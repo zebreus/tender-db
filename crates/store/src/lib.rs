@@ -27,7 +27,7 @@ pub use accounts::{CreateUser, TokenRecord, User};
 pub use analyze::ANALYZE_TABLES;
 pub use checkpoint::{Checkpointed, CheckpointMode};
 pub use canonical::{
-    Applied, BidParty, RefoldCompare, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
+    Applied, BidParty, CarrierSweep, CarrierSweepStop, RefoldCompare, BidState, Change, ContractState, Fact, Identifier, LayerPresence, LayerState,
     register_jurisdiction, org_name_norm,
     LotResultState, LotState, Mention, MentionRefresh, MentionResolver, NamedOrg, NestedOrgRepair, NoticeRef, OrgDissolve, OrgMergeBatch, OrgNameBackfill, OrphanOrgSweep,
     CaseApplyReport, CaseBacklogReport, CaseBacklogRow, CaseReview, CaseUnapplyReport,
@@ -5285,19 +5285,21 @@ mod tests {
             .unwrap();
         }
         // Every table by default: the date carrier is found.
-        let found = db.notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], None).await.unwrap();
+        let found = db.notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], None, &|| false).await.unwrap().ids;
         assert_eq!(found, vec![7], "a date-channel field must be found on notice_dates");
         // Narrowed to a table that does not hold it: an honest miss, by request.
         let narrowed = db
-            .notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], Some(&["notice_texts"]))
+            .notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], Some(&["notice_texts"]), &|| false)
             .await
-            .unwrap();
+            .unwrap()
+            .ids;
         assert!(narrowed.is_empty(), "narrowing to the wrong table finds nothing: {narrowed:?}");
         // Two ids on two channels in one sweep, deduplicated and sorted.
         let both = db
-            .notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD", "TED-TITLE_CONTRACT"], None)
+            .notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD", "TED-TITLE_CONTRACT"], None, &|| false)
             .await
-            .unwrap();
+            .unwrap()
+            .ids;
         assert_eq!(both, vec![7, 8]);
         assert_eq!(canonical::NOTICE_VALUE_TABLES.len(), 8);
         for s in ["", "-wal", "-shm"] {
@@ -5346,11 +5348,12 @@ mod tests {
         let held = db.conn().await;
         let before = db.writer_stats().acquisitions;
         let limit = std::time::Duration::from_secs(5);
-        let carriers = tokio::time::timeout(limit, db.notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], None))
-            .await
-            .expect("notice_ids_carrying_fields must not wait on the writer (issue 549)")
-            .unwrap();
-        assert_eq!(carriers, vec![7]);
+        let carriers =
+            tokio::time::timeout(limit, db.notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], None, &|| false))
+                .await
+                .expect("notice_ids_carrying_fields must not wait on the writer (issue 549)")
+                .unwrap();
+        assert_eq!(carriers.ids, vec![7]);
         let kinds = tokio::time::timeout(limit, db.notice_ids_with_section_kind(&["GroupComposition"]))
             .await
             .expect("notice_ids_with_section_kind must not wait on the writer (issue 549)")

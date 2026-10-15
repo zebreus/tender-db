@@ -471,6 +471,12 @@ pub struct ReclaimReport {
     /// distinct reasons; later arrivals fold into `(other)` so the counts stay
     /// honest without the map growing with the data.
     pub still_held_reasons: std::collections::BTreeMap<String, u64>,
+    /// The pass stopped at an operator's request (issue 543 unit 3), after the member in
+    /// flight. Each reclaim is its own transaction, so the members before the stop are
+    /// reclaimed and the rest are still held, untouched; the reprocess that redoes the
+    /// package picks them up. The walker still reads the archive to its end, so the
+    /// package's declined-member flags (`flag_skipped_members`) still cover all of it.
+    pub cancelled: bool,
 }
 
 /// The bound on distinct reasons in [`ReclaimReport::still_held_reasons`].
@@ -504,6 +510,10 @@ const FLAG_BATCH: usize = 500;
 /// ingest — so a reclaimed member's parsed layer matches one. Members that still
 /// fail (or are still unrecognised profile-level quarantines / corruption) stay
 /// held. Memory stays flat: the producer streams one record at a time.
+///
+/// `should_stop` is read after every member (issue 543 unit 3), the shape
+/// [`reparse_package`] and [`process_package`] already have; see
+/// [`ReclaimReport::cancelled`].
 pub async fn reclaim_package(
     db: &store::Db,
     archive: &Path,
@@ -511,6 +521,7 @@ pub async fn reclaim_package(
     fetch_id: i64,
     held: std::collections::HashSet<String>,
     mut on_progress: impl FnMut(u64, u64, &ReclaimReport),
+    should_stop: impl Fn() -> bool,
 ) -> Result<ReclaimReport, Error> {
     let (rx, walker, estimated) =
         spawn_record_producer(archive, Some(held), &db.unreadable_bundle_members(fetch_id).await?)?;
@@ -564,6 +575,12 @@ pub async fn reclaim_package(
             let _ = db.checkpoint(store::CheckpointMode::Truncate).await;
         }
         on_progress(done, estimated.max(done), &report);
+        // A cooperative stop between members (issue 543 unit 3): this member's reclaim
+        // has committed, and the next one has not started.
+        if should_stop() {
+            report.cancelled = true;
+            break;
+        }
     }
     drop(slot);
 

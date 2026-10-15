@@ -1780,6 +1780,29 @@ pub(crate) fn carrier_window_sql(table: &str, n_fields: usize) -> String {
     )
 }
 
+/// What [`Db::notice_ids_carrying_fields`] found: the carriers, sorted and deduplicated,
+/// and where the sweep stopped if its stop fired (issue 543 unit 3). A stopped sweep's
+/// `ids` are only what its finished windows found.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct CarrierSweep {
+    pub ids: Vec<i64>,
+    pub stopped: Option<CarrierSweepStop>,
+}
+
+/// Where a stopped carrier sweep got to: the window it did not read.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CarrierSweepStop {
+    /// The value table whose next window the stop refused.
+    pub table: String,
+    /// That table's place in the sweep (1-based) and the sweep's table count.
+    pub table_no: usize,
+    pub tables: usize,
+    /// The refused window's low `notice_id`: `table` was swept below it.
+    pub at: i64,
+    /// `MAX(notices.id)` when the sweep began.
+    pub max_id: i64,
+}
+
 /// Legacy `plan_ojs_node` rows written per transaction when materialising the
 /// union-find result (path-B). Chunked so the sorted bulk load keeps the WAL
 /// bounded, like the plan bulk load (issue 60).
@@ -13628,14 +13651,19 @@ impl Db {
     ///   `/health/deep` (plain `/health` reads only memory); a sequential sweep holds
     ///   one of them.
     ///
-    /// The window loop is also the natural stop point for issue 543 unit 3.
+    /// **`stop` is read before every window (issue 543 unit 3).** The sweep is the
+    /// long, read-only half of `refold-fields` (46 min for two tables; the default
+    /// eight have never been timed), so a stop there costs nothing: the result names
+    /// where it stopped ([`CarrierSweep::stopped`]), and `ids` holds only what the
+    /// finished windows found, which is never a cohort to act on.
     pub async fn notice_ids_carrying_fields(
         &self,
         field_ids: &[&str],
         tables: Option<&[&str]>,
-    ) -> turso::Result<Vec<i64>> {
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<CarrierSweep> {
         if field_ids.is_empty() {
-            return Ok(Vec::new());
+            return Ok(CarrierSweep::default());
         }
         let tables: Vec<&str> = match tables {
             Some(t) => t.to_vec(),
@@ -13644,10 +13672,23 @@ impl Db {
         let max_id = self.max_notice_id().await?;
         const WINDOW: i64 = 500_000;
         let mut ids: Vec<i64> = Vec::new();
-        for table in tables {
+        let n_tables = tables.len();
+        for (table_no, table) in tables.into_iter().enumerate() {
             let sql = carrier_window_sql(table, field_ids.len());
             let mut lo = 0i64;
             while lo <= max_id {
+                if stop() {
+                    ids.sort_unstable();
+                    ids.dedup();
+                    let stopped = CarrierSweepStop {
+                        table: table.to_owned(),
+                        table_no: table_no + 1,
+                        tables: n_tables,
+                        at: lo,
+                        max_id,
+                    };
+                    return Ok(CarrierSweep { ids, stopped: Some(stopped) });
+                }
                 let hi = lo.saturating_add(WINDOW);
                 let mut params: Vec<Value> = vec![Value::Integer(lo), Value::Integer(hi)];
                 params.extend(field_ids.iter().map(|f| t(*f)));
@@ -13668,7 +13709,7 @@ impl Db {
         }
         ids.sort_unstable();
         ids.dedup();
-        Ok(ids)
+        Ok(CarrierSweep { ids, stopped: None })
     }
 
     /// The parsed notices carrying a section of any of these KINDS — the cohort a

@@ -434,6 +434,18 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 #                             `audit-fts-ids` (issue 477 unit 3) and
 #                             `backfill-org-name-variants` (issue 542; a restart
 #                             resumes it after its last committed window).
+#                             Issue 543 unit 3 added three:
+#                             - `reprocess` stops before every package and after
+#                               every member; each reclaim is its own commit, and
+#                               a fresh enqueue with the same params re-derives
+#                               the rest;
+#                             - `refold-fields` stops between carrier-sweep
+#                               windows, or after the sweep, and then writes
+#                               nothing. Once its re-queue starts, the re-queue
+#                               and the stamp run to the end together;
+#                             - `rederive-eur` stops before every window. The
+#                               committed watermark stands, and the next
+#                               `rederive-eur` resumes past it.
 #                             A TED/DÖE fetch is one download and answers 409.
 #                             Every other kind is in UNSTOPPABLE_KINDS beside it,
 #                             each with the reason it answers 409: short, one
@@ -441,8 +453,6 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 #                             (refold-denied-schemes, disk-census). A test fails on
 #                             a pushed kind in neither list or in both (issue 543
 #                             unit 2), so a new kind's cancel answer is a choice.
-#                             Read the reason before restarting: rederive-eur
-#                             resumes from its watermark, reprocess from its cursor.
 #                             To end a running 409 kind anyway: a service restart
 #                             with TENDER_DROP_JOBS=<id>, or the restart recovers
 #                             it at the FRONT of the queue.
@@ -502,6 +512,10 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 # the heartbeat, admin, webhook and enqueue writes proceed during it; queued jobs still
 # wait their turn. A sizing run (`expect: 1`) holds no writer at all. A wet run still holds
 # the writer for its re-queue and stamp phase, so do not expect it to journal zero waits.
+# A cancel stops the sweep before its next window (issue 543 unit 3), or after the sweep:
+# the job answers "STOPPED by cancel …", names the table and notice id it reached, and has
+# re-queued and stamped nothing. A re-run sweeps from the start. Once the re-queue starts,
+# a cancel waits for it and its stamp to finish, so the issue-179 pair lands whole.
 /root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_TITLE","TED-LOT_DESCRIPTION"],"expect":1}'
 #   → error "refold-fields aborted: 345203 notices carry [...], expected ~1 (nothing was written)"
 /root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-DATE_OF_CONTRACT_AWARD"],"tables":["notice_dates"],"expect":1}'
@@ -1201,6 +1215,9 @@ Any job that stamps Tenders epoch-stale (`rederive-eur`, the resolver, `refold-n
   re-queue, the watermark and ADR-0017 D5's correction rows together. The job summary counts the
   correction rows it announced; run `project` afterwards, and the fold announces whatever its election
   then moves.
+- Since issue 543 unit 3, a cancel stops `rederive-eur` before its next window. The committed windows
+  and their watermark stand. The next `rederive-eur`, a fresh enqueue included, resumes past that
+  watermark, and the stop line says so. Only a walk that finishes clears the watermark.
 
 **After deploy B:**
 

@@ -86,9 +86,10 @@ async fn the_field_sweep_finds_exactly_the_carriers_and_the_pair_scopes_to_them(
     }
 
     let carriers = db
-        .notice_ids_carrying_fields(&["UBL-FrameworkMaximumAmount", "UBL-FundingProgram"], None)
+        .notice_ids_carrying_fields(&["UBL-FrameworkMaximumAmount", "UBL-FundingProgram"], None, &|| false)
         .await
-        .unwrap();
+        .unwrap()
+        .ids;
     assert_eq!(carriers, vec![1, 2, 3], "both channels, deduped, the non-carrier excluded");
 
     let requeued = db.unmark_projected_by_ids(&carriers).await.unwrap();
@@ -109,5 +110,69 @@ async fn the_field_sweep_finds_exactly_the_carriers_and_the_pair_scopes_to_them(
     assert_eq!(stale, vec![10, 30], "exactly the carriers' tenders are aged");
 
     // An id nothing carries sweeps to an empty cohort.
-    assert!(db.notice_ids_carrying_fields(&["UBL-NoSuchThing"], None).await.unwrap().is_empty());
+    assert!(db.notice_ids_carrying_fields(&["UBL-NoSuchThing"], None, &|| false).await.unwrap().ids.is_empty());
+}
+
+/// Issue 543 unit 3: the sweep reads its stop before every window and, stopped, says where:
+/// the table and window it did not read, and only what the finished windows found. A stop
+/// before the first window reads nothing at all. The sweep is read-only, so either way
+/// nothing is written.
+#[tokio::test]
+async fn the_field_sweep_stops_before_its_next_window_and_names_where() {
+    let (db, conn) = open("stop").await;
+    for id in 1..=2i64 {
+        notice(&conn, id, 1).await;
+    }
+    conn.execute(
+        "INSERT INTO notice_amounts (notice_id, section_id, field_id, ordinal, cents, currency)
+         VALUES (1, 'PROC', 'UBL-FrameworkMaximumAmount', 0, 100, 'EUR')",
+        (),
+    )
+    .await
+    .unwrap();
+    conn.execute(
+        "INSERT INTO notice_texts (notice_id, section_id, field_id, ordinal, lang, value)
+         VALUES (2, 'PROC', 'UBL-FundingProgram', 0, 'ENG', 'x')",
+        (),
+    )
+    .await
+    .unwrap();
+    let fields = ["UBL-FrameworkMaximumAmount", "UBL-FundingProgram"];
+    let tables = ["notice_amounts", "notice_texts"];
+
+    // Asked to stop before anything: no window read, no carrier.
+    let at_once = db.notice_ids_carrying_fields(&fields, Some(&tables), &|| true).await.unwrap();
+    assert!(at_once.ids.is_empty(), "{at_once:?}");
+    assert_eq!(
+        at_once.stopped,
+        Some(store::CarrierSweepStop { table: "notice_amounts".into(), table_no: 1, tables: 2, at: 0, max_id: 2 })
+    );
+
+    // One window per table on this corpus: the stop lands before the second table's, so
+    // the first table's carrier is the only one found.
+    let checks = std::sync::atomic::AtomicUsize::new(0);
+    let second = || checks.fetch_add(1, std::sync::atomic::Ordering::Relaxed) >= 1;
+    let part = db.notice_ids_carrying_fields(&fields, Some(&tables), &second).await.unwrap();
+    assert_eq!(part.ids, vec![1]);
+    assert_eq!(
+        part.stopped,
+        Some(store::CarrierSweepStop { table: "notice_texts".into(), table_no: 2, tables: 2, at: 0, max_id: 2 })
+    );
+
+    // Not stopped: both carriers, and no stop recorded.
+    let whole = db.notice_ids_carrying_fields(&fields, Some(&tables), &|| false).await.unwrap();
+    assert_eq!(whole, store::CarrierSweep { ids: vec![1, 2], stopped: None });
+    assert_eq!(
+        conn.query("SELECT COUNT(*) FROM notices WHERE projected = 1", ())
+            .await
+            .unwrap()
+            .next()
+            .await
+            .unwrap()
+            .unwrap()
+            .get_value(0)
+            .unwrap(),
+        Value::Integer(2),
+        "a sweep writes nothing"
+    );
 }

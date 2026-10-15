@@ -5120,6 +5120,16 @@ const STOPPABLE_KINDS: &[&str] = &[
     "audit-fts-ids",
     // Issue 542: read before every notice window; each window is its own REPLACE commit.
     "backfill-org-name-variants",
+    // Issue 543 unit 3: read before every package and, in `reclaim_package`, after every
+    // member; each reclaim is its own commit, and a fresh enqueue re-derives the rest.
+    "reprocess",
+    // Issue 543 unit 3: `notice_ids_carrying_fields` reads it before every sweep window,
+    // and the arm once more before its first write; a stop writes nothing. The re-queue
+    // and its stale-stamp then run to the end together (the issue-179 pair).
+    "refold-fields",
+    // Issue 543 unit 3: read before every window; each window commits its own watermark,
+    // and a stop leaves it standing, so the next run resumes past it.
+    "rederive-eur",
 ];
 
 /// Issue 543 unit 2: every pushed kind that is NOT in [`STOPPABLE_KINDS`], with the reason
@@ -5172,10 +5182,6 @@ const UNSTOPPABLE_KINDS: &[(&str, &str)] = &[
     ("backfill-original-lang", "a one-off column backfill (job 632, issue 340); a re-run stamps only NULL versions"),
     ("mark-skipped-siblings", "a one-off, expect-gated mark that has run (issues 84, 137); a re-run marks the rest"),
     ("repair-nested-orgs", "a one-off repair, landed 2026-08-28 (issue 259)"),
-    // Long enough for a stop check: issue 543 unit 3 adds one to each.
-    ("rederive-eur", "~10 min (598–646 s, jobs 1001 and 2099), resumes from its watermark; unit 3"),
-    ("reprocess", "writes a resume cursor; its backlog was 12 rows on 2026-10-01; unit 3"),
-    ("refold-fields", "the read-only carrier sweep (46 min for two tables) takes no stop closure yet; its per-window loop is unit 3's stop point (issue 543)"),
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -8046,7 +8052,10 @@ impl Supervisor {
                     notices.len()
                 ))
             }
-            Spec::RefoldFields { fields, expect, tables } => {
+            // Boxed (issue 467's rule): issue 543 unit 3 added the stop closure and the sweep's
+            // result to what this arm holds across its awaits, and `run_maintenance_spec` had
+            // 224 bytes of headroom (1,952 of 2,176). Boxed, the family measures 1,856.
+            Spec::RefoldFields { fields, expect, tables } => Box::pin(async move {
                 let refs: Vec<&str> = fields.iter().map(String::as_str).collect();
                 let table_refs: Option<Vec<&str>> =
                     tables.as_ref().map(|t| t.iter().map(String::as_str).collect());
@@ -8076,11 +8085,29 @@ impl Supervisor {
                         }
                     ),
                 );
-                let carriers = self
+                // Issue 543 unit 3: the sweep reads the stop flag before every window. Stopped
+                // there, the job writes nothing: the re-queue and the stamp never start.
+                let stop = || self.cancelled(job.id);
+                let sweep = self
                     .db
-                    .notice_ids_carrying_fields(&refs, table_refs.as_deref())
+                    .notice_ids_carrying_fields(&refs, table_refs.as_deref(), &stop)
                     .await
                     .map_err(|e| e.to_string())?;
+                if let Some(at) = &sweep.stopped {
+                    return Ok(format!(
+                        "refold-fields STOPPED by cancel during the carrier sweep, at {} from notice id \
+                         {} of {} (table {} of {}): {} carrier(s) of {} field id(s) found so far, nothing \
+                         was re-queued or stamped, and a re-run sweeps from the start",
+                        at.table,
+                        at.at,
+                        at.max_id,
+                        at.table_no,
+                        at.tables,
+                        sweep.ids.len(),
+                        refs.len()
+                    ));
+                }
+                let carriers = sweep.ids;
                 let found = carriers.len() as u64;
                 if let Some(expect) = expect {
                     let slack = expect / 4;
@@ -8090,6 +8117,17 @@ impl Supervisor {
                              ~{expect} — check the field ids (nothing was written)"
                         ));
                     }
+                }
+                // The last stop point. Past it, the re-queue and its stale-stamp run to the
+                // end together: a re-queue without its stamp folds the cohort into an early
+                // return (issue 179), and both are minutes of batched writes even for a
+                // 3.29M-carrier cohort, against the sweep's hours.
+                if self.cancelled(job.id) {
+                    return Ok(format!(
+                        "refold-fields STOPPED by cancel after the carrier sweep ({found} carrier(s) of \
+                         {} field id(s)): nothing was re-queued or stamped",
+                        refs.len()
+                    ));
                 }
                 self.set_phase("re-queueing", Some(0), Some(found), "carriers un-marked".into());
                 let requeued =
@@ -8106,10 +8144,17 @@ impl Supervisor {
                     self.db.stamp_stale_for_notices(&carriers).await.map_err(|e| e.to_string())?;
                 Ok(format!(
                     "{found} carriers of {} field id(s): re-queued {requeued} notices, \
-                     stamped {stamped} tenders epoch-stale for the incremental fold",
-                    refs.len()
+                     stamped {stamped} tenders epoch-stale for the incremental fold{}",
+                    refs.len(),
+                    if self.cancelled(job.id) {
+                        " (a stop request arrived during the re-queue and stamp, which run to the end \
+                         together so the pair lands whole)"
+                    } else {
+                        ""
+                    }
                 ))
-            }
+            })
+            .await,
             _ => Err(misrouted(job, "run_maintenance_spec")),
         }
     }
@@ -8346,6 +8391,35 @@ impl Supervisor {
                 let mut requeued = 0u64;
                 let mut corrections = 0u64;
                 loop {
+                    // Issue 543 unit 3: read before every window. Every committed window
+                    // wrote its own watermark (below), so a stop leaves nothing
+                    // half-written, and it does NOT clear the watermark: the next
+                    // `rederive-eur`, a fresh enqueue included, reads it above and resumes
+                    // past it.
+                    if self.cancelled(job.id) {
+                        return Ok(format!(
+                            "rederive-eur STOPPED by cancel before the window past tender id \
+                             {watermark}{}: {tenders} tenders walked, {updated} of {scanned} money rows \
+                             changed, {corrections} correction row(s) announced, {restamped} tender(s) \
+                             stamped epoch-stale and {requeued} notice(s) re-queued (the committed \
+                             windows stand); {} — run `project` to apply what moved",
+                            if resumed > 0 {
+                                format!(" (this run resumed past tender id {resumed})")
+                            } else {
+                                String::new()
+                            },
+                            if watermark > 0 {
+                                format!(
+                                    "the watermark stays at tender id {watermark}, so the next \
+                                     rederive-eur resumes past it"
+                                )
+                            } else {
+                                "no window has committed, so the next rederive-eur starts at the first \
+                                 tender"
+                                    .to_owned()
+                            }
+                        ));
+                    }
                     // One transaction per window (issue 495 unit 5, ADR-0017's R2
                     // template): the moved `eur_cents`, D5's correction rows for the
                     // Tenders and lots they moved, the stale stamp and the re-queue that
@@ -16134,7 +16208,15 @@ impl Supervisor {
 
         let (mut reclaimed, mut still_held, mut already, mut skipped) = (0u64, 0u64, 0u64, 0u64);
         let mut reasons: std::collections::BTreeMap<String, u64> = Default::default();
+        // Issue 543 unit 3: how far a stopped run got. The flag is read before every
+        // package (a sparse bucket's package is still a whole-archive read) and, inside
+        // `reclaim_package`, after every member, `reparse`'s shape.
+        let mut stop: Option<(usize, Option<i64>)> = None;
         for (i, (fetch_id, source, path)) in packages.iter().enumerate() {
+            if self.cancelled(job_id) {
+                stop = Some((i, None));
+                break;
+            }
             self.update(|p| {
                 p.package = Some(format!("fetch {fetch_id}"));
                 p.packages_done = i as u64;
@@ -16161,6 +16243,7 @@ impl Supervisor {
                         });
                     }
                 },
+                || self.cancelled(job_id),
             )
             .await
             .map_err(|e| format!("db: {e}"))?;
@@ -16170,6 +16253,11 @@ impl Supervisor {
             skipped += report.skipped_by_policy;
             for (reason, count) in &report.still_held_reasons {
                 *reasons.entry(reason.clone()).or_insert(0) += count;
+            }
+            if report.cancelled {
+                // Not drained, so the resume cursor stays on the package before it.
+                stop = Some((i, Some(*fetch_id)));
+                break;
             }
             self.update(|p| p.packages_done = (i + 1) as u64);
             // Advance the durable resume cursor once the package is fully drained
@@ -16209,9 +16297,21 @@ impl Supervisor {
                 format!("; still held by current reason: {}", sample.join(", "))
             }
         };
+        // Every reclaim commits on its own and stamps its row `reprocessed_at`, so a stop
+        // leaves nothing half-written, and a fresh enqueue with the same params re-derives
+        // the work list without what was reclaimed.
+        let stopped = match stop {
+            None => String::new(),
+            Some((done, in_flight)) => format!(
+                "; STOPPED by cancel after {done} of {} package(s){} — every reclaim so far is \
+                 committed, and a fresh enqueue with the same params re-derives the rest",
+                packages.len(),
+                in_flight.map_or(String::new(), |id| format!(" and part of fetch {id}"))
+            ),
+        };
         Ok(format!(
             "{} package(s): {reclaimed} reclaimed, {still_held} still held, \
-             {already} already parsed, {skipped} skipped by dispatch policy{residual}",
+             {already} already parsed, {skipped} skipped by dispatch policy{residual}{stopped}",
             packages.len()
         ))
     }
@@ -17867,7 +17967,16 @@ mod tests {
                 "audit-fts-ids",
                 // Issue 542: the `BackfillOrgNameVariants` arm reads the flag before
                 // every notice window; the committed windows stand.
-                "backfill-org-name-variants"
+                "backfill-org-name-variants",
+                // Issue 543 unit 3: `run_reprocess` reads the flag before every package
+                // and `reclaim_package` after every member; each reclaim commits alone.
+                "reprocess",
+                // Issue 543 unit 3: the carrier sweep reads it before every window and
+                // the arm before its first write; a stopped run writes nothing.
+                "refold-fields",
+                // Issue 543 unit 3: `rederive-eur` reads it before every window; the
+                // committed watermark stands and the next run resumes past it.
+                "rederive-eur"
             ]
         );
     }
@@ -23826,6 +23935,95 @@ mod tests {
         remove_db(&path);
     }
 
+    /// Issue 543 unit 3: `rederive-eur` reads the stop flag before every window. Every
+    /// window commits its own watermark with its rows (issue 495 unit 5), so a stop leaves
+    /// nothing half-written; it does not clear the watermark, and the next run, a fresh
+    /// enqueue, resumes past it. The finished walk clears it.
+    #[tokio::test]
+    async fn rederive_eur_stops_before_its_next_window_and_resumes_from_the_watermark() {
+        let path = format!("/tmp/tender-db-sup-rederive-stop-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        // Two Tenders, each carrying a wrong USD derivation (stored 7777, true 5000 at 2.0).
+        for (tender, notice) in [(1, 7), (2, 8)] {
+            for sql in [
+                format!(
+                    "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at, parse_state, projected) \
+                     VALUES ({notice}, 'ted', 'OJ-{notice}', 'h{notice}', 'text', 1, 'm{notice}', 0, 'parsed', 1)"
+                ),
+                format!(
+                    "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at) \
+                     VALUES ({tender}, 'ted', 'p{tender}', 'procedure', 1, 1266278400, 0)"
+                ),
+                format!(
+                    "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+                     VALUES ({tender}, 1, 1266278400, 'OJ-{notice}', {notice})"
+                ),
+                format!(
+                    "INSERT INTO tender_version_amounts (tender_id, seq, field, cents, currency, eur_cents) \
+                     VALUES ({tender}, 1, 'estimated_value', 10000, 'USD', 7777)"
+                ),
+            ] {
+                conn.execute(&sql, ()).await.unwrap();
+            }
+        }
+        db.upsert_currency_rates(&[("USD".into(), "2010-02-12".into(), 2.0, "ecb".into())]).await.unwrap();
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        assert!(stoppable("rederive-eur", "rederive-eur"));
+        let run = |id: u64| Job { id, ..job(Spec::RederiveEur) };
+        let eur = |tender: i64| {
+            let db = db.clone();
+            async move {
+                db.scalar(&format!("SELECT eur_cents FROM tender_version_amounts WHERE tender_id = {tender}"))
+                    .await
+                    .unwrap()
+            }
+        };
+        let untouched = || async {
+            assert_eq!(eur(1).await, Some(store::turso::Value::Integer(7777)));
+            assert_eq!(eur(2).await, Some(store::turso::Value::Integer(7777)));
+            assert_eq!(db.scalar("SELECT COUNT(*) FROM changes").await.unwrap(), Some(store::turso::Value::Integer(0)));
+            assert_eq!(
+                db.scalar("SELECT COUNT(*) FROM notices WHERE projected = 0").await.unwrap(),
+                Some(store::turso::Value::Integer(0)),
+                "nothing re-queued"
+            );
+        };
+
+        // Stopped before the first window: nothing walked or written, no watermark.
+        sup.cancel_running.store(2, Ordering::Relaxed);
+        let msg = sup.run_spec(&run(2)).await.expect("stopped rederive-eur");
+        assert!(
+            msg.starts_with("rederive-eur STOPPED by cancel before the window past tender id 0: 0 tenders walked"),
+            "{msg}"
+        );
+        assert!(msg.contains("no window has committed, so the next rederive-eur starts at the first tender"), "{msg}");
+        untouched().await;
+        assert_eq!(db.rederive_watermark().await.unwrap(), 0);
+
+        // A walk whose window up to tender 1 committed (the store pins that each window
+        // writes its watermark: `store/tests/currency_rates.rs`), stopped before the next.
+        db.set_rederive_watermark(1).await.unwrap();
+        sup.cancel_running.store(3, Ordering::Relaxed);
+        let msg = sup.run_spec(&run(3)).await.expect("stopped rederive-eur");
+        assert!(msg.contains("before the window past tender id 1 (this run resumed past tender id 1)"), "{msg}");
+        assert!(msg.contains("the watermark stays at tender id 1, so the next rederive-eur resumes past it"), "{msg}");
+        untouched().await;
+        assert_eq!(db.rederive_watermark().await.unwrap(), 1, "a stop does not clear the watermark");
+
+        // The next run resumes past it: tender 2 moves, tender 1 behind the watermark is
+        // not walked again, and the finished walk clears the watermark.
+        sup.cancel_running.store(0, Ordering::Relaxed);
+        let msg = sup.run_spec(&run(4)).await.expect("rederive-eur");
+        assert!(msg.contains("over 1 tenders (resumed past tender id 1):"), "{msg}");
+        assert_eq!(eur(1).await, Some(store::turso::Value::Integer(7777)), "behind the watermark");
+        assert_eq!(eur(2).await, Some(store::turso::Value::Integer(5000)));
+        assert_eq!(db.rederive_watermark().await.unwrap(), 0, "the finished walk clears its watermark");
+        remove_db(&path);
+    }
+
     /// Issue 492: `refold-value-band` finds the Tenders a value rule that can only lower
     /// figures of at least EUR 1 bn can move (a head at or over the floor, or any lot value
     /// at or over it), dry by default, and a wet run stamps and re-queues exactly those.
@@ -24428,6 +24626,104 @@ mod tests {
         assert!(err.contains("\"notice_typo\" is not a notice value table"), "{err}");
         assert!(err.contains("notice_dates"), "the refusal names the walkable tables: {err}");
         assert!(sup.queue.lock().expect("queue lock").is_empty(), "nothing was enqueued");
+    }
+
+    /// Issue 543 unit 3: a cancel stops `refold-fields` in its carrier sweep, before the
+    /// window it would read next, and the stopped run writes nothing: the re-queue and the
+    /// stamp never start. The same request unstopped finds the carrier and re-queues it.
+    #[tokio::test]
+    async fn refold_fields_stops_in_its_sweep_and_writes_nothing() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        assert!(stoppable("refold-fields", "refold-fields TED-LOT_TITLE"));
+        let fetch_id = seed_fetch(&db).await;
+        db.record_notice(
+            &store::Notice {
+                source: "ted".into(),
+                publication_id: "00000001-2024".into(),
+                content_hash: "h".into(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+                declared_version: None,
+                fetch_id,
+                member_path: "m".into(),
+                ingested_at: 0,
+                published_at: Some(store::Stamp::utc(0)),
+                dispatched_at: None,
+            },
+            &store::Parse::Parsed(store::Parsed {
+                sections: vec![],
+                values: vec![store::ValueRow {
+                    section_id: "LOT-0001".into(),
+                    field_id: "TED-LOT_TITLE".into(),
+                    ordinal: 0,
+                    value: store::NoticeValue::Text { lang: Some("ENG".into()), value: "A lot".into() },
+                }],
+            }),
+        )
+        .await
+        .unwrap();
+        let Some(store::turso::Value::Integer(id)) = db.scalar("SELECT id FROM notices").await.unwrap() else {
+            panic!("the seeded notice")
+        };
+        db.mark_projected(&[id]).await.unwrap();
+        let projected = || async { db.scalar(&format!("SELECT projected FROM notices WHERE id = {id}")).await.unwrap() };
+        let spec = Spec::RefoldFields { fields: vec!["TED-LOT_TITLE".into()], expect: Some(1), tables: None };
+
+        sup.cancel_running.store(2, Ordering::Relaxed);
+        let msg = sup.run_spec(&Job { id: 2, ..job(spec.clone()) }).await.expect("stopped refold-fields");
+        assert_eq!(
+            msg,
+            format!(
+                "refold-fields STOPPED by cancel during the carrier sweep, at notice_texts from notice id 0 \
+                 of {id} (table 1 of 8): 0 carrier(s) of 1 field id(s) found so far, nothing was re-queued \
+                 or stamped, and a re-run sweeps from the start"
+            )
+        );
+        assert_eq!(projected().await, Some(store::turso::Value::Integer(1)), "nothing was re-queued");
+
+        // Another job's flag does not stop it: the sweep finds the carrier and re-queues it.
+        let msg = sup.run_spec(&Job { id: 3, ..job(spec) }).await.expect("refold-fields");
+        assert!(msg.starts_with("1 carriers of 1 field id(s): re-queued 1 notices"), "{msg}");
+        assert!(!msg.contains("stop request"), "{msg}");
+        assert_eq!(projected().await, Some(store::turso::Value::Integer(0)));
+    }
+
+    /// Issue 543 unit 3: `reprocess` reads the stop flag before every package (and, in
+    /// `reclaim_package`, after every member: `ingest/tests/process.rs` pins that half on a
+    /// real archive). A stop before a package opens nothing, so the held row stays held and
+    /// stays on the work list a fresh enqueue re-derives.
+    #[tokio::test]
+    async fn reprocess_stops_before_its_next_package_and_leaves_the_rest_held() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        assert!(stoppable("reprocess", "reprocess unknown-field-code"));
+        let fetch_id = seed_fetch(&db).await;
+        db.insert_quarantine(&store::Quarantined {
+            fetch_id,
+            member_path: "m.xml".into(),
+            content_hash: "h".into(),
+            profile: None,
+            reason: "unknown-field-code".into(),
+            detail: Some("line 1: OC".into()),
+            first_seen: 0,
+        })
+        .await
+        .unwrap();
+        let spec = Spec::Reprocess { reason: "unknown-field-code".into(), detail_like: None, profile: None };
+
+        sup.cancel_running.store(2, Ordering::Relaxed);
+        let msg = sup.run_spec(&Job { id: 2, ..job(spec) }).await.expect("stopped reprocess");
+        assert_eq!(
+            msg,
+            "1 package(s): 0 reclaimed, 0 still held, 0 already parsed, 0 skipped by dispatch policy; \
+             STOPPED by cancel after 0 of 1 package(s) — every reclaim so far is committed, and a fresh \
+             enqueue with the same params re-derives the rest"
+        );
+        assert_eq!(
+            db.quarantine_reclaim_packages("unknown-field-code", None, None, 0).await.unwrap().len(),
+            1,
+            "the held row is untouched and still on the work list"
+        );
     }
 
     /// `expect_gaps` re-aims the guard; it does not disarm it (issue 138 criterion 5).

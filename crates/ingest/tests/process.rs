@@ -348,7 +348,7 @@ async fn reclaiming_a_held_container_resolves_its_whole_container_row() {
     // identities dedup as already-parsed, and the first of them resolves the
     // container row.
     let report =
-        process::reclaim_package(&db, &monthly_path, "ted", 2, held, |_, _, _| {}).await.unwrap();
+        process::reclaim_package(&db, &monthly_path, "ted", 2, held, |_, _, _| {}, || false).await.unwrap();
     // The container's members all dispatch: the 4 genuinely-parsed notices
     // dedup as already-parsed (resolving the row), and the 3 stub notices plus
     // the 1 garbage member re-fail exactly as they would in their own daily.
@@ -507,7 +507,7 @@ async fn reclaim_package_reclaims_only_the_held_members() {
 
     // An empty held set (a bucket with nothing held here) parses nothing at all —
     // the whole package is walked but skipped, not even no-op'd.
-    let empty = process::reclaim_package(&db, &pkg, "ted", 1, Default::default(), |_, _, _| {})
+    let empty = process::reclaim_package(&db, &pkg, "ted", 1, Default::default(), |_, _, _| {}, || false)
         .await
         .unwrap();
     assert_eq!((empty.reclaimed, empty.already, empty.still_held), (0, 0, 0));
@@ -525,7 +525,7 @@ async fn reclaim_package_reclaims_only_the_held_members() {
         db.quarantine_held_member_files(1, "unknown-field-code", Some("%: OC"), None).await.unwrap();
     assert_eq!(held.len(), 1, "one held member file in this bucket");
 
-    let report = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}).await.unwrap();
+    let report = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}, || false).await.unwrap();
     // Only the held member is dispatched: it reclaims, and the other 8 members
     // (4 parsed, 3 stubs, 1 garbage) are skipped — never counted as already/held.
     assert_eq!((report.reclaimed, report.already, report.still_held), (1, 0, 0));
@@ -540,6 +540,52 @@ async fn reclaim_package_reclaims_only_the_held_members() {
     assert_eq!(cell_i64(&db, &format!("SELECT projected FROM notices WHERE id = {id}")).await, Some(0));
     assert!(cell_i64(&db, &format!("SELECT reprocessed_at FROM quarantine WHERE notice_id = {id}")).await.is_some());
     assert!(db.unprojected_parsed_notice_ids().await.unwrap().contains(&id));
+
+    let _ = std::fs::remove_dir_all(&archive);
+}
+
+/// Issue 543 unit 3: a reclaim stops between members when asked, and the stop is safe:
+/// the member that committed before it is reclaimed whole, the next one is still held and
+/// untouched, and a second pass over the re-derived held set finishes the package.
+#[tokio::test]
+async fn a_stopped_reclaim_keeps_what_it_reclaimed_and_a_re_run_finishes_the_package() {
+    async fn held(db: &store::Db) -> std::collections::HashSet<String> {
+        db.quarantine_held_member_files(1, "unknown-field-code", Some("%: OC"), None).await.unwrap()
+    }
+    async fn parsed(db: &store::Db, ids: &[i64]) -> Option<i64> {
+        let list = ids.iter().map(i64::to_string).collect::<Vec<_>>().join(",");
+        cell_i64(db, &format!("SELECT COUNT(*) FROM notices WHERE parse_state = 'parsed' AND id IN ({list})")).await
+    }
+    let (archive, db) = fixture("reclaim-stop").await;
+    run(&db, &archive).await;
+    let pkg = archive.join("ted/daily/2026-00137.tar.gz");
+    // Two genuinely-parsed notices rewound to the held state, in one bucket.
+    let mut ids = Vec::new();
+    for _ in 0..2 {
+        let id = cell_i64(&db, "SELECT MIN(id) FROM notices WHERE parse_state = 'parsed'").await.unwrap();
+        make_held(&archive.join("test.db"), id).await;
+        ids.push(id);
+    }
+    assert_eq!(held(&db).await.len(), 2, "two held member files in this bucket");
+    assert_eq!(parsed(&db, &ids).await, Some(0));
+
+    // Stop after the first member: exactly one reclaim committed, the other is held as before.
+    let stopped = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, || true)
+        .await
+        .unwrap();
+    assert!(stopped.cancelled, "the pass must report that it stopped: {stopped:?}");
+    assert_eq!((stopped.reclaimed, stopped.still_held, stopped.already), (1, 0, 0), "{stopped:?}");
+    assert_eq!(parsed(&db, &ids).await, Some(1), "the member before the stop is reclaimed whole");
+    assert_eq!(held(&db).await.len(), 1, "the other is still held, untouched");
+
+    // A re-run over the re-derived held set finishes the package.
+    let again = process::reclaim_package(&db, &pkg, "ted", 1, held(&db).await, |_, _, _| {}, || false)
+        .await
+        .unwrap();
+    assert!(!again.cancelled);
+    assert_eq!(again.reclaimed, 1, "{again:?}");
+    assert_eq!(parsed(&db, &ids).await, Some(2));
+    assert!(held(&db).await.is_empty());
 
     let _ = std::fs::remove_dir_all(&archive);
 }
@@ -627,7 +673,7 @@ async fn reclaim_accounts_for_held_members_a_dispatch_policy_skips() {
         .unwrap();
     assert_eq!(held.len(), 2, "both language files are held in this bucket");
 
-    let report = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}).await.unwrap();
+    let report = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}, || false).await.unwrap();
 
     // The English member reclaims; the French one is declined by policy and
     // REPORTED as such — it is not a failure (`still_held` is for members that
@@ -724,7 +770,7 @@ async fn a_failed_reclaim_records_the_current_failure_on_the_row() {
 
     let held: std::collections::HashSet<String> = [stub.clone(), garbage.to_owned()].into();
     let report =
-        process::reclaim_package(&db, &pkg, "ted", 1, held.clone(), |_, _, _| {}).await.unwrap();
+        process::reclaim_package(&db, &pkg, "ted", 1, held.clone(), |_, _, _| {}, || false).await.unwrap();
 
     // Both failures are REPORTED — including the profile-level one, which used to
     // vanish from the outcome sum entirely — and the residual's shape rides along.
@@ -756,7 +802,7 @@ async fn a_failed_reclaim_records_the_current_failure_on_the_row() {
     );
 
     // A second failed attempt counts, and first-ingest provenance is written ONCE.
-    let again = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}).await.unwrap();
+    let again = process::reclaim_package(&db, &pkg, "ted", 1, held, |_, _, _| {}, || false).await.unwrap();
     assert_eq!(again.still_held, 2);
     for path in [&stub, &garbage.to_owned()] {
         let row = |col: &str| format!("SELECT {col} FROM quarantine WHERE member_path = '{path}'");
