@@ -1,6 +1,6 @@
 # 533 — `status=open` serves procedures their newest notice closed or awarded: a no-winner result or UK12 termination inherits the contract notice's deadline, and DÖE sdk-0.1 award notices publish one of their own
 
-Status: ready-for-agent — unit 1 DECIDED 2026-10-15, and 1(a)'s exemptions RE-DECIDED the same day after step 0a's stop rule fired (`## Decision 1(a) re-made`, below; panel wf_18caa669-8aa): exempt = K1 over the chain (+ legacy `TED-DPS`) || K2 || E2 || (W: an admission window over 365 days && !D: an explicit legacy no-award). 1(b) and 1(c) stand; step 0c done. NEXT: step 0d (one bounded read: W's anchor and own(H) reasons for the 186, with its stop rules), step 0b (per-lot population), and issue 550 (R2.0.9 award blocks read `clos-nw` by inference) decided before the build, since a wrongly inferred `clos-nw` closes a Tender here.
+Status: ready-for-agent — unit 1 DECIDED 2026-10-15, and 1(a)'s exemptions RE-DECIDED the same day after step 0a's stop rule fired (`## Decision 1(a) re-made`, below; panel wf_18caa669-8aa): exempt = K1 over the chain (+ legacy `TED-DPS`) || K2 || E2 || (W: an admission window over 365 days && !D: an explicit legacy no-award). 1(b) and 1(c) stand; step 0c done. Step 0d DONE 2026-10-15 (no stop: 153 close, 33 open). NEXT: step 0b (per-lot population), and issue 550 (R2.0.9 award blocks read `clos-nw` by inference) decided before the build, since a wrongly inferred `clos-nw` closes a Tender here.
 Kind: API semantics / data quality (read layer: `status` on `/v1/tenders` and `/v1/lots`, SSE and webhook filters; the fold's head deadline)
 Relates to:
 - 273 (RESOLVED): `status` is a range on the indexed head column `t.current_deadline`; a fix must stay one.
@@ -395,6 +395,19 @@ closing eForms one-shot, so `[]` proves the flag rather than a passed date. Read
 **Step 0d (new, before the build):** one bounded read giving each of the 186 its W anchor (`published_at` of the first
 deadline-bearing version) and own(H) reasons. Stop if any row read as a live scheme closes, or if W keeps open more than 5
 rows that read as one-shot with a window over 400 days. Measure result latency as a candidate only.
+
+**Step 0d — read 2026-10-15 (no stop).** Public reads of every version of the 186 (`533-step0d-2026-10-15.json` beside
+this file): each version's own submission deadlines (the DATES ids: `BT-131(d)*`, `TED-DATE_RECEIPT_TENDERS`,
+`TED-RECEIPT_LIMIT_DATE`, `TXT-DT/DD`, the SDK01 EndDate; F14 targets not read — they move a deadline, never anchor a
+first one), W's anchor, the window, own(H)'s reasons and markers, and the first-notice-to-result latency.
+- Windows: ≤ 122 days 141; 123–365 days 3 (1148283 178, 1026899 192, 38279 123 — all one-shot calls, all close); 366–400
+  days 1 (1003799 379, the year typo); > 400 days 40; no anchor 1 (8483433, open through K1 anyway).
+- The re-made rule: **153 close, 33 open** (the judge's count). W keeps open the FTS DPS / e-marketplace rows, the six DAK
+  § 130a(8) open-houses, 634469, 179459, 232118, 7241490 (550's case), and the dead 996597, 255271, 913640, 1003799. D
+  closes nine legacy rows despite W: the six with `TED-PROCUREMENT_DISCONTINUED` and 6739006, 7329347, 7329346 (each
+  head notice carries `TED-PROCUREMENT_UNSUCCESSFUL` beside `TED-NO_AWARDED_CONTRACT`).
+- Stop rules: no row read as a live scheme closes; W keeps open no row that reads as a one-shot with a window over 400
+  days (the long-window rows are schemes, ended schemes or the typo). Latency of the closers: median 10.7 days.
 
 **Rule-branch tests to add:** a CN `dps-list` then a CAN `none` keeps K1; `TED-DPS` on a CAN keeps K1; W at 366 days
 open and at 364 closes; a deadline-less PIN or UK2 does not anchor W; D overrides W but not K1.

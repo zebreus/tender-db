@@ -1,0 +1,8946 @@
+[
+ {
+  "tender": 403644,
+  "closes_decided": false,
+  "K1_any": false,
+  "K2": true,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Auktorisationssystem - Mobilbaserad betalningslösning för parkering",
+  "deadline": "2034-12-30T23:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-11-19",
+  "window_days": 3694.0,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 70.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-11-19",
+    "subtype": "16",
+    "deadlines": [
+     "2034-12-30T23:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-01-28",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 305012,
+  "closes_decided": false,
+  "K1_any": true,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Dynamic purchasing system for medical technical equipment.",
+  "deadline": "2034-06-03T22:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-06-13",
+  "window_days": 3642.9,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 587.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-06-13",
+    "subtype": "16",
+    "deadlines": [
+     "2034-06-03T22:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-01-21",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 1110330,
+  "closes_decided": false,
+  "K1_any": true,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Health furniture Harstad, Kvæfjord and Lødingen - dynamic purchasing system",
+  "deadline": "2034-04-06T22:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-04-19",
+  "window_days": 3639.9,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 648.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-04-19",
+    "subtype": "16",
+    "deadlines": [
+     "2034-04-06T22:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-01-27",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7481617,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Marktconsultatie Audit Management Systeem",
+  "deadline": "2032-08-24T17:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2022-08-30",
+  "window_days": 3647.7,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 374.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2022-08-30",
+    "subtype": null,
+    "deadlines": [
+     "2032-08-24T17:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2023-09-08",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": [
+   [
+    2,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ]
+  ]
+ },
+ {
+  "tender": 8706708,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "DPS For The Provision of Education & Social Care Transport 2",
+  "deadline": "2031-08-01T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-08-02T13:42:50+01:00",
+  "window_days": 2554.9,
+  "own_reasons": [
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 5.8,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-08-02T13:42:50+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2031-08-01T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2024-08-08T09:36:06+01:00",
+    "subtype": "award+contract",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8606643,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Dynamic Purchasing - Construction, Civil Engineering and associated works",
+  "deadline": "2030-06-17T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-08-22T17:01:46+01:00",
+  "window_days": 1759.8,
+  "own_reasons": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 28.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-08-22T17:01:46+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2030-06-17T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-09-19T16:54:49+01:00",
+    "subtype": "award+contract",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 6739006,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Aufhebung des Open-House-Verfahrens biomarkerbasierte Behandlungsstrategien bei Brustkrebs",
+  "deadline": "2030-02-28T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2020-03-02",
+  "window_days": 3650.5,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 891.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2020-03-02",
+    "subtype": null,
+    "deadlines": [
+     "2030-02-28T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2022-08-10",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7383945,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Psykoterapi för vuxna anställda (LOV)",
+  "deadline": "2030-01-01T23:59:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2022-05-11",
+  "window_days": 2793.0,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 5.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2022-05-11",
+    "subtype": null,
+    "deadlines": [
+     "2030-01-01T23:59:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2022-05-16",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": [
+   [
+    2,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ]
+  ]
+ },
+ {
+  "tender": 7241490,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "PRÜFSYSTEM für Lieferung von Stahlgittermasten und Konstruktionen für Einzelmaßnahmen und ",
+  "deadline": "2030-01-01T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2021-11-24",
+  "window_days": 2960.5,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 499.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2021-11-24",
+    "subtype": null,
+    "deadlines": [
+     "2030-01-01T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2023-04-07",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 996597,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Begeleiding mantelzorg gemeente Lansingerland (open house procedure) regelmatige toetredin",
+  "deadline": "2029-12-31T23:50:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-06-12",
+  "window_days": 2029.0,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 15.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-06-12",
+    "subtype": "20",
+    "deadlines": [
+     "2029-12-31T23:50:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2024-06-27",
+    "subtype": "33",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 841082,
+  "closes_decided": false,
+  "K1_any": true,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "RRF „Socialinių paslaugų prieinamumo didinimas“ programinės įrangos kūrimo ir Socialinės p",
+  "deadline": "2029-12-11T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-12-09",
+  "window_days": 1828.3,
+  "own_reasons": [
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 43.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-12-09",
+    "subtype": "16",
+    "deadlines": [
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2024-12-31",
+    "subtype": "16",
+    "deadlines": [
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00",
+     "2029-12-11T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2025-01-21",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 987397,
+  "closes_decided": false,
+  "K1_any": true,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "DPS Qualification__Provision of Remote Health Monitoring Technologies to Support the Imple",
+  "deadline": "2029-11-15T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2023-11-17",
+  "window_days": 2190.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 728.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2023-11-17",
+    "subtype": "16",
+    "deadlines": [
+     "2029-11-15T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-11-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 1077484,
+  "closes_decided": false,
+  "K1_any": true,
+  "K2": true,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Tekniska konsulter och landskapsarkitekter dynamiskt inköpssystem",
+  "deadline": "2029-08-30T22:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-09-10",
+  "window_days": 1450.9,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 217.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-09-10",
+    "subtype": "16",
+    "deadlines": [
+     "2029-08-30T22:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-04-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7207004,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": true,
+  "title": "NU CBO Zeist - Desktops All-inones",
+  "deadline": "2029-07-31T15:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2021-10-15",
+  "window_days": 2846.6,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 399.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2021-10-15",
+    "subtype": null,
+    "deadlines": [
+     "2029-07-31T15:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2022-01-17",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 3,
+    "published": "2022-11-18",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": [
+   [
+    2,
+    "TED-DPS",
+    "1"
+   ],
+   [
+    3,
+    "TED-DPS",
+    "1"
+   ]
+  ]
+ },
+ {
+  "tender": 8703287,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Electronic Market Place for Kirklees Welcomes assisting vulnerable migrants, asylum seeker",
+  "deadline": "2029-07-31T13:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-05-30T11:44:14+01:00",
+  "window_days": 1888.1,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-05-30T11:44:14+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2029-07-31T13:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2024-05-31T12:44:33+01:00",
+    "subtype": "award+contract",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 6507010,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "DAS Kantoormeubilair",
+  "deadline": "2029-07-15",
+  "anchor_seq": 1,
+  "anchor_published": "2019-05-21",
+  "window_days": 3708.0,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 808.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2019-05-21",
+    "subtype": null,
+    "deadlines": [
+     "2099-03-27"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2019-08-06",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 3,
+    "published": "2020-08-05",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2021-08-06",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": [
+   [
+    4,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ]
+  ]
+ },
+ {
+  "tender": 6424988,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Adults Supported Living and 16+ Young People Accommodation and Support Services",
+  "deadline": "2029-05-30",
+  "anchor_seq": 1,
+  "anchor_published": "2019-02-15",
+  "window_days": 3757.0,
+  "own_reasons": [
+   null,
+   null,
+   null,
+   null
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 203.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2019-02-15",
+    "subtype": null,
+    "deadlines": [
+     "2029-05-30"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2019-09-06",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": [
+   [
+    2,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ],
+   [
+    2,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ],
+   [
+    2,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ],
+   [
+    2,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ]
+  ]
+ },
+ {
+  "tender": 272271,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschluss einer nicht-exklusiven Rabattvereinbarung nach § 130a Abs. 8 SGB V zum Wirkstoff",
+  "deadline": "2029-05-05T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-05-13",
+  "window_days": 1088.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 111.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-05-13",
+    "subtype": "16",
+    "deadlines": [
+     "2029-05-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-05-15",
+    "subtype": "16",
+    "deadlines": [
+     "2029-05-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-08-31",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-01",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 149151,
+  "closes_decided": false,
+  "K1_any": true,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Dynamisch aankoopsysteem (DAS) IT hardware en aanverwante zaken",
+  "deadline": "2029-01-23T11:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-01-10",
+  "window_days": 1840.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 971.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-01-10",
+    "subtype": "16",
+    "deadlines": [
+     "2029-01-23T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-03",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 232118,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Osallistumispyyntö: Kotihoitopalvelujen hankinta / Förfrågan om deltagande: Upphandling av",
+  "deadline": "2028-12-31T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-03-12",
+  "window_days": 1755.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 106.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-03-12",
+    "subtype": "20",
+    "deadlines": [
+     "2028-12-31T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2024-06-26",
+    "subtype": "33",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 801652,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschluss einer nicht-exklusiven Rabattvereinbarung nach § 130a Abs. 8 SGB V zum Wirkstoff",
+  "deadline": "2028-12-05T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-12-11",
+  "window_days": 1090.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 264.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-12-11",
+    "subtype": "16",
+    "deadlines": [
+     "2028-12-05T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-12-15",
+    "subtype": "16",
+    "deadlines": [
+     "2028-12-05T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-08-31",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-01",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8696815,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Dynamic Purchasing System (“DPS”) of Temporary Worker Agencies, and Interim Contractors/Co",
+  "deadline": "2028-09-04T14:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2022-06-16T09:29:01+01:00",
+  "window_days": 2272.2,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1511.2,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2022-06-16T09:29:01+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2028-07-31T11:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2023-05-31T12:05:02+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2028-09-04T14:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2025-03-27T10:05:08+00:00",
+    "subtype": "tenderUpdate",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-08-05T13:21:59+01:00",
+    "subtype": "award+contract",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 705918,
+  "closes_decided": false,
+  "K1_any": false,
+  "K2": true,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Upphandling av hemtjänst LOV",
+  "deadline": "2028-08-17T21:59:59+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-08-23",
+  "window_days": 1455.9,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 210.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-08-23",
+    "subtype": "20",
+    "deadlines": [
+     "2028-08-17T21:59:59+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-03-21",
+    "subtype": "33",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7422682,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "CANCELLED Dynamic purchasing system for new and second hand vehicles",
+  "deadline": "2028-07-17T09:30:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2022-06-22",
+  "window_days": 2217.4,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 14.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2022-06-22",
+    "subtype": null,
+    "deadlines": [
+     "2028-07-17T09:30:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2022-07-06",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": [
+   [
+    2,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ]
+  ]
+ },
+ {
+  "tender": 195649,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschluss einer nicht-exklusiven Rabattvereinbarung nach § 130a Abs. 8 SGB V zum Wirkstoff",
+  "deadline": "2028-07-05T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-07-16",
+  "window_days": 1085.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 47.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-07-16",
+    "subtype": "16",
+    "deadlines": [
+     "2028-07-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-07-17",
+    "subtype": "16",
+    "deadlines": [
+     "2028-07-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2025-08-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2025-09-01",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8755176,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "A DPS for sustainable and ethically sourced goods and services, delivering social value in",
+  "deadline": "2028-05-08",
+  "anchor_seq": 1,
+  "anchor_published": "2022-05-09T12:03:32+01:00",
+  "window_days": 2190.5,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 0.1,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2022-05-09T12:03:32+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2028-05-08"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2022-05-09T12:08:58+01:00",
+    "subtype": "tenderUpdate",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 3,
+    "published": "2022-05-09T14:12:37+01:00",
+    "subtype": "award+contract",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 847009,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschluss einer nicht-exklusiven Rabattvereinbarung nach § 130a Abs. 8 SGB V zum Wirkstoff",
+  "deadline": "2028-05-05T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-05-18",
+  "window_days": 1083.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 353.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-05-18",
+    "subtype": "16",
+    "deadlines": [
+     "2028-05-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-05-20",
+    "subtype": "16",
+    "deadlines": [
+     "2028-05-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-05-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-05-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7674485,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Timber Survey & Cutting Qualification system",
+  "deadline": "2028-04-24T15:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2023-03-27",
+  "window_days": 1855.6,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 11.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2023-03-27",
+    "subtype": null,
+    "deadlines": [
+     "2028-04-24T15:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2023-04-07",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": [
+   [
+    2,
+    "TED-PROCUREMENT_DISCONTINUED",
+    "1"
+   ]
+  ]
+ },
+ {
+  "tender": 118582,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschluss einer nicht-exklusiven Rabattvereinbarung nach § 130a Abs. 8 SGB V zum Wirkstoff",
+  "deadline": "2028-04-05T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-04-15",
+  "window_days": 1086.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 409.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-04-15",
+    "subtype": "16",
+    "deadlines": [
+     "2028-04-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-04-17",
+    "subtype": "16",
+    "deadlines": [
+     "2028-04-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-05-28",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-05-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 78054,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschluss einer nicht-exklusiven Rabattvereinbarung nach § 130a Abs. 8 SGB V zum Wirkstoff",
+  "deadline": "2028-04-05T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-04-16",
+  "window_days": 1085.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 321.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-04-16",
+    "subtype": "16",
+    "deadlines": [
+     "2028-04-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-04-17",
+    "subtype": "16",
+    "deadlines": [
+     "2028-04-05T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-03-02",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-03-03",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 255271,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Arzneimittel mit dem Wirkstoff Fampridin (ATC: N07XX07)",
+  "deadline": "2028-03-31T00:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-04-17",
+  "window_days": 713.9,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 10.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-04-17",
+    "subtype": "16",
+    "deadlines": [
+     "2028-03-31T00:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-04-20",
+    "subtype": "16",
+    "deadlines": [
+     "2028-03-31T00:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-04-24",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-04-27",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7329347,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Chefs- och ledarhandledning",
+  "deadline": "2028-03-07T23:59:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2022-03-11",
+  "window_days": 2189.0,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2022-03-11",
+    "subtype": null,
+    "deadlines": [
+     "2028-03-07T23:59:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2022-03-18",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7329346,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Handledningstjänster",
+  "deadline": "2028-03-07T23:59:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2022-03-11",
+  "window_days": 2189.0,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2022-03-11",
+    "subtype": null,
+    "deadlines": [
+     "2028-03-07T23:59:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2022-03-18",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8640221,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Y22019 - Connect2Surrey - Dynamic Purchasing System of Temporary Worker Agencies and Inter",
+  "deadline": "2028-01-31T14:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2021-10-27T13:54:48+01:00",
+  "window_days": 2287.0,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1743.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2021-10-27T13:54:48+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2026-12-31T14:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2023-05-31T10:04:55+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2028-01-31T14:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2025-03-27T10:05:17+00:00",
+    "subtype": "tenderUpdate",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-08-05T13:16:58+01:00",
+    "subtype": "award+contract",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 797346,
+  "closes_decided": false,
+  "K1_any": true,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "„Доставка на лекарствени продукти, които не са включени в Приложение 2 на ПЛС, за нуждите ",
+  "deadline": "2027-04-16T23:59:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-03-15",
+  "window_days": 1127.9,
+  "own_reasons": [
+   "ins-fund"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 894.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-03-15",
+    "subtype": "16",
+    "deadlines": [
+     "2027-04-16T23:59:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-08-26",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 445631,
+  "closes_decided": true,
+  "K1_any": true,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "ДСП Доставка на лекарствени продукти за хематология и онкология за УМБАЛ „Св. Иван Рилски“",
+  "deadline": "2027-02-08T23:59:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-02-09",
+  "window_days": 1095.9,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 315.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-02-09",
+    "subtype": "16",
+    "deadlines": [
+     "2027-02-08T23:59:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2024-12-20",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8805808,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Sanierung Neu- und Ausbau Stiegstrasse und Stiegweg - Ingenieurleistung",
+  "deadline": "2027-01-07T11:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-02",
+  "window_days": 97.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-02",
+    "subtype": "16",
+    "deadlines": [
+     "2027-01-07T11:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 634469,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschluss einer nicht-exklusiven Rabattvereinbarung nach § 130a Abs. 8 SGB V zum Wirkstoff",
+  "deadline": "2027-01-05T12:00:00+01:00",
+  "anchor_seq": 2,
+  "anchor_published": "2025-01-16",
+  "window_days": 719.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 499.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-01-15",
+    "subtype": "16",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 2,
+    "published": "2025-01-16",
+    "subtype": "16",
+    "deadlines": [
+     "2027-01-05T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-05-28",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-05-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7975075,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "REVISED CCTV Replacement Invitation to Tender",
+  "deadline": "2026-12-31T23:59:59+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-03T12:36:38+01:00",
+  "window_days": 119.5,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.9,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-03T12:36:38+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-09-30T18:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-03T14:03:34+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-09-30T18:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-04T08:56:46+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-12-31T23:59:59+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-10T11:09:47+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 179459,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschluss eines nicht-exklusiven Rahmenvertrags Bauwerksprüfungen nach DIN 1076 im Open-Ho",
+  "deadline": "2026-12-31T23:59:00+01:00",
+  "anchor_seq": 2,
+  "anchor_published": "2024-09-27",
+  "window_days": 826.0,
+  "own_reasons": [
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 585.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-09-26",
+    "subtype": "16",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 2,
+    "published": "2024-09-27",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-31T23:59:00+01:00",
+     "2026-12-31T23:59:00+01:00",
+     "2026-12-31T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2025-03-27",
+    "subtype": "16",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2025-03-31",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-31T23:59:00+01:00",
+     "2026-12-31T23:59:00+01:00",
+     "2026-12-31T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2025-07-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-31T23:59:00+01:00",
+     "2026-12-31T23:59:00+01:00",
+     "2026-12-31T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 6,
+    "published": "2025-07-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-31T23:59:00+01:00",
+     "2026-12-31T23:59:00+01:00",
+     "2026-12-31T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 7,
+    "published": "2026-04-30",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 8,
+    "published": "2026-05-04",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 336277,
+  "closes_decided": false,
+  "K1_any": true,
+  "K2": true,
+  "E2": false,
+  "dps_marker": false,
+  "title": "DAS Externe Inzet Leo Loopbaan",
+  "deadline": "2026-12-31T11:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2024-10-18",
+  "window_days": 804.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 711.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2024-10-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-31T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7940050,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "ΜΕΛΕΤΗ ΚΑΙ ΚΑΤΑΣΚΕΥΗ ΤΟΥ ΑΥΤΟΚΙΝΗΤΟΔΡΟΜΟΥ ΔΕΝΕΙΑΣ - ΑΚΑΚΙΟΥ - ΑΣΤΡΟΜΕΡΙΤΗ - ΚΠΣ/19/2025/ΜΚ",
+  "deadline": "2026-12-18T11:00:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-28",
+  "window_days": 112.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-28",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-18T11:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-08-31",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 1003799,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Gewerbezentrum Alanbrooke Paderborn mit dem Schwerpunkt Kreativwirtschaft",
+  "deadline": "2026-12-10T10:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-11-26",
+  "window_days": 379.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 30.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-11-26",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-10T10:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-11-26",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-10T10:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2025-12-25",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2025-12-26",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8589715,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Construction de mobilier de la gamme de bancs \"Ville de Genève\" (2364TI) Construction méta",
+  "deadline": "2026-12-02T11:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-28",
+  "window_days": 65.4,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 16.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-28",
+    "subtype": "16",
+    "deadlines": [
+     "2026-12-02T11:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 913640,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Abschl. nicht exkl. AM-Rabattvereinb. nach § 130a Abs. 8 SGB V im Wege eines OH-Mod. zum W",
+  "deadline": "2026-11-30T23:58:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2025-09-17",
+  "window_days": 440.0,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-30T23:58:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2025-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-30T23:58:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2025-09-23",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2025-09-24",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8829551,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Legevikar - Framework agreement",
+  "deadline": "2026-11-30T11:00:58+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-07",
+  "window_days": 54.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-07",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-30T11:00:58+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8556571,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Southern Track and Rail Systems Phase 3",
+  "deadline": "2026-11-20T17:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-15T14:29:35+01:00",
+  "window_days": 66.1,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.9,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-15T14:29:35+01:00",
+    "subtype": "UK3",
+    "deadlines": [
+     "2026-11-20T17:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-22T13:11:07+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8590030,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "__NEEDS_TRANSLATION_54ec9d2__",
+  "deadline": "2026-11-20T11:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-28",
+  "window_days": 53.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-28",
+    "subtype": "17",
+    "deadlines": [
+     "2026-11-20T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-01",
+    "subtype": "30",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8834394,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "MW2503 - Cholesbury Grange (Oxford)",
+  "deadline": "2026-11-17T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-07T17:23:07+01:00",
+  "window_days": 40.8,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 5.7,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-07T17:23:07+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-11-17T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-13T11:20:00+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8841213,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "20/26 „Vstupný objekt – Jarošova ulica, Bratislava“",
+  "deadline": "2026-11-16T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-13",
+  "window_days": 34.3,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 2.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-13",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-16T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8838613,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "SPD8/2026/098 - Framework Contract for Air Quality Monitoring Equipment and Ancillary Supp",
+  "deadline": "2026-11-16T09:30:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-12",
+  "window_days": 35.3,
+  "own_reasons": [
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 2.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-12",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-16T09:30:00+02:00",
+     "2026-11-16T09:30:00+02:00",
+     "2026-11-16T09:30:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8829498,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "MRI - PET Scanner Chiller Replacement",
+  "deadline": "2026-11-13T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-05T17:42:04+01:00",
+  "window_days": 38.8,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 8.7,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-05T17:42:04+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-11-13T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-14T10:17:20+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8835901,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "CONSTRUCTION D’UNE CASERNE DE POMPIERS A  BURG-REULAND",
+  "deadline": "2026-11-12T11:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-09",
+  "window_days": 34.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-09",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-12T11:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-12",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-12T11:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-12",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8829965,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Dodávka 6 ks ultrazvukových přístrojů",
+  "deadline": "2026-11-11T23:59:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-07",
+  "window_days": 36.0,
+  "own_reasons": [
+   "other",
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 8.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-07",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-06T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-12",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-06T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-13",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-06T23:59:00+01:00",
+     "2026-11-11T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7975157,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "My Ends 3.0 Programme",
+  "deadline": "2026-11-11T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-10T10:55:12+01:00",
+  "window_days": 62.1,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 0.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-10T10:55:12+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-11-11T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-10T11:42:45+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8581055,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Design Services for the National Archives, Ireland",
+  "deadline": "2026-11-10T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-23",
+  "window_days": 48.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 8.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-23",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-10T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-01",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8805621,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "ΠΡΟΜΗΘΕΙΑ ΑΣΦΑΛΤΟΜΙΓΜΑΤΟΣ ΓΙΑ ΤΟΝ ΔΗΜΟ ΓΟΡΤΥΝΑΣ",
+  "deadline": "2026-11-09T15:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-02",
+  "window_days": 38.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 5.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-02",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-09T15:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8805361,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "ΠΡΟΜΗΘΕΙΑ ΣΚΥΡΟΔΕΜΑΤΟΣ ΚΑΙ ΔΟΜΙΚΟΥ ΠΛΕΓΜΑΤΟΣ ΓΙΑ ΤΗΝ ΚΑΛΥΨΗ ΤΩΝ ΑΝΑΓΚΩΝ ΤΗΣ ΑΓΡΟΤΙΚΗΣ ΟΔΟΠ",
+  "deadline": "2026-11-09T15:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-02",
+  "window_days": 38.5,
+  "own_reasons": [
+   "rev-body"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 5.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-02",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-09T15:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8680301,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Achiziție servicii privind licențe, instalare, configurare și punere în funcțiune, pregăti",
+  "deadline": "2026-11-09T15:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-30",
+  "window_days": 40.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-30",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-09T15:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-02",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-09T15:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8835796,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Lieferung von 4 Feuerwehrfahrzeugen Typ Drehleiter für den Landkreis Schwäbisch Hall",
+  "deadline": "2026-11-09T10:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-08",
+  "window_days": 32.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-08",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-09T10:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-09",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-09T10:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-13",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8538195,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Baulos L10183, SL GE Seeli Pfyngut",
+  "deadline": "2026-11-06T23:59:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-07-13",
+  "window_days": 117.0,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 64.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-07-13",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-06T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8832536,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "IK-EEA 054-2026 Framework agreement for the procurement of electronic locks",
+  "deadline": "2026-11-06T22:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-08",
+  "window_days": 29.9,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 0.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-08",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-06T22:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8831653,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "MW2520 - Bathroom Replacement Programme (East)",
+  "deadline": "2026-11-06T15:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-06T08:56:09+01:00",
+  "window_days": 31.3,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.1,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-06T08:56:09+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-11-06T15:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-13T11:31:41+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8831650,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "MW2519 - Kitchen Replacement Programme (East)",
+  "deadline": "2026-11-06T15:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-06T08:47:54+01:00",
+  "window_days": 31.3,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.1,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-06T08:47:54+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-11-06T15:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-13T11:32:43+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8828243,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Delivery of Microsoft licences",
+  "deadline": "2026-11-06T11:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-06",
+  "window_days": 31.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 2.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-06",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-06T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8804635,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "HO-26-05 Insurances",
+  "deadline": "2026-11-06T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-02",
+  "window_days": 35.5,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 12.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-02",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-06T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8830494,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "TLA løsning til Præanalyse, Koagulation og Mikrobiologi på KB Rigshospitalet",
+  "deadline": "2026-11-05T11:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-07",
+  "window_days": 29.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-07",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-05T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-09",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-05T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-13",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8579002,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Risiko - und Arbeitssicherheitsmanagement- Tool",
+  "deadline": "2026-11-05T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-22",
+  "window_days": 44.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 23.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-22",
+    "subtype": "17",
+    "deadlines": [
+     "2026-11-05T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-15",
+    "subtype": "30",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8592138,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Procedura aperta per l’affidamento del servizio di raccolta, trasporto e conferimenti rifi",
+  "deadline": "2026-11-05T08:59:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-29",
+  "window_days": 37.3,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 9.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-29",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-05T08:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8583463,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "APPALTO DEI LAVORI DI REALIZZAZIONE \"TANGENZIALE SUD\" TRA S.R. 62 POSTUMIA A SUD (DIR. MOZ",
+  "deadline": "2026-11-04T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-24",
+  "window_days": 41.5,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 11.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-24",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-04T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8823801,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Rekonštrukcia národnej kultúrnej pamiatky Štátnej opery v Banskej Bystrici",
+  "deadline": "2026-11-04T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-05",
+  "window_days": 30.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-05",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-04T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-12",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8680567,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Dotar al Ayuntamiento de los servicios de actividades acuáticas y escuela taller deportivo",
+  "deadline": "2026-11-03T23:59:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-30",
+  "window_days": 35.0,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 8.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-30",
+    "subtype": "20",
+    "deadlines": [
+     "2026-11-03T23:59:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "33",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8592433,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Produse destinate statiei de asfalt pentru fabricarea de mixturi asfaltice si produse cone",
+  "deadline": "2026-11-03T15:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-29",
+  "window_days": 35.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-29",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-03T15:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8749802,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Profiling, advertising and gift items.",
+  "deadline": "2026-11-03T11:00:58+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-01",
+  "window_days": 33.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 12.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-03T11:00:58+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-12",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-03T11:00:58+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-13",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8749583,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "OVERHEIDSOPDRACHT BETREFFENDE HET SLUITEN VAN EEN RAAMOVEREENKOMST VOOR HET PRODUCEREN, DR",
+  "deadline": "2026-11-03T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-01",
+  "window_days": 33.5,
+  "own_reasons": [
+   "other",
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-03T12:00:00+01:00",
+     "2026-11-03T12:00:00+01:00",
+     "2026-11-03T12:00:00+01:00",
+     "2026-11-03T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-03T12:00:00+01:00",
+     "2026-11-03T12:00:00+01:00",
+     "2026-11-03T12:00:00+01:00",
+     "2026-11-03T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8750862,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Talous- ja henkilöstöhallinnon kokonaispalvelu - hankinnan keskeyttäminen",
+  "deadline": "2026-11-03T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-01",
+  "window_days": 33.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 13.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-03T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-02",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-03T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8823115,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Kompletná rekonštrukcia budovy a zníženie energetickej náročnosti – Dom umenia Piešťany",
+  "deadline": "2026-11-03T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-05",
+  "window_days": 29.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-05",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-03T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-12",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8823037,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Servicios de construcción de escenario principal vinculados al Carnaval 2027 y 2028 de la ",
+  "deadline": "2026-11-02T14:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-05",
+  "window_days": 28.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-05",
+    "subtype": "20",
+    "deadlines": [
+     "2026-11-02T14:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "33",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8831837,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Stage One  Competitive Flexible Procedure (CFP)  Aldbanks Supported Living  CBC-2074-CFP-S",
+  "deadline": "2026-11-02T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-06T16:10:25+01:00",
+  "window_days": 26.9,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 5.8,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-06T16:10:25+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-11-02T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-12T10:46:47+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8749525,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "WIDERRUF aufgrund doppelter Veröffentlichungsnummer ANKÖ + Provia_162222_4921 A01 GEN Kn.L",
+  "deadline": "2026-11-02T14:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-01",
+  "window_days": 32.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 5.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T14:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8830065,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "DFG-Az.: EXC 3037/1 TP1 (A 201) Beschaffung von MEMS Sensoren",
+  "deadline": "2026-11-02T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-07",
+  "window_days": 26.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-07",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8679382,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Schools Energy Pathfinder 2025/2026 – Heat Pump Programme – Works Contractors Notice",
+  "deadline": "2026-11-02T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-30",
+  "window_days": 33.5,
+  "own_reasons": [
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 2.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-30",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-02",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8591834,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "MISSIONS DE PRESTATIONS TOPOGRAPHIQUES, DE DETECTION/GEO-DETECTION/GEOLOCALISATION DE RESE",
+  "deadline": "2026-11-02T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-29",
+  "window_days": 34.5,
+  "own_reasons": [
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 8.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-29",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T12:00:00+01:00",
+     "2026-11-02T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8573192,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Inkoop zand Bouwrijp maken Harderweide fase 3",
+  "deadline": "2026-11-02T11:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18",
+  "window_days": 45.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 14.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-02",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8823582,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "„Zapewnienie gotowości bojowej jednostki ochrony przeciwpożarowej włączonej do krajowego s",
+  "deadline": "2026-11-02T10:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-05",
+  "window_days": 28.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 2.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-05",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T10:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8555808,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Website Werkzaak Rivierenland",
+  "deadline": "2026-11-02T10:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 47.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 8.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-11-02T10:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-24",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8555572,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "PPP CENTRO SPORTIVO \"BATTISTA RE\"",
+  "deadline": "2026-11-01T16:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 46.6,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 13.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "19",
+    "deadlines": [
+     "2026-11-01T16:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-29",
+    "subtype": "32",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8831675,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Develop and Supply an Interactive online Nature Finance Project Development game",
+  "deadline": "2026-10-31T17:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-06T10:16:31+01:00",
+  "window_days": 25.3,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.2,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-06T10:16:31+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-31T17:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-13T13:58:26+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 1148283,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Δράσεις Ψηφιακού Μετασχηματισμού του Δήμου Αλίαρτου-Θεσπιέων",
+  "deadline": "2026-10-30T22:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-05-06",
+  "window_days": 177.8,
+  "own_reasons": [
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 138.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-05-06",
+    "subtype": "16",
+    "deadlines": [
+     "2026-06-15T15:00:00+03:00",
+     "2026-06-15T15:00:00+03:00",
+     "2026-06-15T15:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-21",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T22:00:00+02:00",
+     "2026-10-30T22:00:00+02:00",
+     "2026-10-30T22:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-21",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8829262,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Culvert Crossing and Groundworks",
+  "deadline": "2026-10-30T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-05T07:46:44+01:00",
+  "window_days": 25.2,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.3,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-05T07:46:44+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-23T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-06T10:22:09+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-23T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-09T08:24:54+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-10-09T12:05:51+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2026-10-12T16:08:43+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8816242,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "\"Your Education Technology\" An Open Framework (PA 2023) for the provision of ICT products,",
+  "deadline": "2026-10-30T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-02T16:22:47+01:00",
+  "window_days": 27.9,
+  "own_reasons": [
+   null,
+   null,
+   null
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 10.7,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-02T16:22:47+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-02T16:43:09+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-12T17:49:24+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-10-13T09:58:58+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8750625,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Lithiumakkujen lataus- ja säilytyskaapit",
+  "deadline": "2026-10-30T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-01",
+  "window_days": 29.5,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 14.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8572422,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Recruitment of Specialist Staff",
+  "deadline": "2026-10-30T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16T12:02:09+01:00",
+  "window_days": 44.0,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 19.1,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16T12:02:09+01:00",
+    "subtype": "UK3",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05T14:33:35+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7962772,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "NSDC-1705 Property Safety and Compliance Check Service and Maintenance Contract for Newark",
+  "deadline": "2026-10-30T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-07T18:18:37+01:00",
+  "window_days": 52.8,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 13.8,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-07T18:18:37+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-16T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-16T16:04:32+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-30T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-21T13:57:04+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 1026899,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Tarjouspyyntö Maantielauttaliikennepalvelu Saaristomeri I 2029-2050",
+  "deadline": "2026-10-30T11:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-04-22",
+  "window_days": 191.5,
+  "own_reasons": [
+   "all-rej"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 162.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-04-22",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-01",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8841856,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "CPF Digital Project Evaluation",
+  "deadline": "2026-10-30T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-12T17:25:11+01:00",
+  "window_days": 17.7,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 0.9,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-12T17:25:11+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-30T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-13T14:46:08+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8680520,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Keskeytysilmoitus: Rakennustarvikkeet: Keraamiset laatat ja laastit",
+  "deadline": "2026-10-30T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-30",
+  "window_days": 30.4,
+  "own_reasons": [
+   "rev-buyer"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 9.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-30",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-09",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8679694,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Keskeytysilmoitus: Rakennustarvikkeet: Lattiapäällysteet",
+  "deadline": "2026-10-30T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-30",
+  "window_days": 30.4,
+  "own_reasons": [
+   "rev-buyer"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 9.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-30",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-09",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8679627,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Keskeytysilmoitus: Rakennustarvikkeet: Maalit, liimat ja tarvikkeet",
+  "deadline": "2026-10-30T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-30",
+  "window_days": 30.4,
+  "own_reasons": [
+   "rev-buyer"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 9.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-30",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-09",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 627103,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Lerndienstleistung - Fortbildung Praxisanleitung",
+  "deadline": "2026-10-30T11:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-07-10",
+  "window_days": 112.4,
+  "own_reasons": [
+   "all-rej"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 82.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-07-10",
+    "subtype": "16",
+    "deadlines": [
+     "2026-08-11T11:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-07-13",
+    "subtype": "16",
+    "deadlines": [
+     "2026-08-11T11:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-29",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T11:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 5,
+    "published": "2026-09-30",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T11:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 6,
+    "published": "2026-09-30",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 66939,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Διαγωνισμός 126/2026 για την παροχή υπηρεσιών ολοκληρωμένης διαχείρισης και λειτουργίας τη",
+  "deadline": "2026-10-30T13:00:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-07-06",
+  "window_days": 116.4,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 99.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-07-06",
+    "subtype": "16",
+    "deadlines": [
+     "2026-08-07T13:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-07-27",
+    "subtype": "16",
+    "deadlines": [
+     "2026-09-07T13:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-08-07",
+    "subtype": "16",
+    "deadlines": [
+     "2026-09-30T13:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T13:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2026-10-12",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T13:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 6,
+    "published": "2026-10-13",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8590048,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "SPD2/2026/043 ***",
+  "deadline": "2026-10-30T09:30:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-28",
+  "window_days": 32.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 2.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-28",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-30T09:30:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-30",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 38279,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Machinaal groenonderhoud openbare ruimte, gemeente Wijchen 2027-2029",
+  "deadline": "2026-10-29T12:30:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-06-29",
+  "window_days": 122.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-06-29",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-29T12:30:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-06-30",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8585289,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Foodstuffs",
+  "deadline": "2026-10-29T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-25",
+  "window_days": 34.5,
+  "own_reasons": [
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 20.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-25",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-13",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00",
+     "2026-10-29T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8584302,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Byggmaterial och järnhandelsvaror, Hudiksvall 2026",
+  "deadline": "2026-10-29T00:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-24",
+  "window_days": 35.0,
+  "own_reasons": [
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 8.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-24",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-29T00:00:00+01:00",
+     "2026-10-29T00:00:00+01:00",
+     "2026-10-29T00:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-02",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8750458,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Παρακολούθηση επικονιαστών εντός της πρώτης περιόδου αξιολόγησης με τη θέσπιση επιστημονικ",
+  "deadline": "2026-10-29T00:00:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-01",
+  "window_days": 27.9,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 4.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-29T00:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8590143,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Fire alarms, emergency and guiding lighting systems (maintenance).",
+  "deadline": "2026-10-28T11:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-28",
+  "window_days": 30.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-28",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-28T11:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8578273,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "„Доставка на униформено, специално и работно облекло и друго вещево имущество“ за служба „",
+  "deadline": "2026-10-27T23:59:59+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-21",
+  "window_days": 36.9,
+  "own_reasons": [
+   "tch-pr-error",
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 16.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-21",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-27T23:59:59+02:00",
+     "2026-10-27T23:59:59+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8679019,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Housing Needs Assessment",
+  "deadline": "2026-10-27T12:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-29T14:40:48+01:00",
+  "window_days": 27.9,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1.1,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-29T14:40:48+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-27T12:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-30T16:14:30+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7935649,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "GROUPE SCOLAIRE TIVOLI - PLANIFICATEUR GÉNÉRAL & ARCHITECTE INGÉNIEUR CHAUFFAGE VENTILATIO",
+  "deadline": "2026-10-27T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-25",
+  "window_days": 63.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-25",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-27T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-08-26",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8589414,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "KESKEYTYSILMOITUS: Kirurgiset haavaimutarvikkeet",
+  "deadline": "2026-10-27T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-28",
+  "window_days": 29.4,
+  "own_reasons": [
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece",
+   "no-rece"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 9.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-28",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00",
+     "2026-10-27T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8536627,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Entretien et maintenance de l'arrosage automatique et des disconnecteurs pour la ville de ",
+  "deadline": "2026-10-27T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-14",
+  "window_days": 43.4,
+  "own_reasons": [
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 2.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-14",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-27T12:00:00+02:00",
+     "2026-10-27T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-16",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8581352,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Épületgépészeti berend. karbantartása V70 részére",
+  "deadline": "2026-10-27T11:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-23",
+  "window_days": 34.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 22.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-23",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-27T11:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8837675,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Going Global Partnerships Programme; Country Level Evaluations",
+  "deadline": "2026-10-26T21:55:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-09T18:56:42+01:00",
+  "window_days": 17.2,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.8,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-09T18:56:42+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-26T21:55:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-13T14:42:49+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8591924,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Accord-cadre à bons de commande et à marchés subséquents numérisation des fonds d'archives",
+  "deadline": "2026-10-26T16:30:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-29",
+  "window_days": 27.6,
+  "own_reasons": [
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 13.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-29",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T16:30:00+02:00",
+     "2026-10-19T16:30:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T16:30:00+01:00",
+     "2026-10-26T16:30:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-12",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7950622,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Development, Implementation, Maintenance and Operation of financial IT Systems",
+  "deadline": "2026-10-26T14:00:59+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-04",
+  "window_days": 52.5,
+  "own_reasons": [
+   "tch-pr-error",
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 11.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-04",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T14:00:59+01:00",
+     "2026-10-26T14:00:59+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7950077,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Financial and Accounting Support",
+  "deadline": "2026-10-26T14:00:59+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-04",
+  "window_days": 52.5,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 11.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-04",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T14:00:59+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7935328,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Executie lucrari și furnizare dotări în cadrul proiectului cu titlul „EXTINDERE COMPLEX CL",
+  "deadline": "2026-10-26T15:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-25",
+  "window_days": 62.5,
+  "own_reasons": [
+   "rev-body"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 45.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-25",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-12T15:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-22",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T15:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-09",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7974387,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Fish Tracker",
+  "deadline": "2026-10-26T12:30:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-11",
+  "window_days": 45.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 5.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-11",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T12:30:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-16",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8555798,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Servicio de control de vegetación, mantenimiento de drenajes y cerramientos en la red de M",
+  "deadline": "2026-10-26T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 40.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 29.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8538730,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "EU-udbud på levering af inventar til 'Fremtidens børnebibliotek' i Randers Kommune",
+  "deadline": "2026-10-26T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-15",
+  "window_days": 41.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-15",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-18",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7934796,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Accord-cadre pour l'impression de documents d'information de la communauté d'agglomération",
+  "deadline": "2026-10-26T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-24",
+  "window_days": 63.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 37.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-24",
+    "subtype": "16",
+    "deadlines": [
+     "2026-09-28T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-29",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-30",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7946334,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Contrat cadre pour la cyberadministration DIGI-FR",
+  "deadline": "2026-10-26T10:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-02",
+  "window_days": 54.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 27.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-02",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T10:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7944803,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Wagenparkbeheer o.v.b. operational lease",
+  "deadline": "2026-10-26T10:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-01",
+  "window_days": 55.4,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 1.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T10:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-02",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8580482,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Iekšējo inženiertīklu apkopes un remonta pakalpojumi Daugavpils valstspilsētas pašvaldības",
+  "deadline": "2026-10-26T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-23",
+  "window_days": 33.3,
+  "own_reasons": [
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 19.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-23",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T10:00:00+02:00",
+     "2026-10-26T10:00:00+02:00",
+     "2026-10-26T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-12",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8834974,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Dostawa ortopedycznego systemu robotycznego",
+  "deadline": "2026-10-26T08:30:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-10-09",
+  "window_days": 17.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-10-09",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-26T08:30:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8572844,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Sähkökäyttöiset nivellinja-autot ja niiden huolenpitosopimus Plusbussi-liikenteeseen",
+  "deadline": "2026-10-23T16:00:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18",
+  "window_days": 35.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 20.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18",
+    "subtype": "17",
+    "deadlines": [
+     "2026-10-23T16:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "30",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8582368,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Darlington Crisis House (Non-clinical service)",
+  "deadline": "2026-10-23T12:00:00+01:00",
+  "anchor_seq": 3,
+  "anchor_published": "2026-09-22T14:57:13+01:00",
+  "window_days": 30.9,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 337.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-10-27T12:49:16+00:00",
+    "subtype": "UK2",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 2,
+    "published": "2025-11-05T12:20:42+00:00",
+    "subtype": "UK2",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-22T14:57:13+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-23T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-24T14:02:47+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-23T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2026-09-29T13:56:45+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8580688,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "CFT CANCELLED - Multidisciplinary Services for Castletroy Link Road, Limerick Scheme - NTA",
+  "deadline": "2026-10-23T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-23",
+  "window_days": 30.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 19.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-23",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-23T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-12",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7975877,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Live Fire Training Building",
+  "deadline": "2026-10-23T12:00:00+01:00",
+  "anchor_seq": 2,
+  "anchor_published": "2026-09-03T11:36:09+01:00",
+  "window_days": 50.0,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 303.9,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2025-11-11T10:31:44+00:00",
+    "subtype": "UK2",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-03T11:36:09+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-23T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-11T07:57:33+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8579346,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Udbud af visiteret kørsel",
+  "deadline": "2026-10-23T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-22",
+  "window_days": 31.4,
+  "own_reasons": [
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-22",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-23T12:00:00+02:00",
+     "2026-10-23T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7973040,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "HES-SO Genève | Exploitation des cafétérias de la HEAD, de la HEdS, de la HEG et de l’HEPI",
+  "deadline": "2026-10-23T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-11",
+  "window_days": 42.4,
+  "own_reasons": [
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-11",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-23T12:00:00+02:00",
+     "2026-10-23T12:00:00+02:00",
+     "2026-10-23T12:00:00+02:00",
+     "2026-10-23T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8568896,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Keskeytysilmoitus: SR-urakka, Uudisrakennus, Helsinki, Lassila, Heka Lassila Hopeatie 14-1",
+  "deadline": "2026-10-23T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-07-01",
+  "window_days": 114.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-07-01",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-23T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-07-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7973172,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "TP57/26EU Tietokonetomografialaite",
+  "deadline": "2026-10-23T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-11",
+  "window_days": 42.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 33.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-11",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-23T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8573370,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Kone- ja kuljetuskalusto 2027-2028 (optio 2029)",
+  "deadline": "2026-10-23T07:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18",
+  "window_days": 35.3,
+  "own_reasons": [
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 4.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-23T07:00:00+00:00",
+     "2026-10-23T07:00:00+00:00",
+     "2026-10-23T07:00:00+00:00",
+     "2026-10-23T07:00:00+00:00",
+     "2026-10-23T07:00:00+00:00",
+     "2026-10-23T07:00:00+00:00",
+     "2026-10-23T07:00:00+00:00",
+     "2026-10-23T07:00:00+00:00",
+     "2026-10-23T07:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-22",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8579620,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Servicio de gestión de los servicios funerarios, de conservación y mantenimiento de los ce",
+  "deadline": "2026-10-22T14:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-22",
+  "window_days": 30.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 13.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-22",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-22T14:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8573322,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Execuție lucrări pentru obiectivul ”Iașul de după blocuri este orașul nostru” cod SMIS 355",
+  "deadline": "2026-10-22T15:00:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18",
+  "window_days": 34.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-22T15:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-24",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8538871,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Servicii de decolmatare retele canalizare cu grad de colmatare marit si de vidanjare a cam",
+  "deadline": "2026-10-22T15:00:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-15",
+  "window_days": 37.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 2.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-15",
+    "subtype": "17",
+    "deadlines": [
+     "2026-10-22T15:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-17",
+    "subtype": "30",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7966962,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "REZ SW 45Startklar AA Schwäbisch Hall-Tauberbischofsheim",
+  "deadline": "2026-10-22T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-09",
+  "window_days": 43.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 35.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-09",
+    "subtype": "20",
+    "deadlines": [
+     "2026-10-22T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-10",
+    "subtype": "20",
+    "deadlines": [
+     "2026-10-22T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-13",
+    "subtype": "33",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-10-14",
+    "subtype": "33",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8578441,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Metāla aprūpes gultu ar matračiem piegāde Daugavpils valstspilsētas pašvaldības iestādes “",
+  "deadline": "2026-10-22T09:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-22",
+  "window_days": 30.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 13.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-22",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-22T09:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8590268,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Multi-Party Framework Agreement for the Provision of a Non-Operative Treatment Pathway for",
+  "deadline": "2026-10-21T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-28",
+  "window_days": 23.5,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 17.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-28",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-21T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8483433,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": true,
+  "title": "Procesų įvertinimas ir rekomendacijų tobulinimui pateikimas",
+  "deadline": "2026-10-21T10:00:00+00:00",
+  "anchor_seq": null,
+  "anchor_published": null,
+  "window_days": null,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 623.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2021-08-27",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 2,
+    "published": "2023-05-12",
+    "subtype": null,
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": [
+   [
+    2,
+    "TED-DPS",
+    "1"
+   ]
+  ]
+ },
+ {
+  "tender": 8576850,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "KESKEYTYSILMOITUS Näytteenottoputket ja virtsanäyteastia",
+  "deadline": "2026-10-21T06:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-21",
+  "window_days": 30.2,
+  "own_reasons": [
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 16.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-21",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00",
+     "2026-10-21T06:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8576007,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Household Clinical Waste - Collection and Disposal",
+  "deadline": "2026-10-20T23:59:59+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18T17:15:08+01:00",
+  "window_days": 32.3,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 20.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18T17:15:08+01:00",
+    "subtype": "UK4",
+    "deadlines": [
+     "2026-10-20T23:59:59+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08T17:00:45+01:00",
+    "subtype": "UK12",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8538576,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Sjukskötersketjänster jourtid",
+  "deadline": "2026-10-20T21:59:59+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-15",
+  "window_days": 35.9,
+  "own_reasons": [
+   "no-rece"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 29.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-15",
+    "subtype": "20",
+    "deadlines": [
+     "2026-10-12T21:59:59+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-30",
+    "subtype": "20",
+    "deadlines": [
+     "2026-10-16T21:59:59+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-09",
+    "subtype": "20",
+    "deadlines": [
+     "2026-10-18T21:59:59+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-10-12",
+    "subtype": "20",
+    "deadlines": [
+     "2026-10-20T21:59:59+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2026-10-14",
+    "subtype": "33",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8555242,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "NySzC - Laptopok beszerzése",
+  "deadline": "2026-10-20T13:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 34.5,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 28.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T13:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7965277,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "How can technology enable fast-growing digital public service providers to dynamically sca",
+  "deadline": "2026-10-20T12:00:00+01:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-08T14:00:41+01:00",
+  "window_days": 41.9,
+  "own_reasons": [
+   null
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 0.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-08T14:00:41+01:00",
+    "subtype": "tender",
+    "deadlines": [
+     "2026-10-20T12:00:00+01:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-08T14:50:21+01:00",
+    "subtype": "award+contract",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8573733,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Framework agreement for material handling and wheeled loaders",
+  "deadline": "2026-10-20T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18",
+  "window_days": 32.4,
+  "own_reasons": [
+   "other",
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 17.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T10:00:00+00:00",
+     "2026-10-20T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7963768,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "67 Kauf und Lieferung von Nutzfahrzeugen",
+  "deadline": "2026-10-20T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-08",
+  "window_days": 42.4,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 8.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-08",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-09",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-16",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8573234,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Työllistymistä edistävät ja tukevat valmennukset -puitejärjestely 2027-2028 (+1)",
+  "deadline": "2026-10-20T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18",
+  "window_days": 32.4,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 4.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-22",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8576545,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Offentligt udbud vedr. anskaffelse af inventar til Erhvervsakademi Aarhus",
+  "deadline": "2026-10-20T08:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-21",
+  "window_days": 29.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 23.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-21",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T08:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8571485,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Druckluftanlage Feuerwache Kirchhellen",
+  "deadline": "2026-10-20T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 34.3,
+  "own_reasons": [
+   "no-rece"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 29.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7973127,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Rahmenvereinbarung über Nichtapothekenpflichtiges Rettungs-dienstverbrauchsmaterial",
+  "deadline": "2026-10-20T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-10",
+  "window_days": 40.3,
+  "own_reasons": [
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 25.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-10",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-11",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00",
+     "2026-10-15T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-22",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-24",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00",
+     "2026-10-20T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2026-10-02",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 6,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7943338,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "2026-0709 ROK Stadsbank",
+  "deadline": "2026-10-20T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-31",
+  "window_days": 50.3,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 25.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-31",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-05T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-09",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-25",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8574001,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Taxi services",
+  "deadline": "2026-10-20T07:00:58+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18",
+  "window_days": 32.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 19.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T07:00:58+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8570609,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Mätningstjänster för infrastrukturprojekt i landskapet Åland",
+  "deadline": "2026-10-20T00:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-17",
+  "window_days": 32.9,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 28.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-20T00:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8571689,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "„Доставка на нетни количества активна електрическа енергия и избор на координатор на станд",
+  "deadline": "2026-10-19T23:59:59+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-17",
+  "window_days": 32.9,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 27.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T23:59:59+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7965708,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Servicio de limpieza de locales municipales y de mobiliario e instalaciones urbanas",
+  "deadline": "2026-10-19T18:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-10",
+  "window_days": 39.7,
+  "own_reasons": [
+   "other",
+   "other",
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 18.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-10",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T18:00:00+02:00",
+     "2026-10-19T18:00:00+02:00",
+     "2026-10-19T18:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-28",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8536714,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "”Dotări echipamente medicale” pentru Centrul Regional de Transfuzie Sanguină Galați în cad",
+  "deadline": "2026-10-19T15:00:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-14",
+  "window_days": 35.5,
+  "own_reasons": [
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 24.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-14",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-25",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00",
+     "2026-10-19T15:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8578858,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Framework agreement for chemicals and consumables",
+  "deadline": "2026-10-19T10:00:58+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-22",
+  "window_days": 27.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 16.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-22",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:58+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8571042,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Framework agreement for multi-function machines - Cooperating municipalities.",
+  "deadline": "2026-10-19T10:00:58+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-17",
+  "window_days": 32.4,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:58+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-23",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8578089,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Udbud på Facility management - Kerteminde Forsyning",
+  "deadline": "2026-10-19T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-21",
+  "window_days": 28.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 15.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-21",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8555124,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Procurement - Interactive screens, 2026",
+  "deadline": "2026-10-19T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 33.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 7.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-23",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8577337,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Sähköisen ajanvarauksen järjestelmän hankinta sote-palveluihin",
+  "deadline": "2026-10-19T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-21",
+  "window_days": 28.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 24.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-21",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8555289,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Irtokalusteet",
+  "deadline": "2026-10-19T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 33.4,
+  "own_reasons": [
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 21.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T09:00:00+00:00",
+     "2026-10-19T09:00:00+00:00",
+     "2026-10-19T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7974342,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Tuore leipä",
+  "deadline": "2026-10-19T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-11",
+  "window_days": 38.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-11",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7973904,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Mustamakkara",
+  "deadline": "2026-10-19T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-11",
+  "window_days": 38.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 4.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-11",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7973288,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Hedelmä- ja vihannestuotteet",
+  "deadline": "2026-10-19T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-11",
+  "window_days": 38.4,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 3.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-11",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-14",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8571596,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Rahmenvertrag Stickstoff LN2 Versorgung 2027-2030 für GSI",
+  "deadline": "2026-10-19T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 33.3,
+  "own_reasons": [
+   "no-rece"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 22.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-21",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2026-10-05",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 6,
+    "published": "2026-10-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 7,
+    "published": "2026-10-06",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 8,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7937436,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Neubau Grundschule Grebben/ Elektro- und Nachrichtentechnik",
+  "deadline": "2026-10-19T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-24",
+  "window_days": 56.3,
+  "own_reasons": [
+   "no-rece"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 25.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-24",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-08-26",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-17",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-18",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 595635,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Rammeaftale om ad hoc-ejendomsservice",
+  "deadline": "2026-10-19T08:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-05",
+  "window_days": 75.3,
+  "own_reasons": [
+   "all-rej"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 43.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-05",
+    "subtype": "16",
+    "deadlines": [
+     "2026-09-15T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-19T08:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-17",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8536136,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "VA-material",
+  "deadline": "2026-10-16T21:59:59+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-14",
+  "window_days": 32.9,
+  "own_reasons": [
+   "no-rece"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 4.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-14",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T21:59:59+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-18",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7948510,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "„СРЕДСТВА ЗА ПРЕЗЕНТАЦИЯ ЗА НУЖДИТЕ НА ТУ-СОФИЯ И ИЗНЕСЕНИТЕ ЗВЕНА”",
+  "deadline": "2026-10-16T23:59:59+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-03",
+  "window_days": 43.9,
+  "own_reasons": [
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 42.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-03",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-02T23:59:59+03:00",
+     "2026-10-02T23:59:59+03:00",
+     "2026-10-02T23:59:59+03:00",
+     "2026-10-02T23:59:59+03:00",
+     "2026-10-02T23:59:59+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T23:59:59+03:00",
+     "2026-10-02T23:59:59+03:00",
+     "2026-10-02T23:59:59+03:00",
+     "2026-10-02T23:59:59+03:00",
+     "2026-10-02T23:59:59+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-15",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8572672,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Urologi genudbud (delkontrakt 1b)",
+  "deadline": "2026-10-16T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-18",
+  "window_days": 28.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 12.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-18",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-30",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8555810,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Sicherheitsdienstleistungen",
+  "deadline": "2026-10-16T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-15",
+  "window_days": 31.4,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 21.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-15",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-02",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 4,
+    "published": "2026-10-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8555211,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Udbud af koncessionskontrakt af ret til at virke som operatør af offentligt tilgængelige l",
+  "deadline": "2026-10-16T10:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-16",
+  "window_days": 30.4,
+  "own_reasons": [
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 20.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-16",
+    "subtype": "19",
+    "deadlines": [
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00",
+     "2026-10-16T10:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-06",
+    "subtype": "32",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8554837,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Rahmenvertrag Server, Storage, Software",
+  "deadline": "2026-10-16T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-15",
+  "window_days": 31.4,
+  "own_reasons": [
+   "no-rece"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 14.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-15",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-16",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-21",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-22",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2026-09-28",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 6,
+    "published": "2026-09-29",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 908775,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Etude de maîtrise d'oeuvre et Autorisation Environnementale Unique pour le réaménagement d",
+  "deadline": "2026-10-16T12:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-10",
+  "window_days": 67.4,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 42.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-10",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T12:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-21",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7941379,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "EA Rijopleidingen en examens voor rijbewijzen C, C1 en B",
+  "deadline": "2026-10-16T09:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-08-28",
+  "window_days": 49.4,
+  "own_reasons": [
+   "tch-pr-error",
+   "tch-pr-error",
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 41.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-08-28",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T09:00:00+00:00",
+     "2026-10-16T09:00:00+00:00",
+     "2026-10-16T09:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-08",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8571390,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Udbud af Rammeaftale vedrørende teltservice",
+  "deadline": "2026-10-16T08:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-17",
+  "window_days": 29.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 19.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-17",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T08:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7950575,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Arbeiten zur Erneuerung der Prozessleittechnik",
+  "deadline": "2026-10-16T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-03",
+  "window_days": 43.3,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 34.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-03",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-05T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-04",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-05T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-09-09",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 4,
+    "published": "2026-09-10",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 5,
+    "published": "2026-10-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   },
+   {
+    "seq": 6,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 7947913,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Fertőtlenítőszerek és tisztítószerek beszerzése 6r",
+  "deadline": "2026-10-16T10:00:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-03",
+  "window_days": 43.3,
+  "own_reasons": [
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need",
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw",
+   "clos-nw"
+  ],
+  "latency_days": 32.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-03",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T10:00:00+02:00",
+     "2026-10-16T10:00:00+02:00",
+     "2026-10-16T10:00:00+02:00",
+     "2026-10-16T10:00:00+02:00",
+     "2026-10-16T10:00:00+02:00",
+     "2026-10-16T10:00:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8539408,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "SPD8/2026/097 - FRAMEWORK CONTRACT FOR THE SUPPLY, DELIVERY AND UNLOADING ONSITE OF BRAND-",
+  "deadline": "2026-10-16T09:30:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-15",
+  "window_days": 31.3,
+  "own_reasons": [
+   "other"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 20.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-15",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T09:30:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-05",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8590998,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Jälki-ilmoitus hankinnan keskeyttämisestä 4289/02.05.00.01/2026 / Niemen sataman pilaantun",
+  "deadline": "2026-10-16T07:00:00+00:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-29",
+  "window_days": 17.3,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 8.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-29",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-16T07:00:00+00:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-10-07",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8579176,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "Keila Kooli Pargimaja liginullenergia korpuse ehitustööd",
+  "deadline": "2026-10-16T10:00:00+03:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-22",
+  "window_days": 24.3,
+  "own_reasons": [
+   "chan-need"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 6.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-22",
+    "subtype": "17",
+    "deadlines": [
+     "2026-10-16T10:00:00+03:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-28",
+    "subtype": "30",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ },
+ {
+  "tender": 8537668,
+  "closes_decided": true,
+  "K1_any": false,
+  "K2": false,
+  "E2": false,
+  "dps_marker": false,
+  "title": "VN Brno - rozšíření technologických zařízení - 1.etapa",
+  "deadline": "2026-10-15T23:59:00+02:00",
+  "anchor_seq": 1,
+  "anchor_published": "2026-09-14",
+  "window_days": 31.9,
+  "own_reasons": [
+   "tch-pr-error"
+  ],
+  "own_decisions": [
+   "clos-nw"
+  ],
+  "latency_days": 22.0,
+  "versions": [
+   {
+    "seq": 1,
+    "published": "2026-09-14",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-02T23:59:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 2,
+    "published": "2026-09-28",
+    "subtype": "16",
+    "deadlines": [
+     "2026-10-15T23:59:00+02:00"
+    ],
+    "admitted": true
+   },
+   {
+    "seq": 3,
+    "published": "2026-10-06",
+    "subtype": "29",
+    "deadlines": [],
+    "admitted": false
+   }
+  ],
+  "markers": []
+ }
+]
