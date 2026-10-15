@@ -1479,8 +1479,13 @@ pub struct OrgNameRefreshApplied {
     pub stopped: bool,
     /// Ready targets (within `max_groups`) in windows the run never committed — after a stop or a
     /// `window_error`, the failed window's included. 0 on a complete run, and on an aborted one
-    /// (whose `ready` reads the same).
+    /// (whose `ready` reads the same); 0 on a pre-pass stop too, where nothing is known to be ready
+    /// (read `prepass_stopped_after`).
     pub left: u64,
+    /// A cancel stopped the PRE-PASS after this many of its targets (the targets after a resume's
+    /// cursor): nothing was written by this run, and `ready`, `already`, `drifted` and `gone` are
+    /// not counted (`None` on every run whose pre-pass finished).
+    pub prepass_stopped_after: Option<u64>,
     /// The first [`ORG_NAME_REFRESH_DRIFT_SAMPLES`] drifted or gone targets, by org id.
     pub drift_samples: Vec<OrgNameRefreshDrift>,
     /// [`ORG_NAME_REFRESH_APPLIED_SAMPLES`] committed renames, uniform over the run (the planner's
@@ -1562,19 +1567,20 @@ enum Readiness {
 
 /// The pre-pass: each target's organization read and re-elected as the planner read it (the same
 /// page SQL, mention read, voters and verdict probe), then compared with what the plan recorded.
+/// `Err(read)` when `stop`, read between [`IN_CHUNK`]-target chunks, ended it after `read` targets.
 async fn read_readiness(
     reader: &turso::Connection,
     fns: &HeadElectFns,
     targets: &[OrgNameRefreshTarget],
     horizon: i64,
     stop: &(dyn Fn() -> bool + Sync),
-) -> turso::Result<Option<Vec<Readiness>>> {
+) -> turso::Result<Result<Vec<Readiness>, u64>> {
     let mut out = Vec::with_capacity(targets.len());
     for (i, chunk) in targets.chunks(IN_CHUNK).enumerate() {
-        // The v7 review: dating ~28.7k targets takes a while, so a cancel is read between chunks
-        // (`None`: stopped, nothing written).
+        // The v7 review: dating ~28.7k targets takes a while, so a cancel is read between chunks.
+        // `Err(read)`: stopped after `read` targets, nothing written.
         if i > 0 && stop() {
-            return Ok(None);
+            return Ok(Err(out.len() as u64));
         }
         let ids: Vec<Value> = chunk.iter().map(|t| Value::Integer(t.org_id)).collect();
         let mut orgs: HashMap<i64, PageOrg> = HashMap::new();
@@ -1687,7 +1693,7 @@ async fn read_readiness(
             }
         }
     }
-    Ok(Some(out))
+    Ok(Ok(out))
 }
 
 /// The ledger's `evidence`: the epoch, the counts the rename was elected by and (rule `v7`) the
@@ -1723,13 +1729,15 @@ impl Db {
     /// while `organization_mentions_org`, `organization_merged_identifiers_org` or
     /// `tender_versions_notice` is absent, as the planner does. Then:
     /// 1. **Pre-pass.** Every target's organization is read and re-elected with `fns` as the planner
-    ///    elected it (the verdict probe included, and every target dated as the planner dated its
-    ///    candidates: one reading `hold:recent` or `hold:undated` now is drifted). A target is `ready`
-    ///    when the row still holds the
-    ///    plan's pre-image, still carries an identifier, and re-elects to the plan's rule and
-    ///    spelling; `already` when it holds the plan's new pair (a replayed window); `gone` when
-    ///    deleted; `drifted` otherwise. Drifted plus gone above `max(2%, 5)` of the targets read
-    ///    aborts the run here, before any write.
+    ///    elected it (the verdict probe included). The row checks come first — `gone` when deleted,
+    ///    `already` when the row holds the plan's new pair (a replayed window), `drifted` when its
+    ///    pre-image moved or its identifier is NULL — and only the targets past them are dated, as the
+    ///    planner dated its candidates, and re-elected: `ready` when that re-elects to the plan's rule
+    ///    and spelling, else `drifted` (one reading `hold:recent` or `hold:undated` now among them).
+    ///    Drifted plus gone above `max(2%, 5)` of the targets read aborts the run here, before any
+    ///    write. The stop flag is read between [`IN_CHUNK`]-target chunks (not before the first): a
+    ///    cancel there ends the run before any write with `prepass_stopped_after` set and none of the
+    ///    pre-pass counts (they would be a part's).
     /// 2. **Windows** of `args.window` ready targets (the first `max_groups` by org id), each one
     ///    [`Db::immediate`] transaction of compare-and-set renames ([`ORG_NAME_REFRESH_CAS_SQL`]:
     ///    `name_norm` follows as [`org_name_norm`], the mint's derivation), their ledger rows and
@@ -1757,7 +1765,7 @@ impl Db {
                 )));
             }
         }
-        // Rule v7: the pre-pass dates every target as the planner did.
+        // Rule v7: the pre-pass dates the targets past its row checks as the planner dated them.
         let horizon = crate::now_unix() + 86_400;
         let mut targets = args.targets;
         targets.sort_by_key(|t| t.org_id);
@@ -1781,9 +1789,17 @@ impl Db {
             let reader = self.reader().await?;
             read_readiness(&reader, &args.fns, &targets, horizon, args.stop).await?
         };
-        let Some(readiness) = readiness else {
-            report.stopped = true;
-            return Ok(report);
+        let readiness = match readiness {
+            Ok(readiness) => readiness,
+            // A cancel between chunks: nothing written, and none of the pre-pass counts reported —
+            // they would describe the part read. The limit is the whole run's, as the summary never
+            // prints a pre-pass it did not finish (the v7 follow-up check).
+            Err(read) => {
+                report.stopped = true;
+                report.prepass_stopped_after = Some(read);
+                report.drift_limit = org_name_refresh_drift_limit(targets.len() as u64);
+                return Ok(report);
+            }
         };
         let mut ready: Vec<(&OrgNameRefreshTarget, HeadElection)> = Vec::new();
         for (target, reading) in targets.iter().zip(readiness) {

@@ -955,6 +955,66 @@ async fn the_wet_run_reads_the_stop_flag_before_every_window_and_resumes_after_i
     assert!(err.to_string().contains("organization_mentions_org") && err.to_string().contains("refused"), "{err}");
 }
 
+/// The v7 follow-up check: the pre-pass reads the stop flag between its 512-target chunks, and a
+/// cancel there reports how far it read — no pre-pass counts, the whole run's limit — writes nothing
+/// and leaves a recovered job's durable cursor where its last window put it.
+#[tokio::test]
+async fn a_cancel_during_the_pre_pass_reports_how_far_it_read_and_writes_nothing() {
+    let (db, conn) = open("ron-wet-prepass-stop").await;
+    corpus(&conn).await;
+    let planned = targets(&plan(&db, 2_000, None, &[]).await);
+    db.enqueue_job(7, "refresh-org-names", "refresh-org-names wet", "{}").await.unwrap();
+    // An earlier window of job 7 renamed org 1 and moved the cursor to it.
+    let capped = store::OrgNameRefreshApplyArgs { max_groups: Some(1), ..wet(planned.clone(), 7) };
+    let r = db.apply_org_name_refresh(capped).await.unwrap();
+    assert_eq!((r.applied, r.cursor), (1, Some(1)));
+    assert_eq!(progress_of(&db).await, vec![(7, Some("1".to_owned()))]);
+    let (changes, log) = (org_changes(&conn).await, ledger(&conn).await);
+    assert_eq!(changes, vec![1]);
+
+    // The plan's 7 plus 600 targets past them: 606 after the cursor, so a second chunk exists.
+    let mut many = planned;
+    many.extend((0..600).map(|i| store::OrgNameRefreshTarget {
+        org_id: 1_000_000 + i,
+        rule: "R1".to_owned(),
+        old_name: format!("Org {i}"),
+        old_name_norm: Some(format!("org {i}")),
+        new_name: format!("Organisation {i}"),
+    }));
+    let checks = AtomicUsize::new(0);
+    let windows = AtomicUsize::new(0);
+    // Stopped at the first read, which the pre-pass makes before its second chunk.
+    let stop = || {
+        checks.fetch_add(1, Ordering::SeqCst);
+        true
+    };
+    let progress = |_: u64, detail: &str| {
+        if detail.starts_with("renaming") {
+            windows.fetch_add(1, Ordering::SeqCst);
+        }
+    };
+    let r = db
+        .apply_org_name_refresh(store::OrgNameRefreshApplyArgs {
+            resume_after: Some(1),
+            stop: &stop,
+            progress: &progress,
+            ..wet(many, 7)
+        })
+        .await
+        .unwrap();
+    assert!(r.stopped && !r.aborted);
+    assert_eq!((r.targets, r.resumed_past, r.resumed_after, r.cursor, r.prior_applied), (607, 1, Some(1), Some(1), 1));
+    assert_eq!(r.prepass_stopped_after, Some(512), "the first chunk, of 606");
+    assert_eq!(r.drift_limit, store::org_name_refresh_drift_limit(606), "the whole run's limit, never 0");
+    assert_eq!((r.ready, r.already, r.drifted, r.gone, r.capped), (0, 0, 0, 0, 0), "no pre-pass counts");
+    assert_eq!((r.applied, r.raced, r.windows, r.left), (0, 0, 0, 0));
+    assert!(r.drift_samples.is_empty() && r.applied_samples.is_empty() && r.window_error.is_none());
+    assert_eq!((checks.load(Ordering::SeqCst), windows.load(Ordering::SeqCst)), (1, 0));
+    assert_eq!(org_changes(&conn).await, changes, "nothing written");
+    assert_eq!(ledger(&conn).await, log);
+    assert_eq!(progress_of(&db).await, vec![(7, Some("1".to_owned()))], "the durable cursor is unchanged");
+}
+
 #[tokio::test]
 async fn the_revert_leaves_a_head_renamed_since_and_counts_a_gone_one() {
     let (db, conn) = open("ron-revert").await;

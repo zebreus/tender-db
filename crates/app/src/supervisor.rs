@@ -1677,6 +1677,26 @@ fn org_name_refresh_applied_summary(
             if max_groups.is_some() { " (counted against max_groups)" } else { "" }
         ),
     };
+    // The v7 follow-up check: a cancel during the pre-pass reports how far it read, and no pre-pass
+    // counts (they would describe a part), no limit and no window.
+    if let Some(read) = r.prepass_stopped_after {
+        let stands = match r.prior_applied {
+            0 => "; no rename by this job".to_owned(),
+            n => format!(
+                "; this job's earlier windows made {n} rename(s), which stand unless reverted: undo them with \
+                 {{\"kind\":\"revert-org-name-refresh\",\"job\":{job}}}"
+            ),
+        };
+        return format!(
+            "refresh-org-names WET (issue 524 unit 2b, rule {}, job {job}): {} of the plan's {} planned change(s) \
+             in scope.{resumed}{unplanned} STOPPED by cancel during the pre-pass after {read} of {} target(s); \
+             nothing written by this run{stands}. Recorded as org-name-refresh-applied (`prepass_stopped_after`)",
+            store::HEAD_ELECTION_EPOCH,
+            r.targets,
+            plan.planned,
+            r.targets.saturating_sub(r.resumed_past),
+        );
+    }
     let head = format!(
         "refresh-org-names WET (issue 524 unit 2b, rule {}, job {job}): {} of the plan's {} planned change(s) in \
          scope.{resumed}{earlier}{unplanned} Pre-pass: {} ready, {} already renamed, {} drifted, {} gone (limit {}).",
@@ -21843,6 +21863,32 @@ mod tests {
         assert_eq!(expect(30_914_328), None);
     }
 
+    /// Issue 524 rule v7's follow-up check: a wet run a cancel stopped during its pre-pass says how
+    /// far the pre-pass read and that this run wrote nothing — never a pre-pass of zeros, a `limit 0`,
+    /// or "the committed windows stand" — and names the earlier renames of a recovered job.
+    #[test]
+    fn a_pre_pass_stop_is_reported_as_one() {
+        let plan = RefreshPlanTargets { targets: Vec::new(), planned: 600, unplanned: Vec::new(), computed_at: 0 };
+        let fresh = store::OrgNameRefreshApplied {
+            targets: 600,
+            stopped: true,
+            prepass_stopped_after: Some(512),
+            drift_limit: store::org_name_refresh_drift_limit(600),
+            ..Default::default()
+        };
+        let line = org_name_refresh_applied_summary(&fresh, 7, &plan, None);
+        assert!(
+            line.contains("STOPPED by cancel during the pre-pass after 512 of 600 target(s); nothing written by this run; no rename by this job"),
+            "{line}"
+        );
+        for absent in ["Pre-pass:", "limit", "RENAMED", "committed windows stand"] {
+            assert!(!line.contains(absent), "{absent:?} in: {line}");
+        }
+        let recovered = store::OrgNameRefreshApplied { prior_applied: 3, ..fresh };
+        let line = org_name_refresh_applied_summary(&recovered, 7, &plan, None);
+        assert!(line.contains(r#"earlier windows made 3 rename(s), which stand unless reverted: undo them with {"kind":"revert-org-name-refresh","job":7}"#), "{line}");
+    }
+
     /// Issue 524 unit 2a, end to end with the REAL ingest functions (`head_vote_key`, `not_a_name`,
     /// `head_spelling_unfit`, `head_change_hold`): the decision's canary shapes, seeded under their prod
     /// ids, plan as the decision expects; an expected canary the walk does not find is UNEXPECTED, and a
@@ -22226,7 +22272,16 @@ mod tests {
             elect_head(&[(em, 5), ("Head Body", 1)], &org("Head Body"), &fns),
             HeadVerdict::Hold { reason: store::HEAD_HOLD_NO_FIT, rule: HeadRule::R1, new: None }
         );
-        let ita = [("Itä-Suomen  aluehallintovirasto", 3), ("Pohjois-Savon ELY", 1)];
+        // R0's tie-break reads fitness the same way: tied 3-3 under an empty head, the em-space cluster's
+        // only non-ALL-CAPS spelling is unfit collapsed, so it ranks below the ALL-CAPS cluster and loses
+        // the tie (read raw, it would win it and then hold `no_fit`) — although its vote key sorts first.
+        let key = ingest::crosswalk::head_vote_key;
+        assert!(key(em) < key("ZETA SRL"), "the key order alone would elect the em cluster");
+        assert_eq!(
+            elect_head(&[(em, 3), ("ZETA SRL", 3)], &org(""), &fns),
+            HeadVerdict::Change { rule: HeadRule::R0e, new: "ZETA SRL".into() }
+        );
+        let ita =[("Itä-Suomen  aluehallintovirasto", 3), ("Pohjois-Savon ELY", 1)];
         assert_eq!(elect_head(&ita, &org("Pohjois-Savon ELY"), &fns).new_name(), Some("Itä-Suomen aluehallintovirasto"));
         let dotacion = [("Dotacion y Equipamiento S.L.", 4), ("Dotación y Equipamiento, S. L.", 1), ("Equipos Norte", 1)];
         assert_eq!(
