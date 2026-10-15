@@ -1,7 +1,8 @@
 # 543 — `heavy_write_kind` leaves out five batched TRUNCATE writers, and the job-control lists are opt-in
 
 Status: ready-for-agent — filed 2026-10-15 from the 542 audit (an Explore survey of every non-stoppable kind, then
-four adversarial verifiers). Next: unit 1.
+four adversarial verifiers). Unit 1 built 2026-10-15 01:0x UTC (gate, then main; it deploys with 534 and 542). Next:
+unit 2.
 Kind: operations (WAL safety, job control)
 Relates to:
 - 281 (the under-inclusion this repeats);
@@ -69,3 +70,20 @@ The survey found 16 non-stoppable kinds that looked long. The verifiers cut that
 3. **Stop checks where they pay** (low priority): `reprocess` (between packages and members), `refold-fields` (a stop
    closure into `notice_ids_carrying_fields` between windows), and `rederive-eur` (before each window; the stop line
    says the next run resumes from the watermark). Each joins `STOPPABLE_KINDS` and its contract test.
+
+## Unit 1 (built 2026-10-15)
+
+Before editing, every kind still off the list was classified: 27 kinds in five groups, each verdict re-traced by an
+independent skeptic, 27 of 27 agreeing. Exactly the five above are batched TRUNCATE writers.
+- Writers with one commit, so not batched: `apply-case-reviews`, `unapply-case-reviews`, `apply-country-verdicts`,
+  `apply-rehoming`, `restore-dropped-satellites`, `repair-country-typos`, `repair-label-prefixes`,
+  `repair-member-twins`, `repair-minted-countries`, `repair-renormalised-identifiers`, `drop-orphan-satellites`,
+  `fold-org-countries`, `fetch`.
+- Multi-commit writers with no TRUNCATE: `backfill-merged-identifiers`, `fold-provisional-echoes`, `audit-fts-ids`
+  (ledger rows), `analyze` (statistics), `rehash-probe`, `probe`. They do not meet the criterion.
+- Read-only apart from their report: `disk-census`, `data-quality`, `registry-contiguity`.
+- The `-census`, `-packet` and `-probe` report kinds were not re-read one by one; the issue-252 comments describe them
+  as storing only a report. Unit 2's contract test makes that a checked claim.
+
+The five are added to `heavy_write_kind` with a comment line each, and to
+`heavy_write_in_progress_tracks_the_running_job_kind`.

@@ -15982,6 +15982,16 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "backfill-org-name-variants"
             | "fetch-rates"
             | "fetch-rates-ecu"
+            // Issue 543: five more batched writers that TRUNCATE per batch, found by
+            // classifying every kind left off this list. 281's under-inclusion again.
+            // A TRUNCATE per 10k-tender window in the arm.
+            | "backfill-original-lang"
+            // Wet strides with hits: `unmark_projected_by_ids` and `stamp_tenders_stale`.
+            | "refold-denied-schemes"
+            // 20k-row `BEGIN IMMEDIATE` slices, each followed by `checkpoint_on(Truncate)`.
+            | "repair-notice-instants"
+            | "repair-version-instants"
+            | "repair-provisional-name-norm"
     )
 }
 
@@ -21621,6 +21631,12 @@ mod tests {
             // Issues 510/511: the drains re-queue tens of thousands of notices.
             "refold-void-names",
             "refold-placeholder-names",
+            // Issue 543: the five left off until every kind was classified.
+            "backfill-original-lang",
+            "refold-denied-schemes",
+            "repair-notice-instants",
+            "repair-version-instants",
+            "repair-provisional-name-norm",
         ] {
             sup.set_current(Some(progress(kind)));
             assert!(sup.heavy_write_in_progress(), "{kind} checkpoints per batch — coverage must stand down");
