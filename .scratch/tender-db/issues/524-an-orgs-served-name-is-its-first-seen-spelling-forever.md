@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — UNIT 2b DEPLOYED `11803dd`; its wet run is PAUSED and the capped run is REVERTED. Canaries 2516 (5 renames) stand. Capped run 2517 (500 renames) was reverted by job 2518 (500 restored): a dated spot check of its 30 applied samples found 5 confirmed WRONG (2186, 3262, 3694, 6867, 10671), all of one shape. The head was already the organization's CURRENT name, and R1's all-history majority put back the FORMER name. The dry-plan judges had no dates and could not see this. NEXT: the recency decision (panel wf_ce13ee62-9e9) as rule `524u2-v7`, on top of v6's whitespace collapse (`208c09c`, gating). Then build, gate, deploy, re-plan, re-judge WITH dates, canaries, capped run, a dated spot check, the full run. Unit 2c follows. Hold over-blocking is filed as 548.
+Status: ready-for-agent — UNIT 2b DEPLOYED `11803dd`; its wet run is PAUSED and the capped run is REVERTED. Canaries 2516 (5 renames) stand. Capped run 2517 (500 renames) was reverted by job 2518 (500 restored): a dated spot check of its 30 applied samples found 5 confirmed WRONG (2186, 3262, 3694, 6867, 10671), all of one shape. The head was already the organization's CURRENT name, and R1's all-history majority put back the FORMER name. The dry-plan judges had no dates and could not see this. NEXT: rule `524u2-v7`, DECIDED (the recency hold, section below), plus v6's two review should-fixes, on top of v6's whitespace collapse (`208c09c`, gating). Then build, gate, deploy, re-plan, re-judge WITH dates, canaries, capped run, a dated spot check, the full run. Unit 2c follows. Hold over-blocking is filed as 548.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -850,3 +850,276 @@ These figures come from job 2492's totals and its 30-per-bucket samples, simulat
     rename back to the former name read as `right` or `neutral` ("the dominant, current-looking registered name").
   - **The 5 canaries (2516) stand.** Each was decided by hand and all are right (an identifier-holder fix, an
     address-junk head, caps, `s.o.`, empty).
+
+## Unit 2b — recency decision (2026-10-15; panel wf_ce13ee62-9e9)
+
+Judge's synthesis of panel wf_ce13ee62-9e9 (three proposals), 2026-10-15. **Verdict: v7 adds one HOLD inside R1, `recent`.** It uses proposal 3's per-procedure window and the 2-procedure floor that proposals 1 and 2 chose. It adds a junk-head exemption that none of the three had, and corrects canary expectations that two of the three left stale. v7 adds no new kind of change: for the same data, its changes are a subset of v6's.
+
+### Verified before deciding
+
+**Code (`208c09c`)**
+- The order is E1, E2, E3, R0, D4, S1, R1, R2, then bar. R1 runs through `serve`: display spelling, then no_fit, then the bind holds.
+- `tender_versions(caused_by_notice_id)` is indexed by `tender_versions_notice`. That index is a `DEFERRED_TENDER_INDEXES` member, dropped for a rebuild's fold. The planner refuses today only when `organization_mentions_org` or `organization_merged_identifiers_org` is missing.
+- `tender_versions.published_at` is NOT NULL, in unix seconds. `notices.published_at` is nullable.
+- A notice folds into one tender "unless an issue-278 ghost doubles it" (`LINK_NOTICE_TENDERS_SQL`).
+- `organization_mentions.notice_id` sits in the row the `organization_mentions_org` walk already fetches. Selecting it costs no extra I/O.
+
+**Dates.** Notice ids are not in time order: 149 is 2026-07-17, while 25879436 is 2026-06-11.
+
+**The 2516 canaries are live.** A GET returns 31558903 as 'The University of Sheffield' and 61 as 'Tribunal administratif de Nice'. All five now elect keep:S1, so the in-code expectations (change:R1/R0n/R0e) would read UNEXPECTED. Proposals 1 and 2 kept those expectations; proposal 3 caught it.
+
+**178 would read UNEXPECTED under all three rules, and no proposal noticed.**
+- The head 'Communauté d'agglomération Plaine Vallée' names every buyer procedure from 2024-05 to 2026-07. I checked 12, from 1139025 (2026-07-17) to 29281 (2024-10-28).
+- 'ca Plaine Vallée' is the pre-eForms spelling, used up to 2023-12 (7905632, 7766986, 7696877).
+- Job 2518 restored the full head. The abbreviation that 2a.3 accepted as "neutral" is the FORMER usage.
+
+**445.** Its 4 'KADEA' mentions all sit in ONE procedure, 1051275 (notices 26970861 on 06-10, 25879436 on 06-11, 149 on 07-17; tender versions also include 27001247 on 07-16). This is from the cached tender JSON. Counting notices instead of procedures would hold this right fix.
+
+**3406.** Both head mentions are in procedure 165172 (27001331 on 07-16, 1333 on 07-17). Which notice carries the second section does not change the outcome.
+
+**Two more 2515 "right" R1 samples dated:**
+- 18872111 (H=15): 'Skarb Państwa …' names every procedure from 2025-01 to 2026-09; the head form was last used in 2024-11.
+- 9567901 (H=16): 'GOZDARSKE STORITVE, …' is used throughout 2023–2026.
+- Both are forward changes and still change under v7. With proposal 1's 8765882 and 22658118, four of the 2515 H≥2 R1 rights are dated, and none is a rename in the wrong direction.
+
+**Simulation** of the three rules on the cached dated items (`/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/judge524v7/cmp.py`):
+- All three hold 2186, 3262, 3694, 6867 and 10671. In each, the head owns all of the newest k items.
+- All three change 445, 1220, 2762, 3406, 6079, 10603, 11179 and 31558903.
+- They differ only on neutral cases. 7066 is held with a floor of 2 and changed with a floor of 3.
+
+### Why this shape
+
+**Proposal 2's changepoint is rejected.** It counts head rows after the elected cluster's LAST use. A single late old-name straggler releases it, such as an award or modification notice for a pre-rename contract, or a buyer's stale supplier record. It also ignores third clusters.
+
+**Proposal 1's fixed newest-3 window is rejected.** It does not scale with the head: a 600-vote head would be decided by 3 procedures. Proposal 3's window grows with k instead.
+
+**Proposal 3's k ≥ 3 floor is lowered to 2.**
+- At k = 2, the 2/3 bar means BOTH newest items are head items. That is stricter than 2-of-3. Hypergeometric, with 10 items: 2.2% by chance at k = 2, against 18% at k = 3.
+- So the floor of 3 buys little noise reduction, and it lets every 2-procedure rename revert.
+- A revert sticks: the old cluster is top again, so S1 keeps it. A hold releases as soon as a newer non-head item arrives.
+
+**Hold, not keep.**
+- A hold is "a change the rule elected but does not apply". The would-be spelling stays in the plan, so the re-judge and issue 548 (hold over-blocking) can read it.
+
+**Junk exemption (added).** None of the three proposals guards a junk head that recent notices repeat, for example a buyer template that started appending an address or NIP, or a 'LOT 2 :' prefix. The task forbids keeping junk, so the exemption is added.
+
+### The rule (`524u2-v7`, on v6)
+
+Order in `elect_head_counted`:
+1. E1, E2, E3: unchanged.
+2. R0: unchanged; it never reads dates.
+3. D4: unchanged.
+4. S1: unchanged.
+5. R1's bar: unchanged (unique top, T·20 ≥ V·11, T ≥ 3, T ≥ 2H). Then, **NEW and only when H ≥ 2**:
+   - `dated` is None → `Hold{reason:"undated", rule:R1, new:None}`. This fails closed: a caller without dates can never write an R1 change that recency might have stopped.
+   - Otherwise, the window fires and the junk exemption does not apply → `Hold{reason:"recent", rule:R1, new: display_spelling(elected)}`. The `new` value may be None.
+   - Otherwise, `serve(R1)` exactly as v6.
+6. R2: unchanged. It needs H ≤ 1, so the window can never apply.
+7. Keep (bar).
+
+**Input.** `HeadElectOrg.dated: Option<&[DatedVote]>`, with `DatedVote{spelling:&str, tender:i64, at:i64}`. There is one row per mention whose notice has a usable tender version.
+- `tender` is the smallest `tender_id` among the notice's `tender_versions` rows. This handles the issue-278 ghost.
+- `at` is that row's `published_at`.
+- The caller drops rows with `at <= 0` or `at > job start + 86_400` and counts them as undated.
+- `elect_head` filters `dated` with the same voter rule it applies to `votes`, and keys each row by `vote_key`.
+
+**The window.**
+1. An **item** is a distinct pair (vote key, tender). Its time is the max `at` of its rows. A tender that names two clusters gives one item to each.
+2. **k** is the number of the head cluster's items, keyed by `vote_key(head)`.
+3. **Rank** every item of the org, newest first:
+   - by `at`, descending;
+   - on an equal `at`, every non-head item ranks before (newer than) every head item;
+   - then by tender, descending;
+   - then by key, ascending.
+4. **W** is the first k items. **h_W** is the number of head items in W.
+5. The window **fires** when k ≥ `HEAD_RECENT_MIN_PROCEDURES` = 2 and 3·h_W ≥ 2·k.
+   - At k = 2 that means both newest items; at k = 3, 2 of 3; at k = 6, 4 of 6.
+   - Third clusters count against the head (2762's Presidencia and Pleno).
+
+**Junk exemption.** The hold does not apply, and R1 serves as v6, when either holds:
+- (a) `(fns.unfit)(head, head)` is Some: control character, mojibake, long, lowercase, or non_name including award_summary;
+- (b) the head's vote key has a token containing a digit that the elected cluster's key lacks: an address, a postcode, a NIP/REGON, or 'LOT 2'.
+
+Each release is counted as `recent_released` with the value `unfit` or `digits`.
+
+**Readings.** `HeadElection.recent: Option<RecentReading>` is filled whenever `dated` is Some. It carries:
+- k and h_W;
+- `head_newest` and `top_newest` (the elected cluster's newest item);
+- `newest_is_head` (the top-ranked item is a head item);
+- `undated` (voting mentions that are not in `dated`).
+
+**Constants.** `HEAD_HOLD_RECENT = "recent"`, `HEAD_HOLD_UNDATED = "undated"`, `HEAD_RECENT_MIN_PROCEDURES = 2`, `HEAD_ELECTION_EPOCH = "524u2-v7"`.
+
+### Data path
+
+**Page read.**
+- A new `org_name_refresh_mentions_sql(n)`: `SELECT organization_id, name, scheme, notice_id FROM organization_mentions WHERE organization_id IN (…)`. The census SQL is left untouched.
+- `PageOrg` keeps one (spelling, notice_id) per named mention: about 17k i64 on an average page, at most about 66k for a hub. This adds no I/O.
+
+**Per page, in order:**
+1. Elect without dates.
+2. Run the E2 probe on the candidates (existing).
+3. Read dates for every remaining candidate, change or hold, `hold:undated` included. Changes are dated too, so every planned entry and its ledger row carry dates and the residue (below) is measured.
+4. Re-elect the candidates with `Some(dated)` and the probe's `bind_defect`.
+
+**Date read.**
+- Take the distinct notice ids of the candidates' voting mentions, `IN_CHUNK` (512) per statement: `SELECT caused_by_notice_id, tender_id, published_at FROM tender_versions WHERE caused_by_notice_id IN (…)`, through `tender_versions_notice`.
+- In Rust, keep the row with the smallest `tender_id` per notice.
+- No GROUP BY (no sorter), and no `notices.published_at` fallback.
+
+**Refusals.**
+- Add `tender_versions_notice` to the index refusal of both the planner and `apply_org_name_refresh`, with the message "absent (a rebuild's fold?)".
+- Extend `the_refresh_plans_candidate_reads_seek`: the date SQL must show `SEARCH tender_versions USING INDEX tender_versions_notice`, and the new mention SQL must use `organization_mentions_org`.
+
+**Wet pre-pass (`read_readiness`).**
+- The same `notice_id` column, and the same date read for every target (all targets are changes). Then re-elect.
+- A target that re-elects `hold:recent` or `hold:undated` counts as drifted, under the existing max(2%, 5) abort.
+- The wet run refuses a plan whose epoch is not v7, or whose `by_hold.undated` is not 0.
+
+**Unit 2c.** Inherits all of this through the planner.
+
+**Cost.**
+- Plan 2501's candidates: 31.4k orgs, about 2.2M mention rows (R1 with H ≥ 2 alone: 16,348 orgs, 1.85M rows).
+- That means at most that many distinct notices, each one index seek plus one row read: about 4.5M B-tree descents or fewer.
+- Expected time: about 10–30 s warm, up to a few minutes cold, on top of the ~110 s walk.
+- The largest planned org has 18,995 mentions (8087975).
+- The wet pre-pass pays the same for up to 28.7k targets, before any write.
+- No schema change and no backfill.
+- A recent-window ELECTION would need dates for every elected org: about 46M seeks. Rejected.
+
+### Plan output and counters
+
+**Holds.**
+- `recent` appears in `by_hold`, `held` and the samples (`hold:recent`, 30 uniform).
+- `undated` must read 0. The summary prints `undated N (MUST be 0)`.
+
+**Entry fields.** Each is None when the org was not dated: `head_procs` (k), `head_in_window` (h_W), `head_newest`, `top_newest` (YYYY-MM-DD UTC), `newest_is_head`, `undated_mentions`, `recent_released`.
+
+**Plan totals:**
+- `dated_orgs`, `dated_notices`, `dated_version_rows`, `undated_mentions`;
+- `recent_released` {unfit, digits}, listing up to 30 ids;
+- **residue**: planned changes with `newest_is_head`, counted by rule, with 30 uniform samples under `residue:head_newest`. These are the unprotected class: by dates, an H=1 or single-procedure rename looks the same as 31558903's newest stray.
+
+**Ledger evidence** gains `head_procs`, `head_in_window`, `head_newest` and `top_newest`.
+
+### Canaries (`ORG_NAME_REFRESH_CANARIES`)
+
+**Expectations that change:**
+- 31558903, 22713056, 6341366, 760 and 61 become **keep:S1**. All five were applied by 2516.
+- 178 becomes **hold:recent**, with serves None.
+
+**Unchanged:**
+- 7912592 keep:D4;
+- 131 and 99 keep:bar;
+- 10 keep:S1;
+- 334 change:R1 'Les Alchimistes SAS' (H=1, so the window cannot reach it);
+- 1165973 keep:E1;
+- 30914328, reported only.
+
+**New, hold:recent:**
+- 2186, 3262, 3694, 6867 and 10671 (the five 2517 wrongs, reverted by 2518);
+- 1076. Its head names 2024-07, 2025-07 and 2026-07; 'professionnel' appears only in 2018–19. This exercises k=3.
+
+**New, change:R1 (2517's rights, reverted):**
+- 445 'KADEA Berlin GmbH';
+- 1220 'Miasto Bielsko-Biała Urząd Miejski w Bielsku-Białej';
+- 2762 'Diputación Provincial de Valladolid';
+- 3406 'Staatliches Hochbauamt Freiburg';
+- 6079 'Terideal Segex Energies';
+- 10603 'Uždaroji akcinė bendrovė „Visagino energija“';
+- 11179 'Mapfre España, Compañía de Seguros y Reaseguros, S. A.';
+- 1919 'Ondernemingsrechtbank, Afdeling ANTWERPEN'. It is undated, because it appears only as a review body. If it reads hold:recent, date-check it with one bounded /v1/sql read before counting it as a no-go.
+
+The Sheffield shape has no live canary any more, since it is applied. The unit test carries it.
+
+### Tests
+
+In `head_election.rs` (pure), `tests/refresh_org_names.rs` (planner and wet) and the supervisor:
+1. **Rename** (2186 shape): 4 head procedures, all newer than every elected item → hold:recent, with new = the R1 display spelling.
+2. **One procedure, three notices** (445: 06-10, 06-11, 07-17), with elected items both older and newer → k=1 → change:R1.
+3. **A single newest stray, H=1** (31558903) → change:R1, with `newest_is_head`.
+4. **Two head sections of one notice plus its twin in the same tender** (3406) → k=1 → change.
+5. **Head and elected at the same instant** (10603) → the tie ranks the elected item first → change.
+6. **Floor:**
+   - k=2, both newest → hold;
+   - k=2 with one newer elected item → change;
+   - k=1 → change.
+7. **Share:** k=6 with 2 elected items inside W → hold; with 3 → change.
+8. **A third cluster counts against the head** (2762).
+9. **178:** the abbreviation until 2023-12 and the head since 2024 → hold:recent.
+10. **Junk:**
+    - an all-lowercase head, k=3 newest → change:R1, released `unfit`;
+    - an address/NIP head, k=2 newest → change:R1, released `digits`.
+11. **Undated:**
+    - None with H≥2 → hold:undated;
+    - None with H=1 → change:R1;
+    - `Some(&[])` → change:R1.
+12. **R0 and R2 never consult dates.**
+13. **Planner:**
+    - `at` ≤ 0 and future dates are dropped;
+    - a notice in two tenders gives the smaller tender;
+    - a finished plan has `undated` = 0;
+    - it refuses without `tender_versions_notice`;
+    - the EXPLAIN shows a seek;
+    - entries carry their dates.
+14. **Wet:**
+    - a v6 plan is refused;
+    - a plan with undated > 0 is refused;
+    - a target that gained a newer head procedure after the plan reads drifted.
+15. **Supervisor:** the canary table (27 rows) and its readings.
+
+### Rollout
+
+1. **Build and gate.** Build by agent, then a 3-lens review. Gate with `ops/check.sh` redirected to a file, and read `GATE-EXIT=`. Push with `HEAD:main HEAD:<handover>`. Deploy in a queue gap, never during a fold.
+2. **Dry plan** (full walk) on that binary.
+   - Go requires:
+     - `undated` = 0;
+     - 0 unexpected canaries (1919 as above).
+   - Record the walk time and the dated read counts.
+   - Stop and re-decide if `hold:recent` is above about 4,000 (a quarter of R1 with H≥2): the window would be reading noise.
+3. **Dated re-judge** (workflow: classifier plus skeptic). Each judge GETs the newest 3+ procedures on each side.
+   - Lists: change:R1 30, change:R2 30, hold:recent 30, residue:head_newest 30, recent_released up to 30.
+   - **Definitions:**
+     - a change is *wrong* if it serves a FORMER name (every procedure since some date uses the head), another entity or a worse name;
+     - a hold is *harmful* if the head it keeps is junk, a stray or other entity, or defective.
+   - **Bars:**
+     - at most 1 wrong in each change list;
+     - at most 1 harmful in hold:recent;
+     - at most 1 wrong in recent_released;
+     - residue: 3 or more wrong out of 30 → stop and re-decide (a residue holdout).
+4. **Canary wet run** with `org_ids` [445, 1220, 2762, 3406, 6079, 10603, 11179], plus 1919 if its date check passed. Expect 7 renames; GET each one.
+5. **Capped wet run**, `max_groups` 500. This is the lowest ids again, the population that failed. Spot-check its 30 `applied_samples` with dates.
+   - Go requires 0 former-name reverts (any one → a revert job at once, as 2518) and at most 1 other wrong.
+6. **Full wet run**, then the 2b tail:
+   - re-run the dry plan (expect about 0 planned, and `hold:recent` about the same as step 2);
+   - the `org-head-drift` census;
+   - `build-org-match-keys` wet;
+   - re-plan the pending altid / nhs-body / r3 dry plans.
+
+Run each plan and its wet run back to back, outside the daily ingest, so a new procedure does not drift the targets. Unit 2c then inherits the dated protocol; its 2,000 cap counts changes only.
+
+### Risks accepted
+
+- **The residue.** H=1 renames and single-procedure renames still revert, because by dates they look the same as 31558903's stray. It is measured by the residue samples, not guessed.
+- **Stragglers** above 1/3 of W release the hold, which gives v6 behaviour. A notice with no tender version cannot protect a head; it is counted.
+- **Over-holding.** A sub-unit, abbreviation or buyer-habit head that recently dominates is held, and so is a 2-procedure stray (a conflated identifier) until the next non-head procedure arrives. These are missed fixes, never regressions, tracked in 548.
+- **Procedure identity** depends on twins folding into one tender; ghosts are handled by MIN(tender_id).
+- **The vote key is word-order sensitive**, so it can split a new name (10870's 'w spadku').
+- **Review-body names** (61, 1919) reflect how third parties write them.
+- **Not fixed: the converse.** An old head with a new name below R1's bar (6071658, EPF Poitou-Charentes → Nouvelle-Aquitaine) stays. A symmetric rename rule is a later unit, report-only first.
+
+### Rejected at decision
+- Proposal 2's changepoint veto (head rows strictly after the elected cluster's last use t_E): one late old-name straggler (an award or modification of a pre-rename contract, or a stale buyer record) releases it, and third clusters are ignored. Replaced by proposal 3's k-sized window, which tolerates up to 1/3 non-head items.
+- Proposal 1's fixed newest-3-procedure window with h>=2 and 2h>N: it does not scale with the head (a 600-vote head is decided by 3 procedures), 2-of-3 is reachable by chance, and its C(P) newest-UTC-day keys add a timezone tie artefact. Replaced by the window W = the newest k items.
+- Proposal 1's notices.published_at fallback, with each versionless notice as its own procedure (-notice_id): a second read path that double-counts twins (proposal 1's own risk 4). Such notices are undated and counted instead.
+- Proposal 3's k>=3 floor: at k=2 the 2/3 bar already demands both newest items (2.2% by chance at 10 items, against 18% for 2-of-3 at k=3), and a 2-procedure rename revert sticks under S1 while a hold self-releases. The floor is 2, as proposals 1 and 2 had it.
+- Keep(S2) or Keep(current) as the verdict (proposals 2 and 3): a HOLD keeps the would-be spelling in the plan's held list for the dated re-judge and issue 548. Reason `recent`.
+- Leaving the 2516 canaries' expectations unchanged (proposals 1 and 2): 31558903, 22713056, 6341366, 760 and 61 are live under their new names (GET-confirmed for 31558903 and 61) and elect keep:S1.
+- Leaving canary 178 at change:R1 'CA Plaine Vallée' (all three proposals): every buyer procedure from 2024-05 to 2026-07 uses the full head, and 'ca Plaine Vallée' ends in 2023-12, so v7 holds it. Its expectation becomes hold:recent.
+- Protecting any recently repeated head without a junk test (all three proposals): an unfit head (control, mojibake, long, lowercase, non_name) or one with a digit token absent from the elected key (address, NIP/REGON, 'LOT 2') is released to R1 and counted.
+- Dating only the hold:undated candidates (proposals 1 and 3): every candidate is dated (+~0.4M rows), so every planned entry and ledger row carries dates and the H=1 or single-procedure residue is sampled.
+- A recent-window or recency-weighted ELECTION: it reverts 2186 at 12 months, loses 445, 3406 and 31558903 at 6 months, re-scores the 502k S1 heads weekly, and needs dates for every elected org (~46M seeks).
+- Counting notices or mentions instead of procedures: it holds 445 (three notices of tender 1051275, TED plus eForms-DE twins) and 3406, and lets lot or role multiplicity (18872111's 11 Lot-AddInfo sections) weigh in.
+- A symmetric R3 change rule ('renamed away from the head', 6071658) inside v7: it is a new change kind that needs its own judged samples. Later unit, report-only first.
+- Using notice id, org id, created_at or ingested_at as a time proxy: the live feed's notice ids 64, 149 and 1333 are dated 2026-07, below the 2023–26 backfill ids.
+
