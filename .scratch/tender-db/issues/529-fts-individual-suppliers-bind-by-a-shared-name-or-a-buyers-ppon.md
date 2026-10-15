@@ -156,3 +156,7 @@ resolver, store, idgate or parser code.
 - **Auto `sweep-orphan-orgs` 2500**: it walked 5,676,483 orgs and found 11 with no recorded mention. 10 are kept by a
   review table. **It swept 1 of 1 counted, 31966280**, with its one name variant, published as `organization
   removed`. The count is 1, so nothing needs reconciling.
+- **Served check (2026-10-15 03:5x UTC, public `/v1/tenders/8596401`).** All 10 lot results on 46806664 and 46819715
+  still read `selec-w`, with 11–30 winners each. The 46806664 results keep their GBP 9.12M award. No winner is named
+  `Individual`. UKRI (30913706) is a winner only on lots 2 and 4 of 46819715, the accepted unit-3 slot. The cost the
+  panel predicted, one winner row fewer per lot and no lot left without a winner, is what is served.
