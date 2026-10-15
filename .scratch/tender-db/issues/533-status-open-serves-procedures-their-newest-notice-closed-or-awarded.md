@@ -1,6 +1,6 @@
 # 533 — `status=open` serves procedures their newest notice closed or awarded: a no-winner result or UK12 termination inherits the contract notice's deadline, and DÖE sdk-0.1 award notices publish one of their own
 
-Status: ready-for-agent — unit 1 DECIDED 2026-10-15. (a) A Tender closes when its head notice's own results are all `clos-nw` and cover every Lot. Exempt: a declared DPS (BT-766, projected by new sub-unit 2a), `oth-single`/`oth-mult`, or subtype 15/UK13–UK16 anywhere in the chain. UK12 gets no rule of its own. (b) The sdk-0.1 `can-standard` date stops mapping to `submission_deadline` (project.rs:424). (c) Option B: an unindexed `tenders.current_closed_by_notice` flag beside the unchanged `current_deadline` range, SSE `Scope::At` decided per version, and a per-lot term. Step 0c DONE 2026-10-15 (no stop). **Step 0a's STOP RULE FIRED 2026-10-15** (below): 4 of the 6 open-ended exemplars would close (445631 declares its DPS only on the CN; 634469 and 913640 are § 130a(8) SGB V open-house schemes, 179459 an open-house framework), two closing legacy rows carry `TED-DPS` with no termination/discontinued marker (7207004, 8483433), and 841082 declares `dps-list` on its head, so it is a DPS. NEXT: re-decide 1(a)'s exemptions (K1 over every version; open-house/framework schemes) — no build until then; 1(b) is unaffected and step 0c stands.
+Status: ready-for-agent — unit 1 DECIDED 2026-10-15, and 1(a)'s exemptions RE-DECIDED the same day after step 0a's stop rule fired (`## Decision 1(a) re-made`, below; panel wf_18caa669-8aa): exempt = K1 over the chain (+ legacy `TED-DPS`) || K2 || E2 || (W: an admission window over 365 days && !D: an explicit legacy no-award). 1(b) and 1(c) stand; step 0c done. NEXT: step 0d (one bounded read: W's anchor and own(H) reasons for the 186, with its stop rules), step 0b (per-lot population), and issue 550 (R2.0.9 award blocks read `clos-nw` by inference) decided before the build, since a wrongly inferred `clos-nw` closes a Tender here.
 Kind: API semantics / data quality (read layer: `status` on `/v1/tenders` and `/v1/lots`, SSE and webhook filters; the fold's head deadline)
 Relates to:
 - 273 (RESOLVED): `status` is a range on the indexed head column `t.current_deadline`; a fix must stay one.
@@ -342,6 +342,67 @@ a. **Scheme table for the 178.** For each Tender, record:
 b. **Per-lot population.** Count the open-head lots the per-lot term would close while their Tender stays open, and read 5 of them.
 
 c. **sdk-0.1 award dates.** Read 3 to 5 public `/v1/notices/{id}/content` for sdk-0.1 `can-standard` notices that carry the date, including 25892804-1 and the one with the shortest distance. **Stop 1(b)** if any of them invites tenders or requests to participate until that date.
+
+## Decision 1(a) re-made (2026-10-15, owner, after step 0a; panel wf_18caa669-8aa: two designers, an adversarial judge)
+
+The step-0a table showed the decided exemptions close live schemes (open-house § 130a(8) agreements, an open-house
+framework, a DPS declared only on its CN) and two legacy DPS rows. The judge re-ran both proposals' numbers on the table
+and read the disputed notices; this adopts the judge's verdict. The core and the lot rule are unchanged; only `exempt`
+changes:
+
+    closed_by_notice(C) = !exempt(C) && own(H) non-empty && every r in all(H) is clos-nw && covered(H)
+    exempt(C)           = K1(C) || K2(H) || E2(C) || (W(C) && !D(H))
+
+- **K1 (DPS), read over the chain.** `Fact::Classification{scheme:"dps", code ∈ {dps-list, dps-nlist, dps}}` on H or any
+  H lot. Facts supersede per key and lots carry by key, and 2a emits nothing for `none`, so H holds every earlier
+  version's declaration: 445631 (`dps-list` on its CN, `none` on its result) stays open. Sources: sub-unit 2a's four
+  BT-766/DE1/SDK01 ids as decided, PLUS the r209 marker `TED-DPS` as a Tender-scope fact with code `dps` (mirror
+  `procedure_marker`; it is a `Rule::Marker` stored as `Integer(1)`, so its destination is **Channel::Integer**). Not
+  projected: `TED-TERMINATION_DPS`, `TED-DPS_ADDITIONAL_PURCHASERS`. A declaration never clears.
+- **K2, E2:** as decided.
+- **W (admission window over a year) — reverses the ban on deadline distance.** `dl(v)` = `head_deadline(v)`; `a` = the
+  first version of C with `dl(v)` set; `W(C) := dl(H) set && dl(H) − a.published_at > OPEN_WINDOW_SECS (365 days)`.
+  Reads C only (ADR-0017 E5), never now, title or source; the SQL form through the shared deadline helper (or
+  `the_deadline_window_is_written_once` updated in the same commit). Both reasons for the old ban are refuted by the
+  table: 841082 is a DPS, and 7207004's 2029 date is a DPS notice's receipt deadline, not a duration end. Measured
+  windows: one-shots ≤ 122 days (38279 122, 66939 116, 7940050 112, 8805808 97, 8571596 33, 8582368 31); schemes ≥ 439
+  (913640 439, 634469 720, 179459 826, the DAK § 130a rows ~1,085).
+- **D (an explicit legacy no-award), new sub-unit 2b.** In `read_legacy_results`, `TED-PROCUREMENT_DISCONTINUED` and
+  `TED-PROCUREMENT_UNSUCCESSFUL` (Integer markers, Channel::Integer) set `reason` = `discontinued` / `unsuccessful`;
+  `D(H) := own(H) non-empty && every r in own(H) has such a reason`. D overrides W only, never K1, K2 or E2. The served
+  `reason` gains two legacy-only codes (sql.rs notes).
+- **Not rule inputs:** title, now, `tenders.source`; BT-765 `fa-*` (45 closers carry it, 42 dead one-shots); BT-144
+  (`other` on ended and live schemes alike); result latency (a candidate for step 0d to measure, not adopted).
+
+**What it trades on the 186** (judge's re-run): 153 close, 33 open. Wrongly closed: 0 measured live schemes (the
+decided rule wrongly closed 9 live schemes, 5,321 tender-days, plus 7 ambiguous). Wrongly open: 4 dead procedures
+already served open today — 996597 (to 2029-12-31), 255271 (to 2028-03-31), 1003799 (a probable year typo, to
+2026-12-10; issue 474's class), 913640 (its CAN `wird aufgehoben`; to 2026-11-30). Ambiguous kept open: 7 (FTS DPS /
+e-marketplace rows, 232118).
+
+**Exemplars after:** 403644 open (K2; lot 1108460 too); 445631 open (K1 over the chain); 336277 open (K1, K2); 634469 open
+(W 720 d; live — 5 joiners, no termination text); 179459 open (W 826 d); 913640 open (W) though DEAD — an accepted
+cost, dropped from the must-stay-open set; 841082 open (K1, a DPS); 7207004 open (K1 legacy leg — v1 is the F02 `DAS
+ICT Desktops`, receiving requests to 2029-07-31; added to the stop set); 8483433 open (K1; its F14 extended the DPS to
+2026-10-21, so it leaves `open` before any deploy); 6739006 and 7422682 close through D; 38279, 66939, 8805808 close.
+
+**Verify line 1 changes** from 841082 (a DPS) to **8805808**, publication 00684240-2026: a one-shot open procedure
+(`Sanierung Neu- und Ausbau Stiegstrasse und Stiegweg - Ingenieurleistung`), its CAN 47360037 one lot `clos-nw`, BT-144
+`other`, 0 tenders, BT-300 `Begründung des Abbruchs: … Formfehler`; window 97 days; deadline 2027-01-07, the latest of any
+closing eForms one-shot, so `[]` proves the flag rather than a passed date. Read it before 2027-01-07. Fallback 7940050
+(00598729-2026). The Verify text's "841082 … a restricted procedure, not an open-ended scheme" is wrong and goes.
+
+**Step 0d (new, before the build):** one bounded read giving each of the 186 its W anchor (`published_at` of the first
+deadline-bearing version) and own(H) reasons. Stop if any row read as a live scheme closes, or if W keeps open more than 5
+rows that read as one-shot with a window over 400 days. Measure result latency as a candidate only.
+
+**Rule-branch tests to add:** a CN `dps-list` then a CAN `none` keeps K1; `TED-DPS` on a CAN keeps K1; W at 366 days
+open and at 364 closes; a deadline-less PIN or UK2 does not anchor W; D overrides W but not K1.
+
+**Filed from this read:** issue 550 — R2.0.9's standard award blocks write `DATE_CONCLUSION_CONTRACT`, which the
+legacy reader never reads, so the era has no award date and a winner-silent award (`AWARDED_CONTRACT` with a date, no
+contractor) reads `clos-nw` by inference (7241490, the Prüfsystem the judge found closing). Decide 550 before 533's
+build: an inferred `clos-nw` on an open head closes the Tender here.
 
 **Step 0a — the scheme table, read 2026-10-15: the STOP RULE FIRED.** The Repro cohort read (plan re-read locally first:
 `SEARCH t USING INDEX tenders_current_deadline`, every subquery a `(tender_id, seq)` or PK seek) returned 186 Tenders
