@@ -1,6 +1,6 @@
 # 549 — `refold-fields`' carrier sweep holds the single writer for ~9 minutes of read-only work, even on a sizing run that writes nothing
 
-Status: ready-for-agent — units 2a and 2b built at 79fccdb (2026-10-15). Next: gate and deploy, then a sizing
+Status: done — VERIFIED 2026-10-15 17:10 UTC on deploy `d23ce5a`. The sizing run `refold-fields` 2524 (BT-5141-Procedure/Lot over notice_codes, `expect: 1`) swept 16:58–17:10 UTC (11.8 min) and aborted as designed. `/metrics` reads `tender_db_writer_wait_seconds_total 0` and `tender_db_writer_longest_wait_seconds 0`, and the journal has 0 `writer acquired after` lines. Before the fix, the same sweep held the writer for 503–531 s. The Verify grep returns `0`. Units 2a/2b: `79fccdb` + `d23ce5a`. Follow-ups (projection internals, `plan_counts`, `unprojected_*`) stay as listed in Unit 1, unbuilt.
 `refold-fields` (`expect: 1`) that journals no `writer acquired after a … s wait` line.
 Kind: operations (writer contention)
 Relates to:
