@@ -1,6 +1,7 @@
 # 531 — `?bidder=` is not a superset of `?winner=` for sources without a bid graph, although the served contract says it is
 
-Status: ready-for-agent — 531 unit 1 BUILT 2026-10-14 (the "superset of winner" claim corrected on `/docs` and `/v1/openapi.json`, and in the `read.rs` and `api.rs` comments; RETIRED guard plus a positive-half test; two-reviewer round applied; focused tests green; see "Unit 1 — built"). Next: gate + deploy with the 522/524 batch, then read the Verify (expect outcome (a) until unit 2 decides). Then unit 2, the decision.
+Status: ready-for-agent — unit 1 DEPLOYED `e2da1e9` 2026-10-14 22:2x UTC and its Verify read done. Unit 2, the decision on winner-vs-bidder semantics, remains open.
+Was: ready-for-agent — 531 unit 1 BUILT 2026-10-14 (the "superset of winner" claim corrected on `/docs` and `/v1/openapi.json`, and in the `read.rs` and `api.rs` comments; RETIRED guard plus a positive-half test; two-reviewer round applied; focused tests green; see "Unit 1 — built"). Next: gate + deploy with the 522/524 batch, then read the Verify (expect outcome (a) until unit 2 decides). Then unit 2, the decision.
 Kind: docs (the served contract), plus an API-semantics decision
 Relates to:
 - 217 (RESOLVED 2026-08-16/17): shipped `bidder=` with "a superset of `?winner=`" as its acceptance line. It was

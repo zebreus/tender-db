@@ -1,6 +1,7 @@
 # 543 — `heavy_write_kind` leaves out five batched TRUNCATE writers, and the job-control lists are opt-in
 
-Status: ready-for-agent — filed 2026-10-15 from the 542 audit (an Explore survey of every non-stoppable kind, then
+Status: ready-for-agent — unit 1 DEPLOYED `4d4fe13` 2026-10-15 02:04 UTC: five batched writers joined heavy_write_kind. Unit 2 on main at `f25ddc7` (gate green): LIGHT_KINDS and UNSTOPPABLE_KINDS, with source-scan contract tests. It is tests only and ships with the next deploy. Unit 3 is open: stop checks for reprocess, refold-fields and rederive-eur.
+Was: ready-for-agent — filed 2026-10-15 from the 542 audit (an Explore survey of every non-stoppable kind, then
 four adversarial verifiers). Unit 1 built 2026-10-15 01:0x UTC (gate, then main; it deploys with 534 and 542). Unit 2
 built 2026-10-15 in the working tree (focused tests green; not gated or committed yet). Next: gate and commit unit 2, then
 unit 3.

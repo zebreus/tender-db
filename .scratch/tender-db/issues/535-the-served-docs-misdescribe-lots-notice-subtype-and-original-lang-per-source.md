@@ -1,6 +1,7 @@
 # 535 — the served docs misdescribe `lots`, `notice_subtype` and `original_lang` per source: an empty value is the source's silence, and no surface says so
 
-Status: ready-for-agent — 535 units 1-3 BUILT 2026-10-14 (the three fields rewritten on `/v1/openapi.json`, the `/v1/sql/schema` notes and `/docs`; the retired-claims walk now reads the schema notes; a positive-half test; the 2026-09-15 board rows point here; two-reviewer round applied; focused tests green; see "Unit 1 — built" to "Review round"). Next: gate + deploy with the 522/524 batch, then read the Verify.
+Status: done — units 1–3 DEPLOYED `e2da1e9` 2026-10-14 22:2x UTC; the Verify reads done.
+Was: ready-for-agent — 535 units 1-3 BUILT 2026-10-14 (the three fields rewritten on `/v1/openapi.json`, the `/v1/sql/schema` notes and `/docs`; the retired-claims walk now reads the schema notes; a positive-half test; the 2026-09-15 board rows point here; two-reviewer round applied; focused tests green; see "Unit 1 — built" to "Review round"). Next: gate + deploy with the 522/524 batch, then read the Verify.
 Kind: docs (the served contract): `crates/app/data/openapi.json` (`Tender` :969/:970/:974, `TenderDetail.lots` :986,
 the `/v1/lots` description :156), the `/v1/sql/schema` column notes (`COLUMN_NOTES`, `crates/app/src/v1/sql.rs:1121-1135`),
 and `/docs` "Coverage varies by era" (`crates/app/src/v1/docs.rs:690`). No data change.
