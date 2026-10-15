@@ -238,8 +238,9 @@ Decided:
    or gone since the plan. No Tender or lot rows are written:
    `parties[].organization_name` is a read-time join of the organization, so under ADR-0017 D5 the
    moved entity is the organization. This follows the identifier-restore precedent.
-9. **Upkeep.** A weekly capped auto-run keeps heads current after merges and drops. A from-archive
-   rebuild restores first-seen heads until the job runs again.
+9. **Upkeep.** A weekly capped auto-run keeps heads current after merges and drops. NOT BUILT YET: that
+   is issue 524 unit 2c, and until it lands the operator runs `refresh-org-names` by hand. A
+   from-archive rebuild restores first-seen heads until the job runs again.
 
 What a notice published stays available as `parties[].mention_name` (issue 456 design 3). Issue 456's
 design question 2 is answered here.

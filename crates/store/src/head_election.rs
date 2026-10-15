@@ -979,16 +979,37 @@ pub(crate) const ORG_NAME_REFRESH_LEDGER_SQL: &str = "INSERT INTO org_name_refre
 /// `(org_id, at)`.
 pub(crate) const ORG_NAME_REFRESH_LATEST_AT_SQL: &str = "SELECT MAX(at) FROM org_name_refresh_log WHERE org_id = ?";
 
-/// Issue 524 unit 2b: the renames one job has committed (a resumed run's `max_groups` counts them).
+/// Issue 524 unit 2b: the renames one job has committed. A recovered run's `max_groups` counts them,
+/// whether or not a resume cursor survived (the 2b review).
 pub(crate) const ORG_NAME_REFRESH_JOB_COUNT_SQL: &str = "SELECT COUNT(*) FROM org_name_refresh_log WHERE job_id = ?";
 
 /// Issue 524 unit 2b: one job's unreverted renames, through `org_name_refresh_log_job`.
 pub(crate) const ORG_NAME_REFRESH_JOB_ROWS_SQL: &str = "SELECT org_id, at, old_name, old_name_norm, new_name, \
      new_name_norm FROM org_name_refresh_log WHERE job_id = ? AND reverted_at IS NULL ORDER BY org_id, at";
 
-/// Issue 524 unit 2b: the compare-and-set restore, guarded on the pair the rename wrote.
-pub(crate) const ORG_NAME_REVERT_CAS_SQL: &str =
-    "UPDATE organizations SET name = ?, name_norm = ? WHERE id = ? AND name = ? AND name_norm IS ?";
+/// Issue 524 unit 2b: the compare-and-set restore, guarded on the pair the rename wrote, and only on an
+/// identifier-bearing row, as the rename is ([`ORG_NAME_REFRESH_CAS_SQL`]). An identifier a case review
+/// stripped since the rename made `name_norm` the issue-234 bind key: restoring the old pair there would
+/// move a provisional row's key, which unit 2 never does (the 2b review).
+pub(crate) const ORG_NAME_REVERT_CAS_SQL: &str = "UPDATE organizations SET name = ?, name_norm = ? \
+     WHERE id = ? AND name = ? AND name_norm IS ? AND identifier IS NOT NULL";
+
+/// Issue 524 unit 2b: why a restore's compare-and-set missed — no row (gone), `1` (its identifier was
+/// stripped since the rename), `0` (renamed again since).
+pub(crate) const ORG_NAME_REVERT_MISS_SQL: &str = "SELECT identifier IS NULL FROM organizations WHERE id = ?";
+
+/// Issue 524 unit 2b: the job's durable resume cursor, written in each window's transaction so it
+/// commits with the window's renames (the 2b review: written after COMMIT, a death between the two
+/// left a recovered capped run with no cursor). The SQL of `Db::record_job_progress`, on the window's
+/// held writer connection (calling that method there would wait on the writer it holds).
+pub(crate) const ORG_NAME_REFRESH_PROGRESS_SQL: &str = "UPDATE job_queue SET progress = ? WHERE id = ?";
+
+/// Issue 524 unit 2b: the drift limit — drifted plus gone targets above it abort a wet run before any
+/// write: `max(2% of the targets read, 5)`, the 2% rounded down. On a full prod run (~29,000 targets)
+/// the 2% decides it (580); under 300 targets the floor does.
+pub fn org_name_refresh_drift_limit(targets_read: u64) -> u64 {
+    std::cmp::max(targets_read / 50, 5)
+}
 
 /// Issue 524 unit 2b: one planned change as the wet path takes it — a stored plan's `planned` entry
 /// (the app reads the report; store carries no JSON parser).
@@ -1009,8 +1030,8 @@ pub struct OrgNameRefreshApplyArgs<'a> {
     pub fns: HeadElectFns,
     /// The stored plan's `planned` entries, already scoped to `org_ids` by the caller.
     pub targets: Vec<OrgNameRefreshTarget>,
-    /// Apply at most this many of the targets that are still ready (the first by org id). A resumed
-    /// run counts the renames its job already committed against it.
+    /// Apply at most this many of the targets that are still ready (the first by org id). A recovered
+    /// run counts the renames its job already committed (its ledger rows) against it.
     pub max_groups: Option<u64>,
     /// The job: the ledger's `job_id`, and whose resume cursor each window advances.
     pub job_id: Option<i64>,
@@ -1051,9 +1072,10 @@ pub struct OrgNameRefreshApplied {
     /// Targets in scope (deduplicated), and those a resumed run skipped (at or below its cursor).
     pub targets: u64,
     pub resumed_past: u64,
-    /// A resumed run: the cursor it resumed after, and the renames its job's earlier run committed
-    /// (its ledger rows).
+    /// A resumed run: the cursor it resumed after.
     pub resumed_after: Option<i64>,
+    /// The renames this job id committed before this run (its ledger rows): an earlier attempt of a
+    /// recovered job, counted against `max_groups` whether or not its cursor survived.
     pub prior_applied: u64,
     /// The pre-pass: still the plan's change (`ready`), already renamed to the plan's new pair
     /// (`already`, a replayed window), changed since the plan (`drifted`), or deleted (`gone`).
@@ -1061,7 +1083,8 @@ pub struct OrgNameRefreshApplied {
     pub already: u64,
     pub drifted: u64,
     pub gone: u64,
-    /// `max(2% of the targets read, 5)`: drifted plus gone above it aborts the run before any write.
+    /// [`org_name_refresh_drift_limit`] of the targets read: drifted plus gone above it aborts the run
+    /// before any write.
     pub drift_limit: u64,
     pub aborted: bool,
     /// Ready targets past `max_groups`, left for a later run.
@@ -1080,6 +1103,11 @@ pub struct OrgNameRefreshApplied {
     /// sample order, the smallest `(org_id × 2654435761) mod 2³²`), listed by org id. A run of that
     /// many renames or fewer lists every one.
     pub applied_samples: Vec<OrgNameRefreshRename>,
+    /// The 513 U4 `fold_error` shape (the 2b review): a window that failed AFTER at least one window
+    /// committed ends the run there, and the report comes back Ok with the committed windows' counts
+    /// and samples, so the caller records them before it reports the failure. A failure before the
+    /// first commit is the error itself: nothing was written.
+    pub window_error: Option<String>,
 }
 
 /// Issue 524 unit 2b: [`Db::revert_org_name_refresh`]'s inputs.
@@ -1103,10 +1131,16 @@ pub struct OrgNameRefreshReverted {
     pub reverted: u64,
     /// The row no longer holds the pair the rename wrote (renamed again since): left as it is.
     pub renamed_again: u64,
+    /// The row still holds the pair, but a case review stripped its identifier since the rename, so
+    /// its `name_norm` is now an issue-234 bind key: left as it is, unstamped (a restored identifier
+    /// lets a re-run take it up).
+    pub identifier_stripped: u64,
     /// The organization is gone (merged away, swept): nothing to restore.
     pub gone: u64,
     pub windows: u64,
     pub stopped: bool,
+    /// As [`OrgNameRefreshApplied::window_error`]: a window that failed after one committed.
+    pub window_error: Option<String>,
 }
 
 /// The [`ORG_NAME_REFRESH_APPLIED_SAMPLES`] smallest-keyed renames, kept sorted by key.
@@ -1190,7 +1224,11 @@ async fn read_readiness(
                 continue;
             }
             if org.head != target.old_name || org.name_norm != target.old_name_norm {
-                let why = format!("the head is {:?} now, not the plan's {:?}", org.head, target.old_name);
+                let why = if org.head != target.old_name {
+                    format!("the head is {:?} now, not the plan's {:?}", org.head, target.old_name)
+                } else {
+                    format!("the name_norm is {:?} now, not the plan's {:?}", org.name_norm, target.old_name_norm)
+                };
                 out.push(Readiness::Drifted(why));
                 continue;
             }
@@ -1259,9 +1297,14 @@ impl Db {
     ///    [`Db::immediate`] transaction of compare-and-set renames ([`ORG_NAME_REFRESH_CAS_SQL`]:
     ///    `name_norm` follows as [`org_name_norm`], the mint's derivation), their ledger rows and
     ///    their `organization changed` rows. A row changed since the pre-pass fails its compare and
-    ///    is counted `raced`, with nothing written. After each COMMIT: the cursor doorbell, the job's
-    ///    resume cursor (the window's last org id), a TRUNCATE checkpoint, the progress line, and the
-    ///    stop flag (read before every window).
+    ///    is counted `raced`, with nothing written. The job's resume cursor (the window's last org id)
+    ///    is written in the same transaction. After each COMMIT: the cursor doorbell, a TRUNCATE
+    ///    checkpoint, the progress line, and the stop flag (read before every window). A window that
+    ///    fails after one committed ends the run with `window_error` set (see there).
+    ///
+    /// Not re-checked per window: E2, the identifier-verdict probe, runs at the pre-pass only. A
+    /// `wrong` or unapplied `related` verdict recorded during the run (`POST /admin/identifier-verdicts`
+    /// writes outside the queue) does not stop a later window's rename of that org.
     ///
     /// No Tender or lot row is written: `parties[].organization_name` is a read-time join of the
     /// organization, so under ADR-0017 D5 the moved entity is the organization alone.
@@ -1287,14 +1330,16 @@ impl Db {
             report.resumed_past = (before - targets.len()) as u64;
             report.resumed_after = Some(after);
             report.cursor = Some(after);
-            if let Some(job) = args.job_id {
-                let reader = self.reader().await?;
-                let mut rows = reader.query(ORG_NAME_REFRESH_JOB_COUNT_SQL, (Value::Integer(job),)).await?;
-                report.prior_applied = match rows.next().await? {
-                    Some(row) => int(&row, 0).max(0) as u64,
-                    None => 0,
-                };
-            }
+        }
+        // Whenever the run has a job id, not only on resume: a fresh id has no ledger rows, and a
+        // recovered one's are counted against `max_groups` even if its cursor never landed.
+        if let Some(job) = args.job_id {
+            let reader = self.reader().await?;
+            let mut rows = reader.query(ORG_NAME_REFRESH_JOB_COUNT_SQL, (Value::Integer(job),)).await?;
+            report.prior_applied = match rows.next().await? {
+                Some(row) => int(&row, 0).max(0) as u64,
+                None => 0,
+            };
         }
 
         (args.progress)(0, &format!("pre-pass: re-electing {} planned organization(s)", targets.len()));
@@ -1325,7 +1370,7 @@ impl Db {
             }
         }
         report.ready = ready.len() as u64;
-        report.drift_limit = std::cmp::max(targets.len() as u64 / 50, 5);
+        report.drift_limit = org_name_refresh_drift_limit(targets.len() as u64);
         if report.drifted + report.gone > report.drift_limit {
             report.aborted = true;
             return Ok(report);
@@ -1344,8 +1389,9 @@ impl Db {
                 break;
             }
             let now = crate::now_unix();
+            let last = window.last().map(|(target, _)| target.org_id);
             let conn = self.conn().await;
-            let (applied, raced) = Self::immediate(&conn, async {
+            let committed = Self::immediate(&conn, async {
                 let (mut applied, mut raced) = (Vec::new(), 0u64);
                 for (target, election) in window {
                     let new_norm = org_name_norm(&target.new_name);
@@ -1389,9 +1435,29 @@ impl Db {
                     append_change(&conn, "organization", target.org_id, None, "changed", now).await?;
                     applied.push(*target);
                 }
+                // The resume cursor commits with the window (a job row that is absent, as in the store
+                // tests, takes the UPDATE as a no-op).
+                if let (Some(job), Some(last)) = (args.job_id, last) {
+                    conn.execute(ORG_NAME_REFRESH_PROGRESS_SQL, (Value::Text(last.to_string()), Value::Integer(job)))
+                        .await?;
+                }
                 Ok((applied, raced))
             })
-            .await?;
+            .await;
+            let (applied, raced) = match committed {
+                Ok(done) => done,
+                // Rolled back; before the first commit nothing was written, so the error is the answer.
+                Err(e) if report.windows == 0 => return Err(e),
+                Err(e) => {
+                    report.window_error = Some(format!(
+                        "window {} (org ids {}..={}) rolled back: {e}",
+                        report.windows + 1,
+                        window.first().map(|(t, _)| t.org_id).unwrap_or_default(),
+                        last.unwrap_or_default()
+                    ));
+                    break;
+                }
+            };
             report.applied += applied.len() as u64;
             report.raced += raced;
             report.windows += 1;
@@ -1409,22 +1475,18 @@ impl Db {
                     );
                 }
             }
-            let last = window.last().map(|(target, _)| target.org_id);
             report.cursor = last;
-            if !applied.is_empty() {
-                self.publish_cursor(&conn).await?;
-            }
-            // Best-effort, as every window walk: a lost cursor costs one window's replay, which the
-            // pre-pass reads as `already` and the compare-and-set would refuse anyway.
-            if let (Some(job), Some(last)) = (args.job_id, last)
-                && let Err(e) = conn
-                    .execute(
-                        "UPDATE job_queue SET progress = ? WHERE id = ?",
-                        (Value::Text(last.to_string()), Value::Integer(job)),
-                    )
-                    .await
+            // The window is committed: a failed doorbell must not drop its counts, so it ends the run
+            // as a window error (the next publish catches subscribers up).
+            if !applied.is_empty()
+                && let Err(e) = self.publish_cursor(&conn).await
             {
-                eprintln!("[refresh-org-names] job {job} record progress {last}: {e}");
+                report.window_error = Some(format!(
+                    "the change-cursor doorbell after window {} (through org id {}) failed: {e}",
+                    report.windows,
+                    last.unwrap_or_default()
+                ));
+                break;
             }
             if let Err(e) = checkpoint_on(&conn, CheckpointMode::Truncate).await {
                 eprintln!("[refresh-org-names] checkpoint after a window: {e}");
@@ -1451,7 +1513,15 @@ impl Db {
     /// announced as one `organization changed` row, in windows of `args.window` through
     /// [`Db::immediate`]; the stop flag is read before every window, and a re-run takes up the
     /// rows still unreverted. A row renamed again since (by a later job, or a merge) is left as it
-    /// is and counted `renamed_again`; a deleted organization counts `gone`. Neither is stamped.
+    /// is and counted `renamed_again`; one whose identifier a case review stripped since the rename
+    /// counts `identifier_stripped` (its `name_norm` is a bind key now); a deleted organization counts
+    /// `gone`. None of them is stamped. A window that fails after one committed ends the run with
+    /// `window_error` set.
+    ///
+    /// The guard is the pair the rename wrote, so it is blind to an A→B→A→B history: reverting the
+    /// first of two jobs that each wrote B restores A over the second's B and leaves the second's row
+    /// unreverted (its revert then counts it renamed again). The served value is still a pre-image;
+    /// only the ledger's account of it is off. Revert jobs newest first.
     pub async fn revert_org_name_refresh(
         &self,
         args: OrgNameRefreshRevertArgs<'_>,
@@ -1489,8 +1559,8 @@ impl Db {
             }
             let now = crate::now_unix();
             let conn = self.conn().await;
-            let (reverted, renamed_again, gone) = Self::immediate(&conn, async {
-                let (mut reverted, mut renamed_again, mut gone) = (0u64, 0u64, 0u64);
+            let committed = Self::immediate(&conn, async {
+                let (mut reverted, mut renamed_again, mut stripped, mut gone) = (0u64, 0u64, 0u64, 0u64);
                 for row in window {
                     let changed = conn
                         .execute(
@@ -1505,12 +1575,11 @@ impl Db {
                         )
                         .await?;
                     if changed == 0 {
-                        let mut exists =
-                            conn.query("SELECT 1 FROM organizations WHERE id = ?", (Value::Integer(row.org_id),)).await?;
-                        if exists.next().await?.is_some() {
-                            renamed_again += 1;
-                        } else {
-                            gone += 1;
+                        let mut miss = conn.query(ORG_NAME_REVERT_MISS_SQL, (Value::Integer(row.org_id),)).await?;
+                        match miss.next().await? {
+                            None => gone += 1,
+                            Some(found) if int(&found, 0) != 0 => stripped += 1,
+                            Some(_) => renamed_again += 1,
                         }
                         continue;
                     }
@@ -1527,15 +1596,33 @@ impl Db {
                     append_change(&conn, "organization", row.org_id, None, "changed", now).await?;
                     reverted += 1;
                 }
-                Ok((reverted, renamed_again, gone))
+                Ok((reverted, renamed_again, stripped, gone))
             })
-            .await?;
+            .await;
+            let (reverted, renamed_again, stripped, gone) = match committed {
+                Ok(done) => done,
+                Err(e) if report.windows == 0 => return Err(e),
+                Err(e) => {
+                    report.window_error = Some(format!(
+                        "window {} (org ids {}..={}) rolled back: {e}",
+                        report.windows + 1,
+                        window.first().map(|r| r.org_id).unwrap_or_default(),
+                        window.last().map(|r| r.org_id).unwrap_or_default()
+                    ));
+                    break;
+                }
+            };
             report.reverted += reverted;
             report.renamed_again += renamed_again;
+            report.identifier_stripped += stripped;
             report.gone += gone;
             report.windows += 1;
-            if reverted > 0 {
-                self.publish_cursor(&conn).await?;
+            if reverted > 0
+                && let Err(e) = self.publish_cursor(&conn).await
+            {
+                report.window_error =
+                    Some(format!("the change-cursor doorbell after window {} failed: {e}", report.windows));
+                break;
             }
             if let Err(e) = checkpoint_on(&conn, CheckpointMode::Truncate).await {
                 eprintln!("[revert-org-name-refresh] checkpoint after a window: {e}");
@@ -1544,8 +1631,8 @@ impl Db {
             (args.progress)(
                 report.reverted,
                 &format!(
-                    "restoring heads: {} reverted, {} renamed again, {} gone",
-                    report.reverted, report.renamed_again, report.gone
+                    "restoring heads: {} reverted, {} renamed again, {} identifier stripped, {} gone",
+                    report.reverted, report.renamed_again, report.identifier_stripped, report.gone
                 ),
             );
         }

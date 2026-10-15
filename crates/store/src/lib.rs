@@ -93,6 +93,7 @@ pub use head_election::{
     ORG_NAME_REFRESH_LISTING_CAP, ORG_NAME_REFRESH_SPELLINGS, ORG_NAME_REFRESH_WINDOW, OrgNameRefreshApplied,
     OrgNameRefreshApplyArgs, OrgNameRefreshArgs, OrgNameRefreshDrift, OrgNameRefreshPlan, OrgNameRefreshRename,
     OrgNameRefreshReverted, OrgNameRefreshRevertArgs, OrgNameRefreshTarget, elect_head, elect_head_counted,
+    org_name_refresh_drift_limit,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;

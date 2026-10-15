@@ -1210,26 +1210,49 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
     // Issue 524 unit 2b: the column's meaning changed (ADR-0015 D1, the CHANGELOG entry).
     ("organizations", "name", ORGANIZATION_NAME_NOTE),
     ("v_organizations", "name", ORGANIZATION_NAME_NOTE),
+    // The view columns built from `organizations.name` move with it (the 2b review).
+    ("v_lot_results", "winner_name", VIEW_ORGANIZATION_NAME_NOTE),
+    ("v_tender_buyers", "buyer_name", VIEW_ORGANIZATION_NAME_NOTE),
+    ("v_awards", "winner_name", VIEW_ORGANIZATION_NAME_NOTE),
+    ("v_awards", "buyer_name", VIEW_ORGANIZATION_NAME_NOTE),
     (
         "organizations",
         "name_norm",
-        "The name's search key: Unicode-lowercased, whitespace collapsed, trailing `.`/`,`/`;` \
-         stripped (`org_name_norm`). ?name_prefix= seeks it. With an identifier it follows the \
-         elected head (issue 524) and is never a bind key; with `identifier IS NULL` it IS the \
-         identity (with the country), and the head election never moves it.",
+        "The name's search key; ?name_prefix= seeks it. It is `org_name_norm` of the name \
+         (Unicode-lowercased, whitespace collapsed, trailing `.`/`,`/`;` stripped) since issue 432 and \
+         on every rename, but an identifier-bearing row minted before issue 432 and never renamed keeps \
+         the plain lower-cased name, doubled spaces and trailing punctuation included (432 re-keyed \
+         identifier-less rows only), so `?name_prefix=acme ltd` does not reach a stored `acme  ltd`. \
+         With an identifier it follows the elected head (issue 524) and is never a bind key; with \
+         `identifier IS NULL` it IS the identity (with the country), and the head election never \
+         moves it.",
     ),
 ];
 
+/// Issue 524 unit 2b review: a view column that serves an organization's `organizations.name`.
+const VIEW_ORGANIZATION_NAME_NOTE: &str = "The organization's head name, `organizations.name` (see that \
+    column's note): elected from its mentions since issue 524, so it can change in place, announced as \
+    an `organization` `changed` row in `changes` and no Tender row.";
+
 /// Issue 524 unit 2b: `organizations.name` (and `v_organizations.name`) since the head election.
-const ORGANIZATION_NAME_NOTE: &str = "The organization's head name, one per organization, served \
-    on every tender it appears on (`parties[].organization_name` is a read-time join). With an \
-    identifier it is ELECTED from the names its `organization_mentions` published (issue 524, \
-    ADR-0013's 2026-10-15 amendment): the operator's refresh-org-names job serves the spelling \
-    most of them agree on, only past a conservative bar (at least 55% of the mentions and twice \
-    the current head's, a head no more than one mention says, or an empty or placeholder head), \
-    and rewrites it in place with an `organization` `changed` row in `changes`. Before that job \
-    has run on a row, and always where `identifier IS NULL`, it is the first spelling a notice \
-    published. What one notice said is `organization_mentions.name`.";
+const ORGANIZATION_NAME_NOTE: &str = "\
+    The organization's head name, one per organization, served on every tender it appears on \
+    (`parties[].organization_name` is a read-time join). With an identifier it is ELECTED from the names \
+    its `organization_mentions` published (issue 524, ADR-0013's 2026-10-15 amendment): the operator's \
+    refresh-org-names job serves a fit spelling of the winning cluster and rewrites the head in place \
+    with an `organization` `changed` row in `changes`. The votes are the mentions that published a name \
+    (one with no name, a blank one or a non-name one does not vote), clustered as one name across \
+    casing, diacritics, `the` and a legal form. The head changes only when a cluster other than its own \
+    holds at least 55% of the votes, at least 3 votes and at least twice the head's; or when the head's \
+    own cluster holds at most 1 vote and a unique top cluster holds at least 3 votes and at least 25%; \
+    or when the head is empty or not a name (a placeholder, a blank, a void-lot phrase) and some \
+    mention's name votes. Even then it stays when the change would swap one legal-form family for \
+    another (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS name check the old head passed, \
+    or, on the 25% arm only, serve an initialism of the head; when no spelling of the winning cluster is \
+    fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; and when \
+    the head is in another script than its mentions (TED's English rendering). Where the job has not \
+    renamed a row, and always where `identifier IS NULL`, it is the first spelling a notice published. \
+    What one notice said is `organization_mentions.name`.";
 
 /// The description for a table/view, if one is curated.
 fn table_note(name: &str) -> Option<&'static str> {

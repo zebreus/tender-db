@@ -2092,13 +2092,15 @@ async fn organizations_can_be_searched_by_name_prefix() {
 /// Issue 524 unit 2b: the name search's cursor is the last row's STORED `name_norm`. It was rebuilt
 /// from `name.to_lowercase()`, which diverges wherever `org_name_norm` collapses whitespace or strips
 /// trailing punctuation: `ZZQ  Alpha Ltd.` (stored `zzq alpha ltd`) gave the cursor `zzq  alpha ltd.`,
-/// which sorts BEFORE its own row, so page two repeated it. One-row pages must reassemble the list.
+/// which sorts BEFORE its own row, so page two repeated it; `ZZQ Beta,` (stored `zzq beta`) gave
+/// `zzq beta,`, which sorts AFTER `zzq beta services`, so that row was skipped. One-row pages must
+/// reassemble the list.
 #[tokio::test]
 async fn the_name_cursor_survives_a_name_that_diverges_from_its_key() {
     let server = Server::start("org_name_cursor").await;
     let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
     let conn = raw.connect().expect("connect");
-    for (id, name) in [(9101i64, "ZZQ  Alpha Ltd."), (9102, "ZZQ Beta,"), (9103, "zzq   gamma")] {
+    for (id, name) in [(9101i64, "ZZQ  Alpha Ltd."), (9102, "ZZQ Beta,"), (9103, "zzq   gamma"), (9104, "ZZQ Beta Services")] {
         conn.execute(
             "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
              VALUES (?, 'DE', 'vat', ?, ?, ?, 0, 1700000000)",
@@ -2122,8 +2124,12 @@ async fn the_name_cursor_survives_a_name_that_diverges_from_its_key() {
         cursors.push(next.to_owned());
         url = format!("/v1/organizations?name_prefix=zzq&limit=1&cursor={}", urlenc(next));
     }
-    assert_eq!(seen, vec![9101, 9102, 9103], "each row once, in key order");
-    assert_eq!(cursors, vec!["9101~zzq alpha ltd", "9102~zzq beta"], "the stored key, not the lower-cased name");
+    assert_eq!(seen, vec![9101, 9102, 9104, 9103], "each row once, in key order: none repeated, none skipped");
+    assert_eq!(
+        cursors,
+        vec!["9101~zzq alpha ltd", "9102~zzq beta", "9104~zzq beta services"],
+        "the stored key, not the lower-cased name"
+    );
 }
 
 fn urlenc(s: &str) -> String {

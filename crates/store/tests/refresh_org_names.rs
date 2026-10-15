@@ -741,10 +741,27 @@ fn text(s: &str) -> Value {
     Value::Text(s.to_owned())
 }
 
+/// An organization's newest ledger instant.
+async fn latest_at(conn: &turso::Connection, org_id: i64) -> i64 {
+    let mut rows =
+        conn.query("SELECT MAX(at) FROM org_name_refresh_log WHERE org_id = ?", (Value::Integer(org_id),)).await.unwrap();
+    *rows.next().await.unwrap().unwrap().get_value(0).unwrap().as_integer().unwrap()
+}
+
+/// Every queued job's `(id, progress)`: the durable resume cursor recovery hands back.
+async fn progress_of(db: &store::Db) -> Vec<(i64, Option<String>)> {
+    db.pending_jobs().await.unwrap().into_iter().map(|j| (j.id, j.progress)).collect()
+}
+
 #[tokio::test]
 async fn the_wet_run_renames_each_planned_head_once_and_the_revert_restores_it() {
     let (db, conn) = open("ron-wet").await;
     corpus(&conn).await;
+    // The 2b review: the pre-image is the STORED bytes, not a recomputed key. An identifier-bearing row
+    // minted before issue 432 keeps a plain lower-cased key (432 re-keyed identifier-less rows only), and
+    // `name_norm` is nullable.
+    conn.execute("UPDATE organizations SET name_norm = 'sheffield hallam university .' WHERE id = 1", ()).await.unwrap();
+    conn.execute("UPDATE organizations SET name_norm = NULL WHERE id = 2", ()).await.unwrap();
     let before = heads(&conn).await;
     let p = plan(&db, 2_000, None, &[]).await;
     let planned = targets(&p);
@@ -783,13 +800,15 @@ async fn the_wet_run_renames_each_planned_head_once_and_the_revert_restores_it()
             Value::Integer(7),
             text("R1"),
             text("Sheffield Hallam University"),
-            text("sheffield hallam university"),
+            text("sheffield hallam university ."),
             text("The University of Sheffield"),
             text("the university of sheffield"),
             Value::Null,
         ],
-        "the byte-exact pre-image beside what was written"
+        "the byte-exact pre-image beside what was written: the legacy key, not org_name_norm(old)"
     );
+    assert_ne!(rows[0][4], text(&store::org_name_norm("Sheffield Hallam University")), "the fixture keeps its legacy key");
+    assert_eq!(rows[1][4], Value::Null, "2's NULL name_norm is its pre-image");
     assert_eq!(rows[2][3], text(""), "3's empty head is its pre-image");
     let mut evidence = conn.query("SELECT evidence FROM org_name_refresh_log WHERE org_id = 1", ()).await.unwrap();
     let evidence = evidence.next().await.unwrap().unwrap().get_value(0).unwrap();
@@ -812,19 +831,22 @@ async fn the_wet_run_renames_each_planned_head_once_and_the_revert_restores_it()
     // The revert restores every pre-image, announces each, and stamps the ledger.
     let back = db.revert_org_name_refresh(revert(7, 9)).await.unwrap();
     assert_eq!((back.ledger_rows, back.reverted, back.renamed_again, back.gone, back.windows), (7, 7, 0, 0, 1));
-    assert_eq!(heads(&conn).await, before, "the old (name, name_norm) pairs, byte for byte");
+    assert_eq!(heads(&conn).await, before, "the old (name, name_norm) pairs, byte for byte: the legacy key, the NULL");
     assert_eq!(org_changes(&conn).await.len(), 14);
     assert!(ledger(&conn).await.iter().all(|row| row[7] == Value::Integer(9)), "stamped reverted_job");
     let again = db.revert_org_name_refresh(revert(7, 10)).await.unwrap();
     assert_eq!((again.ledger_rows, again.reverted), (0, 0), "nothing left to restore");
     assert_eq!(org_changes(&conn).await.len(), 14);
 
-    // Re-applied within the same second, the ledger keeps one row per rename: `at` steps past the
-    // reverted row's instant rather than colliding on (org_id, at).
+    // Re-applied, the ledger keeps one row per rename: `at` steps past the latest instant rather than
+    // colliding on (org_id, at). Pushed 1,000 s ahead first, so the step is read, not the clock.
+    conn.execute("UPDATE org_name_refresh_log SET at = at + 1000", ()).await.unwrap();
+    let shifted = latest_at(&conn, 1).await;
     let re = db.apply_org_name_refresh(wet(planned, 11)).await.unwrap();
     assert_eq!(re.applied, 7);
     assert_eq!(heads(&conn).await, after);
     assert_eq!(ledger(&conn).await.len(), 14);
+    assert_eq!(latest_at(&conn, 1).await, shifted + 1, "max(now, latest + 1)");
 }
 
 #[tokio::test]
@@ -834,7 +856,9 @@ async fn the_wet_run_skips_a_drifted_target_and_aborts_past_its_drift_limit() {
     let (db, conn) = open("ron-drift").await;
     corpus(&conn).await;
     let mut planned = targets(&plan(&db, 2_000, None, &[]).await);
-    conn.execute("UPDATE organizations SET name = 'Somebody Else' WHERE id IN (1, 2)", ()).await.unwrap();
+    conn.execute("UPDATE organizations SET name = 'Somebody Else' WHERE id = 1", ()).await.unwrap();
+    // 2's key alone moved: the name is the plan's, the pre-image is not.
+    conn.execute("UPDATE organizations SET name_norm = 'moved' WHERE id = 2", ()).await.unwrap();
     conn.execute("UPDATE organizations SET identifier = NULL WHERE id = 13", ()).await.unwrap();
     conn.execute("DELETE FROM organizations WHERE id = 15", ()).await.unwrap();
     // 10 as if a plan had listed it: its row is identifier NULL (E1), and stays as it is.
@@ -853,6 +877,7 @@ async fn the_wet_run_skips_a_drifted_target_and_aborts_past_its_drift_limit() {
     let why: Vec<(i64, &str)> = r.drift_samples.iter().map(|d| (d.org_id, d.why.as_str())).collect();
     assert_eq!(why.len(), 5);
     assert!(why[0].1.contains("Somebody Else") && why[0].0 == 1, "{why:?}");
+    assert_eq!(why[1], (2, "the name_norm is Some(\"moved\") now, not the plan's Some(\"s.o\")"));
     assert_eq!(why[2], (10, "the identifier is NULL now (E1)"));
     assert_eq!(why[3], (13, "the identifier is NULL now (E1)"));
     assert_eq!(why[4], (15, "the organization is gone"));
@@ -880,6 +905,9 @@ async fn the_wet_run_reads_the_stop_flag_before_every_window_and_resumes_after_i
     let (db, conn) = open("ron-wet-stop").await;
     corpus(&conn).await;
     let planned = targets(&plan(&db, 2_000, None, &[]).await);
+    // The job's durable row, and a bystander whose cursor no window may touch.
+    db.enqueue_job(7, "refresh-org-names", "refresh-org-names wet max_groups=3", "{}").await.unwrap();
+    db.enqueue_job(8, "process", "bystander", "{}").await.unwrap();
     let checks = AtomicUsize::new(0);
     let windows = AtomicUsize::new(0);
     // Free for the first window, stopped before the second.
@@ -903,15 +931,19 @@ async fn the_wet_run_reads_the_stop_flag_before_every_window_and_resumes_after_i
     assert_eq!((r.ready, r.capped, r.applied, r.windows, r.cursor), (7, 4, 2, 1, Some(2)));
     assert_eq!((checks.load(Ordering::SeqCst), windows.load(Ordering::SeqCst)), (2, 1));
     assert_eq!(org_changes(&conn).await, vec![1, 2], "the committed window stands");
+    assert_eq!(progress_of(&db).await, vec![(7, Some("2".to_owned())), (8, None)], "the window's last id, durably");
 
-    // The restart resumes after the cursor, and `max_groups` counts the renames already made.
-    let r = db.apply_org_name_refresh(capped(planned.clone(), r.cursor)).await.unwrap();
+    // The restart resumes after the DURABLE cursor (what recovery hands back as `resume_after`), and
+    // `max_groups` counts the renames already made.
+    let cursor = progress_of(&db).await[0].1.as_deref().map(|c| c.parse::<i64>().unwrap());
+    let r = db.apply_org_name_refresh(capped(planned.clone(), cursor)).await.unwrap();
     assert_eq!((r.resumed_after, r.resumed_past, r.prior_applied), (Some(2), 2, 2));
     assert_eq!((r.ready, r.capped, r.applied, r.cursor), (5, 4, 1, Some(3)));
     assert_eq!(org_changes(&conn).await, vec![1, 2, 3]);
+    assert_eq!(progress_of(&db).await, vec![(7, Some("3".to_owned())), (8, None)]);
     // Uncapped, the rest.
     let r = db.apply_org_name_refresh(wet(planned, 7)).await.unwrap();
-    assert_eq!((r.already, r.applied), (3, 4));
+    assert_eq!((r.already, r.applied, r.prior_applied), (3, 4, 3));
     assert_eq!(org_changes(&conn).await, vec![1, 2, 3, 13, 15, 23, 25]);
     assert!(ledger(&conn).await.iter().all(|row| row[1] == Value::Integer(7)));
 
@@ -928,21 +960,133 @@ async fn the_revert_leaves_a_head_renamed_since_and_counts_a_gone_one() {
     let planned = targets(&plan(&db, 2_000, None, &[]).await);
     let r = db.apply_org_name_refresh(wet(planned, 7)).await.unwrap();
     assert_eq!(r.applied, 7);
-    // After the run: 2 renamed again (a later job), 3 merged away.
+    // After the run: 2 renamed again (a later job), 23's key alone moved, 3 merged away, and a case
+    // review stripped 13's identifier, making its name_norm the issue-234 bind key.
     conn.execute("UPDATE organizations SET name = 'Vergabekammer Detmold', name_norm = 'vergabekammer detmold' WHERE id = 2", ())
         .await
         .unwrap();
+    conn.execute("UPDATE organizations SET name_norm = 'moved' WHERE id = 23", ()).await.unwrap();
     conn.execute("DELETE FROM organizations WHERE id = 3", ()).await.unwrap();
+    conn.execute("UPDATE organizations SET identifier = NULL, identifier_kind = NULL WHERE id = 13", ()).await.unwrap();
+    let stripped_after_apply = heads(&conn).await.into_iter().find(|h| h.0 == Value::Integer(13)).unwrap();
     let back = db.revert_org_name_refresh(revert(7, 9)).await.unwrap();
-    assert_eq!((back.ledger_rows, back.reverted, back.renamed_again, back.gone), (7, 5, 1, 1));
+    assert_eq!(
+        (back.ledger_rows, back.reverted, back.renamed_again, back.identifier_stripped, back.gone),
+        (7, 3, 2, 1, 1)
+    );
     let now = heads(&conn).await;
-    assert_eq!(now.iter().find(|h| h.0 == Value::Integer(2)).unwrap().1, text("Vergabekammer Detmold"), "left as found");
-    assert_eq!(now.iter().find(|h| h.0 == Value::Integer(1)).unwrap().1, text("Sheffield Hallam University"));
-    assert_eq!(org_changes(&conn).await.len(), 7 + 5, "a change row per restored head only");
+    let at = |id: i64| now.iter().find(|h| h.0 == Value::Integer(id)).unwrap().clone();
+    assert_eq!(at(2).1, text("Vergabekammer Detmold"), "left as found");
+    assert_eq!(at(23).2, text("moved"), "a key moved alone is renamed again: left as found");
+    assert_eq!(at(13), stripped_after_apply, "identifier stripped: byte-identical to after the run");
+    assert_eq!(at(13).1, text("University of Sheffield"));
+    assert_eq!(at(1).1, text("Sheffield Hallam University"));
+    assert_eq!(org_changes(&conn).await.len(), 7 + 3, "a change row per restored head only");
     let unreverted: Vec<Value> =
         ledger(&conn).await.into_iter().filter(|row| row[7] == Value::Null).map(|row| row[0].clone()).collect();
-    assert_eq!(unreverted, vec![Value::Integer(2), Value::Integer(3)], "neither is stamped");
+    assert_eq!(unreverted, [2, 3, 13, 23].map(Value::Integer).to_vec(), "none of the misses is stamped");
     // A job with no ledger rows restores nothing.
     let none = db.revert_org_name_refresh(revert(42, 9)).await.unwrap();
     assert_eq!((none.ledger_rows, none.reverted, none.windows), (0, 0, 0));
+}
+
+#[test]
+fn the_drift_limit_is_two_percent_of_the_targets_read_with_a_floor_of_five() {
+    for (read, limit) in [(0, 5), (7, 5), (299, 5), (300, 6), (349, 6), (350, 7), (1_049, 20), (29_000, 580)] {
+        assert_eq!(store::org_name_refresh_drift_limit(read), limit, "{read} targets read");
+    }
+}
+
+#[tokio::test]
+async fn a_recovered_capped_run_counts_its_earlier_renames_without_a_cursor() {
+    // The 2b review: a capped job that died after its window committed but (before the cursor moved into
+    // the window's transaction) before its cursor landed came back with no `resume_after`, counted 0
+    // prior renames and applied `max_groups` again.
+    let (db, conn) = open("ron-recovered").await;
+    corpus(&conn).await;
+    let planned = targets(&plan(&db, 2_000, None, &[]).await);
+    let capped = || store::OrgNameRefreshApplyArgs { max_groups: Some(1), ..wet(planned.clone(), 9) };
+    let r = db.apply_org_name_refresh(capped()).await.unwrap();
+    assert_eq!((r.prior_applied, r.ready, r.capped, r.applied), (0, 7, 6, 1));
+    let r = db.apply_org_name_refresh(capped()).await.unwrap();
+    assert_eq!((r.resumed_after, r.prior_applied, r.already, r.ready, r.capped, r.applied), (None, 1, 1, 6, 6, 0));
+    assert_eq!(ledger(&conn).await.len(), 1, "still the one rename the operator capped the run at");
+    assert_eq!(org_changes(&conn).await, vec![1]);
+}
+
+#[tokio::test]
+async fn a_row_changed_after_the_pre_pass_fails_its_compare_and_set_and_writes_nothing() {
+    // Each row breaks ONE predicate of the compare-and-set, inside the window's transaction, after the
+    // pre-pass read all seven as ready: the trigger fires on 1's ledger row, the window's first.
+    let (db, conn) = open("ron-raced").await;
+    corpus(&conn).await;
+    let planned = targets(&plan(&db, 2_000, None, &[]).await);
+    conn.execute(
+        "CREATE TRIGGER t524r AFTER INSERT ON org_name_refresh_log WHEN NEW.org_id = 1 BEGIN
+           UPDATE organizations SET name = 'Somebody Else' WHERE id = 2;
+           UPDATE organizations SET identifier = NULL WHERE id = 13;
+           UPDATE organizations SET name_norm = 'drifted' WHERE id = 23;
+         END",
+        (),
+    )
+    .await
+    .unwrap();
+    let before = heads(&conn).await;
+    let r = db.apply_org_name_refresh(wet(planned, 7)).await.unwrap();
+    assert_eq!((r.ready, r.drifted, r.applied, r.raced, r.windows), (7, 0, 4, 3, 1));
+    assert_eq!(org_changes(&conn).await, vec![1, 3, 15, 25], "no change row for a raced org");
+    let ids: Vec<Value> = ledger(&conn).await.into_iter().map(|row| row[0].clone()).collect();
+    assert_eq!(ids, [1, 3, 15, 25].map(Value::Integer).to_vec(), "no ledger row for a raced org");
+    let now = heads(&conn).await;
+    let at = |rows: &[(Value, Value, Value)], id: i64| rows.iter().find(|h| h.0 == Value::Integer(id)).unwrap().clone();
+    assert_eq!(at(&now, 2), (Value::Integer(2), text("Somebody Else"), at(&before, 2).2), "name: what the trigger left");
+    assert_eq!(at(&now, 13), at(&before, 13), "identifier stripped: the head and key stay");
+    assert_eq!(at(&now, 23), (Value::Integer(23), at(&before, 23).1, text("drifted")), "name_norm: what the trigger left");
+}
+
+#[tokio::test]
+async fn a_window_that_fails_after_a_commit_reports_the_committed_windows() {
+    // The 513 U4 fold_error shape: window 2 (3 and 13) fails after window 1 (1 and 2) committed. The run
+    // comes back Ok with window 1's counts, cursor and samples and the error; window 2 rolled back whole.
+    let (db, conn) = open("ron-window-error").await;
+    corpus(&conn).await;
+    let planned = targets(&plan(&db, 2_000, None, &[]).await);
+    db.enqueue_job(7, "refresh-org-names", "refresh-org-names wet", "{}").await.unwrap();
+    let refuse = |id: i64, table: &str, op: &str| {
+        format!(
+            "CREATE TRIGGER t524_{id} BEFORE {op} ON {table} WHEN NEW.org_id = {id}
+             BEGIN SELECT RAISE(ABORT, 'fixture: the ledger refuses {id}'); END"
+        )
+    };
+    conn.execute(&refuse(13, "org_name_refresh_log", "INSERT"), ()).await.unwrap();
+    let windowed = |targets, job| store::OrgNameRefreshApplyArgs { window: 2, ..wet(targets, job) };
+    let r = db.apply_org_name_refresh(windowed(planned.clone(), 7)).await.unwrap();
+    assert_eq!((r.windows, r.applied, r.cursor, r.stopped), (1, 2, Some(2), false));
+    let error = r.window_error.as_deref().expect("the failure is reported");
+    assert!(error.contains("window 2 (org ids 3..=13)") && error.contains("fixture: the ledger refuses 13"), "{error}");
+    assert_eq!(r.applied_samples.iter().map(|s| s.org_id).collect::<Vec<_>>(), vec![1, 2]);
+    assert_eq!(org_changes(&conn).await, vec![1, 2], "window 2 rolled back: 3 was not renamed");
+    assert_eq!(db.pending_jobs().await.unwrap()[0].progress.as_deref(), Some("2"), "the cursor committed with window 1");
+
+    // The revert has the same shape: window 2 of its rows (13 and 15, once the rest is applied) fails.
+    conn.execute("DROP TRIGGER t524_13", ()).await.unwrap();
+    assert_eq!(db.apply_org_name_refresh(wet(planned.clone(), 7)).await.unwrap().applied, 5);
+    conn.execute(&refuse(13, "org_name_refresh_log", "UPDATE"), ()).await.unwrap();
+    let back = db
+        .revert_org_name_refresh(store::OrgNameRefreshRevertArgs { window: 2, ..revert(7, 9) })
+        .await
+        .unwrap();
+    assert_eq!((back.windows, back.reverted), (1, 2));
+    assert!(back.window_error.as_deref().is_some_and(|e| e.contains("fixture: the ledger refuses 13")), "{back:?}");
+
+    // A failure in the FIRST window is the error itself: nothing was written.
+    let (db, conn) = open("ron-window-error-first").await;
+    corpus(&conn).await;
+    let planned = targets(&plan(&db, 2_000, None, &[]).await);
+    conn.execute(&refuse(1, "org_name_refresh_log", "INSERT"), ()).await.unwrap();
+    let before = heads(&conn).await;
+    let err = db.apply_org_name_refresh(windowed(planned, 7)).await.expect_err("nothing committed");
+    assert!(err.to_string().contains("fixture: the ledger refuses 1"), "{err}");
+    assert_eq!(heads(&conn).await, before);
+    assert!(org_changes(&conn).await.is_empty() && ledger(&conn).await.is_empty());
 }
