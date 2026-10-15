@@ -41,8 +41,12 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// keys into its own cluster. `v7` (unit 2b, the recency decision, panel wf_ce13ee62-9e9, after the
 /// capped run 2517 put five orgs back to a FORMER name): R1 with H ≥ 2 is HELD (`recent`) while the
 /// head's own procedures are the organization's newest ([`HEAD_HOLD_RECENT`]), or (`undated`) when
-/// the caller passed no dates.
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v7";
+/// the caller passed no dates. `v8` (the dated re-judge of plan 2523: its residue sample read 9 of 30
+/// wrong, and 2 of its 10 junk releases were wrong): R1 and R2 are HELD (`residue`) when the
+/// organization's single newest item is the head's ([`HEAD_HOLD_RESIDUE`]), and the junk exemption
+/// no longer releases an all-lower-case head or one whose only new digits sit inside a word
+/// (`CA2BM`).
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v8";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -69,6 +73,13 @@ pub const HEAD_HOLD_RECENT: &str = "recent";
 /// change the window might have stopped. A finished plan must count none.
 pub const HEAD_HOLD_UNDATED: &str = "undated";
 
+/// Issue 524 rule `v8`: the hold reason when R1 or R2 would replace a head that names the
+/// organization's single NEWEST item (the residue holdout: by dates an H = 1 or single-procedure
+/// rename looks like a newest stray, and the re-judge of plan 2523 found the head the better name
+/// there more often — an organ served for its entity, one notice's lot repeats, misspellings). The
+/// junk exemption releases it as it releases [`HEAD_HOLD_RECENT`]; R0 is never held.
+pub const HEAD_HOLD_RESIDUE: &str = "residue";
+
 /// Issue 524 rule `v7`: the fewest head procedures (k) the window fires at. At 2 the 2/3 bar means
 /// both newest items are the head's (2.2% by chance among 10 items, against 18% for 2 of 3).
 pub const HEAD_RECENT_MIN_PROCEDURES: u64 = 2;
@@ -94,15 +105,18 @@ pub struct RecentReading {
     /// The newest head item's and the elected cluster's newest item's `at`.
     pub head_newest: Option<i64>,
     pub top_newest: Option<i64>,
-    /// The organization's newest item is a head item.
+    /// The organization's newest item is a head item (rule `v8`: R1 and R2 hold [`HEAD_HOLD_RESIDUE`]
+    /// on it). `false` when no item is dated, or none of the head's is.
     pub newest_is_head: bool,
     /// Voting mentions the dates did not cover.
     pub undated: u64,
     /// k ≥ [`HEAD_RECENT_MIN_PROCEDURES`] and 3·h_W ≥ 2·k.
     pub fires: bool,
-    /// The window fired on an R1 change (H ≥ 2) but the junk exemption released it: `unfit` (the head
-    /// is unfit to serve even against itself) or `digits` (its vote key has a digit token the elected
-    /// key lacks: an address, a NIP, `LOT 2`).
+    /// A hold the junk exemption released — the window fired on an R1 change (H ≥ 2, `recent`), or
+    /// (rule `v8`) the newest item is the head's on an R1 or R2 change (`residue`): `unfit` (the head
+    /// is unfit to serve even against itself, for any reason but `lowercase`) or `digits` (its vote
+    /// key has an all-digit token the elected key lacks: an address number, a postcode, a NIP, `LOT
+    /// 2`'s `2`).
     pub released: Option<&'static str>,
 }
 
@@ -172,9 +186,10 @@ pub enum HeadVerdict {
     /// A change the rule elected but does not apply: [`HEAD_HOLD_NO_FIT`] (the winning cluster has no
     /// fit spelling, so `new` is `None`), a bind guard's reason (the injected [`HeadElectFns::hold`]:
     /// `family`, `gb_family`, `consortium_removed`, `nhs_check`), for R2 only a shorthand's
-    /// ([`HeadElectFns::r2_hold`]: `initialism`), or, for R1 with H ≥ 2 (rule `v7`), [`HEAD_HOLD_RECENT`]
-    /// (with the display spelling, `None` when none is fit) or [`HEAD_HOLD_UNDATED`] (`None`) — with
-    /// the spelling it would have served.
+    /// ([`HeadElectFns::r2_hold`]: `initialism`), for R1 with H ≥ 2 (rule `v7`) [`HEAD_HOLD_RECENT`]
+    /// (with the display spelling, `None` when none is fit) or [`HEAD_HOLD_UNDATED`] (`None`), or for
+    /// R1 and R2 (rule `v8`) [`HEAD_HOLD_RESIDUE`] (with the display spelling) — with the spelling it
+    /// would have served.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
 }
@@ -258,7 +273,8 @@ pub struct HeadElectOrg<'a> {
     /// hold), so it passes `false` first and re-elects a candidate the probe finds.
     pub bind_defect: bool,
     /// Rule `v7`: the organization's dated mentions, read by the caller for the candidates (`None`
-    /// otherwise). R1 with H ≥ 2 reads its window from them, and holds `undated` without them.
+    /// otherwise). R1 with H ≥ 2 reads its window from them, and holds `undated` without them; R1 and
+    /// R2 read the residue holdout from them (rule `v8`), and change as before without them.
     pub dated: Option<&'a [DatedVote<'a>]>,
 }
 
@@ -315,10 +331,19 @@ struct Cluster<'a> {
 ///      window fires when k ≥ [`HEAD_RECENT_MIN_PROCEDURES`] and 3·h_W ≥ 2·k (both newest at k = 2,
 ///      2 of 3, 4 of 6); a third cluster's items count against the head.
 ///    - The junk exemption releases it to R1 (counted `released`): the head is unfit against itself
-///      ([`HeadElectFns::unfit`]: control, mojibake, long, lowercase, non_name), or its vote key has a
-///      token with a digit the elected key lacks (an address, a NIP/REGON, `LOT 2`).
+///      ([`HeadElectFns::unfit`]: control, mojibake, long, non_name — since rule `v8` not
+///      `lowercase`, a deliberate lower-case brand: 3909's `act legal s.r.o., advokátní kancelář`),
+///      or its vote key has a token of decimal digits only (`char::is_ascii_digit` across the token,
+///      rule `v8`: an address number, a postcode, a NIP/REGON, `LOT 2`'s `2` — never 1846's acronym
+///      `CA2BM`) the elected key lacks.
 /// 6. **R2**: H ≤ 1, the top is unique, T ≥ [`HEAD_ELECT_TOP_MIN`], and T × 4 ≥ V (25%).
 /// 7. Otherwise KEEP (`bar`).
+///
+/// **The residue holdout** (rule `v8`): an R1 or R2 change (5 or 6, past the window) whose
+/// organization's single newest item is a head item (`newest_is_head`) is HELD `residue`
+/// ([`HEAD_HOLD_RESIDUE`], `new` the display spelling) unless the junk exemption releases it. Only
+/// with dates: an undated R1 with H ≥ 2 holds `undated` before it, and an undated H ≤ 1 change (no
+/// dates, or `Some(&[])`) changes as before. R0 is never held.
 ///
 /// The elected cluster serves its DISPLAY spelling: among the fit spellings only
 /// ([`HeadElectFns::unfit`], read on each spelling as published and on its collapsed form), each with
@@ -457,32 +482,45 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
     if head_votes == top {
         return counted(HeadVerdict::Keep(HeadKeep::S1), reading);
     }
-    if unique && top * 20 >= voting * 11 && top >= HEAD_ELECT_TOP_MIN && top >= 2 * head_votes {
-        // Rule v7: only when the head's own cluster holds 2 or more votes (R2's H ≤ 1 never gets here).
-        if head_votes >= 2 {
-            let Some(mut read) = reading else {
-                return counted(HeadVerdict::Hold { reason: HEAD_HOLD_UNDATED, rule: HeadRule::R1, new: None }, None);
-            };
-            if read.fires {
-                match recent_release(org.head, &head_key, tied[0], fns) {
-                    None => {
-                        let new = display_spelling(elected, org.head, fns);
-                        return counted(
-                            HeadVerdict::Hold { reason: HEAD_HOLD_RECENT, rule: HeadRule::R1, new },
-                            Some(read),
-                        );
-                    }
-                    Some(why) => read.released = Some(why),
+    let rule = if unique && top * 20 >= voting * 11 && top >= HEAD_ELECT_TOP_MIN && top >= 2 * head_votes {
+        HeadRule::R1
+    } else if head_votes <= 1 && unique && top >= HEAD_ELECT_TOP_MIN && top * 4 >= voting {
+        HeadRule::R2
+    } else {
+        return counted(HeadVerdict::Keep(HeadKeep::Bar), reading);
+    };
+    let mut reading = reading;
+    // Rule v7: R1's window, only when the head's own cluster holds 2 or more votes (R2's H ≤ 1 never
+    // reads it).
+    if rule == HeadRule::R1 && head_votes >= 2 {
+        let Some(read) = reading.as_mut() else {
+            return counted(HeadVerdict::Hold { reason: HEAD_HOLD_UNDATED, rule, new: None }, None);
+        };
+        if read.fires {
+            match recent_release(org.head, &head_key, tied[0], fns) {
+                None => {
+                    let new = display_spelling(elected, org.head, fns);
+                    return counted(HeadVerdict::Hold { reason: HEAD_HOLD_RECENT, rule, new }, reading);
                 }
+                Some(why) => read.released = Some(why),
             }
-            return counted(serve(HeadRule::R1, elected), Some(read));
         }
-        return counted(serve(HeadRule::R1, elected), reading);
     }
-    if head_votes <= 1 && unique && top >= HEAD_ELECT_TOP_MIN && top * 4 >= voting {
-        return counted(serve(HeadRule::R2, elected), reading);
+    // Rule v8: the residue holdout — the head names the organization's single newest item. A head the
+    // window's exemption already released is released here too (the exemption reads the same keys).
+    if let Some(read) = reading.as_mut()
+        && read.newest_is_head
+        && read.released.is_none()
+    {
+        match recent_release(org.head, &head_key, tied[0], fns) {
+            None => {
+                let new = display_spelling(elected, org.head, fns);
+                return counted(HeadVerdict::Hold { reason: HEAD_HOLD_RESIDUE, rule, new }, reading);
+            }
+            Some(why) => read.released = Some(why),
+        }
     }
-    counted(HeadVerdict::Keep(HeadKeep::Bar), reading)
+    counted(serve(rule, elected), reading)
 }
 
 /// Rule `v7`: the window over `dated` — see [`elect_head`] step 5. `dated` is filtered with the voter
@@ -528,20 +566,26 @@ fn recent_reading(
     }
 }
 
-/// Rule `v7`'s junk exemption: why a recently repeated head is NOT protected — `unfit` when it is
-/// unfit to serve even against itself, `digits` when its vote key has a token with a digit the
-/// elected cluster's key lacks (a buyer template appending an address or a NIP, a `LOT 2` prefix). A
-/// token the two keys share does not count (`nr 5` on both sides is a rename, held). "Digit" is
-/// `char::is_numeric`, on purpose: a decimal digit of any script (Arabic-Indic, full-width) counts,
-/// and so would a `²`, `½` or `Ⅱ` — rare in a key, and a release only gives v6's R1 back.
+/// The junk exemption (rule `v7`, narrowed by `v8`): why a head the window (`recent`) or the residue
+/// holdout (`residue`) would protect is NOT protected — `unfit` when it is unfit to serve even
+/// against itself for any reason but `lowercase` (control, mojibake, long, non_name; a lower-case head
+/// is a deliberate brand, 3909's `act legal s.r.o., advokátní kancelář`, the registered current name
+/// a v7 release reverted), `digits` when its vote key has a token of ASCII decimal digits only the
+/// elected cluster's key lacks (a buyer template appending an address number, a postcode or a NIP, a
+/// `LOT 2` prefix). A token the two keys share does not count (`nr 5` on both sides is a rename,
+/// held), and a token with a letter does not either (v8: 1846's acronym `CA2BM`, printed on every
+/// recent notice, was released by v7's `char::is_numeric` test).
 fn recent_release(head: &str, head_key: &str, elected_key: &str, fns: &HeadElectFns) -> Option<&'static str> {
-    if (fns.unfit)(head, head).is_some() {
-        return Some("unfit");
+    match (fns.unfit)(head, head) {
+        // `unfit` answers `lowercase` before `non_name`: a lower-case non-name head still releases.
+        Some("lowercase") if (fns.not_a_name)(head).is_none() => {}
+        Some(_) => return Some("unfit"),
+        None => {}
     }
     let elected: HashSet<&str> = elected_key.split(' ').collect();
     head_key
         .split(' ')
-        .any(|token| token.chars().any(char::is_numeric) && !elected.contains(token))
+        .any(|token| !token.is_empty() && token.chars().all(|c| c.is_ascii_digit()) && !elected.contains(token))
         .then_some("digits")
 }
 
@@ -779,7 +823,7 @@ pub struct HeadRefreshEntry {
     /// Rule `v7`, each `None` when the org was not dated (only the candidates are): k, h_W, the
     /// newest head item and the elected cluster's newest item (`YYYY-MM-DD`, UTC), whether the
     /// organization's newest item is the head's, the voting mentions no date covered, and the junk
-    /// exemption's release (`unfit` | `digits`) of a fired window.
+    /// exemption's release (`unfit` | `digits`) of a fired window or (rule `v8`) a residue hold.
     pub head_procs: Option<u64>,
     pub head_in_window: Option<u64>,
     pub head_newest: Option<String>,
@@ -843,15 +887,17 @@ pub struct OrgNameRefreshPlan {
     pub dated_notices: u64,
     pub dated_version_rows: u64,
     pub undated_mentions: u64,
-    /// Rule `v7`: the R1 CHANGES (in the population) the window fired on but the junk exemption
-    /// released, by why (`unfit`, `digits`), and the first [`ORG_NAME_REFRESH_RELEASED_LISTED`] of
-    /// their ids by org id. A release that `serve` then held (no fit spelling, a bind guard) is no
-    /// change and is not counted; its entry still reads `recent_released`.
+    /// Rule `v7`: the CHANGES (in the population) the junk exemption released from a hold — R1's fired
+    /// window, or (rule `v8`) an R1 or R2 residue hold — by why (`unfit`, `digits`), and the first
+    /// [`ORG_NAME_REFRESH_RELEASED_LISTED`] of their ids by org id. A release that `serve` then held
+    /// (no fit spelling, a bind guard) is no change and is not counted; its entry still reads
+    /// `recent_released`.
     pub recent_released: BTreeMap<&'static str, u64>,
     pub recent_released_ids: Vec<i64>,
-    /// Rule `v7`: the planned changes whose organization's NEWEST item is a head item, by rule — the
-    /// residue the window cannot protect (an H = 1 or single-procedure rename looks, by dates, like
-    /// 31558903's newest stray). Sampled as `residue:head_newest`.
+    /// Rule `v7`: the planned changes whose organization's NEWEST item is a head item, by rule. Since
+    /// rule `v8` holds that residue (`hold:residue`, in `by_hold`), these are the ones that still SHIP:
+    /// an R0 change (never held) or a change the junk exemption released. Sampled as
+    /// `residue:head_newest`.
     pub residue: BTreeMap<&'static str, HeadDriftCount>,
     /// The planned changes, by org id, the first `listing_cap`.
     pub planned: Vec<HeadRefreshEntry>,
@@ -1119,7 +1165,7 @@ impl Db {
 
             // Rule v7: date every remaining candidate's voting mentions — a change or a hold,
             // `hold:undated` included — and re-elect it with the dates, so every planned entry (and
-            // its ledger row) carries them and the residue is measured.
+            // its ledger row) carries them, and (rule v8) the residue is held.
             let asked: HashSet<i64> =
                 judged.iter().filter(|j| j.candidate()).flat_map(|j| page[j.at].voting_notices(&args.fns)).collect();
             if judged.iter().any(Judged::candidate) {
@@ -1185,6 +1231,7 @@ impl Db {
                             plan.recent_released_ids.push(org.id);
                         }
                     }
+                    // Rule v8 holds the residue; the changes still reading it ship (R0, or released).
                     if let (HeadVerdict::Change { rule, .. }, true) = (verdict, read.newest_is_head) {
                         plan.residue.entry(rule.label()).or_default().add(org.n);
                         let key = sample_key(org.id);
@@ -1677,8 +1724,9 @@ async fn read_readiness(
                     election = org.elect(fns, true, Some(&dated));
                 }
             }
-            // A target that now reads `hold:recent` (a newer head procedure since the plan) or
-            // `hold:undated` is drifted like any other verdict that is not the plan's change.
+            // A target that now reads `hold:recent` (a newer head procedure since the plan),
+            // `hold:residue` (rule v8: its newest item is now the head's) or `hold:undated` is drifted
+            // like any other verdict that is not the plan's change.
             match &election.verdict {
                 HeadVerdict::Change { rule, new } if rule.label() == target.rule && *new == target.new_name => {
                     out.push(Readiness::Ready(election));
@@ -1733,8 +1781,8 @@ impl Db {
     ///    `already` when the row holds the plan's new pair (a replayed window), `drifted` when its
     ///    pre-image moved or its identifier is NULL — and only the targets past them are dated, as the
     ///    planner dated its candidates, and re-elected: `ready` when that re-elects to the plan's rule
-    ///    and spelling, else `drifted` (one reading `hold:recent` or `hold:undated` now among them).
-    ///    Drifted plus gone above `max(2%, 5)` of the targets read aborts the run here, before any
+    ///    and spelling, else `drifted` (one reading `hold:recent`, `hold:residue` or `hold:undated`
+    ///    now among them). Drifted plus gone above `max(2%, 5)` of the targets read aborts the run here, before any
     ///    write. The stop flag is read between [`IN_CHUNK`]-target chunks (not before the first): a
     ///    cancel there ends the run before any write with `prepass_stopped_after` set and none of the
     ///    pre-pass counts (they would be a part's).
@@ -2122,7 +2170,7 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::{
-        DatedVote, HEAD_HOLD_NO_FIT, HEAD_HOLD_RECENT, HEAD_HOLD_UNDATED, HeadElectFns, HeadElectOrg, HeadKeep,
+        DatedVote, HEAD_HOLD_NO_FIT, HEAD_HOLD_RECENT, HEAD_HOLD_RESIDUE, HEAD_HOLD_UNDATED, HeadElectFns, HeadElectOrg, HeadKeep,
         HeadRule, HeadVerdict, Script, dominant_script, elect_head, elect_head_counted, sample_key,
     };
 
@@ -2580,6 +2628,11 @@ mod tests {
         HeadVerdict::Hold { reason: HEAD_HOLD_RECENT, rule: HeadRule::R1, new: new.map(str::to_owned) }
     }
 
+    /// Rule v8's residue hold.
+    fn residue(rule: HeadRule, new: &str) -> HeadVerdict {
+        HeadVerdict::Hold { reason: HEAD_HOLD_RESIDUE, rule, new: Some(new.to_owned()) }
+    }
+
     /// 1. A rename (2186's shape): the head's 4 procedures are all newer than every item of the
     /// cluster R1 elects, so the all-history majority would put the FORMER name back. Held, with the
     /// spelling R1 would have served.
@@ -2593,8 +2646,11 @@ mod tests {
         assert_eq!((read.head_newest, read.top_newest, read.undated), (Some(103 * DAY), Some(10 * DAY), 0));
     }
 
-    /// 2. 445: the head's 4 mentions are ONE procedure (three notices of tender 500), with the elected
-    /// cluster's items both older and newer: k = 1, under the floor. It changes.
+    /// 2. 445: the head's 4 mentions are ONE procedure (three notices of tender 500), with elected
+    /// items both older and newer than its first notice: k = 1, under the floor, so the window never
+    /// fires. Rule v8: that one procedure's newest notice is still the organization's newest item (plan
+    /// 2523 read 445 so: the head 2026-07-17, the elected cluster 2026-07-06), so the residue holdout
+    /// holds it; one newer elected item and it changes.
     #[test]
     fn one_procedure_of_three_notices_is_one_item() {
         let mut rows = items("Kadea Berlin Logistik", 1, 1, 10);
@@ -2604,37 +2660,50 @@ mod tests {
         }
         let e = dated(&rows, "Kadea");
         assert_eq!(e.head_votes, 4);
-        assert_eq!(e.verdict, r1("Kadea Berlin Logistik"));
         let read = e.recent.unwrap();
         assert_eq!((read.head_procs, read.head_in_window, read.fires), (1, 1, false));
         assert_eq!(read.head_newest, Some(138 * DAY), "an item's time is its newest row's");
+        assert!(read.newest_is_head);
+        assert_eq!(e.verdict, residue(HeadRule::R1, "Kadea Berlin Logistik"));
+        rows.push(DatedVote { spelling: "Kadea Berlin Logistik", tender: 30, at: 140 * DAY });
+        assert_eq!(dated(&rows, "Kadea").verdict, r1("Kadea Berlin Logistik"));
     }
 
-    /// 3. 31558903: H = 1, a single newest stray. The window never reaches it; it changes, and the
-    /// reading says the newest item is the head's (the residue the plan samples).
+    /// 3. 31558903: H = 1, a single newest stray. The window never reaches it; the reading says the
+    /// newest item is the head's, and rule v8 holds that residue — the decision's accepted cost (a
+    /// missed fix, listed in 548, never a regression). Undated, it changes as before.
     #[test]
-    fn a_single_newest_stray_changes_and_reads_newest_is_head() {
+    fn a_single_newest_stray_is_held_residue() {
         let rows = [items("University of Sheffield", 1, 1, 16), items("Sheffield Hallam University", 99, 200, 1)].concat();
         let e = dated(&rows, "Sheffield Hallam University");
-        assert_eq!(e.verdict, r1("University of Sheffield"));
+        assert_eq!(e.verdict, residue(HeadRule::R1, "University of Sheffield"));
         let read = e.recent.unwrap();
-        assert!(read.newest_is_head && !read.fires);
+        assert!(read.newest_is_head && !read.fires && read.released.is_none());
+        assert_eq!(elect_head(&votes_of(&rows), &org("Sheffield Hallam University"), &FNS), r1("University of Sheffield"));
     }
 
     /// 4. 3406: two head sections of one notice and its twin in the same tender are one item: k = 1.
+    /// With an elected item newer than it, it changes (as the canary expects); were the head's one
+    /// procedure the newest item, rule v8 would hold it `residue`.
     #[test]
     fn two_sections_and_a_twin_of_one_tender_are_one_item() {
         let mut rows = items("Staatliches Hochbauamt Freiburg", 1, 1, 6);
         rows.push(DatedVote { spelling: "Hochbauamt Freiburg", tender: 165, at: 200 * DAY });
         rows.push(DatedVote { spelling: "Hochbauamt Freiburg", tender: 165, at: 201 * DAY });
+        rows.push(DatedVote { spelling: "Staatliches Hochbauamt Freiburg", tender: 170, at: 202 * DAY });
         let e = dated(&rows, "Hochbauamt Freiburg");
         assert_eq!((e.head_votes, e.recent.unwrap().head_procs), (2, 1));
         assert_eq!(e.verdict, r1("Staatliches Hochbauamt Freiburg"));
+        rows.pop();
+        assert_eq!(dated(&rows, "Hochbauamt Freiburg").verdict, residue(HeadRule::R1, "Staatliches Hochbauamt Freiburg"));
     }
 
-    /// 5. 10603: a head item and an elected item at the same instant — the tie ranks the elected item
-    /// newer. Here the head's two items and one elected item share the newest day: ranked head-first
-    /// both newest would be the head's and it would hold; ranked as the rule ranks, W holds one.
+    /// 5. 10603's shape as the recency decision dated it: a head item and an elected item at the same
+    /// instant — the tie ranks the elected item newer. Here the head's two items and one elected item
+    /// share the newest day: ranked head-first both newest would be the head's and it would hold;
+    /// ranked as the rule ranks, W holds one, and (rule v8) the newest item is no head item either.
+    /// (Plan 2523 dated the real 10603 fully: its head names the newest procedure, so it holds
+    /// `recent`, and the v8 canary expects that.)
     #[test]
     fn on_an_equal_instant_the_elected_item_ranks_newer() {
         let mut rows = items("Visagino energija", 1, 1, 7);
@@ -2643,11 +2712,12 @@ mod tests {
         rows.push(DatedVote { spelling: "VE Visagino", tender: 32, at: 50 * DAY });
         let e = dated(&rows, "VE Visagino");
         let read = e.recent.unwrap();
-        assert_eq!((read.head_procs, read.head_in_window, read.fires), (2, 1, false));
+        assert_eq!((read.head_procs, read.head_in_window, read.fires, read.newest_is_head), (2, 1, false, false));
         assert_eq!(e.verdict, r1("Visagino energija"));
     }
 
-    /// 6. The floor: k = 2 both newest holds; k = 2 with one newer elected item changes; k = 1 changes.
+    /// 6. The floor: k = 2 both newest holds; k = 2 with one newer elected item changes; k = 1 never
+    /// fires the window — here its one item is the newest, so rule v8's residue holdout holds it.
     #[test]
     fn the_window_floor_is_two_procedures() {
         let both = [items("Old Name Agency", 1, 1, 8), items("New Name Agency", 101, 100, 2)].concat();
@@ -2659,11 +2729,12 @@ mod tests {
         one.push(DatedVote { spelling: "New Name Agency", tender: 101, at: 100 * DAY });
         one.push(DatedVote { spelling: "New Name Agency", tender: 101, at: 101 * DAY });
         let e = dated(&one, "New Name Agency");
-        assert_eq!((e.head_votes, e.recent.unwrap().head_procs), (2, 1));
-        assert_eq!(e.verdict, r1("Old Name Agency"));
+        assert_eq!((e.head_votes, e.recent.unwrap().head_procs, e.recent.unwrap().fires), (2, 1, false));
+        assert_eq!(e.verdict, residue(HeadRule::R1, "Old Name Agency"));
     }
 
-    /// 7. The share: k = 6 with 2 elected items inside W holds (4 of 6), with 3 it changes (3 of 6).
+    /// 7. The share: k = 6 with 2 elected items inside W holds (4 of 6), with 3 it changes (3 of 6;
+    /// the third the newest item, so rule v8's residue holdout does not hold it either).
     #[test]
     fn the_window_needs_two_thirds_of_its_items() {
         let mut rows = items("Old Name Agency", 1, 1, 12);
@@ -2673,9 +2744,9 @@ mod tests {
         let e = dated(&rows, "New Name Agency");
         assert_eq!((e.recent.unwrap().head_procs, e.recent.unwrap().head_in_window), (6, 4));
         assert_eq!(e.verdict, recent(Some("Old Name Agency")));
-        rows.push(DatedVote { spelling: "Old Name Agency", tender: 203, at: 103 * DAY });
+        rows.push(DatedVote { spelling: "Old Name Agency", tender: 203, at: 106 * DAY });
         let e = dated(&rows, "New Name Agency");
-        assert_eq!(e.recent.unwrap().head_in_window, 3);
+        assert_eq!((e.recent.unwrap().head_in_window, e.recent.unwrap().newest_is_head), (3, false));
         assert_eq!(e.verdict, r1("Old Name Agency"));
     }
 
@@ -2713,14 +2784,19 @@ mod tests {
         assert_eq!(e.verdict, recent(Some("CA Plaine Vallée")));
     }
 
-    /// 10. Junk: a recently repeated head unfit against itself (lowercase) or carrying a digit token
-    /// the elected key lacks (a NIP) is released to R1, and the release is read.
+    /// 10. Junk: a recently repeated head unfit against itself (a control character) or carrying an
+    /// all-digit token the elected key lacks (a NIP) is released to R1, and the release is read. Rule
+    /// v8: a lower-case head is a brand, not junk (3909) — held.
     #[test]
     fn a_junk_head_is_released_to_r1() {
-        let lower = [items("Acme Group", 1, 1, 8), items("acme services", 101, 100, 3)].concat();
-        let e = dated(&lower, "acme services");
+        let control = [items("Acme Group", 1, 1, 8), items("Acme\u{8c}Services", 101, 100, 3)].concat();
+        let e = dated(&control, "Acme\u{8c}Services");
         assert_eq!(e.verdict, r1("Acme Group"));
         assert_eq!((e.recent.unwrap().fires, e.recent.unwrap().released), (true, Some("unfit")));
+        let lower = [items("Acme Group", 1, 1, 8), items("acme services", 101, 100, 3)].concat();
+        let e = dated(&lower, "acme services");
+        assert_eq!(e.verdict, recent(Some("Acme Group")));
+        assert_eq!((e.recent.unwrap().fires, e.recent.unwrap().released), (true, None));
         let nip = [items("Acme Polska", 1, 1, 8), items("Acme Polska NIP 5250001009", 101, 100, 2)].concat();
         let e = dated(&nip, "Acme Polska NIP 5250001009");
         assert_eq!(e.verdict, r1("Acme Polska"));
@@ -2745,10 +2821,10 @@ mod tests {
         assert_eq!((e.recent.unwrap().head_procs, e.recent.unwrap().undated), (0, 10));
     }
 
-    /// 12. R0 and R2 never consult dates: undated, they still change; dated with the head's items
-    /// newest, they still change.
+    /// 12. R0 never consults dates, and R2 only for rule v8's residue holdout: undated, both still
+    /// change; dated with the head's item newest, R2 holds `residue` and R0 still changes.
     #[test]
-    fn r0_and_r2_never_consult_dates() {
+    fn r0_never_consults_dates_and_r2_only_for_the_residue() {
         let votes = [("Kalmar kommun", 4)];
         assert_eq!(elect_head(&votes, &org(""), &FNS).rule(), Some(HeadRule::R0e));
         assert_eq!(elect_head(&votes, &org(""), &FNS).kind(), "change");
@@ -2757,12 +2833,13 @@ mod tests {
         assert_eq!(elect_head(&stray, &org("Head Body"), &FNS).kind(), "change");
         let rows = [items("Main Body", 1, 1, 3), items("Head Body", 101, 100, 1)].concat();
         let org_ = HeadElectOrg { dated: Some(&rows), ..org("Head Body") };
-        assert_eq!(elect_head(&stray, &org_, &FNS).kind(), "change");
-        // Not vacuous: an R0 head whose vote key OWNS the newest k = 2 items — the window fires — still
-        // changes. The placeholder `s.o.` keys as `so`, and so does the voter `S O`.
+        assert_eq!(elect_head(&stray, &org_, &FNS), residue(HeadRule::R2, "Main Body"));
+        // Not vacuous: an R0 head whose vote key OWNS the newest k = 2 items — the window fires, and
+        // the newest item is the head's — still changes. The placeholder `s.o.` keys as `so`, and so
+        // does the voter `S O`.
         let r0 = [items("Vergabekammer Nord", 1, 1, 4), items("S O", 101, 100, 2)].concat();
         let e = dated(&r0, "s.o.");
-        assert_eq!(e.recent.map(|r| (r.head_procs, r.fires)), Some((2, true)), "the window fires");
+        assert_eq!(e.recent.map(|r| (r.head_procs, r.fires, r.newest_is_head)), Some((2, true, true)), "both fire");
         assert_eq!(e.verdict, HeadVerdict::Change { rule: HeadRule::R0n, new: "Vergabekammer Nord".into() });
     }
 
@@ -2781,6 +2858,75 @@ mod tests {
         let e = dated(&added, "Szkola Podstawowa nr 5 ul Lipowa 12");
         assert_eq!(e.verdict, r1("Szkola Podstawowa nr 5"));
         assert_eq!(e.recent.unwrap().released, Some("digits"));
+    }
+
+    // ---- Rule v8: the residue holdout and the narrowed junk exemption.
+
+    /// 3740262's shape (plan 2523: k = 47, h_W = 4, the head printed on the newest procedure): R1 with
+    /// H ≥ 2 whose window stays silent is held `residue` with the display spelling it would serve.
+    /// One elected item newer than the head's newest and it changes.
+    #[test]
+    fn the_residue_holdout_holds_r1_when_the_head_names_the_newest_item() {
+        let mut rows = items("Junta Gobierno Fuengirola", 1, 1, 20);
+        for (i, day) in [2, 4, 6, 8, 10, 30].into_iter().enumerate() {
+            rows.push(DatedVote { spelling: "Ayuntamiento Fuengirola", tender: 101 + i as i64, at: day * DAY });
+        }
+        let e = dated(&rows, "Ayuntamiento Fuengirola");
+        let read = e.recent.unwrap();
+        assert_eq!((read.head_procs, read.head_in_window, read.fires, read.newest_is_head), (6, 1, false, true));
+        assert_eq!(e.verdict, residue(HeadRule::R1, "Junta Gobierno Fuengirola"));
+        assert_eq!(read.released, None);
+        rows.push(DatedVote { spelling: "Junta Gobierno Fuengirola", tender: 50, at: 31 * DAY });
+        assert_eq!(dated(&rows, "Ayuntamiento Fuengirola").verdict, r1("Junta Gobierno Fuengirola"));
+    }
+
+    /// Rule v8: no dates, an empty date list, or no dated head item never hold `residue` — an
+    /// undated H ≤ 1 change changes as before.
+    #[test]
+    fn the_residue_holdout_needs_a_dated_head_item() {
+        let stray = [("Old Name Agency", 8), ("New Name Agency", 1)];
+        assert_eq!(elect_head(&stray, &org("New Name Agency"), &FNS), r1("Old Name Agency"));
+        let none: [DatedVote<'_>; 0] = [];
+        let empty = HeadElectOrg { dated: Some(&none), ..org("New Name Agency") };
+        let e = elect_head_counted(&stray, &empty, &FNS);
+        assert_eq!((e.verdict, e.recent.unwrap().newest_is_head), (r1("Old Name Agency"), false));
+        // The head's one mention undated (its notice had no usable version): the elected items alone.
+        let elected = items("Old Name Agency", 1, 1, 8);
+        let partial = HeadElectOrg { dated: Some(&elected), ..org("New Name Agency") };
+        let e = elect_head_counted(&stray, &partial, &FNS);
+        let read = e.recent.unwrap();
+        assert_eq!((e.verdict, read.newest_is_head, read.undated), (r1("Old Name Agency"), false, 1));
+    }
+
+    /// Rule v8: the junk exemption releases a residue hold as it releases a recent one — an address
+    /// number or a NIP the elected key lacks, on R2 (H = 1) and on R1 — and the release is read; an
+    /// acronym with a digit inside (1846's `CA2BM`) is no number, held by the residue holdout and by
+    /// the window alike; and a lower-case head (3909) is protected by both.
+    #[test]
+    fn the_junk_exemption_releases_a_residue_hold_on_whole_numbers_only() {
+        let r2 = |head: &'static str| {
+            let rows = [items("Main Body", 1, 1, 3), items(head, 101, 100, 1)].concat();
+            let votes = [("Main Body", 3), ("A Body", 2), ("B Body", 2), ("C Body", 2), ("D Body", 2), (head, 1)];
+            let org_ = HeadElectOrg { dated: Some(&rows), ..org(head) };
+            elect_head_counted(&votes, &org_, &FNS)
+        };
+        let address = r2("Head Body ul Lipowa 12");
+        assert_eq!(address.verdict, HeadVerdict::Change { rule: HeadRule::R2, new: "Main Body".into() });
+        assert_eq!(address.recent.unwrap().released, Some("digits"));
+        let acronym = r2("CA2BM Head Body");
+        assert_eq!(acronym.verdict, residue(HeadRule::R2, "Main Body"));
+        assert_eq!(acronym.recent.unwrap().released, None);
+        let lower = r2("head body");
+        assert_eq!(lower.verdict, residue(HeadRule::R2, "Main Body"));
+
+        let nip = [items("Acme Polska", 1, 1, 8), items("Acme Polska NIP 5250001009", 101, 100, 1)].concat();
+        let e = dated(&nip, "Acme Polska NIP 5250001009");
+        assert_eq!((e.head_votes, e.recent.unwrap().newest_is_head), (1, true));
+        assert_eq!((e.verdict, e.recent.unwrap().released), (r1("Acme Polska"), Some("digits")));
+        let ca2bm = [items("Deux Baies Montreuillois", 1, 1, 8), items("CA2BM Deux Baies", 101, 100, 3)].concat();
+        let e = dated(&ca2bm, "CA2BM Deux Baies");
+        assert_eq!(e.recent.unwrap().fires, true);
+        assert_eq!((e.verdict, e.recent.unwrap().released), (recent(Some("Deux Baies Montreuillois")), None));
     }
 
     /// Issue 524 unit 2a: the planner's candidate reads must seek, not scan: the scoped page by rowid,

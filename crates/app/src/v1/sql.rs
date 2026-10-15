@@ -1252,9 +1252,11 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     the 25% arm only, serve an initialism of the head; when no spelling of the winning cluster is fit to \
     serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on the 55% arm, \
     while the organization's newest procedures still use the current head (a rename: the head names at \
-    least 2 procedures and two thirds of the organization's newest as many, unless the head is unfit to \
-    serve or carries a number the other name lacks); and, on the 55% and 25% arms only, when the head is \
-    in another script than its mentions (TED's English rendering). Where the job has not renamed a row, \
+    least 2 procedures and two thirds of the organization's newest as many); on the 55% and 25% arms, \
+    while the organization's newest procedure prints the current head; both unless the head is unfit to \
+    serve for a reason other than being all lower case, or carries a standalone number the other name \
+    lacks; and, on the 55% and 25% arms only, when the head is in another script than its mentions \
+    (TED's English rendering). Where the job has not renamed a row, \
     and always where `identifier IS NULL`, it is the first spelling a notice published. What one notice \
     said is `organization_mentions.name`.";
 

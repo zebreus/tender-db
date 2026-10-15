@@ -196,13 +196,26 @@ Decided:
    an equal instant, then tender, then key), and the window is the newest k. When k ≥ 2 and the head
    holds at least two thirds of the window, the change is HELD `recent` with the spelling it would
    serve; a third cluster's items count against the head. A head that is unfit to serve even against
-   itself, or whose vote key carries a token with a digit the elected key lacks (an address, a NIP, a
-   `LOT 2`), is not protected: (b) applies as before, and the release is counted. A caller without
-   dates gets HOLD `undated` (it fails closed); a finished plan dates every candidate and must hold
-   none, and the wet run refuses a plan that does. (a) and (c) never read dates ((c)'s head has at
-   most 1 vote). The residue — an H = 1 or single-procedure rename, which by dates looks like a stray
-   newest mention — is not protected; the plan samples it (`residue:head_newest`) for the dated
-   re-judge that gates every wet run.
+   itself for a reason other than being all lower case (a control character, mojibake, over 200
+   characters, a non-name), or whose vote key carries a token of decimal digits only that the elected
+   key lacks (an address number, a postcode, a NIP, `LOT 2`'s `2`), is junk and not protected: (b)
+   applies as before, and the release is counted. A caller without dates gets HOLD `undated` (it
+   fails closed); a finished plan dates every candidate and must hold none, and the wet run refuses
+   a plan that does. (a) never reads dates.
+
+   **(b) and (c) are HELD when the head names the newest procedure (rule `524u2-v8`, the owner's
+   decision of 2026-10-15 after plan 2523's dated re-judge).** The window leaves a residue: an H = 1
+   or single-procedure rename looks, by dates, like a stray newest mention. Plan 2523 changed about
+   800 such heads, and the re-judge read 9 of its 30-sample wrong (an organ served for its entity, a
+   majority made of one notice's lot repeats, misspellings, a placeholder identifier's pile-up) and
+   6 right. So when the organization's single newest dated item is a head item, a (b) or (c) change
+   is HELD `residue` with the spelling it would serve — unless the junk exemption above releases it.
+   An undated (b) with H ≥ 2 holds `undated` first; an undated H ≤ 1 change changes as before. (a)
+   is exempt: a defective head always changes. The Sheffield shape (an H = 1 stray printed newest)
+   is held too, a missed fix, never a regression (issue 548). The same re-judge narrowed the junk
+   exemption: v7 released 1846, whose `CA2BM` acronym carries a digit inside a word, and 3909, whose
+   registered current name `act legal s.r.o., advokátní kancelář` is deliberately lower case — both
+   back to a former name.
 4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
    spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
    guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of

@@ -325,9 +325,11 @@ name check the old head passed, or, on the 25% arm only, serve an initialism of 
 when no spelling of the winning cluster is fit to serve; when the identifier carries a
 <code>wrong</code> or unapplied <code>related</code> review verdict; on the 55% arm, while
 the organization's newest procedures still use the current head (a rename: the head names at
-least 2 procedures and two thirds of the organization's newest as many, unless the head is
-unfit to serve or carries a number the other name lacks); and, on the 55% and 25% arms only,
-when the head is in another script than its mentions (TED's English rendering). So the head
+least 2 procedures and two thirds of the organization's newest as many); on the 55% and 25%
+arms, while the organization's newest procedure prints the current head; both unless the head
+is unfit to serve for a reason other than being all lower case, or carries a standalone number
+the other name lacks; and, on the 55% and 25% arms only, when the head is in another script
+than its mentions (TED's English rendering). So the head
 can change with no new notice, and every tender the organization is on shows the new name at
 once. The rename arrives as an <code>organization</code> <code>changed</code> event, not a
 Tender one: the parties join the organization when read. Where the job has not renamed an
