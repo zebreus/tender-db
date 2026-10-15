@@ -1239,21 +1239,21 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     The organization's head name, one per organization, served on every tender it appears on \
     (`parties[].organization_name` is a read-time join). With an identifier it is ELECTED from the names \
     its `organization_mentions` published (issue 524, ADR-0013's 2026-10-15 amendment): the operator's \
-    refresh-org-names job serves a fit spelling of the winning cluster and rewrites the head in place \
-    with an `organization` `changed` row in `changes`. The votes are the mentions that published a name \
-    (one with no name, a blank one or a non-name one does not vote), clustered as one name across \
-    casing, diacritics, `the` and a legal form. The head changes only when a cluster other than its own \
-    holds at least 55% of the votes, at least 3 votes and at least twice the head's; or when the head's \
-    own cluster holds at most 1 vote and a unique top cluster holds at least 3 votes and at least 25%; \
-    or when the head is empty or not a name (a placeholder, a blank, a void-lot phrase) and some \
-    mention's name votes, whatever script that name is written in. Even then it stays when the change \
-    would swap one legal-form family for another (`AG` to `Sàrl`), drop a consortium mark, fail the NHS \
-    ODS name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when \
-    no spelling of the winning cluster is fit to serve; when the identifier carries a `wrong` or \
-    unapplied `related` review verdict; and, on the 55% and 25% arms only, when the head is in another \
-    script than its mentions (TED's English rendering). Where the job has not renamed a row, and always \
-    where `identifier IS NULL`, it is the first spelling a notice published. What one notice said is \
-    `organization_mentions.name`.";
+    refresh-org-names job serves a fit spelling of the winning cluster, its whitespace collapsed \
+    (trimmed, every run one space) and rewrites the head in place with an `organization` `changed` row \
+    in `changes`. The votes are the mentions that published a name (one with no name, a blank one or a \
+    non-name one does not vote), clustered as one name across casing, diacritics, `the` and a legal \
+    form. The head changes only when a cluster other than its own holds at least 55% of the votes, at \
+    least 3 votes and at least twice the head's; or when the head's own cluster holds at most 1 vote and \
+    a unique top cluster holds at least 3 votes and at least 25%; or when the head is empty or not a \
+    name (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script that \
+    name is written in. Even then it stays when the change would swap one legal-form family for another \
+    (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS name check the old head passed, or, on \
+    the 25% arm only, serve an initialism of the head; when no spelling of the winning cluster is fit to \
+    serve; when the identifier carries a `wrong` or unapplied `related` review verdict; and, on the 55% \
+    and 25% arms only, when the head is in another script than its mentions (TED's English rendering). \
+    Where the job has not renamed a row, and always where `identifier IS NULL`, it is the first spelling \
+    a notice published. What one notice said is `organization_mentions.name`.";
 
 /// The description for a table/view, if one is curated.
 fn table_note(name: &str) -> Option<&'static str> {

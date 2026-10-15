@@ -22121,6 +22121,15 @@ mod tests {
         };
         let dumbraveni = [("Comuna Dumbrăveni", 10), ("COMUNA DUMBRAVENI", 32)];
         assert_eq!(elect_head(&dumbraveni, &org("Comuna Dumbrăveni"), &fns), HeadVerdict::Keep(HeadKeep::S1));
+        // Rule v6, dry plan 2515's 22609166: its `&` dropped to a doubled space, tied 2-2 with the intact
+        // name in one cluster under the real vote key. Collapsed, `&` wins the byte tie-break.
+        let brune = [("Julius Brune GmbH  Co. KG", 2), ("Julius Brune GmbH & Co. KG", 2), ("Mehrwert Logistik", 1)];
+        assert_eq!(
+            elect_head(&brune, &org("Mehrwert Logistik"), &fns),
+            HeadVerdict::Change { rule: HeadRule::R1, new: "Julius Brune GmbH & Co. KG".into() }
+        );
+        let ita = [("Itä-Suomen  aluehallintovirasto", 3), ("Pohjois-Savon ELY", 1)];
+        assert_eq!(elect_head(&ita, &org("Pohjois-Savon ELY"), &fns).new_name(), Some("Itä-Suomen aluehallintovirasto"));
         let dotacion = [("Dotacion y Equipamiento S.L.", 4), ("Dotación y Equipamiento, S. L.", 1), ("Equipos Norte", 1)];
         assert_eq!(
             elect_head(&dotacion, &org("Equipos Norte"), &fns),

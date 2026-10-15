@@ -200,7 +200,12 @@ Decided:
    - at most 200 characters;
    - not all lower case.
 
-   Among the fit spellings, case decides first (a spelling that is not ALL-CAPS before one that is;
+   Each fit spelling is served with its whitespace collapsed (trimmed, every run one space; a tab
+   or a newline is a control character, so unfit), and the fit spellings that collapse alike are
+   counted together (rule `v6`, after dry plan 2515 planned 137 names with a whitespace run, a
+   dropped `&` among them): a doubled space is never served, so the served head is not always byte
+   for byte a published spelling, while its `name_norm` is theirs. Among the collapsed spellings,
+   case decides first (a spelling that is not ALL-CAPS before one that is;
    `ß`, `ª` and `º` have no one-letter capital and do not make a spelling mixed case), then the most
    votes, then byte order. Then, if that winner carries no diacritic (no non-ASCII letter), the
    most-voted fit spelling of its case that is its TWIN (equal once lower-cased, diacritics folded and

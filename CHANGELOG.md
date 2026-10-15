@@ -33,17 +33,17 @@ an organization's notices say: the University of Sheffield served as `Sheffield 
 Sheffield mentions, a German review chamber as `s.o.`.
 
 For an organization WITH an identifier, the head is now elected from the names its mentions published (ADR-0013's
-2026-10-15 amendment): the operator's `refresh-org-names` job serves a fit spelling of the winning cluster. The
-votes are the mentions that published a name (one with no name, a blank one or a non-name one does not vote),
-clustered as one name across casing, diacritics, `the` and a legal form. The head changes only when a cluster other
-than its own holds at least 55% of the votes, at least 3 votes and at least twice the head's; or when the head's
-own cluster holds at most 1 vote and a unique top cluster holds at least 3 votes and at least 25%; or when the head
-is empty or not a name (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script
-that name is written in. Even then it stays when the change would swap one legal-form family for another (`AG` to
-`Sàrl`), drop a consortium mark, fail the NHS ODS name check the old head passed, or, on the 25% arm only, serve an
-initialism of the head; when no spelling of the winning cluster is fit to serve; when the identifier carries a
-`wrong` or unapplied `related` review verdict; and, on the 55% and 25% arms only, when the head is in another
-script than its mentions (TED's English rendering).
+2026-10-15 amendment): the operator's `refresh-org-names` job serves a fit spelling of the winning cluster, its
+whitespace collapsed (trimmed, every run one space). The votes are the mentions that published a name (one with no
+name, a blank one or a non-name one does not vote), clustered as one name across casing, diacritics, `the` and a
+legal form. The head changes only when a cluster other than its own holds at least 55% of the votes, at least 3
+votes and at least twice the head's; or when the head's own cluster holds at most 1 vote and a unique top cluster
+holds at least 3 votes and at least 25%; or when the head is empty or not a name (a placeholder, a blank, a
+void-lot phrase) and some mention's name votes, whatever script that name is written in. Even then it stays when
+the change would swap one legal-form family for another (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS
+name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when no spelling of the
+winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; and,
+on the 55% and 25% arms only, when the head is in another script than its mentions (TED's English rendering).
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new
