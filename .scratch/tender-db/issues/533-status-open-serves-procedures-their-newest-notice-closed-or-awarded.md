@@ -1,6 +1,6 @@
 # 533 — `status=open` serves procedures their newest notice closed or awarded: a no-winner result or UK12 termination inherits the contract notice's deadline, and DÖE sdk-0.1 award notices publish one of their own
 
-Status: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, the decision (S–M).
+Status: ready-for-agent — unit 1 DECIDED 2026-10-15. (a) A Tender closes when its head notice's own results are all `clos-nw` and cover every Lot. Exempt: a declared DPS (BT-766, projected by new sub-unit 2a), `oth-single`/`oth-mult`, or subtype 15/UK13–UK16 anywhere in the chain. UK12 gets no rule of its own. (b) The sdk-0.1 `can-standard` date stops mapping to `submission_deadline` (project.rs:424). (c) Option B: an unindexed `tenders.current_closed_by_notice` flag beside the unchanged `current_deadline` range, SSE `Scope::At` decided per version, and a per-lot term. Next: unit 2, step 0's bounded reads (scheme table for the 178 with stop rules, 3–5 raw sdk-0.1 award notices), then 2a + 1(b) + rule + flag + read path, gate, deploy, `refold-open-head` (R3, ~42k, queued after the 534 refold).
 Kind: API semantics / data quality (read layer: `status` on `/v1/tenders` and `/v1/lots`, SSE and webhook filters; the fold's head deadline)
 Relates to:
 - 273 (RESOLVED): `status` is a range on the indexed head column `t.current_deadline`; a fix must stay one.
@@ -128,6 +128,293 @@ at 15:40 and read the 141; nobody re-measured 42,062, 441/353/88 or the 175):
 Nor re-file the first verification draft's errors: "a result notice publishes no deadline" (false for DÖE
 sdk-0.1); "128 ≤30 days out = cancellations shortly before the deadline" (counted from now, not from the result);
 403644 as a cancellation or a Verify exemplar.
+
+## Decision (unit 1, 2026-10-15)
+
+Decided by a judge panel (independent proposals from distinct angles, then a skeptical judge that re-checked every disputed code claim against the tree at f3d5d06).
+
+**Verdict.**
+- **1(a)** An all-`clos-nw` result closes a Tender when the head notice itself published it and it decides every Lot. The exception is a Tender that declares an open-ended scheme:
+  - a DPS (BT-766, projected by sub-unit 2a);
+  - procedure `oth-single` or `oth-mult`;
+  - a chain that carries subtype `15` or `UK13`–`UK16`.
+  UK12 gets no rule of its own. It closes through its own `cancelled` awards.
+- **1(b)** On a DÖE sdk-0.1 `can-standard` notice, `TenderSubmissionDeadlinePeriod-EndDate` stops mapping to `submission_deadline` (`project.rs:424`). The 141 then have no head deadline, so today's range reads them Closed. No status rule is added for a NULL decision.
+- **1(c)** Option B: an unindexed, fold-maintained `tenders.current_closed_by_notice`, checked on each row of the unchanged `current_deadline` range. The SSE `Scope::At` probe decides status per version. Lots get a per-lot term.
+- The rule never reads a title, a deadline's distance from publication, `now`, or `tenders.source`.
+
+Stale references in the issue body:
+- `read.rs:1123-1133` is now `read.rs:1222-1233`.
+- `read.rs:1124` is now `1223-1225`.
+- `read.rs:162-166` is now `159-166`.
+- `read.rs:1903` is `tenders_ordered_query` (`read.rs:2214`).
+- `canonical.rs:3109` is now `3136`.
+- `docs.rs:172` is now `crates/app/src/v1/docs.rs:175`.
+- `openapi.json:755` is `crates/app/data/openapi.json:755`.
+
+### Code claims re-checked where the proposals disagreed
+- **SSE drops a fold-time close today.** `tenders_query` passes `StatusBy::Head("t.current_deadline")` for `Scope::At` too (`read.rs:2831`). The seq and seq−1 probes (`crates/app/src/v1/sse.rs:420-432`) therefore both read the head. A result that closes the Tender reads closed on both sides and hits `(false, false) => continue` (`sse.rs:465`). A versioned change row never produces `removed`.
+- **Webhooks have no Filter.** `CreateRequest` is `{ url }` (`crates/app/src/v1/webhooks.rs:26-29`), and delivery sends every public change row (`crates/app/src/webhooks.rs:481-490`). The issue's "webhooks share `Filter`" is wrong. Unit 2's webhook check is: a public `tender`/`lot` change row exists for each flip.
+- **A lot change row needs a fact or kind change.** A lot is `changed` only when its facts or kind differ (`canonical.rs:39549-39553`). A result that closes a lot is otherwise silent. A Tender is `changed` on facts, rounds or group_members (`39528-39535`).
+- **Every head index is deferred.** `tenders_current_deadline` and `tenders_source_deadline` are in `DEFERRED_TENDER_INDEXES` (`canonical.rs:14970`, `15054`, `15105`).
+- **The flag's residual costs nothing.** Every Tenders window already reads the `tenders` row, because each joins `tender_versions` on `t.current_seq` (`read.rs:2249`, `2852`, `2926`).
+- **The lot seed must not change.** Bare `status=open`'s open-head lot seed is `SELECT t.id FROM tenders t WHERE t.current_deadline > ?` (`read.rs:3869-3884`), a covering read of `(current_deadline, id)`.
+- **The DÖE date can be dropped at the mapping.**
+  - `NoticeState::read` already knows `sdk01` (`project.rs:5171`). `first_code` exists (`project.rs:10192`), and `SDK01-NoticeTypeCode` is parsed (`project.rs:1103`).
+  - The F14 precedent drops non-deadline dates at the mapping (`project.rs:428-466`).
+  - Neither committed `can-standard` fixture carries the date. Both `cn-standard` fixtures do (`crates/ingest/tests/fixtures/doe/sdk-0.1-*.xml`).
+  - `head_election_agreement.rs` counts `submission_deadline` selectors in store/app code only (`:580-596`). The ingest mapping is outside it, so the claim that dropping the date breaks the head election is false.
+- **Supersession is per field key** (`canonical.rs:3117-3125`). A later notice's date therefore replaces the CN's.
+- **Rounds carry their own notice's id** (`project.rs:5799-5800`, `7297`, and `caused_by_notice_id` at `6539`). A correction replaces the round it corrects (`project.rs:6509-6515`).
+- **The stored layer can't feed the fold, which rules out R2.** `stored_version` returns raw leaf rows (`canonical.rs:21611`), and no loader rebuilds a `TenderVersion` from stored rows.
+- **No `.rs` file reads BT-765/766.** BT-766 is a `code` field, so it lands in `notice_codes` (`eforms/sdk.rs:194-222`). It appears in Rust only in comments (`project.rs:1064`, `1067`). The per-dialect ids are:
+  - eForms (and eForms-DE 2.x): `BT-766-Lot`, `BT-766-Part`;
+  - eForms-DE 1.x: `DE1-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode`;
+  - DÖE: `SDK01-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode`.
+- **REST serves classifications by named scheme only** (cpv, nuts, procedure: `read.rs:2401-2418`). A new `dps` scheme changes no REST payload.
+- **Legacy decisions can be inferred.** A legacy award block with no evidence at all reads `clos-nw` by inference (`project.rs:6990-6992`). Legacy procedure codes never map to `oth-*`.
+
+### 1(a) The closing rule
+Notation: the version prefix is `C = versions[..=n]` and the head is `H = C.last()`. Reading only `C` keeps ADR-0017 E5.
+
+**Definitions:**
+- **`own(H)`:** the lot results of the rounds whose `notice_id == H.caused_by_notice_id`.
+- **`all(H)`:** the lot results of every round of H.
+- **`covered(H)`:** every lot of H with `kind == "Lot"` has a result in `all(H)` with the same `lot_key`. In SQL that is the same `lot_id` (`result_lot`, `canonical.rs:39384-39395`). A version with no Lot-kind lot counts as covered. A Tender-scoped result (`lot_key` None) covers no lot. This is the Repro read's third clause, unchanged.
+- **`exempt(C)`** holds when any of these holds:
+  - **K1 (DPS):** a `Fact::Classification{scheme:"dps"}` (code `dps-list` or `dps-nlist`) is in `H.facts` or in any `H.lots[].facts`. Sub-unit 2a produces this fact.
+  - **K2 (open procedure):** H's Tender-scope `procedure` classification (`project.rs:5256-5262`; SQL `scheme='procedure' AND lot_id IS NULL`, `read.rs:1296`) is `oth-single` or `oth-mult` (`project.rs:7732-7733`).
+  - **E2 (scheme subtype):** some version in C has a trimmed `notice_subtype` of `15` (qualification system, `project.rs:1043-1044`) or `UK13`–`UK16` (dynamic market, `docs/research/uk-fts.md:119`).
+
+**`closed_by_notice(C) = !exempt(C) && own(H) is non-empty && every r in all(H) has decision == Some("clos-nw") && covered(H)`**
+
+- A NULL decision never counts as `clos-nw` (issue 257).
+- Any `selec-w`, `open-nw` or NULL in any round keeps the Tender open. The 175 with a winner stay for unit 3.
+- **Re-launch:** a head CN or tenderUpdate has an empty `own(H)`, so it reads open by construction. This covers the 88.
+- **UK12:** `cancelled` and `unsuccessful` awards map to `clos-nw` (`fts/parse.rs:303-309`).
+  - A UK12 that cancels every lot closes through the rule. Fixture 083256-2026 does: one lot, award `cancelled`, `relatedLots ["1"]`.
+  - A UK12 that cancels some lots stays open.
+  - A UK12 with no awards of its own stays open. That goes to unit 3.
+- **Legacy TED:** all-`clos-nw` heads close, including the inferred `clos-nw` of an evidence-free award block. Step 0's legacy stop rule guards this.
+
+**Lot rule** (per-lot `status`). Lot L of H is closed when either:
+- the Tender is closed; or
+- `!exempt(C)`, and `own(H)` has a `clos-nw` result for L, and every result for L in `all(H)` is `clos-nw`.
+
+**Not rule inputs, and why:**
+- **Title.** Never.
+- **Deadline distance from publication.** It cannot separate 841082 (restricted, 5 years out) from a scheme, and 7207004's date is its duration end.
+- **BT-765 framework.** A framework is concluded by one competition, so an all-`clos-nw` result means that competition failed.
+- **BT-144 reason.** 841082 and 403644 both read `other`.
+- **FTS `tender.status` and `tender.techniques`, BT-119-LotResult, and the legacy DPS/TERMINATION_DPS/PROCUREMENT_DISCONTINUED markers.** None of them is projected; they go to unit 3.
+
+**Expected outcomes:**
+- 841082, 38279 and 66939 close. 8576007 closes, or has already closed if its 2026-10-20 deadline passes before deploy.
+- 6739006, 7422682 and 7207004 close, unless step 0's legacy stop rule fires.
+- 403644 (`oth-single`) and its lot 1108460 stay open.
+- 445631, 336277, 634469, 913640 and 179459 stay open only through K1, K2 or E2. Step 0 checks this.
+- 8831547 and 1706547 close through 1(b).
+
+### Sub-unit 2a: project the DPS declaration (BT-766 only)
+- Add `contracting_system_dps(field_id, code) -> Option<&'static str>` in `project.rs`, beside `contract_nature` (`project.rs:7646`).
+  - It trims and lowercases the code.
+  - It reads four ids: `BT-766-Lot`, `BT-766-Part`, `DE1-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode` and `SDK01-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode`.
+  - `dps-list` and `dps-nlist` return the code.
+  - `none`, any `fa-*` code and unknown codes return nothing.
+- Emit `Fact::Classification{field:"dps", scheme:"dps", code}` at the published Lot or Part scope. Supersession per key carries it.
+- A later `none` emits nothing, so a declaration never clears. That errs toward open.
+- Add the four ids to the `Channel::Code` destination predicate (`project.rs:7509-7520`).
+- Add `dps` to the sandbox scheme and field notes (`crates/app/src/v1/sql.rs:1032-1039`).
+- Do not project BT-765. It is not a rule input, and unit 3 reads it from `notice_codes`.
+
+### 1(b): drop the award notice's date in the mapping
+**The change.** At the Date arm of `NoticeState::read` (`project.rs:5397-5417`), when `sdk01` holds and `first_code(parsed, "SDK01-NoticeTypeCode")` is in `pub const SDK01_AWARD_NOTICE_TYPES: &[&str] = &["can-standard"]`, the SDK01 deadline field maps to `None`.
+- `data_quality.rs:363` uses the same const in place of its literal.
+- `cn-standard`, `pin-only` and any unlisted type keep today's mapping, visibly.
+- The date stays in the notice layer, and `/v1/notices/{id}/content` still serves it.
+
+**Why the mapping, and not `deadline_admitted`, `head_deadline` or the flag:**
+1. **Only the mapping knows which notice a date came from.**
+   - `Fact::Date` carries no provenance (`canonical.rs:3077`).
+   - `deadline_admitted` sees only `(utc, published_at)` (`canonical.rs:4078`). The 474 window stays pure.
+   - `head_deadline` sees merged facts (`canonical.rs:3136`).
+2. **A flag would keep serving the wrong date.** Supersession is per key, so in a chain the award's date replaces the CN's real deadline. A flag would close the Tender but keep serving that date. Dropping it lets the CN's deadline carry forward.
+3. **The date is not a submission deadline on any reading.** It sits 23 to 239 days after the award notice, on all 141. The committed award fixtures do not carry it.
+4. **F14 precedent** (issue 385): "a missing correction is visible as a stale date, an invented one is not."
+5. **One edit fixes every surface:** the served `submission_deadline`, `sort=deadline`, `deadline_after`/`_before`, the lot row and `status`. `current_deadline` becomes NULL, which is Closed under `read.rs:1226-1232`.
+
+The raw reads are a precondition with a stop rule (step 0c), not a unit-4 caveat. NULL-decision award heads outside sdk-0.1 stay in the ~102 for unit 3.
+
+### 1(c): Option B
+**Column.** `tenders.current_closed_by_notice INTEGER`. It is 1 when `closed_by_notice` holds at the head and NULL otherwise, never 0 (the `is_buyer` convention). It has no index: one would offer the planner an `IS NULL` seek over ~7.9M rows.
+
+**Head-scoped Tenders reads** (`StatusBy::Head` at `read.rs:2276`, `2831` (Page), `2901`):
+- Open: `AND t.current_deadline > ? AND t.current_closed_by_notice IS NULL`
+- Closed: `AND (t.current_deadline IS NULL OR t.current_deadline <= ? OR t.current_closed_by_notice IS NOT NULL)`
+
+The open range still seeks `tenders_current_deadline`, or `tenders_source_deadline` under the source pin (`read.rs:2155-2159`). Closed is already an OR.
+
+Unchanged:
+- `sort=deadline`, `HeadOrder::Deadline` and `deadline_after`/`_before`, which stay on `t.current_deadline`;
+- the source pin and isolation;
+- the publication seed. Status rides `version_predicates` after the seed, so Verify line 1 sees the flag.
+
+**SSE probe.** Add `StatusBy::Version`, used by `tenders_query` for `Scope::At` only.
+- Open is an EXISTS on `tender_version_dates` at `d.seq = v.seq`, with `field='submission_deadline'`, `> ?`, and the date admitted by `deadline_admitted_sql` against `v.published_at`. That is ANDed with `NOT closed_by_notice_sql("t.id","v.seq")`.
+- Closed is its negation.
+- Build the deadline EXISTS through one helper shared with `StatusBy::Lot` (`read.rs:1249-1266`). Then `the_deadline_window_is_written_once` (`head_election_agreement.rs:580`, six selectors) stays at six. If a line is added anyway, change the count in the same commit.
+
+**Lots.** `StatusBy::Lot` gains a `tender_closed` expression.
+- Open is `<424 EXISTS> AND NOT (<tender_closed>) AND NOT <lot_closed_by_result_sql(tid, seq, lot)>`. Closed is its negation.
+- `lots_stream_predicates` (`read.rs:3942`): `(SELECT tt.current_closed_by_notice FROM tenders tt WHERE tt.id = l.tender_id) IS NOT NULL`. This is the same PK seek its value bound already pays.
+- `lots_query_previous` (`read.rs:3742`): `t.current_closed_by_notice IS NOT NULL` for Page, and `closed_by_notice_sql("t.id","v.seq")` for At.
+- Never use `closed_by_notice_sql` in a Page read. Its coverage leg, evaluated per lot, is issue 115's quadratic shape.
+- `lot_seed_predicates` is unchanged. It is still a superset, and it keeps bare `status=open`'s seed a covering read.
+- **Perf bound.** On a fixture with 2,400 lots and 2,400 head results, `lots?tender=X&status=open` must stay under 2× its pre-change time. If it does not, ship without `lot_closed_by_result` (lots then close only with their Tender) and move the per-lot term to unit 3. No re-decision is needed.
+
+**Why not Option A** (`current_open_until` with its own index):
+- `sort=deadline`, the deadline bounds and the 503 source pin still need `current_deadline`. Option A would emit both ranges, and its new index would serve nothing.
+- Its index is deferred, so until a `Reindex` a bare range over it walks 7.9M rows. That is the 273 DoS again.
+- Its NULL default disagrees with the fold on every Tender with a deadline. That means either a 7.92M backfill (job 706's size) or a correction on every later refold. The flag's NULL default agrees wherever the rule does not fire.
+
+### One home, a Rust form and an SQL form
+In `canonical.rs`, beside `deadline_admitted` (`4078-4093`):
+- Functions: `closed_by_notice(chain: &[TenderVersion]) -> bool`, `lot_closed_by_result(chain, lot_key) -> bool`, `closed_by_notice_sql(tid, seq) -> String` and `lot_closed_by_result_sql(tid, seq, lot) -> String`.
+- Constants: `clos-nw`, `OPEN_SCHEME_PROCEDURES`, `OPEN_SCHEME_SUBTYPES` (`15`, `UK13`–`UK16`) and `DPS_CODES`.
+
+The SQL forms read only the version's own rows, each by a `(tender_id, seq)`-prefixed or PK seek:
+- `tender_versions`: `caused_by_notice_id`, plus `notice_subtype` for `seq <= v`;
+- `tender_version_lot_results` joined to `lot_results`: `decision`, `lot_id`, `notice_id`;
+- `tender_version_lots`: `kind`;
+- `tender_version_classifications`: `procedure` with `lot_id IS NULL`, and `dps`.
+
+**Agreement test** (the 474 pattern), through `Db::apply_tenders` over every branch fixture:
+- per version, the SQL form equals the Rust form;
+- per Tender, the stored flag equals the SQL form at `current_seq`;
+- per lot, the two lot forms agree.
+
+**Tripwire.** A `clos-nw` literal may appear in store/app code lines only in these helpers. Today the only one is the note at `crates/app/src/v1/sql.rs:1128`.
+
+### Fold and change feed
+- `StoredHead` (`canonical.rs:1527-1533`) gains `closed_by_notice`.
+  - `fresh` fills it beside `head_deadline` (`canonical.rs:21328`).
+  - Both `tender_identity` SELECTs read it.
+  - `head_update` writes it (`canonical.rs:41279`; executed near `21350`).
+  - `head_equal` then sees it (D1.5).
+- `append_version_changes` (`canonical.rs:39506`) gets two more conditions:
+  - Tender `changed` also when `closed_by_notice` differs between prev and v;
+  - each lot present in both versions `changed` also when its lot closure differs.
+- A later result flips the flag in the same transaction as `current_seq`, and SSE classifies it as `removed`. A later re-launch CN clears it, which reads as `added`.
+
+### Rollout: ADR-0017 R3 over the open head
+Read answers can change only where `current_deadline > now`, about 42k rows. A lot open on its own deadline implies that, because `head_deadline` is MAX over the version's tender and lot facts.
+
+**Rejected routes:**
+- **R2 (in-place backfill).** It is infeasible: no stored-rows→`TenderVersion` loader exists.
+- **A job-706 SQL UPDATE.** It would be a second implementation of the rule, which is issue 375's hazard.
+
+**`refold-open-head {dry_run}`** copies `refold-value-band`:
+- Cohort: `Db::open_head_tender_ids(now)` = `SELECT id FROM tenders WHERE current_deadline > ?`, beside `value_band_tender_ids` (`canonical.rs:13735`).
+- Wet run: `stamp_stale_for_tenders` (`13761`) and `requeue_tender_notices` (`13694`), then `project`.
+- Register it at every site `refold-value-band` uses: request arm, the 543 table, dispatch, the `Box::pin` run arm, the heavy-kind list, and a test. `supervisor.rs` is being edited concurrently, so diff before staging.
+- No `PROJECTION_EPOCH` bump. Queue it after the running 534 refold.
+- D3's rules T and L emit the corrections, and SSE classifies them head against head−1.
+- Completeness (D7 R3): the cohort's stale-0 residue is 0, and `verified + corrected == stamped`.
+
+**Then two field refolds:**
+- `refold-fields` over the SDK01 date id (dry count first, expect guard), so past-deadline DÖE awards stop serving the date.
+- The 2a fill: `refold-fields` over the four contracting-system ids. This is heavy, so take a dry count first and use an expect guard. If it has not run when unit 2's reads pass, file it as its own issue. Until it has run, the sandbox note says `dps` rows are complete for the open head and for Tenders folded since the deploy.
+
+### Unit 2 order
+**0. Bounded reads before any code**, gated like the Repro read.
+
+a. **Scheme table for the 178.** For each Tender, record:
+   - the head procedure code;
+   - every version's `notice_subtype`;
+   - the BT-765/BT-766/DE1/SDK01 contracting-system codes on every version's `caused_by_notice_id` (`notice_codes`, PK prefix);
+   - for legacy rows, the r209 DPS, TERMINATION_DPS and PROCUREMENT_DISCONTINUED markers;
+   - a verdict.
+
+   Stop rules:
+   - **Stop and revisit 1(a)** if any of 403644, 445631, 336277, 634469, 913640 or 179459 would close, or if a legacy row that would close carries a DPS marker with no termination or discontinued marker.
+   - **If 841082 declares `dps-*`,** it is a DPS. Replace Verify line 1 with a closing one-shot eForms row from the table.
+
+b. **Per-lot population.** Count the open-head lots the per-lot term would close while their Tender stays open, and read 5 of them.
+
+c. **sdk-0.1 award dates.** Read 3 to 5 public `/v1/notices/{id}/content` for sdk-0.1 `can-standard` notices that carry the date, including 25892804-1 and the one with the shortest distance. **Stop 1(b)** if any of them invites tenders or requests to participate until that date.
+
+**1. Build 2a and 1(b)** in `project.rs`.
+
+**2. Build the rule and its plumbing:**
+- the helpers and constants;
+- the column: SCHEMA (`canonical.rs:132`), `reset_tender_layer`'s CREATE (`canonical.rs:15176-15185`), an `add_column` in `migrate()` beside `lib.rs:861`/`988`, and a `COLUMN_NOTES` entry (`sql.rs:1045`, which says that past-deadline rows read NULL until their next refold);
+- the fold and the change-row clauses;
+- the read path, and the `read.rs:1223-1225` comment.
+
+**3. Tests:**
+- **Rule branches:** R1 closes; re-launch stays open; a winner in an earlier round stays open; an uncovered lot stays open; NULL stays open; K1, K2 and E2 each keep it open; a whole-UK12 closes; a partial UK12 stays open; a lotless Tender closes; a `lot_key`-None result beside Lot-kind lots stays open; a correction to `selec-w` reopens.
+- **1(b):** sdk-0.1 `can-standard` emits no `submission_deadline` while `cn-standard` keeps it; in a CN→CAN chain the CN's deadline carries forward.
+- **Agreement test and tripwire.**
+- **Head writers:** add a writer pin for the new column, beside `the_head_columns_have_exactly_one_writer_that_decides_them` (`head_election_agreement.rs:529`).
+- **`status_head_range.rs:28`:** update the closed string.
+- **Plan tests** with the deferred indexes built: `status=open` by id order, by `sort=deadline` ascending and descending with a cursor, and source-pinned, all still on `tenders_current_deadline`/`tenders_source_deadline` with no new SCAN.
+- **Existing plan tests unchanged:** `head_pointer_plan_tests` (`read.rs:5374`) and `lots_open_head_seed.rs` (423's control).
+- **Golden:** regenerate `fold_writer_golden.rs` deliberately (`GOLDEN_CAPTURE_495=1`).
+- **`api.rs` and SSE:** a result notice gives `removed` on a `status=open` tape; a re-launch gives `added`; `lots?status=open` drops the lots.
+- **Supervisor:** a dry and wet test for `refold-open-head`.
+
+**4. Gate and roll out:**
+- Gate with `ops/check.sh`.
+- Deploy with unit 4's served sentence. The flag makes "By submission deadline." false, which is the issue 370 class.
+- Run `refold-open-head` dry, then wet, then `project`.
+
+**5. Post-deploy reads:**
+- the Verify block;
+- the Repro read with `AND t.current_closed_by_notice IS NULL` and an exemption column, which must return only K1/K2/E2 rows;
+- the count of open heads caused by an sdk-0.1 `can-standard` notice, which must be 0;
+- 403644 and lot 1108460 still open;
+- an SSE `status=open` subscription receiving `removed`, and a public change row for each flip;
+- 273's closing matrix, `status=open&sort=deadline` with and without `source=ted`, `status=open&deadline_after=…`, and 423's `lots?status=open&cpv=45&limit=100`. None may regress.
+
+### Where the proposals disagreed
+- **DPS:** project BT-766 (proposal 1) rather than accept the gap (proposal 3). 445631 (ДСП) and 336277 (DAS) are named DPS-shaped schemes in the cohort, and a false close hides a live opportunity.
+- **BT-765:** not projected (against proposal 1). The rule does not read it.
+- **Coverage:** the Repro definition (proposal 1) rather than own-round coverage (proposal 3). With K1 guarding DPS, the stricter clause only adds false opens, and keeping the Repro read as the reference lets unit 2 check that the cohort drops to exactly the exempt rows.
+- **UK12 without awards:** stays open (proposal 3) rather than a subtype branch (proposal 1). It does not say which lots it ends, and nobody has measured it.
+- **E2:** adopted from proposal 3. It only keeps Tenders open, and it reads projected data.
+- **1(b):** the mapping (proposals 1 and 2) rather than a flag that keeps the date (proposal 3). Keeping it serves a self-contradictory `submission_deadline`, and proposal 3's head-election objection is false.
+- **Flag type:** INTEGER 1/NULL (proposal 2) rather than a TEXT reason (proposal 3). With 1(b) in the mapping there is only one reason.
+- **Per-lot term:** kept with proposal 2's bound and fallback rather than deferred (proposal 3). The issue's 1(c) asks for it, and step 0b measures its population.
+- **Lot seed:** unchanged (proposal 2) rather than flagged (proposal 3). The flag would make the covering `(current_deadline, id)` read do about 42k table lookups.
+- **SSE:** adopt `StatusBy::Version` (proposal 2). This was verified at `read.rs:2831` and `sse.rs:465`.
+- **Change rows:** add explicit clauses (proposal 2). Fold-time lot closures change no lot fact.
+- **Backfill cohort:** ~42k (proposals 1 and 2) rather than ~684 (proposal 3). The head-results cohort misses DÖE award heads whose AwardDate-only result yields no round, and R3 costs one verify each.
+
+### Accepted risks, carried to unit 3 or noted
+- **Late result after a re-launch.** If a re-launch CN is published before the earlier round's late `clos-nw` result, the Tender closes wrongly. BT-140 and OPP-090 are not parsed. After deploy, read the closed Tenders that have two or more contract-notice versions.
+- **Legacy-era open-ended schemes close.** Legacy procedure codes never map to `oth-*`, and the legacy DPS markers are not projected. Step 0a's stop rule is the guard.
+- **Unprojected FTS signals.** PCR-2015 DPS via `tender.techniques` is not parsed, so such a DPS closes. An explicit eForms DPS termination (BT-119) stays open under K1.
+- **Past-deadline flags stay NULL** until the Tender's next refold. That refold over-delivers one harmless correction. A future R4 would announce all of them at once, so count them before any R4.
+- **Transient after deploy.** Between the deploy and the end of `refold-open-head`, the per-lot SQL term runs on stored rows that lack 2a's `dps` facts. Run the refold right after the deploy.
+- **Per-lot closures are R0.** Where the Tender's flag does not move, a per-lot closure has no correction row. CHANGELOG must say so.
+- **Other head-relative SSE predicates.** `Scope::At` stays head-relative for every other head-column predicate (deadline bounds, value, published, source, kind). File that as its own issue.
+- **Rust/SQL drift.** The twins agree only as far as the fixtures and the tripwire cover them, so both must change in one commit.
+
+### Rejected at decision
+- Proposal 1, Option A (`current_open_until` plus its own index): status would need two ranges and the new index would serve nothing. The index is deferred, so it walks 7.9M rows until a Reindex, and its NULL default forces a 7.92M backfill or a correction on every later refold.
+- Proposal 1, UK12/tenderCancellation termination branch that closes a Tender whose UK12 head has no awards of its own: it cannot say which lots it ends, and the population is unmeasured.
+- Proposal 1, projecting BT-765 framework alongside BT-766: framework is not a rule input, so it adds projection scope and fill cost for no change in the rule.
+- Proposal 3, the generic `award-only` rule (every version published results, no open-nw): it would close any all-award chain, including selec-w multi-round DPS/framework shapes in the unmeasured 175.
+- Proposal 3, keeping the DÖE award's date and closing through the flag: it keeps serving a self-contradictory submission_deadline through the served field, sort=deadline and deadline_after. Its claim that dropping the date breaks head_election_agreement is false, because that test counts store/app selector lines only (head_election_agreement.rs:580-596).
+- Proposal 3, adding `t.current_closure IS NULL` to the open-head lot seed (read.rs:3869-3884): it turns bare status=open's covering (current_deadline, id) seed into about 42k table lookups.
+- Proposal 3, the head-results backfill cohort (~684): it misses DÖE award heads with no result round that 1(b)'s mapping still moves. The ~42k open-head range costs one R3 verify each.
+- Proposal 3, own-round-only lot coverage: with K1 guarding DPS it only adds false opens, and it breaks the Repro read as the reference definition for unit 2's post-deploy check.
+- Proposal 3, TEXT `current_closure` reason codes: with 1(b) handled in the mapping there is one reason, so INTEGER 1/NULL follows the is_buyer convention.
+- Proposal 3, moving the 3-5 raw sdk-0.1 reads to unit 4: the mapping drop depends on the date not being a submission deadline, so the read stays a step-0 precondition with a stop rule.
+- Proposal 3, no SSE probe change: tenders_query passes StatusBy::Head for Scope::At (read.rs:2831), so a fold-time close reads closed on both probes and is dropped at sse.rs:465.
+- Proposal 2, closing DÖE award heads through the flag while keeping the date: replaced by the mapping drop, which proposal 2 itself allowed once the raw read shows the date is not a submission deadline.
+- A job-706-style SQL UPDATE backfill: R2 needs the fold's own function over stored rows, and no loader exists (stored_version returns raw leaf rows, canonical.rs:21611). Transcribing the rule into SQL is issue 375's hazard.
+- Title, deadline distance from publication, BT-144 reason, `now` and `tenders.source` as rule inputs (all three proposals agree).
 
 ## Proposed units
 
