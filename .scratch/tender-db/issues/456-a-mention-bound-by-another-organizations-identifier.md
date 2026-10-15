@@ -46,7 +46,8 @@ orgs first. It is a corpus walk, so it is a dry job (a census-style report) and 
    name-only (as a provisional org) and record the identifier as foreign? That is precision against recall: a real
    rename or a trading name also disagrees. 448's campaign found many (Synectics → Ocular Integration), and the
    register (448's `ch_fetch.py`) is what told them apart.
-2. **Head.** Elect the head by majority across mentions, not first-seen. That also bears on 448's legal-form root
+2. **Head.** (DECIDED 2026-10-15 in issue 524 unit 2: the elected-head rule, identifier-bearing orgs only, with
+   R0/R1/R2 and a D4 script guard. 524 owns it.) Elect the head by majority across mentions, not first-seen. That also bears on 448's legal-form root
    (3M UK plc → Ltd stays `plc` forever).
 3. **Read.** Serve the mention's own name beside the org's head in `parties[]`, so a reader sees "the notice said
    Schneider Electric" even where the bind is wrong. That one is cheap, and it is honest whatever 1 decides.
