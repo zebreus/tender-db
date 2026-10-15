@@ -45,8 +45,17 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// wrong, and 2 of its 10 junk releases were wrong): R1 and R2 are HELD (`residue`) when the
 /// organization's single newest item is the head's ([`HEAD_HOLD_RESIDUE`]), and the junk exemption
 /// no longer releases an all-lower-case head or one whose only new digits sit inside a word
-/// (`CA2BM`).
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v8";
+/// (`CA2BM`). `v9` (`## Rule v9 — decided`, panel wf_5cca11b1-622, after plan 2526's dated re-judge
+/// failed its change:R1, change:R2 and released bars): R1 and R2 changes are HELD on five pure tests
+/// of the head and the display spelling ([`HeadElectFns::serve_hold`]: [`HEAD_HOLD_REVIEW_BODY`],
+/// [`HEAD_HOLD_ORGAN`], [`HEAD_HOLD_CODE_ADDED`], [`HEAD_HOLD_ADDRESS_ADDED`],
+/// [`HEAD_HOLD_CAPS_VARIANT`]); the junk exemption's `digits` release is narrowed twice (a digit
+/// glued to its neighbour in the elected key is the name's own, `SMD 3` → `smd3`; and the elected
+/// name must be the head minus junk, at most one other word lost), a withheld release returning to
+/// its hold and counted `release_withheld`; and the plan's uniform samples are salted with this
+/// epoch ([`ORG_NAME_REFRESH_SAMPLE_SALT`]), so a re-judge's fresh samples are not the predictable
+/// continuation of the last plan's.
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v9";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -81,6 +90,34 @@ pub const HEAD_HOLD_UNDATED: &str = "undated";
 /// notice's lot repeats, misspellings). The junk exemption releases it as it releases
 /// [`HEAD_HOLD_RECENT`]; R0 is never held.
 pub const HEAD_HOLD_RESIDUE: &str = "residue";
+
+/// Issue 524 rule `v9`: the serve hold when R1 or R2 would serve a procurement review body's name
+/// (a review chamber or court) over a head that is not review-like — another entity's procedures
+/// naming the chamber that heard a complaint (22028982 `Universitätsklinikum Freiburg` →
+/// `Vergabekammer BW`). `crosswalk::head_serve_hold`'s first test.
+pub const HEAD_HOLD_REVIEW_BODY: &str = "review_body";
+
+/// Issue 524 rule `v9`: the serve hold when R1 or R2 would serve a name led by a contracting ORGAN
+/// (`Junta de Gobierno …`, `Alcaldía …`, `Pleno …`) over a head that is not (4065575). Second.
+pub const HEAD_HOLD_ORGAN: &str = "organ";
+
+/// Issue 524 rule `v9`: the serve hold when R1 or R2 would serve the head's own words plus a code
+/// (`Commune de Chiconi (976)`, 17116440). Third.
+pub const HEAD_HOLD_CODE_ADDED: &str = "code_added";
+
+/// Issue 524 rule `v9`: the serve hold when R1 or R2 would serve a name with a number appended after
+/// a comma or semicolon (an address or seat, 8069375's `…, Ljubljana, Kolodvorska 11`), not a Czech or
+/// Slovak school's. Fourth.
+pub const HEAD_HOLD_ADDRESS_ADDED: &str = "address_added";
+
+/// Issue 524 rule `v9`: the serve hold when R1 or R2 would serve an ALL-CAPS respelling of a
+/// mixed-case head's same words (16508165). Fifth.
+pub const HEAD_HOLD_CAPS_VARIANT: &str = "caps_variant";
+
+/// Issue 524 rule `v9`: the serve holds, in [`HeadElectFns::serve_hold`]'s order — the plan's summary
+/// names each, at zero too.
+pub const HEAD_SERVE_HOLDS: [&str; 5] =
+    [HEAD_HOLD_REVIEW_BODY, HEAD_HOLD_ORGAN, HEAD_HOLD_CODE_ADDED, HEAD_HOLD_ADDRESS_ADDED, HEAD_HOLD_CAPS_VARIANT];
 
 /// Issue 524 rule `v7`: the fewest head procedures (k) the window fires at. At 2 the 2/3 bar means
 /// both newest items are the head's (2.2% by chance among 10 items, against 18% for 2 of 3).
@@ -118,8 +155,14 @@ pub struct RecentReading {
     /// (rule `v8`) the newest item is the head's on an R1 or R2 change (`residue`): `unfit` (the head
     /// is unfit to serve even against itself, for any reason but `lowercase`) or `digits` (its vote
     /// key has an all-digit token the elected key lacks: an address number, a postcode, a NIP, `LOT
-    /// 2`'s `2`).
+    /// 2`'s `2` — since rule `v9` one not glued to its neighbour in the elected key, and only where
+    /// the elected name drops at most one other word of the head).
     pub released: Option<&'static str>,
+    /// Rule `v9`: a `digits` release v8 would have made and v9 withholds, so the `recent` or `residue`
+    /// hold stands: `glue` (every such number is glued to a neighbouring head word in the elected key:
+    /// 4295185's `SMD 3` → `Smd3`, the name's own digit) or `junk_only` (the elected name also drops
+    /// more than one word of 3+ letters the head prints: 9814's owner and street).
+    pub release_withheld: Option<&'static str>,
 }
 
 /// Issue 524 unit 2: the rule a head CHANGE (or a held one) is elected by.
@@ -189,8 +232,9 @@ pub enum HeadVerdict {
     /// fit spelling, so `new` is `None`), a bind guard's reason (the injected [`HeadElectFns::hold`]:
     /// `family`, `gb_family`, `consortium_removed`, `nhs_check`), for R2 only a shorthand's
     /// ([`HeadElectFns::r2_hold`]: `initialism`), for R1 with H ≥ 2 (rule `v7`) [`HEAD_HOLD_RECENT`]
-    /// (with the display spelling, `None` when none is fit) or [`HEAD_HOLD_UNDATED`] (`None`), or for
-    /// R1 and R2 (rule `v8`) [`HEAD_HOLD_RESIDUE`] (with the display spelling) — with the spelling it
+    /// (with the display spelling, `None` when none is fit) or [`HEAD_HOLD_UNDATED`] (`None`), for
+    /// R1 and R2 (rule `v8`) [`HEAD_HOLD_RESIDUE`] (with the display spelling), or for R1 and R2 (rule
+    /// `v9`) a serve hold's ([`HeadElectFns::serve_hold`]: [`HEAD_SERVE_HOLDS`]) — with the spelling it
     /// would have served.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
@@ -240,7 +284,9 @@ impl HeadVerdict {
 
 /// Issue 524 unit 2: the ingest functions [`elect_head`] runs with (store never depends on ingest). The
 /// app passes `crosswalk::head_vote_key`, `partyname::not_a_name` as its class label,
-/// `crosswalk::head_spelling_unfit`, `crosswalk::head_change_hold` and `crosswalk::head_r2_hold`.
+/// `crosswalk::head_spelling_unfit`, `crosswalk::head_change_hold`, `crosswalk::head_r2_hold`,
+/// `crosswalk::head_twin_key` and (rule `v9`) `crosswalk::head_serve_hold` — one value, to the dry
+/// planner and the wet pre-pass alike, so they cannot elect differently.
 #[derive(Clone, Copy)]
 pub struct HeadElectFns {
     /// The key mentions vote under: `altid_name_key` of the diacritic-folded name, with every
@@ -261,6 +307,15 @@ pub struct HeadElectFns {
     /// every non-alphanumeric character dropped (`crosswalk::head_twin_key`). The display order
     /// prefers the twin with more marked letters, and only among twins.
     pub twin_key: fn(&str) -> String,
+    /// Issue 524 rule `v9`, `(old, new, r2)`: why an R1 or R2 change is HELD on the two names alone,
+    /// or `None` — a review body's name served for another entity, an organ for its entity, a code
+    /// added to the head's words, a number added after a comma or semicolon (an address, whatever
+    /// else the name adds), an ALL-CAPS respelling of a mixed-case head
+    /// (`crosswalk::head_serve_hold`; [`HEAD_SERVE_HOLDS`] in its order). Asked after
+    /// [`HeadElectFns::hold`] and [`HeadElectFns::r2_hold`], never for R0 (a defective head always
+    /// changes); the `recent`, `residue` and `undated` holds decide before it. `r2` is the rule. Pure:
+    /// no DB read, so the plan and the pre-pass agree by construction.
+    pub serve_hold: fn(&str, &str, bool) -> Option<&'static str>,
 }
 
 /// Issue 524 unit 2: the organization [`elect_head`] decides for.
@@ -337,7 +392,14 @@ struct Cluster<'a> {
 ///      `lowercase`, a deliberate lower-case brand: 3909's `act legal s.r.o., advokátní kancelář`),
 ///      or its vote key has a token of decimal digits only (`char::is_ascii_digit` across the token,
 ///      rule `v8`: an address number, a postcode, a NIP/REGON, `LOT 2`'s `2` — never 1846's acronym
-///      `CA2BM`) the elected key lacks.
+///      `CA2BM`) the elected key lacks. Rule `v9` narrows `digits` twice: a number glued in the
+///      elected key to the head word before or after it (`prev + t` or `t + next` is an elected
+///      token) does not count — the name's own digit, 4295185's `SMD 3` → `smd3` —; and the elected
+///      key may lack at most ONE head word of 3+ chars with no ASCII digit, so the elected name is the
+///      head minus junk (one lost word lets an expanded acronym through: `SDIS 49` → `Service
+///      départemental …`), not a different wording (9814 drops the owner and the street). A release
+///      either test stops is WITHHELD: the hold stands, read `release_withheld` (`glue` |
+///      `junk_only`).
 /// 6. **R2**: H ≤ 1, the top is unique, T ≥ [`HEAD_ELECT_TOP_MIN`], and T × 4 ≥ V (25%).
 /// 7. Otherwise KEEP (`bar`).
 ///
@@ -346,6 +408,11 @@ struct Cluster<'a> {
 /// ([`HEAD_HOLD_RESIDUE`], `new` the display spelling) unless the junk exemption releases it. Only
 /// with dates: an undated R1 with H ≥ 2 holds `undated` before it, and an undated H ≤ 1 change (no
 /// dates, or `Some(&[])`) changes as before. R0 is never held.
+///
+/// **The serve holds** (rule `v9`): an R1 or R2 change that reaches `serve` with a fit display
+/// spelling, past the bind guards and R2's initialism hold, is HELD when
+/// [`HeadElectFns::serve_hold`] names a reason ([`HEAD_SERVE_HOLDS`]), with the spelling it would
+/// serve. R0 is never asked.
 ///
 /// The elected cluster serves its DISPLAY spelling: among the fit spellings only
 /// ([`HeadElectFns::unfit`], read on each spelling as published and on its collapsed form), each with
@@ -433,7 +500,12 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
         Some(new) if new == org.head => HeadVerdict::Keep(HeadKeep::S1),
         Some(new) => {
             let held = (fns.hold)(org.head, &new, org.identifier_kind, org.identifier)
-                .or_else(|| if rule == HeadRule::R2 { (fns.r2_hold)(org.head, &new) } else { None });
+                .or_else(|| if rule == HeadRule::R2 { (fns.r2_hold)(org.head, &new) } else { None })
+                // Rule v9: the serve holds, for R1 and R2 only — R0's defective head always changes.
+                .or_else(|| match rule {
+                    HeadRule::R1 | HeadRule::R2 => (fns.serve_hold)(org.head, &new, rule == HeadRule::R2),
+                    HeadRule::R0e | HeadRule::R0n => None,
+                });
             match held {
                 Some(reason) => HeadVerdict::Hold { reason, rule, new: Some(new) },
                 None => HeadVerdict::Change { rule, new },
@@ -500,11 +572,15 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
         };
         if read.fires {
             match recent_release(org.head, &head_key, tied[0], fns) {
-                None => {
+                Junk::Released(why) => read.released = Some(why),
+                held => {
+                    // Rule v9: a release v8 would have made returns to the hold, read as withheld.
+                    if let Junk::Withheld(why) = held {
+                        read.release_withheld = Some(why);
+                    }
                     let new = display_spelling(elected, org.head, fns);
                     return counted(HeadVerdict::Hold { reason: HEAD_HOLD_RECENT, rule, new }, reading);
                 }
-                Some(why) => read.released = Some(why),
             }
         }
     }
@@ -515,11 +591,14 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
         && read.released.is_none()
     {
         match recent_release(org.head, &head_key, tied[0], fns) {
-            None => {
+            Junk::Released(why) => read.released = Some(why),
+            held => {
+                if let Junk::Withheld(why) = held {
+                    read.release_withheld = Some(why);
+                }
                 let new = display_spelling(elected, org.head, fns);
                 return counted(HeadVerdict::Hold { reason: HEAD_HOLD_RESIDUE, rule, new }, reading);
             }
-            Some(why) => read.released = Some(why),
         }
     }
     counted(serve(rule, elected), reading)
@@ -565,30 +644,78 @@ fn recent_reading(
         undated: voting.saturating_sub(dated_voters),
         fires: k >= HEAD_RECENT_MIN_PROCEDURES && 3 * h_w >= 2 * k,
         released: None,
+        release_withheld: None,
     }
 }
 
-/// The junk exemption (rule `v7`, narrowed by `v8`): why a head the window (`recent`) or the residue
-/// holdout (`residue`) would protect is NOT protected — `unfit` when it is unfit to serve even
-/// against itself for any reason but `lowercase` (control, mojibake, long, non_name; a lower-case head
-/// is a deliberate brand, 3909's `act legal s.r.o., advokátní kancelář`, the registered current name
-/// a v7 release reverted), `digits` when its vote key has a token of ASCII decimal digits only the
-/// elected cluster's key lacks (a buyer template appending an address number, a postcode or a NIP, a
-/// `LOT 2` prefix). A token the two keys share does not count (`nr 5` on both sides is a rename,
+/// The junk exemption's answer for a head the window (`recent`) or the residue holdout (`residue`)
+/// would protect.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Junk {
+    /// Not junk: the hold stands.
+    No,
+    /// Junk (`unfit` | `digits`): released, the change goes on to `serve`, read `released`.
+    Released(&'static str),
+    /// Rule `v9`: a `digits` release v8 would have made and v9 does not (`glue` | `junk_only`): the hold
+    /// stands, read `release_withheld`.
+    Withheld(&'static str),
+}
+
+/// The junk exemption (rule `v7`, narrowed by `v8` and `v9`): whether a head the window (`recent`) or
+/// the residue holdout (`residue`) would protect is NOT protected — `unfit` when it is unfit to serve
+/// even against itself for any reason but `lowercase` (control, mojibake, long, non_name; a lower-case
+/// head is a deliberate brand, 3909's `act legal s.r.o., advokátní kancelář`, the registered current
+/// name a v7 release reverted), `digits` when its vote key has a token of ASCII decimal digits only
+/// the elected cluster's key lacks (a buyer template appending an address number, a postcode or a NIP,
+/// a `LOT 2` prefix). A token the two keys share does not count (`nr 5` on both sides is a rename,
 /// held), and a token with a letter does not either (v8: 1846's acronym `CA2BM`, printed on every
 /// recent notice, was released by v7's `char::is_numeric` test).
-fn recent_release(head: &str, head_key: &str, elected_key: &str, fns: &HeadElectFns) -> Option<&'static str> {
+///
+/// Rule `v9` (plan 2526's `digits` releases read 5 wrong of 26) narrows `digits` twice; a release
+/// either stops is [`Junk::Withheld`]:
+/// - **glue**: a number does not count when the elected key holds it glued to the head-key token
+///   before or after it (`prev + t` or `t + next`): the name's own digit (4295185 `SMD 3` →
+///   `Smd3`, keyed `smd3`). When every number is glued, `glue`.
+/// - **junk-only**: the elected key may lack at most one head-key token of 3 or more chars with no
+///   ASCII digit — the elected name is the head minus its junk, one lost word allowed so an expanded
+///   acronym still releases (`SDIS 49` → `Service départemental …`). More is a different wording, not
+///   a stripped template (9814's head names the owner, his town and street; plan 2526's Croatian
+///   obrt cohort): `junk_only`.
+fn recent_release(head: &str, head_key: &str, elected_key: &str, fns: &HeadElectFns) -> Junk {
     match (fns.unfit)(head, head) {
         // `unfit` answers `lowercase` before `non_name`: a lower-case non-name head still releases.
         Some("lowercase") if (fns.not_a_name)(head).is_none() => {}
-        Some(_) => return Some("unfit"),
+        Some(_) => return Junk::Released("unfit"),
         None => {}
     }
     let elected: HashSet<&str> = elected_key.split(' ').collect();
-    head_key
-        .split(' ')
-        .any(|token| !token.is_empty() && token.chars().all(|c| c.is_ascii_digit()) && !elected.contains(token))
-        .then_some("digits")
+    let tokens: Vec<&str> = head_key.split(' ').collect();
+    // v8's digits: a whole number of the head key the elected key lacks.
+    let numbers: Vec<usize> = (0..tokens.len())
+        .filter(|&at| {
+            let token = tokens[at];
+            !token.is_empty() && token.chars().all(|c| c.is_ascii_digit()) && !elected.contains(token)
+        })
+        .collect();
+    if numbers.is_empty() {
+        return Junk::No;
+    }
+    // v9 glue: the number glued to its neighbour is an elected token.
+    let glued = |at: usize| {
+        let token = tokens[at];
+        (at > 0 && elected.contains(format!("{}{token}", tokens[at - 1]).as_str()))
+            || tokens.get(at + 1).is_some_and(|next| elected.contains(format!("{token}{next}").as_str()))
+    };
+    if numbers.iter().all(|&at| glued(at)) {
+        return Junk::Withheld("glue");
+    }
+    // v9 junk-only: at most one lost word.
+    let lost: HashSet<&str> = tokens
+        .iter()
+        .copied()
+        .filter(|t| t.chars().count() >= 3 && !t.chars().any(|c| c.is_ascii_digit()) && !elected.contains(t))
+        .collect();
+    if lost.len() > 1 { Junk::Withheld("junk_only") } else { Junk::Released("digits") }
 }
 
 /// The display order of two spellings of one cluster for `max_by`: not-ALL-CAPS before ALL-CAPS, then
@@ -833,6 +960,9 @@ pub struct HeadRefreshEntry {
     pub newest_is_head: Option<bool>,
     pub undated_mentions: Option<u64>,
     pub recent_released: Option<&'static str>,
+    /// Rule `v9`: the `digits` release v9 withheld from this hold (`glue` | `junk_only`), `None`
+    /// otherwise ([`RecentReading::release_withheld`]).
+    pub release_withheld: Option<&'static str>,
 }
 
 /// Issue 524 unit 2a: [`Db::plan_org_name_refresh`]'s answer — what `refresh-org-names` WOULD do.
@@ -896,6 +1026,13 @@ pub struct OrgNameRefreshPlan {
     /// `recent_released`.
     pub recent_released: BTreeMap<&'static str, u64>,
     pub recent_released_ids: Vec<i64>,
+    /// Rule `v9`: the HOLDS (in the population) whose `digits` release v9 withheld — v8 would have
+    /// released them, so the `recent` or `residue` hold stands — by why (`glue`, `junk_only`; see
+    /// [`RecentReading::release_withheld`]), and the first [`ORG_NAME_REFRESH_RELEASED_LISTED`] of their
+    /// ids by org id: the decision's accepted cost (plan 2526: 15 withheld, labelled 5 wrong, 2
+    /// neutral, 8 right), listed so it can be read.
+    pub release_withheld: BTreeMap<&'static str, u64>,
+    pub release_withheld_ids: Vec<i64>,
     /// Rule `v7`: the planned changes whose organization's NEWEST item is a head item, by rule. Since
     /// rule `v8` holds that residue (`hold:residue`, in `by_hold`), these are the ones that still SHIP:
     /// an R0 change (never held) or a change the junk exemption released. Sampled as
@@ -908,7 +1045,8 @@ pub struct OrgNameRefreshPlan {
     pub held: Vec<HeadRefreshEntry>,
     pub held_truncated: bool,
     /// Per `verdict:reason` (`change:R1`, `keep:S1`, `hold:no_fit`), the `samples_per_reason` orgs with
-    /// the smallest `(org_id × 2654435761) mod 2³²` — uniform over the class, not its oldest ids.
+    /// the smallest `((org_id XOR salt) × 2654435761) mod 2³²` — uniform over the class, not its oldest
+    /// ids; since rule `v9` salted with the epoch ([`ORG_NAME_REFRESH_SAMPLE_SALT`]).
     pub samples: BTreeMap<String, Vec<HeadRefreshEntry>>,
     /// The canaries the walk passed, in walk order; a missing id yields no row.
     pub canaries: Vec<HeadRefreshEntry>,
@@ -920,9 +1058,30 @@ pub struct OrgNameRefreshPlan {
 /// 10); past it the tally still counts them all.
 pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 500;
 
-/// The uniform sample's order: Knuth's multiplicative hash of the id, mod 2³², then the id.
+/// Issue 524 rule `v9`: the uniform samples' salt — the low 32 bits of FNV-1a 64 of
+/// [`HEAD_ELECTION_EPOCH`] (`524u2-v9`: 460,574,797). The protocol's dated re-judge reads "fresh"
+/// samples, and an unsalted hash makes every plan's class sample the same first ids: plan 2526's
+/// panel read the next 30 of each list ahead. Salted, each epoch draws anew, and a plan's samples stay
+/// reproducible from its epoch.
+pub const ORG_NAME_REFRESH_SAMPLE_SALT: u64 = epoch_salt(HEAD_ELECTION_EPOCH);
+
+/// FNV-1a 64 of `epoch`, its low 32 bits.
+const fn epoch_salt(epoch: &str) -> u64 {
+    let bytes = epoch.as_bytes();
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    let mut at = 0;
+    while at < bytes.len() {
+        hash ^= bytes[at] as u64;
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+        at += 1;
+    }
+    hash & 0xFFFF_FFFF
+}
+
+/// The uniform sample's order: Knuth's multiplicative hash of the id XOR the epoch's salt (rule `v9`;
+/// XOR keeps it a bijection of the id, so the sample stays uniform), mod 2³², then the id.
 fn sample_key(org_id: i64) -> (u64, i64) {
-    ((org_id as u64).wrapping_mul(2_654_435_761) & 0xFFFF_FFFF, org_id)
+    (((org_id as u64) ^ ORG_NAME_REFRESH_SAMPLE_SALT).wrapping_mul(2_654_435_761) & 0xFFFF_FFFF, org_id)
 }
 
 /// The `cap` smallest-keyed entries offered, kept sorted.
@@ -1235,6 +1394,13 @@ impl Db {
                             plan.recent_released_ids.push(org.id);
                         }
                     }
+                    // Rule v9: the holds a v8 `digits` release would have shipped.
+                    if let (Some(why), HeadVerdict::Hold { .. }) = (read.release_withheld, verdict) {
+                        *plan.release_withheld.entry(why).or_default() += 1;
+                        if plan.release_withheld_ids.len() < ORG_NAME_REFRESH_RELEASED_LISTED {
+                            plan.release_withheld_ids.push(org.id);
+                        }
+                    }
                     // Rule v8 holds the residue; the changes still reading it ship (R0, or released).
                     if let (HeadVerdict::Change { rule, .. }, true) = (verdict, read.newest_is_head) {
                         plan.residue.entry(rule.label()).or_default().add(org.n);
@@ -1381,6 +1547,7 @@ fn refresh_entry(org: &PageOrg, j: &Judged, args: &OrgNameRefreshArgs<'_>) -> He
         newest_is_head: recent.map(|r| r.newest_is_head),
         undated_mentions: recent.map(|r| r.undated),
         recent_released: recent.and_then(|r| r.released),
+        release_withheld: recent.and_then(|r| r.release_withheld),
     }
 }
 
@@ -1470,6 +1637,11 @@ pub struct OrgNameRefreshApplyArgs<'a> {
     pub resume_after: Option<i64>,
     /// Targets per write transaction: [`ORG_NAME_REFRESH_WINDOW`] in the job.
     pub window: usize,
+    /// Rule v9: the junk releases this run excludes (`exclude_released`). The caller already dropped
+    /// the planned targets that shipped through one; the pre-pass also drifts a target whose
+    /// re-election now ships only through one (its head named newer procedures since the plan and
+    /// the exemption released it), so the filter holds at wet time, not only at plan time.
+    pub exclude_released: &'a [String],
     pub stop: &'a (dyn Fn() -> bool + Sync),
     pub progress: &'a (dyn Fn(u64, &str) + Sync),
 }
@@ -1540,8 +1712,9 @@ pub struct OrgNameRefreshApplied {
     /// The first [`ORG_NAME_REFRESH_DRIFT_SAMPLES`] drifted or gone targets, by org id.
     pub drift_samples: Vec<OrgNameRefreshDrift>,
     /// [`ORG_NAME_REFRESH_APPLIED_SAMPLES`] committed renames, uniform over the run (the planner's
-    /// sample order, the smallest `(org_id × 2654435761) mod 2³²`), listed by org id. A run of that
-    /// many renames or fewer lists every one.
+    /// sample order, the smallest `((org_id XOR salt) × 2654435761) mod 2³²`, rule `v9`'s
+    /// [`ORG_NAME_REFRESH_SAMPLE_SALT`]), listed by org id. A run of that many renames or fewer lists
+    /// every one.
     pub applied_samples: Vec<OrgNameRefreshRename>,
     /// The 513 U4 `fold_error` shape (the 2b review): a window that failed AFTER at least one window
     /// of this job id committed ends the run there, and the report comes back Ok with the counts and
@@ -1616,6 +1789,12 @@ enum Readiness {
     Gone,
 }
 
+/// Rule v9: the junk release (`released`, the election's own reading) a wet run's
+/// `exclude_released` names, if any — the pre-pass's check that the filter still holds at wet time.
+fn excluded_release(released: Option<&'static str>, exclude_released: &[String]) -> Option<&'static str> {
+    released.filter(|why| exclude_released.iter().any(|x| x == why))
+}
+
 /// The pre-pass: each target's organization read and re-elected as the planner read it (the same
 /// page SQL, mention read, voters and verdict probe), then compared with what the plan recorded.
 /// `Err(read)` when `stop`, read between [`IN_CHUNK`]-target chunks, ended it after `read` targets.
@@ -1624,6 +1803,7 @@ async fn read_readiness(
     fns: &HeadElectFns,
     targets: &[OrgNameRefreshTarget],
     horizon: i64,
+    exclude_released: &[String],
     stop: &(dyn Fn() -> bool + Sync),
 ) -> turso::Result<Result<Vec<Readiness>, u64>> {
     let mut out = Vec::with_capacity(targets.len());
@@ -1729,11 +1909,20 @@ async fn read_readiness(
                 }
             }
             // A target that now reads `hold:recent` (a newer head procedure since the plan),
-            // `hold:residue` (rule v8: its newest item is now the head's) or `hold:undated` is drifted
-            // like any other verdict that is not the plan's change.
+            // `hold:residue` (rule v8: its newest item is now the head's), `hold:undated` or a serve
+            // hold (rule v9: a pure test of the same head and spelling, so only a moved head or a new
+            // display spelling makes one) is drifted like any other verdict that is not the plan's
+            // change.
             match &election.verdict {
                 HeadVerdict::Change { rule, new } if rule.label() == target.rule && *new == target.new_name => {
-                    out.push(Readiness::Ready(election));
+                    match excluded_release(election.recent.as_ref().and_then(|r| r.released), exclude_released) {
+                        None => out.push(Readiness::Ready(election)),
+                        Some(why) => out.push(Readiness::Drifted(format!(
+                            "re-elected change:{} {:?}, but it ships only through a `{why}` junk release, which \
+                             this run excludes (exclude_released)",
+                            target.rule, target.new_name
+                        ))),
+                    }
                 }
                 other => out.push(Readiness::Drifted(format!(
                     "re-elected {}{}, not the plan's change:{} {:?}",
@@ -1839,7 +2028,7 @@ impl Db {
         (args.progress)(0, &format!("pre-pass: re-electing {} planned organization(s)", targets.len()));
         let readiness = {
             let reader = self.reader().await?;
-            read_readiness(&reader, &args.fns, &targets, horizon, args.stop).await?
+            read_readiness(&reader, &args.fns, &targets, horizon, args.exclude_released, args.stop).await?
         };
         let readiness = match readiness {
             Ok(readiness) => readiness,
@@ -2262,7 +2451,14 @@ mod tests {
         (stands_out && initials.contains(&first.to_lowercase())).then_some("initialism")
     }
 
-    const FNS: HeadElectFns = HeadElectFns { vote_key: key, not_a_name: class, unfit, hold, r2_hold, twin_key: twin };
+    /// Stand-in for `crosswalk::head_serve_hold` (rule v9): a new name led by `Organ of` the head is not
+    /// led by is an organ for its entity.
+    fn serve_hold(old: &str, new: &str, _r2: bool) -> Option<&'static str> {
+        (new.starts_with("Organ of ") && !old.starts_with("Organ of ")).then_some(super::HEAD_HOLD_ORGAN)
+    }
+
+    const FNS: HeadElectFns =
+        HeadElectFns { vote_key: key, not_a_name: class, unfit, hold, r2_hold, twin_key: twin, serve_hold };
 
     fn org(head: &str) -> HeadElectOrg<'_> {
         HeadElectOrg { head, identifier_kind: Some("national"), identifier: Some("GB1"), bind_defect: false, dated: None }
@@ -2592,12 +2788,20 @@ mod tests {
         assert_eq!(dominant_script("ООО Ромашка Ltd"), Some(Script::Cyrillic), "the most letters win");
     }
 
+    /// Rule v9 changed these values on purpose: the key is Knuth's hash of the id XOR the epoch's salt
+    /// (FNV-1a 64 of `524u2-v9`, low 32 bits), so the dated re-judge's "fresh" samples are not plan
+    /// 2526's predictable next 30. Unsalted (v2–v8) the first three read 2,654,435,761, 1,013,904,226
+    /// and 387,276,917.
     #[test]
-    fn the_sample_key_is_knuths_hash_mod_two_to_the_32() {
-        assert_eq!(sample_key(1), (2_654_435_761, 1));
-        assert_eq!(sample_key(2), (1_013_904_226, 2));
-        assert_eq!(sample_key(5), (387_276_917, 5));
-        assert_eq!(sample_key(31_558_903).0, (31_558_903u64 * 2_654_435_761) % (1 << 32));
+    fn the_sample_key_is_knuths_hash_of_the_salted_id_mod_two_to_the_32() {
+        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 460_574_797);
+        assert_eq!(super::epoch_salt("524u2-v9"), 460_574_797);
+        assert_ne!(super::epoch_salt("524u2-v8"), super::ORG_NAME_REFRESH_SAMPLE_SALT, "each epoch its own draw");
+        assert_eq!(sample_key(1), (1_624_961_164, 1));
+        assert_eq!(sample_key(2), (998_333_855, 2));
+        assert_eq!(sample_key(5), (3_892_120_008, 5));
+        assert_eq!(sample_key(31_558_903), (1_157_367_450, 31_558_903));
+        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 460_574_797) * 2_654_435_761) % (1 << 32));
     }
 
     // ---- Rule v7: the R1 recency hold (the recency decision's tests 1-12).
@@ -2914,9 +3118,16 @@ mod tests {
             let org_ = HeadElectOrg { dated: Some(&rows), ..org(head) };
             elect_head_counted(&votes, &org_, &FNS)
         };
-        let address = r2("Head Body ul Lipowa 12");
+        // Rule v9 moved this shape from `Head Body ul Lipowa 12` (v8's) to the elected name plus its
+        // address: v9's junk-only test lets the elected name lose at most one head word, and `Head Body
+        // ul Lipowa 12` → `Main Body` loses `head` AND `lipowa` — it is withheld now (asserted below).
+        // The v8 point, a residue hold released for an address number on R2, is unchanged.
+        let address = r2("Main Body ul Lipowa 12");
         assert_eq!(address.verdict, HeadVerdict::Change { rule: HeadRule::R2, new: "Main Body".into() });
         assert_eq!(address.recent.unwrap().released, Some("digits"));
+        let other = r2("Head Body ul Lipowa 12");
+        assert_eq!(other.verdict, residue(HeadRule::R2, "Main Body"));
+        assert_eq!((other.recent.unwrap().released, other.recent.unwrap().release_withheld), (None, Some("junk_only")));
         let acronym = r2("CA2BM Head Body");
         assert_eq!(acronym.verdict, residue(HeadRule::R2, "Main Body"));
         assert_eq!(acronym.recent.unwrap().released, None);
@@ -2945,6 +3156,134 @@ mod tests {
         assert_eq!(e.verdict, r1("Acme Group"));
         let brand = [items("Acme Group", 1, 1, 8), items("acme services", 101, 100, 3)].concat();
         assert_eq!(dated(&brand, "acme services").verdict, recent(Some("Acme Group")));
+    }
+
+    // ---- Rule v9: the serve holds and the narrowed digits release.
+
+    fn organ(rule: HeadRule, new: &str) -> HeadVerdict {
+        HeadVerdict::Hold { reason: super::HEAD_HOLD_ORGAN, rule, new: Some(new.to_owned()) }
+    }
+
+    /// Rule v9: `serve_hold` is asked of R1 and R2 changes, with the display spelling, after the bind
+    /// guards; never of R0 (a defective head always changes), and never the other way round (the
+    /// head is the organ).
+    #[test]
+    fn the_serve_hold_is_asked_of_r1_and_r2_after_the_bind_guards_never_r0() {
+        let r1 = [("Organ of Acme", 5), ("ORGAN OF ACME", 9), ("Acme", 1)];
+        assert_eq!(elect_head(&r1, &org("Acme"), &FNS), organ(HeadRule::R1, "Organ of Acme"), "the display spelling");
+        let r2 = [("Organ of Acme", 3), ("Nord Body", 2), ("Sued Body", 2), ("Ost Body", 2), ("West Body", 2), ("Acme", 1)];
+        assert_eq!(elect_head(&r2, &org("Acme"), &FNS), organ(HeadRule::R2, "Organ of Acme"));
+        let r0 = [("Organ of Acme", 3)];
+        assert_eq!(
+            elect_head(&r0, &org("s.o."), &FNS),
+            HeadVerdict::Change { rule: HeadRule::R0n, new: "Organ of Acme".into() },
+            "R0 is never asked"
+        );
+        assert_eq!(
+            elect_head(&r0, &org(""), &FNS),
+            HeadVerdict::Change { rule: HeadRule::R0e, new: "Organ of Acme".into() }
+        );
+        // The bind guard answers first.
+        let plc = [("Organ of Bar Ltd", 5), ("Foo Holdings plc", 1)];
+        assert_eq!(
+            elect_head(&plc, &org("Foo Holdings plc"), &FNS),
+            HeadVerdict::Hold { reason: "gb_family", rule: HeadRule::R1, new: Some("Organ of Bar Ltd".into()) }
+        );
+        let reverse = [("Acme", 5), ("Organ of Acme", 1)];
+        assert_eq!(elect_head(&reverse, &org("Organ of Acme"), &FNS), r1_change("Acme"), "the organ head changes");
+    }
+
+    fn r1_change(new: &str) -> HeadVerdict {
+        HeadVerdict::Change { rule: HeadRule::R1, new: new.into() }
+    }
+
+    /// Rule v9: `recent`, `residue` and `undated` keep precedence — the serve hold is asked only of a
+    /// change that passes them — and a head the junk exemption releases still meets the serve holds.
+    #[test]
+    fn recent_residue_and_undated_decide_before_the_serve_hold() {
+        let rename = [items("Organ of Acme", 1, 1, 8), items("Acme", 101, 100, 3)].concat();
+        assert_eq!(dated(&rename, "Acme").verdict, recent(Some("Organ of Acme")));
+        let newest = [items("Organ of Acme", 1, 1, 8), items("Acme", 101, 100, 1)].concat();
+        assert_eq!(dated(&newest, "Acme").verdict, residue(HeadRule::R1, "Organ of Acme"));
+        let undated = [("Organ of Acme", 8), ("Acme", 2)];
+        assert_eq!(
+            elect_head(&undated, &org("Acme"), &FNS),
+            HeadVerdict::Hold { reason: HEAD_HOLD_UNDATED, rule: HeadRule::R1, new: None }
+        );
+        // Past both (a newer elected item), the serve hold answers, and the reading is kept.
+        let mut forward = newest.clone();
+        forward.push(DatedVote { spelling: "Organ of Acme", tender: 300, at: 300 * DAY });
+        let e = dated(&forward, "Acme");
+        assert_eq!(e.verdict, organ(HeadRule::R1, "Organ of Acme"));
+        assert_eq!(e.recent.map(|r| (r.newest_is_head, r.released, r.release_withheld)), Some((false, None, None)));
+        // Released from the window by its NIP (one lost word, `nip`), the change still meets the serve
+        // hold: the release only lifts the date hold.
+        let nip = [items("Organ of Acme Polska", 1, 1, 8), items("Acme Polska NIP 5250001009", 101, 100, 2)].concat();
+        let e = dated(&nip, "Acme Polska NIP 5250001009");
+        assert_eq!((e.recent.unwrap().fires, e.recent.unwrap().released), (true, Some("digits")));
+        assert_eq!(e.verdict, organ(HeadRule::R1, "Organ of Acme Polska"));
+    }
+
+    /// Rule v9's glue: a number glued in the elected key to the head word beside it is the name's own,
+    /// not an address — 4295185 `SMD 3` → `Smd3` (keyed `smd 3` / `smd3`), released by v8, now held
+    /// under its v8 reason (here `residue`, and `recent` when the window fires) and read `glue`; a
+    /// number glued to nothing the elected key holds still releases (14971333 `Infrastructura DF 5` →
+    /// `Infrastructura S5`: `df5` is no elected token).
+    #[test]
+    fn a_number_glued_to_its_neighbour_in_the_elected_key_is_no_junk() {
+        // k = 2 with one elected item in W (no window), the head the newest item: residue.
+        let mut smd = items("Smd3", 1, 1, 10);
+        smd.push(DatedVote { spelling: "SMD 3", tender: 50, at: 5 * DAY });
+        smd.push(DatedVote { spelling: "SMD 3", tender: 60, at: 100 * DAY });
+        let e = dated(&smd, "SMD 3");
+        let read = e.recent.unwrap();
+        assert_eq!((read.head_procs, read.fires, read.newest_is_head), (2, false, true));
+        assert_eq!(e.verdict, residue(HeadRule::R1, "Smd3"));
+        assert_eq!((read.released, read.release_withheld), (None, Some("glue")));
+        // The window path withholds it alike.
+        let window = [items("Smd3", 1, 1, 8), items("SMD 3", 101, 100, 3)].concat();
+        let e = dated(&window, "SMD 3");
+        assert_eq!(e.verdict, recent(Some("Smd3")));
+        assert_eq!(e.recent.unwrap().release_withheld, Some("glue"));
+        // Glued to the word after it too (`t + next`): `3 Dent` → `3dent`.
+        let after = [items("Studio 3dent", 1, 1, 8), items("Studio 3 Dent", 101, 100, 3)].concat();
+        let e = dated(&after, "Studio 3 Dent");
+        assert_eq!((e.verdict, e.recent.unwrap().release_withheld), (recent(Some("Studio 3dent")), Some("glue")));
+        // 14971333: released, as in v8.
+        let df = [items("Infrastructura S5", 1, 1, 8), items("Infrastructura DF 5", 101, 100, 3)].concat();
+        let e = dated(&df, "Infrastructura DF 5");
+        assert_eq!((e.verdict, e.recent.unwrap().released), (r1("Infrastructura S5"), Some("digits")));
+        assert_eq!(e.recent.unwrap().release_withheld, None);
+    }
+
+    /// Rule v9's junk-only: a digits release needs the elected name to be the head minus junk — at
+    /// most one other head word of 3+ letters lost. 9814 (the activity phrase for the owner's
+    /// head-and-address) and 1341's shape are withheld (`junk_only`); `SDIS 49` → `Service
+    /// départemental …` (one lost word, the acronym) still releases.
+    #[test]
+    fn a_digits_release_needs_the_head_minus_junk() {
+        let head = "Izrada sumskih sortimenata Dragan Sapina, Korenica, Zagrebacka 49/2";
+        let mut rows = items("Izrada sumskih sortimenata", 1, 1, 13);
+        rows.push(DatedVote { spelling: head, tender: 500, at: 100 * DAY });
+        rows.push(DatedVote { spelling: head, tender: 500, at: 101 * DAY });
+        let e = dated(&rows, head);
+        let read = e.recent.unwrap();
+        assert_eq!((e.head_votes, read.head_procs, read.fires, read.newest_is_head), (2, 1, false, true));
+        assert_eq!(e.verdict, residue(HeadRule::R1, "Izrada sumskih sortimenata"));
+        assert_eq!((read.released, read.release_withheld), (None, Some("junk_only")));
+        let obrt = "Marcinkovic, Gradevinski Obrt, Jelka Marcinkovic Skugor, Sisak, Tina Ujevica 18";
+        let rows = [items("Marcinkovic Gradevinski Obrt", 1, 1, 8), items(obrt, 101, 100, 3)].concat();
+        let e = dated(&rows, obrt);
+        assert_eq!((e.verdict, e.recent.unwrap().release_withheld), (recent(Some("Marcinkovic Gradevinski Obrt")), Some("junk_only")));
+        let sdis = [items("Service Departemental Incendie Secours", 1, 1, 8), items("SDIS 49", 101, 100, 3)].concat();
+        let e = dated(&sdis, "SDIS 49");
+        assert_eq!(
+            (e.verdict, e.recent.unwrap().released, e.recent.unwrap().release_withheld),
+            (r1("Service Departemental Incendie Secours"), Some("digits"), None)
+        );
+        // `unfit` answers before either test: a control-character head with an address still releases.
+        let control = [items("Acme Group", 1, 1, 8), items("Acme\u{8c}Services Dock Road 12", 101, 100, 3)].concat();
+        assert_eq!(dated(&control, "Acme\u{8c}Services Dock Road 12").recent.unwrap().released, Some("unfit"));
     }
 
     /// Issue 524 unit 2a: the planner's candidate reads must seek, not scan: the scoped page by rowid,
@@ -3002,5 +3341,17 @@ mod tests {
         for suffix in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{suffix}"));
         }
+    }
+
+    /// Rule v9's review: a wet run's `exclude_released` also holds at wet time — a target whose
+    /// re-election ships only through an excluded junk release is not ready, while one that needs no
+    /// release, or a release the run does not exclude, is.
+    #[test]
+    fn the_wet_filter_drifts_a_target_released_only_at_wet_time() {
+        let digits = ["digits".to_owned()];
+        assert_eq!(super::excluded_release(Some("digits"), &digits), Some("digits"));
+        assert_eq!(super::excluded_release(Some("unfit"), &digits), None, "a release the run keeps");
+        assert_eq!(super::excluded_release(None, &digits), None, "no release needed");
+        assert_eq!(super::excluded_release(Some("digits"), &[]), None, "no filter");
     }
 }

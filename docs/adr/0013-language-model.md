@@ -221,6 +221,38 @@ Decided:
    exemption: v7 released 1846, whose `CA2BM` acronym carries a digit inside a word, and 3909, whose
    registered current name `act legal s.r.o., advokátní kancelář` is deliberately lower case — both
    back to a former name.
+
+   **(b) and (c) are HELD on five pure tests of the two names (rule `524u2-v9`, the owner's decision
+   of 2026-10-15 after plan 2526's dated re-judge, panel wf_5cca11b1-622).** Plan 2526 failed its
+   change:R1, change:R2 and released bars (2, 2 and 5 wrong). Its wrongs had causes a test of the
+   head and the served spelling can see, and the panel measured each test on the whole plan, so
+   every piece is a pure function of (head, display, rule, keys): the dry plan and the wet re-check
+   agree by construction, with no DB read. A (b) or (c) change that reaches the served spelling past
+   the guards of 6 is HELD, the first that holds naming it:
+   - `review_body`: the new name is a procurement review body's (a review chamber or court, by a
+     folded phrase list) and the head is not review-like (no such phrase, no review stem, not led by
+     `TA`, `TAR` or `VK`): another entity's procedures naming the chamber that heard a complaint
+     (`Universitätsklinikum Freiburg` → `Vergabekammer BW`). A review body's self-rename changes.
+   - `organ`: the new name is led by a contracting organ (`Junta de Gobierno`, `Alcaldía`, `Pleno`,
+     `Presidencia`, `Rectorado` …, a folded phrase list) and the head is not: PLACSP's organ served for
+     its entity. The reverse (an organ head to its entity) changes.
+   - `code_added`: the new name adds a whole number the head's letters and digits do not spell, in a
+     code position (in brackets, joined by `_`, the last token, a leading list number), and its vote
+     key less that number is the head's (`Commune de Chiconi (976)`).
+   - `address_added`: such a number sits after a comma or semicolon (an appended address or seat),
+     unless the name is a Czech or Slovak school's, which carries its seat by law.
+   - `caps_variant`: the new name is an ALL-CAPS respelling of a mixed-case head's same words, legal
+     forms spelled out or not aside.
+
+   The same decision narrows the junk exemption's numbers twice: a number the elected name prints
+   glued to the head word beside it (`SMD 3` against `Smd3`) is the name's own, not junk; and the
+   elected name must be the head minus junk, losing at most one other word of it (one, so an expanded
+   acronym still releases: `SDIS 49` → `Service départemental …`). A release either stops returns to
+   its hold and is counted (`release_withheld`): 15 in plan 2526, 8 of them right fixes forgone —
+   the decision's accepted cost. (a) is exempt from all of it. The vote key, the N3 key, the family
+   table and their epoch do not move. The plan's uniform samples are salted with the rule's epoch, so
+   a re-judge reads a fresh draw; and a wet run may drop the class a re-judge failed (`exclude_rules`,
+   `exclude_released`) before its re-check, with no re-plan.
 4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
    spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
    guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of

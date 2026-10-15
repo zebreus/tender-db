@@ -328,8 +328,16 @@ the organization's newest procedures still use the current head (a rename: the h
 least 2 procedures and two thirds of the organization's newest as many); on the 55% and 25%
 arms, while the current head is the only one of the organization's names printed on its newest
 publication day; both unless the head is unfit to serve for a reason other than being all lower
-case, or carries a standalone number the other name lacks; and, on the 55% and 25% arms only,
-when the head is in another script than its mentions (TED's English rendering). So the head
+case, or carries a standalone number the other name lacks while the other name drops at most
+one other word of it (a number the other name prints joined to a neighbouring word,
+<code>SMD 3</code> against <code>Smd3</code>, is the name's own); on the 55% and 25% arms, when
+the change would serve a review body's name (a procurement review chamber or court) for a head
+that is not one, a name led by a contracting organ (<code>Junta de Gobierno …</code>,
+<code>Alcaldía …</code>) for a head that is not, the head's own words plus a code
+(<code>(976)</code>), a name that adds a number after a comma or semicolon (an appended
+address; not for a Czech or Slovak school), or an ALL-CAPS respelling of a mixed-case head's
+same words; and, on the 55% and 25% arms only, when the head is in another script than its
+mentions (TED's English rendering). So the head
 can change with no new notice, and every tender the organization is on shows the new name at
 once. The rename arrives as an <code>organization</code> <code>changed</code> event, not a
 Tender one: the parties join the organization when read. Where the job has not renamed an

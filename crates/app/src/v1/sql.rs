@@ -1255,8 +1255,15 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     least 2 procedures and two thirds of the organization's newest as many); on the 55% and 25% arms, \
     while the current head is the only one of the organization's names printed on its newest \
     publication day; both unless the head is unfit to serve for a reason other than being all lower \
-    case, or carries a standalone number the other name lacks; and, on the 55% and 25% arms only, when \
-    the head is in another script than its mentions (TED's English rendering). Where the job has not renamed a row, \
+    case, or carries a standalone number the other name lacks while the other name drops at most one \
+    other word of it (a number the other name prints joined to a neighbouring word, `SMD 3` against \
+    `Smd3`, is the name's own); on the 55% and 25% arms, when the change would serve a review body's \
+    name (a procurement review chamber or court) for a head that is not one, a name led by a contracting \
+    organ (`Junta de Gobierno …`, `Alcaldía …`) for a head that is not, the head's own words plus a code \
+    (`(976)`), a name that adds a number after a comma or semicolon (an appended address; not for a \
+    Czech or Slovak school), or an ALL-CAPS respelling of a mixed-case head's same words; and, on the \
+    55% and 25% arms only, when the head is in another script than its mentions (TED's English \
+    rendering). Where the job has not renamed a row, \
     and always where `identifier IS NULL`, it is the first spelling a notice published. What one notice \
     said is `organization_mentions.name`.";
 

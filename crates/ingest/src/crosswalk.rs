@@ -1813,11 +1813,13 @@ pub const R2_LEGAL_FORM_TOKENS: &[&str] = &[
 /// Issue 524 unit 2a.2: whether a spelling is ALL-CAPS — an upper-case letter and no lower-case one
 /// that has a one-letter capital (`ß`, `ª`, `º` have none), store's `all_caps` read the same way.
 fn all_caps(name: &str) -> bool {
-    let has_capital = |c: char| {
-        let mut upper = c.to_uppercase();
-        matches!((upper.next(), upper.next()), (Some(u), None) if u != c)
-    };
-    name.chars().any(char::is_uppercase) && !name.chars().any(|c| c.is_lowercase() && has_capital(c))
+    name.chars().any(char::is_uppercase) && !name.chars().any(|c| c.is_lowercase() && has_one_letter_capital(c))
+}
+
+/// [`all_caps`]' letter test: `c` upper-cases to ONE other letter (`ß`, `ª` and `º` do not).
+fn has_one_letter_capital(c: char) -> bool {
+    let mut upper = c.to_uppercase();
+    matches!((upper.next(), upper.next()), (Some(u), None) if u != c)
 }
 
 /// Issue 524 unit 2a.2: the key two spellings of one cluster are TWINS under — lower-cased,
@@ -1865,6 +1867,370 @@ fn folded_family(name: &str, read: fn(&str) -> Option<&'static str>) -> Option<&
         }
         read(&words.join(" "))
     })
+}
+
+// ---- Issue 524 rule v9: the serve holds (`## Rule v9 — decided`, panel wf_5cca11b1-622).
+
+/// Issue 524 rule `v9`: why an R1 or R2 change from `old` (the served head) to `new` (the display
+/// spelling the rule would serve) is HELD, read on the two names alone — or `None`. Plan 2526's dated
+/// re-judge read four kinds of change that serve something other than the entity's name, and its
+/// panel measured a pure test for each on the whole plan: so the dry planner and the wet pre-pass,
+/// which ask this with the same strings, agree by construction (no DB read, no index, no fail-closed
+/// counter). Store asks it inside `serve` after [`head_change_hold`] and, for R2, [`head_r2_hold`];
+/// R0 (a defective head always changes) is never asked, and the `recent`, `residue` and `undated`
+/// holds decide before it. The first that holds answers, each a `store::HEAD_HOLD_*` reason:
+///
+/// Words: `T(s)` is [`fold_diacritics`] of `s` split on every char that is not
+/// `char::is_alphanumeric`, empties dropped; `J(s)` is `" " + T(s).join(" ") + " "`.
+/// 1. `review_body` ([`store::HEAD_HOLD_REVIEW_BODY`]): `J(new)` holds `" p "` for a phrase of
+///    [`HEAD_REVIEW_PHRASES`] — a procurement review chamber or court — and the head is not
+///    REVIEW-LIKE: no such phrase, no stem of [`HEAD_REVIEW_STEMS`] anywhere in `J(old)`, and `T(old)`
+///    not led by `ta`, `tar` or `vk`. A review body served for another entity (`Universitätsklinikum
+///    Freiburg` → `Vergabekammer BW`, 22028982: its own procedures name the chamber that heard a
+///    complaint) is held; a review body's self-rename still changes (791 `Urząd Zamówień Publicznych
+///    Departament Odwołań` → `Krajowa Izba Odwoławcza`, 100 `TA de Toulouse`, 395 `Tribunal
+///    Adminsitratif d'Amiens`, 1919 `Tribunal d’affaires …` → `Ondernemingsrechtbank …`).
+/// 2. `organ` ([`store::HEAD_HOLD_ORGAN`]): `T(new).join(" ")` equals or starts with (then a space) a
+///    phrase of [`HEAD_ORGAN_PHRASES`] — a contracting ORGAN, mostly PLACSP's (`Junta de Gobierno
+///    Local del Ayuntamiento de Fuenlabrada` for `Ayuntamiento de Fuenlabrada`, 4065575) — and
+///    `T(old)` does not. The reverse, an organ head to its entity (canary 2762), is never held. The
+///    panel's known false-positive pocket, Castilla y León's `Gerencia de Asistencia Sanitaria de X`,
+///    is accepted.
+/// 3. `code_added` ([`store::HEAD_HOLD_CODE_ADDED`]): A — the tokens of `T(new)` of ASCII digits only
+///    that do not occur in the head's alphanumeric stream ([`head_twin_key`]: lower-cased, folded,
+///    every non-alphanumeric removed, so `Pragma9` covers `9`) — is not empty, one A token sits in a
+///    CODE POSITION (inside `(…)` or `[…]`, a digit run joined to `_`, in the last whitespace-separated
+///    token, or a leading list number before `.` or `)`), and [`head_vote_key`] of `new` less the A
+///    tokens is [`head_vote_key`] of `old`, token for token: the head plus a buyer platform's code
+///    (`Commune de Chiconi (976)`, 17116440).
+/// 4. `address_added` ([`store::HEAD_HOLD_ADDRESS_ADDED`]): an A token (as in 3) lies in a `,`- or
+///    `;`-separated segment of `new` after its first — an address or a seat appended (8069375's `…,
+///    Ljubljana, Kolodvorska 11`) — unless the folded `new` holds a school stem of
+///    [`HEAD_SCHOOL_STEMS`]: Czech and Slovak schools carry their seat by law (3377646 and 4594482
+///    change).
+/// 5. `caps_variant` ([`store::HEAD_HOLD_CAPS_VARIANT`]): `new` is ALL-CAPS (store's `all_caps`, read
+///    the same way here), the head has an upper-case letter and a lower-case one that has a one-letter
+///    capital, and C(old) = C(new) as non-empty multisets, C(s) the tokens of `T(s)` of 2 or more chars
+///    that are no legal-form word ([`family_token`], [`R2_LEGAL_FORM_TOKENS`], [`HEAD_FORM_WORDS`]): an
+///    ALL-CAPS respelling of a mixed-case head's same words, its legal form spelled out or not
+///    (16508165 `Hurt-Papier Ryszard Cebula Sp. j.` → `HURT PAPIER RYSZARD CEBULA SPÓŁKA JAWNA`). The
+///    other way, ALL-CAPS to mixed case (`URTICA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ` → `Urtica Sp.
+///    z o.o.`), is a cosmetic fix and changes.
+///
+/// `_r2` is the rule (R2 when true). No v9 hold reads it — each holds R1 and R2 alike — and it stays
+/// in the injected signature so an R2-only hold (issue 548's queue) needs no new field. Plan 2526,
+/// measured by the panel's ports: ~104 `review_body`, 460 `organ`, 81 `code_added`, ~85
+/// `address_added`, ~290 `caps_variant`. [`head_vote_key`], [`family_token`], [`altid_name_key`] and
+/// [`NAME_KEY_EPOCH`] are read, never changed: no vote key, N3 key or veto moves.
+pub fn head_serve_hold(old: &str, new: &str, _r2: bool) -> Option<&'static str> {
+    if review_body(&serve_joined(new)) && !review_like(old) {
+        return Some(store::HEAD_HOLD_REVIEW_BODY);
+    }
+    if organ_lead(new) && !organ_lead(old) {
+        return Some(store::HEAD_HOLD_ORGAN);
+    }
+    let added = added_numbers(old, new);
+    if !added.is_empty() {
+        if code_added(old, new, &added) {
+            return Some(store::HEAD_HOLD_CODE_ADDED);
+        }
+        if address_added(new, &added) {
+            return Some(store::HEAD_HOLD_ADDRESS_ADDED);
+        }
+    }
+    if caps_variant(old, new) {
+        return Some(store::HEAD_HOLD_CAPS_VARIANT);
+    }
+    None
+}
+
+/// Issue 524 rule `v9`: the review bodies' names [`head_serve_hold`]'s `review_body` reads, as `T`
+/// joins them (folded, lower case, single spaces). `tar` and `t a r` are the Italian regional
+/// administrative courts. The Greek phrase is listed twice: [`fold_diacritics`] lower-cases char by
+/// char, so the ALL-CAPS spelling a publisher prints reads `…εξετασησ…`, its final `Σ` a medial `σ`
+/// (no tonos is folded: an accented mixed-case Greek spelling is not read; plan 2526 has none).
+pub const HEAD_REVIEW_PHRASES: &[&str] = &[
+    "vergabekammer",
+    "vergabesenat",
+    "nachprufungsstelle",
+    "nachprufungsbehorde",
+    "bundesvergabeamt",
+    "landesverwaltungsgericht",
+    "verwaltungsgericht",
+    "oberlandesgericht",
+    "krajowa izba odwolawcza",
+    "krajowej izby odwolawczej",
+    "tribunal administratif",
+    "cour administrative d appel",
+    "conseil d etat",
+    "reglement amiable",
+    "tribunal judiciaire",
+    "tribunal de grande instance",
+    "tar",
+    "t a r",
+    "tribunale amministrativo",
+    "consiglio di stato",
+    "recursos contractuales",
+    "recursos contractuals",
+    "tribunal catala de contractes",
+    "tribunal administrativo central",
+    "tribunal administrativo de contratos",
+    "tribunal administrativo de recursos",
+    "organo administrativo de recursos",
+    "tribunal superior de justicia",
+    "juzgado de lo contencioso",
+    "raad van state",
+    "rechtbank",
+    "tribunal d affaires",
+    "commercial court",
+    "solutionare a contestatiilor",
+    "solutionarea contestatiilor",
+    "klagenaevnet for udbud",
+    "markkinaoikeus",
+    "forvaltningsratten",
+    "kammarratten",
+    "klagenemnda for offentlige anskaffelser",
+    "kozbeszerzesi dontobizottsag",
+    "urad pre verejne obstaravanie",
+    "urad pro ochranu hospodarske souteze",
+    "kontrolu postupaka javne nabave",
+    "drzavna revizijska komisija",
+    "zalbi po javni nabavki",
+    "комисия за защита на конкуренцията",
+    "αρχη εξετασης προδικαστικων προσφυγων",
+    "αρχη εξετασησ προδικαστικων προσφυγων",
+    "public procurement review",
+    "high court",
+    "procurement review board",
+];
+
+/// Issue 524 rule `v9`: a REVIEW-LIKE head's stems — any of them anywhere in `J(old)` (a substring,
+/// so `kammer` reads `Vergabekammer` and `adminsitratif` a typo'd tribunal) exempts the head from
+/// `review_body`: a review body's own self-rename changes.
+pub const HEAD_REVIEW_STEMS: &[&str] = &[
+    "kammer",
+    "tribunal",
+    "trybunal",
+    "odwola",
+    "izba",
+    "rechtbank",
+    "court",
+    "recurs",
+    "contencios",
+    "nachprufung",
+    "gericht",
+    "conseil d etat",
+    "amministrativ",
+    "administratif",
+    "adminsitratif",
+    "amminitrativ",
+    "reglement amiable",
+    "ccira",
+    "ccra",
+    "kio",
+    "uzp",
+    "zamowien publicznych",
+    "contestatii",
+    "klagenaevn",
+    "markkinaoikeus",
+];
+
+/// Issue 524 rule `v9`: a review-like head may be led by these words alone (`TA de Toulouse`, `TAR
+/// Lazio`, `VK Bund`).
+const HEAD_REVIEW_LEADS: [&str; 3] = [" ta ", " tar ", " vk "];
+
+/// Issue 524 rule `v9`: the contracting ORGANS [`head_serve_hold`]'s `organ` reads at the start of
+/// `T(new).join(" ")` (folded, lower case, single spaces).
+pub const HEAD_ORGAN_PHRASES: &[&str] = &[
+    "alcaldia",
+    "alcalde",
+    "alcaldesa",
+    "junta de gobierno",
+    "junta de govern",
+    "pleno",
+    "ple de",
+    "presidencia",
+    "presidente",
+    "rectorado",
+    "rectorat de la universitat",
+    "vicerrectorado",
+    "consejo de administracion",
+    "consell d administracio",
+    "consejo de gobierno",
+    "consell de govern",
+    "consejo rector",
+    "consell rector",
+    "gerencia",
+    "direccion general",
+    "direccion gerencia",
+    "direccion",
+    "consejeria delegada",
+    "consejero delegado",
+    "concejalia",
+    "junta de contratacion",
+    "mesa de contratacion",
+    "mesa del",
+    "organo de contratacion",
+    "comite ejecutivo",
+    "comision ejecutiva",
+    "secretaria general",
+    "magistrat der",
+    "der magistrat",
+];
+
+/// Issue 524 rule `v9`: the school stems that exempt `address_added` (folded; a substring of the
+/// folded `new`): `škola`, `jídelna`/`jedáleň`, `gymnázium`, `internát`, `družina`.
+pub const HEAD_SCHOOL_STEMS: &[&str] = &["skol", "jidel", "jedal", "gymnazi", "internat", "druzin"];
+
+/// Issue 524 rule `v9`: the legal-form words `caps_variant`'s C(s) drops besides every
+/// [`family_token`] key and [`R2_LEGAL_FORM_TOKENS`] — the decision's list, folded: the Polish,
+/// German, English, Dutch, Nordic, Central-European, French, Iberian and Italian forms, abbreviated
+/// and spelled out. The vote key does not fold the Polish spelled-out forms (`SPÓŁKA JAWNA` is two
+/// words to it), which is why 16508165's two spellings never share a cluster; this list is
+/// `caps_variant`'s alone, so no key moves.
+pub const HEAD_FORM_WORDS: &[&str] = &[
+    "sp", "spolka", "z", "ograniczona", "odpowiedzialnoscia", "jawna", "komandytowa", "akcyjna", "cywilna",
+    "partnerska", "komandytowo", "spzoo", "spj", "spk", "ska", "sa", "sl", "slu", "sau", "scarl", "scrl", "srl",
+    "sarl", "sas", "sasu", "eurl", "spa", "snc", "gmbh", "mbh", "ag", "kg", "ohg", "ug", "haftungsbeschrankt", "co",
+    "ev", "ek", "eg", "ltd", "limited", "plc", "llp", "lp", "cic", "company", "bv", "nv", "vof", "cv", "ab", "oy",
+    "oyj", "abp", "as", "asa", "aps", "doo", "dd", "sro", "spol", "kft", "zrt", "nyrt", "bt", "korlatolt",
+    "felelossegu", "tarsasag", "uab", "vsia", "sia", "societe", "anonyme", "responsabilite", "limitee", "par",
+    "actions", "simplifiee", "sociedad", "anonima", "limitada", "unipersonal", "societa", "per", "azioni",
+    "responsabilita", "lda", "unipessoal",
+];
+
+/// Rule `v9`'s `T(s)`: [`fold_diacritics`] split on every char that is not alphanumeric, empties
+/// dropped.
+fn serve_words(name: &str) -> Vec<String> {
+    fold_diacritics(name).split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()).map(str::to_owned).collect()
+}
+
+/// Rule `v9`'s `J(s)`: `" " + T(s).join(" ") + " "`.
+fn serve_joined(name: &str) -> String {
+    format!(" {} ", serve_words(name).join(" "))
+}
+
+/// Whether a joined name (`J`) holds a review body's phrase as whole words.
+fn review_body(joined: &str) -> bool {
+    HEAD_REVIEW_PHRASES.iter().any(|phrase| joined.contains(&format!(" {phrase} ")))
+}
+
+/// A REVIEW-LIKE head: a review phrase, a review stem anywhere, or led by `ta`, `tar` or `vk`.
+fn review_like(head: &str) -> bool {
+    let joined = serve_joined(head);
+    review_body(&joined)
+        || HEAD_REVIEW_STEMS.iter().any(|stem| joined.contains(stem))
+        || HEAD_REVIEW_LEADS.iter().any(|lead| joined.starts_with(lead))
+}
+
+/// A name led by a contracting organ: `T(s).join(" ")` is an organ phrase or starts with one and a
+/// space.
+fn organ_lead(name: &str) -> bool {
+    let joined = serve_words(name).join(" ");
+    HEAD_ORGAN_PHRASES
+        .iter()
+        .any(|phrase| joined == *phrase || joined.strip_prefix(phrase).is_some_and(|rest| rest.starts_with(' ')))
+}
+
+/// Rule `v9`'s A: the distinct tokens of `T(new)` of ASCII digits only that do not occur in `old`'s
+/// alphanumeric stream ([`head_twin_key`]), in `new`'s order.
+fn added_numbers(old: &str, new: &str) -> Vec<String> {
+    let stream = head_twin_key(old);
+    let mut added: Vec<String> = Vec::new();
+    for word in serve_words(new) {
+        if word.chars().all(|c| c.is_ascii_digit()) && !stream.contains(word.as_str()) && !added.contains(&word) {
+            added.push(word);
+        }
+    }
+    added
+}
+
+/// Rule `v9`: the all-digit tokens of `new` in a CODE POSITION — inside `(…)` or `[…]` (from an
+/// opening bracket to the first closing one of either kind), a run of ASCII digits with `_` right
+/// before or after it, in the last whitespace-separated token, or a leading list number followed
+/// (after any whitespace) by `.` or `)`.
+fn code_positions(new: &str) -> Vec<String> {
+    let mut out: Vec<String> = Vec::new();
+    let mut numbers_of = |part: &str| {
+        out.extend(serve_words(part).into_iter().filter(|w| w.chars().all(|c| c.is_ascii_digit())));
+    };
+    let mut rest = new;
+    while let Some(open) = rest.find(['(', '[']) {
+        let after = &rest[open + 1..];
+        let Some(close) = after.find([')', ']']) else { break };
+        numbers_of(&after[..close]);
+        rest = &after[close + 1..];
+    }
+    if let Some(last) = new.split_whitespace().last() {
+        numbers_of(last);
+    }
+    let chars: Vec<char> = new.chars().collect();
+    let mut at = 0;
+    while at < chars.len() {
+        if !chars[at].is_ascii_digit() {
+            at += 1;
+            continue;
+        }
+        let start = at;
+        while at < chars.len() && chars[at].is_ascii_digit() {
+            at += 1;
+        }
+        if (start > 0 && chars[start - 1] == '_') || chars.get(at) == Some(&'_') {
+            out.push(chars[start..at].iter().collect());
+        }
+    }
+    let lead = new.trim_start();
+    let number: String = lead.chars().take_while(char::is_ascii_digit).collect();
+    if !number.is_empty() && lead[number.len()..].trim_start().starts_with(['.', ')']) {
+        out.push(number);
+    }
+    out
+}
+
+/// Rule `v9`'s `code_added`: an added number in a code position, and the display's vote key less the
+/// added numbers is the head's, token for token.
+fn code_added(old: &str, new: &str, added: &[String]) -> bool {
+    let positions = code_positions(new);
+    if !added.iter().any(|number| positions.contains(number)) {
+        return false;
+    }
+    let new_key = head_vote_key(new);
+    let old_key = head_vote_key(old);
+    new_key.split_whitespace().filter(|t| !added.iter().any(|number| number == t)).eq(old_key.split_whitespace())
+}
+
+/// Rule `v9`'s `address_added`: an added number in a `,`/`;` segment after the first, and no school
+/// stem in the folded display.
+fn address_added(new: &str, added: &[String]) -> bool {
+    let after_first =
+        new.split([',', ';']).skip(1).any(|segment| serve_words(segment).iter().any(|word| added.contains(word)));
+    after_first && {
+        let folded = fold_diacritics(new);
+        !HEAD_SCHOOL_STEMS.iter().any(|stem| folded.contains(stem))
+    }
+}
+
+/// Rule `v9`'s C(s): the tokens of `T(s)` of 2 or more chars that are no legal-form word, sorted.
+fn content_words(name: &str) -> Vec<String> {
+    let form = |word: &str| {
+        family_token(word).is_some() || R2_LEGAL_FORM_TOKENS.contains(&word) || HEAD_FORM_WORDS.contains(&word)
+    };
+    let mut words: Vec<String> =
+        serve_words(name).into_iter().filter(|word| word.chars().count() >= 2 && !form(word)).collect();
+    words.sort_unstable();
+    words
+}
+
+/// Rule `v9`'s `caps_variant`: an ALL-CAPS `new` of a mixed-case `old`'s same content words.
+fn caps_variant(old: &str, new: &str) -> bool {
+    if !all_caps(new)
+        || !old.chars().any(char::is_uppercase)
+        || !old.chars().any(|c| c.is_lowercase() && has_one_letter_capital(c))
+    {
+        return false;
+    }
+    let words = content_words(new);
+    !words.is_empty() && words == content_words(old)
 }
 
 #[cfg(test)]
@@ -2176,6 +2542,186 @@ mod head_vote {
         assert_eq!(head_change_hold("University of Oxford", trust, Some("national"), Some("GBNHSRTH")), None);
         assert_eq!(head_family("Acme Holdings plc"), Some("plc"));
         assert_eq!(head_family("Ministerstvo financí"), None);
+    }
+}
+
+/// Issue 524 rule `v9`'s serve holds, on plan 2526's own spellings (`old_name` → `new_name`).
+#[cfg(test)]
+mod serve_hold {
+    use super::{
+        HEAD_FORM_WORDS, HEAD_ORGAN_PHRASES, HEAD_REVIEW_PHRASES, HEAD_REVIEW_STEMS, HEAD_SCHOOL_STEMS, NAME_KEY_EPOCH,
+        altid_name_key, family_token, head_serve_hold, head_vote_key, serve_words,
+    };
+
+    fn hold(old: &str, new: &str) -> Option<&'static str> {
+        head_serve_hold(old, new, false)
+    }
+
+    /// 1. `review_body`: a review body's name served for another entity is held; a review body's own
+    /// self-rename is not (its head is review-like).
+    #[test]
+    fn a_review_body_for_another_entity_is_held_and_its_self_rename_is_not() {
+        assert_eq!(hold("Universitätsklinikum Freiburg", "Vergabekammer BW"), Some(store::HEAD_HOLD_REVIEW_BODY), "22028982");
+        assert_eq!(
+            hold("Universitätsklinikum Freiburg", "Vergabekammer BW"),
+            head_serve_hold("Universitätsklinikum Freiburg", "Vergabekammer BW", true),
+            "R1 and R2 alike"
+        );
+        // 791: the head carries the stems `odwola` and `zamowien publicznych` (V 28,725).
+        assert_eq!(hold("Urząd Zamówień Publicznych Departament Odwołań", "Krajowa Izba Odwoławcza"), None, "791");
+        // 100: led by `ta`.
+        assert_eq!(hold("TA de Toulouse", "Tribunal administratif de Toulouse"), None, "100");
+        // 395: the head's typo `Adminsitratif` is a stem too.
+        assert_eq!(hold("Tribunal Adminsitratif d'Amiens", "Tribunal administratif d'Amiens"), None, "395");
+        // 1919: the head is a review body itself (`tribunal d affaires`).
+        assert_eq!(
+            hold("Tribunal d’affaires, département Anvers", "Ondernemingsrechtbank, Afdeling ANTWERPEN"),
+            None,
+            "1919"
+        );
+        // Whole words: `tar` is the Italian court, not a syllable of another word.
+        assert_eq!(hold("Comune di Roma", "Startup Lazio"), None);
+        assert_eq!(hold("Comune di Roma", "TAR Lazio"), Some(store::HEAD_HOLD_REVIEW_BODY));
+        assert_eq!(hold("Zakład Karny w Wierzchowie", "Krajowa Izba Odwoławcza"), Some(store::HEAD_HOLD_REVIEW_BODY));
+        // An ALL-CAPS Greek spelling folds its final `Σ` to `σ`: the second Greek form reads it.
+        assert_eq!(
+            hold("Δήμος Αθηναίων", "ΑΡΧΗ ΕΞΕΤΑΣΗΣ ΠΡΟΔΙΚΑΣΤΙΚΩΝ ΠΡΟΣΦΥΓΩΝ"),
+            Some(store::HEAD_HOLD_REVIEW_BODY)
+        );
+    }
+
+    /// 2. `organ`: a contracting organ served for its entity is held; the entity for its organ (canary
+    /// 2762) is not, nor one organ for another.
+    #[test]
+    fn an_organ_for_its_entity_is_held_and_the_reverse_is_not() {
+        assert_eq!(
+            hold("Ayuntamiento de Fuenlabrada", "Junta de Gobierno Local del Ayuntamiento de Fuenlabrada"),
+            Some(store::HEAD_HOLD_ORGAN),
+            "4065575"
+        );
+        assert_eq!(
+            hold("Ayuntamiento de Córdoba", "Junta de Gobierno del Ayuntamiento de Córdoba"),
+            Some(store::HEAD_HOLD_ORGAN),
+            "1821052"
+        );
+        assert_eq!(
+            hold("Junta de Gobierno de la Diputación Provincial de Valladolid", "Diputación Provincial de Valladolid"),
+            None,
+            "2762"
+        );
+        assert_eq!(hold("Pleno del Ayuntamiento de Getafe", "Alcaldía del Ayuntamiento de Getafe"), None, "organ to organ");
+        // The phrase must end at a word: `Direccionamiento` is not `Direccion`.
+        assert_eq!(hold("Ayuntamiento de Getafe", "Direccionamiento Getafe"), None);
+        assert_eq!(hold("Stadt Wien", "Magistrat der Stadt Wien"), Some(store::HEAD_HOLD_ORGAN));
+    }
+
+    /// 3. `code_added`: the head plus a platform code is held; a number the head already spells, or one
+    /// beside other new words, is not.
+    #[test]
+    fn a_code_added_to_the_head_is_held() {
+        assert_eq!(hold("Commune de Chiconi", "Commune de Chiconi (976)"), Some(store::HEAD_HOLD_CODE_ADDED), "17116440");
+        // Each code position.
+        assert_eq!(hold("Mairie de Lens", "Mairie de Lens [62]"), Some(store::HEAD_HOLD_CODE_ADDED), "brackets");
+        assert_eq!(hold("Mairie de Lens", "Mairie de Lens_391"), Some(store::HEAD_HOLD_CODE_ADDED), "joined by _");
+        assert_eq!(hold("Mairie de Lens", "Mairie de Lens 62"), Some(store::HEAD_HOLD_CODE_ADDED), "the last token");
+        assert_eq!(hold("Mairie de Lens", "317. Mairie de Lens"), Some(store::HEAD_HOLD_CODE_ADDED), "a list number");
+        // A number the head's stream already holds is no addition (`Pragma9` covers `9`).
+        assert_eq!(hold("Pragma9", "Pragma 9"), None);
+        // A number outside a code position, or a display with more than the code, is not held here.
+        assert_eq!(hold("Torus Commercial Services Ltd", "Torus 62 Commercial Services Ltd"), None);
+        assert_eq!(hold("Mairie de Lens", "Mairie de Lens Centre (62)"), None, "a new word besides the code");
+        // First match wins: a code in the last token after a comma is `code_added`, not `address_added`.
+        assert_eq!(hold("Acme Services", "Acme Services, 976"), Some(store::HEAD_HOLD_CODE_ADDED));
+    }
+
+    /// 4. `address_added`: a number appended after a comma is held, unless the name is a Czech or
+    /// Slovak school's (its seat is in its legal name).
+    #[test]
+    fn an_address_added_to_the_head_is_held_but_not_a_schools() {
+        let institut = "PROMETNI INSTITUT LJUBLJANA d.o.o. za področje raziskovalne in informativne dejavnosti ter \
+                        izdelavo predinvesticijskih in investicijskih programov, Ljubljana, Kolodvorska 11";
+        assert_eq!(hold("Prometni institut Ljubljana d.o.o.", institut), Some(store::HEAD_HOLD_ADDRESS_ADDED), "8069375");
+        assert_eq!(
+            hold(
+                "Střední prům. škola strojnická",
+                "Střední průmyslová škola strojnická, škola hlavního města Prahy, Praha 1, Betlémská 4/287"
+            ),
+            None,
+            "3377646"
+        );
+        assert_eq!(hold("Materská škola", "Materská škola, Tribečská 2633/12, Topoľčany"), None, "4594482");
+        // A number in the first segment is no appended address (and not in a code position here).
+        assert_eq!(hold("Torus Services", "Torus 62 Services, Leeds"), None);
+    }
+
+    /// 5. `caps_variant`: an ALL-CAPS respelling of a mixed-case head's words is held; the other way,
+    /// and a head that is not mixed case, are not.
+    #[test]
+    fn an_all_caps_respelling_of_a_mixed_case_head_is_held() {
+        assert_eq!(
+            hold("Hurt-Papier Ryszard Cebula Sp. j.", "HURT PAPIER RYSZARD CEBULA SPÓŁKA JAWNA"),
+            Some(store::HEAD_HOLD_CAPS_VARIANT),
+            "16508165"
+        );
+        assert_eq!(
+            head_serve_hold("Hurt-Papier Ryszard Cebula Sp. j.", "HURT PAPIER RYSZARD CEBULA SPÓŁKA JAWNA", true),
+            Some(store::HEAD_HOLD_CAPS_VARIANT),
+            "it is an R2 change in plan 2526"
+        );
+        assert_eq!(hold("URTICA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ", "Urtica Sp. z o.o."), None, "URTICA: caps to mixed");
+        assert_eq!(hold("ACME BAU GMBH", "ACME BAU AG"), None, "no mixed-case head");
+        assert_eq!(hold("acme bau gmbh", "ACME BAU GMBH"), None, "no upper-case letter in the head");
+        assert_eq!(hold("Acme Bau GmbH", "ACME BAU NORD GMBH"), None, "a word gained");
+        assert_eq!(hold("Acme Bau GmbH", "Acme Bau Gesellschaft"), None, "a word gained, and not ALL-CAPS either");
+        // The `all_caps(new)` clause itself, on a MIXED-case head with the same content words — the
+        // URTICA case above cannot pin it (its head has no lower-case letter) nor the `Gesellschaft`
+        // one (a word gained). Plan 2526 plans both as R1; without the clause ~2,000 such mixed →
+        // mixed legal-form shortenings would hold.
+        assert_eq!(hold("Urtica Spółka z ograniczoną odpowiedzialnością", "Urtica Sp. z o.o."), None, "17106620: not ALL-CAPS");
+        assert_eq!(
+            hold("Salus International Spółka z ograniczoną odpowiedzialnością", "Salus International Sp. z o.o."),
+            None,
+            "557: not ALL-CAPS"
+        );
+        // C(old) = C(new) as NON-EMPTY multisets: a name of legal-form words only has no words to agree on.
+        assert_eq!(hold("Sp. z o.o.", "SP. Z O.O."), None, "forms only: no content word");
+    }
+
+    /// The common shapes of a change pass: a fit cosmetic or forward change is none of the five.
+    #[test]
+    fn an_ordinary_change_is_not_held() {
+        assert_eq!(hold("Sheffield Hallam University", "The University of Sheffield"), None);
+        assert_eq!(hold("Hôpitaux Civils de Colmar (68)", "Hôpitaux civils de Colmar"), None, "3042");
+        assert_eq!(hold("Infrastructură DF 5", "Infrastructura S5"), None, "14971333");
+        assert_eq!(hold("SMD 3", "Smd3"), None, "4295185");
+        assert_eq!(hold("Ayuntamiento de Fuengirola", "AYUNTAMIENTO DE FUENGIROLA"), Some(store::HEAD_HOLD_CAPS_VARIANT));
+    }
+
+    /// The lists are in `T`'s join form (folded, lower case, single spaces), so a phrase can match.
+    #[test]
+    fn the_phrase_lists_are_folded_words() {
+        for list in [HEAD_REVIEW_PHRASES, HEAD_REVIEW_STEMS, HEAD_ORGAN_PHRASES, HEAD_SCHOOL_STEMS, HEAD_FORM_WORDS] {
+            for phrase in list {
+                assert_eq!(serve_words(phrase).join(" "), *phrase, "{phrase:?}");
+            }
+        }
+    }
+
+    /// The decision: `head_vote_key`, `family_token`, `altid_name_key` and `NAME_KEY_EPOCH` do not change
+    /// — the serve holds read them only. Pinned on the v9 examples' spellings.
+    #[test]
+    fn the_keys_the_serve_holds_read_are_unchanged() {
+        assert_eq!(head_vote_key("Commune de Chiconi (976)"), "commune de chiconi 976");
+        assert_eq!(head_vote_key("Commune de Chiconi"), "commune de chiconi");
+        assert_eq!(head_vote_key("SMD 3"), "smd 3");
+        assert_eq!(head_vote_key("S.M.D.3"), "smd 3", "the initialism run ends at the digit");
+        assert_eq!(head_vote_key("Smd3"), "smd3");
+        assert_eq!(head_vote_key("Hurt-Papier Ryszard Cebula Sp. j."), "hurt papier ryszard cebula sp j");
+        assert_eq!(head_vote_key("HURT PAPIER RYSZARD CEBULA SPÓŁKA JAWNA"), "hurt papier ryszard cebula spolka jawna");
+        assert_eq!(head_vote_key("Hôpitaux Civils de Colmar (68)"), "hopitaux civils de colmar 68");
+        assert_eq!(altid_name_key("Acme Spółka Jawna"), "acme spółka jawna");
+        assert_eq!((family_token("spzoo"), family_token("spolka"), family_token("jawna")), (Some("spzoo"), None, None));
+        assert_eq!(NAME_KEY_EPOCH, "n2v2+n3v1");
     }
 }
 

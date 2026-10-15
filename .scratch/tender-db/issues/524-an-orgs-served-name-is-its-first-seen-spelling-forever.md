@@ -1316,7 +1316,7 @@ wrong; kept as the `exclude_released` fallback); folding Polish spelled-out form
 good cosmetic changes); the root-cause form-spelling and structural-organ rules (superseded by caps_variant and the
 lexicon). The designers' own expected rates (fitted on the same 120 items) are not used as evidence.
 
-**Measured on plan 2526** (judges' Python ports): ~930 serve holds (≈3.4 % of R1, ≈2.6 % of R2) + 15 withheld releases.
+**Measured on plan 2526** (the build's own `head_serve_hold` run over the plan, reproducing the judges' ports): 1,020 serve holds — review_body 104, organ 460, code_added 81, address_added 85, caps_variant 290 (R1 976 = 3.75 %, R2 44 = 2.81 %; the build review corrected an earlier ~930, which came from a panel organ variant not adopted) + 15 withheld releases.
 Labelled change lists: holds 8069375 (W) and 16508165 (W) and 2 neutrals; 0 labelled rights. Residual known wrongs:
 5350675 (a generic prefix drop) and 4123715 (a semantic R2 singleton). Expected fresh rates (judges): change:R1 1.5–2.5 %
 (P(pass) ≈ 0.6–0.9), change:R2 2–3 % (likely to trip; the R2 filter then fires).
