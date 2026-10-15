@@ -611,7 +611,8 @@ async fn a_fold_agreeing_only_on_a_generic_name_is_refused() {
 /// Issue 549: a DRY plan reads through the pool, so it finishes while something else
 /// holds the writer — a fold, or the coverage heartbeat behind one — and reports the
 /// same plan the dry run above does. It used to hold the writer through the whole B-ID
-/// preload. A wet run still takes the writer; this pins only the dry half.
+/// preload. The wet half is pinned too: with the writer released, a wet run takes it,
+/// so a tidy-up that sent both branches to a reader fails here.
 #[tokio::test]
 async fn the_r2_dry_plan_runs_while_the_writer_is_held() {
     let (db, conn) = seed(&format!("/tmp/tender-db-r2-549-{}.db", std::process::id())).await;
@@ -633,4 +634,13 @@ async fn the_r2_dry_plan_runs_while_the_writer_is_held() {
     assert_eq!(dry.merged_groups, 0);
     assert_eq!((dry.mentions, dry.parties, dry.bid_parties, dry.winners), (0, 1, 0, 1));
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 24, "dry run wrote nothing");
+
+    // The wet half: plans under the writer and keeps it to the last merge.
+    let before_wet = db.writer_stats().acquisitions;
+    let wet = db.match_org_identifiers_r2(args(false, Some(3))).await.expect("wet");
+    assert_eq!((wet.plan_groups, wet.merged_groups, wet.removed), (3, 3, 3));
+    assert!(
+        db.writer_stats().acquisitions > before_wet,
+        "a wet run must take the writer (issue 549's switch: only the DRY plan reads the pool)"
+    );
 }

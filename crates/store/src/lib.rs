@@ -5307,9 +5307,11 @@ mod tests {
 
     /// Issue 549: the refold cohort reads never take the writer. The carrier sweep held
     /// it for 503–531 s per sizing run on prod while the coverage heartbeat queued behind
-    /// a pure count. Holds the writer exactly as a fold does, then runs each read under a
-    /// timeout, so a regression FAILS here instead of hanging; the writer's acquisition
-    /// count proves none of them even tried.
+    /// a pure count. Holds the writer mutex, as any other writer would (no write
+    /// transaction is open on it, so this proves "never waits on the writer", not "never
+    /// contends with an open write"), then runs each read under a timeout, so a
+    /// regression FAILS here instead of hanging; the writer's acquisition count proves
+    /// none of them even tried.
     #[tokio::test]
     async fn the_carrier_sweep_runs_while_the_writer_is_held() {
         let path = format!("/tmp/tender-db-549-held-{}.db", std::process::id());
@@ -5340,7 +5342,7 @@ mod tests {
             .unwrap();
         }
 
-        // Exactly what a fold does: take the writer and keep it.
+        // Take the writer mutex and keep it, as any writer does while it works.
         let held = db.conn().await;
         let before = db.writer_stats().acquisitions;
         let limit = std::time::Duration::from_secs(5);
@@ -5374,7 +5376,8 @@ mod tests {
     /// extracted [`canonical::carrier_window_sql`], NOT a statistics guard: the value
     /// tables carry no `sqlite_stat1` rows (issue 428 kept them out of ANALYZE), and a
     /// test database has none at all. turso shows the composite key's autoindex as
-    /// `SEARCH <t> USING INDEX … (notice_id>? …)`, so "PRIMARY KEY" is not asserted.
+    /// `SEARCH <t> USING INDEX sqlite_autoindex_<t>_1 (notice_id>=? AND notice_id<?)`, so
+    /// "PRIMARY KEY" is not asserted; both bounds are.
     #[tokio::test]
     async fn the_carrier_window_seeks_each_value_table() {
         let path = format!("/tmp/tender-db-549-eqp-{}.db", std::process::id());
@@ -5397,9 +5400,16 @@ mod tests {
                 plan.push_str(&r.get_value(3).ok().and_then(|v| v.as_text().cloned()).unwrap_or_default());
                 plan.push('\n');
             }
+            println!("PLAN {table}:\n{plan}");
+            // The constraint text itself, both bounds: `notice_id` alone would match the
+            // table name `notice_ids` (or its autoindex) and prove nothing there, and a
+            // seek on `notice_id>?` only reads from `lo` to the end of the table on every
+            // window.
+            let search = format!("SEARCH {table} ");
             assert!(
-                plan.lines().any(|l| l.contains("SEARCH") && l.contains(table) && l.contains("notice_id")),
-                "{table}'s window must seek its notice_id range — plan was:\n{plan}"
+                plan.lines()
+                    .any(|l| l.contains(&search) && l.contains("notice_id>") && l.contains("notice_id<")),
+                "{table}'s window must seek BOTH bounds of its notice_id range — plan was:\n{plan}"
             );
             assert!(
                 !plan.lines().any(|l| l.trim_start().starts_with("SCAN ")),

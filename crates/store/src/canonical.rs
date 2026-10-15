@@ -13624,8 +13624,9 @@ impl Db {
     ///   snapshot for the whole sweep, and a cancelled sweep would hit the issue-53
     ///   discard path.
     /// - Never parallelize the windows or tables (`join_all`, `spawn`) over this pool.
-    ///   Its eight readers also serve token authentication, admin GETs and `/health`;
-    ///   a sequential sweep holds one of them.
+    ///   Its eight readers also serve token authentication, admin GETs and
+    ///   `/health/deep` (plain `/health` reads only memory); a sequential sweep holds
+    ///   one of them.
     ///
     /// The window loop is also the natural stop point for issue 543 unit 3.
     pub async fn notice_ids_carrying_fields(
@@ -40597,8 +40598,11 @@ impl Db {
 
     /// Take the single writer and hand the guard back — for TESTS that prove a
     /// read-only path does not wait on it (issue 549): hold this, then run the path
-    /// under a timeout. A fold holds the writer exactly like this for its whole run.
-    /// Sibling of [`Db::execute_for_test`]; not an API surface.
+    /// under a timeout. It holds the writer MUTEX, as any other writer would, with no
+    /// write transaction open on it: a test using it proves "never waits on the
+    /// writer", not "never contends with an open write transaction" (a fold also has
+    /// a `BEGIN IMMEDIATE` and uncommitted WAL frames). Sibling of
+    /// [`Db::execute_for_test`]; not an API surface.
     #[doc(hidden)]
     pub async fn hold_writer_for_test(&self) -> tokio::sync::MutexGuard<'_, turso::Connection> {
         self.conn().await
