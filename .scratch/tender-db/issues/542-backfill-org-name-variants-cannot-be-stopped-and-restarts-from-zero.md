@@ -1,8 +1,7 @@
 # 542 — `backfill-org-name-variants` cannot be stopped, and a restart re-walks it from notice 0
 
-Status: ready-for-agent — filed 2026-10-14 23:5x UTC. Unit 1 gated green and on main at `66f1e63`. Unit 2 built
-2026-10-15 (reviewed; gate, then main). Both deploy with 534 and 543 when the queue is idle. Unit 3 resolves itself
-when 2491 finishes. Next: deploy, then the Verify.
+Status: done — unit 1 deployed `4d4fe13` (02:04 UTC) and unit 2 deployed `2706192` (02:3x UTC), both 2026-10-15;
+the Verify reads done (job 2496, below); unit 3 read done. Was: ready-for-agent — filed 2026-10-14 23:5x UTC.
 Kind: operations (job control)
 Relates to:
 - 307 (the backfill itself);
@@ -20,6 +19,9 @@ Relates to:
   `notice id N` in the phase detail.
 - **open (2026-10-14)**: job 2491's cancel answered 409: `job 2491 is running as kind "backfill-org-name-variants",
   which has no stop checkpoint`.
+- **read done (2026-10-15, job 2496, rev `2706192`)**: the cancel answered `{"state":"stopping"}`, and the job ended
+  7 s later: `backfill-org-name-variants STOPPED by cancel after notice id 19984: 10000 notices, 33664 mentions visited,
+  29906 labelled variants written (the committed windows stand)`.
 
 ## What was found
 
@@ -95,3 +97,6 @@ the mentions a dissolve re-bound. On 2026-10-14 that was 7 mentions. The walk:
   classifier. 2491 runs to the end, at ~1,070 notices/s with 8.56M walked, and the deploy waits for an idle queue.
   2492, 2493 and the 07:35 dailies queue behind it.
 - The sibling audit (every other non-stoppable kind, adversarially verified) is filed as issue 543.
+- 2026-10-15 02:4x UTC, after deploying `2706192`: dry dissolve 2497 took 13 s (a cold box) and scanned 1,199,451
+  identifier-bearing orgs. 0 condemned, and its summary ends "; name variants would be re-derived for up to 0
+  re-bound orgs (per window)". Unit 2's line is live. The next real dissolve's wet summary names its re-derivation.
