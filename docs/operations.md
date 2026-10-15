@@ -435,6 +435,14 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 #                             `backfill-org-name-variants` (issue 542; a restart
 #                             resumes it after its last committed window).
 #                             A TED/DÖE fetch is one download and answers 409.
+#                             Every other kind is in UNSTOPPABLE_KINDS beside it,
+#                             each with the reason it answers 409: short, one
+#                             statement or download, a one-off, or deliberate
+#                             (refold-denied-schemes, disk-census). A test fails on
+#                             a pushed kind in neither list or in both (issue 543
+#                             unit 2), so a new kind's cancel answer is a choice.
+#                             Read the reason before restarting: rederive-eur
+#                             resumes from its watermark, reprocess from its cursor.
 #                             To end a running 409 kind anyway: a service restart
 #                             with TENDER_DROP_JOBS=<id>, or the restart recovers
 #                             it at the FRONT of the queue.

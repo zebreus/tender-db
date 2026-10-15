@@ -4617,6 +4617,8 @@ fn stoppable(kind: &str, params: &str) -> bool {
     STOPPABLE_KINDS.contains(&kind) || (matches!(kind, "fetch" | "probe") && params.starts_with("fts "))
 }
 
+/// The kinds whose loop reads the stop flag (issue 252). Every other pushed kind is in
+/// [`UNSTOPPABLE_KINDS`] with its reason (issue 543 unit 2).
 const STOPPABLE_KINDS: &[&str] = &[
     "process",
     "reparse",
@@ -4707,6 +4709,62 @@ const STOPPABLE_KINDS: &[&str] = &[
     "audit-fts-ids",
     // Issue 542: read before every notice window; each window is its own REPLACE commit.
     "backfill-org-name-variants",
+];
+
+/// Issue 543 unit 2: every pushed kind that is NOT in [`STOPPABLE_KINDS`], with the reason
+/// a cancel answers 409 for it: it is short, it is one statement or download, it is a
+/// one-off not worth a checkpoint, or it is refused on purpose. The issue's audit (2026-10-15)
+/// found no kind here that is scheduled automatically; every long one is enqueued by an
+/// operator through `POST /admin/jobs`.
+///
+/// `fetch` and `probe` are listed because a TED or DÖE one is a single download. Their
+/// FTS walks ARE stoppable, by params rather than kind (see [`stoppable`]), and
+/// `every_pushed_kind_is_stoppable_or_not` pins that exactly those two kinds have that case.
+///
+/// The pairing is exhaustive and test-enforced like [`LIGHT_KINDS`]: a new kind fails the
+/// test until its author either gives its loop a stop checkpoint or writes its reason here.
+#[cfg_attr(not(test), allow(dead_code))]
+const UNSTOPPABLE_KINDS: &[(&str, &str)] = &[
+    // Short: one transaction, one statement, one download, or seconds of work.
+    ("apply-case-reviews", "one commit (issue 543 unit 1): nothing between to read a flag at"),
+    ("unapply-case-reviews", "one commit (issue 543 unit 1): nothing between to read a flag at"),
+    ("apply-country-verdicts", "one commit (issue 543 unit 1): nothing between to read a flag at"),
+    ("apply-rehoming", "one commit (issue 543 unit 1): nothing between to read a flag at"),
+    ("restore-dropped-satellites", "one commit (issue 543 unit 1): nothing between to read a flag at"),
+    ("clear-rebuild-flag", "one statement"),
+    ("disk-census", "statvfs plus one stat: no loop to read a flag in (its arm's comment)"),
+    ("registry-contiguity", "one read of the monthly fetch periods"),
+    ("reveal-recheck", "one 100k-section slice, seconds: issue 274 sliced it so it needs no stop flag"),
+    ("rederive-eur-recent", "a few days of heads, seconds (issue 504)"),
+    ("repair-placeholder-orgs", "seconds: job 1615 under a minute, jobs 2488/2489 ~3 s (issue 543 audit)"),
+    ("fetch", "a TED/DÖE fetch is one download; an FTS fetch (`fts …` params) is stoppable through `stoppable`"),
+    ("probe", "a TED/DÖE probe is one download a day; the FTS probe (`fts daily (probe)`) is stoppable"),
+    ("rehash-probe", "`samples` downloads (default 8); a stall is bounded by the fetch client's read timeout"),
+    ("fetch-rates", "one ECB download and a rates-table load"),
+    ("fetch-rates-ecu", "two Eurostat downloads and a rates-table load"),
+    ("register-archive", "an archive walk that hashes only unregistered packages; idempotent"),
+    ("reindex", "CREATE INDEX IF NOT EXISTS, one index at a time: each build is one statement"),
+    ("refold", "a count, then the re-queue and stale-stamp store calls; the fold is the stoppable `project` after it"),
+    ("refold-notices", "the re-queue and stale-stamp store calls over at most 1,000 named ids"),
+    ("refold-sections", "one indexed carrier read, then the re-queue and stale-stamp store calls"),
+    ("refold-value-band", "one id read, then the stale-stamp and re-queue store calls (issue 492)"),
+    ("requeue-uuid-hubs", "one re-queue store call over the census's hub list (issue 482)"),
+    ("repair-swept-siblings", "a count and one repair store call"),
+    // Deliberate, or a one-off not worth a checkpoint (issue 543 audit).
+    ("refold-denied-schemes", "deliberately: one strided pass of the mentions table, minutes (its arm's comment)"),
+    ("backfill-deadlines", "a one-off that has already run (issue 543 audit)"),
+    ("backfill-titles", "a one-off that has already run (issue 543 audit)"),
+    ("backfill-currencies", "a one-off that has already run (issue 543 audit)"),
+    ("backfill-legacy-adjacency", "not run since Aug 2026; its 40 min was one query's tail on pre-228 code"),
+    ("backfill-values", "refused at run time (issue 375): it answers its explanation and writes nothing"),
+    ("backfill-org-names", "a one-off `name_norm` backfill the fold maintains since; idempotent"),
+    ("backfill-original-lang", "a one-off column backfill (job 632, issue 340); a re-run stamps only NULL versions"),
+    ("mark-skipped-siblings", "a one-off, expect-gated mark that has run (issues 84, 137); a re-run marks the rest"),
+    ("repair-nested-orgs", "a one-off repair, landed 2026-08-28 (issue 259)"),
+    // Long enough for a stop check: issue 543 unit 3 adds one to each.
+    ("rederive-eur", "~10 min (598–646 s, jobs 1001 and 2099), resumes from its watermark; unit 3"),
+    ("reprocess", "writes a resume cursor; its backlog was 12 rows on 2026-10-01; unit 3"),
+    ("refold-fields", "the read-only carrier sweep (46 min for two tables) takes no stop closure yet; unit 3"),
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -16253,6 +16311,11 @@ impl Supervisor {
 /// trivial-write kinds stay off it (`probe`, `data-quality`, `reveal-recheck`,
 /// `register-archive`, `clear-rebuild-flag`) so coverage still refreshes during
 /// them.
+///
+/// Issue 543 unit 2: every kind NOT listed here is in [`LIGHT_KINDS`] with its reason,
+/// and `every_pushed_kind_is_heavy_or_light` fails on a pushed kind that is in neither
+/// (or in both). A new batched writer then cannot land light by default: its author
+/// picks a side.
 fn heavy_write_kind(kind: &str) -> bool {
     matches!(
         kind,
@@ -16303,6 +16366,80 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "repair-provisional-name-norm"
     )
 }
+
+/// Issue 543 unit 2: every job kind the supervisor pushes that is NOT a
+/// [`heavy_write_kind`], with the reason it does not take per-batch TRUNCATE checkpoints.
+/// The criterion is that one: a kind that commits in batches AND TRUNCATE-checkpoints
+/// between them belongs on the belt; a single commit, commits without a TRUNCATE, or
+/// one closing checkpoint does not.
+///
+/// The pairing is exhaustive and test-enforced: `every_pushed_kind_is_heavy_or_light`
+/// reads every kind this file pushes out of its own source and fails on a kind in
+/// neither list, in both, or a stale entry here. Adding a job kind means classifying it.
+/// When in doubt, choose heavy: over-inclusion costs one stale coverage refresh, and
+/// under-inclusion is the WAL hazard (issue 281).
+///
+/// The 22 issue-543 unit 1 verdicts are quoted as that unit recorded them. The report
+/// kinds were each re-read for unit 2: every store fn on their path borrows a pooled
+/// reader (`Db::reader`), and the only write is `put_report`'s autocommit.
+#[cfg_attr(not(test), allow(dead_code))]
+const LIGHT_KINDS: &[(&str, &str)] = &[
+    // Read-only apart from their report rows: the walk runs on the reader pool.
+    ("anchor-wall-census", "report only: `anchor_wall_census` reads on the pool"),
+    ("buyer-role-census", "report only: `buyer_role_census` reads parsed windows on the pool"),
+    ("case-review-backlog", "report only: `case_review_backlog` reads on the pool"),
+    ("country-cluster-census", "report only: `country_cluster_census` reads on the pool"),
+    ("country-cluster-packet", "report only: `country_cluster_packet` reads on the pool"),
+    ("country-typo-census", "report only: `country_typo_census` reads on the pool"),
+    ("data-quality", "report only: the aggregates read on the pool (issue 543 unit 1)"),
+    ("disk-census", "report only: statvfs plus one stat (issue 543 unit 1)"),
+    ("duplicate-identity-census", "report only: `duplicate_identity_census` reads on the pool"),
+    ("fusion-census", "report only: `fusion_candidates` reads on the pool"),
+    ("generic-statistic-census", "report only: `genericness_statistic_census` reads on the pool"),
+    ("generic-wall-census", "report only: `generic_wall_inflation_census` reads on the pool"),
+    ("ghost-census", "report only: `ghost_census` reads notice-id slices on the pool"),
+    ("member-twin-census", "report only: `member_twin_census` reads index batches on the pool"),
+    ("name-attribution-probe", "report only: `name_attribution_probe` reads on the pool"),
+    ("name-phrase-census", "report only: `name_phrase_census` reads on the pool"),
+    ("name-pollution-census", "report only: `name_pollution_census` reads on the pool"),
+    ("org-edge-census", "report only: `census_org_candidate_edges` reads on the pool"),
+    ("org-head-drift", "report only: `org_head_drift` reads on the pool"),
+    ("org-merge-health", "report only: no transactions, no checkpoints (issue 300 Stage 0)"),
+    ("procedure-key-census", "report only: `procedure_key_census` reads Tender windows on the pool"),
+    ("provisional-echo-census", "report only: `provisional_echo_census` reads on the pool"),
+    ("r2-census", "report only: `org_merge_health_batch` reads on the pool"),
+    ("r3-census", "report only: `null_country_ident_orgs` and `org_all_names` read on the pool"),
+    ("refresh-org-names", "report only: the dry plan reads on the pool; a wet run is refused at enqueue"),
+    ("registry-contiguity", "report only: one `monthly_fetch_periods` read (issue 543 unit 1)"),
+    ("rehoming-packet", "report only: `rehoming_packet` reads on the pool"),
+    ("reveal-recheck", "reports only: one 100k-section slice read on the pool, then three report rows"),
+    ("satellite-orphans", "report only: `satellite_orphans` reads on the pool"),
+    ("xb-packet", "report only: `xb_same_name_packet` reads on the pool"),
+    // Writers with one commit, so not batched (issue 543 unit 1).
+    ("apply-case-reviews", "one commit (issue 543 unit 1)"),
+    ("unapply-case-reviews", "one commit (issue 543 unit 1)"),
+    ("apply-country-verdicts", "one commit (issue 543 unit 1)"),
+    ("apply-rehoming", "one commit (issue 543 unit 1)"),
+    ("restore-dropped-satellites", "one commit (issue 543 unit 1)"),
+    ("repair-country-typos", "one commit after a stoppable plan walk (issue 543 unit 1)"),
+    ("repair-label-prefixes", "one commit after a stoppable plan walk (issue 543 unit 1)"),
+    ("repair-member-twins", "one transaction, then one checkpoint after it, not per batch (issue 543)"),
+    ("repair-minted-countries", "one commit after a stoppable plan walk (issue 543 unit 1)"),
+    ("repair-renormalised-identifiers", "one commit after a stoppable plan walk (issue 543 unit 1)"),
+    ("drop-orphan-satellites", "one commit after a stoppable plan walk (issue 543 unit 1)"),
+    ("fold-org-countries", "one commit after a stoppable plan walk (issue 543 unit 1)"),
+    ("fetch", "one download and its registry row (issue 543 unit 1)"),
+    // Multi-commit writers with no TRUNCATE checkpoint (issue 543 unit 1).
+    ("backfill-merged-identifiers", "one transaction per ledger window, no TRUNCATE (issue 543 unit 1)"),
+    ("fold-provisional-echoes", "fold transactions, no TRUNCATE (issue 543 unit 1)"),
+    ("audit-fts-ids", "ledger rows per by-id answer, no TRUNCATE (issue 543 unit 1)"),
+    ("analyze", "statistics, one table at a time, no TRUNCATE (issue 543 unit 1)"),
+    ("rehash-probe", "a re-fetch per sample, then two report rows, no TRUNCATE (issue 543 unit 1)"),
+    ("probe", "a fetch per day probed, no TRUNCATE (issue 543 unit 1)"),
+    // Trivial writes.
+    ("clear-rebuild-flag", "one statement: `clear_plan`"),
+    ("register-archive", "a registry row per unregistered package; one TRUNCATE after the walk, not per batch"),
+];
 
 /// Issue 308: the D5 cohort walk wraps every ~3 nightly slices, so per-slice
 /// numbers cannot be watched — the BROKEN count (the campaign's acceptance
@@ -17207,6 +17344,167 @@ mod tests {
                 "backfill-org-name-variants"
             ]
         );
+    }
+
+    /// Every push whose kind is a variable rather than a literal, with how many such push
+    /// sites the variable has and the literals it can hold. [`pushed_kinds`] checks the
+    /// literals against the `let` that binds the variable, so a third class bound there
+    /// fails, and a push through any other variable fails until it is listed here.
+    const VARIABLE_KIND_PUSHES: &[(&str, usize, &[&str])] = &[
+        // `enqueue_request`'s issues 510/511 arm: `push` takes a `'static` kind, so the arm
+        // binds one of its two literals and pushes it dry or wet (two sites).
+        ("kind", 2, &["refold-void-names", "refold-placeholder-names"]),
+    ];
+
+    /// Issue 543 unit 2: every job kind this file can queue, read out of its own source —
+    /// source-read like `ingest::project`'s reader-arm tests, because the invariant is about
+    /// the call sites. Only the production half is read (this module names the patterns).
+    /// Literal kinds come from the `push` and `push_front` call sites, whichever line the
+    /// literal starts on; variable kinds from [`VARIABLE_KIND_PUSHES`]. `enqueue_request`'s
+    /// arms and the schedulers all queue through those two calls, and the scan pins that
+    /// they are the only callers of `enqueue`.
+    fn pushed_kinds() -> std::collections::BTreeSet<&'static str> {
+        let src: &'static str = include_str!("supervisor.rs");
+        let prod = &src[..src.find("\n#[cfg(test)]\nmod tests {").expect("the test module")];
+        assert_eq!(
+            prod.matches("self.enqueue(").count(),
+            2,
+            "`push` and `push_front` are the only callers of `enqueue`: a third path queues kinds \
+             this scan cannot see, so route it through `push` or teach the scan"
+        );
+        let mut kinds = std::collections::BTreeSet::new();
+        let mut variable_sites = std::collections::BTreeMap::<&str, usize>::new();
+        for call in ["self.push(", "self.push_front("] {
+            for (at, _) in prod.match_indices(call) {
+                let line_start = prod[..at].rfind('\n').map_or(0, |i| i + 1);
+                if prod[line_start..at].contains("//") {
+                    continue; // a comment naming the call, not a call
+                }
+                let arg = prod[at + call.len()..].trim_start();
+                if let Some(literal) = arg.strip_prefix('"') {
+                    kinds.insert(&literal[..literal.find('"').expect("a closed kind literal")]);
+                    continue;
+                }
+                let var = &arg[..arg.find(|c: char| !(c.is_ascii_alphanumeric() || c == '_')).unwrap_or(arg.len())];
+                let Some((_, _, expected)) = VARIABLE_KIND_PUSHES.iter().find(|(v, _, _)| *v == var) else {
+                    panic!(
+                        "a `{call}` pushes the kind held by `{var}`, which this test does not know: list the \
+                         kinds it can hold in VARIABLE_KIND_PUSHES, so they are classified like the rest"
+                    );
+                };
+                // The `let` nearest before the push binds it; its literals are the kinds.
+                let binding = &prod[prod[..at].rfind(&format!("let {var} = ")).expect("the variable's binding")..];
+                let binding = &binding[..binding.find(';').expect("the binding's end")];
+                let bound: std::collections::BTreeSet<&str> = binding.split('"').skip(1).step_by(2).collect();
+                assert_eq!(
+                    bound,
+                    expected.iter().copied().collect::<std::collections::BTreeSet<_>>(),
+                    "`{var}` is bound to other kinds than VARIABLE_KIND_PUSHES lists: {binding}"
+                );
+                *variable_sites.entry(var).or_default() += 1;
+                kinds.extend(expected.iter().copied());
+            }
+        }
+        for (var, sites, _) in VARIABLE_KIND_PUSHES {
+            assert_eq!(
+                variable_sites.get(var).copied().unwrap_or(0),
+                *sites,
+                "VARIABLE_KIND_PUSHES expects {sites} push(es) through `{var}`"
+            );
+        }
+        kinds
+    }
+
+    /// Issue 543 unit 2: [`heavy_write_kind`] and [`LIGHT_KINDS`] partition the pushed kinds.
+    /// Five batched TRUNCATE writers sat off the belt (issue 543, and issue 281 before it)
+    /// because a new kind was light unless someone remembered otherwise. Now a kind in
+    /// neither list fails here by name, and so does one in both, a stale entry, a
+    /// duplicate, or an entry with no reason.
+    #[test]
+    fn every_pushed_kind_is_heavy_or_light() {
+        let kinds = pushed_kinds();
+        let light: Vec<&str> = LIGHT_KINDS.iter().map(|(kind, _)| *kind).collect();
+        let neither: Vec<&str> = kinds.iter().copied().filter(|k| !heavy_write_kind(k) && !light.contains(k)).collect();
+        assert!(
+            neither.is_empty(),
+            "unclassified job kind(s) {neither:?}: add each to `heavy_write_kind` if it commits in batches \
+             and TRUNCATE-checkpoints between them, else to LIGHT_KINDS with the reason it does not"
+        );
+        let both: Vec<&str> = light.iter().copied().filter(|k| heavy_write_kind(k)).collect();
+        assert!(both.is_empty(), "{both:?} are in both `heavy_write_kind` and LIGHT_KINDS");
+        let stale: Vec<&str> = light.iter().copied().filter(|k| !kinds.contains(k)).collect();
+        assert!(stale.is_empty(), "LIGHT_KINDS names {stale:?}, which nothing pushes");
+        let mut seen = std::collections::BTreeSet::new();
+        for (kind, reason) in LIGHT_KINDS {
+            assert!(seen.insert(*kind), "LIGHT_KINDS lists {kind} twice");
+            assert!(!reason.trim().is_empty() && !reason.contains('\n'), "LIGHT_KINDS' {kind} needs a one-line reason");
+        }
+        // The belt names no kind nothing pushes either: its arms, read from its body.
+        let src = include_str!("supervisor.rs");
+        let start = src.find("\nfn heavy_write_kind(").expect("heavy_write_kind");
+        let body = &src[start..start + src[start..].find("\n}\n").expect("heavy_write_kind's end")];
+        let heavy: Vec<&str> = body
+            .lines()
+            .filter(|line| !line.trim_start().starts_with("//"))
+            .flat_map(|line| line.split('"').skip(1).step_by(2))
+            .collect();
+        assert!(heavy.contains(&"process") && heavy.contains(&"repair-provisional-name-norm"), "read {heavy:?}");
+        for kind in heavy {
+            assert!(heavy_write_kind(kind), "the body read {kind:?}, which `heavy_write_kind` does not answer");
+            assert!(kinds.contains(kind), "`heavy_write_kind` names {kind}, which nothing pushes");
+        }
+    }
+
+    /// Issue 543 unit 2: the same partition for cancelling. [`STOPPABLE_KINDS`] and
+    /// [`UNSTOPPABLE_KINDS`] split the pushed kinds, so a kind's cancel answer is a choice
+    /// its author made: a checkpoint, or a written reason for the 409. Issue 542's long
+    /// backfill landed unstoppable by default, and nothing asked.
+    #[test]
+    fn every_pushed_kind_is_stoppable_or_not() {
+        let kinds = pushed_kinds();
+        let unstoppable: Vec<&str> = UNSTOPPABLE_KINDS.iter().map(|(kind, _)| *kind).collect();
+        let neither: Vec<&str> =
+            kinds.iter().copied().filter(|k| !STOPPABLE_KINDS.contains(k) && !unstoppable.contains(k)).collect();
+        assert!(
+            neither.is_empty(),
+            "job kind(s) {neither:?} are in neither list: give the loop a stop checkpoint and add the kind \
+             to STOPPABLE_KINDS (and `cancelling_a_kind_with_no_checkpoint_is_refused_rather_than_promised`), \
+             or add it to UNSTOPPABLE_KINDS with the reason a cancel answers 409"
+        );
+        let both: Vec<&str> = unstoppable.iter().copied().filter(|k| STOPPABLE_KINDS.contains(k)).collect();
+        assert!(both.is_empty(), "{both:?} are in both STOPPABLE_KINDS and UNSTOPPABLE_KINDS");
+        let stale: Vec<&str> =
+            STOPPABLE_KINDS.iter().chain(&unstoppable).copied().filter(|k| !kinds.contains(k)).collect();
+        assert!(stale.is_empty(), "{stale:?} are listed, but nothing pushes them");
+        let mut seen = std::collections::BTreeSet::new();
+        for kind in STOPPABLE_KINDS {
+            assert!(seen.insert(*kind), "STOPPABLE_KINDS lists {kind} twice");
+        }
+        let mut seen = std::collections::BTreeSet::new();
+        for (kind, reason) in UNSTOPPABLE_KINDS {
+            assert!(seen.insert(*kind), "UNSTOPPABLE_KINDS lists {kind} twice");
+            assert!(
+                !reason.trim().is_empty() && !reason.contains('\n'),
+                "UNSTOPPABLE_KINDS' {kind} needs a one-line reason"
+            );
+        }
+        // The lists agree with `stoppable`, the one function a cancel asks.
+        for kind in STOPPABLE_KINDS {
+            assert!(stoppable(kind, ""), "{kind} is in STOPPABLE_KINDS but `stoppable` refuses it");
+        }
+        for kind in &unstoppable {
+            assert!(!stoppable(kind, ""), "{kind} is in UNSTOPPABLE_KINDS but `stoppable` accepts it");
+            assert!(!stoppable(kind, "ted daily 2026-00136"), "{kind} is stoppable under a TED name");
+        }
+        // `stoppable`'s one params case, the FTS walk (issues 450 and 477), modelled
+        // explicitly: under each FTS name (both enqueue spellings of a fetch, and the
+        // scheduler's probe) exactly `fetch` and `probe` turn stoppable. A third kind
+        // gaining a params case has to be named here.
+        for params in ["fts monthly 2025-06", "fts daily 2026-09-03", "fts daily (probe)"] {
+            let by_params: Vec<&str> =
+                kinds.iter().copied().filter(|k| !STOPPABLE_KINDS.contains(k) && stoppable(k, params)).collect();
+            assert_eq!(by_params, ["fetch", "probe"], "the kinds `stoppable` accepts by params under {params:?}");
+        }
     }
 
     /// Issue 325's tripwire quoted its predecessor WHOLE, so every weekly run

@@ -1,8 +1,9 @@
 # 543 — `heavy_write_kind` leaves out five batched TRUNCATE writers, and the job-control lists are opt-in
 
 Status: ready-for-agent — filed 2026-10-15 from the 542 audit (an Explore survey of every non-stoppable kind, then
-four adversarial verifiers). Unit 1 built 2026-10-15 01:0x UTC (gate, then main; it deploys with 534 and 542). Next:
-unit 2.
+four adversarial verifiers). Unit 1 built 2026-10-15 01:0x UTC (gate, then main; it deploys with 534 and 542). Unit 2
+built 2026-10-15 in the working tree (focused tests green; not gated or committed yet). Next: gate and commit unit 2, then
+unit 3.
 Kind: operations (WAL safety, job control)
 Relates to:
 - 281 (the under-inclusion this repeats);
@@ -87,3 +88,35 @@ independent skeptic, 27 of 27 agreeing. Exactly the five above are batched TRUNC
 
 The five are added to `heavy_write_kind` with a comment line each, and to
 `heavy_write_in_progress_tracks_the_running_job_kind`.
+
+## Unit 2 — built (2026-10-15, working tree)
+
+Both job-control lists are now exhaustive, and a test enforces it. 91 distinct kinds are pushed: 89 literals at the
+`push`/`push_front` sites, plus the two the issues 510/511 arm pushes through its `kind` variable.
+- `LIGHT_KINDS` (supervisor.rs, after `heavy_write_kind`) has 51 entries, one reason each. With the belt's 40 that
+  makes 91. The 22 unit 1 verdicts are quoted as recorded. The 29 kinds unit 1 did not re-read were each traced:
+  every `-census`/`-packet`/`-probe` report kind, `satellite-orphans`, `org-merge-health`, `org-head-drift`, `refresh-org-names` (dry
+  only), `case-review-backlog`, `procedure-key-census`, `buyer-role-census` and `reveal-recheck`. Every store fn on
+  those paths borrows `Db::reader`, and the only write is `put_report`. `register-archive` writes one registry row
+  per unregistered package and TRUNCATEs once after the walk, not per batch. `clear-rebuild-flag` is one statement.
+  **No further batched TRUNCATE writer was found**, so `heavy_write_kind` is unchanged.
+- `UNSTOPPABLE_KINDS` (after `STOPPABLE_KINDS`) has 37 entries. With `STOPPABLE_KINDS`' 54 that makes 91. The groups:
+  - 24 short: one commit, one statement, one download, or seconds of work;
+  - 10 deliberate or one-off, with reasons from this issue's audit and the arms' own comments (`refold-denied-schemes`,
+    `disk-census`);
+  - 3 marked for unit 3: `rederive-eur`, `reprocess`, `refold-fields`.
+
+  `fetch` and `probe` are listed, and their FTS walks stay stoppable by params.
+- Tests (in `mod tests`):
+  - `pushed_kinds()` reads the production half of `include_str!("supervisor.rs")`. It requires every non-literal
+    push to be listed in `VARIABLE_KIND_PUSHES` and checks those kinds against the variable's `let`. It also pins
+    `push`/`push_front` as the only callers of `enqueue`.
+  - `every_pushed_kind_is_heavy_or_light` fails on a kind in neither list or in both, a stale or duplicate
+    `LIGHT_KINDS` entry, a missing reason, or a `heavy_write_kind` arm (read from its body) that nothing pushes.
+  - `every_pushed_kind_is_stoppable_or_not` checks the same for the stop lists, checks both lists against
+    `stoppable()`, and pins the FTS params case to exactly `fetch` and `probe` under all three FTS names.
+  - Red-first by mutation:
+    - dropping `xb-packet` from `LIGHT_KINDS` and `fetch-rates` from `UNSTOPPABLE_KINDS` failed both tests, each
+      naming its kind;
+    - a push through an unknown variable failed both tests too.
+- `docs/operations.md`'s cancel section names `UNSTOPPABLE_KINDS` and its test.
