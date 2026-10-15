@@ -597,7 +597,8 @@ const PLACEHOLDER_WHOLE: [&str; 74] = [
 /// [`VOID_WHOLE`]: they fill review and mediation slots as often as winner slots, and
 /// promoting one needs 510's per-word value/date table (511 §8.7). `n a`, `na`, `nc`, `n d`
 /// and `none specified` are ambiguous in a winner slot and stay here, asserting nothing.
-const BLANK_WHOLE: [&str; 59] = [
+/// One withheld-name word is here for guard 3 as well: `individual` (issue 529).
+const BLANK_WHOLE: [&str; 60] = [
     "n a",
     "no procede",
     "x",
@@ -659,6 +660,14 @@ const BLANK_WHOLE: [&str; 59] = [
     "this is not applicable in the uk",
     "this is not applicable to the uk",
     "this is not applicable in uk",
+    // Issue 529: Find a Tender's stand-in name for a withheld sole-trader supplier (job 2493: 4
+    // whole-name orgs). `Blank`, not `Placeholder`, for the project's guard 3 alone: an
+    // `Individual` with an admitted identifier is kept (31570158's PPON, 18934187's GH number,
+    // UKRI's PPON on one FTS slot, accepted as 529 unit 3); a bare one, or one on the s.94
+    // placeholder PPONs (idgate `withheld_placeholder`), drops rather than pooling every withheld
+    // UK sole trader on one `(name_norm, country)` provisional row (31966280). Whole value only:
+    // `Individual Centred Care` and `Cabinet Medical Individual …` stay names.
+    "individual",
 ];
 
 /// Issue 511 unit 4 (residual dry 2273): the German "no information is given here" a winner
@@ -8024,6 +8033,27 @@ mod tests {
         }
     }
 
+    /// Issue 529: FTS's withheld sole trader is `Blank` as a whole value only.
+    #[test]
+    fn an_fts_individual_is_blank_as_a_whole_name_only() {
+        // Issue 529: the whole value, with a lot qualifier at most, is FTS's stand-in name.
+        for blank in ["Individual", "individual", "Individual (Lot 2)"] {
+            assert_eq!(not_a_name(blank), Some(NotAName::Blank), "{blank}");
+        }
+        // The 286 orgs job 2493 reached by substring are names: the word inside a name is not one.
+        for name in [
+            "Individual Centred Care",
+            "Individual Care and Support Services Limited",
+            "Cabinet Medical Individual Popescu Ion",
+            "Cabinet Medical Veterinar Individual Dr. Cozma Maria Andreea",
+            "Individual Computer Applications AB",
+            "Individual Solutions Ltd",
+            "Individuals",
+        ] {
+            assert_eq!(not_a_name(name), None, "{name}");
+        }
+    }
+
     /// Issue 511: one prod specimen per lexicon entry (the census of 2026-10-11 and the
     /// review's reads), each with its class, each caught by the drain's net and, the
     /// qualified ones aside, an exact entry.
@@ -8158,6 +8188,10 @@ mod tests {
             "-entfällt-",
             "- entfällt -",
             "Entfaellt",
+            // Issue 529: FTS's withheld sole trader.
+            "Individual",
+            "INDIVIDUAL",
+            "Individual.",
             "Néant.",
             "NEANT",
             "Keine",
@@ -8216,7 +8250,7 @@ mod tests {
                 assert!(mentions_placeholder(name), "the walk's net catches {name}");
             }
         }
-        for exact in ["Siehe oben", "N/A", "Néant.", "Various Suppliers", "-/-", "0", "Withheld", "Nie dotyczy."] {
+        for exact in ["Siehe oben", "N/A", "Néant.", "Various Suppliers", "-/-", "0", "Withheld", "Nie dotyczy.", "Individual"] {
             assert!(is_exact_entry(exact), "{exact}");
         }
         for qualified in ["Withheld Section94 Supplier", "See Section VI.3 Additional information", "Siehe oben (VI.4.1)"] {

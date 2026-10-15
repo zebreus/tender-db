@@ -4576,7 +4576,8 @@ fn party_names<'a>(
 ///   withheld winner beside a void phrase means a winner exists.
 /// - Guard 3: a `Blank` party that carries an identifier the gate admits
 ///   ([`gated_identifier`]) is kept — a real party with a missing name (the DE platform
-///   GUIDs on `.` and `-`, `0` DK with its CVR) — unless the identifier echoes a non-name
+///   GUIDs on `.` and `-`, `0` DK with its CVR, FTS's `Individual` under its own PPON, issue
+///   529) — unless the identifier echoes a non-name
 ///   ([`identifier_echoes`]: `.` on `.`, `KEINE…` on `keine`). A `Placeholder` gets no such
 ///   guard: its text says the identity is withheld or elsewhere, so an identifier beside it
 ///   is the placeholder's (`Withheld Section94 Supplier` carries one PPON on all 123
@@ -15653,6 +15654,54 @@ mod tests {
         assert_eq!(total.placeholder_identified, (DROPPED_SAMPLE + 5) as u64);
         assert_eq!(total.sample.len(), DROPPED_SAMPLE);
         assert_eq!(total.total(), 3 * (DROPPED_SAMPLE + 5) as u64);
+    }
+
+    /// Issue 529 unit 2: FTS's `Individual` (a withheld sole trader) is `Blank`, so guard 3
+    /// keeps one under an identifier the gate admits — its own PPON (31570158's PMGL), or
+    /// UKRI's PDQJ on the FASTER slot, accepted as 529 unit 3 — and drops a bare one or one on
+    /// the s.94 placeholder PPONs, instead of pooling every withheld UK sole trader on one
+    /// `(name_norm, country)` row (31966280). A name that merely contains the word mints.
+    #[test]
+    fn an_fts_individual_drops_bare_and_keeps_an_admitted_identifier() {
+        use placeholder_511::*;
+        let parsed = eforms(
+            &[
+                ("Procedure-Buyer", "Met Office", "GBR", "GB-PPON-PVZW-3234-DTLY"),
+                ("Tenderer", "Individual", "GBR", "GB-PPON-PBXY-3232-WNHZ"),
+                ("Tenderer", "Individual", "GBR", "GB-PPON-PGYY-2165-QXNQ"),
+                ("Tenderer", "Individual", "GBR", "GB-PPON-PMGL-5552-GJZX"),
+                ("Tenderer", "Individual", "GBR", "GB-PPON-PDQJ-7126-JDHG"),
+                ("Tenderer", "Individual", "GBR", ""),
+                ("Tenderer", "Individual Centred Care", "GBR", ""),
+            ],
+            Some("ENG"),
+        );
+        assert_eq!(
+            decided(false, &parsed),
+            BTreeMap::from([
+                ("ORG-2".to_owned(), NotAName::Blank),
+                ("ORG-3".to_owned(), NotAName::Blank),
+                ("ORG-6".to_owned(), NotAName::Blank),
+            ]),
+            "the s.94 PPONs and the bare one drop; the admitted PPONs keep theirs"
+        );
+        let (mentions, mut skipped, dropped, _) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        skipped.sort();
+        assert_eq!(skipped, ["ORG-2", "ORG-3", "ORG-6"]);
+        assert_eq!((dropped.blank, dropped.placeholder), (3, 0));
+        let minted: BTreeMap<String, Option<String>> = mentions
+            .iter()
+            .map(|m| (m.section_id.clone(), m.identifier.as_ref().map(|i| i.value.clone())))
+            .collect();
+        assert_eq!(
+            minted,
+            BTreeMap::from([
+                ("ORG-1".to_owned(), Some("GBPPONPVZW3234DTLY".to_owned())),
+                ("ORG-4".to_owned(), Some("GBPPONPMGL5552GJZX".to_owned())),
+                ("ORG-5".to_owned(), Some("GBPPONPDQJ7126JDHG".to_owned())),
+                ("ORG-7".to_owned(), None),
+            ])
+        );
     }
 
     /// Issue 511 §3: a placeholder buyer is dropped like any other party, so it leaves no

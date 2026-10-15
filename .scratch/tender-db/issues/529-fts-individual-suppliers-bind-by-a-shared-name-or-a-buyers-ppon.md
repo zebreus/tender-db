@@ -1,7 +1,9 @@
 # 529 — FTS `Individual` suppliers bind by a shared name or by a buyer's PPON
 
-Status: ready-for-agent — filed 2026-10-14 from issue 522 unit 1's reads. Unit 1 MEASURED 2026-10-15 (job 2493,
-below). Next: the unit-2 and unit-3 decisions, from that reading.
+Status: ready-for-agent — filed 2026-10-14 from issue 522 unit 1's reads. Unit 1 measured 2026-10-15 (job 2493).
+Units 2 and 3 DECIDED 2026-10-15 by a design panel: three designs and a judge, read-only, code-cited (below).
+Unit 2 built (gate, then main, deploy and drain). Unit 3 is accepted, with no code. Next: deploy unit 2, run the
+drain, then the Verify.
 Kind: data quality (organization identity)
 Relates to:
 - 522 (the s.94 placeholder PPONs stop keying, so their `Individual`s bind by name);
@@ -12,11 +14,11 @@ Relates to:
 
     echo "SELECT id, country, identifier, provisional FROM organizations WHERE name_norm = 'individual' LIMIT 50" | ssh root@zebreus.click /root/sq.sh
 
-- **done**: no identifier-less `individual` row gathers withheld suppliers across notices. UKRI (30913706) holds no
-  mention named `Individual`. Read the second half from the two notices below: their ORG-GB-PPON-PDQJ-7126-JDHG
-  mention.
-- **open (2026-10-14)**: 2 rows, both identified (31570158 GB `GBPPONPMGL5552GJZX`, 18934187 GH `P0004469968`).
-  After 522's dissolve, expect a third: a GB provisional `Individual` holding the four s.94 mentions.
+- **done**: only identified rows (18934187 GH, 31570158 GB), and 31966280 is gone. UKRI's two PDQJ `Individual`
+  mentions stand as accepted (unit 3): on 46806664 with no role, and on 46819715 as Tenderer and winner on lots 2 and
+  4 of tender 8596401.
+- **open (2026-10-15)**: 31966280, a GB provisional `Individual`, holds the four s.94 mentions: PBXY and PGYY on
+  46806664 and 46819715.
 
 ## What was found
 
@@ -79,3 +81,63 @@ mention names in 54 s, and reached 290 orgs.
   sole trader FTS publishes. The buyer-PPON class (unit 3) is one PPON, and it serves UKRI as a bidder on 4 tenders.
 - `BLANK_WHOLE` with guard 3 would drop 31966280's 4 mentions and keep the two identified orgs. It would NOT fix
   UKRI: guard 3 keeps an `Individual` with an admitted identifier, and the PDQJ PPON is admitted.
+
+## Units 2 and 3 — decided (2026-10-15)
+
+A design panel ran with three angles: minimal drop; keep the party but stop the merge; the buyer-PPON case. A judge
+re-checked their code claims.
+
+**Unit 2: `individual` joins `BLANK_WHOLE`** (`crates/ingest/src/partyname.rs`). It changes one list and touches no
+resolver, store, idgate or parser code.
+- A whole-name `Individual`, or `Individual (Lot n)`, is classed `Blank`.
+  - With no identifier, or one the gate refuses (the s.94 PPONs: `idgate::withheld_placeholder`), guard 3 has nothing
+    to keep. The party drops, no mention is minted, and the fold retires the recorded rows.
+  - With an admitted identifier, guard 3 keeps it: 31570158's PMGL, 18934187's GH number, UKRI's PDQJ.
+- Names that merely contain the word stay names.
+- **Cost, checked.** FTS goes through the eForms results path. BT-142 comes from the award status, so the decision
+  stays `selec-w` and the awarded value stays. Only the winner row and the bid party go.
+  - On tender 8596401 every lot that held 31966280 keeps 17–31 winners.
+  - Worst case on a future notice: a lot whose only supplier is a bare `Individual` serves `selec-w`, its value,
+    `winners: []` and a bid with no parties.
+  - This is 511's ruling for withheld suppliers: the result keeps `selec-w` and nothing is bound as the winner. The
+    same PBXY PPON's s.94-sentence names already drop as `Placeholder`.
+- **Rejected:**
+  - keep-but-isolate (mint one org per withheld supplier): it breaks 434's no-re-decide contract, has to patch at
+    least seven `(name_norm, country)` reuse sites, and fills `?winner=` with identical `Individual` orgs;
+  - `Placeholder`: it has no identifier guard;
+  - a scoped ENG entry: the census found no non-English whole-name `Individual`.
+- **Open risk, population 0 today.** On the legacy and sdk-0.1 paths, a lone, dateless, valueless bare `Individual`
+  winner would read `clos-nw`, because `Blank` carries no withheld marker. Job 2493 found whole-name `Individual`
+  only on FTS, apart from the identified orgs. Revisit if the Verify read ever shows a non-FTS bare one.
+
+**Unit 3: accepted, no code.** The panel read the public API.
+- UKRI is not the buyer on FASTER. The Met Office is (`GB-PPON-PVZW-3234-DTLY`).
+- The PDQJ `Individual` is a supplier slot the publisher re-pointed. On 46806664, TPA-2-11 and TPA-4-16 name the s.94
+  PBXY `Individual`. On 46819715 the same TPA ids name `ORG-GB-PPON-PDQJ-7126-JDHG`. The framework is for "Industrial
+  and Academic Institutions", and the Met Office contracts UKRI directly elsewhere (46801716).
+- Nothing published shows the PPON is wrong, and the exact-triple bind treats the literal as the org's own evidence.
+- The "4 tenders" are 1 + 2 + 1:
+  - 8596401 FASTER, the `Individual` case;
+  - 8644596 (BGS) and 8646273 (STFC), both correct;
+  - 8664993, where `Jeol (U.K.) Limited` carries PDQJ: a different class, filed as issue 545.
+- Rejected rules:
+  - a stand-in name refusing the triple: there is no correct destination;
+  - "the identifier's org only buys": false, UKRI genuinely bids;
+  - the notice's own buyer: that is the Met Office;
+  - a 452 verdict: cannot move a triple bind, and would be false;
+  - condemning PDQJ: it is pinned as a near miss and holds UKRI's 2,696 buyer mentions.
+
+**Built (2026-10-15):**
+- `"individual"` added to `BLANK_WHOLE` (59 → 60) with its reason. The guard-3 doc names it.
+- Tests:
+  - `an_fts_individual_is_blank_as_a_whole_name_only`: `Individual (Lot 2)` is Blank; `Individual Centred Care` and
+    `Cabinet Medical Veterinar Individual …` are names;
+  - `every_measured_placeholder_spelling_has_its_class` gains three spellings and an exact entry;
+  - `an_fts_individual_drops_bare_and_keeps_an_admitted_identifier`: PBXY, PGYY and bare drop as Blank; PMGL and PDQJ
+    mint with their identifiers; `Individual Centred Care` mints.
+- **Pre-read for the drain (2026-10-15):**
+  - 31966280 holds exactly 4 mentions: PBXY and PGYY slots on 46806664 and 46819715;
+  - 18934187's two mentions (22342219 ORG-7 and ORG-20) both carry raw `P0004469968`, so guard 3 keeps them;
+  - 31570158's one mention (46806664) carries PMGL. It is the drain's own canary for guard 3.
+- **Drain:** `refold-notices` over `[46806664, 46819715]`. The fold retires the four mentions, and the auto
+  orphan sweep removes 31966280. Reconcile any sweep count above 1 against its plan, since the sweep is global.
