@@ -16,6 +16,9 @@ Relates to:
   Research & Innovation (30913706).
 - **open (2026-10-15)**: tender 8664993 serves UKRI as a bidder. The mention `Jeol (U.K.) Limited` carries
   `GB-PPON-PDQJ-7126-JDHG`, UKRI's PPON, on 46834978, whose buyer is UKHSA.
+  Confirmed from the public API on 2026-10-15 04:5x UTC: `/v1/tenders/8664993` ("Service and Maintenance x JEOL",
+  060996-2026) serves the Tenderer as org 30913706 `UK Research & Innovation` with `mention_name` `Jeol (U.K.)
+  Limited`. Its one bid names UKRI, and the buyer is 30914819 UK Health Security Agency.
 
 ## What was found
 

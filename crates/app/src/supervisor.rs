@@ -499,6 +499,17 @@ enum Spec {
     /// Issue 524 unit 1: whether each organization's served head (written at mint, never again) still
     /// names what its mentions say, with issue 456 unit 1's stray buckets. Read-only.
     OrgHeadDrift { min_mentions: u64, samples: usize },
+    /// Issue 524 unit 2a: re-elect each identifier-bearing organization's served head from its mentions
+    /// (`store::elect_head`, ADR-0013's 2026-10-15 amendment) and store what a wet run would change,
+    /// hold and keep as `org-name-refresh-plan`. Only `dry_run: true` exists: unit 2b builds the wet
+    /// path (ledger, revert, compare-and-set writes), and until then the arm refuses `false` too.
+    RefreshOrgNames {
+        dry_run: bool,
+        min_mentions: u64,
+        samples: usize,
+        #[serde(default)]
+        org_ids: Option<Vec<i64>>,
+    },
     /// Issue 331: does duplication actually push a name key over the
     /// genericness wall? Read-only measurement.
     GenericWallCensus,
@@ -1210,8 +1221,13 @@ pub struct JobRequest {
     /// or absent by construction).
     pub min_mentions: Option<u64>,
     /// `org-head-drift` only: the samples listed per bucket and flag. Omitted, 30; clamped to 1 to
-    /// [`ORG_HEAD_DRIFT_SAMPLES_MAX`].
+    /// [`ORG_HEAD_DRIFT_SAMPLES_MAX`]. Also `refresh-org-names` (issue 524 unit 2a): the uniform samples
+    /// listed per rule and per reason, the same default and clamp; `min_mentions` reads as there too.
     pub samples: Option<u64>,
+    /// `refresh-org-names` only (issue 524 unit 2a): plan only these organizations instead of walking
+    /// every one (a merge campaign's keeps, the canaries). 1 to [`ORG_NAME_REFRESH_ORG_IDS_MAX`] ids,
+    /// each positive. Every other kind ignores it.
+    pub org_ids: Option<Vec<i64>>,
 }
 
 /// Issue 527 unit 1: the most phrases one `name-phrase-census` takes.
@@ -1226,6 +1242,167 @@ const ORG_HEAD_DRIFT_SAMPLES_MAX: u64 = 200;
 /// (the University of Sheffield served as `Sheffield Hallam University`), 22713056 (a review chamber
 /// served as `s.o.`) and 30914328 (`Withheld Section94 Supplier`, issue 522's fix).
 const ORG_HEAD_DRIFT_CANARIES: &[i64] = &[31_558_903, 22_713_056, 30_914_328];
+
+/// Issue 524 unit 2a: the most `org_ids` one `refresh-org-names` takes — the plan's listing cap, so a
+/// scoped plan can never be truncated.
+const ORG_NAME_REFRESH_ORG_IDS_MAX: usize = store::ORG_NAME_REFRESH_LISTING_CAP;
+
+/// Issue 524 unit 2a: one organization `refresh-org-names` always reports, and the verdict the unit 2
+/// decision expects of it (`kind:reason`, and the spelling a change serves). The go/no-go for unit 2b
+/// is every canary as expected; the summary names each one that is not.
+struct RefreshCanary {
+    id: i64,
+    /// `None`: reported, nothing expected.
+    expect: Option<&'static str>,
+    serves: Option<&'static str>,
+}
+
+/// Issue 524 unit 2a: the decision's canaries (`## Unit 2 — decided`), the five positive ones first,
+/// then the seven negative ones, then the census's third exhibit 30914328 (`Withheld Section94
+/// Supplier`, issue 522's fix, reported with no expectation).
+const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
+    RefreshCanary { id: 31_558_903, expect: Some("change:R1"), serves: Some("The University of Sheffield") },
+    RefreshCanary { id: 22_713_056, expect: Some("change:R0n"), serves: Some("Vergabekammer bei der Bezirksregierung") },
+    RefreshCanary { id: 6_341_366, expect: Some("change:R0e"), serves: Some("Kalmar kommun") },
+    RefreshCanary { id: 760, expect: Some("change:R1"), serves: Some("Getinge Polska Sp. z o.o.") },
+    RefreshCanary { id: 61, expect: Some("change:R1"), serves: Some("Tribunal administratif de Nice") },
+    RefreshCanary { id: 7_912_592, expect: Some("keep:D4"), serves: None },
+    RefreshCanary { id: 178, expect: Some("keep:bar"), serves: None },
+    RefreshCanary { id: 131, expect: Some("keep:bar"), serves: None },
+    RefreshCanary { id: 99, expect: Some("keep:bar"), serves: None },
+    RefreshCanary { id: 10, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 334, expect: Some("hold:no_fit"), serves: None },
+    RefreshCanary { id: 1_165_973, expect: Some("keep:E1"), serves: None },
+    RefreshCanary { id: 30_914_328, expect: None, serves: None },
+];
+
+/// Issue 524 unit 2a: the ingest side of the head election, as `store::elect_head` takes it.
+fn head_elect_fns() -> store::HeadElectFns {
+    store::HeadElectFns {
+        vote_key: ingest::crosswalk::head_vote_key,
+        not_a_name: head_drift_name_class,
+        unfit: ingest::crosswalk::head_spelling_unfit,
+        hold: ingest::crosswalk::head_change_hold,
+    }
+}
+
+/// Issue 524 unit 2a: how a canary's planned verdict reads against [`ORG_NAME_REFRESH_CANARIES`] —
+/// `as expected`, `UNEXPECTED (…)`, `(reported)` for a canary with no expectation, or `outside the
+/// scope` when a scoped plan (`scope`, its `org_ids`) did not ask for it. An expected canary the walk
+/// did not find is UNEXPECTED (the 2a review): a missing exhibit is no pass.
+fn refresh_canary_reading(canary: &RefreshCanary, plan: &store::OrgNameRefreshPlan, scope: Option<&[i64]>) -> String {
+    if scope.is_some_and(|ids| !ids.contains(&canary.id)) {
+        return format!("{} outside the scope", canary.id);
+    }
+    let Some(entry) = plan.canaries.iter().find(|e| e.org_id == canary.id) else {
+        return match canary.expect {
+            None => format!("{} not found (reported)", canary.id),
+            Some(want) => format!(
+                "{} not found UNEXPECTED (want {want}{})",
+                canary.id,
+                canary.serves.map(|s| format!(" {s:?}")).unwrap_or_default()
+            ),
+        };
+    };
+    let got = format!("{}:{}", entry.verdict, entry.reason);
+    let shown = match &entry.new_name {
+        Some(new) => format!("{got} {new:?}"),
+        None => got.clone(),
+    };
+    let below = if entry.in_population { "" } else { ", below min_mentions" };
+    match canary.expect {
+        None => format!("{} {shown}{below} (reported)", canary.id),
+        Some(want) if want == got && canary.serves.is_none_or(|s| entry.new_name.as_deref() == Some(s)) => {
+            format!("{} {shown}{below} as expected", canary.id)
+        }
+        Some(want) => format!(
+            "{} {shown}{below} UNEXPECTED (want {want}{})",
+            canary.id,
+            canary.serves.map(|s| format!(" {s:?}")).unwrap_or_default()
+        ),
+    }
+}
+
+/// Issue 524 unit 2a: `refresh-org-names` as stored (`org-name-refresh-plan`) — the plan as serialised,
+/// with the functions it was elected with, the binary, the page and each canary's reading. A sync free
+/// fn, so its temporaries stay off the boxed arm's poll frame.
+fn org_name_refresh_json(plan: &store::OrgNameRefreshPlan, scope: Option<&[i64]>) -> Result<String, String> {
+    let mut body = serde_json::to_value(plan).map_err(|e| e.to_string())?;
+    if let Some(all) = body.as_object_mut() {
+        all.insert("dry_run".to_owned(), true.into());
+        all.insert("rev".to_owned(), crate::v1::rev().into());
+        all.insert(
+            "fns".to_owned(),
+            serde_json::json!({
+                "vote_key": "ingest::crosswalk::head_vote_key",
+                "not_a_name": "ingest::partyname::not_a_name",
+                "unfit": "ingest::crosswalk::head_spelling_unfit",
+                "hold": "ingest::crosswalk::head_change_hold",
+                "family": "ingest::crosswalk::head_family",
+            }),
+        );
+        all.insert("page".to_owned(), store::ORG_HEAD_DRIFT_PAGE.into());
+        all.insert(
+            "canary_readings".to_owned(),
+            serde_json::json!(
+                ORG_NAME_REFRESH_CANARIES.iter().map(|c| refresh_canary_reading(c, plan, scope)).collect::<Vec<_>>()
+            ),
+        );
+    }
+    Ok(body.to_string())
+}
+
+/// Issue 524 unit 2a: `refresh-org-names`' job summary.
+fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i64]>) -> String {
+    let counts = |m: &std::collections::BTreeMap<&'static str, store::HeadDriftCount>| {
+        if m.is_empty() {
+            "none".to_owned()
+        } else {
+            m.iter().map(|(label, c)| format!("{label} {} ({} mentions)", c.orgs, c.mentions)).collect::<Vec<_>>().join(", ")
+        }
+    };
+    let tally = |m: &std::collections::BTreeMap<&'static str, u64>| {
+        if m.is_empty() {
+            "none".to_owned()
+        } else {
+            m.iter().map(|(label, n)| format!("{label} {n}")).collect::<Vec<_>>().join(", ")
+        }
+    };
+    let canaries =
+        ORG_NAME_REFRESH_CANARIES.iter().map(|c| refresh_canary_reading(c, plan, scope)).collect::<Vec<_>>();
+    let unexpected = canaries.iter().filter(|c| c.contains("UNEXPECTED")).count();
+    format!(
+        "refresh-org-names DRY (issue 524 unit 2a, rule {}): {} organization(s) and {} mention row(s) walked{}; \
+         {} elected ({}+ mention rows; {} below), {} with an empty head. CHANGES {} ({} mentions; {} on merge \
+         survivors): {}. HOLDS {}: {}. Keeps {}: {}. Listed {} planned{} and {} held{}. Family moves of the \
+         changes: {}. D4 keeps' ENG satellites: {}. {} identifier-verdict probe(s). Canaries ({unexpected} \
+         unexpected): {}. NOTHING IS WRITTEN — the wet path is unit 2b.",
+        plan.epoch,
+        plan.orgs_walked,
+        plan.mentions_walked,
+        plan.scope_ids.map(|n| format!(" (scoped to {n} org id(s))")).unwrap_or_default(),
+        plan.population.orgs,
+        plan.min_mentions,
+        plan.below_min.orgs,
+        plan.empty_heads.orgs,
+        plan.changes.orgs,
+        plan.planned_mentions,
+        plan.planned_merged.orgs,
+        counts(&plan.by_rule),
+        plan.holds.orgs,
+        counts(&plan.by_hold),
+        plan.keeps.orgs,
+        counts(&plan.by_keep),
+        plan.planned.len(),
+        if plan.truncated { " (TRUNCATED)" } else { "" },
+        plan.held.len(),
+        if plan.held_truncated { " (TRUNCATED)" } else { "" },
+        tally(&plan.family_moves),
+        tally(&plan.d4_eng),
+        plan.verdict_probes,
+        canaries.join("; "),
+    )
+}
 
 /// Issue 524 unit 1: `partyname::not_a_name` as the census's class label. A mention of any class but
 /// `award_summary` (a non-name phrase BESIDE a name, which the fold keeps) holds no key, and a head of
@@ -2132,6 +2309,56 @@ impl Supervisor {
                         "org-head-drift",
                         format!("org-head-drift min_mentions={min_mentions} samples={samples}"),
                         Spec::OrgHeadDrift { min_mentions, samples },
+                    )
+                    .await,
+                ])
+            }
+            "refresh-org-names" => {
+                // Issue 524 unit 2a: dry only. An omitted `dry_run` is the dry plan, and `false` is
+                // refused here rather than queued as a job that could only fail.
+                if req.dry_run == Some(false) {
+                    return Err("refresh-org-names refuses `dry_run: false`: the wet path (issue 524 unit 2b — \
+                                the org_name_refresh_log ledger, the revert, the compare-and-set writes and \
+                                their change rows) is not built. Only the dry plan exists; run it without \
+                                `dry_run` or with `dry_run: true`"
+                        .to_owned());
+                }
+                let min_mentions = req.min_mentions.unwrap_or(ORG_HEAD_DRIFT_MIN_MENTIONS);
+                if min_mentions < 2 {
+                    return Err(format!(
+                        "refresh-org-names needs `min_mentions` of 2 or more, got {min_mentions}: the election's \
+                         population is the census's (an organization with one mention has nothing to elect from)"
+                    ));
+                }
+                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
+                let org_ids = match &req.org_ids {
+                    None => None,
+                    Some(ids) => {
+                        let mut ids = ids.clone();
+                        ids.sort_unstable();
+                        ids.dedup();
+                        if ids.is_empty() || ids.len() > ORG_NAME_REFRESH_ORG_IDS_MAX {
+                            return Err(format!(
+                                "refresh-org-names takes 1 to {ORG_NAME_REFRESH_ORG_IDS_MAX} distinct `org_ids`, got {}; \
+                                 omit the field to plan every organization",
+                                ids.len()
+                            ));
+                        }
+                        if let Some(bad) = ids.iter().find(|&&id| id <= 0) {
+                            return Err(format!("refresh-org-names refuses the org id {bad}: organization ids are positive"));
+                        }
+                        Some(ids)
+                    }
+                };
+                let params = format!(
+                    "refresh-org-names dry min_mentions={min_mentions} samples={samples}{}",
+                    org_ids.as_ref().map(|ids| format!(" org_ids={}", ids.len())).unwrap_or_default()
+                );
+                Ok(vec![
+                    self.push(
+                        "refresh-org-names",
+                        params,
+                        Spec::RefreshOrgNames { dry_run: true, min_mentions, samples, org_ids },
                     )
                     .await,
                 ])
@@ -4404,6 +4631,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 524 unit 1: read before every page of the organization walk; a stopped run stores no
     // report.
     "org-head-drift",
+    // Issue 524 unit 2a: `plan_org_name_refresh` reads it before every page (and every scoped id
+    // chunk); a stopped run stores no plan.
+    "refresh-org-names",
     "generic-wall-census",
     "generic-statistic-census",
     "name-attribution-probe",
@@ -6787,6 +7017,7 @@ impl Supervisor {
             | Spec::NamePollutionCensus
             | Spec::NamePhraseCensus { .. }
             | Spec::OrgHeadDrift { .. }
+            | Spec::RefreshOrgNames { .. }
             | Spec::ProvisionalEchoCensus { .. }
             | Spec::DuplicateIdentityCensus
             | Spec::CountryTypoCensus
@@ -13114,6 +13345,43 @@ impl Supervisor {
                 self.db.put_report("org-head-drift", &body, store::now_unix()).await.map_err(|e| e.to_string())?;
                 Ok(org_head_drift_summary(&r))
             }).await,
+            Spec::RefreshOrgNames { dry_run, min_mentions, samples, org_ids } => Box::pin(async move {
+                // BOXED, as every census arm here, and the store future boxed inside it, so neither this
+                // family's future nor its poll frame grows with the planner (issue 467's budgets). The
+                // stored body and the summary are built by sync free fns, off this frame.
+                if !*dry_run {
+                    return Err("refresh-org-names REFUSED: only the dry plan is built (issue 524 unit 2a); the \
+                                wet path is unit 2b. Nothing was read or written"
+                        .to_owned());
+                }
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 524: electing organization heads (dry)".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                let canaries: Vec<i64> = ORG_NAME_REFRESH_CANARIES.iter().map(|c| c.id).collect();
+                let plan = Box::pin(self.db.plan_org_name_refresh(store::OrgNameRefreshArgs {
+                    fns: head_elect_fns(),
+                    family: ingest::crosswalk::head_family,
+                    min_mentions: *min_mentions,
+                    samples: *samples,
+                    page: store::ORG_HEAD_DRIFT_PAGE,
+                    listing_cap: store::ORG_NAME_REFRESH_LISTING_CAP,
+                    org_ids: org_ids.as_deref(),
+                    canaries: &canaries,
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                if plan.stopped {
+                    return Ok("refresh-org-names STOPPED by cancel — no plan stored".to_owned());
+                }
+                let body = org_name_refresh_json(&plan, org_ids.as_deref())?;
+                self.db.put_report("org-name-refresh-plan", &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+                Ok(org_name_refresh_summary(&plan, org_ids.as_deref()))
+            }).await,
             Spec::NamePollutionCensus => Box::pin(async move {
                 // BOXED. `run_spec` is one async match over every `Spec` arm,
                 // so every arm's locals live in ONE future — and adding this
@@ -16868,6 +17136,7 @@ mod tests {
                 "name-pollution-census",
                 "name-phrase-census",
                 "org-head-drift",
+                "refresh-org-names",
                 "generic-wall-census",
                 "generic-statistic-census",
                 "name-attribution-probe",
@@ -20658,6 +20927,196 @@ mod tests {
         assert_eq!(queued[2].params, "org-head-drift min_mentions=3 samples=200");
         assert!(!heavy_write_kind("org-head-drift"), "read-only: coverage keeps refreshing");
         assert!(stoppable("org-head-drift", &queued[0].params), "a cancel reaches the walk between pages");
+    }
+
+    /// Issue 524 unit 2a: `refresh-org-names` is dry only — an omitted `dry_run` is the plan and `false`
+    /// is refused at enqueue, since unit 2b is not built — takes the census's `min_mentions` and
+    /// `samples` rules, and checks `org_ids` (1 to the cap once deduplicated, each positive).
+    #[tokio::test]
+    async fn refresh_org_names_is_dry_only_and_checks_its_params() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ask = |dry_run: Option<bool>, min_mentions: Option<u64>, samples: Option<u64>, org_ids: Option<Vec<i64>>| {
+            JobRequest { kind: "refresh-org-names".into(), dry_run, min_mentions, samples, org_ids, ..Default::default() }
+        };
+        let err = sup.enqueue_request(&ask(Some(false), None, None, None)).await.expect_err("unit 2b is not built");
+        assert!(err.contains("dry_run: false") && err.contains("unit 2b"), "{err}");
+        let err = sup.enqueue_request(&ask(None, Some(1), None, None)).await.expect_err("one mention elects nothing");
+        assert!(err.contains("min_mentions") && err.contains("2 or more"), "{err}");
+        assert!(sup.enqueue_request(&ask(None, None, None, Some(vec![]))).await.is_err(), "an empty scope");
+        let err = sup.enqueue_request(&ask(None, None, None, Some(vec![5, 0]))).await.expect_err("id 0");
+        assert!(err.contains("positive"), "{err}");
+        let too_many: Vec<i64> = (1..=ORG_NAME_REFRESH_ORG_IDS_MAX as i64 + 1).collect();
+        assert!(sup.enqueue_request(&ask(None, None, None, Some(too_many))).await.is_err(), "over the cap");
+        sup.enqueue_request(&ask(None, None, None, None)).await.expect("the defaults");
+        sup.enqueue_request(&ask(Some(true), Some(3), Some(0), Some(vec![760, 61, 760]))).await.expect("scoped");
+        let queued = sup.queued();
+        assert_eq!(queued.len(), 2, "the refused asks queued nothing");
+        assert_eq!(queued[0].kind, "refresh-org-names");
+        assert_eq!(queued[0].params, "refresh-org-names dry min_mentions=2 samples=30");
+        assert_eq!(queued[1].params, "refresh-org-names dry min_mentions=3 samples=1 org_ids=2", "deduplicated");
+        assert!(!heavy_write_kind("refresh-org-names"), "read-only: coverage keeps refreshing");
+        assert!(stoppable("refresh-org-names", &queued[0].params), "a cancel reaches the walk between pages");
+        // The decision's twelve canaries plus the census's third exhibit, each id once.
+        let ids: std::collections::BTreeSet<i64> = ORG_NAME_REFRESH_CANARIES.iter().map(|c| c.id).collect();
+        assert_eq!(ids.len(), 13);
+        assert!(ids.contains(&31_558_903) && ids.contains(&22_713_056) && ids.contains(&30_914_328));
+    }
+
+    /// Issue 524 unit 2a, end to end with the REAL ingest functions (`head_vote_key`, `not_a_name`,
+    /// `head_spelling_unfit`, `head_change_hold`): the decision's canary shapes, seeded under their prod
+    /// ids, plan as the decision expects; an expected canary the walk does not find is UNEXPECTED, and a
+    /// scoped plan reads the canaries it did not ask for as outside its scope; the plan is stored as
+    /// `org-name-refresh-plan`; nothing is written to `organizations` or `changes`; and the arm itself
+    /// refuses a wet spec.
+    #[tokio::test]
+    async fn refresh_org_names_plans_the_canary_shapes_and_writes_nothing() {
+        let path = format!("/tmp/tender-db-sup-refresh-names-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        db.build_organization_indexes().await.unwrap();
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        let sheffield: &[(&str, usize)] = &[
+            ("UNIVERSITY OF SHEFFIELD", 14),
+            ("University of Sheffield", 1),
+            ("The University of Sheffield", 1),
+            ("Sheffield Hallam University", 1),
+        ];
+        let hallam: &[(&str, usize)] = &[("University of Sheffield", 4), ("Sheffield Hallam University", 1)];
+        let belovo: &[(&str, usize)] = &[("ОБЩИНА БЕЛОВО", 5), ("Obshtina Belovo", 1)];
+        let orgs: &[(i64, &str, Option<&str>, &str, &[(&str, usize)])] = &[
+            (334, "FR", Some("FR33400000000"), "Atelier Nord", &[("les alchimistes", 3), ("Atelier Nord", 1)]),
+            (1_165_973, "GB", None, "Sheffield Hallam University", hallam),
+            (6_341_366, "SE", Some("2120000829"), "", &[("Kalmar kommun", 4)]),
+            (7_912_592, "BG", Some("000215853"), "Obshtina Belovo", belovo),
+            (22_713_056, "DE", Some("0251411691"), "s.o.", &[("Vergabekammer bei der Bezirksregierung", 28)]),
+            (31_558_903, "GB", Some("GBUKPRN10007157"), "Sheffield Hallam University", sheffield),
+        ];
+        use store::turso::Value;
+        let mut notice = 0i64;
+        for (id, country, identifier, head, mentions) in orgs {
+            let params: Vec<Value> = vec![
+                Value::Integer(*id),
+                Value::Text((*country).into()),
+                identifier.map_or(Value::Null, |_| Value::Text("national".into())),
+                identifier.map_or(Value::Null, |i| Value::Text(i.into())),
+                Value::Text((*head).into()),
+                Value::Text(store::org_name_norm(head)),
+                Value::Integer(i64::from(identifier.is_none())),
+            ];
+            conn.execute(
+                "INSERT INTO organizations
+                   (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, 0)",
+                params,
+            )
+            .await
+            .unwrap();
+            for (name, n) in mentions.iter() {
+                for _ in 0..*n {
+                    notice += 1;
+                    let params: Vec<Value> = vec![
+                        Value::Integer(notice),
+                        Value::Integer(*id),
+                        Value::Text((*name).into()),
+                        Value::Text((*country).into()),
+                    ];
+                    conn.execute(
+                        "INSERT INTO organization_mentions
+                           (notice_id, section_id, organization_id, name, country, raw_identifier, scheme)
+                         VALUES (?, 'ORG-0001', ?, ?, ?, NULL, NULL)",
+                        params,
+                    )
+                    .await
+                    .unwrap();
+                }
+            }
+        }
+        conn.execute(
+            "INSERT INTO organization_names (org_id, lang, name, name_norm)
+             VALUES (7912592, 'ENG', 'Obshtina Belovo', 'obshtina belovo')",
+            (),
+        )
+        .await
+        .unwrap();
+        // One feed row already there, so "no change row written" is a count that must not move.
+        conn.execute(
+            "INSERT INTO changes (entity_kind, entity_id, version_seq, op, changed_at)
+             VALUES ('organization', 334, NULL, 'added', 0)",
+            (),
+        )
+        .await
+        .unwrap();
+        let heads = || {
+            let conn = &conn;
+            async move {
+                let mut rows = conn.query("SELECT id, name, name_norm FROM organizations ORDER BY id", ()).await.unwrap();
+                let mut all = Vec::new();
+                while let Some(row) = rows.next().await.unwrap() {
+                    all.push((row.get_value(0).unwrap(), row.get_value(1).unwrap(), row.get_value(2).unwrap()));
+                }
+                all
+            }
+        };
+        let before = heads().await;
+        assert_eq!(before.len(), orgs.len());
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let dry = |dry_run: bool| job(Spec::RefreshOrgNames { dry_run, min_mentions: 2, samples: 30, org_ids: None });
+        let msg = sup.run_spec(&dry(true)).await.expect("the dry plan");
+        for reading in [
+            r#"31558903 change:R1 "The University of Sheffield" as expected"#,
+            r#"22713056 change:R0n "Vergabekammer bei der Bezirksregierung" as expected"#,
+            r#"6341366 change:R0e "Kalmar kommun" as expected"#,
+            "7912592 keep:D4 as expected",
+            "334 hold:no_fit as expected",
+            "1165973 keep:E1 as expected",
+            // Not seeded: an expected canary the walk does not find is no pass.
+            r#"760 not found UNEXPECTED (want change:R1 "Getinge Polska Sp. z o.o.")"#,
+            "10 not found UNEXPECTED (want keep:S1)",
+            "30914328 not found (reported)",
+            "(6 unexpected)",
+            "NOTHING IS WRITTEN",
+        ] {
+            assert!(msg.contains(reading), "missing {reading:?} in: {msg}");
+        }
+        let (body, _) = db.latest_report("org-name-refresh-plan").await.unwrap().expect("the plan is stored");
+        let plan: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(plan["dry_run"], true);
+        assert_eq!(plan["epoch"], store::HEAD_ELECTION_EPOCH);
+        let planned: Vec<i64> = plan["planned"].as_array().unwrap().iter().map(|e| e["org_id"].as_i64().unwrap()).collect();
+        assert_eq!(planned, vec![6_341_366, 22_713_056, 31_558_903], "by org id");
+        assert_eq!(plan["planned"][2]["old_name_norm"], "sheffield hallam university");
+        assert_eq!(plan["planned"][2]["new_name_norm"], "the university of sheffield");
+        assert_eq!(plan["held"][0]["org_id"], 334);
+        assert_eq!(plan["d4_eng"]["equal"], 1, "TED's ENG rendering is the head the guard keeps");
+        assert_eq!(plan["canary_readings"].as_array().unwrap().len(), ORG_NAME_REFRESH_CANARIES.len());
+        assert_eq!(heads().await, before, "dry: no organization's (name, name_norm) moved");
+        assert_eq!(db.scalar("SELECT COUNT(*) FROM changes").await.unwrap(), Some(Value::Integer(1)), "no change row");
+
+        // Scoped: the canaries it did not ask for are outside its scope, not unexpected; an asked one
+        // that is missing still is.
+        let scoped = job(Spec::RefreshOrgNames {
+            dry_run: true,
+            min_mentions: 2,
+            samples: 30,
+            org_ids: Some(vec![760, 31_558_903]),
+        });
+        let msg = sup.run_spec(&scoped).await.expect("the scoped dry plan");
+        for reading in [
+            r#"31558903 change:R1 "The University of Sheffield" as expected"#,
+            "760 not found UNEXPECTED",
+            "22713056 outside the scope",
+            "30914328 outside the scope",
+            "(1 unexpected)",
+            "(scoped to 2 org id(s))",
+        ] {
+            assert!(msg.contains(reading), "missing {reading:?} in: {msg}");
+        }
+        assert_eq!(heads().await, before);
+        assert_eq!(db.scalar("SELECT COUNT(*) FROM changes").await.unwrap(), Some(Value::Integer(1)));
+        let err = sup.run_spec(&dry(false)).await.expect_err("the arm refuses a wet spec too");
+        assert!(err.contains("REFUSED") && err.contains("unit 2b"), "{err}");
+        remove_db(&path);
     }
 
     /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a

@@ -142,3 +142,75 @@ is stamped by the batched `backfill-original-lang` job (PK seeks into
 `notice_codes`, `original_lang IS NULL` rows only, resumable by watermark) rather
 than a corpus refold; new folds write it directly. Unchanged: `lang` is a
 selector, never a predicate; the fold-time surfaces keep the deterministic default.
+
+## Amendment 2026-10-15 — D4's head is ELECTED from the org's mentions, not first-seen (issue 524)
+
+Status: recorded with unit 2a, the dry `refresh-org-names` plan (`store::elect_head`,
+`Db::plan_org_name_refresh`), so the plan's semantics are written down before any head moves. It
+takes effect at unit 2b's first wet run, which marks it effective; until then no head is rewritten.
+
+D4 called `organizations.name` "the ENG-or-original denormalized head". The mint never did that. It
+writes the first mention's first-seen spelling, in whatever language (`ingest::project`: "the
+designated single head keeps its first-seen semantics"), and nothing ever rewrote it. So merges, drops
+and in-place mention refreshes left heads that few or none of an org's mentions say. Census job 2492
+counted 56,144 minority heads and 1,585 absent heads, among them 31558903 served as "Sheffield Hallam
+University" over 16 Sheffield mentions, and 22713056 served as "s.o.".
+
+Decided:
+
+1. **Who.** The mint still writes the first-seen spelling. The dry-first, ledgered job
+   `refresh-org-names` re-elects the head of IDENTIFIER-BEARING organizations only. An identifier-NULL
+   organization keeps its head, because its `name_norm` is the issue-234 bind and provisional-merge
+   key. So D4's provisional-merge key and merge semantics do not change. An organization whose
+   identifier triple carries a `wrong` identifier verdict, or a `related` one not yet applied (the
+   predicate `ORG_COLUMNS` serves `identifier_verdict` by), keeps its head as well: there the bind is
+   the defect (issue 456 design 1), and the mentions it gathered do not name the entity.
+2. **Votes.** A mention votes unless its name is NULL, blank, or a `not_a_name` class other than
+   `award_summary`. Votes group by the head vote key: `crosswalk::altid_name_key` with every legal-form
+   token dropped. Casing, spelling marks, "the" and a legal form (Ltd/Limited/none, S.R.L./SRL/none) are
+   therefore one name.
+3. **When the head changes.** Only when one of these holds:
+   - (a) the head is empty or a non-name (placeholder, blank, void_lot) and some name votes;
+   - (b) a cluster other than the head's holds at least 55% of the votes, at least 3 votes, and at
+     least twice the head's votes;
+   - (c) the head's cluster holds at most 1 vote, and a unique top cluster holds at least 3 votes and
+     at least 25%.
+
+   Otherwise the head stays byte for byte. No single mention, near tie or legal-form difference moves
+   it.
+4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
+   spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
+   guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of
+   anything, so it is replaced whatever script the mentions are written in.
+5. **The served spelling.** Within the winning cluster, the job serves a FIT spelling:
+   - no control character or U+FFFD;
+   - no non-name class;
+   - no placeholder or void net hit;
+   - no consortium mark the old head lacks;
+   - at most 200 characters;
+   - not all lower case.
+
+   Among the fit spellings, case decides first (a spelling that is not ALL-CAPS before one that is;
+   `ß`, `ª` and `º` have no one-letter capital and do not make a spelling mixed case), then the most
+   votes, then byte order. So "The University of Sheffield" (1 vote) is served over "UNIVERSITY OF
+   SHEFFIELD" (14). With no fit spelling, nothing changes. Register names are not used until a
+   register-name cache exists.
+6. **Held for review.** A change is held when it would:
+   - swap one legal-form family for another (`legal_form_family` or `gb_legal_family` set on both sides
+     and different);
+   - drop a consortium mark;
+   - fail the NHS ODS name check the old head passed.
+
+   The head is an input to the resolver's and merge planners' name gates.
+7. **Keys.** `name_norm` follows, as `org_name_norm(new head)`. For identifier-bearing rows it is the
+   name-search key, never a bind key. `organization_names` and `org_name_verdicts` are untouched.
+   `org_match_keys` catches up at its next wholesale build.
+8. **Announcement.** Every change writes a byte-exact pre-image to `org_name_refresh_log` (revertible by
+   job) and one seq-less `organization changed` row. No Tender or lot rows are written:
+   `parties[].organization_name` is a read-time join of the organization, so under ADR-0017 D5 the
+   moved entity is the organization. This follows the identifier-restore precedent.
+9. **Upkeep.** A weekly capped auto-run keeps heads current after merges and drops. A from-archive
+   rebuild restores first-seen heads until the job runs again.
+
+What a notice published stays available as `parties[].mention_name` (issue 456 design 3). Issue 456's
+design question 2 is answered here.

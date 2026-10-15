@@ -10820,12 +10820,15 @@ pub const STRAY_SCHEME_OTHER: &str = "other";
 pub const HEAD_DRIFT_AWARD_SUMMARY: &str = "award_summary";
 
 /// Issue 524 unit 1: the page read of [`Db::org_head_drift`] — a rowid range of `organizations`.
-const ORG_HEAD_DRIFT_ORGS_SQL: &str =
-    "SELECT id, country, identifier, provisional, name FROM organizations WHERE id > ? ORDER BY id LIMIT ?";
+/// Issue 524 unit 2a: [`Db::plan_org_name_refresh`] walks the same pages and reads the last two
+/// columns too (the identifier kind for its NHS hold and verdict probe, and the `name_norm` its plan
+/// records as the pre-image); the census reads the first five.
+pub(crate) const ORG_HEAD_DRIFT_ORGS_SQL: &str = "SELECT id, country, identifier, provisional, name, identifier_kind, \
+     name_norm FROM organizations WHERE id > ? ORDER BY id LIMIT ?";
 
 /// Issue 524 unit 1: one page's mention names and schemes, `n` org ids at a time, through
 /// `organization_mentions_org`.
-fn org_head_drift_mentions_sql(n: usize) -> String {
+pub(crate) fn org_head_drift_mentions_sql(n: usize) -> String {
     format!(
         "SELECT organization_id, name, scheme FROM organization_mentions WHERE organization_id IN ({})",
         placeholders(n)
@@ -10836,7 +10839,7 @@ fn org_head_drift_mentions_sql(n: usize) -> String {
 /// `organization_merged_identifiers_org`. `loser <> org_id` keeps out the rows that name the org as
 /// its own loser, which record no merge: the `altid-alias` resolver binds, the `renormalise`
 /// pre-images and the `nhs-body` alias rows.
-fn org_head_drift_merged_sql(n: usize) -> String {
+pub(crate) fn org_head_drift_merged_sql(n: usize) -> String {
     format!(
         "SELECT DISTINCT org_id FROM organization_merged_identifiers WHERE org_id IN ({}) AND loser <> org_id",
         placeholders(n)
@@ -10851,7 +10854,7 @@ pub struct HeadDriftCount {
 }
 
 impl HeadDriftCount {
-    fn add(&mut self, mentions: u64) {
+    pub(crate) fn add(&mut self, mentions: u64) {
         self.orgs += 1;
         self.mentions += mentions;
     }
@@ -11067,8 +11070,19 @@ fn head_drift_bucket<'a>(
 }
 
 /// Issue 524 unit 1: whether a spelling is ALL-CAPS — it has an upper-case letter and no lower-case one.
-fn all_caps(name: &str) -> bool {
-    name.chars().any(char::is_uppercase) && !name.chars().any(char::is_lowercase)
+/// Issue 524 unit 2a's display-spelling order ([`crate::head_election`]) reads the same test.
+///
+/// A lower-case letter counts only when it has a distinct one-letter capital. `ß` (whose capital is
+/// `SS`, two letters), and the ordinal indicators `ª` and `º` (their own upper case) are lower case
+/// to `char::is_lowercase` but have no capital an ALL-CAPS writer could have used, so
+/// `LANDESBETRIEB STRAßENBAU NRW` and `AGRUPAMENTO DE ESCOLAS Nº 1` are ALL-CAPS (the 2a review), and
+/// `STRAẞE` with the capital sharp s is too.
+pub(crate) fn all_caps(name: &str) -> bool {
+    let has_capital = |c: char| {
+        let mut upper = c.to_uppercase();
+        matches!((upper.next(), upper.next()), (Some(u), None) if u != c)
+    };
+    name.chars().any(char::is_uppercase) && !name.chars().any(|c| c.is_lowercase() && has_capital(c))
 }
 
 /// One address-shaped name (issue 330's second measurement): what a
@@ -41570,7 +41584,7 @@ fn json_field(body: &str, key: &str) -> Option<String> {
 
 /// SQLite's default bind-variable ceiling is 999; stay well under it so an
 /// `IN (…)` read of a batch's ids never overflows a single statement.
-const IN_CHUNK: usize = 512;
+pub(crate) const IN_CHUNK: usize = 512;
 
 /// The issue-443 sweep's mention check: which ids of one org-id window any
 /// recorded mention still points at. One range read of

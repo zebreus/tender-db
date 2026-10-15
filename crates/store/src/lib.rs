@@ -10,6 +10,7 @@ pub mod accounts;
 pub mod analyze;
 pub mod canonical;
 pub mod checkpoint;
+pub mod head_election;
 mod inplace;
 pub mod jobs;
 pub mod publication_audit;
@@ -85,6 +86,11 @@ pub use canonical::{
     REPORT_HISTORY_DEPTH,
     SCAN_KEY_WINDOW,
     TYPO_MOVE_MENTION_VETO,
+};
+pub use head_election::{
+    HEAD_ELECT_TOP_MIN, HEAD_ELECTION_EPOCH, HEAD_HOLD_NO_FIT, HeadElectFns, HeadElectOrg, HeadElection, HeadKeep,
+    HeadRefreshEntry, HeadRule, HeadVerdict, ORG_NAME_REFRESH_LISTING_CAP, ORG_NAME_REFRESH_SPELLINGS, OrgNameRefreshArgs,
+    OrgNameRefreshPlan, elect_head, elect_head_counted,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;

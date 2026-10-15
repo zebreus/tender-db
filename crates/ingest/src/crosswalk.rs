@@ -1439,6 +1439,238 @@ pub fn gb_legal_family(name: &str) -> Option<&'static str> {
     last
 }
 
+// ---- Issue 524 unit 2: the head election's ingest side, injected into `store::elect_head`.
+
+/// Issue 524 unit 2: the key an organization's mentions VOTE under when its served head is
+/// re-elected — [`altid_name_key`] with every legal-form token dropped: the `§` markers (the GB
+/// forms this key adds, and [`n3_key`]'s `§gmbh`/`§srl`/`§sarl`… families) and every BARE token
+/// [`family_token`] knows. The bare ones come from the initialism collapse, which reads `S.R.L.`
+/// as the letters `s r l` and joins them into `srl`, while `SRL` is one token [`n3_key`] marks
+/// `§srl`; dropping both makes `WECO TMC`, `WECO TMC S.R.L.` and `WECO TMC SRL` one name. When
+/// nothing is left (`S.R.L.` alone), the alt key itself, so no name keys empty.
+///
+/// It groups the spellings of ONE organization — casing, punctuation, a leading `the`,
+/// Ltd/Limited/none, S.R.L./SRL/none — and so subsumes [`altid_keys_agree`] (a GB form one side
+/// carries) as a plain key: no union-find, no transitivity question. It merges no organizations
+/// and feeds no bind: [`altid_name_key`], [`altid_keys_agree`], [`family_token`] and
+/// [`NAME_KEY_EPOCH`] stay as they are, so the altid arm, the R2/R3 vetoes and every N3 key do
+/// not move.
+pub fn head_vote_key(name: &str) -> String {
+    let alt = altid_name_key(name);
+    let kept: Vec<&str> = alt
+        .split(' ')
+        .filter(|t| !t.is_empty() && !t.starts_with('§') && family_token(t).is_none())
+        .collect();
+    if kept.is_empty() { alt } else { kept.join(" ") }
+}
+
+/// Issue 524 unit 2: why `candidate` may not be SERVED as an organization's head in place of
+/// `head` — the display-spelling filter `store::elect_head` applies inside the winning cluster —
+/// or `None` for a fit spelling. The first that holds answers:
+/// - `control`: a C0/C1 control character or U+FFFD (sample 99's `C\x8cUR`, 98's line break);
+/// - `long`: more than 200 characters;
+/// - `lowercase`: cased letters and no upper-case one (sample 334's `les alchimistes`);
+/// - `non_name`: [`crate::partyname::not_a_name`] classes it — any class, `award_summary` too,
+///   which still VOTES but is never served;
+/// - `net`: issue 511's [`crate::partyname::mentions_placeholder`] or issue 510's
+///   [`crate::partyname::mentions_void`] hits it and not `head`. Those walks read HEADS, so a
+///   refresh must not hand them a hit the old head did not give;
+/// - `consortium`: [`consortium_name`] and not `head`'s — a grouping's name would turn the
+///   member's head into the vehicle's, which the altid bar and the anchor read as a veto.
+pub fn head_spelling_unfit(candidate: &str, head: &str) -> Option<&'static str> {
+    if candidate.chars().any(|c| c.is_control() || c == '\u{FFFD}') {
+        return Some("control");
+    }
+    if candidate.chars().count() > 200 {
+        return Some("long");
+    }
+    let cased = candidate.chars().any(|c| c.is_lowercase() || c.is_uppercase());
+    if cased && !candidate.chars().any(char::is_uppercase) {
+        return Some("lowercase");
+    }
+    if crate::partyname::not_a_name(candidate).is_some() {
+        return Some("non_name");
+    }
+    use crate::partyname::{mentions_placeholder, mentions_void};
+    if (mentions_placeholder(candidate) && !mentions_placeholder(head))
+        || (mentions_void(candidate) && !mentions_void(head))
+    {
+        return Some("net");
+    }
+    if consortium_name(candidate) && !consortium_name(head) {
+        return Some("consortium");
+    }
+    None
+}
+
+/// Issue 524 unit 2: why a re-elected head `new` is HELD for review instead of replacing `old`, or
+/// `None` to let it through. An identifier-bearing organization's head is an input to the
+/// resolver's and merge planners' name gates — the altid bar's consortium veto and GB head-vs-head
+/// form check, the anchor's owner consortium veto, `legal_form_family` and N2 corroboration — so a
+/// change that would flip one of them is listed, not applied. The first that holds answers:
+/// - `family`: [`legal_form_family`] names a family on both sides, and they differ;
+/// - `gb_family`: [`gb_legal_family`] names a family on both sides, and they differ (`… plc` →
+///   `… Ltd`);
+/// - `consortium_removed`: `old` is a [`consortium_name`] and `new` is not;
+/// - `nhs_check`: the org's identifier is a GB-NHS code (`national` `GBNHS<code>`,
+///   [`crate::nhs_ods::nhs_tail`]) and `new` fails [`crate::nhs_ods::check`] where `old` was
+///   admitted (a `Tie` is no pass, as in `child_check`).
+///
+/// A family gained or lost (`None` → `spzoo`, sample 760's address tail cut to `Getinge Polska Sp.
+/// z o.o.`) is allowed; the dry plan counts those moves.
+pub fn head_change_hold(
+    old: &str,
+    new: &str,
+    identifier_kind: Option<&str>,
+    identifier: Option<&str>,
+) -> Option<&'static str> {
+    if let (Some(a), Some(b)) = (legal_form_family(old), legal_form_family(new))
+        && a != b
+    {
+        return Some("family");
+    }
+    if let (Some(a), Some(b)) = (gb_legal_family(old), gb_legal_family(new))
+        && a != b
+    {
+        return Some("gb_family");
+    }
+    if consortium_name(old) && !consortium_name(new) {
+        return Some("consortium_removed");
+    }
+    if identifier_kind == Some("national")
+        && let Some(code) = identifier.and_then(crate::nhs_ods::nhs_tail)
+    {
+        let admitted = |name: &str| crate::nhs_ods::check(code, name) == crate::nhs_ods::NameCheck::Admitted;
+        if admitted(old) && !admitted(new) {
+            return Some("nhs_check");
+        }
+    }
+    None
+}
+
+/// Issue 524 unit 2: the legal-form family a head names, for the dry plan's `family_old` /
+/// `family_new` and its family-move counts — [`legal_form_family`], else [`gb_legal_family`].
+pub fn head_family(name: &str) -> Option<&'static str> {
+    legal_form_family(name).or_else(|| gb_legal_family(name))
+}
+
+#[cfg(test)]
+mod head_vote {
+    use super::{
+        NAME_KEY_EPOCH, altid_keys_agree, altid_name_key, family_token, head_change_hold, head_family,
+        head_spelling_unfit, head_vote_key,
+    };
+
+    #[test]
+    fn a_legal_form_dotted_bare_marked_or_absent_is_one_vote_key() {
+        let weco = head_vote_key("WECO TMC");
+        assert_eq!(weco, "weco tmc");
+        assert_eq!(head_vote_key("WECO TMC S.R.L."), weco, "the initialism collapse's bare `srl`");
+        assert_eq!(head_vote_key("WECO TMC SRL"), weco, "n3's `§srl`");
+        assert_eq!(head_vote_key("The University of Sheffield"), head_vote_key("UNIVERSITY OF SHEFFIELD"));
+        assert_eq!(head_vote_key("The University of Sheffield"), "university of sheffield");
+        assert_eq!(head_vote_key("Arkil"), head_vote_key("Arkil Ltd"));
+        assert_eq!(head_vote_key("Arkil Limited"), "arkil");
+        assert_eq!(head_vote_key("SARL Fradin"), head_vote_key("FRADIN SARL"));
+        assert_eq!(head_vote_key("SARL Fradin"), "fradin");
+        // A different name stays apart, and the words still have to match.
+        assert_ne!(head_vote_key("Sheffield Hallam University"), head_vote_key("University of Sheffield"));
+        assert_ne!(head_vote_key("Acme UK Ltd"), head_vote_key("Acme Ltd"));
+    }
+
+    #[test]
+    fn a_name_that_is_only_a_legal_form_keeps_its_alt_key() {
+        assert_eq!(head_vote_key("S.R.L."), "srl");
+        assert_eq!(head_vote_key("SRL"), "§srl");
+        assert_eq!(head_vote_key("Ltd"), "§ltd");
+        assert!(!head_vote_key("S.R.L.").is_empty());
+    }
+
+    /// The vote key wraps the altid key and the family table; it changes neither.
+    #[test]
+    fn the_keys_it_wraps_are_unchanged() {
+        assert_eq!(altid_name_key("WECO TMC S.R.L."), "weco tmc srl");
+        assert_eq!(altid_name_key("WECO TMC SRL"), "weco tmc §srl");
+        assert_eq!(altid_name_key("The University of Sheffield"), "university of sheffield");
+        assert_eq!(altid_name_key("Arkil Ltd"), "arkil §ltd");
+        assert_eq!(altid_name_key("SARL Fradin"), "§sarl fradin");
+        assert!(altid_keys_agree("arkil §ltd", "arkil"));
+        assert!(!altid_keys_agree("weco tmc §srl", "weco tmc"), "n3's families are words to the altid arm");
+        assert_eq!(family_token("srl"), Some("srl"));
+        assert_eq!(family_token("sarl"), Some("sarl"));
+        assert_eq!(family_token("ltd"), None, "GB forms are the altid key's, not the family table's");
+        assert_eq!(NAME_KEY_EPOCH, "n2v2+n3v1");
+    }
+
+    #[test]
+    fn an_unfit_spelling_is_named_for_its_first_defect() {
+        let head = "Sheffield Hallam University";
+        assert_eq!(head_spelling_unfit("The University of Sheffield", head), None);
+        assert_eq!(head_spelling_unfit("UNIVERSITY OF SHEFFIELD", head), None, "ALL-CAPS is fit, only ranked last");
+        // Sample 99's mojibake and 98's multi-line list.
+        assert_eq!(head_spelling_unfit("C\u{8c}UR", head), Some("control"));
+        assert_eq!(head_spelling_unfit("Alpha GmbH\nBeta GmbH", head), Some("control"));
+        assert_eq!(head_spelling_unfit("Caf\u{FFFD} Nord", head), Some("control"));
+        assert_eq!(head_spelling_unfit(&"Sehr Lange Firma ".repeat(13), head), Some("long"));
+        assert_eq!(head_spelling_unfit(&"x".repeat(200).to_uppercase(), head), None, "200 characters is fit");
+        // Sample 334.
+        assert_eq!(head_spelling_unfit("les alchimistes", head), Some("lowercase"));
+        assert_eq!(head_spelling_unfit("eBay", head), None);
+        assert_eq!(head_spelling_unfit("ΔΗΜΟΣ ΑΘΗΝΑΙΩΝ", head), None);
+        assert_eq!(head_spelling_unfit("123", head), None, "no cased letter, nothing lower-case");
+        // The first defect answers: the pointer `s.o.` is all lower case before it is a non-name.
+        assert_eq!(head_spelling_unfit("s.o.", head), Some("lowercase"));
+        assert_eq!(head_spelling_unfit("S.O.", head), Some("non_name"));
+        assert_eq!(head_spelling_unfit("-", head), Some("non_name"), "blank: no cased letter, a non-name");
+        assert_eq!(head_spelling_unfit("Infructueux, marché attribué à: Berthelet", head), Some("non_name"));
+        // A grouping's name never replaces a member's head; it may replace a grouping's.
+        let groupement = "Groupement Colas / Barthelemy";
+        assert_eq!(head_spelling_unfit(groupement, "Colas Centre Ouest"), Some("consortium"));
+        assert_eq!(head_spelling_unfit(groupement, "groupement colas"), None);
+    }
+
+    /// `net`: a spelling the 510/511 walks' nets hit (they read HEADS) while `not_a_name` classes it
+    /// nothing — the Scandinavian `INGEN` ("none") is a scoped word, a non-name only in its notice
+    /// languages, so the language-less fold leaves it a name while `mentions_placeholder` takes it.
+    /// Unfit over a head the net misses; fit over a head it already hits.
+    #[test]
+    fn a_spelling_only_the_nets_hit_is_unfit_over_a_head_they_miss() {
+        assert_eq!(crate::partyname::not_a_name("INGEN"), None, "no language, no scoped word");
+        assert!(crate::partyname::mentions_placeholder("INGEN"));
+        assert!(!crate::partyname::mentions_placeholder("Kalmar kommun"));
+        assert_eq!(head_spelling_unfit("INGEN", "Kalmar kommun"), Some("net"));
+        assert_eq!(head_spelling_unfit("INGEN", "Ingen"), None, "the head is a hit already");
+    }
+
+    #[test]
+    fn a_change_that_moves_a_bind_input_is_held() {
+        // plc -> Ltd: a GB form swap, the altid arm's head-vs-head veto.
+        assert_eq!(head_change_hold("Acme Holdings plc", "Acme Services Ltd", None, Some("GB1")), Some("gb_family"));
+        assert_eq!(head_change_hold("Siemens AG", "Siemens GmbH", None, Some("DE1")), Some("family"));
+        // Sample 760: an address-tailed head gains `spzoo` — allowed, and counted by the plan.
+        let old = "Getinge Polska ul. Ostrobramska 101 04-041 Warszawa NIP 5272468405";
+        let new = "Getinge Polska Sp. z o.o.";
+        assert_eq!(head_change_hold(old, new, Some("national"), Some("PL5272468405")), None);
+        assert_eq!((head_family(old), head_family(new)), (None, Some("spzoo")));
+        assert_eq!(head_change_hold("Arkil Ltd", "Arkil", None, Some("GB2")), None, "a form dropped is no swap");
+        assert_eq!(
+            head_change_hold("Groupement Colas / Barthelemy", "Colas Centre Ouest", None, Some("FR1")),
+            Some("consortium_removed")
+        );
+        // GB-NHS: the old head passes the ODS name check, the new one fails it.
+        let trust = "Oxford University Hospitals NHS Foundation Trust";
+        assert_eq!(
+            head_change_hold(trust, "University of Oxford", Some("national"), Some("GBNHSRTH")),
+            Some("nhs_check")
+        );
+        assert_eq!(head_change_hold(trust, "Oxford University Hospitals", Some("national"), Some("GBNHSRTH")), None);
+        assert_eq!(head_change_hold(trust, "University of Oxford", Some("vat"), Some("GBNHSRTH")), None, "not an ODS code");
+        assert_eq!(head_change_hold("University of Oxford", trust, Some("national"), Some("GBNHSRTH")), None);
+        assert_eq!(head_family("Acme Holdings plc"), Some("plc"));
+        assert_eq!(head_family("Ministerstvo financí"), None);
+    }
+}
+
 #[cfg(test)]
 mod altid {
     use super::{
