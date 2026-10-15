@@ -4,6 +4,24 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 532) — a place of performance published only as a country is served in `country` and found by `?country=`
+
+A notice may give its place of performance as a country alone, with no NUTS region: eForms' BT-5141 (often with
+`anyw-cou`, "anywhere in the given country") and DÖE's realized-location country. Nothing read it, so such a tender
+served `country: []` and no `?country=` value found it. It is now served as that country's NUTS level-0 code: `LT`
+for Lithuania, `EL` for Greece, `UK` for the United Kingdom.
+- `?country=LT` finds such a tender and its list row echoes `["LT"]`; `?country=LT0` does not find it.
+- Only on a version that carries no NUTS place code. A version that already serves a NUTS place serves the same
+  `country` as before, even when one of its lots names only a country.
+- Only for the NUTS countries: the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania,
+  Montenegro, North Macedonia, Serbia and Türkiye. A place in any other country (Egypt, the USA) carries none, so its
+  tender still serves `country: []`.
+- In `classifications[]` and on `/v1/sql` the row is scheme `nuts`, field `place_country`. Rows of field `place` are
+  unchanged and still hold the NUTS codes as published.
+
+Find a Tender notices are not affected. Stored tenders change only after they are refolded, which is a separate
+step; until then a tender folded before this change still serves `country: []`.
+
 ## Unreleased (issue 524, unit 2b) — an organization's `name` is elected from its mentions, not its first-seen spelling
 
 `name` on `/v1/organizations` (and `parties[].organization_name`, `lot_results[].winners[].organization_name`,

@@ -167,7 +167,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
 <table>
   <tr><th>Param</th><th>Meaning</th></tr>
   <tr><td class="ep">source</td><td>Source key, e.g. <code>ted</code>.</td></tr>
-  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it.</td></tr>
+  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it. A tender whose notices give the place of performance only as a country (eForms BT-5141; D&Ouml;E's realized-location country), and whose version carries no NUTS place code, is served that country's <strong>NUTS level-0 code</strong>, so <code>LT</code> finds it and <code>LT0</code> does not (Greece <code>EL</code>, the United Kingdom <code>UK</code>). Only the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania, Montenegro, North Macedonia, Serbia and T&uuml;rkiye are served this way: a place in any other country, e.g. Egypt or the USA, carries none.</td></tr>
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
@@ -1598,5 +1598,26 @@ mod tests {
             PAGE.contains("GET /v1/notices?publication_id=79997-2017</td>"),
             "the /docs lookups table must show TED's unpadded spelling"
         );
+    }
+
+    /// Issue 532: both surfaces say a place of performance published only as a
+    /// country is served as its NUTS level-0 code, and that a place outside the
+    /// NUTS countries carries none. Read from the `country` row and the openapi
+    /// `country` parameter, not the whole surface. One phrase per sentence.
+    #[test]
+    fn the_docs_say_a_country_only_place_is_served_as_its_nuts_level_0_code() {
+        let start = PAGE.find("<td class=\"ep\">country</td>").expect("/docs has a country filter row");
+        let docs = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["parameters"]["country"]["description"]
+            .as_str()
+            .expect("the country parameter is described");
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
+            assert_says(
+                &format!("{surface}'s country text"),
+                text,
+                &["only as a country", "nuts level-0 code", "e.g. egypt or the usa, carries none"],
+            );
+        }
     }
 }

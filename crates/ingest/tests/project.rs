@@ -6520,3 +6520,101 @@ async fn a_second_refold_of_a_renamed_party_rebinds_nothing() {
     assert_eq!(scalar(&db, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {summary_org}")).await, 0);
     let _ = std::fs::remove_file(&path);
 }
+
+// ------------------------------------------------- issue 532: a country-only place
+
+/// What the current versions serve as `country`: every `nuts` code, Tender and lots
+/// alike, sorted and distinct — the read paths' own predicate (`scheme = 'nuts'`).
+async fn current_countries(db: &Db) -> Vec<String> {
+    let cell = query_text(
+        db,
+        "SELECT group_concat(code, ',') FROM (SELECT DISTINCT c.code FROM tender_version_classifications c
+           JOIN tenders t ON t.id = c.tender_id AND t.current_seq = c.seq
+          WHERE c.scheme = 'nuts' ORDER BY c.code)",
+    )
+    .await;
+    cell.map(|s| s.split(',').map(str::to_owned).collect()).unwrap_or_default()
+}
+
+/// Issue 532 (unit 2): real fixtures through dispatch, parse and the fold. A notice
+/// that gives its place of performance only as a country (BT-5141, `anyw-cou`)
+/// serves that country's NUTS level-0 code under field `place_country`; a notice
+/// that publishes a NUTS place anywhere on the version serves exactly the NUTS it
+/// served before, its country-only scopes adding nothing. Each expectation was read
+/// off the fixture's `cac:RealizedLocation` blocks; the other `nuts` codes in these
+/// files are organization addresses (BT-507), which are no place.
+#[tokio::test]
+async fn a_country_only_place_serves_its_nuts_level_0_code_and_a_nuts_place_is_unchanged() {
+    let matrix: &[(&str, &str, &[&str])] = &[
+        // LOT-0001 and LOT-0002: BEL, no subentity (BE100 is the buyer's address).
+        ("ted", "eforms/cn-selc-tp-00157944-2024.xml", &["BE"]),
+        // Procedure and LOT-0000: DNK, no subentity (DK011, NO081 are addresses).
+        ("ted", "eforms/can-pat-social-00250633-2024.xml", &["DK"]),
+        // Procedure and LOT-0001: NOR, no subentity (NO0A2 is an address).
+        ("ted", "eforms/can-inline-org-00530983-2024.xml", &["NO"]),
+        // DÖE sdk-1.0: LOT-0000's country DEU with no listName; DE501 is an address.
+        ("doe", "eforms/doe-sdk10-tenderrecipient.xml", &["DE"]),
+        // Procedure ITC4A + ITA, LOT-0001 ITA alone: the NUTS place only, not [IT, ITC4A].
+        ("ted", "eforms/veat-25-00496202-2026.xml", &["ITC4A"]),
+        // Procedure DE128 + DEU, LOT-0001 SEN (a third country, and beside a NUTS place).
+        ("ted", "eforms/cn-pt-national-00245088-2024.xml", &["DE128"]),
+        // Several NOR-only realized locations beside two carrying NO072.
+        ("ted", "eforms/can-cvd-legacy-00381774-2025.xml", &["NO072"]),
+    ];
+    for (i, &(source, fixture, expected)) in matrix.iter().enumerate() {
+        let (db, fetch_id, path) = scratch(&format!("place-country-{i}")).await;
+        ingest_from(&db, fetch_id, source, fixture).await;
+        let report = project::project(&db, false).await.expect("project");
+        assert_eq!(report.tenders, 1, "{fixture}: one tender");
+        assert_eq!(current_countries(&db).await, expected, "{fixture}: the served country");
+        let derived = scalar(
+            &db,
+            "SELECT COUNT(*) FROM tender_version_classifications WHERE field = 'place_country' AND scheme = 'nuts'",
+        )
+        .await;
+        let level0 = expected.iter().all(|c| c.len() == 2);
+        assert_eq!(derived > 0, level0, "{fixture}: a place_country row exactly when the version has no other nuts row");
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
+/// Issue 532 (unit 2): DÖE sdk-0.1 publishes the realized location's country under
+/// its own two path ids. The real fixture with its two place subentities removed is
+/// the country-only shape (witness notice 26168799): the parse keeps both country
+/// codes, and the fold serves `DE` at Tender scope and at Lot scope.
+#[tokio::test]
+async fn an_sdk01_country_only_place_serves_its_level_0_code_at_both_scopes() {
+    let (db, fetch_id, path) = scratch("place-country-sdk01").await;
+    let relative = "doe/sdk-0.1-numeric-cn-25599482-1.xml";
+    let text = String::from_utf8(std::fs::read(format!("tests/fixtures/{relative}")).expect("fixture")).expect("utf-8");
+    let subentity = r#"<ns3:CountrySubentityCode listName="nuts">DE2</ns3:CountrySubentityCode>"#;
+    assert_eq!(text.matches(subentity).count(), 2, "the fixture still carries its two place subentities");
+    ingest_bytes(&db, fetch_id, "doe", relative, text.replace(subentity, "").as_bytes()).await;
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT group_concat(r, ' ') FROM (SELECT field_id || '=' || code AS r FROM notice_codes
+              WHERE field_id LIKE '%RealizedLocation-Address-Country-IdentificationCode' ORDER BY field_id)",
+        )
+        .await
+        .as_deref(),
+        Some(
+            "SDK01-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode=DEU \
+             SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode=DEU"
+        ),
+        "the parse stores both SDK01 country ids as codes"
+    );
+    project::project(&db, false).await.expect("project");
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT group_concat(r, ' ') FROM (SELECT field || ':' || code || ':' || (lot_id IS NULL) AS r
+               FROM tender_version_classifications WHERE scheme = 'nuts' ORDER BY lot_id IS NULL, r)",
+        )
+        .await
+        .as_deref(),
+        Some("place_country:DE:0 place_country:DE:1"),
+        "DE at Lot scope and at Tender scope, and no other nuts row"
+    );
+    let _ = std::fs::remove_file(&path);
+}

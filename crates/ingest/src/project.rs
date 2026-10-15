@@ -1303,6 +1303,13 @@ const DE1_FIELD_ALIASES: &[(&str, &str)] = &[
         "DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-CountrySubentityCode",
         "BT-5071-Lot",
     ),
+    // Issue 532: the realized-location COUNTRY, eForms' BT-5141 under its DE-1.x id
+    // (`fields-de-1.x.json` types both code/country). Read by [`place_country`].
+    ("DE1-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode", "BT-5141-Procedure"),
+    (
+        "DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode",
+        "BT-5141-Lot",
+    ),
     // Dates. The parser has already reunited each `EndDate`/`EndTime` pair into one
     // instant (issue 03), so these are the whole deadline — the `(d)` ids.
     ("DE1-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate", "BT-131(d)-Procedure"),
@@ -5298,6 +5305,32 @@ impl NoticeState {
                     }
                 }
             }
+            // Issue 532 (unit 2): a place of performance published as a country —
+            // eForms' BT-5141, DÖE sdk-0.1's realized-location country — is its NUTS
+            // level-0 code, a `nuts` classification under its own field
+            // (`place_country`) at the scope it was published. Emitted unguarded: the
+            // fold drops it from any version that carries another `nuts` row
+            // ([`drop_place_country_beside_nuts`]). No `continue`: a Code falls
+            // through to `_ => None` below.
+            if let NoticeValue::Code { code, .. } = &value.value
+                && let Some(country) = place_country(field_id, code)
+            {
+                let fact = Fact::Classification {
+                    field: PLACE_COUNTRY_FIELD.to_owned(),
+                    scheme: "nuts".to_owned(),
+                    code: country.to_owned(),
+                };
+                match &scope {
+                    Scope::Tender => {
+                        facts.insert(fact);
+                    }
+                    Scope::Lot(key) => {
+                        if let Some(lot) = lots.get_mut(key) {
+                            lot.facts.insert(fact);
+                        }
+                    }
+                }
+            }
             // Issue 394 (unit 2): a classification value may be SEVERAL codes — the
             // DÖE sdk-0.1 island glues them into one string — so it folds here, one
             // fact per code, rather than through the one-fact match below. CPV goes
@@ -6499,6 +6532,9 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
                 lot.facts.insert(c.applied(&matched));
             }
         }
+        // Issue 532: a country-only place serves only on a version with no other
+        // `nuts` row — judged after the carry, across the Tender and every lot.
+        drop_place_country_beside_nuts(&mut facts, &mut lots);
 
         // Results accumulate: a framework/DPS round or a tranche CAN adds its
         // round and never deletes an earlier one (ted-empirical-checks.md §1:
@@ -6549,6 +6585,33 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
         });
     }
     versions
+}
+
+/// Issue 532 (decision D4): drop every derived `place_country` row from a version
+/// that holds any other `nuts` classification, on the Tender or on any lot.
+///
+/// The test is `scheme == "nuts"` alone, the predicate every read path uses (the
+/// `?country=` EXISTS, the list echo, the probes), so a version that serves a
+/// non-empty `country` without this derivation serves the identical list with it:
+/// only a version that would serve `[]` gains its level-0 code. It runs after the
+/// carry, not per notice: a CN that is country-only `DEU` followed by a CAN with
+/// `AT130` + `AUT` serves `[AT130]`, never a stale `DE` beside it. Dropping from
+/// the carried set is permanent and safe: a non-derived `nuts` row, once in a chain,
+/// never leaves it (`supersede` swaps a key's set only for a non-empty one, and
+/// lots are only added or updated). The accepted miss: a country-only lot beside a
+/// NUTS place in another country serves nothing for that lot, as before.
+fn drop_place_country_beside_nuts(facts: &mut BTreeSet<Fact>, lots: &mut [LotState]) {
+    let other_nuts = |f: &Fact| {
+        matches!(f, Fact::Classification { field, scheme, .. } if scheme == "nuts" && field != PLACE_COUNTRY_FIELD)
+    };
+    if !facts.iter().any(other_nuts) && !lots.iter().any(|l| l.facts.iter().any(other_nuts)) {
+        return;
+    }
+    let derived = |f: &Fact| matches!(f, Fact::Classification { field, .. } if field == PLACE_COUNTRY_FIELD);
+    facts.retain(|f| !derived(f));
+    for lot in lots {
+        lot.facts.retain(|f| !derived(f));
+    }
 }
 
 /// Supersession per field: a field the notice republishes replaces the carried
@@ -7523,6 +7586,8 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 // Issue 479: the procedure type folds from every era's own field.
                 // `field_id` is already the DE-1.x alias target here.
                 || PROCEDURE_FIELDS.contains(&field_id)
+                // Issue 532: a country-only place folds as its NUTS level-0 code.
+                || PLACE_COUNTRY_FIELDS.contains(&field_id)
         }
         Channel::Integer => {
             LEGACY_BID_COUNT_FIELDS.contains(&field_id)
@@ -7661,6 +7726,70 @@ pub fn contract_nature(field_id: &str, code: &str) -> Option<&'static str> {
         },
         _ => None,
     }
+}
+
+/// The classification field a country-only place of performance folds into
+/// (issue 532), scheme `nuts`. Its own field, never `place`: `Fact::key` is
+/// `("classification", field)`, so under `place` a country-only notice would
+/// supersede a precise NUTS code carried from an earlier one.
+const PLACE_COUNTRY_FIELD: &str = "place_country";
+
+/// The CODE field ids that publish a place of performance as a country (issue
+/// 532): eForms' BT-5141 at its three scopes and DÖE sdk-0.1's realized-location
+/// country at Tender and Lot scope, all typed code, list `country` /
+/// `eforms-country` (alpha-3). The DE-1.x spellings reach BT-5141 through
+/// [`DE1_FIELD_ALIASES`]. Exact ids, not the stem, as [`PROCEDURE_FIELDS`]: the
+/// stem would also admit `BT-5141-*-List`, an attribute id in SDK 1.9 and later.
+pub const PLACE_COUNTRY_FIELDS: &[&str] = &[
+    "BT-5141-Procedure",
+    "BT-5141-Lot",
+    "BT-5141-Part",
+    "SDK01-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode",
+    "SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode",
+];
+
+/// The countries NUTS (Eurostat's statistical regions) covers, as their ISO
+/// 3166-1 alpha-2 codes (issue 532): the EU-27, the United Kingdom, the EFTA
+/// countries and the candidate countries. A closed definitional set, not a
+/// sample of common codes. No ISO alpha-2 is another country's NUTS code (`EL` and
+/// `UK` are unassigned in ISO), so an inclusion can only ever serve a country's
+/// own code. [`place_country`] renames GR and GB on the way out.
+const NUTS_LEVEL0_ISO: &[&str] = &[
+    // the EU-27
+    "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU",
+    "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK",
+    // the United Kingdom
+    "GB",
+    // EFTA
+    "CH", "IS", "LI", "NO",
+    // the candidate countries
+    "AL", "ME", "MK", "RS", "TR",
+];
+
+/// A place of performance published only as a country, as its NUTS level-0 code
+/// (issue 532, decision D2): `field_id` must be one of [`PLACE_COUNTRY_FIELDS`];
+/// the code, trimmed and upper-cased, is looked up EXACTLY as an alpha-3 in the
+/// generated ISO table; the alpha-2 must be a NUTS country ([`NUTS_LEVEL0_ISO`]);
+/// and Greece and the United Kingdom take their NUTS spellings, `EL` and `UK`.
+/// So LTU → `LT`, GRC → `EL`, GBR → `UK`. Anything else — an alpha-2, Kosovo's
+/// `1A0` or `XKX`, an unknown code, a third country (EGY, USA) or an overseas
+/// region with its own ISO code (REU) — is left unfolded, not invented (397's
+/// rule). Not routed through [`canonical_country`]: that is 319's org fold, which
+/// maps EL → GR, accepts names and passes unknown input through.
+pub fn place_country(field_id: &str, code: &str) -> Option<&'static str> {
+    if !PLACE_COUNTRY_FIELDS.contains(&field_id) {
+        return None;
+    }
+    let code = code.trim().to_ascii_uppercase();
+    let (_, alpha2) = crate::countries::ALPHA3_TO_ALPHA2.iter().find(|(alpha3, _)| *alpha3 == code)?;
+    if !NUTS_LEVEL0_ISO.contains(alpha2) {
+        return None;
+    }
+    Some(match *alpha2 {
+        "GR" => "EL",
+        "GB" => "UK",
+        other => other,
+    })
 }
 
 /// The CODE field ids that publish a procedure type (issue 479), one per era, in
@@ -11065,6 +11194,199 @@ mod tests {
         assert_eq!(natures(&state.facts), vec!["supplies"], "the procedure's nature at Tender scope");
         let lot = state.lots.iter().find(|l| l.key == "LOT-1").expect("the lot");
         assert_eq!(natures(&lot.facts), vec!["services"], "the lot's own nature at Lot scope");
+    }
+
+    /// Issue 532 (D2/D3/D5): an exact alpha-3 from one of the five place-country
+    /// ids is its NUTS level-0 code — Greece `EL`, the United Kingdom `UK` — and
+    /// everything else (an alpha-2, Kosovo, an unknown code, a third country, an
+    /// overseas region with its own ISO code, another field's country) is nothing.
+    #[test]
+    fn a_country_only_place_maps_an_exact_alpha3_to_its_nuts_level_0_code() {
+        let lot = "BT-5141-Lot";
+        for (alpha3, nuts) in [
+            ("LTU", "LT"),
+            ("GRC", "EL"),
+            ("GBR", "UK"),
+            ("NLD", "NL"),
+            (" ltu ", "LT"),
+            ("NOR", "NO"),
+            ("CHE", "CH"),
+            ("ISL", "IS"),
+            ("LIE", "LI"),
+            ("TUR", "TR"),
+            ("MKD", "MK"),
+            ("SRB", "RS"),
+            ("MNE", "ME"),
+            ("ALB", "AL"),
+        ] {
+            assert_eq!(place_country(lot, alpha3), Some(nuts), "{alpha3:?}");
+        }
+        for skipped in ["EGY", "USA", "SEN", "REU", "XKX", "1A0", "LT", ""] {
+            assert_eq!(place_country(lot, skipped), None, "{skipped:?} is not invented");
+        }
+        for wrong in [
+            "BT-5141-Lot-List",
+            "BT-514-Organization-Company",
+            "SDK01-ContractingParty-Party-PostalAddress-Country-IdentificationCode",
+        ] {
+            assert_eq!(place_country(wrong, "LTU"), None, "{wrong} is not a place of performance");
+        }
+        for id in PLACE_COUNTRY_FIELDS {
+            assert_eq!(place_country(id, "DEU"), Some("DE"), "{id}");
+        }
+        // The drop sieve agrees: each id, and both DE-1.x spellings through the
+        // alias, is read rather than "published and dropped" (368's sieve).
+        for id in PLACE_COUNTRY_FIELDS.iter().copied().chain([
+            "DE1-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode",
+            "DE1-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode",
+        ]) {
+            assert!(table_reads("notice_codes", id), "{id} folds as a place country");
+        }
+    }
+
+    /// Issue 532 (D3): the NUTS country list is the closed definitional set — 37
+    /// ISO countries, each one assigned and reached from exactly one alpha-3 —
+    /// and what it serves is exactly the 37 NUTS level-0 codes, never ISO's GR/GB.
+    #[test]
+    fn the_nuts_level_0_list_is_the_closed_set_of_nuts_countries() {
+        use crate::countries::{ALPHA2, ALPHA3_TO_ALPHA2};
+        assert_eq!(NUTS_LEVEL0_ISO.len(), 37);
+        let distinct: BTreeSet<&str> = NUTS_LEVEL0_ISO.iter().copied().collect();
+        assert_eq!(distinct.len(), 37, "no code listed twice");
+        for code in NUTS_LEVEL0_ISO {
+            assert!(ALPHA2.contains(code), "{code} is an assigned ISO alpha-2");
+            let from = ALPHA3_TO_ALPHA2.iter().filter(|(_, a2)| a2 == code).count();
+            assert_eq!(from, 1, "{code} is reached from exactly one alpha-3");
+        }
+        let served: BTreeSet<&str> =
+            ALPHA3_TO_ALPHA2.iter().filter_map(|(alpha3, _)| place_country("BT-5141-Procedure", alpha3)).collect();
+        assert!(!served.contains("GR") && !served.contains("GB"), "ISO's spellings are never served: {served:?}");
+        let nuts: BTreeSet<&str> = [
+            "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "EL", "HR", "HU", "IE", "IT", "LT", "LU",
+            "LV", "MT", "NL", "PL", "PT", "RO", "SE", "SI", "SK", "UK", "CH", "IS", "LI", "NO", "AL", "ME", "MK", "RS",
+            "TR",
+        ]
+        .into_iter()
+        .collect();
+        assert_eq!(served, nuts, "the served set is exactly the NUTS level-0 codes");
+    }
+
+    /// Issue 532 (D4): the derived `place_country` row serves only on a version
+    /// with no other `nuts` row, judged after the carry across the Tender and every
+    /// lot — so every version that serves a NUTS place today serves the same list,
+    /// and a country-only version serves its level-0 code.
+    #[test]
+    fn a_country_only_place_is_dropped_from_any_version_with_another_nuts_row() {
+        fn country(section: &str, field: &str, ordinal: i64, code: &str) -> store::ValueRow {
+            store::ValueRow {
+                section_id: section.into(),
+                field_id: field.into(),
+                ordinal,
+                value: store::NoticeValue::Code { list: Some("country".into()), code: code.into() },
+            }
+        }
+        fn nuts(section: &str, field: &str, ordinal: i64, code: &str) -> store::ValueRow {
+            classification_value(section, field, ordinal, "nuts", code)
+        }
+        fn notice(id: i64, values: Vec<store::ValueRow>) -> NoticeState {
+            let parsed = Parsed {
+                sections: vec![
+                    store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                    store::Section { id: "LOT-1".into(), kind: "Lot".into(), parent: Some("PROCEDURE".into()) },
+                ],
+                values,
+            };
+            let notice = store::NoticeRef {
+                id,
+                source: "ted".into(),
+                publication_id: format!("{id:08}-2026"),
+                profile: "eforms:eforms-sdk-1.13".into(),
+            };
+            NoticeState::read(&notice, &parsed)
+        }
+        /// What `country` serves: every `nuts` code on the version, Tender and lots.
+        fn served(v: &TenderVersion) -> Vec<String> {
+            let codes: BTreeSet<String> = v
+                .facts
+                .iter()
+                .chain(v.lots.iter().flat_map(|l| l.facts.iter()))
+                .filter_map(|f| match f {
+                    Fact::Classification { scheme, code, .. } if scheme == "nuts" => Some(code.clone()),
+                    _ => None,
+                })
+                .collect();
+            codes.into_iter().collect()
+        }
+        fn each(versions: &[TenderVersion]) -> Vec<Vec<String>> {
+            versions.iter().map(served).collect()
+        }
+        let s = |codes: &[&str]| codes.iter().map(|c| (*c).to_owned()).collect::<Vec<_>>();
+
+        // (a) one notice, one scope: NUTS and country together serve the NUTS code.
+        let a = notice(1, vec![nuts("LOT-1", "BT-5071-Lot", 0, "NL329"), country("LOT-1", "BT-5141-Lot", 1, "NLD")]);
+        assert_eq!(each(&fold(&[&a])), vec![s(&["NL329"])], "(a)");
+        // The derived row exists before the fold; the fold drops it.
+        let lot = a.lots.iter().find(|l| l.key == "LOT-1").expect("the lot");
+        assert!(
+            lot.facts.contains(&Fact::Classification {
+                field: "place_country".into(),
+                scheme: "nuts".into(),
+                code: "NL".into()
+            }),
+            "read emits it unguarded, at Lot scope: {:?}",
+            lot.facts
+        );
+
+        // (b) a CN with NL329 + NLD, then a CAN with NLD only: the head keeps NL329.
+        let cn = notice(1, vec![nuts("LOT-1", "BT-5071-Lot", 0, "NL329"), country("LOT-1", "BT-5141-Lot", 1, "NLD")]);
+        let can = notice(2, vec![country("LOT-1", "BT-5141-Lot", 0, "NLD")]);
+        assert_eq!(each(&fold(&[&cn, &can])), vec![s(&["NL329"]), s(&["NL329"])], "(b)");
+
+        // (c) a CN with NLD only, then a CAN with NL329 + NLD.
+        let cn = notice(1, vec![country("LOT-1", "BT-5141-Lot", 0, "NLD")]);
+        let can = notice(2, vec![nuts("LOT-1", "BT-5071-Lot", 0, "NL329"), country("LOT-1", "BT-5141-Lot", 1, "NLD")]);
+        assert_eq!(each(&fold(&[&cn, &can])), vec![s(&["NL"]), s(&["NL329"])], "(c)");
+
+        // (d) country-only DEU, then country-only AUT at the same scope: supersede.
+        let cn = notice(1, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "DEU")]);
+        let can = notice(2, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "AUT")]);
+        assert_eq!(each(&fold(&[&cn, &can])), vec![s(&["DE"]), s(&["AT"])], "(d)");
+
+        // (e) country-only DEU, then AT130 + AUT: never a stale DE beside AT130
+        // (the per-notice guard would serve [AT130, DE]).
+        let cn = notice(1, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "DEU")]);
+        let can = notice(
+            2,
+            vec![nuts("PROCEDURE", "BT-5071-Procedure", 0, "AT130"), country("PROCEDURE", "BT-5141-Procedure", 1, "AUT")],
+        );
+        assert_eq!(each(&fold(&[&cn, &can])), vec![s(&["DE"]), s(&["AT130"])], "(e)");
+
+        // (f) a NUTS place, then two country-only notices elsewhere: NUTS throughout.
+        let cn = notice(1, vec![nuts("PROCEDURE", "BT-5071-Procedure", 0, "DE212")]);
+        let at = notice(2, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "AUT")]);
+        let fr = notice(3, vec![country("LOT-1", "BT-5141-Lot", 0, "FRA")]);
+        assert_eq!(each(&fold(&[&cn, &at, &fr])), vec![s(&["DE212"]), s(&["DE212"]), s(&["DE212"])], "(f)");
+
+        // (g) a procedure country beside a lot NUTS place on one notice.
+        let g = notice(1, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "NLD"), nuts("LOT-1", "BT-5071-Lot", 1, "NL329")]);
+        assert_eq!(each(&fold(&[&g])), vec![s(&["NL329"])], "(g)");
+
+        // (h) country-only, then a notice silent on place: the code carries.
+        let cn = notice(1, vec![country("LOT-1", "BT-5141-Lot", 0, "NLD")]);
+        let silent = notice(2, vec![]);
+        assert_eq!(each(&fold(&[&cn, &silent])), vec![s(&["NL"]), s(&["NL"])], "(h)");
+
+        // (i) the accepted miss: a procedure NUTS place and a lot in another country
+        // serve the NUTS place only.
+        let i = notice(1, vec![nuts("PROCEDURE", "BT-5071-Procedure", 0, "NL329"), country("LOT-1", "BT-5141-Lot", 1, "BEL")]);
+        assert_eq!(each(&fold(&[&i])), vec![s(&["NL329"])], "(i)");
+
+        // The derived row is its own field, so the published NUTS keeps `place`.
+        let v = &fold(&[&notice(1, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "GRC")])])[0];
+        assert_eq!(
+            v.facts.iter().filter(|f| matches!(f, Fact::Classification { scheme, .. } if scheme == "nuts")).collect::<Vec<_>>(),
+            vec![&Fact::Classification { field: "place_country".into(), scheme: "nuts".into(), code: "EL".into() }],
+        );
     }
 
     /// Issue 479: the procedure-type table, arm by arm — each era's own code onto

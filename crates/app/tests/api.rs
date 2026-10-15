@@ -169,13 +169,19 @@ impl Server {
     async fn ingest(&self, relative: &str) {
         let path = format!("{FIXTURES}/{relative}");
         let bytes = std::fs::read(&path).unwrap_or_else(|e| panic!("read {path}: {e}"));
-        let profile::Disposition::Records(records) = profile::dispatch(relative, &bytes) else {
+        self.ingest_bytes(relative, &bytes).await;
+    }
+
+    /// [`Self::ingest`] of a fixture's bytes as the test edited them, dispatched
+    /// under the fixture's own name.
+    async fn ingest_bytes(&self, relative: &str, bytes: &[u8]) {
+        let profile::Disposition::Records(records) = profile::dispatch(relative, bytes) else {
             panic!("{relative}: dispatch skipped a fixture");
         };
         let [profile::Record::Notice(n)] = &records[..] else {
             panic!("{relative}: expected one notice record");
         };
-        let parse = process::parse_payload(&n.profile, &bytes);
+        let parse = process::parse_payload(&n.profile, bytes);
         assert!(matches!(parse, Parse::Parsed(_)), "{relative}: {parse:?}");
         // The notice row's instants as the processor stamps them — with the
         // offset and precision the source published (issue 367 unit 3).
@@ -1092,6 +1098,45 @@ async fn tender_list_rows_echo_cpv_and_country() {
         echoed.iter().all(|code| detail_cpv.contains(code)),
         "echoed cpv {echoed:?} should all appear in the detail {detail_cpv:?}"
     );
+}
+
+/// Issue 532 (unit 2): a tender whose notice gives its place of performance only
+/// as a country (BT-5141 BEL on both lots, no NUTS place) is found by `?country=`
+/// at that country's NUTS level-0 code, echoes it, and carries it in the detail as
+/// field `place_country`. A region prefix does not match it, and a GBR place is
+/// NUTS's `UK`: `GB` is no NUTS code and finds nothing.
+#[tokio::test]
+async fn a_country_only_place_is_found_by_its_nuts_level_0_code() {
+    const SELC: &str = "eforms/cn-selc-tp-00157944-2024.xml";
+    let server = Server::start("place_country").await;
+    server.ingest(SELC).await;
+
+    let found = items(&server.get("/v1/tenders?country=BE").await).clone();
+    assert_eq!(found.len(), 1, "?country=BE finds the country-only tender");
+    let echoed: Vec<&str> =
+        found[0]["country"].as_array().expect("country is an array").iter().filter_map(|c| c.as_str()).collect();
+    assert_eq!(echoed, vec!["BE"], "the row echoes the level-0 code");
+    assert!(items(&server.get("/v1/tenders?country=BE1").await).is_empty(), "a region prefix finds no country-only place");
+
+    let id = found[0]["id"].as_i64().expect("tender id");
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+    let nuts: Vec<&Value> =
+        detail["classifications"].as_array().expect("classifications").iter().filter(|c| c["scheme"] == "nuts").collect();
+    assert!(
+        !nuts.is_empty() && nuts.iter().all(|c| c["field"] == "place_country" && c["code"] == "BE"),
+        "the detail carries {{field: place_country, scheme: nuts, code: BE}} and no other nuts row: {nuts:?}"
+    );
+
+    // The same notice with its places in the United Kingdom.
+    let uk = Server::start("place_country_gbr").await;
+    let text = std::fs::read_to_string(format!("{FIXTURES}/{SELC}")).expect("fixture");
+    let bel = r#"<cbc:Region>anyw-cou</cbc:Region><cac:Country><cbc:IdentificationCode listName="country">BEL</cbc:IdentificationCode>"#;
+    assert_eq!(text.matches(bel).count(), 2, "the fixture still carries its two country-only places");
+    uk.ingest_bytes(SELC, text.replace(bel, &bel.replace("BEL", "GBR")).as_bytes()).await;
+    let found = items(&uk.get("/v1/tenders?country=UK").await).clone();
+    assert_eq!(found.len(), 1, "?country=UK finds a GBR place");
+    assert_eq!(found[0]["country"], serde_json::json!(["UK"]), "served as NUTS's UK");
+    assert!(items(&uk.get("/v1/tenders?country=GB").await).is_empty(), "GB is no NUTS code and finds nothing");
 }
 
 /// Issue 49: `?tender=` lists exactly a tender's notices rather than silently

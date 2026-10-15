@@ -1036,8 +1036,10 @@ const CLASSIFICATION_SCHEME_NOTE: &str = "One of: cpv (WHAT is bought, the EU Co
     procurement-procedure-type codes such as open, restricted, neg-w-call, neg-wo-call, with \
     German national us-*/de-* codes as published; Tender scope only, lot_id NULL, at most one \
     per version). Filter on scheme explicitly: scheme <> 'cpv' is NOT the NUTS codes.";
-const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts), nature (nature), \
-    procedure (procedure) \u{2014} which published field the code came from.";
+const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts), \
+    place_country (nuts: the level-0 code of a place published only as a country, only on a version \
+    with no other nuts row; issue 532), nature (nature), procedure (procedure) \u{2014} which published \
+    field the code came from.";
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of
 /// that name in any table (the epoch columns recur widely). Open or
