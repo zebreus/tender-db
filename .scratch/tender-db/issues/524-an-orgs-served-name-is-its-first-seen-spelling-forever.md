@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v7 DEPLOYED `d23ce5a` 2026-10-15 16:5x UTC. Dry plan 2523: 28,338 changes, 370 recent holds, undated 0, 1 explained canary (10603). The DATED RE-JUDGE (wf_b6d9f416-8dd) FAILS two go bars: recent_released 2 of 10 wrong, and residue:head_newest 9 of 30 wrong (the decision says stop and re-decide at 3). change:R1 (0 of 30 wrong), change:R2 (0 of 30) and hold:recent (1 of 30 harmful) pass. NEXT: rule `524u2-v8`, below: a residue holdout, and a junk exemption that counts only all-digit tokens and drops `lowercase`. Then build, gate, deploy, re-plan, re-judge the changed lists, canaries, capped run, dated spot check, full run. No wet run under v7.
+Status: ready-for-agent — RULE v8 DEPLOYED `1d95c22` 2026-10-15 ~19:0x UTC; dry plan 2526: 27,559 changes (R1 25,994, R2 1,564), holds recent 374 and residue 794, undated 0, 0 unexpected canaries. The DATED RE-JUDGE (wf_62b83a3d-26b, fresh samples) FAILS three bars: change:R1 2 of 30 wrong, change:R2 2 of 30, released at least 2 of 27 (5 first-pass); hold:residue + the v7 releases v8 holds pass at the bar (2 harmful). No wet run under v8. NEXT: decide rule `524u2-v9` (evidence and candidates below: drop the digits release, a generic-name hold, a digits-added hold; R2's two wrongs are semantic singletons), then build, gate, deploy, re-plan, re-judge FRESH samples, canaries, capped 500, full.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1193,3 +1193,43 @@ The residue holds the cases where the head is printed newest, and there the head
 5. **Follow-up, not in v8:** count votes per procedure rather than per mention, so lot repeats cannot make a majority
    (`Consultorís`). Filed under 548.
 
+## Rule v8 on prod: the dated re-judge (2026-10-15, plan 2526, wf_62b83a3d-26b)
+
+**Plan 2526** (binary `1d95c22`, epoch `524u2-v8`, walk 143 s):
+- CHANGES 27,559: R0n 1, R1 25,994, R2 1,564.
+- HOLDS 1,696, of which `recent` 374 and `residue` 794 (R1 795 → held; R2 8).
+- Undated 0; junk releases 27 (26 `digits`, 1 `unfit`).
+- Canaries: 0 unexpected (30 rows). Its own dates for the six `change:R1` canaries are in the runbook's step 2.
+  The five that share `head_newest` 2026-07-17 (445, 1919, 2762, 3406, 6079) are genuine: low org ids were
+  minted from the first package ingested, OJ 2026-07-17 (notice 1333 is 00495778-2026), so their first-seen heads
+  carry that date.
+
+**The re-judge** — fresh samples (the first 30 of each list not in plan 2523's), each verdict from dated notices on
+the public API, each `wrong` re-read by a skeptic told to refute it:
+
+| list | right | neutral | wrong (skeptic-confirmed) | bar |
+| --- | --- | --- | --- | --- |
+| change:R1 (30) | 20 | 8 | **2**: 8069375, 5350675 | ≤ 1: **FAIL** |
+| change:R2 (30) | 22 | 6 | **2**: 4123715, 16508165 | ≤ 1: **FAIL** |
+| hold:residue (30) + v7 releases v8 holds (4) | 22 | 10 | 2 harmful: 19427430, 15829801 | ≤ 2 together: pass, at the bar |
+| released (27, every one) | 19 | 3 | **≥ 2** (9806, 9814 confirmed; 9833, 4295185, 15855816 first-pass) | ≤ 1: **FAIL** |
+
+- **8069375** R1: `Prometni institut Ljubljana d.o.o.` → the long registered name plus `…, Ljubljana, Kolodvorska 11`,
+  a spelling only older notices print. The served name ADDS a digits-only token (an address number).
+- **5350675** R1: `Ośrodek Pomocy Społecznej w Kluczborku` → `Ośrodek Pomocy Społecznej`, a generic institution type
+  (15 organizations carry it as their head).
+- **4123715** R2: `Rectorat de l'académie de Paris` → `SIEC — Maison des examens`, a sub-service for the legal unit.
+- **16508165** R2: `Hurt-Papier Ryszard Cebula Sp. j.` → `HURT PAPIER RYSZARD CEBULA SPÓŁKA JAWNA`: one outdated
+  sp.j. spelling for another (a sp.k. since 2023). Polish spelled-out forms are not legal-form tokens in
+  `head_vote_key`, so the two never share a cluster.
+- **Released by `digits`**: 9806 and 9814 (a Croatian obrt's owner-and-address head → the bare activity phrase),
+  9833 (back to the 2014 wording), 4295185 (`SMD 3` → `Smd3`: the name's own `3` read as an address digit, the
+  elected key holding it inside `smd3`), 15855816 (`Materská škola, Družstevná 22, Šaľa` → `Materská škola`: in
+  Šaľa the address IS the school's name). Over both plans the `digits` releases read 24 right, 4 neutral, 6 wrong.
+- **Residue harms** (accepted at the bar): 19427430, a contract-modification notice reprinting the pre-rename name;
+  15829801, one buyer's word-order misspelling printed newest.
+
+Pooled over plans 2523 and 2526: R1 2 of 60 wrong, R2 2 of 60. R1's two are structural classes a rule can see (an
+added digits token; a generic name); R2's are semantic singletons that neither its vote statistics nor any token test
+measured so far separates from its 46 rights. The labelled set (both re-judges, final verdicts) and the measurements
+are kept with the evidence pack for the v9 decision.
