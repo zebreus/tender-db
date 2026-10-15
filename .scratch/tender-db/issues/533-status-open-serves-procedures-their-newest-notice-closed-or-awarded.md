@@ -1,6 +1,6 @@
 # 533 — `status=open` serves procedures their newest notice closed or awarded: a no-winner result or UK12 termination inherits the contract notice's deadline, and DÖE sdk-0.1 award notices publish one of their own
 
-Status: ready-for-agent — unit 1 DECIDED 2026-10-15. (a) A Tender closes when its head notice's own results are all `clos-nw` and cover every Lot. Exempt: a declared DPS (BT-766, projected by new sub-unit 2a), `oth-single`/`oth-mult`, or subtype 15/UK13–UK16 anywhere in the chain. UK12 gets no rule of its own. (b) The sdk-0.1 `can-standard` date stops mapping to `submission_deadline` (project.rs:424). (c) Option B: an unindexed `tenders.current_closed_by_notice` flag beside the unchanged `current_deadline` range, SSE `Scope::At` decided per version, and a per-lot term. Next: unit 2, step 0's bounded reads (scheme table for the 178 with stop rules, 3–5 raw sdk-0.1 award notices), then 2a + 1(b) + rule + flag + read path, gate, deploy, `refold-open-head` (R3, ~42k, queued after the 534 refold).
+Status: ready-for-agent — unit 1 DECIDED 2026-10-15. (a) A Tender closes when its head notice's own results are all `clos-nw` and cover every Lot. Exempt: a declared DPS (BT-766, projected by new sub-unit 2a), `oth-single`/`oth-mult`, or subtype 15/UK13–UK16 anywhere in the chain. UK12 gets no rule of its own. (b) The sdk-0.1 `can-standard` date stops mapping to `submission_deadline` (project.rs:424). (c) Option B: an unindexed `tenders.current_closed_by_notice` flag beside the unchanged `current_deadline` range, SSE `Scope::At` decided per version, and a per-lot term. Step 0c DONE 2026-10-15 (below; stop rule did not fire). Next: unit 2, step 0a/0b's bounded reads (scheme table for the 178 with stop rules; the per-lot population), then 2a + 1(b) + rule + flag + read path, gate, deploy, `refold-open-head` (R3, ~42k, queued after the 534 refold).
 Kind: API semantics / data quality (read layer: `status` on `/v1/tenders` and `/v1/lots`, SSE and webhook filters; the fold's head deadline)
 Relates to:
 - 273 (RESOLVED): `status` is a range on the indexed head column `t.current_deadline`; a fix must stay one.
@@ -342,6 +342,23 @@ a. **Scheme table for the 178.** For each Tender, record:
 b. **Per-lot population.** Count the open-head lots the per-lot term would close while their Tender stays open, and read 5 of them.
 
 c. **sdk-0.1 award dates.** Read 3 to 5 public `/v1/notices/{id}/content` for sdk-0.1 `can-standard` notices that carry the date, including 25892804-1 and the one with the shortest distance. **Stop 1(b)** if any of them invites tenders or requests to participate until that date.
+
+**Step 0c — read 2026-10-15 (stop rule did not fire).** The open DÖE heads with a NULL-decision head result, shortest
+deadline gap first (one bounded read, plan read locally first: `SEARCH t USING INDEX tenders_source_deadline (source=?
+AND current_deadline>?)`, then `tender_versions` and `tender_version_lot_results` seeks; 8 rows): 8834111 (23 days),
+8841643 (79), 7952167, 7975754, 8582264 (91), 1736912, 1738807, 1744631 (92). The raw content of four, each
+`NoticeTypeCode` `can-standard` with `TenderResult-AwardDate` equal to its `IssueDate`:
+- 47371097 (25892804-1, tender 8831547, Verify line 2): `Trockenbauarbeiten`, award 2026-10-05, EndDate 2027-04-30;
+  no invitation text, a Staatsanzeiger document link.
+- 47376608 (25902454-1, tender 8834111, the SHORTEST gap, 23 days): `Upgrade und Wartung Atradis` — "Auftragnehmer:
+  TCC GmbH … Vergabeart: Verhandlungsvergabe ohne Teilnahmewettbewerb gem. UVgO § 8 Absatz 4 Nr. 14"; EndDate 2026-10-31.
+- 47392196 (25918012-1, tender 8841643): "Der Auftrag wird als Verhandlungsvergabe ohne TW nach § 8 Abs. 4 Nr. 17 UVgO
+  … vergeben. Name des beauftragten Unternehmens: RPT GmbH"; EndDate 2026-12-31.
+- tender 7952167 (25782126-1): `GSM-ESF 2026_27 Einsatz päd. Fachkräfte`, award 2026-09-03, EndDate 2026-12-04; no
+  invitation text.
+
+Each is an ex-post award publication of a negotiated procedure WITHOUT a participation contest (UVgO § 30), naming the
+contractor where it names anything; none invites tenders or requests to participate until the date. 1(b) stands.
 
 **1. Build 2a and 1(b)** in `project.rs`.
 
