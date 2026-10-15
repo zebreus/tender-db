@@ -855,6 +855,8 @@ These figures come from job 2492's totals and its 30-per-bucket samples, simulat
 
 Judge's synthesis of panel wf_ce13ee62-9e9 (three proposals), 2026-10-15. **Verdict: v7 adds one HOLD inside R1, `recent`.** It uses proposal 3's per-procedure window and the 2-procedure floor that proposals 1 and 2 chose. It adds a junk-head exemption that none of the three had, and corrects canary expectations that two of the three left stale. v7 adds no new kind of change: for the same data, its changes are a subset of v6's.
 
+Note (v7 build review, 4f6dc11): the subset claim held for the rule as decided, but v7 also carries ef0ce4b's whitespace-invariant vote key (`head_vote_key` collapses whitespace before `altid_trim`), which both MERGES clusters (`Acme Ltd trading  as Foo` joins `Acme Ltd`) and SPLITS them, so v7 can plan changes v6 kept. A comparison with plans 2515/2517 must not assume v7 ⊆ v6; the dated re-judge's uniform change samples cover the new ones.
+
 ### Verified before deciding
 
 **Code (`208c09c`)**
