@@ -1767,6 +1767,19 @@ pub const NOTICE_VALUE_TABLES: &[&str] = &[
     "notice_ids",
 ];
 
+/// One window of [`Db::notice_ids_carrying_fields`]' sweep over one value table:
+/// binds `lo`, `hi`, then the `n_fields` field ids. The `notice_id` range rides the
+/// table's `(notice_id, …)` primary key, so each window is a bounded range read;
+/// `field_id` is unindexed and only filters. Built here so the plan test pins the
+/// real string (issue 549), not a copy.
+pub(crate) fn carrier_window_sql(table: &str, n_fields: usize) -> String {
+    format!(
+        "SELECT DISTINCT notice_id FROM {table}
+          WHERE notice_id >= ? AND notice_id < ? AND field_id IN ({})",
+        placeholders(n_fields)
+    )
+}
+
 /// Legacy `plan_ojs_node` rows written per transaction when materialising the
 /// union-find result (path-B). Chunked so the sorted bulk load keeps the WAL
 /// bounded, like the plan bulk load (issue 60).
@@ -13405,11 +13418,18 @@ impl Db {
     /// can refuse a cohort that is not the size it expected BEFORE anything is
     /// written: the failure mode being guarded is a mistyped profile string matching a
     /// far larger set, whose re-fold would be a corpus-wide surprise (issue 85).
+    ///
+    /// Read through Db's reader pool, never the writer (issue 549): the count is pure
+    /// SELECT and scales with the cohort, tens of seconds to minutes for a whole SDK
+    /// profile. It was never atomic with the re-queue that follows (the writer guard
+    /// dropped between the two), so a reader changes nothing for
+    /// [`Db::unmark_projected_for_profiles`], which counts first and only then takes the
+    /// writer. One autocommit statement, so its snapshot ends with it.
     pub async fn projected_notice_count_for_profiles(&self, profiles: &[&str]) -> turso::Result<u64> {
         if profiles.is_empty() {
             return Ok(0);
         }
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let sql = format!(
             "SELECT COUNT(*) FROM notices
               WHERE parse_state = 'parsed' AND projected <> 0 AND profile IN ({})",
@@ -13589,6 +13609,25 @@ impl Db {
     /// sweep never opened, and the answer looked like a mistyped id. A cohort
     /// finder that cannot find a channel's rows fails silent in the worst way, so
     /// the default is now every table and the narrowing is explicit.
+    ///
+    /// **Reads go through Db's reader pool, never the writer (issue 549).** The sweep
+    /// is pure SELECT, yet it used to hold the single writer from `MAX(id)` through
+    /// its last window: on prod the coverage heartbeat waited 503 s and 507 s behind
+    /// it (jobs 2519 and 2521) and 531 s behind issue 534's sizing run, and a sizing
+    /// run (`expect: 1`) writes nothing at all. Now each window borrows its own
+    /// reader, so the pool permit and any WAL-gate lease (issue 63) last one window.
+    /// The WAL snapshot is per statement either way: every window is one autocommit
+    /// SELECT, drained before its borrow ends.
+    ///
+    /// Two rules keep that true:
+    /// - Never wrap the windows in a transaction. `BEGIN … COMMIT` would freeze one
+    ///   snapshot for the whole sweep, and a cancelled sweep would hit the issue-53
+    ///   discard path.
+    /// - Never parallelize the windows or tables (`join_all`, `spawn`) over this pool.
+    ///   Its eight readers also serve token authentication, admin GETs and `/health`;
+    ///   a sequential sweep holds one of them.
+    ///
+    /// The window loop is also the natural stop point for issue 543 unit 3.
     pub async fn notice_ids_carrying_fields(
         &self,
         field_ids: &[&str],
@@ -13601,30 +13640,24 @@ impl Db {
             Some(t) => t.to_vec(),
             None => NOTICE_VALUE_TABLES.to_vec(),
         };
-        let conn = self.conn().await;
-        let max_id = {
-            let mut rows = conn.query("SELECT MAX(id) FROM notices", ()).await?;
-            match rows.next().await? {
-                Some(row) => opt_int_of(&row, 0).unwrap_or(0),
-                None => 0,
-            }
-        };
+        let max_id = self.max_notice_id().await?;
         const WINDOW: i64 = 500_000;
-        let list = placeholders(field_ids.len());
         let mut ids: Vec<i64> = Vec::new();
         for table in tables {
-            let sql = format!(
-                "SELECT DISTINCT notice_id FROM {table}
-                  WHERE notice_id >= ? AND notice_id < ? AND field_id IN ({list})"
-            );
+            let sql = carrier_window_sql(table, field_ids.len());
             let mut lo = 0i64;
             while lo <= max_id {
                 let hi = lo.saturating_add(WINDOW);
                 let mut params: Vec<Value> = vec![Value::Integer(lo), Value::Integer(hi)];
                 params.extend(field_ids.iter().map(|f| t(*f)));
-                let mut rows = conn.query(&sql, params).await?;
-                while let Some(row) = rows.next().await? {
-                    ids.push(int(&row, 0));
+                {
+                    // One borrow per window, sequential, autocommit (see the doc).
+                    // `rows` is declared after `conn`, so it drops first.
+                    let conn = self.reader().await?;
+                    let mut rows = conn.query(&sql, params).await?;
+                    while let Some(row) = rows.next().await? {
+                        ids.push(int(&row, 0));
+                    }
                 }
                 if lo % 5_000_000 == 0 {
                     eprintln!("[store] field sweep {table}: {lo}/{max_id}, {} carriers", ids.len());
@@ -13649,11 +13682,15 @@ impl Db {
     /// Prefer this whenever the mapping's trigger is a section kind rather than a field
     /// id: several past cohorts (the sibling-mount classes, sdk-0.1's party kinds) were
     /// exactly that shape.
+    ///
+    /// Read through Db's reader pool, never the writer (issue 549): one autocommit
+    /// SELECT, so its snapshot ends with the statement. Short as it is, a very common
+    /// kind is seconds of reading that no other write should queue behind.
     pub async fn notice_ids_with_section_kind(&self, kinds: &[&str]) -> turso::Result<Vec<i64>> {
         if kinds.is_empty() {
             return Ok(Vec::new());
         }
-        let conn = self.conn().await;
+        let conn = self.reader().await?;
         let sql = format!(
             "SELECT DISTINCT s.notice_id FROM notice_sections s
                JOIN notices n ON n.id = s.notice_id
@@ -22289,6 +22326,12 @@ impl Db {
     /// nothing; `expect_groups` is the T4 parity guard — a wet run whose
     /// recomputed plan diverges from the recorded dry-run plan beyond
     /// max(2%, 50) aborts BEFORE any write (never force past a divergence).
+    ///
+    /// Issue 549: a DRY plan writes nothing, so it reads through a pooled reader, not
+    /// the writer it used to hold through the whole B-ID preload. A wet run plans under
+    /// the writer and keeps it to the last merge, so no write lands between the plan
+    /// its gates judged and the merges that act on it. Because a dry plan now runs
+    /// beside admin verdict POSTs, post verdicts before the dry run.
     pub async fn match_org_identifiers_r2(
         &self,
         args: R2MergeArgs<'_>,
@@ -22296,7 +22339,17 @@ impl Db {
         const LITERAL_CAP: usize = 8;
         const GROUP_CEILING: usize = 200;
         const MERGE_TXN_GROUPS: usize = 50;
-        let conn = self.conn().await;
+        // altid's switch (issue 549). The dry path's only `&conn` helper is
+        // `withheld_identifier_orgs`, a read; every write is after the dry return.
+        let reader;
+        let writer;
+        let conn: &Connection = if args.dry_run {
+            reader = self.reader().await?;
+            &reader
+        } else {
+            writer = self.conn().await;
+            &writer
+        };
         let now = crate::now_unix();
         let mut report = R2MergeReport::default();
 
@@ -25393,12 +25446,30 @@ impl Db {
     /// would overrule that denial. Same T4 shape as R2: dry-run records the
     /// plan, wet demands `expect_groups` parity within max(2%, 50), capped
     /// and stoppable, chunked txns with COMMIT-failure rollback.
+    ///
+    /// Issue 549: a DRY plan writes nothing, so it reads through a pooled reader, not
+    /// the writer it used to hold through the target-map preload and every
+    /// candidate's probes. A wet run plans under the writer and keeps it to the last
+    /// merge, so no write lands between the plan its gates judged and the merges that
+    /// act on it. Because a dry plan now runs beside admin verdict POSTs, post
+    /// verdicts before the dry run.
     pub async fn match_org_null_country_r3(
         &self,
         args: R3MergeArgs<'_>,
     ) -> turso::Result<R3MergeReport> {
         const MERGE_TXN_GROUPS: usize = 50;
-        let conn = self.conn().await;
+        // altid's switch (issue 549). The dry path's only `&conn` helpers are
+        // `withheld_identifier_orgs` and `evidence_keys`, both reads; every write is
+        // after the dry return.
+        let reader;
+        let writer;
+        let conn: &Connection = if args.dry_run {
+            reader = self.reader().await?;
+            &reader
+        } else {
+            writer = self.conn().await;
+            &writer
+        };
         let now = crate::now_unix();
         let mut report = R3MergeReport::default();
 
@@ -40522,6 +40593,15 @@ impl Db {
     pub async fn execute_for_test(&self, sql: &str) -> turso::Result<u64> {
         let conn = self.conn().await;
         conn.execute(sql, ()).await
+    }
+
+    /// Take the single writer and hand the guard back — for TESTS that prove a
+    /// read-only path does not wait on it (issue 549): hold this, then run the path
+    /// under a timeout. A fold holds the writer exactly like this for its whole run.
+    /// Sibling of [`Db::execute_for_test`]; not an API surface.
+    #[doc(hidden)]
+    pub async fn hold_writer_for_test(&self) -> tokio::sync::MutexGuard<'_, turso::Connection> {
+        self.conn().await
     }
 
     /// How many notices are parsed — the projection's Phase-1 total, read once up

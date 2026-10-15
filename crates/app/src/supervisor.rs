@@ -5175,7 +5175,7 @@ const UNSTOPPABLE_KINDS: &[(&str, &str)] = &[
     // Long enough for a stop check: issue 543 unit 3 adds one to each.
     ("rederive-eur", "~10 min (598–646 s, jobs 1001 and 2099), resumes from its watermark; unit 3"),
     ("reprocess", "writes a resume cursor; its backlog was 12 rows on 2026-10-01; unit 3"),
-    ("refold-fields", "the read-only carrier sweep (46 min for two tables) takes no stop closure yet; unit 3"),
+    ("refold-fields", "the read-only carrier sweep (46 min for two tables) takes no stop closure yet; its per-window loop is unit 3's stop point (issue 543)"),
 ];
 
 /// Issue 300 decision 5: a key shared by more organizations than this is a
@@ -8055,11 +8055,13 @@ impl Supervisor {
                 // mistyped field id matching a far larger carrier set must abort
                 // while nothing has been written.
                 //
-                // Phased, because the sweep is a full walk of notice_texts and
-                // notice_amounts (46 min for 31.7 M notices on 2026-09-12) and the
-                // job view showed `phase: null` for all of it — an operator could not
-                // tell the read-only sweep from the re-queue that follows, and the
-                // cancel answer (issue 382) had nothing to name as in flight.
+                // Phased, because the sweep is a full walk of every notice value table
+                // unless `tables` narrows it (two of them took 46 min for 31.7 M notices
+                // on 2026-09-12) and the job view showed `phase: null` for all of it — an
+                // operator could not tell the read-only sweep from the re-queue that
+                // follows, and the cancel answer (issue 382) had nothing to name as in
+                // flight. The sweep reads through the store's reader pool (issue 549), so
+                // other writes proceed during it; the re-queue and stamp take the writer.
                 self.set_phase(
                     "sweeping",
                     None,
@@ -11116,25 +11118,26 @@ impl Supervisor {
                 );
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
-                let r = self
-                    .db
-                    .match_org_null_country_r3(store::R3MergeArgs {
-                        key: ingest::crosswalk::canonical_key_flat,
-                        anchors: ingest::idgate::checksum_anchors,
-                        condemns: ingest::idgate::condemns,
-                        consortium: ingest::crosswalk::consortium_name,
-                        legal_form: ingest::crosswalk::legal_form_family,
-                        norm: ingest::project::match_norm,
-                        hard_scheme: ingest::idgate::hard_scheme,
-                        stoplist_cap: SCAN_STOPLIST_CAP,
-                        dry_run,
-                        max_groups: *max_groups,
-                        expect_groups,
-                        job_id: Some(job_id as i64),
-                        stop: &stop,
-                    })
-                    .await
-                    .map_err(|e| e.to_string())?;
+                // Boxed (issue 467's rule, as r2's above): issue 549's dry path holds a
+                // pooled `Reader` across the store walk's awaits, which is bigger than
+                // the writer guard it replaced.
+                let r = Box::pin(self.db.match_org_null_country_r3(store::R3MergeArgs {
+                    key: ingest::crosswalk::canonical_key_flat,
+                    anchors: ingest::idgate::checksum_anchors,
+                    condemns: ingest::idgate::condemns,
+                    consortium: ingest::crosswalk::consortium_name,
+                    legal_form: ingest::crosswalk::legal_form_family,
+                    norm: ingest::project::match_norm,
+                    hard_scheme: ingest::idgate::hard_scheme,
+                    stoplist_cap: SCAN_STOPLIST_CAP,
+                    dry_run,
+                    max_groups: *max_groups,
+                    expect_groups,
+                    job_id: Some(job_id as i64),
+                    stop: &stop,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
                 // Keep the recorded plan current (the R2 lesson): a dry run
                 // records the full plan, a wet run the residual, so a capped
                 // continuation runs under parity without a fresh dry run.

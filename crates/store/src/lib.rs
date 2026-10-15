@@ -5305,6 +5305,113 @@ mod tests {
         }
     }
 
+    /// Issue 549: the refold cohort reads never take the writer. The carrier sweep held
+    /// it for 503–531 s per sizing run on prod while the coverage heartbeat queued behind
+    /// a pure count. Holds the writer exactly as a fold does, then runs each read under a
+    /// timeout, so a regression FAILS here instead of hanging; the writer's acquisition
+    /// count proves none of them even tried.
+    #[tokio::test]
+    async fn the_carrier_sweep_runs_while_the_writer_is_held() {
+        let path = format!("/tmp/tender-db-549-held-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            conn.execute_batch(
+                "INSERT INTO fetches(id, source, kind, period, url, sha256, bytes, fetched_at, path)
+                   VALUES (1,'ted','monthly','2010-03','u','s',1,0,'p');
+                 INSERT INTO notices(id, source, publication_id, content_hash, profile, fetch_id,
+                                     member_path, ingested_at, parse_state)
+                   VALUES (7,'ted','070248-2010','h','ted-export-r208',1,'m',0,'parsed'),
+                          (8,'ted','070249-2010','h2','ted-export-r208',1,'m2',0,'parsed');
+                 UPDATE notices SET projected = 1 WHERE id IN (7,8);
+                 INSERT INTO notice_sections(notice_id, section_id, kind)
+                   VALUES (7,'S1','GroupComposition');
+                 INSERT INTO notice_dates(notice_id, section_id, field_id, ordinal, utc_seconds,
+                                          offset_minutes, has_time)
+                   VALUES (7,'RES-1','TED-DATE_OF_CONTRACT_AWARD',0,1243814400,0,0);
+                 INSERT INTO notice_texts(notice_id, section_id, field_id, ordinal, lang, value)
+                   VALUES (8,'PROCEDURE','TED-TITLE_CONTRACT',0,'EN','A title');",
+            )
+            .await
+            .unwrap();
+        }
+
+        // Exactly what a fold does: take the writer and keep it.
+        let held = db.conn().await;
+        let before = db.writer_stats().acquisitions;
+        let limit = std::time::Duration::from_secs(5);
+        let carriers = tokio::time::timeout(limit, db.notice_ids_carrying_fields(&["TED-DATE_OF_CONTRACT_AWARD"], None))
+            .await
+            .expect("notice_ids_carrying_fields must not wait on the writer (issue 549)")
+            .unwrap();
+        assert_eq!(carriers, vec![7]);
+        let kinds = tokio::time::timeout(limit, db.notice_ids_with_section_kind(&["GroupComposition"]))
+            .await
+            .expect("notice_ids_with_section_kind must not wait on the writer (issue 549)")
+            .unwrap();
+        assert_eq!(kinds, vec![7]);
+        let counted = tokio::time::timeout(limit, db.projected_notice_count_for_profiles(&["ted-export-r208"]))
+            .await
+            .expect("projected_notice_count_for_profiles must not wait on the writer (issue 549)")
+            .unwrap();
+        assert_eq!(counted, 2);
+        let after = db.writer_stats();
+        assert_eq!(after.depth, 0, "nothing queued behind the held writer");
+        assert_eq!(after.acquisitions, before, "and nothing took it");
+        drop(held);
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// Issue 549: every window of the carrier sweep is a bounded RANGE on its value
+    /// table's `(notice_id, …)` primary key, never a scan. A shape guard for the
+    /// extracted [`canonical::carrier_window_sql`], NOT a statistics guard: the value
+    /// tables carry no `sqlite_stat1` rows (issue 428 kept them out of ANALYZE), and a
+    /// test database has none at all. turso shows the composite key's autoindex as
+    /// `SEARCH <t> USING INDEX … (notice_id>? …)`, so "PRIMARY KEY" is not asserted.
+    #[tokio::test]
+    async fn the_carrier_window_seeks_each_value_table() {
+        let path = format!("/tmp/tender-db-549-eqp-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        let conn = db.reader().await.unwrap();
+        for table in canonical::NOTICE_VALUE_TABLES {
+            let sql = canonical::carrier_window_sql(table, 2);
+            let params = vec![
+                Value::Integer(0),
+                Value::Integer(500_000),
+                Value::Text("TED-DATE_OF_CONTRACT_AWARD".into()),
+                Value::Text("TED-TITLE_CONTRACT".into()),
+            ];
+            let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+            let mut plan = String::new();
+            while let Some(r) = rows.next().await.unwrap() {
+                plan.push_str(&r.get_value(3).ok().and_then(|v| v.as_text().cloned()).unwrap_or_default());
+                plan.push('\n');
+            }
+            assert!(
+                plan.lines().any(|l| l.contains("SEARCH") && l.contains(table) && l.contains("notice_id")),
+                "{table}'s window must seek its notice_id range — plan was:\n{plan}"
+            );
+            assert!(
+                !plan.lines().any(|l| l.trim_start().starts_with("SCAN ")),
+                "{table}'s window scans — plan was:\n{plan}"
+            );
+        }
+        drop(conn);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Issue 175: the page-cache valve parses positive KiB, clamps the absurd at
     /// both ends (a 100 KiB cache thrashes, an unbounded one re-creates the
     /// issue-61 swap incident as a typo), and falls back to the 128 MiB default

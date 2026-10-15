@@ -500,3 +500,32 @@ async fn a_wrong_number_verdict_takes_a_row_out_of_r3_on_either_side() {
     let dry = db.match_org_null_country_r3(args(true, None)).await.expect("dry");
     assert_eq!((dry.withheld, dry.no_target, dry.plan_groups), (1, 1, 0), "{dry:#?}");
 }
+
+/// Issue 549: a DRY plan reads through the pool, so it finishes while something else
+/// holds the writer and reports the same plan the dry run above does. It used to hold
+/// the writer through the target-map preload and every candidate's probes. A wet run
+/// still takes the writer; this pins only the dry half.
+#[tokio::test]
+async fn the_r3_dry_plan_runs_while_the_writer_is_held() {
+    let (db, conn) = seed(&format!("/tmp/tender-db-r3-549-{}.db", std::process::id())).await;
+    let held = db.hold_writer_for_test().await;
+    let before = db.writer_stats().acquisitions;
+    let dry = tokio::time::timeout(std::time::Duration::from_secs(5), db.match_org_null_country_r3(args(true, None)))
+        .await
+        .expect("a dry r3 plan must not wait on the writer (issue 549)")
+        .expect("dry");
+    assert_eq!(db.writer_stats().acquisitions, before, "the dry plan never took the writer");
+    drop(held);
+    assert_eq!(dry.pool, 22);
+    assert_eq!(
+        (dry.register_prefixed, dry.unanchored, dry.no_target, dry.multi_target, dry.uncorroborated),
+        (1, 2, 1, 1, 1)
+    );
+    assert_eq!((dry.denied_gate, dry.denied_consortium, dry.denied_legal_form), (1, 1, 1));
+    assert_eq!(dry.denied_group_vat, 3);
+    assert_eq!(dry.denied_cap, 9);
+    assert_eq!(dry.plan_groups, 1);
+    assert_eq!(dry.merged_groups, 0);
+    assert_eq!((dry.mentions, dry.parties, dry.bid_parties, dry.winners), (1, 1, 0, 1));
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 32, "dry run wrote nothing");
+}

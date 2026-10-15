@@ -498,6 +498,10 @@ tender-admin raw DELETE /admin/jobs/41 </dev/null   # the same handler
 # SIZE FIRST: `"expect": 1` makes the job enumerate, report the count in its abort message
 # and write nothing, which is the dry run this job otherwise lacks. Then the real run with
 # that count; a `project` is queued behind it automatically.
+# The sweep reads through the reader pool, one borrow per 500k-id window (issue 549), so
+# the heartbeat, admin, webhook and enqueue writes proceed during it; queued jobs still
+# wait their turn. A sizing run (`expect: 1`) holds no writer at all. A wet run still holds
+# the writer for its re-queue and stamp phase, so do not expect it to journal zero waits.
 /root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_TITLE","TED-LOT_DESCRIPTION"],"expect":1}'
 #   → error "refold-fields aborted: 345203 notices carry [...], expected ~1 (nothing was written)"
 /root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-DATE_OF_CONTRACT_AWARD"],"tables":["notice_dates"],"expect":1}'

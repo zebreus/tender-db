@@ -607,3 +607,30 @@ async fn a_fold_agreeing_only_on_a_generic_name_is_refused() {
     let keeps: Vec<i64> = dry.plan_listing_keep.clone();
     assert_eq!(keeps, [4], "the register spelling keeps");
 }
+
+/// Issue 549: a DRY plan reads through the pool, so it finishes while something else
+/// holds the writer — a fold, or the coverage heartbeat behind one — and reports the
+/// same plan the dry run above does. It used to hold the writer through the whole B-ID
+/// preload. A wet run still takes the writer; this pins only the dry half.
+#[tokio::test]
+async fn the_r2_dry_plan_runs_while_the_writer_is_held() {
+    let (db, conn) = seed(&format!("/tmp/tender-db-r2-549-{}.db", std::process::id())).await;
+    let held = db.hold_writer_for_test().await;
+    let before = db.writer_stats().acquisitions;
+    let dry = tokio::time::timeout(std::time::Duration::from_secs(5), db.match_org_identifiers_r2(args(true, None)))
+        .await
+        .expect("a dry r2 plan must not wait on the writer (issue 549)")
+        .expect("dry");
+    assert_eq!(db.writer_stats().acquisitions, before, "the dry plan never took the writer");
+    drop(held);
+    assert_eq!(dry.groups, 8);
+    assert_eq!(
+        (dry.denied_cap, dry.denied_gate, dry.denied_consortium, dry.denied_legal_form, dry.denied_group_vat),
+        (1, 1, 1, 1, 1)
+    );
+    assert_eq!(dry.consortium_excluded, 2);
+    assert_eq!(dry.plan_groups, 3);
+    assert_eq!(dry.merged_groups, 0);
+    assert_eq!((dry.mentions, dry.parties, dry.bid_parties, dry.winners), (0, 1, 0, 1));
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 24, "dry run wrote nothing");
+}
