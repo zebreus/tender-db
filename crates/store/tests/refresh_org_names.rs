@@ -1227,7 +1227,9 @@ async fn dated_corpus(conn: &turso::Connection) {
     // A future-dated elected mention: no date, counted undated.
     forty_two.push(("Bright Services", vec![(4_310, crate_now() + 30 * DAY)]));
     // A notice in TWO tenders (an issue-278 ghost) keeps the smaller; a second head notice in that
-    // tender is then the same procedure: k = 1. Kept as the larger tender, k would be 2, both newest.
+    // tender is then the same procedure: k = 1 (`head_procs` pins it). Kept as the larger tender, k
+    // would be 2 — under rule v8's newer elected item below no longer a pair of newest items, so only
+    // the count tells the two apart.
     forty_two.push(("Dim Services", vec![(4_390, (BASE + 100) * DAY), (4_380, (BASE + 100) * DAY)]));
     forty_two.push(("Dim Services", vec![(4_380, (BASE + 101) * DAY)]));
     // A head notice dated 0: no date, counted undated.
@@ -1341,8 +1343,8 @@ async fn a_target_whose_head_gained_newer_procedures_reads_drifted() {
     for i in 0..4 {
         newer(41, "Old Name Office", 41_900 + i, 4_900 + i, BASE + 200 + i).await;
     }
-    // Rule v8: 42's head names one new procedure, the organization's newest item: two head procedures
-    // of the newest two items is under the window's bar, so it reads `hold:residue`.
+    // Rule v8: 42's head names one new procedure, the organization's newest item. k = 2 with one head
+    // item among the newest two (h_W = 1) is under the window's bar, so it reads `hold:residue`.
     newer(42, "Dim Services", 42_900, 4_399, BASE + 300).await;
     let r = db.apply_org_name_refresh(wet(planned, 7)).await.unwrap();
     assert_eq!((r.ready, r.drifted, r.applied), (2, 2, 2));

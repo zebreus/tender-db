@@ -74,10 +74,12 @@ pub const HEAD_HOLD_RECENT: &str = "recent";
 pub const HEAD_HOLD_UNDATED: &str = "undated";
 
 /// Issue 524 rule `v8`: the hold reason when R1 or R2 would replace a head that names the
-/// organization's single NEWEST item (the residue holdout: by dates an H = 1 or single-procedure
-/// rename looks like a newest stray, and the re-judge of plan 2523 found the head the better name
-/// there more often — an organ served for its entity, one notice's lot repeats, misspellings). The
-/// junk exemption releases it as it releases [`HEAD_HOLD_RECENT`]; R0 is never held.
+/// organization's single NEWEST item: on its newest instant (a date-only notice's day) none of its
+/// other names is printed, since the window ranks a non-head item newer on a tie. The residue holdout:
+/// by dates an H = 1 or single-procedure rename looks like a newest stray, and the re-judge of plan
+/// 2523 found the head the better name there more often (an organ served for its entity, one
+/// notice's lot repeats, misspellings). The junk exemption releases it as it releases
+/// [`HEAD_HOLD_RECENT`]; R0 is never held.
 pub const HEAD_HOLD_RESIDUE: &str = "residue";
 
 /// Issue 524 rule `v7`: the fewest head procedures (k) the window fires at. At 2 the 2/3 bar means
@@ -913,8 +915,10 @@ pub struct OrgNameRefreshPlan {
     pub stopped: bool,
 }
 
-/// Issue 524 rule `v7`: the most released ids a plan lists.
-pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 30;
+/// Issue 524 rule `v7`: the most released ids a plan lists — since the v8 review 500, so the dated
+/// re-judge reads EVERY release (v8 adds the residue's releases to v7's window releases, plan 2523's
+/// 10); past it the tally still counts them all.
+pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 500;
 
 /// The uniform sample's order: Knuth's multiplicative hash of the id, mod 2³², then the id.
 fn sample_key(org_id: i64) -> (u64, i64) {
@@ -2226,7 +2230,7 @@ mod tests {
         match name.trim() {
             "s.o." => Some("placeholder"),
             "-" => Some("blank"),
-            n if n.starts_with("Awarded to ") => Some("award_summary"),
+            n if n.starts_with("Awarded to ") || n.starts_with("awarded to ") => Some("award_summary"),
             _ => None,
         }
     }
@@ -2927,6 +2931,20 @@ mod tests {
         let e = dated(&ca2bm, "CA2BM Deux Baies");
         assert_eq!(e.recent.unwrap().fires, true);
         assert_eq!((e.verdict, e.recent.unwrap().released), (recent(Some("Deux Baies Montreuillois")), None));
+    }
+
+    /// The v8 review: the `lowercase` carve-out keeps releasing a lower-case NON-NAME head — `unfit`
+    /// answers `lowercase` before `non_name`, so the exemption asks `not_a_name` too. A lower-case
+    /// award summary (it votes, so it is no R0 head) is junk and released; a lower-case brand is not.
+    #[test]
+    fn a_lower_case_non_name_head_is_still_released() {
+        let summary = [items("Acme Group", 1, 1, 8), items("awarded to acme services", 101, 100, 3)].concat();
+        let e = dated(&summary, "awarded to acme services");
+        assert_eq!((FNS.unfit)("awarded to acme services", "awarded to acme services"), Some("lowercase"));
+        assert_eq!((e.recent.unwrap().fires, e.recent.unwrap().released), (true, Some("unfit")));
+        assert_eq!(e.verdict, r1("Acme Group"));
+        let brand = [items("Acme Group", 1, 1, 8), items("acme services", 101, 100, 3)].concat();
+        assert_eq!(dated(&brand, "acme services").verdict, recent(Some("Acme Group")));
     }
 
     /// Issue 524 unit 2a: the planner's candidate reads must seek, not scan: the scoped page by rowid,

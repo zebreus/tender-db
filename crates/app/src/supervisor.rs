@@ -1289,7 +1289,9 @@ struct RefreshCanary {
 ///   procedure); 3909 (a lower-case brand) and 1846 (the acronym `CA2BM`) are `hold:recent`, no
 ///   longer released by the junk exemption; 3740262 (an organ, `Junta de Gobierno …`, for its entity)
 ///   is `hold:residue`; and 445, whose one head procedure plan 2523 dated the organization's newest
-///   (2026-07-17 against 2026-07-06), is `hold:residue` too — the residue holdout's accepted cost.
+///   (2026-07-17 against 2026-07-06), and 334 (the v8 review: its one head mention is its newest
+///   procedure) are `hold:residue` too — the residue holdout's accepted cost. 11179 is one
+///   head-printing notice away from `hold:residue`.
 /// - 30914328 (`Withheld Section94 Supplier`, issue 522's fix) is reported with no expectation.
 const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
     // The 2516 five, applied: keep:S1.
@@ -1306,8 +1308,10 @@ const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
     // Issue 524 unit 2a: dry plan 2501 read R1 here, and rightly — its mentions are `les alchimistes`
     // x2, `LES ALCHIMISTES` x2, `Les Alchimistes SAS` and `Les Alchimistes Loire Atlantique`; the vote
     // key drops `SAS`, so five of six votes are one cluster, served by the SIREN's own mixed-case name.
-    // H = 1, so the v7 window cannot reach it.
-    RefreshCanary { id: 334, expect: Some("change:R1"), serves: Some("Les Alchimistes SAS") },
+    // H = 1, so the v7 window cannot reach it; but rule v8's residue holdout does (the v8 review): the
+    // head's one mention, tender 56385 (2026-07-17), is the organization's newest item, ahead of the
+    // elected cluster's 542462 (2026-04-01). The Sheffield shape, held: a missed fix, not a regression.
+    RefreshCanary { id: 334, expect: Some("hold:residue"), serves: Some("Les Alchimistes SAS") },
     RefreshCanary { id: 1_165_973, expect: Some("keep:E1"), serves: None },
     RefreshCanary { id: 30_914_328, expect: None, serves: None },
     // Rule v7: 2517's former-name reverts, and 1076 (its head names 2024-07, 2025-07 and 2026-07;
@@ -1335,6 +1339,9 @@ const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
         expect: Some("hold:recent"),
         serves: Some("Uždaroji akcinė bendrovė „Visagino energija“"),
     },
+    // FRAGILE under rule v8 (the v8 review): the head `MAPFRE ESPAÑA SA` was last printed 2026-10-05,
+    // the elected spelling 2026-10-07. ONE new notice printing the head makes it the newest item, and
+    // it reads `hold:residue` — the rule working, not a regression (the runbook's step 2 says so).
     RefreshCanary {
         id: 11_179,
         expect: Some("change:R1"),
@@ -1460,18 +1467,26 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
     let recent = plan.by_hold.get(store::HEAD_HOLD_RECENT).map_or(0, |c| c.orgs);
     let residue = plan.by_hold.get(store::HEAD_HOLD_RESIDUE).map_or(0, |c| c.orgs);
     let undated = plan.by_hold.get(store::HEAD_HOLD_UNDATED).map_or(0, |c| c.orgs);
+    // The v8 review: the report lists up to 500 released ids for the re-judge; the line names 30.
+    const RELEASED_SHOWN: usize = 30;
+    let released_ids = plan.recent_released_ids.len();
+    let released_more = if released_ids > RELEASED_SHOWN {
+        format!(" and {} more in `recent_released_ids`", released_ids - RELEASED_SHOWN)
+    } else {
+        String::new()
+    };
     let dated = format!(
         "Dated (rule v7): {} candidate(s) of the population, {} of their voting mention(s) undated; the date \
          reads asked {} notice(s) and read {} version row(s) (per page, below-min canaries included); R1's \
          recent hold: {recent}; R1/R2's residue hold: {residue}; undated {undated} (MUST be 0); changes the \
-         junk exemption released from a recent or residue hold: {} (ids {:?}); residue that still ships \
-         (planned changes whose org's newest procedure is the head's: R0, or released): {}.",
+         junk exemption released from a recent or residue hold: {} (ids {:?}{released_more}); residue that \
+         still ships (planned changes whose org's newest procedure is the head's: R0, or released): {}.",
         plan.dated_orgs,
         plan.undated_mentions,
         plan.dated_notices,
         plan.dated_version_rows,
         tally(&plan.recent_released),
-        plan.recent_released_ids,
+        &plan.recent_released_ids[..released_ids.min(RELEASED_SHOWN)],
         counts(&plan.residue),
     );
     format!(
@@ -22024,10 +22039,10 @@ mod tests {
         for id in [178, 2_186, 3_262, 3_694, 6_867, 10_671, 1_076, 10_603, 3_909, 1_846] {
             assert_eq!(expect(id), Some("hold:recent"), "{id}");
         }
-        for id in [3_740_262, 445] {
+        for id in [3_740_262, 445, 334] {
             assert_eq!(expect(id), Some("hold:residue"), "{id}");
         }
-        for id in [1_220, 2_762, 3_406, 6_079, 11_179, 1_919, 334] {
+        for id in [1_220, 2_762, 3_406, 6_079, 11_179, 1_919] {
             assert_eq!(expect(id), Some("change:R1"), "{id}");
         }
         assert_eq!(expect(30_914_328), None);
@@ -22057,6 +22072,18 @@ mod tests {
         let recovered = store::OrgNameRefreshApplied { prior_applied: 3, ..fresh };
         let line = org_name_refresh_applied_summary(&recovered, 7, &plan, None);
         assert!(line.contains(r#"earlier windows made 3 rename(s), which stand unless reverted: undo them with {"kind":"revert-org-name-refresh","job":7}"#), "{line}");
+    }
+
+    /// The v8 review: a plan lists up to 500 released ids for the re-judge; its job line names the
+    /// first 30 and counts the rest.
+    #[test]
+    fn the_plan_line_names_30_released_ids_and_counts_the_rest() {
+        let plan = store::OrgNameRefreshPlan { recent_released_ids: (1..=35).collect(), ..Default::default() };
+        let line = org_name_refresh_summary(&plan, None);
+        let shown: Vec<i64> = (1..=30).collect();
+        assert!(line.contains(&format!("(ids {shown:?} and 5 more in `recent_released_ids`)")), "{line}");
+        let few = store::OrgNameRefreshPlan { recent_released_ids: vec![7, 9], ..Default::default() };
+        assert!(org_name_refresh_summary(&few, None).contains("(ids [7, 9]);"));
     }
 
     /// Issue 524 unit 2a, end to end with the REAL ingest functions (`head_vote_key`, `not_a_name`,
@@ -22089,6 +22116,8 @@ mod tests {
         ];
         let orgs: &[(i64, &str, Option<&str>, &str, &[(&str, usize)])] = &[
             (334, "FR", Some("FR33400000000"), "Les Alchimistes Loire Atlantique", alchimistes),
+            // Not a canary: 334's shape left undated, so it changes (the wet half renames it last).
+            (335, "FR", Some("FR33500000000"), "Les Alchimistes Loire Atlantique", alchimistes),
             // Not a canary: the winning cluster spells only lower case, so the change is held.
             (500, "FR", Some("FR50000000000"), "Atelier Nord", &[("les alchimistes", 3), ("Atelier Nord", 1)]),
             (1_165_973, "GB", None, "Sheffield Hallam University", hallam),
@@ -22144,6 +22173,39 @@ mod tests {
         )
         .await
         .unwrap();
+        // The v8 review: 334 dated as prod dates it — its head's one mention (tender 56385, 2026-07-17)
+        // is the organization's newest item, the elected cluster's newest 542462 (2026-04-01).
+        let mut rows = conn
+            .query("SELECT notice_id, name FROM organization_mentions WHERE organization_id = 334 ORDER BY notice_id", ())
+            .await
+            .unwrap();
+        let mut dated_334 = Vec::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            let notice = *row.get_value(0).unwrap().as_integer().unwrap();
+            let name = row.get_value(1).unwrap().as_text().unwrap().clone();
+            dated_334.push((notice, name));
+        }
+        drop(rows);
+        let (mut lower, mut caps) = (vec![(7_221_314, 1_622_505_600), (7_424_584, 1_646_092_800)], vec![
+            (749_220, 1_745_280_000),
+            (542_462, 1_775_001_600),
+        ]);
+        for (notice, name) in &dated_334 {
+            let (tender, at) = match name.as_str() {
+                "les alchimistes" => lower.remove(0),
+                "LES ALCHIMISTES" => caps.remove(0),
+                "Les Alchimistes SAS" => (335_385, 1_714_694_400),
+                _ => (56_385, 1_784_246_400),
+            };
+            conn.execute(
+                "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                 VALUES (?, 1, ?, ?, 'x')",
+                vec![Value::Integer(tender), Value::Integer(*notice), Value::Integer(at)],
+            )
+            .await
+            .unwrap();
+        }
+        assert_eq!(dated_334.len(), 6);
         // One feed row already there, so "no change row written" is a count that must not move.
         conn.execute(
             "INSERT INTO changes (entity_kind, entity_id, version_seq, op, changed_at)
@@ -22186,7 +22248,8 @@ mod tests {
             r#"22713056 change:R0n "Vergabekammer bei der Bezirksregierung" UNEXPECTED (want keep:S1)"#,
             r#"6341366 change:R0e "Kalmar kommun" UNEXPECTED (want keep:S1)"#,
             "7912592 keep:D4 as expected",
-            r#"334 change:R1 "Les Alchimistes SAS" as expected"#,
+            // The v8 review: dated, 334's head is its newest item — held `residue`.
+            r#"334 hold:residue "Les Alchimistes SAS" as expected"#,
             "1165973 keep:E1 as expected",
             // Not seeded: an expected canary the walk does not find is no pass.
             "760 not found UNEXPECTED (want keep:S1)",
@@ -22196,8 +22259,8 @@ mod tests {
             "10 not found UNEXPECTED (want keep:S1)",
             "30914328 not found (reported)",
             "(26 unexpected)",
-            // Rule v7's and v8's counters, named at zero.
-            "R1's recent hold: 0; R1/R2's residue hold: 0; undated 0 (MUST be 0)",
+            // Rule v7's and v8's counters: 334 is the one residue hold.
+            "R1's recent hold: 0; R1/R2's residue hold: 1; undated 0 (MUST be 0)",
             "residue that still ships (planned changes whose org's newest procedure is the head's: R0, or released): none.",
             "NOTHING IS WRITTEN",
         ] {
@@ -22211,12 +22274,15 @@ mod tests {
         assert_eq!(plan["fns"]["r2_hold"], "ingest::crosswalk::head_r2_hold");
         assert!(msg.contains("(R2's initialism hold: 0)"), "the summary names the R2 hold even at zero: {msg}");
         let planned: Vec<i64> = plan["planned"].as_array().unwrap().iter().map(|e| e["org_id"].as_i64().unwrap()).collect();
-        assert_eq!(planned, vec![334, 6_341_366, 22_713_056, 31_558_903], "by org id");
+        assert_eq!(planned, vec![335, 6_341_366, 22_713_056, 31_558_903], "by org id");
         assert_eq!(plan["planned"][3]["old_name_norm"], "sheffield hallam university");
         assert_eq!(plan["planned"][3]["new_name_norm"], "the university of sheffield");
         assert!(plan["planned"][1]["old_name_norm"].is_null(), "6341366's NULL key: {}", plan["planned"][1]);
-        assert_eq!(plan["held"][0]["org_id"], 500);
-        assert_eq!(plan["held"][0]["reason"], "no_fit");
+        assert_eq!((&plan["held"][0]["org_id"], &plan["held"][0]["reason"]), (&serde_json::json!(334), &serde_json::json!("residue")));
+        assert_eq!(plan["held"][0]["newest_is_head"], true);
+        assert_eq!(plan["by_hold"]["residue"]["orgs"], 1);
+        assert_eq!(plan["held"][1]["org_id"], 500);
+        assert_eq!(plan["held"][1]["reason"], "no_fit");
         assert_eq!(plan["d4_eng"]["equal"], 1, "TED's ENG rendering is the head the guard keeps");
         assert_eq!(plan["canary_readings"].as_array().unwrap().len(), ORG_NAME_REFRESH_CANARIES.len());
         assert_eq!(heads().await, before, "dry: no organization's (name, name_norm) moved");
@@ -22324,7 +22390,7 @@ mod tests {
             (text("Vergabekammer bei der Bezirksregierung"), text(&store::org_name_norm("Vergabekammer bei der Bezirksregierung")))
         );
         assert_eq!(named(6_341_366), (text("Kalmar kommun"), text("kalmar kommun")));
-        for id in [334, 500, 1_165_973, 7_912_592] {
+        for id in [334, 335, 500, 1_165_973, 7_912_592] {
             let was = before.iter().find(|(i, _, _)| *i == Value::Integer(id)).unwrap();
             assert_eq!(after.iter().find(|(i, _, _)| *i == Value::Integer(id)).unwrap(), was, "{id} is untouched");
         }
@@ -22369,12 +22435,12 @@ mod tests {
         assert!(err.contains(r#"{"kind":"revert-org-name-refresh","job":2}"#) && !err.contains("Nothing was written"), "{err}");
         db.put_report("org-name-refresh-plan", &genuine, at).await.unwrap();
         // A recovered job resumes after its durable cursor (`job_queue.progress`): the three targets at
-        // or below it are skipped, so 334 is not reached.
+        // or below it are skipped, so 335 is not reached.
         let resumed = Job { resume_after: Some("22713056".into()), ..wet(4, None) };
         let msg = sup.run_spec(&resumed).await.expect("a resumed wet run");
         assert!(msg.contains("Resumed after org id 22713056: 3 target(s) skipped"), "{msg}");
         assert!(msg.contains("1 already renamed") && msg.contains("RENAMED 0 head(s)"), "{msg}");
-        // The whole plan: only 334 is left to rename.
+        // The whole plan: only 335 is left to rename.
         let msg = sup.run_spec(&wet(4, None)).await.expect("the full wet run");
         assert!(msg.contains("RENAMED 1 head(s)") && msg.contains("3 already renamed"), "{msg}");
         assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(4)));
@@ -22389,8 +22455,8 @@ mod tests {
             assert_eq!(restored.iter().find(|(i, _, _)| *i == Value::Integer(id)).unwrap(), was, "{id} restored");
         }
         assert_ne!(
-            restored.iter().find(|(i, _, _)| *i == Value::Integer(334)),
-            before.iter().find(|(i, _, _)| *i == Value::Integer(334)),
+            restored.iter().find(|(i, _, _)| *i == Value::Integer(335)),
+            before.iter().find(|(i, _, _)| *i == Value::Integer(335)),
             "another job's rename stands"
         );
         assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(7)));

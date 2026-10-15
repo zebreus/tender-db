@@ -210,6 +210,11 @@ Decided:
    majority made of one notice's lot repeats, misspellings, a placeholder identifier's pile-up) and
    6 right. So when the organization's single newest dated item is a head item, a (b) or (c) change
    is HELD `residue` with the spelling it would serve — unless the junk exemption above releases it.
+   "Single" is the window's tie rule: on an equal instant (a date-only notice's day) any other item
+   ranks newer, so the head must be the only one of the organization's names printed on its newest
+   publication day. One notice that prints both the entity (the head) and an organ (the elected
+   name) on that day does not hold; whether such a same-tender tie should is a rule question, not
+   decided here.
    An undated (b) with H ≥ 2 holds `undated` first; an undated H ≤ 1 change changes as before. (a)
    is exempt: a defective head always changes. The Sheffield shape (an H = 1 stray printed newest)
    is held too, a missed fix, never a regression (issue 548). The same re-judge narrowed the junk

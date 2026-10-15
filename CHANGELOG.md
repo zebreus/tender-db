@@ -45,9 +45,10 @@ name check the old head passed, or, on the 25% arm only, serve an initialism of 
 winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on
 the 55% arm, while the organization's newest procedures still use the current head (a rename: the head names at
 least 2 procedures and two thirds of the organization's newest as many); on the 55% and 25% arms, while the
-organization's newest procedure prints the current head; both unless the head is unfit to serve for a reason other
-than being all lower case, or carries a standalone number the other name lacks; and, on the 55% and 25% arms only,
-when the head is in another script than its mentions (TED's English rendering).
+current head is the only one of the organization's names printed on its newest publication day; both unless the
+head is unfit to serve for a reason other than being all lower case, or carries a standalone number the other name
+lacks; and, on the 55% and 25% arms only, when the head is in another script than its mentions (TED's English
+rendering).
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new
