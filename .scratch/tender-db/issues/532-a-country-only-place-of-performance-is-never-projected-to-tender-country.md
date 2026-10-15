@@ -1,6 +1,6 @@
 # 532 — a place of performance published as a country alone never projects, so the tender serves `country: []` and `?country=` misses it
 
-Status: ready-for-agent — unit 2 DEPLOYED (`11803dd`, plus the nits in `f0b0e24`) 2026-10-15. Unit 3 is RUNNING. Sizing (job 2519): 3,288,104 notices carry the seven ids. The refold started at 13:33 UTC with `refold-fields` 2521 (expect 3,288,104), followed by `project` 2522; by the 534 precedent, about 4–6 h. Next, when 2522 ends: run `## Verify` and the DÖE witness (`/v1/tenders/1365142`), then retire the five pre-refold caveats under RETIRED `"issue-532 refold"`. Unit 4 (FTS) and unit 5 (a standing measure) are open.
+Status: ready-for-agent — unit 3 DONE 2026-10-15. Refold 2521/2522 ran 13:33–16:52 UTC: 3,288,104 notices, 1,763,799 tenders, 197,053 corrected. `## Verify` reads done (`[(1058757, ['LT'])]`), and so does the DÖE witness 1365142 (`['DE']`). Witnesses 288572/258568 serve `NL` and 357950 serves `DE`; legacy 8432519 is unchanged. The five pre-refold caveats are retired (RETIRED `"issue-532 refold"`). Open: unit 4 (FTS: measure a delivery address with no region) and unit 5 (a standing data-quality measure).
 Kind: coverage (projection): a modelled concept with an unmapped spelling, the 18/85/177/231/368 shape. The fix is a
 Code-branch derivation in the shape of 397's `contract_nature`, not a `CLASSIFICATIONS` row.
 Relates to:

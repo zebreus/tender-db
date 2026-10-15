@@ -167,7 +167,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
 <table>
   <tr><th>Param</th><th>Meaning</th></tr>
   <tr><td class="ep">source</td><td>Source key, e.g. <code>ted</code>.</td></tr>
-  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it. A tender whose notices give the place of performance only as a country (eForms BT-5141; D&Ouml;E's realized-location country), and whose version carries no NUTS place code, is served that country's <strong>NUTS level-0 code</strong>, so <code>LT</code> finds it and <code>LT0</code> does not (Greece <code>EL</code>, the United Kingdom <code>UK</code>). Only the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania, Montenegro, North Macedonia, Serbia and T&uuml;rkiye are served this way: a place in any other country, e.g. Egypt or the USA, carries none, and so does a place given as an overseas region's own ISO code (e.g. R&eacute;union, &Aring;land). Until the issue-532 refold has run, a tender folded before this change still serves <code>country: []</code> and <code>?country=</code> does not find it.</td></tr>
+  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it. A tender whose notices give the place of performance only as a country (eForms BT-5141; D&Ouml;E's realized-location country), and whose version carries no NUTS place code, is served that country's <strong>NUTS level-0 code</strong>, so <code>LT</code> finds it and <code>LT0</code> does not (Greece <code>EL</code>, the United Kingdom <code>UK</code>). Only the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania, Montenegro, North Macedonia, Serbia and T&uuml;rkiye are served this way: a place in any other country, e.g. Egypt or the USA, carries none, and so does a place given as an overseas region's own ISO code (e.g. R&eacute;union, &Aring;land).</td></tr>
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
@@ -1176,6 +1176,9 @@ mod tests {
             // 5.2M serves no `AWARD_AND_CONTRACT_VALUE` or `RESPONSIBLE_FOR_MEDIATION_PROCEDURES` since.
             // Squash form, case-matching: the served sentence began "Until the issue-534 refold …".
             ("issue-534 refold has run", "the issue-534 refold ran, jobs 2512 and 2513 (issue 534)"),
+            // Issue 532 unit 3: the refold ran (refold-fields 2521, project 2522, 2026-10-15); the
+            // Verify and the DÖE witness 1365142 read done. The five caveats shared this token.
+            ("issue-532 refold", "the issue-532 refold ran, jobs 2521 and 2522 (issue 532)"),
         ];
         // Issue 534 review: an entry is only as good as its spelling. The `/docs` form
         // of the winner sentence, wrapped the way the page wraps prose, is caught.
@@ -1605,20 +1608,12 @@ mod tests {
     }
 
     /// Issue 532: both surfaces say a place of performance published only as a
-    /// country is served as its NUTS level-0 code, that a place outside the NUTS
-    /// countries (or under an overseas region's own code) carries none, and, until
-    /// unit 3's refold, that a tender folded before the change does not have it yet.
-    /// Read from the `country` row and the openapi `country` parameter, not the
-    /// whole surface. One phrase per sentence.
-    ///
-    /// The pre-refold caveat sits in FIVE places: those two, plus three short
-    /// clauses tagged `(issue-532 refold)` in openapi `Tender.country`, the
-    /// classifications `place_country` clause and the `/v1/sql/schema` field note.
-    /// When unit 3's refold has run, all five go, and RETIRED gets
-    /// `"issue-532 refold"`: `no_served_surface_repeats_a_retired_claim` matches
-    /// case-sensitively on the squashed text WITH its markup, so a pin below (which
-    /// is in `plain()` form) cannot be copied there as it stands. The last loop
-    /// proves that fragment reaches all five today.
+    /// country is served as its NUTS level-0 code, and that a place outside the NUTS
+    /// countries (or under an overseas region's own code) carries none. Read from the
+    /// `country` row and the openapi `country` parameter, not the whole surface. One
+    /// phrase per sentence. Unit 3's refold ran (refold-fields 2521, project 2522,
+    /// 2026-10-15), so the five pre-refold caveats are gone and RETIRED holds
+    /// `"issue-532 refold"`.
     #[test]
     fn the_docs_say_a_country_only_place_is_served_as_its_nuts_level_0_code() {
         let start = PAGE.find("<td class=\"ep\">country</td>").expect("/docs has a country filter row");
@@ -1636,36 +1631,8 @@ mod tests {
                     "nuts level-0 code",
                     "e.g. egypt or the usa, carries none",
                     "an overseas region's own iso code",
-                    "until the issue-532 refold has run, a tender folded before this change still serves country: []",
                 ],
             );
-        }
-        // The three short caveats, each pinned by its own clause.
-        let tender_country = spec["components"]["schemas"]["Tender"]["properties"]["country"]["description"]
-            .as_str()
-            .expect("Tender.country is described");
-        let classifications = spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"]["classifications"]
-            ["description"]
-            .as_str()
-            .expect("TenderDetail.classifications is described");
-        let note = crate::v1::sql::column_note("tender_version_classifications", "field")
-            .expect("tender_version_classifications.field has a /v1/sql/schema note");
-        for (surface, text, clause) in [
-            ("Tender.country", tender_country, "a tender folded before that change has no such code yet (issue-532 refold)"),
-            (
-                "TenderDetail.classifications",
-                classifications,
-                "a version folded before that change has no place_country row yet (issue-532 refold)",
-            ),
-            ("/v1/sql/schema tender_version_classifications.field", note, "a version folded before it has none yet (issue-532 refold)"),
-        ] {
-            assert_says(surface, text, &[clause]);
-        }
-        // Unit 3's RETIRED entry, in the walk's own form, reaches all five caveats.
-        for (surface, text) in
-            [("/docs", docs), ("/v1/openapi.json", openapi), ("Tender.country", tender_country), ("TenderDetail.classifications", classifications), ("/v1/sql/schema", note)]
-        {
-            assert!(squash(text).contains("issue-532 refold"), "{surface}: the RETIRED fragment must match its caveat");
         }
     }
 }

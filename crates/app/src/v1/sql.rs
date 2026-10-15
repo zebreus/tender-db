@@ -1038,7 +1038,7 @@ const CLASSIFICATION_SCHEME_NOTE: &str = "One of: cpv (WHAT is bought, the EU Co
     per version). Filter on scheme explicitly: scheme <> 'cpv' is NOT the NUTS codes.";
 const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts), \
     place_country (nuts: the level-0 code of a place published only as a country, only on a version \
-    with no other nuts row; issue 532; a version folded before it has none yet (issue-532 refold)), \
+    with no other nuts row; issue 532), \
     nature (nature), procedure (procedure) \u{2014} which published field the code came from.";
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of

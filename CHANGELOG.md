@@ -20,8 +20,8 @@ for Lithuania, `EL` for Greece, `UK` for the United Kingdom.
 - In `classifications[]` and on `/v1/sql` the row is scheme `nuts`, field `place_country`. Rows of field `place` are
   unchanged and still hold the NUTS codes as published.
 
-Find a Tender notices are not affected. Stored tenders change only after they are refolded, which is a separate
-step; until then a tender folded before this change still serves `country: []`.
+Find a Tender notices are not affected. The stored tenders were refolded on 2026-10-15 (jobs 2521 and 2522,
+3,288,104 notices; 197,053 tenders corrected).
 
 ## Unreleased (issue 524, unit 2b) — an organization's `name` is elected from its mentions, not its first-seen spelling
 
