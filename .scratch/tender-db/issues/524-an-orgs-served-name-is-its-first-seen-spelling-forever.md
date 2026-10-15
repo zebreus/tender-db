@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v8 DEPLOYED `1d95c22` 2026-10-15 ~19:0x UTC; dry plan 2526: 27,559 changes (R1 25,994, R2 1,564), holds recent 374 and residue 794, undated 0, 0 unexpected canaries. The DATED RE-JUDGE (wf_62b83a3d-26b, fresh samples) FAILS three bars: change:R1 2 of 30 wrong, change:R2 2 of 30, released at least 2 of 27 (5 first-pass); hold:residue + the v7 releases v8 holds pass at the bar (2 harmful). No wet run under v8. NEXT: decide rule `524u2-v9` (evidence and candidates below: drop the digits release, a generic-name hold, a digits-added hold; R2's two wrongs are semantic singletons), then build, gate, deploy, re-plan, re-judge FRESH samples, canaries, capped 500, full.
+Status: ready-for-agent — RULE v8 DEPLOYED `1d95c22` 2026-10-15 ~19:0x UTC; dry plan 2526: 27,559 changes (R1 25,994, R2 1,564), holds recent 374 and residue 794, undated 0, 0 unexpected canaries. The DATED RE-JUDGE (wf_62b83a3d-26b, fresh samples) FAILS three bars: change:R1 2 of 30 wrong, change:R2 2 of 30, released 5 of 27 (every wrong skeptic-confirmed); hold:residue + the v7 releases v8 holds pass at the bar (2 harmful). No wet run under v8. NEXT: decide rule `524u2-v9` (evidence and candidates below: drop the digits release, a generic-name hold, a digits-added hold; R2's two wrongs are semantic singletons), then build, gate, deploy, re-plan, re-judge FRESH samples, canaries, capped 500, full.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1212,7 +1212,7 @@ the public API, each `wrong` re-read by a skeptic told to refute it:
 | change:R1 (30) | 20 | 8 | **2**: 8069375, 5350675 | ≤ 1: **FAIL** |
 | change:R2 (30) | 22 | 6 | **2**: 4123715, 16508165 | ≤ 1: **FAIL** |
 | hold:residue (30) + v7 releases v8 holds (4) | 22 | 10 | 2 harmful: 19427430, 15829801 | ≤ 2 together: pass, at the bar |
-| released (27, every one) | 19 | 3 | **≥ 2** (9806, 9814 confirmed; 9833, 4295185, 15855816 first-pass) | ≤ 1: **FAIL** |
+| released (27, every one) | 19 | 3 | **5**: 9806, 9814, 9833, 4295185, 15855816 | ≤ 1: **FAIL** |
 
 - **8069375** R1: `Prometni institut Ljubljana d.o.o.` → the long registered name plus `…, Ljubljana, Kolodvorska 11`,
   a spelling only older notices print. The served name ADDS a digits-only token (an address number).
