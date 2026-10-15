@@ -765,3 +765,35 @@ These figures come from job 2492's totals and its 30-per-bucket samples, simulat
     matching a run of 2 or more head words;
   - rule epoch `524u2-v4`.
   Deploy after the 534 unit-3 refold, then re-run dry and re-judge.
+
+### Units 2a.2 and 2a.3 (2026-10-15)
+
+- **2a.2** (`b8aa743`, gate green). Twin-only accent preference, folded family hold, mojibake reason, the truncation
+  arm dropped, and a tight initialism arm. Replayed over plan 2501's 1,948 R2 changes: 22 held, against 447 under
+  2a.1. On the 30 judged samples only CDC is held.
+  - Its review (wf_12233d66-5ab) confirmed five small should-fixes:
+    - the twin swap ignored votes (1526605: a 1-vote typo twin beat 717 votes; `Zakłąd`; `spółką`;
+      `FrieslandCâmpina`);
+    - mojibake misses (cp1252 `€`/`™`, and `Ã` before a space: 14272015 went from hold to serving mojibake);
+    - the folded family read missed the dotted `S.à r.l.` / `S.p.A.`;
+    - the ALL-CAPS gate exempted a bare initialism;
+    - the legal-form list was too narrow.
+- **2a.3** (built on top, rule `524u2-v5`):
+  - a twin swap replaces only an accent-free winner, picking its most-mentioned marked twin;
+  - the mojibake set gains `€`, `™`, `È™`/`È›`, and `Ã`/`Â` after a lower-case letter before a space or the end;
+  - `folded_family` also reads single-letter runs joined (`s a r l` → `sarl`);
+  - a bare initialism holds whatever its case, and particles are skipped inside a run (`CDCPC`);
+  - the designation list grows: sca scs scg spl snc scop sci selarl selas eurl sasu pph fuh phu zoz spzoz spz ett
+    grsk.
+  - The builder's replay over 2501:
+    - twin swaps 154 → 124: about 10 typo fixes, about 20 fuller accents lost (`Alcaldía` → `Alcaldia`, `Cœur`,
+      `Saúde`…);
+    - R2 initialism holds 10 → 26 (CCAS ×4, CCI ×2, GIP, GECT, TGSS, AMPA, ОДМВР, bare ANER/BSO/EPLO/CTS/SOM);
+    - 31 dotted-form family holds (S.r.l. ↔ S.p.A., m.b.H. ↔ AG, B.V. ↔ GmbH).
+- **Owner decisions:**
+  1. **Twin swap: keep v5.** A minority spelling must never beat a majority that already carries diacritics. Counts
+     cannot tell a fuller-accent twin from a typo twin, and the ~20 losses are minor omissions on the same entity.
+  2. **Canary 178 is re-decided as neutral.** The folded key gives `CA Plaine Vallée` 66 votes against the head's
+     32 (2x passes). It is the buyer's own published form, the same body as `Communauté d'agglomération Plaine
+     Vallée`. A 2-letter R1 initialism guard would also hold right brand changes (`EY`), so R1 stays un-second-
+     guessed. The canary now expects change:R1 "CA Plaine Vallée".

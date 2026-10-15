@@ -1267,7 +1267,14 @@ const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
     RefreshCanary { id: 760, expect: Some("change:R1"), serves: Some("Getinge Polska Sp. z o.o.") },
     RefreshCanary { id: 61, expect: Some("change:R1"), serves: Some("Tribunal administratif de Nice") },
     RefreshCanary { id: 7_912_592, expect: Some("keep:D4"), serves: None },
-    RefreshCanary { id: 178, expect: Some("keep:bar"), serves: None },
+    // Issue 524 unit 2a.3, re-decided by the owner: plan 2501's spellings put the abbreviation at 63
+    // against the head's 32, kept by R1's 2x bar (63 < 64). The folded vote key (2a.1) joins
+    // `CA Plaine Vallee` / `CA plaine vallee` (and one unlisted vote) to that cluster, so 66 ≥ 2 × 32
+    // and R1 serves `CA Plaine Vallée`, the buyer's own published form 66 times over. It names the
+    // same body as the head `Communauté d'agglomération Plaine Vallée`, so the change is neutral, not
+    // wrong. A 2-letter R1 initialism guard would also hold right brand changes (`EY`), and R1 is not
+    // second-guessed. Accepted.
+    RefreshCanary { id: 178, expect: Some("change:R1"), serves: Some("CA Plaine Vallée") },
     RefreshCanary { id: 131, expect: Some("keep:bar"), serves: None },
     RefreshCanary { id: 99, expect: Some("keep:bar"), serves: None },
     RefreshCanary { id: 10, expect: Some("keep:S1"), serves: None },
@@ -21104,6 +21111,9 @@ mod tests {
         let plan: serde_json::Value = serde_json::from_str(&body).unwrap();
         assert_eq!(plan["dry_run"], true);
         assert_eq!(plan["epoch"], store::HEAD_ELECTION_EPOCH);
+        assert_eq!(plan["fns"]["twin_key"], "ingest::crosswalk::head_twin_key");
+        assert_eq!(plan["fns"]["r2_hold"], "ingest::crosswalk::head_r2_hold");
+        assert!(msg.contains("(R2's initialism hold: 0)"), "the summary names the R2 hold even at zero: {msg}");
         let planned: Vec<i64> = plan["planned"].as_array().unwrap().iter().map(|e| e["org_id"].as_i64().unwrap()).collect();
         assert_eq!(planned, vec![334, 6_341_366, 22_713_056, 31_558_903], "by org id");
         assert_eq!(plan["planned"][3]["old_name_norm"], "sheffield hallam university");
@@ -21229,6 +21239,28 @@ mod tests {
         assert_eq!(
             elect_head(&swiss, &org("Acme Schweiz AG"), &fns),
             HeadVerdict::Hold { reason: "family", rule: HeadRule::R1, new: Some("Acme Sàrl".into()) }
+        );
+        // Unit 2a.3: …and joins a dotted form's letters first: AG -> S.à r.l. is one too.
+        let dotted = [("Acme S.à r.l.", 5), ("Acme Schweiz AG", 1)];
+        assert_eq!(
+            elect_head(&dotted, &org("Acme Schweiz AG"), &fns),
+            HeadVerdict::Hold { reason: "family", rule: HeadRule::R1, new: Some("Acme S.à r.l.".into()) }
+        );
+        // Unit 2a.3: an accented winner keeps its place against a one-mention typo twin (1526605).
+        let ministry = [
+            ("Ministerstvo práce, sociálnych vecí a rodiny Slovenskej republiky", 717),
+            ("Ministerstvo práce,sociálných vecí a rodiny Slovenskej republiky", 1),
+            ("Urad Prace", 1),
+        ];
+        assert_eq!(
+            elect_head(&ministry, &org("Urad Prace"), &fns).new_name(),
+            Some("Ministerstvo práce, sociálnych vecí a rodiny Slovenskej republiky")
+        );
+        // Unit 2a.3: a bare ALL-CAPS initialism is held under R2.
+        let pays = "Communauté de communes du Pays de Caux";
+        assert_eq!(
+            elect_head(&r2("CDCPC", pays), &org(pays), &fns),
+            HeadVerdict::Hold { reason: "initialism", rule: HeadRule::R2, new: Some("CDCPC".into()) }
         );
     }
 

@@ -30,8 +30,11 @@ use crate::{Db, int, opt_text_of, text};
 /// folds Latin diacritics, the display order prefers the diacritic-bearing spelling, and R2 holds a
 /// shorthand of the head ([`HeadElectFns::r2_hold`]). `v4` (unit 2a.2): the marked-letter preference
 /// applies between true twins only ([`HeadElectFns::twin_key`]), the family hold reads folded names,
-/// a `mojibake` spelling is unfit, and R2 holds a tightened initialism and no truncation.
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v4";
+/// a `mojibake` spelling is unfit, and R2 holds a tightened initialism and no head cut short. `v5`
+/// (unit 2a.3): the twin swap replaces only a winner with no marked letter, the family hold joins
+/// dotted forms, mojibake knows `€`, `™`, `È™`/`È›` and a word-final `Ã`, and the initialism holds a
+/// bare initialism, skips particles and knows the review's designations.
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v5";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -114,7 +117,7 @@ pub enum HeadVerdict {
     /// A change the rule elected but does not apply: [`HEAD_HOLD_NO_FIT`] (the winning cluster has no
     /// fit spelling, so `new` is `None`), a bind guard's reason (the injected [`HeadElectFns::hold`]:
     /// `family`, `gb_family`, `consortium_removed`, `nhs_check`), or, for R2 only, a shorthand's
-    /// ([`HeadElectFns::r2_hold`]: `initialism`, `truncation`), with the spelling it would have
+    /// ([`HeadElectFns::r2_hold`]: `initialism`), with the spelling it would have
     /// served.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
@@ -247,10 +250,12 @@ struct Cluster<'a> {
 /// The elected cluster serves its DISPLAY spelling: among the fit spellings only
 /// ([`HeadElectFns::unfit`]), the winner is not-ALL-CAPS before ALL-CAPS, then the most mentions, then
 /// the byte-wise smallest — never the census's count-first `top_spelling`, which serves `UNIVERSITY OF
-/// SHEFFIELD`. Then, among the fit spellings of the winner's case that are its TWINS
-/// ([`HeadElectFns::twin_key`]: equal once lower-cased, folded and stripped of punctuation), the one
-/// with more marked (non-ASCII) letters is served, then more mentions, then bytes: `Dotación y
-/// Equipamiento, S. L.` over `Dotacion y Equipamiento S.L.`. A cluster is wider than twins — its vote
+/// SHEFFIELD`. Then, when the winner carries no marked (non-ASCII) letter — an accent-stripped spelling
+/// — the most-mentioned fit spelling of its case that is its TWIN ([`HeadElectFns::twin_key`]: equal
+/// once lower-cased, folded and stripped of punctuation) and does carry one is served instead, then
+/// bytes: `Dotación y Equipamiento, S. L.` over `Dotacion y Equipamiento S.L.`. A winner that has an
+/// accent already is kept (unit 2a.3): its one-mention typo twin never beats it (`sociálných` 1 over
+/// `sociálnych` 717 on 1526605, `Zakłąd` over `Zakład`). A cluster is wider than twins — its vote
 /// key also drops a trading-as clause, a parenthetical, a legal form, `the` and `&` — so `Acme Ltd t/a
 /// Café Rouge` (1) never beats `Acme Ltd` (20) on its accent (the 2a.1 review). No fit spelling is a
 /// HOLD ([`HEAD_HOLD_NO_FIT`]); a change the bind guards ([`HeadElectFns::hold`]) name, or an R2 change
@@ -368,8 +373,8 @@ fn marked_letters(spelling: &str) -> usize {
 }
 
 /// The cluster's display spelling, or `None` when no spelling is fit: the best FIT spelling in
-/// [`spelling_order`], then, among the fit spellings of its case class that are its twins under
-/// [`HeadElectFns::twin_key`], the one with more marked letters (then more mentions, then bytes).
+/// [`spelling_order`]; when that winner has no marked letter, the most-mentioned (then byte-wise
+/// smallest) fit twin of its case class under [`HeadElectFns::twin_key`] that has one.
 fn display_spelling<'a>(cluster: &Cluster<'a>, head: &str, fns: &HeadElectFns) -> Option<&'a str> {
     let fit: Vec<(&'a str, u64)> = cluster
         .spellings
@@ -378,13 +383,17 @@ fn display_spelling<'a>(cluster: &Cluster<'a>, head: &str, fns: &HeadElectFns) -
         .map(|(spelling, n)| (*spelling, *n))
         .collect();
     let winner = fit.iter().copied().max_by(|a, b| spelling_order(*a, *b))?;
+    if marked_letters(winner.0) > 0 {
+        return Some(winner.0);
+    }
     let (case, twin) = (all_caps(winner.0), (fns.twin_key)(winner.0));
-    fit.into_iter()
-        .filter(|(spelling, _)| all_caps(spelling) == case && (fns.twin_key)(spelling) == twin)
-        .max_by(|a, b| {
-            marked_letters(a.0).cmp(&marked_letters(b.0)).then(a.1.cmp(&b.1)).then_with(|| b.0.cmp(a.0))
+    let marked_twin = fit
+        .into_iter()
+        .filter(|(spelling, _)| {
+            marked_letters(spelling) > 0 && all_caps(spelling) == case && (fns.twin_key)(spelling) == twin
         })
-        .map(|(spelling, _)| spelling)
+        .max_by(|a, b| a.1.cmp(&b.1).then_with(|| b.0.cmp(a.0)));
+    Some(marked_twin.map_or(winner.0, |(spelling, _)| spelling))
 }
 
 /// D4's scripts. Only a difference between two of them keeps a head.
@@ -985,7 +994,9 @@ mod tests {
     /// The diacritics the tests spell, folded as `crosswalk::fold_diacritics` folds them.
     fn fold(c: char) -> char {
         match c {
-            'ă' => 'a',
+            'ă' | 'á' | 'â' => 'a',
+            'ý' => 'y',
+            'î' => 'i',
             'à' => 'a',
             'ó' => 'o',
             'é' => 'e',
@@ -1261,9 +1272,32 @@ mod tests {
         let counted = elect_head_counted(&form, &org("Other Body"), &FNS);
         assert_eq!(counted.clusters, 2, "GmbH and Sàrl are one vote key");
         assert_eq!(counted.verdict.new_name(), Some("Acme GmbH"));
-        // A twin of the winner with the accent still wins over it, whatever the votes.
+        // An accent-stripped winner yields to its accented twin, whatever the votes.
         let twins = [("Acme Cafe Ltd", 20), ("Acme Café Ltd", 1), ("Acme Ltd t/a Café Rouge", 5), ("Other Body", 1)];
         assert_eq!(elect_head(&twins, &org("Other Body"), &FNS).new_name(), Some("Acme Café Ltd"));
+    }
+
+    /// Issue 524 unit 2a.3 (the 2a.2 review): the twin swap replaces only a winner with NO marked
+    /// letter, and among the marked twins the most-mentioned is served, not the most-marked. So a
+    /// correctly accented winner keeps its place against a one-mention typo twin.
+    #[test]
+    fn a_twin_swap_never_replaces_an_accented_winner() {
+        // 1526605: 717 votes for `sociálnych` against 1 for the typo `sociálných`.
+        let ministry = [
+            ("Ministerstvo práce, sociálnych vecí a rodiny Slovenskej republiky", 717),
+            ("Ministerstvo práce,sociálných vecí a rodiny Slovenskej republiky", 1),
+            ("Urad Prace", 1),
+        ];
+        assert_eq!(
+            elect_head(&ministry, &org("Urad Prace"), &FNS).new_name(),
+            Some("Ministerstvo práce, sociálnych vecí a rodiny Slovenskej republiky")
+        );
+        // 13303943: the winner already has `România`; `FrieslandCâmpina` (12) does not displace it (23).
+        let friesland = [("FrieslandCampina România S.A.", 23), ("FrieslandCâmpina România S.A.", 12), ("Lactate Sud", 1)];
+        assert_eq!(elect_head(&friesland, &org("Lactate Sud"), &FNS).new_name(), Some("FrieslandCampina România S.A."));
+        // An ASCII winner yields to the most-MENTIONED accented twin, not the most-marked one.
+        let benoit = [("Ville de Saint-Benoit", 41), ("Ville de Saint-Benoît", 9), ("Ville de Saînt-Benoît", 1), ("Mairie", 1)];
+        assert_eq!(elect_head(&benoit, &org("Mairie"), &FNS).new_name(), Some("Ville de Saint-Benoît"));
     }
 
     #[test]

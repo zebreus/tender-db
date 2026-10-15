@@ -170,8 +170,9 @@ Decided:
    Latin diacritics folded (NFD with the combining marks dropped; `ø` → `o`, `ł` → `l`, `ß` → `ss`,
    `æ` → `ae`, `œ` → `oe`), with every legal-form token dropped. Casing, spelling marks, diacritics,
    "the" and a legal form (Ltd/Limited/none, S.R.L./SRL/none) are therefore one name: `Comuna
-   Dumbrăveni` and `COMUNA DUMBRAVENI` vote together. The fold is the vote key's alone; the N2/N3 keys
-   and `altid_name_key` keep their diacritics.
+   Dumbrăveni` and `COMUNA DUMBRAVENI` vote together. The fold is the head election's alone (the vote
+   key, the twin test of 5, the family hold of 6); the N2/N3 keys, `altid_name_key` and the merge
+   vetoes keep their diacritics.
 3. **When the head changes.** Only when one of these holds:
    - (a) the head is empty or a non-name (placeholder, blank, void_lot) and some name votes;
    - (b) a cluster other than the head's holds at least 55% of the votes, at least 3 votes, and at
@@ -191,30 +192,35 @@ Decided:
    - no placeholder or void net hit;
    - no consortium mark the old head lacks;
    - no mojibake (UTF-8 read as cp1252 or Latin-1: `Ã`, `Â`, `Ä` or `Å` directly before a
-     continuation byte's character, `MÃ¼nchen`, `UniversitÃ` and a no-break space);
+     continuation byte's character or `€`/`™`, `È™`/`È›`, or `Ã`/`Â` after a lower-case letter at a
+     word's end: `MÃ¼nchen`, `SOCIETÃ€`, `SocietÃ  Cooperativa`);
    - at most 200 characters;
    - not all lower case.
 
    Among the fit spellings, case decides first (a spelling that is not ALL-CAPS before one that is;
    `ß`, `ª` and `º` have no one-letter capital and do not make a spelling mixed case), then the most
-   votes, then byte order. Then, among the fit spellings of the winner's case that are its TWINS (equal
-   once lower-cased, diacritics folded and punctuation dropped), the one that carries more diacritics
-   (non-ASCII letters) is served. So "The University of Sheffield" (1 vote) is served over "UNIVERSITY
-   OF SHEFFIELD" (14), and "Dotación y Equipamiento, S. L." (1) over its twin "Dotacion y Equipamiento
-   S.L." (4); but "Acme Ltd t/a Café Rouge" (1), which only shares a cluster with "Acme Ltd" (20), is
-   no twin and never wins on its accent. With no fit spelling, nothing changes. Register names are not
+   votes, then byte order. Then, if that winner carries no diacritic (no non-ASCII letter), the
+   most-voted fit spelling of its case that is its TWIN (equal once lower-cased, diacritics folded and
+   punctuation dropped) and does carry one is served instead. So "The University of Sheffield" (1
+   vote) is served over "UNIVERSITY OF SHEFFIELD" (14), and "Dotación y Equipamiento, S. L." (1) over
+   its twin "Dotacion y Equipamiento S.L." (4); but "Acme Ltd t/a Café Rouge" (1), which only shares a
+   cluster with "Acme Ltd" (20), is no twin and never wins on its accent, and a winner that already has
+   its accents ("sociálnych", 717) keeps its place against a typo twin ("sociálných", 1). With no fit spelling, nothing changes. Register names are not
    used until a register-name cache exists.
 6. **Held for review.** A change is held when it would:
    - swap one legal-form family for another (`legal_form_family` or `gb_legal_family`, read on the
-     diacritic-folded names, set on both sides and different: `Acme Schweiz AG` → `Acme Sàrl`);
+     diacritic-folded names, and on them with dotted single letters joined, set on both sides and
+     different: `Acme Schweiz AG` → `Acme Sàrl` or `Acme S.à r.l.`);
    - drop a consortium mark;
    - fail the NHS ODS name check the old head passed;
-   - by (c) only, replace the head with an initialism of it: in a new name that is not ALL-CAPS, a token
-     of 3 to 5 upper-case letters, no legal form (`SRL`, `GMBH`, `SARL`, …), that is the initials of a
-     run of the head's words (`CDC` for `Communauté de communes`) that the new name no longer spells out
-     and that is not the head's own dotted initials (`S.A.V.E.T.` → `SAVET`). A 2-letter token (`EY`)
-     is none. A head cut to some of its words, or stripped of an address, still changes. (b)'s majority
-     is not second-guessed.
+   - by (c) only, replace the head with an initialism of it: a token of 3 to 5 upper-case letters, no
+     legal form or designation (`SRL`, `GMBH`, `SCOP`, `SPL`, `PPH`, …), that is the initials of a run
+     of the head's words, short particles inside the run skippable (`CDC` for `Communauté de communes`,
+     `CDCPC` for `Communauté de communes du Pays de Caux`), that the new name no longer spells out and
+     that is not the head's own dotted initials (`S.A.V.E.T.` → `SAVET`) — in a new name that is
+     either nothing but that token or not ALL-CAPS. A 2-letter token (`EY`) is none. A head cut to
+     some of its words, or stripped of an address, still changes. (b)'s majority is not
+     second-guessed.
 
    The head is an input to the resolver's and merge planners' name gates. (c)'s 25% minority can be a
    publisher's initialism of a correct full head (dry plan 2501's judged samples).
