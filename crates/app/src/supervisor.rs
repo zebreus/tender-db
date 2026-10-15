@@ -1441,13 +1441,14 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
     let recent = plan.by_hold.get(store::HEAD_HOLD_RECENT).map_or(0, |c| c.orgs);
     let undated = plan.by_hold.get(store::HEAD_HOLD_UNDATED).map_or(0, |c| c.orgs);
     let dated = format!(
-        "Dated (rule v7): {} candidate(s), {} notice(s), {} version row(s), {} undated voting mention(s); R1's \
-         recent hold: {recent}; undated {undated} (MUST be 0); released by the junk exemption: {} (ids {:?}); \
-         residue (planned changes whose org's newest procedure is the head's): {}.",
+        "Dated (rule v7): {} candidate(s) of the population, {} of their voting mention(s) undated; the date \
+         reads asked {} notice(s) and read {} version row(s) (per page, below-min canaries included); R1's \
+         recent hold: {recent}; undated {undated} (MUST be 0); changes released by the junk exemption: {} \
+         (ids {:?}); residue (planned changes whose org's newest procedure is the head's): {}.",
         plan.dated_orgs,
+        plan.undated_mentions,
         plan.dated_notices,
         plan.dated_version_rows,
-        plan.undated_mentions,
         tally(&plan.recent_released),
         plan.recent_released_ids,
         counts(&plan.residue),
@@ -22215,6 +22216,16 @@ mod tests {
         // Services Ltd` 3 (one cluster: the key drops the legal form, and reads whitespace alike).
         let summed = [("Acme  Services", 2), ("Acme Services", 2), ("Acme Services Ltd", 3), ("Zeta Holdings", 1)];
         assert_eq!(elect_head(&summed, &org("Zeta Holdings"), &fns).new_name(), Some("Acme Services"));
+        // The v7 review: a spelling must be fit as published AND once collapsed. U+2003 (an em space)
+        // after `Ã` is no continuation character and no ASCII space, so the raw spelling passes the
+        // mojibake test; collapsed to `SocietÃ Cooperativa` it is the word-final shape, and unfit.
+        let em = "SocietÃ\u{2003}Cooperativa";
+        assert!(ingest::crosswalk::head_spelling_unfit(em, "Head Body").is_none(), "fit as published");
+        assert_eq!(ingest::crosswalk::head_spelling_unfit("SocietÃ Cooperativa", "Head Body"), Some("mojibake"));
+        assert_eq!(
+            elect_head(&[(em, 5), ("Head Body", 1)], &org("Head Body"), &fns),
+            HeadVerdict::Hold { reason: store::HEAD_HOLD_NO_FIT, rule: HeadRule::R1, new: None }
+        );
         let ita = [("Itä-Suomen  aluehallintovirasto", 3), ("Pohjois-Savon ELY", 1)];
         assert_eq!(elect_head(&ita, &org("Pohjois-Savon ELY"), &fns).new_name(), Some("Itä-Suomen aluehallintovirasto"));
         let dotacion = [("Dotacion y Equipamiento S.L.", 4), ("Dotación y Equipamiento, S. L.", 1), ("Equipos Norte", 1)];

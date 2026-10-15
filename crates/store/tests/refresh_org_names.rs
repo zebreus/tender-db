@@ -1152,7 +1152,10 @@ fn spread(name: &'static str, tender: i64, day: i64, n: i64) -> Vec<(&'static st
     (0..n).map(|i| (name, vec![(tender + i, (day + i) * DAY)])).collect()
 }
 
-/// The dated corpus: 40 a rename (held `recent`), 41 a forward change, 42 the date read's edges.
+/// The dated corpus: 40 a rename (held `recent`), 41 a forward change, 42 the date read's edges, 43 an
+/// H = 1 stray that is its org's newest item (31558903's shape: R1 with no window, the residue), 44 an
+/// empty head (R0e). 43 and 44 are no `hold:undated` before their dates, so only a planner that dates
+/// EVERY candidate gives their entries a reading (the decision rejected dating only the undated).
 async fn dated_corpus(conn: &turso::Connection) {
     let mut forty = spread("Old Name Agency", 4_000, BASE, 8);
     forty.extend(spread("New Name Agency", 4_100, BASE + 100, 3));
@@ -1167,7 +1170,16 @@ async fn dated_corpus(conn: &turso::Connection) {
     forty_two.push(("Dim Services", vec![(4_380, (BASE + 101) * DAY)]));
     // A head notice dated 0: no date, counted undated.
     forty_two.push(("Dim Services", vec![(4_395, 0)]));
-    for (id, head, rows) in [(40, "New Name Agency", forty), (41, "Old Name Office", forty_one), (42, "Dim Services", forty_two)] {
+    let mut forty_three = spread("Main Office Group", 4_400, BASE, 5);
+    forty_three.extend(spread("Stray Office", 4_450, BASE + 300, 1));
+    let forty_four = spread("Kalmar Office", 4_500, BASE, 3);
+    for (id, head, rows) in [
+        (40, "New Name Agency", forty),
+        (41, "Old Name Office", forty_one),
+        (42, "Dim Services", forty_two),
+        (43, "Stray Office", forty_three),
+        (44, "", forty_four),
+    ] {
         let mentions: Vec<(&str, &[(i64, i64)])> = rows.iter().map(|(name, v)| (*name, v.as_slice())).collect();
         dated_org(conn, id, head, &mentions).await;
     }
@@ -1189,7 +1201,7 @@ async fn the_planner_dates_its_candidates_and_holds_a_rename() {
     let held = &r.held[0];
     assert_eq!((held.reason, held.rule, held.new_name.as_deref()), ("recent", Some("R1"), Some("Old Name Agency")));
     assert_eq!((held.head_procs, held.head_in_window, held.newest_is_head), (Some(3), Some(3), Some(true)));
-    assert_eq!(ids(&r.planned), vec![41, 42]);
+    assert_eq!(ids(&r.planned), vec![41, 42, 43, 44]);
     let forward = &r.planned[0];
     assert_eq!((forward.head_procs, forward.head_in_window, forward.newest_is_head), (Some(2), Some(0), Some(false)));
     assert_eq!(forward.head_newest, Some(store::rates::civil_date((BASE + 6) * DAY)));
@@ -1199,13 +1211,22 @@ async fn the_planner_dates_its_candidates_and_holds_a_rename() {
     // the zero-dated mentions are undated.
     let edges = &r.planned[1];
     assert_eq!((edges.head, edges.head_procs, edges.undated_mentions), (3, Some(1), Some(2)));
-    assert_eq!((r.dated_orgs, r.undated_mentions), (3, 2));
-    assert_eq!(r.dated_notices, 11 + 22 + 11, "every voting mention's notice of the three candidates");
-    assert_eq!(r.dated_version_rows, 11 + 22 + 12, "42's ghost notice reads two rows");
+    // 43: H = 1, never `hold:undated`, dated all the same: its single newest head mention is the residue.
+    let stray = &r.planned[2];
+    assert_eq!((stray.reason, stray.head), ("R1", 1));
+    assert_eq!((stray.head_procs, stray.newest_is_head, stray.undated_mentions), (Some(1), Some(true), Some(0)));
+    // 44: R0e never reads the window, and is dated all the same.
+    let empty = &r.planned[3];
+    assert_eq!((empty.reason, empty.head_procs, empty.newest_is_head), ("R0e", Some(0), Some(false)));
+    assert_eq!((r.dated_orgs, r.undated_mentions), (5, 2));
+    assert_eq!(r.dated_notices, 11 + 22 + 11 + 6 + 3, "every voting mention's notice of the five candidates");
+    assert_eq!(r.dated_version_rows, 11 + 22 + 12 + 6 + 3, "42's ghost notice reads two rows");
     assert!(r.samples.contains_key("hold:recent"));
-    // 42 is the residue: a single head procedure, and the org's newest item.
-    assert_eq!((edges.newest_is_head, r.residue.len(), r.residue["R1"]), (Some(true), 1, count(1, 11)));
-    assert_eq!(ids(&r.samples["residue:head_newest"]), vec![42]);
+    // 42 and 43 are the residue: a single head procedure, the org's newest item.
+    assert_eq!((edges.newest_is_head, r.residue.len(), r.residue["R1"]), (Some(true), 1, count(2, 11 + 6)));
+    let mut residue = ids(&r.samples["residue:head_newest"]);
+    residue.sort_unstable();
+    assert_eq!(residue, vec![42, 43]);
 
     // Refused without the date read's index, as the wet path is.
     conn.execute("DROP INDEX tender_versions_notice", ()).await.unwrap();
@@ -1220,7 +1241,7 @@ async fn a_target_whose_head_gained_newer_procedures_reads_drifted() {
     let (db, conn) = open("ron-dated-wet").await;
     dated_corpus(&conn).await;
     let planned = targets(&plan(&db, 2_000, None, &[]).await);
-    assert_eq!(planned.iter().map(|t| t.org_id).collect::<Vec<_>>(), vec![41, 42]);
+    assert_eq!(planned.iter().map(|t| t.org_id).collect::<Vec<_>>(), vec![41, 42, 43, 44]);
     // After the plan, 41's head names four new procedures, its newest: the window now fires.
     for i in 0..4 {
         let notice = 41_900 + i;
@@ -1241,10 +1262,10 @@ async fn a_target_whose_head_gained_newer_procedures_reads_drifted() {
         .unwrap();
     }
     let r = db.apply_org_name_refresh(wet(planned, 7)).await.unwrap();
-    assert_eq!((r.ready, r.drifted, r.applied), (1, 1, 1));
+    assert_eq!((r.ready, r.drifted, r.applied), (3, 1, 3));
     assert_eq!(r.drift_samples[0].org_id, 41);
     assert!(r.drift_samples[0].why.contains("re-elected hold:recent"), "{:?}", r.drift_samples);
-    assert_eq!(org_changes(&conn).await, vec![42]);
+    assert_eq!(org_changes(&conn).await, vec![42, 43, 44]);
     // The ledger's evidence carries the window's reading.
     let mut rows = conn.query("SELECT evidence FROM org_name_refresh_log WHERE org_id = 42", ()).await.unwrap();
     let evidence = rows.next().await.unwrap().unwrap().get_value(0).unwrap();

@@ -418,11 +418,13 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
     let empty = org.head.trim().is_empty();
     if empty || (fns.not_a_name)(org.head).is_some_and(|class| class != HEAD_DRIFT_AWARD_SUMMARY) {
         let rule = if empty { HeadRule::R0e } else { HeadRule::R0n };
+        // Fit as `display_spelling` reads it (as published AND collapsed, the v7 review), so R0 never
+        // elects a tied cluster that then holds `no_fit` while another had a servable spelling.
         let rank = |cluster: &Cluster<'_>| {
             let fit: Vec<(&str, u64)> = cluster
                 .spellings
                 .iter()
-                .filter(|(spelling, _)| (fns.unfit)(spelling, org.head).is_none())
+                .filter(|(spelling, _)| fit_to_serve(spelling, org.head, fns))
                 .map(|(spelling, n)| (*spelling, *n))
                 .collect();
             (fit.iter().any(|(spelling, _)| !all_caps(spelling)), fit.iter().map(|(_, n)| n).sum::<u64>())
@@ -528,7 +530,10 @@ fn recent_reading(
 
 /// Rule `v7`'s junk exemption: why a recently repeated head is NOT protected — `unfit` when it is
 /// unfit to serve even against itself, `digits` when its vote key has a token with a digit the
-/// elected cluster's key lacks (a buyer template appending an address or a NIP, a `LOT 2` prefix).
+/// elected cluster's key lacks (a buyer template appending an address or a NIP, a `LOT 2` prefix). A
+/// token the two keys share does not count (`nr 5` on both sides is a rename, held). "Digit" is
+/// `char::is_numeric`, on purpose: a decimal digit of any script (Arabic-Indic, full-width) counts,
+/// and so would a `²`, `½` or `Ⅱ` — rare in a key, and a release only gives v6's R1 back.
 fn recent_release(head: &str, head_key: &str, elected_key: &str, fns: &HeadElectFns) -> Option<&'static str> {
     if (fns.unfit)(head, head).is_some() {
         return Some("unfit");
@@ -560,6 +565,13 @@ fn collapse_whitespace(spelling: &str) -> String {
     spelling.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
+/// A spelling the rule may serve in place of `head`: [`HeadElectFns::unfit`] reads it fit as published
+/// AND once collapsed (the collapse can make a word-final mojibake shape: `SocietÃ\u{2003}Cooperativa`
+/// is fit raw and `SocietÃ Cooperativa` is not). The display and R0's tie-break both read this.
+fn fit_to_serve(spelling: &str, head: &str, fns: &HeadElectFns) -> bool {
+    (fns.unfit)(spelling, head).is_none() && (fns.unfit)(&collapse_whitespace(spelling), head).is_none()
+}
+
 /// The cluster's display spelling, or `None` when no spelling is fit: the FIT spellings (fit as
 /// published AND once collapsed, the 2b review: the collapse can make a word-final mojibake shape)
 /// collapsed by [`collapse_whitespace`], the counts of those that collapse alike summed;
@@ -567,11 +579,8 @@ fn collapse_whitespace(spelling: &str) -> String {
 /// (then byte-wise smallest) fit twin of its case class under [`HeadElectFns::twin_key`] that has one.
 fn display_spelling(cluster: &Cluster<'_>, head: &str, fns: &HeadElectFns) -> Option<String> {
     let mut collapsed: BTreeMap<String, u64> = BTreeMap::new();
-    for (spelling, n) in cluster.spellings.iter().filter(|(spelling, _)| (fns.unfit)(spelling, head).is_none()) {
-        let served = collapse_whitespace(spelling);
-        if (fns.unfit)(&served, head).is_none() {
-            *collapsed.entry(served).or_default() += *n;
-        }
+    for (spelling, n) in cluster.spellings.iter().filter(|(spelling, _)| fit_to_serve(spelling, head, fns)) {
+        *collapsed.entry(collapse_whitespace(spelling)).or_default() += *n;
     }
     let fit: Vec<(&str, u64)> = collapsed.iter().map(|(spelling, n)| (spelling.as_str(), *n)).collect();
     let winner = fit.iter().copied().max_by(|a, b| spelling_order(*a, *b))?;
@@ -824,14 +833,20 @@ pub struct OrgNameRefreshPlan {
     pub d4_eng: BTreeMap<&'static str, u64>,
     /// Identifier-verdict probes run (one per candidate).
     pub verdict_probes: u64,
-    /// Rule `v7`: the candidates dated (in the population), the distinct notices their voting mentions
-    /// name, the `tender_versions` rows read for them, and their voting mentions no usable date covered.
+    /// Rule `v7`, two populations (the v7 review). `dated_orgs` and `undated_mentions` count the
+    /// population's dated candidates and their voting mentions no usable date covered. The READ counts
+    /// `dated_notices` and `dated_version_rows` count what the date reads asked and returned: per page,
+    /// for every candidate of the page (a canary below `min_mentions` included), so a notice naming
+    /// orgs on two pages is read, and counted, once per page. They size the read; they are no
+    /// denominator for the other two.
     pub dated_orgs: u64,
     pub dated_notices: u64,
     pub dated_version_rows: u64,
     pub undated_mentions: u64,
-    /// Rule `v7`: the R1 changes the window fired on but the junk exemption released, by why (`unfit`,
-    /// `digits`), and the first [`ORG_NAME_REFRESH_RELEASED_LISTED`] of their ids.
+    /// Rule `v7`: the R1 CHANGES (in the population) the window fired on but the junk exemption
+    /// released, by why (`unfit`, `digits`), and the first [`ORG_NAME_REFRESH_RELEASED_LISTED`] of
+    /// their ids by org id. A release that `serve` then held (no fit spelling, a bind guard) is no
+    /// change and is not counted; its entry still reads `recent_released`.
     pub recent_released: BTreeMap<&'static str, u64>,
     pub recent_released_ids: Vec<i64>,
     /// Rule `v7`: the planned changes whose organization's NEWEST item is a head item, by rule — the
@@ -913,7 +928,7 @@ impl PageOrg {
     }
 
     /// Rule `v7`: this org's voting mentions with a usable date (`dates`: notice id → the notice's
-    /// procedure and `at`), and how many named voting mentions had none.
+    /// procedure and `at`); the undated count is read later, as V less these ([`recent_reading`]).
     fn dated<'s>(&'s self, fns: &HeadElectFns, dates: &HashMap<i64, (i64, i64)>) -> Vec<DatedVote<'s>> {
         let mut out = Vec::new();
         for (spelling, notices) in &self.notices {
@@ -1164,7 +1179,7 @@ impl Db {
                 if let Some(read) = &j.election.recent {
                     plan.dated_orgs += 1;
                     plan.undated_mentions += read.undated;
-                    if let Some(why) = read.released {
+                    if let (Some(why), HeadVerdict::Change { .. }) = (read.released, verdict) {
                         *plan.recent_released.entry(why).or_default() += 1;
                         if plan.recent_released_ids.len() < ORG_NAME_REFRESH_RELEASED_LISTED {
                             plan.recent_released_ids.push(org.id);
@@ -1552,9 +1567,15 @@ async fn read_readiness(
     fns: &HeadElectFns,
     targets: &[OrgNameRefreshTarget],
     horizon: i64,
-) -> turso::Result<Vec<Readiness>> {
+    stop: &(dyn Fn() -> bool + Sync),
+) -> turso::Result<Option<Vec<Readiness>>> {
     let mut out = Vec::with_capacity(targets.len());
-    for chunk in targets.chunks(IN_CHUNK) {
+    for (i, chunk) in targets.chunks(IN_CHUNK).enumerate() {
+        // The v7 review: dating ~28.7k targets takes a while, so a cancel is read between chunks
+        // (`None`: stopped, nothing written).
+        if i > 0 && stop() {
+            return Ok(None);
+        }
         let ids: Vec<Value> = chunk.iter().map(|t| Value::Integer(t.org_id)).collect();
         let mut orgs: HashMap<i64, PageOrg> = HashMap::new();
         let mut rows = reader.query(&org_name_refresh_ids_sql(chunk.len()), ids.clone()).await?;
@@ -1586,19 +1607,17 @@ async fn read_readiness(
             }
         }
         drop(rows);
-        // Rule v7: every target is a change, so every one is dated, as the planner dated it.
-        let mut asked: Vec<i64> =
-            orgs.values().flat_map(|org| org.voting_notices(fns)).collect::<HashSet<_>>().into_iter().collect();
-        asked.sort_unstable();
-        let dates = read_notice_dates(reader, &asked, horizon).await?.dates;
+        // The row checks first: gone, already renamed, a moved pre-image or a stripped identifier
+        // decide without an election, so only the rest is dated (the v7 review).
+        let mut decided: Vec<Option<Readiness>> = Vec::with_capacity(chunk.len());
         for target in chunk {
             let Some(org) = orgs.get(&target.org_id) else {
-                out.push(Readiness::Gone);
+                decided.push(Some(Readiness::Gone));
                 continue;
             };
             let new_norm = org_name_norm(&target.new_name);
             if org.head == target.new_name && org.name_norm.as_deref() == Some(new_norm.as_str()) {
-                out.push(Readiness::Already);
+                decided.push(Some(Readiness::Already));
                 continue;
             }
             if org.head != target.old_name || org.name_norm != target.old_name_norm {
@@ -1607,13 +1626,34 @@ async fn read_readiness(
                 } else {
                     format!("the name_norm is {:?} now, not the plan's {:?}", org.name_norm, target.old_name_norm)
                 };
-                out.push(Readiness::Drifted(why));
+                decided.push(Some(Readiness::Drifted(why)));
                 continue;
             }
-            let Some(identifier) = org.identifier.as_deref() else {
-                out.push(Readiness::Drifted("the identifier is NULL now (E1)".to_owned()));
+            if org.identifier.is_none() {
+                decided.push(Some(Readiness::Drifted("the identifier is NULL now (E1)".to_owned())));
                 continue;
-            };
+            }
+            decided.push(None);
+        }
+        // Rule v7: every remaining target is a change, so every one is dated, as the planner dated it.
+        let mut asked: Vec<i64> = chunk
+            .iter()
+            .zip(&decided)
+            .filter(|(_, decided)| decided.is_none())
+            .filter_map(|(target, _)| orgs.get(&target.org_id))
+            .flat_map(|org| org.voting_notices(fns))
+            .collect::<HashSet<_>>()
+            .into_iter()
+            .collect();
+        asked.sort_unstable();
+        let dates = read_notice_dates(reader, &asked, horizon).await?.dates;
+        for (target, decided) in chunk.iter().zip(decided) {
+            if let Some(readiness) = decided {
+                out.push(readiness);
+                continue;
+            }
+            let org = &orgs[&target.org_id];
+            let identifier = org.identifier.as_deref().unwrap_or_default();
             let dated = org.dated(fns, &dates);
             let mut election = org.elect(fns, false, Some(&dated));
             if matches!(election.verdict, HeadVerdict::Change { .. }) {
@@ -1647,7 +1687,7 @@ async fn read_readiness(
             }
         }
     }
-    Ok(out)
+    Ok(Some(out))
 }
 
 /// The ledger's `evidence`: the epoch, the counts the rename was elected by and (rule `v7`) the
@@ -1739,7 +1779,11 @@ impl Db {
         (args.progress)(0, &format!("pre-pass: re-electing {} planned organization(s)", targets.len()));
         let readiness = {
             let reader = self.reader().await?;
-            read_readiness(&reader, &args.fns, &targets, horizon).await?
+            read_readiness(&reader, &args.fns, &targets, horizon, args.stop).await?
+        };
+        let Some(readiness) = readiness else {
+            report.stopped = true;
+            return Ok(report);
         };
         let mut ready: Vec<(&OrgNameRefreshTarget, HeadElection)> = Vec::new();
         for (target, reading) in targets.iter().zip(readiness) {
@@ -2287,15 +2331,24 @@ mod tests {
         assert_eq!(elect_head(&tie, &org("Beta"), &FNS), HeadVerdict::Keep(HeadKeep::S1));
         // R1's 55% bar, exactly: T x 20 >= V x 11. With H = 2 the 2x bar passes (11 >= 4) and R2 is off
         // (H > 1), so the share alone decides: 11 of 20 is 55% and changes, 11 of 21 is 52.4% and keeps.
+        // Rule v7: H >= 2 reads the window, so the change needs dates (here none cover it: `Some(&[])`);
+        // without any it fails closed, held `undated`.
+        let none: [DatedVote<'_>; 0] = [];
+        let dated_none = |head| HeadElectOrg { dated: Some(&none), ..org(head) };
         let at = [("Main", 11), ("Head", 2), ("Other", 7)];
-        assert_eq!(elect_head(&at, &org("Head"), &FNS).rule(), Some(HeadRule::R1), "11/20 = 55%");
+        assert_eq!(elect_head(&at, &dated_none("Head"), &FNS), r1("Main"), "11/20 = 55%");
+        assert_eq!(
+            elect_head(&at, &org("Head"), &FNS),
+            HeadVerdict::Hold { reason: HEAD_HOLD_UNDATED, rule: HeadRule::R1, new: None },
+            "undated"
+        );
         let under = [("Main", 11), ("Head", 2), ("Other", 8)];
         assert_eq!(elect_head(&under, &org("Head"), &FNS), HeadVerdict::Keep(HeadKeep::Bar), "11/21 < 55%");
         // R1's 2x bar on its own: 55% passes, twice the head does not.
-        let r1 = [("Main", 11), ("Head", 9)];
-        assert_eq!(elect_head(&r1, &org("Head"), &FNS), HeadVerdict::Keep(HeadKeep::Bar), "11/20 but 11 < 2 x 9");
-        let r1 = [("Main", 12), ("Head", 6), ("Other", 2)];
-        assert_eq!(elect_head(&r1, &org("Head"), &FNS).rule(), Some(HeadRule::R1), "60% and twice the head");
+        let half = [("Main", 11), ("Head", 9)];
+        assert_eq!(elect_head(&half, &org("Head"), &FNS), HeadVerdict::Keep(HeadKeep::Bar), "11/20 but 11 < 2 x 9");
+        let twice = [("Main", 12), ("Head", 6), ("Other", 2)];
+        assert_eq!(elect_head(&twice, &dated_none("Head"), &FNS), r1("Main"), "60% and twice the head");
         let near = [("Main", 10), ("Head", 2), ("Other", 7)];
         assert_eq!(elect_head(&near, &org("Head"), &FNS), HeadVerdict::Keep(HeadKeep::Bar), "52.6%, and H = 2 kills R2");
         // R2: a stray head (H <= 1) under a unique top of 3 at 25%.
@@ -2479,8 +2532,6 @@ mod tests {
         assert_eq!(sample_key(31_558_903).0, (31_558_903u64 * 2_654_435_761) % (1 << 32));
     }
 
-    /// Issue 524 unit 2a: the planner's three candidate reads must seek, not scan: the scoped page by
-    /// rowid, the verdict probe and the ENG satellite on their tables' primary keys.
     // ---- Rule v7: the R1 recency hold (the recency decision's tests 1-12).
 
     const DAY: i64 = 86_400;
@@ -2691,8 +2742,34 @@ mod tests {
         let rows = [items("Main Body", 1, 1, 3), items("Head Body", 101, 100, 1)].concat();
         let org_ = HeadElectOrg { dated: Some(&rows), ..org("Head Body") };
         assert_eq!(elect_head(&stray, &org_, &FNS).kind(), "change");
+        // Not vacuous: an R0 head whose vote key OWNS the newest k = 2 items — the window fires — still
+        // changes. The placeholder `s.o.` keys as `so`, and so does the voter `S O`.
+        let r0 = [items("Vergabekammer Nord", 1, 1, 4), items("S O", 101, 100, 2)].concat();
+        let e = dated(&r0, "s.o.");
+        assert_eq!(e.recent.map(|r| (r.head_procs, r.fires)), Some((2, true)), "the window fires");
+        assert_eq!(e.verdict, HeadVerdict::Change { rule: HeadRule::R0n, new: "Vergabekammer Nord".into() });
     }
 
+    /// The digit exemption compares against the ELECTED key (the v7 review): a digit token the two keys
+    /// share is no junk — `nr 5` on both sides is a rename and is held — while a NEW digit token beside
+    /// a shared one releases.
+    #[test]
+    fn a_shared_digit_token_is_no_junk() {
+        let shared = [items("Szkola Podstawowa nr 5", 1, 1, 8), items("Szkola Podstawowa nr 5 im Jana Pawla", 101, 100, 2)]
+            .concat();
+        let e = dated(&shared, "Szkola Podstawowa nr 5 im Jana Pawla");
+        assert_eq!(e.verdict, recent(Some("Szkola Podstawowa nr 5")));
+        assert_eq!(e.recent.unwrap().released, None);
+        let added = [items("Szkola Podstawowa nr 5", 1, 1, 8), items("Szkola Podstawowa nr 5 ul Lipowa 12", 101, 100, 2)]
+            .concat();
+        let e = dated(&added, "Szkola Podstawowa nr 5 ul Lipowa 12");
+        assert_eq!(e.verdict, r1("Szkola Podstawowa nr 5"));
+        assert_eq!(e.recent.unwrap().released, Some("digits"));
+    }
+
+    /// Issue 524 unit 2a: the planner's candidate reads must seek, not scan: the scoped page by rowid,
+    /// the verdict probe and the ENG satellite on their tables' primary keys, and (rule v7) the mention
+    /// read with notices and the notice dates through their indexes.
     #[tokio::test]
     async fn the_refresh_plans_candidate_reads_seek() {
         let path = format!("/tmp/tender-db-524u2-eqp-{}.db", std::process::id());
