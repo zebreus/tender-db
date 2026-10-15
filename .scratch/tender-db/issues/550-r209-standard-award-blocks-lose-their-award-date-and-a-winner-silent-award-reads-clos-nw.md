@@ -1,6 +1,6 @@
 # 550 — R2.0.9's standard award blocks lose their award date, and a winner-silent award reads `clos-nw`
 
-Status: ready-for-agent — filed 2026-10-15 from issue 533's step-0a read (the 1(a) re-decision judge, wf_18caa669-8aa,
+Status: ready-for-agent — unit 1 MEASURED 2026-10-15 (below): of a 2016–2023 public sample, 86 % of legacy results carry `DATE_CONCLUSION_CONTRACT` and all of them read `decided` NULL; 78 of their 82 `clos-nw` are winner-silent awards (≈ 12 % of the standard R2.0.9 results wrongly claim no award). Decided: build unit 2 (the projection fix) next — ahead of 533's build, which reads `clos-nw` — then size the refold. Next: unit 2.
 and the owner's confirmation on the public API and the committed fixtures). Next: unit 1, below.
 Kind: data quality (legacy TED results: `tender_version_lot_results.decided_*` and `decision`)
 Relates to:
@@ -39,6 +39,23 @@ Committed fixtures with `DATE_CONCLUSION_CONTRACT`: `r209/f03-000988-2019.xml`, 
   `TED-CONTRACT_NO 4600002099`, `TED-DATE_CONCLUSION_CONTRACT 2022-06-22`. Served: `clos-nw`, `decided null`.
 - Tender 8437184 (2019, a named winner): `selec-w`, `decided null` — the date is lost even when the outcome is right.
 - The neighbouring 2019 tenders 8437187–8437190 read the same `clos-nw`/null shape.
+
+## Unit 1 — measured (2026-10-15, public API sample)
+
+`sample_550.py` (session scratchpad): five TED Tenders with results per month, 2015-01 to 2023-08, every result block
+read on `/v1/notices/{id}/content` — 778 results in 329 Tenders.
+- 732 results are legacy-shaped. 632 (86 %) carry `TED-DATE_CONCLUSION_CONTRACT` (2016–2023), 40 carry the R2.0.8
+  `TED-CONTRACT_AWARD_DATE` (2015), 60 carry neither.
+- **All 632 read `decided` NULL** — the era has no award date (550 results `selec-w`, 82 `clos-nw`).
+- **78 of the 82 `clos-nw` are winner-silent awards**: `TED-AWARDED_CONTRACT` present, no `TED-NO_AWARDED_CONTRACT`, no
+  winner and no value. With the date read they read NULL under 257's rule. That is ≈ 12 % of the standard R2.0.9
+  results claiming "no award" for a concluded contract, spread evenly over 2016–2022.
+- Scaled to issue 255's 2,098,599 R2.0.9 award notices: on the order of 2 M results gain a date and a quarter-million
+  `clos-nw` become NULL — the size of 534's refold class, so the rollout needs its own sized refold in a queue gap.
+
+**Decision.** Build unit 2 now, ahead of 533's build: 533 closes an open head on an all-`clos-nw` result, and the
+projection fix is pure and cheap. The refold is a separate, sized step (unit 3); 533's own `refold-open-head` re-projects
+the open heads it touches, so 533 does not wait for the corpus refold.
 
 ## Units
 
