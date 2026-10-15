@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v8 DEPLOYED `1d95c22` 2026-10-15 ~19:0x UTC; dry plan 2526: 27,559 changes (R1 25,994, R2 1,564), holds recent 374 and residue 794, undated 0, 0 unexpected canaries. The DATED RE-JUDGE (wf_62b83a3d-26b, fresh samples) FAILS three bars: change:R1 2 of 30 wrong, change:R2 2 of 30, released 5 of 27 (every wrong skeptic-confirmed); hold:residue + the v7 releases v8 holds pass at the bar (2 harmful). No wet run under v8. NEXT: decide rule `524u2-v9` (evidence and candidates below: drop the digits release, a generic-name hold, a digits-added hold; R2's two wrongs are semantic singletons), then build, gate, deploy, re-plan, re-judge FRESH samples, canaries, capped 500, full.
+Status: ready-for-agent — RULE v9 DECIDED 2026-10-15 (`## Rule v9 — decided`, below; panel wf_5cca11b1-622: three designers, two adversarial judges) after plan 2526's dated re-judge failed three bars under v8. v9 adds five pure serve holds (review_body, organ, code_added, address_added, caps_variant), narrows the digits release (glue + junk-only), and pre-builds per-class wet-run filters (`exclude_rules`, `exclude_released`) so one failed list no longer stops the others. No DB read is added. NEXT: build (an agent, then a 3-lens review), gate, deploy, re-plan, the fresh dated re-judge, canaries, capped 500, full. No wet run under v8.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1233,3 +1233,109 @@ Pooled over plans 2523 and 2526: R1 2 of 60 wrong, R2 2 of 60. R1's two are stru
 added digits token; a generic name); R2's are semantic singletons that neither its vote statistics nor any token test
 measured so far separates from its 46 rights. The labelled set (both re-judges, final verdicts) and the measurements
 are kept with the evidence pack for the v9 decision.
+
+## Rule v9 — decided (2026-10-15, owner; panel wf_5cca11b1-622)
+
+Three designers (precision-first, recall-first, root-cause) each proposed and MEASURED a v9 on plan 2526's full plan
+JSON and the labelled set (both dated re-judges, final verdicts); two adversarial judges re-ran their numbers, read random
+plan entries each predicate touches, and ranked root-cause first, precision second. This adopts the judges' synthesis.
+Every piece is a pure function of (head, display, rule, keys), so the planner and the wet pre-pass agree by
+construction; **no DB read, index or fail-closed counter is added.** Epoch `524u2-v9`. Tokens: `T(s)` =
+`crosswalk::fold_diacritics(s)` split on every char that is not `char::is_alphanumeric`, empties dropped.
+
+**Serve holds** — one injected `crosswalk::head_serve_hold(old, new, r2) -> Option<&'static str>`, asked inside
+`serve()` for R1 and R2 only (R0 exempt) after `fns.hold` and `fns.r2_hold`; `recent`, `residue` and `undated` keep
+precedence. First match wins:
+1. **`review_body`.** `J(s) = " " + T(s).join(" ") + " "`; review_body(s) when J(s) contains `" "+p+" "` for some p in
+   REVIEW_PHRASES (folded): vergabekammer, vergabesenat, nachprufungsstelle, nachprufungsbehorde, bundesvergabeamt,
+   landesverwaltungsgericht, verwaltungsgericht, oberlandesgericht, krajowa izba odwolawcza, krajowej izby
+   odwolawczej, tribunal administratif, cour administrative d appel, conseil d etat, reglement amiable, tribunal
+   judiciaire, tribunal de grande instance, tar, t a r, tribunale amministrativo, consiglio di stato, recursos
+   contractuales, recursos contractuals, tribunal catala de contractes, tribunal administrativo central, tribunal
+   administrativo de contratos, tribunal administrativo de recursos, organo administrativo de recursos, tribunal
+   superior de justicia, juzgado de lo contencioso, raad van state, rechtbank, tribunal d affaires, commercial court,
+   solutionare a contestatiilor, solutionarea contestatiilor, klagenaevnet for udbud, markkinaoikeus,
+   forvaltningsratten, kammarratten, klagenemnda for offentlige anskaffelser, kozbeszerzesi dontobizottsag, urad pre
+   verejne obstaravanie, urad pro ochranu hospodarske souteze, kontrolu postupaka javne nabave, drzavna revizijska
+   komisija, zalbi po javni nabavki, комисия за защита на конкуренцията, αρχη εξετασης προδικαστικων προσφυγων, public
+   procurement review, high court, procurement review board. Hold when review_body(display) and NOT review_like(head):
+   review_like(head) = review_body(head), or the joined head contains a stem of {kammer, tribunal, trybunal, odwola,
+   izba, rechtbank, court, recurs, contencios, nachprufung, gericht, conseil d etat, amministrativ, administratif,
+   adminsitratif, amminitrativ, reglement amiable, ccira, ccra, kio, uzp, zamowien publicznych, contestatii,
+   klagenaevn, markkinaoikeus}, or starts with `ta `, `tar ` or `vk ` — so a review body's own self-rename still changes
+   (791 `Urząd Zamówień Publicznych Departament Odwołań` → `Krajowa Izba Odwoławcza`, V 28,725; 100 `TA de Toulouse`;
+   395 `Tribunal Adminsitratif d'Amiens`). Plan 2526: ~104 holds; 16 of 16 read another-entity (`Universitätsklinikum
+   Freiburg` → `Vergabekammer BW`, a prison → KIO).
+2. **`organ`.** organ_lead(s) when `T(s).join(" ")` equals or starts with (`p + " "`) some p in ORGAN_PHRASES (folded):
+   alcaldia, alcalde, alcaldesa, junta de gobierno, junta de govern, pleno, ple de, presidencia, presidente, rectorado,
+   rectorat de la universitat, vicerrectorado, consejo de administracion, consell d administracio, consejo de gobierno,
+   consell de govern, consejo rector, consell rector, gerencia, direccion general, direccion gerencia, direccion,
+   consejeria delegada, consejero delegado, concejalia, junta de contratacion, mesa de contratacion, mesa del, organo de
+   contratacion, comite ejecutivo, comision ejecutiva, secretaria general, magistrat der, der magistrat. Hold when
+   organ_lead(display) and NOT organ_lead(head); the reverse (canary 2762, organ head → entity) is never held. Plan
+   2526: 460 (R1 445, R2 15; ES 450); reads ~32 of 37 an organ or sub-unit for the entity. Known false-positive pocket
+   accepted: Castilla y León `Gerencia de Asistencia Sanitaria de X`.
+3. **`code_added`.** A = the ASCII-digit-only tokens of T(display) that do not occur in the head's alphanumeric stream
+   (lower-cased, folded, every non-alphanumeric removed, so `Pragma9` covers `9`). Hold when A ≠ ∅, some A token is in a
+   code position (inside `(…)`/`[…]`, joined by `_`, the last whitespace token, or a leading list number before `.`/`)`),
+   and `head_vote_key(display)` minus the A tokens equals `head_vote_key(head)` token for token. Plan 2526: 81 (mostly
+   French department codes, `(976)`); 0 right of 16 read.
+4. **`address_added`.** A as in 3. Hold when some A token lies in a `,`/`;` segment after the display's first, unless the
+   folded display contains a school stem {skol, jidel, jedal, gymnazi, internat, druzin} (CZ/SK schools carry their
+   seat by law: labelled rights 3377646, 4594482). Plan 2526: ~85; holds 8069375.
+5. **`caps_variant`.** All four: store's `all_caps(display)`; the head has an upper-case letter and a lower-case letter
+   that has a one-letter capital; C(head) = C(display) as non-empty multisets, C(s) = tokens of T(s) with ≥ 2 chars not
+   in FORM_WORDS (every `family_token` key, `R2_LEGAL_FORM_TOKENS`, and: sp spolka z ograniczona odpowiedzialnoscia
+   jawna komandytowa akcyjna cywilna partnerska komandytowo spzoo spj spk ska sa sl slu sau scarl scrl srl sarl sas sasu
+   eurl spa snc gmbh mbh ag kg ohg ug haftungsbeschrankt co ev ek eg ltd limited plc llp lp cic company bv nv vof cv ab
+   oy oyj abp as asa aps doo dd sro spol kft zrt nyrt bt korlatolt felelossegu tarsasag uab vsia sia societe anonyme
+   responsabilite limitee par actions simplifiee sociedad anonima limitada unipersonal societa per azioni
+   responsabilita lda unipessoal). An ALL-CAPS respelling of the same words over a mixed-case head. Plan 2526: ~290;
+   holds 16508165; both judges read ~0 right in it (cosmetic).
+
+**The digits release** (`recent_release`, both the window and the residue paths; the `unfit` arm unchanged):
+- **glue:** a digits-only head-key token t does not count when the elected key contains its neighbour glued to it
+  (prev+t or t+next) — `SMD 3` vs `smd3` is the name's own digit (holds 4295185, wrong; 6693098, 11087087 neutral);
+- **junk-only:** a digits release also needs |lost| ≤ 1, lost = the head-key tokens of ≥ 3 chars with no ASCII digit
+  absent from the elected key's tokens (the elected name is the head minus junk; one lost token lets an expanded acronym
+  through: `SDIS 49` → `Service départemental…`). Holds 1341, 9793, 9796, 9806, 9807, 9810, 9814, 9833, 9846, 9852,
+  9853, 15855816.
+- A withheld release returns to its v8 hold reason and is listed under a new counter `release_withheld` (ids). Plan
+  2526: releases 11 (labelled 10 right, 1 neutral), withheld 15 (labelled 5 wrong, 2 neutral, 8 right — the 8 forgone
+  right fixes are this decision's accepted cost, recorded, not pooled into any hold bar).
+
+**Per-class wet-run filters** (pre-built, tested in v9): wet-run args `exclude_rules` (e.g. `["R2"]`) and
+`exclude_released` (e.g. `["digits"]`) drop targets before the pre-pass — no re-plan, no parity question. Pre-committed
+use: if change:R2 fails the re-judge, every wet run passes `exclude_rules: ["R2"]` (R2 goes to 548, no refit inside 524
+unit 2); if `released` fails, `exclude_released: ["digits"]`. Only a change:R1 failure stops the run.
+
+**Rejected:** a `generic` hold (the only DB-read verdict; sized on 13 sample hits; the corpus name count measures
+duplicate rows, not genericness — `Urtica`, `Région Occitanie`); `r2_disjoint` (~65–70 % right); a broad `digits_added`
+(~50 % right beyond code/address; holds schools); dropping every digits release (forgoes 10 more rights for no extra
+wrong; kept as the `exclude_released` fallback); folding Polish spelled-out forms into the vote key (cancels 596 mostly
+good cosmetic changes); the root-cause form-spelling and structural-organ rules (superseded by caps_variant and the
+lexicon). The designers' own expected rates (fitted on the same 120 items) are not used as evidence.
+
+**Measured on plan 2526** (judges' Python ports): ~930 serve holds (≈3.4 % of R1, ≈2.6 % of R2) + 15 withheld releases.
+Labelled change lists: holds 8069375 (W) and 16508165 (W) and 2 neutrals; 0 labelled rights. Residual known wrongs:
+5350675 (a generic prefix drop) and 4123715 (a semantic R2 singleton). Expected fresh rates (judges): change:R1 1.5–2.5 %
+(P(pass) ≈ 0.6–0.9), change:R2 2–3 % (likely to trip; the R2 filter then fires).
+
+**Protocol after the build:**
+1. Gate (`ops/check.sh`, read GATE-EXIT); unit tests pin 22028982 review_body; 791, 100 and 1919 not held; 4065575 organ;
+   2762 not held; 17116440 code_added; 8069375 address_added; 3377646 and 4594482 not held; 16508165 caps_variant;
+   URTICA (caps → mixed) not held; 4295185 glue hold; 9814 junk-only hold; 3042 still released; 14971333 still released;
+   the wet-run filters; `head_vote_key`, `family_token` and `NAME_KEY_EPOCH` unchanged.
+2. Deploy in a queue gap; re-plan (full walk). Go: undated 0; 0 unexpected canaries (new: hold:review_body 22028982,
+   hold:organ 4065575, hold:code_added 17116440, hold:address_added 8069375, hold:caps_variant 16508165; change:R1 791;
+   4295185 and 9814 back under their v8 reasons; 3042 released; the existing 30 keep theirs); each new `by_hold` within
+   ±10 % (floor ±10) of plan 2526's deterministic counts above, a larger gap being a port bug to reconcile first.
+3. Fresh dated re-judge, a skeptic on every wrong/harmful. The uniform sample is a fixed hash, so the plan SALTS its
+   sample key with the epoch (or the re-judge skips every org in the labelled set and every id the panel read):
+   change:R1 30 (≤ 1 wrong; fail → stop and re-decide); change:R2 30 (≤ 1; fail → `exclude_rules: ["R2"]`); released,
+   every entry (≤ 1; fail → `exclude_released: ["digits"]`); the new serve holds, 30 stratified (organ 12, review_body
+   6, code_added 4, address_added 4, caps_variant 4) as a COST REPORT, not a gate — a reason reading more right than
+   wrong goes to 548 for narrowing, never released inside v9. hold:recent and hold:residue are unchanged and not
+   re-judged.
+4. Canaries wet run, capped 500 with a dated spot check (0 former-name reverts, ≤ 1 other wrong), full — each with the
+   filters the re-judge fired.
