@@ -16,7 +16,7 @@ for Lithuania, `EL` for Greece, `UK` for the United Kingdom.
 - Only for the NUTS countries: the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania,
   Montenegro, North Macedonia, Serbia and Türkiye. A place in any other country (Egypt, the USA), or given as an
   overseas region's own ISO code (Réunion, Åland), carries none. A later notice that restates a place that way clears
-  the code that place carried from an earlier notice, so the tender does not keep serving the earlier country.
+  the level-0 code that the same procedure or lot derived from an earlier notice.
 - In `classifications[]` and on `/v1/sql` the row is scheme `nuts`, field `place_country`. Rows of field `place` are
   unchanged and still hold the NUTS codes as published.
 

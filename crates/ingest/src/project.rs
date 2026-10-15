@@ -6642,6 +6642,14 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
 /// whose notice republished its place country as something [`place_country`] does
 /// not map (EGY, XKX, an alpha-2) clears the code it carried, flagged by
 /// [`NoticeState::place_country_tender`] / [`NoticeState::place_country_lots`].
+/// That clear is per scope, so two more misses are accepted beside the one above:
+/// - a republish clears only its own scope's code (fold case (k)): a procedure
+///   `DEU` stays when a later notice restates only a lot as `EGY`, and vice versa;
+/// - a PIN's Part never clears. Its `PAR-…` lot stays in every later version (issue
+///   507: the fold never drops a lot), and a CN restates the place under its own
+///   `LOT-…` keys, so a Part's derived code carries beside the CN's: PIN `PAR-0001`
+///   `DEU`, then a country-only CN with `LOT-0001` `AUT`, serves `[AT, DE]`, and with
+///   `LOT-0001` `EGY` still `[DE]`. Before issue 532 both served `[]`.
 fn drop_place_country_beside_nuts(facts: &mut BTreeSet<Fact>, lots: &mut [LotState]) {
     let other_nuts = |f: &Fact| {
         matches!(f, Fact::Classification { field, scheme, .. } if scheme == "nuts" && field != PLACE_COUNTRY_FIELD)
@@ -11341,6 +11349,14 @@ mod tests {
         fn nuts(section: &str, field: &str, ordinal: i64, code: &str) -> store::ValueRow {
             classification_value(section, field, ordinal, "nuts", code)
         }
+        fn code_value(section: &str, field: &str, ordinal: i64, code: &str) -> store::ValueRow {
+            store::ValueRow {
+                section_id: section.into(),
+                field_id: field.into(),
+                ordinal,
+                value: store::NoticeValue::Code { list: None, code: code.into() },
+            }
+        }
         fn notice(id: i64, values: Vec<store::ValueRow>) -> NoticeState {
             let parsed = Parsed {
                 sections: vec![
@@ -11434,10 +11450,12 @@ mod tests {
         let i = notice(1, vec![nuts("PROCEDURE", "BT-5071-Procedure", 0, "NL329"), country("LOT-1", "BT-5141-Lot", 1, "BEL")]);
         assert_eq!(each(&fold(&[&i])), vec![s(&["NL329"])], "(i)");
 
-        // (j) review: a same-scope republish that maps to nothing — a third country,
-        // an alpha-2 — clears the carried code instead of leaving the earlier
-        // notice's country standing. At both scopes, and through the bucketed path's
-        // snapshot and rebuild, which must carry the flag.
+        // (j) review: a same-scope republish replaces the carried code — with its own
+        // level-0 code when it maps (AUT), with nothing when it does not (a third
+        // country, an alpha-2) — instead of leaving the earlier notice's country
+        // standing. So the clear runs BEFORE the scope's supersede. At both scopes,
+        // and through the bucketed path's snapshot and rebuild, which must carry the
+        // flag.
         let through_bucket = |state: NoticeState| {
             let notice = store::NoticeRef {
                 id: state.notice_id,
@@ -11448,22 +11466,39 @@ mod tests {
             BucketRow::snapshot("group".into(), &notice, state).to_notice_state()
         };
         for (section, field) in [("PROCEDURE", "BT-5141-Procedure"), ("LOT-1", "BT-5141-Lot")] {
-            for unmapped in ["EGY", "AT"] {
+            for (republished, then) in [("EGY", Vec::new()), ("AT", Vec::new()), ("AUT", s(&["AT"]))] {
                 let cn = notice(1, vec![country(section, field, 0, "DEU")]);
-                let can = notice(2, vec![country(section, field, 0, unmapped)]);
-                assert_eq!(each(&fold(&[&cn, &can])), vec![s(&["DE"]), vec![]], "(j) {field} DEU then {unmapped}");
+                let can = notice(2, vec![country(section, field, 0, republished)]);
+                let want = vec![s(&["DE"]), then.clone()];
+                assert_eq!(each(&fold(&[&cn, &can])), want, "(j) {field} DEU then {republished}");
                 let (cn, can) = (through_bucket(cn), through_bucket(can));
-                assert_eq!(each(&fold(&[&cn, &can])), vec![s(&["DE"]), vec![]], "(j) bucketed, {field} then {unmapped}");
+                assert_eq!(each(&fold(&[&cn, &can])), want, "(j) bucketed, {field} DEU then {republished}");
             }
-            // (k) a notice silent on BT-5141 still carries the code, as in (h); one
-            // that republishes at the OTHER scope clears only its own.
+            // (k) a notice silent on BT-5141 still carries the code, as in (h) — though
+            // it publishes other Codes at both scopes, so only a place-country value
+            // flags a scope.
             let cn = notice(1, vec![country(section, field, 0, "DEU")]);
-            let silent = notice(2, vec![classification_value("PROCEDURE", "BT-262-Procedure", 0, "cpv", "45000000")]);
-            assert_eq!(each(&fold(&[&cn, &silent])), vec![s(&["DE"]), s(&["DE"])], "(k) {field}");
+            let silent = notice(
+                2,
+                vec![
+                    classification_value("PROCEDURE", "BT-262-Procedure", 0, "cpv", "45000000"),
+                    code_value("PROCEDURE", "BT-23-Procedure", 1, "works"),
+                    code_value("LOT-1", "BT-23-Lot", 2, "works"),
+                ],
+            );
+            assert_eq!(each(&fold(&[&cn, &silent])), vec![s(&["DE"]), s(&["DE"])], "(k) {field}, silent beside BT-23");
         }
+        // (k) a republish clears only its own scope's code, in both directions.
         let cn = notice(1, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "DEU")]);
         let lot_only = notice(2, vec![country("LOT-1", "BT-5141-Lot", 0, "EGY")]);
-        assert_eq!(each(&fold(&[&cn, &lot_only])), vec![s(&["DE"]), s(&["DE"])], "(k) another scope's republish");
+        assert_eq!(each(&fold(&[&cn, &lot_only])), vec![s(&["DE"]), s(&["DE"])], "(k) a lot republish keeps the procedure's");
+        let cn = notice(1, vec![country("LOT-1", "BT-5141-Lot", 0, "DEU")]);
+        let procedure_only = notice(2, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "EGY")]);
+        assert_eq!(
+            each(&fold(&[&cn, &procedure_only])),
+            vec![s(&["DE"]), s(&["DE"])],
+            "(k) a procedure republish keeps the lot's"
+        );
 
         // The derived row is its own field, so the published NUTS keeps `place`.
         let v = &fold(&[&notice(1, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "GRC")])])[0];

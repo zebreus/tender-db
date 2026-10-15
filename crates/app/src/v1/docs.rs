@@ -1605,8 +1605,16 @@ mod tests {
     /// countries (or under an overseas region's own code) carries none, and, until
     /// unit 3's refold, that a tender folded before the change does not have it yet.
     /// Read from the `country` row and the openapi `country` parameter, not the
-    /// whole surface. One phrase per sentence. The refold pin moves to RETIRED when
-    /// the refold has run.
+    /// whole surface. One phrase per sentence.
+    ///
+    /// The pre-refold caveat sits in FIVE places: those two, plus three short
+    /// clauses tagged `(issue-532 refold)` in openapi `Tender.country`, the
+    /// classifications `place_country` clause and the `/v1/sql/schema` field note.
+    /// When unit 3's refold has run, all five go, and RETIRED gets
+    /// `"issue-532 refold"`: `no_served_surface_repeats_a_retired_claim` matches
+    /// case-sensitively on the squashed text WITH its markup, so a pin below (which
+    /// is in `plain()` form) cannot be copied there as it stands. The last loop
+    /// proves that fragment reaches all five today.
     #[test]
     fn the_docs_say_a_country_only_place_is_served_as_its_nuts_level_0_code() {
         let start = PAGE.find("<td class=\"ep\">country</td>").expect("/docs has a country filter row");
@@ -1627,6 +1635,33 @@ mod tests {
                     "until the issue-532 refold has run, a tender folded before this change still serves country: []",
                 ],
             );
+        }
+        // The three short caveats, each pinned by its own clause.
+        let tender_country = spec["components"]["schemas"]["Tender"]["properties"]["country"]["description"]
+            .as_str()
+            .expect("Tender.country is described");
+        let classifications = spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"]["classifications"]
+            ["description"]
+            .as_str()
+            .expect("TenderDetail.classifications is described");
+        let note = crate::v1::sql::column_note("tender_version_classifications", "field")
+            .expect("tender_version_classifications.field has a /v1/sql/schema note");
+        for (surface, text, clause) in [
+            ("Tender.country", tender_country, "a tender folded before that change has no such code yet (issue-532 refold)"),
+            (
+                "TenderDetail.classifications",
+                classifications,
+                "a version folded before that change has no place_country row yet (issue-532 refold)",
+            ),
+            ("/v1/sql/schema tender_version_classifications.field", note, "a version folded before it has none yet (issue-532 refold)"),
+        ] {
+            assert_says(surface, text, &[clause]);
+        }
+        // Unit 3's RETIRED entry, in the walk's own form, reaches all five caveats.
+        for (surface, text) in
+            [("/docs", docs), ("/v1/openapi.json", openapi), ("Tender.country", tender_country), ("TenderDetail.classifications", classifications), ("/v1/sql/schema", note)]
+        {
+            assert!(squash(text).contains("issue-532 refold"), "{surface}: the RETIRED fragment must match its caveat");
         }
     }
 }
