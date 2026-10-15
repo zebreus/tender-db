@@ -140,7 +140,9 @@ ids, so re-run the bounded identifier read first:
     # so a larger number means drift or an over-reach — read the plan before going wet.
     /root/aj.sh /admin/jobs '{"kind":"repair-placeholder-orgs","dry_run":false}'
     /root/aj.sh /admin/jobs '{"kind":"project","rebuild":false}'
-    /root/aj.sh /admin/jobs '{"kind":"backfill-org-name-variants"}'
+    # (2026-10-14 this step was: backfill-org-name-variants, a whole-corpus walk — job 2491, 3.3 h.)
+    # No walk on a re-run: since issue 542 unit 2 the dissolve re-derives its re-bound orgs' name variants itself.
+    # Read it in the wet job's summary: "… name variants re-derived over N re-bound org passes".
 
 Then run the Verify (0 rows, or the org is gone). Also read where 46800936's and 46818757's mentions landed.
 
@@ -169,8 +171,8 @@ guard 3 would keep an identified `Individual` and drop a bare one. Measure the c
 - **Wet run 2489.** 3 dissolved, 7 mentions re-resolved (2 fresh provisionals, 5 reused), 27 party rows, 31 bid-party
   rows, 31 winner rows (2 duplicates removed), 0 skipped, 5 tenders touched.
 - **Follow-up jobs.** Project 2490 had nothing pending. Backfill-org-name-variants 2491 started; it is a whole-corpus
-  walk for these 7 mentions, could not be cancelled (409) and holds the queue for hours. Issue 542 makes it stoppable
-  and resumable, and owns scoping this runbook step.
+  walk for these 7 mentions, could not be cancelled (409), and held the queue for 3.3 h (ok at 01:46 UTC). Issue 542
+  made it stoppable and resumable, and its unit 2 removes this runbook step.
 - **Verify:** `SELECT count(*) … organization_id IN (30914328, 31548264)` reads 0, and both rows are gone.
 - **Where the mentions landed** (bounded reads):
 

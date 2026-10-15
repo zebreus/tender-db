@@ -1,6 +1,7 @@
 # 529 — FTS `Individual` suppliers bind by a shared name or by a buyer's PPON
 
-Status: ready-for-agent — filed 2026-10-14 from issue 522 unit 1's reads. Next: the measure step (below).
+Status: ready-for-agent — filed 2026-10-14 from issue 522 unit 1's reads. Unit 1 MEASURED 2026-10-15 (job 2493,
+below). Next: the unit-2 and unit-3 decisions, from that reading.
 Kind: data quality (organization identity)
 Relates to:
 - 522 (the s.94 placeholder PPONs stop keying, so their `Individual`s bind by name);
@@ -57,3 +58,24 @@ Two problems follow:
 3. **Decide the buyer-PPON case separately.** A guard needs to know that a PPON is a buyer's, for example an
    `Individual`-named mention whose identifier's org serves only buyer roles. Size it from unit 1 before building
    anything.
+
+## Unit 1 — measured (2026-10-15, job 2493)
+
+`name-phrase-census {"phrases":["individual"],"mentions":true}` walked 5,676,483 organization names and 49,671,073
+mention names in 54 s, and reached 290 orgs.
+- **The census matches substrings.** 286 of the 290 are legitimate names that contain the word. Examples: Romania's
+  `Cabinet Medical (Veterinar) Individual …` sole-practice names (RO, 119 orgs), `Individual Centred Care` (GB, 43
+  winner mentions), `Individual Computer Applications AB` (SE). Any rule here must match the WHOLE name only.
+- **Whole-name `Individual`: 4 orgs.**
+
+  | org | identifier | mentions | roles | shape |
+  | --- | --- | --- | --- | --- |
+  | 18934187 GH | `P0004469968` | 2 | winner 1 | identified, named `Individual` itself |
+  | 31570158 GB | `GBPPONPMGL5552GJZX` | 1 | none | identified, named `Individual` itself |
+  | 31966280 GB | none (provisional) | 4 | Tenderer 1 (one tender) | 522's residual: the s.94 slots bound by name |
+  | 30913706 GB, UK Research & Innovation | `GBPPONPDQJ7126JDHG` | 3,548 (some named `Individual`) | Procedure-Buyer 2,696, Tenderer 4 | the buyer-PPON case: an `Individual` mention carries UKRI's PPON |
+
+- **Sizes for the decisions.** The bare-name class (unit 2) is one org with 4 mentions today. It grows with every s.94
+  sole trader FTS publishes. The buyer-PPON class (unit 3) is one PPON, and it serves UKRI as a bidder on 4 tenders.
+- `BLANK_WHOLE` with guard 3 would drop 31966280's 4 mentions and keep the two identified orgs. It would NOT fix
+  UKRI: guard 3 keeps an `Individual` with an admitted identifier, and the PDQJ PPON is admitted.

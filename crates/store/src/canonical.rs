@@ -457,10 +457,13 @@ pub(crate) const SCHEMA: &str = "
     -- ADR-0013 D4: every language variant of an Organization's name, ONE
     -- satellite beside the single designated `organizations.name` head. Grows
     -- with orgs × languages actually published. Written by the mention
-    -- resolver for newly recorded mentions; latest variant per language wins
-    -- (org names are current-state, not versioned — the value-first
-    -- supersession bar applies to tender texts, not here). Issue 300's
-    -- cross-language matcher reads this; nothing else does yet.
+    -- resolver for newly recorded and refreshed mentions, by the issue-307
+    -- backfill walk, and by the issue-542 re-derivation a dissolve runs for the
+    -- orgs it re-binds; latest variant per language wins (org names are
+    -- current-state, not versioned — the value-first supersession bar applies
+    -- to tender texts, not here). Read by issue 300's cross-language matcher
+    -- and by the resolver's name-agreement evidence, both as the union of an
+    -- org's names.
     CREATE TABLE IF NOT EXISTS organization_names (
         org_id    INTEGER NOT NULL REFERENCES organizations(id),
         lang      TEXT NOT NULL, -- ISO 639-2/T uppercase (ADR-0013 D1)
@@ -5257,6 +5260,32 @@ pub struct OrgDissolve {
     /// the stamped tenders' full chains (the pair's requeue half).
     pub refold_notices: u64,
     pub tender_changes: u64,
+    /// Issue 542: the orgs the re-resolved mentions landed on, whose
+    /// `organization_names` rows the window re-derived inside its own transaction.
+    /// A dissolved org's rows die with it, so without this a dissolve needed the
+    /// whole-corpus `backfill-org-name-variants` walk after it (3.3 h, job 2491).
+    /// In a dry run this is an upper bound: distinct reused targets plus one per
+    /// fresh mint the dry run counts.
+    pub variant_orgs: u64,
+    /// Satellite rows those re-derivations wrote (REPLACE). 0 in a dry run.
+    pub variants_written: u64,
+}
+
+/// Issue 542: the per-org read of the dissolve's name-variant re-derivation, one bound
+/// org id then `fields` name-field ids. `CROSS JOIN` fixes the mentions as the outer
+/// loop (issue 421's form): the org's mentions through `organization_mentions_org`,
+/// then each section's texts through the `notice_texts` primary key. It runs inside a
+/// write transaction, so the plan is pinned (`store/tests/placeholder_dissolve.rs`).
+/// Values are raw `notice_texts.value`, as the issue-307 walk writes them.
+pub fn org_name_rederive_sql(fields: usize) -> String {
+    format!(
+        "SELECT om.notice_id, om.section_id, nt.lang, nt.value \
+           FROM organization_mentions om \
+          CROSS JOIN notice_texts nt ON nt.notice_id = om.notice_id AND nt.section_id = om.section_id \
+          WHERE om.organization_id = ? AND nt.lang IS NOT NULL AND nt.field_id IN ({}) \
+          ORDER BY om.notice_id, om.section_id, nt.field_id, nt.ordinal",
+        placeholders(fields)
+    )
 }
 
 /// One window of the issue-443 orphan sweep. Totals are summed across windows
@@ -37950,17 +37979,24 @@ impl Db {
     /// notice, and through the tier-2 party-role disambiguation (issue 309)
     /// when it has several: the mention with the version's sole non-buyer
     /// party row is the winner side. An org with any unresolvable winner row
-    /// is SKIPPED WHOLE
+    /// would be SKIPPED WHOLE
     /// (counted, untouched — the 259 guard discipline: fully dissolved or
-    /// not at all, never half). The org's satellite rows die with it; the
-    /// idempotent `backfill-org-name-variants` walk repopulates variants for
-    /// the new bindings afterwards (the 307 re-run note). This deliberate
+    /// not at all, never half); since tier 5 (issue 309) deletes such rows for the
+    /// refold, no shape skips and `skipped` stays as a tripwire. A dissolved org's
+    /// satellite rows die with it. The window
+    /// then re-derives the `organization_names` rows of every org its mentions
+    /// landed on, from all of that org's recorded mentions and inside the same
+    /// transaction (issue 542, [`OrgDissolve::variant_orgs`]), so no whole-corpus
+    /// `backfill-org-name-variants` walk has to follow. `fields` and `normalize` are
+    /// that walk's name-field list and language normaliser; both live in ingest. This deliberate
     /// binding rewrite is a REPAIR under the 259 precedent — merges never
     /// re-route mentions. Dissolved orgs leave the scan's scope, so a rerun
     /// redoes nothing. `dry_run` counts and writes nothing.
     pub async fn repair_placeholder_orgs_batch(
         &self,
         condemns: fn(Option<&str>, &str, &str) -> bool,
+        fields: &[&str],
+        normalize: fn(Option<&str>) -> Option<String>,
         batch: i64,
         after: i64,
         dry_run: bool,
@@ -38005,6 +38041,7 @@ impl Db {
             let mut touched: BTreeSet<i64> = BTreeSet::new();
             let mut changed_targets: BTreeSet<i64> = BTreeSet::new();
             let mut refold: BTreeSet<i64> = BTreeSet::new();
+            let mut rebound: BTreeSet<i64> = BTreeSet::new();
             match self
                 .dissolve_condemned(
                     &conn,
@@ -38015,6 +38052,7 @@ impl Db {
                     &mut touched,
                     &mut changed_targets,
                     &mut refold,
+                    &mut rebound,
                 )
                 .await
             {
@@ -38069,6 +38107,21 @@ impl Db {
                     return Err(e);
                 }
             }
+            // Issue 542: the re-bound orgs' name variants, in this transaction, so a
+            // window that commits its dissolve has also re-derived them (a failed or
+            // restarted run cannot leave them missing).
+            if dry_run {
+                report.variant_orgs = rebound.len() as u64 + report.fresh;
+            } else {
+                report.variant_orgs = rebound.len() as u64;
+                match Self::rederive_org_name_variants(&conn, fields, normalize, &rebound).await {
+                    Ok(n) => report.variants_written = n,
+                    Err(e) => {
+                        let _ = conn.execute("ROLLBACK", ()).await;
+                        return Err(e);
+                    }
+                }
+            }
             if !dry_run {
                 for &tid in &touched {
                     if let Err(e) = append_change(&conn, "tender", tid, None, "changed", now).await
@@ -38094,6 +38147,58 @@ impl Db {
         }
     }
 
+    /// Issue 542: re-derive each listed org's `organization_names` rows from ALL its
+    /// recorded mentions, as the issue-307 walk would leave them: per mention, the
+    /// first labelled text per language in `notice_texts` key order (field, then
+    /// ordinal); across mentions, the latest (notice, section) carrying a language
+    /// wins. REPLACE, so a language with no labelled text keeps whatever row it has.
+    /// Orgs that are not listed are never touched, including others mentioned on the
+    /// same notices. Runs on the caller's connection, inside its transaction.
+    async fn rederive_org_name_variants(
+        conn: &Connection,
+        fields: &[&str],
+        normalize: fn(Option<&str>) -> Option<String>,
+        orgs: &BTreeSet<i64>,
+    ) -> turso::Result<u64> {
+        if orgs.is_empty() || fields.is_empty() {
+            return Ok(0);
+        }
+        let sql = org_name_rederive_sql(fields.len());
+        let mut written = 0u64;
+        for &org in orgs {
+            let mut params: Vec<Value> = vec![Value::Integer(org)];
+            params.extend(fields.iter().map(|f| t(*f)));
+            let mut latest: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
+            let mut section: Option<(i64, String)> = None;
+            let mut seen: Vec<String> = Vec::new();
+            let mut rows = conn.query(&sql, params).await?;
+            while let Some(row) = rows.next().await? {
+                let key = (int(&row, 0), text(&row, 1));
+                if section.as_ref() != Some(&key) {
+                    section = Some(key);
+                    seen.clear();
+                }
+                let Some(lang) = normalize(opt_text_of(&row, 2).as_deref()) else { continue };
+                if !seen.contains(&lang) {
+                    seen.push(lang.clone());
+                    latest.insert(lang, text(&row, 3));
+                }
+            }
+            drop(rows);
+            for (lang, name) in latest {
+                let norm = name.to_lowercase();
+                conn.execute(
+                    "INSERT OR REPLACE INTO organization_names(org_id, lang, name, name_norm) \
+                     VALUES(?, ?, ?, ?)",
+                    (Value::Integer(org), t(&lang), t(&name), Value::Text(norm)),
+                )
+                .await?;
+                written += 1;
+            }
+        }
+        Ok(written)
+    }
+
     /// The per-org half of [`Self::repair_placeholder_orgs_batch`], separated
     /// so the caller can ROLLBACK on any error.
     #[allow(clippy::too_many_arguments)]
@@ -38107,6 +38212,7 @@ impl Db {
         touched: &mut BTreeSet<i64>,
         changed_targets: &mut BTreeSet<i64>,
         refold: &mut BTreeSet<i64>,
+        rebound: &mut BTreeSet<i64>,
     ) -> turso::Result<()> {
         for &loser in condemned {
             // The org's recorded mentions, and its winner rows up front — the
@@ -38508,6 +38614,9 @@ impl Db {
                 };
                 section_target.insert((*notice, section.clone()), target);
                 report.mentions += 1;
+                if target != 0 {
+                    rebound.insert(target);
+                }
                 if !dry_run {
                     conn.execute(
                         "UPDATE organization_mentions SET organization_id = ? \

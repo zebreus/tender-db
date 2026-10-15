@@ -16,6 +16,17 @@ fn bad(_country: Option<&str>, _kind: &str, value: &str) -> bool {
     value == "BAD"
 }
 
+/// The name fields and language normaliser the job passes from ingest (issue 542).
+const FIELDS: &[&str] = &["TED-OFFICIALNAME"];
+
+fn normalize(lang: Option<&str>) -> Option<String> {
+    match lang?.to_ascii_uppercase().as_str() {
+        "DE" | "DEU" => Some("DEU".into()),
+        "FR" | "FRA" => Some("FRA".into()),
+        other => Some(other.to_owned()),
+    }
+}
+
 async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("{path}{s}"));
@@ -302,7 +313,7 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     let (db, conn) = seed("test-dissolve.db").await;
 
     // Dry-run: full preview, nothing written.
-    let (dry, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, true).await.expect("dry");
+    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, true).await.expect("dry");
     assert_eq!((dry.scanned, dry.condemned), (8, 7), "50, 51, 53-57 condemned, 52 clean");
     assert_eq!((dry.parties, dry.bid_parties), (5, 1), "dry run previews the blast radius");
     assert_eq!(
@@ -311,6 +322,8 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
         "51 t5 refold; 53 t2; 54 t3; 55 t4 descent; 56 t4b origin; 57 t4c roles"
     );
     assert_eq!(dry.mentions, 14, "50:3 + 51:2 + 53:2 + 54:1 + 55:2 + 56:2 + 57:2");
+    assert_eq!(dry.variant_orgs, 14, "issue 542: 60 reused + 13 fresh mints, an upper bound");
+    assert_eq!(dry.variants_written, 0, "dry run writes no name variants");
     assert_eq!((dry.fresh, dry.reused), (13, 1), "all named fresh but Alpha City reuses 60");
     assert_eq!(
         (dry.winners_deleted, dry.refold_tenders, dry.refold_notices),
@@ -327,7 +340,7 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     );
 
     // Wet run.
-    let (wet, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, false).await.expect("wet");
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, false).await.expect("wet");
     assert_eq!((wet.dissolved, wet.skipped), (7, 0));
     assert_eq!((wet.fresh, wet.reused), (13, 1));
     assert_eq!((wet.parties, wet.bid_parties), (5, 1));
@@ -339,6 +352,8 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
         "preview-exact: the wet tier-5 counts match the dry ones"
     );
     assert_eq!(wet.tender_changes, 7, "tenders 1-7 all touched — 2 via the tier-5 delete");
+    assert_eq!(wet.variant_orgs, 14, "issue 542: 60 plus the 13 fresh provisionals");
+    assert_eq!(wet.variants_written, 0, "this seed carries no labelled name texts");
 
     // Org 50 is gone; 51 dissolved via tier 5; the Alpha City mention sits on
     // 60; Beta Corp and the nameless mention sit on fresh provisionals.
@@ -481,6 +496,193 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 57").await, 0);
 
     // A rerun finds every dissolved org gone: only clean 52 stays in scope.
-    let (again, _) = db.repair_placeholder_orgs_batch(bad, 10_000, 0, false).await.expect("rerun");
+    let (again, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, false).await.expect("rerun");
     assert_eq!((again.condemned, again.dissolved, again.skipped), (0, 0, 0));
+}
+
+/// Issue 542: a wet window re-derives the name variants of every org its mentions landed
+/// on, from all of that org's mentions and inside its own transaction, so no
+/// whole-corpus `backfill-org-name-variants` walk has to follow. Orgs it did not
+/// re-bind keep their rows, even when they are mentioned on a re-bound notice.
+#[tokio::test]
+async fn the_dissolve_rederives_the_name_variants_of_the_orgs_it_rebinds() {
+    let path = "test-dissolve-variants.db";
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+
+    // 70 merges two strangers under a condemned identifier; 80 is the standing
+    // provisional "Alpha City" must reuse; 90 is a clean org co-mentioned on notice 100.
+    for (id, ident, name, prov) in
+        [(70, Some("BAD"), "Merger", 0), (80, None, "Alpha City", 1), (90, Some("12345678"), "Co Org", 0)]
+    {
+        conn.execute(
+            "INSERT INTO organizations (id, country, name, name_norm, provisional, identifier_kind, identifier, created_at)
+             VALUES (?, 'CZ', ?, ?, ?, CASE WHEN ? IS NULL THEN NULL ELSE 'national' END, ?, 0)",
+            (
+                Value::Integer(id),
+                Value::Text(name.into()),
+                Value::Text(name.to_lowercase()),
+                Value::Integer(prov),
+                ident.map_or(Value::Null, |s| Value::Text(s.into())),
+                ident.map_or(Value::Null, |s| Value::Text(s.into())),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+    // Inserted out of key order on purpose, so rowid order cannot stand in for the
+    // (notice, section) order the re-derivation must apply.
+    for (nid, sid, org, name) in [
+        // 80's own LATER mention: its text, not notice 100's, is the one the walk leaves.
+        (900, "S-1", 80, "Alpha City"),
+        (100, "S-1", 70, "Alpha City"),
+        (101, "S-1", 70, "Beta Corp"),
+        (100, "S-2", 90, "Co Org"),
+    ] {
+        conn.execute(
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country)
+             VALUES (?, ?, ?, ?, 'CZ')",
+            (Value::Integer(nid), Value::Text(sid.into()), Value::Integer(org), Value::Text(name.into())),
+        )
+        .await
+        .unwrap();
+    }
+    for (nid, sid, ord, lang, value) in [
+        (900, "S-1", 0, Some("DE"), "Alpha City Later"),
+        (100, "S-1", 0, Some("DE"), "Alpha City Alt"),
+        // Two French texts on one section, the later ordinal inserted first: the first
+        // one in key order (field, then ordinal) wins, not the first row written.
+        (101, "S-1", 1, Some("FR"), "Beta Second"),
+        (101, "S-1", 0, Some("FR"), "Beta Corp SA"),
+        (101, "S-1", 2, None, "Beta Unlabelled"),
+        (100, "S-2", 0, Some("DE"), "Co Org Old"),
+    ] {
+        conn.execute(
+            "INSERT INTO notice_texts (notice_id, section_id, field_id, ordinal, lang, value)
+             VALUES (?, ?, 'TED-OFFICIALNAME', ?, ?, ?)",
+            (
+                Value::Integer(nid),
+                Value::Text(sid.into()),
+                Value::Integer(ord),
+                lang.map_or(Value::Null, |l| Value::Text(l.into())),
+                Value::Text(value.into()),
+            ),
+        )
+        .await
+        .unwrap();
+    }
+    // 80's FRA row has no labelled text behind it: REPLACE never deletes, so it stays.
+    for (org, lang, name) in [
+        (70, "DEU", "Merger"),
+        (90, "DEU", "Co Org Current"),
+        (80, "DEU", "Alpha City Old"),
+        (80, "FRA", "Ville Alpha"),
+    ] {
+        conn.execute(
+            "INSERT INTO organization_names (org_id, lang, name, name_norm) VALUES (?, ?, ?, ?)",
+            (Value::Integer(org), Value::Text(lang.into()), Value::Text(name.into()), Value::Text(name.to_lowercase())),
+        )
+        .await
+        .unwrap();
+    }
+
+    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, true).await.expect("dry");
+    assert_eq!((dry.condemned, dry.mentions, dry.fresh, dry.reused), (1, 2, 1, 1));
+    assert_eq!((dry.variant_orgs, dry.variants_written), (2, 0), "80 reused + one fresh mint, nothing written");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_names").await, 4, "dry run wrote nothing");
+
+    // The re-derivation commits with its window or not at all: a change event that fails
+    // AFTER it (80 is reused, so its `changed` event follows the re-derivation) rolls the
+    // whole window back, satellite writes included.
+    conn.execute(
+        "CREATE TRIGGER t542 BEFORE INSERT ON changes WHEN NEW.entity_kind = 'organization' AND NEW.op = 'changed'
+         BEGIN SELECT RAISE(ABORT, 'fixture: the change feed refuses'); END",
+        (),
+    )
+    .await
+    .unwrap();
+    let err = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, false).await.expect_err("refused");
+    assert!(err.to_string().contains("fixture: the change feed refuses"), "{err}");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 3, "70 still stands, nothing minted");
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organization_names WHERE org_id = 80 AND lang = 'DEU' AND name = 'Alpha City Old'").await,
+        1,
+        "the re-derivation rolled back with the window"
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_names").await, 4);
+    conn.execute("DROP TRIGGER t542", ()).await.unwrap();
+
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, false).await.expect("wet");
+    assert_eq!((wet.dissolved, wet.mentions), (1, 2));
+    assert_eq!((wet.variant_orgs, wet.variants_written), (2, 2), "80's DEU and Beta's FRA");
+    let beta = count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 101").await;
+    assert!(beta > 90, "Beta Corp minted fresh (id {beta})");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_names WHERE org_id = 70").await, 0, "died with 70");
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organization_names WHERE org_id = 80 AND lang = 'DEU' AND name = 'Alpha City Later'").await,
+        1,
+        "the reused target keeps its latest notice's text, not the re-bound notice's"
+    );
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organization_names WHERE org_id = 80 AND lang = 'FRA' AND name = 'Ville Alpha'").await,
+        1,
+        "a language with no labelled text keeps its row"
+    );
+    assert_eq!(
+        count(&conn, &format!("SELECT COUNT(*) FROM organization_names WHERE org_id = {beta} AND lang = 'FRA' AND name = 'Beta Corp SA'")).await,
+        1
+    );
+    assert_eq!(count(&conn, &format!("SELECT COUNT(*) FROM organization_names WHERE org_id = {beta}")).await, 1);
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM organization_names WHERE org_id = 90 AND name = 'Co Org Current'").await,
+        1,
+        "a co-mentioned org the dissolve did not re-bind is left alone"
+    );
+
+    drop(conn);
+    drop(db);
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+/// Issue 542: the re-derivation's per-org read runs inside a dissolve window's write
+/// transaction, so its plan is pinned: the org's mentions through
+/// `organization_mentions_org`, each section's texts through the `notice_texts` primary
+/// key, never a walk of either table.
+#[tokio::test]
+async fn the_name_variant_rederivation_seeks_both_indexes() {
+    let (db, _conn) = seed("test-dissolve-plan.db").await;
+    let sql = store::canonical::org_name_rederive_sql(1)
+        .replace("om.organization_id = ?", "om.organization_id = 50")
+        .replace("IN (?)", "IN ('TED-OFFICIALNAME')");
+    assert!(!sql.contains('?'), "every parameter is inlined: {sql}");
+    let plan = db
+        .measure_rows(&format!("EXPLAIN QUERY PLAN {sql}"))
+        .await
+        .unwrap()
+        .into_iter()
+        .map(|row| match row.get(3) {
+            Some(Value::Text(t)) => t.clone(),
+            other => format!("{other:?}"),
+        })
+        .collect::<Vec<_>>()
+        .join(" | ");
+    println!("rederive plan: {plan}");
+    assert!(plan.contains("organization_mentions_org"), "the mentions come through the org index: {plan}");
+    assert!(
+        plan.contains("sqlite_autoindex_notice_texts") || plan.contains("PRIMARY KEY"),
+        "each section's texts come through the notice_texts key: {plan}"
+    );
+    for table in ["om", "nt", "organization_mentions", "notice_texts"] {
+        assert!(!plan.contains(&format!("SCAN {table} ")) && !plan.ends_with(&format!("SCAN {table}")), "{table} is walked: {plan}");
+    }
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("test-dissolve-plan.db{s}"));
+    }
 }

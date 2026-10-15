@@ -196,3 +196,25 @@ re-check's D1–D5. Fixes:
 - **D4:** a stray is judged against every other key, not only the top key, so the count no longer depends on which key
   a tie put on top.
 - **D5:** the scheme-cap wording.
+
+## Unit 1 — the first prod census (2026-10-15, job 2492)
+
+`org-head-drift min_mentions=2 samples=30` (deployed e2da1e9) walked 5,676,483 orgs and 49,671,073 mention rows in
+211 s. The report is `/admin/reports/org-head-drift`.
+- **Census:** 2,101,301 orgs with 2+ mention rows and a voting one (46.1M mentions). 3,575,149 are below the minimum,
+  310,247 mention rows are nameless, and 33 orgs have no voting mention.
+- **Buckets** (orgs / mentions):
+  - aligned: 2,043,572 / 41.56M (97.3% of orgs);
+  - minority head: 56,144 / 4.51M, of them 8,055 merged and 56,132 identifier-bearing;
+  - absent head: 1,585 / 26,249, all identifier-bearing, 3 merged;
+  - below half: 67,720;
+  - form-only: 591;
+  - cosmetic: 6,215, almost all provisional;
+  - single stray: 25,238.
+- **On the secondary key** (`org_name_norm`): minority 75,337, absent 1,588.
+- **Non-name heads:** award_summary 69 orgs (338 mentions), blank 1, placeholder 1 (22713056 `s.o.`, a canary).
+- **Stray mentions:** 151,307 on 82,999 orgs. The schemes with the most are `002` 4,007, `GB-COH` 1,690 and `GB-PPON`
+  1,162.
+
+Next: the unit-2 decision, read from the 30-per-bucket samples. The minority and absent buckets are where a head
+rewrite would act.

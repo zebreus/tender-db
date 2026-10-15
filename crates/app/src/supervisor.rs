@@ -7722,11 +7722,11 @@ impl Supervisor {
                     None => String::new(),
                 };
                 loop {
-                    // Issue 542: read before every window. A full walk is ~10 h at ~1.3k notices/s,
-                    // and job 2491 (one runbook step after a 7-mention dissolve) answered the cancel
-                    // with 409 while it held the queue past the dailies. Every window is its own
-                    // REPLACE commit, so a stop leaves nothing half-written; a fresh enqueue starts
-                    // again at notice 0 and re-writes the same rows.
+                    // Issue 542: read before every window. A full walk is 3.3 h (job 2491: 11,979 s
+                    // over 14.9M notices), and 2491, one runbook step after a 7-mention dissolve,
+                    // answered the cancel with 409 while two censuses queued behind it. Every window
+                    // is its own REPLACE commit, so a stop leaves nothing half-written; a fresh
+                    // enqueue starts again at notice 0 and re-writes the same rows.
                     if self.cancelled(job.id) {
                         return Ok(format!(
                             "backfill-org-name-variants STOPPED by cancel after notice id {watermark}{from}: {} \
@@ -7995,7 +7995,9 @@ impl Supervisor {
                     totals.tender_changes
                 ))
             }
-            Spec::RepairPlaceholderOrgs { dry_run } => {
+            // Boxed (issue 542): the in-window name-variant re-derivation grew this arm past
+            // `run_repair_spec`'s future budget; see the CLAUDE.md note on `run_spec` arms.
+            Spec::RepairPlaceholderOrgs { dry_run } => Box::pin(async move {
                 let dry_run = *dry_run;
                 let mut totals = store::OrgDissolve::default();
                 let mut watermark = 0i64;
@@ -8004,6 +8006,8 @@ impl Supervisor {
                         .db
                         .repair_placeholder_orgs_batch(
                             ingest::idgate::condemns,
+                            ingest::project::ORG_NAME_FIELD_IDS,
+                            ingest::project::normalize_lang,
                             BACKFILL_BATCH,
                             watermark,
                             dry_run,
@@ -8028,6 +8032,8 @@ impl Supervisor {
                     totals.refold_tenders += batch.refold_tenders;
                     totals.refold_notices += batch.refold_notices;
                     totals.tender_changes += batch.tender_changes;
+                    totals.variant_orgs += batch.variant_orgs;
+                    totals.variants_written += batch.variants_written;
                     watermark = next;
                     self.set_phase(
                         if dry_run { "previewing" } else { "dissolving" },
@@ -8047,6 +8053,20 @@ impl Supervisor {
                         }
                     }
                 }
+                // Issue 542: each window re-derived its re-bound orgs' name variants in its own
+                // transaction, so no whole-corpus `backfill-org-name-variants` walk follows.
+                // `variant_orgs` sums per window, so an org re-bound in two windows counts twice.
+                let variants = if dry_run {
+                    format!(
+                        "; name variants would be re-derived for up to {} re-bound orgs (per window)",
+                        totals.variant_orgs
+                    )
+                } else {
+                    format!(
+                        "; {} name variants re-derived over {} re-bound org passes (issue 542)",
+                        totals.variants_written, totals.variant_orgs
+                    )
+                };
                 Ok(format!(
                     "placeholder dissolve (issue 300){}: {} identifier-bearing orgs scanned, \
                      {} condemned by the v2 gate, {} dissolved, {} skipped (unresolvable winner), \
@@ -8054,7 +8074,7 @@ impl Supervisor {
                      {} party rows, {} bid-party rows, {} winner rows ({} duplicates removed), \
                      {} ambiguous winner rows deleted for refold ({} tenders stamped epoch-stale, \
                      {} notices re-queued — the next incremental fold re-derives their winner \
-                     sets), {} tenders touched",
+                     sets), {} tenders touched{variants}",
                     if dry_run { " DRY RUN — nothing written" } else { "" },
                     totals.scanned,
                     totals.condemned,
@@ -8072,7 +8092,8 @@ impl Supervisor {
                     totals.refold_notices,
                     totals.tender_changes
                 ))
-            }
+            })
+            .await,
             Spec::RepairMintedCountries { dry_run } => {
                 let dry_run = *dry_run;
                 let job_id = job.id;
@@ -18815,7 +18836,7 @@ mod tests {
     }
 
     /// Issue 542: `backfill-org-name-variants` reads the stop flag before every notice window,
-    /// so a cancel ends it there instead of answering 409 for a ~10 h walk (job 2491).
+    /// so a cancel ends it there instead of answering 409 for a 3.3 h walk (job 2491).
     #[tokio::test]
     async fn the_org_name_variant_backfill_stops_before_its_next_window() {
         let db = scratch().await;
@@ -18864,6 +18885,71 @@ mod tests {
             msg.starts_with("organization_names backfilled over 0 notices (resumed after notice id 999999):"),
             "{msg}"
         );
+    }
+
+    /// Issue 542: the dissolve job threads ingest's name fields and normaliser into the
+    /// store and names the re-derived variants in its summary, dry and wet. One real
+    /// dissolve: the withheld-supplier PPON (issue 522) is condemned by the live v2 gate,
+    /// and its `Individual` mention's labelled BT-500 text (`EN`) reaches the fresh org
+    /// as `ENG` only if ingest's field list and normaliser both arrived. (The
+    /// re-derivation rules themselves are pinned in `store/tests/placeholder_dissolve.rs`.)
+    #[tokio::test]
+    async fn the_placeholder_dissolve_names_its_rederived_name_variants() {
+        let path = format!("/tmp/tender-db-sup-dissolve-variants-{}-{}.db", std::process::id(), store::now_unix());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        for sql in [
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (1, 'GB', 'national', 'GBPPONPBXY3232WNHZ', 'Withheld Section94 Supplier',
+                     'withheld section94 supplier', 0, 0)",
+            "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country)
+             VALUES (100, 'ORG-0001', 1, 'Individual', 'GB')",
+            "INSERT INTO notice_texts (notice_id, section_id, field_id, ordinal, lang, value)
+             VALUES (100, 'ORG-0001', 'BT-500-Organization-Company', 0, 'EN', 'Individual')",
+        ] {
+            conn.execute(sql, ()).await.unwrap();
+        }
+        let sup = Supervisor::new(db, "archive".into(), reqwest::Client::new());
+        let job = |id: u64, dry_run: bool| Job {
+            id,
+            kind: "repair-placeholder-orgs".into(),
+            params: String::new(),
+            spec: Spec::RepairPlaceholderOrgs { dry_run },
+            resume_after: None,
+        };
+        let dry = sup.run_spec(&job(1, true)).await.expect("dry dissolve");
+        assert!(dry.contains("1 condemned by the v2 gate"), "{dry}");
+        assert!(dry.ends_with("; name variants would be re-derived for up to 1 re-bound orgs (per window)"), "{dry}");
+        let wet = sup.run_spec(&job(2, false)).await.expect("wet dissolve");
+        assert!(wet.ends_with("; 1 name variants re-derived over 1 re-bound org passes (issue 542)"), "{wet}");
+        let mut rows = conn
+            .query(
+                "SELECT n.lang, n.name FROM organization_names n
+                   JOIN organization_mentions m ON m.organization_id = n.org_id
+                  WHERE m.notice_id = 100 AND m.section_id = 'ORG-0001'",
+                (),
+            )
+            .await
+            .unwrap();
+        let row = rows.next().await.unwrap().expect("the re-bound org has its variant");
+        let text = |i: usize| match row.get_value(i).unwrap() {
+            store::turso::Value::Text(t) => t,
+            other => panic!("unexpected {other:?}"),
+        };
+        assert_eq!((text(0), text(1)), ("ENG".to_owned(), "Individual".to_owned()));
+        drop(rows);
+        // A second wet run finds nothing condemned and re-derives nothing.
+        let again = sup.run_spec(&job(3, false)).await.expect("rerun");
+        assert!(again.ends_with("; 0 name variants re-derived over 0 re-bound org passes (issue 542)"), "{again}");
+        drop(conn);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
     }
 
     /// Issue 477 unit 3: the job wiring around `fetch::audit_fts_ids`. It enqueues wet by

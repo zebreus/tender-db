@@ -164,7 +164,10 @@ stock agree on `org_name_norm`.
     # expect: condemned/dissolved/mentions equal to the dry run. The fresh/reused split differs (a dry-run artifact,
     # 365 "The dissolve, verified").
     /root/aj.sh /admin/jobs '{"kind":"project","rebuild":false}'           # re-derive the stamped tenders
-    /root/aj.sh /admin/jobs '{"kind":"backfill-org-name-variants"}'        # the dissolve's own doc: repopulate variants
+    # (2026-09-28 this step was: backfill-org-name-variants, a whole-corpus walk — 3.3 h as job 2491.)
+    # No walk on a re-run: since issue 542 unit 2 each dissolve window re-derives its re-bound orgs' name variants in
+    # its own transaction. Read it in the wet job's summary: "… name variants re-derived over N re-bound org passes".
+    # On a build without that line, run the walk after all.
 
 **Follow-up, not built.** The `org-merge-health` census (`supervisor.rs`, beside `routing_scope`) does not yet count
 `notice_number`, so the weekly report cannot show the class going to 0; the Verify below reads it directly instead. It
