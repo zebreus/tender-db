@@ -1220,7 +1220,7 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "name_norm",
         "The name's search key; ?name_prefix= seeks it. It is `org_name_norm` of the name \
          (Unicode-lowercased, whitespace collapsed, trailing `.`/`,`/`;` stripped) since issue 432 and \
-         on every rename, but an identifier-bearing row minted before issue 432 and never renamed keeps \
+         on every rename, but an identifier-bearing row keyed before issue 432 and never renamed keeps \
          the plain lower-cased name, doubled spaces and trailing punctuation included (432 re-keyed \
          identifier-less rows only), so `?name_prefix=acme ltd` does not reach a stored `acme  ltd`. \
          With an identifier it follows the elected head (issue 524) and is never a bind key; with \
@@ -1246,13 +1246,14 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     holds at least 55% of the votes, at least 3 votes and at least twice the head's; or when the head's \
     own cluster holds at most 1 vote and a unique top cluster holds at least 3 votes and at least 25%; \
     or when the head is empty or not a name (a placeholder, a blank, a void-lot phrase) and some \
-    mention's name votes. Even then it stays when the change would swap one legal-form family for \
-    another (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS name check the old head passed, \
-    or, on the 25% arm only, serve an initialism of the head; when no spelling of the winning cluster is \
-    fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; and when \
-    the head is in another script than its mentions (TED's English rendering). Where the job has not \
-    renamed a row, and always where `identifier IS NULL`, it is the first spelling a notice published. \
-    What one notice said is `organization_mentions.name`.";
+    mention's name votes, whatever script that name is written in. Even then it stays when the change \
+    would swap one legal-form family for another (`AG` to `Sàrl`), drop a consortium mark, fail the NHS \
+    ODS name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when \
+    no spelling of the winning cluster is fit to serve; when the identifier carries a `wrong` or \
+    unapplied `related` review verdict; and, on the 55% and 25% arms only, when the head is in another \
+    script than its mentions (TED's English rendering). Where the job has not renamed a row, and always \
+    where `identifier IS NULL`, it is the first spelling a notice published. What one notice said is \
+    `organization_mentions.name`.";
 
 /// The description for a table/view, if one is curated.
 fn table_note(name: &str) -> Option<&'static str> {

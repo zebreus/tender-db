@@ -19,11 +19,12 @@ votes are the mentions that published a name (one with no name, a blank one or a
 clustered as one name across casing, diacritics, `the` and a legal form. The head changes only when a cluster other
 than its own holds at least 55% of the votes, at least 3 votes and at least twice the head's; or when the head's
 own cluster holds at most 1 vote and a unique top cluster holds at least 3 votes and at least 25%; or when the head
-is empty or not a name (a placeholder, a blank, a void-lot phrase) and some mention's name votes. Even then it
-stays when the change would swap one legal-form family for another (`AG` to `Sàrl`), drop a consortium mark, fail
-the NHS ODS name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when no
-spelling of the winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related`
-review verdict; and when the head is in another script than its mentions (TED's English rendering).
+is empty or not a name (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script
+that name is written in. Even then it stays when the change would swap one legal-form family for another (`AG` to
+`Sàrl`), drop a consortium mark, fail the NHS ODS name check the old head passed, or, on the 25% arm only, serve an
+initialism of the head; when no spelling of the winning cluster is fit to serve; when the identifier carries a
+`wrong` or unapplied `related` review verdict; and, on the 55% and 25% arms only, when the head is in another
+script than its mentions (TED's English rendering).
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new
@@ -36,8 +37,10 @@ review verdict; and when the head is in another script than its mentions (TED's 
 - What one notice published is unchanged, on `parties[].mention_name` and `organization_mentions.name`.
 
 Also: the `next_cursor` of a `?name_prefix=` search is now the last row's stored search key (`name_norm`). It
-was rebuilt from the lower-cased name, which differs from the key wherever the name has a run of whitespace (a
-doubled space, a tab) or a trailing `.`, `,` or `;`.
+was rebuilt from the lower-cased name, which differs from the key where the key is `org_name_norm` of the name
+(every key since issue 432, and every renamed organization's) and the name has a run of whitespace (a doubled
+space, a tab) or a trailing `.`, `,` or `;`. An organization with an identifier keyed before issue 432 and never
+renamed keeps its plain lower-cased name as its key, so its cursor never diverged.
 - Where the rebuilt cursor sorted before the key (a doubled space), the next page repeated rows.
 - Where it sorted after the key (a trailing `.`, `,` or `;`: `ACME Ltd.` gave the cursor `acme ltd.` for the key
   `acme ltd`), the next page silently SKIPPED every row keyed between the two: any `acme ltd` with a higher id,

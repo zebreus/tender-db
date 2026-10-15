@@ -968,11 +968,19 @@ async fn the_revert_leaves_a_head_renamed_since_and_counts_a_gone_one() {
     conn.execute("UPDATE organizations SET name_norm = 'moved' WHERE id = 23", ()).await.unwrap();
     conn.execute("DELETE FROM organizations WHERE id = 3", ()).await.unwrap();
     conn.execute("UPDATE organizations SET identifier = NULL, identifier_kind = NULL WHERE id = 13", ()).await.unwrap();
+    // 25 renamed again AND stripped: renamed again (the re-review) — restoring its identifier would not
+    // let a re-run take it up, so it is no `identifier_stripped`.
+    conn.execute(
+        "UPDATE organizations SET name = 'Tribunal administratif de Nice (greffe)', identifier = NULL WHERE id = 25",
+        (),
+    )
+    .await
+    .unwrap();
     let stripped_after_apply = heads(&conn).await.into_iter().find(|h| h.0 == Value::Integer(13)).unwrap();
     let back = db.revert_org_name_refresh(revert(7, 9)).await.unwrap();
     assert_eq!(
         (back.ledger_rows, back.reverted, back.renamed_again, back.identifier_stripped, back.gone),
-        (7, 3, 2, 1, 1)
+        (7, 2, 3, 1, 1)
     );
     let now = heads(&conn).await;
     let at = |id: i64| now.iter().find(|h| h.0 == Value::Integer(id)).unwrap().clone();
@@ -981,10 +989,11 @@ async fn the_revert_leaves_a_head_renamed_since_and_counts_a_gone_one() {
     assert_eq!(at(13), stripped_after_apply, "identifier stripped: byte-identical to after the run");
     assert_eq!(at(13).1, text("University of Sheffield"));
     assert_eq!(at(1).1, text("Sheffield Hallam University"));
-    assert_eq!(org_changes(&conn).await.len(), 7 + 3, "a change row per restored head only");
+    assert_eq!(at(25).1, text("Tribunal administratif de Nice (greffe)"), "left as found");
+    assert_eq!(org_changes(&conn).await.len(), 7 + 2, "a change row per restored head only");
     let unreverted: Vec<Value> =
         ledger(&conn).await.into_iter().filter(|row| row[7] == Value::Null).map(|row| row[0].clone()).collect();
-    assert_eq!(unreverted, [2, 3, 13, 23].map(Value::Integer).to_vec(), "none of the misses is stamped");
+    assert_eq!(unreverted, [2, 3, 13, 23, 25].map(Value::Integer).to_vec(), "none of the misses is stamped");
     // A job with no ledger rows restores nothing.
     let none = db.revert_org_name_refresh(revert(42, 9)).await.unwrap();
     assert_eq!((none.ledger_rows, none.reverted, none.windows), (0, 0, 0));
@@ -1062,6 +1071,7 @@ async fn a_window_that_fails_after_a_commit_reports_the_committed_windows() {
     let windowed = |targets, job| store::OrgNameRefreshApplyArgs { window: 2, ..wet(targets, job) };
     let r = db.apply_org_name_refresh(windowed(planned.clone(), 7)).await.unwrap();
     assert_eq!((r.windows, r.applied, r.cursor, r.stopped), (1, 2, Some(2), false));
+    assert_eq!((r.ready, r.left, r.capped), (7, 5, 0), "3 and 13 rolled back, 15, 23 and 25 never reached");
     let error = r.window_error.as_deref().expect("the failure is reported");
     assert!(error.contains("window 2 (org ids 3..=13)") && error.contains("fixture: the ledger refuses 13"), "{error}");
     assert_eq!(r.applied_samples.iter().map(|s| s.org_id).collect::<Vec<_>>(), vec![1, 2]);
@@ -1085,8 +1095,20 @@ async fn a_window_that_fails_after_a_commit_reports_the_committed_windows() {
     let planned = targets(&plan(&db, 2_000, None, &[]).await);
     conn.execute(&refuse(1, "org_name_refresh_log", "INSERT"), ()).await.unwrap();
     let before = heads(&conn).await;
-    let err = db.apply_org_name_refresh(windowed(planned, 7)).await.expect_err("nothing committed");
+    let err = db.apply_org_name_refresh(windowed(planned.clone(), 7)).await.expect_err("nothing committed");
     assert!(err.to_string().contains("fixture: the ledger refuses 1"), "{err}");
     assert_eq!(heads(&conn).await, before);
     assert!(org_changes(&conn).await.is_empty() && ledger(&conn).await.is_empty());
+    assert_eq!(db.org_name_refresh_job_renames(7).await.unwrap(), 0);
+
+    // But a RECOVERED job's first window of this run failing is no bare error (the re-review): job 8
+    // renamed 1 before, so the report comes back with `prior_applied` and the error.
+    conn.execute("DROP TRIGGER t524_1", ()).await.unwrap();
+    let one = store::OrgNameRefreshApplyArgs { max_groups: Some(1), ..windowed(planned.clone(), 8) };
+    assert_eq!(db.apply_org_name_refresh(one).await.unwrap().applied, 1);
+    assert_eq!(db.org_name_refresh_job_renames(8).await.unwrap(), 1);
+    conn.execute(&refuse(2, "org_name_refresh_log", "INSERT"), ()).await.unwrap();
+    let r = db.apply_org_name_refresh(windowed(planned, 8)).await.expect("the earlier attempt's rename stands");
+    assert_eq!((r.prior_applied, r.windows, r.applied, r.left), (1, 0, 0, 6));
+    assert!(r.window_error.as_deref().is_some_and(|e| e.contains("window 1 (org ids 2..=3)")), "{r:?}");
 }

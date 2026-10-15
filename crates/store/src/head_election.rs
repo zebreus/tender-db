@@ -994,9 +994,12 @@ pub(crate) const ORG_NAME_REFRESH_JOB_ROWS_SQL: &str = "SELECT org_id, at, old_n
 pub(crate) const ORG_NAME_REVERT_CAS_SQL: &str = "UPDATE organizations SET name = ?, name_norm = ? \
      WHERE id = ? AND name = ? AND name_norm IS ? AND identifier IS NOT NULL";
 
-/// Issue 524 unit 2b: why a restore's compare-and-set missed — no row (gone), `1` (its identifier was
-/// stripped since the rename), `0` (renamed again since).
-pub(crate) const ORG_NAME_REVERT_MISS_SQL: &str = "SELECT identifier IS NULL FROM organizations WHERE id = ?";
+/// Issue 524 unit 2b: why a restore's compare-and-set missed — no row (gone), `1` (the row still holds
+/// the pair the rename wrote, but its identifier was stripped since), `0` (anything else: renamed
+/// again since, stripped or not). Bound `(new_name, new_name_norm, id)`. The re-review: a row renamed
+/// again AND stripped is renamed again, so "restore the identifier and re-run" is never advice for it.
+pub(crate) const ORG_NAME_REVERT_MISS_SQL: &str =
+    "SELECT identifier IS NULL AND name = ? AND name_norm IS ? FROM organizations WHERE id = ?";
 
 /// Issue 524 unit 2b: the job's durable resume cursor, written in each window's transaction so it
 /// commits with the window's renames (the 2b review: written after COMMIT, a death between the two
@@ -1097,6 +1100,10 @@ pub struct OrgNameRefreshApplied {
     /// The last org id a committed window covered: the job's resume cursor.
     pub cursor: Option<i64>,
     pub stopped: bool,
+    /// Ready targets (within `max_groups`) in windows the run never committed — after a stop or a
+    /// `window_error`, the failed window's included. 0 on a complete run, and on an aborted one
+    /// (whose `ready` reads the same).
+    pub left: u64,
     /// The first [`ORG_NAME_REFRESH_DRIFT_SAMPLES`] drifted or gone targets, by org id.
     pub drift_samples: Vec<OrgNameRefreshDrift>,
     /// [`ORG_NAME_REFRESH_APPLIED_SAMPLES`] committed renames, uniform over the run (the planner's
@@ -1104,9 +1111,10 @@ pub struct OrgNameRefreshApplied {
     /// many renames or fewer lists every one.
     pub applied_samples: Vec<OrgNameRefreshRename>,
     /// The 513 U4 `fold_error` shape (the 2b review): a window that failed AFTER at least one window
-    /// committed ends the run there, and the report comes back Ok with the committed windows' counts
-    /// and samples, so the caller records them before it reports the failure. A failure before the
-    /// first commit is the error itself: nothing was written.
+    /// of this job id committed ends the run there, and the report comes back Ok with the counts and
+    /// samples, so the caller records them before it reports the failure. That covers a recovered job
+    /// (`prior_applied` or `resumed_after` set) whose first window of this run fails (the re-review).
+    /// Only a job with no committed window at all gets the bare error: nothing was written.
     pub window_error: Option<String>,
 }
 
@@ -1131,9 +1139,9 @@ pub struct OrgNameRefreshReverted {
     pub reverted: u64,
     /// The row no longer holds the pair the rename wrote (renamed again since): left as it is.
     pub renamed_again: u64,
-    /// The row still holds the pair, but a case review stripped its identifier since the rename, so
-    /// its `name_norm` is now an issue-234 bind key: left as it is, unstamped (a restored identifier
-    /// lets a re-run take it up).
+    /// The row still holds the pair the rename wrote, but a case review stripped its identifier since,
+    /// so its `name_norm` is now an issue-234 bind key: left as it is, unstamped (a restored identifier
+    /// lets a re-run take it up). A row renamed again counts `renamed_again`, stripped or not.
     pub identifier_stripped: u64,
     /// The organization is gone (merged away, swept): nothing to restore.
     pub gone: u64,
@@ -1334,12 +1342,7 @@ impl Db {
         // Whenever the run has a job id, not only on resume: a fresh id has no ledger rows, and a
         // recovered one's are counted against `max_groups` even if its cursor never landed.
         if let Some(job) = args.job_id {
-            let reader = self.reader().await?;
-            let mut rows = reader.query(ORG_NAME_REFRESH_JOB_COUNT_SQL, (Value::Integer(job),)).await?;
-            report.prior_applied = match rows.next().await? {
-                Some(row) => int(&row, 0).max(0) as u64,
-                None => 0,
-            };
+            report.prior_applied = self.org_name_refresh_job_renames(job).await?;
         }
 
         (args.progress)(0, &format!("pre-pass: re-electing {} planned organization(s)", targets.len()));
@@ -1446,8 +1449,11 @@ impl Db {
             .await;
             let (applied, raced) = match committed {
                 Ok(done) => done,
-                // Rolled back; before the first commit nothing was written, so the error is the answer.
-                Err(e) if report.windows == 0 => return Err(e),
+                // Rolled back. With no window of this job id committed, in this run or an earlier
+                // attempt, nothing was written, so the error is the answer; otherwise the counts are.
+                Err(e) if report.windows == 0 && report.prior_applied == 0 && report.resumed_after.is_none() => {
+                    return Err(e);
+                }
                 Err(e) => {
                     report.window_error = Some(format!(
                         "window {} (org ids {}..={}) rolled back: {e}",
@@ -1503,8 +1509,21 @@ impl Db {
                 ),
             );
         }
+        report.left = (ready.len() as u64).saturating_sub(report.applied + report.raced);
         report.applied_samples = samples.into_by_org_id();
         Ok(report)
+    }
+
+    /// Issue 524 unit 2b re-review: the renames a job id has committed (its `org_name_refresh_log`
+    /// rows, a seek on `org_name_refresh_log_job`). A recovered wet job refused, or failing before it
+    /// writes, names this count: its dead earlier attempt stored no report.
+    pub async fn org_name_refresh_job_renames(&self, job: i64) -> turso::Result<u64> {
+        let reader = self.reader().await?;
+        let mut rows = reader.query(ORG_NAME_REFRESH_JOB_COUNT_SQL, (Value::Integer(job),)).await?;
+        Ok(match rows.next().await? {
+            Some(row) => int(&row, 0).max(0) as u64,
+            None => 0,
+        })
     }
 
     /// Issue 524 unit 2b: undo one `refresh-org-names` job's renames. Each of the job's unreverted
@@ -1575,7 +1594,16 @@ impl Db {
                         )
                         .await?;
                     if changed == 0 {
-                        let mut miss = conn.query(ORG_NAME_REVERT_MISS_SQL, (Value::Integer(row.org_id),)).await?;
+                        let mut miss = conn
+                            .query(
+                                ORG_NAME_REVERT_MISS_SQL,
+                                (
+                                    Value::Text(row.new_name.clone()),
+                                    Value::Text(row.new_name_norm.clone()),
+                                    Value::Integer(row.org_id),
+                                ),
+                            )
+                            .await?;
                         match miss.next().await? {
                             None => gone += 1,
                             Some(found) if int(&found, 0) != 0 => stripped += 1,

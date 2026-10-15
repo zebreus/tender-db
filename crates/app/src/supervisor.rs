@@ -1456,14 +1456,18 @@ fn refresh_wet_refused(why: String) -> String {
     format!("refresh-org-names (wet) REFUSED: {why}. Nothing was written")
 }
 
-/// Issue 524 unit 2b review: a RECOVERED wet job's refusal or failure before its first window. Its
-/// resume cursor commits with its windows, so a job that has one has renames standing: "Nothing was
-/// written" would hide them (a deploy's restart lands here, refused on the new `rev`).
-fn refresh_wet_after_earlier_windows(message: String, job: u64) -> String {
-    let base = message.strip_suffix(". Nothing was written").unwrap_or(&message);
+/// Issue 524 unit 2b review: a wet job refused, or failing before it stores a report, while `renames`
+/// of its own (its ledger rows: a recovered job's earlier attempt) stand. "Nothing was written" would
+/// hide them (a deploy's restart lands here, refused on the new `rev`), and the dead attempt stored no
+/// report, so the line names the count (the re-review).
+fn refresh_wet_after_earlier_windows(message: String, job: u64, renames: u64) -> String {
+    let base = [". Nothing was written", ". Nothing was read or written"]
+        .iter()
+        .find_map(|suffix| message.strip_suffix(suffix))
+        .unwrap_or(&message);
     format!(
-        "{base}. Nothing further was written, but this job's earlier windows stand (its resume cursor commits \
-         with them): read them in org-name-refresh-applied if it names job {job}, undo them with \
+        "{base}. Nothing further was written by this run, but this job's earlier windows made {renames} \
+         rename(s), which stand unless reverted: undo them with \
          {{\"kind\":\"revert-org-name-refresh\",\"job\":{job}}}"
     )
 }
@@ -1578,7 +1582,12 @@ fn org_name_refresh_applied_json(
 }
 
 /// Issue 524 unit 2b: a wet `refresh-org-names`' job summary. An aborted run's is its error.
-fn org_name_refresh_applied_summary(r: &store::OrgNameRefreshApplied, job: u64, plan: &RefreshPlanTargets) -> String {
+fn org_name_refresh_applied_summary(
+    r: &store::OrgNameRefreshApplied,
+    job: u64,
+    plan: &RefreshPlanTargets,
+    max_groups: Option<u64>,
+) -> String {
     let drift = if r.drift_samples.is_empty() {
         String::new()
     } else {
@@ -1603,7 +1612,10 @@ fn org_name_refresh_applied_summary(r: &store::OrgNameRefreshApplied, job: u64, 
     // Whenever this job id has ledger rows from before this run, cursor or not (the 2b review).
     let earlier = match r.prior_applied {
         0 => String::new(),
-        n => format!(" {n} rename(s) by an earlier attempt of this job stand (counted against max_groups)."),
+        n => format!(
+            " {n} rename(s) by an earlier attempt of this job stand{}.",
+            if max_groups.is_some() { " (counted against max_groups)" } else { "" }
+        ),
     };
     let head = format!(
         "refresh-org-names WET (issue 524 unit 2b, rule {}, job {job}): {} of the plan's {} planned change(s) in \
@@ -1627,13 +1639,16 @@ fn org_name_refresh_applied_summary(r: &store::OrgNameRefreshApplied, job: u64, 
     }
     if let Some(error) = &r.window_error {
         return format!(
-            "{head} FAILED: {error}. {} rename(s) in {} committed window(s) STAND (ledger job {job}, through org id \
-             {}), {} raced.{drift} Recorded as org-name-refresh-applied; undo with {undo}. A re-run is a new job: it \
+            "{head} FAILED: {error}. {} rename(s) in {} committed window(s) of this run STAND (ledger job {job}, \
+             through org id {}), {} raced, {} ready left unrenamed in windows never committed, {} ready left by \
+             max_groups.{drift} Recorded as org-name-refresh-applied; undo with {undo}. A re-run is a new job: it \
              reads these as already renamed, and its max_groups starts again",
             r.applied,
             r.windows,
             r.cursor.unwrap_or_default(),
-            r.raced
+            r.raced,
+            r.left,
+            r.capped
         );
     }
     format!(
@@ -1671,8 +1686,9 @@ fn org_name_refresh_reverted_summary(r: &store::OrgNameRefreshReverted) -> Strin
     format!(
         "revert-org-name-refresh (issue 524 unit 2b): job {}'s {} unreverted rename(s): {} RESTORED to their \
          pre-image (stamped reverted_at, each with an `organization changed` row), {} renamed again since (left \
-         as found), {} whose identifier a case review stripped since (left as found: their name_norm is an \
-         issue-234 bind key now), {} gone, in {} window(s){ending}",
+         as found), {} identifier stripped (still the pair the job wrote, but a case review stripped the \
+         identifier since: left as found, the name_norm is an issue-234 bind key now), {} gone, in {} \
+         window(s){ending}",
         r.job,
         r.ledger_rows,
         r.reverted,
@@ -2666,9 +2682,24 @@ impl Supervisor {
                 if req.dry_run == Some(true) {
                     return Err(format!(
                         "revert-org-name-refresh has no dry run: it restores job {target}'s renames as soon as it \
-                         runs. Preview them in the job's org-name-refresh-applied report (`applied`, \
-                         `applied_samples`; the report is that job's while its `job` field says {target}), then \
+                         runs, every one not yet reverted — the job's org-name-refresh-applied report's `applied` \
+                         plus its `prior_applied` (an earlier attempt's renames, which `applied_samples` does not \
+                         sample; the report is that job's while its `job` field says {target}). Preview there, then \
                          re-send without `dry_run` (or with `dry_run: false`) to restore"
+                    ));
+                }
+                // The re-review, the match-org-identifiers precedent: a field this kind does not take is
+                // refused, not ignored — an `org_ids: [760]` meant to undo one rename would restore all.
+                let unused = [
+                    ("org_ids", req.org_ids.is_some()),
+                    ("max_groups", req.max_groups.is_some()),
+                    ("min_mentions", req.min_mentions.is_some()),
+                    ("samples", req.samples.is_some()),
+                ];
+                if let Some((field, _)) = unused.iter().find(|(_, set)| *set) {
+                    return Err(format!(
+                        "revert-org-name-refresh refuses `{field}`: it restores the whole job; there is no per-org \
+                         or capped revert"
                     ));
                 }
                 Ok(vec![
@@ -12016,48 +12047,58 @@ impl Supervisor {
         match &job.spec {
             Spec::RefreshOrgNamesWet { org_ids, max_groups } => Box::pin(async move {
                 let job_id = job.id;
-                // A job with a resume cursor has committed windows (the cursor commits with them), so a
-                // refusal or an error before its next window must not read "Nothing was written".
-                let recovered = job.resume_after.is_some();
-                let refused = |e: String| if recovered { refresh_wet_after_earlier_windows(e, job_id) } else { e };
-                let Some((body, computed_at)) =
-                    self.db.latest_report("org-name-refresh-plan").await.map_err(|e| refused(e.to_string()))?
-                else {
-                    return Err(refused(refresh_wet_refused(
-                        "no org-name-refresh-plan is stored; run the dry plan (`{\"kind\":\"refresh-org-names\"}`) \
-                         on this binary first"
-                            .to_owned(),
-                    )));
+                // Everything before the report is stored: a refusal or an error here names the renames
+                // this job id's earlier windows left standing (the re-review: a recovered job's dead
+                // attempt stored no report), counted below.
+                let applied = async {
+                    let Some((body, computed_at)) =
+                        self.db.latest_report("org-name-refresh-plan").await.map_err(|e| e.to_string())?
+                    else {
+                        return Err(refresh_wet_refused(
+                            "no org-name-refresh-plan is stored; run the dry plan (`{\"kind\":\"refresh-org-names\"}`) \
+                             on this binary first"
+                                .to_owned(),
+                        ));
+                    };
+                    let mut plan = org_name_refresh_targets(&body, computed_at, org_ids.as_deref())?;
+                    drop(body);
+                    let stop = || self.cancelled(job_id);
+                    // A restart recovers this job at the front of the queue: it resumes after the last
+                    // committed window (the durable cursor, issue 32), and a fresh enqueue has none.
+                    let resume_after = job.resume_after.as_deref().and_then(|c| c.parse::<i64>().ok());
+                    self.set_phase(
+                        "checking",
+                        None,
+                        None,
+                        format!("issue 524: re-electing {} planned head(s) before renaming", plan.targets.len()),
+                    );
+                    let progress = |done: u64, detail: &str| {
+                        self.set_phase("renaming", Some(done), None, detail.to_owned());
+                    };
+                    let r = Box::pin(self.db.apply_org_name_refresh(store::OrgNameRefreshApplyArgs {
+                        fns: head_elect_fns(),
+                        targets: std::mem::take(&mut plan.targets),
+                        max_groups: *max_groups,
+                        job_id: Some(job_id as i64),
+                        resume_after,
+                        window: store::ORG_NAME_REFRESH_WINDOW,
+                        stop: &stop,
+                        progress: &progress,
+                    }))
+                    .await
+                    .map_err(|e| e.to_string())?;
+                    Ok((r, plan))
+                }
+                .await;
+                let (r, plan) = match applied {
+                    Ok(done) => done,
+                    Err(e) => {
+                        let renames = self.db.org_name_refresh_job_renames(job_id as i64).await.unwrap_or(0);
+                        return Err(if renames > 0 { refresh_wet_after_earlier_windows(e, job_id, renames) } else { e });
+                    }
                 };
-                let mut plan = org_name_refresh_targets(&body, computed_at, org_ids.as_deref()).map_err(refused)?;
-                drop(body);
-                let stop = || self.cancelled(job_id);
-                // A restart recovers this job at the front of the queue: it resumes after the last
-                // committed window (the durable cursor, issue 32), and a fresh enqueue has none.
-                let resume_after = job.resume_after.as_deref().and_then(|c| c.parse::<i64>().ok());
-                self.set_phase(
-                    "checking",
-                    None,
-                    None,
-                    format!("issue 524: re-electing {} planned head(s) before renaming", plan.targets.len()),
-                );
-                let progress = |done: u64, detail: &str| {
-                    self.set_phase("renaming", Some(done), None, detail.to_owned());
-                };
-                let r = Box::pin(self.db.apply_org_name_refresh(store::OrgNameRefreshApplyArgs {
-                    fns: head_elect_fns(),
-                    targets: std::mem::take(&mut plan.targets),
-                    max_groups: *max_groups,
-                    job_id: Some(job_id as i64),
-                    resume_after,
-                    window: store::ORG_NAME_REFRESH_WINDOW,
-                    stop: &stop,
-                    progress: &progress,
-                }))
-                .await
-                .map_err(|e| refused(e.to_string()))?;
                 // The summary first: if the report cannot be stored, the job line is the run's record.
-                let summary = org_name_refresh_applied_summary(&r, job_id, &plan);
+                let summary = org_name_refresh_applied_summary(&r, job_id, &plan, *max_groups);
                 let body = org_name_refresh_applied_json(&r, job_id, &plan, *max_groups)
                     .map_err(|e| format!("{summary} -- BUT the org-name-refresh-applied report did not serialise ({e})"))?;
                 self.db.put_report("org-name-refresh-applied", &body, store::now_unix()).await.map_err(|e| {
@@ -21675,6 +21716,17 @@ mod tests {
         let dry_revert = JobRequest { dry_run: Some(true), ..revert(Some(2601)) };
         let err = sup.enqueue_request(&dry_revert).await.expect_err("no dry mode");
         assert!(err.contains("no dry run") && err.contains("org-name-refresh-applied"), "{err}");
+        assert!(err.contains("`applied`") && err.contains("`prior_applied`"), "{err}");
+        // The re-review: a field the revert does not take is refused, never ignored into a whole-job undo.
+        for (field, ask) in [
+            ("org_ids", JobRequest { org_ids: Some(vec![760]), ..revert(Some(2601)) }),
+            ("max_groups", JobRequest { max_groups: Some(10), ..revert(Some(2601)) }),
+            ("min_mentions", JobRequest { min_mentions: Some(2), ..revert(Some(2601)) }),
+            ("samples", JobRequest { samples: Some(5), ..revert(Some(2601)) }),
+        ] {
+            let err = sup.enqueue_request(&ask).await.expect_err(field);
+            assert!(err.contains(&format!("`{field}`")) && err.contains("no per-org or capped revert"), "{err}");
+        }
         sup.enqueue_request(&ask(None, None, None, None)).await.expect("the defaults");
         sup.enqueue_request(&ask(Some(true), Some(3), Some(0), Some(vec![760, 61, 760]))).await.expect("scoped");
         sup.enqueue_request(&ask(Some(false), Some(1), None, None)).await.expect("wet: the plan's min_mentions apply");
@@ -21914,12 +21966,10 @@ mod tests {
         }
         assert_eq!(heads().await, before, "a refused wet run writes nothing");
         assert_eq!(db.scalar("SELECT COUNT(*) FROM changes").await.unwrap(), Some(Value::Integer(1)));
-        // A RECOVERED job (its resume cursor commits with its windows) refused on the same plan says its
-        // earlier windows stand, not "Nothing was written" (the 2b review).
+        // Job 2 has no ledger row yet, so its refusal is the plain one, even with a resume cursor.
         let recovered = Job { resume_after: Some("1".into()), ..wet(2, None) };
         let err = sup.run_spec(&recovered).await.expect_err("still the truncated plan");
-        assert!(err.contains("truncated") && err.contains("Nothing further was written"), "{err}");
-        assert!(err.contains(r#"{"kind":"revert-org-name-refresh","job":2}"#) && !err.contains("Nothing was written"), "{err}");
+        assert!(err.contains("truncated") && err.ends_with("Nothing was written"), "{err}");
 
         // Past the drift limit: six planned changes for organizations that do not exist (gone) of ten
         // targets read, max(10/50, 5) = 5. The run aborts before any write — not even its 4 ready targets
@@ -21996,6 +22046,17 @@ mod tests {
         assert!(msg.contains("3 already renamed") && msg.contains("RENAMED 0 head(s)"), "{msg}");
         assert_eq!(heads().await, after);
         assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(3)));
+        // Job 2 recovered onto another binary (a deploy's restart): refused on the plan's `rev`, and the
+        // line names the renames its earlier windows made, since that attempt stored no report.
+        let mut moved: serde_json::Value = serde_json::from_str(&genuine).unwrap();
+        moved["rev"] = serde_json::json!("the-binary-before");
+        db.put_report("org-name-refresh-plan", &moved.to_string(), at).await.unwrap();
+        let recovered = Job { resume_after: Some("31558903".into()), ..wet(2, None) };
+        let err = sup.run_spec(&recovered).await.expect_err("another binary's plan");
+        assert!(err.contains("binary \"the-binary-before\""), "{err}");
+        assert!(err.contains("Nothing further was written by this run, but this job's earlier windows made 3 rename(s)"), "{err}");
+        assert!(err.contains(r#"{"kind":"revert-org-name-refresh","job":2}"#) && !err.contains("Nothing was written"), "{err}");
+        db.put_report("org-name-refresh-plan", &genuine, at).await.unwrap();
         // A recovered job resumes after its durable cursor (`job_queue.progress`): the three targets at
         // or below it are skipped, so 334 is not reached.
         let resumed = Job { resume_after: Some("22713056".into()), ..wet(4, None) };
