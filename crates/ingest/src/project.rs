@@ -4275,6 +4275,11 @@ struct BucketRow {
     is_correction: bool,
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
+    /// Issue 532 review: [`NoticeState::place_country_tender`] and
+    /// [`NoticeState::place_country_lots`], which [`fold`] reads (same lifecycle note
+    /// as `group_members` below).
+    place_country_tender: bool,
+    place_country_lots: BTreeSet<String>,
     /// Issue 489 (same lifecycle note as `group_members` below).
     value_corrections: Vec<ValueCorrection>,
     round: Option<Round>,
@@ -4311,6 +4316,8 @@ impl BucketRow {
             is_correction: state.is_correction,
             facts: state.facts,
             lots: state.lots,
+            place_country_tender: state.place_country_tender,
+            place_country_lots: state.place_country_lots,
             value_corrections: state.value_corrections,
             round: state.round,
             group_members: state.group_members,
@@ -4342,6 +4349,8 @@ impl BucketRow {
             is_correction: self.is_correction,
             facts: self.facts.clone(),
             lots: self.lots.clone(),
+            place_country_tender: self.place_country_tender,
+            place_country_lots: self.place_country_lots.clone(),
             value_corrections: self.value_corrections.clone(),
             roles: Vec::new(),
             raw_results: RawResults::default(),
@@ -4371,6 +4380,14 @@ struct NoticeState {
     /// Tender-scoped facts, and one bucket per lot the notice published.
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
+    /// Issue 532 review: the notice published a place-of-performance country
+    /// ([`PLACE_COUNTRY_FIELDS`]) at Tender scope, whether or not [`place_country`]
+    /// mapped it. [`fold`] then clears the carried `place_country` before the
+    /// supersede, so a republished EGY or alpha-2 does not leave an earlier `DE`
+    /// standing. A flag, not a fact: it never reaches a stored row.
+    place_country_tender: bool,
+    /// The same, per lot: the keys of the lots that published one.
+    place_country_lots: BTreeSet<String>,
     /// Issue 489: this notice's F14 value corrections, applied by [`fold`].
     value_corrections: Vec<ValueCorrection>,
     /// Role references awaiting their canonical organization id: (scope,
@@ -5271,6 +5288,10 @@ impl NoticeState {
         // Issue 506: result-level framework values, placed on their lot once the results
         // graph is read (below).
         let mut result_amounts: Vec<(String, Fact)> = Vec::new();
+        // Issue 532 review: the scopes that published a place-of-performance country,
+        // mapped or not (see `NoticeState::place_country_tender`).
+        let mut place_country_tender = false;
+        let mut place_country_lots: BTreeSet<String> = BTreeSet::new();
         for value in &parsed.values {
             let scope = scope_of(&sections, &value.section_id);
             let field_id = value.field_id.as_str();
@@ -5310,23 +5331,29 @@ impl NoticeState {
             // level-0 code, a `nuts` classification under its own field
             // (`place_country`) at the scope it was published. Emitted unguarded: the
             // fold drops it from any version that carries another `nuts` row
-            // ([`drop_place_country_beside_nuts`]). No `continue`: a Code falls
-            // through to `_ => None` below.
-            if let NoticeValue::Code { code, .. } = &value.value
-                && let Some(country) = place_country(field_id, code)
-            {
-                let fact = Fact::Classification {
+            // ([`drop_place_country_beside_nuts`]). The scope is flagged as having
+            // published a place country even when nothing maps (EGY, an alpha-2), so
+            // the fold clears the code it carried rather than serving a stale one.
+            // No `continue`: a Code falls through to `_ => None` below.
+            if PLACE_COUNTRY_FIELDS.contains(&field_id) {
+                let fact = match &value.value {
+                    NoticeValue::Code { code, .. } => place_country(field_id, code),
+                    _ => None,
+                }
+                .map(|country| Fact::Classification {
                     field: PLACE_COUNTRY_FIELD.to_owned(),
                     scheme: "nuts".to_owned(),
                     code: country.to_owned(),
-                };
+                });
                 match &scope {
                     Scope::Tender => {
-                        facts.insert(fact);
+                        place_country_tender = true;
+                        facts.extend(fact);
                     }
                     Scope::Lot(key) => {
                         if let Some(lot) = lots.get_mut(key) {
-                            lot.facts.insert(fact);
+                            place_country_lots.insert(key.clone());
+                            lot.facts.extend(fact);
                         }
                     }
                 }
@@ -5604,6 +5631,8 @@ impl NoticeState {
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
             facts,
             lots: lots.into_values().collect(),
+            place_country_tender,
+            place_country_lots,
             value_corrections,
             roles,
             raw_results,
@@ -6499,6 +6528,11 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
     for state in chain {
         let previous = versions.last();
         let mut facts = previous.map(|p| p.facts.clone()).unwrap_or_default();
+        // Issue 532 review: a scope that republished its place country replaces the
+        // carried code even when the new one maps to nothing.
+        if state.place_country_tender {
+            facts.retain(|f| !is_place_country(f));
+        }
         supersede(&mut facts, &state.facts);
         // Issue 489: an F14 value correction replaces its field only when the
         // Tender carries the figure the block names as replaced. Per-field like
@@ -6515,6 +6549,9 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             match lots.iter_mut().find(|l| l.key == published.key) {
                 Some(carried) => {
                     carried.kind.clone_from(&published.kind);
+                    if state.place_country_lots.contains(&published.key) {
+                        carried.facts.retain(|f| !is_place_country(f));
+                    }
                     supersede(&mut carried.facts, &published.facts);
                 }
                 None => lots.push(published.clone()),
@@ -6600,6 +6637,11 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
 /// never leaves it (`supersede` swaps a key's set only for a non-empty one, and
 /// lots are only added or updated). The accepted miss: a country-only lot beside a
 /// NUTS place in another country serves nothing for that lot, as before.
+///
+/// The other half of keeping a carried code honest is in [`fold`] itself: a scope
+/// whose notice republished its place country as something [`place_country`] does
+/// not map (EGY, XKX, an alpha-2) clears the code it carried, flagged by
+/// [`NoticeState::place_country_tender`] / [`NoticeState::place_country_lots`].
 fn drop_place_country_beside_nuts(facts: &mut BTreeSet<Fact>, lots: &mut [LotState]) {
     let other_nuts = |f: &Fact| {
         matches!(f, Fact::Classification { field, scheme, .. } if scheme == "nuts" && field != PLACE_COUNTRY_FIELD)
@@ -6607,11 +6649,15 @@ fn drop_place_country_beside_nuts(facts: &mut BTreeSet<Fact>, lots: &mut [LotSta
     if !facts.iter().any(other_nuts) && !lots.iter().any(|l| l.facts.iter().any(other_nuts)) {
         return;
     }
-    let derived = |f: &Fact| matches!(f, Fact::Classification { field, .. } if field == PLACE_COUNTRY_FIELD);
-    facts.retain(|f| !derived(f));
+    facts.retain(|f| !is_place_country(f));
     for lot in lots {
-        lot.facts.retain(|f| !derived(f));
+        lot.facts.retain(|f| !is_place_country(f));
     }
+}
+
+/// A derived `place_country` row (issue 532).
+fn is_place_country(fact: &Fact) -> bool {
+    matches!(fact, Fact::Classification { field, .. } if field == PLACE_COUNTRY_FIELD)
 }
 
 /// Supersession per field: a field the notice republishes replaces the carried
@@ -7748,12 +7794,15 @@ pub const PLACE_COUNTRY_FIELDS: &[&str] = &[
     "SDK01-ProcurementProjectLot-ProcurementProject-RealizedLocation-Address-Country-IdentificationCode",
 ];
 
-/// The countries NUTS (Eurostat's statistical regions) covers, as their ISO
-/// 3166-1 alpha-2 codes (issue 532): the EU-27, the United Kingdom, the EFTA
-/// countries and the candidate countries. A closed definitional set, not a
-/// sample of common codes. No ISO alpha-2 is another country's NUTS code (`EL` and
-/// `UK` are unassigned in ISO), so an inclusion can only ever serve a country's
-/// own code. [`place_country`] renames GR and GB on the way out.
+/// The countries whose place codes [`place_country`] serves, as their ISO 3166-1
+/// alpha-2 codes (issue 532): the EU-27, the United Kingdom, the EFTA countries,
+/// and the candidate countries with NUTS-coded statistical regions in NUTS 2021
+/// (AL, ME, MK, RS, TR). The 37 the decision fixed: not every candidate country
+/// (Ukraine, Bosnia and Herzegovina, Moldova and Georgia are candidates too), and
+/// widening it is a later, additive choice. No ISO alpha-2 is another country's
+/// NUTS code (`EL` is unassigned in ISO and `UK` is reserved for the United Kingdom
+/// itself), so an inclusion can only ever serve a country's own code.
+/// [`place_country`] renames GR and GB on the way out.
 const NUTS_LEVEL0_ISO: &[&str] = &[
     // the EU-27
     "AT", "BE", "BG", "CY", "CZ", "DE", "DK", "EE", "ES", "FI", "FR", "GR", "HR", "HU", "IE", "IT", "LT", "LU",
@@ -7762,7 +7811,7 @@ const NUTS_LEVEL0_ISO: &[&str] = &[
     "GB",
     // EFTA
     "CH", "IS", "LI", "NO",
-    // the candidate countries
+    // the candidate countries with NUTS-coded statistical regions in NUTS 2021
     "AL", "ME", "MK", "RS", "TR",
 ];
 
@@ -10790,6 +10839,10 @@ mod tests {
             is_correction: true,
             facts,
             lots: vec![LotState { key: "LOT-1".into(), kind: "Lot".into(), facts: lot_facts }],
+            // Issue 532 review: the place-country flags ride the frame too, or the
+            // bucketed fold would let an unmapped republish carry a stale code.
+            place_country_tender: true,
+            place_country_lots: ["LOT-1".to_owned()].into_iter().collect(),
             // Issue 489: carried through the frame too.
             value_corrections: vec![ValueCorrection {
                 field: "estimated_value".into(),
@@ -11244,11 +11297,11 @@ mod tests {
         }
     }
 
-    /// Issue 532 (D3): the NUTS country list is the closed definitional set — 37
-    /// ISO countries, each one assigned and reached from exactly one alpha-3 —
-    /// and what it serves is exactly the 37 NUTS level-0 codes, never ISO's GR/GB.
+    /// Issue 532 (D3): the NUTS country list is the 37 the decision fixed — ISO
+    /// countries, each one assigned and reached from exactly one alpha-3 — and what
+    /// it serves is exactly those 37 NUTS level-0 codes, never ISO's GR/GB.
     #[test]
-    fn the_nuts_level_0_list_is_the_closed_set_of_nuts_countries() {
+    fn the_nuts_level_0_list_is_the_decided_37() {
         use crate::countries::{ALPHA2, ALPHA3_TO_ALPHA2};
         assert_eq!(NUTS_LEVEL0_ISO.len(), 37);
         let distinct: BTreeSet<&str> = NUTS_LEVEL0_ISO.iter().copied().collect();
@@ -11380,6 +11433,37 @@ mod tests {
         // serve the NUTS place only.
         let i = notice(1, vec![nuts("PROCEDURE", "BT-5071-Procedure", 0, "NL329"), country("LOT-1", "BT-5141-Lot", 1, "BEL")]);
         assert_eq!(each(&fold(&[&i])), vec![s(&["NL329"])], "(i)");
+
+        // (j) review: a same-scope republish that maps to nothing — a third country,
+        // an alpha-2 — clears the carried code instead of leaving the earlier
+        // notice's country standing. At both scopes, and through the bucketed path's
+        // snapshot and rebuild, which must carry the flag.
+        let through_bucket = |state: NoticeState| {
+            let notice = store::NoticeRef {
+                id: state.notice_id,
+                source: "ted".into(),
+                publication_id: state.publication_id.clone(),
+                profile: "eforms:eforms-sdk-1.13".into(),
+            };
+            BucketRow::snapshot("group".into(), &notice, state).to_notice_state()
+        };
+        for (section, field) in [("PROCEDURE", "BT-5141-Procedure"), ("LOT-1", "BT-5141-Lot")] {
+            for unmapped in ["EGY", "AT"] {
+                let cn = notice(1, vec![country(section, field, 0, "DEU")]);
+                let can = notice(2, vec![country(section, field, 0, unmapped)]);
+                assert_eq!(each(&fold(&[&cn, &can])), vec![s(&["DE"]), vec![]], "(j) {field} DEU then {unmapped}");
+                let (cn, can) = (through_bucket(cn), through_bucket(can));
+                assert_eq!(each(&fold(&[&cn, &can])), vec![s(&["DE"]), vec![]], "(j) bucketed, {field} then {unmapped}");
+            }
+            // (k) a notice silent on BT-5141 still carries the code, as in (h); one
+            // that republishes at the OTHER scope clears only its own.
+            let cn = notice(1, vec![country(section, field, 0, "DEU")]);
+            let silent = notice(2, vec![classification_value("PROCEDURE", "BT-262-Procedure", 0, "cpv", "45000000")]);
+            assert_eq!(each(&fold(&[&cn, &silent])), vec![s(&["DE"]), s(&["DE"])], "(k) {field}");
+        }
+        let cn = notice(1, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "DEU")]);
+        let lot_only = notice(2, vec![country("LOT-1", "BT-5141-Lot", 0, "EGY")]);
+        assert_eq!(each(&fold(&[&cn, &lot_only])), vec![s(&["DE"]), s(&["DE"])], "(k) another scope's republish");
 
         // The derived row is its own field, so the published NUTS keeps `place`.
         let v = &fold(&[&notice(1, vec![country("PROCEDURE", "BT-5141-Procedure", 0, "GRC")])])[0];
@@ -12368,6 +12452,8 @@ mod tests {
             is_correction: !corrections.is_empty(),
             facts: facts.into_iter().collect(),
             lots,
+            place_country_tender: false,
+            place_country_lots: BTreeSet::new(),
             value_corrections: corrections,
             roles: Vec::new(),
             raw_results: RawResults::default(),
@@ -12444,6 +12530,8 @@ mod tests {
             is_correction: false,
             facts: BTreeSet::new(),
             lots: Vec::new(),
+            place_country_tender: false,
+            place_country_lots: BTreeSet::new(),
             value_corrections: Vec::new(),
             roles: Vec::new(),
             raw_results: RawResults::default(),
