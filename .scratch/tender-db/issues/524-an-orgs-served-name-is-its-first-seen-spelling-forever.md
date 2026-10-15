@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — UNIT 2b DEPLOYED `11803dd` 2026-10-15 12:3x UTC, and its wet run has begun. Plan 2515 (rule `524u2-v5`) has 28,707 changes, 553 holds and 0 unexpected canaries. Its uniform samples, judged: 39 right, 21 neutral, 0 wrong of 63; plan 2501 was ~3.7% worse. Canaries 2516: 5 renamed. Capped run 2517: 500 renamed, 0 drifted, 0 raced. The full run is HELD: 137 planned display spellings carry a whitespace run (org 22609166 serves `Julius Brune GmbH  Co. KG`, its `&` dropped, on a byte-order tie), and S1 would make each of them permanent. NEXT: rule `524u2-v6` (serve the display spelling whitespace-collapsed, spellings that differ only in whitespace counted together), gate, deploy, re-plan, diff against 2515, then the full run, re-dry, org-head-drift and build-org-match-keys. Unit 2c (weekly upkeep) follows. Hold over-blocking is filed as 548.
+Status: ready-for-agent — UNIT 2b DEPLOYED `11803dd`; its wet run is PAUSED and the capped run is REVERTED. Canaries 2516 (5 renames) stand. Capped run 2517 (500 renames) was reverted by job 2518 (500 restored): a dated spot check of its 30 applied samples found 5 confirmed WRONG (2186, 3262, 3694, 6867, 10671), all of one shape. The head was already the organization's CURRENT name, and R1's all-history majority put back the FORMER name. The dry-plan judges had no dates and could not see this. NEXT: the recency decision (panel wf_ce13ee62-9e9) as rule `524u2-v7`, on top of v6's whitespace collapse (`208c09c`, gating). Then build, gate, deploy, re-plan, re-judge WITH dates, canaries, capped run, a dated spot check, the full run. Unit 2c follows. Hold over-blocking is filed as 548.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -833,3 +833,20 @@ These figures come from job 2492's totals and its 30-per-bucket samples, simulat
   - None of the 505 applied heads has one: they are the lowest org ids, up to 11,210.
   - Fix, rule `524u2-v6`: group a cluster's fit spellings by their whitespace-collapsed form, summing their votes,
     and serve the collapsed form.
+- **Capped 2517 REVERTED (job 2518, 2026-10-15 ~13:1x UTC):** 500 restored, 0 renamed again, 0 stripped, 0 gone.
+  - **The dated spot check** (wf_7b6969e8-539) of its 30 `applied_samples`: 8 right, 16 neutral, 5 wrong. Each
+    wrong verdict was upheld by a skeptic who read the dated notices on the public API.
+    - 2186: a Castilla y León consejería, renamed 2026. Every notice since 2026-08 uses the old head.
+    - 3262: `Mind Energy Oy`, renamed from `Energia Myynti Suomi Oy` in 2025/26. Every notice since 2026-03 uses it.
+    - 3694: the Murcia consejería, which gained `Portavocía` from 2026-06.
+    - 6867: `Askend Estonia OÜ`, renamed from `Wisercat Estonia OÜ`. Every notice since 2025-04 uses it.
+    - 10671: TELEG-M d.o.o., which has used its long name since 2026.
+  - **The shape:**
+    - Low org ids were minted by the live daily feed before the historical backfills, so their first-seen head is
+      often the CURRENT name.
+    - An unweighted all-history majority then favours the former name, because it has more years of notices.
+    - The capped run took the 500 lowest ids, which is exactly this population.
+  - **Why the dry-plan judgement (0 of 63 wrong) missed it:** its samples carried vote counts and no dates, so a
+    rename back to the former name read as `right` or `neutral` ("the dominant, current-looking registered name").
+  - **The 5 canaries (2516) stand.** Each was decided by hand and all are right (an identifier-holder fix, an
+    address-junk head, caps, `s.o.`, empty).
