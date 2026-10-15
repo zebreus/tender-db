@@ -323,14 +323,17 @@ that name is written in. Even then it stays when the change would swap one legal
 for another (<code>AG</code> to <code>Sàrl</code>), drop a consortium mark, fail the NHS ODS
 name check the old head passed, or, on the 25% arm only, serve an initialism of the head;
 when no spelling of the winning cluster is fit to serve; when the identifier carries a
-<code>wrong</code> or unapplied <code>related</code> review verdict; and, on the 55% and 25%
-arms only, when the head is in another script than its mentions (TED's English rendering).
-So the head can change with no new notice, and every tender the organization is on shows the
-new name at once. The rename arrives as an <code>organization</code> <code>changed</code>
-event, not a Tender one: the parties join the organization when read. Where the job has not
-renamed an organization, and always for one without an identifier (whose name is its
-matching key), the head is the first spelling a notice published.
-<code>lot_results[].winners[]</code> carry the head only: a
+<code>wrong</code> or unapplied <code>related</code> review verdict; on the 55% arm, while
+the organization's newest procedures still use the current head (a rename: the head names at
+least 2 procedures and two thirds of the organization's newest as many, unless the head is
+unfit to serve or carries a number the other name lacks); and, on the 55% and 25% arms only,
+when the head is in another script than its mentions (TED's English rendering). So the head
+can change with no new notice, and every tender the organization is on shows the new name at
+once. The rename arrives as an <code>organization</code> <code>changed</code> event, not a
+Tender one: the parties join the organization when read. Where the job has not renamed an
+organization, and always for one without an identifier (whose name is its matching key), the
+head is the first spelling a notice published. <code>lot_results[].winners[]</code> carry
+the head only: a
 winner has no anchor to the notice's party block. In eForms the winning bid's
 <code>parties[]</code> normally carry its published name. The detail's <code>parties[]</code>
 (role <code>winner</code> or <code>Tenderer</code>) carry it only while the version's parties

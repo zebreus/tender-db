@@ -185,6 +185,24 @@ Decided:
 
    Otherwise the head stays byte for byte. No single mention, near tie or legal-form difference moves
    it.
+
+   **(b) is HELD for a rename in progress (rule `524u2-v7`, the recency decision of 2026-10-15,
+   panel wf_ce13ee62-9e9).** The capped run 2517 put five organizations back to a FORMER name: their
+   head was already the current name, and (b)'s all-history majority restored the old one. So when
+   the head's own cluster holds at least 2 votes, (b) reads the organization's dated procedures. An
+   ITEM is a distinct (vote key, tender) pair of the voting mentions, dated by its newest
+   `tender_versions.published_at` (a notice's procedure is its smallest `tender_id`); k is the head
+   cluster's items; every item is ranked newest first (an elected or other item before a head item on
+   an equal instant, then tender, then key), and the window is the newest k. When k ≥ 2 and the head
+   holds at least two thirds of the window, the change is HELD `recent` with the spelling it would
+   serve; a third cluster's items count against the head. A head that is unfit to serve even against
+   itself, or whose vote key carries a token with a digit the elected key lacks (an address, a NIP, a
+   `LOT 2`), is not protected: (b) applies as before, and the release is counted. A caller without
+   dates gets HOLD `undated` (it fails closed); a finished plan dates every candidate and must hold
+   none, and the wet run refuses a plan that does. (a) and (c) never read dates ((c)'s head has at
+   most 1 vote). The residue — an H = 1 or single-procedure rename, which by dates looks like a stray
+   newest mention — is not protected; the plan samples it (`residue:head_newest`) for the dated
+   re-judge that gates every wet run.
 4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
    spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
    guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of

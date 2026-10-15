@@ -1250,10 +1250,13 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     name is written in. Even then it stays when the change would swap one legal-form family for another \
     (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS name check the old head passed, or, on \
     the 25% arm only, serve an initialism of the head; when no spelling of the winning cluster is fit to \
-    serve; when the identifier carries a `wrong` or unapplied `related` review verdict; and, on the 55% \
-    and 25% arms only, when the head is in another script than its mentions (TED's English rendering). \
-    Where the job has not renamed a row, and always where `identifier IS NULL`, it is the first spelling \
-    a notice published. What one notice said is `organization_mentions.name`.";
+    serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on the 55% arm, \
+    while the organization's newest procedures still use the current head (a rename: the head names at \
+    least 2 procedures and two thirds of the organization's newest as many, unless the head is unfit to \
+    serve or carries a number the other name lacks); and, on the 55% and 25% arms only, when the head is \
+    in another script than its mentions (TED's English rendering). Where the job has not renamed a row, \
+    and always where `identifier IS NULL`, it is the first spelling a notice published. What one notice \
+    said is `organization_mentions.name`.";
 
 /// The description for a table/view, if one is curated.
 fn table_note(name: &str) -> Option<&'static str> {

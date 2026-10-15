@@ -640,6 +640,7 @@ fn elect_head_is_the_rule_the_plan_runs() {
         identifier_kind: Some("national"),
         identifier: Some("GB1"),
         bind_defect: false,
+        dated: None,
     };
     let sheffield = [
         ("UNIVERSITY OF SHEFFIELD", 14),
@@ -815,7 +816,8 @@ async fn the_wet_run_renames_each_planned_head_once_and_the_revert_restores_it()
     assert_eq!(
         evidence,
         text(&format!(
-            "{{\"epoch\":\"{}\",\"rule\":\"R1\",\"voting\":17,\"top\":16,\"head\":1,\"second\":1,\"clusters\":2}}",
+            "{{\"epoch\":\"{}\",\"rule\":\"R1\",\"voting\":17,\"top\":16,\"head\":1,\"second\":1,\"clusters\":2,\
+             \"head_procs\":0,\"head_in_window\":0,\"head_newest\":null,\"top_newest\":null}}",
             store::HEAD_ELECTION_EPOCH
         ))
     );
@@ -1111,4 +1113,142 @@ async fn a_window_that_fails_after_a_commit_reports_the_committed_windows() {
     let r = db.apply_org_name_refresh(windowed(planned, 8)).await.expect("the earlier attempt's rename stands");
     assert_eq!((r.prior_applied, r.windows, r.applied, r.left), (1, 0, 0, 6));
     assert!(r.window_error.as_deref().is_some_and(|e| e.contains("window 1 (org ids 2..=3)")), "{r:?}");
+}
+
+// ---- Issue 524 rule v7: the dated planner and wet pre-pass (the recency decision's tests 13 and 14).
+
+const DAY: i64 = 86_400;
+/// 2023-12-09: the dated fixtures' first day.
+const BASE: i64 = 19_700;
+
+/// An identifier-bearing org served as `head`, with one mention per `(spelling, versions)`, each its
+/// own notice (`id * 1000 + i`), and that notice's `tender_versions` rows `(tender, published_at)`.
+async fn dated_org(conn: &turso::Connection, id: i64, head: &str, mentions: &[(&str, &[(i64, i64)])]) {
+    org(conn, id, "DE", Some(&format!("DE{id}")), head, &[]).await;
+    for (i, (name, versions)) in mentions.iter().enumerate() {
+        let notice = id * 1000 + i as i64;
+        conn.execute(
+            "INSERT INTO organization_mentions
+               (notice_id, section_id, organization_id, name, country, raw_identifier, scheme)
+             VALUES (?, 'ORG-0001', ?, ?, 'DE', NULL, NULL)",
+            vec![Value::Integer(notice), Value::Integer(id), Value::Text((*name).into())],
+        )
+        .await
+        .unwrap();
+        for &(tender, at) in *versions {
+            conn.execute(
+                "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                 VALUES (?, ?, ?, ?, 'x')",
+                vec![Value::Integer(tender), Value::Integer(notice), Value::Integer(notice), Value::Integer(at)],
+            )
+            .await
+            .unwrap();
+        }
+    }
+}
+
+/// `n` mentions of `name`, each in its own tender from `tender` on, a day apart from `day` on.
+fn spread(name: &'static str, tender: i64, day: i64, n: i64) -> Vec<(&'static str, Vec<(i64, i64)>)> {
+    (0..n).map(|i| (name, vec![(tender + i, (day + i) * DAY)])).collect()
+}
+
+/// The dated corpus: 40 a rename (held `recent`), 41 a forward change, 42 the date read's edges.
+async fn dated_corpus(conn: &turso::Connection) {
+    let mut forty = spread("Old Name Agency", 4_000, BASE, 8);
+    forty.extend(spread("New Name Agency", 4_100, BASE + 100, 3));
+    let mut forty_one = spread("New Name Office", 4_200, BASE, 20);
+    forty_one.extend(spread("Old Name Office", 4_250, BASE + 5, 2));
+    let mut forty_two = spread("Bright Services", 4_300, BASE, 7);
+    // A future-dated elected mention: no date, counted undated.
+    forty_two.push(("Bright Services", vec![(4_310, crate_now() + 30 * DAY)]));
+    // A notice in TWO tenders (an issue-278 ghost) keeps the smaller; a second head notice in that
+    // tender is then the same procedure: k = 1. Kept as the larger tender, k would be 2, both newest.
+    forty_two.push(("Dim Services", vec![(4_390, (BASE + 100) * DAY), (4_380, (BASE + 100) * DAY)]));
+    forty_two.push(("Dim Services", vec![(4_380, (BASE + 101) * DAY)]));
+    // A head notice dated 0: no date, counted undated.
+    forty_two.push(("Dim Services", vec![(4_395, 0)]));
+    for (id, head, rows) in [(40, "New Name Agency", forty), (41, "Old Name Office", forty_one), (42, "Dim Services", forty_two)] {
+        let mentions: Vec<(&str, &[(i64, i64)])> = rows.iter().map(|(name, v)| (*name, v.as_slice())).collect();
+        dated_org(conn, id, head, &mentions).await;
+    }
+}
+
+fn crate_now() -> i64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64
+}
+
+#[tokio::test]
+async fn the_planner_dates_its_candidates_and_holds_a_rename() {
+    let (db, conn) = open("ron-dated").await;
+    dated_corpus(&conn).await;
+    let r = plan(&db, 2_000, None, &[]).await;
+    assert_eq!(r.epoch, "524u2-v7");
+    assert_eq!(r.by_hold.get("undated"), None, "a finished plan holds nothing undated");
+    assert_eq!(r.by_hold["recent"], count(1, 11), "40, the rename");
+    assert_eq!(ids(&r.held), vec![40]);
+    let held = &r.held[0];
+    assert_eq!((held.reason, held.rule, held.new_name.as_deref()), ("recent", Some("R1"), Some("Old Name Agency")));
+    assert_eq!((held.head_procs, held.head_in_window, held.newest_is_head), (Some(3), Some(3), Some(true)));
+    assert_eq!(ids(&r.planned), vec![41, 42]);
+    let forward = &r.planned[0];
+    assert_eq!((forward.head_procs, forward.head_in_window, forward.newest_is_head), (Some(2), Some(0), Some(false)));
+    assert_eq!(forward.head_newest, Some(store::rates::civil_date((BASE + 6) * DAY)));
+    assert_eq!(forward.top_newest, Some(store::rates::civil_date((BASE + 19) * DAY)));
+    assert_eq!((forward.undated_mentions, forward.recent_released), (Some(0), None));
+    // 42: the ghost's smaller tender makes its two head notices one procedure; the future-dated and
+    // the zero-dated mentions are undated.
+    let edges = &r.planned[1];
+    assert_eq!((edges.head, edges.head_procs, edges.undated_mentions), (3, Some(1), Some(2)));
+    assert_eq!((r.dated_orgs, r.undated_mentions), (3, 2));
+    assert_eq!(r.dated_notices, 11 + 22 + 11, "every voting mention's notice of the three candidates");
+    assert_eq!(r.dated_version_rows, 11 + 22 + 12, "42's ghost notice reads two rows");
+    assert!(r.samples.contains_key("hold:recent"));
+    // 42 is the residue: a single head procedure, and the org's newest item.
+    assert_eq!((edges.newest_is_head, r.residue.len(), r.residue["R1"]), (Some(true), 1, count(1, 11)));
+    assert_eq!(ids(&r.samples["residue:head_newest"]), vec![42]);
+
+    // Refused without the date read's index, as the wet path is.
+    conn.execute("DROP INDEX tender_versions_notice", ()).await.unwrap();
+    let err = db.plan_org_name_refresh(args(2_000, 30, None, &[])).await.expect_err("the date read would scan");
+    assert!(err.to_string().contains("tender_versions_notice is absent (a rebuild's fold?)"), "{err}");
+    let err = db.apply_org_name_refresh(wet(targets(&r), 7)).await.expect_err("so would the pre-pass's");
+    assert!(err.to_string().contains("tender_versions_notice is absent (a rebuild's fold?)"), "{err}");
+}
+
+#[tokio::test]
+async fn a_target_whose_head_gained_newer_procedures_reads_drifted() {
+    let (db, conn) = open("ron-dated-wet").await;
+    dated_corpus(&conn).await;
+    let planned = targets(&plan(&db, 2_000, None, &[]).await);
+    assert_eq!(planned.iter().map(|t| t.org_id).collect::<Vec<_>>(), vec![41, 42]);
+    // After the plan, 41's head names four new procedures, its newest: the window now fires.
+    for i in 0..4 {
+        let notice = 41_900 + i;
+        conn.execute(
+            "INSERT INTO organization_mentions
+               (notice_id, section_id, organization_id, name, country, raw_identifier, scheme)
+             VALUES (?, 'ORG-0001', 41, 'Old Name Office', 'DE', NULL, NULL)",
+            vec![Value::Integer(notice)],
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (?, 1, ?, ?, 'x')",
+            vec![Value::Integer(4_900 + i), Value::Integer(notice), Value::Integer((BASE + 200 + i) * DAY)],
+        )
+        .await
+        .unwrap();
+    }
+    let r = db.apply_org_name_refresh(wet(planned, 7)).await.unwrap();
+    assert_eq!((r.ready, r.drifted, r.applied), (1, 1, 1));
+    assert_eq!(r.drift_samples[0].org_id, 41);
+    assert!(r.drift_samples[0].why.contains("re-elected hold:recent"), "{:?}", r.drift_samples);
+    assert_eq!(org_changes(&conn).await, vec![42]);
+    // The ledger's evidence carries the window's reading.
+    let mut rows = conn.query("SELECT evidence FROM org_name_refresh_log WHERE org_id = 42", ()).await.unwrap();
+    let evidence = rows.next().await.unwrap().unwrap().get_value(0).unwrap();
+    let evidence = evidence.as_text().unwrap();
+    assert!(evidence.contains("\"head_procs\":1,\"head_in_window\":1"), "{evidence}");
+    assert!(evidence.contains(&format!("\"head_newest\":\"{}\"", store::rates::civil_date((BASE + 101) * DAY))), "{evidence}");
 }

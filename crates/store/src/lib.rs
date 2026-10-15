@@ -88,7 +88,8 @@ pub use canonical::{
     TYPO_MOVE_MENTION_VETO,
 };
 pub use head_election::{
-    HEAD_ELECT_TOP_MIN, HEAD_ELECTION_EPOCH, HEAD_HOLD_NO_FIT, HeadElectFns, HeadElectOrg, HeadElection, HeadKeep,
+    DatedVote, HEAD_ELECT_TOP_MIN, HEAD_ELECTION_EPOCH, HEAD_HOLD_NO_FIT, HEAD_HOLD_RECENT, HEAD_HOLD_UNDATED,
+    HEAD_RECENT_MIN_PROCEDURES, ORG_NAME_REFRESH_RELEASED_LISTED, RecentReading, HeadElectFns, HeadElectOrg, HeadElection, HeadKeep,
     HeadRefreshEntry, HeadRule, HeadVerdict, ORG_NAME_REFRESH_APPLIED_SAMPLES, ORG_NAME_REFRESH_DRIFT_SAMPLES,
     ORG_NAME_REFRESH_LISTING_CAP, ORG_NAME_REFRESH_SPELLINGS, ORG_NAME_REFRESH_WINDOW, OrgNameRefreshApplied,
     OrgNameRefreshApplyArgs, OrgNameRefreshArgs, OrgNameRefreshDrift, OrgNameRefreshPlan, OrgNameRefreshRename,

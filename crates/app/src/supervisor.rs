@@ -1275,34 +1275,63 @@ struct RefreshCanary {
     serves: Option<&'static str>,
 }
 
-/// Issue 524 unit 2a: the decision's canaries (`## Unit 2 — decided`), the five positive ones first,
-/// then the seven negative ones, then the census's third exhibit 30914328 (`Withheld Section94
-/// Supplier`, issue 522's fix, reported with no expectation).
+/// Issue 524 unit 2a: the decision's canaries (`## Unit 2 — decided`), re-read for rule v7 by the
+/// recency decision (`## Unit 2b — recency decision`, panel wf_ce13ee62-9e9): 27 rows.
+/// - The five 2516 renames are live under their new names, so each now elects `keep:S1`.
+/// - 178 is a rename the other way: every buyer procedure from 2024-05 to 2026-07 names the full head,
+///   and `CA Plaine Vallée` (which 2a.3 accepted as neutral) is the pre-eForms usage, ended 2023-12.
+/// - The five 2517 wrongs (reverted by 2518) and 1076 (k = 3) are `hold:recent`.
+/// - 2517's rights (reverted with them) are `change:R1`; 1919 is undated (a review body only): if it
+///   reads `hold:recent`, date-check it with one bounded `/v1/sql` read before counting a no-go.
+/// - 30914328 (`Withheld Section94 Supplier`, issue 522's fix) is reported with no expectation.
 const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
-    RefreshCanary { id: 31_558_903, expect: Some("change:R1"), serves: Some("The University of Sheffield") },
-    RefreshCanary { id: 22_713_056, expect: Some("change:R0n"), serves: Some("Vergabekammer bei der Bezirksregierung") },
-    RefreshCanary { id: 6_341_366, expect: Some("change:R0e"), serves: Some("Kalmar kommun") },
-    RefreshCanary { id: 760, expect: Some("change:R1"), serves: Some("Getinge Polska Sp. z o.o.") },
-    RefreshCanary { id: 61, expect: Some("change:R1"), serves: Some("Tribunal administratif de Nice") },
+    // The 2516 five, applied: keep:S1.
+    RefreshCanary { id: 31_558_903, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 22_713_056, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 6_341_366, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 760, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 61, expect: Some("keep:S1"), serves: None },
     RefreshCanary { id: 7_912_592, expect: Some("keep:D4"), serves: None },
-    // Issue 524 unit 2a.3, re-decided by the owner: plan 2501's spellings put the abbreviation at 63
-    // against the head's 32, kept by R1's 2x bar (63 < 64). The folded vote key (2a.1) joins
-    // `CA Plaine Vallee` / `CA plaine vallee` (and one unlisted vote) to that cluster, so 66 ≥ 2 × 32
-    // and R1 serves `CA Plaine Vallée`, the buyer's own published form 66 times over. It names the
-    // same body as the head `Communauté d'agglomération Plaine Vallée`, so the change is neutral, not
-    // wrong. A 2-letter R1 initialism guard would also hold right brand changes (`EY`), and R1 is not
-    // second-guessed. Accepted.
-    RefreshCanary { id: 178, expect: Some("change:R1"), serves: Some("CA Plaine Vallée") },
+    RefreshCanary { id: 178, expect: Some("hold:recent"), serves: None },
     RefreshCanary { id: 131, expect: Some("keep:bar"), serves: None },
     RefreshCanary { id: 99, expect: Some("keep:bar"), serves: None },
     RefreshCanary { id: 10, expect: Some("keep:S1"), serves: None },
     // Issue 524 unit 2a: dry plan 2501 read R1 here, and rightly — its mentions are `les alchimistes`
     // x2, `LES ALCHIMISTES` x2, `Les Alchimistes SAS` and `Les Alchimistes Loire Atlantique`; the vote
     // key drops `SAS`, so five of six votes are one cluster, served by the SIREN's own mixed-case name.
-    // The decision's `hold:no_fit` read its census sample before the vote key existed.
+    // H = 1, so the v7 window cannot reach it.
     RefreshCanary { id: 334, expect: Some("change:R1"), serves: Some("Les Alchimistes SAS") },
     RefreshCanary { id: 1_165_973, expect: Some("keep:E1"), serves: None },
     RefreshCanary { id: 30_914_328, expect: None, serves: None },
+    // Rule v7: 2517's former-name reverts, and 1076 (its head names 2024-07, 2025-07 and 2026-07;
+    // `professionnel` appears only in 2018-19).
+    RefreshCanary { id: 2_186, expect: Some("hold:recent"), serves: None },
+    RefreshCanary { id: 3_262, expect: Some("hold:recent"), serves: None },
+    RefreshCanary { id: 3_694, expect: Some("hold:recent"), serves: None },
+    RefreshCanary { id: 6_867, expect: Some("hold:recent"), serves: None },
+    RefreshCanary { id: 10_671, expect: Some("hold:recent"), serves: None },
+    RefreshCanary { id: 1_076, expect: Some("hold:recent"), serves: None },
+    // Rule v7: 2517's rights, reverted with the rest by 2518.
+    RefreshCanary { id: 445, expect: Some("change:R1"), serves: Some("KADEA Berlin GmbH") },
+    RefreshCanary {
+        id: 1_220,
+        expect: Some("change:R1"),
+        serves: Some("Miasto Bielsko-Biała Urząd Miejski w Bielsku-Białej"),
+    },
+    RefreshCanary { id: 2_762, expect: Some("change:R1"), serves: Some("Diputación Provincial de Valladolid") },
+    RefreshCanary { id: 3_406, expect: Some("change:R1"), serves: Some("Staatliches Hochbauamt Freiburg") },
+    RefreshCanary { id: 6_079, expect: Some("change:R1"), serves: Some("Terideal Segex Energies") },
+    RefreshCanary {
+        id: 10_603,
+        expect: Some("change:R1"),
+        serves: Some("Uždaroji akcinė bendrovė „Visagino energija“"),
+    },
+    RefreshCanary {
+        id: 11_179,
+        expect: Some("change:R1"),
+        serves: Some("Mapfre España, Compañía de Seguros y Reaseguros, S. A."),
+    },
+    RefreshCanary { id: 1_919, expect: Some("change:R1"), serves: Some("Ondernemingsrechtbank, Afdeling ANTWERPEN") },
 ];
 
 /// Issue 524 unit 2a: the ingest side of the head election, as `store::elect_head` takes it.
@@ -1407,10 +1436,26 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
     // Issue 524 unit 2a.1: R2's shorthand hold is named whether or not it fired, so a reader can tell
     // "none held" from "not built". Unit 2a.2 dropped its `truncation` arm; `initialism` remains.
     let initialisms = plan.by_hold.get("initialism").map_or(0, |c| c.orgs);
+    // Rule v7: the recency hold and the undated count are named whatever they read; `undated` must be 0
+    // (a wet run refuses a plan where it is not).
+    let recent = plan.by_hold.get(store::HEAD_HOLD_RECENT).map_or(0, |c| c.orgs);
+    let undated = plan.by_hold.get(store::HEAD_HOLD_UNDATED).map_or(0, |c| c.orgs);
+    let dated = format!(
+        "Dated (rule v7): {} candidate(s), {} notice(s), {} version row(s), {} undated voting mention(s); R1's \
+         recent hold: {recent}; undated {undated} (MUST be 0); released by the junk exemption: {} (ids {:?}); \
+         residue (planned changes whose org's newest procedure is the head's): {}.",
+        plan.dated_orgs,
+        plan.dated_notices,
+        plan.dated_version_rows,
+        plan.undated_mentions,
+        tally(&plan.recent_released),
+        plan.recent_released_ids,
+        counts(&plan.residue),
+    );
     format!(
         "refresh-org-names DRY (issue 524 unit 2a, rule {}): {} organization(s) and {} mention row(s) walked{}; \
          {} elected ({}+ mention rows; {} below), {} with an empty head. CHANGES {} ({} mentions; {} on merge \
-         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. \
+         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. {dated} \
          Listed {} planned{} and {} held{}. Family moves of the changes: {}. D4 keeps' ENG satellites: {}. \
          {} identifier-verdict probe(s). Canaries ({unexpected} unexpected): {}. NOTHING IS WRITTEN — a wet \
          run (`dry_run: false`, issue 524 unit 2b) applies this plan.",
@@ -1507,6 +1552,15 @@ fn org_name_refresh_targets(
     }
     if plan["stopped"].as_bool() == Some(true) {
         return Err(refresh_wet_refused("the stored plan is a stopped walk; re-run the dry plan".to_owned()));
+    }
+    // Rule v7: a plan that held anything `undated` was elected without dates somewhere: the window
+    // could not read it, so it is no plan to apply.
+    let undated = plan["by_hold"][store::HEAD_HOLD_UNDATED]["orgs"].as_u64().unwrap_or(0);
+    if undated != 0 {
+        return Err(refresh_wet_refused(format!(
+            "the stored plan holds {undated} organization(s) `undated` (rule v7: an R1 change it could not \
+             date), and must hold none; re-run the dry plan"
+        )));
     }
     if plan["truncated"].as_bool() != Some(false) {
         return Err(refresh_wet_refused(format!(
@@ -21772,10 +21826,20 @@ mod tests {
         assert!(stoppable("refresh-org-names", &queued[0].params), "a cancel reaches the walk between pages");
         assert!(stoppable("refresh-org-names", &queued[2].params), "and the wet run between windows");
         assert!(stoppable("revert-org-name-refresh", &queued[4].params), "and the revert between windows");
-        // The decision's twelve canaries plus the census's third exhibit, each id once.
+        // The recency decision's 27 canaries (rule v7), each id once.
         let ids: std::collections::BTreeSet<i64> = ORG_NAME_REFRESH_CANARIES.iter().map(|c| c.id).collect();
-        assert_eq!(ids.len(), 13);
-        assert!(ids.contains(&31_558_903) && ids.contains(&22_713_056) && ids.contains(&30_914_328));
+        assert_eq!((ids.len(), ORG_NAME_REFRESH_CANARIES.len()), (27, 27));
+        let expect = |id: i64| ORG_NAME_REFRESH_CANARIES.iter().find(|c| c.id == id).and_then(|c| c.expect);
+        for id in [31_558_903, 22_713_056, 6_341_366, 760, 61, 10] {
+            assert_eq!(expect(id), Some("keep:S1"), "{id}: applied by 2516, live under its new name");
+        }
+        for id in [178, 2_186, 3_262, 3_694, 6_867, 10_671, 1_076] {
+            assert_eq!(expect(id), Some("hold:recent"), "{id}");
+        }
+        for id in [445, 1_220, 2_762, 3_406, 6_079, 10_603, 11_179, 1_919, 334] {
+            assert_eq!(expect(id), Some("change:R1"), "{id}");
+        }
+        assert_eq!(expect(30_914_328), None);
     }
 
     /// Issue 524 unit 2a, end to end with the REAL ingest functions (`head_vote_key`, `not_a_name`,
@@ -21899,17 +21963,23 @@ mod tests {
         assert!(err.contains("REFUSED") && err.contains("no org-name-refresh-plan is stored"), "{err}");
         let msg = sup.run_spec(&dry(true)).await.expect("the dry plan");
         for reading in [
-            r#"31558903 change:R1 "The University of Sheffield" as expected"#,
-            r#"22713056 change:R0n "Vergabekammer bei der Bezirksregierung" as expected"#,
-            r#"6341366 change:R0e "Kalmar kommun" as expected"#,
+            // Seeded as they were BEFORE 2516 renamed them: rule v7 expects the live keep:S1, so the
+            // pre-rename shapes read UNEXPECTED (after the wet run below they read as expected).
+            r#"31558903 change:R1 "The University of Sheffield" UNEXPECTED (want keep:S1)"#,
+            r#"22713056 change:R0n "Vergabekammer bei der Bezirksregierung" UNEXPECTED (want keep:S1)"#,
+            r#"6341366 change:R0e "Kalmar kommun" UNEXPECTED (want keep:S1)"#,
             "7912592 keep:D4 as expected",
             r#"334 change:R1 "Les Alchimistes SAS" as expected"#,
             "1165973 keep:E1 as expected",
             // Not seeded: an expected canary the walk does not find is no pass.
-            r#"760 not found UNEXPECTED (want change:R1 "Getinge Polska Sp. z o.o.")"#,
+            "760 not found UNEXPECTED (want keep:S1)",
+            "178 not found UNEXPECTED (want hold:recent)",
+            r#"445 not found UNEXPECTED (want change:R1 "KADEA Berlin GmbH")"#,
             "10 not found UNEXPECTED (want keep:S1)",
             "30914328 not found (reported)",
-            "(6 unexpected)",
+            "(23 unexpected)",
+            // Rule v7's counters, named at zero.
+            "R1's recent hold: 0; undated 0 (MUST be 0)",
             "NOTHING IS WRITTEN",
         ] {
             assert!(msg.contains(reading), "missing {reading:?} in: {msg}");
@@ -21943,11 +22013,11 @@ mod tests {
         });
         let msg = sup.run_spec(&scoped).await.expect("the scoped dry plan");
         for reading in [
-            r#"31558903 change:R1 "The University of Sheffield" as expected"#,
+            r#"31558903 change:R1 "The University of Sheffield" UNEXPECTED (want keep:S1)"#,
             "760 not found UNEXPECTED",
             "22713056 outside the scope",
             "30914328 outside the scope",
-            "(1 unexpected)",
+            "(2 unexpected)",
             "(scoped to 2 org id(s))",
         ] {
             assert!(msg.contains(reading), "missing {reading:?} in: {msg}");
@@ -21960,11 +22030,17 @@ mod tests {
         // Issue 524 unit 2b, the wet path. An unscoped wet run refuses the scoped plan just stored.
         let err = sup.run_spec(&wet(2, None)).await.expect_err("a scoped plan, unscoped");
         assert!(err.contains("scoped to 2 org id(s)") && err.contains("Nothing was written"), "{err}");
-        // The whole plan again, then three tampered copies of it: each refused, nothing written.
+        // The whole plan again, then tampered copies of it: each refused, nothing written.
         sup.run_spec(&dry(true)).await.expect("the dry plan");
         let (genuine, at) = db.latest_report("org-name-refresh-plan").await.unwrap().unwrap();
         for (field, value, needle) in [
-            ("epoch", serde_json::json!("524u2-v0"), "rule epoch \"524u2-v0\""),
+            // Rule v7: a v6 plan is refused, and so is one that held anything `undated`.
+            ("epoch", serde_json::json!("524u2-v6"), "rule epoch \"524u2-v6\""),
+            (
+                "by_hold",
+                serde_json::json!({ "undated": { "orgs": 1, "mentions": 2 } }),
+                "holds 1 organization(s) `undated`",
+            ),
             ("rev", serde_json::json!("another-binary"), "binary \"another-binary\""),
             ("truncated", serde_json::json!(true), "truncated"),
         ] {
@@ -22056,6 +22132,12 @@ mod tests {
         assert!(msg.contains("3 already renamed") && msg.contains("RENAMED 0 head(s)"), "{msg}");
         assert_eq!(heads().await, after);
         assert_eq!(db.scalar(changed).await.unwrap(), Some(Value::Integer(3)));
+        // Rule v7: renamed, the three canaries elect keep:S1, as the live 2516 five do.
+        let msg = sup.run_spec(&dry(true)).await.expect("the re-plan");
+        for reading in ["31558903 keep:S1 as expected", "22713056 keep:S1 as expected", "6341366 keep:S1 as expected"] {
+            assert!(msg.contains(reading), "missing {reading:?} in: {msg}");
+        }
+        db.put_report("org-name-refresh-plan", &genuine, at).await.unwrap();
         // Job 2 recovered onto another binary (a deploy's restart): refused on the plan's `rev`, and the
         // line names the renames its earlier windows made, since that attempt stored no report.
         let mut moved: serde_json::Value = serde_json::from_str(&genuine).unwrap();
@@ -22118,6 +22200,7 @@ mod tests {
             identifier_kind: Some("national"),
             identifier: Some("RO12345678"),
             bind_defect: false,
+            dated: None,
         };
         let dumbraveni = [("Comuna Dumbrăveni", 10), ("COMUNA DUMBRAVENI", 32)];
         assert_eq!(elect_head(&dumbraveni, &org("Comuna Dumbrăveni"), &fns), HeadVerdict::Keep(HeadKeep::S1));

@@ -19,7 +19,7 @@ use turso::Value;
 
 use crate::canonical::{
     HEAD_DRIFT_AWARD_SUMMARY, HeadDriftCount, IN_CHUNK, ORG_HEAD_DRIFT_ORGS_SQL, all_caps, append_change,
-    org_head_drift_merged_sql, org_head_drift_mentions_sql, org_name_norm, placeholders,
+    org_head_drift_merged_sql, org_name_norm, placeholders,
 };
 use crate::checkpoint::{CheckpointMode, checkpoint_on};
 use crate::{Db, int, opt_int_of, opt_text_of, text};
@@ -38,8 +38,11 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// the display spelling is chosen among the fit spellings with their whitespace collapsed, a run's
 /// spellings counted together, so no change serves a doubled space (often a dropped `&`); the vote
 /// key reads a spelling and its collapsed form alike (`crosswalk::head_vote_key`), so a served head
-/// keys into its own cluster.
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v6";
+/// keys into its own cluster. `v7` (unit 2b, the recency decision, panel wf_ce13ee62-9e9, after the
+/// capped run 2517 put five orgs back to a FORMER name): R1 with H ≥ 2 is HELD (`recent`) while the
+/// head's own procedures are the organization's newest ([`HEAD_HOLD_RECENT`]), or (`undated`) when
+/// the caller passed no dates.
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v7";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -55,6 +58,53 @@ pub const ORG_NAME_REFRESH_SPELLINGS: usize = 5;
 
 /// Issue 524 unit 2: the hold reason when the winning cluster has no FIT spelling to serve.
 pub const HEAD_HOLD_NO_FIT: &str = "no_fit";
+
+/// Issue 524 rule `v7`: the hold reason when R1 (H ≥ 2) would replace a head whose own procedures are
+/// the organization's newest — a rename the all-history majority would revert (2517's 2186, 3262,
+/// 3694, 6867, 10671). See [`elect_head`]'s window.
+pub const HEAD_HOLD_RECENT: &str = "recent";
+
+/// Issue 524 rule `v7`: the hold reason when R1 (H ≥ 2) has no dates to read the window from
+/// (`HeadElectOrg::dated` is `None`). It fails closed: a caller without dates can never write an R1
+/// change the window might have stopped. A finished plan must count none.
+pub const HEAD_HOLD_UNDATED: &str = "undated";
+
+/// Issue 524 rule `v7`: the fewest head procedures (k) the window fires at. At 2 the 2/3 bar means
+/// both newest items are the head's (2.2% by chance among 10 items, against 18% for 2 of 3).
+pub const HEAD_RECENT_MIN_PROCEDURES: u64 = 2;
+
+/// Issue 524 rule `v7`: one dated mention — its spelling, its procedure (the smallest `tender_id` of
+/// the notice's `tender_versions` rows, so an issue-278 ghost reads as one procedure) and that
+/// version's `published_at`. The caller drops a mention whose notice has no usable version (`at ≤ 0`,
+/// or past the job's start by more than a day) and counts it undated.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DatedVote<'a> {
+    pub spelling: &'a str,
+    pub tender: i64,
+    pub at: i64,
+}
+
+/// Issue 524 rule `v7`: what the window read, whenever the caller passed dates.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct RecentReading {
+    /// k: the head cluster's items (distinct `(vote key, tender)` pairs).
+    pub head_procs: u64,
+    /// h_W: the head's items among the newest k items of the organization.
+    pub head_in_window: u64,
+    /// The newest head item's and the elected cluster's newest item's `at`.
+    pub head_newest: Option<i64>,
+    pub top_newest: Option<i64>,
+    /// The organization's newest item is a head item.
+    pub newest_is_head: bool,
+    /// Voting mentions the dates did not cover.
+    pub undated: u64,
+    /// k ≥ [`HEAD_RECENT_MIN_PROCEDURES`] and 3·h_W ≥ 2·k.
+    pub fires: bool,
+    /// The window fired on an R1 change (H ≥ 2) but the junk exemption released it: `unfit` (the head
+    /// is unfit to serve even against itself) or `digits` (its vote key has a digit token the elected
+    /// key lacks: an address, a NIP, `LOT 2`).
+    pub released: Option<&'static str>,
+}
 
 /// Issue 524 unit 2: the rule a head CHANGE (or a held one) is elected by.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
@@ -121,9 +171,10 @@ pub enum HeadVerdict {
     Keep(HeadKeep),
     /// A change the rule elected but does not apply: [`HEAD_HOLD_NO_FIT`] (the winning cluster has no
     /// fit spelling, so `new` is `None`), a bind guard's reason (the injected [`HeadElectFns::hold`]:
-    /// `family`, `gb_family`, `consortium_removed`, `nhs_check`), or, for R2 only, a shorthand's
-    /// ([`HeadElectFns::r2_hold`]: `initialism`), with the spelling it would have
-    /// served.
+    /// `family`, `gb_family`, `consortium_removed`, `nhs_check`), for R2 only a shorthand's
+    /// ([`HeadElectFns::r2_hold`]: `initialism`), or, for R1 with H ≥ 2 (rule `v7`), [`HEAD_HOLD_RECENT`]
+    /// (with the display spelling, `None` when none is fit) or [`HEAD_HOLD_UNDATED`] (`None`) — with
+    /// the spelling it would have served.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
 }
@@ -206,6 +257,9 @@ pub struct HeadElectOrg<'a> {
     /// `related` one. The dry planner probes it for the candidates only (orgs the rule would change or
     /// hold), so it passes `false` first and re-elects a candidate the probe finds.
     pub bind_defect: bool,
+    /// Rule `v7`: the organization's dated mentions, read by the caller for the candidates (`None`
+    /// otherwise). R1 with H ≥ 2 reads its window from them, and holds `undated` without them.
+    pub dated: Option<&'a [DatedVote<'a>]>,
 }
 
 /// Issue 524 unit 2: [`elect_head`]'s verdict with the counts it was read from.
@@ -222,6 +276,8 @@ pub struct HeadElection {
     pub second: u64,
     /// Distinct vote keys among the voters.
     pub clusters: u64,
+    /// Rule `v7`: the window's reading, whenever the caller passed dates.
+    pub recent: Option<RecentReading>,
 }
 
 /// One vote key's mentions and its spellings.
@@ -248,7 +304,19 @@ struct Cluster<'a> {
 ///    cluster's — its leading spelling, all of whose spellings share its key's letters: KEEP. A name
 ///    with no letter has no script and never trips it.
 /// 4. **S1**: the head's cluster is the top cluster or tied for it (H = T): KEEP byte for byte.
-/// 5. **R1**: T × 20 ≥ V × 11 (55%), T ≥ [`HEAD_ELECT_TOP_MIN`], T ≥ 2H, and the top is unique.
+/// 5. **R1**: T × 20 ≥ V × 11 (55%), T ≥ [`HEAD_ELECT_TOP_MIN`], T ≥ 2H, and the top is unique. Then,
+///    only when H ≥ 2 (rule `v7`, the recency decision): with no dates it is HELD `undated`
+///    ([`HEAD_HOLD_UNDATED`], `new` `None`: it fails closed); when the WINDOW fires and the junk
+///    exemption does not apply it is HELD `recent` ([`HEAD_HOLD_RECENT`], `new` the display spelling).
+///    - An ITEM is a distinct (vote key, tender) pair of the voting dated mentions, at its rows'
+///      newest `at`; k is the head cluster's items. Every item of the organization is ranked newest
+///      first: `at` descending, then on an equal `at` every non-head item before every head item,
+///      then tender descending, then key ascending. W is the first k; h_W the head items in it. The
+///      window fires when k ≥ [`HEAD_RECENT_MIN_PROCEDURES`] and 3·h_W ≥ 2·k (both newest at k = 2,
+///      2 of 3, 4 of 6); a third cluster's items count against the head.
+///    - The junk exemption releases it to R1 (counted `released`): the head is unfit against itself
+///      ([`HeadElectFns::unfit`]: control, mojibake, long, lowercase, non_name), or its vote key has a
+///      token with a digit the elected key lacks (an address, a NIP/REGON, `LOT 2`).
 /// 6. **R2**: H ≤ 1, the top is unique, T ≥ [`HEAD_ELECT_TOP_MIN`], and T × 4 ≥ V (25%).
 /// 7. Otherwise KEEP (`bar`).
 ///
@@ -303,16 +371,34 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
     let head_key = (fns.vote_key)(org.head);
     let head_votes = clusters.get(&head_key).map_or(0, |c| c.votes);
     let second = if unique { clusters.values().map(|c| c.votes).filter(|&v| v < top).max().unwrap_or(0) } else { top };
-    let counted = |verdict| HeadElection { verdict, voting, top, head_votes, second, clusters: clusters.len() as u64 };
+    let counted = |verdict, recent| HeadElection {
+        verdict,
+        voting,
+        top,
+        head_votes,
+        second,
+        clusters: clusters.len() as u64,
+        recent,
+    };
+    // Rule v7: the window, read against the cluster the rest of the rule elects (R0 re-reads it
+    // against its own pick), whenever the caller passed dates.
+    let main_key = if clusters.is_empty() {
+        None
+    } else if head_votes == top {
+        Some(head_key.as_str())
+    } else {
+        Some(tied[0])
+    };
+    let reading = org.dated.map(|dated| recent_reading(dated, fns, &head_key, main_key, voting));
 
     if org.identifier.is_none() {
-        return counted(HeadVerdict::Keep(HeadKeep::E1));
+        return counted(HeadVerdict::Keep(HeadKeep::E1), reading);
     }
     if org.bind_defect {
-        return counted(HeadVerdict::Keep(HeadKeep::E2));
+        return counted(HeadVerdict::Keep(HeadKeep::E2), reading);
     }
     if clusters.is_empty() {
-        return counted(HeadVerdict::Keep(HeadKeep::E3));
+        return counted(HeadVerdict::Keep(HeadKeep::E3), reading);
     }
     let serve = |rule: HeadRule, cluster: &Cluster<'_>| match display_spelling(cluster, org.head, fns) {
         None => HeadVerdict::Hold { reason: HEAD_HOLD_NO_FIT, rule, new: None },
@@ -342,13 +428,14 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
             (fit.iter().any(|(spelling, _)| !all_caps(spelling)), fit.iter().map(|(_, n)| n).sum::<u64>())
         };
         // `max_by` keeps the LAST of equals, so the key order is reversed to make the smallest win.
-        let elected = tied
+        let (key, elected) = tied
             .iter()
             .map(|key| (*key, &clusters[*key]))
             .max_by(|a, b| rank(a.1).cmp(&rank(b.1)).then_with(|| b.0.cmp(a.0)))
-            .map(|(_, cluster)| cluster)
             .expect("a voter makes a top cluster");
-        return counted(serve(rule, elected));
+        // R0 never consults the window; its reading names R0's own pick.
+        let reading = org.dated.map(|dated| recent_reading(dated, fns, &head_key, Some(key), voting));
+        return counted(serve(rule, elected), reading);
     }
 
     // The cluster the rest of the rule reads: the head's own when it holds the top count (S1's case),
@@ -363,18 +450,94 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
     if let (Some(head_script), Some(elected_script)) = (dominant_script(org.head), dominant_script(leading))
         && head_script != elected_script
     {
-        return counted(HeadVerdict::Keep(HeadKeep::D4));
+        return counted(HeadVerdict::Keep(HeadKeep::D4), reading);
     }
     if head_votes == top {
-        return counted(HeadVerdict::Keep(HeadKeep::S1));
+        return counted(HeadVerdict::Keep(HeadKeep::S1), reading);
     }
     if unique && top * 20 >= voting * 11 && top >= HEAD_ELECT_TOP_MIN && top >= 2 * head_votes {
-        return counted(serve(HeadRule::R1, elected));
+        // Rule v7: only when the head's own cluster holds 2 or more votes (R2's H ≤ 1 never gets here).
+        if head_votes >= 2 {
+            let Some(mut read) = reading else {
+                return counted(HeadVerdict::Hold { reason: HEAD_HOLD_UNDATED, rule: HeadRule::R1, new: None }, None);
+            };
+            if read.fires {
+                match recent_release(org.head, &head_key, tied[0], fns) {
+                    None => {
+                        let new = display_spelling(elected, org.head, fns);
+                        return counted(
+                            HeadVerdict::Hold { reason: HEAD_HOLD_RECENT, rule: HeadRule::R1, new },
+                            Some(read),
+                        );
+                    }
+                    Some(why) => read.released = Some(why),
+                }
+            }
+            return counted(serve(HeadRule::R1, elected), Some(read));
+        }
+        return counted(serve(HeadRule::R1, elected), reading);
     }
     if head_votes <= 1 && unique && top >= HEAD_ELECT_TOP_MIN && top * 4 >= voting {
-        return counted(serve(HeadRule::R2, elected));
+        return counted(serve(HeadRule::R2, elected), reading);
     }
-    counted(HeadVerdict::Keep(HeadKeep::Bar))
+    counted(HeadVerdict::Keep(HeadKeep::Bar), reading)
+}
+
+/// Rule `v7`: the window over `dated` — see [`elect_head`] step 5. `dated` is filtered with the voter
+/// rule `votes` is, and keyed by [`HeadElectFns::vote_key`]; `elected_key` is the cluster the rule
+/// elects (its newest item is `top_newest`), `voting` V (the undated count is V less the dated voters).
+fn recent_reading(
+    dated: &[DatedVote<'_>],
+    fns: &HeadElectFns,
+    head_key: &str,
+    elected_key: Option<&str>,
+    voting: u64,
+) -> RecentReading {
+    let mut keys: HashMap<&str, String> = HashMap::new();
+    let mut items: HashMap<(String, i64), i64> = HashMap::new();
+    let mut dated_voters = 0u64;
+    for row in dated {
+        if row.spelling.trim().is_empty()
+            || (fns.not_a_name)(row.spelling).is_some_and(|class| class != HEAD_DRIFT_AWARD_SUMMARY)
+        {
+            continue;
+        }
+        dated_voters += 1;
+        let key = keys.entry(row.spelling).or_insert_with(|| (fns.vote_key)(row.spelling)).clone();
+        let at = items.entry((key, row.tender)).or_insert(row.at);
+        *at = (*at).max(row.at);
+    }
+    // (at, is_head, tender, key): newest first; on an equal `at` a non-head item ranks newer.
+    let mut ranked: Vec<(i64, bool, i64, &str)> =
+        items.iter().map(|((key, tender), at)| (*at, key == head_key, *tender, key.as_str())).collect();
+    ranked.sort_by(|a, b| b.0.cmp(&a.0).then(a.1.cmp(&b.1)).then(b.2.cmp(&a.2)).then_with(|| a.3.cmp(b.3)));
+    let k = ranked.iter().filter(|item| item.1).count() as u64;
+    let h_w = ranked.iter().take(k as usize).filter(|item| item.1).count() as u64;
+    let newest = |key: &str| ranked.iter().filter(|item| item.3 == key).map(|item| item.0).max();
+    RecentReading {
+        head_procs: k,
+        head_in_window: h_w,
+        head_newest: newest(head_key),
+        top_newest: elected_key.and_then(newest),
+        newest_is_head: ranked.first().is_some_and(|item| item.1),
+        undated: voting.saturating_sub(dated_voters),
+        fires: k >= HEAD_RECENT_MIN_PROCEDURES && 3 * h_w >= 2 * k,
+        released: None,
+    }
+}
+
+/// Rule `v7`'s junk exemption: why a recently repeated head is NOT protected — `unfit` when it is
+/// unfit to serve even against itself, `digits` when its vote key has a token with a digit the
+/// elected cluster's key lacks (a buyer template appending an address or a NIP, a `LOT 2` prefix).
+fn recent_release(head: &str, head_key: &str, elected_key: &str, fns: &HeadElectFns) -> Option<&'static str> {
+    if (fns.unfit)(head, head).is_some() {
+        return Some("unfit");
+    }
+    let elected: HashSet<&str> = elected_key.split(' ').collect();
+    head_key
+        .split(' ')
+        .any(|token| token.chars().any(char::is_numeric) && !elected.contains(token))
+        .then_some("digits")
 }
 
 /// The display order of two spellings of one cluster for `max_by`: not-ALL-CAPS before ALL-CAPS, then
@@ -477,6 +640,66 @@ pub(crate) fn org_name_refresh_ids_sql(n: usize) -> String {
     )
 }
 
+/// Issue 524 rule `v7`: a page's mention names with their notices, `n` org ids at a time, through
+/// `organization_mentions_org` — the census's read (`canonical::org_head_drift_mentions_sql`, left as it is)
+/// plus `notice_id`, which sits in the row the walk already fetches.
+pub(crate) fn org_name_refresh_mentions_sql(n: usize) -> String {
+    format!(
+        "SELECT organization_id, name, scheme, notice_id FROM organization_mentions WHERE organization_id IN ({})",
+        placeholders(n)
+    )
+}
+
+/// Issue 524 rule `v7`: the versions `n` notices caused, through `tender_versions_notice`. No GROUP BY
+/// (no sorter): the smallest `tender_id` per notice is kept in Rust.
+pub(crate) fn org_name_refresh_dates_sql(n: usize) -> String {
+    format!(
+        "SELECT caused_by_notice_id, tender_id, published_at FROM tender_versions WHERE caused_by_notice_id IN ({})",
+        placeholders(n)
+    )
+}
+
+/// Issue 524 rule `v7`: the indexes the planner and the wet path refuse without, and why each may be
+/// absent: the mention walk's and the merge read's (a rebuild's Phase 1), and the date read's
+/// (`tender_versions_notice`, a `DEFERRED_TENDER_INDEXES` member a rebuild's fold drops).
+const ORG_NAME_REFRESH_INDEXES: [(&str, &str); 3] = [
+    ("organization_mentions_org", "a rebuild's Phase 1?"),
+    ("organization_merged_identifiers_org", "a rebuild's Phase 1?"),
+    ("tender_versions_notice", "a rebuild's fold?"),
+];
+
+/// Issue 524 rule `v7`: what one date read found.
+#[derive(Default)]
+struct NoticeDates {
+    /// Notice id → (its procedure: the smallest `tender_id` among its versions, that version's `at`),
+    /// for the notices with a usable date.
+    dates: HashMap<i64, (i64, i64)>,
+    notices: u64,
+    version_rows: u64,
+}
+
+/// Issue 524 rule `v7`: read the procedures and dates of `notices` ([`org_name_refresh_dates_sql`], in
+/// [`IN_CHUNK`] chunks), keeping the smallest `tender_id` per notice (an issue-278 ghost doubles a
+/// notice into a second tender), then dropping a notice whose kept `at` is ≤ 0 or later than
+/// `horizon` (the job's start plus a day): its mentions count as undated.
+async fn read_notice_dates(reader: &turso::Connection, notices: &[i64], horizon: i64) -> turso::Result<NoticeDates> {
+    let mut out = NoticeDates { notices: notices.len() as u64, ..Default::default() };
+    for chunk in notices.chunks(IN_CHUNK) {
+        let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
+        let mut rows = reader.query(&org_name_refresh_dates_sql(chunk.len()), params).await?;
+        while let Some(row) = rows.next().await? {
+            out.version_rows += 1;
+            let (notice, tender, at) = (int(&row, 0), int(&row, 1), int(&row, 2));
+            let kept = out.dates.entry(notice).or_insert((tender, at));
+            if tender < kept.0 {
+                *kept = (tender, at);
+            }
+        }
+    }
+    out.dates.retain(|_, (_, at)| *at > 0 && *at <= horizon);
+    Ok(out)
+}
+
 /// Issue 524 unit 2a: [`Db::plan_org_name_refresh`]'s inputs.
 pub struct OrgNameRefreshArgs<'a> {
     pub fns: HeadElectFns,
@@ -544,6 +767,17 @@ pub struct HeadRefreshEntry {
     pub in_population: bool,
     /// The top [`ORG_NAME_REFRESH_SPELLINGS`] voting spellings, most mentions first, then byte order.
     pub spellings: Vec<(String, u64)>,
+    /// Rule `v7`, each `None` when the org was not dated (only the candidates are): k, h_W, the
+    /// newest head item and the elected cluster's newest item (`YYYY-MM-DD`, UTC), whether the
+    /// organization's newest item is the head's, the voting mentions no date covered, and the junk
+    /// exemption's release (`unfit` | `digits`) of a fired window.
+    pub head_procs: Option<u64>,
+    pub head_in_window: Option<u64>,
+    pub head_newest: Option<String>,
+    pub top_newest: Option<String>,
+    pub newest_is_head: Option<bool>,
+    pub undated_mentions: Option<u64>,
+    pub recent_released: Option<&'static str>,
 }
 
 /// Issue 524 unit 2a: [`Db::plan_org_name_refresh`]'s answer — what `refresh-org-names` WOULD do.
@@ -590,6 +824,20 @@ pub struct OrgNameRefreshPlan {
     pub d4_eng: BTreeMap<&'static str, u64>,
     /// Identifier-verdict probes run (one per candidate).
     pub verdict_probes: u64,
+    /// Rule `v7`: the candidates dated (in the population), the distinct notices their voting mentions
+    /// name, the `tender_versions` rows read for them, and their voting mentions no usable date covered.
+    pub dated_orgs: u64,
+    pub dated_notices: u64,
+    pub dated_version_rows: u64,
+    pub undated_mentions: u64,
+    /// Rule `v7`: the R1 changes the window fired on but the junk exemption released, by why (`unfit`,
+    /// `digits`), and the first [`ORG_NAME_REFRESH_RELEASED_LISTED`] of their ids.
+    pub recent_released: BTreeMap<&'static str, u64>,
+    pub recent_released_ids: Vec<i64>,
+    /// Rule `v7`: the planned changes whose organization's NEWEST item is a head item, by rule — the
+    /// residue the window cannot protect (an H = 1 or single-procedure rename looks, by dates, like
+    /// 31558903's newest stray). Sampled as `residue:head_newest`.
+    pub residue: BTreeMap<&'static str, HeadDriftCount>,
     /// The planned changes, by org id, the first `listing_cap`.
     pub planned: Vec<HeadRefreshEntry>,
     pub truncated: bool,
@@ -603,6 +851,9 @@ pub struct OrgNameRefreshPlan {
     pub canaries: Vec<HeadRefreshEntry>,
     pub stopped: bool,
 }
+
+/// Issue 524 rule `v7`: the most released ids a plan lists.
+pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 30;
 
 /// The uniform sample's order: Knuth's multiplicative hash of the id, mod 2³², then the id.
 fn sample_key(org_id: i64) -> (u64, i64) {
@@ -640,6 +891,9 @@ struct PageOrg {
     n: u64,
     /// Named mentions per exact spelling.
     spellings: HashMap<String, u64>,
+    /// Rule `v7`: the notice of each named mention, per exact spelling (no extra I/O: the mention
+    /// walk's rows carry it).
+    notices: HashMap<String, Vec<i64>>,
 }
 
 impl PageOrg {
@@ -647,14 +901,40 @@ impl PageOrg {
         self.spellings.iter().map(|(spelling, n)| (spelling.as_str(), *n)).collect()
     }
 
-    fn elect(&self, fns: &HeadElectFns, bind_defect: bool) -> HeadElection {
+    fn elect(&self, fns: &HeadElectFns, bind_defect: bool, dated: Option<&[DatedVote<'_>]>) -> HeadElection {
         let org = HeadElectOrg {
             head: &self.head,
             identifier_kind: self.identifier_kind.as_deref(),
             identifier: self.identifier.as_deref(),
             bind_defect,
+            dated,
         };
         elect_head_counted(&self.votes(), &org, fns)
+    }
+
+    /// Rule `v7`: this org's voting mentions with a usable date (`dates`: notice id → the notice's
+    /// procedure and `at`), and how many named voting mentions had none.
+    fn dated<'s>(&'s self, fns: &HeadElectFns, dates: &HashMap<i64, (i64, i64)>) -> Vec<DatedVote<'s>> {
+        let mut out = Vec::new();
+        for (spelling, notices) in &self.notices {
+            if (fns.not_a_name)(spelling).is_some_and(|class| class != HEAD_DRIFT_AWARD_SUMMARY) {
+                continue;
+            }
+            for notice in notices {
+                if let Some(&(tender, at)) = dates.get(notice) {
+                    out.push(DatedVote { spelling, tender, at });
+                }
+            }
+        }
+        out
+    }
+
+    /// Rule `v7`: the distinct notices of this org's voting mentions.
+    fn voting_notices<'s>(&'s self, fns: &'s HeadElectFns) -> impl Iterator<Item = i64> + 's {
+        self.notices
+            .iter()
+            .filter(|(spelling, _)| !(fns.not_a_name)(spelling).is_some_and(|class| class != HEAD_DRIFT_AWARD_SUMMARY))
+            .flat_map(|(_, notices)| notices.iter().copied())
     }
 }
 
@@ -662,6 +942,8 @@ impl PageOrg {
 struct Judged {
     at: usize,
     election: HeadElection,
+    /// The E2 probe found a bind-defect verdict (re-elections keep it).
+    bind_defect: bool,
     in_population: bool,
     merged: bool,
     eng: Option<&'static str>,
@@ -679,25 +961,30 @@ impl Db {
     ///
     /// It walks exactly the census's pages ([`Db::org_head_drift`]): `organizations` by id, `args.page`
     /// rows at a time ([`ORG_HEAD_DRIFT_ORGS_SQL`]), each page's mention names through
-    /// `organization_mentions_org` in [`IN_CHUNK`] id chunks, and it refuses before reading while
-    /// that index or `organization_merged_identifiers_org` is absent (a rebuild's Phase 1). With
-    /// `org_ids` it reads those rows by id instead. For the CANDIDATES only — orgs the rule would
-    /// change or hold — it adds three reads: the identifier-verdict probe (E2, the `ORG_COLUMNS`
-    /// predicate on the verdicts' primary key), the merge-survivor read the census makes, and, for the
-    /// D4 keeps, the `organization_names` ENG seek. The stop flag is read before every page; a stopped
+    /// `organization_mentions_org` in [`IN_CHUNK`] id chunks (with their notice ids, rule `v7`), and it
+    /// refuses before reading while that index, `organization_merged_identifiers_org` (a rebuild's
+    /// Phase 1) or `tender_versions_notice` (a rebuild's fold) is absent. With `org_ids` it reads those
+    /// rows by id instead. For the CANDIDATES only — orgs the rule would change or hold — it adds the
+    /// identifier-verdict probe (E2, the `ORG_COLUMNS` predicate on the verdicts' primary key), then
+    /// (rule `v7`) the dates of every remaining candidate's voting mentions (`read_notice_dates`
+    /// through `tender_versions_notice`) and a re-election with them, so `hold:undated` never survives
+    /// a finished plan and every candidate entry carries its window; then the merge-survivor read the
+    /// census makes, and, for the D4 keeps, the `organization_names` ENG seek. The stop flag is read before every page; a stopped
     /// walk returns an empty plan marked `stopped`.
     ///
     /// This writes nothing: no `organizations` row, no ledger, no change row. The caller stores the
     /// plan as a report.
     pub async fn plan_org_name_refresh(&self, args: OrgNameRefreshArgs<'_>) -> turso::Result<OrgNameRefreshPlan> {
-        for index in ["organization_mentions_org", "organization_merged_identifiers_org"] {
+        for (index, why) in ORG_NAME_REFRESH_INDEXES {
             if !self.has_index(index).await? {
                 return Err(turso::Error::Error(format!(
-                    "refresh-org-names refused: {index} is absent (a rebuild's Phase 1?), so every chunk would \
-                     scan its table; run `reindex` first. Nothing was read"
+                    "refresh-org-names refused: {index} is absent ({why}), so every chunk would scan its \
+                     table; run `reindex` first. Nothing was read"
                 )));
             }
         }
+        // Rule v7: a date more than a day past the job's start is no date.
+        let horizon = crate::now_unix() + 86_400;
         let scope: Option<Vec<i64>> = args.org_ids.map(|ids| {
             let mut ids = ids.to_vec();
             ids.sort_unstable();
@@ -750,6 +1037,7 @@ impl Db {
                     name_norm: opt_text_of(&row, 6),
                     n: 0,
                     spellings: HashMap::new(),
+                    notices: HashMap::new(),
                 });
             }
             drop(rows);
@@ -762,17 +1050,18 @@ impl Db {
             plan.orgs_walked += page.len() as u64;
             let at: HashMap<i64, usize> = page.iter().enumerate().map(|(i, org)| (org.id, i)).collect();
 
-            // The page's mention names, as the census reads them.
+            // The page's mention names, as the census reads them, with their notices (rule v7).
             let ids: Vec<i64> = page.iter().map(|org| org.id).collect();
             for chunk in ids.chunks(IN_CHUNK) {
                 let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
-                let mut rows = reader.query(&org_head_drift_mentions_sql(chunk.len()), params).await?;
+                let mut rows = reader.query(&org_name_refresh_mentions_sql(chunk.len()), params).await?;
                 while let Some(row) = rows.next().await? {
                     let Some(&i) = at.get(&int(&row, 0)) else { continue };
                     plan.mentions_walked += 1;
                     let org = &mut page[i];
                     org.n += 1;
                     if let Some(name) = opt_text_of(&row, 1).filter(|name| !name.trim().is_empty()) {
+                        org.notices.entry(name.clone()).or_default().push(int(&row, 3));
                         *org.spellings.entry(name).or_default() += 1;
                     }
                 }
@@ -788,8 +1077,8 @@ impl Db {
                         continue;
                     }
                 }
-                let election = org.elect(&args.fns, false);
-                judged.push(Judged { at: i, election, in_population: !below, merged: false, eng: None });
+                let election = org.elect(&args.fns, false, None);
+                judged.push(Judged { at: i, election, bind_defect: false, in_population: !below, merged: false, eng: None });
             }
 
             // E2, for the candidates only: a bind-defect verdict on the triple keeps the head.
@@ -808,7 +1097,26 @@ impl Db {
                     )
                     .await?;
                 if rows.next().await?.is_some() {
-                    j.election = org.elect(&args.fns, true);
+                    j.bind_defect = true;
+                    j.election = org.elect(&args.fns, true, None);
+                }
+            }
+
+            // Rule v7: date every remaining candidate's voting mentions — a change or a hold,
+            // `hold:undated` included — and re-elect it with the dates, so every planned entry (and
+            // its ledger row) carries them and the residue is measured.
+            let asked: HashSet<i64> =
+                judged.iter().filter(|j| j.candidate()).flat_map(|j| page[j.at].voting_notices(&args.fns)).collect();
+            if judged.iter().any(Judged::candidate) {
+                let mut asked: Vec<i64> = asked.into_iter().collect();
+                asked.sort_unstable();
+                let read = read_notice_dates(&reader, &asked, horizon).await?;
+                plan.dated_notices += read.notices;
+                plan.dated_version_rows += read.version_rows;
+                for j in judged.iter_mut().filter(|j| j.candidate()) {
+                    let org = &page[j.at];
+                    let dated = org.dated(&args.fns, &read.dates);
+                    j.election = org.elect(&args.fns, j.bind_defect, Some(&dated));
                 }
             }
 
@@ -852,6 +1160,24 @@ impl Db {
                 plan.population.add(org.n);
                 if org.head.trim().is_empty() {
                     plan.empty_heads.add(org.n);
+                }
+                if let Some(read) = &j.election.recent {
+                    plan.dated_orgs += 1;
+                    plan.undated_mentions += read.undated;
+                    if let Some(why) = read.released {
+                        *plan.recent_released.entry(why).or_default() += 1;
+                        if plan.recent_released_ids.len() < ORG_NAME_REFRESH_RELEASED_LISTED {
+                            plan.recent_released_ids.push(org.id);
+                        }
+                    }
+                    if let (HeadVerdict::Change { rule, .. }, true) = (verdict, read.newest_is_head) {
+                        plan.residue.entry(rule.label()).or_default().add(org.n);
+                        let key = sample_key(org.id);
+                        let uniform = samples.entry(("residue", "head_newest")).or_default();
+                        if uniform.admits(args.samples, key) {
+                            uniform.insert(args.samples, key, entry());
+                        }
+                    }
                 }
                 match verdict {
                     HeadVerdict::Keep(keep) => {
@@ -948,6 +1274,7 @@ async fn merged_among(reader: &turso::Connection, ids: &[i64]) -> turso::Result<
 /// One page org's plan entry.
 fn refresh_entry(org: &PageOrg, j: &Judged, args: &OrgNameRefreshArgs<'_>) -> HeadRefreshEntry {
     let verdict = &j.election.verdict;
+    let recent = j.election.recent;
     let new_name = verdict.new_name().map(str::to_owned);
     let mut spellings: Vec<(String, u64)> = org
         .spellings
@@ -981,6 +1308,13 @@ fn refresh_entry(org: &PageOrg, j: &Judged, args: &OrgNameRefreshArgs<'_>) -> He
         eng: j.eng,
         in_population: j.in_population,
         spellings,
+        head_procs: recent.map(|r| r.head_procs),
+        head_in_window: recent.map(|r| r.head_in_window),
+        head_newest: recent.and_then(|r| r.head_newest).map(crate::rates::civil_date),
+        top_newest: recent.and_then(|r| r.top_newest).map(crate::rates::civil_date),
+        newest_is_head: recent.map(|r| r.newest_is_head),
+        undated_mentions: recent.map(|r| r.undated),
+        recent_released: recent.and_then(|r| r.released),
     }
 }
 
@@ -1217,6 +1551,7 @@ async fn read_readiness(
     reader: &turso::Connection,
     fns: &HeadElectFns,
     targets: &[OrgNameRefreshTarget],
+    horizon: i64,
 ) -> turso::Result<Vec<Readiness>> {
     let mut out = Vec::with_capacity(targets.len());
     for chunk in targets.chunks(IN_CHUNK) {
@@ -1236,19 +1571,26 @@ async fn read_readiness(
                     name_norm: opt_text_of(&row, 6),
                     n: 0,
                     spellings: HashMap::new(),
+                    notices: HashMap::new(),
                 },
             );
         }
         drop(rows);
-        let mut rows = reader.query(&org_head_drift_mentions_sql(chunk.len()), ids).await?;
+        let mut rows = reader.query(&org_name_refresh_mentions_sql(chunk.len()), ids).await?;
         while let Some(row) = rows.next().await? {
             let Some(org) = orgs.get_mut(&int(&row, 0)) else { continue };
             org.n += 1;
             if let Some(name) = opt_text_of(&row, 1).filter(|name| !name.trim().is_empty()) {
+                org.notices.entry(name.clone()).or_default().push(int(&row, 3));
                 *org.spellings.entry(name).or_default() += 1;
             }
         }
         drop(rows);
+        // Rule v7: every target is a change, so every one is dated, as the planner dated it.
+        let mut asked: Vec<i64> =
+            orgs.values().flat_map(|org| org.voting_notices(fns)).collect::<HashSet<_>>().into_iter().collect();
+        asked.sort_unstable();
+        let dates = read_notice_dates(reader, &asked, horizon).await?.dates;
         for target in chunk {
             let Some(org) = orgs.get(&target.org_id) else {
                 out.push(Readiness::Gone);
@@ -1272,7 +1614,8 @@ async fn read_readiness(
                 out.push(Readiness::Drifted("the identifier is NULL now (E1)".to_owned()));
                 continue;
             };
-            let mut election = org.elect(fns, false);
+            let dated = org.dated(fns, &dates);
+            let mut election = org.elect(fns, false, Some(&dated));
             if matches!(election.verdict, HeadVerdict::Change { .. }) {
                 let mut rows = reader
                     .query(
@@ -1285,9 +1628,11 @@ async fn read_readiness(
                     )
                     .await?;
                 if rows.next().await?.is_some() {
-                    election = org.elect(fns, true);
+                    election = org.elect(fns, true, Some(&dated));
                 }
             }
+            // A target that now reads `hold:recent` (a newer head procedure since the plan) or
+            // `hold:undated` is drifted like any other verdict that is not the plan's change.
             match &election.verdict {
                 HeadVerdict::Change { rule, new } if rule.label() == target.rule && *new == target.new_name => {
                     out.push(Readiness::Ready(election));
@@ -1305,13 +1650,26 @@ async fn read_readiness(
     Ok(out)
 }
 
-/// The ledger's `evidence`: the epoch and the counts the rename was elected by. Every value is a
-/// number or a fixed ASCII label, so nothing needs escaping.
+/// The ledger's `evidence`: the epoch, the counts the rename was elected by and (rule `v7`) the
+/// window's reading — k, h_W and the newest head and elected items (`YYYY-MM-DD`, or `null`). Every
+/// value is a number, a date or a fixed ASCII label, so nothing needs escaping.
 fn refresh_evidence(rule: &str, election: &HeadElection) -> String {
+    let recent = election.recent.unwrap_or_default();
+    let number = |n: Option<u64>| n.map_or_else(|| "null".to_owned(), |n| n.to_string());
+    let date = |at: Option<i64>| at.map_or_else(|| "null".to_owned(), |at| format!("\"{}\"", crate::rates::civil_date(at)));
+    let dated = election.recent.is_some();
     format!(
         "{{\"epoch\":\"{HEAD_ELECTION_EPOCH}\",\"rule\":\"{rule}\",\"voting\":{},\"top\":{},\"head\":{},\"second\":{},\
-         \"clusters\":{}}}",
-        election.voting, election.top, election.head_votes, election.second, election.clusters
+         \"clusters\":{},\"head_procs\":{},\"head_in_window\":{},\"head_newest\":{},\"top_newest\":{}}}",
+        election.voting,
+        election.top,
+        election.head_votes,
+        election.second,
+        election.clusters,
+        number(dated.then_some(recent.head_procs)),
+        number(dated.then_some(recent.head_in_window)),
+        date(recent.head_newest),
+        date(recent.top_newest),
     )
 }
 
@@ -1320,11 +1678,14 @@ impl Db {
     /// (ADR-0013's 2026-10-15 amendment), each with a byte-exact pre-image in `org_name_refresh_log`
     /// and one seq-less `organization changed` row.
     ///
-    /// The caller has already refused a missing, truncated, other-epoch or other-binary plan and
-    /// scoped `targets` to `org_ids`. This refuses while `organization_mentions_org` or
-    /// `organization_merged_identifiers_org` is absent, as the planner does. Then:
+    /// The caller has already refused a missing, truncated, other-epoch or other-binary plan (and,
+    /// rule `v7`, one holding anything `undated`) and scoped `targets` to `org_ids`. This refuses
+    /// while `organization_mentions_org`, `organization_merged_identifiers_org` or
+    /// `tender_versions_notice` is absent, as the planner does. Then:
     /// 1. **Pre-pass.** Every target's organization is read and re-elected with `fns` as the planner
-    ///    elected it (the verdict probe included). A target is `ready` when the row still holds the
+    ///    elected it (the verdict probe included, and every target dated as the planner dated its
+    ///    candidates: one reading `hold:recent` or `hold:undated` now is drifted). A target is `ready`
+    ///    when the row still holds the
     ///    plan's pre-image, still carries an identifier, and re-elects to the plan's rule and
     ///    spelling; `already` when it holds the plan's new pair (a replayed window); `gone` when
     ///    deleted; `drifted` otherwise. Drifted plus gone above `max(2%, 5)` of the targets read
@@ -1348,14 +1709,16 @@ impl Db {
         &self,
         args: OrgNameRefreshApplyArgs<'_>,
     ) -> turso::Result<OrgNameRefreshApplied> {
-        for index in ["organization_mentions_org", "organization_merged_identifiers_org"] {
+        for (index, why) in ORG_NAME_REFRESH_INDEXES {
             if !self.has_index(index).await? {
                 return Err(turso::Error::Error(format!(
-                    "refresh-org-names (wet) refused: {index} is absent (a rebuild's Phase 1?), so the pre-pass \
-                     would scan its table; run `reindex` first. Nothing was read or written"
+                    "refresh-org-names (wet) refused: {index} is absent ({why}), so the pre-pass would scan its \
+                     table; run `reindex` first. Nothing was read or written"
                 )));
             }
         }
+        // Rule v7: the pre-pass dates every target as the planner did.
+        let horizon = crate::now_unix() + 86_400;
         let mut targets = args.targets;
         targets.sort_by_key(|t| t.org_id);
         targets.dedup_by_key(|t| t.org_id);
@@ -1376,7 +1739,7 @@ impl Db {
         (args.progress)(0, &format!("pre-pass: re-electing {} planned organization(s)", targets.len()));
         let readiness = {
             let reader = self.reader().await?;
-            read_readiness(&reader, &args.fns, &targets).await?
+            read_readiness(&reader, &args.fns, &targets, horizon).await?
         };
         let mut ready: Vec<(&OrgNameRefreshTarget, HeadElection)> = Vec::new();
         for (target, reading) in targets.iter().zip(readiness) {
@@ -1699,8 +2062,8 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::{
-        HEAD_HOLD_NO_FIT, HeadElectFns, HeadElectOrg, HeadKeep, HeadRule, HeadVerdict, Script, dominant_script,
-        elect_head, elect_head_counted, sample_key,
+        DatedVote, HEAD_HOLD_NO_FIT, HEAD_HOLD_RECENT, HEAD_HOLD_UNDATED, HeadElectFns, HeadElectOrg, HeadKeep,
+        HeadRule, HeadVerdict, Script, dominant_script, elect_head, elect_head_counted, sample_key,
     };
 
     /// Lower-cased words, `the` and the legal forms dropped, a run of single letters one initialism —
@@ -1790,7 +2153,7 @@ mod tests {
     const FNS: HeadElectFns = HeadElectFns { vote_key: key, not_a_name: class, unfit, hold, r2_hold, twin_key: twin };
 
     fn org(head: &str) -> HeadElectOrg<'_> {
-        HeadElectOrg { head, identifier_kind: Some("national"), identifier: Some("GB1"), bind_defect: false }
+        HeadElectOrg { head, identifier_kind: Some("national"), identifier: Some("GB1"), bind_defect: false, dated: None }
     }
 
     #[test]
@@ -2118,6 +2481,218 @@ mod tests {
 
     /// Issue 524 unit 2a: the planner's three candidate reads must seek, not scan: the scoped page by
     /// rowid, the verdict probe and the ENG satellite on their tables' primary keys.
+    // ---- Rule v7: the R1 recency hold (the recency decision's tests 1-12).
+
+    const DAY: i64 = 86_400;
+
+    /// `n` dated mentions of `spelling`, one per tender from `tender` on, a day apart from `day` on.
+    fn items(spelling: &'static str, tender: i64, day: i64, n: i64) -> Vec<DatedVote<'static>> {
+        (0..n).map(|i| DatedVote { spelling, tender: tender + i, at: (day + i) * DAY }).collect()
+    }
+
+    /// The votes the dated rows make, one per row (every mention dated).
+    fn votes_of<'a>(rows: &[DatedVote<'a>]) -> Vec<(&'a str, u64)> {
+        let mut counts: std::collections::BTreeMap<&'a str, u64> = std::collections::BTreeMap::new();
+        for row in rows {
+            *counts.entry(row.spelling).or_default() += 1;
+        }
+        counts.into_iter().collect()
+    }
+
+    /// Elect `head` from `rows`, every mention dated.
+    fn dated(rows: &[DatedVote<'_>], head: &str) -> super::HeadElection {
+        let org = HeadElectOrg { dated: Some(rows), ..org(head) };
+        elect_head_counted(&votes_of(rows), &org, &FNS)
+    }
+
+    fn r1(new: &str) -> HeadVerdict {
+        HeadVerdict::Change { rule: HeadRule::R1, new: new.into() }
+    }
+
+    fn recent(new: Option<&str>) -> HeadVerdict {
+        HeadVerdict::Hold { reason: HEAD_HOLD_RECENT, rule: HeadRule::R1, new: new.map(str::to_owned) }
+    }
+
+    /// 1. A rename (2186's shape): the head's 4 procedures are all newer than every item of the
+    /// cluster R1 elects, so the all-history majority would put the FORMER name back. Held, with the
+    /// spelling R1 would have served.
+    #[test]
+    fn a_rename_is_held_recent() {
+        let rows = [items("Old Name Agency", 1, 1, 10), items("New Name Agency", 101, 100, 4)].concat();
+        let e = dated(&rows, "New Name Agency");
+        assert_eq!(e.verdict, recent(Some("Old Name Agency")));
+        let read = e.recent.expect("dated");
+        assert_eq!((read.head_procs, read.head_in_window, read.newest_is_head, read.fires), (4, 4, true, true));
+        assert_eq!((read.head_newest, read.top_newest, read.undated), (Some(103 * DAY), Some(10 * DAY), 0));
+    }
+
+    /// 2. 445: the head's 4 mentions are ONE procedure (three notices of tender 500), with the elected
+    /// cluster's items both older and newer: k = 1, under the floor. It changes.
+    #[test]
+    fn one_procedure_of_three_notices_is_one_item() {
+        let mut rows = items("Kadea Berlin Logistik", 1, 1, 10);
+        rows.extend(items("Kadea Berlin Logistik", 20, 120, 2));
+        for day in [100, 101, 138, 138] {
+            rows.push(DatedVote { spelling: "Kadea", tender: 500, at: day * DAY });
+        }
+        let e = dated(&rows, "Kadea");
+        assert_eq!(e.head_votes, 4);
+        assert_eq!(e.verdict, r1("Kadea Berlin Logistik"));
+        let read = e.recent.unwrap();
+        assert_eq!((read.head_procs, read.head_in_window, read.fires), (1, 1, false));
+        assert_eq!(read.head_newest, Some(138 * DAY), "an item's time is its newest row's");
+    }
+
+    /// 3. 31558903: H = 1, a single newest stray. The window never reaches it; it changes, and the
+    /// reading says the newest item is the head's (the residue the plan samples).
+    #[test]
+    fn a_single_newest_stray_changes_and_reads_newest_is_head() {
+        let rows = [items("University of Sheffield", 1, 1, 16), items("Sheffield Hallam University", 99, 200, 1)].concat();
+        let e = dated(&rows, "Sheffield Hallam University");
+        assert_eq!(e.verdict, r1("University of Sheffield"));
+        let read = e.recent.unwrap();
+        assert!(read.newest_is_head && !read.fires);
+    }
+
+    /// 4. 3406: two head sections of one notice and its twin in the same tender are one item: k = 1.
+    #[test]
+    fn two_sections_and_a_twin_of_one_tender_are_one_item() {
+        let mut rows = items("Staatliches Hochbauamt Freiburg", 1, 1, 6);
+        rows.push(DatedVote { spelling: "Hochbauamt Freiburg", tender: 165, at: 200 * DAY });
+        rows.push(DatedVote { spelling: "Hochbauamt Freiburg", tender: 165, at: 201 * DAY });
+        let e = dated(&rows, "Hochbauamt Freiburg");
+        assert_eq!((e.head_votes, e.recent.unwrap().head_procs), (2, 1));
+        assert_eq!(e.verdict, r1("Staatliches Hochbauamt Freiburg"));
+    }
+
+    /// 5. 10603: a head item and an elected item at the same instant — the tie ranks the elected item
+    /// newer. Here the head's two items and one elected item share the newest day: ranked head-first
+    /// both newest would be the head's and it would hold; ranked as the rule ranks, W holds one.
+    #[test]
+    fn on_an_equal_instant_the_elected_item_ranks_newer() {
+        let mut rows = items("Visagino energija", 1, 1, 7);
+        rows.push(DatedVote { spelling: "Visagino energija", tender: 30, at: 50 * DAY });
+        rows.push(DatedVote { spelling: "VE Visagino", tender: 31, at: 50 * DAY });
+        rows.push(DatedVote { spelling: "VE Visagino", tender: 32, at: 50 * DAY });
+        let e = dated(&rows, "VE Visagino");
+        let read = e.recent.unwrap();
+        assert_eq!((read.head_procs, read.head_in_window, read.fires), (2, 1, false));
+        assert_eq!(e.verdict, r1("Visagino energija"));
+    }
+
+    /// 6. The floor: k = 2 both newest holds; k = 2 with one newer elected item changes; k = 1 changes.
+    #[test]
+    fn the_window_floor_is_two_procedures() {
+        let both = [items("Old Name Agency", 1, 1, 8), items("New Name Agency", 101, 100, 2)].concat();
+        assert_eq!(dated(&both, "New Name Agency").verdict, recent(Some("Old Name Agency")));
+        let mut newer = both.clone();
+        newer.push(DatedVote { spelling: "Old Name Agency", tender: 300, at: 300 * DAY });
+        assert_eq!(dated(&newer, "New Name Agency").verdict, r1("Old Name Agency"));
+        let mut one = items("Old Name Agency", 1, 1, 8);
+        one.push(DatedVote { spelling: "New Name Agency", tender: 101, at: 100 * DAY });
+        one.push(DatedVote { spelling: "New Name Agency", tender: 101, at: 101 * DAY });
+        let e = dated(&one, "New Name Agency");
+        assert_eq!((e.head_votes, e.recent.unwrap().head_procs), (2, 1));
+        assert_eq!(e.verdict, r1("Old Name Agency"));
+    }
+
+    /// 7. The share: k = 6 with 2 elected items inside W holds (4 of 6), with 3 it changes (3 of 6).
+    #[test]
+    fn the_window_needs_two_thirds_of_its_items() {
+        let mut rows = items("Old Name Agency", 1, 1, 12);
+        rows.extend(items("New Name Agency", 101, 100, 6));
+        rows.push(DatedVote { spelling: "Old Name Agency", tender: 201, at: 104 * DAY });
+        rows.push(DatedVote { spelling: "Old Name Agency", tender: 202, at: 102 * DAY });
+        let e = dated(&rows, "New Name Agency");
+        assert_eq!((e.recent.unwrap().head_procs, e.recent.unwrap().head_in_window), (6, 4));
+        assert_eq!(e.verdict, recent(Some("Old Name Agency")));
+        rows.push(DatedVote { spelling: "Old Name Agency", tender: 203, at: 103 * DAY });
+        let e = dated(&rows, "New Name Agency");
+        assert_eq!(e.recent.unwrap().head_in_window, 3);
+        assert_eq!(e.verdict, r1("Old Name Agency"));
+    }
+
+    /// 8. 2762: a third cluster's newer items count against the head.
+    #[test]
+    fn a_third_cluster_counts_against_the_head() {
+        let rows = [
+            items("Diputacion Provincial", 1, 1, 10),
+            items("Presidencia Diputacion", 101, 100, 3),
+            items("Pleno Provincial", 201, 103, 2),
+        ]
+        .concat();
+        let e = dated(&rows, "Presidencia Diputacion");
+        assert_eq!((e.recent.unwrap().head_procs, e.recent.unwrap().head_in_window), (3, 1));
+        assert_eq!(e.verdict, r1("Diputacion Provincial"));
+        // Without the third cluster, the head owns the newest three: held.
+        let two = [items("Diputacion Provincial", 1, 1, 10), items("Presidencia Diputacion", 101, 100, 3)].concat();
+        assert_eq!(dated(&two, "Presidencia Diputacion").verdict, recent(Some("Diputacion Provincial")));
+    }
+
+    /// 9. 178: the abbreviation until 2023-12, the full head on every procedure since 2024. The 2a.3
+    /// "neutral" change is the FORMER usage: held.
+    #[test]
+    fn plaine_vallee_is_held_recent() {
+        let full = "Communauté d'agglomération Plaine Vallée";
+        let mut rows = Vec::new();
+        for i in 0..66 {
+            rows.push(DatedVote { spelling: "CA Plaine Vallée", tender: 1 + i / 3, at: (19_000 + i) * DAY });
+        }
+        for i in 0..32 {
+            rows.push(DatedVote { spelling: full, tender: 100 + i / 3, at: (19_800 + i) * DAY });
+        }
+        let e = dated(&rows, full);
+        assert_eq!((e.top, e.head_votes), (66, 32));
+        assert_eq!(e.verdict, recent(Some("CA Plaine Vallée")));
+    }
+
+    /// 10. Junk: a recently repeated head unfit against itself (lowercase) or carrying a digit token
+    /// the elected key lacks (a NIP) is released to R1, and the release is read.
+    #[test]
+    fn a_junk_head_is_released_to_r1() {
+        let lower = [items("Acme Group", 1, 1, 8), items("acme services", 101, 100, 3)].concat();
+        let e = dated(&lower, "acme services");
+        assert_eq!(e.verdict, r1("Acme Group"));
+        assert_eq!((e.recent.unwrap().fires, e.recent.unwrap().released), (true, Some("unfit")));
+        let nip = [items("Acme Polska", 1, 1, 8), items("Acme Polska NIP 5250001009", 101, 100, 2)].concat();
+        let e = dated(&nip, "Acme Polska NIP 5250001009");
+        assert_eq!(e.verdict, r1("Acme Polska"));
+        assert_eq!(e.recent.unwrap().released, Some("digits"));
+    }
+
+    /// 11. Undated: no dates with H ≥ 2 holds `undated` (it fails closed); with H = 1 R1 changes;
+    /// `Some(&[])` reads k = 0 and changes.
+    #[test]
+    fn r1_without_dates_fails_closed_only_where_the_window_applies() {
+        let votes = [("Old Name Agency", 8), ("New Name Agency", 2)];
+        assert_eq!(
+            elect_head(&votes, &org("New Name Agency"), &FNS),
+            HeadVerdict::Hold { reason: HEAD_HOLD_UNDATED, rule: HeadRule::R1, new: None }
+        );
+        let stray = [("Old Name Agency", 8), ("New Name Agency", 1)];
+        assert_eq!(elect_head(&stray, &org("New Name Agency"), &FNS), r1("Old Name Agency"));
+        let none: [DatedVote<'_>; 0] = [];
+        let empty = HeadElectOrg { dated: Some(&none), ..org("New Name Agency") };
+        let e = elect_head_counted(&votes, &empty, &FNS);
+        assert_eq!(e.verdict, r1("Old Name Agency"));
+        assert_eq!((e.recent.unwrap().head_procs, e.recent.unwrap().undated), (0, 10));
+    }
+
+    /// 12. R0 and R2 never consult dates: undated, they still change; dated with the head's items
+    /// newest, they still change.
+    #[test]
+    fn r0_and_r2_never_consult_dates() {
+        let votes = [("Kalmar kommun", 4)];
+        assert_eq!(elect_head(&votes, &org(""), &FNS).rule(), Some(HeadRule::R0e));
+        assert_eq!(elect_head(&votes, &org(""), &FNS).kind(), "change");
+        let stray = [("Main Body", 3), ("A Body", 2), ("B Body", 2), ("C Body", 2), ("D Body", 2), ("Head Body", 1)];
+        assert_eq!(elect_head(&stray, &org("Head Body"), &FNS).rule(), Some(HeadRule::R2));
+        assert_eq!(elect_head(&stray, &org("Head Body"), &FNS).kind(), "change");
+        let rows = [items("Main Body", 1, 1, 3), items("Head Body", 101, 100, 1)].concat();
+        let org_ = HeadElectOrg { dated: Some(&rows), ..org("Head Body") };
+        assert_eq!(elect_head(&stray, &org_, &FNS).kind(), "change");
+    }
+
     #[tokio::test]
     async fn the_refresh_plans_candidate_reads_seek() {
         let path = format!("/tmp/tender-db-524u2-eqp-{}.db", std::process::id());
@@ -2138,6 +2713,20 @@ mod tests {
                 "org_identifier_verdicts",
             ),
             ("eng satellite", super::HEAD_ELECT_ENG_SQL.to_owned(), vec![turso::Value::Integer(1)], "organization_names"),
+            // Rule v7: the mention read carries `notice_id` through the same index, and the date read
+            // seeks `tender_versions_notice`.
+            (
+                "mentions with notices",
+                super::org_name_refresh_mentions_sql(crate::canonical::IN_CHUNK),
+                (1..=crate::canonical::IN_CHUNK as i64).map(turso::Value::Integer).collect(),
+                "organization_mentions_org",
+            ),
+            (
+                "notice dates",
+                super::org_name_refresh_dates_sql(crate::canonical::IN_CHUNK),
+                (1..=crate::canonical::IN_CHUNK as i64).map(turso::Value::Integer).collect(),
+                "tender_versions_notice",
+            ),
         ] {
             let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
             let mut plan = String::new();

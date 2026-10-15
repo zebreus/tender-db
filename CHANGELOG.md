@@ -42,8 +42,11 @@ holds at least 3 votes and at least 25%; or when the head is empty or not a name
 void-lot phrase) and some mention's name votes, whatever script that name is written in. Even then it stays when
 the change would swap one legal-form family for another (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS
 name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when no spelling of the
-winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; and,
-on the 55% and 25% arms only, when the head is in another script than its mentions (TED's English rendering).
+winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on
+the 55% arm, while the organization's newest procedures still use the current head (a rename: the head names at
+least 2 procedures and two thirds of the organization's newest as many, unless the head is unfit to serve or
+carries a number the other name lacks); and, on the 55% and 25% arms only, when the head is in another script than
+its mentions (TED's English rendering).
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new
