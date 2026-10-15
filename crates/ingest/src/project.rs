@@ -1210,6 +1210,19 @@ const LEGACY_AWARD_DATE_FIELD: &str = "TED-CONTRACT_AWARD_DATE";
 /// The r208 probe listed 79 rows of it as dropped in the era's head window; its
 /// corpus size is whatever `refold-fields` counts.
 const LEGACY_AWARD_DATE_FIELD_R207: &str = "TED-DATE_OF_CONTRACT_AWARD";
+/// The same award-block date under the R2.0.9 STANDARD forms' spelling (issue 550): F03, F06,
+/// F15, F20 and kin (TED 2014–2023) put the outcome in `AWARD_CONTRACT/AWARDED_CONTRACT` and its
+/// date in `DATE_CONCLUSION_CONTRACT`; only the defence form F18 writes `CONTRACT_AWARD_DATE`,
+/// which is all issue 255 gated on. A 2016–2023 public sample read 86 % of legacy results carrying
+/// it and every one of them served `decided` NULL; reading it also lets 257's rule see that a
+/// winner-silent award announced an award (NULL, not `clos-nw`).
+const LEGACY_AWARD_DATE_FIELD_R209: &str = "TED-DATE_CONCLUSION_CONTRACT";
+/// R2.0.9's "a contract was awarded" marker on the award block (issue 550): `AWARDED_CONTRACT`,
+/// a `Rule::Marker` stored as `Integer(1)` — the mirror of [`LEGACY_NO_AWARD_MARKER`]. It is award
+/// evidence: a block that carries it and names no winner and no value is the publisher withholding
+/// the outcome (NULL, issue 257), never the end-of-function `clos-nw` default — the sample's 78
+/// of 82 standard-form `clos-nw` were such blocks.
+const LEGACY_AWARDED_MARKER: &str = "TED-AWARDED_CONTRACT";
 /// The legacy "no contract was awarded" marker on the award block, a `Rule::Marker`
 /// the XML parsers store as `Integer(1)` and the text parser as `Code("1")` (its award
 /// skeleton for a body that says every tender was rejected; issue 512 — for years only
@@ -6795,6 +6808,9 @@ struct RawLotResult {
     /// Section VI.3`) — a winner exists and its name is withheld or elsewhere, so the
     /// result is `selec-w` with no winner bound.
     withheld_winner: bool,
+    /// Issue 550: the block carries R2.0.9's `AWARDED_CONTRACT` marker — an award was made, so the
+    /// block is never read as "no award" by default.
+    awarded_marker: bool,
     direct_cents: Option<i64>,
     direct_currency: Option<String>,
 }
@@ -7060,10 +7076,13 @@ fn read_legacy_results(
             // splits it into DAY/MONTH/YEAR elements; the parse layer has already made
             // that one instant.
             (
-                LEGACY_AWARD_DATE_FIELD | LEGACY_AWARD_DATE_FIELD_R207,
+                LEGACY_AWARD_DATE_FIELD | LEGACY_AWARD_DATE_FIELD_R207 | LEGACY_AWARD_DATE_FIELD_R209,
                 NoticeValue::Date { utc_seconds, offset_minutes, has_time },
             ) => {
                 r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
+            }
+            (LEGACY_AWARDED_MARKER, NoticeValue::Integer(_) | NoticeValue::Code { .. }) => {
+                r.awarded_marker = true;
             }
             (LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(_) | NoticeValue::Code { .. }) => {
                 r.decision = Some("clos-nw".to_owned());
@@ -7105,7 +7124,8 @@ fn read_legacy_results(
                 r.decision = Some("clos-nw".to_owned());
             } else if r.direct_cents.is_some() {
                 r.decision = Some("selec-w".to_owned());
-            } else if r.decided.is_none() {
+            } else if r.decided.is_none() && !r.awarded_marker {
+                // Issue 550: an `AWARDED_CONTRACT` block is award evidence even undated.
                 r.decision = Some("clos-nw".to_owned());
             }
         }
@@ -7622,6 +7642,7 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || field_id == SDK01_AWARD_DATE_FIELD
                 || field_id == LEGACY_AWARD_DATE_FIELD
                 || field_id == LEGACY_AWARD_DATE_FIELD_R207
+                || field_id == LEGACY_AWARD_DATE_FIELD_R209
         }
         Channel::Code => {
             field_id == SUBTYPE_FIELD
@@ -7647,6 +7668,7 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
             LEGACY_BID_COUNT_FIELDS.contains(&field_id)
                 || field_id.ends_with(AMOUNT_ELEMENT)
                 || field_id == LEGACY_NO_AWARD_MARKER
+                || field_id == LEGACY_AWARDED_MARKER
                 // Issue 479 review: the legacy form markers that name a procedure type.
                 || procedure_marker(field_id).is_some()
         }
@@ -13018,6 +13040,8 @@ mod tests {
         // must say so or the probe lists 1,688 rows of it as dropped (it did).
         assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD));
         assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD_R207));
+        assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD_R209), "issue 550");
+        assert!(table_reads("notice_integers", LEGACY_AWARDED_MARKER), "issue 550");
         // Two more the issue-384 guard found on its first run: the no-award marker
         // (a wildcard arm in the reader, an Integer(1) in the store) and the bid
         // count on its Number spelling.
@@ -13095,6 +13119,8 @@ mod tests {
         // The const-named arms and slices the reader consults, held by name.
         assert!(has_destination(LEGACY_AWARD_DATE_FIELD, Channel::Date));
         assert!(has_destination(LEGACY_AWARD_DATE_FIELD_R207, Channel::Date));
+        assert!(has_destination(LEGACY_AWARD_DATE_FIELD_R209, Channel::Date), "issue 550");
+        assert!(has_destination(LEGACY_AWARDED_MARKER, Channel::Integer), "issue 550");
         assert!(has_destination(LEGACY_NO_AWARD_MARKER, Channel::Integer));
         assert!(has_destination(LEGACY_NO_AWARD_MARKER, Channel::Code), "issue 512: the text era's spelling");
         for f in LEGACY_BID_COUNT_FIELDS {

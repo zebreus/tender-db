@@ -856,6 +856,51 @@ async fn the_legacy_award_block_carries_its_decision_date() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 550: R2.0.9's STANDARD award forms write the award date as `DATE_CONCLUSION_CONTRACT`
+/// inside `AWARDED_CONTRACT` (only the defence form F18 writes `CONTRACT_AWARD_DATE`, issue 255's
+/// gate), so the era served no award date. And a block that says `AWARDED_CONTRACT` but names no
+/// contractor and no value — the publisher withholding the outcome — read `clos-nw` (no award) by
+/// the end-of-function default; 257's rule wants NULL. The fixture's one block, then the same block
+/// with its contractor and value cut, then with its date cut too.
+#[tokio::test]
+async fn an_r209_standard_award_carries_its_conclusion_date_and_a_winner_silent_award_is_null() {
+    const FIXTURE: &str = "r209/f03-000988-2019.xml";
+    let raw = std::fs::read_to_string(format!("tests/fixtures/{FIXTURE}")).unwrap();
+    // Cut `from` through the first `to` AFTER it (the coded section has its own `<VALUES>`).
+    let cut = |text: &str, from: &str, to: &str| {
+        let a = text.find(from).unwrap_or_else(|| panic!("{from} not in the fixture"));
+        let b = a + text[a..].find(to).unwrap_or_else(|| panic!("{to} not after {from}")) + to.len();
+        format!("{}{}", &text[..a], &text[b..])
+    };
+    let silent = cut(&cut(&raw, "<CONTRACTORS>", "</CONTRACTORS>"), "<VALUES><VAL_ESTIMATED_TOTAL", "</VALUES>");
+    assert!(silent.contains("<NB_TENDERS_RECEIVED>4</NB_TENDERS_RECEIVED></TENDERS></AWARDED_CONTRACT>"));
+    let undated = cut(&silent, "<DATE_CONCLUSION_CONTRACT>", "</DATE_CONCLUSION_CONTRACT>");
+    // 2018-12-28, offsetless.
+    const CONCLUDED: i64 = 1_545_955_200;
+    for (name, bytes, decision, decided) in [
+        ("named", raw.clone(), Some("selec-w"), Some(CONCLUDED)),
+        ("winner-silent", silent, None, Some(CONCLUDED)),
+        ("winner-silent-undated", undated, None, None),
+    ] {
+        assert!(!bytes.contains("<CONTRACTOR>") || name == "named", "{name}: the cut must remove the contractor");
+        let (db, fetch_id, path) = scratch(&format!("r209-conclusion-{name}")).await;
+        ingest_bytes(&db, fetch_id, SOURCE, FIXTURE, bytes.as_bytes()).await;
+        project::project(&db, false).await.expect("project");
+        assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results").await, 1, "{name}");
+        assert_eq!(
+            query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(),
+            decision,
+            "{name}: an AWARDED_CONTRACT block is never `clos-nw` by default"
+        );
+        let got = match db.scalar("SELECT decided_utc FROM tender_version_lot_results").await.expect("query") {
+            Some(turso::Value::Integer(i)) => Some(i),
+            _ => None,
+        };
+        assert_eq!(got, decided, "{name}: DATE_CONCLUSION_CONTRACT is the decided stamp");
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
 /// Its `AWARD_OF_CONTRACT_DEFENCE` section holds two amounts:
 ///
 ///     <INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT>  VALUE_COST 2 162 630,19   (no marker)
