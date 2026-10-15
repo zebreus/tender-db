@@ -1,6 +1,6 @@
 # 534 — legacy award winners serve the element name `AWARD_AND_CONTRACT_VALUE` as their role, and three more party-role gaps the 393 fold left
 
-Status: ready-for-agent — units 1, 2, 5 and 6 DEPLOYED `4d4fe13` 2026-10-15 02:04 UTC. Unit 3 sized at 2,006,441 notices (job 2494), and its refold is RUNNING: `refold-fields` 2512 is done (2,006,441 re-queued, 1,117,095 tenders stamped) and `project` 2513 started 07:47 UTC, ~7.5 h. Next: when 2513 ends, run `## Verify`, re-read band 5.2M and move the docs caveat to RETIRED. Unit 4 (the repeated-row decision) is open.
+Status: ready-for-agent — unit 3 VERIFIED 2026-10-15 12:4x UTC: `project` 2513 finished ok at 12:11 UTC (14,928,123 notices → 8,795,253 tenders; 2,720,333 verified, 1,105,094 corrected), sweep 2514 swept 0, and deploy `11803dd` is live. `## Verify` reads done on both lines; band 5.2M has `AWARD_AND_CONTRACT_VALUE` 0 and `RESPONSIBLE_FOR_MEDIATION_PROCEDURES` 0. Next: move the pre-refold docs caveat to RETIRED (openapi `parties[]`, the sql.rs role note, the docs.rs pin; the RETIRED spelling must be a case-matching squash-form fragment), then unit 4 (the repeated-row decision) is the only open unit.
 Was: ready-for-agent — UNITS 1, 2, 5 (the test variant) AND 6 BUILT 2026-10-14 and REVIEWED (two reviewers; the review round's fixes are in, see "Review round"; uncommitted in the worktree; focused tests green; see "Units 1/2/5/6 — built"). The fold grew past the two named elements: three more R2.0.8 wrappers prod serves verbatim (`BODY_RESPONSIBLE_APPEAL`, `BODY_RESPONSIBLE_MEDIATION`, `SERVICE_INFORMATION_LODGING_APPEALS`) fold too, and seven elements sit on an explicit refusal list (the review added `PARTY_NAME_ADDRESS`). Next: `ops/check.sh`, commit, deploy with the batch. Then unit 3, the refold — NOT run: a ~7.5 h full projection (job 1616 took ~442 min), to schedule after 524's post-deploy census (522 and 536 are done) in a window that spans no 07:35 UTC daily tick, with the field list widened below; when it lands, the docs' pre-refold caveat goes (unit 3). Unit 4 (the repeated-row decision) is still open. Was: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, fold `AWARD_AND_CONTRACT_VALUE` → `winner` and `RESPONSIBLE_FOR_MEDIATION_PROCEDURES` → `mediation-body` in `legacy_role` (S; build and test, the refold is unit 3).
 Kind: defect (projection vocabulary): `legacy_role` in `crates/ingest/src/project.rs:8985`; the party read
 `PARTIES_SQL` (`crates/store/src/read.rs:2785`); the role docs in `crates/app/data/openapi.json` (`parties[]`) and
@@ -28,6 +28,8 @@ Relates to:
 Covers units 1-3 (the folds and their refold). Units 4-6 are a decision, a detector and docs; check them in place.
 - **done**: `[5200474,["winner"]]` and `[8400010,["appeal-information","review-body"]]`.
 - **open (2026-10-14)**: `[5200474,["AWARD_AND_CONTRACT_VALUE"]]` and `[8400010,["review-body","review-body"]]`.
+- **read 2026-10-15 12:4x UTC (after 2513, deploy `11803dd`)**: `[5200474,["winner"]]` and
+  `[8400010,["appeal-information","review-body"]]`: done.
 
 ## Repro
 
@@ -446,3 +448,14 @@ as `buyer`) and 541 (T02 transport awards name a `winner` party but write no awa
   `refold-fields` 2512 with `expect: 2006441`, then `project` 2513, a full-projection fallback of ~7.5 h. That ends
   well before the next 07:35 tick. When 2513 finishes: run `## Verify`, re-read band 5.2M, and move the docs caveat
   to RETIRED (unit 3's docs step).
+
+## Unit 3 readings (2026-10-15)
+
+- `project` 2513: 07:57 → 12:11 UTC (4.2 h, not the 7.5 h estimated). 14,928,123 notices → 8,795,253 tenders,
+  2,332,657 versions; 3,825,437 tenders written, 4,969,816 verified unchanged; compare: 2,720,333 verified,
+  1,105,094 corrected (4,687,710 correction rows). `sweep-orphan-orgs` 2514 (AUTO): 10 rows with no mention, all
+  kept by a review table; 0 swept.
+- Band 5,200,000–5,203,000 `GROUP BY role` (bounded `/v1/sql`): 12 roles, none verbatim. `winner` 6,898 rows /
+  1,741 tenders (was 6,622 / 1,626 plus 279 `AWARD_AND_CONTRACT_VALUE`), `review-body` 3,656 / 1,971,
+  `appeal-information` 2,406 / 1,228, `mediation-body` 448 / 270. `AWARD_AND_CONTRACT_VALUE` 0 and
+  `RESPONSIBLE_FOR_MEDIATION_PROCEDURES` 0.
