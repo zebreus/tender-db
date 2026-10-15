@@ -1,9 +1,9 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — UNIT 1 DONE (census job 2492, 2026-10-15). UNIT 2 DECIDED 2026-10-15 by a design panel:
-three angles (election rule; keys and downstream; rollout), and a judge who simulated the rule on the census samples
-(see "Unit 2 — decided"). Next: unit 2a, the pure `elect_head` and a DRY `refresh-org-names` planner, then one dry
-run, then 2b (wet + ledger) and 2c (weekly upkeep).
+Status: ready-for-agent — UNIT 1 DONE (job 2492). UNIT 2 DECIDED (panel wf_8a507dec-00b). UNIT 2a BUILT, reviewed,
+gated and DEPLOYED `fa2677c` 2026-10-15 05:11 UTC. The dry plan (job 2501) was judged on its uniform samples (below):
+about 3.7% of changes would serve a worse name, from two systemic causes. NEXT: unit 2a.1 (fold Latin diacritics in
+the vote key; an R2 abbreviation and truncation hold; the 334 canary's expectation), re-run dry, re-judge, then 2b.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -674,3 +674,67 @@ These figures come from job 2492's totals and its 30-per-bucket samples, simulat
     - the name_norm writes are at 34823, 35353 and lib.rs 4067, not 34430/34960/4065.
 
     Builders should grep, not trust offsets.
+
+## Unit 2a — built, deployed, first dry plan (2026-10-15)
+
+- **Built** by an agent from the decision. A 3-lens review found 16 findings, all confirmed apart from one no-defect
+  lens. The core rule was faithful. The one code defect: `all_caps` counted `ß`, `ª` and `º` as lower case, so a
+  German or Portuguese ALL-CAPS spelling ranked as mixed case. Fixed, with 13 test and doc gaps, in one fix round.
+- **Gated and deployed:** green at `fa2677c` (1,214 s), deployed 05:11 UTC.
+- **Dry plan, job 2501** (109 s, rule `524u2-v2`). It walked 5,676,482 orgs and 49,671,069 mention rows, and elected
+  2,101,333 of them.
+  - **Changes: 30,832** (2,215,214 mentions; 4,155 on merge survivors): R0e 1, R0n 2, R1 28,881, R2 1,948.
+  - **Holds: 533**: consortium_removed 244, no_fit 220, family 55, gb_family 13, nhs_check 1.
+  - **Keeps:** D4 1,732, E1 1,547,068, E2 2, E3 6, S1 502,657, bar 18,503.
+  - **D4 ENG satellites:** absent 1,678, agrees 2, differs 40, equal 12.
+  - **Canaries:** 11 of 12 as expected. 31558903 → "The University of Sheffield"; 22713056 → "Vergabekammer bei der
+    Bezirksregierung"; 6341366 → "Kalmar kommun". **334 read R1 "Les Alchimistes SAS" where the expectation said
+    hold:no_fit.** The expectation is stale: its mentions are `les alchimistes` ×2, `LES ALCHIMISTES` ×2,
+    `Les Alchimistes SAS` ×1 and `Les Alchimistes Loire Atlantique` ×1. The vote key drops `SAS`, so 5/6 votes form
+    one cluster, and the fit mixed-case spelling is the SIREN's own name. The change is right; fix the expectation.
+- **Sample judgement** (workflow wf_2ac4aece-d33). The 30 uniform samples per change rule were classified, and every
+  "wrong" got an independent skeptic, who refuted 4 of 8:
+
+  | rule | right | neutral | wrong |
+  | --- | --- | --- | --- |
+  | R1 (28,881) | 19 | 10 | **1** (13731240) |
+  | R2 (1,948) | 13 | 14 | **3** (15075247, 13839658, 17348355) |
+  | R0 (3) | 2 | 1 | 0 |
+
+  Weighted, that is about 960 + 195 ≈ 1,150 worse names out of 30,832 (≈3.7%). The causes:
+  1. **Latin diacritics are not folded in the vote key.** `match_norm` folds only Greek tonos, so `Comuna Dumbrăveni`
+     and `COMUNA DUMBRAVENI` are two clusters. R1 fires and serves the ALL-CAPS ASCII form (13731240, the one R1
+     wrong). The same split makes several accent-only R1 flips neutral at best (12615968 Szervíz, 16531730 Dotación,
+     11385081 Géosat).
+  2. **R2 swaps a full name for an abbreviation or truncation.**
+     - 15075247: `Communauté de communes Terroir de Caux` → `CDC Terroir de Caux`.
+     - 13839658: `C 3 I - CONCEPT EN INGENIERIE D'INFRASTRUCTURES INNOVANTES` → `SAS C3i`.
+     - 17348355: `Dräger Safety România` → `DRAEGER ROMANIA`, the parent's name on the subsidiary's CUI.
+     R2's 25% bar lets a minority shorthand beat a stray but correct full head.
+- **Holds over-block** (they write nothing, so the cost is missed fixes, not damage):
+  - consortium_removed: 10 of 12 unjustified. The identifier is the lead member's own, and 57–86% of votes name it.
+  - family: 8 of 12. Some are false family reads with the same form on both sides, e.g. an `Energie AG` brand inside
+    an s.r.o. name.
+  - gb_family: 8 of 12. `gb_legal_family` misparses `Public Ltd Company`, and reads a trailing ownership note.
+  - no_fit: 1 of 12 (`vivida bkk`, a lower-case brand).
+  - nhs_check: 1 of 1 justified.
+  - D4 keeps: 12 of 12 justified. All have eng=absent; 21652539 has transliterator casing artifacts.
+  - bar keeps: 10 of 12. 6071658 is EPF Poitou-Charentes → Nouvelle-Aquitaine, a rename the 2x hysteresis blocks.
+    5778 is a tribunal's name on a private company's SIRET, issue 456 design 1.
+
+### Unit 2a.1 (next)
+
+1. **Fold Latin diacritics in `head_vote_key` only** (NFD, then drop the combining marks; `altid_name_key` is left
+   alone). Within a cluster the display order prefers the diacritic-bearing spelling among the fit mixed-case ones.
+   Then 13731240 becomes an S1 keep, as do the accent-only flips.
+2. **R2 abbreviation and truncation hold.** Hold an R2 change when:
+   - (a) the new name has a 2–5 letter token equal to the initials of a run of the head's words (`CDC` ↔
+     `Communauté de communes`); or
+   - (b) the new name's vote-key tokens, with single-letter runs joined (`C 3 I` → `c3i`), are a proper subset of the
+     head's, and the dropped tokens are all alphabetic words (not digits, postcodes or `ul.`). This leaves R2's
+     address and NIP strip-downs (764/765) changing.
+   Re-check the 13 right R2 samples against both arms before building.
+3. **Fix the 334 canary expectation** to change:R1 "Les Alchimistes SAS".
+4. Re-run the dry plan, re-judge the samples with the same workflow, and decide 2b's go from that reading. Refine the
+   holds (consortium lead-member identifier, legal_form_family first-token misreads, gb_legal_family `Public Ltd
+   Company` and trailing ownership notes) as a later unit; they only block.
