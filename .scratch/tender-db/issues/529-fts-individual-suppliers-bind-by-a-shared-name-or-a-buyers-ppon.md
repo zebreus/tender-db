@@ -1,9 +1,8 @@
 # 529 — FTS `Individual` suppliers bind by a shared name or by a buyer's PPON
 
-Status: ready-for-agent — filed 2026-10-14 from issue 522 unit 1's reads. Unit 1 measured 2026-10-15 (job 2493).
-Units 2 and 3 DECIDED 2026-10-15 by a design panel: three designs and a judge, read-only, code-cited (below).
-Unit 2 built (gate, then main, deploy and drain). Unit 3 is accepted, with no code. Next: deploy unit 2, run the
-drain, then the Verify.
+Status: done — 2026-10-15. Unit 2 deployed `bbda07f` (03:00 UTC) and drained (jobs 2498–2500); unit 3 accepted;
+the Verify reads done. Was: ready-for-agent — filed 2026-10-14 from issue 522 unit 1's reads; units 2 and 3 decided by
+a design panel.
 Kind: data quality (organization identity)
 Relates to:
 - 522 (the s.94 placeholder PPONs stop keying, so their `Individual`s bind by name);
@@ -19,6 +18,10 @@ Relates to:
   4 of tender 8596401.
 - **open (2026-10-15)**: 31966280, a GB provisional `Individual`, holds the four s.94 mentions: PBXY and PGYY on
   46806664 and 46819715.
+- **read done (2026-10-15 03:0x UTC, after the drain)**:
+  - the read returns exactly 31570158 (GB, PMGL) and 18934187 (GH, `P0004469968`), both identified;
+  - 31966280 is gone;
+  - the `Individual` mentions left on the two notices are UKRI's two PDQJ slots (accepted) and PMGL's.
 
 ## What was found
 
@@ -141,3 +144,15 @@ resolver, store, idgate or parser code.
   - 31570158's one mention (46806664) carries PMGL. It is the drain's own canary for guard 3.
 - **Drain:** `refold-notices` over `[46806664, 46819715]`. The fold retires the four mentions, and the auto
   orphan sweep removes 31966280. Reconcile any sweep count above 1 against its plan, since the sweep is global.
+
+## Drained (2026-10-15)
+
+- **Deployed** `bbda07f` at 03:00 UTC.
+- **`refold-notices` 2498** over `[46806664, 46819715]`: re-queued 2, stamped 1 Tender.
+- **`project` 2499**:
+  - 2 notices → 1 Tender (8596401), 1 corrected, 6 correction rows;
+  - **4 non-name mentions retired**; dropped parties 4 blank, 0 placeholder.
+  - The four were the PBXY and PGYY slots. PMGL's mention on 46806664 was kept by guard 3, which was the canary.
+- **Auto `sweep-orphan-orgs` 2500**: it walked 5,676,483 orgs and found 11 with no recorded mention. 10 are kept by a
+  review table. **It swept 1 of 1 counted, 31966280**, with its one name variant, published as `organization
+  removed`. The count is 1, so nothing needs reconciling.
