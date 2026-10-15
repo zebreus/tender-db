@@ -1240,7 +1240,7 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     (`parties[].organization_name` is a read-time join). With an identifier it is ELECTED from the names \
     its `organization_mentions` published (issue 524, ADR-0013's 2026-10-15 amendment): the operator's \
     refresh-org-names job serves a fit spelling of the winning cluster, its whitespace collapsed \
-    (trimmed, every run one space) and rewrites the head in place with an `organization` `changed` row \
+    (trimmed, every run one space), and rewrites the head in place with an `organization` `changed` row \
     in `changes`. The votes are the mentions that published a name (one with no name, a blank one or a \
     non-name one does not vote), clustered as one name across casing, diacritics, `the` and a legal \
     form. The head changes only when a cluster other than its own holds at least 55% of the votes, at \

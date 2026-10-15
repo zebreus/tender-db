@@ -1463,8 +1463,17 @@ pub fn gb_legal_family(name: &str) -> Option<&'static str> {
 /// and feeds no bind: [`altid_name_key`], [`altid_keys_agree`], [`family_token`] and
 /// [`NAME_KEY_EPOCH`] stay as they are, so the altid arm, the R2/R3 vetoes and every N3 key do
 /// not move.
+///
+/// Whitespace-invariant (issue 524 rule v6's review): the name is trimmed and every run of Unicode
+/// whitespace made one ASCII space FIRST. The election serves a display spelling with its
+/// whitespace collapsed, and [`altid_name_key`]'s trim matches its markers (` t/a `, ` trading as `)
+/// and its trailing ` ltd`/` limited`/` plc`/` llp` byte for byte, so `Acme Ltd trading  as Foo` and
+/// its served `Acme Ltd trading as Foo` keyed apart: the served head left its own cluster, S1 never
+/// kept it, and every later plan proposed it again. Spellings that differ only in whitespace are now
+/// one cluster too.
 pub fn head_vote_key(name: &str) -> String {
-    let alt = altid_name_key(&fold_diacritics(name));
+    let collapsed = name.split_whitespace().collect::<Vec<_>>().join(" ");
+    let alt = altid_name_key(&fold_diacritics(&collapsed));
     let kept: Vec<&str> = alt
         .split(' ')
         .filter(|t| !t.is_empty() && !t.starts_with('§') && family_token(t).is_none())
@@ -1864,6 +1873,33 @@ mod head_vote {
         NAME_KEY_EPOCH, altid_keys_agree, altid_name_key, family_token, fold_diacritics, head_change_hold, head_family,
         head_r2_hold, head_spelling_unfit, head_twin_key, head_vote_key,
     };
+
+    /// Issue 524 rule v6's review: the vote key is whitespace-invariant. The election serves a display
+    /// spelling with its whitespace collapsed, and `altid_name_key`'s trim matches its markers and its
+    /// trailing GB legal form byte for byte, so these keyed apart from their collapsed forms: the served
+    /// head left its cluster.
+    #[test]
+    fn the_vote_key_reads_a_spelling_and_its_collapsed_form_alike() {
+        let collapse = |s: &str| s.split_whitespace().collect::<Vec<_>>().join(" ");
+        for raw in [
+            "Acme Ltd trading  as Foo",
+            "Acme Ltd t/a\u{a0}Foo",
+            "Acme\u{a0}Ltd (BDP)",
+            "  Acme   GmbH ",
+            "Julius Brune GmbH  Co. KG",
+        ] {
+            assert_ne!(collapse(raw), raw);
+            assert_eq!(head_vote_key(&collapse(raw)), head_vote_key(raw), "{raw:?}");
+        }
+        // Not vacuous: the key it wraps reads the two forms apart.
+        assert_ne!(
+            altid_name_key(&fold_diacritics("Acme Ltd trading  as Foo")),
+            altid_name_key(&fold_diacritics("Acme Ltd trading as Foo"))
+        );
+        // And the collapse cuts the trading-as clause, as the published single space does.
+        assert_eq!(head_vote_key("Acme Ltd trading  as Foo"), head_vote_key("Acme Ltd trading as Foo"));
+        assert_eq!(head_vote_key("Acme Ltd trading  as Foo"), head_vote_key("Acme Ltd"));
+    }
 
     /// Issue 524 unit 2a.1: dry plan 2501's accent-only splits are one vote key each.
     #[test]

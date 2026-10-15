@@ -201,12 +201,15 @@ Decided:
    - not all lower case.
 
    Each fit spelling is served with its whitespace collapsed (trimmed, every run one space; a tab
-   or a newline is a control character, so unfit), and the fit spellings that collapse alike are
-   counted together (rule `v6`, after dry plan 2515 planned 137 names with a whitespace run, a
-   dropped `&` among them): a doubled space is never served, so the served head is not always byte
-   for byte a published spelling, while its `name_norm` is theirs. Among the collapsed spellings,
-   case decides first (a spelling that is not ALL-CAPS before one that is;
-   `ß`, `ª` and `º` have no one-letter capital and do not make a spelling mixed case), then the most
+   or a newline is a control character, so unfit, and a spelling must be fit both as published and
+   collapsed), and the fit spellings that collapse alike are counted together (rule `v6`, after dry
+   plan 2515 planned 137 names with a whitespace run, a dropped `&` among them). So no change
+   serves a doubled space (a head the rule keeps stays byte for byte), and a served head is not
+   always byte for byte a published spelling, while its `name_norm` and its vote key are theirs:
+   the vote key reads whitespace runs as one space, so the served head stays in its own cluster,
+   and a display equal to the head is a keep. Among the collapsed spellings, case decides first (a
+   spelling that is not ALL-CAPS before one that is; `ß`, `ª` and `º` have no one-letter capital
+   and do not make a spelling mixed case), then the most
    votes, then byte order. Then, if that winner carries no diacritic (no non-ASCII letter), the
    most-voted fit spelling of its case that is its TWIN (equal once lower-cased, diacritics folded and
    punctuation dropped) and does carry one is served instead. So "The University of Sheffield" (1

@@ -22128,6 +22128,10 @@ mod tests {
             elect_head(&brune, &org("Mehrwert Logistik"), &fns),
             HeadVerdict::Change { rule: HeadRule::R1, new: "Julius Brune GmbH & Co. KG".into() }
         );
+        // The sum decides under the real key too: `Acme  Services` 2 + `Acme Services` 2 beat `Acme
+        // Services Ltd` 3 (one cluster: the key drops the legal form, and reads whitespace alike).
+        let summed = [("Acme  Services", 2), ("Acme Services", 2), ("Acme Services Ltd", 3), ("Zeta Holdings", 1)];
+        assert_eq!(elect_head(&summed, &org("Zeta Holdings"), &fns).new_name(), Some("Acme Services"));
         let ita = [("Itä-Suomen  aluehallintovirasto", 3), ("Pohjois-Savon ELY", 1)];
         assert_eq!(elect_head(&ita, &org("Pohjois-Savon ELY"), &fns).new_name(), Some("Itä-Suomen aluehallintovirasto"));
         let dotacion = [("Dotacion y Equipamiento S.L.", 4), ("Dotación y Equipamiento, S. L.", 1), ("Equipos Norte", 1)];

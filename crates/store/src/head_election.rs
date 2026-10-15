@@ -36,8 +36,9 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// dotted forms, mojibake knows `€`, `™`, `È™`/`È›` and a word-final `Ã`, and the initialism holds a
 /// bare initialism, skips particles and knows the review's designations. `v6` (unit 2b, dry plan 2515):
 /// the display spelling is chosen among the fit spellings with their whitespace collapsed, a run's
-/// spellings counted together, so a doubled space (often a dropped `&`) is never served
-/// ([`collapse_whitespace`]).
+/// spellings counted together, so no change serves a doubled space (often a dropped `&`); the vote
+/// key reads a spelling and its collapsed form alike (`crosswalk::head_vote_key`), so a served head
+/// keys into its own cluster.
 pub const HEAD_ELECTION_EPOCH: &str = "524u2-v6";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
@@ -252,17 +253,20 @@ struct Cluster<'a> {
 /// 7. Otherwise KEEP (`bar`).
 ///
 /// The elected cluster serves its DISPLAY spelling: among the fit spellings only
-/// ([`HeadElectFns::unfit`], read on each spelling as published), each with its whitespace collapsed
-/// (trimmed, every run one space: [`collapse_whitespace`]) and the spellings that collapse alike
+/// ([`HeadElectFns::unfit`], read on each spelling as published and on its collapsed form), each with
+/// its whitespace collapsed (trimmed, every run one space) and the spellings that collapse alike
 /// counted together (rule `v6`), the winner is not-ALL-CAPS before ALL-CAPS, then the most mentions,
 /// then the byte-wise smallest — never the census's count-first `top_spelling`, which serves
-/// `UNIVERSITY OF SHEFFIELD`. So a doubled space is never served, `Acme  GmbH` 20 and `Acme GmbH` 3
-/// serve `Acme GmbH` with 23, and dry plan 2515's `Julius Brune GmbH  Co. KG` (its `&` dropped) tied
-/// 2–2 with `Julius Brune GmbH & Co. KG` loses on bytes once collapsed (`&` 0x26 before `C` 0x43, where
+/// `UNIVERSITY OF SHEFFIELD`. So no change serves a doubled space (a head the rule keeps stays byte
+/// for byte, its doubled space included), `Acme  GmbH` 2 and `Acme GmbH` 2 serve `Acme GmbH` with 4
+/// over `Acme-GmbH` 3, and dry plan 2515's `Julius Brune GmbH  Co. KG` (its `&` dropped), tied 2–2
+/// with `Julius Brune GmbH & Co. KG`, loses on bytes once collapsed (`&` 0x26 before `C` 0x43, where
 /// the doubled space's 0x20 had won). The served head is then the collapsed form, not always a
 /// spelling some mention published byte for byte; its `name_norm` (`org_name_norm`, which collapses
-/// whitespace too) is that of the spellings it stands for. Then, when the winner carries no marked (non-ASCII) letter — an accent-stripped spelling
-/// — the most-mentioned fit spelling of its case that is its TWIN ([`HeadElectFns::twin_key`]: equal
+/// whitespace too) and its vote key (`crosswalk::head_vote_key`, likewise) are those of the spellings
+/// it stands for. A display equal to the head byte for byte is a KEEP (`S1`), never a change to
+/// itself. Then, when the winner carries no marked (non-ASCII) letter — an accent-stripped spelling —
+/// the most-mentioned fit spelling of its case that is its TWIN ([`HeadElectFns::twin_key`]: equal
 /// once lower-cased, folded and stripped of punctuation) and does carry one is served instead, then
 /// bytes: `Dotación y Equipamiento, S. L.` over `Dotacion y Equipamiento S.L.`. A winner that has an
 /// accent already is kept (unit 2a.3): its one-mention typo twin never beats it (`sociálných` 1 over
@@ -312,6 +316,8 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
     }
     let serve = |rule: HeadRule, cluster: &Cluster<'_>| match display_spelling(cluster, org.head, fns) {
         None => HeadVerdict::Hold { reason: HEAD_HOLD_NO_FIT, rule, new: None },
+        // The belt (rule v6's review): a display equal to the head is no change; the head keeps.
+        Some(new) if new == org.head => HeadVerdict::Keep(HeadKeep::S1),
         Some(new) => {
             let held = (fns.hold)(org.head, &new, org.identifier_kind, org.identifier)
                 .or_else(|| if rule == HeadRule::R2 { (fns.r2_hold)(org.head, &new) } else { None });
@@ -391,14 +397,18 @@ fn collapse_whitespace(spelling: &str) -> String {
     spelling.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// The cluster's display spelling, or `None` when no spelling is fit: the FIT spellings (read as
-/// published) collapsed by [`collapse_whitespace`], the counts of those that collapse alike summed;
+/// The cluster's display spelling, or `None` when no spelling is fit: the FIT spellings (fit as
+/// published AND once collapsed, the 2b review: the collapse can make a word-final mojibake shape)
+/// collapsed by [`collapse_whitespace`], the counts of those that collapse alike summed;
 /// the best of those in [`spelling_order`]; when that winner has no marked letter, the most-mentioned
 /// (then byte-wise smallest) fit twin of its case class under [`HeadElectFns::twin_key`] that has one.
 fn display_spelling(cluster: &Cluster<'_>, head: &str, fns: &HeadElectFns) -> Option<String> {
     let mut collapsed: BTreeMap<String, u64> = BTreeMap::new();
     for (spelling, n) in cluster.spellings.iter().filter(|(spelling, _)| (fns.unfit)(spelling, head).is_none()) {
-        *collapsed.entry(collapse_whitespace(spelling)).or_default() += *n;
+        let served = collapse_whitespace(spelling);
+        if (fns.unfit)(&served, head).is_none() {
+            *collapsed.entry(served).or_default() += *n;
+        }
     }
     let fit: Vec<(&str, u64)> = collapsed.iter().map(|(spelling, n)| (spelling.as_str(), *n)).collect();
     let winner = fit.iter().copied().max_by(|a, b| spelling_order(*a, *b))?;
@@ -1858,13 +1868,16 @@ mod tests {
 
     /// Rule `v6` (dry plan 2515: 137 of 28,707 planned names carried a whitespace run): the display
     /// spelling is chosen among the fit spellings with their whitespace collapsed, those that collapse
-    /// alike counted together, so no doubled space is ever served.
+    /// alike counted together, so no change serves a doubled space.
     #[test]
     fn the_display_spelling_collapses_whitespace_and_counts_its_spellings_together() {
         let change = |new: &str| HeadVerdict::Change { rule: HeadRule::R1, new: new.into() };
-        // A doubled space joins its clean form: 20 + 3 serve `Acme GmbH` (v5 served the 20).
+        // A doubled space joins its clean form: 20 + 3 serve `Acme GmbH` (v5 served the 20 as spelled).
         let merged = [("Acme  GmbH", 20), ("Acme GmbH", 3), ("Head Body", 1)];
         assert_eq!(elect_head(&merged, &org("Head Body"), &FNS), change("Acme GmbH"));
+        // The SUM decides: 2 + 2 beat `Acme-GmbH`'s 3. Unsummed, `Acme-GmbH` would win.
+        let summed = [("Acme  GmbH", 2), ("Acme GmbH", 2), ("Acme-GmbH", 3), ("Head Body", 1)];
+        assert_eq!(elect_head(&summed, &org("Head Body"), &FNS), change("Acme GmbH"));
         // 22609166's tie, its `&` dropped: raw, the doubled space's 0x20 sorts before `&` (0x26) and won
         // the byte tie-break; collapsed, `&` sorts before `C` (0x43), so the intact name is served.
         assert!("Julius Brune GmbH  Co. KG" < "Julius Brune GmbH & Co. KG");
@@ -1880,14 +1893,26 @@ mod tests {
         let nbsp = [("Acme\u{a0}Services", 3), ("Head Body", 1)];
         assert_eq!(elect_head(&nbsp, &org("Head Body"), &FNS), change("Acme Services"));
         // `unfit` reads each spelling as published, BEFORE the collapse: a tab is a control character,
-        // so that spelling is not served nor counted toward its clean form (its 5 still vote).
-        let tab = [("Acme\tServices", 5), ("Acme Services", 1), ("Head Body", 1)];
-        assert_eq!(elect_head(&tab, &org("Head Body"), &FNS), change("Acme Services"));
-        // The served name keys as the spellings it stands for: the CAS and drift reads are unchanged.
-        assert_eq!(
-            crate::canonical::org_name_norm("Julius Brune GmbH  Co. KG"),
-            crate::canonical::org_name_norm("Julius Brune GmbH Co. KG")
-        );
+        // so that spelling is neither served nor counted toward its clean form (its 5 still vote).
+        // `Acme-Services` 3 beats `Acme Services` 1; read after the collapse, 6 would have won.
+        let tab = [("Acme\tServices", 5), ("Acme Services", 1), ("Acme-Services", 3), ("Head Body", 1)];
+        assert_eq!(elect_head(&tab, &org("Head Body"), &FNS), change("Acme-Services"));
+        // The served name keys as the spellings it stands for (`name_norm` collapses whitespace too).
+        for votes in [&lone[..], &edges[..], &nbsp[..]] {
+            let served = elect_head(votes, &org("Head Body"), &FNS);
+            assert_eq!(
+                crate::canonical::org_name_norm(served.new_name().unwrap()),
+                crate::canonical::org_name_norm(votes[0].0),
+                "{votes:?}"
+            );
+        }
+        // The belt: a display equal to the head is kept, never a change to itself. Under a vote key
+        // that reads whitespace (as `head_vote_key` did before the review) the head `Acme GmbH` keys
+        // apart from its own `Acme  GmbH` votes, so S1 misses it and R1 elects them; the belt keeps it.
+        let raw = HeadElectFns { vote_key: |s: &str| s.to_owned(), ..FNS };
+        let itself = [("Acme  GmbH", 5), ("Other Body", 1)];
+        assert_eq!(elect_head(&itself, &org("Acme GmbH"), &raw), HeadVerdict::Keep(HeadKeep::S1));
+        assert_eq!(elect_head(&itself, &org("Old Body"), &raw), change("Acme GmbH"), "and R1 elects them");
         assert_eq!(super::collapse_whitespace(" a \u{a0} b  c "), "a b c");
         assert_eq!(super::collapse_whitespace("a b"), "a b");
     }
