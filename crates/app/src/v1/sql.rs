@@ -1220,8 +1220,9 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "name_norm",
         "The name's search key; ?name_prefix= seeks it. It is `org_name_norm` of the name \
          (Unicode-lowercased, whitespace collapsed, trailing `.`/`,`/`;` stripped) since issue 432 and \
-         on every rename, but an identifier-bearing row keyed before issue 432 and never renamed keeps \
-         the plain lower-cased name, doubled spaces and trailing punctuation included (432 re-keyed \
+         on every rename, but a row keyed before issue 432 while it had an identifier, and never renamed \
+         since (a reverted rename restores that key), keeps the plain lower-cased name, whitespace runs \
+         (a doubled space, a tab, a no-break space) and trailing punctuation included (432 re-keyed \
          identifier-less rows only), so `?name_prefix=acme ltd` does not reach a stored `acme  ltd`. \
          With an identifier it follows the elected head (issue 524) and is never a bind key; with \
          `identifier IS NULL` it IS the identity (with the country), and the head election never \

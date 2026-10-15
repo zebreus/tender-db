@@ -39,8 +39,9 @@ script than its mentions (TED's English rendering).
 Also: the `next_cursor` of a `?name_prefix=` search is now the last row's stored search key (`name_norm`). It
 was rebuilt from the lower-cased name, which differs from the key where the key is `org_name_norm` of the name
 (every key since issue 432, and every renamed organization's) and the name has a run of whitespace (a doubled
-space, a tab) or a trailing `.`, `,` or `;`. An organization with an identifier keyed before issue 432 and never
-renamed keeps its plain lower-cased name as its key, so its cursor never diverged.
+space, a tab) or a trailing `.`, `,` or `;`. An organization keyed before issue 432 while it had an identifier, and
+never renamed since (a reverted rename restores that key), keeps its plain lower-cased name as its key, so its cursor
+never diverged.
 - Where the rebuilt cursor sorted before the key (a doubled space), the next page repeated rows.
 - Where it sorted after the key (a trailing `.`, `,` or `;`: `ACME Ltd.` gave the cursor `acme ltd.` for the key
   `acme ltd`), the next page silently SKIPPED every row keyed between the two: any `acme ltd` with a higher id,

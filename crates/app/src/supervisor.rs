@@ -1185,6 +1185,7 @@ pub struct JobRequest {
     /// the design's capped first prod run (issue 300 Stage 2). Omitted means
     /// the whole plan. Also a wet `refresh-org-names` (issue 524 unit 2b): rename
     /// at most this many of the plan's still-ready heads, the first by org id.
+    /// `revert-org-name-refresh` refuses it (it restores the whole job).
     pub max_groups: Option<u64>,
     /// `match-org-identifiers` only: which merge rule to run — `r2` (the
     /// Stage-2 same-country canonical-key merge, the default), `r3` (the
@@ -1233,15 +1234,17 @@ pub struct JobRequest {
     /// `org-head-drift` only (issue 524 unit 1): the census reads organizations with at least this many
     /// mention rows. Omitted, [`ORG_HEAD_DRIFT_MIN_MENTIONS`]; under 2 is refused (one mention is aligned
     /// or absent by construction).
+    /// `revert-org-name-refresh` refuses it (it restores the whole job).
     pub min_mentions: Option<u64>,
     /// `org-head-drift` only: the samples listed per bucket and flag. Omitted, 30; clamped to 1 to
     /// [`ORG_HEAD_DRIFT_SAMPLES_MAX`]. Also `refresh-org-names` (issue 524 unit 2a): the uniform samples
     /// listed per rule and per reason, the same default and clamp; `min_mentions` reads as there too.
+    /// `revert-org-name-refresh` refuses it (it restores the whole job).
     pub samples: Option<u64>,
     /// `refresh-org-names` only (issue 524 unit 2a): plan only these organizations instead of walking
     /// every one (a merge campaign's keeps, the canaries). 1 to [`ORG_NAME_REFRESH_ORG_IDS_MAX`] ids,
     /// each positive. On a wet run (unit 2b), rename only these of the stored plan's planned ids.
-    /// Every other kind ignores it.
+    /// Every other kind ignores it, except that `revert-org-name-refresh` refuses it (it restores the whole job).
     pub org_ids: Option<Vec<i64>>,
 }
 
@@ -1460,13 +1463,15 @@ fn refresh_wet_refused(why: String) -> String {
 /// of its own (its ledger rows: a recovered job's earlier attempt) stand. "Nothing was written" would
 /// hide them (a deploy's restart lands here, refused on the new `rev`), and the dead attempt stored no
 /// report, so the line names the count (the re-review).
-fn refresh_wet_after_earlier_windows(message: String, job: u64, renames: u64) -> String {
+fn refresh_wet_after_earlier_windows(message: String, job: u64, renames: Option<u64>) -> String {
     let base = [". Nothing was written", ". Nothing was read or written"]
         .iter()
         .find_map(|suffix| message.strip_suffix(suffix))
         .unwrap_or(&message);
+    // `None`: the ledger count could not be read, but the job's resume cursor says windows committed.
+    let made = renames.map_or_else(|| "an unread number of".to_string(), |n| n.to_string());
     format!(
-        "{base}. Nothing further was written by this run, but this job's earlier windows made {renames} \
+        "{base}. Nothing further was written by this run, but this job's earlier windows made {made} \
          rename(s), which stand unless reverted: undo them with \
          {{\"kind\":\"revert-org-name-refresh\",\"job\":{job}}}"
     )
@@ -12093,8 +12098,13 @@ impl Supervisor {
                 let (r, plan) = match applied {
                     Ok(done) => done,
                     Err(e) => {
-                        let renames = self.db.org_name_refresh_job_renames(job_id as i64).await.unwrap_or(0);
-                        return Err(if renames > 0 { refresh_wet_after_earlier_windows(e, job_id, renames) } else { e });
+                        // A failed count read must not hide renames a resume cursor proves were made.
+                        return Err(match self.db.org_name_refresh_job_renames(job_id as i64).await {
+                            Ok(0) => e,
+                            Ok(n) => refresh_wet_after_earlier_windows(e, job_id, Some(n)),
+                            Err(_) if job.resume_after.is_some() => refresh_wet_after_earlier_windows(e, job_id, None),
+                            Err(_) => e,
+                        });
                     }
                 };
                 // The summary first: if the report cannot be stored, the job line is the run's record.
