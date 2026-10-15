@@ -1462,7 +1462,7 @@ pub fn gb_legal_family(name: &str) -> Option<&'static str> {
 /// [`NAME_KEY_EPOCH`] stay as they are, so the altid arm, the R2/R3 vetoes and every N3 key do
 /// not move.
 pub fn head_vote_key(name: &str) -> String {
-    let alt = altid_name_key(&fold_diacritics(&name.to_lowercase()));
+    let alt = altid_name_key(&fold_diacritics(name));
     let kept: Vec<&str> = alt
         .split(' ')
         .filter(|t| !t.is_empty() && !t.starts_with('§') && family_token(t).is_none())
@@ -1470,26 +1470,28 @@ pub fn head_vote_key(name: &str) -> String {
     if kept.is_empty() { alt } else { kept.join(" ") }
 }
 
-/// Issue 524 unit 2a.1: a LOWER-CASE name with its Latin diacritics folded, for
-/// [`head_vote_key`] — what NFD followed by dropping the combining marks gives, done by table
-/// because the crate carries no normalisation data:
+/// Issue 524 unit 2a.1: a name LOWER-CASED (char by char, so a final `Σ` reads `σ`, as `match_norm`
+/// reads it anyway) with its Latin diacritics folded, for [`head_vote_key`], [`head_twin_key`], the
+/// head's legal-form family and [`head_r2_hold`] — what NFD followed by dropping the combining marks
+/// gives, done by table because the crate carries no normalisation data:
 /// - the generic combining marks (U+0300–U+036F, U+1AB0–U+1AFF, U+1DC0–U+1DFF, U+20D0–U+20FF,
-///   U+FE20–U+FE2F) are dropped, so decomposed input folds like precomposed input (and Turkish
-///   `İ`, which lower-cases to `i` and a combining dot, folds to `i`). Without that, `match_norm`
-///   would read each mark as a word break;
-/// - the precomposed lower-case Latin letters fold to their base letter: Latin-1, Extended-A, the
-///   Extended-B letters with a diacritic, and Latin Extended Additional (Vietnamese, `ṣ`, `ẓ`, …);
-/// - the letters NFD leaves whole fold as store's issue-359 table (`fold_latin`, the R2 name gate
-///   and the buyer guard) folds them: `ø` → `o`, `đ` → `d`, `ł` → `l`, `ı` → `i`, `ð` → `d`. Except
-///   three, which expand to the two letters an ASCII writer uses, so the ALL-CAPS twin joins the
-///   cluster: `ß` → `ss` (`STRASSENBAU` beside `Straßenbau`; its capital is `SS`), `æ` → `ae`,
-///   `œ` → `oe` (and `þ` → `th`, `ĳ` → `ij`). `fold_latin` keeps one letter for them and is not
-///   changed.
+///   U+FE20–U+FE2F) are dropped after a letter of ANY script, so decomposed input folds like
+///   precomposed input (and Turkish `İ`, which lower-cases to `i` and a combining dot, folds to `i`).
+///   Without that, `match_norm` would read each mark as a word break;
+/// - the precomposed Latin letters fold to their base letter: Latin-1, Extended-A, the Extended-B
+///   letters with a diacritic, and Latin Extended Additional (Vietnamese, `ṣ`, `ẓ`, …);
+/// - of the letters NFD leaves whole, `ø` → `o`, `đ` → `d`, `ł` → `l` and `ı` → `i` fold as store's
+///   issue-359 table (`fold_latin`, the R2 name gate and the buyer guard) folds them, and this table
+///   adds `ð` → `d`, `ħ` → `h`, `ŧ` → `t` and a few more that `fold_latin` does not know. Three expand
+///   to the two letters an ASCII writer uses where `fold_latin` keeps one, so the ALL-CAPS twin joins
+///   the cluster: `ß` → `ss` (`STRASSENBAU` beside `Straßenbau`; its capital is `SS`), `æ` → `ae`,
+///   `œ` → `oe` (and `þ` → `th`, `ĳ` → `ij`). `fold_latin` is not changed.
 ///
-/// Every other character, Cyrillic and Greek included, passes through.
-pub fn fold_diacritics(lower: &str) -> String {
-    let mut out = String::with_capacity(lower.len());
-    for c in lower.chars() {
+/// A precomposed letter of another script (Cyrillic `й`, Greek `ά`) is lower-cased and otherwise
+/// passes through: the Greek tonos fold stays `match_norm`'s.
+pub fn fold_diacritics(name: &str) -> String {
+    let mut out = String::with_capacity(name.len());
+    for c in name.chars().flat_map(char::to_lowercase) {
         let cp = u32::from(c);
         if matches!(cp, 0x300..=0x36F | 0x1AB0..=0x1AFF | 0x1DC0..=0x1DFF | 0x20D0..=0x20FF | 0xFE20..=0xFE2F) {
             continue;
@@ -1566,6 +1568,7 @@ const ASCII_LETTERS: [&str; 26] = [
 /// `head` — the display-spelling filter `store::elect_head` applies inside the winning cluster —
 /// or `None` for a fit spelling. The first that holds answers:
 /// - `control`: a C0/C1 control character or U+FFFD (sample 99's `C\x8cUR`, 98's line break);
+/// - `mojibake` (unit 2a.2): UTF-8 read as cp1252 or Latin-1 (`MÃ¼nchen`, `UniversitÃ\u{a0}degli`);
 /// - `long`: more than 200 characters;
 /// - `lowercase`: cased letters and no upper-case one (sample 334's `les alchimistes`);
 /// - `non_name`: [`crate::partyname::not_a_name`] classes it — any class, `award_summary` too,
@@ -1578,6 +1581,9 @@ const ASCII_LETTERS: [&str; 26] = [
 pub fn head_spelling_unfit(candidate: &str, head: &str) -> Option<&'static str> {
     if candidate.chars().any(|c| c.is_control() || c == '\u{FFFD}') {
         return Some("control");
+    }
+    if mojibake(candidate) {
+        return Some("mojibake");
     }
     if candidate.chars().count() > 200 {
         return Some("long");
@@ -1601,6 +1607,23 @@ pub fn head_spelling_unfit(candidate: &str, head: &str) -> Option<&'static str> 
     None
 }
 
+/// Issue 524 unit 2a.2: whether a spelling shows UTF-8 read as cp1252 or Latin-1 — a lead byte's
+/// letter (`Ã`, `Â`, `Ä`, `Å`) directly followed by a continuation byte's character: U+0080–U+00BF
+/// (`¼`, `©`, the no-break space of `UniversitÃ\u{a0}`), or a cp1252 special that byte maps to (`Œ`,
+/// `œ`, `Š`, `š`, `Ÿ`, `Ž`, `ž`, `ƒ`, `ˆ`, `˜`, U+2013–U+203A). The pair rule alone, so it stays
+/// conservative: `São Paulo`, `Ålesund` and `Ärzte` have a letter after the lead, and are fit. The
+/// 2a.1 review's case: an Italian word-final `à` read as `Ã` and a no-break space folded into the
+/// right cluster and won the display order on its marked letters.
+fn mojibake(name: &str) -> bool {
+    let continuation = |c: char| {
+        matches!(
+            u32::from(c),
+            0x80..=0xBF | 0x152 | 0x153 | 0x160 | 0x161 | 0x178 | 0x17D | 0x17E | 0x192 | 0x2C6 | 0x2DC | 0x2013..=0x203A
+        )
+    };
+    name.chars().zip(name.chars().skip(1)).any(|(a, b)| matches!(a, 'Ã' | 'Â' | 'Ä' | 'Å') && continuation(b))
+}
+
 /// Issue 524 unit 2: why a re-elected head `new` is HELD for review instead of replacing `old`, or
 /// `None` to let it through. An identifier-bearing organization's head is an input to the
 /// resolver's and merge planners' name gates — the altid bar's consortium veto and GB head-vs-head
@@ -1622,12 +1645,16 @@ pub fn head_change_hold(
     identifier_kind: Option<&str>,
     identifier: Option<&str>,
 ) -> Option<&'static str> {
-    if let (Some(a), Some(b)) = (legal_form_family(old), legal_form_family(new))
+    // Issue 524 unit 2a.2: the families are read on the folded names, because the vote key folds:
+    // `Sàrl` and `S.à r.l.` are one name with `SARL`, and `legal_form_family` alone cannot see them, so
+    // an AG -> Sàrl change passed unheld. `legal_form_family` itself, and the merge vetoes, are unchanged.
+    let (old_folded, new_folded) = (fold_diacritics(old), fold_diacritics(new));
+    if let (Some(a), Some(b)) = (legal_form_family(&old_folded), legal_form_family(&new_folded))
         && a != b
     {
         return Some("family");
     }
-    if let (Some(a), Some(b)) = (gb_legal_family(old), gb_legal_family(new))
+    if let (Some(a), Some(b)) = (gb_legal_family(&old_folded), gb_legal_family(&new_folded))
         && a != b
     {
         return Some("gb_family");
@@ -1646,82 +1673,104 @@ pub fn head_change_hold(
     None
 }
 
-/// Issue 524 unit 2a.1: why an R2 change is HELD as a shorthand of the head it would replace, or
+/// Issue 524 unit 2a.2: why an R2 change is HELD as an INITIALISM of the head it would replace, or
 /// `None`. R2 replaces a stray head (one vote) by a top cluster of only 25%, and dry plan 2501's
-/// judged samples showed that minority to be a publisher's shorthand of a correct full head:
-/// `Communauté de communes Terroir de Caux` → `CDC Terroir de Caux` (15075247), `C 3 I - CONCEPT EN
-/// INGENIERIE D'INFRASTRUCTURES INNOVANTES` → `SAS C3i` (13839658). Store applies this to R2 alone;
-/// R1's 55% majority with twice the head's votes is not second-guessed. The first that holds
-/// answers:
-/// - `initialism`: `new` has a token of 2 to 5 letters, all upper case as published, that equals
-///   (diacritics folded) the initials of a run of as many consecutive words of `old` — the words
-///   split on whitespace and punctuation, lower-cased and folded, short ones like `de` counted
-///   (`CDC` ↔ `Communauté de communes`);
-/// - `truncation`: `new`'s [`head_vote_key`] tokens, each run of one-character tokens joined into one
-///   (`c 3 i` → `c3i`), are a proper subset of `old`'s read the same way, every dropped token is
-///   letters only, and at least one dropped token has three letters or more. So a head that only
-///   loses digits, a postcode, a NIP or an address with its number (`… ul. Polna 1 00-001 Warszawa
-///   NIP 1234567890` → `Firma Kowalski`, samples 764/765) is no truncation, nor one that loses only
-///   an initial or a particle; a name that GROWS (`FREGONESE` → `FREGONESE ET FILS`) never is.
+/// judged samples showed that minority can be a publisher's shorthand of a correct full head:
+/// `Communauté de communes Terroir de Caux` → `CDC Terroir de Caux` (15075247). Store applies this to
+/// R2 alone; R1's 55% majority with twice the head's votes is not second-guessed.
+///
+/// `initialism`: `new` is not ALL-CAPS as a whole (so the token stands out), and has a token of 3 to
+/// 5 letters, all upper case as published and no legal form ([`R2_LEGAL_FORM_TOKENS`] or a
+/// [`family_token`], diacritics folded: `SRL`, `GMBH`, `SARL`), that equals the initials of a run of
+/// as many consecutive words of `old` — the words split on whitespace and punctuation, lower-cased and
+/// folded, short ones like `de` counted (`CDC` ↔ `Communauté de communes`) — unless `new` still spells
+/// every word of that run: then the token annotates the full name instead of replacing it
+/// (`Restauration Pour Collectivités (RPC)`, `HKI - Hans Knudsen Instituttet`; 8 of the 32 holds a
+/// replay of plan 2501's R2 changes found), and nothing is lost; or unless every word of the run is a
+/// single letter: then the head spells the same initialism with dots (`S.A.V.E.T. SRL` → `SAVET
+/// s.r.l.`, `C.P.I. Α.Ε.` → `CPI …`).
+///
+/// Unit 2a.1's looser arm held 447 of 2501's 1,948 R2 changes, 4 of its 13 right samples among them,
+/// so the 2a.2 review narrowed it: a 2-letter token (`EY` ↔ `Ernst & Young`) and a legal form
+/// (`SRL` ↔ `societate cu răspundere limitată`) are no initialism, nor a short word of an ALL-CAPS name
+/// (`DRAEGER ROMANIA …`). 2a.1's `truncation` arm (the head cut to some of its words) is gone: the vote
+/// key's diacritic fold already keeps its motivating case (13839658, `C 3 I - CONCEPT …` → `SAS C3i`),
+/// and it held right strip-downs.
 pub fn head_r2_hold(old: &str, new: &str) -> Option<&'static str> {
-    let folded_words = |name: &str| -> Vec<String> {
-        fold_diacritics(&name.to_lowercase())
-            .split(|c: char| !c.is_alphanumeric())
-            .filter(|w| !w.is_empty())
-            .map(str::to_owned)
-            .collect()
-    };
-    let initials: Vec<char> = folded_words(old).iter().filter_map(|w| w.chars().next()).collect();
-    let initialism = new.split(|c: char| !c.is_alphanumeric()).any(|token| {
-        if !(2..=5).contains(&token.chars().count()) || !token.chars().all(|c| c.is_alphabetic() && c.is_uppercase()) {
-            return false;
-        }
-        let token: Vec<char> = fold_diacritics(&token.to_lowercase()).chars().collect();
-        initials.windows(token.len()).any(|run| run == token.as_slice())
-    });
-    if initialism {
-        return Some("initialism");
-    }
-    // The vote key's tokens, a run of one-character tokens joined (`c 3 i` → `c3i`).
-    let joined = |name: &str| -> std::collections::BTreeSet<String> {
-        let mut out = std::collections::BTreeSet::new();
-        let mut run = String::new();
-        for token in head_vote_key(name).split(' ').filter(|t| !t.is_empty()) {
-            if token.chars().count() == 1 {
-                run.push_str(token);
-                continue;
-            }
-            if !run.is_empty() {
-                out.insert(std::mem::take(&mut run));
-            }
-            out.insert(token.to_owned());
-        }
-        if !run.is_empty() {
-            out.insert(run);
-        }
-        out
-    };
-    let (old_tokens, new_tokens) = (joined(old), joined(new));
-    if new_tokens.is_empty() || new_tokens.len() >= old_tokens.len() || !new_tokens.is_subset(&old_tokens) {
+    if all_caps(new) {
         return None;
     }
-    let dropped: Vec<&String> = old_tokens.difference(&new_tokens).collect();
-    let words = dropped.iter().all(|t| t.chars().all(char::is_alphabetic));
-    let long = dropped.iter().any(|t| t.chars().count() >= 3);
-    (words && long).then_some("truncation")
+    let old_words: Vec<String> = fold_diacritics(old)
+        .split(|c: char| !c.is_alphanumeric())
+        .filter(|w| !w.is_empty())
+        .map(str::to_owned)
+        .collect();
+    let initials: Vec<char> = old_words.iter().filter_map(|w| w.chars().next()).collect();
+    let new_folded = fold_diacritics(new);
+    let new_words: std::collections::HashSet<&str> =
+        new_folded.split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()).collect();
+    let initialism = new.split(|c: char| !c.is_alphanumeric()).any(|token| {
+        if !(3..=5).contains(&token.chars().count()) || !token.chars().all(|c| c.is_alphabetic() && c.is_uppercase()) {
+            return false;
+        }
+        let folded = fold_diacritics(token);
+        if R2_LEGAL_FORM_TOKENS.contains(&folded.as_str()) || family_token(&folded).is_some() {
+            return false;
+        }
+        let token: Vec<char> = folded.chars().collect();
+        // A run of at least two words (a token of three letters or more makes it three) that `new` no
+        // longer spells out.
+        token.len() >= 2
+            && initials.windows(token.len()).enumerate().any(|(at, run)| {
+                let words = &old_words[at..at + token.len()];
+                run == token.as_slice()
+                    && !words.iter().all(|w| new_words.contains(w.as_str()))
+                    && !words.iter().all(|w| w.chars().count() == 1)
+            })
+    });
+    initialism.then_some("initialism")
+}
+
+/// Issue 524 unit 2a.2: the legal-form abbreviations [`head_r2_hold`] never reads as an initialism of
+/// the head's words (lower-case, diacritics folded), beside every [`family_token`].
+pub const R2_LEGAL_FORM_TOKENS: &[&str] = &[
+    "sa", "srl", "spa", "sas", "sarl", "ag", "bv", "nv", "ab", "as", "oy", "kg", "gmbh", "ltd", "plc", "llp", "inc",
+    "sl", "slu",
+];
+
+/// Issue 524 unit 2a.2: whether a spelling is ALL-CAPS — an upper-case letter and no lower-case one
+/// that has a one-letter capital (`ß`, `ª`, `º` have none), store's `all_caps` read the same way.
+fn all_caps(name: &str) -> bool {
+    let has_capital = |c: char| {
+        let mut upper = c.to_uppercase();
+        matches!((upper.next(), upper.next()), (Some(u), None) if u != c)
+    };
+    name.chars().any(char::is_uppercase) && !name.chars().any(|c| c.is_lowercase() && has_capital(c))
+}
+
+/// Issue 524 unit 2a.2: the key two spellings of one cluster are TWINS under — lower-cased,
+/// diacritics folded ([`fold_diacritics`]) and every non-alphanumeric character dropped. Store's
+/// display order prefers the twin with more marked letters (`Dotación y Equipamiento, S. L.` over
+/// `Dotacion y Equipamiento S.L.`) and nothing else: a cluster also joins spellings that differ by a
+/// trading-as clause, a parenthetical, a legal form, `the` or `&`, and those are no twins (`Acme Ltd
+/// t/a Café Rouge` never beats `Acme Ltd` on its accent).
+pub fn head_twin_key(name: &str) -> String {
+    fold_diacritics(name).chars().filter(|c| c.is_alphanumeric()).collect()
 }
 
 /// Issue 524 unit 2: the legal-form family a head names, for the dry plan's `family_old` /
-/// `family_new` and its family-move counts — [`legal_form_family`], else [`gb_legal_family`].
+/// `family_new` and its family-move counts — [`legal_form_family`], else [`gb_legal_family`], read on
+/// the diacritic-folded name as [`head_change_hold`] reads them (unit 2a.2: `Acme Sàrl` is `sarl`).
 pub fn head_family(name: &str) -> Option<&'static str> {
-    legal_form_family(name).or_else(|| gb_legal_family(name))
+    let folded = fold_diacritics(name);
+    legal_form_family(&folded).or_else(|| gb_legal_family(&folded))
 }
 
 #[cfg(test)]
 mod head_vote {
     use super::{
         NAME_KEY_EPOCH, altid_keys_agree, altid_name_key, family_token, fold_diacritics, head_change_hold, head_family,
-        head_r2_hold, head_spelling_unfit, head_vote_key,
+        head_r2_hold, head_spelling_unfit, head_twin_key, head_vote_key,
     };
 
     /// Issue 524 unit 2a.1: dry plan 2501's accent-only splits are one vote key each.
@@ -1767,33 +1816,82 @@ mod head_vote {
         assert_eq!(fold_diacritics("ß æ œ þ ø đ ð"), "ss ae oe th o d d");
         assert_eq!(fold_diacritics("a\u{300}\u{1dc0}"), "a", "combining marks are dropped");
         assert_eq!(fold_diacritics("москва αθήνα 東京"), "москва αθήνα 東京");
+        // It lower-cases as it folds, char by char.
+        assert_eq!(fold_diacritics("ÀÉ STRAẞE Ærø ΣΑΣ İzmir"), "ae strasse aero σασ izmir");
     }
 
-    /// Issue 524 unit 2a.1: R2's shorthand holds — an initialism of a run of the head's words, or the
-    /// head cut to a proper subset of its words — and what they leave alone.
+    /// Issue 524 unit 2a.2: R2's initialism hold, narrowed by the 2a.1 review — and what it leaves alone,
+    /// now that 2a.1's truncation arm is gone.
     #[test]
-    fn an_r2_shorthand_of_the_head_is_held_and_a_strip_down_is_not() {
+    fn an_r2_initialism_of_the_head_is_held_and_nothing_else_is() {
         // 15075247: `CDC` is the initials of `Communauté de communes`.
         assert_eq!(head_r2_hold("Communauté de communes Terroir de Caux", "CDC Terroir de Caux"), Some("initialism"));
-        // 13839658: `c3i` is the head's `C 3 I`, every other word dropped.
-        assert_eq!(
-            head_r2_hold("C 3 I - CONCEPT EN INGENIERIE D'INFRASTRUCTURES INNOVANTES", "SAS C3i"),
-            Some("truncation")
-        );
-        assert_eq!(head_r2_hold("Tribunal administratif de Nice Greffe", "Tribunal administratif de Nice"), Some("truncation"));
-        // Samples 764/765's shape: the address and the NIP go, digits with them. Changes.
-        assert_eq!(head_r2_hold("Firma Kowalski ul. Polna 1 00-001 Warszawa NIP 1234567890", "Firma Kowalski"), None);
-        // A name that grows is no shorthand.
-        assert_eq!(head_r2_hold("FREGONESE", "FREGONESE ET FILS"), None);
-        // Only a particle dropped (`TA`, two letters): no truncation.
-        assert_eq!(head_r2_hold("TRIBUNAL ADMINISTRATIF DE NICE (TA)", "Tribunal administratif de Nice"), None);
-        // An upper-case token that abbreviates nothing in the head, and a mixed-case one that does.
-        assert_eq!(head_r2_hold("Stadtwerke Bonn", "SWB Energie"), None, "s-b, not s-w-b");
-        assert_eq!(head_r2_hold("Communauté de communes Terroir de Caux", "Cdc Terroir de Caux"), None, "not upper case");
         // Diacritics are folded on both sides: `ÉDF` ↔ `Électricité de France`.
         assert_eq!(head_r2_hold("Électricité de France Renouvelables", "ÉDF Renouvelables"), Some("initialism"));
-        // A different name entirely is neither.
+        // Two letters are too few: `EY` ↔ `Ernst & Young` is no hold.
+        assert_eq!(head_r2_hold("Ernst & Young Advisory", "EY Advisory"), None);
+        // A legal form is never an initialism, even where the head's words spell it.
+        assert_eq!(head_r2_hold("Ernst Young Società Responsabilità Limitata", "Ernst & Young SRL"), None);
+        assert_eq!(head_r2_hold("Acme Gesellschaft Mit Beschränkter Haftung", "Acme GMBH"), None);
+        // An ALL-CAPS new name has no token that stands out; the same token in a mixed-case name does.
+        assert_eq!(head_r2_hold("Dräger Romania Safety SRL", "DRS ROMANIA SRL"), None);
+        assert_eq!(head_r2_hold("Dräger Romania Safety SRL", "DRS Romania"), Some("initialism"));
+        // An initialism BESIDE the words it abbreviates replaces nothing: no hold.
+        assert_eq!(head_r2_hold("Restauration pour collectivités", "Restauration Pour Collectivités (RPC)"), None);
+        assert_eq!(head_r2_hold("Den Erhvervsdrivende Fond Hans Knudsen Instituttet", "HKI - Hans Knudsen Instituttet"), None);
+        // The head's own dotted initialism, written without dots, abbreviates nothing either.
+        assert_eq!(head_r2_hold("S.A.V.E.T. SRL CON UNICO SOCIO", "SAVET s.r.l."), None);
+        // …but a run of real words beside it still counts: `SEA` is `Società Elettromeccanica Arzignanense`.
+        assert_eq!(head_r2_hold("S.E.A. Società Elettromeccanica Arzignanense S.p.A.", "SEA S.p.A"), Some("initialism"));
+        // The truncations 2a.1 held now change: 13839658 (whose fold keeps it an S1 in the data), a
+        // head cut to its first words, samples 764/765's address and NIP strip-down, a name that grows.
+        assert_eq!(head_r2_hold("C 3 I - CONCEPT EN INGENIERIE D'INFRASTRUCTURES INNOVANTES", "SAS C3i"), None);
+        assert_eq!(head_r2_hold("Tribunal administratif de Nice Greffe", "Tribunal administratif de Nice"), None);
+        assert_eq!(head_r2_hold("Firma Kowalski ul. Polna 1 00-001 Warszawa NIP 1234567890", "Firma Kowalski"), None);
+        assert_eq!(head_r2_hold("FREGONESE", "FREGONESE ET FILS"), None);
+        // No upper-case token in the new spelling at all: nothing to read as an initialism.
+        assert_eq!(head_r2_hold("TRIBUNAL ADMINISTRATIF DE NICE (TA)", "Tribunal administratif de Nice"), None);
+        assert_eq!(head_r2_hold("Communauté de communes Terroir de Caux", "Cdc Terroir de Caux"), None, "not upper case");
+        // An upper-case token that abbreviates no run of the head's words.
+        assert_eq!(head_r2_hold("Stadtwerke Bonn", "SWB Energie"), None, "s-b, not s-w-b");
         assert_eq!(head_r2_hold("Sheffield Hallam University", "University of Sheffield"), None);
+    }
+
+    /// Issue 524 unit 2a.2: mojibake — UTF-8 read as cp1252 or Latin-1 — is unfit; a real accented
+    /// capital followed by a letter is not.
+    #[test]
+    fn a_mojibake_spelling_is_unfit_and_an_accented_capital_is_not() {
+        let head = "Universita degli Studi";
+        assert_eq!(head_spelling_unfit("UniversitÃ\u{a0}degli Studi di Napoli", head), Some("mojibake"));
+        assert_eq!(head_spelling_unfit("MÃ¼nchen Stadtwerke", head), Some("mojibake"));
+        assert_eq!(head_spelling_unfit("CafÃ© Rouge", head), Some("mojibake"));
+        assert_eq!(head_spelling_unfit("NÂ° 1 Logistique", head), Some("mojibake"));
+        assert_eq!(head_spelling_unfit("Ã‰cole Normale", head), Some("mojibake"), "a cp1252 special: ‰");
+        for fit in ["Università degli Studi", "São Paulo", "Ålesund", "Ärzte GmbH", "SÃO PAULO", "ÅRHUS KOMMUNE"] {
+            assert_eq!(head_spelling_unfit(fit, head), None, "{fit}");
+        }
+    }
+
+    /// Issue 524 unit 2a.2: twins are equal once lower-cased, folded and stripped of punctuation —
+    /// accents and punctuation only, never a clause, a parenthetical or a legal form.
+    #[test]
+    fn twins_differ_by_accents_and_punctuation_only() {
+        assert_eq!(head_twin_key("Dotación y Equipamiento, S. L."), head_twin_key("Dotacion y Equipamiento S.L."));
+        assert_eq!(head_twin_key("Comuna Dumbrăveni"), head_twin_key("COMUNA DUMBRAVENI"));
+        assert_eq!(head_twin_key("Comuna Dumbrăveni"), "comunadumbraveni");
+        assert_ne!(head_twin_key("Acme Ltd"), head_twin_key("Acme Ltd t/a Café Rouge"));
+        assert_ne!(head_twin_key("Acme GmbH"), head_twin_key("Acme Sàrl"));
+        assert_ne!(head_twin_key("The Acme Trust"), head_twin_key("Acme Trust"));
+    }
+
+    /// Issue 524 unit 2a.2: the head's families are read on the folded names, so the `Sàrl` the vote key
+    /// folds into `SARL` is a family the hold sees.
+    #[test]
+    fn a_family_swap_spelled_with_a_diacritic_is_held() {
+        assert_eq!(head_change_hold("Acme Schweiz AG", "Acme Sàrl", None, Some("CHE123")), Some("family"));
+        assert_eq!(head_family("Acme Sàrl"), Some("sarl"));
+        assert_eq!(head_family("Acme Schweiz AG"), Some("ag"));
+        assert_eq!(head_change_hold("Acme SARL", "Acme Sàrl", None, Some("FR1")), None, "the same family");
     }
 
     #[test]

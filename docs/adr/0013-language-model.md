@@ -177,7 +177,7 @@ Decided:
    - (b) a cluster other than the head's holds at least 55% of the votes, at least 3 votes, and at
      least twice the head's votes;
    - (c) the head's cluster holds at most 1 vote, and a unique top cluster holds at least 3 votes and
-     at least 25% — unless the change is a shorthand of the head (6).
+     at least 25% — unless the change is an initialism of the head (6).
 
    Otherwise the head stays byte for byte. No single mention, near tie or legal-form difference moves
    it.
@@ -190,29 +190,34 @@ Decided:
    - no non-name class;
    - no placeholder or void net hit;
    - no consortium mark the old head lacks;
+   - no mojibake (UTF-8 read as cp1252 or Latin-1: `Ã`, `Â`, `Ä` or `Å` directly before a
+     continuation byte's character, `MÃ¼nchen`, `UniversitÃ` and a no-break space);
    - at most 200 characters;
    - not all lower case.
 
    Among the fit spellings, case decides first (a spelling that is not ALL-CAPS before one that is;
-   `ß`, `ª` and `º` have no one-letter capital and do not make a spelling mixed case), then a spelling
-   that carries diacritics over its ASCII-folded twin (the one with more non-ASCII letters; every two
-   spellings of one cluster are such twins, since the vote key folds diacritics), then the most votes,
-   then byte order. So "The University of Sheffield" (1 vote) is served over "UNIVERSITY OF SHEFFIELD"
-   (14), and "Dotación y Equipamiento, S. L." (1) over "Dotacion y Equipamiento S.L." (4). With no fit
-   spelling, nothing changes. Register names are not used until a register-name cache exists.
+   `ß`, `ª` and `º` have no one-letter capital and do not make a spelling mixed case), then the most
+   votes, then byte order. Then, among the fit spellings of the winner's case that are its TWINS (equal
+   once lower-cased, diacritics folded and punctuation dropped), the one that carries more diacritics
+   (non-ASCII letters) is served. So "The University of Sheffield" (1 vote) is served over "UNIVERSITY
+   OF SHEFFIELD" (14), and "Dotación y Equipamiento, S. L." (1) over its twin "Dotacion y Equipamiento
+   S.L." (4); but "Acme Ltd t/a Café Rouge" (1), which only shares a cluster with "Acme Ltd" (20), is
+   no twin and never wins on its accent. With no fit spelling, nothing changes. Register names are not
+   used until a register-name cache exists.
 6. **Held for review.** A change is held when it would:
-   - swap one legal-form family for another (`legal_form_family` or `gb_legal_family` set on both sides
-     and different);
+   - swap one legal-form family for another (`legal_form_family` or `gb_legal_family`, read on the
+     diacritic-folded names, set on both sides and different: `Acme Schweiz AG` → `Acme Sàrl`);
    - drop a consortium mark;
    - fail the NHS ODS name check the old head passed;
-   - by (c) only, replace the head with a shorthand of it: a token of 2 to 5 upper-case letters that is
-     the initials of a run of the head's words (`CDC` for `Communauté de communes`), or the head's words
-     cut to a proper subset that drops only words, one of three letters or more (`SAS C3i` for `C 3 I -
-     CONCEPT EN INGENIERIE D'INFRASTRUCTURES INNOVANTES`). A head that loses digits, a postcode or an
-     address with its number still changes. (b)'s majority is not second-guessed.
+   - by (c) only, replace the head with an initialism of it: in a new name that is not ALL-CAPS, a token
+     of 3 to 5 upper-case letters, no legal form (`SRL`, `GMBH`, `SARL`, …), that is the initials of a
+     run of the head's words (`CDC` for `Communauté de communes`) that the new name no longer spells out
+     and that is not the head's own dotted initials (`S.A.V.E.T.` → `SAVET`). A 2-letter token (`EY`)
+     is none. A head cut to some of its words, or stripped of an address, still changes. (b)'s majority
+     is not second-guessed.
 
    The head is an input to the resolver's and merge planners' name gates. (c)'s 25% minority can be a
-   publisher's shorthand of a correct full head (dry plan 2501's judged samples).
+   publisher's initialism of a correct full head (dry plan 2501's judged samples).
 7. **Keys.** `name_norm` follows, as `org_name_norm(new head)`. For identifier-bearing rows it is the
    name-search key, never a bind key. `organization_names` and `org_name_verdicts` are untouched.
    `org_match_keys` catches up at its next wholesale build.

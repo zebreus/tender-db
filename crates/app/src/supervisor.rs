@@ -1288,6 +1288,7 @@ fn head_elect_fns() -> store::HeadElectFns {
         unfit: ingest::crosswalk::head_spelling_unfit,
         hold: ingest::crosswalk::head_change_hold,
         r2_hold: ingest::crosswalk::head_r2_hold,
+        twin_key: ingest::crosswalk::head_twin_key,
     }
 }
 
@@ -1344,6 +1345,7 @@ fn org_name_refresh_json(plan: &store::OrgNameRefreshPlan, scope: Option<&[i64]>
                 "unfit": "ingest::crosswalk::head_spelling_unfit",
                 "hold": "ingest::crosswalk::head_change_hold",
                 "r2_hold": "ingest::crosswalk::head_r2_hold",
+                "twin_key": "ingest::crosswalk::head_twin_key",
                 "family": "ingest::crosswalk::head_family",
             }),
         );
@@ -1377,13 +1379,13 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
     let canaries =
         ORG_NAME_REFRESH_CANARIES.iter().map(|c| refresh_canary_reading(c, plan, scope)).collect::<Vec<_>>();
     let unexpected = canaries.iter().filter(|c| c.contains("UNEXPECTED")).count();
-    // Issue 524 unit 2a.1: R2's shorthand holds are named whether or not any fired, so a reader can tell
-    // "none held" from "not built".
-    let shorthand = |reason: &str| plan.by_hold.get(reason).map_or(0, |c| c.orgs);
+    // Issue 524 unit 2a.1: R2's shorthand hold is named whether or not it fired, so a reader can tell
+    // "none held" from "not built". Unit 2a.2 dropped its `truncation` arm; `initialism` remains.
+    let initialisms = plan.by_hold.get("initialism").map_or(0, |c| c.orgs);
     format!(
         "refresh-org-names DRY (issue 524 unit 2a, rule {}): {} organization(s) and {} mention row(s) walked{}; \
          {} elected ({}+ mention rows; {} below), {} with an empty head. CHANGES {} ({} mentions; {} on merge \
-         survivors): {}. HOLDS {}: {} (R2's shorthand holds: initialism {}, truncation {}). Keeps {}: {}. \
+         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. \
          Listed {} planned{} and {} held{}. Family moves of the changes: {}. D4 keeps' ENG satellites: {}. \
          {} identifier-verdict probe(s). Canaries ({unexpected} unexpected): {}. NOTHING IS WRITTEN — the \
          wet path is unit 2b.",
@@ -1401,8 +1403,7 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
         counts(&plan.by_rule),
         plan.holds.orgs,
         counts(&plan.by_hold),
-        shorthand("initialism"),
-        shorthand("truncation"),
+        initialisms,
         plan.keeps.orgs,
         counts(&plan.by_keep),
         plan.planned.len(),
@@ -21140,11 +21141,12 @@ mod tests {
         remove_db(&path);
     }
 
-    /// Issue 524 unit 2a.1, with the REAL ingest functions: the vote key folds diacritics, so dry plan
-    /// 2501's accent-only split (13731240) is one cluster and an S1 keep; the diacritic-bearing spelling
-    /// is served over its ASCII twin; and an R2 change that abbreviates (15075247) or truncates
-    /// (13839658) the head is held, while an address strip-down, a name that grows and every R1
-    /// shorthand still change.
+    /// Issue 524 units 2a.1/2a.2, with the REAL ingest functions: the vote key folds diacritics, so dry
+    /// plan 2501's accent-only split (13731240) is one cluster and an S1 keep; the diacritic-bearing
+    /// spelling is served over its ASCII TWIN and never over a wider cluster mate; a mojibake spelling
+    /// is never served; an AG -> Sàrl swap is held as a family change; an R2 change that abbreviates
+    /// the head (15075247) is held, while 2a.1's truncations, an address strip-down, a name that grows
+    /// and every R1 shorthand change.
     #[test]
     fn the_head_election_folds_diacritics_and_holds_r2_shorthands_with_the_real_keys() {
         use store::{HeadKeep, HeadRule, HeadVerdict, elect_head};
@@ -21171,10 +21173,17 @@ mod tests {
             elect_head(&r2("CDC Terroir de Caux", caux), &org(caux), &fns),
             HeadVerdict::Hold { reason: "initialism", rule: HeadRule::R2, new: Some("CDC Terroir de Caux".into()) }
         );
+        // Unit 2a.2 dropped 2a.1's truncation arm: this synthetic R2 now changes (the real 13839658 is
+        // an S1 keep once the fold joins its `C3I` spellings to the head's cluster).
         let c3i = "C 3 I - CONCEPT EN INGENIERIE D'INFRASTRUCTURES INNOVANTES";
         assert_eq!(
             elect_head(&r2("SAS C3i", c3i), &org(c3i), &fns),
-            HeadVerdict::Hold { reason: "truncation", rule: HeadRule::R2, new: Some("SAS C3i".into()) }
+            HeadVerdict::Change { rule: HeadRule::R2, new: "SAS C3i".into() }
+        );
+        assert_eq!(
+            elect_head(&r2("EY Advisory", "Ernst & Young Advisory"), &org("Ernst & Young Advisory"), &fns),
+            HeadVerdict::Change { rule: HeadRule::R2, new: "EY Advisory".into() },
+            "two letters are no initialism"
         );
         let address = "Firma Kowalski ul. Polna 1 00-001 Warszawa NIP 1234567890";
         assert_eq!(
@@ -21195,11 +21204,31 @@ mod tests {
             HeadVerdict::Change { rule: HeadRule::R1, new: "Tribunal administratif de Nice".into() }
         );
         let greffe = "Tribunal administratif de Nice Greffe";
-        assert_eq!(ingest::crosswalk::head_r2_hold(greffe, "Tribunal administratif de Nice"), Some("truncation"));
-        let cut = [("Tribunal administratif de Nice", 10), (greffe, 1)];
         assert_eq!(
-            elect_head(&cut, &org(greffe), &fns),
-            HeadVerdict::Change { rule: HeadRule::R1, new: "Tribunal administratif de Nice".into() }
+            elect_head(&r2("Tribunal administratif de Nice", greffe), &org(greffe), &fns),
+            HeadVerdict::Change { rule: HeadRule::R2, new: "Tribunal administratif de Nice".into() },
+            "no truncation hold since unit 2a.2"
+        );
+        // An initialism the R2 hold reads still changes under R1.
+        assert_eq!(ingest::crosswalk::head_r2_hold(caux, "CDC Terroir de Caux"), Some("initialism"));
+        let majority = [("CDC Terroir de Caux", 10), (caux, 1)];
+        assert_eq!(
+            elect_head(&majority, &org(caux), &fns),
+            HeadVerdict::Change { rule: HeadRule::R1, new: "CDC Terroir de Caux".into() }
+        );
+        // Unit 2a.2's display regression fix: an accent outside a twin does not beat the votes.
+        let trading = [("Acme Ltd", 20), ("Acme Ltd t/a Café Rouge", 1), ("Other Body", 1)];
+        assert_eq!(elect_head(&trading, &org("Other Body"), &fns).new_name(), Some("Acme Ltd"));
+        let form = [("Acme GmbH", 20), ("Acme Sàrl", 1), ("Other Body", 1)];
+        assert_eq!(elect_head(&form, &org("Other Body"), &fns).new_name(), Some("Acme GmbH"));
+        // Mojibake is unfit: the clean spelling is served whatever the votes.
+        let napoli = [("UniversitÃ\u{a0}degli Studi di Napoli", 9), ("Università degli Studi di Napoli", 1), ("Ateneo Sud", 1)];
+        assert_eq!(elect_head(&napoli, &org("Ateneo Sud"), &fns).new_name(), Some("Università degli Studi di Napoli"));
+        // The family hold reads the folded names: AG -> Sàrl is a family swap.
+        let swiss = [("Acme Sàrl", 5), ("Acme Schweiz AG", 1)];
+        assert_eq!(
+            elect_head(&swiss, &org("Acme Schweiz AG"), &fns),
+            HeadVerdict::Hold { reason: "family", rule: HeadRule::R1, new: Some("Acme Sàrl".into()) }
         );
     }
 
