@@ -1,7 +1,7 @@
 # 542 — `backfill-org-name-variants` cannot be stopped, and a restart re-walks it from notice 0
 
-Status: ready-for-agent — filed 2026-10-14 23:5x UTC. Unit 1 built (stop flag + durable resume cursor); next: gate,
-main, deploy with 534. Then unit 2.
+Status: ready-for-agent — filed 2026-10-14 23:5x UTC. Unit 1 gated green (1239 s) and on main at `66f1e63`; next:
+deploy it with 534 when the queue is idle, then unit 2.
 Kind: operations (job control)
 Relates to:
 - 307 (the backfill itself);
@@ -61,3 +61,8 @@ the mentions a dissolve re-bound. On 2026-10-14 that was 7 mentions. The walk:
 - 2026-10-14 23:50 UTC: 2491's cancel answered 409. A `max(id)` read of `notices` to size the remainder answered 408
   (not retried). 2491 was left to run, because a restart would only have re-walked it from 0 at the front of the
   queue.
+- 2026-10-15 00:20 UTC: unit 1 on main (`66f1e63`, gate green). A deploy over the running 2491 (`FORCE_BUSY=1`, so the
+  restart would bring 2491 back on the stoppable build to be cancelled) was refused by the session's permission
+  classifier. 2491 runs to the end, at ~1,070 notices/s with 8.56M walked, and the deploy waits for an idle queue.
+  2492, 2493 and the 07:35 dailies queue behind it.
+- The sibling audit (every other non-stoppable kind, adversarially verified) is filed as issue 543.
