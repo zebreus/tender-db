@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v9 DECIDED 2026-10-15 (`## Rule v9 — decided`, below; panel wf_5cca11b1-622: three designers, two adversarial judges) after plan 2526's dated re-judge failed three bars under v8. v9 adds five pure serve holds (review_body, organ, code_added, address_added, caps_variant), narrows the digits release (glue + junk-only), and pre-builds per-class wet-run filters (`exclude_rules`, `exclude_released`) so one failed list no longer stops the others. No DB read is added. NEXT: build (an agent, then a 3-lens review), gate, deploy, re-plan, the fresh dated re-judge, canaries, capped 500, full. No wet run under v8.
+Status: ready-for-agent — RULE v9 DEPLOYED `b234150` 2026-10-15 ~23:3x UTC (gate green 1289 s; built and reviewed by wf_809621d5-793). Dry plan 2527 meets step 2: undated 0, 0 unexpected canaries (39), each serve hold exactly the decision's count (review_body 104, organ 460, code_added 81, address_added 85, caps_variant 290), releases 12 (11 digits, 1 unfit — all 12 carry plan 2526's labels, 11 right and 1 neutral, so the released bar passes at 0 wrong), withheld 17. CHANGES 26,524 (R1 25,003, R2 1,520). NEXT: the fresh dated re-judge (wf_6c629c6b-755: change:R1 30, change:R2 30, 30 stratified serve holds as a cost report), then canaries, capped 500, full — with the filters the re-judge fires.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1339,3 +1339,19 @@ Labelled change lists: holds 8069375 (W) and 16508165 (W) and 2 neutrals; 0 labe
    re-judged.
 4. Canaries wet run, capped 500 with a dated spot check (0 former-name reverts, ≤ 1 other wrong), full — each with the
    filters the re-judge fired.
+
+## Rule v9 on prod: deployed, plan 2527 (2026-10-15)
+
+Built `25ee0d9` (wf_809621d5-793: builder; three reviewers — predicate fidelity, parity/safety, tests/docs — whose three
+minor findings the fixer closed with mutation checks; the owner added the wet-time `exclude_released` check a reviewer's nit
+found: a target that ships only through an excluded release at wet time now drifts). Gated with 550 unit 2 at `b234150`
+(green, 1289 s), deployed 2026-10-15 ~23:3x UTC.
+
+**Plan 2527** (binary `b234150`, epoch `524u2-v9`, walk 134 s): CHANGES 26,524 (R0n 1, R1 25,003, R2 1,520); HOLDS 2,731 —
+recent 376, residue 809, review_body 104, organ 460, code_added 81, address_added 85, caps_variant 290, plus the v8 guards;
+undated 0. Releases 12: digits 11, unfit 1 (3042, 4337, 4976, 6056, 7590, 11543, 13036, 13060485, 14971333, 22446841,
+22667173, 31565136) — every one carries plan 2526's re-judge label with the same old and new name (11 right, 1 neutral), so
+the released list passes its bar (≤ 1 wrong) at 0 without a new read. Withheld 17: glue 3 (4295185, 6693098, 11087087),
+junk_only 14 (the 12 the decision names plus 14505 and 22558941 — holds that were never in v8's release list). Canaries: 0
+unexpected of 39. The samples are salted by the epoch, so step 3 reads a fresh draw (and skips every org in the labelled set
+and every id the panel named, as a belt).
