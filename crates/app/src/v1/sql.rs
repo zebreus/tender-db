@@ -1118,10 +1118,7 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          keeps the role), so do not read who won from this column: ask \
          tender_version_result_winners (v_lot_results, v_awards), as ?winner= does. \
          Any other value is a source element name not yet folded, kept verbatim \
-         rather than guessed at: treat it as unknown, not as canonical. Until the \
-         issue-534 refold has run, a tender projected before it may still serve \
-         R2.0.9's appeal-information slot (ADDRESS_REVIEW_INFO) as 'review-body', and \
-         a legacy award winner as 'AWARD_AND_CONTRACT_VALUE'.",
+         rather than guessed at: treat it as unknown, not as canonical.",
     ),
     (
         "*",

@@ -1168,6 +1168,10 @@ mod tests {
             // Issue 534: the issue-393 re-projection ran (job 1616); no band role list
             // shows a pre-393 element name since.
             ("before the issue-393 re-projection", "the issue-393 re-projection ran, job 1616 (issue 534)"),
+            // Issue 534 unit 3: the refold ran (refold-fields 2512, project 2513, 2026-10-15); band
+            // 5.2M serves no `AWARD_AND_CONTRACT_VALUE` or `RESPONSIBLE_FOR_MEDIATION_PROCEDURES` since.
+            // Squash form, case-matching: the served sentence began "Until the issue-534 refold …".
+            ("issue-534 refold has run", "the issue-534 refold ran, jobs 2512 and 2513 (issue 534)"),
         ];
         // Issue 534 review: an entry is only as good as its spelling. The `/docs` form
         // of the winner sentence, wrapped the way the page wraps prose, is caught.
@@ -1244,10 +1248,6 @@ mod tests {
                     // Kept until a served-role detector exists (issue 534 unit 5 is a
                     // test over the inventory, not a census of the served rows).
                     "a source element name not yet folded",
-                    // Issue 534 review: stored rows keep their old roles until unit 3's
-                    // refold. When it lands, this sentence goes, and its phrase moves to
-                    // RETIRED (recorded in the issue's unit 3).
-                    "until the issue-534 refold has run, a tender projected before it may still serve",
                 ],
             );
         }

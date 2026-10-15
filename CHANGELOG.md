@@ -97,8 +97,7 @@ Two consequences show in `parties[]`:
 - a folded award winner that is its notice's own buyer now carries `is_buyer: true` (issue 484).
 
 The tenders projected before the change are refolded (about 2.0M notices, 1.1M tenders); a refolded tender whose served
-reading moved publishes `tender changed`. Until that refold has finished, an older tender may still serve the previous
-value.
+reading moved publishes `tender changed`. The refold ran on 2026-10-15 (jobs 2512 and 2513).
 
 ## Unreleased (issue 536) — `publication_id=` matches TED's own spelling, the OJ S form and every stored width
 
