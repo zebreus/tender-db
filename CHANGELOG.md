@@ -10,8 +10,9 @@ answers; this file exists for the rare case where one does.
 contract notice's (`/docs` caveats, Dates) and a procedure whose award notice cancelled every lot stayed `open` until
 that date passed — years, for some. `status` now reads the newest notice too:
 - **`closed`** also when the newest notice published results, every result the procedure has published is a no-award
-  (all `clos-nw`; a cancellation, an FTS UK12 termination), and together they decide every lot (a Tender-scoped result
-  decides none) — unless the Tender declares an open-ended scheme, where such a result reports one round: a dynamic
+  (all `clos-nw`; a cancellation, an FTS UK12 termination), and together they decide every lot of kind `Lot` (lots
+  groups and parts need no result; a Tender-scoped result decides no lot, so it closes only a Tender with no
+  `Lot`-kind lot) — unless the Tender declares an open-ended scheme, where such a result reports one round: a dynamic
   purchasing system (eForms BT-766, or the r2.0.9 DPS marker, on any version), a procedure `oth-single`/`oth-mult`, a
   qualification-system (eForms 15) or dynamic-market (UK13–UK16) notice, or a deadline more than a year after the
   first deadline-bearing notice (an explicit r2.0.9 *discontinued* / *unsuccessful* no-award closes even then). A
@@ -74,16 +75,24 @@ the change would swap one legal-form family for another (`AG` to `Sàrl`), drop 
 name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when no spelling of the
 winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on
 the 55% arm, while the organization's newest procedures still use the current head (a rename: the head names at
-least 2 procedures and two thirds of the organization's newest as many); on the 55% and 25% arms, while the
-current head is the only one of the organization's names printed on its newest publication day; both unless the head
-is unfit to serve for a reason other than being all lower case, or carries a standalone number the other name lacks
-while the other name drops at most one other word of it (a number the other name prints joined to a neighbouring
+least 2 procedures and two thirds of the organization's newest as many), or while a notice printed the current head
+within 3 years (1,095 days) before the job's plan; on the 55% and 25% arms, while the current head is the only one
+of the organization's names printed on its newest publication day; all three unless the head is unfit to serve
+for a reason other than being all lower case, or carries a standalone number the other name lacks while the other
+name drops at most one other word of it (a number the other name prints joined to a neighbouring
 word, `SMD 3` against `Smd3`, is the name's own); on the 55% and 25% arms, when the change would serve a review
 body's name (a procurement review chamber or court) for a head that is not one, a name led by a contracting organ
 (`Junta de Gobierno …`, `Alcaldía …`) for a head that is not, the head's own words plus a code (`(976)`), a
 name that adds a number after a comma or semicolon (an appended address; not for a Czech or Slovak school), or an
 ALL-CAPS respelling of a mixed-case head's same words; and, on the 55% and 25% arms only, when the head is in another
 script than its mentions (TED's English rendering).
+
+Rule v10 (2026-10-16) added the 3-year hold above: a head still printed is usually the current name, so a majority
+for another spelling there is more often a respelling, an appended qualifier, an abbreviation or another entity
+sharing the identifier than a fix; a head not printed for 3 years is the outdated name the election exists to
+replace. The 3 years count back from the start of the job's plan, which the plan records (`as_of`): a rename run
+re-checks every head against that same date, so a head printed after the plan is left as it is. The 25% arm's
+changes are not applied for now: every rename run excludes them, pending a refit (issue 548).
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new

@@ -163,9 +163,10 @@ pub enum Status {
     /// procedure (issue 533: `tenders.current_closed_by_notice` is NULL, read as `IS NOT 1`).
     Open,
     /// Not open: no submission deadline in the future (none ever published, or every one
-    /// past), OR the head version's own notice closed the procedure (at any time) —
-    /// an all-`clos-nw` result that decides every lot, unless the Tender declares an
-    /// open-ended scheme (`canonical::closed_by_notice`, issue 533). An award head is NOT
+    /// past), OR the head version's own notice closed the procedure (at any time) — it
+    /// published results, every result the procedure has published is `clos-nw` and together
+    /// they decide every lot of kind `Lot`, unless the Tender declares an open-ended scheme
+    /// (`canonical::closed_by_notice`, issue 533). An award head is NOT
     /// deadline-less: it carries its contract notice's deadline (issue 370), which is why the
     /// deadline alone cannot say this. A lot is closed with its Tender; a no-award for one
     /// lot of a Tender that stays open does not close that lot (the decided per-lot leg failed

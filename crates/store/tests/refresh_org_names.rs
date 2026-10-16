@@ -562,7 +562,10 @@ async fn the_canaries_are_reported_whatever_their_verdict_and_paging_changes_not
     assert!(one_page.canaries[0].merged);
     assert_eq!(one_page.population.orgs, 24, "a canary below the population is counted there only");
     // Pages of three: the same plan, field for field — the samples are hash-chosen, not page-chosen.
+    // Rule v10: but for its `as_of`, each plan's own start (the two may straddle a second).
     let paged = plan(&db, 3, None, &[18, 1, 99]).await;
+    assert!(paged.as_of >= one_page.as_of && paged.as_of - one_page.as_of < 60, "{} then {}", one_page.as_of, paged.as_of);
+    let paged = store::OrgNameRefreshPlan { as_of: one_page.as_of, as_of_date: one_page.as_of_date.clone(), ..paged };
     assert_eq!(paged, one_page);
 }
 
@@ -571,7 +574,8 @@ async fn the_canaries_are_reported_whatever_their_verdict_and_paging_changes_not
 /// Rule v9 salts the hash with the epoch (`ORG_NAME_REFRESH_SAMPLE_SALT`). Over v8's five orgs the
 /// salted draw is `[2, 1]` — the first two ids, inside the capped listing `[1, 2, 3]` — so a planner
 /// that sampled the oldest ids, or the listing, and ordered them by hash would pass. Eight orgs put
-/// the draw at `[8, 7]`, outside both, which keeps the test's point under the salt.
+/// the draw at `[8, 7]`, outside both, which keeps the test's point under the salt. Rule v10's epoch
+/// draws `[8, 3]` from the eight, so the listing is capped at 2 (`[1, 2]`), outside it again.
 #[tokio::test]
 async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
     let (db, conn) = open("ron-uniform").await;
@@ -579,7 +583,7 @@ async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
         org(&conn, id, "DE", Some(format!("DE{id}").as_str()), "-", &[(format!("Firma {id}").as_str(), 2)]).await;
     }
     let r = db
-        .plan_org_name_refresh(store::OrgNameRefreshArgs { listing_cap: 3, ..args(2_000, 2, None, &[]) })
+        .plan_org_name_refresh(store::OrgNameRefreshArgs { listing_cap: 2, ..args(2_000, 2, None, &[]) })
         .await
         .unwrap();
     assert_eq!(r.by_rule["R0n"], count(8, 16), "a blank head, R0n");
@@ -587,16 +591,16 @@ async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
     let mut expected: Vec<i64> = (1..=8).collect();
     expected.sort_by_key(|&id| hash(id));
     expected.truncate(2);
-    assert_eq!(expected, vec![8, 7]);
+    assert_eq!(expected, vec![8, 3]);
     assert_eq!(ids(&r.samples["change:R0n"]), expected, "smallest hash first, not 1 and 2 in id order");
     assert_eq!(r.samples_per_reason, 2);
-    assert_eq!(ids(&r.planned), vec![1, 2, 3]);
+    assert_eq!(ids(&r.planned), vec![1, 2]);
     assert!(
         ids(&r.samples["change:R0n"]).iter().all(|id| !ids(&r.planned).contains(id)),
         "drawn from the whole class, not from the capped listing"
     );
     assert!(r.truncated);
-    assert_eq!((r.listing_cap, r.planned_mentions), (3, 16), "the counts are whole");
+    assert_eq!((r.listing_cap, r.planned_mentions), (2, 16), "the counts are whole");
 }
 
 /// A scoped plan reads only the named organizations (deduplicated; a missing id reads nothing).
@@ -655,6 +659,8 @@ fn elect_head_is_the_rule_the_plan_runs() {
         identifier: Some("GB1"),
         bind_defect: false,
         dated: None,
+        // Rule v10: read only with dates.
+        as_of: 0,
     };
     let sheffield = [
         ("UNIVERSITY OF SHEFFIELD", 14),
@@ -680,9 +686,31 @@ fn elect_head_is_the_rule_the_plan_runs() {
 
 // ---- Issue 524 unit 2b: the wet path (`Db::apply_org_name_refresh`) and its revert.
 
-/// A stored plan's `planned` entries as the wet path takes them (the app reads them off the report).
-fn targets(plan: &store::OrgNameRefreshPlan) -> Vec<store::OrgNameRefreshTarget> {
-    plan.planned
+/// A stored plan's `planned` entries as the wet path takes them (the app reads them off the report),
+/// with the plan's `as_of` (rule v10: the wet pre-pass re-elects with the STORED plan's). It reads as
+/// the target list.
+#[derive(Clone, Default)]
+struct Planned {
+    targets: Vec<store::OrgNameRefreshTarget>,
+    as_of: i64,
+}
+
+impl std::ops::Deref for Planned {
+    type Target = Vec<store::OrgNameRefreshTarget>;
+    fn deref(&self) -> &Self::Target {
+        &self.targets
+    }
+}
+
+impl std::ops::DerefMut for Planned {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.targets
+    }
+}
+
+fn targets(plan: &store::OrgNameRefreshPlan) -> Planned {
+    let targets = plan
+        .planned
         .iter()
         .map(|e| store::OrgNameRefreshTarget {
             org_id: e.org_id,
@@ -691,13 +719,16 @@ fn targets(plan: &store::OrgNameRefreshPlan) -> Vec<store::OrgNameRefreshTarget>
             old_name_norm: e.old_name_norm.clone(),
             new_name: e.new_name.clone().expect("a change has a new name"),
         })
-        .collect()
+        .collect();
+    Planned { targets, as_of: plan.as_of }
 }
 
-fn wet<'a>(targets: Vec<store::OrgNameRefreshTarget>, job: i64) -> store::OrgNameRefreshApplyArgs<'a> {
+/// The wet run's args for `planned`, re-electing with its plan's `as_of` (rule v10).
+fn wet<'a>(planned: Planned, job: i64) -> store::OrgNameRefreshApplyArgs<'a> {
     store::OrgNameRefreshApplyArgs {
         fns: FNS,
-        targets,
+        as_of: planned.as_of,
+        targets: planned.targets,
         max_groups: None,
         job_id: Some(job),
         resume_after: None,
@@ -831,10 +862,12 @@ async fn the_wet_run_renames_each_planned_head_once_and_the_revert_restores_it()
     assert_eq!(
         evidence,
         text(&format!(
-            "{{\"epoch\":\"{}\",\"rule\":\"R1\",\"voting\":17,\"top\":16,\"head\":1,\"second\":1,\"clusters\":2,\
-             \"head_procs\":0,\"head_in_window\":0,\"head_newest\":null,\"top_newest\":null}}",
-            store::HEAD_ELECTION_EPOCH
-        ))
+            "{{\"epoch\":\"{}\",\"as_of\":\"{}\",\"rule\":\"R1\",\"voting\":17,\"top\":16,\"head\":1,\"second\":1,\
+             \"clusters\":2,\"head_procs\":0,\"head_in_window\":0,\"head_newest\":null,\"top_newest\":null}}",
+            store::HEAD_ELECTION_EPOCH,
+            store::rates::civil_date(p.as_of),
+        )),
+        "rule v10: the plan's as_of, as the pre-pass used it"
     );
 
     // A replayed run (the same plan, a restart without its cursor) renames nothing and announces
@@ -966,7 +999,7 @@ async fn the_wet_run_reads_the_stop_flag_before_every_window_and_resumes_after_i
 
     // Refused while the mention index is absent, as the planner is.
     conn.execute("DROP INDEX organization_mentions_org", ()).await.unwrap();
-    let err = db.apply_org_name_refresh(wet(Vec::new(), 8)).await.expect_err("the pre-pass would scan");
+    let err = db.apply_org_name_refresh(wet(Planned::default(), 8)).await.expect_err("the pre-pass would scan");
     assert!(err.to_string().contains("organization_mentions_org") && err.to_string().contains("refused"), "{err}");
 }
 
@@ -1193,8 +1226,11 @@ async fn a_window_that_fails_after_a_commit_reports_the_committed_windows() {
 // ---- Issue 524 rule v7: the dated planner and wet pre-pass (the recency decision's tests 13 and 14).
 
 const DAY: i64 = 86_400;
-/// 2023-12-09: the dated fixtures' first day.
-const BASE: i64 = 19_700;
+/// 2016-07-18: the dated fixtures' first day. Rule v10 moved it from 2023-12-09 (day 19,700): the
+/// planner's `as_of` is the clock, and a head the fixtures print within 3 years of it holds
+/// `head_current`, so the v7–v9 shapes sit more than 3 years back, where they keep their meaning. The
+/// v10 fixtures date themselves from the clock.
+const BASE: i64 = 17_000;
 
 /// An identifier-bearing org served as `head`, with one mention per `(spelling, versions)`, each its
 /// own notice (`id * 1000 + i`), and that notice's `tender_versions` rows `(tender, published_at)`.
@@ -1278,8 +1314,9 @@ async fn the_planner_dates_its_candidates_and_holds_a_rename() {
     let (db, conn) = open("ron-dated").await;
     dated_corpus(&conn).await;
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v9");
+    assert_eq!(r.epoch, "524u2-v10");
     assert_eq!(r.by_hold.get("undated"), None, "a finished plan holds nothing undated");
+    assert_eq!(r.by_hold.get("head_current"), None, "every head printed 3+ years before the plan");
     assert_eq!(r.by_hold["recent"], count(1, 11), "40, the rename");
     assert_eq!(r.by_hold["residue"], count(1, 6), "43, the newest stray (rule v8)");
     assert_eq!(ids(&r.held), vec![40, 43]);
@@ -1405,7 +1442,7 @@ async fn the_planner_counts_the_serve_holds_and_the_withheld_releases() {
         dated_org(&conn, id, head, &mentions).await;
     }
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v9");
+    assert_eq!(r.epoch, "524u2-v10");
     assert_eq!(r.by_hold["residue"], count(2, 12), "50 and 51 stay held under their v8 reason");
     assert_eq!(r.by_hold[store::HEAD_HOLD_ORGAN], count(1, 6), "53");
     assert_eq!(ids(&r.held), vec![50, 51, 53]);
@@ -1422,4 +1459,106 @@ async fn the_planner_counts_the_serve_holds_and_the_withheld_releases() {
     assert_eq!((r.planned[0].recent_released, r.planned[0].release_withheld), (Some("digits"), None));
     assert_eq!((r.recent_released.len(), r.recent_released["digits"], r.recent_released_ids.clone()), (1, 1, vec![52]));
     assert!(r.samples.contains_key("hold:organ") && r.samples.contains_key("hold:residue"));
+}
+
+// ---- Issue 524 rule v10: the current-head hold, the plan's `as_of`, and the wet pre-pass's.
+
+/// Rule v10 in the planner: the plan stores its start as `as_of` (and `as_of_date`), and an R1 change
+/// on a head printed within 3 years of it is `hold:head_current` — in `by_hold`, `held` and the
+/// samples, with the spelling it would serve. The same shape on a head last printed more than 3 years
+/// back changes, and a current head the junk exemption releases ships, counted `recent_released`.
+#[tokio::test]
+async fn the_planner_holds_a_current_head_and_stores_its_as_of() {
+    let (db, conn) = open("ron-v10").await;
+    let today = crate_now() / DAY;
+    // 60: the head printed 400 and 399 days ago, the elected cluster newer: no window, no residue.
+    let mut sixty = spread("Acme Works Office", 6_000, today - 400, 2);
+    sixty.extend(spread("Acme Group Office", 6_050, today - 300, 5));
+    // 61: the same shape 2,000 days back: the head is outdated, and R1 changes it.
+    let mut sixty_one = spread("Beta Works Office", 6_100, today - 2_000, 2);
+    sixty_one.extend(spread("Beta Group Office", 6_150, today - 1_900, 5));
+    // 62: a current H = 1 head that adds a pier number to the elected name (one lost word): junk.
+    let mut sixty_two = spread("Harbour Office", 6_200, today - 300, 5);
+    sixty_two.extend(spread("Harbour Office Pier 17", 6_250, today - 400, 1));
+    for (id, head, rows) in [
+        (60, "Acme Works Office", sixty),
+        (61, "Beta Works Office", sixty_one),
+        (62, "Harbour Office Pier 17", sixty_two),
+    ] {
+        let mentions: Vec<(&str, &[(i64, i64)])> = rows.iter().map(|(name, v)| (*name, v.as_slice())).collect();
+        dated_org(&conn, id, head, &mentions).await;
+    }
+    let before = crate_now();
+    let r = plan(&db, 2_000, None, &[]).await;
+    let after = crate_now();
+    assert_eq!(r.epoch, "524u2-v10");
+    assert!(before <= r.as_of && r.as_of <= after, "as_of is the planner's start: {before} <= {} <= {after}", r.as_of);
+    assert_eq!(r.as_of_date, store::rates::civil_date(r.as_of));
+    assert_eq!(r.by_hold[store::HEAD_HOLD_CURRENT], count(1, 7), "60");
+    assert_eq!(r.by_hold.len(), 1);
+    assert_eq!(ids(&r.held), vec![60]);
+    let held = &r.held[0];
+    assert_eq!((held.verdict, held.reason, held.rule, held.new_name.as_deref()), ("hold", "head_current", Some("R1"), Some("Acme Group Office")));
+    assert_eq!(held.head_newest, Some(store::rates::civil_date((today - 399) * DAY)));
+    assert_eq!((held.newest_is_head, held.recent_released, held.release_withheld), (Some(false), None, None));
+    assert_eq!(ids(&r.samples["hold:head_current"]), vec![60], "sampled per reason like every hold");
+    assert_eq!(ids(&r.planned), vec![61, 62]);
+    assert_eq!((r.planned[0].reason, r.planned[0].recent_released), ("R1", None));
+    assert_eq!((r.planned[1].reason, r.planned[1].recent_released), ("R1", Some("digits")));
+    assert_eq!(r.recent_released_ids, vec![62]);
+    // The wet run takes the plan's `as_of`: both planned changes are ready.
+    let w = db.apply_org_name_refresh(wet(targets(&r), 7)).await.unwrap();
+    assert_eq!((w.ready, w.drifted, w.applied), (2, 0, 2));
+}
+
+/// Rule v10 at wet time: the pre-pass re-elects with the STORED plan's `as_of`, so a target whose head
+/// was printed after the plan (and whose elected cluster printed after that, so no `recent` or
+/// `residue` reads it) is `hold:head_current` now and drifts. The same pre-pass handed an `as_of`
+/// more than 3 years past that print reads it ready — the pre-pass reads `as_of`, not the clock —
+/// and the ledger's `evidence` names the `as_of` it re-elected with.
+#[tokio::test]
+async fn a_head_printed_after_the_plan_reads_head_current_at_wet_time() {
+    let (db, conn) = open("ron-v10-wet").await;
+    let mut seventy = spread("Old Works Office", 7_000, BASE, 1);
+    seventy.extend(spread("New Works Office", 7_050, BASE + 10, 8));
+    let mentions: Vec<(&str, &[(i64, i64)])> = seventy.iter().map(|(name, v)| (*name, v.as_slice())).collect();
+    dated_org(&conn, 70, "Old Works Office", &mentions).await;
+    let p = plan(&db, 2_000, None, &[]).await;
+    let planned = targets(&p);
+    assert_eq!(planned.iter().map(|t| (t.org_id, t.new_name.as_str())).collect::<Vec<_>>(), vec![(70, "New Works Office")]);
+    // After the plan: the head printed once more, the elected cluster once after it.
+    for (notice, tender, name, at) in [(70_900, 7_900, "Old Works Office", p.as_of + 10), (70_901, 7_901, "New Works Office", p.as_of + 20)] {
+        conn.execute(
+            "INSERT INTO organization_mentions
+               (notice_id, section_id, organization_id, name, country, raw_identifier, scheme)
+             VALUES (?, 'ORG-0001', 70, ?, 'DE', NULL, NULL)",
+            vec![Value::Integer(notice), Value::Text(name.into())],
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (?, 1, ?, ?, 'x')",
+            vec![Value::Integer(tender), Value::Integer(notice), Value::Integer(at)],
+        )
+        .await
+        .unwrap();
+    }
+    let r = db.apply_org_name_refresh(wet(planned.clone(), 7)).await.unwrap();
+    assert_eq!((r.ready, r.drifted, r.applied), (0, 1, 0));
+    let why = &r.drift_samples[0];
+    assert_eq!(why.org_id, 70);
+    assert!(
+        why.why.contains(r#"re-elected hold:head_current "New Works Office", not the plan's change:R1 "New Works Office""#),
+        "{why:?}"
+    );
+    assert!(org_changes(&conn).await.is_empty());
+    // An `as_of` 2,000 days on: that print is no longer current, and the target is ready.
+    let later = p.as_of + 2_000 * DAY;
+    let r = db.apply_org_name_refresh(store::OrgNameRefreshApplyArgs { as_of: later, ..wet(planned, 8) }).await.unwrap();
+    assert_eq!((r.ready, r.drifted, r.applied), (1, 0, 1));
+    let mut rows = conn.query("SELECT evidence FROM org_name_refresh_log WHERE org_id = 70", ()).await.unwrap();
+    let evidence = rows.next().await.unwrap().unwrap().get_value(0).unwrap();
+    let evidence = evidence.as_text().unwrap();
+    assert!(evidence.contains(&format!("\"as_of\":\"{}\"", store::rates::civil_date(later))), "{evidence}");
 }

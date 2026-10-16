@@ -18,7 +18,9 @@
 //!   deciding per version; a lot is closed exactly when its Tender is (the decided per-lot leg
 //!   failed 1(c)'s perf bound and is unit 3's — `canonical::closed_by_notice`'s doc);
 //! - the change feed: the version that closes or reopens a Tender is a `changed` row for the
-//!   Tender and for each of its lots, even when nothing else moved.
+//!   Tender and for each of its lots, even when nothing else moved;
+//! - the deploy window: a head folded before the deploy (flag NULL) reads its flag, not the
+//!   rule, until its next fold, and an append to it that also closes is dropped by SSE.
 
 use std::collections::{BTreeMap, BTreeSet};
 use store::canonical::{
@@ -628,6 +630,116 @@ async fn a_closure_flip_is_a_change_row_for_the_tender_and_its_lots() {
     assert_eq!(rows("tender", flip, 2).await, 1, "the closing CAN");
     assert_eq!(rows("tender", flip, 3).await, 1, "the reopening notice, nothing else moving");
     assert_eq!(rows("lot", lot_id(flip, "LOT-1").await, 3).await, 1, "and its lot with it");
+}
+
+/// The deploy window (third review, finding 1). `current_closed_by_notice` was ALTERed in
+/// NULL, so a head folded before issue 533 deployed whose rule already closes it keeps the
+/// NULL until a fold re-derives it. This fixture forces that state onto r1's shape on one lot
+/// (a CN, then an all-`clos-nw` CAN; every other fixture is folded with the rule live, where
+/// flag = rule, so none can tell the two apart) and pins what the code does with it:
+/// - the pages and the SSE `Scope::At` head branch both read the stored flag, not the rule,
+///   so both serve the Tender open;
+/// - a daily fold that appends a second closing CAN (not stale, so nothing compares the
+///   stored head) writes the flag and no correction row: the transition row compares the rule
+///   over the prefix with the rule over the chain, closed and closed, never the stored NULL,
+///   so the Tender's row is a plain `changed` (its rounds moved) and the lot gets none;
+/// - the SSE diff of that row reads the new head through the flag (1, closed) and seq-1, no
+///   longer the head, through the rule (closed): `(false, false)` on a row that carries a seq,
+///   so it is dropped. A `status=open` subscriber that was served the Tender open is never sent
+///   `removed`; a `status=closed` one gets `changed` where `added` was due.
+///
+/// That is the ACCEPTED window, not a fold to change: `refold-open-head` and its `project` are
+/// enqueued right after the deploy, so every daily fetch/process/project queues behind them
+/// and every open head is re-derived (its flip a seq-less correction row, which SSE delivers)
+/// before a daily fold can append to it (docs/operations.md, "The open head after issue 533").
+#[tokio::test]
+async fn a_head_folded_before_the_deploy_reads_its_null_flag_until_its_next_fold() {
+    let (db, conn) = open("pre-deploy").await;
+    let one = [lot("LOT-1", "Lot", &[])];
+    let first = round(9_002, vec![result("RES-1", Some("LOT-1"), NO_AWARD)]);
+    let mut p = TenderProjection {
+        source: "ted".into(),
+        procedure_key: Some("pk-533-pre-deploy".into()),
+        island_notice_id: None,
+        kind: "procedure".into(),
+        versions: vec![
+            version(9_001, CN_AT, Some("16"), &[deadline(DEADLINE)], &one, &[]),
+            version(9_002, CAN_AT, Some("29"), &[deadline(DEADLINE)], &one, std::slice::from_ref(&first)),
+        ],
+    };
+    assert!(closed_by_notice(&p.versions), "the rule closes the head");
+    db.apply_tenders(std::slice::from_ref(&p), NOW, false).await.unwrap();
+    db.build_tender_indexes().await.unwrap();
+    let id = scalar(&conn, "SELECT id FROM tenders WHERE procedure_key = 'pk-533-pre-deploy'", vec![]).await.unwrap();
+    let lot_id =
+        scalar(&conn, "SELECT id FROM lots WHERE tender_id = ? AND lot_key = 'LOT-1'", vec![Value::Integer(id)]).await.unwrap();
+    // The pre-deploy state: the column as migrate() ALTERed it in.
+    conn.execute("UPDATE tenders SET current_closed_by_notice = NULL WHERE id = ?", vec![Value::Integer(id)])
+        .await
+        .unwrap();
+
+    let open = Filter { status: Some(Status::Open), now: NOW, ..Filter::default() };
+    let closed = Filter { status: Some(Status::Closed), ..open.clone() };
+    let page = |f: Filter| {
+        let conn = conn.clone();
+        async move {
+            read::tenders(&conn, &f, Scope::Page { after: 0, limit: 10 }).await.unwrap().iter().any(|r| r.id == id)
+        }
+    };
+    let at = |f: Filter, seq: i64| {
+        let conn = conn.clone();
+        async move { !read::tenders(&conn, &f, Scope::At { id, seq }).await.unwrap().is_empty() }
+    };
+    let lot_at = |f: Filter, seq: i64| {
+        let conn = conn.clone();
+        async move { !read::lots(&conn, &f, Scope::At { id: lot_id, seq }).await.unwrap().is_empty() }
+    };
+    assert!(page(open.clone()).await && !page(closed.clone()).await, "the page reads the NULL flag: open");
+    assert!(at(open.clone(), 2).await, "the At head branch reads the flag, as the page does, not the rule");
+    assert!(lot_at(open.clone(), 2).await, "and so does the lot At probe at the head");
+
+    // A daily fold appends a second closing CAN: its own all-`clos-nw` round on the one lot.
+    p.versions.push(version(9_003, NOW - DAY, Some("29"), &[deadline(DEADLINE)], &one, &[
+        first,
+        round(9_003, vec![result("RES-2", Some("LOT-1"), NO_AWARD)]),
+    ]));
+    assert!(closed_by_notice(&p.versions) && closed_by_notice(&p.versions[..2]), "closed before and after by the rule");
+    db.apply_tenders(std::slice::from_ref(&p), NOW, false).await.unwrap();
+    let flag = scalar(&conn, "SELECT current_closed_by_notice FROM tenders WHERE id = ?", vec![Value::Integer(id)]).await;
+    assert_eq!(flag, Some(1), "the append's head update writes the flag");
+    assert!(!page(open.clone()).await && page(closed.clone()).await, "a page or a fresh snapshot now reads it closed");
+
+    let count = |sql: &'static str, entity: i64| {
+        let conn = conn.clone();
+        async move { scalar(&conn, sql, vec![Value::Integer(entity)]).await.unwrap() }
+    };
+    let at_seq_3 = "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = ? AND version_seq = 3 AND op = 'changed'";
+    assert_eq!(count(at_seq_3, id).await, 1, "the appended CAN is a plain `changed`: its rounds moved");
+    assert_eq!(
+        count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'lot' AND entity_id = ? AND version_seq = 3", lot_id).await,
+        0,
+        "the lot's facts did not move and the rule did not flip: no lot row"
+    );
+    assert_eq!(
+        count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND entity_id = ? AND version_seq IS NULL", id).await
+            + count("SELECT COUNT(*) FROM changes WHERE entity_kind = 'lot' AND entity_id = ? AND version_seq IS NULL", lot_id)
+                .await,
+        0,
+        "nothing compared the stored NULL with the rule, so no seq-less correction row"
+    );
+
+    // The SSE pair for the seq-3 row: new = the head (the flag), old = seq 2 (now the rule).
+    assert_eq!(
+        (at(open.clone(), 2).await, at(open.clone(), 3).await),
+        (false, false),
+        "status=open: (false, false) on a row with a seq, dropped — the accepted window: the subscriber \
+         served this Tender open is never sent `removed`"
+    );
+    assert_eq!(
+        (at(closed.clone(), 2).await, at(closed, 3).await),
+        (true, true),
+        "status=closed: `changed` where `added` was due"
+    );
 }
 
 async fn plan_lines(conn: &turso::Connection, sql: &str, params: Vec<Value>) -> Vec<String> {

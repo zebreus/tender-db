@@ -54,8 +54,13 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// name must be the head minus junk, at most one other word lost), a withheld release returning to
 /// its hold and counted `release_withheld`; and the plan's uniform samples are salted with this
 /// epoch ([`ORG_NAME_REFRESH_SAMPLE_SALT`]), so a re-judge's fresh samples are not the predictable
-/// continuation of the last plan's.
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v9";
+/// continuation of the last plan's. `v10` (`## Rule v10 — decided`, from the dated re-judges of plans
+/// 2523, 2526 and 2527: pooled, 4 of 29 change:R1 items on a head still in print read wrong, against 1
+/// of 61 on a head not printed for 3+ years): an R1 change whose head was printed within
+/// [`HEAD_CURRENT_DAYS`] of the plan's `as_of` ([`HeadElectOrg::as_of`]) is HELD
+/// [`HEAD_HOLD_CURRENT`], unless the junk exemption releases it; the plan stores its `as_of`, and the
+/// wet pre-pass re-elects with it.
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v10";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -114,6 +119,22 @@ pub const HEAD_HOLD_ADDRESS_ADDED: &str = "address_added";
 /// mixed-case head's same words (16508165). Fifth.
 pub const HEAD_HOLD_CAPS_VARIANT: &str = "caps_variant";
 
+/// Issue 524 rule `v10` (`## Rule v10 — decided`): the hold reason when R1 would replace a head still
+/// in PRINT — its newest dated item ([`RecentReading::head_newest`]) within [`HEAD_CURRENT_DAYS`] before
+/// the plan's `as_of` ([`HeadElectOrg::as_of`]). A head still printed is usually current, so a change
+/// there tends to be cosmetic, a qualifier tail, an abbreviation or another entity on a shared
+/// identifier (plan 2527's four change:R1 wrongs: 4605761, 13924072, 22529369, 23399855); a head not
+/// printed for 3+ years is the outdated name the refresh exists to fix. Asked after the serve holds
+/// ([`HEAD_SERVE_HOLDS`]), so a change v9 holds keeps its v9 reason, and after [`HEAD_HOLD_RECENT`],
+/// [`HEAD_HOLD_RESIDUE`] and [`HEAD_HOLD_UNDATED`]. The junk exemption releases it as it releases those
+/// two (a head it already released there ships: canary 3042). R0 and R2 are never held by it; an R1
+/// change with no dated head item (no reading, or no `head_newest`) follows rule `v7`.
+pub const HEAD_HOLD_CURRENT: &str = "head_current";
+
+/// Issue 524 rule `v10`: the [`HEAD_HOLD_CURRENT`] window, 3 years — a head whose newest dated item is
+/// at or after `as_of − HEAD_CURRENT_DAYS × 86,400` is current.
+pub const HEAD_CURRENT_DAYS: i64 = 1_095;
+
 /// Issue 524 rule `v9`: the serve holds, in [`HeadElectFns::serve_hold`]'s order — the plan's summary
 /// names each, at zero too.
 pub const HEAD_SERVE_HOLDS: [&str; 5] =
@@ -151,17 +172,19 @@ pub struct RecentReading {
     pub undated: u64,
     /// k ≥ [`HEAD_RECENT_MIN_PROCEDURES`] and 3·h_W ≥ 2·k.
     pub fires: bool,
-    /// A hold the junk exemption released — the window fired on an R1 change (H ≥ 2, `recent`), or
-    /// (rule `v8`) the newest item is the head's on an R1 or R2 change (`residue`): `unfit` (the head
-    /// is unfit to serve even against itself, for any reason but `lowercase`) or `digits` (its vote
-    /// key has an all-digit token the elected key lacks: an address number, a postcode, a NIP, `LOT
-    /// 2`'s `2` — since rule `v9` one not glued to its neighbour in the elected key, and only where
-    /// the elected name drops at most one other word of the head).
+    /// A hold the junk exemption released — the window fired on an R1 change (H ≥ 2, `recent`), (rule
+    /// `v8`) the newest item is the head's on an R1 or R2 change (`residue`), or (rule `v10`) the head
+    /// was printed within [`HEAD_CURRENT_DAYS`] of `as_of` on an R1 change (`head_current`): `unfit`
+    /// (the head is unfit to serve even against itself, for any reason but `lowercase`) or `digits`
+    /// (its vote key has an all-digit token the elected key lacks: an address number, a postcode, a
+    /// NIP, `LOT 2`'s `2` — since rule `v9` one not glued to its neighbour in the elected key, and
+    /// only where the elected name drops at most one other word of the head).
     pub released: Option<&'static str>,
-    /// Rule `v9`: a `digits` release v8 would have made and v9 withholds, so the `recent` or `residue`
-    /// hold stands: `glue` (every such number is glued to a neighbouring head word in the elected key:
-    /// 4295185's `SMD 3` → `Smd3`, the name's own digit) or `junk_only` (the elected name also drops
-    /// more than one word of 3+ letters the head prints: 9814's owner and street).
+    /// Rule `v9`: a `digits` release v8 would have made and v9 withholds, so the `recent`, `residue`
+    /// or (rule `v10`) `head_current` hold stands: `glue` (every such number is glued to a
+    /// neighbouring head word in the elected key: 4295185's `SMD 3` → `Smd3`, the name's own digit) or
+    /// `junk_only` (the elected name also drops more than one word of 3+ letters the head prints:
+    /// 9814's owner and street).
     pub release_withheld: Option<&'static str>,
 }
 
@@ -233,9 +256,9 @@ pub enum HeadVerdict {
     /// `family`, `gb_family`, `consortium_removed`, `nhs_check`), for R2 only a shorthand's
     /// ([`HeadElectFns::r2_hold`]: `initialism`), for R1 with H ≥ 2 (rule `v7`) [`HEAD_HOLD_RECENT`]
     /// (with the display spelling, `None` when none is fit) or [`HEAD_HOLD_UNDATED`] (`None`), for
-    /// R1 and R2 (rule `v8`) [`HEAD_HOLD_RESIDUE`] (with the display spelling), or for R1 and R2 (rule
-    /// `v9`) a serve hold's ([`HeadElectFns::serve_hold`]: [`HEAD_SERVE_HOLDS`]) — with the spelling it
-    /// would have served.
+    /// R1 and R2 (rule `v8`) [`HEAD_HOLD_RESIDUE`] (with the display spelling), for R1 and R2 (rule
+    /// `v9`) a serve hold's ([`HeadElectFns::serve_hold`]: [`HEAD_SERVE_HOLDS`]), or for R1 (rule `v10`)
+    /// [`HEAD_HOLD_CURRENT`] — with the spelling it would have served.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
 }
@@ -333,6 +356,11 @@ pub struct HeadElectOrg<'a> {
     /// otherwise). R1 with H ≥ 2 reads its window from them, and holds `undated` without them; R1 and
     /// R2 read the residue holdout from them (rule `v8`), and change as before without them.
     pub dated: Option<&'a [DatedVote<'a>]>,
+    /// Rule `v10`: the plan's `as_of` (unix seconds, the planner's start), read only with `dated`: an
+    /// R1 change whose newest dated head item is at or after `as_of − HEAD_CURRENT_DAYS × 86,400` holds
+    /// [`HEAD_HOLD_CURRENT`]. The planner passes its own start and the wet pre-pass the STORED plan's,
+    /// so a head printed after the plan reads `head_current` at wet time and drifts.
+    pub as_of: i64,
 }
 
 /// Issue 524 unit 2: [`elect_head`]'s verdict with the counts it was read from.
@@ -413,6 +441,14 @@ struct Cluster<'a> {
 /// spelling, past the bind guards and R2's initialism hold, is HELD when
 /// [`HeadElectFns::serve_hold`] names a reason ([`HEAD_SERVE_HOLDS`]), with the spelling it would
 /// serve. R0 is never asked.
+///
+/// **The current-head hold** (rule `v10`): an R1 change that comes out of `serve` a CHANGE, whose
+/// dated reading has a `head_newest` at or after `as_of − HEAD_CURRENT_DAYS × 86,400`
+/// ([`HeadElectOrg::as_of`]), is HELD `head_current` ([`HEAD_HOLD_CURRENT`]) with the spelling it would
+/// serve — unless the junk exemption releases it (counted `released`, as for `recent` and `residue`;
+/// a release it withholds is read `release_withheld`), or the window or the residue holdout already
+/// released the head. R0 and R2 are never held by it; an undated R1 (no reading, or no dated head
+/// item) follows rule `v7`.
 ///
 /// The elected cluster serves its DISPLAY spelling: among the fit spellings only
 /// ([`HeadElectFns::unfit`], read on each spelling as published and on its collapsed form), each with
@@ -601,7 +637,27 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
             }
         }
     }
-    counted(serve(rule, elected), reading)
+    let verdict = serve(rule, elected);
+    // Rule v10: an R1 change on a head still in print — after the serve holds, so a change v9 holds
+    // keeps its reason. A head the window or the residue holdout already released ships; otherwise the
+    // junk exemption is asked as they ask it.
+    if let (HeadRule::R1, HeadVerdict::Change { new, .. }) = (rule, &verdict)
+        && let Some(read) = reading.as_mut()
+        && read.released.is_none()
+        && read.head_newest.is_some_and(|at| at >= org.as_of.saturating_sub(HEAD_CURRENT_DAYS * 86_400))
+    {
+        match recent_release(org.head, &head_key, tied[0], fns) {
+            Junk::Released(why) => read.released = Some(why),
+            held => {
+                if let Junk::Withheld(why) = held {
+                    read.release_withheld = Some(why);
+                }
+                let new = Some(new.clone());
+                return counted(HeadVerdict::Hold { reason: HEAD_HOLD_CURRENT, rule, new }, reading);
+            }
+        }
+    }
+    counted(verdict, reading)
 }
 
 /// Rule `v7`: the window over `dated` — see [`elect_head`] step 5. `dated` is filtered with the voter
@@ -648,8 +704,8 @@ fn recent_reading(
     }
 }
 
-/// The junk exemption's answer for a head the window (`recent`) or the residue holdout (`residue`)
-/// would protect.
+/// The junk exemption's answer for a head the window (`recent`), the residue holdout (`residue`) or
+/// (rule `v10`) the current-head hold (`head_current`) would protect.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum Junk {
     /// Not junk: the hold stands.
@@ -661,8 +717,9 @@ enum Junk {
     Withheld(&'static str),
 }
 
-/// The junk exemption (rule `v7`, narrowed by `v8` and `v9`): whether a head the window (`recent`) or
-/// the residue holdout (`residue`) would protect is NOT protected — `unfit` when it is unfit to serve
+/// The junk exemption (rule `v7`, narrowed by `v8` and `v9`, asked by `v10` too): whether a head the
+/// window (`recent`), the residue holdout (`residue`) or the current-head hold (`head_current`) would
+/// protect is NOT protected — `unfit` when it is unfit to serve
 /// even against itself for any reason but `lowercase` (control, mojibake, long, non_name; a lower-case
 /// head is a deliberate brand, 3909's `act legal s.r.o., advokátní kancelář`, the registered current
 /// name a v7 release reverted), `digits` when its vote key has a token of ASCII decimal digits only
@@ -952,7 +1009,8 @@ pub struct HeadRefreshEntry {
     /// Rule `v7`, each `None` when the org was not dated (only the candidates are): k, h_W, the
     /// newest head item and the elected cluster's newest item (`YYYY-MM-DD`, UTC), whether the
     /// organization's newest item is the head's, the voting mentions no date covered, and the junk
-    /// exemption's release (`unfit` | `digits`) of a fired window or (rule `v8`) a residue hold.
+    /// exemption's release (`unfit` | `digits`) of a fired window, (rule `v8`) a residue hold or
+    /// (rule `v10`) a `head_current` hold — `head_newest` is what `head_current` reads.
     pub head_procs: Option<u64>,
     pub head_in_window: Option<u64>,
     pub head_newest: Option<String>,
@@ -971,6 +1029,13 @@ pub struct HeadRefreshEntry {
 pub struct OrgNameRefreshPlan {
     /// [`HEAD_ELECTION_EPOCH`].
     pub epoch: &'static str,
+    /// Rule `v10`: the planner's start (unix seconds), every election's [`HeadElectOrg::as_of`] — the
+    /// instant [`HEAD_HOLD_CURRENT`]'s 3 years count back from. A wet run re-elects with THIS value
+    /// (`OrgNameRefreshApplyArgs::as_of`), so the plan and the pre-pass agree; the app refuses a stored
+    /// plan without it. `0` on a stopped plan.
+    pub as_of: i64,
+    /// `as_of` as `YYYY-MM-DD` (UTC); empty on a stopped plan.
+    pub as_of_date: String,
     pub min_mentions: u64,
     pub samples_per_reason: usize,
     pub listing_cap: usize,
@@ -1020,14 +1085,16 @@ pub struct OrgNameRefreshPlan {
     pub dated_version_rows: u64,
     pub undated_mentions: u64,
     /// Rule `v7`: the CHANGES (in the population) the junk exemption released from a hold — R1's fired
-    /// window, or (rule `v8`) an R1 or R2 residue hold — by why (`unfit`, `digits`), and the first
+    /// window, (rule `v8`) an R1 or R2 residue hold, or (rule `v10`) an R1 `head_current` hold — by why
+    /// (`unfit`, `digits`), and the first
     /// [`ORG_NAME_REFRESH_RELEASED_LISTED`] of their ids by org id. A release that `serve` then held
     /// (no fit spelling, a bind guard) is no change and is not counted; its entry still reads
     /// `recent_released`.
     pub recent_released: BTreeMap<&'static str, u64>,
     pub recent_released_ids: Vec<i64>,
     /// Rule `v9`: the HOLDS (in the population) whose `digits` release v9 withheld — v8 would have
-    /// released them, so the `recent` or `residue` hold stands — by why (`glue`, `junk_only`; see
+    /// released them, so the `recent`, `residue` or (rule `v10`) `head_current` hold stands — by why
+    /// (`glue`, `junk_only`; see
     /// [`RecentReading::release_withheld`]), and the first [`ORG_NAME_REFRESH_RELEASED_LISTED`] of their
     /// ids by org id: the decision's accepted cost (plan 2526: 15 withheld, labelled 5 wrong, 2
     /// neutral, 8 right), listed so it can be read.
@@ -1059,9 +1126,9 @@ pub struct OrgNameRefreshPlan {
 pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 500;
 
 /// Issue 524 rule `v9`: the uniform samples' salt — the low 32 bits of FNV-1a 64 of
-/// [`HEAD_ELECTION_EPOCH`] (`524u2-v9`: 460,574,797). The protocol's dated re-judge reads "fresh"
-/// samples, and an unsalted hash makes every plan's class sample the same first ids: plan 2526's
-/// panel read the next 30 of each list ahead. Salted, each epoch draws anew, and a plan's samples stay
+/// [`HEAD_ELECTION_EPOCH`] (`524u2-v10`: 2,780,006,399; v9's `524u2-v9` was 460,574,797). The
+/// protocol's dated re-judge reads "fresh" samples, and an unsalted hash makes every plan's class
+/// sample the same first ids: plan 2526's panel read the next 30 of each list ahead. Salted, each epoch draws anew, and a plan's samples stay
 /// reproducible from its epoch.
 pub const ORG_NAME_REFRESH_SAMPLE_SALT: u64 = epoch_salt(HEAD_ELECTION_EPOCH);
 
@@ -1125,13 +1192,21 @@ impl PageOrg {
         self.spellings.iter().map(|(spelling, n)| (spelling.as_str(), *n)).collect()
     }
 
-    fn elect(&self, fns: &HeadElectFns, bind_defect: bool, dated: Option<&[DatedVote<'_>]>) -> HeadElection {
+    /// Elect this org; `as_of` is the plan's (rule `v10`: [`HeadElectOrg::as_of`]).
+    fn elect(
+        &self,
+        fns: &HeadElectFns,
+        bind_defect: bool,
+        dated: Option<&[DatedVote<'_>]>,
+        as_of: i64,
+    ) -> HeadElection {
         let org = HeadElectOrg {
             head: &self.head,
             identifier_kind: self.identifier_kind.as_deref(),
             identifier: self.identifier.as_deref(),
             bind_defect,
             dated,
+            as_of,
         };
         elect_head_counted(&self.votes(), &org, fns)
     }
@@ -1207,8 +1282,11 @@ impl Db {
                 )));
             }
         }
-        // Rule v7: a date more than a day past the job's start is no date.
-        let horizon = crate::now_unix() + 86_400;
+        // Rule v10: the job's start is the plan's `as_of`, every election's (`head_current` counts back
+        // from it), stored in the plan for the wet pre-pass. Rule v7: a date more than a day past it is
+        // no date.
+        let as_of = crate::now_unix();
+        let horizon = as_of + 86_400;
         let scope: Option<Vec<i64>> = args.org_ids.map(|ids| {
             let mut ids = ids.to_vec();
             ids.sort_unstable();
@@ -1217,6 +1295,8 @@ impl Db {
         });
         let mut plan = OrgNameRefreshPlan {
             epoch: HEAD_ELECTION_EPOCH,
+            as_of,
+            as_of_date: crate::rates::civil_date(as_of),
             min_mentions: args.min_mentions,
             samples_per_reason: args.samples,
             listing_cap: args.listing_cap,
@@ -1301,7 +1381,7 @@ impl Db {
                         continue;
                     }
                 }
-                let election = org.elect(&args.fns, false, None);
+                let election = org.elect(&args.fns, false, None, as_of);
                 judged.push(Judged { at: i, election, bind_defect: false, in_population: !below, merged: false, eng: None });
             }
 
@@ -1322,7 +1402,7 @@ impl Db {
                     .await?;
                 if rows.next().await?.is_some() {
                     j.bind_defect = true;
-                    j.election = org.elect(&args.fns, true, None);
+                    j.election = org.elect(&args.fns, true, None, as_of);
                 }
             }
 
@@ -1340,7 +1420,7 @@ impl Db {
                 for j in judged.iter_mut().filter(|j| j.candidate()) {
                     let org = &page[j.at];
                     let dated = org.dated(&args.fns, &read.dates);
-                    j.election = org.elect(&args.fns, j.bind_defect, Some(&dated));
+                    j.election = org.elect(&args.fns, j.bind_defect, Some(&dated), as_of);
                 }
             }
 
@@ -1626,6 +1706,10 @@ pub struct OrgNameRefreshTarget {
 pub struct OrgNameRefreshApplyArgs<'a> {
     /// The functions the plan was elected with: the pre-pass re-elects every target with them.
     pub fns: HeadElectFns,
+    /// Rule `v10`: the STORED plan's `as_of` ([`OrgNameRefreshPlan::as_of`]): the pre-pass re-elects
+    /// with it, so a target whose head was printed after the plan reads `hold:head_current` and drifts,
+    /// and the ledger's `evidence` names it.
+    pub as_of: i64,
     /// The stored plan's `planned` entries, already scoped to `org_ids` by the caller.
     pub targets: Vec<OrgNameRefreshTarget>,
     /// Apply at most this many of the targets that are still ready (the first by org id). A recovered
@@ -1802,6 +1886,7 @@ async fn read_readiness(
     reader: &turso::Connection,
     fns: &HeadElectFns,
     targets: &[OrgNameRefreshTarget],
+    as_of: i64,
     horizon: i64,
     exclude_released: &[String],
     stop: &(dyn Fn() -> bool + Sync),
@@ -1892,7 +1977,7 @@ async fn read_readiness(
             let org = &orgs[&target.org_id];
             let identifier = org.identifier.as_deref().unwrap_or_default();
             let dated = org.dated(fns, &dates);
-            let mut election = org.elect(fns, false, Some(&dated));
+            let mut election = org.elect(fns, false, Some(&dated), as_of);
             if matches!(election.verdict, HeadVerdict::Change { .. }) {
                 let mut rows = reader
                     .query(
@@ -1905,14 +1990,15 @@ async fn read_readiness(
                     )
                     .await?;
                 if rows.next().await?.is_some() {
-                    election = org.elect(fns, true, Some(&dated));
+                    election = org.elect(fns, true, Some(&dated), as_of);
                 }
             }
             // A target that now reads `hold:recent` (a newer head procedure since the plan),
-            // `hold:residue` (rule v8: its newest item is now the head's), `hold:undated` or a serve
+            // `hold:residue` (rule v8: its newest item is now the head's), `hold:undated`, a serve
             // hold (rule v9: a pure test of the same head and spelling, so only a moved head or a new
-            // display spelling makes one) is drifted like any other verdict that is not the plan's
-            // change.
+            // display spelling makes one) or `hold:head_current` (rule v10: the head printed within 3
+            // years of the plan's `as_of` — a print since the plan) is drifted like any other verdict
+            // that is not the plan's change.
             match &election.verdict {
                 HeadVerdict::Change { rule, new } if rule.label() == target.rule && *new == target.new_name => {
                     match excluded_release(election.recent.as_ref().and_then(|r| r.released), exclude_released) {
@@ -1937,17 +2023,19 @@ async fn read_readiness(
     Ok(Ok(out))
 }
 
-/// The ledger's `evidence`: the epoch, the counts the rename was elected by and (rule `v7`) the
-/// window's reading — k, h_W and the newest head and elected items (`YYYY-MM-DD`, or `null`). Every
-/// value is a number, a date or a fixed ASCII label, so nothing needs escaping.
-fn refresh_evidence(rule: &str, election: &HeadElection) -> String {
+/// The ledger's `evidence`: the epoch, (rule `v10`) the plan's `as_of` (`YYYY-MM-DD`), the counts the
+/// rename was elected by and (rule `v7`) the window's reading — k, h_W and the newest head and elected
+/// items (`YYYY-MM-DD`, or `null`). Every value is a number, a date or a fixed ASCII label, so nothing
+/// needs escaping.
+fn refresh_evidence(rule: &str, election: &HeadElection, as_of: i64) -> String {
     let recent = election.recent.unwrap_or_default();
     let number = |n: Option<u64>| n.map_or_else(|| "null".to_owned(), |n| n.to_string());
     let date = |at: Option<i64>| at.map_or_else(|| "null".to_owned(), |at| format!("\"{}\"", crate::rates::civil_date(at)));
     let dated = election.recent.is_some();
     format!(
-        "{{\"epoch\":\"{HEAD_ELECTION_EPOCH}\",\"rule\":\"{rule}\",\"voting\":{},\"top\":{},\"head\":{},\"second\":{},\
+        "{{\"epoch\":\"{HEAD_ELECTION_EPOCH}\",\"as_of\":\"{}\",\"rule\":\"{rule}\",\"voting\":{},\"top\":{},\"head\":{},\"second\":{},\
          \"clusters\":{},\"head_procs\":{},\"head_in_window\":{},\"head_newest\":{},\"top_newest\":{}}}",
+        crate::rates::civil_date(as_of),
         election.voting,
         election.top,
         election.head_votes,
@@ -2006,8 +2094,10 @@ impl Db {
                 )));
             }
         }
-        // Rule v7: the pre-pass dates the targets past its row checks as the planner dated them.
+        // Rule v7: the pre-pass dates the targets past its row checks as the planner dated them. Rule
+        // v10: it re-elects them with the stored plan's `as_of`, so `head_current` reads as it did.
         let horizon = crate::now_unix() + 86_400;
+        let as_of = args.as_of;
         let mut targets = args.targets;
         targets.sort_by_key(|t| t.org_id);
         targets.dedup_by_key(|t| t.org_id);
@@ -2028,7 +2118,7 @@ impl Db {
         (args.progress)(0, &format!("pre-pass: re-electing {} planned organization(s)", targets.len()));
         let readiness = {
             let reader = self.reader().await?;
-            read_readiness(&reader, &args.fns, &targets, horizon, args.exclude_released, args.stop).await?
+            read_readiness(&reader, &args.fns, &targets, as_of, horizon, args.exclude_released, args.stop).await?
         };
         let readiness = match readiness {
             Ok(readiness) => readiness,
@@ -2123,7 +2213,7 @@ impl Db {
                             target.old_name_norm.clone().map_or(Value::Null, Value::Text),
                             Value::Text(target.new_name.clone()),
                             Value::Text(new_norm),
-                            Value::Text(refresh_evidence(&target.rule, election)),
+                            Value::Text(refresh_evidence(&target.rule, election, as_of)),
                         ],
                     )
                     .await?;
@@ -2363,8 +2453,9 @@ impl Db {
 #[cfg(test)]
 mod tests {
     use super::{
-        DatedVote, HEAD_HOLD_NO_FIT, HEAD_HOLD_RECENT, HEAD_HOLD_RESIDUE, HEAD_HOLD_UNDATED, HeadElectFns, HeadElectOrg, HeadKeep,
-        HeadRule, HeadVerdict, Script, dominant_script, elect_head, elect_head_counted, sample_key,
+        DatedVote, HEAD_CURRENT_DAYS, HEAD_HOLD_CURRENT, HEAD_HOLD_NO_FIT, HEAD_HOLD_RECENT, HEAD_HOLD_RESIDUE, HEAD_HOLD_UNDATED,
+        HeadElectFns, HeadElectOrg, HeadKeep, HeadRule, HeadVerdict, Script, dominant_script, elect_head, elect_head_counted,
+        sample_key,
     };
 
     /// Lower-cased words, `the` and the legal forms dropped, a run of single letters one initialism —
@@ -2460,8 +2551,20 @@ mod tests {
     const FNS: HeadElectFns =
         HeadElectFns { vote_key: key, not_a_name: class, unfit, hold, r2_hold, twin_key: twin, serve_hold };
 
+    /// Rule v10: the plan's `as_of` the rule tests before v10 elect with — day 40,000 (2079), long after
+    /// every dated test item (days under 20,000), so no head is current and their meaning is v9's. The
+    /// v10 tests pass their own.
+    const LATE_PLAN: i64 = 40_000 * 86_400;
+
     fn org(head: &str) -> HeadElectOrg<'_> {
-        HeadElectOrg { head, identifier_kind: Some("national"), identifier: Some("GB1"), bind_defect: false, dated: None }
+        HeadElectOrg {
+            head,
+            identifier_kind: Some("national"),
+            identifier: Some("GB1"),
+            bind_defect: false,
+            dated: None,
+            as_of: LATE_PLAN,
+        }
     }
 
     #[test]
@@ -2789,19 +2892,21 @@ mod tests {
     }
 
     /// Rule v9 changed these values on purpose: the key is Knuth's hash of the id XOR the epoch's salt
-    /// (FNV-1a 64 of `524u2-v9`, low 32 bits), so the dated re-judge's "fresh" samples are not plan
-    /// 2526's predictable next 30. Unsalted (v2–v8) the first three read 2,654,435,761, 1,013,904,226
-    /// and 387,276,917.
+    /// (FNV-1a 64 of the epoch, low 32 bits), so the dated re-judge's "fresh" samples are not the last
+    /// plan's predictable next 30. Rule v10's epoch `524u2-v10` draws anew (salt 2,780,006,399); v9's
+    /// `524u2-v9` salt was 460,574,797, its first three keys 1,624,961,164, 998,333,855 and
+    /// 3,892,120,008. Unsalted (v2–v8) they read 2,654,435,761, 1,013,904,226 and 387,276,917.
     #[test]
     fn the_sample_key_is_knuths_hash_of_the_salted_id_mod_two_to_the_32() {
-        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 460_574_797);
-        assert_eq!(super::epoch_salt("524u2-v9"), 460_574_797);
-        assert_ne!(super::epoch_salt("524u2-v8"), super::ORG_NAME_REFRESH_SAMPLE_SALT, "each epoch its own draw");
-        assert_eq!(sample_key(1), (1_624_961_164, 1));
-        assert_eq!(sample_key(2), (998_333_855, 2));
-        assert_eq!(sample_key(5), (3_892_120_008, 5));
-        assert_eq!(sample_key(31_558_903), (1_157_367_450, 31_558_903));
-        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 460_574_797) * 2_654_435_761) % (1 << 32));
+        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_006_399);
+        assert_eq!(super::epoch_salt("524u2-v10"), 2_780_006_399);
+        assert_eq!(super::epoch_salt("524u2-v9"), 460_574_797, "v9's salt, as plan 2527 drew it");
+        assert_ne!(super::epoch_salt("524u2-v9"), super::ORG_NAME_REFRESH_SAMPLE_SALT, "each epoch its own draw");
+        assert_eq!(sample_key(1), (1_744_442_526, 1));
+        assert_eq!(sample_key(2), (3_384_974_061, 2));
+        assert_eq!(sample_key(5), (4_011_601_370, 5));
+        assert_eq!(sample_key(31_558_903), (2_997_381_256, 31_558_903));
+        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_006_399) * 2_654_435_761) % (1 << 32));
     }
 
     // ---- Rule v7: the R1 recency hold (the recency decision's tests 1-12).
@@ -3284,6 +3389,137 @@ mod tests {
         // `unfit` answers before either test: a control-character head with an address still releases.
         let control = [items("Acme Group", 1, 1, 8), items("Acme\u{8c}Services Dock Road 12", 101, 100, 3)].concat();
         assert_eq!(dated(&control, "Acme\u{8c}Services Dock Road 12").recent.unwrap().released, Some("unfit"));
+    }
+
+    // ---- Rule v10: the current-head hold.
+
+    /// Elect `head` from `rows`, every mention dated, under a plan started at `as_of`.
+    fn dated_at(rows: &[DatedVote<'_>], head: &str, as_of: i64) -> super::HeadElection {
+        let org = HeadElectOrg { dated: Some(rows), as_of, ..org(head) };
+        elect_head_counted(&votes_of(rows), &org, &FNS)
+    }
+
+    fn current(new: &str) -> HeadVerdict {
+        HeadVerdict::Hold { reason: HEAD_HOLD_CURRENT, rule: HeadRule::R1, new: Some(new.to_owned()) }
+    }
+
+    /// The forward shape v10 is about: the head's 2 items (days 1 and 2) are older than every item of
+    /// the cluster R1 elects (days 10–14), so neither the window nor the residue holdout fires, and R1
+    /// changes the head — unless the head was printed within 3 years of the plan.
+    fn forward(head: &'static str, elected: &'static str) -> Vec<DatedVote<'static>> {
+        [items(head, 1, 1, 2), items(elected, 100, 10, 5)].concat()
+    }
+
+    /// Rule v10: an R1 change on a head printed within `HEAD_CURRENT_DAYS` (1,095) of the plan's `as_of`
+    /// is HELD `head_current` with the spelling it would serve; the same organization planned more
+    /// than 3 years after the head's newest item changes. The bound is inclusive: a head printed
+    /// exactly `as_of − 1,095 days` holds, one second older changes.
+    #[test]
+    fn an_r1_change_on_a_head_printed_within_three_years_holds_head_current() {
+        assert_eq!((HEAD_HOLD_CURRENT, HEAD_CURRENT_DAYS), ("head_current", 1_095));
+        let rows = forward("Acme Works", "Acme Group");
+        let head_newest = 2 * DAY;
+        let e = dated_at(&rows, "Acme Works", head_newest + 100 * DAY);
+        assert_eq!(e.verdict, current("Acme Group"));
+        let read = e.recent.unwrap();
+        assert_eq!((read.fires, read.newest_is_head, read.head_newest), (false, false, Some(head_newest)));
+        assert_eq!((read.released, read.release_withheld), (None, None));
+        assert_eq!(e.verdict.label(), "hold:head_current");
+        // Planned more than 3 years after the head's newest item: the outdated name changes.
+        assert_eq!(dated_at(&rows, "Acme Works", head_newest + 2_000 * DAY).verdict, r1("Acme Group"));
+        // The boundary.
+        let edge = head_newest + HEAD_CURRENT_DAYS * DAY;
+        assert_eq!(dated_at(&rows, "Acme Works", edge).verdict, current("Acme Group"), "exactly 1,095 days: held");
+        assert_eq!(dated_at(&rows, "Acme Works", edge + 1).verdict, r1("Acme Group"), "one second older: changes");
+        // An H = 1 head (no window) is held alike.
+        let stray = [items("Acme Works", 1, 1, 1), items("Acme Group", 100, 10, 5)].concat();
+        assert_eq!(dated_at(&stray, "Acme Works", 20 * DAY).verdict, current("Acme Group"));
+        assert_eq!(dated_at(&stray, "Acme Works", LATE_PLAN).verdict, r1("Acme Group"));
+    }
+
+    /// Rule v10 is asked after the serve holds and the bind guards: a change they hold keeps their
+    /// reason on a current head, never `head_current`.
+    #[test]
+    fn a_serve_hold_or_a_bind_guard_on_a_current_head_keeps_its_reason() {
+        let organ_rows = forward("Acme", "Organ of Acme");
+        assert_eq!(dated_at(&organ_rows, "Acme", 20 * DAY).verdict, organ(HeadRule::R1, "Organ of Acme"));
+        let plc = forward("Foo Holdings plc", "Bar Services Ltd");
+        assert_eq!(
+            dated_at(&plc, "Foo Holdings plc", 20 * DAY).verdict,
+            HeadVerdict::Hold { reason: "gb_family", rule: HeadRule::R1, new: Some("Bar Services Ltd".into()) }
+        );
+        // And `recent` and `residue` decide before it, on heads as current as can be.
+        let rename = [items("Old Name Agency", 1, 1, 8), items("New Name Agency", 101, 100, 3)].concat();
+        assert_eq!(dated_at(&rename, "New Name Agency", 103 * DAY).verdict, recent(Some("Old Name Agency")));
+        let newest = [items("Old Name Agency", 1, 1, 8), items("New Name Agency", 101, 100, 1)].concat();
+        assert_eq!(dated_at(&newest, "New Name Agency", 101 * DAY).verdict, residue(HeadRule::R1, "Old Name Agency"));
+    }
+
+    /// Rule v10's junk exemption, as `recent` and `residue` have it: a current head unfit against
+    /// itself (a control character) or carrying a whole number the elected key lacks (a NIP, one word
+    /// lost) changes, read `released`; a number v9 withholds (`glue`) holds `head_current`, read
+    /// `release_withheld`; a lower-case brand is no junk. A head the window already released ships
+    /// (canary 3042's shape: its `(68)`).
+    #[test]
+    fn the_junk_exemption_releases_a_current_head() {
+        let control = forward("Acme\u{8c}Services", "Acme Group");
+        let e = dated_at(&control, "Acme\u{8c}Services", 20 * DAY);
+        assert_eq!((e.verdict, e.recent.unwrap().released), (r1("Acme Group"), Some("unfit")));
+        let nip = forward("Acme Polska NIP 5250001009", "Acme Polska");
+        let e = dated_at(&nip, "Acme Polska NIP 5250001009", 20 * DAY);
+        assert_eq!((e.verdict, e.recent.unwrap().released), (r1("Acme Polska"), Some("digits")));
+        let glue = forward("Studio 3 Dent", "Studio 3dent");
+        let e = dated_at(&glue, "Studio 3 Dent", 20 * DAY);
+        assert_eq!(e.verdict, current("Studio 3dent"));
+        assert_eq!((e.recent.unwrap().released, e.recent.unwrap().release_withheld), (None, Some("glue")));
+        let brand = forward("acme services", "Acme Group");
+        assert_eq!(dated_at(&brand, "acme services", 20 * DAY).verdict, current("Acme Group"));
+        // 3042's shape: the window fires on the head's newest items and releases its number; v10 does
+        // not take the release back.
+        let colmar = [items("Hopitaux Civils de Colmar", 1, 1, 10), items("Hopitaux Civils de Colmar 68", 100, 100, 4)].concat();
+        let e = dated_at(&colmar, "Hopitaux Civils de Colmar 68", 104 * DAY);
+        assert_eq!(e.recent.map(|r| (r.fires, r.released)), Some((true, Some("digits"))));
+        assert_eq!(e.verdict, r1("Hopitaux Civils de Colmar"));
+    }
+
+    /// Rule v10 holds R1 only: R0's defective head always changes, and R2 (excluded from wet runs by
+    /// the v9 filter instead) keeps its own verdict on a current head.
+    #[test]
+    fn r0_and_r2_are_not_held_head_current() {
+        let r0 = [items("Vergabekammer Nord", 1, 1, 4), items("S O", 101, 100, 2)].concat();
+        let e = dated_at(&r0, "s.o.", 102 * DAY);
+        assert_eq!(e.recent.and_then(|r| r.head_newest), Some(101 * DAY), "the head is current");
+        assert_eq!(e.verdict, HeadVerdict::Change { rule: HeadRule::R0n, new: "Vergabekammer Nord".into() });
+        let stray = [("Main Body", 3), ("A Body", 2), ("B Body", 2), ("C Body", 2), ("D Body", 2), ("Head Body", 1)];
+        let rows = [items("Head Body", 1, 1, 1), items("Main Body", 100, 10, 3)].concat();
+        let org_ = HeadElectOrg { dated: Some(&rows), as_of: 20 * DAY, ..org("Head Body") };
+        let e = elect_head_counted(&stray, &org_, &FNS);
+        assert_eq!(e.recent.and_then(|r| r.head_newest), Some(DAY), "the head is current");
+        assert_eq!(e.verdict, HeadVerdict::Change { rule: HeadRule::R2, new: "Main Body".into() });
+        // R2's own holds still answer: `residue` when the head names the newest item.
+        let newest = [items("Main Body", 1, 1, 3), items("Head Body", 101, 100, 1)].concat();
+        let org_ = HeadElectOrg { dated: Some(&newest), as_of: 101 * DAY, ..org("Head Body") };
+        assert_eq!(elect_head(&stray, &org_, &FNS), residue(HeadRule::R2, "Main Body"));
+    }
+
+    /// Rule v10 reads only a dated head item: an undated R1 follows v7 whatever `as_of` says — H ≤ 1
+    /// with no dates, an empty date list, or only the elected items dated changes; H ≥ 2 with no dates
+    /// holds `undated` as before.
+    #[test]
+    fn an_undated_r1_follows_v7_under_v10() {
+        let stray = [("Old Name Agency", 8), ("New Name Agency", 1)];
+        let near = |dated| HeadElectOrg { dated, as_of: 9 * DAY, ..org("New Name Agency") };
+        assert_eq!(elect_head(&stray, &near(None), &FNS), r1("Old Name Agency"));
+        let none: [DatedVote<'_>; 0] = [];
+        assert_eq!(elect_head(&stray, &near(Some(&none[..])), &FNS), r1("Old Name Agency"));
+        let elected = items("Old Name Agency", 1, 1, 8);
+        let e = elect_head_counted(&stray, &near(Some(&elected[..])), &FNS);
+        assert_eq!((e.verdict, e.recent.unwrap().head_newest), (r1("Old Name Agency"), None));
+        let pair = [("Old Name Agency", 8), ("New Name Agency", 2)];
+        assert_eq!(
+            elect_head(&pair, &near(None), &FNS),
+            HeadVerdict::Hold { reason: HEAD_HOLD_UNDATED, rule: HeadRule::R1, new: None }
+        );
     }
 
     /// Issue 524 unit 2a: the planner's candidate reads must seek, not scan: the scoped page by rowid,

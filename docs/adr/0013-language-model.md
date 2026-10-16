@@ -253,6 +253,20 @@ Decided:
    table and their epoch do not move. The plan's uniform samples are salted with the rule's epoch, so
    a re-judge reads a fresh draw; and a wet run may drop the class a re-judge failed (`exclude_rules`,
    `exclude_released`) before its re-check, with no re-plan.
+
+   **(b) is HELD while the head is still in print, and (c) is planned only (rule `524u2-v10`, the
+   owner's decision of 2026-10-16 after plan 2527's dated re-judge).** Plan 2527 failed change:R1 and
+   change:R2 again (4 and 4 wrong of 30), each wrong a new shape no test of the two names sees (a
+   registry marker appended, an eSender's abbreviation, another entity on a shared identifier, an
+   agent's tail). Pooled over the three dated re-judges, the head's recency separated them: a (b)
+   change on a head last printed 3 or more years before the plan read wrong once in 61 under v9, on a
+   head printed within 3 years 4 times in 29. So a (b) change whose head's newest dated item is within
+   1,095 days of the plan's start (`as_of`, stored in the plan; the wet re-check elects with the
+   plan's, so a head printed since reads held and is skipped) is HELD `head_current` with the spelling
+   it would serve — unless the junk exemption releases it, as it releases `recent` and `residue`. It
+   is asked after the tests above, so a change they hold keeps their reason; an undated (b) follows
+   v7; (a) is exempt. (c) showed no such split and keeps failing: the planner still elects and lists
+   it, for issue 548, but every wet run drops it (`exclude_rules: ["R2"]`, v9's pre-committed filter).
 4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
    spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
    guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of

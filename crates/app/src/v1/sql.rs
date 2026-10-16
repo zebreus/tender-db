@@ -1105,9 +1105,11 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          classification, procedure oth-single/oth-mult, a subtype 15 or UK13-UK16 on any version, \
          or a head deadline more than a year after the first deadline-bearing version, unless every \
          own result is an r2.0.9 'discontinued'/'unsuccessful' no-award). NULL otherwise, never 0. \
-         It compares no date with the deadline: a result published after the deadline sets it too, \
-         on a Tender folded since issue 533 deployed. ?status=open is current_deadline > now AND this IS NOT 1 (NULL). A head whose deadline has passed \
-         reads NULL until its next refold (it is Closed by its deadline anyway).",
+         It reads no result's date against the deadline: a result published after the deadline \
+         sets it too, on a Tender folded since issue 533 deployed. ?status=open is \
+         current_deadline > now AND this IS NOT 1 (NULL). A head not folded since issue 533 \
+         deployed whose deadline had already passed reads NULL until its next fold (it is Closed \
+         by its deadline anyway).",
     ),
     (
         "*",
@@ -1281,9 +1283,10 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     the 25% arm only, serve an initialism of the head; when no spelling of the winning cluster is fit to \
     serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on the 55% arm, \
     while the organization's newest procedures still use the current head (a rename: the head names at \
-    least 2 procedures and two thirds of the organization's newest as many); on the 55% and 25% arms, \
+    least 2 procedures and two thirds of the organization's newest as many), or while a notice printed \
+    the current head within 3 years (1,095 days) before the job's plan; on the 55% and 25% arms, \
     while the current head is the only one of the organization's names printed on its newest \
-    publication day; both unless the head is unfit to serve for a reason other than being all lower \
+    publication day; all three unless the head is unfit to serve for a reason other than being all lower \
     case, or carries a standalone number the other name lacks while the other name drops at most one \
     other word of it (a number the other name prints joined to a neighbouring word, `SMD 3` against \
     `Smd3`, is the name's own); on the 55% and 25% arms, when the change would serve a review body's \

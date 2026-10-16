@@ -4307,8 +4307,8 @@ pub fn closure_exempt(chain: &[TenderVersion]) -> bool {
     !explicit
 }
 
-/// Issue 533 1(a): the head's own notice closed the procedure — no timing is read, so an
-/// award notice published after the deadline closes it too —
+/// Issue 533 1(a): the head's own notice closed the procedure — no result's timing is read,
+/// so an award notice published after the deadline closes it too —
 /// `!exempt(C) && own(H) non-empty && every result of H is clos-nw && covered(H)`:
 ///
 /// - `own(H)` non-empty: the head notice itself published results. A re-launch CN after a
