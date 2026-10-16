@@ -1746,3 +1746,40 @@ The full judge record and its reproduction scripts are in `.scratch/tender-db/52
 - **Sequencing.** Dry plan 2562 was enqueued at once, ahead of issue 533/538's refold of 14,927,948 notices (sizing
   2560). That refold follows the plan and holds the queue for hours, so gates (a), (b) and (c) are judged offline
   meanwhile, and the wet steps (canaries, capped, full) wait for it to finish.
+
+## Rule v11 on prod: plan 2562, protocol step 2 (2026-10-16) — GO
+
+Plan 2562 ran on `cbc992b` with `as_of` 2026-10-16. The walk took 153 s (`as_of` 1792150332 → computed 1792150485)
+over 5,679,061 organizations and 49,707,435 mention rows; 2,102,132 were elected. Dated reads: 29,261 candidates,
+1,507,838 notices and 1,507,838 version rows. Not `truncated`.
+
+Every step-2 check passes. Each count is within ±10% of plan 2543's v11 port:
+
+| count | plan 2562 | expected (port on plan 2543) |
+| --- | --- | --- |
+| `by_hold.top_stale` | 2,425 | ~2,430 |
+| `by_hold.doubled` | 91 | ~91 |
+| `by_hold.seat_dropped` | 68 | ~67 |
+| `by_hold.placeholder_id` | 10 | ~10 |
+| `by_hold.head_current` | 6,309 | ~6,302 |
+| `by_rule.R1` (incl. 66 `digits` + 102 `unfit` releases) | 16,103 | ~16,104 |
+| undated | 0 | must be 0 |
+| unexpected canaries | 0 of 54 | 0 |
+
+`hold:recent` is 378 and `hold:residue` 806, so the window is not reading noise; the stop line is about 4,000.
+`release_withheld` is glue 14 and junk_only 95.
+
+The cut for gate (c) is org id 5,102,899 (port: 5,100,081). Gate (a)'s pool, the stale no-rival R1 changes with no
+release, holds 4,610.
+
+**Step 3 draw** (`.scratch/tender-db/524-v11/gates-2562/sample_v11.py`, salt 2,780,005,964, skipping the 565 ids
+in `skip-ids.tsv`): 122 distinct items in `v11_gate_items.json`.
+- (a): 30 items.
+- (b): 30 items, plus a reserve so that 30 survive if (a) fails; 10 of the first 30 are ones `exclude_stale_top`
+  would drop.
+- (c): 30 items, plus the same kind of reserve; 13 of the first 30 would be dropped.
+- (d): 20 `top_stale`, 5 `seat_dropped` and 5 `doubled`, counting only `doubled` entries whose half differs from
+  the head.
+
+Judged in wf_46642f82-a94 (a classifier, then a skeptic on every wrong, revert or harmful), offline while the
+533/538 refold holds the queue.

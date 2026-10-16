@@ -1,0 +1,5535 @@
+{
+ "draw": {
+  "a": [
+   14308356,
+   5734103,
+   9633397,
+   20313467,
+   4395196,
+   14882776,
+   8241524,
+   4735768,
+   2334419,
+   10496191,
+   4431138,
+   3453706,
+   10135437,
+   6844847,
+   17834452,
+   6327719,
+   16516719,
+   3516714,
+   8657785,
+   2675242,
+   12396613,
+   10399481,
+   14066055,
+   8427983,
+   10910891,
+   9803103,
+   13591573,
+   10921742,
+   10046511,
+   1404233
+  ],
+  "b": [
+   14016700,
+   14308356,
+   12726216,
+   22107996,
+   10421725,
+   5734103,
+   14715935,
+   5672636,
+   9633397,
+   20313467,
+   4395196,
+   15997203,
+   13887717,
+   16204526,
+   16330071,
+   13067304,
+   14882776,
+   8241524,
+   14415595,
+   4731571,
+   8447148,
+   4735768,
+   8302120,
+   2334419,
+   4635740,
+   4867629,
+   10496191,
+   12800751,
+   18707735,
+   8102499
+  ],
+  "b_nd": [
+   14016700,
+   12726216,
+   22107996,
+   10421725,
+   14715935,
+   5672636,
+   15997203,
+   13887717,
+   16204526,
+   16330071,
+   13067304,
+   14415595,
+   4731571,
+   8447148,
+   8302120,
+   4635740,
+   4867629,
+   12800751,
+   18707735,
+   8102499,
+   8752489,
+   13655748,
+   9559880,
+   5107698,
+   14335148,
+   20153605,
+   8163810,
+   16673494,
+   5831518,
+   12941470
+  ],
+  "c_cut": 5102899,
+  "c": [
+   4395196,
+   4731571,
+   4735768,
+   2334419,
+   4635740,
+   4867629,
+   4431138,
+   3453706,
+   3555188,
+   1906197,
+   3516714,
+   4094662,
+   2675242,
+   4609556,
+   3597009,
+   1404233,
+   4757185,
+   3283527,
+   1594648,
+   3855027,
+   4007561,
+   2397432,
+   1620777,
+   3652310,
+   4965337,
+   3599743,
+   4599039,
+   3657416,
+   4220277,
+   1263315
+  ],
+  "c_nd": [
+   4731571,
+   4635740,
+   4867629,
+   3555188,
+   1906197,
+   4094662,
+   4609556,
+   3597009,
+   4757185,
+   1594648,
+   3855027,
+   1620777,
+   3652310,
+   4965337,
+   3599743,
+   4599039,
+   4220277,
+   3126906,
+   2968772,
+   3951385,
+   2496978,
+   4082824,
+   4460372,
+   4969094,
+   3204338,
+   3331583,
+   1375095,
+   2528921,
+   4235504,
+   1272845
+  ],
+  "d_top_stale": [
+   14802754,
+   9213677,
+   13897322,
+   9938875,
+   17499099,
+   6160661,
+   9561846,
+   7301922,
+   9534339,
+   10878449,
+   15896262,
+   15346526,
+   7940094,
+   10075795,
+   15082073,
+   10368351,
+   5638950,
+   8386914,
+   10071871,
+   8291325
+  ],
+  "d_seat_dropped": [
+   5350924,
+   11951931,
+   19702064,
+   3452803,
+   22640992
+  ],
+  "d_doubled": [
+   5676405,
+   2043044,
+   7309421,
+   6546919,
+   5857542
+  ]
+ },
+ "items": [
+  {
+   "org_id": 14308356,
+   "identifier": "27660236",
+   "country": "FI",
+   "old_name": "Finn Vaatturit Oy",
+   "new_name": "Fin Vaatturit Oy",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 7,
+   "voting": 7,
+   "top": 6,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Fin Vaatturit Oy",
+     6
+    ],
+    [
+     "Finn Vaatturit Oy",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-11-07",
+   "top_newest": "2023-10-20",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 5734103,
+   "identifier": "24360023600018",
+   "country": "FR",
+   "old_name": "Communauté des communes du Pays d'Issoudun",
+   "new_name": "Communauté de communes du Pays d'Issoudun",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 12,
+   "voting": 12,
+   "top": 11,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Communauté de communes du Pays d'Issoudun",
+     7
+    ],
+    [
+     "Communauté de Communes du Pays d'Issoudun",
+     3
+    ],
+    [
+     "Communauté de communes du pays d'Issoudun",
+     1
+    ],
+    [
+     "Communauté des communes du Pays d'Issoudun",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-10-09",
+   "top_newest": "2024-07-31",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 9633397,
+   "identifier": "5086388000",
+   "country": "SI",
+   "old_name": "OŠ Frana Metelka Škocjan",
+   "new_name": "Osnovna šola Frana Metelka Škocjan",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 31,
+   "voting": 31,
+   "top": 29,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Osnovna šola Frana Metelka Škocjan",
+     21
+    ],
+    [
+     "OSNOVNA ŠOLA FRANA METELKA ŠKOCJAN",
+     8
+    ],
+    [
+     "OŠ Frana Metelka Škocjan",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-04-28",
+   "top_newest": "2024-12-13",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 20313467,
+   "identifier": "31201784",
+   "country": "SK",
+   "old_name": "Základná škola Morovnianska cesta",
+   "new_name": "Základná škola, Morovnianska cesta 1866/55, Handlová",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 4,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Základná škola, Morovnianska cesta 1866/55, Handlová",
+     4
+    ],
+    [
+     "Základná škola Morovnianska cesta",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-01-13",
+   "top_newest": "2024-02-13",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 4395196,
+   "identifier": "31559786",
+   "country": "SK",
+   "old_name": "HaM autoopravy-predaj, s.r.o.",
+   "new_name": "H & M autoopravy - predaj s.r.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 14,
+   "voting": 14,
+   "top": 10,
+   "head": 4,
+   "second": 4,
+   "clusters": 2,
+   "spellings": [
+    [
+     "H & M autoopravy - predaj s.r.o.",
+     9
+    ],
+    [
+     "HaM autoopravy-predaj, s.r.o.",
+     4
+    ],
+    [
+     "H & M autoopravy – predaj s.r.o.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-11-13",
+   "top_newest": "2024-09-04",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b",
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 14882776,
+   "identifier": "0000148010",
+   "country": "PL",
+   "old_name": "Biotronik Polska sp. z o.o.",
+   "new_name": "Biotronik Polska Spółka z o. o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 4,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Biotronik Polska Spółka z o. o.",
+     4
+    ],
+    [
+     "Biotronik Polska sp. z o.o.",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-02-20",
+   "top_newest": "2021-08-13",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 8241524,
+   "identifier": "5084032000",
+   "country": "SI",
+   "old_name": "Osnovna šola Benedikt",
+   "new_name": "Javni vzgojno-izobraževalni zavod Osnovna šola Benedikt",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 5,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Javni vzgojno-izobraževalni zavod Osnovna šola Benedikt",
+     5
+    ],
+    [
+     "Osnovna šola Benedikt",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2016-06-02",
+   "top_newest": "2020-11-25",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 4735768,
+   "identifier": "5566269345",
+   "country": "SE",
+   "old_name": "Dong Energy AB",
+   "new_name": "Orsted AB",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 17,
+   "voting": 17,
+   "top": 15,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Orsted AB",
+     15
+    ],
+    [
+     "DONG Energy AB",
+     1
+    ],
+    [
+     "Dong Energy AB",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2017-05-13",
+   "top_newest": "2025-01-20",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b",
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 2334419,
+   "identifier": "AK09892",
+   "country": "HU",
+   "old_name": "Bács-Kiskun Megyei Múzeumi Szervezet",
+   "new_name": "Kecskeméti Katona József Múzeum",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 20,
+   "voting": 20,
+   "top": 17,
+   "head": 3,
+   "second": 3,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Kecskeméti Katona József Múzeum",
+     17
+    ],
+    [
+     "Bács-Kiskun Megyei Múzeumi Szervezet",
+     3
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2013-06-07",
+   "top_newest": "2016-05-11",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b",
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 10496191,
+   "identifier": "18418330E",
+   "country": "ES",
+   "old_name": "Ezequiel Pomar Domínguez",
+   "new_name": "Limpiezas Ezequiel Pomar Domínguez",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 14,
+   "voting": 14,
+   "top": 12,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "LIMPIEZAS EZEQUIEL POMAR DOMINGUEZ",
+     11
+    ],
+    [
+     "EZEQUIEL POMAR DOMINGUEZ",
+     1
+    ],
+    [
+     "Ezequiel Pomar Domínguez",
+     1
+    ],
+    [
+     "Limpiezas Ezequiel Pomar Domínguez",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2022-01-31",
+   "top_newest": "2023-09-11",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "b"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 4431138,
+   "identifier": "RCS319159877",
+   "country": "FR",
+   "old_name": "Thales Air Systems S.A.S.",
+   "new_name": "Thales LAS FRANCE SAS",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Thales LAS FRANCE SAS",
+     2
+    ],
+    [
+     "Thales las France SAS",
+     2
+    ],
+    [
+     "Thales Air Systems S.A.S.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-11-22",
+   "top_newest": "2023-02-01",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 3453706,
+   "identifier": "AK17483",
+   "country": "HU",
+   "old_name": "Jászkerület Kulturális és Művészeti Közhasznú Nonprofit Kft.",
+   "new_name": "JÁSZKERÜLET Kulturális és Művészeti Közhasznú Nonprofit Korlátolt Felelősségű Társaság",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 14,
+   "voting": 14,
+   "top": 12,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "JÁSZKERÜLET Kulturális és Művészeti Közhasznú Nonprofit Korlátolt Felelősségű Társaság",
+     8
+    ],
+    [
+     "Jászkerület Kulturális és Művészeti Közhasznú Nonprofit Korlátolt Felelősségű Társaság",
+     4
+    ],
+    [
+     "Jászkerület Kulturális és Művészeti Közhasznú Nonprofit Kft.",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-06-18",
+   "top_newest": "2018-01-12",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 10135437,
+   "identifier": "20003591300017",
+   "country": "FR",
+   "old_name": "Syndicat d'electrification Vauclusien",
+   "new_name": "Syndicat d'énergie Vauclusien",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 29,
+   "voting": 29,
+   "top": 22,
+   "head": 7,
+   "second": 7,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Syndicat d'énergie Vauclusien",
+     8
+    ],
+    [
+     "Syndicat d'énergie vauclusien",
+     6
+    ],
+    [
+     "syndicat D'Energie VAUCLUSIEN",
+     5
+    ],
+    [
+     "Syndicat d'electrification Vauclusien",
+     4
+    ],
+    [
+     "syndicat d'énergie Vauclusien",
+     3
+    ]
+   ],
+   "head_procs": 5,
+   "head_in_window": 0,
+   "head_newest": "2018-07-10",
+   "top_newest": "2024-08-08",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 6844847,
+   "identifier": "8Z80458U",
+   "country": "IE",
+   "old_name": "Clondalkin Group",
+   "new_name": "Essentra Packaging Ireland Ltd",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 4,
+   "voting": 4,
+   "top": 3,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Essentra Packaging Ireland Ltd",
+     3
+    ],
+    [
+     "Clondalkin Group",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2015-07-04",
+   "top_newest": "2022-01-25",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 17834452,
+   "identifier": "16962508",
+   "country": "RO",
+   "old_name": "S.C. NESTE AUTOMOTIVE S.R.L.",
+   "new_name": "NESTE AUTOMOTIVE",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 4,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "NESTE AUTOMOTIVE",
+     4
+    ],
+    [
+     "S.C. NESTE AUTOMOTIVE S.R.L.",
+     2
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 1,
+   "head_newest": "2023-06-27",
+   "top_newest": "2023-10-04",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 6327719,
+   "identifier": "64991300",
+   "country": "CZ",
+   "old_name": "Sbor dobrovolných hasičů Horní Sukolom",
+   "new_name": "SH ČMS - Sbor dobrovolných hasičů Horní Sukolom",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 9,
+   "voting": 9,
+   "top": 6,
+   "head": 3,
+   "second": 3,
+   "clusters": 2,
+   "spellings": [
+    [
+     "SH ČMS - Sbor dobrovolných hasičů Horní Sukolom",
+     6
+    ],
+    [
+     "Sbor dobrovolných hasičů Horní Sukolom",
+     3
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2018-11-13",
+   "top_newest": "2023-10-11",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 16516719,
+   "identifier": "7471528431",
+   "country": "PL",
+   "old_name": "Thomex Krystian Thoma",
+   "new_name": "Krystian Thoma Thomex",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "KRYSTIAN THOMA THOMEX",
+     3
+    ],
+    [
+     "Krystian Thoma Thomex",
+     1
+    ],
+    [
+     "Thomex Krystian Thoma",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2021-01-19",
+   "top_newest": "2025-02-28",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 3516714,
+   "identifier": "300021499",
+   "country": "LT",
+   "old_name": "Uždaroji akcinė bendrovė „Verslo ir neįgaliųjų vystymo grupė“",
+   "new_name": "UAB Verslo ir neįgaliųjų vystymo grupė",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 40,
+   "voting": 40,
+   "top": 34,
+   "head": 6,
+   "second": 6,
+   "clusters": 2,
+   "spellings": [
+    [
+     "UAB Verslo ir neįgaliųjų vystymo grupė",
+     21
+    ],
+    [
+     "UAB Verslo ir Neįgaliųjų Vystymo Grupė",
+     6
+    ],
+    [
+     "Uždaroji akcinė bendrovė „Verslo ir neįgaliųjų vystymo grupė“",
+     6
+    ],
+    [
+     "UAB „Verslo ir neįgaliųjų vystymo grupė“",
+     4
+    ],
+    [
+     "UAB \"Verslo ir neįgaliųjų vystymo grupė\"",
+     2
+    ]
+   ],
+   "head_procs": 5,
+   "head_in_window": 0,
+   "head_newest": "2017-10-03",
+   "top_newest": "2023-05-17",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 8657785,
+   "identifier": "35780203200031",
+   "country": "FR",
+   "old_name": "La Moselle-Maison Familiale",
+   "new_name": "Batigère Maison Familiale",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 7,
+   "voting": 7,
+   "top": 5,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "BATIGERE MAISON FAMILIALE",
+     4
+    ],
+    [
+     "La Moselle-Maison Familiale",
+     2
+    ],
+    [
+     "Batigère Maison Familiale",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2016-09-29",
+   "top_newest": "2024-08-01",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 2675242,
+   "identifier": "AK16866",
+   "country": "HU",
+   "old_name": "Pannon Egyetem",
+   "new_name": "Nereus Park Hotel Kft.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 16,
+   "voting": 16,
+   "top": 14,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Nereus Park Hotel Kft.",
+     12
+    ],
+    [
+     "Nereus Park Hotel Kft",
+     2
+    ],
+    [
+     "Pannon Egyetem",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-01-02",
+   "top_newest": "2018-01-12",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 12396613,
+   "identifier": "6806076995",
+   "country": "SE",
+   "old_name": "Träd, sten & ängar",
+   "new_name": "HAHRE, STEFAN",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "HAHRE, STEFAN",
+     4
+    ],
+    [
+     "Träd, sten & ängar",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-10-23",
+   "top_newest": "2024-08-26",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 10399481,
+   "identifier": "974685019",
+   "country": "NO",
+   "old_name": "Victoria",
+   "new_name": "Victoria AS",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 8,
+   "voting": 8,
+   "top": 7,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Victoria AS",
+     4
+    ],
+    [
+     "VICTORIA AS",
+     3
+    ],
+    [
+     "Victoria",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-09-29",
+   "top_newest": "2025-10-08",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 14066055,
+   "identifier": "162725B",
+   "country": "AT",
+   "old_name": "Maschinenring Salzburg reg. Gen. m.b.H.",
+   "new_name": "Maschinenring Salzburg registrierte Genossenschaft mit beschränkter Haftung",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 8,
+   "voting": 8,
+   "top": 7,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Maschinenring Salzburg registrierte Genossenschaft mit beschränkter Haftung",
+     7
+    ],
+    [
+     "Maschinenring Salzburg reg. Gen. m.b.H.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-09-25",
+   "top_newest": "2024-10-17",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 8427983,
+   "identifier": "5877881000",
+   "country": "SI",
+   "old_name": "Avtohiša Kolmanič & Dokl d.o.o.",
+   "new_name": "AVTOHIŠA KOLMANIČ & DOKL, trgovina in servis d.o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 4,
+   "voting": 4,
+   "top": 3,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "AVTOHIŠA KOLMANIČ & DOKL, trgovina in servis d.o.o.",
+     3
+    ],
+    [
+     "Avtohiša Kolmanič & Dokl d.o.o.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2016-07-23",
+   "top_newest": "2025-05-26",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 10910891,
+   "identifier": "00280755",
+   "country": "CZ",
+   "old_name": "ZŠ Olešnice – Moderně a komplexně – dodávky",
+   "new_name": "Město Olešnice",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Město Olešnice",
+     4
+    ],
+    [
+     "ZŠ Olešnice – Moderně a komplexně – dodávky",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-01-30",
+   "top_newest": "2018-06-22",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 9803103,
+   "identifier": "FI23287075",
+   "country": "FI",
+   "old_name": "Tmi Jukka Similä / Hailuodon Taksi",
+   "new_name": "Tmi Jukka Similä",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 13,
+   "voting": 13,
+   "top": 12,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Tmi Jukka Similä",
+     12
+    ],
+    [
+     "Tmi Jukka Similä / Hailuodon Taksi",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-05-31",
+   "top_newest": "2024-12-20",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 13591573,
+   "identifier": "EKRSZ70597004",
+   "country": "HU",
+   "old_name": "Garden Kertészeti és Erdészeti Szolgáltató Kft.",
+   "new_name": "Garden Kertészeti és Erdészeti Szolgáltató Korlátolt Felelősségű Társaság",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 5,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Garden Kertészeti és Erdészeti Szolgáltató Korlátolt Felelősségű Társaság",
+     5
+    ],
+    [
+     "Garden Kertészeti és Erdészeti Szolgáltató Kft.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-06-20",
+   "top_newest": "2020-12-23",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 10921742,
+   "identifier": "SE556463224701",
+   "country": "SE",
+   "old_name": "SICK AB",
+   "new_name": "SICK Aktiebolag",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 4,
+   "voting": 4,
+   "top": 3,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "SICK Aktiebolag",
+     3
+    ],
+    [
+     "SICK AB",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-01-04",
+   "top_newest": "2025-04-07",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 10046511,
+   "identifier": "5566138144",
+   "country": "SE",
+   "old_name": "B. Zellout AB",
+   "new_name": "Zellout AB",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 5,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Zellout AB",
+     5
+    ],
+    [
+     "B. Zellout AB",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-07-15",
+   "top_newest": "2023-02-07",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 1404233,
+   "identifier": "10043113",
+   "country": "DE",
+   "old_name": "Kommunale Verwaltung",
+   "new_name": "Gemeinde Merchweiler",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 22,
+   "voting": 22,
+   "top": 21,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Gemeinde Merchweiler",
+     21
+    ],
+    [
+     "Kommunale Verwaltung",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2011-11-18",
+   "top_newest": "2025-04-10",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "a",
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 14016700,
+   "identifier": "51373754400058",
+   "country": "FR",
+   "old_name": "ETPE",
+   "new_name": "Europ TP",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 48,
+   "voting": 48,
+   "top": 41,
+   "head": 1,
+   "second": 1,
+   "clusters": 8,
+   "spellings": [
+    [
+     "EUROP'TP",
+     18
+    ],
+    [
+     "EUROP TP",
+     8
+    ],
+    [
+     "EUROP'TP SAS",
+     5
+    ],
+    [
+     "Europ TP",
+     3
+    ],
+    [
+     "EUROP’TP",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-09-12",
+   "top_newest": "2026-09-04",
+   "rival_newest": "2026-04-23",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 12726216,
+   "identifier": "7781002137",
+   "country": "PL",
+   "old_name": "Sigma-Aldrich Sp. z o.o.",
+   "new_name": "Merck Life Science Sp. z o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 236,
+   "voting": 236,
+   "top": 195,
+   "head": 10,
+   "second": 10,
+   "clusters": 16,
+   "spellings": [
+    [
+     "Merck Life Science Sp. z o.o.",
+     102
+    ],
+    [
+     "Merck Life Science Sp. z o. o.",
+     59
+    ],
+    [
+     "Merck Life Science sp. z o.o.",
+     12
+    ],
+    [
+     "Merc Life Science Sp. z o.o.",
+     6
+    ],
+    [
+     "MERCK LIFE SCIENCE Sp. z o.o.",
+     5
+    ]
+   ],
+   "head_procs": 5,
+   "head_in_window": 0,
+   "head_newest": "2021-07-05",
+   "top_newest": "2026-10-16",
+   "rival_newest": "2026-10-15",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 22107996,
+   "identifier": "5213381661",
+   "country": "PL",
+   "old_name": "SoftMed Sp. z o. o. Członkiem Konsorcjum",
+   "new_name": "SoftMed Sp. z o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 18,
+   "voting": 18,
+   "top": 13,
+   "head": 1,
+   "second": 1,
+   "clusters": 6,
+   "spellings": [
+    [
+     "SoftMed Sp. z o.o.",
+     10
+    ],
+    [
+     "SOFTMED SP. Z O.O.",
+     1
+    ],
+    [
+     "SOFTMED SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+     1
+    ],
+    [
+     "SOFTMED sp. z o.o.",
+     1
+    ],
+    [
+     "Soft Med Sp. z o.o.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-10-13",
+   "top_newest": "2026-06-25",
+   "rival_newest": "2026-06-17",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 10421725,
+   "identifier": "24570140400056",
+   "country": "FR",
+   "old_name": "Communauté de communes du Pays Haut Val d'Alzette",
+   "new_name": "Communauté de communes Pays Haut Val d'Alzette",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 18,
+   "voting": 18,
+   "top": 17,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Communauté de communes Pays Haut Val d'Alzette",
+     11
+    ],
+    [
+     "communauté de communes Pays Haut Val d'alzette",
+     6
+    ],
+    [
+     "Communauté de communes du Pays Haut Val d'Alzette",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-10-28",
+   "top_newest": "2026-10-15",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 14715935,
+   "identifier": "122729525",
+   "country": "PL",
+   "old_name": "Konsorcjum: lider: Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.)",
+   "new_name": "Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 21,
+   "voting": 21,
+   "top": 15,
+   "head": 1,
+   "second": 2,
+   "clusters": 6,
+   "spellings": [
+    [
+     "MAŁOPOLSKIE PRZEDSIĘBIORSTWO GOSPODARKI ODPADAMI SP. Z O.O.",
+     7
+    ],
+    [
+     "Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.",
+     7
+    ],
+    [
+     "Miejskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.",
+     2
+    ],
+    [
+     "Konsorcjum Małopolskie Przed.Gospodarki  (lider: Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.)",
+     1
+    ],
+    [
+     "Konsorcjum: lider: Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.)",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-01-14",
+   "top_newest": "2026-02-09",
+   "rival_newest": "2025-10-17",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 5672636,
+   "identifier": "29524210204",
+   "country": "HR",
+   "old_name": "VIPnet d.o.o.",
+   "new_name": "A1 Hrvatska d.o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 153,
+   "voting": 153,
+   "top": 137,
+   "head": 15,
+   "second": 15,
+   "clusters": 3,
+   "spellings": [
+    [
+     "A1 Hrvatska d.o.o.",
+     137
+    ],
+    [
+     "VIPnet d.o.o.",
+     8
+    ],
+    [
+     "VIPnet d. o. o.",
+     7
+    ],
+    [
+     "Zajednica ponuditelja Vipnet d.o.o. i Metronet telekomunikacije d.d.",
+     1
+    ]
+   ],
+   "head_procs": 15,
+   "head_in_window": 0,
+   "head_newest": "2018-03-29",
+   "top_newest": "2026-10-06",
+   "rival_newest": "2015-07-15",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 15997203,
+   "identifier": "64834042",
+   "country": "CZ",
+   "old_name": "Sídlo společnosti Lesní stavby, s.r.o.",
+   "new_name": "LS stavby s.r.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 7,
+   "voting": 7,
+   "top": 6,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "LS stavby s.r.o.",
+     6
+    ],
+    [
+     "Sídlo společnosti Lesní stavby, s.r.o.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-10-19",
+   "top_newest": "2026-06-08",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 13887717,
+   "identifier": "33180058100158",
+   "country": "FR",
+   "old_name": "C 3 B",
+   "new_name": "C3B",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 12,
+   "voting": 12,
+   "top": 11,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "C3B",
+     11
+    ],
+    [
+     "C 3 B",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-08-13",
+   "top_newest": "2026-08-24",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 16204526,
+   "identifier": "5470052876",
+   "country": "PL",
+   "old_name": "Suez Bielsko-Biała S.A.",
+   "new_name": "PreZero Bielsko-Biała S.A.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 17,
+   "voting": 17,
+   "top": 13,
+   "head": 1,
+   "second": 2,
+   "clusters": 4,
+   "spellings": [
+    [
+     "PreZero Bielsko-Biała S.A.",
+     13
+    ],
+    [
+     "PreZero BielskoBiała S.A.",
+     2
+    ],
+    [
+     "PreZero Bielsko-Biała Spółka Akcyjna",
+     1
+    ],
+    [
+     "Suez Bielsko-Biała S.A.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-11-24",
+   "top_newest": "2026-01-06",
+   "rival_newest": "2026-06-30",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 16330071,
+   "identifier": "8990102145",
+   "country": "PL",
+   "old_name": "Zakład Automatyki Przemysłowej INTEC spółka z ograniczona odpowiedzialnością",
+   "new_name": "INTEC S.A.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 8,
+   "voting": 8,
+   "top": 5,
+   "head": 2,
+   "second": 2,
+   "clusters": 3,
+   "spellings": [
+    [
+     "INTEC S.A.",
+     5
+    ],
+    [
+     "Zakład Automatyki Przemysłowej INTEC Sp. z o.o.",
+     1
+    ],
+    [
+     "Zakład Automatyki Przemysłowej INTEC Spółka z ograniczoną odpowiedzialnością",
+     1
+    ],
+    [
+     "Zakład Automatyki Przemysłowej INTEC spółka z ograniczona odpowiedzialnością",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2022-12-21",
+   "top_newest": "2026-01-15",
+   "rival_newest": "2021-11-23",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 13067304,
+   "identifier": "6961010818",
+   "country": "PL",
+   "old_name": "Konsorcjum Zakładów Usług Leśnych Zakład Usług Leśnych Hieronim Koszyczarek - Lider Konsorcjum",
+   "new_name": "Zakład Usług Leśnych Hieronim Koszyczarek",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 8,
+   "voting": 8,
+   "top": 7,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Zakład Usług Leśnych Hieronim Koszyczarek",
+     6
+    ],
+    [
+     "Konsorcjum Zakładów Usług Leśnych Zakład Usług Leśnych Hieronim Koszyczarek - Lider Konsorcjum",
+     1
+    ],
+    [
+     "Zakład Usług Leśnych, Hieronim Koszyczarek",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-03-18",
+   "top_newest": "2026-03-03",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 14415595,
+   "identifier": "A08066896",
+   "country": "ES",
+   "old_name": "Prolians Metalco, S. A.",
+   "new_name": "Metalco, S. A.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 27,
+   "voting": 27,
+   "top": 25,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "METALCO, S.A.",
+     9
+    ],
+    [
+     "Metalco, S. A.",
+     5
+    ],
+    [
+     "Metalco, S.A.",
+     4
+    ],
+    [
+     "METALCO S.A.",
+     3
+    ],
+    [
+     "METALCO SA",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-11-28",
+   "top_newest": "2026-03-16",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4731571,
+   "identifier": "25525410",
+   "country": "NL",
+   "old_name": "Stichting Flore",
+   "new_name": "Blosse",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 15,
+   "voting": 15,
+   "top": 13,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Blosse",
+     13
+    ],
+    [
+     "Stichting Flore",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-08-16",
+   "top_newest": "2026-07-22",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd",
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 8447148,
+   "identifier": "5378628000",
+   "country": "SI",
+   "old_name": "Janko Sirc S.P.",
+   "new_name": "Sirc Janko s.p. - mesarstvo",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 50,
+   "voting": 50,
+   "top": 40,
+   "head": 10,
+   "second": 10,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Sirc Janko s.p. - mesarstvo",
+     19
+    ],
+    [
+     "SIRC JANKO S.P. - MESARSTVO",
+     12
+    ],
+    [
+     "Janko Sirc S.P.",
+     8
+    ],
+    [
+     "Sirc Janko s.p. - Mesarstvo",
+     5
+    ],
+    [
+     "JANKO SIRC S.P.",
+     2
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2017-07-13",
+   "top_newest": "2025-12-30",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 8302120,
+   "identifier": "5050596000",
+   "country": "SI",
+   "old_name": "ZUDV Dornava",
+   "new_name": "Zavod za usposabljanje, delo in varstvo dr. Marijana Borštnarja Dornava",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 142,
+   "voting": 142,
+   "top": 130,
+   "head": 12,
+   "second": 12,
+   "clusters": 2,
+   "spellings": [
+    [
+     "ZAVOD ZA USPOSABLJANJE, DELO IN VARSTVO DR. MARIJANA BORŠTNARJA DORNAVA",
+     91
+    ],
+    [
+     "Zavod za usposabljanje, delo in varstvo dr. Marijana Borštnarja Dornava",
+     30
+    ],
+    [
+     "ZUDV Dornava",
+     12
+    ],
+    [
+     "Zavod za usposabljanje, delo in varstvo Dr. Marijana Borštnarja Dornava",
+     9
+    ]
+   ],
+   "head_procs": 5,
+   "head_in_window": 0,
+   "head_newest": "2017-06-20",
+   "top_newest": "2026-09-11",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4635740,
+   "identifier": "10914764",
+   "country": "EE",
+   "old_name": "Osaühing Awre",
+   "new_name": "Forklift OÜ",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 35,
+   "voting": 35,
+   "top": 34,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Forklift OÜ",
+     34
+    ],
+    [
+     "Osaühing Awre",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-01-24",
+   "top_newest": "2026-06-08",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd",
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4867629,
+   "identifier": "10236446484",
+   "country": "HR",
+   "old_name": "Ministarstvo pravosuđa, Kaznionica u Lepoglavi",
+   "new_name": "KAZNIONICA U LEPOGLAVI",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 657,
+   "voting": 657,
+   "top": 650,
+   "head": 6,
+   "second": 6,
+   "clusters": 3,
+   "spellings": [
+    [
+     "KAZNIONICA U LEPOGLAVI",
+     650
+    ],
+    [
+     "Ministarstvo pravosuđa, Kaznionica u Lepoglavi",
+     6
+    ],
+    [
+     "Ministarstvo pravosuđa i uprave, Kaznionica u Lepoglavi",
+     1
+    ]
+   ],
+   "head_procs": 3,
+   "head_in_window": 0,
+   "head_newest": "2015-08-21",
+   "top_newest": "2026-10-13",
+   "rival_newest": "2022-03-09",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd",
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 12800751,
+   "identifier": "17382834",
+   "country": "FI",
+   "old_name": "Lukkarinoja Oy/Esperi Koti Pirttikoski",
+   "new_name": "Lukkarinoja Oy",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Lukkarinoja Oy",
+     4
+    ],
+    [
+     "Lukkarinoja Oy/Esperi Koti Pirttikoski",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-01-22",
+   "top_newest": "2026-07-06",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 18707735,
+   "identifier": "6891208247",
+   "country": "PL",
+   "old_name": "Sylwestr Bożejewicz prowadzący działalność gospodarczą pod firmą Sylwester Bożejewicz Usługi Leśne",
+   "new_name": "Usługi Leśne Sylwester Bożejewicz",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 9,
+   "voting": 9,
+   "top": 5,
+   "head": 2,
+   "second": 2,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Usługi Leśne Sylwester Bożejewicz",
+     5
+    ],
+    [
+     "Sylwester Bożejewicz Usługi Leśne",
+     2
+    ],
+    [
+     "Sylwestr Bożejewicz prowadzący działalność gospodarczą pod firmą Sylwester Bożejewicz Usługi Leśne",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-01-27",
+   "top_newest": "2026-03-26",
+   "rival_newest": "2025-03-18",
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 8102499,
+   "identifier": "78007414476",
+   "country": "HR",
+   "old_name": "OŠ Markušica",
+   "new_name": "OSNOVNA ŠKOLA MARKUŠICA",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 4,
+   "voting": 4,
+   "top": 3,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "OSNOVNA ŠKOLA MARKUŠICA",
+     3
+    ],
+    [
+     "OŠ Markušica",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2016-04-22",
+   "top_newest": "2026-09-01",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b",
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 8752489,
+   "identifier": "5925983000",
+   "country": "SI",
+   "old_name": "Birotehna d.o.o.",
+   "new_name": "Birotehna, servis in vzdrževanje računalniške in pisarniške opreme, d.o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 45,
+   "voting": 45,
+   "top": 39,
+   "head": 6,
+   "second": 6,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Birotehna, servis in vzdrževanje računalniške in pisarniške opreme, d.o.o.",
+     23
+    ],
+    [
+     "BIROTEHNA, servis in vzdrževanje računalniške in pisarniške opreme, d.o.o.",
+     15
+    ],
+    [
+     "Birotehna d.o.o.",
+     6
+    ],
+    [
+     "Birotehna, servis in vzdrževanje računalniške in pisarniške opreme, d. o. o.",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2016-11-15",
+   "top_newest": "2026-06-08",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 13655748,
+   "identifier": "B06150916",
+   "country": "ES",
+   "old_name": "Distribución Gasóleos García-Camacho, S. L.",
+   "new_name": "DISTRIBUCION GARCIA-CAMACHO, S.L.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 4,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "DISTRIBUCION GARCIA-CAMACHO, S.L.",
+     4
+    ],
+    [
+     "Distribución Gasóleos García-Camacho, S. L.",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-07-03",
+   "top_newest": "2026-02-25",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 9559880,
+   "identifier": "5465303000",
+   "country": "SI",
+   "old_name": "VIGROS d.o.o.",
+   "new_name": "Vigros - Trgovina na debelo in drobno d.o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 313,
+   "voting": 313,
+   "top": 308,
+   "head": 5,
+   "second": 5,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Vigros - Trgovina na debelo in drobno d.o.o.",
+     151
+    ],
+    [
+     "VIGROS - Trgovina na debelo in drobno d.o.o.",
+     138
+    ],
+    [
+     "Vigros - trgovina na debelo in drobno d.o.o.",
+     14
+    ],
+    [
+     "VIGROS d.o.o.",
+     5
+    ],
+    [
+     "VIGROS – Trgovina na debelo in drobno d.o.o.",
+     3
+    ]
+   ],
+   "head_procs": 3,
+   "head_in_window": 0,
+   "head_newest": "2017-04-29",
+   "top_newest": "2026-05-28",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 5107698,
+   "identifier": "92518824224",
+   "country": "HR",
+   "old_name": "Školski servis",
+   "new_name": "Školski servis d.o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 48,
+   "voting": 48,
+   "top": 45,
+   "head": 2,
+   "second": 2,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Školski servis d.o.o.",
+     28
+    ],
+    [
+     "ŠKOLSKI SERVIS d.o.o.",
+     15
+    ],
+    [
+     "Zajednica ponuditelja: Školski servis d. o. o.; Orto Rea d. o. o.",
+     1
+    ],
+    [
+     "Školski Servis",
+     1
+    ],
+    [
+     "Školski Servis d.o.o.",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2016-04-22",
+   "top_newest": "2026-09-21",
+   "rival_newest": "2017-02-22",
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 14335148,
+   "identifier": "7133063693",
+   "country": "PL",
+   "old_name": "Zakład Zagospodarowania Odpadów Komunalnych Sp. z o.o. (Zamawiający)",
+   "new_name": "Zakład Zagospodarowania Odpadów Komunalnych w Bełżycach Sp. z o.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 73,
+   "voting": 73,
+   "top": 45,
+   "head": 2,
+   "second": 16,
+   "clusters": 7,
+   "spellings": [
+    [
+     "Zakład Zagospodarowania Odpadów Komunalnych w Bełżycach Sp. z o.o.",
+     38
+    ],
+    [
+     "Zakład Zagospodarowania Odpadów Komunalnych w Bełżycach Spółka z ograniczoną odpowiedzialnością",
+     8
+    ],
+    [
+     "Zakład Zagospodarowania Odpadów Komunalnych Sp. z o.o.",
+     7
+    ],
+    [
+     "Zakład Zagospodarowania Odpadów Komunalnych w Bełżycach Spółka z ograniczoną odpowiedzialnościa",
+     5
+    ],
+    [
+     "Zakład Zagospodarowania Odpadów Komunalnych w Bełżycach Sp. z o. o.",
+     3
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-01-03",
+   "top_newest": "2026-10-09",
+   "rival_newest": "2025-10-14",
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 20153605,
+   "identifier": "26217523",
+   "country": "FI",
+   "old_name": "Ylöjärven Kiviset Oy (TYL Prokivi)",
+   "new_name": "Ylöjärven Kiviset Oy",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Ylöjärven Kiviset Oy",
+     4
+    ],
+    [
+     "Ylöjärven Kiviset Oy (TYL Prokivi)",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2022-11-25",
+   "top_newest": "2025-12-31",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 8163810,
+   "identifier": "20000068500012",
+   "country": "FR",
+   "old_name": "ESPCI",
+   "new_name": "ESPCI Paris PSL",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 22,
+   "voting": 22,
+   "top": 21,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "ESPCI Paris PSL",
+     8
+    ],
+    [
+     "ESPCI Paris-PSL",
+     8
+    ],
+    [
+     "ESPCI Paris  PSL",
+     4
+    ],
+    [
+     "ESPCI",
+     1
+    ],
+    [
+     "ESPCI Paris - PSL",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2016-05-12",
+   "top_newest": "2026-07-02",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 16673494,
+   "identifier": "8491497510",
+   "country": "PL",
+   "old_name": "Konsorcjum firm: Lider Forest Factory Maciej Frej",
+   "new_name": "Factory Maciej Frej",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 4,
+   "voting": 4,
+   "top": 3,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Factory Maciej Frej",
+     3
+    ],
+    [
+     "Konsorcjum firm: Lider Forest Factory Maciej Frej",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2021-02-15",
+   "top_newest": "2026-01-29",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 5831518,
+   "identifier": "221822144",
+   "country": "NL",
+   "old_name": "Stichting Speciaal Onderwijs Noord- en Midden Limburg",
+   "new_name": "Stichting Onderwijsgroep Buitengewoon",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 21,
+   "voting": 21,
+   "top": 14,
+   "head": 7,
+   "second": 7,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Stichting Onderwijsgroep Buitengewoon",
+     14
+    ],
+    [
+     "Stichting Speciaal Onderwijs Noord- en Midden Limburg",
+     5
+    ],
+    [
+     "Stichting Speciaal Onderwijs Noord- en Midden-Limburg",
+     2
+    ]
+   ],
+   "head_procs": 3,
+   "head_in_window": 0,
+   "head_newest": "2018-03-01",
+   "top_newest": "2026-07-06",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 12941470,
+   "identifier": "49616374",
+   "country": "CZ",
+   "old_name": "Rekma, spol. s.r.o.",
+   "new_name": "OAT,s.r.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 44,
+   "voting": 44,
+   "top": 34,
+   "head": 10,
+   "second": 10,
+   "clusters": 2,
+   "spellings": [
+    [
+     "OAT,s.r.o.",
+     19
+    ],
+    [
+     "OAT, s.r.o.",
+     12
+    ],
+    [
+     "Rekma, spol. s.r.o.",
+     9
+    ],
+    [
+     "OAT, s. r. o.",
+     2
+    ],
+    [
+     "Oat, s.r.o.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2022-03-30",
+   "top_newest": "2026-10-08",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "b_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3555188,
+   "identifier": "129010196",
+   "country": "BG",
+   "old_name": "Командване на Военноморски сили",
+   "new_name": "Командване на военноморските сили",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 153,
+   "voting": 153,
+   "top": 115,
+   "head": 33,
+   "second": 33,
+   "clusters": 4,
+   "spellings": [
+    [
+     "Командване на военноморските сили",
+     77
+    ],
+    [
+     "Командване на Военноморските сили",
+     38
+    ],
+    [
+     "Командване на Военноморски сили",
+     33
+    ],
+    [
+     "Сухопътни войски - военно формирование 22450",
+     3
+    ],
+    [
+     "Командване на военоморските сили",
+     2
+    ]
+   ],
+   "head_procs": 15,
+   "head_in_window": 0,
+   "head_newest": "2022-05-18",
+   "top_newest": "2026-08-11",
+   "rival_newest": "2019-12-09",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 1906197,
+   "identifier": "28505913",
+   "country": "CZ",
+   "old_name": "Advokátní kancelář Jansta, Kostka spol. s r.o.",
+   "new_name": "Chrenek, Toman, Kotrba advokátní kancelář spol. s r. o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 336,
+   "voting": 336,
+   "top": 246,
+   "head": 84,
+   "second": 84,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Chrenek, Toman, Kotrba advokátní kancelář spol. s r. o.",
+     241
+    ],
+    [
+     "Advokátní kancelář Jansta, Kostka spol. s r.o.",
+     74
+    ],
+    [
+     "Advokátní kancelář Jansta, Kostka, spol. s.r.o.",
+     6
+    ],
+    [
+     "Chrenek, Toman, Kotrba advokátní kancelář spol. s r.o.",
+     5
+    ],
+    [
+     "Advokátní kancelář Chrenek, Kotrba spol. s r. o.",
+     4
+    ]
+   ],
+   "head_procs": 64,
+   "head_in_window": 0,
+   "head_newest": "2021-12-17",
+   "top_newest": "2026-10-16",
+   "rival_newest": "2026-06-24",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4094662,
+   "identifier": "33912343",
+   "country": "SK",
+   "old_name": "AST Desing – Mgr. Stuchlíková Andrea",
+   "new_name": "Mgr. Andrea Stuchlíková – AST Design",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 18,
+   "voting": 18,
+   "top": 17,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Mgr. Andrea Stuchlíková – AST Design",
+     7
+    ],
+    [
+     "Mgr. Andrea Stuchlíková - AST DESIGN",
+     6
+    ],
+    [
+     "Mgr. Andrea Stuchlíková - AST Design",
+     2
+    ],
+    [
+     "AST Desing – Mgr. Stuchlíková Andrea",
+     1
+    ],
+    [
+     "Mgr. Andrea Stuchlíková - Ast Design",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-08-31",
+   "top_newest": "2026-04-22",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4609556,
+   "identifier": "9697204320",
+   "country": "SE",
+   "old_name": "McKinsey & Company",
+   "new_name": "McKinsey",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 20,
+   "voting": 20,
+   "top": 16,
+   "head": 1,
+   "second": 2,
+   "clusters": 4,
+   "spellings": [
+    [
+     "McKinsey",
+     16
+    ],
+    [
+     "McKinsey & Company KB",
+     2
+    ],
+    [
+     "McKinsey & Company",
+     1
+    ],
+    [
+     "Mckinsey & Company Kommanditbolag",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-01-11",
+   "top_newest": "2025-11-14",
+   "rival_newest": "2025-10-31",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3597009,
+   "identifier": "2120000175",
+   "country": "SE",
+   "old_name": "Upphandling av säkerhetssystem för Sundbybergs stad",
+   "new_name": "Sundbybergs kommun",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 362,
+   "voting": 362,
+   "top": 328,
+   "head": 1,
+   "second": 31,
+   "clusters": 4,
+   "spellings": [
+    [
+     "Sundbybergs kommun",
+     328
+    ],
+    [
+     "Sundbybergs stad",
+     29
+    ],
+    [
+     "Sundbyberg stad",
+     2
+    ],
+    [
+     "Sundbybergs Stad",
+     2
+    ],
+    [
+     "Upphandling av säkerhetssystem för Sundbybergs stad",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-04-30",
+   "top_newest": "2026-10-15",
+   "rival_newest": "2026-05-13",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4757185,
+   "identifier": "974760673",
+   "country": "NO",
+   "old_name": "Brønnøysundregistrene",
+   "new_name": "Registerenheten i Brønnøysund",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 264,
+   "voting": 264,
+   "top": 201,
+   "head": 24,
+   "second": 24,
+   "clusters": 10,
+   "spellings": [
+    [
+     "Registerenheten i Brønnøysund",
+     200
+    ],
+    [
+     "Brønnøysundregistrene",
+     24
+    ],
+    [
+     "The Brønnøysund Register Centre",
+     20
+    ],
+    [
+     "Brønnøysundregistrene [The Brønnøysund Register Centre]",
+     5
+    ],
+    [
+     "Oslo Tingrett",
+     5
+    ]
+   ],
+   "head_procs": 19,
+   "head_in_window": 0,
+   "head_newest": "2021-01-11",
+   "top_newest": "2026-10-13",
+   "rival_newest": "2026-09-09",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3283527,
+   "identifier": "37781308",
+   "country": "SK",
+   "old_name": "Knižnica P.O.Hviezdoslava v Prešove",
+   "new_name": "Krajská knižnica P.O.Hviezdoslava v Prešove",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 12,
+   "voting": 12,
+   "top": 9,
+   "head": 3,
+   "second": 3,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Krajská knižnica P.O.Hviezdoslava v Prešove",
+     5
+    ],
+    [
+     "Krajská knižnica P. O. Hviezdoslava v Prešove",
+     4
+    ],
+    [
+     "Knižnica P. O. Hviezdoslava v Prešove",
+     1
+    ],
+    [
+     "Knižnica P.O. Hviezdoslava v Prešove",
+     1
+    ],
+    [
+     "Knižnica P.O.Hviezdoslava v Prešove",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2013-09-14",
+   "top_newest": "2024-07-01",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 1594648,
+   "identifier": "7270134501",
+   "country": "PL",
+   "old_name": "Komenda Wojewódzka PSP w Łodzi",
+   "new_name": "Komenda Wojewódzka Państwowej Straży Pożarnej w Łodzi",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 76,
+   "voting": 76,
+   "top": 66,
+   "head": 1,
+   "second": 9,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Komenda Wojewódzka Państwowej Straży Pożarnej w Łodzi",
+     63
+    ],
+    [
+     "Łódzki Komendant Wojewódzki Państwowej Straży Pożarnej",
+     9
+    ],
+    [
+     "KOMENDA WOJEWÓDZKA PAŃSTWOWEJ STRAŻY POŻARNEJ W ŁODZI",
+     3
+    ],
+    [
+     "Komenda Wojewódzka PSP w Łodzi",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2012-01-04",
+   "top_newest": "2026-08-26",
+   "rival_newest": "2026-01-06",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3855027,
+   "identifier": "5565935698",
+   "country": "SE",
+   "old_name": "Sentensia q AB",
+   "new_name": "B3 Upphandling AB",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 89,
+   "voting": 89,
+   "top": 71,
+   "head": 9,
+   "second": 9,
+   "clusters": 3,
+   "spellings": [
+    [
+     "B3 Upphandling AB",
+     71
+    ],
+    [
+     "B3 Sentensia AB",
+     9
+    ],
+    [
+     "Sentensia Q AB",
+     6
+    ],
+    [
+     "Sentensia q AB",
+     3
+    ]
+   ],
+   "head_procs": 6,
+   "head_in_window": 0,
+   "head_newest": "2019-01-09",
+   "top_newest": "2026-10-08",
+   "rival_newest": "2020-03-20",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4007561,
+   "identifier": "36862126",
+   "country": "SK",
+   "old_name": "Agrofert Holding, a.s., organizačná zložka Agrochémia",
+   "new_name": "Agrofert, a. s., organizačná zložka Agrochémia",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 16,
+   "voting": 16,
+   "top": 14,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Agrofert, a. s., organizačná zložka Agrochémia",
+     6
+    ],
+    [
+     "Agrofert, a.s., organizačná zložka Agrochémia",
+     6
+    ],
+    [
+     "Agrofert Holding, a.s., organizačná zložka Agrochémia",
+     2
+    ],
+    [
+     "AGROFERT, a. s., organizačná zložka Agrochémia",
+     1
+    ],
+    [
+     "Agrofert ,a.s. Organizačná zložka Agrochémia",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2014-03-15",
+   "top_newest": "2023-02-03",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 2397432,
+   "identifier": "28418794",
+   "country": "CZ",
+   "old_name": "ARTEZIS, s.r.o.",
+   "new_name": "Ing. Pavel Novák s.r.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 66,
+   "voting": 66,
+   "top": 49,
+   "head": 17,
+   "second": 17,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Ing. Pavel Novák s.r.o.",
+     26
+    ],
+    [
+     "Ing. Pavel Novák",
+     19
+    ],
+    [
+     "ARTEZIS s.r.o.",
+     12
+    ],
+    [
+     "Ing. Pavel Novák, s.r.o.",
+     4
+    ],
+    [
+     "ARTEZIS, s.r.o.",
+     3
+    ]
+   ],
+   "head_procs": 10,
+   "head_in_window": 0,
+   "head_newest": "2012-10-02",
+   "top_newest": "2024-04-25",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 1620777,
+   "identifier": "28046153",
+   "country": "CZ",
+   "old_name": "Plzeňské komunální služby s.r.o.",
+   "new_name": "Čistá Plzeň, s.r.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 50,
+   "voting": 50,
+   "top": 41,
+   "head": 9,
+   "second": 9,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Čistá Plzeň, s.r.o.",
+     36
+    ],
+    [
+     "Plzeňské komunální služby s.r.o.",
+     9
+    ],
+    [
+     "Čistá Plzeň s.r.o.",
+     3
+    ],
+    [
+     "Čistá Plzeň, s. r. o.",
+     2
+    ]
+   ],
+   "head_procs": 8,
+   "head_in_window": 0,
+   "head_newest": "2015-01-31",
+   "top_newest": "2026-06-15",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3652310,
+   "identifier": "000044541",
+   "country": "BG",
+   "old_name": "Университет „Проф. д-р Асен Златаров\"",
+   "new_name": "Университет „Професор д-р Асен Златаров“ — Бургас",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 125,
+   "voting": 125,
+   "top": 75,
+   "head": 28,
+   "second": 28,
+   "clusters": 6,
+   "spellings": [
+    [
+     "УНИВЕРСИТЕТ \"ПРОФЕСОР Д-Р АСЕН ЗЛАТАРОВ\" БУРГАС",
+     64
+    ],
+    [
+     "Университет „Проф. д-р Асен Златаров“",
+     27
+    ],
+    [
+     "Университет „Професор д-р Асен Златаров“ — Бургас",
+     9
+    ],
+    [
+     "УНИВЕРСИТЕТ \"ПРОФ. Д-Р АСЕН ЗЛАТАРОВ\" БУРГАС",
+     6
+    ],
+    [
+     "Университет „Проф. д-р Асен Златаров“ — Бургас",
+     6
+    ]
+   ],
+   "head_procs": 13,
+   "head_in_window": 0,
+   "head_newest": "2020-05-13",
+   "top_newest": "2026-09-01",
+   "rival_newest": "2024-08-16",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4965337,
+   "identifier": "970896856",
+   "country": "NO",
+   "old_name": "KLP Forsikring as",
+   "new_name": "KLP Skadeforsikring AS",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 83,
+   "voting": 83,
+   "top": 54,
+   "head": 1,
+   "second": 23,
+   "clusters": 6,
+   "spellings": [
+    [
+     "KLP Skadeforsikring AS",
+     49
+    ],
+    [
+     "KLP Skadeforsikring",
+     14
+    ],
+    [
+     "KLP skadeforsikring",
+     8
+    ],
+    [
+     "KLP skadeforsikring AS",
+     4
+    ],
+    [
+     "KLP AS",
+     3
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-03-28",
+   "top_newest": "2026-10-14",
+   "rival_newest": "2023-06-01",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3599743,
+   "identifier": "25355996",
+   "country": "CZ",
+   "old_name": "Nehlsen Třinec, s. r. o.",
+   "new_name": "SMOLO CZ, s.r.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 14,
+   "voting": 14,
+   "top": 13,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "SMOLO CZ, s.r.o.",
+     11
+    ],
+    [
+     "Nehlsen Třinec, s. r. o.",
+     1
+    ],
+    [
+     "SMOLO CZ s.r.o.",
+     1
+    ],
+    [
+     "Smolo CZ, s.r.o.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-05-02",
+   "top_newest": "2026-03-03",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4599039,
+   "identifier": "881894742",
+   "country": "NO",
+   "old_name": "Faveo prosjektledelse AS",
+   "new_name": "WSP Norge AS",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 310,
+   "voting": 310,
+   "top": 204,
+   "head": 51,
+   "second": 51,
+   "clusters": 9,
+   "spellings": [
+    [
+     "WSP Norge AS",
+     183
+    ],
+    [
+     "Faveo Prosjektledelse AS",
+     47
+    ],
+    [
+     "WSP NORGE AS (Oppdragsgiver)",
+     27
+    ],
+    [
+     "WSP Norge  AS",
+     19
+    ],
+    [
+     "WSP Norge AS (hovedenhet)",
+     16
+    ]
+   ],
+   "head_procs": 35,
+   "head_in_window": 0,
+   "head_newest": "2016-03-02",
+   "top_newest": "2026-10-13",
+   "rival_newest": "2026-09-28",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3657416,
+   "identifier": "05924747",
+   "country": "FI",
+   "old_name": "Konsulttitoimisto Markinvest Oy",
+   "new_name": "Markinvest Oy",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Markinvest Oy",
+     4
+    ],
+    [
+     "Konsulttitoimisto Markinvest Oy",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-05-17",
+   "top_newest": "2024-04-15",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 4220277,
+   "identifier": "07945410",
+   "country": "FI",
+   "old_name": "A-Insinöörit Oy",
+   "new_name": "A-Insinöörit Rakennuttaminen Oy",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 194,
+   "voting": 194,
+   "top": 181,
+   "head": 4,
+   "second": 4,
+   "clusters": 9,
+   "spellings": [
+    [
+     "A-Insinöörit Rakennuttaminen Oy",
+     174
+    ],
+    [
+     "A-insinöörit Rakennuttaminen Oy",
+     6
+    ],
+    [
+     "A-Insinöörit",
+     3
+    ],
+    [
+     "4. A-Insinöörit Rakennuttaminen Oy",
+     2
+    ],
+    [
+     "5. A-Insinöörit Rakennuttaminen Oy",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2019-05-07",
+   "top_newest": "2026-10-01",
+   "rival_newest": "2022-07-04",
+   "newest_is_head": false,
+   "gates": [
+    "c",
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 1263315,
+   "identifier": "190425189",
+   "country": "PL",
+   "old_name": "Gdynia Container Terminla S.A.",
+   "new_name": "Gdynia Container Terminal S.A.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 11,
+   "voting": 11,
+   "top": 10,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Gdynia Container Terminal S.A.",
+     8
+    ],
+    [
+     "Gdynia Container Terminal S.A",
+     1
+    ],
+    [
+     "Gdynia Container Terminal SA",
+     1
+    ],
+    [
+     "Gdynia Container Terminla S.A.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2011-10-13",
+   "top_newest": "2013-03-14",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c"
+   ],
+   "stale_top": true
+  },
+  {
+   "org_id": 3126906,
+   "identifier": "000662655",
+   "country": "BG",
+   "old_name": "НМТБ „Цар Борис ІІІ“",
+   "new_name": "Национална многопрофилна транспортна болница „Цар Борис III“",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 226,
+   "voting": 226,
+   "top": 175,
+   "head": 9,
+   "second": 41,
+   "clusters": 4,
+   "spellings": [
+    [
+     "НАЦИОНАЛНА МНОГОПРОФИЛНА ТРАНСПОРТНА БОЛНИЦА \"ЦАР БОРИС III\"",
+     145
+    ],
+    [
+     "Национална многопрофилна транспортна болница „Цар Борис ІІІ“",
+     31
+    ],
+    [
+     "Национална многопрофилна транспортна болница „Цар Борис III“",
+     22
+    ],
+    [
+     "Национална Многопрофилна Транспортна Болница „Цар Борис III“",
+     8
+    ],
+    [
+     "Национална Многопрофилна Транспортна Болница „Цар Борис ІІІ“",
+     8
+    ]
+   ],
+   "head_procs": 7,
+   "head_in_window": 0,
+   "head_newest": "2014-03-27",
+   "top_newest": "2026-10-12",
+   "rival_newest": "2022-05-13",
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 2968772,
+   "identifier": "26940106300012",
+   "country": "FR",
+   "old_name": "EPS Paul Guiraud",
+   "new_name": "GHT Psy Sud Paris",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 56,
+   "voting": 56,
+   "top": 48,
+   "head": 6,
+   "second": 6,
+   "clusters": 4,
+   "spellings": [
+    [
+     "GHT Psy Sud Paris",
+     47
+    ],
+    [
+     "EPS Paul Guiraud",
+     6
+    ],
+    [
+     "GH Paul Guiraud - Fondation Vallée",
+     1
+    ],
+    [
+     "GHT PSY SUD PARIS",
+     1
+    ],
+    [
+     "GROUPE HOSPITALIER FONDATION VALLEE - PAUL GUIRAUD",
+     1
+    ]
+   ],
+   "head_procs": 3,
+   "head_in_window": 0,
+   "head_newest": "2016-09-09",
+   "top_newest": "2026-09-08",
+   "rival_newest": "2026-09-09",
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3951385,
+   "identifier": "36223646",
+   "country": "SK",
+   "old_name": "ALTA-JP, s.r.o.",
+   "new_name": "ALTA-PJ, s.r.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 5,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "ALTA-PJ, s.r.o.",
+     3
+    ],
+    [
+     "ALTA - PJ, s.r.o.",
+     2
+    ],
+    [
+     "ALTA-JP, s.r.o.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-07-26",
+   "top_newest": "2026-10-12",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 2496978,
+   "identifier": "00165182",
+   "country": "SK",
+   "old_name": "Ministerstvo kultúry SR",
+   "new_name": "Ministerstvo kultúry Slovenskej republiky",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 294,
+   "voting": 294,
+   "top": 279,
+   "head": 12,
+   "second": 12,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Ministerstvo kultúry Slovenskej republiky",
+     279
+    ],
+    [
+     "Ministerstvo kultúry SR",
+     12
+    ],
+    [
+     "Bibiana",
+     3
+    ]
+   ],
+   "head_procs": 10,
+   "head_in_window": 0,
+   "head_newest": "2015-03-21",
+   "top_newest": "2026-10-14",
+   "rival_newest": "2015-08-08",
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4082824,
+   "identifier": "302502912",
+   "country": "LT",
+   "old_name": "UAB Dezinfekcijos paslaugos (Dezinfekavimo paslaugų ir dezinfekcinių priemonių pirkimas)",
+   "new_name": "UAB \"Dezinfekcijos paslaugos\"",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 13,
+   "voting": 13,
+   "top": 12,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "UAB \"Dezinfekcijos paslaugos\"",
+     6
+    ],
+    [
+     "UAB „Dezinfekcijos paslaugos“",
+     3
+    ],
+    [
+     "UAB DEZINFEKCIJOS PASLAUGOS",
+     2
+    ],
+    [
+     "UAB \"DEZINFEKCIJOS PASLAUGOS\"",
+     1
+    ],
+    [
+     "UAB Dezinfekcijos paslaugos (Dezinfekavimo paslaugų ir dezinfekcinių priemonių pirkimas)",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-08-29",
+   "top_newest": "2026-09-22",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4460372,
+   "identifier": "25907069",
+   "country": "CZ",
+   "old_name": "Janča V.M. s.r.o.",
+   "new_name": "JANČA & EMAS group s.r.o.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 13,
+   "voting": 13,
+   "top": 11,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "JANČA & EMAS group s.r.o.",
+     11
+    ],
+    [
+     "Janča V.M. s.r.o.",
+     2
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2015-01-17",
+   "top_newest": "2026-07-24",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4969094,
+   "identifier": "34718613532",
+   "country": "HR",
+   "old_name": "Vlada Republike Hrvatske – Direkcija za korištenje službenim zrakoplovom",
+   "new_name": "DIREKCIJA ZA KORIŠTENJE SLUŽBENIH ZRAKOPLOVA",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 288,
+   "voting": 288,
+   "top": 280,
+   "head": 8,
+   "second": 8,
+   "clusters": 2,
+   "spellings": [
+    [
+     "DIREKCIJA ZA KORIŠTENJE SLUŽBENIH ZRAKOPLOVA",
+     280
+    ],
+    [
+     "Vlada Republike Hrvatske – Direkcija za korištenje službenim zrakoplovom",
+     4
+    ],
+    [
+     "Vlada Republike Hrvatske - Direkcija za korištenje službenim zrakoplovom",
+     3
+    ],
+    [
+     "Vlada Republike Hrvatske, Direkcija za korištenje službenim zrakoplovom",
+     1
+    ]
+   ],
+   "head_procs": 8,
+   "head_in_window": 0,
+   "head_newest": "2023-08-29",
+   "top_newest": "2026-10-15",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3204338,
+   "identifier": "133724656",
+   "country": "LT",
+   "old_name": "Uždaroji akcinė bendrovė \"Kauno liftai\"",
+   "new_name": "UAB „Kauno liftai“",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 45,
+   "voting": 45,
+   "top": 31,
+   "head": 14,
+   "second": 14,
+   "clusters": 2,
+   "spellings": [
+    [
+     "UAB „Kauno liftai“",
+     17
+    ],
+    [
+     "Uždaroji akcinė bendrovė „Kauno liftai“",
+     11
+    ],
+    [
+     "UAB \"Kauno liftai\"",
+     7
+    ],
+    [
+     "Kauno liftai, UAB",
+     5
+    ],
+    [
+     "UAB Kauno liftai",
+     2
+    ]
+   ],
+   "head_procs": 11,
+   "head_in_window": 1,
+   "head_newest": "2023-09-04",
+   "top_newest": "2026-03-05",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 3331583,
+   "identifier": "2120000977",
+   "country": "SE",
+   "old_name": "Tekniska kontoret",
+   "new_name": "Ängelholms kommun",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 650,
+   "voting": 650,
+   "top": 649,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Ängelholms kommun",
+     612
+    ],
+    [
+     "Ängelholms Kommun",
+     37
+    ],
+    [
+     "Tekniska kontoret",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-02-26",
+   "top_newest": "2026-10-12",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 1375095,
+   "identifier": "00156621",
+   "country": "SK",
+   "old_name": "Ministerstvo pôdohospodárstva a rozvija vidieka SR",
+   "new_name": "Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej republiky",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 322,
+   "voting": 322,
+   "top": 277,
+   "head": 1,
+   "second": 43,
+   "clusters": 4,
+   "spellings": [
+    [
+     "Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej republiky",
+     277
+    ],
+    [
+     "Ministerstvo pôdohospodárstva a rozvoja vidieka SR",
+     43
+    ],
+    [
+     "Ministerstvo pôdohospodárstva a rozvija vidieka SR",
+     1
+    ],
+    [
+     "Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2011-11-10",
+   "top_newest": "2026-09-10",
+   "rival_newest": "2015-04-03",
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 2528921,
+   "identifier": "07650698",
+   "country": "FI",
+   "old_name": "Rejlers Oy",
+   "new_name": "Rejlers Finland Oy",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 172,
+   "voting": 172,
+   "top": 164,
+   "head": 8,
+   "second": 8,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Rejlers Finland Oy",
+     164
+    ],
+    [
+     "Rejlers Oy",
+     8
+    ]
+   ],
+   "head_procs": 7,
+   "head_in_window": 0,
+   "head_newest": "2019-03-14",
+   "top_newest": "2026-09-11",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 4235504,
+   "identifier": "17383546",
+   "country": "FI",
+   "old_name": "Energiamarkkinavirasto",
+   "new_name": "Energiavirasto",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 33,
+   "voting": 33,
+   "top": 30,
+   "head": 2,
+   "second": 2,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Energiavirasto",
+     30
+    ],
+    [
+     "Energiamarkkinavirasto",
+     2
+    ],
+    [
+     "Energy Authority (Energiavirasto)",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-10-30",
+   "top_newest": "2026-03-13",
+   "rival_newest": "2017-09-14",
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 1272845,
+   "identifier": "44570783",
+   "country": "SK",
+   "old_name": "Nemocnica svätého Michala, a. s.",
+   "new_name": "Univerzitná nemocnica - Nemocnica svätého Michala, a.s.",
+   "verdict": "change",
+   "rule": "R1",
+   "reason": "R1",
+   "recent_released": null,
+   "n": 180,
+   "voting": 180,
+   "top": 120,
+   "head": 59,
+   "second": 59,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Univerzitná nemocnica - Nemocnica svätého Michala, a.s.",
+     73
+    ],
+    [
+     "Univerzitná nemocnica - Nemocnica svätého Michala, a. s.",
+     47
+    ],
+    [
+     "Nemocnica svätého Michala, a.s.",
+     42
+    ],
+    [
+     "Nemocnica svätého Michala, a. s.",
+     17
+    ],
+    [
+     "Slovenský hydrometeorologický ústav",
+     1
+    ]
+   ],
+   "head_procs": 29,
+   "head_in_window": 0,
+   "head_newest": "2020-03-11",
+   "top_newest": "2026-10-15",
+   "rival_newest": "2013-02-09",
+   "newest_is_head": false,
+   "gates": [
+    "c_nd"
+   ],
+   "stale_top": false
+  },
+  {
+   "org_id": 14802754,
+   "identifier": "9151718970",
+   "country": "PL",
+   "old_name": "Zakład Usługowy „Baks” Paweł Baksalary",
+   "new_name": "Paweł Baksalary Zakład Usługowy \"BAKS\"",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 10,
+   "voting": 10,
+   "top": 8,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "PAWEŁ BAKSALARY ZAKŁAD USŁUGOWY \"BAKS\"",
+     3
+    ],
+    [
+     "PAWEŁ BAKSALARY ZAKŁAD\nUSŁUGOWY \"BAKS\"",
+     1
+    ],
+    [
+     "Paweł Baksalary Zakład Usługowy \"BAKS\"",
+     1
+    ],
+    [
+     "Paweł Baksalary Zakład Usługowy BAKS",
+     1
+    ],
+    [
+     "Paweł Baksalary Zakład Usługowy „BAKS\"",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-02-27",
+   "top_newest": "2025-02-21",
+   "rival_newest": "2023-08-25",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 9213677,
+   "identifier": "200676532",
+   "country": "BG",
+   "old_name": "„Ойл Плюс“ ЕООД",
+   "new_name": "„Ойл Плюс — Бургас“ ЕООД",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 16,
+   "voting": 16,
+   "top": 14,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "„Ойл Плюс — Бургас“ ЕООД",
+     5
+    ],
+    [
+     "„Ойл Плюс-Бургас“ ЕООД",
+     3
+    ],
+    [
+     "„Ойл Плюс Бургас” ЕООД",
+     2
+    ],
+    [
+     "Ойл Плюс Бургас ЕООД",
+     1
+    ],
+    [
+     "Ойл Плюс — Бургас ЕООД",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-01-19",
+   "top_newest": "2024-07-25",
+   "rival_newest": "2018-03-16",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 13897322,
+   "identifier": "5492238909",
+   "country": "PL",
+   "old_name": "Wasiela Jerzy Netprint s.c.",
+   "new_name": "KONSULTING JERZY WASIELA",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 3,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "KONSULTING JERZY WASIELA",
+     3
+    ],
+    [
+     "Jerzy Wasiela",
+     1
+    ],
+    [
+     "Wasiela Jerzy Netprint s.c.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-08-28",
+   "top_newest": "2024-01-16",
+   "rival_newest": "2022-04-05",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 9938875,
+   "identifier": "5566911342",
+   "country": "SE",
+   "old_name": "Praxair Sverige AB",
+   "new_name": "Nippon Gases Sverige AB",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 24,
+   "voting": 24,
+   "top": 17,
+   "head": 4,
+   "second": 4,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Nippon Gases Sverige AB",
+     17
+    ],
+    [
+     "Praxair Sverige AB",
+     4
+    ],
+    [
+     "Nippon Sanso Sverige AB",
+     3
+    ]
+   ],
+   "head_procs": 4,
+   "head_in_window": 0,
+   "head_newest": "2019-01-11",
+   "top_newest": "2025-08-19",
+   "rival_newest": "2026-08-12",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 17499099,
+   "identifier": "10036000007935",
+   "country": "MD",
+   "old_name": "DataControl SRL",
+   "new_name": "FCPC ”DataControl” SRL",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 70,
+   "voting": 70,
+   "top": 62,
+   "head": 3,
+   "second": 4,
+   "clusters": 4,
+   "spellings": [
+    [
+     "FCPC ”DataControl” SRL",
+     61
+    ],
+    [
+     "FCPC Data Control SRL",
+     4
+    ],
+    [
+     "DataControl SRL",
+     3
+    ],
+    [
+     "FCPC „DataControl” SRL",
+     1
+    ],
+    [
+     "„Almicom-Tech” SRL",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2021-07-28",
+   "top_newest": "2024-10-24",
+   "rival_newest": "2022-03-07",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 6160661,
+   "identifier": "24188834",
+   "country": "NL",
+   "old_name": "Kemira Rotterdam BV (agent voor Kemira Oyj)",
+   "new_name": "Kemira Rotterdam B.V.",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 16,
+   "voting": 16,
+   "top": 11,
+   "head": 3,
+   "second": 3,
+   "clusters": 4,
+   "spellings": [
+    [
+     "Kemira Rotterdam B.V.",
+     6
+    ],
+    [
+     "Kemira Rotterdam BV",
+     3
+    ],
+    [
+     "Kemira Rotterdam BV (agent voor Kemira Oyj)",
+     3
+    ],
+    [
+     "Kemira Rotterdam bv",
+     2
+    ],
+    [
+     "Kemira Oyj vertegenwoordigd door Kemira Rotterdam B.V.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2015-01-22",
+   "top_newest": "2025-02-26",
+   "rival_newest": "2026-05-21",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 9561846,
+   "identifier": "75344769",
+   "country": "CZ",
+   "old_name": "Mgr. Adriana Rešlová",
+   "new_name": "Adriana Rešlová",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 9,
+   "voting": 9,
+   "top": 6,
+   "head": 2,
+   "second": 2,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Adriana Rešlová",
+     6
+    ],
+    [
+     "Mgr. Adriana Rešlová",
+     2
+    ],
+    [
+     "Jan Bureš",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-04-06",
+   "top_newest": "2025-07-18",
+   "rival_newest": "2017-04-06",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 7301922,
+   "identifier": "06064355",
+   "country": "NL",
+   "old_name": "Leijh Kappelhof Seckel van den Dobbelsteen architecten BV",
+   "new_name": "LKSVDD architecten",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "LKSVDD architecten",
+     3
+    ],
+    [
+     "Architecten VOORMORGEN B.V.",
+     1
+    ],
+    [
+     "LKSVDD architecten BV",
+     1
+    ],
+    [
+     "Leijh Kappelhof Seckel van den Dobbelsteen architecten BV",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2015-10-06",
+   "top_newest": "2025-03-04",
+   "rival_newest": "2026-09-10",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 9534339,
+   "identifier": "19185885",
+   "country": "FI",
+   "old_name": "Dosti tulkkaus- ja käännöspalvelu",
+   "new_name": "Dosti tulkkaus- ja käännöspalvelut",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 11,
+   "voting": 11,
+   "top": 8,
+   "head": 2,
+   "second": 2,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Dosti tulkkaus- ja käännöspalvelut",
+     4
+    ],
+    [
+     "Dosti tulkkaus- ja käännöspalvelut Oy",
+     4
+    ],
+    [
+     "Dosti tulkkaus- ja käännöspalvelu",
+     2
+    ],
+    [
+     "Dosti tulkkaus- jam käännöspalvelut Oy",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-03-28",
+   "top_newest": "2018-05-31",
+   "rival_newest": "2018-05-31",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 10878449,
+   "identifier": "8421774045",
+   "country": "PL",
+   "old_name": "Usługi Leśne Roman Kotłowski",
+   "new_name": "Zakład Usług Leśnych i Transportowych Sp. Cywilna Kazimierz Rowiński, Rafał Rowiński",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 7,
+   "voting": 7,
+   "top": 5,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Zakład Usług Leśnych i Transportowych Sp. Cywilna Kazimierz Rowiński, Rafał Rowiński",
+     5
+    ],
+    [
+     "Usługi Leśne Roman Kotłowski",
+     1
+    ],
+    [
+     "ZULIT S.C. Kazimierz Rowiński, Rafał Rowiński",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-01-20",
+   "top_newest": "2023-05-26",
+   "rival_newest": "2020-01-24",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 15896262,
+   "identifier": "9110023714905",
+   "country": "AT",
+   "old_name": "Salzburger Burgen & Schlösser Betriebsführung",
+   "new_name": "Salzburger Burgen und Schlösser Betriebsführung",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 22,
+   "voting": 22,
+   "top": 19,
+   "head": 1,
+   "second": 2,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Salzburger Burgen und Schlösser Betriebsführung",
+     19
+    ],
+    [
+     "Land Salzburg Burgen und Schlösser Betriebsführung",
+     2
+    ],
+    [
+     "Salzburger Burgen & Schlösser Betriebsführung",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-09-21",
+   "top_newest": "2025-04-30",
+   "rival_newest": "2026-06-01",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 15346526,
+   "identifier": "7521328416",
+   "country": "PL",
+   "old_name": "199. Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.",
+   "new_name": "Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o.o.",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 45,
+   "voting": 45,
+   "top": 33,
+   "head": 4,
+   "second": 5,
+   "clusters": 5,
+   "spellings": [
+    [
+     "Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o.o.",
+     16
+    ],
+    [
+     "Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.",
+     12
+    ],
+    [
+     "199. Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.",
+     4
+    ],
+    [
+     "Zakład Wodociągów i Usług Komunalnych EKOWOD Sp. z o.o.",
+     3
+    ],
+    [
+     "54. Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.",
+     2
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2020-09-25",
+   "top_newest": "2024-05-02",
+   "rival_newest": "2026-07-10",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 7940094,
+   "identifier": "545646",
+   "country": "GB",
+   "old_name": "United Living",
+   "new_name": "United Living (North) Ltd",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 10,
+   "voting": 10,
+   "top": 8,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "United Living (North) Ltd",
+     4
+    ],
+    [
+     "United Living (North) Limited",
+     2
+    ],
+    [
+     "United Living",
+     1
+    ],
+    [
+     "United Living (North) Limited  (appointed to Lot 7)",
+     1
+    ],
+    [
+     "United Living (North) Ltd (appointed to Lot 7)",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2016-03-26",
+   "top_newest": "2021-10-26",
+   "rival_newest": "2018-02-28",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 10075795,
+   "identifier": "26378443",
+   "country": "DK",
+   "old_name": "G. Tscherning",
+   "new_name": "G. Tscherning A/S",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 3,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "G. Tscherning A/S",
+     3
+    ],
+    [
+     "G. Tscherning",
+     1
+    ],
+    [
+     "TSCHERNING A/S",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-07-14",
+   "top_newest": "2024-12-09",
+   "rival_newest": "2026-09-04",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 15082073,
+   "identifier": "5891962110",
+   "country": "PL",
+   "old_name": "Zakład Robót Ogólnobudowlanych Stanisław Repiński",
+   "new_name": "Spółka Komunalna Żukowo Sp. z o.o.",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 44,
+   "voting": 44,
+   "top": 34,
+   "head": 1,
+   "second": 9,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Spółka Komunalna Żukowo Sp. z o.o.",
+     34
+    ],
+    [
+     "Spółka Komunalna Żukowo Sp.zo.o.",
+     9
+    ],
+    [
+     "Zakład Robót Ogólnobudowlanych Stanisław Repiński",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-04-17",
+   "top_newest": "2023-12-19",
+   "rival_newest": "2026-09-04",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 10368351,
+   "identifier": "5562795251",
+   "country": "SE",
+   "old_name": "Högbo Brukshotell",
+   "new_name": "Winn Hotels Högbo Brukshotell AB",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 6,
+   "voting": 6,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Winn Hotels Högbo Brukshotell AB",
+     4
+    ],
+    [
+     "Högbo Brukshotell",
+     1
+    ],
+    [
+     "Software Högbo Brukshotell AB",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-09-22",
+   "top_newest": "2022-11-22",
+   "rival_newest": "2019-06-14",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 5638950,
+   "identifier": "08644280117",
+   "country": "HR",
+   "old_name": "Brlić d.o.o.",
+   "new_name": "Brlic",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 19,
+   "voting": 19,
+   "top": 14,
+   "head": 4,
+   "second": 4,
+   "clusters": 3,
+   "spellings": [
+    [
+     "BRLIC",
+     9
+    ],
+    [
+     "Brlic",
+     5
+    ],
+    [
+     "Brlić d.o.o.",
+     4
+    ],
+    [
+     "Zajednica ponuditelja: Brlić d.o.o.; COM d.o.o.; Geodata Projekt d.o.o.",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-09-16",
+   "top_newest": "2024-11-29",
+   "rival_newest": "2015-10-31",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 8386914,
+   "identifier": "5436362000",
+   "country": "SI",
+   "old_name": "Autodelta d.o.o.",
+   "new_name": "Autodelta trgovsko-proizvodno podjetje export-import, marketing, zastopanje in ekonomski inženiring, d.o.o.",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 36,
+   "voting": 36,
+   "top": 30,
+   "head": 3,
+   "second": 3,
+   "clusters": 4,
+   "spellings": [
+    [
+     "Autodelta trgovsko-proizvodno podjetje export-import, marketing, zastopanje in ekonomski inženiring, d.o.o.",
+     16
+    ],
+    [
+     "AUTODELTA trgovsko-proizvodno podjetje export-import, marketing, zastopanje in ekonomski inženiring, d.o.o.",
+     8
+    ],
+    [
+     "Autodelta, trgovsko-proizvodno podjetje export-import, marketing, zastopanje in ekonomski inženiring, d.o.o.",
+     6
+    ],
+    [
+     "Autodelta d.o.o.",
+     3
+    ],
+    [
+     "Autodelta trgovsko-proizvodno podjetje export-import, marketing, zastopanje in ekonomski inženiring, d.o.o., Dunajska 122, Ljubljana",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2016-07-27",
+   "top_newest": "2025-02-13",
+   "rival_newest": "2017-11-10",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 10071871,
+   "identifier": "24404227",
+   "country": "NL",
+   "old_name": "RebelGroup Executives BV",
+   "new_name": "Rebel Strong Society",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 3,
+   "head": 1,
+   "second": 1,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Rebel Strong Society",
+     2
+    ],
+    [
+     "Rebel Group Executives",
+     1
+    ],
+    [
+     "Rebel Strong Society bv",
+     1
+    ],
+    [
+     "RebelGroup Executives BV",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-07-22",
+   "top_newest": "2021-10-22",
+   "rival_newest": "2021-04-23",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 8291325,
+   "identifier": "20006224800014",
+   "country": "FR",
+   "old_name": "Conseil général des Yvelines",
+   "new_name": "conseil départemental des Yvelines",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "top_stale",
+   "recent_released": null,
+   "n": 191,
+   "voting": 191,
+   "top": 151,
+   "head": 23,
+   "second": 23,
+   "clusters": 3,
+   "spellings": [
+    [
+     "conseil départemental des Yvelines",
+     81
+    ],
+    [
+     "Conseil départemental des Yvelines",
+     70
+    ],
+    [
+     "Conseil général des Yvelines",
+     23
+    ],
+    [
+     "Seine et Yvelines Numérique",
+     17
+    ]
+   ],
+   "head_procs": 12,
+   "head_in_window": 0,
+   "head_newest": "2017-10-27",
+   "top_newest": "2023-11-24",
+   "rival_newest": "2024-09-06",
+   "newest_is_head": false,
+   "gates": [
+    "d_top_stale"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 5350924,
+   "identifier": "7511568308",
+   "country": "PL",
+   "old_name": "Publiczna Szkoła Podstawowa Nr 2 w Wołczynie",
+   "new_name": "Publiczna Szkoła Podstawowa Nr 2",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "n": 5,
+   "voting": 5,
+   "top": 4,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Publiczna Szkoła Podstawowa Nr 2",
+     4
+    ],
+    [
+     "Publiczna Szkoła Podstawowa Nr 2 w Wołczynie",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-07-05",
+   "top_newest": "2018-06-01",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "d_seat_dropped"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 11951931,
+   "identifier": "7181638364",
+   "country": "PL",
+   "old_name": "Wojewódzki Ośrodek Profilaktyki i Terapii Uzależnień w Łomży",
+   "new_name": "Wojewódzki Ośrodek Profilaktyki i Terapii Uzależnień",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "n": 7,
+   "voting": 7,
+   "top": 6,
+   "head": 1,
+   "second": 1,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Wojewódzki Ośrodek Profilaktyki i Terapii Uzależnień",
+     6
+    ],
+    [
+     "Wojewódzki Ośrodek Profilaktyki i Terapii Uzależnień w Łomży",
+     1
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-08-30",
+   "top_newest": "2026-09-25",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "d_seat_dropped"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 19702064,
+   "identifier": "5472169306",
+   "country": "PL",
+   "old_name": "Krajowa Informacja Skarbowa w Bielsku-Białej",
+   "new_name": "Krajowa Informacja Skarbowa",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "n": 157,
+   "voting": 157,
+   "top": 143,
+   "head": 13,
+   "second": 13,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Krajowa Informacja Skarbowa",
+     142
+    ],
+    [
+     "Krajowa Informacja Skarbowa w Bielsku-Białej",
+     10
+    ],
+    [
+     "KRAJOWA INFORMACJA SKARBOWA W BIELSKU-BIAŁEJ",
+     3
+    ],
+    [
+     "KRAJOWA INFORMACJA SKARBOWA",
+     1
+    ],
+    [
+     "Krajowej Administracji Skarbowej",
+     1
+    ]
+   ],
+   "head_procs": 3,
+   "head_in_window": 0,
+   "head_newest": "2026-02-06",
+   "top_newest": "2026-10-16",
+   "rival_newest": "2024-01-17",
+   "newest_is_head": false,
+   "gates": [
+    "d_seat_dropped"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 3452803,
+   "identifier": "63024675",
+   "country": "CZ",
+   "old_name": "Pedagogické centrum pro polské národnostní školství v Českém Těšíně",
+   "new_name": "Pedagogické centrum pro polské národnostní školství",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "n": 9,
+   "voting": 9,
+   "top": 7,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Pedagogické centrum pro polské národnostní školství",
+     7
+    ],
+    [
+     "Pedagogické centrum pro polské národnostní školství v Českém Těšíně",
+     2
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2013-04-13",
+   "top_newest": "2016-04-13",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "d_seat_dropped"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 22640992,
+   "identifier": "523642630",
+   "country": "PL",
+   "old_name": "Centrum Usług Wspólnych w Skawinie",
+   "new_name": "Centrum Usług Wspólnych",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "n": 15,
+   "voting": 15,
+   "top": 11,
+   "head": 4,
+   "second": 4,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Centrum Usług Wspólnych",
+     11
+    ],
+    [
+     "Centrum Usług Wspólnych w Skawinie",
+     4
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2024-09-05",
+   "top_newest": "2026-09-18",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "d_seat_dropped"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 5676405,
+   "identifier": "P0100100G",
+   "country": "ES",
+   "old_name": "Ayuntamiento de Alegría-Dulantzi",
+   "new_name": "Ayuntamiento de Alegria-Dulantzi - Ayuntamiento de Alegria-Dulantzi",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "doubled",
+   "recent_released": null,
+   "n": 9,
+   "voting": 9,
+   "top": 7,
+   "head": 2,
+   "second": 2,
+   "clusters": 2,
+   "spellings": [
+    [
+     "Ayuntamiento de Alegria-Dulantzi - Ayuntamiento de Alegria-Dulantzi",
+     7
+    ],
+    [
+     "Ayuntamiento de Alegria-Dulantzi",
+     1
+    ],
+    [
+     "Ayuntamiento de Alegría-Dulantzi",
+     1
+    ]
+   ],
+   "head_procs": 2,
+   "head_in_window": 0,
+   "head_newest": "2021-05-28",
+   "top_newest": "2026-03-02",
+   "rival_newest": null,
+   "newest_is_head": false,
+   "gates": [
+    "d_doubled"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 2043044,
+   "identifier": "P4809300I",
+   "country": "ES",
+   "old_name": "Ayuntamiento de Valle de Trapaga-Trapagaran",
+   "new_name": "Ayuntamiento de Valle de Trápaga-Trapagaran - Ayuntamiento de Valle de Trápaga-Trapagaran",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "doubled",
+   "recent_released": null,
+   "n": 61,
+   "voting": 61,
+   "top": 45,
+   "head": 14,
+   "second": 14,
+   "clusters": 4,
+   "spellings": [
+    [
+     "Ayuntamiento de Valle de Trápaga-Trapagaran - Ayuntamiento de Valle de Trápaga-Trapagaran",
+     45
+    ],
+    [
+     "Ayuntamiento de Valle de Trápaga-Trapagaran",
+     10
+    ],
+    [
+     "Ayuntamiento de Valle de Trapaga-Trapagaran",
+     4
+    ],
+    [
+     "Ayuntamiento Valle de Trápaga-Trapagaran",
+     1
+    ],
+    [
+     "ELAI SERBITZUAK, S.L.",
+     1
+    ]
+   ],
+   "head_procs": 10,
+   "head_in_window": 0,
+   "head_newest": "2021-07-09",
+   "top_newest": "2026-07-29",
+   "rival_newest": "2024-01-10",
+   "newest_is_head": false,
+   "gates": [
+    "d_doubled"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 7309421,
+   "identifier": "P2005300E",
+   "country": "ES",
+   "old_name": "Lazkaoko Udala — Ayuntamiento de Lazkao",
+   "new_name": "Ayuntamiento de Lazkao - Ayuntamiento de Lazkao",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "doubled",
+   "recent_released": null,
+   "n": 40,
+   "voting": 40,
+   "top": 22,
+   "head": 5,
+   "second": 13,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Ayuntamiento de Lazkao - Ayuntamiento de Lazkao",
+     22
+    ],
+    [
+     "Ayuntamiento de Lazkao",
+     13
+    ],
+    [
+     "Lazkaoko Udala – Ayuntamiento de Lazkao",
+     3
+    ],
+    [
+     "Lazkaoko Udala — Ayuntamiento de Lazkao",
+     2
+    ]
+   ],
+   "head_procs": 3,
+   "head_in_window": 0,
+   "head_newest": "2016-03-09",
+   "top_newest": "2026-07-01",
+   "rival_newest": "2021-05-10",
+   "newest_is_head": false,
+   "gates": [
+    "d_doubled"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 6546919,
+   "identifier": "P2005700F",
+   "country": "ES",
+   "old_name": "Lezoko Unibertsitateko Udala",
+   "new_name": "Ayuntamiento de Lezo - Ayuntamiento de Lezo",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "doubled",
+   "recent_released": null,
+   "n": 33,
+   "voting": 33,
+   "top": 21,
+   "head": 2,
+   "second": 10,
+   "clusters": 3,
+   "spellings": [
+    [
+     "Ayuntamiento de Lezo - Ayuntamiento de Lezo",
+     21
+    ],
+    [
+     "Ayuntamiento de Lezo",
+     10
+    ],
+    [
+     "Lezoko Unibertsitateko Udala",
+     2
+    ]
+   ],
+   "head_procs": 1,
+   "head_in_window": 0,
+   "head_newest": "2015-07-11",
+   "top_newest": "2026-07-15",
+   "rival_newest": "2019-04-19",
+   "newest_is_head": false,
+   "gates": [
+    "d_doubled"
+   ],
+   "stale_top": null
+  },
+  {
+   "org_id": 5857542,
+   "identifier": "Q2000553D",
+   "country": "ES",
+   "old_name": "Centro Informático Municipal",
+   "new_name": "DonostiaTIK - DonostiaTIK",
+   "verdict": "hold",
+   "rule": "R1",
+   "reason": "doubled",
+   "recent_released": null,
+   "n": 51,
+   "voting": 51,
+   "top": 37,
+   "head": 3,
+   "second": 8,
+   "clusters": 5,
+   "spellings": [
+    [
+     "DonostiaTIK - DonostiaTIK",
+     37
+    ],
+    [
+     "DonostiaTIK",
+     7
+    ],
+    [
+     "Centro Informático Municipal",
+     3
+    ],
+    [
+     "CIM — Centro Informático Municipal de Donostia",
+     2
+    ],
+    [
+     "Donostia TIK",
+     1
+    ]
+   ],
+   "head_procs": 3,
+   "head_in_window": 0,
+   "head_newest": "2017-01-21",
+   "top_newest": "2026-09-02",
+   "rival_newest": "2025-05-23",
+   "newest_is_head": false,
+   "gates": [
+    "d_doubled"
+   ],
+   "stale_top": null
+  }
+ ]
+}
