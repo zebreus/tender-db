@@ -1,0 +1,312 @@
+[0] planned 98 R2 None L5 loss_subset,new_eq_first_line,multi_entity
+   OLD 'Politecnica  Ingegneria  ed  Architettura  Società  Cooperativa\nCooprogetti S.C.R.L.\nIdrostudi  S.r.l.\nRina  Consulting  S.p.A.\nMatildi+Partners'
+   NEW 'Politecnica Ingegneria ed Architettura Soc. Coop.'
+[1] planned 4040 R1 unfit L3 loss_subset
+   OLD 'Konsorcjum\nLider: WIMED Sp z o.o., Sp. K., \nPartner: BRUK-MAR F.H.U. MARCIN GĄSIOR,'
+   NEW 'WIMED Sp. z o.o., Sp. k.'
+[2] planned 12300 R1 unfit L3 other
+   OLD 'Bayerischer Rundfunk, \nAnstalt des öffentlichen Rechts,\ngesetzlich vertreten durch die Intendantin Dr. Katja Wildermuth'
+   NEW 'Bayerischer Rundfunk A.d.ö.R.'
+[3] planned 14770 R1 unfit L3 loss_subset,new_eq_first_line,addr_tail
+   OLD 'Landkreis Saalekreis\nDomplatz 9\n06217 Merseburg'
+   NEW 'Landkreis Saalekreis'
+[4] planned 15395 R1 unfit L3 loss_subset,multi_entity
+   OLD 'Konsorcjum firm:\n1) Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o. o. – Lider konsorcjum\n2) Miejskie Przedsiębiorstwo Gospodarki Komunalnej i Mieszkaniowej Sp. z o.o. - Konsorcjant'
+   NEW 'Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o.o.'
+[5] planned 5078420 R1 None L2 loss_subset,multi_entity
+   OLD 'ZP RENCON d.o.o. Osijek;  \nInstitut IGH, d.d.  Zagreb i HIDROELEKTRA PROJEKT d.o.o. Zagreb'
+   NEW 'Rencon d.o.o.'
+[6] planned 5078918 R1 None L2 loss_subset,multi_entity
+   OLD 'ZP UČKA-KONZALTING d.o.o. Pazin;  \nInstitut IGH, d.d.  Zagreb i DEZEL d.o.o. Zagreb'
+   NEW 'Učka konzalting, d.o.o.'
+[7] planned 6144230 R2 None L2 other
+   OLD 'Mapfre Familiar Compañia de\nSeguros y Reaseguros, S.A.'
+   NEW 'Mapfre España Compañía de Seguros y Reaseguros, S.A.'
+[8] planned 19635627 R1 None L2 loss_subset
+   OLD '1.\tGmina i Miasto Krajenka'
+   NEW 'Gmina i Miasto Krajenka'
+[9] planned 21635484 R1 None L2 loss_subset,addr_tail
+   OLD '1.\tGAMA Marek Samborski, ul. Zygmunta Słomińskiego 19 lok. 109, 00-195 Warszawa'
+   NEW 'GAMA - Marek Samborski'
+[10] planned 21955455 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'PROVINCIA DI FOGGIA\nSETTORE SUA, APPALTI E CONTRATTI'
+   NEW 'PROVINCIA DI FOGGIA'
+[11] planned 22149904 R1 unfit L3 other,addr_tail
+   OLD 'Vergabekammer Rheinland-Pfalz\nStiftsstraße 9\n55116 Mainz'
+   NEW 'Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau - Vergabekammer -'
+[12] planned 22199243 R1 unfit L2 other
+   OLD 'Große Kreisstadt Delitzsch\nSG Kommunalbau'
+   NEW 'Landesdirektion Sachsen'
+[13] planned 22214994 R1 unfit L4 loss_subset,new_eq_first_line,addr_tail
+   OLD 'Stadt Zeitz\nDer Oberbügermeister \nAltmarkt 1\n06712 Zeitz'
+   NEW 'Stadt Zeitz'
+[14] planned 22216826 R1 unfit L2 loss_subset,multi_entity
+   OLD 'Alexianer St. Hedwig-Kliniken Berlin GmbH - SHK\nc/o Alexianer Agamus GmbH'
+   NEW 'Alexianer St. Hedwig-Kliniken Berlin GmbH'
+[15] planned 22219908 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'C&E Consulting und Engineering GmbH\nNL Berlin/Brandenburg'
+   NEW 'C&E Consulting und Engineering GmbH'
+[16] planned 22265259 R1 unfit L4 loss_subset,new_eq_first_line,addr_tail
+   OLD 'Markt Haag i. OB\nMarktplatz 7\n83527 Haag i. OB\nJuristische Person des öffentlichen Rechts'
+   NEW 'Markt Haag i. OB'
+[17] planned 22289866 R1 unfit L2 loss_subset
+   OLD 'Vergabekammer Rheinland-Pfalz\nbei dem Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau'
+   NEW 'Vergabekammer Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau'
+[18] planned 22299001 R1 unfit L2 other
+   OLD 'Stadt Remagen\nBürgermeister Björn Ingendahl'
+   NEW 'Stadt Remagen vertreten durch die Stadtverwaltung Remagen'
+[19] planned 22302655 R1 unfit L2 other,multi_entity
+   OLD "AMBITO TERRITORIALE SOCIALE N. 3 AMANTEA\n(COMUNI DI AMANTEA,AIELLO CALABRO,BELMONTE CALABRO,CLETO, FIUMEFREDDO BRUZIO, LAGO, LONGOBARDI, SAN PIETRO IN AMANTEA, SERRA D'AIELLO)"
+   NEW 'Comune di Amantea'
+[20] planned 22307905 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'Studentenwerk Niederbayern / Oberpfalz\nAnstalt des öffentlichen Rechts'
+   NEW 'Studentenwerk Niederbayern Oberpfalz'
+[21] planned 22354266 R1 unfit L2 loss_subset,multi_entity,addr_tail
+   OLD 'SRR Messina Provincia S.C.p.A.\nper il tramite della C.U.C. c/o Consorzio Tirreno Ecosviluppo 2000 Soc. Cons. a r.l., sede: Via Roma n. 7 Municipio - 98040 Venetico (ME) P. IVA 02129950834 - Tel. +39 090/9942498; e-mail: centrale@tirrenoecosviluppo.net; PEC: ti'
+   NEW 'S.R.R. Messina Provincia s.c.p.a.'
+[22] planned 22388718 R1 unfit L3 loss_subset,new_eq_first_line
+   OLD 'SLS Ingenieurbüro im Bauwesen\nDipl.-Ing. Ludwig Schmitz\nSicherheitsingenieur'
+   NEW 'SLS-Ingenieurbüro im Bauwesen'
+[23] planned 22391303 R1 unfit L2 gain_superset
+   OLD 'WISAG Garten- & Landschaftspflege Süd-West \nGmbH & Co. KG'
+   NEW 'WISAG Garten- und Landschaftspflege Süd-West GmbH & Co. KG'
+[24] planned 22393047 R1 unfit L2 loss_subset
+   OLD '"D.B.W. DROGI BUDOWY WYBURZENIA" SPÓŁKA Z OGRANICZONĄ\nODPOWIEDZIALNOŚCIĄ'
+   NEW 'D.B.W. Drogi Budowy Wyburzenia sp. z o.o.'
+[25] planned 22398613 R1 unfit L2 other
+   OLD 'Vergabekammer Niedersachsen beim Nds. Ministerium für Wirtschaft, Arbeit und Verkehr\nRegierungsvertretung Lüneburg'
+   NEW 'Vergabekammer Niedersachsen beim Nds. Ministerium für Wirtschaft, Arbeit und Verkehr und Digitalisierung'
+[26] planned 22399126 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'Magistrat der Stadt Flörsheim am Main\nStadtbauamt - Vergabestelle'
+   NEW 'Magistrat der Stadt Flörsheim am Main'
+[27] planned 22419170 R1 unfit L2 gain_superset
+   OLD 'Przedsiębiorstwo Handlowo-Usługowe\nIwona Żak'
+   NEW 'Przedsiębiorstwo Handlowo Usługowe Iwona Żak w spadku'
+[28] planned 22428673 R1 unfit L2 other
+   OLD 'Waldemar Kuras Zakład Usług Leśnych\n„Modrzew”]'
+   NEW 'Zakład Usług Leśnych "Modrzew" Waldemar Kuras'
+[29] planned 22496731 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'solution-MUC\nStefan Schmidt'
+   NEW 'solution-MUC'
+[30] planned 22502674 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'Geosys-Eber Ingenieure \nSachverständige für Vermessung'
+   NEW 'Geosys-Eber Ingenieure'
+[31] planned 22503765 R1 unfit L5 loss_subset,addr_tail
+   OLD 'Konsorcjum:\n1.TAKMA Tadeusz Tiuchty, \n51-128 Wrocław, ul. Poświęcka 1 -lider konsorcjum\n2. SCANTER Sp. z o.o. \n51-128 Wrocław, ul. Poświęcka 1a- partner'
+   NEW 'TAKMA Tadeusz Tiuchty'
+[32] planned 22505944 R1 unfit L2 other
+   OLD 'COMMUNAUTÉ DE COMMUNES ARC SUD BRETAGNE\nPouvoir Adjudicateur'
+   NEW 'COM DE COMMUNES ARC SUD BRETAGNE'
+[33] planned 22508374 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'Universitätsklinikum Würzburg\nAnstalt des öffentlichen Rechts'
+   NEW 'Universitätsklinikum Würzburg'
+[34] planned 22520552 R1 unfit L2 loss_subset
+   OLD 'Der Kreisausschuss des Odenwaldkreises\nEigenbetrieb Bau- und Immobilienmanagement'
+   NEW 'Kreisausschuss des Odenwaldkreises, Eigenbetrieb Bau- und Immobilienmanagement'
+[35] planned 22521607 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'Generaldirektion Wasserstraßen- und Schifffahrt\nDezernat U20 - Nachprüfungsstelle -'
+   NEW 'Generaldirektion Wasserstraßen und Schifffahrt'
+[36] planned 22545991 R1 unfit L2 other
+   OLD 'Υπουργείο Αγροτικής Ανάπτυξης και Τροφίμων (ΥΠΑΑΤ)\nΕιδική Υπηρεσία Διαχείρισης ΣΣ ΚΑΠ'
+   NEW 'ΕΥΔ ΣΣ ΚΑΠ'
+[37] planned 22562109 R1 unfit L3 loss_subset,new_eq_first_line,addr_tail
+   OLD 'Campus Unity GmbH\nKurt-Schumacher-Straße 1\n63322 Rödermark'
+   NEW 'Campus Unity GmbH'
+[38] planned 22571984 R1 unfit L2 loss_subset
+   OLD 'Α.Σ.Ε.Α. ΜΟΥΜΤΖΗΣ ΑΝΩΝΥΜΗ ΕΤΑΙΡΕΙΑ ΕΜΠΟΡΙΑΣ ΜΗΧΑΝΟΛΟΓΙΚΟΥ ΕΞΟΠΛΙΣΜΟΥ ΜΕΤΑΦΟΡΙΚΩΝ – ΜΕΣΩΝ – ΣΥΜΒΟΥΛΕΥΤΙΚΗ - ΤΕΧΝΙΚΗ \nΚΑΤΑΣΚΕΥΑΣΤΙΚΗ'
+   NEW 'Α.Σ.Ε.Α. ΜΟΥΜΤΖΗΣ Α.Ε.'
+[39] planned 22573069 R1 unfit L2 loss_subset
+   OLD 'Société INARI MEDICAL EUROPE Gmbh\nSofradom'
+   NEW 'INARI MEDICAL EUROPE'
+[40] planned 22581610 R1 unfit L2 loss_subset
+   OLD 'BG Industriesammler Nord BA 1.2 Dresden\nHeinz Lange Bauunternehmen GmbH'
+   NEW 'Heinz Lange Bauunternehmen GmbH'
+[41] planned 22590144 R1 unfit L2 loss_subset
+   OLD 'Atelier 30 Architekten GmbH, Kassel \nmit Landschaftsarchitekt GTL Michael Triebswetter Landschaftsarchitekt, Kassel'
+   NEW 'ATELIER 30 Architekten GmbH'
+[42] planned 22591529 R2 None L4 other
+   OLD 'Aeronautica Militare\n4ª Brigata Telecomunicazioni\nSistemi D.A./A.V.\nServizio Amministrativo'
+   NEW '4 Brigata Telecomunicazioni e Sistemi D.A./A.V.'
+[43] planned 22603984 R1 unfit L2 loss_subset,multi_entity
+   OLD 'RTI G4 Vigilanza SpA (Mandataria) / B.T.V. S.p.A. (Mandante) /\nSicuritalia IVRI S.p.A. (Mandante)'
+   NEW 'G4 VIGILANZA S.p.A.'
+[44] planned 22611512 R1 unfit L4 loss_subset,addr_tail
+   OLD 'W. Schmitt GmbH \nFeuerwehrtechnik \nRheinstraße 182\n56564 Neuwied'
+   NEW 'W. Schmitt GmbH Feuerwehrtechnik'
+[45] planned 22612907 R1 unfit L2 loss_subset
+   OLD 'ray facility management group |\nNils Bogdol GmbH,'
+   NEW 'Nils Bogdol GmbH'
+[46] planned 22632467 R1 unfit L2 loss_subset
+   OLD 'Gemeinde Hohen Sprenz\nüber die Stadt Laage als geschäftsführende Gemeinde des Amtes Laage'
+   NEW 'Stadt Laage'
+[47] planned 22639255 R1 unfit L3 loss_subset,new_eq_first_line,addr_tail
+   OLD 'Ziehm Imaging GmbH\nLina-Ammon-Str. 10\n90471 Nürnberg'
+   NEW 'Ziehm Imaging GmbH'
+[48] planned 22648679 R1 unfit L3 loss_subset,addr_tail
+   OLD 'Amministrazione proponente: Comune di Sant’Antioco\nSede Municipale: Piazzetta Italo Diana, 1 -09017 – Sant’Antioco \nTel .0781 80301/2/3/4 - C.F. 81002570927 - P.I. 03109320923'
+   NEW 'COMUNE DI SANT ANTIOCO'
+[49] planned 22650988 R1 unfit L3 loss_subset,multi_entity,addr_tail
+   OLD 'Konsorcjum Firm: Adamietz Warszawa Sp. z o. o. (lider konsorcjum), ul. Pryzmaty 4a, 02-226 Warszawa, województwo mazowieckie, NIP: 5223240063, REGON: 523554452 \noraz EKSA Sp. z o.o. (partner konsorcjum), ul. Senatorska 21, 93-192 Łódź, województwo łódzkie\nNIP:'
+   NEW 'Adamietz Warszawa Sp. z o.o.'
+[50] planned 22661109 R1 unfit L2 loss_subset
+   OLD 'Szkoła Podstawowa nr 13\nz Oddziałami Dwujęzycznymi im. Jana III Sobieskiego w Tychach'
+   NEW 'Szkoła Podstawowa nr 13 z Oddziałami Dwujęzycznymi'
+[51] planned 22667173 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'BAUHAUF GmbH\nHoch- und Tiefbau'
+   NEW 'BAUHAUF GmbH'
+[52] planned 22670558 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'Schandert GmbH\nRaumgestaltung'
+   NEW 'Schandert GmbH'
+[53] planned 22675343 R1 unfit L2 loss_subset
+   OLD 'Konsorcjum firm: REMEX Sp. z o.o., ul. Bitwy Białostockiej 6/1, 15-103 Białystok – Lider konsorcjum i „NAWEC” Sp. z o.o., ul. Gen. Władysława Andersa 15\n15-124 Białystok – Partner Konsorcjum'
+   NEW 'Remex Sp. z o.o.'
+[54] planned 22678568 R1 unfit L2 loss_subset
+   OLD 'MZP-Ingenieure MARKS + ZIMMERMANN und PARTNER Beratende \nIngenieure für Bauwesen mbB'
+   NEW 'MZP-Ingenieure'
+[55] planned 22685142 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'ReFood GmbH & Co. KG\nNiederlassung Hüttenfeld'
+   NEW 'ReFood GmbH & Co. KG'
+[56] planned 22693690 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'Bennert GmbH\nBetrieb für Bauwerksicherung'
+   NEW 'Bennert GmbH'
+[57] planned 22703404 R1 unfit L4 other,addr_tail
+   OLD 'Erzbistum Köln\nErzbischöfliches Generalvikariat\nMarzellenstraße 32\n50668 Köln'
+   NEW 'Erzbistum Köln | sape'
+[58] planned 22714498 R1 unfit L3 loss_subset,new_eq_first_line
+   OLD 'Partner4Medicine Sp. z o.o. \nAdres: Aleje Zygmunta Krasińskiego 20A, 64-100 Leszno \nNIP 1132826097 REGON 142806977'
+   NEW 'Partner4Medicine Sp. z o.o.'
+[59] planned 22715251 R1 unfit L2 loss_subset
+   OLD '2)\tGmina Brzuze'
+   NEW 'Gmina Brzuze'
+[60] planned 22715252 R1 unfit L2 loss_subset
+   OLD '9)\tZespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu'
+   NEW 'Zespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu'
+[61] planned 22718921 R1 unfit L2 gain_superset
+   OLD 'KMS BUILDINGS A.E. - ΚΤΗΡΙΑΚΑ ΜΕΤΑΛΛΙΚΑ\nΣΤΟΙΧΕΙΑ ΑΝΩΝΥΜΟΣ ΚΑΤΑΣΚΕΥΑΣΤΙΚΗ ΕΤΑΙΡΕΙΑ'
+   NEW '«KMS BUILDINGS A.E. - ΚΤΗΡΙΑΚΑ ΜΕΤΑΛΛΙΚΑ ΣΤΟΙΧΕΙΑ ΑΝΩΝΥΜΟΣ ΚΑΤΑΣΚΕΥΑΣΤΙΚΗ ΕΤΑΙΡΕΙΑ» και με το διακριτικό τίτλο «ΚΜS BUILDINGS AE»'
+[62] planned 22722707 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur \nvertreten durch: Rems-Murr-Immobilien Management GmbH (RMIM)'
+   NEW 'Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur'
+[63] planned 22737299 R1 unfit L4 other,multi_entity,addr_tail
+   OLD 'BPB - Büro für Planung und\nBauüberwachung im Verkehrswesen GmbH\nHohenzollernstr. 18\nD-56068 KOBLENZ'
+   NEW 'BPB Büro für Planung und Bauüberwac - im Verkehrswesen GmbH'
+[64] planned 22738452 R1 unfit L2 loss_subset
+   OLD 'HELLENIC CABLES S.A. HELLENIC CABLE INDUSTRY SINGLE MEMBER \nSOCIETE ANONYME'
+   NEW 'Hellenic Cables S.A.'
+[65] planned 22755546 R1 unfit L2 other
+   OLD "BAIE D'ARMOR AMENAGEMENT\n(POUR LE COMPTE DE SAINT-BRIEUC ARMOR AGGLOMERATION)"
+   NEW "Baie d'Armor Aménagement"
+[66] planned 22774437 R1 unfit L4 loss_subset,addr_tail
+   OLD 'Landesanstalt für Landwirtschaft und Gartenbau \nSachsen-Anhalt\nStrenzfelder Allee 22\n06406 Bernburg'
+   NEW 'Landesanstalt für Landwirtschaft und Gartenbau Sachsen-Anhalt'
+[67] planned 22819677 R1 unfit L2 loss_subset,new_eq_first_line,addr_tail
+   OLD 'GE Medical Systems Polska Sp z.o.o\nAdres: ul. Wołoska 9, 02-583 Warszawa'
+   NEW 'GE Medical Systems Polska Sp.z.o.o'
+[68] planned 22862316 R1 unfit L2 other
+   OLD 'Wolff & Müller Hoch- und Industriebau GmbH\nZweigniederlassung Hamburg'
+   NEW 'Wolff & Müller Hoch- und Industriebau GmbH & Co. KG, ZNL HH'
+[69] planned 22879656 R1 unfit L2 loss_subset
+   OLD 'FRATELLI MAZZOCCHIA SPA (AGGIUDICATARIO\nTERZO CLASSIFICATO)'
+   NEW 'FRATELLI MAZZOCCHIA SPA'
+[70] planned 22923683 R2 None L2 loss_subset,multi_entity
+   OLD 'R.T.I. CONSORZIO STABILE EUROPEO, (Mandataria, C.F\n03975140231) - FEA Srl (Mandante, C.F. 02764870362) e CO.VE.MA. Srl (Mandante, C.F. 03428670362)'
+   NEW 'CONSORZIO STABILE EUROPEO SCARL'
+[71] planned 22923998 R1 unfit L3 other,multi_entity
+   OLD 'Bietergemeinschaft bestehend aus\nIBBS ZT-GmbH, Ingenieurbüro ste.p ZT-GmbH,\nTecton Consult Engineering ZT GmbH,'
+   NEW 'Bietergemeinschaft IBBS ZT-GmbH/Tecton Consult Engineering ZT GmbH/Stoik & Partner ZT-GmbH'
+[72] planned 22925490 R1 unfit L4 loss_subset,new_eq_first_line,multi_entity
+   OLD 'MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nImpel Defender Sp. z o.o.\nFM Integrated Solutions Sp. z o.o.'
+   NEW 'MoreThanGood Sp. z o.o.'
+[73] planned 22962566 R1 unfit L2 other
+   OLD 'Abwasserzweckverband Thulba – Saale, vertreten durch Herrn Armin Warmuth,\nVerbandsvorsitzender'
+   NEW 'Bundeswehr-Dienstleistungszentrum Hammelburg'
+[74] planned 22981989 R1 unfit L2 other
+   OLD 'Zespół Szkół Centrum Kształcenia Rolniczego\nim. Wł. St. Reymonta w Sokołowie Podlaskim'
+   NEW 'ZESPÓŁ SZKÓŁ CENTRUM KSZTAŁCENIA ROLNICZEGO IM. WŁADYSŁAWA STANISŁAWA REYMONTA W SOKOŁOWIE PODLASKIM'
+[75] planned 23017077 R1 unfit L2 loss_subset,multi_entity
+   OLD 'RTI – TECNOSTRADE S.R.L. (Mandataria – C.f. 01170840548) – M.C.I. S.R.L.\n(Mandante – C.f. 01990420547) – TROVATI S.R.L. con Socio Unico (Mandante – C.f. 03238440543)'
+   NEW 'TECNOSTRADE S.r.l.'
+[76] planned 23035020 R1 unfit L3 loss_subset,new_eq_first_line,addr_tail
+   OLD 'Gemeinde Hagen im Bremischen\nAmtsplatz 3\n27628 Hagen im Bremischen'
+   NEW 'Gemeinde Hagen im Bremischen'
+[77] planned 23038177 R1 unfit L2 other
+   OLD 'BERNDT Gebäudereinigung\nMeisterbetrieb GmbH'
+   NEW 'Gebäudereinigung Berndt Meisterbetrieb GmbH'
+[78] planned 23066511 R1 unfit L3 loss_subset,new_eq_first_line,addr_tail
+   OLD 'Balton Sp. z o.o.\nAdres: ul. Nowy Świat 7 m 14, 00-496 Warszawa\nNIP 536-00-15-638 REGON 010757273'
+   NEW 'Balton Sp. z o.o.'
+[79] planned 23066716 R1 unfit L3 loss_subset,new_eq_first_line
+   OLD 'BOXMET MEDICAL Sp. z o. o.\nAdres: Piskorzów 51, 58-250 Pieszyce\nNIP 882-203-82-05 REGON 020546953'
+   NEW 'Boxmet Medical Sp.z.o.o'
+[80] planned 23115884 R2 None L2 gain_superset
+   OLD 'PREDICTA ΕΜΠΟΡΙΚΗ ΕΤΑΙΡΕΙΑ ΑΝΤΙΠΡΟΣΩΠΕΙΩΝ \nΑΝΑΛΥΤΙΚΩΝ ΛΥΣΕΩΝ ΠΡΟΒΛΕΨΗΣ & ΛΟΓΙΣΜΙΚΟΥ ΑΝΩΝΥΜΗ ΕΤΑΙΡΕΙΑ'
+   NEW 'PREDICTA ΕΜΠΟΡΙΚΗ ΕΤΑΙΡΕΙΑ ΑΝΤΙΠΡΟΣΩΠΕΙΩΝ ΑΝΑΛΥΤΙΚΩΝ ΛΥΣΕΩΝ ΠΡΟΒΛΕΨΗΣ ΚΑΙ ΛΟΓΙΣΜΙΚΟΥ ΑΝΩΝΥΜΗ ΕΤΑΙΡΕΙΑ'
+[81] planned 23150170 R1 unfit L5 loss_subset,new_eq_first_line,addr_tail
+   OLD 'Klingenstadt Solingen\nStadtdienst 23 - Gebäudemanagement\nvertreten durch den Oberbürgermeister\nBonner Str. 100\n42697 Solingen'
+   NEW 'Klingenstadt Solingen'
+[82] planned 23294406 R1 unfit L2 other
+   OLD "Alexander's Gastro GmbH\nSasch Nini"
+   NEW 'Alexanders Gastro GmbH'
+[83] planned 23329783 R1 unfit L2 loss_subset,new_eq_first_line
+   OLD 'AOK Rheinland/Hamburg – Die Gesundheitskasse\nStrategisches Immobilienmanagement'
+   NEW 'AOK Rheinland/Hamburg - Die Gesundheitskasse'
+[84] planned 23349142 R1 unfit L2 gain_superset
+   OLD 'Regierungspräsidium Karlsruhe\nVergabekammer Baden-Württemberg'
+   NEW 'Vergabekammer Baden-Württemberg beim Regierungspräsidium Karlsruhe'
+[85] planned 23455902 R1 unfit L2 loss_subset,new_eq_first_line,addr_tail
+   OLD 'TEAM MP Sp. z o.o.\nul. Wrocławska 56, 55-095 Długołęka'
+   NEW 'TEAM MP Sp. z o.o.'
+[86] planned 23474998 R1 unfit L2 other
+   OLD 'Zespół Szkół Centrum Kształcenia Rolniczego\nim. Władysława Stanisława Reymonta w Dobryszycach'
+   NEW 'Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Dobryszycach'
+[87] planned 23595865 R1 unfit L2 gain_superset
+   OLD 'Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau\n- Vergabekammer -'
+   NEW 'Vergabekammer Rheinland-Pfalz Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau'
+[88] planned 30914521 R1 unfit L2 loss_subset
+   OLD 'Name of Supplier\tPublic Sector Media Ltd'
+   NEW 'PUBLIC SECTOR MEDIA LTD'
+[89] planned 31571858 R1 unfit L2 loss_prefix,new_eq_first_line
+   OLD 'Sedem Pharmacy Ltd\tSedem Pharmacy'
+   NEW 'Sedem Pharmacy Ltd'
+[90] held 22489648 review_body None L2 other
+   OLD 'Stadt Weimar                                                                                                                              \nDezernat für Bauen und Verkehr'
+   NEW 'Vergabekammer des Freistaats Thüringen beim Thüringer Landesverwaltungsamt'
+[91] held 22563684 no_fit None L2 loss_subset
+   OLD 'comité consultatif national de règlement amiable des litiges relatifs aux marchés \npublics'
+   NEW ''
+[92] held 22564460 consortium_removed None L5 loss_subset
+   OLD 'CUADRA (mandataire) \ncotraitant ACDe\ncotraitant B3E\ncotraitant CDB ACOUSTIQUE \ncotraitant PLANTAGO'
+   NEW 'CUADRA'
+[93] held 22578631 initialism None L4 other,multi_entity
+   OLD "Ministère de la Transition Écologique et de la Cohésion des Territoires chargé des Transports\nDirection Générale de l'Aviation Civile\nSecrétariat Général \nService National de l'Ingénierie Aéroportuaire (SNIA)"
+   NEW 'Min.Défense-DCSID-SNIA'
+[94] held 22590748 consortium_removed None L3 loss_subset
+   OLD 'Titulaire 1: SOLVHA (mandataire) / MEOTEC (co-traitant)\nTitulaire 2: KLB GROUP \nTitulaire 3: VISIATIV'
+   NEW 'SOLVHA'
+[95] held 22622636 consortium_removed None L2 loss_subset,new_eq_first_line
+   OLD 'THERMO FISHER DIAGNOSTICS SAS\nMandataire du groupement THERMO FISHER    DIAGNOSTICS / BMT'
+   NEW 'Thermo Fisher Diagnostics SAS'
+[96] held 22648040 consortium_removed None L2 loss_subset
+   OLD 'ARGE ARCUS + DEGAT\nARCUS Planung + Beratung Bauplanungsgesellschaft mbH'
+   NEW 'ARCUS Planung + Beratung Bauplanungsgesellschaft mbH'
+[97] held 22715315 consortium_removed None L3 loss_subset
+   OLD 'COLAS DURAND ARCHITECTES (MANDATAIRE)\nCOTRAITANTS\nBSO/OPRYME/EICE/ACCOUSTIBEL'
+   NEW 'COLAS DURAND Architectes'
+[98] held 22782871 consortium_removed None L2 loss_subset
+   OLD 'GROUPEMENT DE COMMANDE DU GHT 21-52 ET SES ETABLISSEMENTS PARTENAIRES\n Etablissement coordonnateur : CHU DIJON BOURGOGNE'
+   NEW 'CHU Dijon Bourgogne'
+[99] held 22838635 consortium_removed None L2 loss_subset,new_eq_first_line
+   OLD 'Ville de Gueugnon\nCoordonnateur du groupement de commande Ville de Gueugnon / Communauté de Communes Entre Arroux, Loire et Somme'
+   NEW 'Ville de Gueugnon'
+[100] held 22844782 address_added None L2 other,addr_tail
+   OLD 'Stadtwerke Böhmetal GmbH \nPoststraße 4 / 29664 Walsrode'
+   NEW 'HOLINGER Ingenieure GmbH, im IHZ, Postbox 41'
+[101] held 22854500 no_fit None L4 loss_subset,multi_entity
+   OLD 'Ministero dell’Interno\nDipartimento per l’Amministrazione Generale, per le Politiche del Personale\ndell`Amministrazione Civile e per le Risorse Strumentali e Finanziarie\nDirezione Centrale per le Risorse Strumentali e Finanziarie'
+   NEW ''
+[102] held 23126037 consortium_removed None L2 other,multi_entity
+   OLD 'Consórcio Líder 504615947, 1 MEO SERVIÇOS DE COMUNICAÇÕES E\nMULTIMÉDIA, S.A., 510889255, BMWTConsultoria e Serviços informáticos,Lda'
+   NEW 'BMWT - Consultoria e Serviços Informáticos, lda'
+[103] held 23371774 no_fit None L2 loss_subset
+   OLD 'Bernd Heinen und Thilo Fischer GbR\nÖffentlich bestellte Vermessungsingenieure'
+   NEW ''
