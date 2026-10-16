@@ -1,6 +1,6 @@
 # 537 — a head figure 1,000× the sum of its own lots (to the cent) is served: 369057 at €62.4 bn, 165437 at €20.0 bn
 
-Status: ready-for-agent — unit 3 BUILT 2026-10-16 (wf_c928afc4-2e2, with 538 unit 3; 4-lens review, 15 findings fixed) and in the gate. Next: deploy, then the drain (`refold-value-band` → `project`), then the Verify and a section-16 re-read.
+Status: done — unit 3 DEPLOYED `14cb029` 2026-10-16 ~09:40 UTC (gate green at `832a21e`, 1292 s) and DRAINED: `refold-value-band` 2558 stamped 3,790 Tenders (9,037 notices; dry 2557 counted the same); `project` 2559 wrote 3,790 (3,425 verified + 365 corrected = 3,790, D7 complete). The Verify reads done: 369057 `None`, 165437 `2020289170`. Keeps hold: 8400892 £10.8 bn, 8312215 £4 bn. As predicted, 7427765 and 5943121 fall to one lot's figure (551). 143300 stays at €1 bn because guard T found no figure; that refusal would be right (above). Left: re-read section 16's `lot sum` column on the next weekly data-quality report (Sunday 2026-10-18).
 Kind: data quality (amount plausibility: the head election)
 Relates to:
 - 471 (done 2026-10-08). Two of its decisions border this one, and neither covers it:

@@ -1,6 +1,6 @@
 # 538 — publisher double-escaped HTML entities (`&#224;`, `&amp;quot;`, `&amp;lt;br/&amp;gt;`, `&apos;`) reach served titles, descriptions and party names
 
-Status: ready-for-agent — unit 3 BUILT 2026-10-16 (wf_c928afc4-2e2, with 537 unit 3; 4-lens review, findings fixed) and in the gate. Next: deploy, then the drain, batched with 533's three field refolds into one full refold, then the Verify with D7's completeness check.
+Status: ready-for-agent — unit 3 DEPLOYED `14cb029` 2026-10-16 ~09:40 UTC (gate green at `832a21e`). New folds decode now. The drain is batched with 533's three field refolds into one `refold-fields` over 41 field ids and 4 tables: sizing 2560 is running, then the wet run and its `project`, a near-corpus fold of hours. Next: that drain, then the Verify (8561858's title) with D7's completeness check.
 Kind: data quality (served text and names) — needs a decision
 Relates to:
 - 11 (resolved): the text era's UTF8 variant unescapes the five XML entities (`unescape`, crates/ingest/src/text/
