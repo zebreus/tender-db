@@ -737,7 +737,7 @@ fn day_gap(earlier: &str, later: &str) -> i64 {
 
 /// Days since the civil epoch for `'YYYY-MM-DD'` (Howard Hinnant's
 /// days-from-civil algorithm — exact over the table's whole range).
-fn day_number(date: &str) -> Option<i64> {
+pub(crate) fn day_number(date: &str) -> Option<i64> {
     let mut parts = date.split('-');
     let y: i64 = parts.next()?.parse().ok()?;
     let m: i64 = parts.next()?.parse().ok()?;

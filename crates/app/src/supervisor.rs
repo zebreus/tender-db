@@ -519,6 +519,9 @@ enum Spec {
     /// caps the renames (the first by org id). Rule v9: `exclude_rules` (`R0e` `R0n` `R1` `R2`) and
     /// `exclude_released` (`digits` `unfit`) drop the planned changes of those classes before the
     /// pre-pass (empty: none), so a class the dated re-judge failed is not applied, with no re-plan.
+    /// Rule v11: `exclude_stale_top` (off unless the v11 re-judge's gate (a) fails) drops the planned
+    /// non-release R1 changes whose stored `top_newest` is missing or older than the plan's `as_of` less
+    /// 365 days, and the pre-pass drifts one whose re-election reads so.
     RefreshOrgNamesWet {
         org_ids: Option<Vec<i64>>,
         max_groups: Option<u64>,
@@ -526,6 +529,8 @@ enum Spec {
         exclude_rules: Vec<String>,
         #[serde(default)]
         exclude_released: Vec<String>,
+        #[serde(default)]
+        exclude_stale_top: bool,
     },
     /// Issue 524 unit 2b: restore one wet `refresh-org-names` job's renames from `org_name_refresh_log`
     /// under a compare-and-set on the pair it wrote (`store::Db::revert_org_name_refresh`).
@@ -1274,6 +1279,13 @@ pub struct JobRequest {
     /// released (`recent_released`: `digits`, `unfit`) before the pre-pass — the fallback when the
     /// re-judge's released list fails (`["digits"]`). Refused as `exclude_rules` is.
     pub exclude_released: Option<Vec<String>>,
+    /// A WET `refresh-org-names` only (issue 524 rule v11, the decision's pre-built fallback): `true`
+    /// drops the planned non-release R1 changes whose stored `top_newest` is missing or older than the
+    /// plan's `as_of` less 365 days before the pre-pass, and the pre-pass drifts one whose re-election
+    /// reads so — what every wet run passes when the v11 re-judge's gate (a) fails. Omitted or `false`:
+    /// off. Refused on a dry plan and by `revert-org-name-refresh`, whatever its value; every other kind
+    /// ignores it.
+    pub exclude_stale_top: Option<bool>,
 }
 
 /// Issue 527 unit 1: the most phrases one `name-phrase-census` takes.
@@ -1307,7 +1319,8 @@ struct RefreshCanary {
 /// recency decision (`## Unit 2b — recency decision`, panel wf_ce13ee62-9e9), for rule v8 by its
 /// decision (`## Rule v8 — decided`, after plan 2523's dated re-judge), for rule v9 by its
 /// (`## Rule v9 — decided`, panel wf_5cca11b1-622, protocol step 2) and for rule v10 by its build notes
-/// (`## Rule v10 — decided`): 45 rows.
+/// (`## Rule v10 — decided`) and for rule v11 by its (`## Rule v11 — decided`, panel wf_5d3b6fa8-186):
+/// 54 rows.
 /// - The five 2516 renames are live under their new names, so each now elects `keep:S1`.
 /// - 178 is a rename the other way: every buyer procedure from 2024-05 to 2026-07 names the full head,
 ///   and `CA Plaine Vallée` (which 2a.3 accepted as neutral) is the pre-eForms usage, ended 2023-12.
@@ -1343,6 +1356,14 @@ struct RefreshCanary {
 ///   Radgona` → `Zdravstveni dom Gornja Radgona`), 9766149 (`Karl Krátký` → `Karel Krátký`) and
 ///   4993534 (`Ferrmont, spol. s.r.o.` → `FERRMONT, a.s.`) — no `serves`, as plan 2527's labels give
 ///   the leading text only; each is re-read at the first v10 plan.
+/// - Rule v11 (`## Rule v11 — decided`, its Canaries): job 2554 renamed those six, so each now elects
+///   `keep:S1`. Nine more, each with the spelling plan 2543 listed for it: `hold:top_stale` 1556789
+///   (a revert spelling's rival, 4 clusters), 1276213 (a superseding third name) and 1345526 (top age
+///   625 days, the youngest stale wrong); `hold:doubled` 1918631 — job 2555's four wrongs —; `hold:seat_dropped`
+///   5350675; `hold:placeholder_id` 22831984 (`KEINEANGABE7`, a v10 `digits` release); and `change:R1`
+///   2857103 and 2715115 (stale tops with no rival: the exemption gate (a) tests) and 1800186 (a fresh
+///   top with a rival above the head). 3042 stays `change:R1`: a release is exempt from `top_stale`
+///   (its top, 2022-10-12, is stale and 4 clusters vote). 54 rows.
 const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
     // The 2516 five, applied: keep:S1.
     RefreshCanary { id: 31_558_903, expect: Some("keep:S1"), serves: None },
@@ -1446,13 +1467,45 @@ const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
     // Rule v10: its head is current (2026-10-08), but the release ships it all the same.
     RefreshCanary { id: 3_042, expect: Some("change:R1"), serves: Some("Hôpitaux civils de Colmar") },
     // Rule v10: six judged-right R1 renames on heads not printed for 3+ years (plan 2527 planned each);
-    // the runbook's wet canary step.
-    RefreshCanary { id: 4_220_276, expect: Some("change:R1"), serves: None },
-    RefreshCanary { id: 4_823_670, expect: Some("change:R1"), serves: None },
-    RefreshCanary { id: 8_092_631, expect: Some("change:R1"), serves: None },
-    RefreshCanary { id: 8_152_890, expect: Some("change:R1"), serves: None },
-    RefreshCanary { id: 9_766_149, expect: Some("change:R1"), serves: None },
-    RefreshCanary { id: 4_993_534, expect: Some("change:R1"), serves: None },
+    // v10's wet canary step. Rule v11: job 2554 renamed all six, so they are live under the new names.
+    RefreshCanary { id: 4_220_276, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 4_823_670, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 8_092_631, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 8_152_890, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 9_766_149, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 4_993_534, expect: Some("keep:S1"), serves: None },
+    // Rule v11: job 2555's revert and two of its wrongs, each a stale top with a rival cluster: `top_stale`.
+    RefreshCanary {
+        id: 1_556_789,
+        expect: Some("hold:top_stale"),
+        serves: Some("Instituto Navarro de Deporte y Juventud"),
+    },
+    RefreshCanary {
+        id: 1_276_213,
+        expect: Some("hold:top_stale"),
+        serves: Some("Instituto de Investigación y Formación Agraria y Pesquera"),
+    },
+    RefreshCanary { id: 1_345_526, expect: Some("hold:top_stale"), serves: Some("Valence Romans Sud Rhône-Alpes") },
+    // Rule v11: the doubled name (a fresh top; job 2555's fourth wrong).
+    RefreshCanary {
+        id: 1_918_631,
+        expect: Some("hold:doubled"),
+        serves: Some("Instituto Foral de Bienestar Social - Instituto Foral de Bienestar Social"),
+    },
+    // Rule v11: the seat dropped to a generic name (stale top, no rival).
+    RefreshCanary { id: 5_350_675, expect: Some("hold:seat_dropped"), serves: Some("Ośrodek Pomocy Społecznej") },
+    // Rule v11: `KEINEANGABE7`, a v10 `digits` release (`Kapitel 2` → an AOK) — the bind guard decides
+    // before the release is asked.
+    RefreshCanary {
+        id: 22_831_984,
+        expect: Some("hold:placeholder_id"),
+        serves: Some("AOK PLUS - Die Gesundheitskasse für Sachsen und Thüringen"),
+    },
+    // Rule v11: two stale tops with no rival (2 clusters; gate (a)'s cell, and step 4's wet canaries if
+    // it passes) and a fresh top with a rival above the head — all three ship.
+    RefreshCanary { id: 2_857_103, expect: Some("change:R1"), serves: Some("Itslearning Oy") },
+    RefreshCanary { id: 2_715_115, expect: Some("change:R1"), serves: Some("Lännen Tekstiilihuolto Oy") },
+    RefreshCanary { id: 1_800_186, expect: Some("change:R1"), serves: Some("Terveystalo Julkiset Palvelut Oy") },
 ];
 
 /// Issue 524 unit 2a: the ingest side of the head election, as `store::elect_head` takes it.
@@ -1618,10 +1671,20 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
         plan.as_of_date,
         plan.by_hold.get(store::HEAD_HOLD_CURRENT).map_or(0, |c| c.orgs),
     );
+    // Rule v11: the stale-top hold and the placeholder-identifier bind guard, each named at zero too
+    // (the two new serve holds, `doubled` and `seat_dropped`, are in the v9 clause's list).
+    let v11 = format!(
+        "Rule v11: R1's top_stale hold (a rival cluster, and the elected spelling's newest dated item more than \
+         {} days before as_of {}, or undated): {}; the placeholder_id bind guard: {}.",
+        store::HEAD_TOP_STALE_DAYS,
+        plan.as_of_date,
+        plan.by_hold.get(store::HEAD_HOLD_TOP_STALE).map_or(0, |c| c.orgs),
+        plan.by_hold.get(store::HEAD_HOLD_PLACEHOLDER_ID).map_or(0, |c| c.orgs),
+    );
     format!(
         "refresh-org-names DRY (issue 524 unit 2a, rule {}): {} organization(s) and {} mention row(s) walked{}; \
          {} elected ({}+ mention rows; {} below), {} with an empty head. CHANGES {} ({} mentions; {} on merge \
-         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. {dated} {v9} {v10} \
+         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. {dated} {v9} {v10} {v11} \
          Listed {} planned{} and {} held{}. Family moves of the changes: {}. D4 keeps' ENG satellites: {}. \
          {} identifier-verdict probe(s). Canaries ({unexpected} unexpected): {}. NOTHING IS WRITTEN — a wet \
          run (`dry_run: false`, issue 524 unit 2b) applies this plan.",
@@ -1693,14 +1756,17 @@ fn refresh_wet_filters(req: &JobRequest) -> Result<(Vec<String>, Vec<String>), S
 }
 
 /// Issue 524 rule v9: the filters as the params line and the summary print them (` exclude_rules=R2`,
-/// ` exclude_released=digits`), empty when none.
-fn refresh_wet_filters_line(exclude_rules: &[String], exclude_released: &[String]) -> String {
+/// ` exclude_released=digits`, and rule v11's ` exclude_stale_top=true`), empty when none.
+fn refresh_wet_filters_line(exclude_rules: &[String], exclude_released: &[String], exclude_stale_top: bool) -> String {
     let mut line = String::new();
     if !exclude_rules.is_empty() {
         line.push_str(&format!(" exclude_rules={}", exclude_rules.join(",")));
     }
     if !exclude_released.is_empty() {
         line.push_str(&format!(" exclude_released={}", exclude_released.join(",")));
+    }
+    if exclude_stale_top {
+        line.push_str(" exclude_stale_top=true");
     }
     line
 }
@@ -1721,11 +1787,15 @@ struct RefreshPlanTargets {
     /// Rule v9: the run's filters, as checked at enqueue.
     exclude_rules: Vec<String>,
     exclude_released: Vec<String>,
+    /// Rule v11: the run's `exclude_stale_top`.
+    exclude_stale_top: bool,
     /// Rule v9: the planned changes in scope the filters dropped before the pre-pass — by their rule
-    /// (`exclude_rules`, read first), and by their junk release (`exclude_released`) — and every
-    /// dropped id, by org id (the report lists the first [`ORG_NAME_REFRESH_UNPLANNED_LISTED`]).
+    /// (`exclude_rules`, read first), by their junk release (`exclude_released`), and (rule v11) as a
+    /// non-release R1 on a stale top (`exclude_stale_top`, read last) — and every dropped id, by org id
+    /// (the report lists the first [`ORG_NAME_REFRESH_UNPLANNED_LISTED`]).
     excluded_by_rule: u64,
     excluded_by_release: u64,
+    excluded_by_stale_top: u64,
     excluded_ids: Vec<i64>,
 }
 
@@ -1762,7 +1832,9 @@ fn refresh_wet_after_earlier_windows(message: String, job: u64, renames: Option<
 /// changes in scope that `exclude_rules` (their `rule`) or `exclude_released` (their
 /// `recent_released`) name are DROPPED here, before the pre-pass, and counted — so no excluded org
 /// is read, re-elected or renamed, and the drift limit counts the targets that remain; an asked id
-/// dropped this way is planned, not `unplanned`. A sync free fn, so the parsed plan stays off the
+/// dropped this way is planned, not `unplanned`. Rule v11: with `exclude_stale_top`, so is every R1
+/// change with no `recent_released` whose `top_newest` is missing or older than the plan's `as_of`
+/// less 365 days (`store::head_top_stale_date`). A sync free fn, so the parsed plan stays off the
 /// boxed arm's poll frame.
 fn org_name_refresh_targets(
     body: &str,
@@ -1770,6 +1842,7 @@ fn org_name_refresh_targets(
     org_ids: Option<&[i64]>,
     exclude_rules: &[String],
     exclude_released: &[String],
+    exclude_stale_top: bool,
 ) -> Result<RefreshPlanTargets, String> {
     let plan: serde_json::Value = serde_json::from_str(body)
         .map_err(|e| refresh_wet_refused(format!("the stored org-name-refresh-plan does not parse ({e})")))?;
@@ -1827,6 +1900,7 @@ fn org_name_refresh_targets(
     let asked: Option<std::collections::HashSet<i64>> = org_ids.map(|ids| ids.iter().copied().collect());
     let mut found: std::collections::HashSet<i64> = std::collections::HashSet::new();
     let (mut excluded_by_rule, mut excluded_by_release, mut excluded_ids) = (0u64, 0u64, Vec::new());
+    let mut excluded_by_stale_top = 0u64;
     for entry in listed {
         let target = (|| {
             if entry["verdict"].as_str()? != "change" {
@@ -1859,6 +1933,16 @@ fn org_name_refresh_targets(
             excluded_ids.push(target.org_id);
             continue;
         }
+        // Rule v11: the pre-built fallback — a non-release R1 change on a stale (or undated) top.
+        if exclude_stale_top
+            && target.rule == "R1"
+            && entry["recent_released"].is_null()
+            && store::head_top_stale_date(entry["top_newest"].as_str(), as_of)
+        {
+            excluded_by_stale_top += 1;
+            excluded_ids.push(target.org_id);
+            continue;
+        }
         targets.push(target);
     }
     let mut unplanned: Vec<i64> =
@@ -1873,8 +1957,10 @@ fn org_name_refresh_targets(
         as_of,
         exclude_rules: exclude_rules.to_vec(),
         exclude_released: exclude_released.to_vec(),
+        exclude_stale_top,
         excluded_by_rule,
         excluded_by_release,
+        excluded_by_stale_top,
         excluded_ids,
     })
 }
@@ -1909,6 +1995,9 @@ fn org_name_refresh_applied_json(
         all.insert("exclude_released".to_owned(), serde_json::json!(plan.exclude_released));
         all.insert("excluded_by_rule".to_owned(), plan.excluded_by_rule.into());
         all.insert("excluded_by_release".to_owned(), plan.excluded_by_release.into());
+        // Rule v11: the stale-top fallback, recorded off and on.
+        all.insert("exclude_stale_top".to_owned(), plan.exclude_stale_top.into());
+        all.insert("excluded_by_stale_top".to_owned(), plan.excluded_by_stale_top.into());
         all.insert(
             "excluded_ids".to_owned(),
             serde_json::json!(plan.excluded_ids.iter().take(ORG_NAME_REFRESH_UNPLANNED_LISTED).collect::<Vec<_>>()),
@@ -1946,17 +2035,23 @@ fn org_name_refresh_applied_summary(
         Some(after) => format!(" Resumed after org id {after}: {} target(s) skipped.", r.resumed_past),
     };
     // Rule v9: a filtered run names its filters and what they dropped, before the pre-pass's counts
-    // (which read the remaining targets only).
-    let excluded = if plan.exclude_rules.is_empty() && plan.exclude_released.is_empty() {
+    // (which read the remaining targets only). Rule v11: `exclude_stale_top` too, named only when on.
+    let excluded = if plan.exclude_rules.is_empty() && plan.exclude_released.is_empty() && !plan.exclude_stale_top {
         String::new()
     } else {
         format!(
-            " Filters (rule v9):{} — {} planned change(s) in scope dropped before the pre-pass ({} by rule, {} by \
-             junk release).",
-            refresh_wet_filters_line(&plan.exclude_rules, &plan.exclude_released),
+            " Filters (rule v9{}):{} — {} planned change(s) in scope dropped before the pre-pass ({} by rule, {} by \
+             junk release{}).",
+            if plan.exclude_stale_top { ", v11" } else { "" },
+            refresh_wet_filters_line(&plan.exclude_rules, &plan.exclude_released, plan.exclude_stale_top),
             plan.excluded_ids.len(),
             plan.excluded_by_rule,
-            plan.excluded_by_release
+            plan.excluded_by_release,
+            if plan.exclude_stale_top {
+                format!(", {} by stale top", plan.excluded_by_stale_top)
+            } else {
+                String::new()
+            },
         )
     };
     // Whenever this job id has ledger rows from before this run, cursor or not (the 2b review).
@@ -3003,11 +3098,13 @@ impl Supervisor {
                     }
                 };
                 // Issue 524 rule v9: the per-class filters drop a WET run's targets; a dry plan has none to
-                // drop, so asking one for them is refused, not ignored.
-                if req.dry_run != Some(false) && (req.exclude_rules.is_some() || req.exclude_released.is_some()) {
-                    return Err("refresh-org-names refuses `exclude_rules` and `exclude_released` on a dry plan: they \
-                                drop classes of the stored plan's changes from a WET run (`dry_run: false`), and a \
-                                dry plan always elects every class"
+                // drop, so asking one for them is refused, not ignored. Rule v11's `exclude_stale_top` too.
+                if req.dry_run != Some(false)
+                    && (req.exclude_rules.is_some() || req.exclude_released.is_some() || req.exclude_stale_top.is_some())
+                {
+                    return Err("refresh-org-names refuses `exclude_rules`, `exclude_released` and `exclude_stale_top` \
+                                on a dry plan: they drop classes of the stored plan's changes from a WET run \
+                                (`dry_run: false`), and a dry plan always elects every class"
                         .to_owned());
                 }
                 if req.dry_run == Some(false) {
@@ -3018,17 +3115,25 @@ impl Supervisor {
                     }
                     let max_groups = req.max_groups;
                     let (exclude_rules, exclude_released) = refresh_wet_filters(req)?;
+                    // Rule v11: off unless asked `true`.
+                    let exclude_stale_top = req.exclude_stale_top == Some(true);
                     let params = format!(
                         "refresh-org-names wet{}{}{}",
                         org_ids.as_ref().map(|ids| format!(" org_ids={}", ids.len())).unwrap_or_default(),
                         max_groups.map(|n| format!(" max_groups={n}")).unwrap_or_default(),
-                        refresh_wet_filters_line(&exclude_rules, &exclude_released),
+                        refresh_wet_filters_line(&exclude_rules, &exclude_released, exclude_stale_top),
                     );
                     return Ok(vec![
                         self.push(
                             "refresh-org-names",
                             params,
-                            Spec::RefreshOrgNamesWet { org_ids, max_groups, exclude_rules, exclude_released },
+                            Spec::RefreshOrgNamesWet {
+                                org_ids,
+                                max_groups,
+                                exclude_rules,
+                                exclude_released,
+                                exclude_stale_top,
+                            },
                         )
                         .await,
                     ]);
@@ -3083,6 +3188,7 @@ impl Supervisor {
                     ("samples", req.samples.is_some()),
                     ("exclude_rules", req.exclude_rules.is_some()),
                     ("exclude_released", req.exclude_released.is_some()),
+                    ("exclude_stale_top", req.exclude_stale_top.is_some()),
                 ];
                 if let Some((field, _)) = unused.iter().find(|(_, set)| *set) {
                     return Err(format!(
@@ -12576,7 +12682,13 @@ impl Supervisor {
     /// future boxed inside it, so neither this fn's future nor its poll frame grows with the walk.
     async fn run_org_name_refresh_spec(&self, job: &Job) -> Result<String, String> {
         match &job.spec {
-            Spec::RefreshOrgNamesWet { org_ids, max_groups, exclude_rules, exclude_released } => Box::pin(async move {
+            Spec::RefreshOrgNamesWet {
+                org_ids,
+                max_groups,
+                exclude_rules,
+                exclude_released,
+                exclude_stale_top,
+            } => Box::pin(async move {
                 let job_id = job.id;
                 // Everything before the report is stored: a refusal or an error here names the renames
                 // this job id's earlier windows left standing (the re-review: a recovered job's dead
@@ -12591,9 +12703,16 @@ impl Supervisor {
                                 .to_owned(),
                         ));
                     };
-                    // Rule v9: the per-class filters drop their targets here, before the pre-pass.
-                    let mut plan =
-                        org_name_refresh_targets(&body, computed_at, org_ids.as_deref(), exclude_rules, exclude_released)?;
+                    // Rule v9: the per-class filters drop their targets here, before the pre-pass (and rule
+                    // v11's `exclude_stale_top`).
+                    let mut plan = org_name_refresh_targets(
+                        &body,
+                        computed_at,
+                        org_ids.as_deref(),
+                        exclude_rules,
+                        exclude_released,
+                        *exclude_stale_top,
+                    )?;
                     drop(body);
                     let stop = || self.cancelled(job_id);
                     // A restart recovers this job at the front of the queue: it resumes after the last
@@ -12618,6 +12737,8 @@ impl Supervisor {
                         resume_after,
                         window: store::ORG_NAME_REFRESH_WINDOW,
                         exclude_released: exclude_released.as_slice(),
+                        // Rule v11: the pre-pass holds the stale-top filter at wet time too.
+                        exclude_stale_top: *exclude_stale_top,
                         stop: &stop,
                         progress: &progress,
                     }))
@@ -22332,8 +22453,8 @@ mod tests {
             let specs: Vec<&Spec> = queue.iter().map(|j| &j.spec).collect();
             assert!(matches!(
                 specs[2],
-                Spec::RefreshOrgNamesWet { org_ids: None, max_groups: None, exclude_rules, exclude_released }
-                    if exclude_rules.is_empty() && exclude_released.is_empty()
+                Spec::RefreshOrgNamesWet { org_ids: None, max_groups: None, exclude_rules, exclude_released, exclude_stale_top }
+                    if exclude_rules.is_empty() && exclude_released.is_empty() && !exclude_stale_top
             ));
             assert!(matches!(
                 specs[3],
@@ -22347,13 +22468,30 @@ mod tests {
         assert!(stoppable("refresh-org-names", &queued[0].params), "a cancel reaches the walk between pages");
         assert!(stoppable("refresh-org-names", &queued[2].params), "and the wet run between windows");
         assert!(stoppable("revert-org-name-refresh", &queued[4].params), "and the revert between windows");
-        // The 45 canaries (rule v10's six on rule v9's 39 — v9's nine on rule v8's 30, which kept the
-        // recency decision's 27), each id once.
+        // The 54 canaries (rule v11's nine on rule v10's 45 — v10's six on rule v9's 39, v9's nine on
+        // rule v8's 30, which kept the recency decision's 27), each id once.
         let ids: std::collections::BTreeSet<i64> = ORG_NAME_REFRESH_CANARIES.iter().map(|c| c.id).collect();
-        assert_eq!((ids.len(), ORG_NAME_REFRESH_CANARIES.len()), (45, 45));
+        assert_eq!((ids.len(), ORG_NAME_REFRESH_CANARIES.len()), (54, 54));
         let expect = |id: i64| ORG_NAME_REFRESH_CANARIES.iter().find(|c| c.id == id).and_then(|c| c.expect);
         for id in [31_558_903, 22_713_056, 6_341_366, 760, 61, 10] {
             assert_eq!(expect(id), Some("keep:S1"), "{id}: applied by 2516, live under its new name");
+        }
+        // Rule v11: the six v10 canaries, applied by job 2554, are live under their new names.
+        for id in [4_220_276, 4_823_670, 8_092_631, 8_152_890, 9_766_149, 4_993_534] {
+            assert_eq!(expect(id), Some("keep:S1"), "{id}: applied by 2554");
+        }
+        // Rule v11: one canary per new hold, each naming the spelling it would serve (plan 2543's).
+        for (id, reason) in [
+            (1_556_789, store::HEAD_HOLD_TOP_STALE),
+            (1_276_213, store::HEAD_HOLD_TOP_STALE),
+            (1_345_526, store::HEAD_HOLD_TOP_STALE),
+            (1_918_631, store::HEAD_HOLD_DOUBLED),
+            (5_350_675, store::HEAD_HOLD_SEAT_DROPPED),
+            (22_831_984, store::HEAD_HOLD_PLACEHOLDER_ID),
+        ] {
+            assert_eq!(expect(id), Some(format!("hold:{reason}").as_str()), "{id}");
+            let canary = ORG_NAME_REFRESH_CANARIES.iter().find(|c| c.id == id).unwrap();
+            assert!(canary.serves.is_some(), "{id}: the hold names the spelling it would serve");
         }
         for id in [178, 2_186, 3_262, 3_694, 6_867, 10_671, 1_076, 10_603, 3_909, 1_846] {
             assert_eq!(expect(id), Some("hold:recent"), "{id}");
@@ -22363,16 +22501,19 @@ mod tests {
             assert_eq!(expect(id), Some("hold:residue"), "{id}");
         }
         // Rule v10: v9's change:R1 canaries print their heads within 3 years of plan 2527, so seven hold
-        // `head_current` (with the spelling each would serve); 3042, a digits release, still changes, and
-        // six renames of heads not printed for 3+ years are the new change:R1 canaries.
+        // `head_current` (with the spelling each would serve); 3042, a digits release, still changes
+        // (rule v11: a release is exempt from `top_stale`), and since rule v11 so do two stale tops with
+        // no rival (2857103, 2715115) and a fresh top with a rival (1800186).
         for id in [1_220, 2_762, 3_406, 6_079, 11_179, 1_919, 791] {
             assert_eq!(expect(id), Some(format!("hold:{}", store::HEAD_HOLD_CURRENT).as_str()), "{id}");
             let canary = ORG_NAME_REFRESH_CANARIES.iter().find(|c| c.id == id).unwrap();
             assert!(canary.serves.is_some(), "{id}: the hold names the spelling it would serve");
         }
-        for id in [3_042, 4_220_276, 4_823_670, 8_092_631, 8_152_890, 9_766_149, 4_993_534] {
+        for id in [3_042, 2_857_103, 2_715_115, 1_800_186] {
             assert_eq!(expect(id), Some("change:R1"), "{id}");
         }
+        let changes = ORG_NAME_REFRESH_CANARIES.iter().filter(|c| c.expect == Some("change:R1")).count();
+        assert_eq!(changes, 4, "the change:R1 canaries are 3042 and rule v11's three");
         // Rule v9: one canary per serve hold, each expecting the hold's reason by its store const.
         for (id, reason) in [
             (22_028_982, store::HEAD_HOLD_REVIEW_BODY),
@@ -22444,6 +22585,118 @@ mod tests {
         ));
     }
 
+    /// Issue 524 rule v11's `exclude_stale_top` at enqueue: a wet run takes it (`true` on, `false` or
+    /// omitted off), records it on the params line and in the queued spec; a dry plan and the revert
+    /// refuse it whatever its value.
+    #[tokio::test]
+    async fn refresh_org_names_takes_exclude_stale_top_on_a_wet_run_only() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ask = |dry_run: Option<bool>, stale: Option<bool>| JobRequest {
+            kind: "refresh-org-names".into(),
+            dry_run,
+            exclude_stale_top: stale,
+            ..Default::default()
+        };
+        for dry_run in [None, Some(true)] {
+            for stale in [Some(true), Some(false)] {
+                let err = sup.enqueue_request(&ask(dry_run, stale)).await.expect_err("a dry plan");
+                assert!(err.contains("`exclude_stale_top`") && err.contains("dry plan"), "{err}");
+            }
+        }
+        let revert = JobRequest {
+            kind: "revert-org-name-refresh".into(),
+            job: Some(2601),
+            exclude_stale_top: Some(true),
+            ..Default::default()
+        };
+        let err = sup.enqueue_request(&revert).await.expect_err("the revert restores the whole job");
+        assert!(err.contains("`exclude_stale_top`") && err.contains("no per-org or capped revert"), "{err}");
+        assert!(sup.queued().is_empty(), "the refused asks queued nothing");
+        // The v11 protocol's fallback run, and the same with it off.
+        let fallback = JobRequest {
+            exclude_rules: Some(vec!["R2".to_owned()]),
+            exclude_released: Some(vec!["unfit".to_owned()]),
+            ..ask(Some(false), Some(true))
+        };
+        sup.enqueue_request(&fallback).await.expect("the stale-top fallback");
+        sup.enqueue_request(&ask(Some(false), Some(false))).await.expect("off");
+        let queued = sup.queued();
+        assert_eq!(
+            queued[0].params,
+            "refresh-org-names wet exclude_rules=R2 exclude_released=unfit exclude_stale_top=true"
+        );
+        assert_eq!(queued[1].params, "refresh-org-names wet");
+        let queue = sup.queue.lock().expect("queue lock");
+        assert!(matches!(&queue[0].spec, Spec::RefreshOrgNamesWet { exclude_stale_top: true, .. }));
+        assert!(matches!(&queue[1].spec, Spec::RefreshOrgNamesWet { exclude_stale_top: false, .. }));
+        // A job queued before rule v11 deserialises with the filter off.
+        let old: Spec = serde_json::from_str(
+            r#"{"RefreshOrgNamesWet":{"org_ids":null,"max_groups":null,"exclude_rules":["R2"],"exclude_released":[]}}"#,
+        )
+        .expect("a v10 spec");
+        assert!(matches!(old, Spec::RefreshOrgNamesWet { exclude_stale_top: false, .. }));
+    }
+
+    /// Issue 524 rule v11: `exclude_stale_top` drops, before the pre-pass, the planned R1 changes with
+    /// no junk release whose stored `top_newest` is missing or older than the plan's `as_of` less 365
+    /// days — read last, after the rule and release filters — and leaves the same targets alone when off;
+    /// the job line and the report record it.
+    #[test]
+    fn exclude_stale_top_drops_a_stale_no_rival_target_and_leaves_it_alone_when_off() {
+        let entry = |id: i64, rule: &str, released: Option<&str>, top: Option<&str>| {
+            serde_json::json!({
+                "org_id": id, "verdict": "change", "rule": rule, "old_name": "Old", "old_name_norm": "old",
+                "new_name": "New", "recent_released": released, "top_newest": top,
+            })
+        };
+        // `as_of` 2026-10-16 11:20:05 UTC (plan 2543's): the cutoff is 2025-10-16 11:20:05.
+        let plan = serde_json::json!({
+            "epoch": store::HEAD_ELECTION_EPOCH, "rev": crate::v1::rev(), "stopped": false, "truncated": false,
+            "scope_ids": null, "by_hold": {}, "listing_cap": 100_000, "as_of": 1_792_132_805,
+            "planned": [
+                entry(20, "R1", None, Some("2020-10-26")),          // 2857103's shape: stale, no rival — dropped
+                entry(21, "R1", None, Some("2026-09-22")),          // fresh — kept
+                entry(22, "R1", Some("digits"), Some("2022-10-12")), // a release — kept (3042's shape)
+                entry(23, "R2", None, Some("2018-01-01")),          // R2 — kept (excluded by rule, if asked)
+                entry(24, "R1", None, None),                        // undated — dropped (fails closed)
+                entry(25, "R1", None, Some("2025-10-16")),          // the cutoff's own day — dropped
+                entry(26, "R1", None, Some("2025-10-17")),          // a day inside the year — kept
+            ],
+        })
+        .to_string();
+        let ids = |p: &RefreshPlanTargets| p.targets.iter().map(|t| t.org_id).collect::<Vec<_>>();
+        let off = org_name_refresh_targets(&plan, 7, None, &[], &[], false).expect("off");
+        assert_eq!((ids(&off), off.excluded_by_stale_top, off.excluded_ids.clone()), (vec![20, 21, 22, 23, 24, 25, 26], 0, vec![]));
+        let on = org_name_refresh_targets(&plan, 7, None, &[], &[], true).expect("on");
+        assert_eq!((ids(&on), on.excluded_by_stale_top, on.excluded_ids.clone()), (vec![21, 22, 23, 26], 3, vec![20, 24, 25]));
+        // With the v11 protocol's standing filters: R2 by rule first, the stale ones by top.
+        let r2 = vec!["R2".to_owned()];
+        let unfit = vec!["unfit".to_owned()];
+        let all = org_name_refresh_targets(&plan, 7, None, &r2, &unfit, true).expect("all three");
+        assert_eq!((ids(&all), all.excluded_by_rule, all.excluded_by_release, all.excluded_by_stale_top), (vec![21, 22, 26], 1, 0, 3));
+        // Scoped: an asked id the filter drops is planned, not `unplanned`.
+        let scoped = org_name_refresh_targets(&plan, 7, Some(&[20, 21, 99]), &[], &[], true).expect("scoped");
+        assert_eq!((ids(&scoped), scoped.excluded_ids.clone(), scoped.unplanned.clone()), (vec![21], vec![20], vec![99]));
+        // The job line and the report.
+        let r = store::OrgNameRefreshApplied { targets: 3, ready: 3, applied: 3, windows: 1, ..Default::default() };
+        let line = org_name_refresh_applied_summary(&r, 9, &all, None);
+        assert!(
+            line.contains(
+                "Filters (rule v9, v11): exclude_rules=R2 exclude_released=unfit exclude_stale_top=true — 4 planned \
+                 change(s) in scope dropped before the pre-pass (1 by rule, 0 by junk release, 3 by stale top)."
+            ),
+            "{line}"
+        );
+        let stale_only = org_name_refresh_applied_summary(&r, 9, &on, None);
+        assert!(stale_only.contains("Filters (rule v9, v11): exclude_stale_top=true — 3 planned"), "{stale_only}");
+        assert!(!org_name_refresh_applied_summary(&r, 9, &off, None).contains("Filters"), "off, no clause");
+        let body: serde_json::Value = serde_json::from_str(&org_name_refresh_applied_json(&r, 9, &all, None).unwrap()).unwrap();
+        assert_eq!((body["exclude_stale_top"].as_bool(), body["excluded_by_stale_top"].as_u64()), (Some(true), Some(3)));
+        assert_eq!(body["excluded_ids"], serde_json::json!([20, 23, 24, 25]));
+        let body: serde_json::Value = serde_json::from_str(&org_name_refresh_applied_json(&r, 9, &off, None).unwrap()).unwrap();
+        assert_eq!((body["exclude_stale_top"].as_bool(), body["excluded_by_stale_top"].as_u64()), (Some(false), Some(0)));
+    }
+
     /// Issue 524 rule v9: the filters drop their classes off the stored plan's targets before the
     /// pre-pass — by rule first, then by junk release — counting each and listing the ids; an asked id
     /// they drop is planned, not `unplanned`; no filter takes every planned change, as before.
@@ -22466,20 +22719,20 @@ mod tests {
         .to_string();
         let owned = |v: &[&str]| v.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
         let ids = |p: &RefreshPlanTargets| p.targets.iter().map(|t| t.org_id).collect::<Vec<_>>();
-        let all = org_name_refresh_targets(&plan, 7, None, &[], &[]).expect("no filter");
+        let all = org_name_refresh_targets(&plan, 7, None, &[], &[], false).expect("no filter");
         assert_eq!((ids(&all), all.excluded_by_rule, all.excluded_by_release, all.excluded_ids.clone()), (vec![10, 11, 12, 13, 14, 15], 0, 0, vec![]));
         // Rule v10: the plan's own `as_of`, not when it was stored.
         assert_eq!((all.as_of, all.computed_at), (1_792_108_800, 7));
-        let r2 = org_name_refresh_targets(&plan, 7, None, &owned(&["R2"]), &[]).expect("the R2 fallback");
+        let r2 = org_name_refresh_targets(&plan, 7, None, &owned(&["R2"]), &[], false).expect("the R2 fallback");
         assert_eq!((ids(&r2), r2.excluded_by_rule, r2.excluded_ids.clone()), (vec![10, 12, 14, 15], 2, vec![11, 13]));
-        let digits = org_name_refresh_targets(&plan, 7, None, &[], &owned(&["digits"])).expect("the released fallback");
+        let digits = org_name_refresh_targets(&plan, 7, None, &[], &owned(&["digits"]), false).expect("the released fallback");
         assert_eq!((ids(&digits), digits.excluded_by_release, digits.excluded_ids.clone()), (vec![10, 11, 14, 15], 2, vec![12, 13]));
         // Both: 13 is an R2 AND released by digits — counted once, by its rule.
-        let both = org_name_refresh_targets(&plan, 7, None, &owned(&["R2"]), &owned(&["digits", "unfit"])).expect("both");
+        let both = org_name_refresh_targets(&plan, 7, None, &owned(&["R2"]), &owned(&["digits", "unfit"]), false).expect("both");
         assert_eq!((ids(&both), both.excluded_by_rule, both.excluded_by_release), (vec![10, 15], 2, 2));
         assert_eq!((both.exclude_rules.clone(), both.exclude_released.clone()), (owned(&["R2"]), owned(&["digits", "unfit"])));
         // Scoped: an asked id the filter drops is not `unplanned`; an id the plan lacks still is.
-        let scoped = org_name_refresh_targets(&plan, 7, Some(&[11, 10, 99]), &owned(&["R2"]), &[]).expect("scoped");
+        let scoped = org_name_refresh_targets(&plan, 7, Some(&[11, 10, 99]), &owned(&["R2"]), &[], false).expect("scoped");
         assert_eq!((ids(&scoped), scoped.excluded_ids.clone(), scoped.unplanned.clone()), (vec![10], vec![11], vec![99]));
         // The applied report and the job line record them.
         let r = store::OrgNameRefreshApplied { targets: 2, ready: 2, applied: 2, windows: 1, ..Default::default() };
@@ -22563,7 +22816,7 @@ mod tests {
         let planned: Vec<(i64, &str)> =
             plan["planned"].as_array().unwrap().iter().map(|e| (e["org_id"].as_i64().unwrap(), e["rule"].as_str().unwrap())).collect();
         assert_eq!(planned, vec![(701, "R1"), (702, "R2")]);
-        let wet = |id: u64, exclude_rules: &[&str], exclude_released: &[&str]| Job {
+        let wet_stale = |id: u64, exclude_rules: &[&str], exclude_released: &[&str], exclude_stale_top: bool| Job {
             id,
             kind: "refresh-org-names".into(),
             ..job(Spec::RefreshOrgNamesWet {
@@ -22571,8 +22824,10 @@ mod tests {
                 max_groups: None,
                 exclude_rules: exclude_rules.iter().map(|s| (*s).to_owned()).collect(),
                 exclude_released: exclude_released.iter().map(|s| (*s).to_owned()).collect(),
+                exclude_stale_top,
             })
         };
+        let wet = |id: u64, exclude_rules: &[&str], exclude_released: &[&str]| wet_stale(id, exclude_rules, exclude_released, false);
         // 701 marked as a digits release in a copy of the plan: both filters together drop both.
         let mut marked = plan.clone();
         marked["planned"][0]["recent_released"] = serde_json::json!("digits");
@@ -22586,6 +22841,22 @@ mod tests {
         ] {
             assert!(msg.contains(needle), "missing {needle:?} in: {msg}");
         }
+        assert_eq!((head_of(701).await, head_of(702).await), (Value::Text("Sheffield Hallam University".into()), Value::Text("Stray Body".into())));
+        // Rule v11: the genuine plan, with `exclude_stale_top` beside the R2 filter. Nothing here is dated,
+        // so 701's stored `top_newest` is null: an undated top fails closed as stale, and 701 is dropped too.
+        db.put_report("org-name-refresh-plan", &genuine, at).await.unwrap();
+        assert!(plan["planned"][0]["top_newest"].is_null(), "{}", plan["planned"][0]);
+        let msg = sup.run_spec(&wet_stale(5, &["R2"], &[], true)).await.expect("stale top and R2 filtered");
+        for needle in [
+            "refresh-org-names WET (issue 524 unit 2b, rule 524u2-v11, job 5): 0 of the plan's 2 planned change(s) in scope.",
+            "Filters (rule v9, v11): exclude_rules=R2 exclude_stale_top=true — 2 planned change(s) in scope dropped before the pre-pass (1 by rule, 0 by junk release, 1 by stale top).",
+            "RENAMED 0 head(s)",
+        ] {
+            assert!(msg.contains(needle), "missing {needle:?} in: {msg}");
+        }
+        let (body, _) = db.latest_report("org-name-refresh-applied").await.unwrap().unwrap();
+        let applied: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((applied["exclude_stale_top"].as_bool(), applied["excluded_by_stale_top"].as_u64()), (Some(true), Some(1)));
         assert_eq!((head_of(701).await, head_of(702).await), (Value::Text("Sheffield Hallam University".into()), Value::Text("Stray Body".into())));
         // Rule v10: the wet pre-pass re-elects with the STORED plan's `as_of` — not the clock, a constant
         // or `computed_at` — so a distinctive past instant written into the plan (2015-06-01) comes back
@@ -22803,7 +23074,13 @@ mod tests {
         let wet = |id: u64, org_ids: Option<Vec<i64>>| Job {
             id,
             kind: "refresh-org-names".into(),
-            ..job(Spec::RefreshOrgNamesWet { org_ids, max_groups: None, exclude_rules: vec![], exclude_released: vec![] })
+            ..job(Spec::RefreshOrgNamesWet {
+                org_ids,
+                max_groups: None,
+                exclude_rules: vec![],
+                exclude_released: vec![],
+                exclude_stale_top: false,
+            })
         };
         let err = sup.run_spec(&wet(2, None)).await.expect_err("no plan is stored yet");
         assert!(err.contains("REFUSED") && err.contains("no org-name-refresh-plan is stored"), "{err}");
@@ -22828,10 +23105,15 @@ mod tests {
             // Rule v9's nine canaries are not seeded here either.
             r#"22028982 not found UNEXPECTED (want hold:review_body "Vergabekammer BW")"#,
             r#"3042 not found UNEXPECTED (want change:R1 "Hôpitaux civils de Colmar")"#,
-            // Rule v10: seven re-pointed to `hold:head_current`, six new change:R1 canaries (no spelling).
+            // Rule v10: seven re-pointed to `hold:head_current`; v10's six change:R1 canaries, applied by
+            // job 2554, are keep:S1 since rule v11 (no spelling).
             r#"1220 not found UNEXPECTED (want hold:head_current "Miasto Bielsko-Biała Urząd Miejski w Bielsku-Białej")"#,
-            "4220276 not found UNEXPECTED (want change:R1)",
-            "(41 unexpected)",
+            "4220276 not found UNEXPECTED (want keep:S1)",
+            // Rule v11's nine are not seeded here either.
+            r#"1556789 not found UNEXPECTED (want hold:top_stale "Instituto Navarro de Deporte y Juventud")"#,
+            r#"22831984 not found UNEXPECTED (want hold:placeholder_id "AOK PLUS - Die Gesundheitskasse für Sachsen und Thüringen")"#,
+            r#"2857103 not found UNEXPECTED (want change:R1 "Itslearning Oy")"#,
+            "(50 unexpected)",
             // Rule v7's and v8's counters: 334 is the one residue hold.
             "R1's recent hold: 0; R1/R2's residue hold: 1; undated 0 (MUST be 0)",
             "residue that still ships (planned changes whose org's newest procedure is the head's: R0, or released): none.",
@@ -22855,12 +23137,22 @@ mod tests {
         assert_eq!(plan["fns"]["r2_hold"], "ingest::crosswalk::head_r2_hold");
         assert_eq!(plan["fns"]["serve_hold"], "ingest::crosswalk::head_serve_hold", "rule v9");
         // Rule v9's counters, named at zero: no serve hold fires on these shapes, no release withheld.
+        // Rule v11's two serve holds join the list.
         assert!(
             msg.contains(
-                "Rule v9: R1/R2 serve holds: review_body 0, organ 0, code_added 0, address_added 0, caps_variant 0; \
-                 digits releases withheld (held under their recent, residue or head_current hold, release_withheld): \
-                 none (ids [])."
+                "Rule v9: R1/R2 serve holds: review_body 0, organ 0, code_added 0, address_added 0, caps_variant 0, \
+                 doubled 0, seat_dropped 0; digits releases withheld (held under their recent, residue or \
+                 head_current hold, release_withheld): none (ids [])."
             ),
+            "{msg}"
+        );
+        // Rule v11's stale-top hold and placeholder guard, named at zero, with the plan's `as_of`.
+        assert!(
+            msg.contains(&format!(
+                "Rule v11: R1's top_stale hold (a rival cluster, and the elected spelling's newest dated item more \
+                 than 365 days before as_of {}, or undated): 0; the placeholder_id bind guard: 0.",
+                store::rates::civil_date(as_of)
+            )),
             "{msg}"
         );
         assert_eq!(plan["release_withheld_ids"], serde_json::json!([]));
@@ -23474,6 +23766,203 @@ mod tests {
         let dated = [spread(uni, 1, 1, 2), spread(vk, 100, 10, 3)].concat();
         let e = elect(&[(vk, 402), (uni, 40)], uni, &dated, 13 * day);
         assert_eq!(e.verdict, held(store::HEAD_HOLD_REVIEW_BODY, vk));
+    }
+
+    /// Issue 524 rule v11, with the REAL ingest functions, on the v11 canaries' plan-2543 spellings and
+    /// vote counts (an unlisted spelling or two added where the listing's top five fall short of V), each
+    /// head's and elected spelling's newest dates as plan 2543 read them and its `as_of`: job 2555's three
+    /// wrongs hold `top_stale`; 1918631 holds `doubled`, 5350675 `seat_dropped` and 22831984
+    /// `placeholder_id` (a v10 `digits` release: the bind guard answers in `serve`, before any release
+    /// counts); the stale no-rival tops 2857103 and 2715115 and the fresh top with a rival 1800186
+    /// change; and 3042, released by the window, changes on its stale top with a rival. The planner and
+    /// the wet pre-pass both run these through `head_elect_fns()`.
+    #[test]
+    fn the_v11_canary_shapes_with_the_real_keys() {
+        use store::{DatedVote, HeadRule, HeadVerdict, elect_head_counted};
+        let fns = head_elect_fns();
+        let day = 86_400;
+        // Plan 2543's `as_of`, 2026-10-16 11:20:05 UTC.
+        let as_of = 1_792_132_805;
+        // Days since 1970-01-01 of a `YYYY-MM-DD` (Hinnant's days-from-civil), checked against the store's
+        // own inverse.
+        let on = |date: &str| {
+            let part = |at: std::ops::Range<usize>| date[at].parse::<i64>().expect("a date");
+            let (y, m, d) = (part(0..4), part(5..7), part(8..10));
+            let y = if m <= 2 { y - 1 } else { y };
+            let era = y.div_euclid(400);
+            let yoe = y - era * 400;
+            let doy = (153 * ((m + 9) % 12) + 2) / 5 + d - 1;
+            let days = era * 146_097 + yoe * 365 + yoe / 4 - yoe / 100 + doy - 719_468;
+            assert_eq!(store::rates::civil_date(days * day), date);
+            days
+        };
+        // `n` items of `spelling`, one per tender from `tender` on, a day apart, the newest on `newest`.
+        let ending = |spelling: &'static str, tender: i64, newest: &str, n: i64| -> Vec<DatedVote<'static>> {
+            let last = on(newest);
+            (0..n).map(|i| DatedVote { spelling, tender: tender + i, at: (last - i) * day }).collect()
+        };
+        let elect = |votes: &[(&str, u64)], head: &str, identifier: &str, dated: &[DatedVote<'_>]| {
+            let org = store::HeadElectOrg {
+                head,
+                identifier_kind: Some("national"),
+                identifier: Some(identifier),
+                bind_defect: false,
+                dated: Some(dated),
+                as_of,
+            };
+            elect_head_counted(votes, &org, &fns)
+        };
+        let held = |reason: &'static str, new: &str| HeadVerdict::Hold { reason, rule: HeadRule::R1, new: Some(new.into()) };
+        let change = |new: &str| HeadVerdict::Change { rule: HeadRule::R1, new: new.into() };
+
+        // 1556789: V 27, T 15, H 1, 4 clusters; head 2011-12-24, top 2020-03-11 — a revert spelling's rival.
+        let (head, elected) = ("Instituto Navarro del Deporte y Actividad Fisica", "Instituto Navarro de Deporte y Juventud");
+        let votes = [
+            (elected, 15),
+            ("INSTITUTO NAVARRO DEL DEPORTE", 7),
+            ("INSTITUTO NAVARRO DEL DEPORTE Y DE LA ACTIVIDAD FISICA", 2),
+            ("Instituto Navarro del Deporte", 2),
+            (head, 1),
+        ];
+        let dated = [
+            ending(elected, 1, "2020-03-11", 15),
+            ending("INSTITUTO NAVARRO DEL DEPORTE", 100, "2019-06-01", 7),
+            ending("Instituto Navarro del Deporte", 200, "2018-06-01", 2),
+            ending("INSTITUTO NAVARRO DEL DEPORTE Y DE LA ACTIVIDAD FISICA", 300, "2016-06-01", 2),
+            ending(head, 400, "2011-12-24", 1),
+        ]
+        .concat();
+        let e = elect(&votes, head, "Q3150025I", &dated);
+        assert_eq!((e.voting, e.top, e.head_votes, e.second, e.clusters), (27, 15, 1, 9, 4));
+        assert_eq!(e.verdict, held(store::HEAD_HOLD_TOP_STALE, elected), "1556789");
+
+        // 1276213: V 96, T 56, H 7, 3 clusters; head 2015-09-04, top 2023-11-20; the superseding name newer.
+        let head = "Instituto Andaluz de Investigación y Formación Agraria Y Pesquera (IFAPA)";
+        let elected = "Instituto de Investigación y Formación Agraria y Pesquera";
+        let caps = "INSTITUTO DE INVESTIGACIÓN Y FORMACIÓN AGRARIA Y PESQUERA";
+        let newer = "Instituto Andaluz de Investigación y Formación Agraria, Pesquera, Alimentaria y de la Producción Ecológica";
+        let head_twin = "Instituto Andaluz de Investigación y Formación Agraria y Pesquera (IFAPA)";
+        let votes = [(caps, 35), (newer, 33), (elected, 21), (head_twin, 6), (head, 1)];
+        let dated = [
+            ending(caps, 1, "2023-11-20", 35),
+            ending(elected, 100, "2022-01-01", 21),
+            ending(newer, 200, "2026-09-01", 33),
+            ending(head_twin, 300, "2015-09-03", 6),
+            ending(head, 400, "2015-09-04", 1),
+        ]
+        .concat();
+        let e = elect(&votes, head, "Q4100689A", &dated);
+        assert_eq!((e.voting, e.top, e.head_votes, e.second, e.clusters), (96, 56, 7, 33, 3));
+        assert_eq!(e.recent.map(|r| (r.fires, r.newest_is_head)), Some((false, false)));
+        assert_eq!(e.verdict, held(store::HEAD_HOLD_TOP_STALE, elected), "1276213");
+        assert_eq!(e.recent.unwrap().rival_newest, Some(on("2026-09-01") * day), "the superseding name, newer than the top");
+
+        // 1345526: V 143, T 128, H 1, 4 clusters; head 2011-11-03, top 2025-01-29 (625 days).
+        let head = "Mairie de Valence - direction de l'administration, de la commande publique et des affaires juridiques";
+        let elected = "Valence Romans Sud Rhône-Alpes";
+        let votes = [
+            ("valence romans sud rhone-alpes", 55),
+            (elected, 52),
+            ("Ville de Valence", 12),
+            ("VALENCE ROMANS SUD RHONE-ALPES", 10),
+            ("Valence-Romans Sud Rhône-Alpes", 8),
+            ("Valence Romans Sud Rhone-Alpes", 3),
+            ("Commune de Valence", 2),
+            (head, 1),
+        ];
+        let dated = [
+            ending(elected, 1, "2025-01-29", 52),
+            ending("Ville de Valence", 100, "2024-03-01", 12),
+            ending("Commune de Valence", 200, "2013-01-01", 2),
+            ending(head, 300, "2011-11-03", 1),
+        ]
+        .concat();
+        let e = elect(&votes, head, "21260362500014", &dated);
+        assert_eq!((e.voting, e.top, e.head_votes, e.clusters), (143, 128, 1, 4));
+        assert_eq!(e.verdict, held(store::HEAD_HOLD_TOP_STALE, elected), "1345526");
+
+        // 1918631: the doubled name, a fresh top (2026-09-02), H 69 (head 2021-07-20).
+        let head = "Instituto Foral de Bienestar Social";
+        let doubled = "Instituto Foral de Bienestar Social - Instituto Foral de Bienestar Social";
+        let area = "Instituto Foral de Bienestar Social, Área de Contratación y Régimen Jurídico";
+        let votes = [
+            (doubled, 218),
+            (head, 69),
+            (area, 8),
+            ("Instituto Foral de Bienestar Social — Área de Contratación y Régimen Jurídico", 4),
+            ("Instituto Foral de Bienestar Social — Instituto Foral de Bienestar Social", 3),
+            ("INSTITUTO FORAL DE BIENESTAR SOCIAL - INSTITUTO FORAL DE BIENESTAR SOCIAL", 1),
+        ];
+        let dated = [ending(doubled, 1, "2026-09-02", 218), ending(area, 300, "2024-01-01", 8), ending(head, 500, "2021-07-20", 69)]
+            .concat();
+        let e = elect(&votes, head, "G01019124", &dated);
+        assert_eq!((e.top, e.head_votes), (222, 69));
+        assert_eq!(e.verdict, held(store::HEAD_HOLD_DOUBLED, doubled), "1918631");
+
+        // 5350675: the seat dropped; a stale top with no rival (V 4, T 3, H 1).
+        let (head, elected) = ("Ośrodek Pomocy Społecznej w Kluczborku", "Ośrodek Pomocy Społecznej");
+        let dated = [ending(elected, 1, "2017-05-27", 3), ending(head, 100, "2014-07-05", 1)].concat();
+        let e = elect(&[(elected, 3), (head, 1)], head, "7511368012", &dated);
+        assert_eq!(e.clusters, 2);
+        assert_eq!(e.verdict, held(store::HEAD_HOLD_SEAT_DROPPED, elected), "5350675");
+
+        // 22831984: `KEINEANGABE7`; the head printed within 3 years (a v10 `digits` release).
+        let (head, aok) = ("Kapitel 2", "AOK PLUS - Die Gesundheitskasse für Sachsen und Thüringen");
+        let dated = [ending(aok, 1, "2025-05-13", 4), ending(head, 100, "2024-11-26", 2)].concat();
+        let votes = [(aok, 4), (head, 2)];
+        let e = elect(&votes, head, "KEINEANGABE7", &dated);
+        assert_eq!(e.verdict, held(store::HEAD_HOLD_PLACEHOLDER_ID, aok), "22831984");
+        // On a real identifier the same shape is v10's `digits` release, as plan 2543 planned it.
+        let e = elect(&votes, head, "DE123456789", &dated);
+        assert_eq!((e.verdict, e.recent.unwrap().released), (change(aok), Some("digits")));
+
+        // 2857103 and 2715115: stale tops (2020-10-26, 2018-11-27) with no rival: they change.
+        let dated = [ending("Itslearning Oy", 1, "2020-10-26", 3), ending("itslearning Oy", 50, "2019-01-01", 1), ending("Fronter Oy", 100, "2012-11-03", 1)].concat();
+        let e = elect(&[("Itslearning Oy", 3), ("Fronter Oy", 1), ("itslearning Oy", 1)], "Fronter Oy", "21389668", &dated);
+        assert_eq!((e.clusters, e.verdict), (2, change("Itslearning Oy")), "2857103");
+        let (lannen, turun) = ("Lännen Tekstiilihuolto Oy", "Turun Tekstiilihuolto Oy");
+        let dated = [ending(lannen, 1, "2018-11-27", 7), ending("Lännen tekstiilihuolto Oy", 50, "2017-01-01", 2), ending(turun, 100, "2013-09-25", 2)].concat();
+        let e = elect(&[(lannen, 7), ("Lännen tekstiilihuolto Oy", 2), (turun, 2)], turun, "17188580", &dated);
+        assert_eq!((e.clusters, e.verdict), (2, change(lannen)), "2715115");
+
+        // 1800186: a fresh top (2026-09-22) with a rival above the head: it changes.
+        let (head, elected) = ("Attendo MedOne Oy", "Terveystalo Julkiset Palvelut Oy");
+        let votes = [
+            (elected, 283),
+            ("Attendo Terveyspalvelut Oy", 113),
+            ("Terveystalon Julkiset Palvelut Oy", 23),
+            ("Terveystalo Julkiset palvelut Oy", 20),
+            ("Attendo Terveyspalvelut Oy (10A)", 2),
+            (head, 1),
+        ];
+        let dated = [ending(elected, 1, "2026-09-22", 283), ending("Attendo Terveyspalvelut Oy", 400, "2025-01-01", 113), ending(head, 600, "2012-02-18", 1)].concat();
+        let e = elect(&votes, head, "16251744", &dated);
+        assert!(e.clusters > 2 && e.head_votes == 1, "a rival: {} clusters", e.clusters);
+        assert_eq!(e.verdict, change(elected), "1800186");
+
+        // 3042: the window fires on the head's newest procedures and releases its `(68)`; the top
+        // (2022-10-12) is stale and two rivals vote, and the release ships it.
+        let (colmar68, colmar) = ("Hôpitaux Civils de Colmar (68)", "Hôpitaux civils de Colmar");
+        let votes = [
+            (colmar, 440),
+            (colmar68, 251),
+            ("Hopitaux civils de Colmar", 84),
+            ("Hôpitaux Civils de Colmar", 69),
+            ("Hopitaux Civils de Colmar", 28),
+            ("Groupe Hospitalier Centre Alsace", 6),
+            ("GHT Alsace Centre", 2),
+        ];
+        let dated = [
+            ending(colmar, 1, "2022-10-12", 440),
+            ending("Groupe Hospitalier Centre Alsace", 1_000, "2021-01-01", 6),
+            ending(colmar68, 2_000, "2026-10-08", 251),
+        ]
+        .concat();
+        let e = elect(&votes, colmar68, "26680090300012", &dated);
+        assert_eq!((e.head_votes, e.clusters), (251, 4));
+        assert_eq!(e.recent.map(|r| (r.fires, r.released)), Some((true, Some("digits"))));
+        assert!(store::head_top_stale(e.recent.unwrap().top_newest, as_of), "its top is stale");
+        assert_eq!(e.verdict, change(colmar), "3042");
     }
 
     /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a

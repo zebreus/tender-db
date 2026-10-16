@@ -1282,8 +1282,9 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     name (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script that \
     name is written in. Even then it stays when the change would swap one legal-form family for another \
     (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS name check the old head passed, or, on \
-    the 25% arm only, serve an initialism of the head; when no spelling of the winning cluster is fit to \
-    serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on the 55% arm, \
+    the 25% arm only, serve an initialism of the head; when the identifier is a placeholder \
+    (`KEINEANGABE`, `UNBEKANNT` or `NICHTVORHANDEN` with any digits, or all zeros); when no spelling of \
+    the winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on the 55% arm, \
     while the organization's newest procedures still use the current head (a rename: the head names at \
     least 2 procedures and two thirds of the organization's newest as many), or while a notice printed \
     the current head within 3 years (1,095 days) before the job's plan; on the 55% and 25% arms, \
@@ -1291,11 +1292,17 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     publication day; all three unless the head is unfit to serve for a reason other than being all lower \
     case, or carries a standalone number the other name lacks while the other name drops at most one \
     other word of it (a number the other name prints joined to a neighbouring word, `SMD 3` against \
-    `Smd3`, is the name's own); on the 55% and 25% arms, when the change would serve a review body's \
+    `Smd3`, is the name's own); on the 55% arm, while a name other than the winning one and the current \
+    head's also has votes and no notice printed the winning name (any spelling of it) within a year \
+    (365 days) before the job's plan (an undated one counts as not printed), unless one of those three holds \
+    was lifted for the head; on the 55% and 25% arms, when the change would serve a review body's \
     name (a procurement review chamber or court) for a head that is not one, a name led by a contracting \
     organ (`Junta de Gobierno …`, `Alcaldía …`) for a head that is not, the head's own words plus a code \
     (`(976)`), a name that adds a number after a comma or semicolon (an appended address; not for a \
-    Czech or Slovak school), or an ALL-CAPS respelling of a mixed-case head's same words; and, on the \
+    Czech or Slovak school), an ALL-CAPS respelling of a mixed-case head's same words, the same words \
+    printed twice (`X - X`) for a head that is not, or the head with its seat dropped (a tail of 2 or 3 \
+    words led by `w`, `we`, `v`, `ve` or `vo`: `Ośrodek Pomocy Społecznej w Kluczborku` to `Ośrodek \
+    Pomocy Społecznej`); and, on the \
     55% and 25% arms only, when the head is in another script than its mentions (TED's English \
     rendering). Where the job has not renamed a row, \
     and always where `identifier IS NULL`, it is the first spelling a notice published. What one notice \

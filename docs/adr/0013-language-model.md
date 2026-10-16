@@ -267,6 +267,26 @@ Decided:
    is asked after the tests above, so a change they hold keeps their reason; an undated (b) follows
    v7; (a) is exempt. (c) showed no such split and keeps failing: the planner still elects and lists
    it, for issue 548, but every wet run drops it (`exclude_rules: ["R2"]`, v9's pre-committed filter).
+
+   **(b) is HELD on a stale top with a rival, and three narrow holds join (rule `524u2-v11`, the
+   owner's decision of 2026-10-16 after the capped run 2555's dated spot check, panel wf_5d3b6fa8-186).**
+   The capped run's lowest ids read a revert and three wrongs. Three of the four had a voting cluster
+   other than the elected one and the head's (a rival) and an elected spelling last printed more than a
+   year before the plan: a newer third name had superseded it, the head's name was printed again in
+   another spelling, or the elected spelling was another entity's. With no rival, the holds above
+   already make the elected spelling the organization's newest printed name, so neither failure can
+   occur there. So a (b) change that passes every hold above is HELD `top_stale` with the spelling it
+   would serve when a rival votes and the elected cluster's newest dated item is before the plan's
+   `as_of` less 365 days. Undated counts as stale. A head the window, the residue holdout or
+   `head_current` already released ships; the junk exemption is not asked again. The served-spelling
+   tests gain `doubled` (the display's words are X then X, for a head that is not doubled) and
+   `seat_dropped` (the head is the display plus a 2–3 word seat tail led by `w`, `we`, `v`, `ve` or
+   `vo`), for (b) and (c). The bind guards gain `placeholder_id` for every rule: the identifier is
+   `KEINEANGABE`, `UNBEKANNT` or `NICHTVORHANDEN` with any digits, or all zeros. The vote key and its
+   epoch do not move. The plain-age rule, every stale (b) whatever its rivals, is pre-built as a wet-run
+   filter (`exclude_stale_top`), which every wet run passes if the dated re-judge of the stale no-rival
+   cell fails. Plan entries also carry `rival_newest`, the rival's newest print, which no verdict reads
+   (for issue 548's direct supersede test).
 4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
    spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
    guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of

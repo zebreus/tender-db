@@ -575,7 +575,8 @@ async fn the_canaries_are_reported_whatever_their_verdict_and_paging_changes_not
 /// salted draw is `[2, 1]` — the first two ids, inside the capped listing `[1, 2, 3]` — so a planner
 /// that sampled the oldest ids, or the listing, and ordered them by hash would pass. Eight orgs put
 /// the draw at `[8, 7]`, outside both, which keeps the test's point under the salt. Rule v10's epoch
-/// draws `[8, 3]` from the eight, so the listing is capped at 2 (`[1, 2]`), outside it again.
+/// drew `[8, 3]` from the eight, so the listing is capped at 2 (`[1, 2]`), outside it again; rule v11's
+/// draws `[3, 8]`, still outside it.
 #[tokio::test]
 async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
     let (db, conn) = open("ron-uniform").await;
@@ -591,7 +592,7 @@ async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
     let mut expected: Vec<i64> = (1..=8).collect();
     expected.sort_by_key(|&id| hash(id));
     expected.truncate(2);
-    assert_eq!(expected, vec![8, 3]);
+    assert_eq!(expected, vec![3, 8]);
     assert_eq!(ids(&r.samples["change:R0n"]), expected, "smallest hash first, not 1 and 2 in id order");
     assert_eq!(r.samples_per_reason, 2);
     assert_eq!(ids(&r.planned), vec![1, 2]);
@@ -734,6 +735,7 @@ fn wet<'a>(planned: Planned, job: i64) -> store::OrgNameRefreshApplyArgs<'a> {
         resume_after: None,
         window: store::ORG_NAME_REFRESH_WINDOW,
         exclude_released: &[],
+        exclude_stale_top: false,
         stop: &never,
         progress: &nowhere,
     }
@@ -1314,7 +1316,7 @@ async fn the_planner_dates_its_candidates_and_holds_a_rename() {
     let (db, conn) = open("ron-dated").await;
     dated_corpus(&conn).await;
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v10");
+    assert_eq!(r.epoch, "524u2-v11");
     assert_eq!(r.by_hold.get("undated"), None, "a finished plan holds nothing undated");
     assert_eq!(r.by_hold.get("head_current"), None, "every head printed 3+ years before the plan");
     assert_eq!(r.by_hold["recent"], count(1, 11), "40, the rename");
@@ -1442,7 +1444,7 @@ async fn the_planner_counts_the_serve_holds_and_the_withheld_releases() {
         dated_org(&conn, id, head, &mentions).await;
     }
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v10");
+    assert_eq!(r.epoch, "524u2-v11");
     assert_eq!(r.by_hold["residue"], count(2, 12), "50 and 51 stay held under their v8 reason");
     assert_eq!(r.by_hold[store::HEAD_HOLD_ORGAN], count(1, 6), "53");
     assert_eq!(ids(&r.held), vec![50, 51, 53]);
@@ -1491,7 +1493,7 @@ async fn the_planner_holds_a_current_head_and_stores_its_as_of() {
     let before = crate_now();
     let r = plan(&db, 2_000, None, &[]).await;
     let after = crate_now();
-    assert_eq!(r.epoch, "524u2-v10");
+    assert_eq!(r.epoch, "524u2-v11");
     assert!(before <= r.as_of && r.as_of <= after, "as_of is the planner's start: {before} <= {} <= {after}", r.as_of);
     assert_eq!(r.as_of_date, store::rates::civil_date(r.as_of));
     assert_eq!(r.by_hold[store::HEAD_HOLD_CURRENT], count(1, 7), "60");
@@ -1561,4 +1563,70 @@ async fn a_head_printed_after_the_plan_reads_head_current_at_wet_time() {
     let evidence = rows.next().await.unwrap().unwrap().get_value(0).unwrap();
     let evidence = evidence.as_text().unwrap();
     assert!(evidence.contains(&format!("\"as_of\":\"{}\"", store::rates::civil_date(later))), "{evidence}");
+}
+
+// ---- Issue 524 rule v11: the stale-top hold in the planner, `rival_newest`, and `exclude_stale_top`
+// at wet time.
+
+/// Rule v11 in the planner: an R1 change on a stale top (the elected cluster last printed 801 days
+/// before the plan) with a rival cluster is `hold:top_stale` with the spelling it would serve; the same
+/// shape with no rival, or with a fresh top, is planned. Every dated entry carries `rival_newest`, the
+/// rival's newest print (a diagnostic). At wet time `exclude_stale_top` drifts the stale no-rival
+/// target (the caller drops it from the plan first; the pre-pass holds the filter if it did not), and
+/// a run without it renames that same target.
+#[tokio::test]
+async fn the_planner_holds_a_stale_top_with_a_rival_and_the_wet_run_can_exclude_a_stale_top() {
+    let (db, conn) = open("ron-v11").await;
+    let today = crate_now() / DAY;
+    // 80: a stale top and a rival — held `top_stale`.
+    let mut eighty = spread("Head Office Eighty", 8_000, today - 4_000, 1);
+    eighty.extend(spread("Rival Office Eighty", 8_010, today - 3_000, 2));
+    eighty.extend(spread("Elected Office Eighty", 8_050, today - 805, 5));
+    // 81: a stale top and no rival (two clusters, H = 1) — planned: the stale no-rival cell.
+    let mut eighty_one = spread("Head Office Eighty One", 8_100, today - 4_000, 1);
+    eighty_one.extend(spread("Elected Office Eighty One", 8_150, today - 805, 5));
+    // 82: a fresh top and a rival — planned.
+    let mut eighty_two = spread("Head Office Eighty Two", 8_200, today - 4_000, 1);
+    eighty_two.extend(spread("Rival Office Eighty Two", 8_210, today - 3_000, 2));
+    eighty_two.extend(spread("Elected Office Eighty Two", 8_250, today - 100, 5));
+    for (id, head, rows) in [
+        (80, "Head Office Eighty", eighty),
+        (81, "Head Office Eighty One", eighty_one),
+        (82, "Head Office Eighty Two", eighty_two),
+    ] {
+        let mentions: Vec<(&str, &[(i64, i64)])> = rows.iter().map(|(name, v)| (*name, v.as_slice())).collect();
+        dated_org(&conn, id, head, &mentions).await;
+    }
+    let r = plan(&db, 2_000, None, &[]).await;
+    assert_eq!(r.epoch, "524u2-v11");
+    assert_eq!(r.by_hold[store::HEAD_HOLD_TOP_STALE], count(1, 8), "80");
+    assert_eq!(r.by_hold.len(), 1);
+    assert_eq!(ids(&r.held), vec![80]);
+    let held = &r.held[0];
+    assert_eq!(
+        (held.verdict, held.reason, held.rule, held.new_name.as_deref()),
+        ("hold", "top_stale", Some("R1"), Some("Elected Office Eighty"))
+    );
+    assert_eq!((held.clusters, held.head), (3, 1));
+    assert_eq!(held.top_newest, Some(store::rates::civil_date((today - 801) * DAY)));
+    assert_eq!(held.rival_newest, Some(store::rates::civil_date((today - 2_999) * DAY)), "the rival's newest print");
+    assert_eq!((held.recent_released, held.release_withheld), (None, None), "no release is minted");
+    assert_eq!(ids(&r.samples["hold:top_stale"]), vec![80], "sampled per reason like every hold");
+    assert_eq!(ids(&r.planned), vec![81, 82]);
+    assert_eq!((r.planned[0].reason, r.planned[0].rival_newest.as_deref()), ("R1", None), "81: no rival");
+    assert_eq!(r.planned[1].rival_newest, Some(store::rates::civil_date((today - 2_999) * DAY)), "82");
+    assert!(store::head_top_stale_date(r.planned[0].top_newest.as_deref(), r.as_of), "81's top is stale");
+    assert!(!store::head_top_stale_date(r.planned[1].top_newest.as_deref(), r.as_of), "82's is fresh");
+    // Wet with `exclude_stale_top`: 81 drifts, 82 is renamed.
+    let filtered = store::OrgNameRefreshApplyArgs { exclude_stale_top: true, ..wet(targets(&r), 7) };
+    let w = db.apply_org_name_refresh(filtered).await.unwrap();
+    assert_eq!((w.ready, w.drifted, w.applied), (1, 1, 1));
+    let why = &w.drift_samples[0];
+    assert_eq!(why.org_id, 81);
+    assert!(why.why.contains("exclude_stale_top") && why.why.contains(&store::rates::civil_date((today - 801) * DAY)), "{why:?}");
+    assert_eq!(org_changes(&conn).await, vec![82]);
+    // Without it, the same target is renamed (82 reads already renamed).
+    let w = db.apply_org_name_refresh(wet(targets(&r), 8)).await.unwrap();
+    assert_eq!((w.ready, w.already, w.drifted, w.applied), (1, 1, 0, 1));
+    assert_eq!(org_changes(&conn).await, vec![81, 82]);
 }

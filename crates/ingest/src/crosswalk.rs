@@ -1675,7 +1675,13 @@ fn mojibake(name: &str) -> bool {
 /// - `consortium_removed`: `old` is a [`consortium_name`] and `new` is not;
 /// - `nhs_check`: the org's identifier is a GB-NHS code (`national` `GBNHS<code>`,
 ///   [`crate::nhs_ods::nhs_tail`]) and `new` fails [`crate::nhs_ods::check`] where `old` was
-///   admitted (a `Tie` is no pass, as in `child_check`).
+///   admitted (a `Tie` is no pass, as in `child_check`);
+/// - `placeholder_id` (issue 524 rule `v11`, [`store::HEAD_HOLD_PLACEHOLDER_ID`]): the identifier is a
+///   placeholder ([`head_placeholder_identifier`]: `KEINEANGABE`, `UNBEKANNT` or `NICHTVORHANDEN` with
+///   any trailing ASCII digits, in any ASCII letter case, or all ASCII zeros) — no one entity's
+///   mentions vote behind it (22831984 `KEINEANGABE7`: `Kapitel 2` → an AOK). Last, so every older
+///   guard keeps its reason; store asks it of every rule, before R2's initialism hold and the serve
+///   holds. `telefon` is not one (a phone number, not a "no value" word).
 ///
 /// A family gained or lost (`None` → `spzoo`, sample 760's address tail cut to `Getinge Polska Sp.
 /// z o.o.`) is allowed; the dry plan counts those moves.
@@ -1711,7 +1717,29 @@ pub fn head_change_hold(
             return Some("nhs_check");
         }
     }
+    if identifier.is_some_and(head_placeholder_identifier) {
+        return Some(store::HEAD_HOLD_PLACEHOLDER_ID);
+    }
     None
+}
+
+/// Issue 524 rule `v11`: the placeholder identifier families [`head_change_hold`]'s `placeholder_id`
+/// reads (the decision's `(?i)^(keineangabe|unbekannt|nichtvorhanden)\d*$`), lower case.
+pub const HEAD_PLACEHOLDER_ID_WORDS: [&str; 3] = ["keineangabe", "unbekannt", "nichtvorhanden"];
+
+/// Issue 524 rule `v11`: whether an organization identifier is a PLACEHOLDER — a word of
+/// [`HEAD_PLACEHOLDER_ID_WORDS`] in any ASCII letter case followed by ASCII digits only (none too:
+/// `KEINEANGABE`, `KEINEANGABE7`, `UNBEKANNT2`, `NICHTVORHANDEN1`), or a non-empty run of ASCII `0`
+/// alone. Exact, never a substring: `GBNHSQK1` and `TELEFON1` are no placeholder.
+pub fn head_placeholder_identifier(identifier: &str) -> bool {
+    let zeros = !identifier.is_empty() && identifier.bytes().all(|b| b == b'0');
+    zeros
+        || HEAD_PLACEHOLDER_ID_WORDS.iter().any(|word| {
+            identifier.len() >= word.len()
+                && identifier.is_char_boundary(word.len())
+                && identifier[..word.len()].eq_ignore_ascii_case(word)
+                && identifier[word.len()..].bytes().all(|b| b.is_ascii_digit())
+        })
 }
 
 /// Issue 524 unit 2a.2: why an R2 change is HELD as an INITIALISM of the head it would replace, or
@@ -1916,12 +1944,25 @@ fn folded_family(name: &str, read: fn(&str) -> Option<&'static str>) -> Option<&
 ///    (16508165 `Hurt-Papier Ryszard Cebula Sp. j.` → `HURT PAPIER RYSZARD CEBULA SPÓŁKA JAWNA`). The
 ///    other way, ALL-CAPS to mixed case (`URTICA SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ` → `Urtica Sp.
 ///    z o.o.`), is a cosmetic fix and changes.
+/// 6. `doubled` (rule `v11`, [`store::HEAD_HOLD_DOUBLED`]): `T(new)` is X followed by X again, X
+///    non-empty with a word of 3 or more chars, and `T(old)` is not of that form: a publisher's field
+///    printed twice (1918631 `Instituto Foral de Bienestar Social - Instituto Foral de Bienestar
+///    Social`). Separators are no words, so `X - X`, `X / X` and `X X` are alike; a head doubled itself
+///    is not held.
+/// 7. `seat_dropped` (rule `v11`, [`store::HEAD_HOLD_SEAT_DROPPED`]): `T(old)` is `T(new)` (2 or more
+///    words) followed by a tail of 2–3 words, none with a digit, whose first word is a seat preposition
+///    of [`HEAD_SEAT_PREPOSITIONS`] (`w`, `we`, `v`, `ve`, `vo`), and that preposition stands in the
+///    head as a whole word (a maximal run of alphanumerics and `_`, compared in ASCII case) followed by
+///    whitespace: the name with its seat dropped, usually a generic one (5350675 `Ośrodek Pomocy
+///    Społecznej w Kluczborku` → `Ośrodek Pomocy Społecznej`). An agent tail, `Sandefjord kommune
+///    v/VOIS` → `Sandefjord kommune`, changes; so does a seat added (2643237).
 ///
-/// `_r2` is the rule (R2 when true). No v9 hold reads it — each holds R1 and R2 alike — and it stays
-/// in the injected signature so an R2-only hold (issue 548's queue) needs no new field. Plan 2526,
-/// measured by the panel's ports: ~104 `review_body`, 460 `organ`, 81 `code_added`, ~85
-/// `address_added`, ~290 `caps_variant`. [`head_vote_key`], [`family_token`], [`altid_name_key`] and
-/// [`NAME_KEY_EPOCH`] are read, never changed: no vote key, N3 key or veto moves.
+/// `_r2` is the rule (R2 when true). No v9 or v11 hold reads it — each holds R1 and R2 alike — and it
+/// stays in the injected signature so an R2-only hold (issue 548's queue) needs no new field. Plan
+/// 2526, measured by the panel's ports: ~104 `review_body`, 460 `organ`, 81 `code_added`, ~85
+/// `address_added`, ~290 `caps_variant`; plan 2543 by the v11 judge's: ~91 `doubled`, ~67
+/// `seat_dropped`. [`head_vote_key`], [`family_token`], [`altid_name_key`] and [`NAME_KEY_EPOCH`] are
+/// read, never changed: no vote key, N3 key or veto moves.
 pub fn head_serve_hold(old: &str, new: &str, _r2: bool) -> Option<&'static str> {
     if review_body(&serve_joined(new)) && !review_like(old) {
         return Some(store::HEAD_HOLD_REVIEW_BODY);
@@ -1941,7 +1982,64 @@ pub fn head_serve_hold(old: &str, new: &str, _r2: bool) -> Option<&'static str> 
     if caps_variant(old, new) {
         return Some(store::HEAD_HOLD_CAPS_VARIANT);
     }
+    let (old_words, new_words) = (serve_words(old), serve_words(new));
+    if doubled_words(&new_words) && !doubled_words(&old_words) {
+        return Some(store::HEAD_HOLD_DOUBLED);
+    }
+    if seat_dropped(old, &old_words, &new_words) {
+        return Some(store::HEAD_HOLD_SEAT_DROPPED);
+    }
     None
+}
+
+/// Issue 524 rule `v11`: the seat prepositions [`head_serve_hold`]'s `seat_dropped` reads as a tail's
+/// first word (Polish `w`/`we`, Czech and Slovak `v`/`ve`/`vo`), folded.
+pub const HEAD_SEAT_PREPOSITIONS: [&str; 5] = ["w", "we", "v", "ve", "vo"];
+
+/// Rule `v11`'s `doubled`: the words are X then X again, X non-empty with a word of 3 or more chars.
+fn doubled_words(words: &[String]) -> bool {
+    let half = words.len() / 2;
+    !words.is_empty()
+        && words.len() % 2 == 0
+        && words[..half] == words[half..]
+        && words[..half].iter().any(|word| word.chars().count() >= 3)
+}
+
+/// Rule `v11`'s `seat_dropped`: `old_words` (`T(old)`) are `new_words` (`T(new)`, 2 or more) plus a
+/// tail of 2–3 words with no digit led by a seat preposition, and that preposition is a whole word of
+/// `old` followed by whitespace.
+fn seat_dropped(old: &str, old_words: &[String], new_words: &[String]) -> bool {
+    if new_words.len() < 2 || old_words.len() <= new_words.len() || old_words[..new_words.len()] != *new_words {
+        return false;
+    }
+    let tail = &old_words[new_words.len()..];
+    if !(2..=3).contains(&tail.len()) || tail.iter().any(|word| word.chars().any(char::is_numeric)) {
+        return false;
+    }
+    let preposition = tail[0].as_str();
+    if !HEAD_SEAT_PREPOSITIONS.contains(&preposition) {
+        return false;
+    }
+    // A whole word: a maximal run of alphanumerics and `_` (a regex's `\w`), the preposition in ASCII
+    // case, then whitespace — so `v/VOIS` (an agent: `v/` is "care of") is no seat.
+    let word_char = |c: char| c.is_alphanumeric() || c == '_';
+    let chars: Vec<char> = old.chars().collect();
+    let mut at = 0;
+    while at < chars.len() {
+        if !word_char(chars[at]) {
+            at += 1;
+            continue;
+        }
+        let start = at;
+        while at < chars.len() && word_char(chars[at]) {
+            at += 1;
+        }
+        let word: String = chars[start..at].iter().collect();
+        if word.eq_ignore_ascii_case(preposition) && chars.get(at).is_some_and(|c| c.is_whitespace()) {
+            return true;
+        }
+    }
+    false
 }
 
 /// Issue 524 rule `v9`: the review bodies' names [`head_serve_hold`]'s `review_body` reads, as `T`
@@ -2545,6 +2643,34 @@ mod head_vote {
     }
 }
 
+/// Issue 524 rule `v11`'s bind guard `placeholder_id`, in `head_change_hold`.
+#[cfg(test)]
+mod placeholder_id {
+    use super::{HEAD_PLACEHOLDER_ID_WORDS, head_change_hold, head_placeholder_identifier};
+
+    /// The decision's families, any ASCII case, with or without trailing digits, and the all-zeros id,
+    /// are placeholders; a real code (an NHS ODS code), `TELEFON` (dropped by the decision), a family
+    /// word inside a longer id, or letters after the digits are not.
+    #[test]
+    fn a_placeholder_identifier_is_held_and_a_real_one_is_not() {
+        for id in ["KEINEANGABE7", "KEINEANGABE", "keineangabe", "KeineAngabe12", "UNBEKANNT2", "NICHTVORHANDEN1", "0", "0000000"] {
+            assert!(head_placeholder_identifier(id), "{id}");
+        }
+        for id in ["GBNHSQK1", "TELEFON1", "", "XKEINEANGABE", "KEINEANGABE7A", "UNBEKANNT 2", "00A0", "DE0000"] {
+            assert!(!head_placeholder_identifier(id), "{id:?}");
+        }
+        assert_eq!(HEAD_PLACEHOLDER_ID_WORDS, ["keineangabe", "unbekannt", "nichtvorhanden"]);
+        // 22831984: `Kapitel 2` → `AOK PLUS …` on `KEINEANGABE7`, held whatever the kind.
+        let aok = "AOK PLUS - Die Gesundheitskasse für Sachsen und Thüringen";
+        assert_eq!(head_change_hold("Kapitel 2", aok, Some("national"), Some("KEINEANGABE7")), Some(store::HEAD_HOLD_PLACEHOLDER_ID));
+        assert_eq!(head_change_hold("Kapitel 2", aok, None, Some("KEINEANGABE")), Some(store::HEAD_HOLD_PLACEHOLDER_ID));
+        assert_eq!(head_change_hold("Kapitel 2", aok, None, Some("GBNHSQK1")), None);
+        assert_eq!(head_change_hold("Kapitel 2", aok, None, None), None, "no identifier, no placeholder");
+        // Last of the guards: an older guard keeps its reason on a placeholder identifier.
+        assert_eq!(head_change_hold("Acme Holdings plc", "Acme Services Ltd", None, Some("0000")), Some("gb_family"));
+    }
+}
+
 /// Issue 524 rule `v9`'s serve holds, on plan 2526's own spellings (`old_name` → `new_name`).
 #[cfg(test)]
 mod serve_hold {
@@ -2687,6 +2813,62 @@ mod serve_hold {
         assert_eq!(hold("Sp. z o.o.", "SP. Z O.O."), None, "forms only: no content word");
     }
 
+    /// 6. `doubled` (rule v11): a display whose words are X then X is held — whatever separator, case or
+    /// accents print the two halves — unless the head is doubled too; X needs a word of 3+ chars.
+    #[test]
+    fn a_doubled_display_is_held_unless_the_head_is_doubled_too() {
+        let ifbs = "Instituto Foral de Bienestar Social";
+        let doubled = "Instituto Foral de Bienestar Social - Instituto Foral de Bienestar Social";
+        assert_eq!(hold(ifbs, doubled), Some(store::HEAD_HOLD_DOUBLED), "1918631");
+        assert_eq!(head_serve_hold(ifbs, doubled, true), Some(store::HEAD_HOLD_DOUBLED), "R2 alike");
+        for display in [
+            "Instituto Foral de Bienestar Social — Instituto Foral de Bienestar Social",
+            "Instituto Foral de Bienestar Social / INSTITUTO FORAL DE BIENESTAR SOCIAL",
+            "Instituto Foral de Bienestar Social Instituto Foral de Bienestar Social",
+            "Ayuntamiento de Ávila - Ayuntamiento de Avila",
+        ] {
+            assert_eq!(hold(ifbs, display), Some(store::HEAD_HOLD_DOUBLED), "{display}");
+        }
+        // A doubled head going to a doubled display (the em-dash spelling to the hyphen one) is not held.
+        assert_eq!(hold("Instituto Foral de Bienestar Social — Instituto Foral de Bienestar Social", doubled), None);
+        // X needs a word of 3 or more chars; an odd count or a differing half is no doubling.
+        assert_eq!(hold("Acme Holding", "AB - AB"), None, "no word of 3 chars");
+        assert_eq!(hold("Acme Holding", "Acme Acme Holding"), None, "three words");
+        assert_eq!(hold("Acme Holding", "Acme Holding - Acme Holdings"), None, "the halves differ");
+        assert_eq!(hold(doubled, ifbs), None, "un-doubling changes");
+        // Asked after the five v9 holds: a review body printed twice is `review_body`.
+        assert_eq!(hold("Stadt Wien", "Vergabekammer Wien - Vergabekammer Wien"), Some(store::HEAD_HOLD_REVIEW_BODY));
+    }
+
+    /// 7. `seat_dropped` (rule v11): the head is the display's words plus a seat — a 2–3 word tail with
+    /// no digit led by `w`/`we`/`v`/`ve`/`vo` standing as a word before whitespace — and is held; an
+    /// agent tail (`v/…`), a seat added, a one-word display, a long or numbered tail are not.
+    #[test]
+    fn a_dropped_seat_is_held_and_an_agent_tail_is_not() {
+        assert_eq!(
+            hold("Ośrodek Pomocy Społecznej w Kluczborku", "Ośrodek Pomocy Społecznej"),
+            Some(store::HEAD_HOLD_SEAT_DROPPED),
+            "5350675"
+        );
+        assert_eq!(hold("Zakład Karny we Wronkach", "Zakład Karny"), Some(store::HEAD_HOLD_SEAT_DROPPED));
+        assert_eq!(hold("Základní škola ve Zlíně", "Základní škola"), Some(store::HEAD_HOLD_SEAT_DROPPED));
+        assert_eq!(hold("Mestský úrad vo Zvolene", "Mestský úrad"), Some(store::HEAD_HOLD_SEAT_DROPPED));
+        assert_eq!(hold("Obecní úřad v Lounech", "OBECNÍ ÚŘAD"), Some(store::HEAD_HOLD_SEAT_DROPPED), "case and accents");
+        assert_eq!(
+            hold("Miejska Biblioteka Publiczna W Gminie Kórnik", "Miejska Biblioteka Publiczna"),
+            Some(store::HEAD_HOLD_SEAT_DROPPED),
+            "a capital preposition, a three-word tail"
+        );
+        assert_eq!(hold("Sandefjord kommune v/VOIS", "Sandefjord kommune"), None, "an agent tail: `v/` is no seat");
+        assert_eq!(hold("Zespół Szkół Budowlanych", "Zespół Szkół Budowlanych w Tarnowie"), None, "2643237: a seat added");
+        assert_eq!(hold("Ośrodek w Kluczborku", "Ośrodek"), None, "a one-word display");
+        assert_eq!(hold("Szkoła Podstawowa nr 5 w Kluczborku", "Szkoła Podstawowa nr 5"), Some(store::HEAD_HOLD_SEAT_DROPPED));
+        assert_eq!(hold("Ośrodek Pomocy Społecznej w Kluczborku 2", "Ośrodek Pomocy Społecznej"), None, "a digit in the tail");
+        assert_eq!(hold("Ośrodek Pomocy Społecznej w Gminie Kluczbork Opolskie", "Ośrodek Pomocy Społecznej"), None, "four words");
+        assert_eq!(hold("Ośrodek Pomocy Społecznej z Kluczborka", "Ośrodek Pomocy Społecznej"), None, "`z` is no seat word");
+        assert_eq!(hold("Ośrodek Pomocy Społecznej w-Kluczborku", "Ośrodek Pomocy Społecznej"), None, "no space after `w`");
+    }
+
     /// The common shapes of a change pass: a fit cosmetic or forward change is none of the five.
     #[test]
     fn an_ordinary_change_is_not_held() {
@@ -2722,6 +2904,13 @@ mod serve_hold {
         assert_eq!(altid_name_key("Acme Spółka Jawna"), "acme spółka jawna");
         assert_eq!((family_token("spzoo"), family_token("spolka"), family_token("jawna")), (Some("spzoo"), None, None));
         assert_eq!(NAME_KEY_EPOCH, "n2v2+n3v1");
+        // Rule v11 reads the same keys and moves none: the doubled display is its own vote key (so 218
+        // votes elected it on 1918631), as is the head with its seat (5350675's two clusters).
+        let ifbs = "Instituto Foral de Bienestar Social";
+        assert_eq!(head_vote_key(ifbs), "instituto foral de bienestar social");
+        assert_ne!(head_vote_key(&format!("{ifbs} - {ifbs}")), head_vote_key(ifbs));
+        assert_eq!(head_vote_key("Ośrodek Pomocy Społecznej"), "osrodek pomocy spolecznej");
+        assert_ne!(head_vote_key("Ośrodek Pomocy Społecznej w Kluczborku"), head_vote_key("Ośrodek Pomocy Społecznej"));
     }
 }
 

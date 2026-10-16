@@ -59,8 +59,16 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// of 61 on a head not printed for 3+ years): an R1 change whose head was printed within
 /// [`HEAD_CURRENT_DAYS`] of the plan's `as_of` ([`HeadElectOrg::as_of`]) is HELD
 /// [`HEAD_HOLD_CURRENT`], unless the junk exemption releases it; the plan stores its `as_of`, and the
-/// wet pre-pass re-elects with it.
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v10";
+/// wet pre-pass re-elects with it. `v11` (`## Rule v11 — decided`, panel wf_5d3b6fa8-186, after the
+/// capped run 2555's spot check read 1 revert and 3 wrongs on the lowest ids): an R1 change still a
+/// change after `head_current` is HELD [`HEAD_HOLD_TOP_STALE`] when a RIVAL cluster votes (one other
+/// than the elected and the head's) and the elected spelling's newest dated item is older than
+/// [`HEAD_TOP_STALE_DAYS`] before `as_of` (undated counts stale), unless the head was already released;
+/// two serve holds join the five ([`HEAD_HOLD_DOUBLED`], [`HEAD_HOLD_SEAT_DROPPED`]) and a bind guard
+/// joins `head_change_hold`'s ([`HEAD_HOLD_PLACEHOLDER_ID`]); plan entries gain the diagnostic
+/// [`RecentReading::rival_newest`]; and a wet run may drop the stale-top targets
+/// ([`OrgNameRefreshApplyArgs::exclude_stale_top`], the decision's pre-built fallback).
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v11";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -135,10 +143,69 @@ pub const HEAD_HOLD_CURRENT: &str = "head_current";
 /// at or after `as_of − HEAD_CURRENT_DAYS × 86,400` is current.
 pub const HEAD_CURRENT_DAYS: i64 = 1_095;
 
+/// Issue 524 rule `v11` (`## Rule v11 — decided`): the serve hold when R1 or R2 would serve a DOUBLED
+/// name — its words (`crosswalk::head_serve_hold`'s `T`) are X then X again, X with a word of 3 or more
+/// chars — over a head that is not doubled itself (1918631 `Instituto Foral de Bienestar Social` →
+/// `Instituto Foral de Bienestar Social - Instituto Foral de Bienestar Social`). Sixth, after
+/// [`HEAD_HOLD_CAPS_VARIANT`].
+pub const HEAD_HOLD_DOUBLED: &str = "doubled";
+
+/// Issue 524 rule `v11`: the serve hold when R1 or R2 would serve the head with its SEAT dropped — the
+/// head's words are the display's (2 or more) plus a tail of 2–3 words with no digit led by the
+/// preposition `w`, `we`, `v`, `ve` or `vo`, followed by whitespace in the head (5350675 `Ośrodek
+/// Pomocy Społecznej w Kluczborku` → `Ośrodek Pomocy Społecznej`, a generic name). An agent tail
+/// (`Sandefjord kommune v/VOIS`) still changes. Seventh, after [`HEAD_HOLD_DOUBLED`].
+pub const HEAD_HOLD_SEAT_DROPPED: &str = "seat_dropped";
+
+/// Issue 524 rule `v11`: the bind guard (`crosswalk::head_change_hold`'s last, for every rule) when the
+/// organization's identifier is a PLACEHOLDER — `KEINEANGABE`, `UNBEKANNT` or `NICHTVORHANDEN` with
+/// any trailing digits, any letter case, or all ASCII zeros: no identity votes behind it (22831984
+/// `KEINEANGABE7`, served `Kapitel 2` → an AOK). Asked before R2's initialism hold and the serve holds.
+pub const HEAD_HOLD_PLACEHOLDER_ID: &str = "placeholder_id";
+
+/// Issue 524 rule `v11`: the hold reason when an R1 change, still a change after the serve holds and
+/// [`HEAD_HOLD_CURRENT`], has a RIVAL — a voting cluster other than the elected one and the head's
+/// (`clusters > 1 + (head_votes > 0)`) — and a STALE top: the elected cluster's newest dated item
+/// ([`RecentReading::top_newest`]) before `as_of − HEAD_TOP_STALE_DAYS × 86,400` ([`head_top_stale`];
+/// no reading, or no `top_newest`, is stale: it fails closed). Both failures that sank the capped run
+/// 2555 need a rival: a superseding third name (1276213) and a revert to the head's name in another
+/// spelling (1556789). A head the window, the residue holdout or `head_current` already released
+/// (`read.released` is `Some`) ships (3042); the junk exemption is NOT asked, so it mints no release.
+/// R0 and R2 are never held by it.
+pub const HEAD_HOLD_TOP_STALE: &str = "top_stale";
+
+/// Issue 524 rule `v11`: the [`HEAD_HOLD_TOP_STALE`] age, one year — an elected cluster whose newest
+/// dated item is before `as_of − HEAD_TOP_STALE_DAYS × 86,400` is stale. The judge's labels hold alike
+/// at every T from 45 to 625 days; 365 leaves 260 days to the youngest stale wrong (1345526).
+pub const HEAD_TOP_STALE_DAYS: i64 = 365;
+
 /// Issue 524 rule `v9`: the serve holds, in [`HeadElectFns::serve_hold`]'s order — the plan's summary
-/// names each, at zero too.
-pub const HEAD_SERVE_HOLDS: [&str; 5] =
-    [HEAD_HOLD_REVIEW_BODY, HEAD_HOLD_ORGAN, HEAD_HOLD_CODE_ADDED, HEAD_HOLD_ADDRESS_ADDED, HEAD_HOLD_CAPS_VARIANT];
+/// names each, at zero too. Rule `v11` adds [`HEAD_HOLD_DOUBLED`] and [`HEAD_HOLD_SEAT_DROPPED`].
+pub const HEAD_SERVE_HOLDS: [&str; 7] = [
+    HEAD_HOLD_REVIEW_BODY,
+    HEAD_HOLD_ORGAN,
+    HEAD_HOLD_CODE_ADDED,
+    HEAD_HOLD_ADDRESS_ADDED,
+    HEAD_HOLD_CAPS_VARIANT,
+    HEAD_HOLD_DOUBLED,
+    HEAD_HOLD_SEAT_DROPPED,
+];
+
+/// Issue 524 rule `v11`: whether an elected cluster's newest dated item, `top_newest` (unix seconds),
+/// is STALE against a plan started at `as_of`: before `as_of − HEAD_TOP_STALE_DAYS × 86,400`, or
+/// unknown (`None` fails closed). [`elect_head`]'s [`HEAD_HOLD_TOP_STALE`] reads it, and so does the
+/// wet pre-pass's `exclude_stale_top` drift.
+pub fn head_top_stale(top_newest: Option<i64>, as_of: i64) -> bool {
+    top_newest.is_none_or(|at| at < as_of.saturating_sub(HEAD_TOP_STALE_DAYS * 86_400))
+}
+
+/// Issue 524 rule `v11`: [`head_top_stale`] read off a STORED plan entry's `top_newest` (`YYYY-MM-DD`,
+/// UTC) — the `exclude_stale_top` filter's plan-time drop. The day is read as its first instant, so a
+/// top printed on the cutoff's own day is stale (the side that drops: a filter fails closed), and a
+/// missing or malformed date is stale too. The wet pre-pass then re-reads the exact instant.
+pub fn head_top_stale_date(top_newest: Option<&str>, as_of: i64) -> bool {
+    head_top_stale(top_newest.and_then(crate::rates::day_number).map(|day| day * 86_400), as_of)
+}
 
 /// Issue 524 rule `v7`: the fewest head procedures (k) the window fires at. At 2 the 2/3 bar means
 /// both newest items are the head's (2.2% by chance among 10 items, against 18% for 2 of 3).
@@ -165,6 +232,11 @@ pub struct RecentReading {
     /// The newest head item's and the elected cluster's newest item's `at`.
     pub head_newest: Option<i64>,
     pub top_newest: Option<i64>,
+    /// Rule `v11`, a DIAGNOSTIC no verdict reads: the newest `at` of any item of a cluster other than
+    /// the elected one and the head's (a rival's), `None` when no rival item is dated. Emitted so issue
+    /// 548 can measure the direct supersede test (`rival_newest > top_newest`) the v11 decision rejected
+    /// as a gate.
+    pub rival_newest: Option<i64>,
     /// The organization's newest item is a head item (rule `v8`: R1 and R2 hold [`HEAD_HOLD_RESIDUE`]
     /// on it). `false` when no item is dated, or none of the head's is.
     pub newest_is_head: bool,
@@ -257,8 +329,9 @@ pub enum HeadVerdict {
     /// ([`HeadElectFns::r2_hold`]: `initialism`), for R1 with H ≥ 2 (rule `v7`) [`HEAD_HOLD_RECENT`]
     /// (with the display spelling, `None` when none is fit) or [`HEAD_HOLD_UNDATED`] (`None`), for
     /// R1 and R2 (rule `v8`) [`HEAD_HOLD_RESIDUE`] (with the display spelling), for R1 and R2 (rule
-    /// `v9`) a serve hold's ([`HeadElectFns::serve_hold`]: [`HEAD_SERVE_HOLDS`]), or for R1 (rule `v10`)
-    /// [`HEAD_HOLD_CURRENT`] — with the spelling it would have served.
+    /// `v9`) a serve hold's ([`HeadElectFns::serve_hold`]: [`HEAD_SERVE_HOLDS`]), for R1 (rule `v10`)
+    /// [`HEAD_HOLD_CURRENT`], or for R1 (rule `v11`) [`HEAD_HOLD_TOP_STALE`] — with the spelling it would
+    /// have served. Rule `v11`'s bind guard [`HEAD_HOLD_PLACEHOLDER_ID`] is one of [`HeadElectFns::hold`]'s.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
 }
@@ -320,7 +393,9 @@ pub struct HeadElectFns {
     pub not_a_name: fn(&str) -> Option<&'static str>,
     /// `(candidate, head)`: why `candidate` may not be served in place of `head`, or `None` when fit.
     pub unfit: fn(&str, &str) -> Option<&'static str>,
-    /// `(old, new, identifier_kind, identifier)`: why a change is held for review, or `None`.
+    /// `(old, new, identifier_kind, identifier)`: why a change is held for review, or `None` — the bind
+    /// guards (`family`, `gb_family`, `consortium_removed`, `nhs_check` and, since rule `v11`,
+    /// [`HEAD_HOLD_PLACEHOLDER_ID`]), asked of every rule's change.
     pub hold: fn(&str, &str, Option<&str>, Option<&str>) -> Option<&'static str>,
     /// Issue 524 unit 2a.1, `(old, new)`: why an R2 change is held as a shorthand of the head it would
     /// replace (since unit 2a.2, an initialism of a run of its words), or `None`. Asked of R2 changes
@@ -333,7 +408,8 @@ pub struct HeadElectFns {
     /// Issue 524 rule `v9`, `(old, new, r2)`: why an R1 or R2 change is HELD on the two names alone,
     /// or `None` — a review body's name served for another entity, an organ for its entity, a code
     /// added to the head's words, a number added after a comma or semicolon (an address, whatever
-    /// else the name adds), an ALL-CAPS respelling of a mixed-case head
+    /// else the name adds), an ALL-CAPS respelling of a mixed-case head, and (rule `v11`) a doubled
+    /// name or the head with its seat dropped
     /// (`crosswalk::head_serve_hold`; [`HEAD_SERVE_HOLDS`] in its order). Asked after
     /// [`HeadElectFns::hold`] and [`HeadElectFns::r2_hold`], never for R0 (a defective head always
     /// changes); the `recent`, `residue` and `undated` holds decide before it. `r2` is the rule. Pure:
@@ -449,6 +525,16 @@ struct Cluster<'a> {
 /// a release it withholds is read `release_withheld`), or the window or the residue holdout already
 /// released the head. R0 and R2 are never held by it; an undated R1 (no reading, or no dated head
 /// item) follows rule `v7`.
+///
+/// **The stale-top hold** (rule `v11`): an R1 change that comes out of `serve` AND `head_current` a
+/// CHANGE is HELD `top_stale` ([`HEAD_HOLD_TOP_STALE`]) with the spelling it would serve when a RIVAL
+/// votes (`clusters > 1 + (head_votes > 0)`: a cluster other than the elected one and the head's, so
+/// with H = 0 two clusters are a rival) and the top is STALE ([`head_top_stale`]: the reading's
+/// `top_newest` before `as_of − HEAD_TOP_STALE_DAYS × 86,400`; no reading or no `top_newest` is stale)
+/// — unless the window, the residue holdout or `head_current` already released the head
+/// (`read.released` is `Some`). It never asks the junk exemption, so it mints no release. R0 and R2
+/// are never held by it. The serve holds' order (rule `v11`): the bind guards (with
+/// [`HEAD_HOLD_PLACEHOLDER_ID`], every rule), R2's initialism hold, then the seven serve holds.
 ///
 /// The elected cluster serves its DISPLAY spelling: among the fit spellings only
 /// ([`HeadElectFns::unfit`], read on each spelling as published and on its collapsed form), each with
@@ -657,6 +743,17 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
             }
         }
     }
+    // Rule v11: an R1 change with a rival cluster on a stale top — after `head_current`, so every v10
+    // hold keeps its reason. A head already released (window, residue or head_current) ships; the junk
+    // exemption is not asked. No reading, or no `top_newest`, is stale: it fails closed.
+    if let (HeadRule::R1, HeadVerdict::Change { new, .. }) = (rule, &verdict)
+        && reading.as_ref().is_none_or(|read| read.released.is_none())
+        && clusters.len() as u64 > 1 + u64::from(head_votes > 0)
+        && head_top_stale(reading.as_ref().and_then(|read| read.top_newest), org.as_of)
+    {
+        let new = Some(new.clone());
+        return counted(HeadVerdict::Hold { reason: HEAD_HOLD_TOP_STALE, rule, new }, reading);
+    }
     counted(verdict, reading)
 }
 
@@ -691,11 +788,15 @@ fn recent_reading(
     let k = ranked.iter().filter(|item| item.1).count() as u64;
     let h_w = ranked.iter().take(k as usize).filter(|item| item.1).count() as u64;
     let newest = |key: &str| ranked.iter().filter(|item| item.3 == key).map(|item| item.0).max();
+    // Rule v11's diagnostic: the newest item of a cluster neither the elected one nor the head's.
+    let rival_newest =
+        ranked.iter().filter(|item| item.3 != head_key && Some(item.3) != elected_key).map(|item| item.0).max();
     RecentReading {
         head_procs: k,
         head_in_window: h_w,
         head_newest: newest(head_key),
         top_newest: elected_key.and_then(newest),
+        rival_newest,
         newest_is_head: ranked.first().is_some_and(|item| item.1),
         undated: voting.saturating_sub(dated_voters),
         fires: k >= HEAD_RECENT_MIN_PROCEDURES && 3 * h_w >= 2 * k,
@@ -1015,6 +1116,9 @@ pub struct HeadRefreshEntry {
     pub head_in_window: Option<u64>,
     pub head_newest: Option<String>,
     pub top_newest: Option<String>,
+    /// Rule `v11`, a diagnostic no verdict reads ([`RecentReading::rival_newest`], `YYYY-MM-DD`): the
+    /// newest dated item of a cluster other than the elected one and the head's.
+    pub rival_newest: Option<String>,
     pub newest_is_head: Option<bool>,
     pub undated_mentions: Option<u64>,
     pub recent_released: Option<&'static str>,
@@ -1126,7 +1230,8 @@ pub struct OrgNameRefreshPlan {
 pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 500;
 
 /// Issue 524 rule `v9`: the uniform samples' salt — the low 32 bits of FNV-1a 64 of
-/// [`HEAD_ELECTION_EPOCH`] (`524u2-v10`: 2,780,006,399; v9's `524u2-v9` was 460,574,797). The
+/// [`HEAD_ELECTION_EPOCH`] (`524u2-v11`: 2,780,005,964; v10's `524u2-v10` was 2,780,006,399 and v9's
+/// `524u2-v9` 460,574,797). The
 /// protocol's dated re-judge reads "fresh" samples, and an unsalted hash makes every plan's class
 /// sample the same first ids: plan 2526's panel read the next 30 of each list ahead. Salted, each epoch draws anew, and a plan's samples stay
 /// reproducible from its epoch.
@@ -1624,6 +1729,7 @@ fn refresh_entry(org: &PageOrg, j: &Judged, args: &OrgNameRefreshArgs<'_>) -> He
         head_in_window: recent.map(|r| r.head_in_window),
         head_newest: recent.and_then(|r| r.head_newest).map(crate::rates::civil_date),
         top_newest: recent.and_then(|r| r.top_newest).map(crate::rates::civil_date),
+        rival_newest: recent.and_then(|r| r.rival_newest).map(crate::rates::civil_date),
         newest_is_head: recent.map(|r| r.newest_is_head),
         undated_mentions: recent.map(|r| r.undated),
         recent_released: recent.and_then(|r| r.released),
@@ -1726,6 +1832,12 @@ pub struct OrgNameRefreshApplyArgs<'a> {
     /// re-election now ships only through one (its head named newer procedures since the plan and
     /// the exemption released it), so the filter holds at wet time, not only at plan time.
     pub exclude_released: &'a [String],
+    /// Rule v11 (`exclude_stale_top`, the decision's pre-built fallback for a failed gate (a)): the
+    /// caller already dropped the planned non-release R1 targets whose stored `top_newest` is missing
+    /// or older than the plan's `as_of − HEAD_TOP_STALE_DAYS` ([`head_top_stale_date`]); the pre-pass
+    /// also drifts a target whose re-election is a non-release R1 change on a stale top
+    /// ([`head_top_stale`] of the re-read `top_newest`), so the filter holds at wet time too.
+    pub exclude_stale_top: bool,
     pub stop: &'a (dyn Fn() -> bool + Sync),
     pub progress: &'a (dyn Fn(u64, &str) + Sync),
 }
@@ -1879,6 +1991,17 @@ fn excluded_release(released: Option<&'static str>, exclude_released: &[String])
     released.filter(|why| exclude_released.iter().any(|x| x == why))
 }
 
+/// Rule v11: whether a wet run's `exclude_stale_top` drifts a re-elected change — an R1 change no junk
+/// release shipped, whose reading's `top_newest` is stale against the plan's `as_of` (or unknown: no
+/// reading, or no dated elected item, fails closed). The pre-pass's check that the filter still holds
+/// at wet time.
+fn excluded_stale_top(exclude_stale_top: bool, rule: HeadRule, recent: Option<&RecentReading>, as_of: i64) -> bool {
+    exclude_stale_top
+        && rule == HeadRule::R1
+        && recent.is_none_or(|read| read.released.is_none())
+        && head_top_stale(recent.and_then(|read| read.top_newest), as_of)
+}
+
 /// The pre-pass: each target's organization read and re-elected as the planner read it (the same
 /// page SQL, mention read, voters and verdict probe), then compared with what the plan recorded.
 /// `Err(read)` when `stop`, read between [`IN_CHUNK`]-target chunks, ended it after `read` targets.
@@ -1889,6 +2012,7 @@ async fn read_readiness(
     as_of: i64,
     horizon: i64,
     exclude_released: &[String],
+    exclude_stale_top: bool,
     stop: &(dyn Fn() -> bool + Sync),
 ) -> turso::Result<Result<Vec<Readiness>, u64>> {
     let mut out = Vec::with_capacity(targets.len());
@@ -1997,11 +2121,25 @@ async fn read_readiness(
             // `hold:residue` (rule v8: its newest item is now the head's), `hold:undated`, a serve
             // hold (rule v9: a pure test of the same head and spelling, so only a moved head or a new
             // display spelling makes one) or `hold:head_current` (rule v10: the head printed within 3
-            // years of the plan's `as_of` — a print since the plan) is drifted like any other verdict
-            // that is not the plan's change.
+            // years of the plan's `as_of` — a print since the plan), (rule v11) `hold:top_stale` (a new
+            // rival cluster, or the elected spelling's dates read differently) or a v11 serve or bind
+            // hold is drifted like any other verdict that is not the plan's change.
             match &election.verdict {
                 HeadVerdict::Change { rule, new } if rule.label() == target.rule && *new == target.new_name => {
                     match excluded_release(election.recent.as_ref().and_then(|r| r.released), exclude_released) {
+                        None if excluded_stale_top(exclude_stale_top, *rule, election.recent.as_ref(), as_of) => {
+                            out.push(Readiness::Drifted(format!(
+                                "re-elected change:{} {:?}, but its elected spelling's newest dated item is {} — \
+                                 older than {HEAD_TOP_STALE_DAYS} days before the plan's as_of, or undated — and \
+                                 this run excludes a stale top (exclude_stale_top)",
+                                target.rule,
+                                target.new_name,
+                                election
+                                    .recent
+                                    .and_then(|r| r.top_newest)
+                                    .map_or_else(|| "undated".to_owned(), crate::rates::civil_date)
+                            )))
+                        }
                         None => out.push(Readiness::Ready(election)),
                         Some(why) => out.push(Readiness::Drifted(format!(
                             "re-elected change:{} {:?}, but it ships only through a `{why}` junk release, which \
@@ -2063,7 +2201,9 @@ impl Db {
     ///    pre-image moved or its identifier is NULL — and only the targets past them are dated, as the
     ///    planner dated its candidates, and re-elected: `ready` when that re-elects to the plan's rule
     ///    and spelling, else `drifted` (one reading `hold:recent`, `hold:residue` or `hold:undated`
-    ///    now among them). Drifted plus gone above `max(2%, 5)` of the targets read aborts the run here, before any
+    ///    now among them; since rule v9 one shipping only through a release `exclude_released` names,
+    ///    and since rule v11 a non-release R1 on a stale top when `exclude_stale_top` is set). Drifted
+    ///    plus gone above `max(2%, 5)` of the targets read aborts the run here, before any
     ///    write. The stop flag is read between [`IN_CHUNK`]-target chunks (not before the first): a
     ///    cancel there ends the run before any write with `prepass_stopped_after` set and none of the
     ///    pre-pass counts (they would be a part's).
@@ -2118,7 +2258,17 @@ impl Db {
         (args.progress)(0, &format!("pre-pass: re-electing {} planned organization(s)", targets.len()));
         let readiness = {
             let reader = self.reader().await?;
-            read_readiness(&reader, &args.fns, &targets, as_of, horizon, args.exclude_released, args.stop).await?
+            read_readiness(
+                &reader,
+                &args.fns,
+                &targets,
+                as_of,
+                horizon,
+                args.exclude_released,
+                args.exclude_stale_top,
+                args.stop,
+            )
+            .await?
         };
         let readiness = match readiness {
             Ok(readiness) => readiness,
@@ -2454,8 +2604,8 @@ impl Db {
 mod tests {
     use super::{
         DatedVote, HEAD_CURRENT_DAYS, HEAD_HOLD_CURRENT, HEAD_HOLD_NO_FIT, HEAD_HOLD_RECENT, HEAD_HOLD_RESIDUE, HEAD_HOLD_UNDATED,
-        HeadElectFns, HeadElectOrg, HeadKeep, HeadRule, HeadVerdict, Script, dominant_script, elect_head, elect_head_counted,
-        sample_key,
+        HeadElectFns, HeadElectOrg, HeadKeep, HeadRule, HeadVerdict, RecentReading, Script, dominant_script, elect_head,
+        elect_head_counted, sample_key,
     };
 
     /// Lower-cased words, `the` and the legal forms dropped, a run of single letters one initialism —
@@ -2686,7 +2836,14 @@ mod tests {
         let raw = HeadElectFns { vote_key: |s: &str| s.to_owned(), ..FNS };
         let itself = [("Acme  GmbH", 5), ("Other Body", 1)];
         assert_eq!(elect_head(&itself, &org("Acme GmbH"), &raw), HeadVerdict::Keep(HeadKeep::S1));
-        assert_eq!(elect_head(&itself, &org("Old Body"), &raw), change("Acme GmbH"), "and R1 elects them");
+        // Rule v11: `Old Body` keys into no cluster (H = 0), so `Other Body` is a rival, and undated the
+        // top fails closed as stale: R1 elects them and `top_stale` holds the change it would serve.
+        assert_eq!(
+            elect_head(&itself, &org("Old Body"), &raw),
+            HeadVerdict::Hold { reason: super::HEAD_HOLD_TOP_STALE, rule: HeadRule::R1, new: Some("Acme GmbH".into()) },
+            "and R1 elects them"
+        );
+        assert_eq!(elect_head(&itself[..1], &org("Old Body"), &raw), change("Acme GmbH"), "no rival: it changes");
         assert_eq!(super::collapse_whitespace(" a \u{a0} b  c "), "a b c");
         assert_eq!(super::collapse_whitespace("a b"), "a b");
     }
@@ -2698,12 +2855,20 @@ mod tests {
         assert_eq!(elect_head(&tie, &org("Beta"), &FNS), HeadVerdict::Keep(HeadKeep::S1));
         // R1's 55% bar, exactly: T x 20 >= V x 11. With H = 2 the 2x bar passes (11 >= 4) and R2 is off
         // (H > 1), so the share alone decides: 11 of 20 is 55% and changes, 11 of 21 is 52.4% and keeps.
-        // Rule v7: H >= 2 reads the window, so the change needs dates (here none cover it: `Some(&[])`);
-        // without any it fails closed, held `undated`.
-        let none: [DatedVote<'_>; 0] = [];
-        let dated_none = |head| HeadElectOrg { dated: Some(&none), ..org(head) };
+        // Rule v7: H >= 2 reads the window, so the change needs dates (here only one elected item is
+        // dated: no head item, so no window); without any it fails closed, held `undated`. Rule v11:
+        // `Other` is a rival, so that one dated item is the day before the plan — a fresh top, which
+        // `top_stale` never holds (undated, `Some(&[])`, it would: no `top_newest` fails closed).
+        let fresh = [DatedVote { spelling: "Main", tender: 1, at: LATE_PLAN - DAY }];
+        let dated_none = |head| HeadElectOrg { dated: Some(&fresh), ..org(head) };
         let at = [("Main", 11), ("Head", 2), ("Other", 7)];
         assert_eq!(elect_head(&at, &dated_none("Head"), &FNS), r1("Main"), "11/20 = 55%");
+        let none: [DatedVote<'_>; 0] = [];
+        assert_eq!(
+            elect_head(&at, &HeadElectOrg { dated: Some(&none), ..org("Head") }, &FNS),
+            HeadVerdict::Hold { reason: super::HEAD_HOLD_TOP_STALE, rule: HeadRule::R1, new: Some("Main".into()) },
+            "undated top, a rival: rule v11 fails closed"
+        );
         assert_eq!(
             elect_head(&at, &org("Head"), &FNS),
             HeadVerdict::Hold { reason: HEAD_HOLD_UNDATED, rule: HeadRule::R1, new: None },
@@ -2893,20 +3058,23 @@ mod tests {
 
     /// Rule v9 changed these values on purpose: the key is Knuth's hash of the id XOR the epoch's salt
     /// (FNV-1a 64 of the epoch, low 32 bits), so the dated re-judge's "fresh" samples are not the last
-    /// plan's predictable next 30. Rule v10's epoch `524u2-v10` draws anew (salt 2,780,006,399); v9's
-    /// `524u2-v9` salt was 460,574,797, its first three keys 1,624,961,164, 998,333,855 and
-    /// 3,892,120,008. Unsalted (v2–v8) they read 2,654,435,761, 1,013,904,226 and 387,276,917.
+    /// plan's predictable next 30. Rule v11's epoch `524u2-v11` draws anew (salt 2,780,005,964); v10's
+    /// `524u2-v10` salt was 2,780,006,399, its first three keys 1,744,442,526, 3,384,974,061 and
+    /// 4,011,601,370; v9's `524u2-v9` was 460,574,797 (keys 1,624,961,164, 998,333,855 and
+    /// 3,892,120,008). Unsalted (v2–v8) they read 2,654,435,761, 1,013,904,226 and 387,276,917.
     #[test]
     fn the_sample_key_is_knuths_hash_of_the_salted_id_mod_two_to_the_32() {
-        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_006_399);
-        assert_eq!(super::epoch_salt("524u2-v10"), 2_780_006_399);
+        assert_eq!(super::HEAD_ELECTION_EPOCH, "524u2-v11");
+        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_005_964);
+        assert_eq!(super::epoch_salt("524u2-v11"), 2_780_005_964);
+        assert_eq!(super::epoch_salt("524u2-v10"), 2_780_006_399, "v10's salt, as plan 2543 drew it");
         assert_eq!(super::epoch_salt("524u2-v9"), 460_574_797, "v9's salt, as plan 2527 drew it");
-        assert_ne!(super::epoch_salt("524u2-v9"), super::ORG_NAME_REFRESH_SAMPLE_SALT, "each epoch its own draw");
-        assert_eq!(sample_key(1), (1_744_442_526, 1));
-        assert_eq!(sample_key(2), (3_384_974_061, 2));
-        assert_eq!(sample_key(5), (4_011_601_370, 5));
-        assert_eq!(sample_key(31_558_903), (2_997_381_256, 31_558_903));
-        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_006_399) * 2_654_435_761) % (1 << 32));
+        assert_ne!(super::epoch_salt("524u2-v10"), super::ORG_NAME_REFRESH_SAMPLE_SALT, "each epoch its own draw");
+        assert_eq!(sample_key(1), (3_424_993_341, 1));
+        assert_eq!(sample_key(2), (1_784_461_806, 2));
+        assert_eq!(sample_key(5), (1_397_184_889, 5));
+        assert_eq!(sample_key(31_558_903), (469_290_571, 31_558_903));
+        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_005_964) * 2_654_435_761) % (1 << 32));
     }
 
     // ---- Rule v7: the R1 recency hold (the recency decision's tests 1-12).
@@ -3074,7 +3242,17 @@ mod tests {
         .concat();
         let e = dated(&rows, "Presidencia Diputacion");
         assert_eq!((e.recent.unwrap().head_procs, e.recent.unwrap().head_in_window), (3, 1));
-        assert_eq!(e.verdict, r1("Diputacion Provincial"));
+        // The window does not hold it. Rule v11: the third cluster is a rival and the plan (LATE_PLAN)
+        // comes long after the elected cluster's newest item, so `top_stale` holds what R1 elects.
+        assert_eq!(
+            e.verdict,
+            HeadVerdict::Hold {
+                reason: super::HEAD_HOLD_TOP_STALE,
+                rule: HeadRule::R1,
+                new: Some("Diputacion Provincial".into())
+            }
+        );
+        assert_eq!(e.recent.unwrap().rival_newest, Some(104 * DAY), "the rival's newest item, a diagnostic");
         // Without the third cluster, the head owns the newest three: held.
         let two = [items("Diputacion Provincial", 1, 1, 10), items("Presidencia Diputacion", 101, 100, 3)].concat();
         assert_eq!(dated(&two, "Presidencia Diputacion").verdict, recent(Some("Diputacion Provincial")));
@@ -3589,5 +3767,284 @@ mod tests {
         assert_eq!(super::excluded_release(Some("unfit"), &digits), None, "a release the run keeps");
         assert_eq!(super::excluded_release(None, &digits), None, "no release needed");
         assert_eq!(super::excluded_release(Some("digits"), &[]), None, "no filter");
+    }
+
+    // ---- Rule v11: the stale-top hold (`## Rule v11 — decided`, the protocol's unit pins).
+
+    /// Plan 2543's `as_of` (2026-10-16 11:20:05 UTC): the judge aged every label against it.
+    const PLAN_2543: i64 = 1_792_132_805;
+
+    /// The unix instant of a `YYYY-MM-DD` day's start.
+    fn on(date: &str) -> i64 {
+        crate::rates::day_number(date).expect("a date") * DAY
+    }
+
+    /// One org's dated mentions: per `(spelling, n, newest)`, `n` items, one per tender, a day apart and
+    /// ending on `newest`. Tenders never repeat across spellings.
+    fn shape(clusters: &[(&'static str, i64, &str)]) -> Vec<DatedVote<'static>> {
+        let mut rows = Vec::new();
+        for (at, (spelling, n, newest)) in clusters.iter().enumerate() {
+            let last = on(newest);
+            for i in 0..*n {
+                rows.push(DatedVote { spelling, tender: 1_000 * (at as i64 + 1) + i, at: last - i * DAY });
+            }
+        }
+        rows
+    }
+
+    fn top_stale(new: &str) -> HeadVerdict {
+        HeadVerdict::Hold { reason: super::HEAD_HOLD_TOP_STALE, rule: HeadRule::R1, new: Some(new.to_owned()) }
+    }
+
+    /// The protocol's `top_stale` pins on the labelled shapes (their V, T, H, clusters and the head's and
+    /// the elected spelling's newest dates from plan 2543, aged from its `as_of`): job 2555's three
+    /// wrongs and 16431242 (top age 423, 5 clusters) hold; 2857103 (2 clusters, top age 2,181) and
+    /// 1800186 (a fresh top with a rival above H) change.
+    #[test]
+    fn top_stale_holds_the_labelled_stale_tops_with_a_rival_and_ships_the_rest() {
+        assert_eq!((super::HEAD_HOLD_TOP_STALE, super::HEAD_TOP_STALE_DAYS), ("top_stale", 365));
+        // 1556789: V 27, T 15, H 1, 4 clusters; head 2011-12-24, top 2020-03-11 (a revert spelling's rival).
+        let rows = shape(&[
+            ("Elected Name", 15, "2020-03-11"),
+            ("Revert Name", 9, "2019-01-01"),
+            ("Long Revert Name", 2, "2018-01-01"),
+            ("Head Name", 1, "2011-12-24"),
+        ]);
+        let e = dated_at(&rows, "Head Name", PLAN_2543);
+        assert_eq!((e.voting, e.top, e.head_votes, e.clusters), (27, 15, 1, 4));
+        assert_eq!(e.verdict, top_stale("Elected Name"), "1556789");
+        // 1276213: V 96, T 56, H 7, 3 clusters; head 2015-09-04, top 2023-11-20 (a superseding third name).
+        let rows = shape(&[("Elected Name", 56, "2023-11-20"), ("Third Name", 33, "2026-09-01"), ("Head Name", 7, "2015-09-04")]);
+        let e = dated_at(&rows, "Head Name", PLAN_2543);
+        assert_eq!((e.voting, e.top, e.head_votes, e.clusters), (96, 56, 7, 3));
+        assert_eq!(e.recent.map(|r| (r.fires, r.newest_is_head)), Some((false, false)), "past the window and the residue");
+        assert_eq!(e.verdict, top_stale("Elected Name"), "1276213");
+        // 1345526: V 143, T 128, H 1, 4 clusters; top 2025-01-29 (625 days, the youngest stale wrong).
+        let rows = shape(&[
+            ("Elected Name", 128, "2025-01-29"),
+            ("Ville Name", 12, "2024-06-01"),
+            ("Other Name", 2, "2023-01-01"),
+            ("Head Name", 1, "2011-11-03"),
+        ]);
+        let e = dated_at(&rows, "Head Name", PLAN_2543);
+        assert_eq!((e.top, e.head_votes, e.clusters), (128, 1, 4));
+        assert_eq!(e.verdict, top_stale("Elected Name"), "1345526");
+        // 16431242: V 16, T 10, H 1, 5 clusters; top 2025-08-19 (423 days) — a right fix it forgoes.
+        let rows = shape(&[
+            ("Elected Name", 10, "2025-08-19"),
+            ("Second Name", 3, "2025-01-01"),
+            ("Third Name", 1, "2024-01-01"),
+            ("Fourth Name", 1, "2023-01-01"),
+            ("Head Name", 1, "2020-12-24"),
+        ]);
+        let e = dated_at(&rows, "Head Name", PLAN_2543);
+        assert_eq!((e.clusters, (PLAN_2543 - e.recent.unwrap().top_newest.unwrap()) / DAY), (5, 423));
+        assert_eq!(e.verdict, top_stale("Elected Name"), "16431242");
+        // 2857103: V 5, T 4, H 1, 2 clusters — no rival; top 2020-10-26 (2,181 days): it ships.
+        let rows = shape(&[("Elected Name", 4, "2020-10-26"), ("Head Name", 1, "2012-11-03")]);
+        let e = dated_at(&rows, "Head Name", PLAN_2543);
+        assert_eq!((e.clusters, (PLAN_2543 - e.recent.unwrap().top_newest.unwrap()) / DAY), (2, 2_181));
+        assert_eq!(e.verdict, r1("Elected Name"), "2857103");
+        // 1800186: V 456, T 305, H 1, second 115, 10 clusters; a fresh top (2026-09-22): it ships.
+        let mut clusters = vec![("Elected Name", 305, "2026-09-22"), ("Former Name", 115, "2025-12-01")];
+        for name in ["Rival A", "Rival B", "Rival C", "Rival D", "Rival E", "Rival F", "Rival G"] {
+            clusters.push((name, 5, "2024-01-01"));
+        }
+        clusters.push(("Head Name", 1, "2012-02-18"));
+        let e = dated_at(&shape(&clusters), "Head Name", PLAN_2543);
+        assert_eq!((e.voting, e.top, e.head_votes, e.second, e.clusters), (456, 305, 1, 115, 10));
+        assert_eq!(e.verdict, r1("Elected Name"), "1800186");
+    }
+
+    /// `top_stale` counts a rival as `clusters > 1 + (H > 0)`: with H = 0 two clusters are a rival (the
+    /// head keys into neither), with H ≥ 1 three are needed; and its age is strict — a top printed
+    /// exactly `as_of − 365 days` is fresh, one second older is stale.
+    #[test]
+    fn top_stale_counts_a_rival_when_h_is_zero_and_reads_its_age_strictly() {
+        let as_of = on("2026-10-16");
+        let two = shape(&[("Elected Name", 5, "2020-01-01"), ("Other Name", 2, "2019-01-01")]);
+        let e = dated_at(&two, "Absent Head", as_of);
+        assert_eq!((e.head_votes, e.clusters), (0, 2));
+        assert_eq!(e.verdict, top_stale("Elected Name"), "H = 0 and two clusters: a rival");
+        let one = shape(&[("Elected Name", 5, "2020-01-01")]);
+        assert_eq!(dated_at(&one, "Absent Head", as_of).verdict, r1("Elected Name"), "H = 0, one cluster: none");
+        let pair = shape(&[("Elected Name", 5, "2020-01-01"), ("Head Name", 2, "2012-01-01")]);
+        assert_eq!(dated_at(&pair, "Head Name", as_of).verdict, r1("Elected Name"), "H = 2 and two clusters: none");
+        // The boundary, on the H = 0 rival shape.
+        let edge = as_of - super::HEAD_TOP_STALE_DAYS * DAY;
+        let at = |top: i64| {
+            let rows = [
+                DatedVote { spelling: "Elected Name", tender: 1, at: top },
+                DatedVote { spelling: "Elected Name", tender: 2, at: top - DAY },
+                DatedVote { spelling: "Elected Name", tender: 3, at: top - 2 * DAY },
+                DatedVote { spelling: "Other Name", tender: 4, at: top - 3 * DAY },
+            ];
+            dated_at(&rows, "Absent Head", as_of).verdict
+        };
+        assert_eq!(at(edge), r1("Elected Name"), "exactly 365 days: fresh");
+        assert_eq!(at(edge - 1), top_stale("Elected Name"), "one second older: stale");
+        assert!(!super::head_top_stale(Some(edge), as_of) && super::head_top_stale(Some(edge - 1), as_of));
+    }
+
+    /// `top_stale` fails closed: no reading (no dates passed), or a reading with no dated elected item
+    /// (`top_newest` `None`), is stale; the same shape with a fresh elected item changes.
+    #[test]
+    fn top_stale_fails_closed_on_a_missing_top_newest() {
+        let as_of = on("2026-10-16");
+        let votes = [("Elected Name", 5), ("Rival Name", 2), ("Head Name", 1)];
+        // The head's item and the rival's dated, the elected cluster's not: the rival is the newest item.
+        let partial = shape(&[("Rival Name", 2, "2026-01-01"), ("Head Name", 1, "2012-01-01")]);
+        let e = elect_head_counted(&votes, &HeadElectOrg { dated: Some(&partial), as_of, ..org("Head Name") }, &FNS);
+        let read = e.recent.unwrap();
+        assert_eq!((read.top_newest, read.newest_is_head, read.released), (None, false, None));
+        assert_eq!(e.verdict, top_stale("Elected Name"), "no dated elected item");
+        let undated = HeadElectOrg { dated: None, as_of, ..org("Head Name") };
+        assert_eq!(elect_head(&votes, &undated, &FNS), top_stale("Elected Name"), "no reading (H = 1: no undated hold)");
+        assert!(super::head_top_stale(None, as_of));
+        let mut fresh = partial.clone();
+        fresh.push(DatedVote { spelling: "Elected Name", tender: 9_000, at: as_of - 10 * DAY });
+        let e = elect_head_counted(&votes, &HeadElectOrg { dated: Some(&fresh), as_of, ..org("Head Name") }, &FNS);
+        assert_eq!(e.verdict, r1("Elected Name"), "a fresh top ships");
+    }
+
+    /// A head the window, the residue holdout or `head_current` already RELEASED ships whatever its top
+    /// (canary 3042: `(68)` released by the window, its top 2022-10-12 stale, 4 clusters); and
+    /// `top_stale` never asks the junk exemption itself — the same digits head, released by nothing, is
+    /// held, and no release is read.
+    #[test]
+    fn top_stale_exempts_a_released_head_and_mints_no_release() {
+        let head = "Hopitaux Civils de Colmar 68";
+        // 3042's shape: the head owns the newest four procedures (the window fires and releases `68`); a
+        // rival votes; the plan is 1,900 days after the elected cluster's newest item.
+        let window = [
+            items("Hopitaux Civils de Colmar", 1, 1, 10),
+            items("Groupe Hospitalier Colmar", 50, 20, 2),
+            items(head, 100, 100, 4),
+        ]
+        .concat();
+        let e = dated_at(&window, head, 2_000 * DAY);
+        assert_eq!(e.recent.map(|r| (r.fires, r.released)), Some((true, Some("digits"))));
+        assert!(super::head_top_stale(e.recent.unwrap().top_newest, 2_000 * DAY) && e.clusters == 3);
+        assert_eq!(e.verdict, r1("Hopitaux Civils de Colmar"), "released by the window: it ships");
+        // The head's procedures OLDER than the elected cluster's: no window, no residue. Within 3 years
+        // of the plan, `head_current` asks the junk exemption, which releases `68`: it ships.
+        let old = [
+            items(head, 100, 1, 4),
+            items("Groupe Hospitalier Colmar", 50, 20, 2),
+            items("Hopitaux Civils de Colmar", 1, 50, 10),
+        ]
+        .concat();
+        let e = dated_at(&old, head, 500 * DAY);
+        assert_eq!(e.recent.map(|r| (r.fires, r.newest_is_head, r.released)), Some((false, false, Some("digits"))));
+        assert_eq!(e.verdict, r1("Hopitaux Civils de Colmar"), "released by head_current: it ships");
+        // The same organization planned 2,000 days on: no hold asks the exemption, so nothing releases
+        // the head, and `top_stale` holds it without asking — no release is minted.
+        let e = dated_at(&old, head, 2_000 * DAY);
+        assert_eq!(e.recent.map(|r| (r.released, r.release_withheld)), Some((None, None)));
+        assert_eq!(e.verdict, top_stale("Hopitaux Civils de Colmar"));
+    }
+
+    /// `top_stale` is R1's alone, asked last: R0 and R2 changes on a stale top with a rival ship; a serve
+    /// hold, `head_current`, `recent` and `residue` keep their reasons on such a shape.
+    #[test]
+    fn top_stale_is_r1_only_and_asked_after_every_other_hold() {
+        let as_of = 5_000 * DAY;
+        // R2: a stray head under a 25% top, rivals galore, every item thousands of days old.
+        let stray = [items("Main Body", 1, 10, 3), items("A Body", 10, 5, 2), items("B Body", 20, 5, 2), items("C Body", 30, 5, 2), items("D Body", 40, 5, 2), items("Head Body", 50, 1, 1)].concat();
+        assert_eq!(dated_at(&stray, "Head Body", as_of).verdict, HeadVerdict::Change { rule: HeadRule::R2, new: "Main Body".into() });
+        // R0: a placeholder head; the top and a rival stale.
+        let r0 = [items("Vergabekammer Nord", 1, 10, 4), items("Other Body", 10, 5, 2)].concat();
+        assert_eq!(dated_at(&r0, "s.o.", as_of).verdict, HeadVerdict::Change { rule: HeadRule::R0n, new: "Vergabekammer Nord".into() });
+        // A serve hold first (the organ), on a stale top with a rival.
+        let organ_rows = [items("Acme", 1, 1, 1), items("Organ of Acme", 10, 10, 5), items("Rival Body", 20, 5, 2)].concat();
+        assert_eq!(dated_at(&organ_rows, "Acme", as_of).verdict, organ(HeadRule::R1, "Organ of Acme"));
+        // `head_current` first: the head printed within 3 years, the top stale, a rival.
+        let current_rows = [items("Acme Works", 1, 1, 1), items("Acme Group", 10, 10, 5), items("Rival Body", 20, 5, 2)].concat();
+        let e = dated_at(&current_rows, "Acme Works", 500 * DAY);
+        assert!(super::head_top_stale(e.recent.unwrap().top_newest, 500 * DAY));
+        assert_eq!(e.verdict, current("Acme Group"));
+        // `recent` and `residue` first.
+        let rename = [items("Old Name Agency", 1, 1, 8), items("Rival Agency", 50, 5, 2), items("New Name Agency", 101, 100, 3)].concat();
+        assert_eq!(dated_at(&rename, "New Name Agency", as_of).verdict, recent(Some("Old Name Agency")));
+        let newest = [items("Old Name Agency", 1, 1, 8), items("Rival Agency", 50, 5, 2), items("New Name Agency", 101, 100, 1)].concat();
+        assert_eq!(dated_at(&newest, "New Name Agency", as_of).verdict, residue(HeadRule::R1, "Old Name Agency"));
+    }
+
+    /// `rival_newest` is emitted — the newest item of a cluster neither the elected one nor the head's —
+    /// and read by NO verdict: the same organization with its rival's items moved from oldest to newest
+    /// elects the same, its reading differing in `rival_newest` alone.
+    #[test]
+    fn rival_newest_is_emitted_and_read_by_no_verdict() {
+        let as_of = 1_200 * DAY;
+        let old_rival = [items("Head Name", 1, 1, 1), items("Rival Name", 10, 5, 2), items("Elected Name", 20, 10, 5)].concat();
+        let new_rival = [items("Head Name", 1, 1, 1), items("Rival Name", 10, 100, 2), items("Elected Name", 20, 10, 5)].concat();
+        let (a, b) = (dated_at(&old_rival, "Head Name", as_of), dated_at(&new_rival, "Head Name", as_of));
+        assert_eq!(a.verdict, top_stale("Elected Name"));
+        assert_eq!(a.verdict, b.verdict, "the rival's dates move no verdict");
+        let (ra, rb) = (a.recent.unwrap(), b.recent.unwrap());
+        assert_eq!((ra.rival_newest, rb.rival_newest), (Some(6 * DAY), Some(101 * DAY)));
+        assert_eq!(
+            RecentReading { rival_newest: None, ..ra },
+            RecentReading { rival_newest: None, ..rb },
+            "and nothing else in the reading moves"
+        );
+        // A fresh top, the rival oldest or newest of all: a change either way, the same change.
+        let fresh = |rival_day: i64| {
+            let rows = [items("Head Name", 1, 1, 1), items("Rival Name", 10, rival_day, 2), items("Elected Name", 20, 1_490, 5)]
+                .concat();
+            let e = dated_at(&rows, "Head Name", 1_700 * DAY);
+            (e.verdict, e.recent.unwrap().rival_newest)
+        };
+        assert_eq!(fresh(5), (r1("Elected Name"), Some(6 * DAY)));
+        assert_eq!(fresh(1_600), (r1("Elected Name"), Some(1_601 * DAY)));
+        // No rival: none read; the head's and the elected cluster's items never count.
+        let pair = [items("Head Name", 1, 1, 1), items("Elected Name", 20, 10, 5)].concat();
+        assert_eq!(dated_at(&pair, "Head Name", as_of).recent.unwrap().rival_newest, None);
+    }
+
+    /// The decision's no-move pin, on this module's side: v11 bumps the epoch and nothing about the vote
+    /// key — the stand-in key `elect_head` runs with here keys exactly as before, and the clusters of
+    /// every v11 shape are the vote key's (`crosswalk::head_vote_key` and `NAME_KEY_EPOCH` are pinned in
+    /// ingest's own tests).
+    #[test]
+    fn the_v11_rule_moves_no_vote_key() {
+        assert_eq!(key("Hopitaux Civils de Colmar 68"), "hopitaux civils de colmar 68");
+        assert_eq!(key("The University of Sheffield"), "university of sheffield");
+        assert_eq!(super::HEAD_SERVE_HOLDS.len(), 7);
+        assert_eq!(&super::HEAD_SERVE_HOLDS[5..], &[super::HEAD_HOLD_DOUBLED, super::HEAD_HOLD_SEAT_DROPPED]);
+        assert_eq!(super::HEAD_HOLD_PLACEHOLDER_ID, "placeholder_id");
+    }
+
+    /// The plan-time `exclude_stale_top` read: a stored day is its first instant (the cutoff's own day
+    /// is stale — the filter fails closed), and a missing or malformed date is stale.
+    #[test]
+    fn a_stored_top_newest_reads_stale_from_its_day() {
+        let as_of = on("2026-10-16") + 11 * 3_600; // 11:00 UTC, the cutoff 2025-10-16 11:00
+        assert!(!super::head_top_stale_date(Some("2025-10-17"), as_of), "younger than a year");
+        assert!(super::head_top_stale_date(Some("2025-10-16"), as_of), "the cutoff's own day");
+        assert!(super::head_top_stale_date(Some("2025-10-15"), as_of));
+        assert!(super::head_top_stale_date(None, as_of), "missing");
+        assert!(super::head_top_stale_date(Some("2025-13-01"), as_of), "malformed");
+        assert!(super::head_top_stale_date(Some("yesterday"), as_of), "malformed");
+    }
+
+    /// Rule v11's wet-time `exclude_stale_top` check: a non-release R1 change on a stale (or undated) top
+    /// drifts when the filter is on; a released head, a fresh top, R2 or the filter off do not.
+    #[test]
+    fn the_stale_top_filter_drifts_a_stale_non_release_r1_at_wet_time() {
+        let as_of = on("2026-10-16");
+        let read = |top: Option<i64>, released: Option<&'static str>| RecentReading {
+            top_newest: top,
+            released,
+            ..RecentReading::default()
+        };
+        let stale = read(Some(on("2024-01-01")), None);
+        assert!(super::excluded_stale_top(true, HeadRule::R1, Some(&stale), as_of));
+        assert!(!super::excluded_stale_top(false, HeadRule::R1, Some(&stale), as_of), "off");
+        assert!(!super::excluded_stale_top(true, HeadRule::R2, Some(&stale), as_of), "R2");
+        assert!(!super::excluded_stale_top(true, HeadRule::R1, Some(&read(Some(on("2024-01-01")), Some("digits"))), as_of), "a release");
+        assert!(!super::excluded_stale_top(true, HeadRule::R1, Some(&read(Some(on("2026-10-01")), None)), as_of), "fresh");
+        assert!(super::excluded_stale_top(true, HeadRule::R1, Some(&read(None, None)), as_of), "undated");
+        assert!(super::excluded_stale_top(true, HeadRule::R1, None, as_of), "no reading");
     }
 }

@@ -322,6 +322,8 @@ top cluster holds at least 3 votes and at least 25%; or when the head is empty o
 that name is written in. Even then it stays when the change would swap one legal-form family
 for another (<code>AG</code> to <code>Sàrl</code>), drop a consortium mark, fail the NHS ODS
 name check the old head passed, or, on the 25% arm only, serve an initialism of the head;
+when the identifier is a placeholder (<code>KEINEANGABE</code>, <code>UNBEKANNT</code> or
+<code>NICHTVORHANDEN</code> with any digits, or all zeros);
 when no spelling of the winning cluster is fit to serve; when the identifier carries a
 <code>wrong</code> or unapplied <code>related</code> review verdict; on the 55% arm, while
 the organization's newest procedures still use the current head (a rename: the head names at
@@ -331,13 +333,19 @@ arms, while the current head is the only one of the organization's names printed
 publication day; all three unless the head is unfit to serve for a reason other than being all lower
 case, or carries a standalone number the other name lacks while the other name drops at most
 one other word of it (a number the other name prints joined to a neighbouring word,
-<code>SMD 3</code> against <code>Smd3</code>, is the name's own); on the 55% and 25% arms, when
-the change would serve a review body's name (a procurement review chamber or court) for a head
+<code>SMD 3</code> against <code>Smd3</code>, is the name's own); on the 55% arm, while a name
+other than the winning one and the current head's also has votes and no notice printed the
+winning name (any spelling of it) within a year (365 days) before the job's plan (an undated one
+counts as not printed), unless one of those three holds was lifted for the head; on the 55% and
+25% arms, when the change would serve a review body's name (a procurement review chamber or court) for a head
 that is not one, a name led by a contracting organ (<code>Junta de Gobierno …</code>,
 <code>Alcaldía …</code>) for a head that is not, the head's own words plus a code
 (<code>(976)</code>), a name that adds a number after a comma or semicolon (an appended
-address; not for a Czech or Slovak school), or an ALL-CAPS respelling of a mixed-case head's
-same words; and, on the 55% and 25% arms only, when the head is in another script than its
+address; not for a Czech or Slovak school), an ALL-CAPS respelling of a mixed-case head's
+same words, the same words printed twice (<code>X - X</code>) for a head that is not, or the
+head with its seat dropped (a tail of 2 or 3 words led by <code>w</code>, <code>we</code>,
+<code>v</code>, <code>ve</code> or <code>vo</code>: <code>Ośrodek Pomocy Społecznej w
+Kluczborku</code> to <code>Ośrodek Pomocy Społecznej</code>); and, on the 55% and 25% arms only, when the head is in another script than its
 mentions (TED's English rendering). So the head
 can change with no new notice, and every tender the organization is on shows the new name at
 once. The rename arrives as an <code>organization</code> <code>changed</code> event, not a

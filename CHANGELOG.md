@@ -109,7 +109,8 @@ votes and at least twice the head's; or when the head's own cluster holds at mos
 holds at least 3 votes and at least 25%; or when the head is empty or not a name (a placeholder, a blank, a
 void-lot phrase) and some mention's name votes, whatever script that name is written in. Even then it stays when
 the change would swap one legal-form family for another (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS
-name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when no spelling of the
+name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when the identifier is a
+placeholder (`KEINEANGABE`, `UNBEKANNT` or `NICHTVORHANDEN` with any digits, or all zeros); when no spelling of the
 winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on
 the 55% arm, while the organization's newest procedures still use the current head (a rename: the head names at
 least 2 procedures and two thirds of the organization's newest as many), or while a notice printed the current head
@@ -117,12 +118,16 @@ within 3 years (1,095 days) before the job's plan; on the 55% and 25% arms, whil
 of the organization's names printed on its newest publication day; all three unless the head is unfit to serve
 for a reason other than being all lower case, or carries a standalone number the other name lacks while the other
 name drops at most one other word of it (a number the other name prints joined to a neighbouring
-word, `SMD 3` against `Smd3`, is the name's own); on the 55% and 25% arms, when the change would serve a review
-body's name (a procurement review chamber or court) for a head that is not one, a name led by a contracting organ
-(`Junta de Gobierno …`, `Alcaldía …`) for a head that is not, the head's own words plus a code (`(976)`), a
-name that adds a number after a comma or semicolon (an appended address; not for a Czech or Slovak school), or an
-ALL-CAPS respelling of a mixed-case head's same words; and, on the 55% and 25% arms only, when the head is in another
-script than its mentions (TED's English rendering).
+word, `SMD 3` against `Smd3`, is the name's own); on the 55% arm, while a name other than the winning one and the
+current head's also has votes and no notice printed the winning name (any spelling of it) within a year (365 days)
+before the job's plan (an undated one counts as not printed), unless one of those three holds was lifted for the head;
+on the 55% and 25% arms, when the change would serve a review body's name (a procurement review chamber or court) for
+a head that is not one, a name led by a contracting organ (`Junta de Gobierno …`, `Alcaldía …`) for a head that is
+not, the head's own words plus a code (`(976)`), a name that adds a number after a comma or semicolon (an appended
+address; not for a Czech or Slovak school), an ALL-CAPS respelling of a mixed-case head's same words, the same words
+printed twice (`X - X`) for a head that is not, or the head with its seat dropped (a tail of 2 or 3 words led by `w`,
+`we`, `v`, `ve` or `vo`: `Ośrodek Pomocy Społecznej w Kluczborku` to `Ośrodek Pomocy Społecznej`); and, on the 55% and
+25% arms only, when the head is in another script than its mentions (TED's English rendering).
 
 Rule v10 (2026-10-16) added the 3-year hold above: a head still printed is usually the current name, so a majority
 for another spelling there is more often a respelling, an appended qualifier, an abbreviation or another entity
@@ -130,6 +135,19 @@ sharing the identifier than a fix; a head not printed for 3 years is the outdate
 replace. The 3 years count back from the start of the job's plan, which the plan records (`as_of`): a rename run
 re-checks every head against that same date, so a head printed after the plan is left as it is. The 25% arm's
 changes are not applied for now: every rename run excludes them, pending a refit (issue 548).
+
+Rule v11 (2026-10-16) added four holds after a capped run renamed one organization back to a former name and three
+to the wrong one. Three of the four had a third name with votes and a winning name not printed, in any spelling,
+for over a year: a newer name had superseded the winner, the old name was being printed again in another spelling,
+or the winner was another entity buying for the organization. The fourth was a name printed twice. So on the 55%
+arm a change now also waits while a name other than the winning one and the current head's has votes and no notice
+printed the winning name (any spelling of it) within a year (365 days) before the job's plan, the year counted back
+from the plan's start as the 3 years are. A change whose old head the holds above already released as junk still
+applies. The other three holds stop a change to a name printed twice in one field, a change that cuts the head to a
+generic name by dropping its seat (`… w Kluczborku`), and every change of an organization whose identifier is a
+placeholder (`KEINEANGABE`, `UNBEKANNT`, `NICHTVORHANDEN`, all zeros) rather than a register number. The rename run
+can also leave out every 55% change not released as junk whose winning name (any spelling of it) is a year or more out
+of print, whatever the other names; the operator turns that on only if the dated review of that class fails.
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new
