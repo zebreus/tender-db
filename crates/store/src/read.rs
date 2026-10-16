@@ -1172,6 +1172,58 @@ enum StatusBy<'a> {
 const STATUS_BY_HEAD: StatusBy<'static> =
     StatusBy::Head { deadline: "t.current_deadline", closed: "t.current_closed_by_notice" };
 
+/// How the value bounds (`min_value`/`max_value`) are decided for the collection a
+/// [`version_predicates`] caller reads — [`StatusBy`]'s twin for the value (issue 547).
+#[derive(Clone, Copy)]
+enum ValueBy<'a> {
+    /// The fold-maintained head column (`t.current_value_eur_cents`, indexed with `id`), or a
+    /// lots builder's primary-key seek of it.
+    Head(&'a str),
+    /// ONE version, the SSE `Scope::At` probe (Tenders, and Lots, which a value bound reads
+    /// through their Tender: issue 490 decision 6). The head column is the head's value only,
+    /// so the seq and seq − 1 probes read one figure and a change across a bound was dropped
+    /// as `(false, false)` or served `changed`. At the head (`seq = head_seq`) this reads
+    /// `head_value`, exact. An earlier version has NO stored elected value —
+    /// `head_value_eur_cents` runs for the head alone, and its rule (the sentinel digit walk,
+    /// scale partners over the chain) is not transcribed into SQL (issues 366, 375) — so there
+    /// the bound reads a SUPERSET: an amount row of the version whose `eur_cents` lies within
+    /// it. The fold elects one of the version's own stored rows (the amount pick in
+    /// `tender_select_head` finds it by `eur_cents` the same way), so a version inside the
+    /// bound always matches, and a PROBED change that takes the head out of the bound reaches
+    /// its subscriber as `removed`. Probed: a lots stream reads only `lot` change rows, and the
+    /// fold writes one only when the lot's facts, kind or its Tender's closure moved — a
+    /// version that moves only the Tender's value (a procedure-total corrigendum, a sibling
+    /// lot's figure) probes no lot, so a lots subscriber keeps it (issue 560). The error is
+    /// one-sided: an earlier version with any figure inside the bound that it did not elect —
+    /// a refused one, or under `max_value` ANY smaller one, which a Tender with several lots
+    /// usually has (each lot's figure is below the procedure total) — also matches: an
+    /// idempotent over-delivered `removed` for a Tender that never matched (issue 164's
+    /// direction), or `changed` where `added` was due (so `changed` is applied as an upsert,
+    /// `/docs`); and a subscriber catching up past a version since superseded reads both of its
+    /// probes this way, until the newer version's own change row probes the head. Exact
+    /// everywhere needs the elected value stored per version, as 490 stores the lots' (issue
+    /// 561). The amount EXISTS carries `seq IS NOT head_seq`, as `closed_at_version_sql` carries
+    /// its `cb_v.seq <> head_seq`: turso runs the ELSE leg's loop on a head probe too (it is
+    /// planned as a join loop, not a lazily evaluated subquery), and without the guard every
+    /// head probe walked the version's whole amount slice whenever no amount lay inside the
+    /// bound (measured 0.046 s against 0.004 s on 2,400 amount rows, review 2026-10-16). `IS
+    /// NOT` rather than `<>` keeps a NULL `head_seq` reading as today.
+    Version { head_seq: &'a str, head_value: &'a str },
+}
+
+/// The Tender head's value column, as every head-scoped Tenders builder names it.
+const VALUE_BY_HEAD: ValueBy<'static> = ValueBy::Head("t.current_value_eur_cents");
+
+/// A version's submission deadline as one scalar expression (issue 547): the MAX of its
+/// admitted rows — canonical's one selector, the rows [`StatusBy::Version`]'s EXISTS reads —
+/// and NULL when it has none. That is what `canonical::head_deadline` writes into
+/// `t.current_deadline` when the version is the head, so a bound over it reads as the same
+/// bound over the column, NULL failing both, at any version.
+fn version_deadline_sql(tid: &str, seq: &str, published: &str) -> String {
+    let rows = crate::canonical::admitted_deadline_rows_sql("vd", tid, seq, published);
+    format!("(SELECT MAX(vd.utc_seconds) FROM tender_version_dates vd WHERE {rows})")
+}
+
 /// The version-scoped filters, emitted against caller-supplied expressions for the
 /// Tender id and the version `seq`.
 ///
@@ -1203,7 +1255,7 @@ fn version_predicates(
     tid: &str,
     seq: &str,
     status_by: StatusBy<'_>,
-    value_col: &str,
+    value_by: ValueBy<'_>,
 ) {
     if let Some(country) = &f.country {
         q.push(
@@ -1341,10 +1393,32 @@ fn version_predicates(
     // (the same one-sided honesty as every filter guard). The raw-cents
     // comparison this replaces mixed currencies numerically; its retirement
     // is CHANGELOG.md's first entry.
-    for (bound, op) in [(f.min_value, ">="), (f.max_value, "<=")] {
-        if let Some(eur_cents) = bound {
-            q.push(&format!(" AND {value_col} {op} ?"), [Value::Integer(eur_cents)]);
+    let bounds: Vec<(&str, i64)> =
+        [(">=", f.min_value), ("<=", f.max_value)].into_iter().filter_map(|(op, b)| Some((op, b?))).collect();
+    match value_by {
+        ValueBy::Head(value_col) => {
+            for (op, eur_cents) in &bounds {
+                q.push(&format!(" AND {value_col} {op} ?"), [Value::Integer(*eur_cents)]);
+            }
         }
+        // Issue 547: the stored value at the head, a superset (one amount row of the version
+        // inside every bound) before it — see `ValueBy::Version`.
+        ValueBy::Version { head_seq, head_value } if !bounds.is_empty() => {
+            let at_head: Vec<String> = bounds.iter().map(|(op, _)| format!("{head_value} {op} ?")).collect();
+            let a_row: Vec<String> = bounds.iter().map(|(op, _)| format!("va.eur_cents {op} ?")).collect();
+            q.push(
+                &format!(
+                    " AND CASE WHEN {seq} = {head_seq} THEN ({})
+                          ELSE EXISTS (SELECT 1 FROM tender_version_amounts va
+                                        WHERE va.tender_id = {tid} AND va.seq = {seq}
+                                          AND {seq} IS NOT {head_seq} AND {}) END",
+                    at_head.join(" AND "),
+                    a_row.join(" AND "),
+                ),
+                bounds.iter().chain(&bounds).map(|(_, eur_cents)| Value::Integer(*eur_cents)).collect::<Vec<_>>(),
+            );
+        }
+        ValueBy::Version { .. } => {}
     }
     if !f.procedure_type.is_empty() {
         // Issue 479: the procedure type the CURRENT version carries at Tender scope —
@@ -2353,7 +2427,7 @@ fn tenders_ordered_query(
             inner.push(" AND t.kind = ?", [t(kind)]);
         }
     }
-    version_predicates(&mut inner, filter, "t.id", "v.seq", STATUS_BY_HEAD, "t.current_value_eur_cents");
+    version_predicates(&mut inner, filter, "t.id", "v.seq", STATUS_BY_HEAD, VALUE_BY_HEAD);
     if let Some((value, id)) = cursor {
         let (outer, tie) = if desc { ("<=", "<") } else { (">=", ">") };
         inner.push(
@@ -2884,33 +2958,40 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
     // (`retain_publication_companions`); the `EXISTS` predicates stay — they have
     // no `tenders` index to flatten onto (winner companion measured 1.9 ms).
     if filter.publication_id.is_none() {
+        // `source` and `kind` stay on the Tender row: neither is a fact of a version. The
+        // source is the Tender's label (TED once any of its notices is: a DÖE Tender whose TED
+        // twin arrives turns `ted`) and the kind its fold-first notice's (issue 462), each
+        // rewritten for the whole Tender, so no row keeps the earlier value for the seq − 1
+        // probe and such a move reads the same on both sides (issue 547; the gap is issue 562).
         if let Some(source) = &filter.source {
             q.push(" AND t.source = ?", [t(source)]);
         }
         if let Some(kind) = &filter.kind {
             q.push(" AND t.kind = ?", [t(kind)]);
         }
-        // Publication-date bounds (issue 216). In THIS id-ordered shape a narrow range
-        // walks the PK to fill its page, so `walks()` isolates it; the REST handler
-        // routes range/sorted reads through `tenders_by_published` instead, which rides
-        // `tenders_current_published`. This application exists so the filter also means
-        // something on the id-ordered paths (SSE snapshots, an explicit `sort=id`).
+        // The date bounds (issue 216) at the PROBED version (issue 547): its own publication,
+        // and its own deadline — MAX of its admitted rows, what the fold writes into
+        // `t.current_published_at` / `t.current_deadline` when the version is the head. The
+        // head columns read the same on both probes, so a change across a bound was dropped
+        // or served `changed`. Pages bound the head columns, in `tenders_page_query`.
         if let Some(after) = filter.published_after {
-            q.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
+            q.push(" AND v.published_at >= ?", [Value::Integer(after)]);
         }
         if let Some(before) = filter.published_before {
-            q.push(" AND t.current_published_at < ?", [Value::Integer(before)]);
+            q.push(" AND v.published_at < ?", [Value::Integer(before)]);
         }
+        let deadline = version_deadline_sql("t.id", "v.seq", "v.published_at");
         if let Some(after) = filter.deadline_after {
-            q.push(" AND t.current_deadline >= ?", [Value::Integer(after)]);
+            q.push(&format!(" AND {deadline} >= ?"), [Value::Integer(after)]);
         }
         if let Some(before) = filter.deadline_before {
-            q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
+            q.push(&format!(" AND {deadline} < ?"), [Value::Integer(before)]);
         }
     }
     // Issue 533: this shape is `Scope::At` only (the page returned above), the SSE diff
     // probe, so status is decided at the probed version, not by the head columns, which
-    // read the same on both sides of the change that moved them.
+    // read the same on both sides of the change that moved them. Issue 547: the value
+    // bounds too (`ValueBy::Version`: exact at the head, a superset before it).
     version_predicates(
         &mut q,
         filter,
@@ -2921,7 +3002,7 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             head_seq: "t.current_seq",
             head_flag: "t.current_closed_by_notice",
         },
-        "t.current_value_eur_cents",
+        ValueBy::Version { head_seq: "t.current_seq", head_value: "t.current_value_eur_cents" },
     );
     match scope {
         Scope::Page { after, limit } => q.push(
@@ -2979,6 +3060,11 @@ fn tender_page_predicates(inner: &mut Query, filter: &Filter) {
         if let Some(kind) = &filter.kind {
             inner.push(" AND t.kind = ?", [t(kind)]);
         }
+        // Publication-date bounds (issue 216). In THIS id-ordered shape a narrow range
+        // walks the PK to fill its page, so `walks()` isolates it; the REST handler
+        // routes range/sorted reads through `tenders_by_published` instead, which rides
+        // `tenders_current_published`. This application exists so the filter also means
+        // something on the id-ordered paths (SSE snapshots, an explicit `sort=id`).
         if let Some(after) = filter.published_after {
             inner.push(" AND t.current_published_at >= ?", [Value::Integer(after)]);
         }
@@ -2992,7 +3078,7 @@ fn tender_page_predicates(inner: &mut Query, filter: &Filter) {
             inner.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(inner, filter, "t.id", "v.seq", STATUS_BY_HEAD, "t.current_value_eur_cents");
+    version_predicates(inner, filter, "t.id", "v.seq", STATUS_BY_HEAD, VALUE_BY_HEAD);
 }
 
 /// The satellite SELECT list joined back onto the ≤limit page rows the inner
@@ -3802,20 +3888,31 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
                    JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
                 [],
             );
-            let seq = match scope {
+            // Issue 547 review: the At probe binds the lot row's seq to its parameter too.
+            // Joined `vl.seq = v.seq`, the planner put `vl` ahead of `v` whenever the WHERE
+            // grew a leg on `v` (the value bounds' CASE), sought it by `(tender_id=?)` alone and
+            // walked every version's lot rows — 0.003 s to 0.35 s a probe on 2,400 lots × 31
+            // versions, and a flip of that Tender is 4,800 probes per subscriber. Bound, `vl` seeks
+            // its full key `(tender_id, seq, lot_id)` whatever the filter (`at_probe_plan_tests`
+            // pins it, `source`/`kind`/`tender` included). Only `vl` is guaranteed that: under a
+            // `source`, `kind` or `tender` filter the planner can still seek `tender_versions v`
+            // by the Tender alone (`(tender_id=?)` on the UNIQUE `(tender_id,
+            // caused_by_notice_id)` index) and walk its versions, once per probe — O(versions),
+            // not O(versions × lots), and the shape every lots At probe had before this.
+            let (seq, vl_seq) = match scope {
                 Scope::Page { .. } => {
-                    "(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)".to_owned()
+                    ("(SELECT MAX(x.seq) FROM tender_versions x WHERE x.tender_id = t.id)".to_owned(), "v.seq")
                 }
                 Scope::At { seq, .. } => {
-                    q.params.push(Value::Integer(seq));
-                    "?".to_owned()
+                    q.params.extend([Value::Integer(seq), Value::Integer(seq)]);
+                    ("?".to_owned(), "?")
                 }
             };
             q.push(
                 &format!(
                     "{seq}
                        JOIN tender_version_lots vl
-                         ON vl.tender_id = t.id AND vl.seq = v.seq AND vl.lot_id = l.id
+                         ON vl.tender_id = t.id AND vl.seq = {vl_seq} AND vl.lot_id = l.id
                       WHERE 1 = 1"
                 ),
                 [],
@@ -3848,7 +3945,11 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
         "t.id",
         "v.seq",
         StatusBy::Lot { lot: "l.id", tender_closed: &tender_closed },
-        "t.current_value_eur_cents",
+        // Issue 547: and the Tender's value at the probed version, which bounds a lot.
+        match scope {
+            Scope::Page { .. } => VALUE_BY_HEAD,
+            Scope::At { .. } => ValueBy::Version { head_seq: "t.current_seq", head_value: "t.current_value_eur_cents" },
+        },
     );
     match scope {
         Scope::Page { after, limit } => q.push(
@@ -4063,7 +4164,7 @@ fn lots_stream_predicates(q: &mut Query, filter: &Filter) {
             lot: "l.id",
             tender_closed: "(SELECT tt.current_closed_by_notice FROM tenders tt WHERE tt.id = l.tender_id) IS 1",
         },
-        "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)",
+        ValueBy::Head("(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)"),
     );
 }
 
@@ -5943,6 +6044,171 @@ mod head_pointer_plan_tests {
             let _ = std::fs::remove_file(format!("{path}{s}"));
         }
         assert!(failures.is_empty(), "{} plan(s) failed:\n{}", failures.len(), failures.join("\n"));
+    }
+}
+
+/// Issue 547: the SSE `Scope::At` probes read the value and date bounds at the probed version,
+/// so each change classification now runs the version's deadline MAX (`vd`, through
+/// `version_deadline_sql`) and its amount EXISTS (`va`, `ValueBy::Version`). Both must seek the
+/// version's own rows, `(tender_id=? AND seq=?)`, never scan, alone and beside `status`; and the
+/// lots probe's own lot row (`vl`) must seek its full key — sought by the Tender alone it walks
+/// every version's lot rows, which the value CASE once made the planner choose (review
+/// 2026-10-16).
+#[cfg(test)]
+mod at_probe_plan_tests {
+    use super::*;
+
+    const NOW: i64 = 1_790_000_000;
+
+    #[tokio::test]
+    async fn the_at_probe_bounds_seek_the_version_rows() {
+        let path = format!("/tmp/tender-db-547-at-plans-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = crate::Db::open(&path).await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let conn = db.reader().await.unwrap();
+        let print = std::env::var("TDB_PRINT_PLANS").is_ok();
+
+        let base = Filter { now: NOW, ..Filter::default() };
+        let filters = [
+            ("min_value", Filter { min_value: Some(1_000), ..base.clone() }),
+            ("max_value", Filter { max_value: Some(9_000), ..base.clone() }),
+            ("value band", Filter { min_value: Some(1_000), max_value: Some(9_000), ..base.clone() }),
+            ("deadline_after", Filter { deadline_after: Some(1_786_000_000), ..base.clone() }),
+            ("deadline_before", Filter { deadline_before: Some(1_786_000_000), ..base.clone() }),
+            ("published_after", Filter { published_after: Some(1_754_000_000), ..base.clone() }),
+            (
+                "every bound + open",
+                Filter {
+                    min_value: Some(1_000),
+                    max_value: Some(9_000),
+                    deadline_after: Some(1_780_000_000),
+                    deadline_before: Some(1_786_000_000),
+                    published_after: Some(1_754_000_000),
+                    published_before: Some(1_756_000_000),
+                    status: Some(Status::Open),
+                    ..base.clone()
+                },
+            ),
+            // No bound at all: the lots probe's `vl` seeks its full key here too.
+            ("no bound", base.clone()),
+            // The filters that reorder the lots join (issue 547 re-review): under each the
+            // planner may seek `v` by the Tender alone (O(versions), documented in
+            // `lots_query_previous`), but `vl` keeps its full key. Each alone, and `kind` with
+            // the value band and `open`, the shape that put `vl` ahead of `v`.
+            ("source", Filter { source: Some("ted".to_owned()), ..base.clone() }),
+            ("kind", Filter { kind: Some("Lot".to_owned()), ..base.clone() }),
+            ("tender", Filter { tender: Some(7), ..base.clone() }),
+            (
+                "kind + value band + open",
+                Filter {
+                    kind: Some("Lot".to_owned()),
+                    min_value: Some(1_000),
+                    max_value: Some(9_000),
+                    status: Some(Status::Open),
+                    ..base.clone()
+                },
+            ),
+            (
+                "source + kind + tender + min_value",
+                Filter {
+                    source: Some("ted".to_owned()),
+                    kind: Some("Lot".to_owned()),
+                    tender: Some(7),
+                    min_value: Some(1_000),
+                    ..base.clone()
+                },
+            ),
+        ];
+        let at = Scope::At { id: 7, seq: 2 };
+        let mut failures = Vec::new();
+        for (name, f) in &filters {
+            for (label, q) in [(format!("tenders At {name}"), tenders_query(f, at)), (format!("lots At {name}"), lots_query(f, at))] {
+                let plan = plan_of(&conn, &q.sql, q.params.clone()).await;
+                if print {
+                    println!("PLAN {label}\n-- params: {:?}\n{}\n{plan}", q.params, q.sql);
+                }
+                // Lots honour the value bounds, never the date bounds (`honoured_params`).
+                let lots = label.starts_with("lots");
+                let dated = !lots && (f.deadline_after.is_some() || f.deadline_before.is_some());
+                let why = faults(&plan, f.min_value.is_some() || f.max_value.is_some(), dated, lots);
+                if !why.is_empty() {
+                    failures.push(format!("{label}: {}\n{plan}", why.join("; ")));
+                }
+            }
+        }
+        // The check can say NO: the amount leg keyed on the Tender alone, a walk of every
+        // version's amounts, is named for it.
+        let f = &filters[0].1;
+        let q = tenders_query(f, at);
+        let loose = q.sql.replace("va.seq = v.seq", "va.seq >= 0");
+        assert_ne!(loose, q.sql, "the control rewrote nothing");
+        let plan = plan_of(&conn, &loose, q.params.clone()).await;
+        assert!(!faults(&plan, true, false, false).is_empty(), "the check cannot tell a Tender-wide amount walk:\n{plan}");
+        // And the lot row joined to the version row instead of the bound seq, the shape that put
+        // `vl` first on `(tender_id=?)` under the value band.
+        let f = &filters[2].1;
+        let q = lots_query(f, at);
+        let joined = q.sql.replace("vl.seq = ?", "vl.seq = v.seq");
+        assert_ne!(joined, q.sql, "the control rewrote nothing");
+        let mut params = q.params.clone();
+        assert_eq!(params[..2], [Value::Integer(2), Value::Integer(2)], "the two bound seqs lead");
+        params.remove(1);
+        let plan = plan_of(&conn, &joined, params).await;
+        assert!(!faults(&plan, true, false, true).is_empty(), "the check cannot tell a version-wide lot walk:\n{plan}");
+        drop(conn);
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        assert!(failures.is_empty(), "{} plan(s) failed:\n{}", failures.len(), failures.join("\n"));
+    }
+
+    /// What is wrong with an At probe's plan: any SCAN, a missing `va` (value) or `vd`
+    /// (deadline) leg where the filter has one, either leg reached by anything but the
+    /// version's own `(tender_id=? AND seq=?)` rows, and on a lots probe a `vl` leg that does
+    /// not seek the lot row's full key.
+    fn faults(plan: &str, valued: bool, dated: bool, lots: bool) -> Vec<String> {
+        let lines: Vec<&str> = plan.lines().map(str::trim).collect();
+        let mut why: Vec<String> = lines.iter().filter(|l| l.starts_with("SCAN ")).map(|l| format!("scans: `{l}`")).collect();
+        if lots {
+            let vl: Vec<&&str> = lines.iter().filter(|l| l.starts_with("SEARCH vl ")).collect();
+            if vl.is_empty() {
+                why.push("no `vl` leg".to_owned());
+            }
+            why.extend(
+                vl.iter()
+                    .filter(|l| !l.contains("(tender_id=? AND seq=? AND lot_id=?)"))
+                    .map(|l| format!("`vl` does not seek the lot row: `{l}`")),
+            );
+        }
+        for (alias, used) in [("va", valued), ("vd", dated)] {
+            let legs: Vec<&&str> = lines
+                .iter()
+                .filter(|l| l.starts_with(&format!("SEARCH {alias} ")) || l.contains(&format!(" AS {alias} ")))
+                .collect();
+            if used && legs.is_empty() {
+                why.push(format!("no `{alias}` leg"));
+            }
+            why.extend(
+                legs.iter().filter(|l| !l.contains("(tender_id=? AND seq=?)")).map(|l| format!("`{alias}` does not seek the version: `{l}`")),
+            );
+        }
+        why
+    }
+
+    async fn plan_of(conn: &Connection, sql: &str, params: Vec<Value>) -> String {
+        let mut rows = conn.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+        let mut plan = String::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Ok(Value::Text(detail)) = row.get_value(3) {
+                plan.push_str(&detail);
+                plan.push('\n');
+            }
+        }
+        assert!(!plan.is_empty(), "no plan came back for: {sql}");
+        plan
     }
 }
 

@@ -741,11 +741,11 @@ fn the_deadline_window_is_written_once() {
         "the code lines selecting `submission_deadline` facts changed: {readers:?}. Expected five — \
          the fold's `head_deadline`, the read pick, canonical's `admitted_deadline_rows_sql` (issue 533: \
          the one selector of a version's admitted deadline rows, which the lots `status` EXISTS — its \
-         two rows used to be two readers here —, the SSE `StatusBy::Version` probe and the closing \
-         rule's window W all call), the lot row in `summarise`, and the backfill — each applying \
-         canonical's window. A new reader must call `deadline_admitted`/`deadline_admitted_sql` (or \
-         `admitted_deadline_rows_sql`) and change this count in the same commit (issue 474; issue 366 \
-         was a reader that named no constant)."
+         two rows used to be two readers here —, the SSE `StatusBy::Version` probe, the SSE At probe's \
+         deadline bounds (issue 547, `version_deadline_sql`) and the closing rule's window W all call), \
+         the lot row in `summarise`, and the backfill — each applying canonical's window. A new reader \
+         must call `deadline_admitted`/`deadline_admitted_sql` (or `admitted_deadline_rows_sql`) and \
+         change this count in the same commit (issue 474; issue 366 was a reader that named no constant)."
     );
 }
 

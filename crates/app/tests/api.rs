@@ -3900,6 +3900,351 @@ async fn a_closing_result_is_removed_from_an_open_subscription_and_a_relaunch_ad
     assert_eq!(items(&server.get("/v1/tenders?status=open").await).len(), 1, "open again");
 }
 
+/// Issue 547: what the next diff of each tape carries — its op, the entity kind and the id it
+/// names — `None` when the tape stays silent (a `(false, false)` classification is dropped,
+/// never sent). The kind is read so a lots tape that named the Tender would fail.
+async fn next_ops(tapes: &mut [&mut Tape]) -> Vec<Option<(String, String, i64)>> {
+    let mut ops = Vec::new();
+    for tape in tapes.iter_mut() {
+        ops.push(tape.next().await.map(|e| {
+            (
+                e.data["op"].as_str().unwrap_or_default().to_owned(),
+                e.data["entity"].as_str().unwrap_or_default().to_owned(),
+                e.data["id"].as_i64().unwrap_or_default(),
+            )
+        }));
+    }
+    ops
+}
+
+/// Issue 547: one expected [`next_ops`] entry.
+fn diff_op(op: &str, entity: &str, id: i64) -> Option<(String, String, i64)> {
+    Some((op.to_owned(), entity.to_owned(), id))
+}
+
+/// Issue 547: a change that moves a Tender across a `min_value`/`max_value` bound reaches each
+/// subscription as the membership move it is. The chain's CN publishes EUR 816,863 for the
+/// procedure and its lot alike; its first change notice restates both as EUR 100,000. Before
+/// the SSE probes read the value at each probed version, both read the head column — so the
+/// `min_value` subscriber never heard `removed` (both sides read EUR 100,000 and the row was
+/// dropped) and the `max_value` one heard `changed` for a Tender it never had. That `added` is
+/// exact here only because the CN carries no figure below the bound: an earlier version is read
+/// as a superset (any of its amounts inside the bound), so had the CN's lot been under EUR
+/// 500,000 — each lot's figure is below the procedure total on a Tender with several lots — the
+/// `max_value` subscriber would still hear `changed` (`ValueBy::Version`; issue 561). The lots
+/// stream bounds a lot by its Tender's value (issue 490 decision 6), and hears this move only
+/// because the lot's own figure moved too, which is what writes its change row (issue 493): a
+/// version that moves only the Tender's value probes no lot (issue 560).
+#[tokio::test]
+async fn a_version_that_moves_the_value_across_a_bound_is_removed_and_added() {
+    let server = Server::start("sse-value-bound").await;
+    server.ingest(CHAIN[0]).await;
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("the CN's Tender");
+    let lot = items(&server.get("/v1/lots").await)[0]["id"].as_i64().expect("the CN's lot");
+    let lowered = std::fs::read_to_string(format!("{FIXTURES}/{}", CHAIN[1]))
+        .expect("the change notice")
+        .replace(">816863<", ">100000<");
+    assert_eq!(lowered.matches(">100000<").count(), 2, "the procedure's and the lot's figure");
+
+    // EUR 500,000, in cents.
+    let mut above = Tape::open(&server, "/v1/tenders?min_value=50000000", None).await;
+    assert_eq!(above.until_live().await.0.len(), 1, "EUR 816,863 is at least EUR 500,000");
+    let mut below = Tape::open(&server, "/v1/tenders?max_value=50000000", None).await;
+    assert!(below.until_live().await.0.is_empty(), "and not at most");
+    let mut lots_above = Tape::open(&server, "/v1/lots?min_value=50000000", None).await;
+    assert_eq!(lots_above.until_live().await.0.len(), 1);
+    let mut lots_below = Tape::open(&server, "/v1/lots?max_value=50000000", None).await;
+    assert!(lots_below.until_live().await.0.is_empty());
+
+    server.ingest_bytes(CHAIN[1], lowered.as_bytes()).await;
+    assert!(items(&server.get("/v1/tenders?min_value=50000000").await).is_empty(), "the page agrees: below now");
+    assert_eq!(items(&server.get("/v1/tenders?max_value=50000000").await).len(), 1);
+    assert_eq!(
+        next_ops(&mut [&mut above, &mut below, &mut lots_above, &mut lots_below]).await,
+        [diff_op("removed", "tender", id), diff_op("added", "tender", id), diff_op("removed", "lot", lot), diff_op("added", "lot", lot)],
+        "tenders min_value, max_value; lots min_value, max_value"
+    );
+}
+
+/// Issue 547: the same for the submission-deadline bounds. The CN closes 2026-01-21, its first
+/// change notice moves that to 2026-01-27, across a 2026-01-24 bound: `deadline_before` loses
+/// the Tender and `deadline_after` gains it. The head column read the same on both probes. The
+/// subscriptions name no `sort`: a date bound implies its ordering on a page only (it once
+/// implied one on a stream too, which then refused the subscription for a sort the client
+/// never sent).
+#[tokio::test]
+async fn a_version_that_moves_the_deadline_across_a_bound_is_removed_and_added() {
+    let server = Server::start("sse-deadline-bound").await;
+    server.ingest(CHAIN[0]).await;
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("the CN's Tender");
+
+    let mut before = Tape::open(&server, "/v1/tenders?deadline_before=2026-01-24", None).await;
+    assert_eq!(before.until_live().await.0.len(), 1, "2026-01-21 is before the bound");
+    let mut after = Tape::open(&server, "/v1/tenders?deadline_after=2026-01-24", None).await;
+    assert!(after.until_live().await.0.is_empty(), "and not after it");
+    // Bounds on both date columns, which a page refuses without a `sort`, open a stream too.
+    let mut both = Tape::open(&server, "/v1/tenders?published_after=2025-01-01&deadline_after=2026-01-01", None).await;
+    assert_eq!(both.until_live().await.0.len(), 1, "a stream bounded on both date columns snapshots");
+
+    server.ingest(CHAIN[1]).await;
+    assert!(items(&server.get("/v1/tenders?deadline_before=2026-01-24").await).is_empty(), "the page agrees");
+    assert_eq!(items(&server.get("/v1/tenders?deadline_after=2026-01-24").await).len(), 1);
+    assert_eq!(
+        next_ops(&mut [&mut before, &mut after, &mut both]).await,
+        [diff_op("removed", "tender", id), diff_op("added", "tender", id), diff_op("changed", "tender", id)],
+        "deadline_before, deadline_after; both bounds, matched on both sides"
+    );
+}
+
+/// Issue 547: and for the publication bounds, which read the CURRENT version's publication. The
+/// CN is published 2025-12-15, its first change notice 2026-01-07, across a 2026-01-01 bound.
+#[tokio::test]
+async fn a_version_published_across_a_bound_is_removed_and_added() {
+    let server = Server::start("sse-published-bound").await;
+    server.ingest(CHAIN[0]).await;
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("the CN's Tender");
+
+    let mut before = Tape::open(&server, "/v1/tenders?published_before=2026-01-01", None).await;
+    assert_eq!(before.until_live().await.0.len(), 1, "2025-12-15 is before the bound");
+    let mut after = Tape::open(&server, "/v1/tenders?published_after=2026-01-01", None).await;
+    assert!(after.until_live().await.0.is_empty(), "and not after it");
+
+    server.ingest(CHAIN[1]).await;
+    assert!(items(&server.get("/v1/tenders?published_before=2026-01-01").await).is_empty(), "the page agrees");
+    assert_eq!(items(&server.get("/v1/tenders?published_after=2026-01-01").await).len(), 1);
+    assert_eq!(
+        next_ops(&mut [&mut before, &mut after]).await,
+        [diff_op("removed", "tender", id), diff_op("added", "tender", id)],
+        "published_before, published_after"
+    );
+}
+
+/// Issue 547: a chain fixture with its value lines (the procedure's and the lot's
+/// `EstimatedOverallContractAmount`) or its submission-deadline period cut out.
+fn chain_without(i: usize, value: bool, deadline: bool) -> String {
+    let mut xml = std::fs::read_to_string(format!("{FIXTURES}/{}", CHAIN[i])).expect("a chain fixture");
+    if value {
+        let kept: Vec<&str> = xml.lines().filter(|l| !l.contains("EstimatedOverallContractAmount")).collect();
+        assert_eq!(xml.lines().count() - kept.len(), 2, "the procedure's and the lot's amount line");
+        xml = kept.join("\n");
+    }
+    if deadline {
+        let (open, close) = ("<cac:TenderSubmissionDeadlinePeriod>", "</cac:TenderSubmissionDeadlinePeriod>");
+        let start = xml.find(open).expect("a deadline period");
+        let end = start + xml[start..].find(close).expect("a closed deadline period") + close.len();
+        xml.replace_range(start..end, "");
+        assert!(!xml.contains("TenderSubmissionDeadlinePeriod"), "one deadline period");
+    }
+    xml
+}
+
+/// Issue 547: the commonest real transition across a value or deadline bound is the first figure
+/// or date appearing. The earlier side has no row to read — no amount for the EXISTS, no
+/// admitted deadline for the MAX (NULL, failing every bound) — so a version that brings one
+/// inside a bound is `added`, and a bound it misses stays silent. (The head column read the
+/// new figure on both sides, which served `changed`.)
+#[tokio::test]
+async fn a_version_that_brings_the_first_value_or_deadline_is_added() {
+    let server = Server::start("sse-first-value").await;
+    server.ingest_bytes(CHAIN[0], chain_without(0, true, true).as_bytes()).await;
+    let tender = items(&server.get("/v1/tenders").await)[0].clone();
+    assert!(tender["value"].is_null() && tender["submission_deadline"].is_null(), "neither yet: {tender}");
+    let id = tender["id"].as_i64().expect("the CN's Tender");
+    let lot = items(&server.get("/v1/lots").await)[0]["id"].as_i64().expect("the CN's lot");
+
+    let mut tapes = Vec::new();
+    for path in [
+        "/v1/tenders?min_value=50000000",
+        "/v1/lots?min_value=50000000",
+        "/v1/tenders?deadline_after=2026-01-24",
+        "/v1/tenders?max_value=50000000",
+        "/v1/tenders?deadline_before=2026-01-24",
+    ] {
+        let mut tape = Tape::open(&server, path, None).await;
+        assert!(tape.until_live().await.0.is_empty(), "{path} matches nothing yet");
+        tapes.push(tape);
+    }
+    server.ingest(CHAIN[1]).await;
+    assert_eq!(
+        next_ops(&mut tapes.iter_mut().collect::<Vec<_>>()).await,
+        [diff_op("added", "tender", id), diff_op("added", "lot", lot), diff_op("added", "tender", id), None, None],
+        "min_value, lots min_value, deadline_after (EUR 816,863 and 2026-01-27 arrive); max_value, deadline_before"
+    );
+}
+
+/// Issue 547: a subscriber resuming past two versions probes the first of them as an EARLIER
+/// version on both sides (the amount EXISTS and the deadline MAX, not the head columns), and
+/// still reads each move. CHAIN[1] lowers the value to EUR 100,000 and moves the deadline to
+/// 2026-01-27; CHAIN[2] restates EUR 816,863. Both fold before the resumed diff runs, so the
+/// version-2 rows are classified with version 3 already the head.
+#[tokio::test]
+async fn a_resumed_subscription_reads_a_superseded_version_at_its_own_value_and_deadline() {
+    let server = Server::start("sse-catch-up-bound").await;
+    server.ingest(CHAIN[0]).await;
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("the CN's Tender");
+    let lot = items(&server.get("/v1/lots").await)[0]["id"].as_i64().expect("the CN's lot");
+    let paths = [
+        "/v1/tenders?min_value=50000000",
+        "/v1/tenders?max_value=50000000",
+        "/v1/lots?min_value=50000000",
+        "/v1/lots?max_value=50000000",
+        "/v1/tenders?deadline_before=2026-01-24",
+        "/v1/tenders?deadline_after=2026-01-24",
+    ];
+    let mut tokens = Vec::new();
+    for path in paths {
+        let mut tape = Tape::open(&server, path, None).await;
+        tokens.push(tape.until_live().await.1.id.expect("the live marker's resume token"));
+    }
+    let lowered = std::fs::read_to_string(format!("{FIXTURES}/{}", CHAIN[1]))
+        .expect("the change notice")
+        .replace(">816863<", ">100000<");
+    server.ingest_bytes(CHAIN[1], lowered.as_bytes()).await;
+    server.ingest(CHAIN[2]).await;
+
+    let mut seen = Vec::new();
+    for (path, token) in paths.iter().zip(&tokens) {
+        let mut tape = Tape::open(&server, path, Some(token.as_str())).await;
+        seen.push(next_ops(&mut [&mut tape]).await.into_iter().chain(next_ops(&mut [&mut tape]).await).collect::<Vec<_>>());
+    }
+    assert_eq!(
+        seen,
+        [
+            vec![diff_op("removed", "tender", id), diff_op("added", "tender", id)],
+            vec![diff_op("added", "tender", id), diff_op("removed", "tender", id)],
+            vec![diff_op("removed", "lot", lot), diff_op("added", "lot", lot)],
+            vec![diff_op("added", "lot", lot), diff_op("removed", "lot", lot)],
+            vec![diff_op("removed", "tender", id), None],
+            vec![diff_op("added", "tender", id), diff_op("changed", "tender", id)],
+        ],
+        "per path, the version-2 then the version-3 event: {paths:?}"
+    );
+}
+
+/// Issue 547: a version inside a bound on both sides is `changed`, for every per-version bound.
+#[tokio::test]
+async fn a_version_inside_a_bound_on_both_sides_is_changed() {
+    let server = Server::start("sse-both-inside").await;
+    server.ingest(CHAIN[0]).await;
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("the CN's Tender");
+    let lot = items(&server.get("/v1/lots").await)[0]["id"].as_i64().expect("the CN's lot");
+    let mut tapes = Vec::new();
+    for path in [
+        "/v1/tenders?min_value=50000000",
+        "/v1/lots?min_value=50000000",
+        "/v1/tenders?deadline_after=2026-01-01",
+        "/v1/tenders?published_after=2025-12-01",
+    ] {
+        let mut tape = Tape::open(&server, path, None).await;
+        assert_eq!(tape.until_live().await.0.len(), 1, "{path} holds the CN");
+        tapes.push(tape);
+    }
+    server.ingest(CHAIN[1]).await;
+    assert_eq!(
+        next_ops(&mut tapes.iter_mut().collect::<Vec<_>>()).await,
+        [diff_op("changed", "tender", id), diff_op("changed", "lot", lot), diff_op("changed", "tender", id), diff_op("changed", "tender", id)],
+        "min_value, lots min_value, deadline_after, published_after"
+    );
+}
+
+/// Issue 547 re-review: one stream request's status, content type and, for a refusal, its
+/// error message. Each call names its own `x-real-ip`, so the 5-stream budget never refuses a
+/// request for the wrong reason; an accepted stream's body is never read (it does not end).
+async fn stream_answer(server: &Server, path: &str, ip: usize) -> (u16, String, String) {
+    let response = server
+        .http
+        .get(format!("{}{path}", server.base))
+        .header("accept", "text/event-stream")
+        .header("x-real-ip", format!("198.51.100.{ip}"))
+        .send()
+        .await
+        .expect("sse request");
+    let status = response.status().as_u16();
+    let content_type =
+        response.headers().get("content-type").and_then(|v| v.to_str().ok()).unwrap_or_default().to_owned();
+    let message = if status == 200 {
+        String::new()
+    } else {
+        let body: Value = response.json().await.expect("a json error envelope");
+        body["error"]["message"].as_str().unwrap_or_default().to_owned()
+    };
+    (status, content_type, message)
+}
+
+/// Issue 547 re-review: ONE stream rule on `/v1/tenders`. A stream snapshots in id order whatever
+/// its date bounds, so `sort` unset or `id` and `order` unset or `asc` open it, with or without a
+/// date bound (bounds on both columns included), and any other `sort` or `order` gets the stream
+/// refusal. Never the both-bounds 400, whose "pass sort=…" advice is itself refused on a stream,
+/// and never the descending-id 400, whose "use sort=published_at" is too. The round before
+/// accepted `order=asc` without a date bound and refused it beside one. Pages answer as before.
+#[tokio::test]
+async fn a_tenders_stream_takes_id_order_whatever_its_date_bounds() {
+    let server = Server::start("sse-sort-rule").await;
+    server.ingest(CHAIN[0]).await;
+    const STREAM_REFUSAL: &str = "sort does not apply to event streams";
+    const BOTH_BOUNDS: &str = "both published and deadline bounds given";
+    let both = "published_after=2025-01-01&deadline_after=2025-01-01";
+
+    let accepted = [
+        "/v1/tenders?sort=id".to_owned(),
+        "/v1/tenders?order=asc".to_owned(),
+        "/v1/tenders?sort=id&order=asc".to_owned(),
+        "/v1/tenders?published_after=2025-01-01&order=asc".to_owned(),
+        "/v1/tenders?deadline_after=2025-01-01&order=asc".to_owned(),
+        "/v1/tenders?deadline_after=2025-01-01&sort=id".to_owned(),
+        format!("/v1/tenders?{both}"),
+        format!("/v1/tenders?{both}&order=asc"),
+        format!("/v1/tenders?{both}&sort=id&order=asc"),
+    ];
+    let refused = [
+        "/v1/tenders?order=desc".to_owned(),
+        "/v1/tenders?sort=id&order=desc".to_owned(),
+        "/v1/tenders?sort=published_at".to_owned(),
+        "/v1/tenders?sort=deadline".to_owned(),
+        "/v1/tenders?published_after=2025-01-01&order=desc".to_owned(),
+        format!("/v1/tenders?{both}&order=desc"),
+        format!("/v1/tenders?{both}&sort=published_at"),
+    ];
+    let mut ip = 0;
+    for path in &accepted {
+        ip += 1;
+        let (status, content_type, message) = stream_answer(&server, path, ip).await;
+        assert_eq!(status, 200, "the stream {path} opens: {message}");
+        assert!(content_type.starts_with("text/event-stream"), "{path} streams: {content_type}");
+    }
+    for path in &refused {
+        ip += 1;
+        let (status, content_type, message) = stream_answer(&server, path, ip).await;
+        assert_eq!(status, 400, "the stream {path} is refused");
+        assert_eq!(content_type, "application/json", "{path}");
+        assert!(message.contains(STREAM_REFUSAL), "{path} gets the stream refusal, not {message:?}");
+    }
+
+    // Pages, unchanged: both bounds still need a sort (with or without `order=asc`), descending
+    // id is still its own 400, and a lone bound still implies its sort beside any `order`.
+    for path in [format!("/v1/tenders?{both}"), format!("/v1/tenders?{both}&order=asc")] {
+        let (status, body) = server.get_with_status(&path).await;
+        assert_eq!(status, 400, "the page {path}");
+        let message = body["error"]["message"].as_str().unwrap_or_default();
+        assert!(message.contains(BOTH_BOUNDS), "the page {path} asks for a sort: {body}");
+    }
+    let (status, body) = server.get_with_status("/v1/tenders?order=desc").await;
+    assert_eq!(status, 400);
+    assert!(
+        body["error"]["message"].as_str().is_some_and(|m| m.contains("descending id order is not supported")),
+        "the page keeps its own refusal: {body}"
+    );
+    for path in [
+        "/v1/tenders?published_after=2025-01-01&order=asc".to_owned(),
+        "/v1/tenders?published_after=2025-01-01&order=desc".to_owned(),
+        "/v1/tenders?sort=published_at".to_owned(),
+        format!("/v1/tenders?{both}&sort=published_at"),
+        format!("/v1/tenders?{both}&sort=id"),
+    ] {
+        assert_eq!(items(&server.get(&path).await).len(), 1, "the page {path} serves the CN");
+    }
+}
+
 #[tokio::test]
 async fn a_snapshot_larger_than_one_page_arrives_page_by_page_exactly_once() {
     // Page size 1 forces the snapshot through the keyset-paging path (issue

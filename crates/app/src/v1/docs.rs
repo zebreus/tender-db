@@ -182,8 +182,8 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices. A TED number is found in any of its spellings &mdash; TED's own unpadded one, the 6 or 8 digits the archive stores, the OJ S form &mdash; on TED notices only; another source's number (FTS, DÖE) matches as that source stores it. On <code>/v1/notices</code> the notice itself; on <code>/v1/tenders</code> the tender it caused. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">identifier</td><td>An Organization's official identifier <em>value</em> (e.g. a VAT number); pair with <code>kind</code> for the scheme. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">name_prefix</td><td>Organization-name prefix, Unicode case-insensitive (<code>mü</code> matches <code>MÜLLER</code>); switches the list to name order. Must not be empty. See <a href="#lookups">lookups</a>.</td></tr>
-  <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds, RFC 3339 or a bare date (midnight UTC); a single bound implies <code>sort=published_at</code>. See <a href="#ordering">ordering</a>.</td></tr>
-  <tr><td class="ep"><code>deadline_after</code><br><code>deadline_before</code></td><td>Bound Tenders by submission deadline (rows without one never match). A single bound implies <code>sort=deadline</code>.</td></tr>
+  <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds, RFC 3339 or a bare date (midnight UTC); a single bound implies <code>sort=published_at</code> (pages only; a stream snapshots in id order). See <a href="#ordering">ordering</a>.</td></tr>
+  <tr><td class="ep"><code>deadline_after</code><br><code>deadline_before</code></td><td>Bound Tenders by submission deadline (rows without one never match). A single bound implies <code>sort=deadline</code> (pages only; a stream snapshots in id order).</td></tr>
   <tr><td class="ep">sort</td><td>Tenders only: <code>id</code> (default), <code>published_at</code> or <code>deadline</code>. See <a href="#ordering">ordering</a>.</td></tr>
   <tr><td class="ep">order</td><td><code>asc</code> | <code>desc</code>. Defaults per sort: <code>published_at</code> newest-first, <code>deadline</code> soonest-first, <code>id</code> ascending (its only direction).</td></tr>
   <tr><td class="ep">limit</td><td>Page size, default 100. Must be 1&ndash;1000 inclusive &mdash; a value outside that range is a <code>400</code>, not silently clamped.</td></tr>
@@ -235,11 +235,12 @@ domain time:</p>
   <tr><td class="ep">?sort=deadline</td><td>Soonest submission deadline first (default <code>order=asc</code>) — "closes soon". Only tenders that <em>have</em> a deadline appear; pair with <code>status=open</code> and <code>deadline_after</code> for still-open ones.</td></tr>
   <tr><td class="ep">?sort=id</td><td>The default ascending list, named explicitly. Descending id is not supported — use <code>sort=published_at</code> for newest-first.</td></tr>
 </table>
-<p>The date <strong>bounds imply their ordering</strong>: a
+<p>On a page the date <strong>bounds imply their ordering</strong>: a
 <code>published_after</code>/<code>published_before</code> bound alone implies
 <code>sort=published_at</code>, a <code>deadline_after</code>/<code>deadline_before</code>
 bound implies <code>sort=deadline</code>. Bounds on <em>both</em> columns need an
-explicit <code>sort</code> to pick the ordering, else <code>400</code>. Instants
+explicit <code>sort</code> to pick the ordering, else <code>400</code> (pages only; a
+stream snapshots in id order). Instants
 are unix seconds, RFC 3339 (the format the API itself serves; an unencoded
 <code>+01:00</code> offset pasted into a URL works), a bare <code>YYYY-MM-DD</code>
 (the form a date-only publication is served in; taken as that day's midnight UTC),
@@ -252,8 +253,12 @@ other filters, and pagination is unchanged: follow <code>next_cursor</code>, bac
 into the <em>same</em> query shape — a cursor is specific to its sort. Sorted
 reads are REST-only; an SSE subscription snapshots in the list's own order (ascending id; the
 organization-seeded lots stream in its <em>(tender, lot)</em> order) and then follows
-the change log, so <code>sort</code>/<code>order</code> on a stream is
-<code>400</code>.</p>
+the change log, whatever its date bounds. On a <code>/v1/tenders</code> stream,
+<code>sort</code> unset or <code>id</code> and <code>order</code> unset or <code>asc</code>
+are accepted and mean that id order, with or without date bounds (bounds on both columns
+included); any other <code>sort</code> (<code>published_at</code>, <code>deadline</code>) or
+<code>order=desc</code> is <code>400</code>. The other collections refuse
+<code>sort</code>/<code>order</code> on a stream as on a page.</p>
 <pre><code># the five newest tenders
 curl -s "https://tenders.zebreus.click/v1/tenders?sort=published_at&amp;limit=5"
 
@@ -476,15 +481,23 @@ subscription and answers <code>400</code> to a stream request rather than
 quietly returning JSON; subscribe to <code>/v1/notices</code> without
 <code>tender</code> if you need a live feed. The protocol:</p>
 <ol>
-  <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read page by page with no transaction held across the pages, so it is not a point-in-time view. Under concurrent writes it is <strong>at-least-once</strong>: an entity written during the snapshot can arrive as <code>added</code> and again as a <code>change</code> after <code>live</code>, and one that left your filter before its page was read is not sent, while its <code>removed</code> is. Apply <code>added</code> as an upsert by id and <code>removed</code> as an idempotent delete — a <code>removed</code> can name an entity you never received; the diff stream then makes your final state exact.</li>
+  <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read page by page with no transaction held across the pages, so it is not a point-in-time view. Under concurrent writes it is <strong>at-least-once</strong>: an entity written during the snapshot can arrive as <code>added</code> and again as a <code>change</code> after <code>live</code>, and one that left your filter before its page was read is not sent, while its <code>removed</code> is. Apply <code>added</code> as an upsert by id and <code>removed</code> as an idempotent delete — a <code>removed</code> can name an entity you never received; the diff stream then makes your final state exact, with two known exceptions: on <code>/v1/lots</code> under <code>min_value</code>/<code>max_value</code>, a version that moves only its Tender's value re-evaluates no lot, so you keep a lot the bound now excludes and are not sent one it now admits (issue 560); and under <code>source</code> (or, on <code>/v1/tenders</code>, <code>kind</code>), the fold rewrites that label for the whole Tender (a DÖE Tender turns <code>ted</code> when its TED twin arrives), which reaches a subscriber to the old label as nothing (issue 562).</li>
   <li>A <code>live</code> marker carrying the snapshot's cursor.</li>
-  <li><strong>Diff</strong> — <code>change</code> events forever after, each re-evaluating your filter against the old and new version of the entity: a row moving <em>into</em> your filter is <code>added</code>, out of it <code>removed</code>, changed-within it <code>changed</code>.</li>
+  <li><strong>Diff</strong> — <code>change</code> events forever after, each re-evaluating your filter against the old and new version of the entity: a row moving <em>into</em> your filter is <code>added</code>, out of it <code>removed</code>, changed-within it <code>changed</code>. Apply <code>changed</code> as an upsert by id too (re-read the entity, or subscribe with <code>include_data</code>): under <code>min_value</code>/<code>max_value</code>, <code>source</code> or (on <code>/v1/tenders</code>) <code>kind</code> a <code>changed</code> can name an entity you never received where <code>added</code> was due &mdash; an earlier version's value is not stored and is read as a superset (issue 561), and <code>source</code> and a Tender's <code>kind</code> read its current label on both sides (issue 562).</li>
 </ol>
 <p>Each event's SSE <code>id</code> is an opaque resume token
 (generation-qualified cursor, e.g. <code>3:193055</code>). On reconnect the
 browser <code>EventSource</code> replays it as <code>Last-Event-ID</code>; for
 curl and scripts pass it as that header or as <code>?cursor=</code>, verbatim.
-Resuming skips the snapshot and delivers exactly what you missed. A
+Resuming skips the snapshot and delivers exactly what you missed &mdash; except under a
+date bound spelled as the literal <code>now</code>. A stream resolves <code>now</code> when
+its connection opens and again on every reconnect, so a resumed stream checks a later bound
+than the one your state was built under, and a Tender that crossed the moving bound between
+the two connects is not sent the move: under <code>deadline_after=now</code>, a Tender you hold
+whose deadline fell in between is never sent <code>removed</code>, not even when a later
+version of it stays outside the bound (a deadline passing sends no event in any case).
+<code>status</code> reads the clock the same way. For an exact resume, pass an absolute
+timestamp instead of <code>now</code> (issue 563). A
 <code>reset</code> event means your token cannot resume and you must drop local
 state and re-subscribe fresh: <code>{"reason":"cursor_expired"}</code> (the log's
 retained horizon passed your token), <code>{"reason":"cursor_ahead"}</code> (your
@@ -1588,6 +1601,12 @@ mod tests {
         for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
             assert!(text.contains("at-least-once"), "{surface} must say the SSE snapshot is at-least-once:\n{text}");
             assert!(text.contains("upsert"), "{surface} must say how a client applies a repeated `added`:\n{text}");
+            // Issue 547: a value bound reads an earlier version as a superset, so a versioned
+            // `changed` can name an entity the client never received.
+            assert!(
+                text.contains("Apply `changed` as an upsert by id") || text.contains("Apply <code>changed</code> as an upsert by id"),
+                "{surface} must say a `changed` is applied as an upsert too:\n{text}"
+            );
             assert!(
                 text.contains("idempotent delete"),
                 "{surface} must say how a client applies a `removed` for an entity it never received:\n{text}"
@@ -1809,5 +1828,55 @@ mod tests {
                 "a figure with neither such a partner nor such a lot sum is served as published",
             ],
         );
+    }
+
+    /// Issue 547 re-review: a date bound implies its sort on a page only, and every text that
+    /// says "implies" says so (the four OpenAPI bounds, the two `/docs` table rows, the
+    /// both-bounds sentence); the ordering section states the one stream rule; and the Live feed
+    /// says, on both surfaces, that a resumed stream under a `now` bound is not exact (issue
+    /// 563) and that a `changed` can name an unreceived entity under `source`/`kind` too.
+    #[test]
+    fn the_docs_say_a_date_bound_implies_a_sort_on_pages_only() {
+        const PAGES_ONLY: &str = "(pages only; a stream snapshots in id order)";
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        for name in ["published_after", "published_before", "deadline_after", "deadline_before"] {
+            let text = spec["components"]["parameters"][name]["description"].as_str().expect("the bound is described");
+            assert!(text.contains(PAGES_ONLY), "openapi's {name} must qualify its implied sort:\n{text}");
+        }
+        for row in ["<td class=\"ep\"><code>published_after</code>", "<td class=\"ep\"><code>deadline_after</code>"] {
+            let start = PAGE.find(row).expect("/docs has the bound's row");
+            let text = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+            assert!(text.contains(PAGES_ONLY), "/docs's {row} row must qualify its implied sort:\n{text}");
+        }
+        let start = PAGE.find("<h2 id=\"ordering\">").expect("/docs has an ordering section");
+        let ordering = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows it")];
+        assert_says(
+            "/docs's ordering section",
+            ordering,
+            &[
+                "else 400 (pages only; a stream snapshots in id order)",
+                "sort unset or id and order unset or asc are accepted and mean that id order, with or without date bounds",
+                "any other sort (published_at, deadline) or order=desc is 400",
+            ],
+        );
+        let start = PAGE.find("<h2 id=\"sse\">").expect("/docs has an SSE section");
+        let sse = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows SSE")];
+        let stream = spec["components"]["schemas"]["EventStream"]["description"]
+            .as_str()
+            .expect("the EventStream schema is described");
+        for (surface, text) in [("/docs", sse), ("/v1/openapi.json", stream)] {
+            assert_says(
+                &format!("{surface}'s live feed"),
+                text,
+                &[
+                    "except under a date bound spelled as the literal now",
+                    "pass an absolute timestamp",
+                    "(issue 563)",
+                    "source or (on /v1/tenders) kind a changed can name an entity",
+                    "(issue 560)",
+                    "(issue 562)",
+                ],
+            );
+        }
     }
 }

@@ -4,6 +4,46 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 547) — an SSE subscription hears a Tender cross a value or date bound
+
+A subscription's diff re-evaluates its filter against the old and new version of the entity (`/docs`, Live feed), but
+`min_value`/`max_value`, `deadline_after`/`deadline_before` and `published_after`/`published_before` read the Tender's
+CURRENT figures on both sides. So a change that moved a Tender across one of those bounds reached the subscriber as
+`changed` where `added` was due, or not at all where `removed` was due: a corrigendum that lowered the value below a
+`min_value`, or moved the deadline past a `deadline_before`, left the client holding a Tender its filter excludes.
+- Each side now reads its own version's publication and submission deadline, exactly, on `/v1/tenders`
+  subscriptions. A date-bounded subscription opens without `sort`: a date bound implies its ordering on a page only,
+  and such a stream (or one bounded on both date columns) used to answer `400` for a sort the client never sent.
+  One rule now holds on a `/v1/tenders` stream whatever its date bounds: `sort` unset or `id`, and `order` unset or
+  `asc`, are accepted and mean id order; `sort=published_at`, `sort=deadline` and `order=desc` answer `400` "sort
+  does not apply to event streams", checked before the both-bounds `400` (whose "pass sort=…" advice is refused on a
+  stream). `order=desc` on a stream without a date bound used to answer "descending id order is not supported",
+  and `order=asc` beside a date bound used to be refused. Pages answer exactly as before.
+- A stream whose date bound is the literal `now` resolves it when the connection opens and again on every resume,
+  so a resumed stream is not exact: a Tender that crossed the moving bound between the two connects is not sent the
+  move. Unchanged here, but such a stream now opens without `sort=id`; pass an absolute timestamp for an exact resume
+  (issue 563).
+- The value bounds read the current value for the current version. An earlier version's elected value is not
+  stored, so the earlier side matches when any amount that version published lies within the bound. On
+  `/v1/tenders` a Tender whose current version leaves a bound always arrives as `removed`. An earlier version that
+  published any figure inside the bound without electing it also reads as matching: a refused figure, a
+  partner-only award figure (a framework value, BT-709/BT-660, served at its lot), a `Part` figure, or under
+  `max_value` ANY figure below its value — which a Tender with several lots usually has, each lot's figure lying
+  below the procedure total. That gives a `removed` for a Tender you never received (apply it as an idempotent delete, as
+  the snapshot already requires), or `changed` where `added` was due, which under `max_value` is the usual outcome
+  on a Tender with several lots: apply `changed` as an upsert by id too (re-read it, or subscribe with `include_data`).
+  Exact needs the elected value stored per version (issue 561).
+- On `/v1/lots`, whose value bound is the Tender's value, the same holds only for a version that writes the lot's
+  own change row — its facts, its kind or its Tender's closure moved. A version that moves only the Tender's value
+  (a corrigendum of the procedure total, another lot's figure, an award value beside unchanged lot facts)
+  re-evaluates no lot, so a lots subscriber keeps a lot its bound now excludes, and does not hear one it now admits
+  (issue 560).
+- `source` and `kind` still read the Tender's current label on both sides: the fold rewrites both for the whole
+  Tender (a DÖE Tender turns `ted` when its TED twin arrives; the kind is re-derived), so no stored row holds the
+  earlier label. Such a move reaches a `source=doe` subscriber as nothing and a `source=ted` one as `changed`
+  (issue 562).
+- Pages, polls and webhooks are unchanged.
+
 ## Unreleased (issue 537) — a procedure total 10^k times the sum of its own lots is refused
 
 A Tender's `value` (and what `min_value` / `max_value` compare) no longer elects a procedure-level figure of €1 bn or

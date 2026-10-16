@@ -1606,6 +1606,26 @@ async fn tenders(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<
         }
     };
     let filter = p.filter(store::now_unix())?;
+    // One stream rule (issue 547 review). A stream snapshots in id order and then follows the
+    // change log whatever its date bounds (`/docs`: sorted reads are REST-only), so on a stream
+    // no bound implies an ordering: `sort` unset or `id`, and `order` unset or `asc`, are
+    // accepted and mean that id order; any other `sort` (`published_at`, `deadline`) or
+    // `order=desc` asks for an order a stream cannot give and gets the one stream refusal.
+    // Decided here, before the page rules below, so a stream never meets the both-bounds 400
+    // (whose "pass sort=…" advice is itself refused on a stream) or the descending-id 400
+    // (whose "use sort=published_at" is too). The rounds before this let a lone date bound
+    // imply its sort on a stream and then refused the stream for it, and later accepted
+    // `order=asc` without a date bound but refused it beside one. Pages are untouched: every
+    // arm below runs only without `Accept: text/event-stream`.
+    if wants_events(&h) {
+        if order_desc || matches!(sort, SortChoice::Published | SortChoice::Deadline) {
+            return Err(ApiError::bad_request(
+                "sort does not apply to event streams: a subscription snapshots in id order \
+                 and then follows the change log; subscribe without sort/order",
+            ));
+        }
+        return collection(Collection::Tenders, s, h, p).await;
+    }
     let published_range = filter.published_after.is_some() || filter.published_before.is_some();
     let deadline_range = filter.deadline_after.is_some() || filter.deadline_before.is_some();
     let sort = match sort {
@@ -1635,12 +1655,6 @@ async fn tenders(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<
         }
         return collection(Collection::Tenders, s, h, p).await;
     };
-    if wants_events(&h) {
-        return Err(ApiError::bad_request(
-            "sort does not apply to event streams: a subscription snapshots in id order \
-             and then follows the change log; subscribe without sort/order",
-        ));
-    }
     // Direction defaults follow the question each ordering answers: newest-first
     // for publication ("what just came out"), soonest-first for deadlines ("what
     // closes soon").
