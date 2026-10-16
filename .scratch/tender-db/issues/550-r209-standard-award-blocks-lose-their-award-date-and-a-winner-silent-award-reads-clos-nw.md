@@ -1,6 +1,6 @@
 # 550 — R2.0.9's standard award blocks lose their award date, and a winner-silent award reads `clos-nw`
 
-Status: ready-for-agent — unit 1 MEASURED 2026-10-15 (below): of a 2016–2023 public sample, 86 % of legacy results carry `DATE_CONCLUSION_CONTRACT` and all of them read `decided` NULL; 78 of their 82 `clos-nw` are winner-silent awards (≈ 12 % of the standard R2.0.9 results wrongly claim no award). Unit 2 BUILT 2026-10-15 (`LEGACY_AWARD_DATE_FIELD_R209` read as `decided`; the `TED-AWARDED_CONTRACT` marker is award evidence; test `an_r209_standard_award_carries_its_conclusion_date_and_a_winner_silent_award_is_null`), gated with 524 v9 and DEPLOYED `b234150` 2026-10-15 ~23:3x UTC (new folds read it). Unit 3 SIZED 2026-10-16 00:37 UTC (sizing `refold-fields` 2528, `expect: 1`, notice_dates + notice_integers: **1,899,575** notices carry `TED-DATE_CONCLUSION_CONTRACT` or `TED-AWARDED_CONTRACT`, ~11 min, nothing written) and the wet run ENQUEUED 00:35 UTC in an idle queue (`refold-fields` 2530 with `expect: 1899575`, its `project` 2531 behind it), ahead of 533's rollout so 533 reads the corrected results. Next: the Verify once 2531 finishes.
+Status: done — VERIFIED 2026-10-16 04:55 UTC. Unit 3's refold landed: `refold-fields` 2530 (1,899,575 carriers re-queued, 1,530,259 Tenders stamped) and `project` 2531 (00:36–04:53 UTC, 4.3 h, mostly planning: 1,530,259 Tenders written, 1,519,091 corrected, 6,278,416 correction rows, 7,264,994 verified unchanged). The Verify reads done: 8437191 `[null,"2019-05-20"]` (was `["clos-nw",null]`), 8437184 `selec-w` decided 2019-05-27, and 7241490 (533's Prüfsystem) `[null,"2022-06-22"]`. Units 1 and 2: measured, built, deployed `b234150` 2026-10-15.
 Kind: data quality (legacy TED results: `tender_version_lot_results.decided_*` and `decision`)
 Relates to:
 - 255 (DONE): slice 2 mapped `TED-CONTRACT_AWARD_DATE` (r208, and the r209 DEFENCE form F18) into
@@ -75,5 +75,5 @@ the open heads it touches, so 533 does not wait for the corpus refold.
 ## Verify
 
 - `curl -s https://tenders.zebreus.click/v1/tenders/8437191 | jq -c '.lot_results[0] | [.decision, .decided]'`
-  reads `[null,"2019-05-20…"]` (today `["clos-nw",null]`).
-- `…/v1/tenders/8437184` reads a `decided` date beside its `selec-w`.
+  reads `[null,"2019-05-20…"]` (was `["clos-nw",null]`). **Done 2026-10-16: `[null,"2019-05-20"]`.**
+- `…/v1/tenders/8437184` reads a `decided` date beside its `selec-w`. **Done 2026-10-16: `selec-w`, 2019-05-27.**
