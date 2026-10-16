@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v9 DEPLOYED `b234150` 2026-10-15 ~23:3x UTC (gate green 1289 s; built and reviewed by wf_809621d5-793). Dry plan 2527 meets step 2: undated 0, 0 unexpected canaries (39), each serve hold exactly the decision's count (review_body 104, organ 460, code_added 81, address_added 85, caps_variant 290), releases 12 (11 digits, 1 unfit — all 12 carry plan 2526's labels, 11 right and 1 neutral, so the released bar passes at 0 wrong), withheld 17. CHANGES 26,524 (R1 25,003, R2 1,520). NEXT: the fresh dated re-judge (wf_6c629c6b-755: change:R1 30, change:R2 30, 30 stratified serve holds as a cost report), then canaries, capped 500, full — with the filters the re-judge fires.
+Status: ready-for-agent — RULE v9 DEPLOYED `b234150`; its fresh dated re-judge (wf_6c629c6b-755) FAILS change:R1 (4 of 30 wrong) and change:R2 (4 of 30); released passes (0, by plan 2526's labels); the 30 serve holds cost 1 harmful. No wet run under v9. RULE v10 DECIDED (below): R1 changes ship only when the head was last printed ≥ 3 years before the plan (`head_current` hold otherwise), and R2 is excluded from every wet run (`exclude_rules: ["R2"]`, the pre-committed fallback; R2 → 548). NEXT: build v10 after 533's build leaves the tree, gate, deploy, re-plan, fresh re-judge of change:R1, then canaries, capped 500, full.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1355,3 +1355,51 @@ the released list passes its bar (≤ 1 wrong) at 0 without a new read. Withheld
 junk_only 14 (the 12 the decision names plus 14505 and 22558941 — holds that were never in v8's release list). Canaries: 0
 unexpected of 39. The samples are salted by the epoch, so step 3 reads a fresh draw (and skips every org in the labelled set
 and every id the panel named, as a belt).
+
+## Rule v9 on prod: the dated re-judge (2026-10-16, plan 2527, wf_6c629c6b-755)
+
+Fresh salted samples (labelled and panel-read orgs skipped), dated reads, a skeptic on every wrong (3 refuted: 8507094,
+23216721, 8203825):
+
+| list | right | neutral | wrong | bar |
+| --- | --- | --- | --- | --- |
+| change:R1 (30) | 21 | 5 | **4** | ≤ 1: **FAIL** |
+| change:R2 (30) | 19 | 7 | **4** | ≤ 1: **FAIL** (the R2 fallback fires) |
+| released (12) | 11 | 1 | 0 (plan 2526's labels carried) | ≤ 1: pass |
+| v9 serve holds (30, cost report) | 22 | 7 | 1 harmful | report only |
+
+- R1 wrongs — all new semantic shapes: **4605761** `Oslo universitetssykehus HF` → `Oslo Universitetssykehus HF (hovedenhet)`
+  (a registry marker appended; the head still printed 2026-10-05); **13924072** `Azienda Ospedaliero Universitaria
+  Sant'Andrea` → `A.O. Sant'Andrea` (an eSender's abbreviation of the old form); **22529369** `Prezes Krajowej Izby
+  Odwoławczej` → `Krajowa Izba Odwoławcza` (the identifier is Kontur.IT's — both names are another entity);
+  **23399855** `Politiezone Rivierenland` → `…, bijgestaan door Belfius Bank nv` (an agent tail).
+- R2 wrongs: 13068036 (a slash read as `I`), 10487887 (`Cté de Cnes …`, an abbreviation), 21846426 (a sibling office
+  sharing a CH id), 23252614 (another entity, a project's co-buyer).
+- Harmful hold: 22435268, a mojibake head (`Comit consultatif interrgional du rglement amiable`) that `review_body` keeps
+  because its broken spelling defeats the review-like stems — filed to 548.
+
+## Rule v10 — decided (2026-10-16, owner, from the three dated re-judges)
+
+**The finding.** Pooled over plans 2523, 2526 and 2527 (90 change:R1 items, final verdicts), the head's recency separates
+the wrongs where no token rule did:
+- head last printed **≥ 3 years** before the plan: 46 right, 13 neutral, 2 wrong (8069375, 5350675) — and v9 holds
+  8069375, so **1 of 61 (1.6 %)** under v9;
+- head printed **within 3 years**: 19 right, 6 neutral, **4 wrong (14 %)** — every one of plan 2527's four.
+
+The mechanism: a head still in print is usually current, so a change there tends to be cosmetic, a qualifier tail, an
+abbreviation or another entity on a shared identifier; a head not printed for 3+ years is the outdated name the refresh
+exists to fix (renames, junk from old notices). R2 shows no such split (5 of 76 wrong on stale heads) and keeps failing.
+
+**The rule (`524u2-v10`, on v9).**
+1. **`head_current`.** An R1 change whose dated reading has `head_newest` within 1,095 days of the plan's `as_of` (the
+   planner's start; the wet pre-pass re-elects with the PLAN's `as_of`, so the two agree) is HOLD `head_current` with
+   the spelling it would serve. Undated (no `head_newest`) R1 follows v7 (`undated` for H ≥ 2; H ≤ 1 changes). R0 is
+   exempt. It is asked after the serve holds, so a change v9 already holds keeps its v9 reason.
+2. **R2** is excluded from every wet run with the pre-built filter (`exclude_rules: ["R2"]`), as v9 pre-committed; the
+   planner still elects and lists R2 for 548's measurement. No refit inside 524 unit 2.
+3. Epoch `524u2-v10`; canaries unchanged except where `head_current` now holds one (re-read at the first plan).
+
+**Expected (plan 2527 as measured):** R1 changes 25,003 → about 18,480 (74 %, 1.12 M mentions); about 6,520 more holds.
+A post-hoc split on 90 items (one-sided p ≈ 0.06), so it is validated the only honest way: the next plan's fresh salted
+change:R1 sample (30, ≤ 1 wrong), then the canaries, the capped 500 with a dated spot check and the full run, each with
+`exclude_rules: ["R2"]`.
