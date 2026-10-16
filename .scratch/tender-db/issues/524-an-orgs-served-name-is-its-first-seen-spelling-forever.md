@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v11 DEPLOYED `cbc992b`; plan 2562 GO; protocol step 3 PASSED 2026-10-16 (wf_46642f82-a94): (a) 0 wrong / 0 reverts, so no `exclude_stale_top`; (b) 0 wrong; (c) 1 wrong / 0 reverts. Step 4 canary wet run 2565 is queued behind the 533/538 refold (2563 + project 2564). NEXT: read 2565 (8 RENAMED, 0 drifted), then step 5 capped 500 with its dated spot check, then step 6 full. Every wet run passes `exclude_rules:["R2"], exclude_released:["unfit"]`.
+Status: ready-for-agent — RULE v11: plan 2562 GO, gates (a)(b)(c) PASSED, step 4 canaries PASSED (job 2565, 8 renamed, 0 drifted). 547 + 563 deployed `064cd35`; re-plan 2566 on that binary is running. NEXT: read 2566 against 2562 (±10%; the 8 canaries now read keep:S1 as expected), then step 5 capped 500 with the dated spot check, then step 6 full. Every wet run passes `exclude_rules:["R2"], exclude_released:["unfit"]`.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1820,3 +1820,17 @@ reads clean, with the queue idle, together with issue 563 (gated and committed f
 changes the binary rev, and a wet run refuses a plan from another rev, so step 5 starts with a fresh dry plan on the
 547 binary (v11 is unchanged; read it against plan 2562's counts, ±10%).
 The gates (a)–(c) stand: the epoch and the rule are the same, and only data drift separates the two plans.
+
+## Rule v11 on prod: protocol step 4, the canaries (2026-10-16) — PASSED
+
+Wet job 2565 (`org_ids` = the six fresh-top ids plus 2857103 and 2715115, `exclude_rules:["R2"]`,
+`exclude_released:["unfit"]`) ran at 17:47 UTC, after project 2564.
+- **Pre-pass:** 8 ready, 0 already, 0 drifted, 0 gone.
+- **Writes:** RENAMED 8 in one window, 0 raced.
+- **Served names, all 8 read:** 8765882 `Kiesel Norge AS`, 5393731 `Nodra AB`, 9856301 `SKY & FACILITY s.r.o.`, 7822785
+  `Parque Científico y Tecnológico Cartuja, S. A.`, 11268197 `Centar za pružanje usluga u zajednici Osijek`, 5011106
+  `Thage i Skåne AB`, 2857103 `Itslearning Oy`, 2715115 `Lännen Tekstiilihuolto Oy`.
+- **Undo:** `{"kind":"revert-org-name-refresh","job":2565}`.
+
+547 and 563 deployed at 18:0x UTC (`064cd35`). Per the sequencing note, step 5 starts from re-plan 2566 on that
+binary. Re-point the 8 canaries to `keep:S1` at the next build.

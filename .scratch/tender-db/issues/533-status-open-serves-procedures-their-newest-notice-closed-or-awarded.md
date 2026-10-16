@@ -1,6 +1,6 @@
 # 533 — `status=open` serves procedures their newest notice closed or awarded: a no-winner result or UK12 termination inherits the contract notice's deadline, and DÖE sdk-0.1 award notices publish one of their own
 
-Status: ready-for-agent — unit 2 DEPLOYED `a7acb4d` 2026-10-16 05:10 UTC (gate green at `c3c1a7c`, 1281 s; built wf_9ed3c6cf-ebc, two adversarial panels with 11 + 10 findings fixed, a read-only third look with 5 minor findings, follow-ups riding the next gate). The open head is refolded: dry 2534 counted 41,733 Tenders / 64,472 notices, wet 2535 stamped 41,733, and project 2536 wrote 41,733 (39,443 verified + 2,290 corrected, 7,269 correction rows). The **Verify reads done**: `[]`, `[]`, and the newest-notice description. All 14 exemplars read as decided. Next: the three field refolds, sized 2026-10-16 05:40 UTC (1(b) DÖE sdk-0.1 EndDate 531,134; r2.0.9 markers 350,614; eForms BT-766 2,634,034). They are deferred until after 524 v10's rollout and run in one quiet window: they are completeness fills, `status` does not wait on them, and a refold this large can push the project into whole-corpus planning (550's took 4.3 h). Then unit 3 (the per-lot leg, measurement) and unit 4's remaining docs.
+Status: ready-for-agent — unit 2 DEPLOYED and verified; its three field refolds DONE 2026-10-16 in the combined drain (refold 2563 + project 2564, D7 complete). Owed: retire the sql.rs `dps` completeness caveat at the next build. Next: unit 3 (per-lot leg, measurement) and unit 4's remaining docs.
 Kind: API semantics / data quality (read layer: `status` on `/v1/tenders` and `/v1/lots`, SSE and webhook filters; the fold's head deadline)
 Relates to:
 - 273 (RESOLVED): `status` is a range on the indexed head column `t.current_deadline`; a fix must stay one.
@@ -696,3 +696,16 @@ contractor where it names anything; none invites tenders or requests to particip
 4. **Docs (S).** `openapi.json:755` and `docs.rs:172` name what closes a Tender besides its deadline. Correct the
    `Status::Closed` doc, the `read.rs:1124` rationale and `head_deadline`'s doc (award notices DO carry a deadline,
    inherited or their own), and make `checklist.rs:116` true or correct it. Gate the served sentence (the 370 class).
+
+## Field refolds done (2026-10-16)
+
+The three field refolds ran in issue 538's combined drain: refold 2563 over 41 field ids, including the
+SDK01 EndDate, the r2.0.9 DPS/TERMINATION_DPS/PROCUREMENT_DISCONTINUED markers and the four BT-766 ids, then project
+2564. Verified plus corrected equals the stamped count (8,792,804), so the cohort's stale-0 residue is 0.
+
+**Owed to the next build:** retire the `dps` caveat in `crates/app/src/v1/sql.rs`'s classification note ("Complete
+for the open head and for Tenders folded since issue 533 deployed, until a fields refold reaches the rest"). The
+refold has now reached the rest. Change it to "complete since the 2026-10-16 fields refold (jobs 2563/2564)". It is
+a served-docs string, so it goes in with the next gated code change.
+
+Next: unit 3 (the per-lot leg, a measurement) and unit 4's remaining docs.

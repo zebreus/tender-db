@@ -1,6 +1,6 @@
 # 538 — publisher double-escaped HTML entities (`&#224;`, `&amp;quot;`, `&amp;lt;br/&amp;gt;`, `&apos;`) reach served titles, descriptions and party names
 
-Status: ready-for-agent — unit 3 DEPLOYED `14cb029` 2026-10-16 ~09:40 UTC (gate green at `832a21e`; since 11:32 UTC prod runs `cbc992b`, which carries it). New folds decode now. The drain is batched with 533's three field refolds into one `refold-fields` over 41 field ids and 4 tables. Sizing 2560 (09:40–11:15 UTC) counted **14,927,948 notices**. Next: wet refold-fields 2563 (`expect` 14,927,948) and its project 2564, a near-corpus fold, queued 11:45 UTC behind 524 v11's dry plan 2562. Then the Verify (8561858's title) with D7's completeness check.
+Status: DONE 2026-10-16 — decode deployed `14cb029` (prod now `064cd35`); drained by the combined refold 2563 + project 2564 (14,927,948 notices → 8,797,453 tenders; 8,317,567 verified + 475,237 corrected = 8,792,804 stamped, D7 complete). Verify reads done. Names stay deferred (unit 4, behind 524's wet runs).
 Kind: data quality (served text and names) — needs a decision
 Relates to:
 - 11 (resolved): the text era's UTF8 variant unescapes the five XML entities (`unescape`, crates/ingest/src/text/
@@ -208,3 +208,17 @@ Verify:
     for t in 8848007 8847965 8847923 8847754; do curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/$t | python3 -c "import json,sys,re; d=json.load(sys.stdin); print(d['id'], bool(re.search(r'&(#[0-9]+|#x[0-9a-fA-F]+|amp|quot|lt|gt|apos);', d.get('title') or '')))"; done
 
 Every line must end `False`.
+
+## Done (2026-10-16 18:0x UTC)
+
+The combined drain is **refold 2563** (11:34–12:54 UTC: 14,927,948 carriers of 41 field ids re-queued, 8,792,804
+tenders stamped epoch-stale) plus **project 2564** (12:54–17:47 UTC: 14,933,160 notices → 8,797,453 tenders, 8,792,804
+written).
+- **Compare.** 8,317,567 verified, 475,237 corrected, 3,162,052 correction rows. Verified plus corrected equals the
+  stamped count exactly, so D7's completeness holds.
+- **Verify.** 8561858 reads `False Gara europea a procedura aperta telematica, in modalità multilotto, per l’affida`.
+- **Repro ids.** 8561112, 8561120, 8561167, 8561279 and 8561312 carry no escapes left in their title or texts.
+  8561312's U+F0D7 is served as `•`.
+- **Post-drain check.** 8848007, 8847965, 8847923 and 8847754 all read `False`.
+- **Left alone, by decision 2.** Names: 8561120's buyer still serves `CENTRE COMMUNAL D&apos;ACTION SOCIALE DE BOLBEC`,
+  which belongs to unit 4.

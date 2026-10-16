@@ -1,6 +1,6 @@
 # 563 — a resumed SSE stream re-resolves the literal `now`, so its date bound moves and the resume is not exact
 
-Status: ready-for-agent — decision B COMMITTED `3a1845d` and GATED green 2026-10-16 (151 suites; built and reviewed wf_2d9bc7e2-2c9, 9 findings fixed). On main. NEXT: ship in ONE deploy with 547 (after 524's canary run 2565, queue idle), then the Verify curl; close as DONE <date>.
+Status: DONE 2026-10-16 — decision B deployed with 547 as `064cd35` at 18:0x UTC. Verify reads done: a `deadline_after=now` stream answers the refusal (`grep -c` prints 1), and a page with `deadline_after=now` answers 200.
 (`ops/check.sh`), commit, ship in ONE deploy with 547 (547's Status names the coupling), then the Verify curl; close
 as `DONE <date>` when it reads done. A `/v1/tenders` event stream refuses a date bound spelled as the literal `now`
 with 400 (fresh connect and resume alike); pages keep `now`. Filed 2026-10-16 from issue 547's re-review (finding
@@ -112,3 +112,8 @@ So a client resuming a `now` stream keeps a Tender that matches neither bound; a
    `listTenders` name the `now` refusal; the `status` resume caveat now says a change that leaves the Tender closed
    is not sent (a reopening version arrives as `added`) on all three surfaces; this file's Status and Verify follow
    the board rules; 547's record and Status name the retired caveat and the joint deploy.
+
+## Done (2026-10-16)
+
+Deployed with 547. The Verify curl prints 1: a `deadline_after=now` stream gets "… is refused on an event stream …".
+`/v1/tenders?deadline_after=now&limit=1` without the stream header answers 200.
