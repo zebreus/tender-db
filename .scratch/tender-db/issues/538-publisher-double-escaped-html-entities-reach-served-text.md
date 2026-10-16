@@ -195,3 +195,16 @@ every one.
   paid once. A stored-text finder (refold only Tenders whose stored text holds `&`) would be smaller, but it needs a
   new job kind; it is noted in operations.md as the fallback if the batch falls through.
 - The `/docs` caveats opening now names the decode as the one place tender-db rewrites published text.
+
+## Post-drain check added (2026-10-16, hourly audit)
+
+The 500 newest titles were read at 13:5x UTC. 4 still print numeric references: 8848007 `all&#8217;analisi …
+qualit&#224;`, 8847965 `&#8211; … l&#8217;affidamento`, 8847923, and 8847754 `identit&#224; visiva`. The daily
+`project` 2552 folded all four at 07:39 UTC, before `14cb029` (the decode) deployed at 09:40, so they are expected:
+`decode_publisher_escapes` pins `&#224;` and `&#8217;`. They carry BT-21 titles, which are in refold 2563's 41 field ids
+(re-queued 14,927,948, stamped 8,792,804). After project 2564 each must serve a decoded title. Read them with the
+Verify:
+
+    for t in 8848007 8847965 8847923 8847754; do curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/$t | python3 -c "import json,sys,re; d=json.load(sys.stdin); print(d['id'], bool(re.search(r'&(#[0-9]+|#x[0-9a-fA-F]+|amp|quot|lt|gt|apos);', d.get('title') or '')))"; done
+
+Every line must end `False`.
