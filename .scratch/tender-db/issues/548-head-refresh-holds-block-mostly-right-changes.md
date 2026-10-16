@@ -1,6 +1,6 @@
 # 548 — the head refresh's holds block mostly right changes (consortium, family, gb_family, part of initialism)
 
-Status: needs-triage — filed 2026-10-15 from the judgement of 524's dry plan 2515 (workflow wf_f9b41c3f-643). Next:
+Status: needs-triage — filed 2026-10-15 from the judgement of 524's dry plan 2515 (workflow wf_f9b41c3f-643); 524's v8–v10 re-judges added the R2 withdrawal, generic names and a mojibake serve-hold harm (below). Next:
 measure each hold's right/wrong split on its full listing (`held` in `org-name-refresh-plan`), then decide per hold.
 Kind: data quality (served organization names; tuning)
 Relates to:
@@ -50,3 +50,37 @@ are change holds (`head_change_hold`), applied after a rule has already passed t
    - **initialism:** check the 10 wrong holds for a shared shape first.
 3. **Build** as a new epoch (`524u2-v7` or later), re-plan, re-judge, and apply through 524's runbook. Do it before
    or with unit 2c, so the weekly upkeep does not re-meet the same holds every week.
+
+## Classes 524's later re-judges routed here (rules v8–v10, plans 2523, 2526, 2527)
+
+Unit 1 measures these alongside the holds above. None of them blocks 524; each is a missed fix or a
+withheld rule, never a served wrong name.
+
+- **R2, withheld whole (v9's pre-committed fallback, 2026-10-16).** change:R2 failed every dated re-judge:
+  2/30, 2/30 and 4/30 wrong (6 of 90 pooled). Every 524 wet run passes `exclude_rules: ["R2"]`. The planner
+  still elects and lists R2: plan 2527 had 1,520 changes, 42,203 mentions. Its wrongs are semantic singletons
+  that no vote statistic or token test separates from its rights:
+  - 4123715: a sub-service for the legal unit;
+  - 16508165: one outdated sp.j. spelling for another, because Polish spelled-out forms are not vote-key tokens;
+  - 13068036: a slash read as `I`;
+  - 10487887: a `Cté de Cnes` abbreviation;
+  - 21846426: a sibling office on a shared CH id;
+  - 23252614: a co-buyer, which is another entity.
+
+  Unit 2 decides whether any R2 sub-shape can ship, or whether R2 stays planner-only.
+- **Generic names (R1).** 5350675 changed `Ośrodek Pomocy Społecznej w Kluczborku` to `Ośrodek Pomocy
+  Społecznej`, a bare institution type that 15 organizations carry as their head. Its head is stale (≥ 3 years),
+  so v10's `head_current` does not hold it. v9 rejected a `generic` hold because the corpus name count measures
+  duplicate rows, not genericness (`Urtica`, `Région Occitanie`). A usable test needs a different signal, for
+  example the name being a known institution-type phrase with the place token dropped.
+- **Harmful serve hold: mojibake defeats `review_body`.** 22435268's head is `Comit consultatif interrgional du
+  rglement amiable`. The hold keeps it because the broken spelling no longer matches the review-like stems.
+  Candidate: ask the unfit/mojibake test (including dropped-accent shapes like `interrgional`) before the serve
+  holds.
+- **Harmful residue hold.** 10662302 keeps a `Sp. zo.o.` typo (v7 re-judge). Accepted at the bar.
+- **The Sheffield shape.** An H=1 stray printed newest is held by `residue` (v8). This is a missed fix, never a
+  regression.
+- **Votes per mention, not per procedure.** Lot repeats can make a majority (`Consultorís`). Count votes per
+  procedure, not per mention.
+- **`head_current` (v10).** About 6,520 R1 changes become holds on a head printed within 3 years. Its right/wrong
+  split is measured on the first v10 plan: a hold sample read the same way as the holds above.
