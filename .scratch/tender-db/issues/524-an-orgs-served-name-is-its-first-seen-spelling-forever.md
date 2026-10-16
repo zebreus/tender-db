@@ -1435,3 +1435,27 @@ change:R1 sample (30, ≤ 1 wrong), then the canaries, the capped 500 with a dat
 - **`as_of` is stored in the plan** (the planner's start, unix seconds). The wet pre-pass re-elects with the stored
   plan's `as_of`, so a head printed after the plan reads `head_current` and drifts. A plan without `as_of` is
   refused (it is also an older epoch).
+
+## Rule v10 on prod: deployed, plan 2543 (2026-10-16)
+
+**Deploy.** `703aa62` at 06:39 UTC (gate green, 1260 s; build wf_9aab3825-c90, 3-lens review with 9 minor findings
+fixed). The gate also carries 533's five follow-ups.
+
+**Plan 2543** (epoch `524u2-v10`, rev `703aa621`, `as_of` 1792132805 = 2026-10-16, walk 212 s):
+- CHANGES 20,179 (1,171,511 mentions): R0n 1, R1 18,658 (1,129,305), R2 1,520 (42,203). Expected R1 about 18,480.
+- HOLDS 9,076, of which `head_current` **6,345** (603,232 mentions; expected about 6,520). The other holds are
+  unchanged from plan 2527: recent 376, residue 809, the serve holds 1,020.
+- Junk releases **169** (digits 67, unfit 102), up from 12. `head_current` asks the junk exemption too.
+  release_withheld 109 (glue 14, junk_only 95). Undated 0.
+- **Canaries: 0 unexpected of 45.** The seven re-pointed canaries read `hold:head_current` with the spelling they
+  would serve. 3042 and the six stale-head renames read `change:R1`.
+
+**Re-judge bars, fixed BEFORE the run** (inputs `rejudge2543.json`: fresh salted samples, every labelled and
+panel-read org skipped):
+- **change:R1** (30): ≤ 1 wrong. A fail stops the run, as before.
+- **released** (157 new, every one; 12 carry earlier labels: 11 right, 1 neutral): wrong rate ≤ 1/27 (3.7 %), the
+  old bar's rate, i.e. ≤ 5 wrong of 157.
+  - If it fails, the pre-built filter fires for the class that carries the wrongs: `exclude_released: ["digits"]`
+    or `["unfit"]`, or both.
+  - Read per class: digits 56, unfit 101.
+- **hold:head_current** (30): a cost report only. Harmful holds feed 548.
