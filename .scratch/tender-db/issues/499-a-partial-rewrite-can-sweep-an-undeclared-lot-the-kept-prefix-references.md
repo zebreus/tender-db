@@ -1,17 +1,17 @@
 # 499 — a partial rewrite can sweep a lot that only the kept prefix's results or bids reference
 
-Status: ready-for-agent — REPRODUCED AND FIXED 2026-10-08. The store test
+Status: done — RE-READ 2026-10-16 00:35 UTC, a week of daily folds after the fix's deploy (`85bca61`, 2026-10-08), on
+rev `b234150`. The newest 100k-tender window (8,750,000–8,846,475, the newest Tender, 449,688 result rows / 442,534 lot
+references, `MAX(seq)` 622) holds 0 dangling `lot_id`s in `tender_version_lot_results` and 0 in `tender_version_bids`
+(bounded `NOT EXISTS (… lots l WHERE l.id = x.lot_id)` reads, plan-checked: autoindex range + rowid probe). That window
+is where this week's partial rewrites land (follow-up notices on recent Tenders). Closed.
+
+Before (2026-10-08): REPRODUCED AND FIXED. The store test
 `a_lot_only_the_kept_prefix_references_survives_a_partial_rewrite` fails on the old code: the sweep deleted
 the undeclared lot that the kept v1's result names (count 1 → 0, with a spurious `removed`). The fix:
 `extend_keep_with_kept_prefix` seeds `written.lots` from every lot-naming leaf column the descriptor records
 (`LotScope::Column` and `Pair`, which covers results, bids, group members and lot-scoped facts), not only
-`tender_version_lots`. Goldens unchanged.
-
-Prod: 0 dangling references in five 100k windows after the epoch-4 refold and today's daily fold. One window
-(224k) answered 408 and was not retried.
-
-DEPLOYED 2026-10-08 ~23:45 UTC (`85bca61`, health ok). NEXT: re-read the dangling windows after a week of daily
-folds (2026-10-15), then close.
+`tender_version_lots`. Goldens unchanged. Prod: 0 dangling references in five 100k windows after the epoch-4 refold.
 Kind: correctness / the orphan sweep (`crates/store/src/canonical.rs`)
 Relates to: 103 (the orphan sweep), 279 (`extend_keep_with_kept_prefix`), 495 (unit 2's identity cache reads the
 same sets)
