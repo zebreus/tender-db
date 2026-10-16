@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v11: plan 2562 GO, gates (a)(b)(c) PASSED, step 4 canaries PASSED (job 2565, 8 renamed, 0 drifted). 547 + 563 deployed `064cd35`; re-plan 2566 on that binary is running. NEXT: read 2566 against 2562 (±10%; the 8 canaries now read keep:S1 as expected), then step 5 capped 500 with the dated spot check, then step 6 full. Every wet run passes `exclude_rules:["R2"], exclude_released:["unfit"]`.
+Status: ready-for-agent — RULE v11: plan 2562 GO, gates (a)(b)(c) PASSED, step 4 canaries PASSED (2565), re-plan 2566 GO, step 5 capped 500 PASSED (job 2567: 500 renamed, 0 drifted; dated spot check 27 right / 3 neutral / 0 wrong / 0 reverts). NEXT: step 6, the full wet run (`exclude_rules:["R2"], exclude_released:["unfit"]`, about 15,494 renames), then its dated spot check. On 2026-10-16 the enqueue was refused by the session's permission classifier ("blind apply"), so step 6 waits for an operator-visible go.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1834,3 +1834,44 @@ Wet job 2565 (`org_ids` = the six fresh-top ids plus 2857103 and 2715115, `exclu
 
 547 and 563 deployed at 18:0x UTC (`064cd35`). Per the sequencing note, step 5 starts from re-plan 2566 on that
 binary. Re-point the 8 canaries to `keep:S1` at the next build.
+
+## Rule v11 on prod: re-plan 2566 and step 5, the capped 500 (2026-10-16) — PASSED
+
+**Re-plan 2566** ran on `064cd35`, after 547 and 563 deployed. Every count matches plan 2562 except R1, which is 8
+lower because the 8 canaries were renamed:
+
+| count | plan 2566 | plan 2562 |
+| --- | --- | --- |
+| CHANGES | 17,622 | 17,630 |
+| R1 | 16,095 | 16,103 |
+| R2 | 1,526 | 1,526 |
+| `top_stale` | 2,425 | 2,425 |
+| `doubled` | 91 | 91 |
+| `seat_dropped` | 68 | 68 |
+| `placeholder_id` | 10 | 10 |
+| `head_current` | 6,309 | 6,309 |
+| `recent` | 378 | 378 |
+| `residue` | 806 | 806 |
+| undated | 0 | 0 |
+
+There are 2 "unexpected" canaries: 2857103 and 2715115 read `keep:S1` (want `change:R1`). This is the runbook's
+same-build re-plan exception. Step 4 renamed both, their head is the wanted spelling, and the API serves it.
+
+**Step 5, capped job 2567** (`max_groups:500`, `exclude_rules:["R2"]`, `exclude_released:["unfit"]`):
+- 15,994 targets in scope; 1,628 were dropped before the pre-pass (1,526 R2, 102 `unfit`).
+- Pre-pass: 15,994 ready, 0 drifted, 0 gone.
+- RENAMED 500 with 0 raced, leaving 15,494 ready.
+- Undo: `{"kind":"revert-org-name-refresh","job":2567}`.
+
+**Dated spot check** of its 30 `applied_samples` (wf_4b9814b5-abf; evidence in
+`.scratch/tender-db/524-v11/capped-2567/`): **27 right, 3 neutral, 0 wrong, 0 reverts**. The bar was 0 reverts and at
+most 1 other wrong, so step 5 passes. The neutral ones:
+- 1724520 and 2049181: Lithuanian `Uždaroji akcinė bendrovė` against `UAB`, the same entity;
+- 2272301: its identifier `TILBYGGEWEBASSEUNDERPKTVI3` is a parse artifact built from prose ("til byggeweb A/S (se
+  under pkt. VI.3)"), and both its names are instruction sentences. That is a junk-identifier class, like v11's
+  `placeholder_id`, and belongs on 473's board.
+
+**Step 6 (full) is pending.** The enqueue was refused by this session's permission classifier ("blind apply"). Every
+protocol gate before it has passed: the payload is the runbook's step 6
+`{"kind":"refresh-org-names","dry_run":false,"exclude_rules":["R2"],"exclude_released":["unfit"]}`, against stored plan
+2566.

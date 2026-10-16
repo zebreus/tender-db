@@ -1,0 +1,342 @@
+{
+ "tally": {
+  "right": 27,
+  "neutral": 3,
+  "wrong": 0,
+  "reverts": 0
+ },
+ "final": {
+  "1188507": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1257607": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1263315": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1272845": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1323665": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1375095": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1404233": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1482783": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1594648": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1620777": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1646514": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1724520": {
+   "verdict": "neutral",
+   "revert": false
+  },
+  "1744569": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1778389": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1906197": {
+   "verdict": "right",
+   "revert": false
+  },
+  "1926769": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2000767": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2040363": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2049181": {
+   "verdict": "neutral",
+   "revert": false
+  },
+  "2272301": {
+   "verdict": "neutral",
+   "revert": false
+  },
+  "2320322": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2334419": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2397432": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2496978": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2496999": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2505469": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2517061": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2528921": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2628938": {
+   "verdict": "right",
+   "revert": false
+  },
+  "2675242": {
+   "verdict": "right",
+   "revert": false
+  }
+ },
+ "groups": [
+  {
+   "group": "applied2567#0",
+   "items": [
+    {
+     "org_id": 1188507,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 37954571 (SK). The old head 'n.o.' is the short form of the legal form, printed only once and only early: buyer on 8267243 (300470-2011, 2011-09-24). From 2014 on, every notice I read prints the spelled-out form: 5146017 (2014-07-17), 5386481 (2015-07-04), 6856585 (2022-08-12), 7117690 (2022-09-23) and the newest buyer notice, 6642290 (638524-2022, 2022-11-18), all print 'Všeobecná nemocnica s poliklinikou Lučenec nezisková organizácia'. Same entity, and new_name is the newer form the org itself prints. No winner or bidder notices exist."
+    },
+    {
+     "org_id": 1257607,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier Q0719003F (IB-Salut). The old head is a sub-unit, the Menorca health area. It was printed from 2011 to 2013 on 4669412 (2011-12-15, tender receipt at 'Registro General del ÁREA de Salud de Menorca. Hospital Mateu Orfila'), 7986761 (2012-03-27), 4631506 (2012-05-10), 4874167 (2013-03-27) and 4898490 (2013-05-14). The newest buyer notices print the parent body that holds the identifier, 'Servicio de Salud de las Illes Balears': 8583203 (00658814-2026, 2026-09-24), 761520 (2026-04-27), 1133014 (2025-11-12) and 934273 (2025-11-07). So the change replaces a served organ with the actual entity. No winner or bidder notices."
+    },
+    {
+     "org_id": 1263315,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 190425189 (PL). The old head is a typo: 'Gdynia Container Terminla S.A.', printed once on 4632288 (321059-2011, 2011-10-13). Every later notice spells it 'Terminal': 4634577 (2011-10-18, 'S.A'), 4634894 (2011-10-18), 4638316 (2012-01-28, 'SA'), 4667127 (2012-01-31), 4665808 (2012-02-03), 4713708 (2012-11-09) and the newest, 4880382 (084599-2013, 2013-03-14), print 'Gdynia Container Terminal S.A.'. The change fixes a misspelling of the same company."
+    },
+    {
+     "org_id": 1272845,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 44570783 (SK). The hospital took on the 'Univerzitná nemocnica -' prefix in 2019/2020. The old head 'Nemocnica svätého Michala, a.s.' was last printed on 6334655 (2019-06-06), 6630360 (2019-11-12) and 6565918 (118367-2020, 2020-03-11). The new form appears from 6645746 (2019-11-14) and 6727642 (2020-03-17) on. The newest buyer notices print 'Univerzitná nemocnica - Nemocnica svätého Michala, a. s.': 445293 (00712591-2026, 2026-10-15), 1031478 (2026-10-02), 7973604 (2026-09-15) and 7946873 (2026-09-02). new_name differs from that only by the 'a.s.'/'a. s.' spacing. So it is the current name, not a reversion. (The one 'Slovenský hydrometeorologický ústav' print under this identifier has nothing to do with new_name.)"
+    },
+    {
+     "org_id": 1323665,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier A26309617 (ES). The old head 'La Rioja Turismo SAU' is the former company name, printed once on 4583146 (338418-2011, 2011-10-28). Every notice since prints the renamed company: 7229895 (2021-11-10), 7156234 (2021-11-16), 7572349 (2023-02-22) and 7761350 (2023-12-26) as '... SAU', and the newest eForms notices 296963 (00611777-2025, 2025-09-18) and 353537 (00193103-2026, 2026-03-20) as 'La Rioja 360 Grados Avanza Sociedad de Promoción de La Rioja S.A.U.'. new_name is the current name of the same company. No winner or bidder notices."
+    },
+    {
+     "org_id": 1375095,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 00156621 (SK). The old head 'Ministerstvo pôdohospodárstva a rozvija vidieka SR' is a typo ('rozvija'), seen on 4649016 (047178-2012, 2012-02-14). The short form '...rozvoja vidieka SR' appears on 4547944 (2011-12-13). The full name 'Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej republiky' appears already on 4650819 (2011-12-17) and on every newest buyer notice: 689538 (00625042-2026, 2026-09-10) and 8567065, 8564326 and 8560260 (all 2026-07-01), where it is printed for buyer, signatory, document provider, tender receipt and evaluation. The change fixes a misspelling with the ministry's full proper name."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "applied2567#1",
+   "items": [
+    {
+     "org_id": 1404233,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 10043113 (DE). old_name 'Kommunale Verwaltung' is a generic type, printed once: 4653180 (2011-11-18, buyer: 'Kommunale Verwaltung'). Every later notice prints the specific municipality: 6257762 (2018-08-01), 6500350 (2019-05-13), 316330 (2024-08-26), 927818 (2025-03-26) and 829977 (2025-04-10, newest), all buyer 'Gemeinde Merchweiler'. new_name is the proper entity name."
+    },
+    {
+     "org_id": 1482783,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 00638927 (CZ). old_name (with the obsolete 'územní středisko záchranné služby' tail and 'Praha' in the wrong case) was printed only at the start: 4538931 (2011-12-09). Variants followed in 4610842 (2011-12-31) and 4598633 (2012-01-20), and '... hl. města Prahy - ÚSZS' in 4767102 (2012-05-19). The newest notices all print new_name: 8566099 (2026-10-14), 672917 (2026-10-14) and 8830270 (2026-10-07), each buyer 'Zdravotnická záchranná služba hl. m. Prahy'. Same entity, current spelling, drops the old sub-unit tail. The rival 'hlavního města Prahy' (newest 2026-07-24) is the same name spelled out."
+    },
+    {
+     "org_id": 1594648,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 7270134501 (PL). old_name 'Komenda Wojewódzka PSP w Łodzi' abbreviates the service name (head_newest 2012-01-04). None of the buyer notices I opened carries it; the oldest buyer notice, 7376016 (2022-11-30), already prints the full name. Full-name prints: 7489333 (2023-06-05), 270275 (2026-07-09) and 521133 (2026-08-04), all 'Komenda Wojewódzka Państwowej Straży Pożarnej w Łodzi'; 39725 (2026-08-26, newest) prints the same words in capitals. new_name is the entity's full name. The rival 'Łódzki Komendant ...' is the commander (an organ), not the entity."
+    },
+    {
+     "org_id": 1620777,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 28046153 (CZ). The company was renamed. old_name 'Plzeňské komunální služby s.r.o.' appears from 4714044 (2012-02-25) and 4738738 (2012-04-03) to 5331696 (2014-11-25); head_newest is 2015-01-31. new_name appears from 7825085 (2023-12-01, winner) through 1129231 (2025-03-11), 421632 (2026-03-27), 331706 (2026-04-02), 709927 (2026-04-20) and 833154 (2026-06-15, newest), all 'Čistá Plzeň, s.r.o.'. new_name is the current name, and the old name is no longer printed."
+    },
+    {
+     "org_id": 1646514,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 09191560 (FI), merged VAT FI09191560. old_name 'Atea oyj' (wrong legal form; the Finnish subsidiary is an Oy) was printed once: 4641632 (2012-01-14, winner 'Atea oyj'). From 4668075 (2012-10-27) and 4881905 (2013-04-11) to 8816877 (2026-07-08), 133554 (2026-07-14) and 777770 (2026-07-15, newest), every notice prints tenderer 'Atea Finland Oy'. new_name is the correct current name."
+    },
+    {
+     "org_id": 1724520,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Identifier 134746488 (LT). Same company; only the legal form differs, spelled out vs abbreviated. Spelled-out prints: 4558672 (2012-02-01, 'Uždaroji akcinė bendrovė \"Adranas\"'), 5708398 (2017-06-30), 6858395 (2021-05-07) and 7090829 (2021-09-24, the last). 'UAB' prints: 6311402 (2019-01-28, 'UAB „Adranas“'), 7070135 (2021-08-02, 'UAB \"Adranas\"'), 6197896 (2021-12-07), 6914205 (2022-07-19) and 7382261 (2022-09-30). The newest notices print just 'Adranas': 1158312 (2026-02-03), 74988 (2026-05-26) and 871879 (2026-09-07). UAB is the standard Lithuanian abbreviation of the legal form, so the entity is named equally well."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "applied2567#2",
+   "items": [
+    {
+     "org_id": 1744569,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier S2516001A, which is the Subdelegación's own NIF. old_name (the parent ministry prefixed to the office) was printed only in the two oldest notices: 4700401 (2012-02-04) 'Ministerio de Hacienda y Administraciones Públicas. Subdelegación del Gobierno en Lleida' and 5517725 (2015-09-17), the same with a comma. Every later notice prints new_name: 5891983 (2017-04-06), 5936049 (2017-06-03), 5821850 (2017-06-17), 5952932 (2017-06-28), 6024087 (2017-09-30), 6087734 (2017-12-21) and the newest, 7440762 (2022-10-14), all 'Subdelegación del Gobierno en Lleida'. new_name is the entity's own current name without the old parent-ministry tail, and that ministry no longer exists under that name."
+    },
+    {
+     "org_id": 1778389,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 05113000 is the municipal code (AGS) of the city of Essen itself. old_name names a department (Immobilienwirtschaft) and was printed only in 4705159 (2012-02-14) 'Stadt Essen - Der Oberbürgermeister, Immobilienwirtschaft'. 5296294 (2014-09-30) printed 'Stadt Essen Immobilienwirtschaft'. The two newest notices print new_name: 1069060 (2025-07-23) 'Stadt Essen' and 439468 (2026-02-18) 'Stadt Essen'. new_name is the legal entity behind the code; old_name was a sub-unit with an office tail."
+    },
+    {
+     "org_id": 1906197,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier IČO 28505913. This is one law firm that renamed twice. Old names: 8322978 (2018-10-13) 'Advokátní kancelář Jansta, Kostka, spol. s.r.o.' and 6398392 (2020-01-17) 'Advokátní kancelář Jansta, Kostka spol. s.r.o.'. Middle name: 8504040 (2022-08-19) 'Advokátní kancelář Chrenek, Kotrba spol. s r. o.'. new_name from 2023 on: 8529734 (2023-09-11) 'Chrenek, Toman, Kotrba advokátní kancelář spol. s r.o.', 7761601 (2023-10-17), 6881160 (2024-01-08), 7366300 (2024-01-23), 791510 (2026-06-25), 362814 (2026-07-16), 265088 (2026-07-30), 534127 (2026-09-17), 449753 (2026-10-02) and 608944 (2026-10-15), all 'Chrenek, Toman, Kotrba advokátní kancelář spol. s r. o.'. No notice after 2021 prints old_name; new_name is the firm's current name."
+    },
+    {
+     "org_id": 1926769,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 08031514 (business ID 0803151-4, VAT FI08031514), which is Abbott Oy. old_name is a division tail and was printed only in 4728435 (2012-03-20) 'Abbott Oy Diagnostics Division' (also misspelled 'Diacnostics' there). 4707401 (2012-08-17) printed 'Abbott Oy, Vascular Division'. The legal name has been printed since 5793422 (2016-11-17), 5868887 (2017-03-08) and 5940110 (2017-06-10). The newest notices also print it: 563919 (2025-08-12), 1130507 (2026-01-28) and 869875 (2026-09-25), all 'Abbott Oy'. One exception is 621640 (2025-08-27) 'Abbott Oy Point of Care', another unit tail. new_name is the legal entity, not a division."
+    },
+    {
+     "org_id": 2000767,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier A28135614 (MERCASA). Both names are the same buyer. old_name was printed only in 4591203 (2012-04-05) 'Mercados Centrales de Abastecimiento, SA'. All three later notices print new_name: 6199625 (2018-05-12), 6243747 (2018-07-05) and the newest, 6317987 (2018-10-05), each 'Empresa Estatal Mercados Centrales de Abastecimiento, S. A. (Mercasa)'. new_name is the buyer's own latest and majority print and carries the name the company goes by (Mercasa). This is a marginal call: the registered prefix is 'Empresa Nacional', not 'Empresa Estatal', so neutral would also be defensible. new_name is not worse."
+    },
+    {
+     "org_id": 2040363,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier IČO 27714608. The same company renamed, running the same Sanatorium Pálava project. old_name prints: 7521466 (2022-10-14), 7567976 (2023-01-25) and 7493275 (2023-02-21) 'Thermal Pasohlávky a.s.', the last print. Every print from 2025 on is new_name: 1198506 (2025-05-22) 'Jihomoravská zdravotní, a.s.', 576265 (2026-08-14), 7935453 (2026-08-25), 7954471 (2026-09-07) and 273827 (2026-09-21), all 'Jihomoravská zdravotní, a.s.'. new_name is the current name; the old name stopped appearing after February 2023."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "applied2567#3",
+   "items": [
+    {
+     "org_id": 2049181,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "LT 124850887 (served: 'UAB Statybos projektų ekspertizės centras'). This is one entity with its legal form written two ways: 'Uždaroji akcinė bendrovė' spelled out versus the UAB abbreviation. Neither name is former or superseded. Old spelled-out form printed on tenders 5926351 (2017-08-25, winner, 'Uždaroji akcinė bendrovė „Statybos projektų ekspertizės centras“') and 5954195 (2017-10-27, same print), matching head_newest 2017-10-27. The UAB form is what every recent notice prints: 918762 (2025-10-06), 1007288 (2026-01-08), 782247 (2026-04-17) and 798830 (2026-08-31), all Tenderer 'UAB \"Statybos projektų ekspertizės centras\"'. new_name follows that current spelling but without the quotes, so it is equally good rather than better. Side note: 313166 (2026-08-31) prints 'UAB \"Darbasta\"' under this org's identifier, a different entity sharing the identifier. It is a stray mention and does not affect the head."
+    },
+    {
+     "org_id": 2272301,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "DK, identifier 'TILBYGGEWEBASSEUNDERPKTVI3'. The identifier is a parse artifact built from prose ('til byggeweb A/S (se under pkt. VI.3)'). Both old and new are instruction sentences, not names: 'Anmodning skal fremsendes elektronisk' means 'request must be sent electronically', and new_name adds 'til byggeweb A/S (se under pkt. VI.3)'. new_name is longer and carries a cross-reference tail, but it also names Byggeweb A/S, the real recipient, so it is no worse than the old fragment. The rename is a wash; the proper fix is void or placeholder treatment or rebinding to Byggeweb A/S, not a choice between the two. Dates: ?buyer=, ?winner= and ?bidder= all return empty pages, so the mentions sit in non-participation roles (address/contact) that these filters cannot reach. The plan's dated reading has the old spelling's single procedure at 2012-06-14 and the newest top-spelling print at 2015-06-20. No revert pattern."
+    },
+    {
+     "org_id": 2320322,
+     "verdict": "right",
+     "revert": false,
+     "why": "FI 19754558 (Y-tunnus 1975455-8). The Finnish register (PRH/YTJ) records 'Colemont Finland Oy' from 2005-08-31 to 2015-09-03, then 'Howden Finland Oy' from 2015-09-03 to now. So new_name is the current legal name and old_name is the former one. Newest print: tender 109148 (2024-08-26, JÄLKI-ILMOITUS Vakuutusmeklaripalvelujen hankinta), Tenderer/winner 'Howden Finland Oy'. That is the only tender ?winner= and ?bidder= return; ?buyer= is empty. The old name's newest print is 2014-06-04 (head_newest, 4 procedures), before the 2015 rename. Nothing printed later uses Colemont."
+    },
+    {
+     "org_id": 2334419,
+     "verdict": "right",
+     "revert": false,
+     "why": "HU, procurement-register ID AK09892. The newest print under this ID is tender 5604150 (2016-05-11, buyer), 'Kecskeméti Katona József Múzeum'; ?buyer= returns only that procedure, and ?winner= and ?bidder= are empty. The old name 'Bács-Kiskun Megyei Múzeumi Szervezet' last printed 2013-06-07 (head_newest, 2 procedures). That fits the 2013 transfer of county museums to the county-seat towns, after which Kecskemét's 2013 founding deed (4825-9/2013) governs the Kecskeméti Katona József Múzeum. A 2017 State Audit Office report audits the museum's operations for 2011–2014, which suggests one continuing institution under the new name, though I found no source that states the succession outright. So new_name is the newer name of the same register entry, not a member served for the umbrella: since 2013 it is the only name printed under this ID."
+    },
+    {
+     "org_id": 2397432,
+     "verdict": "right",
+     "revert": false,
+     "why": "CZ IČO 28418794. The Czech commercial register (ARES/VR) shows the trade name 'ARTEZIS s.r.o.' from 2008-06-30, erased 2013-03-26, and 'Ing. Pavel Novák s.r.o.' from 2013-03-26 to now. ARES main record today: 'Ing. Pavel Novák s.r.o.', Osadní 799/26, Praha 7. So new_name is the current legal name and old_name is the former one. Dated reading: the old name's newest print is 2012-10-02 (head_newest, 10 procedures), before the rename; the top spelling's newest is 2024-04-25. ?buyer=, ?winner= and ?bidder= all return empty pages, which points to agent/contact roles the filters cannot reach, so I could not open individual notices. The verdict rests on the register history plus the plan dates. Note: the 19 bare 'Ing. Pavel Novák' votes are a person-style print, but the served name carries the s.r.o. legal form, which matches the register exactly."
+    },
+    {
+     "org_id": 2496978,
+     "verdict": "right",
+     "revert": false,
+     "why": "SK IČO 00165182. The served name changes from the abbreviated 'Ministerstvo kultúry SR' to the full proper name 'Ministerstvo kultúry Slovenskej republiky' (279 of 294 votes). The newest buyer notices all print the full form as Procedure-Buyer: 8823115 and 8823801 (2026-10-12), 192538 and 781963 (2026-10-13), 8842428 (2026-10-14). The full form was already printed in 2015: 5374886 (2015-02-05), 8339328 (2015-03-05) and 8339329 (2015-03-06), all buyer 'Ministerstvo kultúry Slovenskej republiky'. The 'SR' abbreviation's newest print is 2015-03-21 (head_newest), so this is an abbreviation replaced by the proper name, not a revert. The 'Bibiana' votes (rival_newest 2015-08-08) are a subordinate body sharing the identifier and did not win."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "applied2567#4",
+   "items": [
+    {
+     "org_id": 2496999,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier SK 00682357. All dated buyer notices put 'Bibiana' first and the descriptor after it. Older notices: 4886515 (036742-2013, 2013-02-02) 'Bibiana, medzinárodný dom umenia pre deti'; 4960333 (284510-2013, 2013-08-23) 'Bibiana, Medzinárodný dom umenia pre deti'; 5630796 (2016-06-15) 'Bibiana, medzinárodný dom umenia pre deti'; 5937006 (2017-12-12), 6366990 (2019-04-02) and 6582905 (2020-02-06) 'Bibiana - medzinárodný dom umenia pre deti'. Newest: 544887 (2024-04-23), 45123 (2024-05-03) and 554714 (00735465-2025, 2025-11-06) 'BIBIANA, medzinárodný dom umenia pre deti'. The old head 'Medzinárodný dom umenia pre deti Bibiana' was last printed 2013-01-25 (head_newest; not visible on any current REST version) and nothing since prints that order. new_name is the current name with a dash where the newest notices use a comma, so it is better than old_name."
+    },
+    {
+     "org_id": 2505469,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier PL NIP 6750006524. This is the regional directorate's own NIP, and every listed procedure has it as buyer. Notices: 6101536 (2018-03-10), 6275659 (2018-11-13), 7857499 (2023-10-25), 685015 (00239999-2025, 2025-04-14), 1129298 (00156738-2026, 2026-03-06) and 703517 (00168249-2026, 2026-03-11) all print 'Regionalna Dyrekcja Lasów Państwowych w Krakowie'. The only variant is 387806 (2025-03-31): 'Skarb Państwa PGL LP Regionalna Dyrekcja Lasów Państwowych w Krakowie'. The old head (parent prefix 'Państwowe Gospodarstwo Leśne Lasy Państwowe;' plus the same name) has one print, dated 2012-08-07 (head_newest); I found no REST procedure carrying it. new_name is the same entity's proper name without the parent prefix. It is not a sub-unit for a parent: the NIP is the RDLP's."
+    },
+    {
+     "org_id": 2517061,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier SK IČO 37873423. The old head 'Základná umelecká škola' is a generic institution type. Its only print is 4820899 (388035-2012, 2012-12-07), a joint gas purchase led by Mesto Vranov nad Topľou, where it appears as a purchasing-body next to several plain 'Základná škola' entries. Every notice the org has as buyer prints the specific name: 823576 (00782933-2023, 2023-12-22), 568674 (00807207-2025, 2025-12-05) and 198093 (00082807-2026, 2026-02-05) all print 'Základná umelecká škola, A. Dubčeka 880, Vranov nad Topľou'. Slovak school names conventionally include the seat address, so this is the official form, not an agent or registry tail."
+    },
+    {
+     "org_id": 2528921,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier FI 07650698 (Y-tunnus 0765069-8). 'Rejlers Oy' (old) prints on 4674944 (2012-08-11) and last on 6310402 (119875-2019, 2019-03-14, lots 3 and 4). 'Rejlers Finland Oy' already prints on 6278079 (2019-02-22) and on every notice after: 6335748 (2019-06-13), 6364109 (2019-08-08), 6451546 (2020-01-17), 683693 (2026-05-08), 880251 (2026-06-19), 968409 (2026-06-24), 1153331 (2026-07-07), 459097 (2026-09-04) and 263495 (00627344-2026, 2026-09-11) as Tenderer, plus 603473 (2026-04-29) as buyer. new_name is the current, renamed company name."
+    },
+    {
+     "org_id": 2628938,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier HR OIB 22874515170 (VAT HR22874515170 merged). The old head 'Republic of Croatia, Ministry of Maritime Affairs, Transport and Infrastructure' is a 2013 English rendering of the former ministry name, printed only on 4836382 (126120-2013, 2013-04-17). The former Croatian name 'Ministarstvo pomorstva, prometa i infrastrukture' prints on 5189159 (2014-04-09) and 5151128 (2014-05-31). The current name 'Ministarstvo mora, prometa i infrastrukture' prints on 725560 and 557056 (2026-10-06), 8840819 and 8840974 (2026-10-13), 327125 and 521040 (2026-10-14) and 14530 (00714234-2026, 2026-10-15). The 2026-10-06 rival print 8828974 is the English 'Ministry of the Sea, Transport and Infrastructure', the same current name. new_name is the ministry's current official name."
+    },
+    {
+     "org_id": 2675242,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier HU AK16866 belongs to Nereus Park Hotel Kft.; no other org has it, and Pannon Egyetem's own record carries AK06088. The old head 'Pannon Egyetem' has one print, on joint electricity purchase 4842715 (000218-2013, 2013-01-02). That notice also prints 'Nereus Park Hotel Kft.' on the same org, and its purchasing-body links are off by one (the 'Óbudai Egyetem' mention is linked to Pannon Egyetem's org). So 'Pannon Egyetem' was another entity mis-linked onto this identifier. Buyer notices 5663639 (356516-2016, 2016-10-13) 'Nereus Park Hotel Kft.' and 6009908 (013441-2018, 2018-01-12) 'Nereus Park Hotel Kft' confirm the entity. new_name is correct and old_name was wrong."
+    }
+   ],
+   "checks": []
+  }
+ ]
+}

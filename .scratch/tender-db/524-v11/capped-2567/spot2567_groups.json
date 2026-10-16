@@ -1,0 +1,1194 @@
+{
+ "groups": [
+  {
+   "key": "applied2567#0",
+   "kind": "change",
+   "items": [
+    {
+     "org_id": 1188507,
+     "identifier": "37954571",
+     "country": "SK",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 32,
+     "top": 31,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Všeobecná nemocnica s poliklinikou Lučenec nezisková organizácia",
+       31
+      ],
+      [
+       "Všeobecná nemocnica s poliklinikou Lučenec n.o.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2011-09-24",
+     "top_newest": "2022-11-18",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Všeobecná nemocnica s poliklinikou Lučenec n.o.",
+     "new_name": "Všeobecná nemocnica s poliklinikou Lučenec nezisková organizácia",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1257607,
+     "identifier": "Q0719003F",
+     "country": "ES",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 1362,
+     "top": 1260,
+     "head": 11,
+     "second": 31,
+     "clusters": 22,
+     "spellings": [
+      [
+       "Servicio de Salud de las Illes Balears",
+       1259
+      ],
+      [
+       "HOSPITAL UNIVERSITARIO SON LLÀTZER",
+       26
+      ],
+      [
+       "Servicio de Salud de las Illes Balears, Ib-Salut, Área de Salud de Menorca",
+       11
+      ],
+      [
+       "Servicio de Salud de las Islas Baleares",
+       11
+      ],
+      [
+       "Servicio de Salud de las Illes Baleares, Hospital Can Misses",
+       6
+      ]
+     ],
+     "head_procs": 7,
+     "head_newest": "2014-01-28",
+     "top_newest": "2026-09-24",
+     "rival_newest": "2024-01-15",
+     "newest_is_head": false,
+     "old_name": "Servicio de Salud de las Illes Balears, Ib-Salut, Área de Salud de Menorca",
+     "new_name": "Servicio de Salud de las Illes Balears",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1263315,
+     "identifier": "190425189",
+     "country": "PL",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 11,
+     "top": 10,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Gdynia Container Terminal S.A.",
+       8
+      ],
+      [
+       "Gdynia Container Terminal S.A",
+       1
+      ],
+      [
+       "Gdynia Container Terminal SA",
+       1
+      ],
+      [
+       "Gdynia Container Terminla S.A.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2011-10-13",
+     "top_newest": "2013-03-14",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Gdynia Container Terminla S.A.",
+     "new_name": "Gdynia Container Terminal S.A.",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1272845,
+     "identifier": "44570783",
+     "country": "SK",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 180,
+     "top": 120,
+     "head": 59,
+     "second": 59,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Univerzitná nemocnica - Nemocnica svätého Michala, a.s.",
+       73
+      ],
+      [
+       "Univerzitná nemocnica - Nemocnica svätého Michala, a. s.",
+       47
+      ],
+      [
+       "Nemocnica svätého Michala, a.s.",
+       42
+      ],
+      [
+       "Nemocnica svätého Michala, a. s.",
+       17
+      ],
+      [
+       "Slovenský hydrometeorologický ústav",
+       1
+      ]
+     ],
+     "head_procs": 29,
+     "head_newest": "2020-03-11",
+     "top_newest": "2026-10-15",
+     "rival_newest": "2013-02-09",
+     "newest_is_head": false,
+     "old_name": "Nemocnica svätého Michala, a. s.",
+     "new_name": "Univerzitná nemocnica - Nemocnica svätého Michala, a.s.",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1323665,
+     "identifier": "A26309617",
+     "country": "ES",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 13,
+     "top": 12,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "La Rioja 360 Grados Avanza Sociedad de Promoción de La Rioja SAU",
+       10
+      ],
+      [
+       "La Rioja 360 Grados Avanza Sociedad de Promoción de La Rioja S.A.U.",
+       2
+      ],
+      [
+       "La Rioja Turismo SAU",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2011-10-28",
+     "top_newest": "2026-03-20",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "La Rioja Turismo SAU",
+     "new_name": "La Rioja 360 Grados Avanza Sociedad de Promoción de La Rioja SAU",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1375095,
+     "identifier": "00156621",
+     "country": "SK",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 322,
+     "top": 277,
+     "head": 1,
+     "second": 43,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej republiky",
+       277
+      ],
+      [
+       "Ministerstvo pôdohospodárstva a rozvoja vidieka SR",
+       43
+      ],
+      [
+       "Ministerstvo pôdohospodárstva a rozvija vidieka SR",
+       1
+      ],
+      [
+       "Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2011-11-10",
+     "top_newest": "2026-09-10",
+     "rival_newest": "2015-04-03",
+     "newest_is_head": false,
+     "old_name": "Ministerstvo pôdohospodárstva a rozvija vidieka SR",
+     "new_name": "Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej republiky",
+     "verdict": "change",
+     "applied_by_job": 2567
+    }
+   ]
+  },
+  {
+   "key": "applied2567#1",
+   "kind": "change",
+   "items": [
+    {
+     "org_id": 1404233,
+     "identifier": "10043113",
+     "country": "DE",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 22,
+     "top": 21,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Gemeinde Merchweiler",
+       21
+      ],
+      [
+       "Kommunale Verwaltung",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2011-11-18",
+     "top_newest": "2025-04-10",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Kommunale Verwaltung",
+     "new_name": "Gemeinde Merchweiler",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1482783,
+     "identifier": "00638927",
+     "country": "CZ",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 841,
+     "top": 655,
+     "head": 1,
+     "second": 171,
+     "clusters": 9,
+     "spellings": [
+      [
+       "Zdravotnická záchranná služba hl. m. Prahy",
+       645
+      ],
+      [
+       "Zdravotnická záchranná služba hlavního města Prahy",
+       171
+      ],
+      [
+       "Zdravotnická záchranná služba hl. města Prahy - ÚSZS",
+       5
+      ],
+      [
+       "Zdravotnická záchranná služba hl.m. Prahy",
+       5
+      ],
+      [
+       "Zdravotnická záchranná služba hl.m.Prahy",
+       5
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2011-12-09",
+     "top_newest": "2026-10-14",
+     "rival_newest": "2026-07-24",
+     "newest_is_head": false,
+     "old_name": "Zdravotnická záchranná služba hl. města Praha - územní středisko záchranné služby",
+     "new_name": "Zdravotnická záchranná služba hl. m. Prahy",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1594648,
+     "identifier": "7270134501",
+     "country": "PL",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 76,
+     "top": 66,
+     "head": 1,
+     "second": 9,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Komenda Wojewódzka Państwowej Straży Pożarnej w Łodzi",
+       63
+      ],
+      [
+       "Łódzki Komendant Wojewódzki Państwowej Straży Pożarnej",
+       9
+      ],
+      [
+       "KOMENDA WOJEWÓDZKA PAŃSTWOWEJ STRAŻY POŻARNEJ W ŁODZI",
+       3
+      ],
+      [
+       "Komenda Wojewódzka PSP w Łodzi",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2012-01-04",
+     "top_newest": "2026-08-26",
+     "rival_newest": "2026-01-06",
+     "newest_is_head": false,
+     "old_name": "Komenda Wojewódzka PSP w Łodzi",
+     "new_name": "Komenda Wojewódzka Państwowej Straży Pożarnej w Łodzi",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1620777,
+     "identifier": "28046153",
+     "country": "CZ",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 50,
+     "top": 41,
+     "head": 9,
+     "second": 9,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Čistá Plzeň, s.r.o.",
+       36
+      ],
+      [
+       "Plzeňské komunální služby s.r.o.",
+       9
+      ],
+      [
+       "Čistá Plzeň s.r.o.",
+       3
+      ],
+      [
+       "Čistá Plzeň, s. r. o.",
+       2
+      ]
+     ],
+     "head_procs": 8,
+     "head_newest": "2015-01-31",
+     "top_newest": "2026-06-15",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Plzeňské komunální služby s.r.o.",
+     "new_name": "Čistá Plzeň, s.r.o.",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1646514,
+     "identifier": "09191560",
+     "country": "FI",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 136,
+     "top": 133,
+     "head": 1,
+     "second": 1,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Atea Finland Oy",
+       132
+      ],
+      [
+       "ATEA Finland Oy",
+       1
+      ],
+      [
+       "Atea Finland Oulu",
+       1
+      ],
+      [
+       "Atea oyj",
+       1
+      ],
+      [
+       "Ilona IT Oy",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2012-01-14",
+     "top_newest": "2026-07-15",
+     "rival_newest": "2018-04-14",
+     "newest_is_head": false,
+     "old_name": "Atea oyj",
+     "new_name": "Atea Finland Oy",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1724520,
+     "identifier": "134746488",
+     "country": "LT",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 30,
+     "top": 20,
+     "head": 10,
+     "second": 10,
+     "clusters": 2,
+     "spellings": [
+      [
+       "UAB \"Adranas\"",
+       6
+      ],
+      [
+       "UAB „Adranas“",
+       6
+      ],
+      [
+       "Uždaroji akcinė bendrovė „Adranas“",
+       6
+      ],
+      [
+       "Adranas",
+       4
+      ],
+      [
+       "UAB Adranas",
+       4
+      ]
+     ],
+     "head_procs": 8,
+     "head_newest": "2021-09-24",
+     "top_newest": "2026-09-07",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Uždaroji akcinė bendrovė \"Adranas\"",
+     "new_name": "UAB \"Adranas\"",
+     "verdict": "change",
+     "applied_by_job": 2567
+    }
+   ]
+  },
+  {
+   "key": "applied2567#2",
+   "kind": "change",
+   "items": [
+    {
+     "org_id": 1744569,
+     "identifier": "S2516001A",
+     "country": "ES",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 10,
+     "top": 8,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Subdelegación del Gobierno en Lleida",
+       8
+      ],
+      [
+       "Ministerio de Hacienda y Administraciones Públicas, Subdelegación del Gobierno en Lleida",
+       1
+      ],
+      [
+       "Ministerio de Hacienda y Administraciones Públicas. Subdelegación del Gobierno en Lleida",
+       1
+      ]
+     ],
+     "head_procs": 2,
+     "head_newest": "2015-09-17",
+     "top_newest": "2022-10-14",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Ministerio de Hacienda y Administraciones Públicas. Subdelegación del Gobierno en Lleida",
+     "new_name": "Subdelegación del Gobierno en Lleida",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1778389,
+     "identifier": "05113000",
+     "country": "DE",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 6,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Stadt Essen",
+       4
+      ],
+      [
+       "Stadt Essen - Der Oberbürgermeister, Immobilienwirtschaft",
+       1
+      ],
+      [
+       "Stadt Essen Immobilienwirtschaft",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2012-02-14",
+     "top_newest": "2026-02-18",
+     "rival_newest": "2014-09-30",
+     "newest_is_head": false,
+     "old_name": "Stadt Essen - Der Oberbürgermeister, Immobilienwirtschaft",
+     "new_name": "Stadt Essen",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1906197,
+     "identifier": "28505913",
+     "country": "CZ",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 336,
+     "top": 246,
+     "head": 84,
+     "second": 84,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Chrenek, Toman, Kotrba advokátní kancelář spol. s r. o.",
+       241
+      ],
+      [
+       "Advokátní kancelář Jansta, Kostka spol. s r.o.",
+       74
+      ],
+      [
+       "Advokátní kancelář Jansta, Kostka, spol. s.r.o.",
+       6
+      ],
+      [
+       "Chrenek, Toman, Kotrba advokátní kancelář spol. s r.o.",
+       5
+      ],
+      [
+       "Advokátní kancelář Chrenek, Kotrba spol. s r. o.",
+       4
+      ]
+     ],
+     "head_procs": 64,
+     "head_newest": "2021-12-17",
+     "top_newest": "2026-10-16",
+     "rival_newest": "2026-06-24",
+     "newest_is_head": false,
+     "old_name": "Advokátní kancelář Jansta, Kostka spol. s r.o.",
+     "new_name": "Chrenek, Toman, Kotrba advokátní kancelář spol. s r. o.",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 1926769,
+     "identifier": "08031514",
+     "country": "FI",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 57,
+     "top": 36,
+     "head": 2,
+     "second": 7,
+     "clusters": 10,
+     "spellings": [
+      [
+       "Abbott Oy",
+       34
+      ],
+      [
+       "Abbott Diabetes Care",
+       5
+      ],
+      [
+       "Abbott",
+       2
+      ],
+      [
+       "Abbott Diagnostics",
+       2
+      ],
+      [
+       "Abbott Oy Diagnostics Division",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2012-03-20",
+     "top_newest": "2026-09-25",
+     "rival_newest": "2025-08-27",
+     "newest_is_head": false,
+     "old_name": "Abbott Oy Diagnostics Division",
+     "new_name": "Abbott Oy",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2000767,
+     "identifier": "A28135614",
+     "country": "ES",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Empresa Estatal Mercados Centrales de Abastecimiento, S. A. (Mercasa)",
+       3
+      ],
+      [
+       "Mercados Centrales de Abastecimiento, SA",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2012-04-05",
+     "top_newest": "2018-10-05",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Mercados Centrales de Abastecimiento, SA",
+     "new_name": "Empresa Estatal Mercados Centrales de Abastecimiento, S. A. (Mercasa)",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2040363,
+     "identifier": "27714608",
+     "country": "CZ",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 90,
+     "top": 72,
+     "head": 18,
+     "second": 18,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Jihomoravská zdravotní, a.s.",
+       72
+      ],
+      [
+       "Thermal Pasohlávky a.s.",
+       14
+      ],
+      [
+       "Thermal Pasohlávky, a.s.",
+       4
+      ]
+     ],
+     "head_procs": 11,
+     "head_newest": "2023-02-21",
+     "top_newest": "2026-09-21",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Thermal Pasohlávky a.s.",
+     "new_name": "Jihomoravská zdravotní, a.s.",
+     "verdict": "change",
+     "applied_by_job": 2567
+    }
+   ]
+  },
+  {
+   "key": "applied2567#3",
+   "kind": "change",
+   "items": [
+    {
+     "org_id": 2049181,
+     "identifier": "124850887",
+     "country": "LT",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 140,
+     "top": 113,
+     "head": 20,
+     "second": 20,
+     "clusters": 9,
+     "spellings": [
+      [
+       "UAB Statybos projektų ekspertizės centras",
+       39
+      ],
+      [
+       "UAB \"Statybos projektų ekspertizės centras\"",
+       30
+      ],
+      [
+       "UAB „Statybos projektų ekspertizės centras“",
+       30
+      ],
+      [
+       "Uždaroji akcinė bendrovė „Statybos projektų ekspertizės centras“",
+       17
+      ],
+      [
+       "UAB \"STATYBOS PROJEKTŲ EKSPERTIZĖS CENTRAS\"",
+       6
+      ]
+     ],
+     "head_procs": 19,
+     "head_newest": "2017-10-27",
+     "top_newest": "2026-08-31",
+     "rival_newest": "2026-08-31",
+     "newest_is_head": false,
+     "old_name": "Uždaroji akcinė bendrovė \"Statybos projektų ekspertizės centras\"",
+     "new_name": "UAB Statybos projektų ekspertizės centras",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2272301,
+     "identifier": "TILBYGGEWEBASSEUNDERPKTVI3",
+     "country": "DK",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 5,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Anmodning skal fremsendes elektronisk til byggeweb A/S (se under pkt. VI.3)",
+       2
+      ],
+      [
+       "Anmodning skal fremsendes elektronisk",
+       1
+      ],
+      [
+       "Anmodning skal fremsendes elektronisk til Byggeweb A/S (se under pkt. VI.3))",
+       1
+      ],
+      [
+       "Anmodning skal fremsendes elektronisk til byggeweb A/S (se under pkt. VI.3))",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2012-06-14",
+     "top_newest": "2015-06-20",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Anmodning skal fremsendes elektronisk",
+     "new_name": "Anmodning skal fremsendes elektronisk til byggeweb A/S (se under pkt. VI.3)",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2320322,
+     "identifier": "19754558",
+     "country": "FI",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 26,
+     "top": 22,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Howden Finland Oy",
+       22
+      ],
+      [
+       "Colemont Finland Oy",
+       4
+      ]
+     ],
+     "head_procs": 4,
+     "head_newest": "2014-06-04",
+     "top_newest": "2024-08-26",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Colemont Finland Oy",
+     "new_name": "Howden Finland Oy",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2334419,
+     "identifier": "AK09892",
+     "country": "HU",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 20,
+     "top": 17,
+     "head": 3,
+     "second": 3,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Kecskeméti Katona József Múzeum",
+       17
+      ],
+      [
+       "Bács-Kiskun Megyei Múzeumi Szervezet",
+       3
+      ]
+     ],
+     "head_procs": 2,
+     "head_newest": "2013-06-07",
+     "top_newest": "2016-05-11",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Bács-Kiskun Megyei Múzeumi Szervezet",
+     "new_name": "Kecskeméti Katona József Múzeum",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2397432,
+     "identifier": "28418794",
+     "country": "CZ",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 66,
+     "top": 49,
+     "head": 17,
+     "second": 17,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Ing. Pavel Novák s.r.o.",
+       26
+      ],
+      [
+       "Ing. Pavel Novák",
+       19
+      ],
+      [
+       "ARTEZIS s.r.o.",
+       12
+      ],
+      [
+       "Ing. Pavel Novák, s.r.o.",
+       4
+      ],
+      [
+       "ARTEZIS, s.r.o.",
+       3
+      ]
+     ],
+     "head_procs": 10,
+     "head_newest": "2012-10-02",
+     "top_newest": "2024-04-25",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "ARTEZIS, s.r.o.",
+     "new_name": "Ing. Pavel Novák s.r.o.",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2496978,
+     "identifier": "00165182",
+     "country": "SK",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 294,
+     "top": 279,
+     "head": 12,
+     "second": 12,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Ministerstvo kultúry Slovenskej republiky",
+       279
+      ],
+      [
+       "Ministerstvo kultúry SR",
+       12
+      ],
+      [
+       "Bibiana",
+       3
+      ]
+     ],
+     "head_procs": 10,
+     "head_newest": "2015-03-21",
+     "top_newest": "2026-10-14",
+     "rival_newest": "2015-08-08",
+     "newest_is_head": false,
+     "old_name": "Ministerstvo kultúry SR",
+     "new_name": "Ministerstvo kultúry Slovenskej republiky",
+     "verdict": "change",
+     "applied_by_job": 2567
+    }
+   ]
+  },
+  {
+   "key": "applied2567#4",
+   "kind": "change",
+   "items": [
+    {
+     "org_id": 2496999,
+     "identifier": "00682357",
+     "country": "SK",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 53,
+     "top": 38,
+     "head": 4,
+     "second": 11,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Bibiana",
+       11
+      ],
+      [
+       "Bibiana – medzinárodný dom umenia pre deti",
+       11
+      ],
+      [
+       "BIBIANA, medzinárodný dom umenia pre deti",
+       9
+      ],
+      [
+       "Bibiana - medzinárodný dom umenia pre deti",
+       8
+      ],
+      [
+       "Bibiana-medzinárodný dom umenia pre deti",
+       4
+      ]
+     ],
+     "head_procs": 3,
+     "head_newest": "2013-01-25",
+     "top_newest": "2026-07-28",
+     "rival_newest": "2019-09-16",
+     "newest_is_head": false,
+     "old_name": "Medzinárodný dom umenia pre deti Bibiana",
+     "new_name": "Bibiana – medzinárodný dom umenia pre deti",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2505469,
+     "identifier": "6750006524",
+     "country": "PL",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 27,
+     "top": 23,
+     "head": 1,
+     "second": 3,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Regionalna Dyrekcja Lasów Państwowych w Krakowie",
+       23
+      ],
+      [
+       "Skarb Państwa PGL LP Regionalna Dyrekcja Lasów Państwowych w Krakowie",
+       3
+      ],
+      [
+       "Państwowe Gospodarstwo Leśne Lasy Państwowe; Regionalna Dyrekcja Lasów Państwowych w Krakowie",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2012-08-07",
+     "top_newest": "2026-03-11",
+     "rival_newest": "2025-03-31",
+     "newest_is_head": false,
+     "old_name": "Państwowe Gospodarstwo Leśne Lasy Państwowe; Regionalna Dyrekcja Lasów Państwowych w Krakowie",
+     "new_name": "Regionalna Dyrekcja Lasów Państwowych w Krakowie",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2517061,
+     "identifier": "37873423",
+     "country": "SK",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 14,
+     "top": 12,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Základná umelecká škola, A. Dubčeka 880, Vranov nad Topľou",
+       12
+      ],
+      [
+       "Základná umelecká škola",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2012-12-07",
+     "top_newest": "2026-02-05",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Základná umelecká škola",
+     "new_name": "Základná umelecká škola, A. Dubčeka 880, Vranov nad Topľou",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2528921,
+     "identifier": "07650698",
+     "country": "FI",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 172,
+     "top": 164,
+     "head": 8,
+     "second": 8,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Rejlers Finland Oy",
+       164
+      ],
+      [
+       "Rejlers Oy",
+       8
+      ]
+     ],
+     "head_procs": 7,
+     "head_newest": "2019-03-14",
+     "top_newest": "2026-09-11",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Rejlers Oy",
+     "new_name": "Rejlers Finland Oy",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2628938,
+     "identifier": "22874515170",
+     "country": "HR",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 1760,
+     "top": 1692,
+     "head": 2,
+     "second": 54,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Ministarstvo mora, prometa i infrastrukture",
+       1588
+      ],
+      [
+       "MINISTARSTVO MORA, PROMETA I INFRASTRUKTURE",
+       104
+      ],
+      [
+       "Ministarstvo pomorstva, prometa i infrastrukture",
+       54
+      ],
+      [
+       "Ministry of the Sea, Transport and Infrastructure",
+       12
+      ],
+      [
+       "Republic of Croatia, Ministry of Maritime Affairs, Transport and Infrastructure",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2013-04-17",
+     "top_newest": "2026-10-15",
+     "rival_newest": "2026-10-06",
+     "newest_is_head": false,
+     "old_name": "Republic of Croatia, Ministry of Maritime Affairs, Transport and Infrastructure",
+     "new_name": "Ministarstvo mora, prometa i infrastrukture",
+     "verdict": "change",
+     "applied_by_job": 2567
+    },
+    {
+     "org_id": 2675242,
+     "identifier": "AK16866",
+     "country": "HU",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": null,
+     "voting": 16,
+     "top": 14,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Nereus Park Hotel Kft.",
+       12
+      ],
+      [
+       "Nereus Park Hotel Kft",
+       2
+      ],
+      [
+       "Pannon Egyetem",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_newest": "2013-01-02",
+     "top_newest": "2018-01-12",
+     "rival_newest": null,
+     "newest_is_head": false,
+     "old_name": "Pannon Egyetem",
+     "new_name": "Nereus Park Hotel Kft.",
+     "verdict": "change",
+     "applied_by_job": 2567
+    }
+   ]
+  }
+ ]
+}

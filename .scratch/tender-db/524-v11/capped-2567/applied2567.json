@@ -1,0 +1,185 @@
+{
+ "job": 2567,
+ "samples": [
+  {
+   "new_name": "Všeobecná nemocnica s poliklinikou Lučenec nezisková organizácia",
+   "old_name": "Všeobecná nemocnica s poliklinikou Lučenec n.o.",
+   "org_id": 1188507,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Servicio de Salud de las Illes Balears",
+   "old_name": "Servicio de Salud de las Illes Balears, Ib-Salut, Área de Salud de Menorca",
+   "org_id": 1257607,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Gdynia Container Terminal S.A.",
+   "old_name": "Gdynia Container Terminla S.A.",
+   "org_id": 1263315,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Univerzitná nemocnica - Nemocnica svätého Michala, a.s.",
+   "old_name": "Nemocnica svätého Michala, a. s.",
+   "org_id": 1272845,
+   "rule": "R1"
+  },
+  {
+   "new_name": "La Rioja 360 Grados Avanza Sociedad de Promoción de La Rioja SAU",
+   "old_name": "La Rioja Turismo SAU",
+   "org_id": 1323665,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej republiky",
+   "old_name": "Ministerstvo pôdohospodárstva a rozvija vidieka SR",
+   "org_id": 1375095,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Gemeinde Merchweiler",
+   "old_name": "Kommunale Verwaltung",
+   "org_id": 1404233,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Zdravotnická záchranná služba hl. m. Prahy",
+   "old_name": "Zdravotnická záchranná služba hl. města Praha - územní středisko záchranné služby",
+   "org_id": 1482783,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Komenda Wojewódzka Państwowej Straży Pożarnej w Łodzi",
+   "old_name": "Komenda Wojewódzka PSP w Łodzi",
+   "org_id": 1594648,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Čistá Plzeň, s.r.o.",
+   "old_name": "Plzeňské komunální služby s.r.o.",
+   "org_id": 1620777,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Atea Finland Oy",
+   "old_name": "Atea oyj",
+   "org_id": 1646514,
+   "rule": "R1"
+  },
+  {
+   "new_name": "UAB \"Adranas\"",
+   "old_name": "Uždaroji akcinė bendrovė \"Adranas\"",
+   "org_id": 1724520,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Subdelegación del Gobierno en Lleida",
+   "old_name": "Ministerio de Hacienda y Administraciones Públicas. Subdelegación del Gobierno en Lleida",
+   "org_id": 1744569,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Stadt Essen",
+   "old_name": "Stadt Essen - Der Oberbürgermeister, Immobilienwirtschaft",
+   "org_id": 1778389,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Chrenek, Toman, Kotrba advokátní kancelář spol. s r. o.",
+   "old_name": "Advokátní kancelář Jansta, Kostka spol. s r.o.",
+   "org_id": 1906197,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Abbott Oy",
+   "old_name": "Abbott Oy Diagnostics Division",
+   "org_id": 1926769,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Empresa Estatal Mercados Centrales de Abastecimiento, S. A. (Mercasa)",
+   "old_name": "Mercados Centrales de Abastecimiento, SA",
+   "org_id": 2000767,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Jihomoravská zdravotní, a.s.",
+   "old_name": "Thermal Pasohlávky a.s.",
+   "org_id": 2040363,
+   "rule": "R1"
+  },
+  {
+   "new_name": "UAB Statybos projektų ekspertizės centras",
+   "old_name": "Uždaroji akcinė bendrovė \"Statybos projektų ekspertizės centras\"",
+   "org_id": 2049181,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Anmodning skal fremsendes elektronisk til byggeweb A/S (se under pkt. VI.3)",
+   "old_name": "Anmodning skal fremsendes elektronisk",
+   "org_id": 2272301,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Howden Finland Oy",
+   "old_name": "Colemont Finland Oy",
+   "org_id": 2320322,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Kecskeméti Katona József Múzeum",
+   "old_name": "Bács-Kiskun Megyei Múzeumi Szervezet",
+   "org_id": 2334419,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Ing. Pavel Novák s.r.o.",
+   "old_name": "ARTEZIS, s.r.o.",
+   "org_id": 2397432,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Ministerstvo kultúry Slovenskej republiky",
+   "old_name": "Ministerstvo kultúry SR",
+   "org_id": 2496978,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Bibiana – medzinárodný dom umenia pre deti",
+   "old_name": "Medzinárodný dom umenia pre deti Bibiana",
+   "org_id": 2496999,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Regionalna Dyrekcja Lasów Państwowych w Krakowie",
+   "old_name": "Państwowe Gospodarstwo Leśne Lasy Państwowe; Regionalna Dyrekcja Lasów Państwowych w Krakowie",
+   "org_id": 2505469,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Základná umelecká škola, A. Dubčeka 880, Vranov nad Topľou",
+   "old_name": "Základná umelecká škola",
+   "org_id": 2517061,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Rejlers Finland Oy",
+   "old_name": "Rejlers Oy",
+   "org_id": 2528921,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Ministarstvo mora, prometa i infrastrukture",
+   "old_name": "Republic of Croatia, Ministry of Maritime Affairs, Transport and Infrastructure",
+   "org_id": 2628938,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Nereus Park Hotel Kft.",
+   "old_name": "Pannon Egyetem",
+   "org_id": 2675242,
+   "rule": "R1"
+  }
+ ]
+}
