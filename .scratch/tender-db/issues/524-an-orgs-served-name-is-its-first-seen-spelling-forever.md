@@ -1403,3 +1403,34 @@ exists to fix (renames, junk from old notices). R2 shows no such split (5 of 76 
 A post-hoc split on 90 items (one-sided p ≈ 0.06), so it is validated the only honest way: the next plan's fresh salted
 change:R1 sample (30, ≤ 1 wrong), then the canaries, the capped 500 with a dated spot check and the full run, each with
 `exclude_rules: ["R2"]`.
+
+**Build notes (2026-10-16, before the build).**
+- **The canaries pay the decided cost.** Every canary that expects `change:R1` has a head printed within the window
+  on plan 2527, so under v10 each reads `hold:head_current` (with the spelling it would serve):
+  - 1220: 2026-09-29;
+  - 11179: 2026-10-05;
+  - 791: 2026-09-04;
+  - 3042: 2026-10-08;
+  - 1919, 2762, 3406 and 6079: 2026-07-17.
+
+  The dates are real prints, not an ingest artifact. 3406's head `Staatliche Hochbauamt Freiburg` is printed by
+  TED notice 1333 (published 2026-07-17) and DOE notice 27001331 (2026-07-16). These are right fixes that v10
+  forgoes; the trade the decision made (19 rights for 4 wrongs among the in-window labelled items). The build
+  re-points these eight to `hold:head_current`. The runbook's wet canary step moves to six judged-right R1
+  changes on heads not printed for 3+ years. All six are still planned in plan 2527:
+  - 4220276 `Pöyry CM Oy` → `Ramboll CM Oy`;
+  - 4823670 `Imtech ICT Communication Solutions BV` → `Axians …`;
+  - 8092631 `Energetika Maribor d.o.o.` → `Javno podjetje Energetika Maribor d.o.o.`;
+  - 8152890 `ZD G. Radgona` → `Zdravstveni dom Gornja Radgona`;
+  - 9766149 `Karl Krátký` → `Karel Krátký`;
+  - 4993534 `Ferrmont, spol. s.r.o.` → `FERRMONT, a.s.`
+
+  Each is re-read at the first v10 plan.
+- **The junk exemption applies to `head_current` too**, as it does to `recent` and `residue`. An unfit head, or one
+  with a digits-only token the elected key lacks (v9's narrowed release), still changes, read `released`. The
+  alternative would undo the released class that passed its bar on plan 2527 (11 right, 1 neutral, 0 wrong). With
+  the exemption, canary 3042 (a v9-kept `digits` release, `(68)`) keeps `change:R1` only if its head reads junk; the
+  first plan shows which. The v10 re-judge reads `released` in full again if it grew.
+- **`as_of` is stored in the plan** (the planner's start, unix seconds). The wet pre-pass re-elects with the stored
+  plan's `as_of`, so a head printed after the plan reads `head_current` and drifts. A plan without `as_of` is
+  refused (it is also an older epoch).
