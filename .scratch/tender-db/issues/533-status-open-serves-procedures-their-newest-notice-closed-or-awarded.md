@@ -1,6 +1,6 @@
 # 533 — `status=open` serves procedures their newest notice closed or awarded: a no-winner result or UK12 termination inherits the contract notice's deadline, and DÖE sdk-0.1 award notices publish one of their own
 
-Status: ready-for-agent — unit 2 DEPLOYED `a7acb4d` 2026-10-16 05:10 UTC (gate green at `c3c1a7c`, 1281 s; built wf_9ed3c6cf-ebc, two adversarial panels with 11 + 10 findings fixed, a read-only third look with 5 minor findings, follow-ups riding the next gate). The open head is refolded: dry 2534 counted 41,733 Tenders / 64,472 notices, wet 2535 stamped 41,733, and project 2536 wrote 41,733 (39,443 verified + 2,290 corrected, 7,269 correction rows). The **Verify reads done**: `[]`, `[]`, and the newest-notice description. All 14 exemplars read as decided. Next: the three field refolds (sizing 2537/2539/2541 queued), then unit 3 (the per-lot leg, measurement) and unit 4's remaining docs.
+Status: ready-for-agent — unit 2 DEPLOYED `a7acb4d` 2026-10-16 05:10 UTC (gate green at `c3c1a7c`, 1281 s; built wf_9ed3c6cf-ebc, two adversarial panels with 11 + 10 findings fixed, a read-only third look with 5 minor findings, follow-ups riding the next gate). The open head is refolded: dry 2534 counted 41,733 Tenders / 64,472 notices, wet 2535 stamped 41,733, and project 2536 wrote 41,733 (39,443 verified + 2,290 corrected, 7,269 correction rows). The **Verify reads done**: `[]`, `[]`, and the newest-notice description. All 14 exemplars read as decided. Next: the three field refolds, sized 2026-10-16 05:40 UTC (1(b) DÖE sdk-0.1 EndDate 531,134; r2.0.9 markers 350,614; eForms BT-766 2,634,034). They are deferred until after 524 v10's rollout and run in one quiet window: they are completeness fills, `status` does not wait on them, and a refold this large can push the project into whole-corpus planning (550's took 4.3 h). Then unit 3 (the per-lot leg, measurement) and unit 4's remaining docs.
 Kind: API semantics / data quality (read layer: `status` on `/v1/tenders` and `/v1/lots`, SSE and webhook filters; the fold's head deadline)
 Relates to:
 - 273 (RESOLVED): `status` is a range on the indexed head column `t.current_deadline`; a fix must stay one.
@@ -53,6 +53,12 @@ a measurement.
 
   Each reads exactly as the re-made decision's exemplars say.
 - **Verify:** `[]`, `[]`, and the served description "By submission deadline, and by what the newest notice says …".
+- **Field refolds sized** (`expect: 1`, nothing written):
+  - 2537 `SDK01-…-TenderSubmissionDeadlinePeriod-EndDate` (notice_dates): **531,134** carriers;
+  - 2539 `TED-DPS` + the two reasons (notice_integers): **350,614**;
+  - 2541 BT-766 + national spellings (notice_codes): **2,634,034**.
+
+  The wet runs are deferred until after 524 v10's rollout (above).
 - **Follow-ups riding the next gate** (the read-only third look, wf_71cd7d33-729, 5 minor findings, all confirmed):
   - the Dates caveat and the `Status::Closed` doc still describe the single-result shape;
   - "every lot" should be "every lot of kind `Lot`";
