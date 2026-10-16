@@ -84,3 +84,27 @@ withheld rule, never a served wrong name.
   procedure, not per mention.
 - **`head_current` (v10).** About 6,520 R1 changes become holds on a head printed within 3 years. Its right/wrong
   split is measured on the first v10 plan: a hold sample read the same way as the holds above.
+
+## From 524 rule v11's gate (d), plan 2562 (2026-10-16)
+
+The cost report of wf_46642f82-a94; items in `.scratch/tender-db/524-v11/gates-2562/` (`v11_gate_items.json`,
+`rejudge2562_result.json`).
+
+- **`hold:top_stale` (v11), 20 read: 3 right, 8 neutral, 9 HARMFUL.** The hold keeps a better name out in nearly half
+  the sample:
+  - newer legal names: 9938875 Praxair → Nippon Gases Sverige AB; 10071871 RebelGroup Executives BV → Rebel Strong
+    Society;
+  - agent tails: 6160661 `Kemira Rotterdam BV (agent voor Kemira Oyj)`;
+  - list-number prefixes: 15346526 `199. Zakład …`;
+  - other-entity prints: 15082073 (a one-off print of another company), 10878449 (a s.c. partner's name);
+  - other better names: 9213677, 13897322 and 7940094.
+
+  The rival's newest print often POSTDATES the elected spelling's (9938875 rival 2026-08-12, 6160661 2026-05-21,
+  15082073 2026-09-04), so a stale top with a FRESHER rival is a supersede candidate. A direct test on `rival_newest`
+  (the diagnostic v11 stores in every dated entry) is this issue's lead: elect the rival when it is the newest
+  printed name and passes the serve holds.
+- **`hold:seat_dropped` (v11), 5 read: 3 right, 2 neutral, 0 harmful.** It holds as designed.
+- **`hold:doubled` (v11), 5 read (only those whose half differs from the head): 3 right, 1 neutral, 1 harmful.** The
+  harmful one is 5857542: a former generic head `Centro Informático Municipal`, where the doubled
+  `DonostiaTIK - DonostiaTIK` is the current body's name printed twice. The fix would be to serve the half
+  (`DonostiaTIK`), not to hold.

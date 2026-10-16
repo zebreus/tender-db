@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v11 DEPLOYED `cbc992b` 2026-10-16 11:32 UTC (built wf_067856fc-5b0: three review lenses, 7 minor doc findings confirmed and fixed; gate green at `cbc992b`). Its dry plan 2562 is running (protocol step 2). NEXT: read the plan against the expected counts (±10%: top_stale ~2,430, doubled ~91, seat_dropped ~67, placeholder_id ~10, head_current ~6,302, by_rule.R1 ~16,104; 0 unexpected canaries; undated 0), then judge the dated gates (a) stale no-rival, (b) uniform, (c) low-id offline while the 533/538 refold holds the queue, then canaries, capped 500, full.
+Status: ready-for-agent — RULE v11 DEPLOYED `cbc992b`; plan 2562 GO; protocol step 3 PASSED 2026-10-16 (wf_46642f82-a94): (a) 0 wrong / 0 reverts, so no `exclude_stale_top`; (b) 0 wrong; (c) 1 wrong / 0 reverts. Step 4 canary wet run 2565 is queued behind the 533/538 refold (2563 + project 2564). NEXT: read 2565 (8 RENAMED, 0 drifted), then step 5 capped 500 with its dated spot check, then step 6 full. Every wet run passes `exclude_rules:["R2"], exclude_released:["unfit"]`.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1783,3 +1783,34 @@ in `skip-ids.tsv`): 122 distinct items in `v11_gate_items.json`.
 
 Judged in wf_46642f82-a94 (a classifier, then a skeptic on every wrong, revert or harmful), offline while the
 533/538 refold holds the queue.
+
+## Rule v11 on prod: protocol step 3, the dated gates (2026-10-16) — PASSED
+
+Judged in wf_46642f82-a94: one classifier per group, a skeptic on every wrong, revert or harmful (34 agents), and all 122
+items read with dates. Results are in `.scratch/tender-db/524-v11/gates-2562/rejudge2562_result.json`.
+
+| gate | bar | right | neutral | wrong | reverts | result |
+| --- | --- | --- | --- | --- | --- | --- |
+| (a) stale no-rival, 30 | ≤ 1 wrong, 0 reverts | 17 | 13 | 0 | 0 | **PASS**: no `exclude_stale_top` |
+| (b) change:R1 uniform, 30 | ≤ 1 wrong | 26 | 4 | 0 | 0 | **PASS** |
+| (c) change:R1 low-id, 30 (cut 5,102,899) | ≤ 1 wrong, 0 reverts | 26 | 3 | 1 | 0 | **PASS** |
+| (d) cost: `hold:top_stale` 20 | report | 3 | 8 | 9 harmful | – | to 548 |
+| (d) cost: `hold:seat_dropped` 5 | report | 3 | 2 | 0 | – | holds right |
+| (d) cost: `hold:doubled` 5 | report | 3 | 1 | 1 harmful | – | holds right |
+
+Notes on the results:
+- **The wrongs.** (c)'s one wrong, confirmed by the skeptic, is 4609556 `McKinsey & Company` → `McKinsey`: an
+  abbreviation of the proper name (later notices also print `McKinsey & Company KB`). It is not a revert. The
+  reserve draws, kept in case (a) failed, add one more wrong: 2968772 `EPS Paul Guiraud` → `GHT Psy Sud Paris`, the
+  hospital grouping served for the hospital. It does not count, because (a) passed.
+- **(a)** reads 13 neutral, mostly respellings of an equally old head. The mechanism holds: no reverts and no
+  supersedes.
+- **(d) `top_stale` over-blocks.** 9 of 20 holds are harmful: they keep an outdated, defective or other-entity head
+  the change would fix. The harmful holds are:
+  - newer legal names: 9938875 `Praxair Sverige AB` → `Nippon Gases Sverige AB`; 10071871;
+  - agent tails: 6160661 `… (agent voor Kemira Oyj)`;
+  - list-number prefixes: 15346526 `199. Zakład …`;
+  - other-entity prints: 15082073; 10878449;
+  - and 9213677, 13897322, 7940094.
+
+  Per the protocol the class goes to issue 548, and nothing is released inside v11.

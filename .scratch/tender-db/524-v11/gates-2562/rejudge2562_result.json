@@ -1,0 +1,1667 @@
+{
+ "final": {
+  "1263315": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#13"
+  },
+  "1272845": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#15"
+  },
+  "1375095": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#14"
+  },
+  "1404233": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#4"
+  },
+  "1594648": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#11"
+  },
+  "1620777": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#11"
+  },
+  "1906197": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#10"
+  },
+  "2043044": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:doubled#0"
+  },
+  "2334419": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#1"
+  },
+  "2397432": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#11"
+  },
+  "2496978": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#13"
+  },
+  "2528921": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#14"
+  },
+  "2675242": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#3"
+  },
+  "2968772": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "change#13"
+  },
+  "3126906": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#13"
+  },
+  "3204338": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#14"
+  },
+  "3283527": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#11"
+  },
+  "3331583": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#14"
+  },
+  "3452803": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:seat_dropped#0"
+  },
+  "3453706": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#1"
+  },
+  "3516714": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#2"
+  },
+  "3555188": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#10"
+  },
+  "3597009": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#10"
+  },
+  "3599743": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#12"
+  },
+  "3652310": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#12"
+  },
+  "3657416": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#12"
+  },
+  "3855027": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#11"
+  },
+  "3951385": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#13"
+  },
+  "4007561": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#11"
+  },
+  "4082824": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#13"
+  },
+  "4094662": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#10"
+  },
+  "4220277": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#12"
+  },
+  "4235504": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#15"
+  },
+  "4395196": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#0"
+  },
+  "4431138": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#1"
+  },
+  "4460372": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#14"
+  },
+  "4599039": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#12"
+  },
+  "4609556": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "change#10"
+  },
+  "4635740": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#7"
+  },
+  "4731571": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#7"
+  },
+  "4735768": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#1"
+  },
+  "4757185": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#10"
+  },
+  "4867629": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#7"
+  },
+  "4965337": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#12"
+  },
+  "4969094": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#14"
+  },
+  "5107698": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#8"
+  },
+  "5350924": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:seat_dropped#0"
+  },
+  "5638950": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:top_stale#3"
+  },
+  "5672636": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#5"
+  },
+  "5676405": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:doubled#0"
+  },
+  "5734103": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#0"
+  },
+  "5831518": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#9"
+  },
+  "5857542": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:doubled#0"
+  },
+  "6160661": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#1"
+  },
+  "6327719": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#2"
+  },
+  "6546919": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:doubled#0"
+  },
+  "6844847": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#2"
+  },
+  "7301922": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:top_stale#1"
+  },
+  "7309421": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:doubled#0"
+  },
+  "7940094": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#2"
+  },
+  "8102499": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#8"
+  },
+  "8163810": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#9"
+  },
+  "8241524": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#1"
+  },
+  "8291325": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:top_stale#3"
+  },
+  "8302120": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#7"
+  },
+  "8386914": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:top_stale#3"
+  },
+  "8427983": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#3"
+  },
+  "8447148": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#7"
+  },
+  "8657785": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#3"
+  },
+  "8752489": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#8"
+  },
+  "9213677": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#0"
+  },
+  "9534339": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:top_stale#1"
+  },
+  "9559880": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#8"
+  },
+  "9561846": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:top_stale#1"
+  },
+  "9633397": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#0"
+  },
+  "9803103": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#4"
+  },
+  "9938875": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#0"
+  },
+  "10046511": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#4"
+  },
+  "10071871": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#3"
+  },
+  "10075795": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:top_stale#2"
+  },
+  "10135437": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#2"
+  },
+  "10368351": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:top_stale#3"
+  },
+  "10399481": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#3"
+  },
+  "10421725": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#5"
+  },
+  "10496191": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#1"
+  },
+  "10878449": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#1"
+  },
+  "10910891": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#4"
+  },
+  "10921742": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#4"
+  },
+  "11951931": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:seat_dropped#0"
+  },
+  "12396613": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#3"
+  },
+  "12726216": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#5"
+  },
+  "12800751": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#7"
+  },
+  "12941470": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#9"
+  },
+  "13067304": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#6"
+  },
+  "13591573": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#4"
+  },
+  "13655748": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#8"
+  },
+  "13887717": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#6"
+  },
+  "13897322": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#0"
+  },
+  "14016700": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#5"
+  },
+  "14066055": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#3"
+  },
+  "14308356": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#0"
+  },
+  "14335148": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#9"
+  },
+  "14415595": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#6"
+  },
+  "14715935": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#5"
+  },
+  "14802754": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:top_stale#0"
+  },
+  "14882776": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#0"
+  },
+  "15082073": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#2"
+  },
+  "15346526": {
+   "verdict": "wrong",
+   "revert": false,
+   "group": "hold:top_stale#2"
+  },
+  "15896262": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:top_stale#2"
+  },
+  "15997203": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#6"
+  },
+  "16204526": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#6"
+  },
+  "16330071": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#6"
+  },
+  "16516719": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#2"
+  },
+  "16673494": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#9"
+  },
+  "17499099": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:top_stale#0"
+  },
+  "17834452": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "change#2"
+  },
+  "18707735": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#8"
+  },
+  "19702064": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "hold:seat_dropped#0"
+  },
+  "20153605": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#9"
+  },
+  "20313467": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#0"
+  },
+  "22107996": {
+   "verdict": "right",
+   "revert": false,
+   "group": "change#5"
+  },
+  "22640992": {
+   "verdict": "right",
+   "revert": false,
+   "group": "hold:seat_dropped#0"
+  }
+ },
+ "groups": [
+  {
+   "group": "change#0",
+   "items": [
+    {
+     "org_id": 14308356,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same company (FI 27660236). Each spelling comes from only one procedure. ojs:2023-192170 (tender 7679089, published 2023-10-20) prints 'Fin Vaatturit Oy' on 6 winner lots (LOT-1/2/5/7/10/15), and those lots are all 6 of the 'top' votes. ojs:2019-169831 (tender 6475720, published 2019-11-07) prints 'Finn Vaatturit Oy' on LOT-1. The org has no other buyer or bidder notices. The newest print is 'Fin', so this is not a revert. The two names differ by one letter, and nothing I could find (notices or a web search) shows which spelling is registered. The 6-to-1 majority is lot inflation from one notice, so the change is a coin-flip, not an improvement."
+    },
+    {
+     "org_id": 5734103,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'Communauté des communes ...' is a misspelling of the French legal form; it was printed once, last on 2014-10-09. The org's newest notices all print 'de communes': tender 436812 (2024-07-31) 'Communauté de Communes du Pays d'Issoudun' as Procedure-Buyer and ReviewOrg; tender 624006 (2024-07-24) the same; tender 312248 (2024-06-19) the same; ojs:2018-153373 (6173758, 2018-07-06) 'Communauté de communes du pays d'Issoudun'; ojs:2016-327987 (5753371, 2016-12-31) 'Communauté de communes du Pays d'Issoudun'. The new name fixes the misspelling, and its casing only differs from the 2024 prints."
+    },
+    {
+     "org_id": 9633397,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'OŠ Frana Metelka Škocjan' is the abbreviated form; it was printed twice, last on 2017-04-28. The school's own notices print the full name: tender 554930 (2024-12-13) 'OSNOVNA ŠOLA FRANA METELKA ŠKOCJAN'; ojs:2022-552271 (7517529, 2023-01-18) and ojs:2018-206340 (6200883, 2022-01-26) the same in capitals; ojs:2015-326626 (5517708, 2018-10-27) and ojs:2015-088282 (5398785, 2018-08-03) 'Osnovna šola Frana Metelka Škocjan'. The new name spells out the abbreviation in the casing printed most often. It is the same school (SI 5086388000)."
+    },
+    {
+     "org_id": 20313467,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'Základná škola Morovnianska cesta' was printed only in ojs:2022-674207 (7570127, 2023-01-13). The school's two newer notices both print 'Základná škola, Morovnianska cesta 1866/55, Handlová': tender 184976 (2023-11-07) as Procedure-Buyer, and tender 942300 (2024-02-13) as Procedure-Buyer and Contract-Signatory. Slovak school names include the street address and town by convention. The registeruz.sk financial statements for IČO 31201784 (founder: Town of Handlová) carry this full form. So the address text here belongs to the legal name and is not junk. The head is a truncation without number or town, and the new name identifies the school better."
+    },
+    {
+     "org_id": 4395196,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'HaM autoopravy-predaj, s.r.o.' is an old rendering with '&' mangled to 'a'; it was last printed on 2013-11-13. Every recent notice prints 'H & M autoopravy - predaj s.r.o.': tender 1009460 (2024-09-04), tender 666459 (2024-08-09), tenders 802978 and 289822 (both 2023-12-08) as Tenderer, and ojs:2023-082027 (7627079, 2023-09-22) as winner. A CRZ contract names IČO 31559786 as 'H&M autoopravy-predaj s.r.o.', Banská Bystrica. The new name fixes an outdated, mangled head for the same company."
+    },
+    {
+     "org_id": 14882776,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same company (KRS 0000148010); only the legal form is written differently. ojs:2020-640078 (6977521, 2021-08-13) prints 'Biotronik Polska Spółka z o. o.' on LOT-2/4/6/8, and those lots are all 4 of the 'top' votes. ojs:2019-239270 (6509843, 2020-02-20) prints 'Biotronik Polska sp. z o.o.' on LOT-11/13. These are the org's only notices, one procedure each. The newest print is the new spelling, so this is not a revert. 'sp. z o.o.' is the standard abbreviation and 'Spółka z o. o.' is a half-expanded variant, so neither name is better; the majority is lot inflation."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#1",
+   "items": [
+    {
+     "org_id": 8241524,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same Slovenian school (5084032000) either way. The new name is the full legal name with the public-institution prefix ('Javni vzgojno-izobraževalni zavod' = JVIZ) in front of the head. It is no former name and no different entity. Newest buyer notice: 6748596, published 2020-11-25 (versions 2020-03-13 to 2020-11-25), prints 'Javni vzgojno-izobraževalni zavod Osnovna šola Benedikt'. The head 'Osnovna šola Benedikt' was last printed on 5601329 (2016-06-02, versions 2016-02-03 and 2016-06-02). These are the only two buyer procedures, with no winner or bidder rows. The long official form and the short form name this entity equally well, so the change neither fixes nor breaks anything."
+    },
+    {
+     "org_id": 4735768,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is outdated: DONG Energy rebranded as Ørsted in 2017. Every notice since then prints 'Orsted AB'. As buyer: 884590 (2025-01-20), 495135 (2024-10-28), 784692 (2024-10-21) and 777707 (2024-06-03, 'Soft Services ... for Ørsted'). As winner: 7347328 (2022-07-06), 6939898 (2020-12-18) and 6507422 (2019-10-30). The head was last printed as 'DONG Energy AB' on winner notice 5876975 (2017-05-13, Biogas Helsingborg). Same identifier 5566269345. No rival cluster, so top_stale does not apply."
+    },
+    {
+     "org_id": 2334419,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is the pre-2013 name. In Hungary's 2013 museum reorganisation, the Bács-Kiskun county museum organisation passed to Kecskemét and continued as 'Kecskeméti Katona József Múzeum'. It is the same contracting authority, under the same AK09892 number. The only buyer procedure is 5604150 (versions 2016-02-06 and 2016-05-11, published 2016-05-11), and it prints 'Kecskeméti Katona József Múzeum'. The head was last printed 2013-06-07 (head_newest). The head's 2 procedures are not reachable through the buyer, winner or bidder filters, so I could not open them. The new name has 17 of 20 votes. It is the org's later and current name, not a sub-unit served for the entity."
+    },
+    {
+     "org_id": 10496191,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Spanish sole trader: 18418330E is a personal NIF. The head is the person's own name. The new name is his trade name, 'Limpiezas' + his name, and both are the same entity. Winner notices that print 'LIMPIEZAS EZEQUIEL POMAR DOMINGUEZ': 7739312 (2023-09-11), 7351462 (2022-10-07, lots 1-8) and 6973282 (2021-11-16, lots 3 and 6). Notice 6916942 (2021-07-14) prints 'Limpiezas Ezequiel Pomar Domínguez'. Notice 6975570 (2022-01-31, lot 73) prints the head form 'EZEQUIEL POMAR DOMINGUEZ'. The two forms alternate, so there was no rename. The new name keeps the accent and is not an agent tail or a different entity. It is equally good, not better."
+    },
+    {
+     "org_id": 4431138,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is outdated. Thales Air Systems SAS (RCS 319 159 877) now trades as Thales LAS France SAS. Winner notices 7620095 (2023-02-01) and 7609290 (2023-01-20), TopSky framework II, print 'Thales LAS FRANCE SAS'. Notices 6923493 and 6923492 (both 2020-10-30) print 'Thales las France SAS'. The head 'Thales Air Systems S.A.S.' was last printed on 8003684 (2013-11-22, EUROCAT upgrade). No rival cluster, so top_stale does not apply."
+    },
+    {
+     "org_id": 3453706,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same company with the same name. The new name only writes out the legal form ('Kft.' becomes 'Korlátolt Felelősségű Társaság') and uses the registered capitals 'JÁSZKERÜLET'. The only buyer procedure, 6025605 (versions 2017-10-04 and 2018-01-12, published 2018-01-12), prints 'JÁSZKERÜLET Kulturális és Művészeti Közhasznú Nonprofit Korlátolt Felelősségű Társaság'. The head 'Jászkerület ... Nonprofit Kft.' was last printed 2013-06-18 (head_newest). The head's 2013 procedure is not reachable through the buyer, winner or bidder filters. Identifier AK17483. There is no rename or revert, and the short and long legal-form spellings are equally good."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#2",
+   "items": [
+    {
+     "org_id": 10135437,
+     "verdict": "right",
+     "revert": false,
+     "why": "FR SIREN/SIRET 20003591300017. The head is the syndicate's former name. The new name is the current one, printed on every notice since 2019. Buyer notices that print the head: 6023069 (2017-09-29) and 6248207 (2018-07-10), 'Syndicat d'electrification Vauclusien'; 6248207 is the last one. Every newer buyer notice prints the new name: 6621832 (2019-10-10), 6626626 (2020-01-24) and 6852401 (2021-01-15) 'Syndicat d'énergie Vauclusien'; 7516764 (2022-10-07), 7875011 (2023-10-20) and 7902462 (2023-12-06) 'syndicat D'Energie VAUCLUSIEN'; 301067 (eForms, 2024-05-24) 'Syndicat d'énergie vauclusien'. No winner rows. The bidder listing returns the same buyer procedures. The rename has been stable for 5 years, so this fixes an outdated head and is not a revert."
+    },
+    {
+     "org_id": 6844847,
+     "verdict": "right",
+     "revert": false,
+     "why": "IE VAT 8Z80458U. The org appears only as a winner, in 4 printing-services notices. 5256584 (2015-07-04, Cork IT) prints 'Clondalkin Group', which is the head's only print. 5885418 (2017-11-21, Maynooth University), 6529149 (2019-11-06, Oireachtas) and 7102538 (2022-01-25, Houses of the Oireachtas Service) all print 'Essentra Packaging Ireland Ltd'. Essentra took over Clondalkin's packaging and print business in 2015, and every later notice uses the successor's specific legal-entity name. The head is an outdated parent-group name, so the change is right and not a revert."
+    },
+    {
+     "org_id": 17834452,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "RO CUI 16962508 / RO16962508. Winner only. The two spellings alternate across the same supplier's vehicle contracts: 7107621 (2021-09-17) 'S.C. NESTE AUTOMOTIVE S.R.L.', 7367475 (2022-08-23) 'NESTE AUTOMOTIVE', 7497653 (2022-11-04) 'NESTE AUTOMOTIVE', 7632501 (2023-06-27) 'S.C. NESTE AUTOMOTIVE S.R.L.', 7713318 (2023-10-04, newest, lots 1 and 2) 'NESTE AUTOMOTIVE'. It is the same entity either way. The new name drops the 'S.C. ... S.R.L.' legal-form wrapper, which is neither better nor worse. It is not a former or superseded name."
+    },
+    {
+     "org_id": 6327719,
+     "verdict": "right",
+     "revert": false,
+     "why": "CZ IČO 64991300. Buyer only, in the joint electricity tenders of Uničov/Šternberk. 6243789 (2018-11-13) prints 'Sbor dobrovolných hasičů Horní Sukolom', the head's last print. 7448343 (2022-10-21), 7670568 (2023-03-24) and 8525791 (2023-10-11) all print 'SH ČMS - Sbor dobrovolných hasičů Horní Sukolom'. That is the form fire-brigade branches use as spolek-register names, so the newest notices consistently print it. The 'SH ČMS -' prefix names the parent association that this branch belongs to. It is not an agent tail and not a member-for-association swap. Same entity, under its current registered name."
+    },
+    {
+     "org_id": 16516719,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "PL NIP 7471528431, a sole trader (Krystian Thoma, trading as Thomex). 6826779 (2021-01-19, winner) prints 'Thomex Krystian Thoma', the head's only print. 7451771 (2022-11-25, winner), 556386 (2024-07-19, tenderer) and 1086281 (2025-02-28, tenderer) print 'KRYSTIAN THOMA THOMEX'. 684701 (2024-02-05, tenderer) prints 'Krystian Thoma Thomex'. The same words are in a different order. The new order matches what every notice since 2022 prints, but it identifies the entity no better or worse."
+    },
+    {
+     "org_id": 3516714,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "LT company code 300021499. Winner only. 5904058 (2017-10-03) prints 'Uždaroji akcinė bendrovė „Verslo ir neįgaliųjų vystymo grupė“' (legal form spelled out), the head's last print. 6225378 (2018-11-07) prints 'UAB „Verslo ir neįgaliųjų vystymo grupė“'. 6656386 (2020-02-28), 6556260 (2020-05-08) and 6600012 (2023-01-23) print 'UAB Verslo ir neįgaliųjų vystymo grupė' (6600012 lot 3 has quotes). 7590689 (2023-05-17) prints 'UAB \"Verslo ir neįgaliųjų vystymo grupė\"'. 6865015 (2024-02-02) prints 'UAB Verslo ir neįgaliųjų vystymo grupė' / 'UAB Verslo ir Neįgaliųjų Vystymo Grupė'. Same company. The new name only writes the legal form as the standard abbreviation UAB instead of spelling it out, so the two are equally good."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#3",
+   "items": [
+    {
+     "org_id": 8657785,
+     "verdict": "right",
+     "revert": false,
+     "why": "FR SIRET 35780203200031 (merged sibling 35780203200049, same SIREN 357802032). The head 'La Moselle-Maison Familiale' appears only on the 2016 notices: tender 5576032 (337030-2016, 2016-09-29) and 5574438 (337031-2016, 2016-09-29). Every later notice for this identifier prints the Batigere name: 7078303 (233511-2021, 2021-05-10) 'Batigère Maison Familiale'; 7444499 (385081-2022, 2022-07-15), 7611248 (043497-2023, 2023-01-23) and 778933 (00463412-2024, 2024-08-01) all print 'BATIGERE MAISON FAMILIALE'. On 778933 it is a co-buyer with its sister companies BATIGERE HABITAT and BATIGERE RHONES ALPES. This is a rename of the same legal entity, so the head is the outdated former name. new_name is the current name in proper case with the accent. No rival cluster, so top_stale does not apply."
+    },
+    {
+     "org_id": 2675242,
+     "verdict": "right",
+     "revert": false,
+     "why": "HU AK16866. Pannon Egyetem is a separate org, 1857821, with its own identifier AK06088. In the joint university energy procurements both appear as separate buyers: 5663639 (356516-2016, 2016-10-13) has 1857821 'Pannon Egyetem' plus this org printed 'Nereus Park Hotel Kft.', and 6009908 (013441-2018, 2018-01-12) has 1857821 'Pannon Egyetem' plus this org printed 'Nereus Park Hotel Kft'. The head's only source is 4842715 (000218-2013, 2013-01-02). There this org holds two purchasing-body mentions, 'Pannon Egyetem' and 'Nereus Park Hotel Kft.', while org 1857821 got 'Óbudai Egyetem'. That is a shifted party list, not a former name. So the head serves another entity (the parent university) for its hotel company. new_name is the entity's own name, printed on every notice that carries AK16866."
+    },
+    {
+     "org_id": 12396613,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "SE 6806076995 is a personnummer-style number, so this is a sole trader. The head 'Träd, sten & ängar' (its trading name) was printed once, on 6224517 (466001-2018, 2018-10-23, winner). The only later procedure is 553252 (Norrköpings kommun, 2024-01-24 to 2024-08-26, final 00510561-2024, 2024-08-26). Its Tenderer LOT-0001 mention, on each of four notice versions, prints the owner's register name 'HAHRE, STEFAN', and this org is a LOT-0001 winner there. Both names designate the same sole proprietorship. The trading name is not shown to be dropped; the 2024 buyer simply printed the owner's legal name. The inverted all-caps format is register style, and neither name is clearly better. Same entity, about equally good."
+    },
+    {
+     "org_id": 10399481,
+     "verdict": "right",
+     "revert": false,
+     "why": "NO 974685019 (also MVA NO974685019MVA). The head 'Victoria' (no legal form) appears only on 5744926 (384311-2017, 2017-09-29, winner LOT-1). Every later notice adds the 'AS': 7113264 (261054-2022, 2022-05-16) 'Victoria AS'; 7167223 (530849-2022, 2022-09-28) 'VICTORIA AS'; 7752202 (559455-2023, 2023-09-18) 'VICTORIA AS' on LOT-4 and LOT-5; 990737 (00609518-2024, 2024-10-09), 108756 (00127242-2025, 2025-02-26) and 530544 (00658511-2025, 2025-10-08) all print 'Victoria AS'. new_name is the full company name of the same entity and is current through 2025-10. The bare 'Victoria' head was a truncation."
+    },
+    {
+     "org_id": 14066055,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "AT FN 162725b. The head 'Maschinenring Salzburg reg. Gen. m.b.H.' is printed on 6487058 (451081-2019, 2019-09-25, winner LOT-18). The newer notices print the legal form spelled out, 'Maschinenring Salzburg registrierte Genossenschaft mit beschränkter Haftung': 6628560 (272249-2020, 2020-06-11, winner on LOTs 1/3/5/7/9/11) and 295450 (00629855-2024, 2024-10-17, Tenderer LOT-0016). Same entity and same name; only the legal-form suffix is abbreviated or written out. Both serve equally well. Not a rename and not a revert."
+    },
+    {
+     "org_id": 8427983,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "SI 5877881000. The head is the short name 'Avtohiša Kolmanič & Dokl d.o.o.', printed on 5569432 (254950-2016, 2016-07-23, winner LOT-5). The newer notices print the full registered name: 7450294 (696847-2022, 2022-12-16, winner LOT-2) and 846858 (00337621-2025, 2025-05-26, Tenderer LOT-0002) both read 'AVTOHIŠA KOLMANIČ & DOKL, trgovina in servis d.o.o.'. This is the same company: full registered name with its activity clause ('trgovina in servis') versus the registered short name. new_name is current but is no clearer than the head. Equally good, no revert."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#4",
+   "items": [
+    {
+     "org_id": 10910891,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is a procedure title, not an organization. It was printed once, in the 2018-01-30 contract notice (041234-2018, v1 of procedure 6114750). Every later notice prints the buyer as 'Město Olešnice': 6114750 v3 (213234-2018, 2018-05-18) and 6154361 'ZŠ Olešnice - Moderně a komplexně - dodávky - II' (268069-2018, 2018-06-22). The org has no winner or bidder rows. Identifier 00280755 is a CZ national IČO and fits the town as the contracting authority; 'ZŠ Olešnice' is the town's school project. The new name fixes junk text and is not a former name."
+    },
+    {
+     "org_id": 9803103,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'Tmi Jukka Similä / Hailuodon Taksi' was printed only on 8393377 (2017-05-31, winner). All later notices print 'Tmi Jukka Similä': 7113814 (2022-02-23, winner), 7706315 (2023-10-17, winner x9) and 49776 (2024-12-20, Tenderer). Identifier FI23287075 (merged 23287075) is the same sole trader. The new name is the current name. It drops a trading-name suffix that has not been printed since 2017, so it is not a revert."
+    },
+    {
+     "org_id": 13591573,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same entity and same name; only the legal form is written differently. 'Garden Kertészeti és Erdészeti Szolgáltató Kft.' was printed on 6442604 (2019-06-20, winner). The full form 'Garden Kertészeti és Erdészeti Szolgáltató Korlátolt Felelősségű Társaság' was printed on the newer 6791589 (2020-10-09, winner) and 6685914 (2020-12-23, winner x3). Kft. is the standard abbreviation of Korlátolt Felelősségű Társaság, so both serve equally well. The change is not wrong, since the newer notices print the full form."
+    },
+    {
+     "org_id": 10921742,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same company; AB is the standard abbreviation of Aktiebolag. 'SICK AB' was printed only on 6097295 (2018-01-04, winner). 'SICK Aktiebolag' is printed on 7633772 (2023-04-19, winner), 68726 (2024-01-17, Tenderer) and 100776 (2025-04-07, Tenderer). Identifier SE556463224701 (merged 5564632247) is one company. Both names serve equally well; the new one matches the current notices."
+    },
+    {
+     "org_id": 10046511,
+     "verdict": "right",
+     "revert": false,
+     "why": "In the head, 'B.' is a list marker. On 5627223 (Uppsala universitet, 2017-07-15) every winner carries it: 'B. Kärnhuset Järnfeldt Karlsson AB', 'B. Hillmarketing AB,' and 'B. Zellout AB'. Every other notice prints 'Zellout AB': 6543337 (2020-01-08), 6680932 (2020-08-07), 7235329 (2022-04-15), 7204096 (2022-10-24) and 7512534 (2023-02-07), all as winner. The new name removes the stray prefix from the same company (identifier 5566138144)."
+    },
+    {
+     "org_id": 1404233,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'Kommunale Verwaltung' is a generic type name. It was printed only on 4653180 (2011-11-18, buyer), and that notice's own text reads 'Die Gemeinde Merchweiler beabsichtigt...' with the title 'Gemeinde Merchweiler, Hauptstraße 82'. Later notices print 'Gemeinde Merchweiler' as buyer: 7715986 (2023-05-08), 316330 (2024-08-26), 927818 (2025-03-26) and 829977 (2025-04-10). Identifier 10043113 is Merchweiler's municipality code in Landkreis Neunkirchen (10043). The new name replaces the generic type with the specific entity."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#5",
+   "items": [
+    {
+     "org_id": 14016700,
+     "verdict": "right",
+     "revert": false,
+     "why": "SIRET 51373754400058 (merged 51373754400074) is Europ'TP. The head 'ETPE' was printed exactly once, on LOT-1 of 6601918 (2019-09-12), and that same notice prints 'Europ TP' three times. Every later notice prints a Europ'TP spelling: 6618563 (2019-10-02) \"EUROP'TP\" on 11 lots, 7052436 (2021-04-12) 'Europ'TP', 7665136 (2023-09-20) \"EUROP'TP\", 67398 (2026-04-23) \"EUROP'TP SAS_03/_04\", 7944731 (2026-09-01) 'EUROP TP' and 7950030 (2026-09-04) 'EUROP TP'. 'ETPE' is a one-off acronym. 'Europ TP' is the company's real name and still in use, so this replaces an abbreviation and is not a former name."
+    },
+    {
+     "org_id": 12726216,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 7781002137. The head was printed only up to mid-2021: 6321411 (2019-01-18) 'Sigma-Aldrich Sp. z o.o.', 6835213 (2020-10-26) 'Sigma-Aldrich Spółka z o.o.', 6947370 (2021-03-26) 'Sigma – Aldrich Sp. z o.o.', 6975003 (2021-07-05) 'SIGMA – ALDRICH Sp. z o.o.'. From 7096801 (2021-10-19) and 7212775 (2021-12-28) on, notices print 'Merck Life Science Sp. z o.o.', and they still do: 1006521 (2026-10-13) 'Merck Life Science sp. z o.o.', 1004044 (2026-10-15) 'Merck Life Science Sp.zo.o.', 8825351 (2026-10-16) 'Merck Life Science Sp. z o. o.'. This is a company rename, so the change fixes an outdated head with the current name."
+    },
+    {
+     "org_id": 22107996,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 5213381661. The head 'SoftMed Sp. z o. o. Członkiem Konsorcjum' ('member of the consortium') appears only on 7840988 (2023-10-13), and the consortium-role tail is junk. Every newer notice prints the plain company name: 1021611 (2026-06-17) 'Soft Med Sp. z o.o.', 339268 (2026-06-18) 'SOFTMED sp. z o.o.', 851245 (2026-06-25) 'SoftMed Sp. z o.o.'. The new name is the same company with the tail removed."
+    },
+    {
+     "org_id": 10421725,
+     "verdict": "right",
+     "revert": false,
+     "why": "SIRET 24570140400056. The head spelling with 'du' was printed only once, by the buyer itself, on 6047168 (2017-10-28) \"Communauté de communes du Pays Haut Val d'Alzette\". All of its own notices since 2024 print the name without 'du', for example 664831 (2026-01-21), 320047 (2026-04-29) and 8845212 (2026-10-15) \"Communauté de communes Pays Haut Val d'Alzette\" as Procedure-Buyer. It is the same entity, and the new name is the self-designation it uses today. The gain is marginal, close to neutral."
+    },
+    {
+     "org_id": 14715935,
+     "verdict": "right",
+     "revert": false,
+     "why": "REGON 122729525. The head \"Konsorcjum: lider: Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.)\" (consortium-leader text with a stray parenthesis) appears only on 6702164 (2020-01-14). Later notices print the clean company name: 7190618 (2021-12-10) and 7613309 (2023-03-20) 'MAŁOPOLSKIE PRZEDSIĘBIORSTWO GOSPODARKI ODPADAMI SP. Z O.O.', 557071 (2025-07-01) and 81078 (2026-02-09) 'Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.', 1067083 (2025-12-17) in upper case. The 'Miejskie ...' spelling on 7196356 (2021-12-24) is a one-off misprint and was not elected. The change removes the junk."
+    },
+    {
+     "org_id": 5672636,
+     "verdict": "right",
+     "revert": false,
+     "why": "OIB 29524210204. VIPnet d.o.o. was renamed A1 Hrvatska d.o.o. in 2018. The head was printed up to 5948311 (2017-12-19) and 6022842 (2018-03-29) 'VIPnet d.o.o.'. From 6247794 (2018-10-16) and 6208559 (2018-10-17) on, notices print 'A1 Hrvatska d.o.o.', and the newest still do: 1109988 (2026-10-05) and 596818 (2026-10-13) 'A1 Hrvatska d.o.o.'. The head is the former name, and the change serves the current one."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#6",
+   "items": [
+    {
+     "org_id": 15997203,
+     "verdict": "right",
+     "revert": false,
+     "why": "CZ IČO 64834042. The head 'Sídlo společnosti Lesní stavby, s.r.o.' starts with a junk prefix ('Sídlo společnosti' means 'registered office of the company') and was printed only once, in the 2020 version 492539-2020 (2020-10-19) of procedure 6911423. In that same procedure's 2022-05-06 result (239494-2022), the procedure-level winner already prints 'LS stavby s.r.o.'. Every later notice prints 'LS stavby s.r.o.': 7245559 (2022-03-29, winner), 7471174 (2022-08-16, winner) and 660966 (2026-06-08, Tenderer). The head is outdated and junk-prefixed, and the new name is the current one."
+    },
+    {
+     "org_id": 13887717,
+     "verdict": "right",
+     "revert": false,
+     "why": "FR SIRET 33180058100158 (SIREN 331800581, merged). 'C 3 B' appears only in 6581418 (2019-08-13, LGV+ Paris Lyon, winner LOT-1). From 6719389 (2020-12-22, winner) onward every notice prints 'C3B': 569826 (2026-01-07, Tenderer/SProvider), 856977 (2026-01-09), 820256 (2026-01-29) and 7934506 (2026-08-24), all as Tenderer. Same entity. C3B is the company's proper unspaced name, so the change fixes a spacing artifact."
+    },
+    {
+     "org_id": 16204526,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 5470052876. The head 'Suez Bielsko-Biała S.A.' was printed last in 6873510 (2020-11-24, winner LOT-1). From 7170468 (2021-12-10, winner LOT-2/3) the notices print 'PreZero Bielsko-Biała S.A.', following the takeover of Suez Polska by PreZero. Later notices: 1106772 (2025-01-09) and 33758 (2026-01-06) print 'PreZero Bielsko-Biała S.A.'; 4283 (2026-01-14) and 595422 (2026-06-30) print 'PreZero BielskoBiała S.A.'. That rival cluster is the same new name with the hyphen missing. The head is an outdated former name, and the new name is the current one, not a revert."
+    },
+    {
+     "org_id": 16330071,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 8990102145. The notices print the sp. z o.o. form up to the end of 2022: 7116699 (2021-11-23) 'Zakład Automatyki Przemysłowej INTEC Sp. z o.o.' and 7446710 (2022-12-21) '...INTEC Spółka z ograniczoną odpowiedzialnością'. From 2023-12 every notice prints 'INTEC S.A.': 317058 (2023-12-15), 443434 (2024-07-03), 526761 (2025-01-09), 1083950 (2025-02-21) and 615366 (2026-01-15), all as Tenderer. Same NIP, so this reads as a conversion of the sp. z o.o. into an S.A. The head is the outdated former legal form, the new name is current, and it is not a revert."
+    },
+    {
+     "org_id": 13067304,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 6961010818. The head is a consortium wrapper, 'Konsorcjum Zakładów Usług Leśnych ... - Lider Konsorcjum', printed only in 6328276 (2019-03-18, winner). Every other notice prints the entity itself, 'Zakład Usług Leśnych Hieronim Koszyczarek': 6640331 (2020-01-31), 6915461 (2023-02-07) and 7873844 (2024-01-19) as winner, and 519680 (2025-02-05) as Tenderer. The new name drops the consortium/leader wrapper and serves the firm's own name."
+    },
+    {
+     "org_id": 14415595,
+     "verdict": "right",
+     "revert": false,
+     "why": "ES CIF A08066896. The head 'Prolians Metalco, S. A.' appears only in the earliest notice, 6493407 (2019-11-28, winner LOT-4/5), with a Prolians group brand prefix. The very next notices already print Metalco: 6672856 (2020-07-15) 'METALCO, S.A.' and 6817791 (2020-10-12) 'Metalco, S. A.'. The newest notices continue it: 986106 (2025-05-02) 'METALCO, S.A.', 739068 (2026-02-27) 'METALCO, S.A.', 91599 (2026-03-06) 'METALCO S A' and 668254 (2026-03-27) 'Metalco, S.A.'. The elected spelling is the current, consistently printed legal name; the head was a one-off branded print. Not a revert."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#7",
+   "items": [
+    {
+     "org_id": 4731571,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 25525410 (NL), a school foundation in Heerhugowaard. The head 'Stichting Flore' appears in only one notice: 5159606 (2014-08-16, buyer). Every later buyer notice prints 'Blosse': 7683774 (2023-04-05), 945885 (2024-04-23), 286332 (2025-02-27, titled 'T62291 Blosse - De Reflector meubilair'), 186784 (2025-12-31), 200573 (2026-04-13) and 1088231 (2026-07-22). The description of 1088231 calls the buyer 'Stichting Blosse'. The foundation was renamed from Flore to Blosse, so the head is an outdated name and new_name is the current one. No rival cluster."
+    },
+    {
+     "org_id": 8447148,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 5378628000 (SI), a sole-trader butchery. The head 'Janko Sirc S.P.' was last printed in winner notice 4785177 (2017-02-16). Every winner/tenderer notice since prints the full firm name with its activity word: 'Sirc Janko s.p. - mesarstvo' in 5908387 (2020-11-03), and 'SIRC JANKO S.P. - MESARSTVO' in 5628872 (2020-10-23), 6851542 (2022-01-21), 7426864 (2022-09-27), 7831396 (2024-01-19) and 1039759 (2025-12-30). Same entity. new_name is the current registered firm form: the activity word 'mesarstvo' (butchery) is part of a Slovenian s.p. firm name, not an agent or registry tail. The head is a shorter 2017 form with the miscased 'S.P.'. Close to neutral, and in no way a revert."
+    },
+    {
+     "org_id": 8302120,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 5050596000 (SI). The head 'ZUDV Dornava' is an abbreviation, last printed in buyer notice 4933247 (2017-06-03). Already by 6337201 (2019-01-25) the buyer prints 'Zavod za usposabljanje, delo in varstvo dr. Marijana Borštnarja Dornava'. The newest buyer notices print the same name in caps: 405746 (2026-09-11), 751552 (2026-08-10) and 899038 (2026-08-03). new_name replaces the abbreviation with the institution's full proper name. No rival."
+    },
+    {
+     "org_id": 4635740,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 10914764 (EE). The head 'Osaühing Awre' is printed only in winner notice 5043574 (2014-06-28). From 5666503 (2016-08-20, winner) on, the company prints 'Forklift OÜ', and so do the newest tenderer notices: 655939 (2024-09-18), 868121 (2025-01-07) and 280145 (2025-05-20). Newer notices never print Awre again. This is the same registry code under its current name, so the head is a former name and new_name the current one. No rival."
+    },
+    {
+     "org_id": 4867629,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier OIB 10236446484 (HR). The head 'Ministarstvo pravosuđa, Kaznionica u Lepoglavi' (the prison with its parent ministry prefixed) was last printed as buyer in 5437669 (2015-08-21). All current buyer notices print the prison itself, 'KAZNIONICA U LEPOGLAVI': 1163658, 908690 and 770679 (all 2026-10-13), 650 votes in total. The rival 'Ministarstvo pravosuđa i uprave, Kaznionica u Lepoglavi' (winner notice 7326303, 2022-03-09) just carries the renamed ministry as a prefix, which confirms the prefix belongs to the parent body and is not part of the prison's name. The prison buys under its own OIB, so dropping the ministry prefix serves the correct entity name. Not top_stale: the newest print is 2026-10-13."
+    },
+    {
+     "org_id": 12800751,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 17382834 (FI). The head 'Lukkarinoja Oy/Esperi Koti Pirttikoski' (the company plus one care home unit) appears only in winner notice 6310612 (2019-01-22). Every later notice prints the legal entity alone, 'Lukkarinoja Oy': 7243591 (2022-02-16, winner), 7353471 (2023-03-31, winner), 181201 (2023-12-15, tenderer) and 39965 (2026-07-06, tenderer). new_name drops the unit tail and serves the company's current name."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#8",
+   "items": [
+    {
+     "org_id": 18707735,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 6891208247 (GET /v1/organizations/18707735: national 6891208247, 9 mentions). The head 'Sylwestr Bożejewicz prowadzący działalność gospodarczą pod firmą ...' is junk: 'Sylwestr' is misspelled and the rest is boilerplate meaning 'carrying on business under the firm'. The plan dates its only print to 2023-01-27 (tender 7297239, 056762-2023). That notice's current parties no longer carry a named mention for this org: the winner slot shows mention_name null. Newer notices print the clean firm name. 1067154 (00146988-2025, 2025-03-06, Nadl. Ustrzyki Dolne, Tenderer LOT-0010) and 973641 (00339450-2024, 2024-06-10, Nadl. Stuposiany, Tenderer LOT-0008) print 'Usługi Leśne Sylwester Bożejewicz'. 158795 (00173088-2025, 2025-03-18, Tenderer LOT-0008) and 7600836 (119602-2023, 2023-02-27, winner LOT-2) print the word-order variant 'Sylwester Bożejewicz Usługi Leśne'. The plan dates the elected spelling's newest print to 2026-03-26, but that notice does not appear in the winner/bidder lists. new_name is the same sole trader's firm name with a correct spelling and no boilerplate, so it is clearly better than the head. The rival word order would be about as good."
+    },
+    {
+     "org_id": 8102499,
+     "verdict": "right",
+     "revert": false,
+     "why": "HR OIB 78007414476 (org record confirms). The head 'OŠ Markušica' uses the abbreviation for 'Osnovna škola'; the plan's head_newest is 2016-04-22. The newest procedure, 899082 (00600649-2026, 2026-09-01, joint 'Opskrba električnom energijom' with the Vukovar-Srijem county schools), prints this org as Procedure-Buyer 'OSNOVNA ŠKOLA MARKUŠICA'. The buyer list holds only that procedure, and the org has no winner or bidder side. new_name spells out the abbreviation for the same school and is what current notices print, so it fixes an abbreviated, outdated head."
+    },
+    {
+     "org_id": 8752489,
+     "verdict": "right",
+     "revert": false,
+     "why": "SI registration 5925983000 (org record confirms). All recent notices print the full registered name 'BIROTEHNA, servis in vzdrževanje računalniške in pisarniške opreme, d.o.o.': 606001 (00390543-2026, 2026-06-08, MNZ, Tenderer LOT-0003), 104005 (00469133-2025, 2025-07-17, UL FF), 129878 (00060278-2025, 2025-01-29), 7396058 (2022-09-30) and 6870743 (2022-05-18). It has been printed that way since 5903805 (028902-2018, 2018-01-20, 'Birotehna, servis in ...'). The head 'Birotehna d.o.o.' appears only on 2016 notices: 5708280 (401181-2016, 2016-11-15) and 5688101 (378188-2016, 2016-10-28). new_name is the full legal name of the same company and replaces a short form last printed in 2016."
+    },
+    {
+     "org_id": 13655748,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "ES CIF B06150916 (org record confirms). The head 'Distribución Gasóleos García-Camacho, S. L.' was the registered name until a BORME change recorded 2025-11-25 (registered 2025-11-18). The company is now 'García-Camacho Energéticas S.L.' (infonif registry page), and no notice prints that name yet. The head is printed only by 6544670 (308189-2019, 2019-07-03, winner LOT-1/2). Every later notice prints new_name 'DISTRIBUCION GARCIA-CAMACHO, S.L.': 7608383 (296086-2023, 2023-05-19, winner) and the TRAGSA tenders 325393 (00069031-2026, 2026-01-30) and 930087 (00146591-2026, 2026-03-03). new_name is the trading short form buyers actually print, so it is the same entity and not a revert. However, it drops 'Gasóleos' and the accents, and neither name is the current legal one. That makes it no better than the head: equally good."
+    },
+    {
+     "org_id": 9559880,
+     "verdict": "right",
+     "revert": false,
+     "why": "SI registration 5465303000 (org record confirms). Its newest procedures all print 'VIGROS - Trgovina na debelo in drobno d.o.o.': 642411 (00365447-2026, 2026-05-28, Kobilarna Lipica, Tenderer LOT-0003), 544424 (00066908-2026, 2026-01-29, Protokolarne storitve RS), 1053350 (00407790-2025, 2025-06-25), 566697 (00052921-2025, 2025-01-24), 1000739 (00678357-2024, 2024-11-07, OŠ Koper) and 671486 (00124226-2024, 2024-02-29). That cluster has 308 of 313 votes. The head 'VIGROS d.o.o.' has 5 votes and was last printed 2017-04-29 (plan head_newest). new_name is the full legal name of the same company and replaces a short form last printed in 2017."
+    },
+    {
+     "org_id": 5107698,
+     "verdict": "right",
+     "revert": false,
+     "why": "HR OIB 92518824224 (org record confirms). Its newest procedures all print 'ŠKOLSKI SERVIS d.o.o.': 653331 (00647004-2026, 2026-09-21, OŠ Dragojle Jarnević), 336486 (00588816-2026, 2026-08-26, Sisačko-moslavačka ž.), 1092499 (00585371-2026, 2026-08-25), 532411 (00408964-2026, 2026-06-15, Grad Koprivnica), 233653 (2026-05-21) and 580135 (2026-05-12). The head is the bare 'Školski Servis', without the legal form, printed on 5562453 (140028-2016, 2016-04-22). Notices from that same period already print the legal form: 5478270 (2016-04-21) 'Školski servis d.o.o.', 5470085 (2016-04-21) 'Školski Servis d.o.o.' and 5505293 (2015-11-28) 'Školski servis d.o.o.'. The 2017 rival cluster is a consortium label, 'Zajednica ponuditelja: Školski servis d. o. o.; Orto Rea d. o. o.'. new_name is the same company with its legal form added, which completes a truncated head."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#9",
+   "items": [
+    {
+     "org_id": 14335148,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 7133063693. The head carries a role marker, '(Zamawiający)', and drops the seat. Its only print is dated 2020-01-03. Every recent notice prints the elected name as buyer: 8585484 (2026-10-09), 8578713 (2026-09-22), 891017 (2026-04-10) and 633065 (2025-10-27) all print 'Zakład Zagospodarowania Odpadów Komunalnych w Bełżycach Sp. z o.o.'. As tenderer, 383781 (2026-02-27) and 150467 (2025-02-06) print the same, and 62882 (2025-03-10) prints it with a double space. 113468 (2024-10-02) prints 'Zakład Zagospodarowania odpadów Komunalnych w Bełżycach Spółka z ograniczona odpowiedzialnością'. The new name removes the junk marker and restores 'w Bełżycach', which is part of the company's name. It is the same entity and the current name."
+    },
+    {
+     "org_id": 20153605,
+     "verdict": "right",
+     "revert": false,
+     "why": "FI 26217523 (VAT FI26217523). The head 'Ylöjärven Kiviset Oy (TYL Prokivi)' adds a joint-venture tag (TYL = työyhteenliittymä). It was printed once, on winner notice 7442742 (2022-11-25). Every later notice prints the bare company name 'Ylöjärven Kiviset Oy': 7781241 (2023-10-09) and 7740593 (2023-10-11) as winner, 605676 (2025-07-15) and 515839 (2025-12-31) as tenderer. The new name drops the JV tail and keeps the registered company name."
+    },
+    {
+     "org_id": 8163810,
+     "verdict": "right",
+     "revert": false,
+     "why": "SIRET 20000068500012 (SIREN 200000685). The head is the bare acronym 'ESPCI', last printed 2016-05-12. Every recent buyer notice prints the school's current Paris-PSL name. 8567070 (2026-07-02) prints 'ESPCI Paris - PSL'. 723778 (2026-03-26) and 144829 (2026-03-20) print 'ESPCI Paris – PSL' with a broken dash character. 505641 (2025-06-27) prints 'ESPCI Paris PSL', 312801 (2025-04-04) 'ESPCI Paris-PSL' and 789675 (2024-02-02) 'ESPCI Paris PSL'. The new name is that current name with the dash removed, so it is more specific and up to date than a bare acronym from ten years ago."
+    },
+    {
+     "org_id": 16673494,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 8491497510. The head 'Konsorcjum firm: Lider Forest Factory Maciej Frej' is a consortium phrase ('consortium of firms: leader ...'). It comes from one text-era winner notice, 6914784 (2021-02-15, Nadleśnictwo Pisz). Every later notice prints 'Factory Maciej Frej' as tenderer: 661445 (2024-11-13, Pisz), 85675 (2025-01-17, Maskulińskie) and 924804 (2026-01-29, Maskulińskie, LOT-0005). Two sibling records print the same name: org 18496738 on 7519305 (2023-02-15) and 602725 (2026-03-02), and org 18420587 on 7215600 (2022-01-14) and 7519268 (2023-01-13). So several buyers print this spelling consistently from 2022 to 2026. One caveat: the 2021 notice suggests the full trade name may be 'Forest Factory Maciej Frej', and the registry was unreachable to check. Even so, the new name drops the consortium junk and is the spelling notices print today."
+    },
+    {
+     "org_id": 5831518,
+     "verdict": "right",
+     "revert": false,
+     "why": "NL 221822144. The head 'Stichting Speciaal Onderwijs Noord- en Midden Limburg' (SSONML) is a former name. Its last print is buyer notice 5973515 (2018-03-01). From 2019 on, every buyer notice prints 'Stichting Onderwijsgroep Buitengewoon': 6464653 (2019-09-06), 6644347 (2021-11-24), 1004092 (2023-10-24), 470072 (2024-06-28), 1025717 (2026-05-13) and 8558072 (2026-07-06). This is the same foundation for special education in Noord- and Midden-Limburg (Venlo/Haelen) under its new name. The change fixes an outdated head; it is not a revert."
+    },
+    {
+     "org_id": 12941470,
+     "verdict": "right",
+     "revert": false,
+     "why": "IČO 49616374. In the ARES registry this number is 'OAT,s.r.o.' (Ústřední 423/62, Praha 10). The head 'Rekma, spol. s.r.o.' is a different company: ARES lists REKMA, spol. s r.o. under IČO 25551337 in Břeclav. Rekma was attached here only from the PDC Simost/OAT/Rekma consortium notice 6219467 (published 2022-11-15, LOT-2 to LOT-5 winners). On that notice OAT was bound to sibling org 12941468, which carries Rekma's IČO 25551337, so the two identifiers were swapped. Every later notice prints 'OAT,s.r.o.' for this org as tenderer: 40770 and 1104365 (2024-05-16), 1147564 (2024-05-17) and 1022254 (2026-10-08). The new name is this IČO's registered name and removes the stray other entity. It is not a revert, because Rekma was never OAT's name."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#10",
+   "items": [
+    {
+     "org_id": 3555188,
+     "verdict": "right",
+     "revert": false,
+     "why": "This is BG Navy Command (BULSTAT 129010196). The head 'Командване на Военноморски сили' drops the definite article. Its last print was tender 6200107 (2022-05-18, 266388-2022, buyer 'Командване на Военноморски сили'). Every later notice prints the elected spelling: 7363435 (2022-08-02) and 7726052 (2023-09-25) say 'Командване на военноморските сили', and so do 93219 (2026-04-02), 464610 (2026-06-03), 313556 (2026-06-19) and 286940 (2026-08-11). The oldest notice, 4970033 (2013-09-28), already printed 'Командване на Военноморските сили'. So the new name is the grammatical form of the proper name and the one printed today, not a former name. The lowercase 'военноморските' is only a capitalisation detail. The 'Сухопътни войски - военно формирование 22450' rival (5087365 2014-01-11, 5156929 2014-02-21) is old welded-ID noise and does not compete."
+    },
+    {
+     "org_id": 1906197,
+     "verdict": "right",
+     "revert": false,
+     "why": "This is a CZ law firm (IČO 28505913) whose head is an outdated former name. The head 'Advokátní kancelář Jansta, Kostka spol. s r.o.' appears only in old notices: 8322978 (2018-10-13) prints 'Advokátní kancelář Jansta, Kostka, spol. s.r.o.' and 6398392 (2020-01-17) prints 'Advokátní kancelář Jansta, Kostka spol. s.r.o.'; its newest print is 2021-12-17. Every recent notice prints the elected name 'Chrenek, Toman, Kotrba advokátní kancelář spol. s r. o.': 265088 (2026-07-30, tenderer and main contractor), 534127 (2026-09-17, bid), 449753 (2026-10-02, bid) and 608944 (2026-10-15, tenderer). The elected name is the firm's current name, so this fixes an outdated head."
+    },
+    {
+     "org_id": 4094662,
+     "verdict": "right",
+     "revert": false,
+     "why": "This is an SK sole trader (IČO 33912343). The head 'AST Desing – Mgr. Stuchlíková Andrea' is a misspelling ('Desing') and was printed once, on 8312617 (2013-08-31). From 2015 every notice prints the new form: 8355715 (2015-09-25) and 5315211 (2015-10-22) say 'Mgr. Andrea Stuchlíková – AST Design'. Later notices 7250684 (2022-05-11), 7345689 (2022-10-10), 141727 (2024-06-18) and 235555 (2026-04-22) print 'Mgr. Andrea Stuchlíková - AST DESIGN'. Same person, and the new name fixes the misspelling."
+    },
+    {
+     "org_id": 4609556,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "This is SE org nr 9697204320, the McKinsey & Company Kommanditbolag. The elected 'McKinsey' cuts the proper name 'McKinsey & Company' down to a short brand form, which makes it an abbreviation. Notices read: 5063774 (2014-01-11) prints the head 'McKinsey & Company'. 6341132 (2019-02-27), 6143106 (2019-03-06), 1020450 (2024-06-18), 894762 (2024-09-27) and 407033 (2025-11-14) print 'McKinsey'. 682807 (2025-10-31) prints the full legal form 'McKinsey & Company KB'. 'McKinsey' is not a former name, so no revert. But it is a worse served name than the head, and 'McKinsey & Company KB' would be better than either."
+    },
+    {
+     "org_id": 3597009,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'Upphandling av säkerhetssystem för Sundbybergs stad' is junk: a procurement title printed once, on 4976250 (2013-04-30, 'Upphandling: ramavtal – säkerhetssystem för Sundbybergs stad'). Org nr 2120000175 is the municipality. Early notices 5028116 (2013-12-05) and 5120477 (2013-12-19) print 'Sundbybergs stad'. Current notices print the elected legal name 'Sundbybergs kommun': 1128456 (2026-09-25), 8591390 (2026-09-29), 8679682 (2026-09-30) and 8844906 (2026-10-15). The new name fixes junk text and is the right entity."
+    },
+    {
+     "org_id": 4757185,
+     "verdict": "right",
+     "revert": false,
+     "why": "NO org nr 974760673 is registered as 'Registerenheten i Brønnøysund'. 'Brønnøysundregistrene' is its public brand name. The head was printed on early notices 5058343 (2014-02-08), 5094404 (2014-02-22) and 5085803 (2014-02-25), and its newest print is 2021-01-11. Recent notices print the elected registered name: 1079426 (2026-06-10), 638455 (2026-06-29, 'Registerenheten I Brønnøysund') and 618332 (2026-10-13). 194554 (2026-06-05) prints the English 'The Brønnøysund Register Centre'. It is the same entity, and the elected name is its current legal name rather than a former or sub-unit name, so the head is outdated in the notices. The small 'Oslo Tingrett' cluster is unrelated welded noise."
+    }
+   ],
+   "checks": [
+    {
+     "org_id": 4609556,
+     "first": {
+      "org_id": 4609556,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "This is SE org nr 9697204320, the McKinsey & Company Kommanditbolag. The elected 'McKinsey' cuts the proper name 'McKinsey & Company' down to a short brand form, which makes it an abbreviation. Notices read: 5063774 (2014-01-11) prints the head 'McKinsey & Company'. 6341132 (2019-02-27), 6143106 (2019-03-06), 1020450 (2024-06-18), 894762 (2024-09-27) and 407033 (2025-11-14) print 'McKinsey'. 682807 (2025-10-31) prints the full legal form 'McKinsey & Company KB'. 'McKinsey' is not a former name, so no revert. But it is a worse served name than the head, and 'McKinsey & Company KB' would be better than either."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I could not refute the first reader. Org 4609556 is SE national identifier 9697204320, and /v1/organizations confirms the identifier and the head 'McKinsey & Company'. The org appears on 20 winner-side procedures, 5 of which also list it as a bidder. I opened all 20 and read this org's mention_name on parties[]. 5063774 (2014-01-11) prints 'McKinsey & Company'. 7291090 (2022-05-30) prints 'Mckinsey & Company Kommanditbolag'. 558756 (2024-02-05) and 682807 (2025-10-31) print 'McKinsey & Company KB'. The other 16, from 6341132 (2019-02-27) to 407033 (2025-11-14), print 'McKinsey'. The entity's legal name, printed as recently as 2025-10-31, is 'McKinsey & Company KB / Kommanditbolag', so '& Company' is still part of its proper name. The elected 'McKinsey' cuts that name down to the short brand form, an abbreviation or truncation of the proper name. The head 'McKinsey & Company' is the proper name without the legal form, so 'McKinsey' is a worse served name. Other firms in the same notices are printed with full legal names ('Ernst & Young Aktiebolag', 'KPMG AB', 'Oliver Wyman AB'), so the short form is a convention of these notices, not the firm's name. 'McKinsey & Company KB' would beat both. This is not a revert: 'McKinsey' is not a former name, it is printed on the newest notice (2025-11-14), and the full form and the short form are printed side by side through 2024-2025. top_stale also does not apply: top_newest of 2025-11-14 is 336 days before 2026-10-16, under the 365-day threshold, so the change is not held."
+     }
+    }
+   ]
+  },
+  {
+   "group": "change#11",
+   "items": [
+    {
+     "org_id": 3283527,
+     "verdict": "right",
+     "revert": false,
+     "why": "SK 37781308 (org detail confirms). The org's whole buyer list is 4 procedures and every one prints the elected name: 418291 (2024-07-01) and 452999 (2024-05-03) print 'Krajská knižnica P.O.Hviezdoslava v Prešove' as Procedure-Buyer and Contract-Signatory; 6914304 (2020-12-21) and 6896934 (2020-12-15) print 'Krajská knižnica P. O. Hviezdoslava v Prešove'. It has no winner or bidder side. The head 'Knižnica P.O.Hviezdoslava v Prešove' was last printed 2013-09-14 and is the library's older name. Its notices since 2020 call it the regional ('Krajská') library. There is no rival cluster, so top_stale cannot hold even though stale_top is set. This fixes an outdated head; not a revert."
+    },
+    {
+     "org_id": 1594648,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL 7270134501. The newest buyer procedures print the spelled-out name: 39725 (2026-08-26) 'KOMENDA WOJEWÓDZKA PAŃSTWOWEJ STRAŻY POŻARNEJ W ŁODZI'; 521133 (2026-08-04), 270275 (2026-07-09, also as LotResult-Financing/Paying) and 1119259 (2026-06-10) 'Komenda Wojewódzka Państwowej Straży Pożarnej w Łodzi'. The head uses the abbreviation PSP and was printed once, in 2012-01-04. The rival 'Łódzki Komendant Wojewódzki PSP' names the commander, an organ, not the entity, so serving the Komenda is correct. The org has no winner or bidder side. Same entity with the abbreviation expanded and in current use: better."
+    },
+    {
+     "org_id": 3855027,
+     "verdict": "right",
+     "revert": false,
+     "why": "SE 5565935698. Every recent notice on each side prints 'B3 Upphandling AB'. Bidder: 8832864 (2026-10-08), 8828549 (2026-10-06), 155477 (2026-09-21) and 1076706 (2026-09-02), all as Tenderer. Winner: 8828549 (2026-10-06), 510691 (2026-08-20), 743973 (2026-04-03) and 896808 (2026-02-19). Buyer: 1180307 (2024-07-04), 7698753 (2023-06-16) and 7626191 (2023-04-07). The head 'Sentensia q AB' was last printed 2019-01-09 and the in-between 'B3 Sentensia AB' 2020-03-20. That is a rename chain, Sentensia Q to B3 Sentensia to B3 Upphandling, and the elected name is the newest link. Fixes an outdated head; not a revert."
+    },
+    {
+     "org_id": 4007561,
+     "verdict": "right",
+     "revert": false,
+     "why": "SK 36862126 (the Slovak branch). It appears on the winner side only. The head 'Agrofert Holding, a.s., organizačná zložka Agrochémia' is printed on 4980835 (2014-03-15). From five weeks later the notices print the renamed parent: 8328651 (2014-04-19) 'Agrofert, a.s., organizačná zložka Agrochémia'; 6120692 (2018-10-06), 6296636 (2018-11-23), 6431930 (2019-11-12), 8429906 (2019-12-03) and 8468662 (2021-03-09) 'Agrofert, a. s., organizačná zložka Agrochémia'; the newest, 8514744 (2023-02-03), 'AGROFERT, a. s., organizačná zložka Agrochémia'. This matches Agrofert Holding becoming AGROFERT, a.s. in 2014. There is no rival cluster, so top_stale cannot hold. Fixes an outdated head with the current branch name."
+    },
+    {
+     "org_id": 2397432,
+     "verdict": "right",
+     "revert": false,
+     "why": "CZ 28418794. The buyer, winner and bidder lists for /v1/tenders and /v1/lots all return 0 items, so no notice could be opened. The 66 mentions sit in roles those filters do not cover, likely an agent role. A second org, 6703486, carries the same identifier and is named 'Ing. Pavel Novák s.r.o.' (1 mention). The Czech commercial register (ARES) settles it: 'ARTEZIS s.r.o.' was registered 2008-06-30 and struck 2013-03-26, and 'Ing. Pavel Novák s.r.o.' has been the registered name since 2013-03-26 and is still current (record updated 2026-09-18). The plan's dates agree: the head was last printed 2012-10-02, the elected name as late as 2024-04-25. No rival cluster. Same entity, current registered name; the head is the former name."
+    },
+    {
+     "org_id": 1620777,
+     "verdict": "right",
+     "revert": false,
+     "why": "CZ 28046153. Buyer side: 833154 (2026-06-15), 331706 (2026-04-02), 421632 (2026-03-27) and 498178 (2025-09-01) all print 'Čistá Plzeň, s.r.o.' as Procedure-Buyer. Winner/bidder side: 709927 (2026-04-20) and 1129231 (2025-03-11) as Tenderer, and 7825085 (2023-12-01) as winner, all 'Čistá Plzeň, s.r.o.'. The head 'Plzeňské komunální služby s.r.o.' was last printed 2015-01-31. ARES confirms the rename: the head was registered 2009-01-08 and struck 2015-02-25, and 'Čistá Plzeň, s.r.o.' has been the name since 2015-02-25. Fixes an outdated head; not a revert."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#12",
+   "items": [
+    {
+     "org_id": 3652310,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same university (BG 000044541) either way. The head's abbreviated 'Проф.' spelling was last printed as buyer on 6655712 (2020-04-15) and on 6624762 and 6643600 (2020-05-13), all as 'Университет „Проф. д-р Асен Златаров“'. From 6867652 (2020-11-23) the org prints 'Университет „Професор д-р Асен Златаров“ — Бургас'. Every recent buyer notice prints 'УНИВЕРСИТЕТ \"ПРОФЕСОР Д-Р АСЕН ЗЛАТАРОВ\" БУРГАС': 7944654 (2026-09-01), 827326 (2026-08-24), 995105 (2026-07-31), 984571 (2026-05-15) and 330775 (2026-04-23). As tenderer it printed 'PROF DR ASEN ZLATAROV UNIVERSITY' on 317879 (2024-08-16). The new name only spells out 'Професор' and adds the seat 'Бургас', in the form the org uses now. It also fixes the head's mismatched closing quote. Against that, the head is not an outdated name: 827326's own title calls the buyer 'Бургаски държавен университет „Проф. д-р Асен Златаров“', and neither name is that current official form. Equally good, so neutral."
+    },
+    {
+     "org_id": 4965337,
+     "verdict": "right",
+     "revert": false,
+     "why": "Org nr 970896856 is KLP Skadeforsikring AS. The head 'KLP Forsikring as' was printed once, on winner notice 5136745 (2014-03-28). Two months earlier, 8006006 (2014-01-21) already printed 'KLP skadeforsikring AS'. Every recent tenderer notice prints 'KLP Skadeforsikring AS': 761931 (2026-10-14), 395643 (2026-04-13), 317049 (2026-01-21) and 190927 (2025-04-14). The new name puts back the dropped 'Skade-' and fixes the lowercase legal form. Head 1 vote vs top 54."
+    },
+    {
+     "org_id": 3599743,
+     "verdict": "right",
+     "revert": false,
+     "why": "IČO 25355996. The head 'Nehlsen Třinec, s. r. o.' appears only on buyer notice 8312863 (2013-05-02). Every later notice prints 'SMOLO CZ, s.r.o.', with the same Třinec waste business: winner 7549452 (2023-03-10) and 7740591 (2023-09-26), tenderer 938847 (2024-08-21) and 1114719 (2025-05-28, collection yard in Třinec). This looks like the same company under its later name, not a different entity sharing the IČO. The head is outdated (13 votes vs 1, no rival cluster)."
+    },
+    {
+     "org_id": 4599039,
+     "verdict": "right",
+     "revert": false,
+     "why": "Org nr 881894742 (also printed as 881894742MVA). The head 'Faveo Prosjektledelse AS' was last printed on winner notice 5534547 (2016-03-02). By 5610293 (2016-05-04, buyer) the same org printed 'WSP Norge AS', and again on winner notices 5739778 (2016-12-22) and 5779668 (2017-01-14). Recent notices print WSP Norge AS. As buyer: 8840731 (2026-10-13), and 255058 (2025-12-08) and 796839 (2025-09-09), which print 'WSP NORGE AS (Oppdragsgiver)'. As tenderer: 1086406 (2026-10-01), 262506 (2026-06-12), 146301 (2026-07-06), and 909984 (2026-06-08), which prints 'WSP Norge AS (hovedenhet)'. This is the name Faveo took after WSP acquired it, so the head is outdated and the new name is current."
+    },
+    {
+     "org_id": 3657416,
+     "verdict": "right",
+     "revert": false,
+     "why": "Y-tunnus 0592474-7. The head 'Konsulttitoimisto Markinvest Oy' appears only on winner notice 4890718 (2013-05-17). Later notices print 'Markinvest Oy': winner 5064602 (2014-10-04) and 7077019 (2023-08-30), and tenderer 1104104 (2024-04-15, the org's newest). stale_top is true, but there is no rival cluster, so top_stale correctly does not hold. The new name is the org's current shorter name, not a reversion."
+    },
+    {
+     "org_id": 4220277,
+     "verdict": "right",
+     "revert": false,
+     "why": "Y-tunnus 0794541-0. The head 'A-Insinöörit Oy' appears on winner notice 8002229 (2013-10-15). The 2019 head-cluster notice 6238694 (2019-05-07) prints only the bare brand 'A-Insinöörit'. Since 2014 the same identifier prints 'A-Insinöörit Rakennuttaminen Oy': 5001784 (2014-07-24), 8343307 (2015-01-22), 5902035 (2017-11-14) and 6033304 (2018-03-22). Recent notices agree: buyer 898899 (2026-03-03), tenderer 676187 (2026-10-01), 344692 (2026-09-18), 146063 (2026-09-09) and 687039 (2026-09-04). 181 of 194 votes say this identifier belongs to the Rakennuttaminen company, so the head is the group or brand name. The new name is the specific, current holder."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#13",
+   "items": [
+    {
+     "org_id": 1263315,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'Terminla' is a one-off typo. Only tender 4632288 (2011-10-13) prints 'Gdynia Container Terminla S.A.'. Five days later 4634894 (2011-10-18) prints 'Gdynia Container Terminal S.A.', and so do the newest buyer notices: 4880382 (2013-03-14), 4713708 (2012-11-09) and 4665808 (2012-02-03). 4638316 (2012-01-28) prints 'Gdynia Container Terminal SA'. There are no winner or bidder appearances. The org's last notice is from 2013, so the elected spelling is stale only because the org is inactive. No rival spelling exists, and the change fixes a misspelling."
+    },
+    {
+     "org_id": 3126906,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'НМТБ „Цар Борис ІІІ“' is an abbreviation, last printed 2014-03-27. The newest buyer notices all print the full name 'НАЦИОНАЛНА МНОГОПРОФИЛНА ТРАНСПОРТНА БОЛНИЦА \"ЦАР БОРИС III\"': 8839407 (2026-10-12), 8838413 (2026-10-12), 954660 (2026-07-27), 732679 (2026-07-27) and 599736 (2026-07-27). The abbreviation now shows up only inside procedure titles ('за нуждите на НМТБ...'). new_name is that same full proper name in title case, for the same entity (identifier 000662655). It expands the abbreviation."
+    },
+    {
+     "org_id": 2968772,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "Identifier 26940106300012 belongs to the Paul Guiraud hospital, and GHT Psy Sud Paris is the regional hospital grouping it runs purchasing for, not the hospital itself. Tender 1119109 (2025-07-21) prints buyer 'GHT Psy Sud Paris' but buys 'pour le compte de l'établissement public de santé d'Erasme (EPS Erasme)', which is a separate legal entity. When the hospital's own legal name is printed, it is 'GROUPE HOSPITALIER FONDATION VALLEE - PAUL GUIRAUD' in 7964405 (2026-09-09, the newest notice) and 'GH Paul Guiraud - Fondation Vallée' in 832375 (2025-07-01). 'GHT Psy Sud Paris' is printed in 7960861 (2026-09-08), 469066 (2026-07-28), 608389 (2026-07-23), 478843 (2026-06-18) and 121695 (2025-11-24). The head 'EPS Paul Guiraud' is outdated (last printed in 5661294, 2016-09-09), but the fix it needs is the Groupe Hospitalier name. Serving the grouping name is the association-for-member error in reverse. GHT is not a former name of the entity, so this is no revert."
+    },
+    {
+     "org_id": 3951385,
+     "verdict": "right",
+     "revert": false,
+     "why": "'JP' is a transposition typo. Tender 4879953 (2013-07-26) prints this winner four times: once 'ALTA-JP, s.r.o.' and three times 'ALTA-PJ, s.r.o.'. Every later notice prints 'ALTA - PJ, s.r.o.': 7104918 (2022-03-07, winner) and 653381 (2026-10-12, tenderer). There are no buyer appearances. Same entity, identifier 36223646, and the change fixes a misspelling."
+    },
+    {
+     "org_id": 2496978,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'Ministerstvo kultúry SR' is an abbreviated form, last printed 2015-03-21. The newest buyer notices all print the full official name 'Ministerstvo kultúry Slovenskej republiky': 8842428 (2026-10-14), 781963 (2026-10-13), 192538 (2026-10-13) and 8823801 (2026-10-12). It wins 279 of 294 votes. The other rival is 'Bibiana' (3 votes, newest 2015), a subordinate body, and it is not elected. Same entity, identifier 00165182."
+    },
+    {
+     "org_id": 4082824,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head has a procurement title glued onto the company name. Tender 5053407 (2013-08-29) prints 'UAB Dezinfekcijos paslaugos (Dezinfekavimo paslaugų ir dezinfekcinių priemonių pirkimas)', and that bracketed text is that procedure's title. Later notices print just the company: 'UAB \"DEZINFEKCIJOS PASLAUGOS\"' in 7328921 (2022-06-03), 'UAB \"Dezinfekcijos paslaugos\"' in 1097293 (2024-08-20) and 954801 (2024-09-23), and 'UAB DEZINFEKCIJOS PASLAUGOS' in 1138037 (2025-07-02) and 1156527 (2026-09-22). Same entity, identifier 302502912, and the change removes the junk tail."
+    }
+   ],
+   "checks": [
+    {
+     "org_id": 2968772,
+     "first": {
+      "org_id": 2968772,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "Identifier 26940106300012 belongs to the Paul Guiraud hospital, and GHT Psy Sud Paris is the regional hospital grouping it runs purchasing for, not the hospital itself. Tender 1119109 (2025-07-21) prints buyer 'GHT Psy Sud Paris' but buys 'pour le compte de l'établissement public de santé d'Erasme (EPS Erasme)', which is a separate legal entity. When the hospital's own legal name is printed, it is 'GROUPE HOSPITALIER FONDATION VALLEE - PAUL GUIRAUD' in 7964405 (2026-09-09, the newest notice) and 'GH Paul Guiraud - Fondation Vallée' in 832375 (2025-07-01). 'GHT Psy Sud Paris' is printed in 7960861 (2026-09-08), 469066 (2026-07-28), 608389 (2026-07-23), 478843 (2026-06-18) and 121695 (2025-11-24). The head 'EPS Paul Guiraud' is outdated (last printed in 5661294, 2016-09-09), but the fix it needs is the Groupe Hospitalier name. Serving the grouping name is the association-for-member error in reverse. GHT is not a former name of the entity, so this is no revert."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I could not refute it. I re-read the item and fetched 14 notices. GET /v1/organizations/2968772 gives identifier 26940106300012, merged with 26940106300830. Both are SIRETs of the hospital itself (SIREN 269401063, the Paul Guiraud public hospital in Villejuif). The org appears only as a buyer: the winner and bidder searches return nothing. The first reader's dates are all correct. The head 'EPS Paul Guiraud' was printed only in 2013-2016 (4886537, 5529169, 5661294, the last on 2016-09-09), so it is outdated. Since 2024-09, 'GHT Psy Sud Paris' is printed on almost every notice: 7960861 (2026-09-08), 469066, 608389, 478843, 121695, 937987, 8542606, 1119109, 389361, 742987 and others. But the GHT is a regional grouping of hospitals with no legal personality of its own. Its notices name several member legal entities, separately and by name: lot 1 of 608389 is for EPS Erasme and lot 3 for GH Fondation Vallée - Paul Guiraud; 1119109 buys 'pour le compte de l'EPS d'Erasme'; in 389361 'GHT Psy Sud Paris' signs the contract for CESU childcare vouchers for EPS Erasme staff. Paul Guiraud is the grouping's lead hospital and runs purchasing for it, so the GHT name sits on this SIRET as a purchasing brand. It does not name the entity. Even the hospital's own purchases carry the GHT name: 478843 (CESU for its own crèches) and 121695 (security systems at its UHSA site). When the entity's own name is printed, it is 'GROUPE HOSPITALIER FONDATION VALLEE - PAUL GUIRAUD' in 7964405, which is the newest notice (2026-09-09), and 'GH Paul Guiraud - Fondation Vallée' in 832375 (2025-07-01). The change therefore swaps a name for the right entity, outdated but correct, for the name of the grouping it belongs to and leads. That is the member-for-association error in reverse (association for member). The fix the head needs is the Groupe Hospitalier name, not the GHT. It is not a revert: the GHT is not a former name of this entity, and 'GHT Psy Sud Paris' is still printed today (2026-09-08)."
+     }
+    }
+   ]
+  },
+  {
+   "group": "change#14",
+   "items": [
+    {
+     "org_id": 4460372,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier CZ IČO 25907069. The head 'Janča V.M. s.r.o.' appears only on the org's own old buyer notices: 5109343 (2013-12-06) and 5362614 (2015-01-17). Every later notice prints 'JANČA & EMAS group s.r.o.': winner 8500938 (2022-06-29, lots 1-3, 5 and 6) and tenderer on 947431 (2026-07-24) and 325620 (2026-07-24). That is 11 votes against 2, with top_newest 2026-07-24 and head_newest 2015-01-17. The same IČO carries both names across time, so this reads as the company's rename, not a welded identifier. The new name replaces an outdated head."
+    },
+    {
+     "org_id": 4969094,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier HR OIB 34718613532, which belongs to the Direkcija itself (the head names it, with the Government as a prefix). The head spelling was last printed on buyer notices 7639152 (2023-02-21) and 7827622 (2023-08-29), as 'Vlada Republike Hrvatske - Direkcija za korištenje službenim zrakoplovom'. Every notice since prints 'DIREKCIJA ZA KORIŠTENJE SLUŽBENIH ZRAKOPLOVA': 393730 (2026-01-27, the first one after the head's last print), 8840974 and 8840819 (2026-10-13) and 14530 (2026-10-15). The vote is 280 to 8. It is the same body under its current name, without the parent prefix and the old 'službenim zrakoplovom' wording, so the head is outdated. Not an organ swap: the identifier already belongs to the Direkcija."
+    },
+    {
+     "org_id": 3204338,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Identifier LT 133724656. The company is the same; only the legal form changes between spelled out ('Uždaroji akcinė bendrovė') and abbreviated ('UAB'). The spelled-out form was last printed on winner notice 8529278 (2023-09-04, 'Uždaroji akcinė bendrovė „Kauno liftai“'); 8528588 (2023-08-23) already printed 'Kauno liftai, UAB'. Recent tenderer notices all print 'UAB \"Kauno liftai\"': 689269 (2025-04-30), 613788 (2026-01-21), 1021662 (2026-02-13) and 197354 (2026-03-05). UAB is the standard abbreviation of the legal form and the proper name 'Kauno liftai' is unchanged, so the new name is an equal spelling, not a worse one."
+    },
+    {
+     "org_id": 3331583,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier SE 2120000977, a municipal organisation number (212000-...). The head 'Tekniska kontoret' (a municipal department, a sub-unit) was printed once, on buyer notice 4935679 (2013-02-26, 'Inköp av kranbil'). Every other print names the municipality, 649 of 650 votes. Recent buyer notices print 'Ängelholms kommun': 143097 (2026-10-08) and 8838669 and 8838998 (2026-10-12). The new name replaces a sub-unit head with the entity the identifier belongs to."
+    },
+    {
+     "org_id": 1375095,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier SK IČO 00156621 (the ministry). The head 'Ministerstvo pôdohospodárstva a rozvija vidieka SR' is a misspelling ('rozvija' instead of 'rozvoja') with a single vote, last printed 2011-11-10. I could not find that notice in a buyer listing before 2011-11-20. Recent buyer notices print the full name 'Ministerstvo pôdohospodárstva a rozvoja vidieka Slovenskej republiky': 764003 (2026-06-25), 8567065 (2026-07-01) and 689538 (2026-09-10). That spelling has 277 of 322 votes. The new name is the correct spelling of the same ministry."
+    },
+    {
+     "org_id": 2528921,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier FI 07650698 (Y-tunnus 0765069-8). The head 'Rejlers Oy' was last printed on winner notice 6310402 (2019-03-14). 'Rejlers Finland Oy' already appeared on 6278079 (2019-02-22) and is the only spelling since: buyer on 603473 (2026-04-29), tenderer on 968409 (2026-06-24), 1153331 (2026-07-07), 459097 (2026-09-04) and 263495 (2026-09-11). The vote is 164 to 8. It is the same company under its current name, so the head is outdated and nothing is reverted."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "change#15",
+   "items": [
+    {
+     "org_id": 4235504,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head, Energiamarkkinavirasto, is the agency's name from before 2014; it became Energiavirasto on 2014-01-01. The org's dated head print is 2013-10-30, and none of its 25 buyer procedures from 2017-10-07 to 2026-03-13 print the old name. The newest notices, read as buyer mention_name, all print the new name: 258041 (2026-03-13) 'Energiavirasto'; 8816787 (2025-12-17) 'Energiavirasto', also as the title prefix 'Energiavirasto - Työterveys 2024-2030 DPS'; 1150883 (2024-01-24) 'Energiavirasto' as Procedure-Buyer and as Contract-Signatory on LOT-0001 and LOT-0002. The org's identifier is 17383546 (FI national). The vote is 30 of 33 for 'Energiavirasto', so this change fixes an outdated head. There are no winner or bidder appearances."
+    },
+    {
+     "org_id": 1272845,
+     "verdict": "right",
+     "revert": false,
+     "why": "The hospital, identifier 44570783 (SK national), added 'Univerzitná nemocnica - ' to its name in March 2020. The last head print is 6565918 (2020-03-11), whose buyer mention_name is 'Nemocnica svätého Michala, a.s.'. Six days later, 6727642 (2020-03-17) prints 'Univerzitná nemocnica - Nemocnica svätého Michala, a.s.', and so does 6717450 (2020-07-08). Every newer buyer notice I read prints the university-hospital name: 445293 (2026-10-15), 1031478 (2026-10-02), 7973604 (2026-09-15), 7946873 (2026-09-02) and 81092 (2026-05-08) all print 'Univerzitná nemocnica - Nemocnica svätého Michala, a. s.'. That is the same name as the proposed one, apart from the space in 'a. s.' versus 'a.s.'. The vote is 120 of 180 for the elected cluster. The head is outdated (newest print 2020-03-11), so the new name is the current name of the same legal entity. There are no winner or bidder appearances."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "hold:top_stale#0",
+   "items": [
+    {
+     "org_id": 14802754,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same sole trader both ways; only the word order differs. The head 'Zakład Usługowy „Baks” Paweł Baksalary' was printed once, on tender 6674604 (2020-02-27, TED 097304-2020, winner). Every later notice puts the person's name first: 7014356 (2021-05-03) 'Paweł Baksalary Zakład Usługowy „BAKS\"', 7603119 (2023-03-24) 'Paweł Baksalary zakład Usługowy ,,BAKS\"', 7632381 (2023-10-13) and 181544 (2024-04-04) 'PAWEŁ BAKSALARY ZAKŁAD USŁUGOWY \"BAKS\"', and the newest, 974379 (2025-02-21, tenderer) 'Paweł Baksalary Zakład Usługowy \"BAKS\"'. The 'rival' cluster is just the unquoted 'Paweł Baksalary Zakład Usługowy BAKS', so it splits the elected name rather than competing with it. Both names carry the same person, the same trade name and the same business type, so the change would only reorder words and the hold does no harm. The org has no buyer-side notices."
+    },
+    {
+     "org_id": 9213677,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "The head drops 'Бургас', which is part of the company's printed name. The head '„Ойл Плюс“ ЕООД' appears only on tender 5834544 (2017-01-19, TED 020126-2017). Every notice since prints the name with Бургас: 5904894 (2017-04-22) '„Ойл Плюс-Бургас“ ЕООД', 6074811 (2017-12-06) '„Ойл Плюс — Бургас“ ЕООД', 6155023 (2018-03-16; this is the rival cluster, the same name without ЕООД) '„Ойл Плюс — Бургас“', 6345468 (2018-11-03) 'Ойл плюс — Бургас ЕООД', 6420002 (2019-02-11) 'Ойл Плюс — Бургас ЕООД', 6477686 (2019-04-12) '„Ойл Плюс — Бургас“ ЕООД', and the newest, 729959 (2024-06-13) and 238626 (2024-07-25), both '„Ойл Плюс Бургас” ЕООД'. The rival vote is the same name with the legal form left off, so the top_stale gate fired on a split, not on a competing name. The hold keeps a one-off 2017 shortening that could be mistaken for a different 'Ойл Плюс' company; the change would serve the name printed over 7 years, so this hold is harmful. The org has no buyer-side notices."
+    },
+    {
+     "org_id": 13897322,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "Identifier 5492238909 belongs to the partner Jerzy Wasiela personally, not to the Netprint s.c. partnership. His co-partner is a separate org with his own tax ID (13897323 'Bartosz Szostak Netprint s.c.', 5492255380), and each award lists both partners as co-winners. The head 'Wasiela Jerzy Netprint s.c.' appears only on tender 6517839 (2019-08-28, TED 404518-2019) and carries the partnership name the two share. Later notices: 7266425 (2022-04-05) prints the bare 'Jerzy Wasiela' (this is the rival, a subset of the elected name, not a competing name). The two newest, 7410983 (2022-10-17, TED 568617-2022) and 7722538 (2024-01-16, TED 028641-2024), both print 'KONSULTING JERZY WASIELA', his own business name, beside 'NETPRINT S.C. Bartosz Szostak' / 'BARTOSZ SZOSTAK NETPRINT S.C.'. The elected name is still the newest print, and the hold keeps a 2019 label that serves the shared partnership name for one partner; the change would fix that. The org appears only as a winner; buyer and bidder lists are empty."
+    },
+    {
+     "org_id": 9938875,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "Org number 5566911342 is the same company under three names. 'Praxair Sverige AB' was printed on 6227622 (2018-10-05) and last on 6306313 (2019-01-11, TED 015161-2019). From 6366904 (2019-04-18, TED 183022-2019) the company appears as 'Nippon Gases Sverige AB' (after the Praxair Europe sale), through 611032 (2024-07-01), 637407 (2025-02-20) and 293704 (2025-08-19). The newest notices print a third name, 'Nippon Sanso Sverige AB': 1037347 (2026-06-11), 20542 (2026-06-25) and 1029711 (2026-08-12, tenderer). So the gate is right that the elected 'Nippon Gases' has been superseded. But holding falls back to Praxair, a name two renames old that no notice has printed in nearly 8 years, which is worse than the elected name, so the hold protects nothing. The right target is 'Nippon Sanso Sverige AB'; failing that, 'Nippon Gases Sverige AB' still beats the head. This hold is harmful."
+    },
+    {
+     "org_id": 17499099,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Both names are the same Moldovan company, with and without the FCPC prefix that Moldovan company names often carry. The head 'DataControl SRL' (3 mentions) appears only on tender 8481653 (2021-07-28, TED 384376-2021). The elected 'FCPC ”DataControl” SRL' gets 61 of its votes from a single 61-lot award, 8472295 (2021-08-02, TED 392707-2021). That same notice also welds in one stray mention of another company, '„Almicom-Tech” SRL', on LOT-213. The rival is 8488803 (2022-03-07, TED 120968-2022) 'FCPC Data Control SRL', a spacing variant of the elected name, so the gate fired on a split. The newest notice, 8822112 (2024-10-24, TED 00646224-2024, tenderer), prints 'FCPC „DataControl” SRL', which matches the elected name. The change would only add the prefix and quotes, and the elected spelling has a closing quote where the opening one belongs. The head is neither junk nor outdated in substance, so either name is acceptable. The org has no buyer-side notices."
+    }
+   ],
+   "checks": [
+    {
+     "org_id": 9213677,
+     "first": {
+      "org_id": 9213677,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "The head drops 'Бургас', which is part of the company's printed name. The head '„Ойл Плюс“ ЕООД' appears only on tender 5834544 (2017-01-19, TED 020126-2017). Every notice since prints the name with Бургас: 5904894 (2017-04-22) '„Ойл Плюс-Бургас“ ЕООД', 6074811 (2017-12-06) '„Ойл Плюс — Бургас“ ЕООД', 6155023 (2018-03-16; this is the rival cluster, the same name without ЕООД) '„Ойл Плюс — Бургас“', 6345468 (2018-11-03) 'Ойл плюс — Бургас ЕООД', 6420002 (2019-02-11) 'Ойл Плюс — Бургас ЕООД', 6477686 (2019-04-12) '„Ойл Плюс — Бургас“ ЕООД', and the newest, 729959 (2024-06-13) and 238626 (2024-07-25), both '„Ойл Плюс Бургас” ЕООД'. The rival vote is the same name with the legal form left off, so the top_stale gate fired on a split, not on a competing name. The hold keeps a one-off 2017 shortening that could be mistaken for a different 'Ойл Плюс' company; the change would serve the name printed over 7 years, so this hold is harmful. The org has no buyer-side notices."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I could not refute it. The first reader's dates are right; I re-read them myself. GET /v1/organizations/9213677 returns identifier 200676532 (BG), 16 mentions, served name '„Ойл Плюс“ ЕООД'. The org has no buyer-side notices. Its winner and bidder notices give 14 procedures that print a name for it; I opened every one.\n\nThe head '„Ойл Плюс“ ЕООД' is printed only once, on 5834544 (2017-01-19, 020126-2017, a Бургасбус tender). Every later notice includes Бургас:\n- 5904894 (2017-04-22): '„Ойл Плюс-Бургас“ ЕООД', lots 4-6\n- 6074811 (2017-12-06): '„Ойл Плюс — Бургас“ ЕООД'\n- 6121248 (2018-02-06): '„Ойл Плюс — Бургас“ ЕООД', lots 1 and 3\n- 6155023 (2018-03-16): '„Ойл Плюс — Бургас“' with no ЕООД (the rival cluster)\n- 6195845 (2018-05-05): '„Ойл плюс — Бургас“ ЕООД'\n- 6220841 (2018-06-08): '„Ойл Плюс — Бургас“ ЕООД'\n- 6345468 (2018-11-03): 'Ойл плюс — Бургас ЕООД'\n- 6420002 (2019-02-11): 'Ойл Плюс — Бургас ЕООД'\n- 6477686 (2019-04-12): '„Ойл Плюс — Бургас“ ЕООД'\n- 729959 (2024-06-13) and 238626 (2024-07-25, Гранична полиция tenderer): both '„Ойл Плюс Бургас” ЕООД'\n- 6777142 (2023-09-05) links the org only through a lot result, with no printed mention.\n\nThis is not a revert and not a newer name superseding the elected one. The elected '„Ойл Плюс — Бургас“ ЕООД' and the newest 2024 print differ only by the dash, so they are the same name. The head is the older one-off print: a 2017 shortening that drops 'Бургас', a word the company itself printed on 15 of its 16 mentions.\n\nThe top_stale gate fired only because top_newest (2024-07-25) is more than 365 days old and the 'rival' votes. But the rival is a single 2018 print of the same name without the legal form, so it is not a competing name. The hold keeps a truncated name that leaves out the distinguishing word and could be confused with another 'Ойл Плюс' firm. The change would have fixed that, so the hold is harmful."
+     }
+    },
+    {
+     "org_id": 13897322,
+     "first": {
+      "org_id": 13897322,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "Identifier 5492238909 belongs to the partner Jerzy Wasiela personally, not to the Netprint s.c. partnership. His co-partner is a separate org with his own tax ID (13897323 'Bartosz Szostak Netprint s.c.', 5492255380), and each award lists both partners as co-winners. The head 'Wasiela Jerzy Netprint s.c.' appears only on tender 6517839 (2019-08-28, TED 404518-2019) and carries the partnership name the two share. Later notices: 7266425 (2022-04-05) prints the bare 'Jerzy Wasiela' (this is the rival, a subset of the elected name, not a competing name). The two newest, 7410983 (2022-10-17, TED 568617-2022) and 7722538 (2024-01-16, TED 028641-2024), both print 'KONSULTING JERZY WASIELA', his own business name, beside 'NETPRINT S.C. Bartosz Szostak' / 'BARTOSZ SZOSTAK NETPRINT S.C.'. The elected name is still the newest print, and the hold keeps a 2019 label that serves the shared partnership name for one partner; the change would fix that. The org appears only as a winner; buyer and bidder lists are empty."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I could not refute the first reader. The org's identifier is 5492238909 (PL, national). It appears only as a winner: the buyer and bidder lists are empty, and the winner list has 4 tenders with more=false, so the org has 5 mentions in all.\n- 6517839 (2019-08-28, TED 404518-2019, buyer Wody Polskie) prints the head 'Wasiela Jerzy Netprint s.c.'. This is its only print.\n- 7266425 (2022-04-05, Politechnika Warszawska) prints the bare 'Jerzy Wasiela'. This is the rival.\n- 7410983 (2022-10-17, 11 WOG, lots 1 and 2) and 7722538 (2024-01-16, 11 WOG, lot 2) both print 'KONSULTING JERZY WASIELA'. These are the elected name's 3 votes.\n- On every award the co-winner is the other partner: 13897323 'Bartosz Szostak Netprint s.c.' with its own valid NIP 5492255380. In 2024 the co-winner is a stray org 22389550 whose NIP is mistyped as 549225380.\n\nSince each partner has his own NIP, 5492238909 belongs to Jerzy Wasiela's own business, not to the shared partnership. 'KONSULTING JERZY WASIELA' looks like that business's registered name, which a buyer would not invent. I could not confirm this in the public registries: the VAT white-list API and the TED XML were blocked, and compabase returned 403.\n\nThe elected name is the newest print and the majority, and no notice for this org comes after 2024-01-16. So this is not a revert, and no newer name supersedes it. The rival that set off top_stale is older than the elected name's newest print (2022-04 against 2024-01) and is just the bare personal name inside it, so it is no threat. The gate fires only because the newest print is more than 365 days old, and nothing here backs that worry.\n\nThe head is a one-off 2019 label, outside the 3-year head_current window. It also serves the shared partnership name 'Netprint s.c.' for one partner, so both partner orgs read as 'Netprint s.c.'. The change would fix this, so the hold is harmful, though only mildly."
+     }
+    },
+    {
+     "org_id": 9938875,
+     "first": {
+      "org_id": 9938875,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "Org number 5566911342 is the same company under three names. 'Praxair Sverige AB' was printed on 6227622 (2018-10-05) and last on 6306313 (2019-01-11, TED 015161-2019). From 6366904 (2019-04-18, TED 183022-2019) the company appears as 'Nippon Gases Sverige AB' (after the Praxair Europe sale), through 611032 (2024-07-01), 637407 (2025-02-20) and 293704 (2025-08-19). The newest notices print a third name, 'Nippon Sanso Sverige AB': 1037347 (2026-06-11), 20542 (2026-06-25) and 1029711 (2026-08-12, tenderer). So the gate is right that the elected 'Nippon Gases' has been superseded. But holding falls back to Praxair, a name two renames old that no notice has printed in nearly 8 years, which is worse than the elected name, so the hold protects nothing. The right target is 'Nippon Sanso Sverige AB'; failing that, 'Nippon Gases Sverige AB' still beats the head. This hold is harmful."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I could not refute it; every date the first reader cited is correct. GET /v1/organizations/9938875 returns identifier 5566911342 (SE), with the served name 'Praxair Sverige AB' and 24 mentions. The name this org carries on parties[], in date order:\n- 'Praxair Sverige AB' on 5894907 (2017-06-27), 6163708 (2018-05-23), 6227622 (2018-10-05) and last on 6306313 (2019-01-11, TED 015161-2019).\n- 'Nippon Gases Sverige AB' from 6366904 (2019-04-18, TED 183022-2019) through 7515286 (2023-01), 7819980 (2023-11), 847426 (2024-03), 872141 (2024-05), 611032 (2024-07), 637407 (2025-02) and 293704 (2025-08-19).\n- 'Nippon Sanso Sverige AB' on all three newest notices: 1037347 (2026-06-11, tenderer and winner), 20542 (2026-06-25) and 1029711 (2026-08-12).\n\nThe gate fired correctly on its own terms. A rival cluster votes (3) and the elected spelling was last printed 2025-08-19, which is 423 days before 2026-10-16, so 'Nippon Gases' has indeed been replaced by 'Nippon Sanso'.\n\nBut holding keeps 'Praxair Sverige AB'. That name is two renames old and no notice has printed it in nearly 8 years. It is also misleading here: since 2018 the Praxair brand belongs to Linde, and Linde Gas AB / AGA Gas AB bid against this company in the same procedures (1029711, 1037347, 20542). Serving 'Praxair' therefore points readers at the competitor's group. 'Nippon Gases Sverige AB' has 17 of 24 votes, was in use from 2019 to 2025, and belongs to the same group as the current name, so it is clearly better than the head. Holding protects nothing and keeps an outdated, misleading head that the change would mostly fix. The best target is 'Nippon Sanso Sverige AB'; failing that, 'Nippon Gases Sverige AB' still beats the head. Verdict: wrong (harmful). This is not a revert."
+     }
+    }
+   ]
+  },
+  {
+   "group": "hold:top_stale#1",
+   "items": [
+    {
+     "org_id": 6160661,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "KvK 24188834 is Kemira Rotterdam B.V. (GET /v1/organizations/6160661). The head 'Kemira Rotterdam BV (agent voor Kemira Oyj)' is an agent tail that appears on one notice only: 5308815 (2015-01-22). The clean elected name runs from 2015 to 2025 as winner/tenderer: 5414534 (2015-10-20) 'Kemira Rotterdam BV'; 5426975 (2015-12-11) 'Kemira Rotterdam BV'; 6347729 (2019-02-19) 'Kemira Rotterdam B.V.'; 6503562 (2019-09-09) 'Kemira Rotterdam bv'; 7677803 (2023-03-31), 203069 (2024-10-04) and 335734 (2025-02-26) 'Kemira Rotterdam B.V.'. The rivals that fire top_stale are not a newer name for this entity. They are representation phrases that contain the elected name: 5684471 (2017-01-04) 'Kemira Oyj — agent Kemira Rotterdam BV' and 896421 (2026-05-21, tenderer) 'Kemira Oyj vertegenwoordigd door Kemira Rotterdam B.V.'. So nothing supersedes 'Kemira Rotterdam B.V.'. The hold keeps a defective, agent-tailed head from 2015 that the change would have fixed."
+    },
+    {
+     "org_id": 10878449,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "The identifier belongs to the partnership. The sibling orgs carry 'NIP8421352410NIPSPKICYWILNEJ8421774045' (10878447) and 'NIP8421127883NIPSPKICYWILNEJ8421774045' (10878448), meaning 8421774045 is the 'NIP spółki cywilnej' of ZULiT s.c. Kazimierz Rowiński, Rafał Rowiński. The head 'Usługi Leśne Roman Kotłowski' is a stray consortium member. It appears only on 6055596 (2018-02-14, Nadleśnictwo Trzebielino LOT-4), beside 'ZULiT sc Kazimierz Rowiński Rafał Rowiński' and '1. Zakład Usług Leśnych i Transportowych Kazimierz Rowiński, 2. ZULiT sc ...'. Every later print under this org is the Rowiński partnership: 6636325 (2020-01-24, LOT-2) 'ZULIT S.C. Kazimierz Rowiński, Rafał Rowiński', and 7649976 (2023-05-26, ZSLP Białogard, LOTs 20/21/22/27/28) 'Zakład Usług Leśnych i Transportowych Sp. Cywilna Kazimierz Rowiński, Rafał Rowiński'. The 'rival' is just ZULIT's own short form from 2020, older than the elected spelling. The hold keeps another entity's name, which the change would have fixed."
+    },
+    {
+     "org_id": 7301922,
+     "verdict": "right",
+     "revert": false,
+     "why": "KvK 06064355. The head 'Leijh Kappelhof Seckel van den Dobbelsteen architecten BV' (the full form behind the acronym) appears only on 5310425 (2015-10-06). The elected 'LKSVDD architecten' appears on 6616716 (2020-03-30), 6994336 (2021-07-02), 389380 (2023-12-21, as 'LKSVDD architecten BV') and 160126 (2025-03-04). The newest notice, 622865 (2026-09-10, Agora Zaanstreek, architect selection, tenderer/winner), prints 'Architecten VOORMORGEN B.V.' for the same KvK. That looks like a rename: a newer third name that supersedes the elected spelling (I could not confirm it outside the data). top_stale did what it is for. Changing now would serve a superseded name and churn the org twice. The head is the unabbreviated form of the same former name, so holding until VOORMORGEN builds votes is correct."
+    },
+    {
+     "org_id": 9561846,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "IČO 75344769 is a natural-person trader. The head 'Mgr. Adriana Rešlová' appears only on 5864977 (2017-04-06), co-printed with 'Jan Bureš', a co-winner welded onto the same notice. That is the rival cluster, and it is old, not newer. The untitled 'Adriana Rešlová' is printed on 8489031 (2022-05-18) and 8526737 (2023-07-25) as winner, and on 392998 (2024-05-13) and 838226 (2025-07-18) as tenderer. The change only drops the academic title 'Mgr.'. It is the same person and the same name, so both forms are acceptable. The top_stale firing here is spurious (the rival dates from 2017) but harmless."
+    },
+    {
+     "org_id": 9534339,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Y-tunnus 1918588-5 (merged VAT FI19185885). Every print dates from 2017-2018. The head 'Dosti tulkkaus- ja käännöspalvelu' (singular) appears only on 5768556 (2017-03-28). The plural 'Dosti tulkkaus- ja käännöspalvelut' appears on 5914506 (2017-11-30). 6041440 (2018-05-31) prints 'Dosti tulkkaus- ja käännöspalvelut', '... käännöspalvelut Oy' and the typo '... jam käännöspalvelut Oy'. That typo is the 'rival' cluster: it comes from the same notice as the elected spelling, not a newer name, so top_stale fired only because the whole org is stale. The change is a one-letter singular-to-plural respelling of the same company. The plural is the likelier registered form (8 of 11 votes, and the later notices), but the singular head is a readable, correct-entity name, not junk. The hold costs little."
+    }
+   ],
+   "checks": [
+    {
+     "org_id": 6160661,
+     "first": {
+      "org_id": 6160661,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "KvK 24188834 is Kemira Rotterdam B.V. (GET /v1/organizations/6160661). The head 'Kemira Rotterdam BV (agent voor Kemira Oyj)' is an agent tail that appears on one notice only: 5308815 (2015-01-22). The clean elected name runs from 2015 to 2025 as winner/tenderer: 5414534 (2015-10-20) 'Kemira Rotterdam BV'; 5426975 (2015-12-11) 'Kemira Rotterdam BV'; 6347729 (2019-02-19) 'Kemira Rotterdam B.V.'; 6503562 (2019-09-09) 'Kemira Rotterdam bv'; 7677803 (2023-03-31), 203069 (2024-10-04) and 335734 (2025-02-26) 'Kemira Rotterdam B.V.'. The rivals that fire top_stale are not a newer name for this entity. They are representation phrases that contain the elected name: 5684471 (2017-01-04) 'Kemira Oyj — agent Kemira Rotterdam BV' and 896421 (2026-05-21, tenderer) 'Kemira Oyj vertegenwoordigd door Kemira Rotterdam B.V.'. So nothing supersedes 'Kemira Rotterdam B.V.'. The hold keeps a defective, agent-tailed head from 2015 that the change would have fixed."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I tried to refute the claim and could not. I re-read the item and every notice the org appears on (10 as winner/tenderer, 0 as buyer). GET /v1/organizations/6160661 returns identifier 24188834, kind national, country NL. That is a Dutch KvK number, so the entity is the Dutch company and not the Finnish parent Kemira Oyj. The head 'Kemira Rotterdam BV (agent voor Kemira Oyj)' is printed on one procedure only, 5308815 (2015-01-22), which matches head_procs=1 and head_newest 2015-01-22. The clean elected spelling appears on these notices: 5414534 (2015-10-20) and 5426975 (2015-12-11) 'Kemira Rotterdam BV'; 6347729 (2019-02-19, 3 lots) 'Kemira Rotterdam B.V.'; 6503562 (2019-09-09) 'Kemira Rotterdam bv'; 7677803 (2023-03-31), 203069 (2024-10-04, tenderer) and 335734 (2025-02-26, tenderer) 'Kemira Rotterdam B.V.'. Two notices fire top_stale: 5684471 (2017-01-04) 'Kemira Oyj — agent Kemira Rotterdam BV' and 896421 (2026-05-21, tenderer on both lots) 'Kemira Oyj vertegenwoordigd door Kemira Rotterdam B.V.'. Neither is a newer name. Both describe a representation relationship, and the 2026 one contains the elected spelling 'Kemira Rotterdam B.V.' word for word. So the newest print confirms the elected name rather than replacing it. The elected name is not older than the head (the head is the 2015-01 one-off), so this is not a revert, and no third name supersedes it. The best case for the head is that its agent wording matches the 2017 and 2026 representation phrases. But that wording describes a role, not a name: an appended agent tail is one of the listed defect classes, and the bare company name is used on 8 notices over ten years. The top_stale hold therefore keeps a defective, agent-tailed name taken from a single 2015 notice, which the change to 'Kemira Rotterdam B.V.' would have fixed. The hold is harmful, as the first reader said."
+     }
+    },
+    {
+     "org_id": 10878449,
+     "first": {
+      "org_id": 10878449,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "The identifier belongs to the partnership. The sibling orgs carry 'NIP8421352410NIPSPKICYWILNEJ8421774045' (10878447) and 'NIP8421127883NIPSPKICYWILNEJ8421774045' (10878448), meaning 8421774045 is the 'NIP spółki cywilnej' of ZULiT s.c. Kazimierz Rowiński, Rafał Rowiński. The head 'Usługi Leśne Roman Kotłowski' is a stray consortium member. It appears only on 6055596 (2018-02-14, Nadleśnictwo Trzebielino LOT-4), beside 'ZULiT sc Kazimierz Rowiński Rafał Rowiński' and '1. Zakład Usług Leśnych i Transportowych Kazimierz Rowiński, 2. ZULiT sc ...'. Every later print under this org is the Rowiński partnership: 6636325 (2020-01-24, LOT-2) 'ZULIT S.C. Kazimierz Rowiński, Rafał Rowiński', and 7649976 (2023-05-26, ZSLP Białogard, LOTs 20/21/22/27/28) 'Zakład Usług Leśnych i Transportowych Sp. Cywilna Kazimierz Rowiński, Rafał Rowiński'. The 'rival' is just ZULIT's own short form from 2020, older than the elected spelling. The hold keeps another entity's name, which the change would have fixed."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "Re-read live and the first reader's claim holds. GET /v1/organizations/10878449 returns identifier 8421774045 and head 'Usługi Leśne Roman Kotłowski', with 7 mentions. The sibling orgs show who owns that number. 10878447 carries 'NIP8421352410NIPSPKICYWILNEJ8421774045' and 10878448 carries 'NIP8421127883NIPSPKICYWILNEJ8421774045', so 8421774045 is the 'NIP spółki cywilnej' of the Rowiński partnership. Kotłowski is not one of its partners. The org shows up only as a winner; the buyer and bidder lists are empty. Its three procedures: (1) 6055596, published 2018-02-14 (decided 2018-01-16), Nadleśnictwo Trzebielino LOT-4, a three-member consortium. 10878447 is printed as '1. Zakład Usług Leśnych i Transportowych Kazimierz Rowiński, 2. ZULiT sc ...', 10878448 as 'ZULiT sc Kazimierz Rowiński Rafał Rowiński', and this org as 'Usługi Leśne Roman Kotłowski'. That is the only print of the head, and it is the stray consortium member that took the partnership's identifier. (2) 6636325, 2020-01-24, Trzebielino LOT-2, printed 'ZULIT S.C. Kazimierz Rowiński, Rafał Rowiński'. (3) 7649976, 2023-05-26, ZSLP Białogard LOTs 20/21/22/27/28, printed 'Zakład Usług Leśnych i Transportowych Sp. Cywilna Kazimierz Rowiński, Rafał Rowiński'. Every print after the head names the partnership that owns the identifier. The 'rival' cluster that set off top_stale is just ZULIT's own short form, printed in 2020, older than the elected spelling (top_newest 2023-05-26). It is not a competing entity or a newer name. So this is not a revert and not a superseding name. The elected spelling is the identifier holder's full, newest name. The hold keeps another entity's name, which the change would have fixed, so it is harmful."
+     }
+    }
+   ]
+  },
+  {
+   "group": "hold:top_stale#2",
+   "items": [
+    {
+     "org_id": 15896262,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "AT 9110023714905. The head '&' spelling was printed once: buyer on 6887437 (440970-2020, 2020-09-21, 'Salzburger Burgen & Schlösser Betriebsführung'). Every notice after that prints 'und': 7397639 (2022-05-25), 68243 (2025-01-20), 476 (2025-02-05) and 394080/467652/769271 (all 2025-04-30), each 'Salzburger Burgen und Schlösser Betriebsführung'. The newest, 883499 (2026-06-01), prints 'Land Salzburg Burgen und Schlösser Betriebsführung'. That rival is the same body with a 'Land Salzburg' prefix, not a successor name. The change is only '&' to 'und'. 'und' matches how the org's own notices print the name, but '&' is a valid brand spelling of the same entity. The hold does no harm and the change would also be fine."
+    },
+    {
+     "org_id": 15346526,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "PL NIP 7521328416. The head carries a list-row number from a group electricity purchase: '199. Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.' on 6802430 (2020-07-14) and 6840530 (2020-09-25). The same kind of junk appears as '56. ...' on 7401048 (2022-07-11). The org's own notices print it clean: 873077 (2024-05-02, Tenderer LOT-0002) 'Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.', and the newest, 8564046 (2026-07-10, Procedure-Buyer), 'Zakład Wodociągów i Usług Komunalnych „EKOWOD” Spółka z ograniczoną odpowiedzialnością'. The rival that tripped top_stale is that long legal form of the same name, not a new name. The hold keeps a defective '199.'-prefixed head that the change would fix."
+    },
+    {
+     "org_id": 7940094,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "GB 545646 is Companies House 00545646, United Living (North) Ltd. Other orgs in the DB carry that number as '00545646' / '0545646' under exactly that name. The bare name 'United Living' is also used by a different company (org 20806112, identifier 13711164), and the sibling United Living (South) is 00817560. The head 'United Living' comes only from the 2016-03-26 version (102560-2016) of 5316712, LOT-7. Every other print names the North entity: 5992232 (2018-02-28) 'United Living (North) Limited', 8440725 (2020-02-10) 'United Living (North) Ltd' on lots 1/3/4, and 5316736 (2021-10-26) 'United Living (North) Ltd'. On 5316712 (2021-10-26) LOT-1 it is 'United Living (North) Limited (appointed to Lot 7)'. Nothing newer exists. The rival is just the 'Limited' respelling, so top_stale fired on a stale org, not a renamed one. The hold serves the group brand name for the North subsidiary."
+    },
+    {
+     "org_id": 10075795,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "DK CVR 26378443. The head 'G. Tscherning' was printed on 5746829 (2017-07-14, winner). The elected 'G. Tscherning A/S' appears on 6319746 (2020-01-20), 7634236 (2023-07-10) and 919667 (2024-12-09, Tenderer LOT-0001). The newest print is a bid on 33059 version 3 (00611072-2026, 2026-09-04): 'TSCHERNING A/S'. That looks like a newer register-style name without the 'G.'. Head and elected are both the older 'G. Tscherning' form, and the change only adds 'A/S'. It would not reach the newest spelling, and the hold keeps a valid short form of the same company. Neither choice is harmful."
+    },
+    {
+     "org_id": 15082073,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "PL NIP 5891962110 is a welded identifier. On its own buyer notices the org prints 'Spółka Komunalna Żukowo': 7698401 (2023-12-15) and 7576646 (2023-12-19) 'Spółka Komunalna Żukowo Sp. z o.o.'; 890292 (2024-12-04), 749079 (2025-12-08) and 36957 (2026-09-04) 'Spółka Komunalna Żukowo Sp.zo.o.'. The head comes from a single winner print on 6716153 (179718-2020, 2020-04-17), LOT-1: 'Zakład Robót Ogólnobudowlanych Stanisław Repiński'. That is a private contractor that won a tender from Spółka Komunalna Żukowo. The buyer there was bound to a separate org, 10125527, which has no identifier. The rival 'Sp.zo.o.' cluster is the same name with different spacing, so top_stale fired on a spelling split. The hold serves another entity, a stray winner, for the municipal company's NIP. The change would fix it."
+    }
+   ],
+   "checks": [
+    {
+     "org_id": 15346526,
+     "first": {
+      "org_id": 15346526,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "PL NIP 7521328416. The head carries a list-row number from a group electricity purchase: '199. Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.' on 6802430 (2020-07-14) and 6840530 (2020-09-25). The same kind of junk appears as '56. ...' on 7401048 (2022-07-11). The org's own notices print it clean: 873077 (2024-05-02, Tenderer LOT-0002) 'Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.', and the newest, 8564046 (2026-07-10, Procedure-Buyer), 'Zakład Wodociągów i Usług Komunalnych „EKOWOD” Spółka z ograniczoną odpowiedzialnością'. The rival that tripped top_stale is that long legal form of the same name, not a new name. The hold keeps a defective '199.'-prefixed head that the change would fix."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I could not refute the first reader. I re-read the item and every notice listed for the org as buyer, winner and bidder. GET /v1/organizations/15346526 returns PL NIP 7521328416, and the head it serves is '199. Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.'. That '199.' prefix is a row number from the list of members in a group electricity purchase. It appears only on 6802430 (2020-07-14) and 6840530 (2020-09-25), both 'Sprzedaż energii elektrycznej w 2021 roku Odbiorcom Końcowym IX Grupy Zakupowej'. The same kind of junk shows up as '56. ...' on 7401048 (2022-07-11, XI Grupa Zakupowa). Every notice since then prints the name clean: 873077 (2024-05-02, Tenderer LOT-0002) has 'Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o. o.', and the newest, 8564046 (2026-07-10, Procedure-Buyer, Lot-TenderEval and Lot-TenderReceipt), has 'Zakład Wodociągów i Usług Komunalnych „EKOWOD” Spółka z ograniczoną odpowiedzialnością'. That rival_newest cluster, which tripped top_stale, is just the long legal form of the same name. It is not a newer third name, a former name, an organ or another entity. The new_name 'Zakład Wodociągów i Usług Komunalnych \"EKOWOD\" Sp. z o.o.' (33 of 45 votes) is the clean entity name. The head has 4 votes, was last printed on 2020-09-25 and has 0 procedures in the window, so this is not a revert either. The hold keeps a defective numbered head that the change would fix, so the hold is HARMFUL."
+     }
+    },
+    {
+     "org_id": 7940094,
+     "first": {
+      "org_id": 7940094,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "GB 545646 is Companies House 00545646, United Living (North) Ltd. Other orgs in the DB carry that number as '00545646' / '0545646' under exactly that name. The bare name 'United Living' is also used by a different company (org 20806112, identifier 13711164), and the sibling United Living (South) is 00817560. The head 'United Living' comes only from the 2016-03-26 version (102560-2016) of 5316712, LOT-7. Every other print names the North entity: 5992232 (2018-02-28) 'United Living (North) Limited', 8440725 (2020-02-10) 'United Living (North) Ltd' on lots 1/3/4, and 5316736 (2021-10-26) 'United Living (North) Ltd'. On 5316712 (2021-10-26) LOT-1 it is 'United Living (North) Limited (appointed to Lot 7)'. Nothing newer exists. The rival is just the 'Limited' respelling, so top_stale fired on a stale org, not a renamed one. The hold serves the group brand name for the North subsidiary."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I could not refute it; every point checks out. GET /v1/organizations/7940094 returns GB, national id 545646, served name 'United Living', 10 mentions. The org is never a buyer or a bidder. As winner it has exactly 4 procedures. 5992232 (2018-02-28) prints 'United Living (North) Limited' on LOT-1 and LOT-4, and the misspelling 'United Lviing (North) Limited' on LOT-2. 8440725 (2020-02-10) prints 'United Living (North) Ltd' on LOT-1, 3 and 4. 5316736 (2021-10-26) prints 'United Living (North) Ltd' on LOT-7 and '... (appointed to Lot 7)' on LOT-1. 5316712 (2021-10-26) prints 'United Living (North) Limited (appointed to Lot 7)' on LOT-1. Its LOT-7 'United Living' comes from lot_result notice_id 18707218, which is the 2016-03-26 version (102560-2016). That is the head's only print. The 2021 versions of the same framework reprint that same Lot-7 appointment as the North company, so the bare name was a short mention, not a different or later name. The elected spelling has the org's newest print, and no newer name exists. The rival cluster is just the 'Limited' respelling (newest 2018-02-28), so top_stale fired on an org that simply has no recent notices, not one that was renamed. The identifier lookup backs the North reading: identifier=00545646 gives org 17310605 'United Living (North) Ltd', and identifier=0545646 gives org 19093589 'United Living (North) Limited'. The bare name 'United Living' is ambiguous. It is held by org 20806112 (identifier 13711164, a different company) and by org 7303713 (no identifier, 54 mentions). A separate South subsidiary, 00817560, is served as 'United Living (South) Ltd/Limited'. So the hold keeps the group brand name, which is generic and shared with other entities, on the North subsidiary. The change to 'United Living (North) Ltd' would have fixed that. The hold is harmful; it is a hold, so revert is false."
+     }
+    },
+    {
+     "org_id": 15082073,
+     "first": {
+      "org_id": 15082073,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "PL NIP 5891962110 is a welded identifier. On its own buyer notices the org prints 'Spółka Komunalna Żukowo': 7698401 (2023-12-15) and 7576646 (2023-12-19) 'Spółka Komunalna Żukowo Sp. z o.o.'; 890292 (2024-12-04), 749079 (2025-12-08) and 36957 (2026-09-04) 'Spółka Komunalna Żukowo Sp.zo.o.'. The head comes from a single winner print on 6716153 (179718-2020, 2020-04-17), LOT-1: 'Zakład Robót Ogólnobudowlanych Stanisław Repiński'. That is a private contractor that won a tender from Spółka Komunalna Żukowo. The buyer there was bound to a separate org, 10125527, which has no identifier. The rival 'Sp.zo.o.' cluster is the same name with different spacing, so top_stale fired on a spelling split. The hold serves another entity, a stray winner, for the municipal company's NIP. The change would fix it."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "The first reader's claim holds up; I could not refute it. GET /v1/organizations/15082073 returns NIP 5891962110 with 44 mentions, and it serves the head 'Zakład Robót Ogólnobudowlanych Stanisław Repiński'. On the winner side there is only one print, on 6716153 (179718-2020, published 2020-04-17). It is the LOT-1 winner on a tender for road materials 'dla Spółki Komunalnej Żukowo sp. z o.o.'. The buyer mention on that notice ('Spółka Komunalna Żukowo sp. z o.o.') is bound to a separate org, 10125527, which is provisional and has no identifier. The bidder side is empty. Every buyer print is the municipal company: 7698401 (2023-12-15) and 7576646 (2023-12-19) print 'Spółka Komunalna Żukowo Sp. z o.o.', and 890292 (2024-12-04), 749079 (2025-12-08) and 36957 (2026-09-04) print 'Spółka Komunalna Żukowo Sp.zo.o.'. These are joint electricity purchases led by Gmina Miasta Gdańska, so the org is still active under that name. The decisive evidence is on 7698401 (2023-12-15). There the municipal company is the buyer bound to 15082073, and Repiński wins LOT-1 again but is bound to his own org, 18451109, which carries a different NIP (5910002665). So the head is a stray winner print welded to the municipal company's NIP. It names another entity, a private contractor that sold to this buyer. top_stale fired only because the newer prints spell the same name with different spacing ('Sp.zo.o.' vs 'Sp. z o.o.'). That is a spacing split, not a real rival name. The change to 'Spółka Komunalna Żukowo Sp. z o.o.' (34 of 44 votes, the same name as the 2024-2026 prints) would fix the record. The hold is harmful."
+     }
+    }
+   ]
+  },
+  {
+   "group": "hold:top_stale#3",
+   "items": [
+    {
+     "org_id": 10368351,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "SE 5562795251, appears only as a winner (no buyer or bidder rows). The head 'Högbo Brukshotell' (hotel/trade name, no legal form) was printed once: 6017729, 2017-09-22 (Sandvikens kommun). Every later print uses the elected legal-entity name 'Winn Hotels Högbo Brukshotell AB': 6184930 2018-06-02 (Gävle kommun), 6627239 2021-02-08 and 6627556 2021-02-15 (Kammarkollegiet), and 7490203 2022-11-22 (Region Gävleborg), which is the org's newest notice of any kind. The only rival is the junk misprint 'Software Högbo Brukshotell AB' (6457664, 2019-06-14), which is older than the elected spelling. No newer third name exists. top_stale fired only because the org stopped appearing after 2022. Holding is harmless: the head is the same entity's establishment name, not junk or another entity. The change would have been a mild improvement (full legal name, all prints since 2018)."
+    },
+    {
+     "org_id": 5638950,
+     "verdict": "right",
+     "revert": false,
+     "why": "HR OIB 08644280117. The head 'Brlić d.o.o.' (correct diacritic plus legal form) was printed in 5145333, 2014-09-16 (Državni ured za upravljanje državnom imovinom). The elected 'Brlic'/'BRLIC' is the same firm with the ć dropped and the legal form stripped: 6657743 2020-04-09 'Brlic', 7279116 2022-10-28 'BRLIC' (Grad Zagreb), 7518118 2023-05-31 'BRLIC', and eForms tenderer rows 986445 2024-06-27, 181529/712454/977927/982458 2024-08-02, 409665 2024-11-29, all 'BRLIC'. The rival is the consortium string 'Zajednica ponuditelja: Brlić d.o.o.; COM d.o.o.; Geodata Projekt d.o.o.' (5414961, 2015-10-31). So the change would serve a diacritic-less, form-less respelling that is worse than the head. Holding keeps the better name."
+    },
+    {
+     "org_id": 8386914,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "SI 5436362000. The head 'Autodelta d.o.o.' was printed in 5602550, 2016-07-27 (MNZ). 5816640 2017-05-17 printed 'AUTODELTA d.o.o., Ljubljana'. The elected full registered name 'Autodelta trgovsko-proizvodno podjetje export-import, marketing, zastopanje in ekonomski inženiring, d.o.o.' appears from 2017 to 2025: 5896630 2017-11-10 (with ', Dunajska 122, Ljubljana' appended, which is the rival cluster), 6087469 2018-06-19, 6544935 2019-10-18, 6735101 2020-09-21, 6235642 2022-02-04, 7252568 2022-04-05, 7769655 2023-11-10 and 661357 2025-02-13 (tenderer; the last four in caps 'AUTODELTA ...'). The head is the company's short name and the elected one its full registered name. Both are the same entity and both are acceptable. The gate fired on an address-tail variant of the elected name, not a newer name. Holding is harmless, and changing would be cosmetic."
+    },
+    {
+     "org_id": 10071871,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "NL KvK 24404227. The head 'RebelGroup Executives BV' was printed in 5841046, 2017-07-22 (VWS, 'anders werken aan complexe maatschappelijke...'). 6818259 2021-04-23 (VWS, same subject) printed 'Rebel Group Executives', which is the 'rival' cluster but really the head's own name re-tokenized. After that the same KvK is printed as 'Rebel Strong Society bv' (6987746, 2021-04-28, IUC DJI) and 'Rebel Strong Society' (7129137, 2021-10-22, VWS UBR HIS). The 2023-07-03 procedure 6142990 carries this org only in the 2021-07-09 version 348426-2021 (decided 2021-06-29), and its printed name is not exposed. No separate 'Rebel Strong Society' org exists among the NL Rebel orgs. This reads as Rebel Group renaming the BV. The elected name is the NEWEST name, newer than both the head and the rival. top_stale held only because the firm stopped appearing after 2021. The hold keeps a former name that the change would have fixed."
+    },
+    {
+     "org_id": 8291325,
+     "verdict": "right",
+     "revert": false,
+     "why": "FR SIRET 20006224800014. A 2000xxxxx SIREN belongs to a newer grouping, not the département. The département of Yvelines is SIREN 227800010. Titles show these are the digital syndicat's own procurements: 6194419 2018-08-01 'centrale d'achats Yvelines Numériques', 6400298 2019-08-05 'pour le compte d'Yvelines Numériques', 7594364 2023-04-19 'adhérents de Seine-Et-Yvelines Numérique Centrale d'achat'. The printed buyer names were the head 'Conseil général des Yvelines' (5709542 2017-01-13, 5976307 2017-09-21), then 'Conseil départemental des Yvelines' (6194419, 6400298) and the elected 'conseil départemental des Yvelines' (7594364 2023-04-19, 7837413 2023-11-08, 7794218 2023-11-20, 7753148 2023-11-24). Since eForms every notice prints the rival 'Seine et Yvelines Numérique': 872507 2024-04-25, 118184 2024-05-10, 1154914 2024-05-31, 628869 2024-06-06, 112747 2024-08-07, 900853 2024-09-06. new_name is therefore both superseded and another entity's name (the département). This is the 'newer third name' case top_stale exists for, so holding is right. The head is equally wrong (former département name), and the real fix is to serve 'Seine et Yvelines Numérique' by another path."
+    }
+   ],
+   "checks": [
+    {
+     "org_id": 10071871,
+     "first": {
+      "org_id": 10071871,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "NL KvK 24404227. The head 'RebelGroup Executives BV' was printed in 5841046, 2017-07-22 (VWS, 'anders werken aan complexe maatschappelijke...'). 6818259 2021-04-23 (VWS, same subject) printed 'Rebel Group Executives', which is the 'rival' cluster but really the head's own name re-tokenized. After that the same KvK is printed as 'Rebel Strong Society bv' (6987746, 2021-04-28, IUC DJI) and 'Rebel Strong Society' (7129137, 2021-10-22, VWS UBR HIS). The 2023-07-03 procedure 6142990 carries this org only in the 2021-07-09 version 348426-2021 (decided 2021-06-29), and its printed name is not exposed. No separate 'Rebel Strong Society' org exists among the NL Rebel orgs. This reads as Rebel Group renaming the BV. The elected name is the NEWEST name, newer than both the head and the rival. top_stale held only because the firm stopped appearing after 2021. The hold keeps a former name that the change would have fixed."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I could not refute the first reader. I read the raw notice content (/v1/notices/{id}/content) for all 5 mentions. Every one prints KvK 24404227 and the same address, Wijnhaven 23, 3011 WH Rotterdam. In date order: 'RebelGroup Executives BV' (notice 19366802, contract 2017-06-19, published 2017-07-22, the only print of the head); 'Rebel Group Executives' (21660913, contract 2021-03-24, published 2021-04-23, contact tom.gommans@rebelgroup.com); 'Rebel Strong Society bv' (21628098, contract 2021-04-22, published 2021-04-28); 'Rebel Strong Society' (21827548 on procedure 6142990, contract 2021-06-29, same tom.gommans contact); 'Rebel Strong Society' (21998016, contract 2021-10-08, published 2021-10-22, same contact). So the printed name for the 6142990 mention is not hidden: the raw content shows it as 'Rebel Strong Society'. The same KvK number and the same contact person switch from 'Rebel Group Executives' in March 2021 to 'Rebel Strong Society' from April 2021 on, and one print carries the legal suffix 'bv'. That reads as the same company renamed, not a trade name or a different firm. It also matches the group's 'Rebel <practice> B.V.' naming: Rebel Energy B.V. 56674341, Rebel Economics & Transactions bv 56674368, Rebel Transitiemanagement B.V. 56651244, Rebel Strategy & Development bv 68792506. No other org carries identifier 24404227, and no separate 'Rebel Strong Society' org exists. The 'rival' cluster is the head's own name split into two words, and it is older than the elected one (2021-04-23 against 2021-10-22). So the elected name is the newest name, not a former or superseded one. top_stale fired only because the firm stopped appearing after 2021, and nothing in the data shows a later rename. The hold keeps a name last printed in 2017, which the company itself stopped using in its 3 newest notices. That is an outdated head the change would have fixed, so the hold is harmful. It is not a revert claim, so revert is false."
+     }
+    }
+   ]
+  },
+  {
+   "group": "hold:seat_dropped#0",
+   "items": [
+    {
+     "org_id": 5350924,
+     "verdict": "right",
+     "revert": false,
+     "why": "Hold is correct. The school never shows up under ?buyer=, ?winner= or ?bidder= (all empty) because its mentions carry the role 'purchasing-body' in the Związek Gmin Śląska Opolskiego energy-group tenders. Tender 5243257 (v1 2014-07-05, 226301-2014; head 2014-09-03, 299056-2014) prints 'Publiczna Szkoła Podstawowa Nr 2 w Wołczynie', which is the head. Tender 6215968 (v1 2018-06-01, 236427-2018; head 2018-08-25, 373495-2018, VII Grupa) prints the seat-less 'Publiczna Szkoła Podstawowa Nr 2', while the same list keeps the seat for its sibling 'Szkoła Podstawowa Nr 1 w Wołczynie'. So the 2018 form is a list truncation, not a rename. In the IX Grupa tenders 6802430 (2020-07-14) and 6840530 (2020-09-25) the school is gone and 'Zespół Szkół w Wołczynie' is listed instead, so no newer name exists for this org. 'Publiczna Szkoła Podstawowa Nr 2' is a generic type-plus-number shared by hundreds of schools; an org_name_prefix lookup lists dozens of PSP Nr 2 orgs. Serving it would be the generic-for-specific failure. The head is the school's full name with its seat."
+    },
+    {
+     "org_id": 11951931,
+     "verdict": "right",
+     "revert": false,
+     "why": "Hold is correct. The head 'Wojewódzki Ośrodek Profilaktyki i Terapii Uzależnień w Łomży' is the centre's name with its seat. The seat-less votes all come from one recurring joint notice, the Łomżyńska Grupa Zakupowa electricity tender: 972759 (2024-11-18, 00700286-2024), 78935 (2025-07-16, 00464772-2025) and 8556790 (2026-09-25, 00661021-2026). Each prints 'Wojewódzki Ośrodek Profilaktyki i Terapii Uzależnień' as Procedure-Buyer, Contract-Signatory and LotResult-Paying. In those same lists other Łomża bodies keep the seat ('Wojewódzka Stacja Pogotowia Ratunkowego ... w Łomży', 'Szpital Wojewódzki ... w Łomży'), so the group's list style dropped it here. The head form was printed most recently on 2018-08-30, per the dated reading. Without the seat the name is a generic descriptive name for a voivodeship addiction-therapy centre, which the seat_dropped hold exists to stop."
+    },
+    {
+     "org_id": 19702064,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Both names are acceptable. KIS is a single national body (seat Bielsko-Biała), so the seat-less 'Krajowa Informacja Skarbowa' is its proper name and unambiguous. KIS's own notice as sole buyer, tender 7942796 (2026-08-31, 00596416-2026), prints 'Krajowa Informacja Skarbowa' in every role. So do the IAS Katowice/KAS Śląsk joint tenders 7962088 (2026-09-08), 314726 (2026-08-05), 877566 (2026-03-04) and 82459 (2025-12-12), and the 672049 notice (2026-04-29). The head 'Krajowa Informacja Skarbowa w Bielsku-Białej' was printed most recently in the COAR-led central mobile-telephony framework, tender 927681 v8 (2026-02-06, 00088416-2026). KAS titles also use that form ('Krajowej Informacji Skarbowej w Bielsku-Białej' in 314726 and 877566). The change would be a mild improvement, but the held head is accurate, current and the same entity, not outdated or defective. So holding does no harm."
+    },
+    {
+     "org_id": 3452803,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Both names are acceptable. /v1/organizations/3452803 shows CZ identifier 63024675. ?buyer=, ?winner= and ?bidder= are all empty: like the PL purchasing-body cases, the mentions sit in a role these filters don't match. Bounded date-window searches did not find the notices; I tried CZ and CZ080 lists around 2013-04-13 and 2016-04-13, and tenders 4964408, 4965586, 8030978, 5742809 and 5714678 do not name it. So the dates come from the plan's dated reading only: the head 'Pedagogické centrum pro polské národnostní školství v Českém Těšíně' was printed twice, newest 2013-04-13; the seat-less form 7 times, newest 2016-04-13; nothing since. The seat-less name is specific, since there is only one centre for Polish-minority schooling in CZ, and as far as I recall the register name puts Český Těšín in the address, not the name. The head with its seat is also accurate for the same dormant entity. Neither name is a former name, another entity or junk, so the hold neither harms nor clearly helps."
+    },
+    {
+     "org_id": 22640992,
+     "verdict": "right",
+     "revert": false,
+     "why": "Hold is correct. 'Centrum Usług Wspólnych' is a generic municipal institution type with hundreds of namesakes; this org is the Skawina gmina's CUW, and its name carries 'w Skawinie'. The head is printed on its own notice, tender 794660 (2024-09-05, 00533600-2024, 'Dowóz uczniów z terenu miasta i gminy Skawina ... 2024/2025'): 'Centrum Usług Wspólnych w Skawinie'. Since 2025 its eForms notices print only 'Centrum Usług Wspólnych': 880952 (2025-09-25, 00626931-2025), 207846 (2026-09-01, 00600992-2026), 76681 (2026-09-18, 00646135-2026) and 709206 (2026-09-18, 00643318-2026). The seat sits only in the address and in titles ('gminy Skawina'). This is a truncation, not a rename, and serving it would be the generic-for-specific failure."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "hold:doubled#0",
+   "items": [
+    {
+     "org_id": 5676405,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier P0100100G. The head 'Ayuntamiento de Alegría-Dulantzi' is the council's correct current name. Every newer notice prints the same name, without the accent and doubled. Buyer notices read: 748050 (2026-03-02) and 246083 (2026-03-02) both print 'Ayuntamiento de Alegria-Dulantzi - Ayuntamiento de Alegria-Dulantzi' as Procedure-Buyer and Lot-AddInfo; 628945 (2025-11-06) prints the same; 7723833 (2023-05-16) prints the same; 7304410 (2022-02-14) and 7264881 (2021-12-22) print the same. The oldest, 7094674 (2021-05-28), prints the single form 'Ayuntamiento de Alegria-Dulantzi'. The org has no winner or bidder appearances. Nothing was renamed: the change would only swap a correct name for a doubled, unaccented copy of it. Holding is correct. The real fix would be to de-double the name, not to change it."
+    },
+    {
+     "org_id": 2043044,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier P4809300I. It is the same council throughout. The head 'Ayuntamiento de Valle de Trapaga-Trapagaran' was printed on 5076952 (2013-10-09), where the tender-receipt mention reads 'Ayuntamiento Valle de Trápaga-Trapagaran'. The head cluster's accented single form was printed on 5724890 (2017-03-11) and 7130586 (2021-07-09). The doubled form starts with 7011050 (2021-10-29) and 7130592 (2022-01-10). The newest notices all print 'Ayuntamiento de Valle de Trápaga-Trapagaran - Ayuntamiento de Valle de Trápaga-Trapagaran': 374296 (2026-07-29), 8566395 (2026-07-08), 1101369 (2026-05-22), 397186 (2026-04-29) and 128480 (2026-03-18). The head only lacks the accent on Trápaga, a minor flaw. The doubled name would be worse, so holding is correct. De-doubling would serve the accented single form. Separate issue: on the one winner/bidder notice, 1005190 (2024-01-10), the Tenderer mention 'ELAI SERBITZUAK, S.L.' is linked to this council. That is a stray mis-link, the rival cluster dated 2024-01-10."
+    },
+    {
+     "org_id": 7309421,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier P2005300E. The head 'Lazkaoko Udala — Ayuntamiento de Lazkao' is the council's bilingual Basque/Spanish name and still correct. It was printed as 'Lazkaoko Udala – Ayuntamiento de Lazkao' on 5552501 (2016-03-09), 5547398 (2016-03-08) and 5547261 (2016-03-08). 6750279 (2020-10-09) prints 'Ayuntamiento de Lazkao'. The doubled form starts with 7078269 (2021-10-08) and continues on 7078332 (2023-04-26) and 280463 (2024-09-26). The newest buyer notices all print 'Ayuntamiento de Lazkao - Ayuntamiento de Lazkao': 896597 (2026-07-01), 188042 (2025-12-04), 905250 (2025-01-10) and 17413 (2024-12-04). The org has no winner or bidder appearances. Nothing was renamed, so the change would only serve a doubled Spanish-only copy. Holding is correct. De-doubling to 'Ayuntamiento de Lazkao' would be the only improvement."
+    },
+    {
+     "org_id": 6546919,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Identifier P2005700F. The head 'Lezoko Unibertsitateko Udala' was printed exactly once, on 5415041 (2015-07-11). It is the right entity: Udala means council, and 'Unibertsitate' is a historic Gipuzkoan word for a municipality. But it is stale, and readers can mistake it for a university. Since then the council always prints 'Ayuntamiento de Lezo': 5823287 (2016-12-28), 6229003 (2018-07-17) and 6484340 (2019-04-19). It prints it doubled from 7666767 (2023-03-20), and the newest notices print 'Ayuntamiento de Lezo - Ayuntamiento de Lezo': 8568432 (2026-07-15), 529779 (2025-12-30), 660771 (2025-05-07) and 350796 (2025-04-17). The org has no winner or bidder appearances. Both names are flawed: the hold keeps an 11-year-old one-off spelling, and the change would serve a doubled copy of the current name. Both still identify the council. The best fix, de-doubling to 'Ayuntamiento de Lezo', beats both."
+    },
+    {
+     "org_id": 5857542,
+     "verdict": "wrong",
+     "revert": false,
+     "why": "Identifier Q2000553D. The head 'Centro Informático Municipal' is a former name and also a generic institution type: it has no city in it. It was printed only on 5321929 (2014-11-07) and 5836733 (2017-01-21). The body was then renamed DonostiaTIK: 5867081 (2017-07-08) prints 'Donostia TIK', 6151754 (2018-03-13) prints 'Donostiatik', 7570485 (2022-12-05) prints 'DonostiaTIK - DonostiaTIK', and 995056 (2025-05-23) prints 'DonostiaTIK'. The newest buyer notices all print 'DonostiaTIK - DonostiaTIK': 613943 (2026-09-02), 44302 (2026-06-03), 1215965 (2026-04-24), 612784 (2026-04-21) and 35436 (2026-04-08). The org has no winner or bidder appearances. The hold keeps a name the body dropped 9 years ago, one that fits any city's IT centre. The change would serve the specific current name; doubling it is only a cosmetic flaw. The hold is harmful. The right fix is to de-double and serve 'DonostiaTIK'."
+    }
+   ],
+   "checks": [
+    {
+     "org_id": 5857542,
+     "first": {
+      "org_id": 5857542,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "Identifier Q2000553D. The head 'Centro Informático Municipal' is a former name and also a generic institution type: it has no city in it. It was printed only on 5321929 (2014-11-07) and 5836733 (2017-01-21). The body was then renamed DonostiaTIK: 5867081 (2017-07-08) prints 'Donostia TIK', 6151754 (2018-03-13) prints 'Donostiatik', 7570485 (2022-12-05) prints 'DonostiaTIK - DonostiaTIK', and 995056 (2025-05-23) prints 'DonostiaTIK'. The newest buyer notices all print 'DonostiaTIK - DonostiaTIK': 613943 (2026-09-02), 44302 (2026-06-03), 1215965 (2026-04-24), 612784 (2026-04-21) and 35436 (2026-04-08). The org has no winner or bidder appearances. The hold keeps a name the body dropped 9 years ago, one that fits any city's IT centre. The change would serve the specific current name; doubling it is only a cosmetic flaw. The hold is harmful. The right fix is to de-double and serve 'DonostiaTIK'."
+     },
+     "verify": {
+      "refuted": false,
+      "verdict": "wrong",
+      "revert": false,
+      "why": "I tried to refute the first reader and could not. Every fact it gave checks out. GET /v1/organizations/5857542 returns identifier Q2000553D (ES, national) with head 'Centro Informático Municipal'. The org has 30 buyer procedures and no winner or bidder appearances. The head is printed only on 5321929 (2014-11-07) and 5836733 (2017-01-21). From 2017 on, every procedure I opened prints the DonostiaTIK name. 5867081 (2017-07-08) prints 'Donostia TIK'; 5867084 (2017-10-20), 6550487 (2019-07-09) and 6537939 (2020-04-28) print 'DonostiaTIK'; 6151754 (2018-03-13) prints 'Donostiatik'. 7078271 (2021-09-27), 7148488 (2022-01-14), 7251200 (2022-03-28) and 7570485 (2022-12-05) print 'DonostiaTIK - DonostiaTIK', and 995056 (2025-05-23) prints 'DonostiaTIK'. The five newest buyer notices, 613943 (2026-09-02), 44302 (2026-06-03), 1215965 (2026-04-24), 612784 (2026-04-21) and 35436 (2026-04-08), all print 'DonostiaTIK - DonostiaTIK' on the Procedure-Buyer party and on every Lot-AddInfo party. Their titles name 'DonostiaTIK, Ayuntamiento de San Sebastián y demás entidades municipales', so this is the same municipal IT body, renamed. It is not an organ, and the identifier is not shared with another entity. The served head is 9 years stale. It has no city, so it reads like any town's IT centre. The change is not a revert: the elected spelling is the newest one, and the head was never printed again after the rename. The only flaw in 'DonostiaTIK - DonostiaTIK' is the doubling, which is cosmetic and fixed by serving 'DonostiaTIK', a spelling that has 7 votes of its own. That still identifies the entity far better than the generic former name. The doubled hold therefore keeps an outdated, generic head that the change would fix, so it is harmful."
+     }
+    }
+   ]
+  }
+ ]
+}
