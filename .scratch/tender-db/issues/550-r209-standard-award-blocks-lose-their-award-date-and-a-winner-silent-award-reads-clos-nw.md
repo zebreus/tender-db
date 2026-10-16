@@ -1,7 +1,6 @@
 # 550 — R2.0.9's standard award blocks lose their award date, and a winner-silent award reads `clos-nw`
 
-Status: ready-for-agent — unit 1 MEASURED 2026-10-15 (below): of a 2016–2023 public sample, 86 % of legacy results carry `DATE_CONCLUSION_CONTRACT` and all of them read `decided` NULL; 78 of their 82 `clos-nw` are winner-silent awards (≈ 12 % of the standard R2.0.9 results wrongly claim no award). Unit 2 BUILT 2026-10-15 (`LEGACY_AWARD_DATE_FIELD_R209` read as `decided`; the `TED-AWARDED_CONTRACT` marker is award evidence; test `an_r209_standard_award_carries_its_conclusion_date_and_a_winner_silent_award_is_null`), gated with 524 v9 and DEPLOYED `b234150` 2026-10-15 ~23:3x UTC (new folds read it). Next: unit 3 (size the refold of the R2.0.9 award notices; a queue gap).
-and the owner's confirmation on the public API and the committed fixtures). Next: unit 1, below.
+Status: ready-for-agent — unit 1 MEASURED 2026-10-15 (below): of a 2016–2023 public sample, 86 % of legacy results carry `DATE_CONCLUSION_CONTRACT` and all of them read `decided` NULL; 78 of their 82 `clos-nw` are winner-silent awards (≈ 12 % of the standard R2.0.9 results wrongly claim no award). Unit 2 BUILT 2026-10-15 (`LEGACY_AWARD_DATE_FIELD_R209` read as `decided`; the `TED-AWARDED_CONTRACT` marker is award evidence; test `an_r209_standard_award_carries_its_conclusion_date_and_a_winner_silent_award_is_null`), gated with 524 v9 and DEPLOYED `b234150` 2026-10-15 ~23:3x UTC (new folds read it). Unit 3 SIZED 2026-10-16 00:37 UTC (sizing `refold-fields` 2528, `expect: 1`, notice_dates + notice_integers: **1,899,575** notices carry `TED-DATE_CONCLUSION_CONTRACT` or `TED-AWARDED_CONTRACT`, ~11 min, nothing written) and the wet run ENQUEUED 00:35 UTC in an idle queue (`refold-fields` 2530 with `expect: 1899575`, its `project` 2531 behind it), ahead of 533's rollout so 533 reads the corrected results. Next: the Verify once 2531 finishes.
 Kind: data quality (legacy TED results: `tender_version_lot_results.decided_*` and `decision`)
 Relates to:
 - 255 (DONE): slice 2 mapped `TED-CONTRACT_AWARD_DATE` (r208, and the r209 DEFENCE form F18) into
@@ -70,7 +69,7 @@ the open heads it touches, so 533 does not wait for the corpus refold.
    block with it and no winner/value reads NULL (257) rather than `clos-nw`. Tests on the three r209 fixtures: the
    date lands in `tender_version_lot_results.decided_*` and `v_awards`; a winner-silent `AWARDED_CONTRACT` block reads
    NULL; a block with `NO_AWARDED_CONTRACT` still reads `clos-nw`; an R2.0.8 `CONTRACT_AWARD_DATE` block is unchanged.
-3. **Roll out** per unit 1's decision (`refold-fields` over the notices carrying `TED-DATE_CONCLUSION_CONTRACT`, sized
+3. **Roll out** per unit 1's decision (sized 2026-10-16: 1,899,575 carriers; wet 2530/2531) (`refold-fields` over the notices carrying `TED-DATE_CONCLUSION_CONTRACT`, sized
    first; it is a corpus-scale writer, so it needs a queue gap and the 543 stop points), then the Verify.
 
 ## Verify
