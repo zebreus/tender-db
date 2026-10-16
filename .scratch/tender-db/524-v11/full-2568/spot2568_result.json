@@ -1,0 +1,342 @@
+{
+ "tally": {
+  "right": 28,
+  "neutral": 2,
+  "wrong": 0,
+  "reverts": 0
+ },
+ "final": {
+  "4395196": {
+   "verdict": "right",
+   "revert": false
+  },
+  "4635740": {
+   "verdict": "right",
+   "revert": false
+  },
+  "4731571": {
+   "verdict": "right",
+   "revert": false
+  },
+  "4735768": {
+   "verdict": "right",
+   "revert": false
+  },
+  "4867629": {
+   "verdict": "right",
+   "revert": false
+  },
+  "5672636": {
+   "verdict": "right",
+   "revert": false
+  },
+  "5734103": {
+   "verdict": "right",
+   "revert": false
+  },
+  "8102499": {
+   "verdict": "right",
+   "revert": false
+  },
+  "8241524": {
+   "verdict": "right",
+   "revert": false
+  },
+  "8302120": {
+   "verdict": "right",
+   "revert": false
+  },
+  "8447148": {
+   "verdict": "right",
+   "revert": false
+  },
+  "8752489": {
+   "verdict": "right",
+   "revert": false
+  },
+  "9633397": {
+   "verdict": "right",
+   "revert": false
+  },
+  "10421725": {
+   "verdict": "right",
+   "revert": false
+  },
+  "10496191": {
+   "verdict": "neutral",
+   "revert": false
+  },
+  "12726216": {
+   "verdict": "right",
+   "revert": false
+  },
+  "12800751": {
+   "verdict": "right",
+   "revert": false
+  },
+  "13067304": {
+   "verdict": "right",
+   "revert": false
+  },
+  "13887717": {
+   "verdict": "right",
+   "revert": false
+  },
+  "14016700": {
+   "verdict": "right",
+   "revert": false
+  },
+  "14308356": {
+   "verdict": "right",
+   "revert": false
+  },
+  "14415595": {
+   "verdict": "right",
+   "revert": false
+  },
+  "14715935": {
+   "verdict": "right",
+   "revert": false
+  },
+  "14882776": {
+   "verdict": "neutral",
+   "revert": false
+  },
+  "15997203": {
+   "verdict": "right",
+   "revert": false
+  },
+  "16204526": {
+   "verdict": "right",
+   "revert": false
+  },
+  "16330071": {
+   "verdict": "right",
+   "revert": false
+  },
+  "18707735": {
+   "verdict": "right",
+   "revert": false
+  },
+  "20313467": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22107996": {
+   "verdict": "right",
+   "revert": false
+  }
+ },
+ "groups": [
+  {
+   "group": "applied2568#0",
+   "items": [
+    {
+     "org_id": 4395196,
+     "verdict": "right",
+     "revert": false,
+     "why": "SK ICO 31559786. Old 'HaM autoopravy-predaj, s.r.o.' was printed only once, in the oldest notice: 8325116 (2013-11-13), winner. New 'H & M autoopravy - predaj s.r.o.' is printed in every later notice: 5505451 (2016-01-06, with an en-dash), 7462577 (2022-11-08), 289822 and 802978 (2023-12-08), 666459 (2024-08-09) and 1009460 (2024-09-04, the newest), as winner or Tenderer. Same company. 'HaM' is a lossy contraction of 'H & M', and new_name is the spelling printed for ten years."
+    },
+    {
+     "org_id": 4635740,
+     "verdict": "right",
+     "revert": false,
+     "why": "EE registry code 10914764. Old 'Osaühing Awre' was printed only in 5043574 (2014-06-28), winner. 'Forklift OÜ' is printed from 5666503 (2016-08-20) and 5690037 (2016-12-14) through 655939 (2024-09-18), 868121 (2025-01-07), 280145 (2025-05-20) and 26377 (2026-10-15, bids tenderer and lot winner). Old_name is a former name the company stopped using after 2014. New_name is its current name."
+    },
+    {
+     "org_id": 4731571,
+     "verdict": "right",
+     "revert": false,
+     "why": "NL KvK 25525410. 'Stichting Flore' was printed only in 5159606 (2014-08-16), buyer. 'Blosse' is printed as buyer, signatory and review body in 7683774 (2023-04-05), 7713987 (2023-05-05), 286332 (2025-02-27, title 'T62291 Blosse - De Reflector meubilair'), 186784 (2025-12-31), 200573 (2026-04-13, Kindcentrum de Vaart Heerhugowaard) and 1088231 (2026-07-22). Same Heerhugowaard school board under its renamed current name. Flore is the former name."
+    },
+    {
+     "org_id": 4735768,
+     "verdict": "right",
+     "revert": false,
+     "why": "SE org.nr 5566269345. 'Dong Energy AB' appears in 5062367 (2014-02-19) and 'DONG Energy AB' in 5876975 (2017-05-13), both as winner. 'Orsted AB' appears from 6507422 (2019-10-30) on: 6939898 (2020-12-18), 7347328 (2022-07-06), 8507252 (2022-10-14), 715847 (2023-11-28), 1079845 (2024-07-01), 784692/495135 (2024-10) and 884590 (2025-01-20, the newest), as buyer and winner. This follows the 2017 DONG to Ørsted rebrand. New_name is the current name, and the old one has not been printed since 2017."
+    },
+    {
+     "org_id": 4867629,
+     "verdict": "right",
+     "revert": false,
+     "why": "HR OIB 10236446484 belongs to the prison itself; the ministry has its own separate OIB. Old 'Ministarstvo pravosuđa, Kaznionica u Lepoglavi' (parent ministry plus unit) was printed in 5167509 (2014-06-20), 5165852 (2014-08-09) and 5437669 (2015-08-21). A variant with 'pravosuđa i uprave' appears in 7326303 (2022-03-09, winner). 'KAZNIONICA U LEPOGLAVI' is printed as Procedure-Buyer in 733897 (2026-03-26) and in 1163658, 908690, 770679 and 744489 (all 2026-10-13). The old name carries a stale ministry prefix, since the ministry was renamed twice. New_name is the entity's own name. It is in all caps, which is cosmetic."
+    },
+    {
+     "org_id": 5672636,
+     "verdict": "right",
+     "revert": false,
+     "why": "HR OIB 29524210204. 'VIPnet d.o.o.' is printed in 5178139 (2014-09-24), 5259370 (2014-12-02) and 5400387 (2015-08-04), with a consortium print in 5403506 (2015-07-15); head_newest is 2018-03-29. 'A1 Hrvatska d.o.o.' is printed from 795615 (2024-05-23), 33053 (2024-05-30) and 906962 (2024-06-27) through 1020221 and 1109988 (2026-10-05), 596818 (2026-10-13) and 738190 (2026-10-14), as Tenderer and bids tenderer. VIPnet was renamed A1 Hrvatska in 2018. New_name is the current name, and the old one is a former name no longer printed."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "applied2568#1",
+   "items": [
+    {
+     "org_id": 5734103,
+     "verdict": "right",
+     "revert": false,
+     "why": "FR SIREN 243600236 (SIRET 24360023600018); the API now serves 'Communauté de communes du Pays d'Issoudun'. The old head 'Communauté des communes ...' ('des' instead of 'de') is a misspelling of the legal form. The dated reading has it printed once, on 2014-10-09; I could not reach that notice through the buyer, winner or bidder filters. Every buyer notice I read prints 'de communes': 5302478 (2015-01-08) 'Communauté de communes du Pays d'Issoudun', 5750388 (2016-12-09) the same, 5816354 (2016-12-21) the same, 6173758 (2018-07-06) 'Communauté de communes du pays d'Issoudun', 312248 (2024-06-19) 'Communauté de Communes du Pays d'Issoudun', 624006 (2024-07-24) the same, 436812 (2024-07-31) the same, as Procedure-Buyer and Lot-ReviewOrg. new_name is the correctly spelled current name. No winner or bidder side."
+    },
+    {
+     "org_id": 8102499,
+     "verdict": "right",
+     "revert": false,
+     "why": "HR OIB 78007414476; the API serves 'OSNOVNA ŠKOLA MARKUŠICA'. The old head 'OŠ Markušica' is the abbreviation of 'Osnovna škola' (primary school). The dated reading has it last printed 2016-04-22; that notice is not reachable through the buyer, winner or bidder filters. The only listed buyer procedure, 899082 (2026-09-01, electricity supply), prints Procedure-Buyer 'OSNOVNA ŠKOLA MARKUŠICA'. new_name is the full proper name and the newest print. The all-caps style is cosmetic. No winner or bidder side."
+    },
+    {
+     "org_id": 8241524,
+     "verdict": "right",
+     "revert": false,
+     "why": "SI registration number 5084032000; the API serves 'Javni vzgojno-izobraževalni zavod Osnovna šola Benedikt'. Buyer notice 5601329 (2016-06-02) prints 'Osnovna šola Benedikt' (the old head). The newest buyer notice, 6748596 (2020-11-25, food supply for 'Osnovne šole Benedikt'), prints 'Javni vzgojno-izobraževalni zavod Osnovna šola Benedikt'. The prefix is the institution's legal form (a public school-plus-kindergarten institute) and part of its registered name. It is not a generic type replacing the specific name, because 'Osnovna šola Benedikt' is kept in full. new_name is the newer print and the full official name. Only 2 buyer procedures exist. No winner or bidder side."
+    },
+    {
+     "org_id": 8302120,
+     "verdict": "right",
+     "revert": false,
+     "why": "SI 5050596000; the API serves 'Zavod za usposabljanje, delo in varstvo dr. Marijana Borštnarja Dornava'. The old head 'ZUDV Dornava' is an acronym, printed on buyer notices 5618711 (2016-06-17), 5771594 (2016-12-23) and 4933247 (2017-06-03), and not after that. The full name is printed from 6044584 (2018-01-20) and 6337201 (2019-01-25), then in upper case on the newest notices: 899038 (2026-08-03), 751552 (2026-08-10) and 405746 (2026-09-11), all Procedure-Buyer 'ZAVOD ZA USPOSABLJANJE, DELO IN VARSTVO DR. MARIJANA BORŠTNARJA DORNAVA'. new_name is the current full name, replacing an abbreviation."
+    },
+    {
+     "org_id": 8447148,
+     "verdict": "right",
+     "revert": false,
+     "why": "SI 5378628000, a sole trader (s.p.); the API serves 'Sirc Janko s.p. - mesarstvo'. The old head 'Janko Sirc S.P.' appears on winner notice 4785177 (2017-02-16); the dated reading puts its last print at 2017-07-13. Every later notice prints the new form: 5628872 (2020-10-23) 'SIRC JANKO S.P. - MESARSTVO', 5908387 (2020-11-03) 'Sirc Janko s.p. - mesarstvo', 6851542 (2022-01-21), 7426864 (2022-09-27) and 7831396 (2024-01-19) as winner, and 1039759 (2025-12-30) as Tenderer, all 'SIRC JANKO S.P. - MESARSTVO'. '- mesarstvo' ('butchery') is the business description in the sole trader's trade name, not a registry marker or an agent tail. new_name is how the entity prints itself today. It is close to neutral, since both name the same trader."
+    },
+    {
+     "org_id": 8752489,
+     "verdict": "right",
+     "revert": false,
+     "why": "SI 5925983000; the API serves 'Birotehna, servis in vzdrževanje računalniške in pisarniške opreme, d.o.o.'. The old head is the short form 'Birotehna d.o.o.', printed as winner on 5688101 (2016-10-28) and 5708280 (2016-11-15) only. The full registered name, which includes the business description ('servicing and maintenance of computer and office equipment'), is printed from 5903805 (2018-01-20) and 6571069 (2019-12-20), then 'BIROTEHNA, servis in vzdrževanje ...' on 7396058 (2022-09-30, winner), and as Tenderer on 129878 (2025-01-29), 104005 (2025-07-17) and 606001 (2026-06-08). new_name is the full name the company prints today, not an appended tail. It is near-neutral, because the short form is also a valid name for the company."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "applied2568#2",
+   "items": [
+    {
+     "org_id": 9633397,
+     "verdict": "right",
+     "revert": false,
+     "why": "SI 5086388000. The old head 'OŠ Frana Metelka Škocjan' is an abbreviation ('OŠ' stands for Osnovna šola). It was printed once, in notice 160689-2017 (2017-04-28), a version of procedure 5517708. Every later buyer notice prints the full name. Procedure 554930 (2024-12-13, Procedure-Buyer): 'OSNOVNA ŠOLA FRANA METELKA ŠKOCJAN'. 7517529 (2023-01-18): same print. 6200883 (2022-01-26): same print. 5517708 (2018-10-27) and 5398785 (2018-08-03): 'Osnovna šola Frana Metelka Škocjan'. new_name is the full proper name of the same school."
+    },
+    {
+     "org_id": 10421725,
+     "verdict": "right",
+     "revert": false,
+     "why": "FR SIRET 24570140400056. The old head 'Communauté de communes du Pays Haut Val d'Alzette' appears only on 6047168 (2017-10-28, buyer). All recent buyer notices print the new name without 'du', in every role (Procedure-Buyer, Lot-AddInfo, Lot-TenderReceipt, Contract-Signatory): 8845212 (2026-10-15), 320047 (2026-04-29), 664831 (2026-01-21) and 623379 (2026-01-20), all 'Communauté de communes Pays Haut Val d'Alzette'. It is the same body. new_name is its current self-printed form, which also matches the official CCPHVA name."
+    },
+    {
+     "org_id": 10496191,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "ES NIF 18418330E is a personal DNI, so this is a sole trader. The old head 'Ezequiel Pomar Domínguez' is the person's legal name; it was printed on 6975570 (2022-01-31, winner: 'EZEQUIEL POMAR DOMINGUEZ'). new_name 'Limpiezas Ezequiel Pomar Domínguez' is the same person's trading name. It is printed on both sides of that date: 6916942 (2021-07-14) 'Limpiezas Ezequiel Pomar Domínguez', 6973282 (2021-11-16), 7351462 (2022-10-07) and 7739312 (2023-09-11), the last three 'LIMPIEZAS EZEQUIEL POMAR DOMINGUEZ'. Both names identify the same entity equally well: the trading name is the majority and newest print, the personal name is the legal one. Not a former name, a tail or another entity."
+    },
+    {
+     "org_id": 12726216,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 7781002137 (VAT PL7781002137). The company was renamed from Sigma-Aldrich Sp. z o.o. to Merck Life Science Sp. z o.o. The old name stops after mid-2021: 6321411 (2019-01-18) 'Sigma-Aldrich Sp. z o.o.', 6947370 (2021-03-26) 'Sigma – Aldrich Sp. z o.o.', 8468663 (2021-04-23) 'Sigma-Aldrich Sp. z o.o.', 6975003 (2021-07-05) 'SIGMA – ALDRICH Sp. z o.o.' The new name is printed through today: 933721 (2026-10-13) 'Merck Life Science Sp. z o.o.', 1006521 (2026-10-13) 'Merck Life Science sp. z o.o.', 1004044 (2026-10-15) 'Merck Life Science Sp.zo.o.', 8825351 (2026-10-16) 'Merck Life Science Sp. z o. o.' new_name is the current name, so this is a correct supersede, not a revert."
+    },
+    {
+     "org_id": 12800751,
+     "verdict": "right",
+     "revert": false,
+     "why": "FI Y-tunnus 1738283-4. The old head 'Lukkarinoja Oy/Esperi Koti Pirttikoski' appears only on 6310612 (2019-01-22, winner). It carries an appended care-home unit tail ('/Esperi Koti Pirttikoski'). Every later notice prints the plain company name: 7243591 (2022-02-16, winner), 7353471 (2023-03-31, winner), 181201 (2023-12-15, Tenderer) and 39965 (2026-07-06, Tenderer), all 'Lukkarinoja Oy'. new_name is the clean legal name of the same company."
+    },
+    {
+     "org_id": 13067304,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 6961010818. The old head appears only on 6328276 (2019-03-18, winner). It is a consortium wrapper, 'Konsorcjum Zakładów Usług Leśnych Zakład Usług Leśnych Hieronim Koszyczarek - Lider Konsorcjum', with the role tail 'Lider Konsorcjum'. Every other notice prints the firm's own name, 'Zakład Usług Leśnych Hieronim Koszyczarek': 6640331 (2020-01-31, winner), 6915461 (2023-02-07, winner), 7873844 (2024-01-19, winner) and 519680 (2025-02-05, Tenderer). new_name is the member firm's proper name for this identifier."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "applied2568#3",
+   "items": [
+    {
+     "org_id": 13887717,
+     "verdict": "right",
+     "revert": false,
+     "why": "Org record: SIRET 33180058100158 (FR), served name C3B. The old name 'C 3 B' was printed on only one notice, TED 383697-2019 (tender 6581418, 2019-08-13, winner LOT-1). Every later notice prints 'C3B': 6719389 (619542-2020, 2020-12-22, winner); 149253 (00857055-2025, 2025-12-23, tenderer, buyer HABELLIS); 569826 (00007616-2026, 2026-01-07, tenderer, buyer SGAMI EST); 856977 (00011170-2026, 2026-01-09); 820256 (00066969-2026, 2026-01-29, buyer GRAND DOLE HABITAT); 7934506 (00583146-2026, 2026-08-24, tenderer/winner, buyer SGAMI EST). new_name is the newer, compact form of the same company's name, and the spaced form appears only in 2019. Not a revert."
+    },
+    {
+     "org_id": 14016700,
+     "verdict": "right",
+     "revert": false,
+     "why": "Org record: SIRET 51373754400058 (FR, merged with ...074). The old name 'ETPE' appears only on 427678-2019 (tender 6601918, 2019-09-12). The same notice also prints 'Europ TP' for this org, so ETPE is an acronym used alongside the proper name. Later notices print the proper name: 6618563 (461237-2019, 2019-10-02) EUROP'TP on 11 lots; 7413620 (483538-2022, 2022-09-06) 'europ tp'; 704275 (00135848-2026, 2026-02-26) 'EUROP'TP SAS'; 902125 (00256858-2026, 2026-04-15) EUROP'TP SAS; 67398 (00277584-2026, 2026-04-23) EUROP'TP SAS_03/_04; 7944731 (00601900-2026, 2026-09-01) 'EUROP TP'; 7950030 (00609881-2026, 2026-09-04) 'EUROP TP'. 'Europ TP' is the current trade name in different capitals and without the apostrophe; ETPE is an abbreviation. Not a revert."
+    },
+    {
+     "org_id": 14308356,
+     "verdict": "right",
+     "revert": false,
+     "why": "Org record: identifier 27660236 (FI, Y-tunnus 2766023-6). The Finnish registry (PRH YTJ open data) gives the registered name 'FIN VAATTURIT OY'. The old name 'Finn Vaatturit Oy' was printed only on 527538-2019 (tender 6475720, 2019-11-07, winner LOT-1), so the double n was a misspelling. The newer notice 633625-2023 (tender 7679089, 2023-10-20) prints 'Fin Vaatturit Oy' as winner on lots 1, 2, 5, 7, 10 and 15. new_name matches the registry and the newest print. Not a revert."
+    },
+    {
+     "org_id": 14415595,
+     "verdict": "right",
+     "revert": false,
+     "why": "Org record: CIF A08066896 (ES). The old name 'Prolians Metalco, S. A.' was printed only on 563968-2019 (tender 6493407, 2019-11-28, winner on lots 4 and 5). That is the company name with the Prolians brand prefix in front. Every newer notice prints plain Metalco: 1046139 (00044220-2025, 2025-01-22) 'METALCO, S.A.'; 986106 (00284407-2025, 2025-05-02) and 364468 (00364471-2025, 2025-06-05) METALCO, S.A.; 739068 (00138607-2026, 2026-02-27) METALCO, S.A.; 91599 (00159145-2026, 2026-03-06, Getxo) 'METALCO S A'; 668254 (00214322-2026, 2026-03-27) 'Metalco, S.A.'. new_name is the company's current printed name without the brand prefix. Not a revert."
+    },
+    {
+     "org_id": 14715935,
+     "verdict": "right",
+     "revert": false,
+     "why": "Org record: REGON 122729525 (PL). The old head was a consortium label with a stray closing parenthesis, printed once on 017477-2020 (tender 6702164, 2020-01-14): 'Konsorcjum: lider: Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.)'. Newer notices print the clean company name: 86626 (00052117-2025, 2025-01-24, Gmina Myślenice) 'Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.'; 745017 (00075132-2025, 2025-02-04) in capitals 'SP. Z O.O.'; 557071 (00423669-2025, 2025-07-01) the mixed-case form; 684190 (00684094-2025, 2025-10-17) with the legal form spelled out in capitals 'SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ'; 1067083 (00837625-2025, 2025-12-17) in capitals; 81078 (00092802-2026, 2026-02-09) the mixed-case form. new_name is the company's own name instead of a consortium phrase. Not a revert."
+    },
+    {
+     "org_id": 14882776,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Org record: KRS 0000148010 (PL). Both names are the same company, with the legal form abbreviated in two different ways. The old name 'Biotronik Polska sp. z o.o.' was printed on 084872-2020 (tender 6509843, 2020-02-20, winner on lots 11 and 13). The new name 'Biotronik Polska Spółka z o. o.' was printed on the newer 412302-2021 (tender 6977521, 2021-08-13, winner on lots 2, 4, 6 and 8). The new name is the newer print, but its 'z o. o.' spacing is no better than the standard 'sp. z o.o.'. Equally good, not a revert."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "applied2568#4",
+   "items": [
+    {
+     "org_id": 15997203,
+     "verdict": "right",
+     "revert": false,
+     "why": "IČO 64834042 (/v1/organizations/15997203 serves 'LS stavby s.r.o.'). The old name 'Sídlo společnosti Lesní stavby, s.r.o.' (literally 'registered seat of the company Lesní stavby', so it carries a junk prefix) was printed only once, as winner on tender 6911423 in the 2020-10-19 notice. Every later notice prints 'LS stavby s.r.o.': 7245559 (published 2022-03-29, winner), 6911423 (2022-05-06 re-notice, winner), 7471174 (2022-08-16, winner), and 660966 (eForms; tenderer/bid notices 2024-07-09 and 2026-06-08). The buyer has not printed the new name for 4+ years and no third name appears. This is the current name of the same company, not a former name."
+    },
+    {
+     "org_id": 16204526,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 5470052876. 'Suez Bielsko-Biała S.A.' was printed only on tender 6873510 (2020-11-24, winner, notice 565039-2020). After the company was rebranded from Suez to PreZero, every notice prints PreZero: 7170468 (2021-12-10, 'PreZero Bielsko-Biała S.A.'), 7291606 (2022-06-20, 'PreZero Bielsko-Biała Spółka Akcyjna'), 795693 (2024-11-29), 1106772 (2025-01-09), 33758 (2025-12-10 and 2026-01-06, all 'PreZero Bielsko-Biała S.A.'), 4283 (2026-01-14) and 595422 (2026-06-30), the last two as 'PreZero BielskoBiała S.A.'. That newest rival only drops the hyphen, so it is a misspelling of the same name. The hyphenated new_name is the correct current name, and Suez is the former one."
+    },
+    {
+     "org_id": 16330071,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 8990102145. Long form 'Zakład Automatyki Przemysłowej INTEC sp. z o.o.' printed as winner on 6904706 (2020-12-23), 7116699 (2021-11-23, 'Sp. z o.o.') and 7446710 (2022-12-21, 'Spółka z ograniczoną odpowiedzialnością'). Every notice since prints 'INTEC S.A.': 317058 (2023-12-15), 443434 (2024-07-03), 526761 (2025-01-09), 1083950 (2025-02-21) and 615366 (2026-01-15), all as tenderer. Read as the same company becoming a joint-stock company under the same NIP. The new_name is the current name, the old one is superseded, and no third name appears."
+    },
+    {
+     "org_id": 18707735,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 6891208247, a sole trader. The old name 'Sylwestr Bożejewicz prowadzący działalność gospodarczą pod firmą Sylwester Bożejewicz Usługi Leśne' misspells the given name ('Sylwestr') and wraps the name in 'trading under the firm name'. It comes only from text-era notices on tender 7297239 (lot results in notices 122715-2022 of 2022-03-08 and 056395-2023 of 2023-01-27; head_newest 2023-01-27). The new name 'Usługi Leśne Sylwester Bożejewicz' is printed on 973641 (bid 2024-06-10) and 1067154 (notice 2025-02-05). The swapped order 'Sylwester Bożejewicz Usługi Leśne' is printed on 7600836 (2023-02-27) and 158795 (2025-03-18, newest). The new name puts the same words in a different order from the registered firm name quoted inside the old name, but it is the same entity, has no misspelling and no wrapper, so it is clearly better than the old name."
+    },
+    {
+     "org_id": 20313467,
+     "verdict": "right",
+     "revert": false,
+     "why": "IČO 31201784, a Slovak public school and a buyer. The truncated 'Základná škola Morovnianska cesta' (no house number, no town) was printed only on text-era tender 7570127 (notices 2022-12-05 and 2023-01-13). All later eForms notices print 'Základná škola, Morovnianska cesta 1866/55, Handlová': 184976 (2023-11-07, Procedure-Buyer) and 942300 (2023-12-01, 2023-12-12, 2024-02-13; Procedure-Buyer and Contract-Signatory). Slovak schools are officially named 'Základná škola, <street> <number>, <town>', so the address is part of the name, not an added tail. This is the full official name of the same entity."
+    },
+    {
+     "org_id": 22107996,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 5213381661. The old 'SoftMed Sp. z o. o. Członkiem Konsorcjum' ends in a role tail ('member of the consortium'). It was printed only on tender 7840988 (2023-10-13, notice 617865-2023, winner). Newer notices print the clean company name: 244454 (2026-05-29, 'SoftMed Sp. z o.o.'), 851245 (bids 2026-06-09 and 2026-06-25, 'SoftMed Sp. z o.o.'), 1021611 (2026-06-17, 'Soft Med Sp. z o.o.') and 339268 (2026-06-18, 'SOFTMED sp. z o.o.'). The other spellings differ only in case or spacing. The new_name is the proper name, with the tail removed."
+    }
+   ],
+   "checks": []
+  }
+ ]
+}

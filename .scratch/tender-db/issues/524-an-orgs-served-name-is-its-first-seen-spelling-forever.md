@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v11 ROLLED OUT 2026-10-16: step 6 full wet run 2568 (operator go) renamed 15,494 heads, with 500 already renamed by 2567, 0 drifted, 0 raced. Its dated spot check (wf_7a93edd6-ffe) is running; a fail reverts 2568. NEXT: the spot check, then deploy main (rule v12, issue 552) and run v12's protocol.
+Status: ready-for-agent — RULE v11 DONE on prod 2026-10-16: 16,002 heads renamed (canaries 2565: 8; capped 2567: 500; full 2568: 15,494), every dated spot check passed (2568: 28 right / 2 neutral / 0 wrong / 0 reverts). NEXT: deploy main (rule v12, issue 552, gated `da95dd4`) and run v12's protocol (docs/operations.md). Open follow-ups: 548 (top_stale over-blocks 9/20), 552 (v12), 473 (junk identifiers such as 2272301's).
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1898,3 +1898,11 @@ v11's renames total 16,002: 8 canaries (2565), 500 capped (2567) and 15,494 full
 `.scratch/tender-db/524-v11/full-2568/`. The applied samples come from the same epoch-salted uniform draw as the
 plan's samples, so 30 of the 30 were already read in step 3's gates, all right or neutral there:
 [4395196, 4635740, 4731571, 4735768, 4867629, 5672636, 5734103, 8102499, 8241524, 8302120, 8447148, 8752489, 9633397, 10421725, 10496191, 12726216, 12800751, 13067304, 13887717, 14016700, 14308356, 14415595, 14715935, 14882776, 15997203, 16204526, 16330071, 18707735, 20313467, 22107996]. They are read again here, dated and after the rename.
+
+**Dated spot check of 2568: PASSED (wf_7a93edd6-ffe): 28 right, 2 neutral, 0 wrong, 0 reverts.** Evidence is in
+`.scratch/tender-db/524-v11/full-2568/spot2568_result.json`. The neutrals:
+- 10496191: ES NIF 18418330E is a personal DNI, so this is a sole trader. The old head 'Ezequiel Pomar Domínguez' is the person's legal name; it was printed on 6975570 (202
+- 14882776: Org record: KRS 0000148010 (PL). Both names are the same company, with the legal form abbreviated in two different ways. The old name 'Biotronik Polska sp. z o.
+
+**Rule v11 is rolled out.** Every gate and spot check passed. Undo stays available per job
+(`revert-org-name-refresh` with job 2565, 2567 or 2568).
