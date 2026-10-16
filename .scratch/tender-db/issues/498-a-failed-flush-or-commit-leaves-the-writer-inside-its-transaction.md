@@ -1,7 +1,9 @@
 # 498 — a failed flush or COMMIT leaves the shared writer connection inside its transaction
 
-Status: done (watch) — units 0, 1, 2 and 3 DEPLOYED 2026-10-09 (`ad4fddd`, health ok). NEXT: on 2026-10-16, grep the
-journal for `INSIDE an open transaction`, then close. Filed 2026-10-08 from the issue 495 unit 2 planning review (`wf_da3c04cf-2f7`, step 12),
+Status: done — watch CLOSED 2026-10-16 00:40 UTC: `journalctl -u tender-db --since "2026-10-09 01:20"` holds 0
+`INSIDE an open transaction` lines over the week since `ad4fddd` (the journal reaches back to 2026-08-09, so the
+window is whole) — no panic or cancelled future handed the writer over mid-transaction. Units 0, 1, 2 and 3 DEPLOYED
+2026-10-09 (`ad4fddd`, health ok). Filed 2026-10-08 from the issue 495 unit 2 planning review (`wf_da3c04cf-2f7`, step 12),
 confirmed against the code.
 - Unit 1 (census) DONE 2026-10-09: 22 confirmed leaking sites, ranked, plus the helper design —
   `.scratch/tender-db/498-tx/census-2026-10-09.{md,json}`.
@@ -21,7 +23,7 @@ confirmed against the code.
   body (one allocation per transaction). The same review found the resolver's lenient probes, filed as
   issue 501.
 - DEPLOYED 2026-10-09 ~01:20 UTC (`ad4fddd`, gate green with the size-budget test, health ok).
-- NEXT: a journal grep for `INSIDE an open transaction` on 2026-10-16. A hit means a panic or a cancelled future,
+- (Done 2026-10-16, 0 hits.) A journal grep for `INSIDE an open transaction` on 2026-10-16. A hit means a panic or a cancelled future,
   the only leaks left. The census's already-safe hand-written sites (about 30) may follow for uniformity; they
   carry no risk.
 Kind: robustness / the single writer (`Db::conn`)
