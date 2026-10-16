@@ -1459,3 +1459,39 @@ panel-read org skipped):
     or `["unfit"]`, or both.
   - Read per class: digits 56, unfit 101.
 - **hold:head_current** (30): a cost report only. Harmful holds feed 548.
+
+## Rule v10 on prod: the dated re-judge (2026-10-16, plan 2543, wf_65a1fd84-adb)
+
+Fresh salted samples (labelled and panel-read orgs skipped), dated reads, a skeptic on every wrong:
+
+| list | right | neutral | wrong (skeptic-confirmed) | bar | result |
+| --- | --- | --- | --- | --- | --- |
+| change:R1 (30) | 25 | 5 | **0** | ≤ 1 | **pass** (the first change:R1 sample with no wrong) |
+| released (157 new; 12 carried: 11 right, 1 neutral) | 142 | 8 | **7** | ≤ 5 (3.7 %) | **fail** |
+| released by class: unfit (101) | 91 | 5 | 5 (5.0 %) | 3.7 % | fail: `exclude_released: ["unfit"]` fires |
+| released by class: digits (56) | 51 | 3 | 2 (3.6 %) | 3.7 % | pass: digits stays |
+| hold:head_current (30, cost report) | 9 | 9 | 12 harmful | report only | to 548 |
+
+- **The unfit wrongs** share one shape: a head whose only defect is a line break, with a change that serves a shorter
+  or worse spelling of the same name. Examples:
+  - 22289866: a Vergabekammer cut short;
+  - 22545991: a ministry service served as its bare acronym;
+  - 22661109: a school without its patron and town;
+  - 22718921: an over-long legal-title spelling;
+  - 22737299: a truncated `Bauüberwac -`.
+
+  81 of the plan's 102 unfit releases have a control-whitespace head. Their verdicts were 71 right, 4 neutral and
+  5 wrong: all five wrongs are in this group. None serves the head with its whitespace collapsed; that is the fix
+  filed as 552.
+- **The digits wrongs:** 22673598 (`SDIS 10` → a misspelt long form, `incendis`) and 22831984 (`Kapitel 2` → AOK
+  PLUS on a `KEINEANGABE7` placeholder identifier: two entities joined by a placeholder).
+- **head_current's cost**, as decided: 12 of 30 holds keep a worse head. These are former names (22330123 SOPEXA →
+  HOPSCOTCH, 22872584 VITRONIC), a consortium or member marker (22558344, 23474281), an organ for the entity
+  (22267223, 22532818), a misspelling (31561899) and a town suffix (13068344). The recency signal pays that to buy
+  change:R1 0/30. Recorded on 548 for unit 1's measurement.
+
+**Go.** Every wet run passes `exclude_rules: ["R2"], exclude_released: ["unfit"]`.
+
+- **Step 4, the canaries (job 2554):** 6 ready, 0 drifted, **RENAMED 6**. All six read their new names on
+  `/v1/organizations/{id}`. Undo is `{"kind":"revert-org-name-refresh","job":2554}`.
+- **Step 5, capped 500 (job 2555):** running.
