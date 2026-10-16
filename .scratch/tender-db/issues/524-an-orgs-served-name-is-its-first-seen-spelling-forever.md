@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v9 DEPLOYED `b234150`; its fresh dated re-judge (wf_6c629c6b-755) FAILS change:R1 (4 of 30 wrong) and change:R2 (4 of 30); released passes (0, by plan 2526's labels); the 30 serve holds cost 1 harmful. No wet run under v9. RULE v10 DECIDED (below): R1 changes ship only when the head was last printed ≥ 3 years before the plan (`head_current` hold otherwise), and R2 is excluded from every wet run (`exclude_rules: ["R2"]`, the pre-committed fallback; R2 → 548). NEXT: build v10 after 533's build leaves the tree, gate, deploy, re-plan, fresh re-judge of change:R1, then canaries, capped 500, full.
+Status: ready-for-agent — RULE v10 DEPLOYED `703aa62`. Its dated re-judge PASSED change:R1 0/30 (released failed for `unfit`, which is excluded), and the canaries renamed 6. The capped 500 (job 2555) FAILED its dated spot check (1 former-name revert + 3 wrong of 30, on the lowest ids) and was REVERTED (job 2556). NEXT: decide v11 from the pooled labels; the candidate is a `top_stale` hold (the elected spelling itself stale, or a newer third spelling). Measure on the low-id population before any wet run.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1498,5 +1498,27 @@ Fresh salted samples (labelled and panel-read orgs skipped), dated reads, a skep
   - 18,557 of 20,179 planned changes in scope; 1,622 dropped by the filters (1,520 R2, 102 unfit).
   - Pre-pass: 18,541 ready, 6 already renamed, 10 drifted, 0 gone (limit 371).
   - **RENAMED 500**, 0 raced, 18,041 left to `max_groups`. `window_error` null, not stopped.
-  - The dated spot check of its 30 `applied_samples` (wf_a11e1a4f-464) is running. Go needs 0 former-name reverts
-    and at most 1 other wrong.
+  - **Dated spot check of its 30 `applied_samples` (wf_a11e1a4f-464): NO-GO.** 22 right, 4 neutral, 3 wrong and
+    **1 former-name revert**, every wrong confirmed by a skeptic:
+    - 1556789 (revert): `Instituto Navarro del Deporte y Actividad Fisica` → `… de Deporte y Juventud`. The elected
+      spelling was printed 2015–2020 only (`top_newest` 2020-03-11); the 2024–25 notices print the head's name
+      again.
+    - 1276213: IFAPA → a 2020–23 short form without `Andaluz` (`top_newest` 2023-11-20). Since 2024 the notices
+      print a third, longer official name.
+    - 1345526: the Commune de Valence → `Valence Romans Sud Rhône-Alpes`, the agglomeration (another entity) that
+      buys for it.
+    - 1918631: a bilingual doubling `X - X`.
+  - **Reverted at once** (job 2556): 500 restored to their pre-image, 0 renamed again since. The canaries' six
+    renames (job 2554, judged right) stand.
+
+**What the no-go says.** The uniform change:R1 sample read 0/30 wrong; the capped run's lowest ids read 4/30. Those
+are the long-lived orgs minted from the first packages, the population 2517 failed on. Two of the four wrongs
+share a mechanism v10 does not read: **the elected spelling is itself stale** (`top_newest` years before `as_of`)
+while a third, newer spelling exists. v10 asks only whether the HEAD is current. A third failure is another entity
+buying on the identifier's behalf (1345526, an old class).
+
+**State after v10:** prod serves the pre-524-v10 heads, except the six canary renames. R2 stays planner-only and
+`unfit` stays excluded. NEXT: decide rule v11 from the pooled labels: plans 2523, 2526, 2527 and 2543 plus the
+capped spot check, now in `labels524.json` with a `revert` flag. A candidate is a `top_stale` hold: R1 holds when
+the elected cluster's newest print is old, or when a cluster other than the head and the elected one was printed
+after the elected's newest. Measure it on the low-id population explicitly before any further wet run.
