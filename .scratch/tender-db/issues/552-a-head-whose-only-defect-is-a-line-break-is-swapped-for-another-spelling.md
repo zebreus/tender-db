@@ -1,6 +1,6 @@
 # 552 — a head whose only defect is a line break is swapped for another spelling instead of being served collapsed
 
-Status: ready-for-agent — unit 1 measured and unit 2 decided 2026-10-16, revised the same day after the adversarial
+Status: ready-for-agent — unit 3 BUILT as 524 rule v12 and GATED green 2026-10-16 (`da95dd4`, 151 suites; built and reviewed in wf_bc376053-44d, 13 confirmed findings fixed; the Rust matches decide_552_v2.py on all 104 rows). On main, NOT deployed: it deploys only after 524 v11's step 6 (a new epoch refuses the stored v11 plan). NEXT, after the deploy: the v12 protocol in docs/operations.md (re-plan, then re-judge every control-only release and every R0w change before the wet runs lift `exclude_rules:["R2","R0w"]` / `exclude_released:["unfit"]`).
 check wf_0744b445-0ee (5 blocking findings, all taken; below). Next: unit 3, built as a 524 epoch after rule v11 has
 rolled out (v11's wet runs keep `exclude_released: ["unfit"]` until this ships).
 Kind: data quality (served organization names; issue 524's head election)

@@ -1875,3 +1875,8 @@ most 1 other wrong, so step 5 passes. The neutral ones:
 protocol gate before it has passed: the payload is the runbook's step 6
 `{"kind":"refresh-org-names","dry_run":false,"exclude_rules":["R2"],"exclude_released":["unfit"]}`, against stored plan
 2566.
+
+**main carries rule v12 undeployed (2026-10-16 21:xx UTC).** Issue 552's unit 3 (`da95dd4`, gated green) is on main.
+Prod stays on `064cd35` (v11) until step 6 has run against stored plan 2566. Do not deploy main before that: the v12 epoch
+refuses a v11 plan. If a deploy is ever forced first, v12's runbook says where a v12 plan resumes: step 3's re-judge,
+then step 5 (capped again), then step 6.
