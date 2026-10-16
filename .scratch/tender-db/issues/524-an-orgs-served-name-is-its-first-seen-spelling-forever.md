@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v11 DECIDED 2026-10-16 (panel wf_5d3b6fa8-186, adversarial judge; below). It adds `top_stale` (R1 elected spelling ≥ 365 d old AND a rival cluster; asked after head_current; no junk exemption), the serve holds `doubled` and `seat_dropped`, the bind guard `placeholder_id`, the pre-built fallback filter `exclude_stale_top`, and the diagnostic `rival_newest`; 54 canaries. v10 stays deployed with the six canary renames standing (the capped 2555 was reverted). NEXT: build v11, gate, deploy, re-plan, then the dated gates (a) stale no-rival, (b) uniform, (c) low-id, then canaries, capped 500, full.
+Status: ready-for-agent — RULE v11 DEPLOYED `cbc992b` 2026-10-16 11:32 UTC (built wf_067856fc-5b0: three review lenses, 7 minor doc findings confirmed and fixed; gate green at `cbc992b`). Its dry plan 2562 is running (protocol step 2). NEXT: read the plan against the expected counts (±10%: top_stale ~2,430, doubled ~91, seat_dropped ~67, placeholder_id ~10, head_current ~6,302, by_rule.R1 ~16,104; 0 unexpected canaries; undated 0), then judge the dated gates (a) stale no-rival, (b) uniform, (c) low-id offline while the 533/538 refold holds the queue, then canaries, capped 500, full.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1732,3 +1732,17 @@ Every wet run passes `exclude_rules: ["R2"], exclude_released: ["unfit"]`, plus 
 Reproduce: the scripts are in `/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/v11/judge/`. `t1.py` holds the label tables, `t2.py` and `t8.py` the plan and threshold counts, `t3.py` and `t4.py` the cells and Fisher tests, `t9.py` and `t10.py` the full v11 simulation.
 
 The full judge record and its reproduction scripts are in `.scratch/tender-db/524-v11/`.
+
+## Rule v11 on prod: deployed (2026-10-16)
+
+- **Build.** Built in wf_067856fc-5b0 (build, three review lenses, verify, fix):
+  - the rule lens found 0 findings, and the wet-path and docs lenses found 7 minor ones, all confirmed and fixed;
+  - the build agent checked the Rust predicates against the judge's port on all 29,255 plan-2543 entries:
+    `top_stale` 2,430, `doubled` 91, `seat_dropped` 67, `placeholder_id` 10, `head_current` 6,302, R1 changes
+    15,936, identical verdicts;
+  - `.scratch/tender-db/524-v11/skip-ids.tsv` (565 org ids) holds the ids the gates must not redraw.
+- **Commit and gate.** Committed `cbc992b`, gate green (GATE-EXIT=0, 151 suites).
+- **Deploy.** Deployed 2026-10-16 11:32 UTC with the queue idle; health OK, rev `cbc992b`.
+- **Sequencing.** Dry plan 2562 was enqueued at once, ahead of issue 533/538's refold of 14,927,948 notices (sizing
+  2560). That refold follows the plan and holds the queue for hours, so gates (a), (b) and (c) are judged offline
+  meanwhile, and the wet steps (canaries, capped, full) wait for it to finish.
