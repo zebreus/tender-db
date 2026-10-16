@@ -1,6 +1,6 @@
 # 537 — a head figure 1,000× the sum of its own lots (to the cent) is served: 369057 at €62.4 bn, 165437 at €20.0 bn
 
-Status: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, measure the lot-sum match over the heads ≥ €1 bn (S).
+Status: ready-for-agent — unit 1 MEASURED and unit 2 DECIDED 2026-10-16 (below): of 3,750 heads ≥ €1 bn, 48 match 10ᵏ × a lot sum; adjudicated 43 head_wrong, 4 lots_wrong, 1 coincidence. Rule: k 2..6, n ≥ 2, award-side S unconditional, estimate-side S only under a third-figure guard. It refuses 22 heads, all wrong, 0 wrong refusals. Next: unit 3 (build) after 533 and 524 v10 leave the tree; the lot-sum fallback is filed as 551.
 Kind: data quality (amount plausibility: the head election)
 Relates to:
 - 471 (done 2026-10-08). Two of its decisions border this one, and neither covers it:
@@ -85,6 +85,81 @@ Not measured: the FTS, r208/r209 and text rows of the band; the €1–10 bn ban
   (project.rs:13510). **Do not re-file it.**
 - The first verification draft's errors, not to be repeated: "exactly 1,000×" (165437 is 0.6 cent off; say "to the
   cent"), and arguing only against Unit 5 (the decision these two contradict is 4(c)).
+
+## Unit 1 — measured (2026-10-16)
+
+Evidence pack: `.scratch/tender-db/537-lot-sum/`.
+- `unit1-synthesis-2026-10-16.md`: the full record, every exhibit, and the precision matrix.
+- `unit1-verdicts-2026-10-16.json`: first reader and skeptic for each Tender.
+- `sweep_537.py` / `analyse_537.py`.
+
+**Population.**
+- 3,750 elected heads at ≥ €1 bn and under the €100 bn cap. These are one bounded seek on
+  `tenders_current_value_eur`, plan-checked, and the public detail of each.
+- 2,082 of them carry a lot figure in the head's currency.
+- **48 match** `|F − 10ᵏ·S| ≤ 10ᵏ·n` cents for some lot sum S:
+  - k=1: 17; k=2: 10; k=3: 20; k=4: 1;
+  - 43 TED and 5 FTS.
+
+  S is one of: each lot's latest award; lot BT-27; lot BT-271; or BT-709/BT-660.
+- Sanity population: the head equals its lot sum for 776 estimate sums and 550 award sums.
+
+**Adjudicated** (workflow wf_da0f812d-8bd: a reader per Tender, then a skeptic on every decided verdict):
+**43 head_wrong, 4 lots_wrong, 1 coincidence**.
+- lots_wrong:
+  - 8400892 (k=3, n=1, the kept housing framework);
+  - 8312215 (k=4, lots in thousands);
+  - 8720567 (k=2, FTS);
+  - 8596393 (k=1, FTS, moderate confidence).
+- coincidence: 1039053 (k=1, a deliberate 10× framework ceiling).
+- Every wrong row has an `estimated_value` or `framework_maximum` head, or n = 1.
+- All 28 `result_value` heads are head_wrong.
+
+**Precision on the 48** (right / wrong refusals):
+- Award-side S (awards ∪ BT-709 ∪ BT-660) over n ≥ 2 lots at k ≥ 2: **20 / 0**.
+- The same at k ≥ 1: 24 / 1.
+- Estimate-side S without a guard at k ≥ 2: 7 / 2.
+- Estimate-side S with guard T: 2 / 0. T holds when a third procedure-scope figure X ≠ F in the chain sits within
+  [S/10, 10·S].
+- k = 1 sums are all round numbers (no digit information) and include the coincidence.
+
+## Decision (2026-10-16, owner, from unit 1)
+
+Adopt the synthesis's recommended rule.
+- **Where:** in `ScalePartners` at election time (492's placement).
+- **What it refuses:** every procedure-scope fact of the head version whose cents equal F, worth at least
+  `SCALE_ERROR_MIN_EUR_CENTS` (€1 bn) and at most `IMPLAUSIBLE_EUR_CENTS`. Lot-award copies are not refused.
+- **When:** for some k in 2..=6 and some S over **n ≥ 2** lots, `|F − 10ᵏ·S| ≤ 10ᵏ·n` cents, where S is:
+  - **(A) award side, unconditional:** lot awards, each Lot once from its latest award; BT-709 per lot; BT-660 per
+    lot. Partner-only rows serve as S only, never elected and never in `head_lot_sums` (506).
+  - **(B) estimate side, only under guard T:** lot BT-27 (each Lot's largest figure); lot BT-271 (each Lot's largest
+    figure).
+- Lots of kind Lot only; Parts count only in a head with no Lot. Withheld figures and sentinels are skipped.
+- 492's `framework_total` keep takes precedence. No corroboration exemption (492's reason).
+- **k = 1 is not adopted.** It is below every scale rule's floor, its sums are round, and it holds the coincidence.
+  Its 15 head_wrong rows stay as published, and the caveat stands.
+- **Expected effect:** 22 refusals, all head_wrong, 0 wrong. The rule-of-three 95 % bound on the error rate is
+  about 13.6 %.
+  - All 22 drop below €1 bn: the band goes 3,750 → 3,728.
+  - They fall to null 6×, to a plausible procedure figure 5×, to one lot's figure at the right scale but understated
+    10×, and to a wrong figure 1× (867491's own ×1000 lot slip, under the gate).
+  - Serving the lot sum instead of one lot's figure is a separate decision: filed as 551.
+- **Recorded cost:** arm (A) cannot keep a correct total over award lots published in thousands. That shape occurs
+  0 times in the 20 award-side refusals, and a guard against it would also lose 369057.
+- **Interactions:**
+  - 471: n ≥ 2 leaves single-partner cases to 471. Its corroboration exemption keeps 317736 and 622872, two slips;
+    recorded, unchanged.
+  - 492: disjoint windows, and 492's exemption wins.
+  - 505: the converse direction.
+  - The `IMPLAUSIBLE_EUR_CENTS` doc's "tender-versus-lot-sum ratio" sentence names this rule.
+
+**Unit 3 is the build, as below, with these additions:**
+- the S definitions above;
+- the section-16 flag column;
+- the tests and controls the synthesis names:
+  - refuse: 369057 → null, 165437 → 2020289170, 6921980 / 801998 (tolerance), 392980 (latest award per lot), 1024214
+    (BT-709 as S), 508666 / 114991 (arm B through T);
+  - keep: 8400892, 8312215, 8720567, 8596393, 1039053, 7955574, and the 492/505 control sets.
 
 ## Proposed units
 
