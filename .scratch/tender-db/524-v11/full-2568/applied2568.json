@@ -1,0 +1,185 @@
+{
+ "job": 2568,
+ "samples": [
+  {
+   "new_name": "H & M autoopravy - predaj s.r.o.",
+   "old_name": "HaM autoopravy-predaj, s.r.o.",
+   "org_id": 4395196,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Forklift OÜ",
+   "old_name": "Osaühing Awre",
+   "org_id": 4635740,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Blosse",
+   "old_name": "Stichting Flore",
+   "org_id": 4731571,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Orsted AB",
+   "old_name": "Dong Energy AB",
+   "org_id": 4735768,
+   "rule": "R1"
+  },
+  {
+   "new_name": "KAZNIONICA U LEPOGLAVI",
+   "old_name": "Ministarstvo pravosuđa, Kaznionica u Lepoglavi",
+   "org_id": 4867629,
+   "rule": "R1"
+  },
+  {
+   "new_name": "A1 Hrvatska d.o.o.",
+   "old_name": "VIPnet d.o.o.",
+   "org_id": 5672636,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Communauté de communes du Pays d'Issoudun",
+   "old_name": "Communauté des communes du Pays d'Issoudun",
+   "org_id": 5734103,
+   "rule": "R1"
+  },
+  {
+   "new_name": "OSNOVNA ŠKOLA MARKUŠICA",
+   "old_name": "OŠ Markušica",
+   "org_id": 8102499,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Javni vzgojno-izobraževalni zavod Osnovna šola Benedikt",
+   "old_name": "Osnovna šola Benedikt",
+   "org_id": 8241524,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Zavod za usposabljanje, delo in varstvo dr. Marijana Borštnarja Dornava",
+   "old_name": "ZUDV Dornava",
+   "org_id": 8302120,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Sirc Janko s.p. - mesarstvo",
+   "old_name": "Janko Sirc S.P.",
+   "org_id": 8447148,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Birotehna, servis in vzdrževanje računalniške in pisarniške opreme, d.o.o.",
+   "old_name": "Birotehna d.o.o.",
+   "org_id": 8752489,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Osnovna šola Frana Metelka Škocjan",
+   "old_name": "OŠ Frana Metelka Škocjan",
+   "org_id": 9633397,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Communauté de communes Pays Haut Val d'Alzette",
+   "old_name": "Communauté de communes du Pays Haut Val d'Alzette",
+   "org_id": 10421725,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Limpiezas Ezequiel Pomar Domínguez",
+   "old_name": "Ezequiel Pomar Domínguez",
+   "org_id": 10496191,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Merck Life Science Sp. z o.o.",
+   "old_name": "Sigma-Aldrich Sp. z o.o.",
+   "org_id": 12726216,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Lukkarinoja Oy",
+   "old_name": "Lukkarinoja Oy/Esperi Koti Pirttikoski",
+   "org_id": 12800751,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Zakład Usług Leśnych Hieronim Koszyczarek",
+   "old_name": "Konsorcjum Zakładów Usług Leśnych Zakład Usług Leśnych Hieronim Koszyczarek - Lider Konsorcjum",
+   "org_id": 13067304,
+   "rule": "R1"
+  },
+  {
+   "new_name": "C3B",
+   "old_name": "C 3 B",
+   "org_id": 13887717,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Europ TP",
+   "old_name": "ETPE",
+   "org_id": 14016700,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Fin Vaatturit Oy",
+   "old_name": "Finn Vaatturit Oy",
+   "org_id": 14308356,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Metalco, S. A.",
+   "old_name": "Prolians Metalco, S. A.",
+   "org_id": 14415595,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.",
+   "old_name": "Konsorcjum: lider: Małopolskie Przedsiębiorstwo Gospodarki Odpadami Sp. z o.o.)",
+   "org_id": 14715935,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Biotronik Polska Spółka z o. o.",
+   "old_name": "Biotronik Polska sp. z o.o.",
+   "org_id": 14882776,
+   "rule": "R1"
+  },
+  {
+   "new_name": "LS stavby s.r.o.",
+   "old_name": "Sídlo společnosti Lesní stavby, s.r.o.",
+   "org_id": 15997203,
+   "rule": "R1"
+  },
+  {
+   "new_name": "PreZero Bielsko-Biała S.A.",
+   "old_name": "Suez Bielsko-Biała S.A.",
+   "org_id": 16204526,
+   "rule": "R1"
+  },
+  {
+   "new_name": "INTEC S.A.",
+   "old_name": "Zakład Automatyki Przemysłowej INTEC spółka z ograniczona odpowiedzialnością",
+   "org_id": 16330071,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Usługi Leśne Sylwester Bożejewicz",
+   "old_name": "Sylwestr Bożejewicz prowadzący działalność gospodarczą pod firmą Sylwester Bożejewicz Usługi Leśne",
+   "org_id": 18707735,
+   "rule": "R1"
+  },
+  {
+   "new_name": "Základná škola, Morovnianska cesta 1866/55, Handlová",
+   "old_name": "Základná škola Morovnianska cesta",
+   "org_id": 20313467,
+   "rule": "R1"
+  },
+  {
+   "new_name": "SoftMed Sp. z o.o.",
+   "old_name": "SoftMed Sp. z o. o. Członkiem Konsorcjum",
+   "org_id": 22107996,
+   "rule": "R1"
+  }
+ ]
+}

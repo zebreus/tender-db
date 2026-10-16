@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v11: plan 2562 GO, gates (a)(b)(c) PASSED, step 4 canaries PASSED (2565), re-plan 2566 GO, step 5 capped 500 PASSED (job 2567: 500 renamed, 0 drifted; dated spot check 27 right / 3 neutral / 0 wrong / 0 reverts). NEXT: step 6, the full wet run (`exclude_rules:["R2"], exclude_released:["unfit"]`, about 15,494 renames), then its dated spot check. On 2026-10-16 the enqueue was refused by the session's permission classifier ("blind apply"), so step 6 waits for an operator-visible go.
+Status: ready-for-agent — RULE v11 ROLLED OUT 2026-10-16: step 6 full wet run 2568 (operator go) renamed 15,494 heads, with 500 already renamed by 2567, 0 drifted, 0 raced. Its dated spot check (wf_7a93edd6-ffe) is running; a fail reverts 2568. NEXT: the spot check, then deploy main (rule v12, issue 552) and run v12's protocol.
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1880,3 +1880,21 @@ protocol gate before it has passed: the payload is the runbook's step 6
 Prod stays on `064cd35` (v11) until step 6 has run against stored plan 2566. Do not deploy main before that: the v12 epoch
 refuses a v11 plan. If a deploy is ever forced first, v12's runbook says where a v12 plan resumes: step 3's re-judge,
 then step 5 (capped again), then step 6.
+
+## Rule v11 on prod: step 6, the full run (2026-10-16 22:0x UTC)
+
+The owner gave the go after the session classifier had refused twice. Before the enqueue the preconditions were
+re-checked: queue idle, prod on `064cd35`, stored plan 2566 is v11 on that rev and not truncated.
+
+**Job 2568** (`exclude_rules:["R2"]`, `exclude_released:["unfit"]`):
+- 15,994 targets in scope; 1,628 were dropped before the pre-pass (1,526 R2, 102 `unfit`).
+- Pre-pass: 15,494 ready, 500 already renamed (job 2567), 0 drifted, 0 gone.
+- **RENAMED 15,494 in 8 windows, 0 raced.**
+- Undo: `{"kind":"revert-org-name-refresh","job":2568}`.
+
+v11's renames total 16,002: 8 canaries (2565), 500 capped (2567) and 15,494 full (2568).
+
+**Dated spot check** of 2568's 30 `applied_samples`: wf_7a93edd6-ffe, evidence to
+`.scratch/tender-db/524-v11/full-2568/`. The applied samples come from the same epoch-salted uniform draw as the
+plan's samples, so 30 of the 30 were already read in step 3's gates, all right or neutral there:
+[4395196, 4635740, 4731571, 4735768, 4867629, 5672636, 5734103, 8102499, 8241524, 8302120, 8447148, 8752489, 9633397, 10421725, 10496191, 12726216, 12800751, 13067304, 13887717, 14016700, 14308356, 14415595, 14715935, 14882776, 15997203, 16204526, 16330071, 18707735, 20313467, 22107996]. They are read again here, dated and after the rename.
