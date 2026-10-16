@@ -1494,4 +1494,9 @@ Fresh salted samples (labelled and panel-read orgs skipped), dated reads, a skep
 
 - **Step 4, the canaries (job 2554):** 6 ready, 0 drifted, **RENAMED 6**. All six read their new names on
   `/v1/organizations/{id}`. Undo is `{"kind":"revert-org-name-refresh","job":2554}`.
-- **Step 5, capped 500 (job 2555):** running.
+- **Step 5, capped 500 (job 2555):**
+  - 18,557 of 20,179 planned changes in scope; 1,622 dropped by the filters (1,520 R2, 102 unfit).
+  - Pre-pass: 18,541 ready, 6 already renamed, 10 drifted, 0 gone (limit 371).
+  - **RENAMED 500**, 0 raced, 18,041 left to `max_groups`. `window_error` null, not stopped.
+  - The dated spot check of its 30 `applied_samples` (wf_a11e1a4f-464) is running. Go needs 0 former-name reverts
+    and at most 1 other wrong.
