@@ -732,6 +732,39 @@ notice; then Pass B `refold-fields` over the four field ids on `notice_amounts`,
 first (storage completeness: no served value may move — B assumes C has run, or a de-1.1 chain carrying
 both shapes would rise inside B).
 
+**The open head after issue 533 (`refold-open-head`).** `tenders.current_closed_by_notice` (the
+closing rule, `canonical::closed_by_notice`) is fold-maintained and reads NULL on every row folded
+before the deploy; only the open head (`current_deadline > now`, ~42k on 2026-10-14) can answer
+`status` differently, since a past or absent deadline is Closed already. Re-derive it through the
+fold (ADR-0017 R3; no SQL backfill, issue 375), right after the deploy (until it has run, an open
+head folded before the deploy keeps its pre-533 answer) and queued after any running refold:
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"refold-open-head"}'                  # dry: counts Tenders and notices
+/root/aj.sh /admin/jobs '{"kind":"refold-open-head","dry_run":false}'  # stamps and re-queues them
+/root/aj.sh /admin/jobs '{"kind":"project"}'
+```
+
+Verify: the wet message's `stamped N` equals the dry count, and the `project` message's
+`compare: N verified, M corrected` sums to it (D7's completeness; more if other Tenders were
+pending). The flips are rule T/L correction rows (a lot closes only with its Tender, so a lot's
+flip rides its Tender's). Then three field refolds, each sized first with `"expect":1` (the abort
+message names the carrier count; nothing is written) and run with that count as `expect`:
+
+```sh
+# 1(b): past-deadline DÖE award notices stop serving their own date
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate"],"tables":["notice_dates"],"expect":1}'
+# 2a fill, eForms: BT-766 and its national spellings -> `dps` rows (heavy)
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["BT-766-Lot","BT-766-Part","DE1-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode","SDK01-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode"],"tables":["notice_codes"],"expect":1}'
+# 2a fill, r2.0.9: the DPS marker (K1's legacy leg) and 2b's two no-award reasons, Integer markers
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-DPS","TED-PROCUREMENT_DISCONTINUED","TED-PROCUREMENT_UNSUCCESSFUL"],"tables":["notice_integers"],"expect":1}'
+```
+
+Until the last two have run, `dps` rows and the `discontinued`/`unsuccessful` reasons are complete
+only for the open head and for Tenders folded since the deploy (the sandbox notes say so); `status`
+does not wait on them, since a past-deadline head is Closed by its deadline. Post-deploy reads:
+issue 533's `### Unit 2 order`, step 5.
+
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|
 refold-notices|refold-sections|reparse|data-quality|backfill-titles|mark-skipped-siblings|clear-rebuild-flag,

@@ -145,6 +145,15 @@ pub(crate) const SCHEMA: &str = "
         -- ALTERed in by migrate() for pre-D5 files; backfilled by the
         -- `backfill-values` job.
         current_value_eur_cents INTEGER,
+        -- Issue 533: 1 when the head version's OWN notice closed the procedure, at any
+        -- time (`canonical::closed_by_notice`: an all-`clos-nw` result covering
+        -- every lot, outside an open-ended scheme), NULL otherwise — never 0 (the
+        -- is_buyer convention), so the NULL every existing row reads agrees with the
+        -- fold wherever the rule does not fire. Fold-maintained beside current_deadline;
+        -- `status` reads it on each row of the unchanged deadline range. NO index: one
+        -- would offer the planner an `IS NULL` seek over ~7.9M rows. Also ALTERed in by
+        -- migrate() and in reset_tender_layer's CREATE.
+        current_closed_by_notice INTEGER,
         -- Which PROJECTION LOGIC this Tender's content was last folded under
         -- (issue 99). The fold's early-return keys on the chain of causing
         -- notices, which is a state key only while the logic is fixed: a mapping
@@ -357,8 +366,8 @@ pub(crate) const SCHEMA: &str = "
         tender_id INTEGER NOT NULL,
         seq       INTEGER NOT NULL,
         lot_id    INTEGER REFERENCES lots(id),
-        field     TEXT NOT NULL, -- main | additional | place | nature | procedure
-        scheme    TEXT NOT NULL, -- cpv | nuts | nature (issue 397) | procedure (issue 479)
+        field     TEXT NOT NULL, -- main | additional | place | place_country | nature | procedure | dps
+        scheme    TEXT NOT NULL, -- cpv | nuts | nature (issue 397) | procedure (issue 479) | dps (issue 533)
         code      TEXT NOT NULL,
         FOREIGN KEY (tender_id, seq) REFERENCES tender_versions(tender_id, seq)
     ) STRICT;
@@ -1530,6 +1539,9 @@ struct StoredHead {
     deadline: Option<i64>,
     title: Option<String>,
     value_eur_cents: Option<i64>,
+    /// Issue 533: `current_closed_by_notice` — `Some(1)` when [`closed_by_notice`] holds at the
+    /// head, `None` otherwise (never 0), so D1.5's head compare sees a flip.
+    closed_by_notice: Option<i64>,
 }
 
 /// What `tender_identity` found (issue 495 unit 3): the stored head of an existing Tender, and
@@ -3166,9 +3178,17 @@ impl Fact {
 /// facts — exactly the value the list row's `pick` reads back out of
 /// `tender_version_dates` (`ORDER BY utc_seconds DESC LIMIT 1` over all rows of
 /// the version, lot rows included), computed here from the in-memory facts so the
-/// head update pays no extra query. `None` when the version publishes no deadline
-/// (award notices), which the read layer treats as "not in the deadline
-/// ordering".
+/// head update pays no extra query. `None` when the version carries no admitted
+/// deadline, which the read layer treats as "not in the deadline ordering".
+///
+/// **An award head is not deadline-less** (issue 533). A version is the union of its
+/// notices, so a result notice that publishes no deadline of its own CARRIES its
+/// contract notice's (the /docs Dates caveat, issue 370), and a 2029 date stays on a
+/// procedure its CAN cancelled in 2025. So this is the head's deadline, not whether the
+/// Tender can still be bid on: `status` reads [`closed_by_notice`]
+/// (`tenders.current_closed_by_notice`) beside it. The one award notice that published a
+/// date of its own under this field, DÖE sdk-0.1's `can-standard`, no longer maps it
+/// (`project.rs`, `SDK01_AWARD_NOTICE_TYPES`, issue 533 1(b)).
 pub fn head_deadline(head: &TenderVersion) -> Option<i64> {
     head.facts
         .iter()
@@ -4128,6 +4148,21 @@ pub fn deadline_admitted_sql(utc: &str, published_at: &str) -> String {
     )
 }
 
+/// The WHERE body that selects a version's ADMITTED `submission_deadline` rows from
+/// `tender_version_dates` aliased `d`: the version `(tid, seq)`, the field, and canonical's
+/// window against `published_at` (the version's own publication, a single operand as for
+/// [`deadline_admitted_sql`]). Lot rows included, as [`head_deadline`] reads them.
+///
+/// Issue 533: the one line that names the field for every SQL reader that wants "the
+/// version's deadlines" — the lots `status` EXISTS (its outer and its own-lot rows), the SSE
+/// `StatusBy::Version` probe and the closing rule's admission window (W) — so
+/// `the_deadline_window_is_written_once` counts one selector for all of them instead of a
+/// copy each.
+pub fn admitted_deadline_rows_sql(d: &str, tid: &str, seq: &str, published_at: &str) -> String {
+    let window = deadline_admitted_sql(&format!("{d}.utc_seconds"), published_at);
+    format!("{d}.tender_id = {tid} AND {d}.seq = {seq} AND {d}.field = 'submission_deadline' AND {window}")
+}
+
 /// The earliest instant a submission deadline may name before it is read as a
 /// placeholder rather than a date (issue 171, the research profile's rule 12):
 /// 1990-01-01 UTC. TED's own record starts in the 1990s, and the five head
@@ -4147,6 +4182,334 @@ pub fn deadline_admitted_sql(utc: &str, published_at: &str) -> String {
 /// The weekly data-quality run's sentinel-date detector reads this same
 /// constant as its floor, so it lists exactly what the election refuses.
 pub const DEADLINE_FLOOR_SECS: i64 = 631_152_000;
+
+// ------------------------------------------------- issue 533: closed by its own notice
+
+/// The BT-142 decision a result reads when no contract was awarded — the one home of the
+/// literal in store and app code (issue 533's tripwire,
+/// `the_no_award_decision_is_written_once`): the closing rule's Rust and SQL forms below
+/// read it through this constant, and the sandbox's `decision` note is the one other line.
+pub const DECISION_NO_AWARD: &str = "clos-nw";
+
+/// Issue 533 K2: the eForms BT-105 procedure types that declare an open-ended scheme — "other
+/// single stage" and "other multiple stage", which the corpus uses for authorisation
+/// systems and open-house schemes (403644's Kalmar auktorisationssystem is `oth-single`).
+pub const OPEN_SCHEME_PROCEDURES: &[&str] = &["oth-single", "oth-mult"];
+
+/// Issue 533 E2: the notice subtypes that announce an open-ended scheme on some version of the
+/// chain — eForms `15` (a qualification system) and the UK FTS dynamic-market notices
+/// `UK13`–`UK16` (`docs/research/uk-fts.md`). Compared trimmed of spaces (SQLite's `TRIM`).
+pub const OPEN_SCHEME_SUBTYPES: &[&str] = &["15", "UK13", "UK14", "UK15", "UK16"];
+
+/// Issue 533 K1: the classification scheme (and field) a declared dynamic purchasing system
+/// folds into — BT-766 `dps-list`/`dps-nlist` at its Lot or Part (sub-unit 2a), and the
+/// legacy r209 `DPS` marker as the Tender-scope code `dps`.
+pub const DPS_SCHEME: &str = "dps";
+
+/// Issue 533 K1: the `dps` scheme's codes ([`DPS_SCHEME`]). BT-766's `none` and the
+/// framework codes are never emitted, so a declaration on any version never clears.
+pub const DPS_CODES: &[&str] = &["dps-list", "dps-nlist", "dps"];
+
+/// Issue 533 W: an admission window longer than this keeps a Tender open — the head deadline
+/// more than a year after the publication of the first version that published one. Measured
+/// on the 186 (step 0d): one-shot calls ≤ 122 days (38279 122, 66939 116, 8805808 97),
+/// schemes ≥ 439 days (913640 439, 634469 720, 179459 826).
+pub const OPEN_WINDOW_SECS: i64 = 365 * 86_400;
+
+/// Issue 533 sub-unit 2b: the legacy result `reason` read off r209's
+/// `PROCUREMENT_DISCONTINUED` marker — the publisher's explicit "the procedure was
+/// discontinued" beside `NO_AWARDED_CONTRACT`. A legacy-only code, outside BT-144's list.
+pub const REASON_DISCONTINUED: &str = "discontinued";
+
+/// Issue 533 sub-unit 2b: the legacy result `reason` read off r209's
+/// `PROCUREMENT_UNSUCCESSFUL` marker ("no tenders or requests to participate, or all of them
+/// rejected"). A legacy-only code, outside BT-144's list.
+pub const REASON_UNSUCCESSFUL: &str = "unsuccessful";
+
+/// Issue 533 D: the result reasons that make a no-award an EXPLICIT legacy one, which
+/// overrides the admission window W (never K1, K2 or E2).
+pub const LEGACY_NO_AWARD_REASONS: &[&str] = &[REASON_DISCONTINUED, REASON_UNSUCCESSFUL];
+
+/// The results the head's OWN notice published (issue 533's `own(H)`): the rounds whose
+/// `notice_id` is the head's causing notice. A head contract notice has none.
+fn own_results(head: &TenderVersion) -> impl Iterator<Item = &LotResultState> {
+    head.rounds
+        .iter()
+        .filter(move |r| r.notice_id == head.caused_by_notice_id)
+        .flat_map(|r| r.lot_results.iter())
+}
+
+/// Every result of the head (issue 533's `all(H)`): rounds accumulate, so this is every
+/// result the chain has published, a correction's replacement in place of what it corrected.
+fn all_results(head: &TenderVersion) -> impl Iterator<Item = &LotResultState> {
+    head.rounds.iter().flat_map(|r| r.lot_results.iter())
+}
+
+/// A `clos-nw` result. A NULL decision is not one (issue 257): an award notice that withheld
+/// its outcome never closes anything here.
+fn is_no_award(r: &LotResultState) -> bool {
+    r.decision.as_deref() == Some(DECISION_NO_AWARD)
+}
+
+/// Issue 533's `exempt(C)`: the chain `C` (oldest first, its last version the head `H`)
+/// declares an open-ended scheme, so a no-award result reports one round of it rather than
+/// the end of the procedure — `K1 || K2 || E2 || (W && !D)` (`## Decision 1(a) re-made`):
+///
+/// - **K1**: a `dps` classification ([`DPS_CODES`]) on `H` or any of `H`'s lots. Facts
+///   supersede per key and lots carry by key, so `H` holds every earlier version's
+///   declaration (445631: `dps-list` on its CN, `none` on its result, stays open).
+/// - **K2**: `H`'s Tender-scope `procedure` is [`OPEN_SCHEME_PROCEDURES`].
+/// - **E2**: some version of `C` has a subtype in [`OPEN_SCHEME_SUBTYPES`].
+/// - **W**: `H`'s deadline ([`head_deadline`]) lies more than [`OPEN_WINDOW_SECS`] after the
+///   publication of the FIRST version of `C` that published a deadline (the earliest
+///   published: the fold orders a chain by publication) — an admission window, not a bid
+///   deadline. A deadline-less PIN or UK2 does not anchor it.
+/// - **D**: every result `H`'s own notice published carries a [`LEGACY_NO_AWARD_REASONS`]
+///   reason — an explicit legacy no-award, which overrides W only.
+///
+/// Reads `C` only (ADR-0017 E5): never a title, `now`, or `tenders.source`. The SQL twin is
+/// [`closure_exempt_sql`]; `closed_by_notice_agrees_with_its_sql_form` holds them together.
+pub fn closure_exempt(chain: &[TenderVersion]) -> bool {
+    let Some(head) = chain.last() else { return false };
+    let dps = |f: &Fact| {
+        matches!(f, Fact::Classification { scheme, code, .. }
+            if scheme == DPS_SCHEME && DPS_CODES.contains(&code.as_str()))
+    };
+    if head.facts.iter().chain(head.lots.iter().flat_map(|l| l.facts.iter())).any(dps) {
+        return true;
+    }
+    let open_procedure = |f: &Fact| {
+        matches!(f, Fact::Classification { scheme, code, .. }
+            if scheme == "procedure" && OPEN_SCHEME_PROCEDURES.contains(&code.as_str()))
+    };
+    if head.facts.iter().any(open_procedure) {
+        return true;
+    }
+    if chain
+        .iter()
+        .any(|v| v.notice_subtype.as_deref().is_some_and(|s| OPEN_SCHEME_SUBTYPES.contains(&s.trim_matches(' '))))
+    {
+        return true;
+    }
+    // The anchor is the earliest publication among the dated versions: the fold orders a
+    // chain by publication, so that is the first version that published a deadline, and the
+    // SQL twin can read it as one join (any dated version far enough back) with no
+    // "first" subquery — a level of nesting each lots page row would pay for.
+    let window = head_deadline(head)
+        .zip(chain.iter().filter(|v| head_deadline(v).is_some()).map(|v| v.published_at).min())
+        .is_some_and(|(deadline, anchor)| deadline - anchor > OPEN_WINDOW_SECS);
+    if !window {
+        return false;
+    }
+    let mut own = own_results(head).peekable();
+    let explicit = own.peek().is_some()
+        && own.all(|r| r.reason.as_deref().is_some_and(|reason| LEGACY_NO_AWARD_REASONS.contains(&reason)));
+    !explicit
+}
+
+/// Issue 533 1(a): the head's own notice closed the procedure — no timing is read, so an
+/// award notice published after the deadline closes it too —
+/// `!exempt(C) && own(H) non-empty && every result of H is clos-nw && covered(H)`:
+///
+/// - `own(H)` non-empty: the head notice itself published results. A re-launch CN after a
+///   failed round has none, so it reads open by construction (the 88).
+/// - every result in `all(H)`, every round, is `clos-nw`: a winner, an `open-nw` or a NULL
+///   anywhere keeps the Tender open (the 175 with a winner stay for unit 3).
+/// - `covered(H)`: every lot of kind `Lot` has a result naming it; a version with no
+///   Lot-kind lot counts as covered, and a Tender-scoped result (no lot) covers none. A
+///   UK12 that cancels some lots stays open; one that cancels every lot closes.
+/// - not [`closure_exempt`].
+///
+/// The fold stores it as `tenders.current_closed_by_notice` (1 or NULL, never 0); `status`
+/// reads that beside the unchanged `current_deadline` range. The SQL twin, over one stored
+/// version, is [`closed_by_notice_sql`].
+///
+/// **A lot is closed exactly when its Tender is.** The decided lot rule had a second leg — a
+/// lot its head notice decided `clos-nw` while its Tender stays open (a partial UK12, step
+/// 0b's 11 lots in 7 Tenders) — with 1(c)'s bound and fallback: ship without it if
+/// `lots?tender=X&status=open` passed 2x its pre-533 time on 2,400 lots. It did (2.71x on the
+/// tender-scoped page with lots that carry no deadline of their own; on the lots stream,
+/// where the leg is correlated per lot, 88x at 300 lots — measured 2026-10-16), so the per-lot
+/// leg is unit 3's, and a lot's `status` reads only its Tender's flag beside its deadline.
+pub fn closed_by_notice(chain: &[TenderVersion]) -> bool {
+    let Some(head) = chain.last() else { return false };
+    if own_results(head).next().is_none() || !all_results(head).all(is_no_award) {
+        return false;
+    }
+    let covered = head
+        .lots
+        .iter()
+        .filter(|l| l.kind == "Lot")
+        .all(|l| all_results(head).any(|r| r.lot_key.as_deref() == Some(l.key.as_str())));
+    covered && !closure_exempt(chain)
+}
+
+/// `items` as a parenthesised SQL list of string literals. Only ever called with this
+/// module's constants, which hold no quote.
+fn sql_list(items: &[&str]) -> String {
+    let quoted: Vec<String> = items.iter().map(|item| format!("'{item}'")).collect();
+    format!("({})", quoted.join(", "))
+}
+
+/// The NEGATION of [`closure_exempt`] as a flat SQL conjunction over the `tender_versions` row
+/// aliased `v`, already in scope: not K1 and not K2 (one classifications seek), not E2 (the
+/// chain prefix), and not (W and not D) — W being the head's admitted deadline rows joined to
+/// every dated version of the prefix (the earliest is the anchor), D the head's own results.
+/// `own_present`: the caller has already required an own result (both rule forms do), so D
+/// reduces to "no own result lacks a legacy no-award reason"; otherwise D's non-emptiness is
+/// spelled out too.
+///
+/// Kept FLAT on purpose — a conjunction of single-level subqueries, the version's columns read
+/// off `v` (its `tender_id`, `seq`, `caused_by_notice_id`, `published_at`) rather than the
+/// caller's `tid`/`seq` spliced into each leg. turso plans nested subqueries and nested boolean
+/// negations recursively, and the lots `status` shapes already sit near a debug test thread's
+/// 2 MiB stack: the first cut (W as a scalar "first dated version" subquery under an EXISTS,
+/// D as `NOT (EXISTS … AND NOT EXISTS …)` under `NOT (… OR …)`, `seq` spliced a dozen times
+/// as the lots stream's own scalar subquery) needed 3 MiB and overflowed it; measured with a
+/// stack probe, the nested negation of D alone cost 512 KiB.
+fn not_exempt_body(v: &str, own_present: bool) -> String {
+    let head_rows = admitted_deadline_rows_sql("cb_d", &format!("{v}.tender_id"), &format!("{v}.seq"), &format!("{v}.published_at"));
+    let anchor_rows = admitted_deadline_rows_sql("cb_f", "cb_a.tender_id", "cb_a.seq", "cb_a.published_at");
+    let own = format!(
+        "SELECT 1 FROM tender_version_lot_results cb_r
+           CROSS JOIN lot_results cb_lr ON cb_lr.id = cb_r.lot_result_id
+          WHERE cb_r.tender_id = {v}.tender_id AND cb_r.seq = {v}.seq
+            AND cb_lr.notice_id = {v}.caused_by_notice_id"
+    );
+    let reasons = sql_list(LEGACY_NO_AWARD_REASONS);
+    let unexplained = format!("NOT EXISTS ({own} AND (cb_r.reason IS NULL OR cb_r.reason NOT IN {reasons}))");
+    let explicit = if own_present { unexplained } else { format!("(EXISTS ({own}) AND {unexplained})") };
+    // `INDEXED BY` the version index on the K1/K2 leg: with no row stats (prod runs no
+    // ANALYZE, issues 428/429) turso planned the OR of two `scheme = ?` branches as
+    // `MULTI-INDEX OR cb_c (tender_version_classifications_code, …)` — each branch a
+    // corpus-wide `(scheme=?)` seek filtered on tender_id/seq afterwards, so every evaluation
+    // read every `procedure` and `dps` row in the database (issue 421's trap; one At probe
+    // 6 ms → 1.85 s at 100k non-matching rows, review 2026-10-16). The version index is in
+    // SCHEMA, never deferred or dropped (`drop_and_recreate` re-creates it), so the hint
+    // cannot fail; the plan pin is `the_status_reads_keep_their_deadline_index_and_add_no_scan`.
+    format!(
+        "NOT EXISTS (SELECT 1 FROM tender_version_classifications cb_c
+                       INDEXED BY tender_version_classifications_version
+                      WHERE cb_c.tender_id = {v}.tender_id AND cb_c.seq = {v}.seq
+                        AND ((cb_c.scheme = '{DPS_SCHEME}' AND cb_c.code IN {dps})
+                             OR (cb_c.scheme = 'procedure' AND cb_c.lot_id IS NULL AND cb_c.code IN {procedures})))
+         AND NOT EXISTS (SELECT 1 FROM tender_versions cb_e
+                          WHERE cb_e.tender_id = {v}.tender_id AND cb_e.seq <= {v}.seq
+                            AND TRIM(cb_e.notice_subtype) IN {subtypes})
+         AND (NOT EXISTS (SELECT 1 FROM tender_version_dates cb_d
+                            CROSS JOIN tender_versions cb_a
+                            CROSS JOIN tender_version_dates cb_f
+                          WHERE {head_rows}
+                            AND cb_a.tender_id = {v}.tender_id AND cb_a.seq <= {v}.seq
+                            AND {anchor_rows}
+                            AND cb_d.utc_seconds - cb_a.published_at > {OPEN_WINDOW_SECS})
+              OR {explicit})",
+        dps = sql_list(DPS_CODES),
+        procedures = sql_list(OPEN_SCHEME_PROCEDURES),
+        subtypes = sql_list(OPEN_SCHEME_SUBTYPES),
+    )
+}
+
+/// `body` (an SQL predicate over the alias `cb_v`) evaluated at the stored version `(tid, seq)`
+/// — one primary-key seek on `tender_versions`, so `tid` and `seq` are spliced in once.
+fn at_version(tid: &str, seq: &str, body: &str) -> String {
+    format!(
+        "EXISTS (SELECT 1 FROM tender_versions cb_v
+                  WHERE cb_v.tender_id = {tid} AND cb_v.seq = {seq} AND {body})"
+    )
+}
+
+/// [`closure_exempt`] as an SQL predicate over the stored version `(tid, seq)` — `tid` and
+/// `seq` are single operands spliced in once (columns, parameters or scalar subqueries).
+/// Reads only that version's own rows and its chain prefix, each by a `(tender_id, seq)`-
+/// prefixed or primary-key seek: `tender_versions` (the version itself; for `seq <= v`, E2 and
+/// W's anchor), `tender_version_classifications` (K1, K2), `tender_version_dates` through
+/// [`admitted_deadline_rows_sql`] (W), and the version's results (D). Always 0 or 1, never
+/// NULL. Aliases are `cb_`-prefixed so they shadow nothing.
+pub fn closure_exempt_sql(tid: &str, seq: &str) -> String {
+    format!("(NOT {})", at_version(tid, seq, &not_exempt_body("cb_v", false)))
+}
+
+/// [`closed_by_notice`] as an SQL predicate over the stored version `(tid, seq)`: what the
+/// SSE `Scope::At` probes decide status by at a version that is not the head (through
+/// [`closed_at_version_sql`]), and what the agreement test checks the stored flag against.
+/// Same reads as [`closure_exempt_sql`], plus `tender_version_lots.kind` for coverage.
+/// **Never in a Page read** — a page reads the stored flag, one row read where this is a
+/// dozen seeks. Always 0 or 1.
+///
+/// Gated in two loops, because turso 0.7 runs every correlated subquery of a loop before
+/// testing any condition at that loop (`main_loop/conditions.rs`: early conditions, then the
+/// loop's subqueries, then the conditions that read them), so a cheap leg beside a costly one
+/// never spares it — a version without results paid both coverage counts, linear in its lots
+/// (review 2026-10-16: 47.7 ms at 2,400 lots against 4.0 ms at 8, and a winner head as much as
+/// a closing one). The cheap legs — an own result, no result other than `clos-nw` — correlate
+/// on `cb_v`; the coverage counts and the exemption on `cb_g`, the same version row sought
+/// again one loop deeper (CROSS JOIN keeps the order), which turso enters only when `cb_v`'s
+/// conditions held. The `LIMIT 1` keeps the `clos-nw` leg a subquery of `cb_v`'s
+/// loop: unlimited, turso's unnesting pass rewrites a one-table NOT EXISTS into an anti-join
+/// appended AFTER `cb_g`, where it would gate nothing (`optimizer/unnest.rs`,
+/// `can_unnest_inner_plan`). What still pays the counts is a version that passes both cheap
+/// legs: one that closes, or an exempt one whose results are all `clos-nw`.
+///
+/// Coverage is a COUNT, not "no Lot-kind lot without a result": the version's Lot-kind lots
+/// against the distinct Lot-kind lots its results name, each result joined to its lot row by
+/// primary key. The NOT EXISTS form walked the version's result slice once per lot
+/// (`tender_version_lot_results` has no `lot_id` index — issue 115's quadratic shape), and a
+/// flip of a big Tender writes one lot change row per lot, each probed at two versions by
+/// every lots subscription with a `status` filter: on 2,400 lots whose results are all
+/// `clos-nw` that was 4,800 probes of 5.8M row visits each. The lot row's ON is keyed on
+/// `cb_g`, not on the result row: keyed on `cb_r`, the planner sought the results by
+/// `(tender_id=?)` alone and read every version's slice of the Tender (1.7x on 31 versions
+/// against 2, review 2026-10-16); keyed on `cb_g`, it seeks `(tender_id=? AND seq=?)` and reads
+/// this version's slice once.
+pub fn closed_by_notice_sql(tid: &str, seq: &str) -> String {
+    format!("({})", closed_at(tid, seq, ""))
+}
+
+/// The closing rule at a version, for the SSE `Scope::At` probes (Tenders and Lots): at the
+/// head (`seq` = `head_seq`) the fold's stored flag `head_flag`, one column of the row the
+/// probe already reads; at any other version [`closed_by_notice_sql`]'s rule. The two agree at
+/// the head wherever the Tender was folded since issue 533 deployed (the agreement test pins
+/// it), and the fold that writes a version's change rows writes the flag with them; reading the
+/// flag also keeps a probe's head answer the one the pages serve. Measured 2026-10-16, before this: the rule itself on
+/// every probe made one lots At probe of a 2,400-lot Tender 10-17x the pre-533 one, and a
+/// flip of that Tender is 4,800 probes per subscription. `cb_v.seq <> head_seq` is an early
+/// condition of the rule's first loop, so at the head the rule's subqueries never run; what a
+/// head probe still pays is preparing the rule's SQL text, about 4-5 ms in a debug build
+/// whatever the Tender's size (1.3-1.6x the pre-533 probe on 2,400 lots, measured 2026-10-16).
+pub fn closed_at_version_sql(tid: &str, seq: &str, head_seq: &str, head_flag: &str) -> String {
+    format!(
+        "(({seq} = {head_seq} AND {head_flag} IS 1) OR {})",
+        closed_at(tid, seq, &format!(" AND cb_v.seq <> {head_seq}"))
+    )
+}
+
+/// The gated rule behind [`closed_by_notice_sql`] and [`closed_at_version_sql`]; `skip` is
+/// spliced into the first loop's conditions.
+fn closed_at(tid: &str, seq: &str, skip: &str) -> String {
+    format!(
+        "EXISTS (SELECT 1 FROM tender_versions cb_v
+                   CROSS JOIN tender_versions cb_g
+                  WHERE cb_v.tender_id = {tid} AND cb_v.seq = {seq}{skip}
+                    AND EXISTS (SELECT 1 FROM tender_version_lot_results cb_r
+                                  CROSS JOIN lot_results cb_lr ON cb_lr.id = cb_r.lot_result_id
+                                 WHERE cb_r.tender_id = cb_v.tender_id AND cb_r.seq = cb_v.seq
+                                   AND cb_lr.notice_id = cb_v.caused_by_notice_id)
+                    AND NOT EXISTS (SELECT 1 FROM tender_version_lot_results cb_r
+                                     WHERE cb_r.tender_id = cb_v.tender_id AND cb_r.seq = cb_v.seq
+                                       AND (cb_r.decision IS NULL OR cb_r.decision <> '{DECISION_NO_AWARD}')
+                                     LIMIT 1)
+                    AND cb_g.tender_id = cb_v.tender_id AND cb_g.seq = cb_v.seq
+                    AND (SELECT COUNT(*) FROM tender_version_lots cb_l
+                          WHERE cb_l.tender_id = cb_g.tender_id AND cb_l.seq = cb_g.seq AND cb_l.kind = 'Lot')
+                      = (SELECT COUNT(DISTINCT cb_r.lot_id) FROM tender_version_lot_results cb_r
+                           CROSS JOIN tender_version_lots cb_l
+                                   ON cb_l.tender_id = cb_g.tender_id AND cb_l.seq = cb_g.seq AND cb_l.lot_id = cb_r.lot_id
+                          WHERE cb_r.tender_id = cb_g.tender_id AND cb_r.seq = cb_g.seq AND cb_l.kind = 'Lot')
+                    AND {not_exempt})",
+        not_exempt = not_exempt_body("cb_g", true),
+    )
+}
 
 /// A published amount that is a placeholder rather than a figure, and so must
 /// never be elected as a Tender's headline value (issue 366, measured on prod
@@ -13805,6 +14168,23 @@ impl Db {
         Self::stamp_tenders_stale(&conn, ids).await
     }
 
+    /// Issue 533: the open head — every Tender whose stored head deadline is after `now`,
+    /// ascending: the only Tenders whose `status` answer the closing rule (and 1(b)'s dropped
+    /// DÖE award date) can change, since a past or absent deadline reads Closed already and a
+    /// lot open on its own date implies its Tender's (`head_deadline` is MAX over the head's
+    /// tender and lot dates). `refold-open-head`'s cohort (ADR-0017 R3): one range read of
+    /// `tenders_current_deadline`, about 42k ids on prod (2026-10-14).
+    pub async fn open_head_tender_ids(&self, now: i64) -> turso::Result<Vec<i64>> {
+        let conn = self.reader().await?;
+        let mut rows = conn.query("SELECT id FROM tenders WHERE current_deadline > ?", (Value::Integer(now),)).await?;
+        let mut ids = Vec::new();
+        while let Some(row) = rows.next().await? {
+            ids.push(int(&row, 0));
+        }
+        ids.sort_unstable();
+        Ok(ids)
+    }
+
     /// The Tenders whose stored head value, or any stored lot value of any version, is at
     /// least `floor_eur_cents`, ascending: the cohort a value-election rule that can only
     /// LOWER figures at or above that floor can move (issue 492's x100 rule, issue 471's
@@ -15259,6 +15639,7 @@ impl Db {
                  current_seq INTEGER, current_published_at INTEGER,
                  current_deadline INTEGER, current_title TEXT,
                  current_value_eur_cents INTEGER,
+                 current_closed_by_notice INTEGER,
                  projection_epoch INTEGER NOT NULL DEFAULT 0
              ) STRICT",
             (),
@@ -21303,7 +21684,6 @@ impl Db {
         }
         for (i, version) in p.versions.iter().enumerate().skip(keep) {
             let seq = i as i64 + 1;
-            let previous = i.checked_sub(1).map(|j| &p.versions[j]);
             partners.add_version_figures(version);
             partners.set_head(version);
             let prior = if i < compared {
@@ -21347,7 +21727,7 @@ impl Db {
             // the sweep. Every other version is announced by its transition rows, as today.
             if !(acting && i < compared) {
                 applied.changes += self
-                    .append_version_changes(conn, tender_id, seq, version, previous, now, stmts)
+                    .append_version_changes(conn, tender_id, seq, &p.versions[..=i], now, stmts)
                     .await?;
             }
             if shadow && i + 1 == compared {
@@ -21407,6 +21787,8 @@ impl Db {
                 deadline: head_deadline(head),
                 title: head_title(head),
                 value_eur_cents: head_value_eur_cents_with(head, &partners, &self.rates_lookup()),
+                // Issue 533: the closing rule over the whole chain; 1 or NULL, never 0.
+                closed_by_notice: closed_by_notice(&p.versions).then_some(1),
             };
             // An appended head is announced by its transition rows; otherwise a head column
             // that moved while every version compared identical is a correction.
@@ -21434,6 +21816,7 @@ impl Db {
                         opt_int(fresh.deadline),
                         opt_text(fresh.title.as_deref()),
                         opt_int(fresh.value_eur_cents),
+                        opt_int(fresh.closed_by_notice),
                         Value::Integer(tender_id),
                     ))
                     .await?;
@@ -21617,7 +22000,8 @@ impl Db {
                 (Some(key), _) => {
                     conn.query(
                         "SELECT id, source, projection_epoch, kind, current_seq, current_published_at,
-                                current_deadline, current_title, current_value_eur_cents
+                                current_deadline, current_title, current_value_eur_cents,
+                                current_closed_by_notice
                            FROM tenders WHERE procedure_key = ?",
                         (t(key),),
                     )
@@ -21626,7 +22010,8 @@ impl Db {
                 (None, Some(notice_id)) => {
                     conn.query(
                         "SELECT id, source, projection_epoch, kind, current_seq, current_published_at,
-                                current_deadline, current_title, current_value_eur_cents
+                                current_deadline, current_title, current_value_eur_cents,
+                                current_closed_by_notice
                            FROM tenders WHERE source = ? AND island_notice_id = ?",
                         (t(&p.source), Value::Integer(notice_id)),
                     )
@@ -21659,6 +22044,7 @@ impl Db {
                     deadline: opt_int_of(&row, 6),
                     title: opt_text_of(&row, 7),
                     value_eur_cents: opt_int_of(&row, 8),
+                    closed_by_notice: opt_int_of(&row, 9),
                 };
                 return Ok((id, false, int(&row, 2), Some(StoredIdentity { head, moved })));
             }
@@ -39615,17 +40001,29 @@ impl Db {
     }
 
     /// The diff-based change scoping of ADR-0001's amendment: what this version
-    /// changed is what differs from the previous one, per entity.
+    /// changed is what differs from the previous one, per entity. `chain` is the version
+    /// prefix ending at this version (`versions[..=seq-1]`), never empty: the closing rule
+    /// (issue 533) reads a prefix, not a pair.
     async fn append_version_changes(
         &self,
         conn: &Connection,
         tender_id: i64,
         seq: i64,
-        v: &TenderVersion,
-        previous: Option<&TenderVersion>,
+        chain: &[TenderVersion],
         now: i64,
         stmts: &mut TenderInserts,
     ) -> turso::Result<u64> {
+        let (v, before) = chain.split_last().expect("a version prefix is never empty");
+        let previous = before.last();
+        // Issue 533: whether the closing rule holds at this version and at the previous one.
+        // A later result that closes the Tender, or a re-launch CN (or any later notice with
+        // no results of its own) that reopens it, flips it with no fact of its own changing —
+        // a lot's facts seldom move on a CAN — so the flip is a change in its own right, for
+        // the Tender and for each of its lots (a lot is closed exactly when its Tender is,
+        // `closed_by_notice`), which SSE then classifies `removed`/`added` against the
+        // previous version's probe.
+        let closed_now = closed_by_notice(chain);
+        let closed_before = closed_by_notice(before);
         let mut count = 0;
         match previous {
             None => {
@@ -39641,7 +40039,8 @@ impl Db {
             Some(prev)
                 if prev.facts != v.facts
                     || prev.rounds != v.rounds
-                    || prev.group_members != v.group_members =>
+                    || prev.group_members != v.group_members
+                    || closed_before != closed_now =>
             {
                 stmts.append_change("tender", tender_id, Some(seq), "changed", now).await?;
                 count += 1;
@@ -39659,9 +40058,15 @@ impl Db {
             // 14,480 consecutive-version value moves lacked a lot `changed` row at their seq. The
             // gap is documented rather than closed, because emitting on every value move would
             // cost each daily append a row per lot.
+            // Issue 533: a lot present on both sides is also `changed` when its Tender's closure
+            // moved, which is its own.
             let op = match previous_lots.iter().find(|l| l.key == lot.key) {
                 None => "added",
-                Some(before) if before.facts != lot.facts || before.kind != lot.kind => "changed",
+                Some(before)
+                    if before.facts != lot.facts || before.kind != lot.kind || closed_before != closed_now =>
+                {
+                    "changed"
+                }
                 Some(_) => continue,
             };
             stmts.append_change("lot", lot_id, Some(seq), op, now).await?;
@@ -41401,7 +41806,7 @@ impl TenderInserts {
                 .prepare("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)")
                 .await?,
             head_update: conn
-                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ?, current_title = ?, current_value_eur_cents = ? WHERE id = ?")
+                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ?, current_title = ?, current_value_eur_cents = ?, current_closed_by_notice = ? WHERE id = ?")
                 .await?,
             lot_lookup: conn
                 .prepare("SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?")

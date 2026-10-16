@@ -172,7 +172,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
   <tr><td class="ep">bidder</td><td>Organization id named as a tenderer on a published bid (TED eForms, eForms-DE), won or not. On FTS, an award supplier only: FTS publishes no losing bidders. The pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1 publish winners without bids, so a win there appears under <code>winner</code> only. To find every tender where an organization is named as a tenderer or a winner, query both; on the formats without bids, an award to the tender's own buyer is in neither (issue 531).</td></tr>
-  <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code> (by submission deadline). On <code>/v1/lots</code> the deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>.</td></tr>
+  <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code>, by submission deadline <strong>and by what the newest notice says</strong> (issue 533). <code>open</code>: a submission deadline in the future, and the procedure not closed by its newest notice. <code>closed</code>: everything else &mdash; no deadline in the future, or a newest notice that published results when every result the procedure has published is a no-award (all <code>clos-nw</code>: a cancellation, an FTS UK12 termination) and together they decide every lot (a Tender-scoped result decides none), because a result notice usually publishes no deadline and the Tender carries its contract notice's (see <a href="#caveats">caveats &rarr; Dates</a>). Not where the Tender declares an open-ended scheme, whose no-award result reports one round: a dynamic purchasing system, procedure <code>oth-single</code>/<code>oth-mult</code>, a qualification-system (eForms 15) or dynamic-market (UK13&ndash;UK16) notice, or a current deadline more than a year after the publication of the first notice that published a deadline (an admission window; an explicit r2.0.9 <em>discontinued</em>/<em>unsuccessful</em> no-award closes even then). A winner, or a decision the notice withheld, never closes a Tender here; a later notice that publishes no results of its own (a re-launch contract notice, but also e.g. a corrigendum) reopens it. On <code>/v1/lots</code> a lot is closed with its Tender: a no-award for some lots of a Tender that stays open does not close those lots. The deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>. <code>sort=deadline</code> and <code>deadline_after</code>/<code>deadline_before</code> still read the deadline alone.</td></tr>
   <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the TENDER's elected headline figure converted to EUR at its publication date (on <code>/v1/lots</code> too: the bound reads the Tender's figure, not the lot's own <code>value</code>) (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
   <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em> &mdash; any amount row, including the partner-only award-notice framework values (issue 506).</td></tr>
   <tr><td class="ep">procedure_type</td><td>The <strong>procedure type</strong> (eForms BT-105, <code>procurement-procedure-type</code>): one or more codes, comma-separated, case-insensitive, at most 10 &mdash; <code>open</code>, <code>restricted</code>, <code>neg-w-call</code>, <code>neg-wo-call</code>, <code>comp-dial</code>, <code>innovation</code>, <code>oth-single</code>, <code>oth-mult</code>, and the German national codes as published (eForms-DE&rsquo;s below-threshold <code>us-*</code>, DÖE sdk-0.1&rsquo;s <code>de-*</code>; not cross-walked onto the EU list). Exact match on the current version&rsquo;s procedure type &mdash; the latest <em>mapped</em> type a notice of the Tender stated; lots inherit their Tender&rsquo;s. The pre-eForms TED eras fold the form&rsquo;s own procedure checkbox where it names one type, else the <code>PR</code> code through a closed table (1 open, 2/3 restricted, 4 neg-w-call, T neg-wo-call); any other value or a silent notice folds nothing, so the earlier type stays in place (it can predate the latest notice), and a Tender no notice typed matches no code. E.g. <code>procedure_type=neg-wo-call</code> for awards without a prior call &mdash; complete for eForms, <em>not</em> before it: a legacy award is typed only when its form ticked a without-call box, and FTS&rsquo;s Procurement Act routes (<em>Direct award</em>, <em>Competitive flexible procedure</em>, &hellip;) are not mapped. Tenders/Lots.</td></tr>
@@ -900,7 +900,14 @@ rates and the quarantine resolution ledger.</p>
   versions, so <code>published_at</code> advances to the newest notice while a
   deadline the newest notice is silent about is carried forward from an earlier
   one. After an award notice, <code>deadline &lt; published_at</code> is the
-  EXPECTED shape, not noise and not data loss (issue 370).</li>
+  EXPECTED shape, not noise and not data loss (issue 370). The converse is the
+  same carry: a result published BEFORE the deadline it carries leaves the row's
+  <code>submission_deadline</code> in the future, which is why <code>status</code>
+  reads the newest notice as well (issue 533, <a href="#filters">filters</a>): a
+  no-award result that decides every lot closes the Tender outside an open-ended scheme
+  (see filters) while its deadline is still served. A D&Ouml;E sdk-0.1 award notice's own <code>EndDate</code> is not a submission
+  deadline (an ex-post award of a procedure without a participation contest) and maps to
+  none; it stays in <code>/v1/notices/{id}/content</code>.</li>
   <li>A date-only <code>published_at</code> / <code>dispatched_at</code> is stored at its
   <strong>civil day's UTC midnight</strong> (issue 418), so <code>published_after=YYYY-MM-DD</code>
   finds it and a <code>/v1/sql</code> day or year grouping names the day the source stated. The
@@ -1189,6 +1196,11 @@ mod tests {
             // Issue 532 unit 3: the refold ran (refold-fields 2521, project 2522, 2026-10-15); the
             // Verify and the DÖE witness 1365142 read done. The five caveats shared this token.
             ("issue-532 refold", "the issue-532 refold ran, jobs 2521 and 2522 (issue 532)"),
+            // Issue 533: served from issue 370 on. A result notice usually publishes no
+            // deadline, so the Tender carries its contract notice's, and a procedure its
+            // newest notice cancelled read `open` until that date passed.
+            ("By submission deadline.", "status reads the newest notice too (issue 533)"),
+            ("(by submission deadline)", "status reads the newest notice too (issue 533)"),
         ];
         // Issue 534 review: an entry is only as good as its spelling. The `/docs` form
         // of the winner sentence, wrapped the way the page wraps prose, is caught.
@@ -1615,6 +1627,39 @@ mod tests {
             PAGE.contains("GET /v1/notices?publication_id=79997-2017</td>"),
             "the /docs lookups table must show TED's unpadded spelling"
         );
+    }
+
+    /// Issue 533, the positive half of the retired "By submission deadline.": both surfaces
+    /// say `status` reads the newest notice beside the deadline, which notices close a Tender,
+    /// which schemes are exempt, what reopens it and how a lot follows its Tender. Read from
+    /// the `status` row and the openapi `status` parameter, not the whole surface. One phrase
+    /// per sentence.
+    #[test]
+    fn the_docs_say_status_reads_the_newest_notice() {
+        let start = PAGE.find("<td class=\"ep\">status</td>").expect("/docs has a status filter row");
+        let docs = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["parameters"]["status"]["description"]
+            .as_str()
+            .expect("the status parameter is described");
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi)] {
+            assert_says(
+                &format!("{surface}'s status text"),
+                text,
+                &[
+                    "by what the newest notice says",
+                    "not closed by its newest notice",
+                    "every result the procedure has published is a no-award",
+                    "together they decide every lot",
+                    "open-ended scheme",
+                    "more than a year after the publication of the first notice that published a deadline",
+                    "never closes a tender here",
+                    "a later notice that publishes no results of its own",
+                    "a lot is closed with its tender",
+                ],
+            );
+        }
+        assert_says("/docs's status row", docs, &["still read the deadline alone"]);
     }
 
     /// Issue 532: both surfaces say a place of performance published only as a

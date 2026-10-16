@@ -1032,14 +1032,27 @@ const TABLE_NOTES: &[(&str, &str)] = &[
 const CLASSIFICATION_SCHEME_NOTE: &str = "One of: cpv (WHAT is bought, the EU Common \
     Procurement Vocabulary), nuts (WHERE it is performed, the EU region code), nature (the \
     contract nature since issue 397: works, supplies, services, or combined, which only the \
-    pre-eForms eras publish) and procedure (the procedure type since issue 479, eForms BT-105's \
+    pre-eForms eras publish), procedure (the procedure type since issue 479, eForms BT-105's \
     procurement-procedure-type codes such as open, restricted, neg-w-call, neg-wo-call, with \
     German national us-*/de-* codes as published; Tender scope only, lot_id NULL, at most one \
-    per version). Filter on scheme explicitly: scheme <> 'cpv' is NOT the NUTS codes.";
+    per version) and dps (a declared dynamic purchasing system since issue 533: eForms BT-766 \
+    dps-list / dps-nlist at the lot that declared it, and dps at Tender scope for the r2.0.9 \
+    DPS marker; a later notice's 'none' never clears it. Complete for the open head and for \
+    Tenders folded since issue 533 deployed, until a fields refold reaches the rest). Filter on \
+    scheme explicitly: scheme <> 'cpv' is NOT the NUTS codes.";
 const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts), \
     place_country (nuts: the level-0 code of a place published only as a country, only on a version \
     with no other nuts row; issue 532), \
-    nature (nature), procedure (procedure) \u{2014} which published field the code came from.";
+    nature (nature), procedure (procedure), dps (dps) \u{2014} which published field the code came from.";
+
+/// Issue 533 sub-unit 2b: the served lot-result `reason` vocabulary, now that the legacy reader
+/// writes two codes of its own beside eForms' BT-144 list.
+const RESULT_REASON_NOTE: &str = "Why no contract was awarded, where the notice says so. eForms: \
+    the BT-144 non-award-justification code as published (e.g. 'other', 'chan-need', \
+    'no-rece'). r2.0.9 (issue 533): 'discontinued' (PROCUREMENT_DISCONTINUED) or 'unsuccessful' \
+    (PROCUREMENT_UNSUCCESSFUL), legacy-only codes outside BT-144's list; complete for the open head \
+    and for Tenders folded since issue 533 deployed, until a fields refold reaches the rest (they \
+    read NULL there until the Tender is next re-folded). NULL otherwise.";
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of
 /// that name in any table (the epoch columns recur widely). Open or
@@ -1084,6 +1097,19 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          predates the backfill).",
     ),
     (
+        "tenders",
+        "current_closed_by_notice",
+        "1 when the head version's OWN notice published results and the closing rule holds (issue \
+         533): every result of the head is a no-award decision (see decision), \
+         every lot of kind 'Lot' has one, and the Tender declares no open-ended scheme (a dps \
+         classification, procedure oth-single/oth-mult, a subtype 15 or UK13-UK16 on any version, \
+         or a head deadline more than a year after the first deadline-bearing version, unless every \
+         own result is an r2.0.9 'discontinued'/'unsuccessful' no-award). NULL otherwise, never 0. \
+         It compares no date with the deadline: a result published after the deadline sets it too, \
+         on a Tender folded since issue 533 deployed. ?status=open is current_deadline > now AND this IS NOT 1 (NULL). A head whose deadline has passed \
+         reads NULL until its next refold (it is Closed by its deadline anyway).",
+    ),
+    (
         "*",
         "awarded_eur_cents",
         "Derived EUR at the version's publication date (ADR-0014) for awarded_cents — same \
@@ -1126,6 +1152,9 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "eForms winner-selection-status code, e.g. 'selec-w' (a winner was selected), \
          'clos-nw' (closed, no award).",
     ),
+    ("tender_version_lot_results", "reason", RESULT_REASON_NOTE),
+    ("v_lot_results", "reason", RESULT_REASON_NOTE),
+    ("v_awards", "reason", RESULT_REASON_NOTE),
     (
         "*",
         "notice_subtype",

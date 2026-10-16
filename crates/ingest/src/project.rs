@@ -421,7 +421,8 @@ const DATES: &[(&str, &str)] = &[
     ("TXT-DT", "submission_deadline"),
     ("TXT-DD", "submission_deadline"),
     // DÖE sdk-0.1: the lot's tender-submission deadline (an EndDate period).
-    ("SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate", "submission_deadline"),
+    // Not on an award notice (issue 533 1(b): `SDK01_AWARD_NOTICE_TYPES`).
+    (SDK01_DEADLINE_FIELD, "submission_deadline"),
 ];
 
 /// The F14 corrigendum's new date, and the sibling that says what it corrects.
@@ -1197,6 +1198,20 @@ const SDK01_RESULT_CODE_FIELD: &str = "SDK01-TenderResult-TenderResultCode";
 /// winner, no value. `AwardTime` is published beside it and is not merged: the
 /// day is the fact anyone reads, and a half-carried instant is worse than a date.
 const SDK01_AWARD_DATE_FIELD: &str = "SDK01-TenderResult-AwardDate";
+/// DÖE sdk-0.1's lot tender-submission deadline (an `EndDate` period), mapped to
+/// `submission_deadline` through [`DATES`] — except on an award notice (issue 533 1(b),
+/// [`SDK01_AWARD_NOTICE_TYPES`]).
+const SDK01_DEADLINE_FIELD: &str = "SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate";
+/// The `SDK01-NoticeTypeCode`s that are AWARD notices (issue 533 1(b)): on one of these the
+/// [`SDK01_DEADLINE_FIELD`] date is not a submission deadline on any reading — read raw on
+/// four `can-standard` notices (step 0c), each an ex-post award of a negotiated procedure
+/// without a participation contest, its `EndDate` 23 to 239 days after the award on all 141
+/// open heads, inviting nothing — so it maps to no canonical fact. It stays in the notice
+/// layer (`/v1/notices/{id}/content`). In a CN→CAN chain the CN's real deadline then carries
+/// forward instead of being superseded by it; a single-version award head has no deadline
+/// and reads Closed. `cn-standard`, `pin-only` and any unlisted type keep the mapping. The
+/// data-quality profile's DÖE award vocabulary reads the same list.
+pub const SDK01_AWARD_NOTICE_TYPES: &[&str] = &["can-standard"];
 /// The legacy eras' award date, read on the award block by `read_legacy_results`
 /// (issue 255). Named so the destination predicate and the reader agree: the
 /// r208 probe listed 1,688 rows of it as unread on the date channel (2026-09-12)
@@ -1231,6 +1246,22 @@ const LEGACY_AWARDED_MARKER: &str = "TED-AWARDED_CONTRACT";
 /// the reader matched it with a wildcard value pattern, so the predicate had
 /// no channel to know it on and would have listed it as dropped.
 const LEGACY_NO_AWARD_MARKER: &str = "TED-NO_AWARDED_CONTRACT";
+/// R2.0.9's explicit "the procedure was discontinued" marker inside `NO_AWARDED_CONTRACT`
+/// (issue 533 sub-unit 2b): a `Rule::Marker` stored as `Integer(1)` on the award block, read
+/// as the result `reason` [`store::canonical::REASON_DISCONTINUED`]. The closing rule's D: an
+/// explicit legacy no-award closes a Tender even past a long admission window (6739006's
+/// `Aufhebung des Open-House-Verfahrens`, 7422682's cancelled DPS).
+const LEGACY_DISCONTINUED_MARKER: &str = "TED-PROCUREMENT_DISCONTINUED";
+/// R2.0.9's "no tenders, or all rejected" marker inside `NO_AWARDED_CONTRACT` (issue 533
+/// sub-unit 2b), read as the result `reason` [`store::canonical::REASON_UNSUCCESSFUL`].
+const LEGACY_UNSUCCESSFUL_MARKER: &str = "TED-PROCUREMENT_UNSUCCESSFUL";
+/// R2.0.9's "the procedure involves the setting up of a dynamic purchasing system" marker
+/// (`PROCEDURE/DPS`), a `Rule::Marker` stored as `Integer(1)` (issue 533 K1's legacy leg):
+/// folded as the Tender-scope `dps` classification with code `dps`, mirroring
+/// [`procedure_marker`]'s Tender-scope election, so 7207004 (`DAS ICT Desktops`) and 8483433
+/// stay open through K1 like an eForms BT-766 declaration. `TERMINATION_DPS` and
+/// `DPS_ADDITIONAL_PURCHASERS` are not folded.
+const LEGACY_DPS_MARKER: &str = "TED-DPS";
 /// sdk-0.1's procedure folder id (its BT-04 analogue). Only a genuine uuid is a
 /// strong-enough cross-reference to key a Tender on (issue 34); the numeric
 /// channel's non-uuid folder ids are notice-local and stay islands.
@@ -5206,6 +5237,11 @@ impl NoticeState {
 
         let legacy = is_legacy_profile(&notice.profile);
         let sdk01 = is_sdk01_profile(&notice.profile);
+        // Issue 533 1(b): a DÖE sdk-0.1 award notice, whose own submission-deadline date maps
+        // to nothing (see `SDK01_AWARD_NOTICE_TYPES`).
+        let sdk01_award = sdk01
+            && first_code(parsed, "SDK01-NoticeTypeCode")
+                .is_some_and(|code| SDK01_AWARD_NOTICE_TYPES.contains(&code.trim()));
         // Award-family marker for `amount_target` (issue 177): only award forms
         // carry result sections, and only award forms publish `TOTAL_FINAL_VALUE`
         // — a result total — at object scope.
@@ -5338,6 +5374,38 @@ impl NoticeState {
                         }
                     }
                 }
+            }
+            // Issue 533 sub-unit 2a: a declared DPS (BT-766 and its two national spellings)
+            // folds as a `dps` classification at the scope it was published — the closing
+            // rule's K1, which keeps an all-`clos-nw` round of a live DPS from closing it.
+            // Supersession per key carries it to every later version; `none` emits nothing.
+            if let NoticeValue::Code { code, .. } = &value.value
+                && let Some(dps) = contracting_system_dps(field_id, code)
+            {
+                let fact = Fact::Classification {
+                    field: store::canonical::DPS_SCHEME.to_owned(),
+                    scheme: store::canonical::DPS_SCHEME.to_owned(),
+                    code: dps.to_owned(),
+                };
+                match &scope {
+                    Scope::Tender => {
+                        facts.insert(fact);
+                    }
+                    Scope::Lot(key) => {
+                        if let Some(lot) = lots.get_mut(key) {
+                            lot.facts.insert(fact);
+                        }
+                    }
+                }
+            }
+            // Issue 533 K1's legacy leg: r209's `PROCEDURE/DPS` marker, at Tender scope
+            // whatever section carried it (the procedure markers' rule, issue 479).
+            if field_id == LEGACY_DPS_MARKER && matches!(value.value, NoticeValue::Integer(_)) {
+                facts.insert(Fact::Classification {
+                    field: store::canonical::DPS_SCHEME.to_owned(),
+                    scheme: store::canonical::DPS_SCHEME.to_owned(),
+                    code: store::canonical::DPS_SCHEME.to_owned(),
+                });
             }
             // Issue 532 (unit 2): a place of performance published as a country —
             // eForms' BT-5141, DÖE sdk-0.1's realized-location country — is its NUTS
@@ -5479,6 +5547,10 @@ impl NoticeState {
                             .get(value.section_id.as_str())
                             .and_then(|target| f14_target_date(target))
                             .map(str::to_owned)
+                    } else if sdk01_award && field_id == SDK01_DEADLINE_FIELD {
+                        // Issue 533 1(b): a DÖE award notice's own `EndDate` is no
+                        // submission deadline; dropped here, where the notice is known.
+                        None
                     } else {
                         canonical_name(DATES, field_id)
                     };
@@ -7087,6 +7159,15 @@ fn read_legacy_results(
             (LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(_) | NoticeValue::Code { .. }) => {
                 r.decision = Some("clos-nw".to_owned());
             }
+            // Issue 533 sub-unit 2b: WHY no contract was awarded, where R2.0.9 says so — the
+            // explicit legacy no-award the closing rule's D reads. The reason only: the
+            // decision stays `NO_AWARDED_CONTRACT`'s, which the block always carries beside it.
+            (LEGACY_DISCONTINUED_MARKER, NoticeValue::Integer(_)) => {
+                r.reason = Some(store::canonical::REASON_DISCONTINUED.to_owned());
+            }
+            (LEGACY_UNSUCCESSFUL_MARKER, NoticeValue::Integer(_)) => {
+                r.reason = Some(store::canonical::REASON_UNSUCCESSFUL.to_owned());
+            }
             (f, NoticeValue::Integer(n)) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
                 r.statistics.push(("tenders".to_owned(), *n, None));
             }
@@ -7663,12 +7744,19 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || PROCEDURE_FIELDS.contains(&field_id)
                 // Issue 532: a country-only place folds as its NUTS level-0 code.
                 || PLACE_COUNTRY_FIELDS.contains(&field_id)
+                // Issue 533 sub-unit 2a: BT-766 and its national spellings fold as `dps`.
+                || CONTRACTING_SYSTEM_FIELDS.contains(&field_id)
         }
         Channel::Integer => {
             LEGACY_BID_COUNT_FIELDS.contains(&field_id)
                 || field_id.ends_with(AMOUNT_ELEMENT)
                 || field_id == LEGACY_NO_AWARD_MARKER
                 || field_id == LEGACY_AWARDED_MARKER
+                // Issue 533: the legacy DPS marker (K1) and the two explicit no-award
+                // reasons (sub-unit 2b, D).
+                || field_id == LEGACY_DPS_MARKER
+                || field_id == LEGACY_DISCONTINUED_MARKER
+                || field_id == LEGACY_UNSUCCESSFUL_MARKER
                 // Issue 479 review: the legacy form markers that name a procedure type.
                 || procedure_marker(field_id).is_some()
         }
@@ -7800,6 +7888,34 @@ pub fn contract_nature(field_id: &str, code: &str) -> Option<&'static str> {
             "4" => Some("services"),
             _ => None,
         },
+        _ => None,
+    }
+}
+
+/// The CODE field ids that publish BT-766, the contracting system a lot is tendered under
+/// (issue 533 sub-unit 2a): eForms (and eForms-DE 2.x) at Lot and Part scope, and the two
+/// national dialects under their own element-path ids, which no alias renames. List
+/// `contracting-system-type`: `dps-list`, `dps-nlist`, `none`, and the `fa-*` framework codes.
+pub const CONTRACTING_SYSTEM_FIELDS: &[&str] = &[
+    "BT-766-Lot",
+    "BT-766-Part",
+    "DE1-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode",
+    "SDK01-ProcurementProjectLot-TenderingProcess-ContractingSystem-ContractingSystemTypeCode",
+];
+
+/// Issue 533 sub-unit 2a: the DPS a lot declares, as the `dps` classification code it folds
+/// into (`store::canonical::DPS_SCHEME`) — `dps-list` or `dps-nlist`, trimmed and
+/// lowercased, from one of [`CONTRACTING_SYSTEM_FIELDS`]. Anything else is `None`: `none`
+/// emits nothing, so a later notice's `none` never clears an earlier declaration (445631:
+/// `dps-list` on its CN, `none` on its CAN, stays a DPS — erring toward open), and a
+/// framework code (`fa-*`, BT-765's business) is not a DPS and not a closing-rule input.
+pub fn contracting_system_dps(field_id: &str, code: &str) -> Option<&'static str> {
+    if !CONTRACTING_SYSTEM_FIELDS.contains(&field_id) {
+        return None;
+    }
+    match code.trim().to_ascii_lowercase().as_str() {
+        "dps-list" => Some("dps-list"),
+        "dps-nlist" => Some("dps-nlist"),
         _ => None,
     }
 }
@@ -13042,6 +13158,14 @@ mod tests {
         assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD_R207));
         assert!(table_reads("notice_dates", LEGACY_AWARD_DATE_FIELD_R209), "issue 550");
         assert!(table_reads("notice_integers", LEGACY_AWARDED_MARKER), "issue 550");
+        // Issue 533: the legacy DPS marker (K1) and the two explicit no-award reasons (2b) are
+        // Integer markers, BT-766 and its national spellings codes (2a).
+        for marker in [LEGACY_DPS_MARKER, LEGACY_DISCONTINUED_MARKER, LEGACY_UNSUCCESSFUL_MARKER] {
+            assert!(table_reads("notice_integers", marker), "issue 533: {marker}");
+        }
+        for field in CONTRACTING_SYSTEM_FIELDS {
+            assert!(table_reads("notice_codes", field), "issue 533: {field}");
+        }
         // Two more the issue-384 guard found on its first run: the no-award marker
         // (a wildcard arm in the reader, an Integer(1) in the store) and the bid
         // count on its Number spelling.
@@ -13121,6 +13245,13 @@ mod tests {
         assert!(has_destination(LEGACY_AWARD_DATE_FIELD_R207, Channel::Date));
         assert!(has_destination(LEGACY_AWARD_DATE_FIELD_R209, Channel::Date), "issue 550");
         assert!(has_destination(LEGACY_AWARDED_MARKER, Channel::Integer), "issue 550");
+        for marker in [LEGACY_DPS_MARKER, LEGACY_DISCONTINUED_MARKER, LEGACY_UNSUCCESSFUL_MARKER] {
+            assert!(has_destination(marker, Channel::Integer), "issue 533: {marker}");
+        }
+        for field in CONTRACTING_SYSTEM_FIELDS {
+            assert!(has_destination(field, Channel::Code), "issue 533: {field}");
+        }
+        assert!(has_destination(SDK01_DEADLINE_FIELD, Channel::Date), "issue 533 1(b): still read, dropped per notice");
         assert!(has_destination(LEGACY_NO_AWARD_MARKER, Channel::Integer));
         assert!(has_destination(LEGACY_NO_AWARD_MARKER, Channel::Code), "issue 512: the text era's spelling");
         for f in LEGACY_BID_COUNT_FIELDS {
@@ -13169,6 +13300,21 @@ mod tests {
             "data_quality.rs must sieve with table_reads, not the channel-blind predicate"
         );
         assert!(src.contains("table_reads("), "data_quality.rs must use table_reads");
+    }
+
+    #[test]
+    fn contracting_system_dps_reads_only_the_dps_codes_of_the_four_ids() {
+        // Issue 533 sub-unit 2a.
+        for field in CONTRACTING_SYSTEM_FIELDS {
+            assert_eq!(contracting_system_dps(field, "dps-list"), Some("dps-list"), "{field}");
+            assert_eq!(contracting_system_dps(field, " DPS-NLIST "), Some("dps-nlist"), "{field}: trimmed, lowercased");
+            for other in ["none", "fa-wo-rc", "fa-w-rc", "fa-mix", "dps", ""] {
+                assert_eq!(contracting_system_dps(field, other), None, "{field} {other}: not a DPS declaration");
+            }
+        }
+        // BT-765 (the framework system) and any other id never fold as a DPS.
+        assert_eq!(contracting_system_dps("BT-765-Lot", "dps-list"), None);
+        assert_eq!(contracting_system_dps("BT-23-Lot", "dps-list"), None);
     }
 
     /// Every DE-1.x alias names an eForms field the projection actually reads,

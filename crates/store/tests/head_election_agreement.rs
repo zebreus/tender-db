@@ -548,6 +548,83 @@ fn the_head_columns_have_exactly_one_writer_that_decides_them() {
     );
 }
 
+/// Issue 533: `tenders.current_closed_by_notice` has ONE writer, the fold's head update, which
+/// takes it from `canonical::closed_by_notice` — the issue-375 rule for every head column. A
+/// backfill that wrote it from SQL would be a second transcription of the closing rule, the
+/// hazard the decision rejected (job 706's shape); the open head is re-derived by
+/// `refold-open-head` through the fold instead.
+#[test]
+fn the_closed_by_notice_head_column_has_one_writer() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut writers: Vec<String> = Vec::new();
+    for rel in ["src/lib.rs", "src/canonical.rs", "src/read.rs", "src/rates.rs", "src/inplace.rs"] {
+        let text = std::fs::read_to_string(root.join(rel)).expect(rel);
+        for (n, line) in text.lines().enumerate() {
+            let code = line.split("//").next().unwrap_or("");
+            if code.contains("current_closed_by_notice =") || code.contains("current_closed_by_notice=") {
+                writers.push(format!("{rel}:{}", n + 1));
+            }
+        }
+    }
+    assert_eq!(
+        writers.len(),
+        1,
+        "expected exactly one writer of `current_closed_by_notice` — the fold's `head_update`, fed by \
+         `canonical::closed_by_notice`. Found: {writers:?}. A second writer is issue 375 again: it agrees \
+         with the rule the day it is written and drifts the next time the rule changes."
+    );
+    let canonical = std::fs::read_to_string(root.join("src/canonical.rs")).unwrap();
+    assert!(
+        canonical.contains("closed_by_notice: closed_by_notice(&p.versions).then_some(1)"),
+        "the fold's head must take the flag from the Rust rule over the whole chain"
+    );
+}
+
+/// Issue 533's tripwire: the no-award decision `clos-nw` is written as a literal in store and
+/// app code only at its one home, `canonical::DECISION_NO_AWARD`, which the closing rule's Rust
+/// and SQL forms read — so a reader that tests the literal itself (and would miss the rule's
+/// coverage, exemptions or NULL handling) cannot appear unseen. The sandbox's `decision` note,
+/// which documents the vocabulary to callers, is the one other line. A literal is the quoted
+/// spelling a reader would use, Rust's `"clos-nw"` or SQL's `'clos-nw'`; prose naming the code
+/// (the served /docs, a schema comment) is not one. Like the deadline selectors above, a
+/// tripwire, not a proof. Tests and the ingest crate (which MAPS sources onto the code) are
+/// outside the count.
+#[test]
+fn the_no_award_decision_is_written_once() {
+    let crates = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).parent().unwrap().to_path_buf();
+    let allowed: [(&str, &str); 2] = [
+        ("store/src/canonical.rs", "pub const DECISION_NO_AWARD: &str = \"clos-nw\";"),
+        ("app/src/v1/sql.rs", "'clos-nw' (closed, no award).\","),
+    ];
+    let mut files = Vec::new();
+    for krate in ["store", "app"] {
+        rust_files(&crates.join(krate).join("src"), &mut files);
+    }
+    let mut seen = [0usize; 2];
+    let mut stray = Vec::new();
+    for file in &files {
+        let rel = file.strip_prefix(&crates).unwrap().to_string_lossy().into_owned();
+        let text = std::fs::read_to_string(file).unwrap();
+        for (n, line) in text.lines().enumerate() {
+            let code = line.split("//").next().unwrap_or("");
+            if !code.contains("\"clos-nw\"") && !code.contains("'clos-nw'") {
+                continue;
+            }
+            match allowed.iter().position(|&(f, l)| f == rel && l == code.trim()) {
+                Some(i) => seen[i] += 1,
+                None => stray.push(format!("{rel}:{}", n + 1)),
+            }
+        }
+    }
+    assert_eq!(seen, [1, 1], "each allowed `clos-nw` line must appear exactly once ({allowed:?})");
+    assert!(
+        stray.is_empty(),
+        "`clos-nw` is written outside `canonical::DECISION_NO_AWARD` at {stray:?}. Read it through the \
+         constant, and a closing decision through `canonical::closed_by_notice` / `closed_by_notice_sql` \
+         (issue 533)."
+    );
+}
+
 /// Every `.rs` file under `dir`, recursively, in a stable order.
 fn rust_files(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
     let mut entries: Vec<_> = std::fs::read_dir(dir).expect("readable dir").map(|e| e.unwrap().path()).collect();
@@ -660,12 +737,15 @@ fn the_deadline_window_is_written_once() {
     );
     assert_eq!(
         readers.len(),
-        6,
-        "the code lines selecting `submission_deadline` facts changed: {readers:?}. Expected six — \
-         the fold's `head_deadline`, the read pick, the lots `status` EXISTS (two rows), the lot \
-         row in `summarise`, and the backfill — each applying canonical's window. A new reader \
-         must call `deadline_admitted`/`deadline_admitted_sql` and raise this count in the same \
-         commit (issue 474; issue 366 was a reader that named no constant)."
+        5,
+        "the code lines selecting `submission_deadline` facts changed: {readers:?}. Expected five — \
+         the fold's `head_deadline`, the read pick, canonical's `admitted_deadline_rows_sql` (issue 533: \
+         the one selector of a version's admitted deadline rows, which the lots `status` EXISTS — its \
+         two rows used to be two readers here —, the SSE `StatusBy::Version` probe and the closing \
+         rule's window W all call), the lot row in `summarise`, and the backfill — each applying \
+         canonical's window. A new reader must call `deadline_admitted`/`deadline_admitted_sql` (or \
+         `admitted_deadline_rows_sql`) and change this count in the same commit (issue 474; issue 366 \
+         was a reader that named no constant)."
     );
 }
 

@@ -360,7 +360,9 @@ pub const DOC_TYPE_MARKERS: &[DocTypeMarker] = &[
     DocTypeMarker {
         profiles: &["eforms:eforms-sdk-0.1"],
         field_id: "SDK01-NoticeTypeCode",
-        award: &["can-standard"],
+        // Issue 533 1(b): the projection's own list, so the two cannot disagree on what a
+        // DÖE award notice is.
+        award: crate::project::SDK01_AWARD_NOTICE_TYPES,
         other: &["cn-standard", "pin-only"],
     },
     // R2.0.8 / R2.0.9 / defence: the TED-wide `TD` vocabulary.

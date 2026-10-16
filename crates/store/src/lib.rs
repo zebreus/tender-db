@@ -990,6 +990,13 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // ALSO in reset_tender_layer's hardcoded CREATE — a column added here
     // alone is missing for a whole rebuild (the current_deadline lesson).
     add_column(conn, "ALTER TABLE tenders ADD COLUMN current_value_eur_cents INTEGER").await?;
+    // Issue 533: the head's closed-by-its-own-notice flag (1 or NULL, never 0). Nullable
+    // with no default, so metadata-only (`alter_add_column_cost.rs`). Every existing row
+    // reads NULL, which is what the rule says wherever it does not fire; `refold-open-head`
+    // re-derives the open head (ADR-0017 R3) and a past-deadline head is Closed already.
+    // ALSO in canonical's SCHEMA and reset_tender_layer's CREATE (the current_deadline
+    // lesson).
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN current_closed_by_notice INTEGER").await?;
     // ADR-0013 D3's third leg (2026-09-02): the version's original language.
     // O(1) at boot like the eur_cents columns; the standing corpus is stamped by
     // the `backfill-original-lang` job rather than a refold.

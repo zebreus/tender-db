@@ -4,6 +4,36 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 533) — `status=open` leaves out a procedure its newest notice closed
+
+`status` was the submission deadline alone. A result notice usually publishes no deadline, so the Tender carries its
+contract notice's (`/docs` caveats, Dates) and a procedure whose award notice cancelled every lot stayed `open` until
+that date passed — years, for some. `status` now reads the newest notice too:
+- **`closed`** also when the newest notice published results, every result the procedure has published is a no-award
+  (all `clos-nw`; a cancellation, an FTS UK12 termination), and together they decide every lot (a Tender-scoped result
+  decides none) — unless the Tender declares an open-ended scheme, where such a result reports one round: a dynamic
+  purchasing system (eForms BT-766, or the r2.0.9 DPS marker, on any version), a procedure `oth-single`/`oth-mult`, a
+  qualification-system (eForms 15) or dynamic-market (UK13–UK16) notice, or a deadline more than a year after the
+  first deadline-bearing notice (an explicit r2.0.9 *discontinued* / *unsuccessful* no-award closes even then). A
+  winner, or a decision the notice withheld (NULL), never closes a Tender here. A later notice that publishes no
+  results of its own (a re-launch contract notice, but also e.g. a corrigendum) reopens it.
+- On `/v1/lots`, a lot is `closed` with its Tender. A no-award for some lots of a Tender that stays open (an FTS
+  UK12 that cancels one lot of two) does not close those lots yet: a per-lot rule cost too much on the lots stream
+  and is still owed (issue 533 unit 3).
+- Applies to `/v1/tenders`, `/v1/lots` and their SSE subscriptions: a closing result reaches a `status=open`
+  subscription as `removed` and a re-launch as `added`, each a public `tender` change row and one `lot` change row
+  per lot (what webhooks deliver).
+- The served `submission_deadline`, `sort=deadline` and `deadline_after`/`deadline_before` are unchanged: they still
+  read the deadline alone, so a closed Tender keeps serving its carried date.
+- DÖE sdk-0.1 award notices (`can-standard`) no longer map their own `TenderSubmissionDeadlinePeriod-EndDate` to
+  `submission_deadline`: it is no submission deadline (an ex-post award of a procedure without a participation
+  contest). In a contract notice → award chain the contract notice's deadline carries forward; a single award notice
+  has none and reads `closed`. The date stays in `/v1/notices/{id}/content`.
+- New: `classifications[]` scheme `dps` (BT-766 `dps-list`/`dps-nlist` at its lot; `dps` at Tender scope for the
+  r2.0.9 marker), `lot_results[].reason` codes `discontinued`/`unsuccessful` (r2.0.9), and on `/v1/sql`
+  `tenders.current_closed_by_notice`. Complete for the open head and for Tenders folded since the deploy; the
+  `dps` rows and reasons reach the rest of the corpus through field refolds.
+
 ## Unreleased (issue 532) — a place of performance published only as a country is served in `country` and found by `?country=`
 
 A notice may give its place of performance as a country alone, with no NUTS region: eForms' BT-5141 (often with

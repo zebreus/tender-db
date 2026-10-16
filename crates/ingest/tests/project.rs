@@ -6663,3 +6663,211 @@ async fn an_sdk01_country_only_place_serves_its_level_0_code_at_both_scopes() {
     );
     let _ = std::fs::remove_file(&path);
 }
+
+// ------------------------------------------------------------------- issue 533
+
+/// The `dps` classifications the projection folded, as `(code, lot-scoped?)`, sorted.
+async fn dps_rows(db: &Db) -> Vec<(String, bool)> {
+    let readers = db.readers(1).expect("readers");
+    let reader = readers.get().await.expect("reader");
+    let mut rows = reader
+        .query("SELECT code, lot_id IS NOT NULL FROM tender_version_classifications WHERE scheme = 'dps' ORDER BY code", ())
+        .await
+        .expect("dps rows");
+    let mut out = Vec::new();
+    while let Some(row) = rows.next().await.expect("row") {
+        let code = match row.get_value(0).expect("code") {
+            turso::Value::Text(s) => s,
+            other => panic!("code: {other:?}"),
+        };
+        out.push((code, row.get_value(1).expect("scope").as_integer().copied() == Some(1)));
+    }
+    out
+}
+
+/// Issue 533 sub-unit 2a: a lot's BT-766 `dps-list`/`dps-nlist` folds as a `dps`
+/// classification at that lot — the closing rule's K1 — in eForms and under eForms-DE 1.x's
+/// own element-path id; `none` (and a framework code in the shared DE-1.x element) folds
+/// nothing, so a later `none` never clears an earlier declaration.
+#[tokio::test]
+async fn a_declared_dps_folds_as_a_dps_classification_at_its_lot() {
+    for (name, source, fixture, from, to, want) in [
+        ("eforms-none", SOURCE, "eforms-chain/1-cn-16-831374-2025.xml", "", "", vec![]),
+        (
+            "eforms-dps-list",
+            SOURCE,
+            "eforms-chain/1-cn-16-831374-2025.xml",
+            r#"listName="dps-usage">none<"#,
+            r#"listName="dps-usage">dps-list<"#,
+            vec![("dps-list".to_owned(), true)],
+        ),
+        (
+            "eforms-dps-nlist",
+            SOURCE,
+            "eforms-chain/1-cn-16-831374-2025.xml",
+            r#"listName="dps-usage">none<"#,
+            r#"listName="dps-usage"> DPS-NLIST <"#,
+            vec![("dps-nlist".to_owned(), true)],
+        ),
+        (
+            "eforms-framework-only",
+            SOURCE,
+            "eforms-chain/1-cn-16-831374-2025.xml",
+            r#"listName="framework-agreement">none<"#,
+            r#"listName="framework-agreement">fa-wo-rc<"#,
+            vec![],
+        ),
+        (
+            "de1-dps-list",
+            "doe",
+            "doe/eforms-de-1.1-cn-7d69b0f7.xml",
+            r#"listName="dps-usage">none<"#,
+            r#"listName="dps-usage">dps-list<"#,
+            vec![("dps-list".to_owned(), true)],
+        ),
+        (
+            "de1-framework-only",
+            "doe",
+            "doe/eforms-de-1.1-cn-7d69b0f7.xml",
+            r#"listName="framework-agreement">none<"#,
+            r#"listName="framework-agreement">fa-w-rc<"#,
+            vec![],
+        ),
+    ] {
+        let raw = std::fs::read_to_string(format!("tests/fixtures/{fixture}")).unwrap();
+        let bytes = if from.is_empty() {
+            raw
+        } else {
+            assert!(raw.contains(from), "{name}: the fixture carries {from}");
+            raw.replacen(from, to, 1)
+        };
+        let (db, fetch_id, path) = scratch(&format!("533-dps-{name}")).await;
+        ingest_bytes(&db, fetch_id, source, fixture, bytes.as_bytes()).await;
+        project::project(&db, false).await.expect("project");
+        assert_eq!(dps_rows(&db).await, want, "{name}");
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
+/// Issue 533 K1's legacy leg: r2.0.9's `PROCEDURE/DPS` marker folds as the Tender-scope `dps`
+/// classification with code `dps` (7207004, 8483433: legacy DPSes the decided rule closed).
+#[tokio::test]
+async fn a_legacy_dps_marker_folds_as_a_tender_scope_dps() {
+    const FIXTURE: &str = "r209/f02-000245-2019.xml";
+    let raw = std::fs::read_to_string(format!("tests/fixtures/{FIXTURE}")).unwrap();
+    assert!(raw.contains("<PROCEDURE><PT_OPEN/>"));
+    for (name, bytes, want) in [
+        ("plain", raw.clone(), vec![]),
+        ("dps", raw.replacen("<PROCEDURE><PT_OPEN/>", "<PROCEDURE><PT_OPEN/><DPS/>", 1), vec![("dps".to_owned(), false)]),
+    ] {
+        let (db, fetch_id, path) = scratch(&format!("533-legacy-dps-{name}")).await;
+        ingest_bytes(&db, fetch_id, SOURCE, FIXTURE, bytes.as_bytes()).await;
+        project::project(&db, false).await.expect("project");
+        assert_eq!(dps_rows(&db).await, want, "{name}");
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
+/// Issue 533 sub-unit 2b: r2.0.9's explicit no-award — `NO_AWARDED_CONTRACT` with
+/// `PROCUREMENT_DISCONTINUED` or `PROCUREMENT_UNSUCCESSFUL` — reads `clos-nw` with the reason
+/// `discontinued` / `unsuccessful` (the closing rule's D); a bare `NO_AWARDED_CONTRACT` keeps a
+/// NULL reason, and an award block none.
+#[tokio::test]
+async fn an_r209_explicit_no_award_carries_its_reason() {
+    const FIXTURE: &str = "r209/f03-000988-2019.xml";
+    let raw = std::fs::read_to_string(format!("tests/fixtures/{FIXTURE}")).unwrap();
+    let a = raw.find("<AWARDED_CONTRACT>").expect("the award block");
+    let b = raw.find("</AWARDED_CONTRACT>").expect("its end") + "</AWARDED_CONTRACT>".len();
+    let with = |block: &str| format!("{}{block}{}", &raw[..a], &raw[b..]);
+    for (name, bytes, decision, reason) in [
+        ("awarded", raw.clone(), Some("selec-w"), None),
+        ("bare", with("<NO_AWARDED_CONTRACT/>"), Some("clos-nw"), None),
+        (
+            "discontinued",
+            with("<NO_AWARDED_CONTRACT><PROCUREMENT_DISCONTINUED/></NO_AWARDED_CONTRACT>"),
+            Some("clos-nw"),
+            Some("discontinued"),
+        ),
+        (
+            "unsuccessful",
+            with("<NO_AWARDED_CONTRACT><PROCUREMENT_UNSUCCESSFUL/></NO_AWARDED_CONTRACT>"),
+            Some("clos-nw"),
+            Some("unsuccessful"),
+        ),
+    ] {
+        let (db, fetch_id, path) = scratch(&format!("533-reason-{name}")).await;
+        ingest_bytes(&db, fetch_id, SOURCE, FIXTURE, bytes.as_bytes()).await;
+        project::project(&db, false).await.expect("project");
+        assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tender_version_lot_results").await, 1, "{name}");
+        assert_eq!(query_text(&db, "SELECT decision FROM tender_version_lot_results").await.as_deref(), decision, "{name}");
+        assert_eq!(query_text(&db, "SELECT reason FROM tender_version_lot_results").await.as_deref(), reason, "{name}");
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
+/// Issue 533 1(b): a DÖE sdk-0.1 `can-standard` notice's own
+/// `TenderSubmissionDeadlinePeriod-EndDate` maps to no `submission_deadline` (an ex-post award
+/// of a procedure without a participation contest, its date 23–239 days after the award),
+/// while a `cn-standard` keeps it; and in a CN→CAN chain the CN's deadline carries forward
+/// instead of being superseded by the award's date. The date stays in the notice layer.
+#[tokio::test]
+async fn an_sdk01_award_notice_maps_no_submission_deadline() {
+    const CN: &str = "doe/sdk-0.1-numeric-cn-25599482-1.xml";
+    const CN_TYPE: &str = r#"<ns3:NoticeTypeCode listName="competition">cn-standard</ns3:NoticeTypeCode>"#;
+    const CAN_TYPE: &str = r#"<ns3:NoticeTypeCode listName="result">can-standard</ns3:NoticeTypeCode>"#;
+    const FOLDER: &str = "<ns3:ContractFolderID>4f0c2a8e-9b1d-4e6a-8c3f-2d7b5a1e9c40</ns3:ContractFolderID>";
+    let raw = std::fs::read_to_string(format!("tests/fixtures/{CN}")).unwrap();
+    assert!(raw.contains(CN_TYPE) && raw.contains("<ns3:EndDate>2026-08-13+02:00</ns3:EndDate>"));
+    // 2026-08-13T00:00+02:00, the CN's own deadline.
+    const CN_DEADLINE: i64 = 1_786_572_000;
+    const DEADLINES: &str = "SELECT COUNT(*) FROM tender_version_dates WHERE field = 'submission_deadline'";
+
+    // The CN alone keeps its date.
+    let (db, fetch_id, path) = scratch("533-sdk01-cn").await;
+    ingest_bytes(&db, fetch_id, "doe", CN, raw.as_bytes()).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(deadline(&db, 1).await, CN_DEADLINE, "a cn-standard keeps its deadline");
+    let _ = std::fs::remove_file(&path);
+
+    // The same notice typed as an award maps none, and keeps it in the notice layer.
+    let award = raw.replacen(CN_TYPE, CAN_TYPE, 1);
+    let (db, fetch_id, path) = scratch("533-sdk01-can").await;
+    ingest_bytes(&db, fetch_id, "doe", CN, award.as_bytes()).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(scalar(&db, DEADLINES).await, 0, "a can-standard's own EndDate is no submission deadline");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders WHERE current_deadline IS NULL").await, 1, "so it reads Closed");
+    assert!(
+        scalar(
+            &db,
+            "SELECT COUNT(*) FROM notice_dates WHERE field_id = \
+             'SDK01-ProcurementProjectLot-TenderingProcess-TenderSubmissionDeadlinePeriod-EndDate'"
+        )
+        .await
+            >= 1,
+        "the date stays in the notice layer"
+    );
+    let _ = std::fs::remove_file(&path);
+
+    // CN → CAN in one procedure (a shared uuid folder): the head carries the CN's deadline,
+    // not the award's own later date.
+    let cn = raw.replacen("<ns3:ContractFolderID/>", FOLDER, 1);
+    let can = cn
+        .replacen(CN_TYPE, CAN_TYPE, 1)
+        .replacen("<ns3:ID>25599482</ns3:ID>", "<ns3:ID>25599483</ns3:ID>", 1)
+        .replacen(
+            "<ns3:RequestedPublicationDate>2026-07-17+02:00</ns3:RequestedPublicationDate>",
+            "<ns3:RequestedPublicationDate>2026-07-30+02:00</ns3:RequestedPublicationDate>",
+            1,
+        )
+        .replacen("<ns3:EndDate>2026-08-13+02:00</ns3:EndDate>", "<ns3:EndDate>2027-01-31+01:00</ns3:EndDate>", 1);
+    assert_ne!(can, cn);
+    let (db, fetch_id, path) = scratch("533-sdk01-chain").await;
+    ingest_bytes(&db, fetch_id, "doe", CN, cn.as_bytes()).await;
+    ingest_bytes(&db, fetch_id, "doe", "doe/sdk-0.1-numeric-can-25599483-1.xml", can.as_bytes()).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders").await, 1, "one procedure");
+    assert_eq!(scalar(&db, "SELECT current_seq FROM tenders").await, 2, "CN then CAN");
+    assert_eq!(deadline(&db, 2).await, CN_DEADLINE, "the CN's deadline carries forward under the award");
+    assert_eq!(scalar(&db, "SELECT current_deadline FROM tenders").await, CN_DEADLINE);
+    let _ = std::fs::remove_file(&path);
+}

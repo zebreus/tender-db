@@ -1358,10 +1358,10 @@ applied: tenders_created=3 tenders_written=3 tenders_unchanged=0 versions_writte
 31|2|1|3001|1768953600|NULL|NULL|NULL|'3001-2026'
 32|3|1|4001|1767657600|1767484800|'16'|'DEU'|'4001-2026'
 33|3|2|4002|1770681600|1770508800|'29'|'DEU'|'4002-2026'
---- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,projection_epoch) ---
-1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|30|1775037600|1778500800|'Road maintenance framework, revision 10'|51000000|4
-2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|4
-3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|4
+--- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,projection_epoch) ---
+1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|30|1775037600|1778500800|'Road maintenance framework, revision 10'|51000000|NULL|4
+2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|NULL|4
+3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|NULL|4
 --- lots (8 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'
@@ -3113,10 +3113,10 @@ applied: tenders_created=0 tenders_written=1 tenders_unchanged=2 versions_writte
 31|2|1|3001|1768953600|NULL|NULL|NULL|'3001-2026'
 32|3|1|4001|1767657600|1767484800|'16'|'DEU'|'4001-2026'
 33|3|2|4002|1770681600|1770508800|'29'|'DEU'|'4002-2026'
---- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,projection_epoch) ---
-1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|31|1775296800|1778500800|'Road maintenance framework, revision 10'|51000000|4
-2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|4
-3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|4
+--- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,projection_epoch) ---
+1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|31|1775296800|1778500800|'Road maintenance framework, revision 10'|51000000|NULL|4
+2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|NULL|4
+3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|NULL|4
 --- lots (8 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'
@@ -4898,10 +4898,10 @@ applied: tenders_created=0 tenders_written=1 tenders_unchanged=2 versions_writte
 31|2|1|3001|1768953600|NULL|NULL|NULL|'3001-2026'
 32|3|1|4001|1767657600|1767484800|'16'|'DEU'|'4001-2026'
 33|3|2|4002|1770681600|1770508800|'29'|'DEU'|'4002-2026'
---- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,projection_epoch) ---
-1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|32|1775296800|1778500800|'Road maintenance framework, revision 10'|51000000|4
-2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|4
-3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|4
+--- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,projection_epoch) ---
+1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|32|1775296800|1778500800|'Road maintenance framework, revision 10'|51000000|NULL|4
+2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|NULL|4
+3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|NULL|4
 --- lots (8 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'
@@ -6700,10 +6700,10 @@ applied: tenders_created=0 tenders_written=1 tenders_unchanged=2 versions_writte
 31|2|1|3001|1768953600|NULL|NULL|NULL|'3001-2026'
 32|3|1|4001|1767657600|1767484800|'16'|'DEU'|'4001-2026'
 33|3|2|4002|1770681600|1770508800|'29'|'DEU'|'4002-2026'
---- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,projection_epoch) ---
-1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|31|1775296800|1778500800|'Road maintenance framework, revision 10'|51000000|4
-2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|4
-3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|4
+--- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,projection_epoch) ---
+1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|31|1775296800|1778500800|'Road maintenance framework, revision 10'|51000000|NULL|4
+2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|NULL|4
+3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|NULL|4
 --- lots (7 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'
@@ -8597,10 +8597,10 @@ applied: tenders_created=0 tenders_written=3 tenders_unchanged=0 versions_writte
 32|2|1|3001|1768953600|NULL|NULL|NULL|'3001-2026'
 33|3|1|4001|1767657600|1767484800|'16'|'DEU'|'4001-2026'
 34|3|2|4002|1770681600|1770508800|'29'|'DEU'|'4002-2026'
---- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,projection_epoch) ---
-1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|31|1775296800|1778500800|'Road maintenance framework, revision 10'|51000000|4
-2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|4
-3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|4
+--- tenders (3 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,projection_epoch) ---
+1|1|'ted'|'golden-mega-chain'|NULL|'procedure'|31|1775296800|1778500800|'Road maintenance framework, revision 10'|51000000|NULL|4
+2|2|'ted'|NULL|3001|'registration'|1|1768953600|NULL|'Supplier registration system'|452080|NULL|4
+3|3|'doe'|'golden-keyed-parts'|NULL|'procedure'|2|1770681600|NULL|'Schulbau Teil ''A'''|NULL|NULL|4
 --- lots (7 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'

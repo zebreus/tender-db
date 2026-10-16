@@ -113,7 +113,7 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("tender.procurementMethodRationale", Ignored("owed: the direct-award justification (BT-136) is not folded for FTS")),
     ("tender.procurementMethodRationaleClassifications", Ignored("owed: the direct-award justification codes (BT-136) are not folded for FTS")),
     ("tender.specialRegime", Ignored("a UK-regime flag with no eForms counterpart")),
-    ("tender.status", Ignored("the OCDS tender status; the Tender's status is derived from its notices and deadlines")),
+    ("tender.status", Ignored("the OCDS tender status is not read: the Tender's `status` is derived from its submission deadline and its awards (issue 533: once its newest notice has published awards of its own, every award the procedure has published `cancelled`/`unsuccessful` and together covering every lot, a UK12's included, closes it outside an open-ended scheme); a cancellation published only here is not seen (issue 533 unit 3)")),
     ("tender.submissionMethodDetails", Ignored("submission instructions, prose")),
     ("tender.submissionTerms", Ignored("submission terms (electronic policy, languages) — outside the canonical model")),
     // ----------------------------------------------------------------- awards

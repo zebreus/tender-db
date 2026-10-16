@@ -684,6 +684,15 @@ enum Spec {
     /// R3). Run `project` after it; the fold compares and announces only what moved.
     /// `dry_run` (the default) counts and writes nothing.
     RefoldValueBand { dry_run: bool },
+    /// Issue 533: stamp stale and re-queue the open head — every Tender whose stored
+    /// `current_deadline` is after now (`Db::open_head_tender_ids`, about 42k on prod) — so the
+    /// fold derives `current_closed_by_notice` for it and drops a DÖE award notice's own date
+    /// (1(b)): the only Tenders whose `status` answer either can move, a past or absent
+    /// deadline reading Closed already (ADR-0017 D6's route R3; R2 has no stored-rows loader
+    /// and a SQL UPDATE would be a second copy of the rule, issue 375's hazard). Run `project`
+    /// after it; the fold compares and announces only what moved (rules T and L). `dry_run`
+    /// (the default) counts and writes nothing.
+    RefoldOpenHead { dry_run: bool },
     /// Issue 365 unit 6: re-queue every notice carrying a mention under one of
     /// `schemes`.
     ///
@@ -3432,6 +3441,12 @@ impl Supervisor {
                 let params = if dry_run { "refold-value-band dry-run" } else { "refold-value-band" }.to_owned();
                 Ok(vec![self.push("refold-value-band", params, Spec::RefoldValueBand { dry_run }).await])
             }
+            // Issue 533: the open-head cohort, dry by default like every census.
+            "refold-open-head" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                let params = if dry_run { "refold-open-head dry-run" } else { "refold-open-head" }.to_owned();
+                Ok(vec![self.push("refold-open-head", params, Spec::RefoldOpenHead { dry_run }).await])
+            }
             "refold-notices" => {
                 let notices = req.notices.clone().unwrap_or_default();
                 if notices.is_empty() {
@@ -5417,6 +5432,7 @@ const UNSTOPPABLE_KINDS: &[(&str, &str)] = &[
     ("refold-notices", "the re-queue and stale-stamp store calls over at most 1,000 named ids"),
     ("refold-sections", "one indexed carrier read, then the re-queue and stale-stamp store calls"),
     ("refold-value-band", "one id read, then the stale-stamp and re-queue store calls (issue 492)"),
+    ("refold-open-head", "one id range read, then the stale-stamp and re-queue store calls (issue 533)"),
     ("requeue-uuid-hubs", "one re-queue store call over the census's hub list (issue 482)"),
     ("repair-swept-siblings", "a count and one repair store call"),
     // Deliberate, or a one-off not worth a checkpoint (issue 543 audit).
@@ -7703,6 +7719,7 @@ impl Supervisor {
             | Spec::RefoldDeniedSchemes { .. }
             | Spec::RefoldNotices { .. }
             | Spec::RefoldValueBand { .. }
+            | Spec::RefoldOpenHead { .. }
             | Spec::RefoldFields { .. } => off_frame(|| self.run_maintenance_spec(job)).await,
             Spec::BackfillOrgNames
             | Spec::BackfillLegacyAdjacency
@@ -8283,6 +8300,27 @@ impl Supervisor {
                     if *dry_run { " DRY RUN — nothing written" } else { "" },
                     ids.len(),
                     floor / 100_000_000,
+                    if *dry_run { "would re-queue" } else { "re-queued" },
+                ))
+            })
+            .await,
+            // Issue 533: refold-value-band's shape over the open head. Boxed like it (issue 467's
+            // rule), so the arm's locals do not grow `run_maintenance_spec`'s one future.
+            Spec::RefoldOpenHead { dry_run } => Box::pin(async move {
+                let now = store::now_unix();
+                self.set_phase("finding", None, None, format!("Tenders whose head deadline is after {now}"));
+                let ids = self.db.open_head_tender_ids(now).await.map_err(|e| e.to_string())?;
+                let (stamped, (notices, requeued)) = if *dry_run {
+                    (0, self.db.requeue_tender_notices(&ids, true).await.map_err(|e| e.to_string())?)
+                } else {
+                    let stamped = self.db.stamp_stale_for_tenders(&ids).await.map_err(|e| e.to_string())?;
+                    (stamped, self.db.requeue_tender_notices(&ids, false).await.map_err(|e| e.to_string())?)
+                };
+                Ok(format!(
+                    "refold-open-head (issue 533){}: {} Tender(s) with a head deadline after {now}, {notices} \
+                     notice(s); {} {requeued}, stamped {stamped} epoch-stale — run `project` to apply",
+                    if *dry_run { " DRY RUN — nothing written" } else { "" },
+                    ids.len(),
                     if *dry_run { "would re-queue" } else { "re-queued" },
                 ))
             })
@@ -17253,6 +17291,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "refold-void-names"
             | "refold-placeholder-names"
             | "refold-value-band"
+            | "refold-open-head"
             | "rederive-eur"
             | "rederive-eur-recent"
             | "repair-nested-orgs"
@@ -24901,6 +24940,75 @@ mod tests {
         assert_eq!(projected(1).await, Some(store::turso::Value::Integer(0)));
         assert_eq!(projected(2).await, Some(store::turso::Value::Integer(0)), "a lot value in an old version counts");
         assert_eq!(projected(3).await, Some(store::turso::Value::Integer(1)), "below the floor is left alone");
+        remove_db(&path);
+    }
+
+    /// Issue 533: `refold-open-head` finds the open head — the Tenders whose stored head
+    /// deadline is after now, the only ones the closing rule (and 1(b)'s dropped DÖE award
+    /// date) can move — dry by default; a wet run stamps them epoch-stale and re-queues their
+    /// notices, and a past or absent deadline is left alone.
+    #[tokio::test]
+    async fn refold_open_head_requeues_the_tenders_whose_head_deadline_is_ahead() {
+        let path = format!("/tmp/tender-db-sup-open-head-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        let ahead = store::now_unix() + 30 * 86_400;
+        let past = store::now_unix() - 30 * 86_400;
+        // Tender 1: a deadline ahead (open). Tender 2: a deadline past. Tender 3: none.
+        for (id, deadline) in [(1, ahead.to_string()), (2, past.to_string()), (3, "NULL".to_owned())] {
+            for sql in [
+                format!(
+                    "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, \
+                     ingested_at, parse_state, projected) VALUES ({id}, 'ted', 'OJ-{id}', 'h{id}', 'text', 1, 'm{id}', 0, \
+                     'parsed', 1)"
+                ),
+                format!(
+                    "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at, \
+                     projection_epoch, current_deadline) VALUES ({id}, 'ted', 'p{id}', 'procedure', 1, 100, 0, \
+                     {epoch}, {deadline})",
+                    epoch = store::canonical::PROJECTION_EPOCH,
+                ),
+                format!(
+                    "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+                     VALUES ({id}, 1, 100, 'OJ-{id}', {id})"
+                ),
+            ] {
+                conn.execute(&sql, ()).await.unwrap();
+            }
+        }
+        assert_eq!(db.open_head_tender_ids(store::now_unix()).await.unwrap(), vec![1]);
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let scalar = |sql: String| {
+            let db = db.clone();
+            async move { db.scalar(&sql).await.unwrap() }
+        };
+
+        let dry = sup.run_spec(&job(Spec::RefoldOpenHead { dry_run: true })).await.expect("dry run");
+        assert!(dry.contains("DRY RUN") && dry.contains("1 Tender(s)") && dry.contains("would re-queue 1"), "got: {dry}");
+        assert_eq!(scalar("SELECT projected FROM notices WHERE id = 1".into()).await, Some(store::turso::Value::Integer(1)));
+        assert_eq!(
+            scalar("SELECT projection_epoch FROM tenders WHERE id = 1".into()).await,
+            Some(store::turso::Value::Integer(store::canonical::PROJECTION_EPOCH)),
+            "a dry run writes nothing"
+        );
+
+        let wet = sup.run_spec(&job(Spec::RefoldOpenHead { dry_run: false })).await.expect("wet run");
+        assert!(wet.contains("re-queued 1, stamped 1"), "got: {wet}");
+        assert_eq!(scalar("SELECT projected FROM notices WHERE id = 1".into()).await, Some(store::turso::Value::Integer(0)));
+        assert_ne!(
+            scalar("SELECT projection_epoch FROM tenders WHERE id = 1".into()).await,
+            Some(store::turso::Value::Integer(store::canonical::PROJECTION_EPOCH)),
+            "the open head is stamped stale, so the fold re-derives it (ADR-0017 R3)"
+        );
+        for id in [2, 3] {
+            assert_eq!(
+                scalar(format!("SELECT projected FROM notices WHERE id = {id}")).await,
+                Some(store::turso::Value::Integer(1)),
+                "tender {id}: a past or absent deadline reads Closed already and is left alone"
+            );
+        }
         remove_db(&path);
     }
 

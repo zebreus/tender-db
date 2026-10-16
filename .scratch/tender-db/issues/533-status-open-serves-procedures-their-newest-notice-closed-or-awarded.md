@@ -21,14 +21,20 @@ Relates to:
 
 ## Verify
 
-    curl -s "https://tenders.zebreus.click/v1/tenders?publication_id=00043118-2025&status=open&limit=1" "https://tenders.zebreus.click/v1/tenders?publication_id=25892804-1&status=open&limit=1" "https://tenders.zebreus.click/v1/openapi.json" | jq -c 'if .components then .components.parameters.status.description else [.items[].id] end'
+    curl -s "https://tenders.zebreus.click/v1/tenders?publication_id=00684240-2026&status=open&limit=1" "https://tenders.zebreus.click/v1/tenders?publication_id=25892804-1&status=open&limit=1" "https://tenders.zebreus.click/v1/openapi.json" | jq -c 'if .components then .components.parameters.status.description else [.items[].id] end'
 
-It prints three lines: the carry-forward exemplar (841082), the DÖE exemplar (8831547), and the served `status`
-description. Lines 1–2 read unit 2's result and line 3 reads unit 4's. Unit 3 is a measurement.
-- **done**: `[]`, `[]`, and a description that names what closes a Tender besides its deadline. 841082 is a
-  restricted procedure, not an open-ended scheme, so no outcome of unit 1(a) keeps it open. If a later plausibility
-  rule drops its 2029 deadline for another reason, take a new exemplar from the cohort read in Repro.
-- **open (2026-10-14 16:04 UTC)**: `[841082]`, `[8831547]`, `"By submission deadline."`
+It prints three lines: the carry-forward exemplar (8805808, publication 00684240-2026), the DÖE exemplar
+(8831547), and the served `status` description. Lines 1–2 read unit 2's result and line 3 reads unit 4's. Unit 3 is
+a measurement.
+- **done**: `[]`, `[]`, and a description that names what closes a Tender besides its deadline. 8805808 is a one-shot
+  open procedure (`Sanierung Neu- und Ausbau Stiegstrasse und Stiegweg - Ingenieurleistung`): its CAN 47360037 decides
+  its one lot `clos-nw` (BT-144 `other`, 0 tenders, BT-300 `Begründung des Abbruchs: … Formfehler`), its window is 97
+  days, and it declares no DPS, no `oth-*` procedure and no scheme subtype, so no exemption of the re-made 1(a) keeps
+  it open. Its deadline, 2027-01-07, is the latest of any closing eForms one-shot, so `[]` proves the flag rather
+  than a passed date: **read it before 2027-01-07**. Fallback 7940050 (publication 00598729-2026). (The first Verify
+  line used 841082, which step 0a found declares `dps-list` on its head: a DPS, which K1 keeps open.)
+- **open (re-made decision, 2026-10-15)**: `[8805808]`, `[8831547]`, `"By submission deadline."` (2026-10-14 16:04
+  UTC with the old line 1: `[841082]`, `[8831547]`, `"By submission deadline."`)
 
 ## Repro
 
@@ -546,6 +552,63 @@ contractor where it names anything; none invites tenders or requests to particip
 - A job-706-style SQL UPDATE backfill: R2 needs the fold's own function over stored rows, and no loader exists (stored_version returns raw leaf rows, canonical.rs:21611). Transcribing the rule into SQL is issue 375's hazard.
 - Title, deadline distance from publication, BT-144 reason, `now` and `tenders.source` as rule inputs (all three proposals agree).
 
+## Unit 2 build notes (2026-10-16, after the build review)
+
+- **1(c)'s per-lot bound fired, so the per-lot leg shipped out (the decided fallback, no re-decision).** The builder's
+  `#[ignore]` perf test passed at 1.02x only because every fixture lot carried its own deadline, which made the
+  baseline the 424 EXISTS's own quadratic walk. On lots without a deadline of their own (re-measured locally, debug
+  build, same fixture otherwise): `lots?tender=X&status=open` 1.62x at 300 lots, 1.83x at 1,200, **2.71x at 2,400**
+  (413 ms → 1.12 s); the lots stream page (`status=open&limit=100`), where the leg is correlated per lot, **88x at 300
+  lots** (109 ms → 9.6 s). So a lot is closed exactly when its Tender is: `lot_closed_by_result(_sql)`,
+  `closed_lot_keys` and the lot-leg set are gone, `StatusBy::Lot` reads only the Tender's closure (the stored flag on a
+  page, `closed_by_notice_sql` on the At probe), and a lot's change row fires on its Tender's flip. Step 0b's 11 lots
+  in 7 open Tenders (a partial UK12's cancelled lot) stay open — unit 3. The perf test now builds lots without own
+  deadlines and times the stream page too (the flag alone: a residual / one PK seek per lot).
+- **The K1/K2 leg walked the corpus.** With no row stats turso planned `cb_c`'s two-scheme OR as `MULTI-INDEX OR cb_c
+  (tender_version_classifications_code, …)` — a `(scheme=?)` seek per branch over every `procedure` and `dps` row,
+  filtered on the version afterwards (read locally with EXPLAIN QUERY PLAN; the review measured one At probe at 6 ms →
+  1.85 s beside 100k non-matching rows). Pinned `INDEXED BY tender_version_classifications_version` (in SCHEMA, never
+  deferred); the plan test now rejects a `MULTI-INDEX OR`, a `(scheme=` access or any non-version access on every
+  `cb_*` leg, alone and inside the Tenders and Lots At statements, and the perf test times an At probe beside 100k
+  other rows.
+- **The SQL twin's coverage leg was quadratic on the At probe** (found while re-timing): `NOT EXISTS (a Lot-kind lot
+  with NOT EXISTS (a result naming it))` walked the version's result slice once per lot, and a big Tender's flip
+  writes one lot change row per lot, each probed at two versions by every lots subscription with `status` — 120
+  probes of a 2,400-lot all-`clos-nw` Tender had not finished in 15 minutes. Now a COUNT of Lot-kind lots against
+  the distinct Lot-kind lots the results name (results joined to their lot row by primary key): 2,400 lots cost 8.07x
+  300 (linear), about 0.25 s a probe in a debug build. The perf test pins the scaling (< 16x for 8x the lots).
+- **Runbook:** the 2a fill gains a third field refold, `TED-DPS` + `TED-PROCUREMENT_DISCONTINUED` +
+  `TED-PROCUREMENT_UNSUCCESSFUL` on `notice_integers` (K1's legacy leg and 2b's reasons are Integer markers, which the
+  `notice_codes` refold never reaches).
+- **Served text:** W is measured from the PUBLICATION of the first deadline-bearing notice to the current deadline (the
+  first cut said "between the first deadline and the current one", which predicts a close for 78054, 232118, 8606643
+  and 634469 that the code keeps open). The `dps` scheme is documented on `classifications[]` (the version detail
+  serves every scheme, so 1(a)'s "a new dps scheme changes no REST payload" held for list rows only).
+- **The At probes paid the whole rule on every probe (second review, 2026-10-16).** turso 0.7 runs every correlated
+  subquery of a loop before it tests any condition there, so the "cheap legs first" order spared nothing: a version
+  with no results paid both coverage counts, and the lots At probe of a 2,400-lot Tender cost 10-17x the pre-533 one
+  (the Tenders At probe 23x), with 4,800 probes per subscription on a flip. Now (`canonical::closed_at_version_sql`)
+  the At probes read the stored flag at the head, where the agreement test pins flag = rule, and run the rule only
+  at an earlier version, in two loops: an own result and no non-`clos-nw` result on `cb_v`, then the counts and the
+  exemption on `cb_g`, the same row one loop deeper (the `clos-nw` leg carries `LIMIT 1` so turso does not unnest it
+  into an anti-join after `cb_g`). The coverage count's lot join is keyed on the version row, so its results seek
+  `(tender_id, seq)`, not every version's slice (1.7x on 31 versions). Measured, debug, 2,400 lots, best of 3 x10,
+  each against itself with the closed leg cut out: lots At at the head 1.29x, at the CN 1.03x, Tenders At at the head
+  1.59x — a constant 4-5 ms of preparing the rule's SQL, whatever the size — and 2.18x at an earlier award version
+  whose LAST result names a winner (the rule's own pass over the results; bounded at 3x). The perf test pins all
+  four; the plan test now requires `(tender_id=? AND seq=` on every version-keyed leg. Still paying the full rule: an
+  earlier version that passes both cheap legs (one that closed, or an exempt all-`clos-nw` one), linear in its lots.
+- **Served text, second pass:** the closing clause names every result the procedure has published (all rounds, as
+  decided: the Repro coverage, not own-round coverage) and "together they decide every lot"; the reopen trigger is any
+  later notice without results of its own, a corrigendum or modification as well as a re-launch CN (unit 3 decides
+  whether a non-CN head should keep the closure); the Dates caveat says "outside an open-ended scheme"; the
+  `current_closed_by_notice` note no longer says "before its deadline" (the rule reads no timing); the reasons note
+  says "since issue 533 deployed", not "2026-10". The 370 gate: RETIRED holds "By submission deadline." and "(by
+  submission deadline)", and `the_docs_say_status_reads_the_newest_notice` pins one phrase per sentence.
+- **Fixtures:** four chains pin the coverage count's DISTINCT (two results on one lot of two; a lot decided in two
+  rounds) and its result-side kind filter (a result naming only a group; results naming the group and the lot) —
+  each mutant of the SQL now fails the agreement test.
+
 ## Proposed units
 
 1. **Decide (S–M; the decision is the step).** Record the decision here with its reasoning. It has three parts.
@@ -585,6 +648,12 @@ contractor where it names anything; none invites tenders or requests to particip
    - The 175 with a winner: read BT-765/BT-766, UK13–16 and the deadline distance on a sample. Does "awarded before
      the deadline" ever close a non-DPS procedure?
    - The ~102 unclassified non-DÖE heads (partial, `open-nw`, null decision).
+   - The lot rule's per-lot leg, shipped out of unit 2 under 1(c)'s fallback (`## Unit 2 build notes`): step 0b's 11
+     lots in 7 open Tenders. It needs a shape that stays under 2x on the lots stream, not a per-lot SQL set — e.g. a
+     fold-maintained per-lot flag beside the version's lot rows.
+   - The reopen trigger as built is "the head published no results of its own", not "a contract notice": a
+     corrigendum, modification or result-subtype notice without results reopens a closed Tender (served as such since
+     the second review). Decide whether a non-CN head without results should keep the closure.
    - The channels nobody has measured: FTS OCDS `tender.status` (ignored at `checklist.rs:116`, so a cancellation
      carried only there is invisible) and eForms BT-140 change notices (not parsed).
 4. **Docs (S).** `openapi.json:755` and `docs.rs:172` name what closes a Tender besides its deadline. Correct the

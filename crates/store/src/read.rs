@@ -159,10 +159,17 @@ impl Drop for Reader {
 /// Whether a Tender is still open for submissions at a reference instant.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Status {
-    /// A submission deadline in the future.
+    /// A submission deadline in the future, and the head's own notice has not closed the
+    /// procedure (issue 533: `tenders.current_closed_by_notice` is NULL, read as `IS NOT 1`).
     Open,
-    /// No submission deadline in the future — closed, awarded, or never
-    /// carrying a deadline at all (award notices do not).
+    /// Not open: no submission deadline in the future (none ever published, or every one
+    /// past), OR the head version's own notice closed the procedure (at any time) —
+    /// an all-`clos-nw` result that decides every lot, unless the Tender declares an
+    /// open-ended scheme (`canonical::closed_by_notice`, issue 533). An award head is NOT
+    /// deadline-less: it carries its contract notice's deadline (issue 370), which is why the
+    /// deadline alone cannot say this. A lot is closed with its Tender; a no-award for one
+    /// lot of a Tender that stays open does not close that lot (the decided per-lot leg failed
+    /// 1(c)'s perf bound and is issue 533 unit 3's).
     Closed,
 }
 
@@ -1139,12 +1146,30 @@ pub fn isolation_routed(collection: Collection, f: &Filter) -> Vec<Isolated> {
 /// How `status` is decided for the collection a [`version_predicates`] caller reads.
 #[derive(Clone, Copy)]
 enum StatusBy<'a> {
-    /// Tenders: the fold-maintained head column (`t.current_deadline`, issue 273).
-    Head(&'a str),
+    /// Tenders at the head: the fold-maintained head columns — `deadline` the indexed
+    /// range column (`t.current_deadline`, issue 273), `closed` the unindexed flag
+    /// (`t.current_closed_by_notice`, issue 533) tested on each row of that range.
+    Head { deadline: &'a str, closed: &'a str },
+    /// Tenders at ONE version (issue 533): the SSE `Scope::At` probe decides status per
+    /// version — its own admitted deadline rows and `canonical::closed_at_version_sql` at
+    /// `seq` (the stored flag at the head, the rule elsewhere) — because the head columns read
+    /// the same on both sides of a change, so a fold-time close was classified `(false, false)`
+    /// and dropped. `published` is the version's publication expression (`v.published_at`);
+    /// `head_seq` and `head_flag` the Tender's head pointer and stored flag.
+    Version { published: &'a str, head_seq: &'a str, head_flag: &'a str },
     /// Lots: per LOT, from the version's date rows, by the rule the lot ROW is
-    /// served by (issue 424) — the expression names the lot's id.
-    Lot(&'a str),
+    /// served by (issue 424) — `lot` names the lot's id. Issue 533: `tender_closed` is the
+    /// Tender's closure for this builder — the stored flag on a page,
+    /// `canonical::closed_at_version_sql` on an At probe — and a lot is closed with its
+    /// Tender. The decided per-lot leg (a lot its head notice alone decided `clos-nw`) is not
+    /// here: it cost 2.71x the pre-533 tender-scoped page on 2,400 lots and 88x on the stream,
+    /// past 1(c)'s 2x bound, so it is unit 3's under the decision's fallback.
+    Lot { lot: &'a str, tender_closed: &'a str },
 }
+
+/// The Tender head's status columns, as every head-scoped Tenders builder names them.
+const STATUS_BY_HEAD: StatusBy<'static> =
+    StatusBy::Head { deadline: "t.current_deadline", closed: "t.current_closed_by_notice" };
 
 /// The version-scoped filters, emitted against caller-supplied expressions for the
 /// Tender id and the version `seq`.
@@ -1165,6 +1190,12 @@ enum StatusBy<'a> {
 /// canonical.rs), and MAX(d) > now ⟺ EXISTS(d > now); a Tender with no deadline
 /// gets NULL, which both forms read as Closed. Lots builders pass [`StatusBy::Lot`] —
 /// no head column there — and keep an EXISTS, decided per lot (issue 424).
+///
+/// Issue 533: the head form adds `t.current_closed_by_notice IS NOT 1` to Open (and `IS 1`
+/// to Closed's OR), a residual on each row of the same range: every Tenders
+/// window already reads the `tenders` row, since it joins `tender_versions` on
+/// `t.current_seq`, so the flag costs no extra read and the range keeps its index. The
+/// SSE At probe passes [`StatusBy::Version`] instead.
 fn version_predicates(
     q: &mut Query,
     f: &Filter,
@@ -1221,18 +1252,48 @@ fn version_predicates(
         );
     }
     if let Some(status) = f.status {
-        // "Open" is a submission deadline still in the future. A Tender that
-        // never published one (award notices) is therefore Closed, which is the
-        // useful reading: it cannot be bid on.
+        // "Open" is a submission deadline still in the future that the head's own notice
+        // has not overtaken. A Tender with no deadline (none published, or a DÖE sdk-0.1
+        // award whose own date no longer maps, issue 533 1(b)) is Closed, the useful
+        // reading: it cannot be bid on. And an award head does NOT lack a deadline — it
+        // carries its contract notice's (issue 370) — so a cancellation published before
+        // that date was served open until it passed (38279: its all-`clos-nw` CAN of
+        // 2026-06-30 under a 2026-10-29 deadline). Issue 533 closes it through the fold's
+        // flag (open-ended schemes exempt, `canonical::closure_exempt`), read on each row
+        // of the unchanged deadline range, so the range still seeks its index.
         match status_by {
-            StatusBy::Head(col) => match status {
-                Status::Open => q.push(&format!(" AND {col} > ?"), [Value::Integer(f.now)]),
+            StatusBy::Head { deadline, closed } => match status {
+                // `IS NOT 1` / `IS 1`, not `IS NULL` / `IS NOT NULL`: the same predicates on a
+                // column that is 1 or NULL and never 0, but turso 0.7's planner re-costs the
+                // join on an `IS NULL` residual and left the head pointer's (tender_id, seq)
+                // seek for a walk of the Tender's versions on the seeded `buyer+open` page
+                // (`head_pointer_plan_tests`, measured 2026-10-16); `IS NOT 1` plans as before.
+                Status::Open => q.push(
+                    &format!(" AND {deadline} > ? AND {closed} IS NOT 1"),
+                    [Value::Integer(f.now)],
+                ),
                 Status::Closed => q.push(
-                    &format!(" AND ({col} IS NULL OR {col} <= ?)"),
+                    &format!(" AND ({deadline} IS NULL OR {deadline} <= ? OR {closed} IS 1)"),
                     [Value::Integer(f.now)],
                 ),
             },
-            StatusBy::Lot(lot) => {
+            StatusBy::Version { published, head_seq, head_flag } => {
+                // The head range's per-version twin: MAX(admitted d) > now ⟺ EXISTS(admitted
+                // d > now), exactly what `head_deadline` would write for this version, and
+                // the closing rule over this version's own rows and its chain prefix (the
+                // stored flag at the head, where the two agree).
+                let rows = crate::canonical::admitted_deadline_rows_sql("d", tid, seq, published);
+                let closed = crate::canonical::closed_at_version_sql(tid, seq, head_seq, head_flag);
+                let open = format!(
+                    "(EXISTS (SELECT 1 FROM tender_version_dates d WHERE {rows} AND d.utc_seconds > ?)
+                      AND NOT {closed})"
+                );
+                match status {
+                    Status::Open => q.push(&format!(" AND {open}"), [Value::Integer(f.now)]),
+                    Status::Closed => q.push(&format!(" AND NOT {open}"), [Value::Integer(f.now)]),
+                }
+            }
+            StatusBy::Lot { lot, tender_closed } => {
                 // Open iff the lot's EFFECTIVE deadline is in the future, which is
                 // exactly what the lot row serves (`summarise`, issue 389): its own
                 // lot-scoped deadline if it published an admitted one, otherwise
@@ -1246,28 +1307,28 @@ fn version_predicates(
                 // one PK seek. A strict subset of the old per-tender answer, so
                 // the open-head seed (`t.current_deadline > now`) is still a
                 // candidate SUPERSET of it.
+                //
+                // Issue 533: the version's deadline rows come from canonical's one selector
+                // (`admitted_deadline_rows_sql`), the window applied there.
                 let published = format!(
                     "(SELECT pv.published_at FROM tender_versions pv
                        WHERE pv.tender_id = {tid} AND pv.seq = {seq})"
                 );
-                let outer = crate::canonical::deadline_admitted_sql("d.utc_seconds", &published);
-                let own = crate::canonical::deadline_admitted_sql("o.utc_seconds", &published);
+                let outer = crate::canonical::admitted_deadline_rows_sql("d", tid, seq, &published);
+                let own = crate::canonical::admitted_deadline_rows_sql("o", tid, seq, &published);
                 let exists = format!(
                     "EXISTS (SELECT 1 FROM tender_version_dates d
-                              WHERE d.tender_id = {tid} AND d.seq = {seq}
-                                AND d.field = 'submission_deadline' AND d.utc_seconds > ?
-                                AND {outer}
+                              WHERE {outer} AND d.utc_seconds > ?
                                 AND (d.lot_id = {lot}
                                      OR (d.lot_id IS NULL
                                          AND NOT EXISTS (SELECT 1 FROM tender_version_dates o
-                                                          WHERE o.tender_id = {tid} AND o.seq = {seq}
-                                                            AND o.field = 'submission_deadline'
-                                                            AND o.lot_id = {lot}
-                                                            AND {own}))))"
+                                                          WHERE {own} AND o.lot_id = {lot}))))"
                 );
+                // Issue 533: open on its deadline and its Tender not closed by its own notice.
+                let open = format!("({exists} AND NOT ({tender_closed}))");
                 match status {
-                    Status::Open => q.push(&format!(" AND {exists}"), [Value::Integer(f.now)]),
-                    Status::Closed => q.push(&format!(" AND NOT {exists}"), [Value::Integer(f.now)]),
+                    Status::Open => q.push(&format!(" AND {open}"), [Value::Integer(f.now)]),
+                    Status::Closed => q.push(&format!(" AND NOT {open}"), [Value::Integer(f.now)]),
                 }
             }
         }
@@ -2197,6 +2258,24 @@ pub fn tenders_ordered_statement(
     (q.sql, q.params)
 }
 
+/// The id-ordered page statement [`tenders_page`] builds (unbanded), without running it — the
+/// same test seam as [`tenders_ordered_statement`], so issue 533's plan test reads the artifact
+/// the `status` head range actually emits.
+#[doc(hidden)]
+pub fn tenders_page_statement(filter: &Filter, after: i64, limit: i64) -> (String, Vec<Value>) {
+    let q = tenders_page_query(filter, Scope::Page { after, limit }, None);
+    (q.sql, q.params)
+}
+
+/// The SSE `Scope::At` probe statement [`tenders`] runs for one version, without running it —
+/// issue 533's plan test reads what `StatusBy::Version` and `canonical::closed_at_version_sql`
+/// emit inside the real statement, where turso flattens the rule's subqueries into the join.
+#[doc(hidden)]
+pub fn tenders_at_statement(filter: &Filter, id: i64, seq: i64) -> (String, Vec<Value>) {
+    let q = tenders_query(filter, Scope::At { id, seq });
+    (q.sql, q.params)
+}
+
 /// [`tenders_ordered_statement`] with the issue-503 pin [`tenders_ordered`] applies when
 /// `source_pin` asks for one and the index exists (assumed here).
 #[doc(hidden)]
@@ -2273,7 +2352,7 @@ fn tenders_ordered_query(
             inner.push(" AND t.kind = ?", [t(kind)]);
         }
     }
-    version_predicates(&mut inner, filter, "t.id", "v.seq", StatusBy::Head("t.current_deadline"), "t.current_value_eur_cents");
+    version_predicates(&mut inner, filter, "t.id", "v.seq", STATUS_BY_HEAD, "t.current_value_eur_cents");
     if let Some((value, id)) = cursor {
         let (outer, tie) = if desc { ("<=", "<") } else { (">=", ">") };
         inner.push(
@@ -2828,7 +2907,21 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
             q.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq", StatusBy::Head("t.current_deadline"), "t.current_value_eur_cents");
+    // Issue 533: this shape is `Scope::At` only (the page returned above), the SSE diff
+    // probe, so status is decided at the probed version, not by the head columns, which
+    // read the same on both sides of the change that moved them.
+    version_predicates(
+        &mut q,
+        filter,
+        "t.id",
+        "v.seq",
+        StatusBy::Version {
+            published: "v.published_at",
+            head_seq: "t.current_seq",
+            head_flag: "t.current_closed_by_notice",
+        },
+        "t.current_value_eur_cents",
+    );
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND t.id > ? ORDER BY t.id LIMIT ?",
@@ -2898,7 +2991,7 @@ fn tender_page_predicates(inner: &mut Query, filter: &Filter) {
             inner.push(" AND t.current_deadline < ?", [Value::Integer(before)]);
         }
     }
-    version_predicates(inner, filter, "t.id", "v.seq", StatusBy::Head("t.current_deadline"), "t.current_value_eur_cents");
+    version_predicates(inner, filter, "t.id", "v.seq", STATUS_BY_HEAD, "t.current_value_eur_cents");
 }
 
 /// The satellite SELECT list joined back onto the ≤limit page rows the inner
@@ -3739,7 +3832,23 @@ fn lots_query_previous(filter: &Filter, scope: Scope) -> Query {
     {
         q.push(" AND l.tender_id = ?", [Value::Integer(tender)]);
     }
-    version_predicates(&mut q, filter, "t.id", "v.seq", StatusBy::Lot("l.id"), "t.current_value_eur_cents");
+    // Issue 533: a page reads the Tender's stored flag (`closed_by_notice_sql` per lot would
+    // be issue 115's quadratic shape); the SSE At probe decides it at the probed version — the
+    // same flag at the head, the rule at an earlier version.
+    let tender_closed = match scope {
+        Scope::Page { .. } => "t.current_closed_by_notice IS 1".to_owned(),
+        Scope::At { .. } => {
+            crate::canonical::closed_at_version_sql("t.id", "v.seq", "t.current_seq", "t.current_closed_by_notice")
+        }
+    };
+    version_predicates(
+        &mut q,
+        filter,
+        "t.id",
+        "v.seq",
+        StatusBy::Lot { lot: "l.id", tender_closed: &tender_closed },
+        "t.current_value_eur_cents",
+    );
     match scope {
         Scope::Page { after, limit } => q.push(
             " AND l.id > ? ORDER BY l.id LIMIT ?",
@@ -3939,9 +4048,22 @@ fn lots_stream_head(filter: &Filter) -> Query {
 /// so its per-lot EXISTS (which never named the lot and cost hundreds of index
 /// rows per lot on a prolific org) is not added again. Only the seeded one: a
 /// second org filter alongside it still decides per lot.
+///
+/// Issue 533: the Tender's closure is its stored flag, read by the same primary-key seek
+/// on `tenders` the value bound already pays — never a JOIN, `lots` stays the only table
+/// in FROM (issue 16).
 fn lots_stream_predicates(q: &mut Query, filter: &Filter) {
-    version_predicates(q, &without_seeded_org(filter), "l.tender_id", LOT_SEQ, StatusBy::Lot("l.id"),
-        "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)");
+    version_predicates(
+        q,
+        &without_seeded_org(filter),
+        "l.tender_id",
+        LOT_SEQ,
+        StatusBy::Lot {
+            lot: "l.id",
+            tender_closed: "(SELECT tt.current_closed_by_notice FROM tenders tt WHERE tt.id = l.tender_id) IS 1",
+        },
+        "(SELECT tt.current_value_eur_cents FROM tenders tt WHERE tt.id = l.tender_id)",
+    );
 }
 
 // ------------------------------------------------------------ seeded lots walk

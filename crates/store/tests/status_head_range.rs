@@ -18,6 +18,12 @@ fn tenders_status_is_a_current_deadline_range() {
     let (sql, _) = tenders_ordered_statement(&f(), HeadOrder::Deadline, false, None, 25);
     println!("TENDERS SQL:\n{sql}");
     assert!(sql.contains("t.current_deadline > ?"), "Open must be the head range: {sql}");
+    // Issue 533: the closing rule rides the same range as a per-row residual on the fold's
+    // flag, never a second range or an EXISTS.
+    assert!(
+        sql.contains("t.current_deadline > ? AND t.current_closed_by_notice IS NOT 1"),
+        "Open is the range plus the unindexed flag: {sql}"
+    );
     assert!(
         !sql.contains("d.field = 'submission_deadline'"),
         "the walking EXISTS form must be gone from the Tenders shape: {sql}"
@@ -26,8 +32,9 @@ fn tenders_status_is_a_current_deadline_range() {
     let closed = Filter { status: Some(Status::Closed), ..f() };
     let (sql, _) = tenders_ordered_statement(&closed, HeadOrder::Deadline, false, None, 25);
     assert!(
-        sql.contains("(t.current_deadline IS NULL OR t.current_deadline <= ?)"),
-        "Closed is NULL-or-past — a Tender that never published a deadline cannot be bid on: {sql}"
+        sql.contains("(t.current_deadline IS NULL OR t.current_deadline <= ? OR t.current_closed_by_notice IS 1)"),
+        "Closed is NULL-or-past — a Tender that never published a deadline cannot be bid on — or \
+         closed by its own newest notice (issue 533): {sql}"
     );
 }
 

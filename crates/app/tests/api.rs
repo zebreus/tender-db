@@ -3813,6 +3813,93 @@ async fn a_subscription_snapshots_then_streams_diffs() {
     );
 }
 
+/// `YYYY-MM-DD+01:00` for the civil day `days` from now (Hinnant's days-to-civil), so a
+/// fixture's dates can be moved relative to the clock `status` compares against.
+fn civil_day(days: i64) -> String {
+    let z = store::now_unix().div_euclid(86_400) + days + 719_468;
+    let era = z.div_euclid(146_097);
+    let doe = z - era * 146_097;
+    let yoe = (doe - doe / 1_460 + doe / 36_524 - doe / 146_096) / 365;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = yoe + era * 400 + i64::from(m <= 2);
+    format!("{y:04}-{m:02}-{d:02}+01:00")
+}
+
+/// Issue 533: a result that closes the procedure before its deadline closes it on every
+/// surface. The chain's CN, moved to a deadline a month ahead, is open; its CAN, re-coded to
+/// an all-`clos-nw` result for the one lot, arrives while a `status=open` subscription is
+/// live and reaches it as `removed` — the head columns read the same on both sides of that
+/// change, so before the SSE probe decided per version it was dropped as `(false, false)` —
+/// while the Tender keeps serving its (future) deadline. The flip is a public `tender` and
+/// `lot` change row (what webhooks deliver), `lots?status=open` drops the lot, and a later
+/// contract notice (a re-launch) reopens it as `added`.
+#[tokio::test]
+async fn a_closing_result_is_removed_from_an_open_subscription_and_a_relaunch_added_back() {
+    let server = Server::start("closed-by-notice").await;
+    let read = |relative: &str| std::fs::read_to_string(format!("{FIXTURES}/{relative}")).expect(relative);
+    let cn = read(CHAIN[0])
+        .replacen("<efbc:PublicationDate>2025-12-15+01:00<", &format!("<efbc:PublicationDate>{}<", civil_day(-20)), 1)
+        .replacen("<cbc:IssueDate xmlns=\"\">2025-12-11+01:00<", &format!("<cbc:IssueDate xmlns=\"\">{}<", civil_day(-21)), 1)
+        .replace("2026-01-21+01:00", &civil_day(30));
+    let can = read(CHAIN[3])
+        .replacen("<efbc:PublicationDate>2026-06-03+02:00<", &format!("<efbc:PublicationDate>{}<", civil_day(-2)), 1)
+        .replacen("<cbc:IssueDate xmlns=\"\">2026-06-02+02:00<", &format!("<cbc:IssueDate xmlns=\"\">{}<", civil_day(-3)), 1)
+        .replacen(">selec-w</cbc:TenderResultCode>", ">clos-nw</cbc:TenderResultCode>", 1);
+    assert!(can.contains(">clos-nw</cbc:TenderResultCode>") && cn.contains(&civil_day(30)));
+    server.ingest_bytes(CHAIN[0], cn.as_bytes()).await;
+    let id = items(&server.get("/v1/tenders?status=open").await)[0]["id"].as_i64().expect("the open CN");
+    assert_eq!(items(&server.get("/v1/lots?status=open").await).len(), 1, "its lot is open");
+
+    let mut tape = Tape::open(&server, "/v1/tenders?status=open", None).await;
+    let (snapshot, _) = tape.until_live().await;
+    assert_eq!(snapshot.len(), 1, "the open Tender is in the snapshot");
+    let mut lots_tape = Tape::open(&server, "/v1/lots?status=open", None).await;
+    let (lot_snapshot, _) = lots_tape.until_live().await;
+    assert_eq!(lot_snapshot.len(), 1, "and its open lot");
+
+    server.ingest_bytes(CHAIN[3], can.as_bytes()).await;
+    let diff = tape.next().await.expect("the closing result must reach the subscription");
+    assert_eq!((diff.data["op"].as_str(), diff.data["id"].as_i64()), (Some("removed"), Some(id)), "{:?}", diff.data);
+    let lot_diff = lots_tape.next().await.expect("the closed lot must reach the lots subscription");
+    assert_eq!(lot_diff.data["op"], "removed", "{:?}", lot_diff.data);
+
+    assert!(items(&server.get("/v1/tenders?status=open").await).is_empty(), "closed by its own notice");
+    assert_eq!(items(&server.get("/v1/tenders?status=closed").await).len(), 1);
+    assert!(items(&server.get("/v1/lots?status=open").await).is_empty(), "the lots surface agrees");
+    assert!(items(&server.get(&format!("/v1/lots?tender={id}&status=open")).await).is_empty());
+    let detail = server.get(&format!("/v1/tenders/{id}")).await;
+    assert!(
+        detail["submission_deadline"].is_string(),
+        "the carried deadline is still served — the flag closes `status`, never the date: {}",
+        detail["submission_deadline"]
+    );
+    let feed = server.get("/v1/changes?since=0&limit=1000").await;
+    let flips: Vec<(String, String, i64)> = feed["events"]
+        .as_array()
+        .expect("events")
+        .iter()
+        .filter(|e| e["version"].as_i64() == Some(2) && e["op"] == "changed")
+        .map(|e| (e["entity"].as_str().unwrap_or_default().to_owned(), e["op"].as_str().unwrap_or_default().to_owned(), e["id"].as_i64().unwrap_or(0)))
+        .collect();
+    assert!(flips.iter().any(|(kind, _, eid)| kind == "tender" && *eid == id), "a public tender change row: {flips:?}");
+    assert!(flips.iter().any(|(kind, ..)| kind == "lot"), "a public lot change row for the lot it closed: {flips:?}");
+
+    // A re-launch: the same procedure's next contract notice, with results of its own none.
+    let relaunch = read(CHAIN[0])
+        .replacen("a6e3de9d-b506-45df-869b-ea7b3749cfc9", "a6e3de9d-b506-45df-869b-ea7b3749cfca", 1)
+        .replacen("00831374-2025", "00999374-2026", 1)
+        .replacen("<efbc:PublicationDate>2025-12-15+01:00<", &format!("<efbc:PublicationDate>{}<", civil_day(-1)), 1)
+        .replacen("<cbc:IssueDate xmlns=\"\">2025-12-11+01:00<", &format!("<cbc:IssueDate xmlns=\"\">{}<", civil_day(-1)), 1)
+        .replace("2026-01-21+01:00", &civil_day(60));
+    server.ingest_bytes("eforms-chain/5-relaunch-16-999374-2026.xml", relaunch.as_bytes()).await;
+    let diff = tape.next().await.expect("the re-launch must reach the subscription");
+    assert_eq!((diff.data["op"].as_str(), diff.data["id"].as_i64()), (Some("added"), Some(id)), "{:?}", diff.data);
+    assert_eq!(items(&server.get("/v1/tenders?status=open").await).len(), 1, "open again");
+}
+
 #[tokio::test]
 async fn a_snapshot_larger_than_one_page_arrives_page_by_page_exactly_once() {
     // Page size 1 forces the snapshot through the keyset-paging path (issue
