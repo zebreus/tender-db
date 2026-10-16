@@ -1,6 +1,6 @@
 # 533 — `status=open` serves procedures their newest notice closed or awarded: a no-winner result or UK12 termination inherits the contract notice's deadline, and DÖE sdk-0.1 award notices publish one of their own
 
-Status: ready-for-agent — unit 1 DECIDED 2026-10-15, and 1(a)'s exemptions RE-DECIDED the same day after step 0a's stop rule fired (`## Decision 1(a) re-made`, below; panel wf_18caa669-8aa): exempt = K1 over the chain (+ legacy `TED-DPS`) || K2 || E2 || (W: an admission window over 365 days && !D: an explicit legacy no-award). 1(b) and 1(c) stand; step 0c done. Step 0d DONE 2026-10-15 (no stop: 153 close, 33 open); step 0b DONE (the lot term closes 11 lots in 7 open Tenders, all one-shots). NEXT: issue 550 (R2.0.9 award blocks read `clos-nw` by inference) decided before the build, since a wrongly inferred `clos-nw` closes a Tender here.
+Status: ready-for-agent — unit 2 DEPLOYED `a7acb4d` 2026-10-16 05:10 UTC (gate green at `c3c1a7c`, 1281 s; built wf_9ed3c6cf-ebc, two adversarial panels with 11 + 10 findings fixed, a read-only third look with 5 minor findings, follow-ups riding the next gate). The open head is refolded: dry 2534 counted 41,733 Tenders / 64,472 notices, wet 2535 stamped 41,733, and project 2536 wrote 41,733 (39,443 verified + 2,290 corrected, 7,269 correction rows). The **Verify reads done**: `[]`, `[]`, and the newest-notice description. All 14 exemplars read as decided. Next: the three field refolds (sizing 2537/2539/2541 queued), then unit 3 (the per-lot leg, measurement) and unit 4's remaining docs.
 Kind: API semantics / data quality (read layer: `status` on `/v1/tenders` and `/v1/lots`, SSE and webhook filters; the fold's head deadline)
 Relates to:
 - 273 (RESOLVED): `status` is a range on the indexed head column `t.current_deadline`; a fix must stay one.
@@ -33,8 +33,34 @@ a measurement.
   it open. Its deadline, 2027-01-07, is the latest of any closing eForms one-shot, so `[]` proves the flag rather
   than a passed date: **read it before 2027-01-07**. Fallback 7940050 (publication 00598729-2026). (The first Verify
   line used 841082, which step 0a found declares `dps-list` on its head: a DPS, which K1 keeps open.)
+- **done (2026-10-16 05:2x UTC, after `a7acb4d` and refold-open-head 2535/2536)**: `[]`, `[]`, and `"By submission deadline, and by what the newest notice says. …"`.
 - **open (re-made decision, 2026-10-15)**: `[8805808]`, `[8831547]`, `"By submission deadline."` (2026-10-14 16:04
   UTC with the old line 1: `[841082]`, `[8831547]`, `"By submission deadline."`)
+
+## Unit 2 deployed (2026-10-16)
+
+- **Deploy.** `a7acb4d` (533 unit 2 `c3c1a7c` plus 550's issue commit) at 05:10 UTC. Gate green at `c3c1a7c`
+  (151 suites, 1281 s). Health ok.
+- **Open-head refold.** It ran first, so every daily queues behind it. That closes the SSE window the third look
+  found.
+  - Dry 2534: 41,733 Tenders with a head deadline after now; 64,472 notices.
+  - Wet 2535: re-queued 64,472 and stamped 41,733, equal to the dry count.
+  - `project` 2536: 41,733 Tenders written. Compare: 39,443 verified + 2,290 corrected = 41,733 (D7's completeness
+    holds). 7,269 correction rows. 60.5 s of reads.
+- **Exemplars** (`tenders.current_closed_by_notice`, a PK read):
+  - closed (1): 38279, 66939, 6739006, 7422682, 8805808;
+  - open (NULL): 403644, 445631, 336277, 634469, 179459, 841082, 913640, 7207004, 8483433.
+
+  Each reads exactly as the re-made decision's exemplars say.
+- **Verify:** `[]`, `[]`, and the served description "By submission deadline, and by what the newest notice says …".
+- **Follow-ups riding the next gate** (the read-only third look, wf_71cd7d33-729, 5 minor findings, all confirmed):
+  - the Dates caveat and the `Status::Closed` doc still describe the single-result shape;
+  - "every lot" should be "every lot of kind `Lot`";
+  - the `current_closed_by_notice` note's two self-contradicting sentences;
+  - the docs test pins fewer phrases than its comment claims;
+  - the post-deploy SSE window, now in the runbook with a NULL-flag fixture.
+
+  Applied in the working tree; they gate with 524 v10.
 
 ## Repro
 
