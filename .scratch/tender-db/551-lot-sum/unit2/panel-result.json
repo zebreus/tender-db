@@ -1,0 +1,760 @@
+{
+ "labels": [
+  {
+   "id": 251619,
+   "plausible_total_cents": 2433875808,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x100 slip (BT-161 typed without its decimal point) on a can-modif; 4 distinct lot awards sum right; serves null today",
+   "evidence": "Only version is notice 24455078 (eForms can-modif, subtype 38, dispatched 2024-12-04, pub 00744344-2024 on 2024-12-05). BT-161 = EUR 2,433,875,808.00. The four BT-720 figures are 1,509,192.00 (LOT-0002), 6,605,400.00 (LOT-0003), 1,110,720.00 (LOT-0004) and 15,113,446.08 (LOT-0006), which sum to EUR 24,338,758.08. BT-161 / sum = 100.000 exactly. The BT-202 modification texts give increments of 301,838.42 / 1,321,080.03 / 222,143.98 / 2,121,439.32 on top, but the buyer's own total, once the slip is removed, is the pre-modification sum. results.jsonl awards sum is 2433875808 (4 lots). The API serves null."
+  },
+  {
+   "id": 369057,
+   "plausible_total_cents": 6237873628,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip on BT-161 and BT-118 alike; 3 distinct lots sum right; serves null today",
+   "evidence": "Notice 24955357 (can-standard, dispatched 2025-08-06, pub 00522142-2025 on 2025-08-08). BT-161 = BT-118 = EUR 62,378,736,280.00. BT-709 per lot is 1,588,782.38, 33,677,863.40 and 27,112,090.50, which sum to 62,378,736.28: exactly 1/1000 of BT-161. The seven BT-720s (L2 split 6,138,642.08 + 21,912,797.58 + 5,626,423.75; L3 split 9,195,064.25 + 7,611,611.25 + 10,305,415.00) sum to 62,378,736.29. results.jsonl awards sum is 6237873629, 1 cent from the buyer's figure. BT-118 does NOT confirm the total here: it carries the same x1000 slip. The API serves null."
+  },
+  {
+   "id": 380921,
+   "plausible_total_cents": 724704000,
+   "currency": "PLN",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip; 4 distinct lot awards sum right; serves null today",
+   "evidence": "CN 24560851 (cn-standard, defence directive 2009/81, dispatched 2025-02-25, pub 2025-02-26) prints no estimate. Its BT-75 bid bond is PLN 143,000 in total (22k/40k/64k/17k per lot), about 2% of a PLN 7 m contract, which corroborates the scale. CAN 44497987 (head, subtype 31, dispatched 2025-06-17, pub 2025-06-18): BT-161 = PLN 7,247,040,000.00. BT-720s are 1,001,400 + 2,197,800 + 3,157,920 + 889,920 = PLN 7,247,040.00, and BT-161 / sum = 1000.000. results.jsonl awards sum is 724704000. The API serves null."
+  },
+  {
+   "id": 392980,
+   "plausible_total_cents": 3574004272,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x100 slip, repeated in two CAN versions; 2 distinct lots sum right only within the head version",
+   "evidence": "The CNs 24381579 / 24371967 (2024-11-11/13) print no value. CAN 24581313 (v6, pub 2025-02-07): BT-161 = EUR 3,760,912,819.00 = 100 x (16,891,134.38 + 20,717,993.81). Head CAN 24549672 (v8, dispatched 2025-02-09, pub 00092421-2025 on 2025-02-11): BT-161 = EUR 3,574,004,272.00 = 100 x (LOT-0001 15,022,048.91 + LOT-0002 20,717,993.81 = 35,740,042.72). The buyer slipped the same way twice and the head-version lot sum matches exactly. CAVEAT: results.jsonl per_lot_max_any_field = 3760912819 mixes in the superseded v6 LOT-0001 figure (EUR 37.6 m, wrong). The awards sum from head-version rows, 3574004272, is right. The API serves null."
+  },
+  {
+   "id": 425446,
+   "plausible_total_cents": 154900719,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip; 4 distinct lot awards sum right; serves null today",
+   "evidence": "CNs 23903725 (2024-04-03) and 23889869 (2024-04-08) print no value. Head CAN 24106799 (can-standard, dispatched 2024-07-30, pub 00460432-2024 on 2024-07-31): BT-161 = EUR 1,549,007,190.00. BT-720s are 404,397.65 + 517,322.18 + 329,791.76 + 297,495.60 = EUR 1,549,007.19, and BT-161 / sum = 1000.000. results.jsonl awards sum is 154900719. The API serves null."
+  },
+  {
+   "id": 706887,
+   "plausible_total_cents": 7056079275,
+   "currency": "PLN",
+   "best": "lot_sum",
+   "shape": "537-refused x100 slip; 10 distinct lot awards sum right (one big lot, not equal to the others' sum); serves null today",
+   "evidence": "CN 24534879 (2025-01-20/21) prints no estimate. Head CAN 24715719 (can-standard, dispatched 2025-04-14, pub 00246342-2025 on 2025-04-15): BT-161 = PLN 7,056,079,275.00. The ten BT-720s are 6,980,506.50, 2,228,700, 2,091,519, 1,339,812.75, 793,194, 5,552,778, 1,827,570, 1,755,000, 962,685 and 47,029,027.50, summing to PLN 70,560,792.75; BT-161 / sum = 100.000. LOT-0010 (47.0 m) is not the sum of the others (23.5 m). results.jsonl awards sum is 7056079275. The API serves null."
+  },
+  {
+   "id": 1024214,
+   "plausible_total_cents": 340000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip; per-lot framework caps (BT-271 = BT-709) sum right; the award (BT-720) sum is the WRONG kind",
+   "evidence": "Notice 25462602 (can-standard, dispatched 2026-01-22, pub 00054926-2026 on 2026-01-26). BT-161 = EUR 3,400,000,000.00. BT-271 and BT-709 per lot are 1,200,000 / 1,200,000 / 1,000,000, summing to 3,400,000; BT-161 / sum = 1000.000. BT-300 reads 'engagement maximum annuel de 300 000 EUR HT ... lots 1 et 2 et 250 000 EUR HT ... lot 3', and BT-54 gives 12 months renewable 3 times (max 4 years), so 4 x (300k+300k+250k) = 3.4 m. BT-118 = EUR 120,000,000.00, which matches nothing (100 x one lot). The BT-720s, 80,118 + 150,372 + 46,357 = 276,847, are bid prices, not the contract total. The API serves EUR 1,200,000 (LOT-0002's cap, ratio 2.83). The same-kind sum (framework_maximum, 340000000) is right. Awards-first would serve 276,847, 12x too low."
+  },
+  {
+   "id": 5779108,
+   "plausible_total_cents": 212000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip on TED VAL_TOTAL; 2 distinct lot awards (4-year framework maxima) sum right",
+   "evidence": "CN 18995955 (2016-10-27, framework) gives a max of EUR 350,000 HT per year for lot 1 and EUR 180,000 HT per year for lot 2. CAN 19306566 (head, 223707-2017, 2017-06-13): VAL_TOTAL / VALUE (PROCUREMENT_TOTAL) = EUR 2,120,000,000.00. Lot VAL_TOTALs are RES-1 1,400,000 (4x350k) and RES-2 720,000 (4x180k), summing to 2,120,000; VAL_TOTAL / sum = 1000.000. The API serves EUR 1,400,000 (the LOT-1 award copy, 66%). results.jsonl awards sum is 212000000."
+  },
+  {
+   "id": 5943121,
+   "plausible_total_cents": 132157992,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip on TED VAL_TOTAL; 10 distinct lot awards sum right",
+   "evidence": "CN 19312705 (2017-06-15) and corrigendum 19355782 (2017-07-04) print no value. CAN 19449682 (2017-09-19) closed lots without award (clos-nw). Head CAN 19549394 (465306-2017, 2017-11-22): VAL_TOTAL = EUR 1,321,579,920.00. The ten lot VAL_TOTALs are 416,053.05, 40,675.49, 42,456.63, 23,600, 105,954.25, 135,513, 50,660, 150,823, 168,090.50 and 187,754, summing to 1,321,579.92; VAL_TOTAL / sum = 1000.000. The API serves EUR 416,053.05 (LOT-1, 31%). results.jsonl awards sum is 132157992 (10 lots)."
+  },
+  {
+   "id": 6342034,
+   "plausible_total_cents": 1083675445,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x100 slip on TED VAL_TOTAL; 2 distinct lot awards sum right",
+   "evidence": "CN 20055733 (2018-10-31) prints no value. CAN 20753595 (head, 561264-2019, 2019-11-27): VAL_TOTAL / VALUE (PROCUREMENT_TOTAL) = EUR 1,083,675,445.00. Lot VAL_TOTALs are RES-1 7,686,754.45 and RES-2 3,150,000.00, summing to 10,836,754.45; VAL_TOTAL / sum = 100.000. The API serves EUR 7,686,754.45 (LOT-1, 71%). results.jsonl awards sum is 1083675445."
+  },
+  {
+   "id": 6921980,
+   "plausible_total_cents": 2493033611,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x100 slip on TED VAL_TOTAL; 15 distinct lot awards sum right, corroborated by the CN estimate",
+   "evidence": "CN 21329540 (515801-2020, 2020-10-30): VAL_ESTIMATED_TOTAL = EUR 25,000,000.00, with lot VAL_OBJECTs of 3.96 m, 10.3 m, ... Head CAN 21438871 (597000-2020, 2020-12-11): VAL_TOTAL = EUR 2,493,033,613.00. The 15 lot VAL_TOTALs (= VAL_ESTIMATED_TOTAL per lot; net-of-19%-VAT figures such as 3,966,386.55 and 10,369,747.89) sum to 24,930,336.11. VAL_TOTAL / sum = 100.000 (2 cents of rounding). The API serves EUR 10,369,747.89 (LOT-8 award copy, 42%). results.jsonl awards sum is 2493033611."
+  },
+  {
+   "id": 7044132,
+   "plausible_total_cents": 238599200,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip on TED VAL_TOTAL; 7 distinct lot awards sum right",
+   "evidence": "CN 21576440 (160254-2021, 2021-03-31, framework, 1 year + 3 tacit renewals) prints no value. Head CAN 21896926 (440480-2021, 2021-08-31): VAL_TOTAL / VALUE (PROCUREMENT_TOTAL) = EUR 2,385,992,000.00. The lot VAL_TOTALs (each equal to its VAL_ESTIMATED_TOTAL) are 423,464, 315,664, 804,268, 242,000, 234,532, 287,064 and 79,000, summing to 2,385,992; VAL_TOTAL / sum = 1000.000. The API serves EUR 804,268 (LOT-3, 34%). results.jsonl awards sum is 238599200."
+  },
+  {
+   "id": 7427765,
+   "plausible_total_cents": 300000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip; 6 UNIFORM lot awards (EUR 500k each) whose sum is right; uniform but not a repeated procedure total",
+   "evidence": "CN 22440928 (348605-2022, 2022-06-29) prints no value. Head CAN 22731299 (586603-2022, 2022-10-25): VAL_TOTAL / VALUE = EUR 3,000,000,000.00. RES-1..RES-6 VAL_TOTAL = EUR 500,000.00 each, summing to 3,000,000; VAL_TOTAL / sum = 1000.000. The API serves EUR 500,000.00 (1/6). GUARD WARNING: every lot carries the same figure, and that figure equals the lot-null award copy (results.jsonl uniform.awards=true; award_copy_of LOT-1..6). A 'uniform figure equal to a lot-null figure' guard would refuse this correct sum. The guard must compare against genuine procedure-scope figures, not against award copies of the lots themselves."
+  },
+  {
+   "id": 7829010,
+   "plausible_total_cents": 200000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "537-refused x1000 slip on TED VAL_TOTAL; 2 distinct lot awards (one tiny) sum right",
+   "evidence": "Only version is CAN 23368583 (523824-2023, 2023-08-30). VAL_TOTAL / VALUE (PROCUREMENT_TOTAL) = EUR 2,000,000,000.00. RES-1 VAL_TOTAL = VAL_ESTIMATED_TOTAL = 35,000; RES-2 VAL_TOTAL = VAL_ESTIMATED_TOTAL = 1,965,000. The sum is 2,000,000 and VAL_TOTAL / sum = 1000.000. The API serves EUR 1,965,000 (LOT-2, 98%). results.jsonl awards sum is 200000000."
+  },
+  {
+   "id": 8514592,
+   "plausible_total_cents": 17924893700,
+   "currency": "DKK",
+   "best": "lot_sum",
+   "shape": "537-refused x100 slip on TED VAL_TOTAL; 2 of 3 lots awarded, distinct, sum right",
+   "evidence": "Only version is CAN 22956476 (067061-2023, 2023-02-01, utilities 2014/25). VAL_TOTAL / VALUE (PROCUREMENT_TOTAL) = DKK 17,924,893,700.00. RES-1 (LOT-1) = DKK 158,639,473.00 and RES-3 (LOT-3) = DKK 20,609,464.00; LOT-2 was clos-nw. The sum is DKK 179,248,937.00 and VAL_TOTAL / sum = 100.000. The API serves DKK 158,639,473.00 (LOT-1, 88%). results.jsonl awards sum is 17924893700."
+  },
+  {
+   "id": 59219,
+   "plausible_total_cents": 230000000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "not 537: the head CAN zeroes every procedure figure (sentinel 0); the CN's BT-27-Procedure equals the exact sum of 5 distinct lot estimates",
+   "evidence": "Enexis 'Cables LV MV 2024', a 12-year framework (8 + 4). CN 23707696 (v1, cn-standard subtype 17, dispatched 2024-01-08, pub 00013338-2024 on 2024-01-09): BT-27-Procedure = EUR 2,300,000,000.00. BT-27-Lot values are 68,000,000 / 1,471,000,000 / 562,000,000 / 187,000,000 / 12,000,000, summing to exactly 2,300,000,000. Head CAN 25542657 (v2, subtype 30, dispatched 2026-02-09, pub 00093696-2026 on 2026-02-10) repeats the same BT-27-Lots, but BT-27-Procedure, BT-161, BT-118 and BT-1118 = EUR 0.00, and BT-709, BT-660 and BT-720 = 0 (all not electable as sentinels). The API serves EUR 1,471,000,000 (LOT-0002, 64%). The same-kind estimated_value sum in results.jsonl is 230000000000 (ratio 1.564), equal to the v1 procedure estimate."
+  },
+  {
+   "id": 175096,
+   "plausible_total_cents": 12400000000,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "garbage lot estimate repeated on both lots beats a €124 m framework; the notice totals give the real figure",
+   "evidence": "Vlaamse Overheid, media planning and purchase framework, 2 lots. CNs v1-v4 (notices 24078246, 24115100, 24074467, 24087545; 2024-07-05..07-22) carry no amounts. The CAN v5 (24899450, 2025-08-28) has: BT-27-Lot €3,166,666,667 on both lots (served head, €3.17 bn); BT-271-Lot €124 m on each lot; BT-1118-NoticeResult €124 m; BT-118-NoticeResult €62 m; BT-709 and BT-660 €62 m per LotResult (Σ €124 m = BT-1118); BT-720 TEN-0001 €143 m (×10 of BT-710 €14.3 m) and TEN-0002 €14,979,356. Three of the four framework readings agree on €124 m. The same-kind lot sum (estimated) is €6.33 bn (wrong) and BT-271 Σ is €248 m. The current head is ×25.5 too high."
+  },
+  {
+   "id": 242212,
+   "plausible_total_cents": 385500000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot estimates",
+   "evidence": "CATP (Centrale d'Achat du Transport Public), GNV buses. Single CN 24073219 (00431785-2024, 2024-07-18): BT-27-Lot LOT-0001 €2,120 m (12 m standard), LOT-0002 €1,735 m (18 m articulated). BT-300-Lot: 'valeur estimée du lot correspond à son montant maximum sur la durée de l'accord-cadre reconductions comprises'. No BT-27-Procedure. Lot sum €3,855 m (ratio 1.82). The served head is LOT-0001 €2.12 bn (55%)."
+  },
+  {
+   "id": 274271,
+   "plausible_total_cents": null,
+   "currency": null,
+   "best": "other",
+   "shape": "test/training notice; PLN 6 bn placeholder on all 230 lots",
+   "evidence": "CN 25374184 (00761228-2025, 2025-11-17), 'Dostawa leków 230 cześci.' The buyer is 'QWERTY Zygmunt Kopacz' (platformazakupowa.pl/pn/szkolen = a training site, email pracownik@on.biz.pl). Every lot reads title 'Leki', description 'Opis części', wadium '10000000 pln.........', and BT-27-Lot PLN 6,000,000,000. There is no procedure figure. Lot sum PLN 1.38 trillion (×230). The served head is PLN 6 bn (€1.42 bn). Not a real procurement, so no figure is plausible: null."
+  },
+  {
+   "id": 411001,
+   "plausible_total_cents": 249600000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot estimates",
+   "evidence": "CATP/AGIR Transport, bi-articulated electric buses. CN 25460318 (00054047-2026, 2026-01-26): BT-27-Lot LOT-0001 €1,056 m (no charging), LOT-0002 €1,440 m (flash charging). Term 2 y + 6×1 y renewals. BT-300: the estimate is informative and the maximum is in the CCAP. No procedure figure. Lot sum €2,496 m (ratio 1.73). The served head is LOT-0002 €1.44 bn."
+  },
+  {
+   "id": 465993,
+   "plausible_total_cents": 400000000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "one figure (the DPS total) repeated on all 13 lots",
+   "evidence": "CPO LT, dynamic purchasing system for building works, 2026-03-02..2036-12-31. CN 25458043 (00051947-2026, 2026-01-23): BT-27-Lot €4,000,000,000 on every one of 13 lots. The lots are building class × contract-size bands (≤€300 k, €300 k-1.5 m, 1.5-5 m, >5 m). No procedure figure. €4 bn per ≤€300 k band, and a €52 bn sum for Lithuania, are implausible, so €4 bn is the DPS-wide value repeated. Same-kind sum ×13. Head €4 bn = plausible."
+  },
+  {
+   "id": 543944,
+   "plausible_total_cents": 152100000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "procedure total (framework max) repeated on every lot and result; lot estimates sum to about the same",
+   "evidence": "RESAH, cleaning services. CAN 24606612 (00160003-2025, 2025-03-12): BT-118-NoticeResult €1,521 m; BT-271-Lot €1,521 m on all 32 lots; BT-709-LotResult €1,521 m on all 32 results; BT-27-Lot distinct estimates on 30 lots (LOT-0019 and LOT-0032 have none), Σ €1,501 m. Same-kind (framework_maximum) lot sum €48.67 bn (×32, wrong). Head €1.521 bn = BT-118. The estimates sum (0.987) is also close."
+  },
+  {
+   "id": 631213,
+   "plausible_total_cents": 15600000000,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "procedure total repeated on every lot's BT-271; 5 lots carry a ×10 slip, which is elected",
+   "evidence": "Hôpitaux Civils de Colmar (GAPSCA), dressings 2024/2027, 90 lots. CAN 23862513 (00203999-2024, 2024-04-08). BT-24-Procedure: 'montant maximum pour la durée totale du marché de 156 000 000,00 EUR H.T.' BT-271-Lot is €156 m on 85 lots and €1.56 bn on LOT-0012/0021/0044/0060/0073 (×10). No awards amounts. Served head €1.56 bn (×10). Same-kind lot sum €21.06 bn (×135). Plausible €156 m, the buyer's stated maximum."
+  },
+  {
+   "id": 741063,
+   "plausible_total_cents": 130000000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct per-lot framework maxima (BT-271)",
+   "evidence": "EDF SA, temp-staff framework for EDF group, 5 y from 2025-06-01. CN v1 23854005 (2024-03-06) and v2 23842830 (2024-03-14, change notice) carry the same BT-271-Lot: Métropole €1,035 m, Digital €200 m, Martinique/Guadeloupe €31 m, Guyane €16 m, Réunion €18 m. No BT-27/procedure figure. Lot sum €1,300 m (ratio 1.26). Served head is lot 1's €1.035 bn."
+  },
+  {
+   "id": 786738,
+   "plausible_total_cents": 400000000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "one figure (the DPS total) repeated on all 13 lots; procedure terminated",
+   "evidence": "CPO LT building-works DPS (predecessor of 465993). CN 25014107 (2025-09-18), changes 25212344 (2025-10-14) and 25145152 (2025-10-22), and CAN 25628329 (00177714-2026, 2026-03-13; 'NUTRAUKTAS', procedures terminated 2026-03-09). Every version has BT-27-Lot €4,000,000,000 on all 13 lots and no procedure figure. The same-kind sum is €52 bn (×13). Head €4 bn = the repeated DPS figure."
+  },
+  {
+   "id": 917292,
+   "plausible_total_cents": 170783731300,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot estimates and framework maxima",
+   "evidence": "SNCF Réseau, rails. Award notice 24426415 (00766497-2024, 2024-12-16, subtype 30). BT-271-Lot: €1,016.34 m (lot 1, max 780 kt), €626.13 m (lot 2, max 643.5 kt), €65.37 m (lot 3), Σ €1,707.84 m. BT-27-Lot: €750.88 m (660 kt), €494.90 m (435 kt), €44.78 m, Σ €1,290.55 m. The BT-720s are -1 cent placeholders. No procedure figure. The same-kind (framework_maximum) sum is €1.708 bn (ratio 1.68); the estimate sum of €1.29 bn is the alternative. Served head is lot 1 €1.016 bn."
+  },
+  {
+   "id": 934033,
+   "plausible_total_cents": 255570241940,
+   "currency": "BGN",
+   "best": "current_head",
+   "shape": "procedure total = Σ lot estimates; the CAN restates the total as LOT-0001's award",
+   "evidence": "Bulgarian medicines framework. CNs 24239154 (2024-09-30), 24297202 (2024-10-16) and 24562605 (2025-02-24): BT-27-Procedure BGN 2,555,702,419.40 = Σ six BT-27-Lot (120.59 m + 595.40 m + 1,466.52 m + 237.37 m + 111.64 m + 24.18 m). The CAN 25028663 (00615113-2025, 2025-09-19) has only LOT-0001 (BT-27 BGN 120.59 m), with BT-709 = BT-660 = BT-720 = BT-118 = BT-1118 = BT-27-Procedure = BGN 2,555,702,419.40. Head (award-copy) BGN 2.556 bn = plausible. The estimate lot sum ties exactly (ratio 1.0)."
+  },
+  {
+   "id": 979673,
+   "plausible_total_cents": 320000000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct per-lot framework maxima (BT-271)",
+   "evidence": "ERAFP (French public-service pension fund), selection of private-equity/infrastructure fund managers. CN 24719436 (00208448-2025, 2025-04-01): BT-271-Lot €1,400 m (PE Europe), €600 m (PE North America), €800 m (infra OECD), €400 m (transition infra). No procedure figure. Lot sum €3,200 m (ratio 2.29). Served head is lot 1 €1.4 bn."
+  },
+  {
+   "id": 1072480,
+   "plausible_total_cents": 100500000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "procedure total = Σ lot estimates; the CAN repeats the total as BT-709 on every lot result",
+   "evidence": "French servers/storage acquisition, 10 lots. CNs 24669223 (2025-03-07) and 24703190 (2025-04-04): BT-27-Procedure €1,005 m = Σ BT-27-Lot (300 + 250 + 100 + 30 + 70 + 50 + 25 + 20 + 150 + 10 m). CAN 25005978 (00608580-2025, 2025-09-17): BT-27-Procedure €1,005 m, BT-118 €1,005 m, BT-709 €1,005 m on each of 10 LotResults, and BT-720 per tender = each lot's estimate (Σ €1,005 m). Head €1.005 bn = plausible. The estimate lot sum ties. The same-kind 'awards' sum (partner-only BT-709 ×10) is €10.05 bn, wrong."
+  },
+  {
+   "id": 1122853,
+   "plausible_total_cents": 408660000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot estimates",
+   "evidence": "CATP/AGIR Transport, GNV coaches. CN 24347429 (00707606-2024, 2024-11-20) and change 24376979 (00710530-2024, 2024-11-21; deadline moved only) both have BT-27-Lot LOT-0001 €2,028.6 m (school coaches) and LOT-0002 €2,058 m (line coaches). Term 2 y + 6×1 y. No procedure figure. Lot sum €4,086.6 m (ratio 1.99). Served head is LOT-0002 €2.058 bn."
+  },
+  {
+   "id": 1136952,
+   "plausible_total_cents": 19000000000,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "procedure total repeated on every lot's BT-271; 7 lots carry a ×10 slip, which is elected",
+   "evidence": "Hôpitaux Civils de Colmar (GAPS Centre Alsace), non-woven articles and sterile care sets 2025/2028, 102 lots. CN 24200157 (00531347-2024, 2024-09-04). BT-24-Procedure: 'montant maximum pour la durée totale du marché de 190 000 000 euros HT'. BT-271-Lot is €190 m on 95 lots and €1.9 bn on LOT-0012/0055/0062/0069/0071/0081/0093 (×10). Served head €1.9 bn. Same-kind lot sum €31.35 bn (×165). Plausible €190 m. This is not a per-lot cap: the per-lot figure is the stated procedure maximum repeated."
+  },
+  {
+   "id": 1140133,
+   "plausible_total_cents": 21007500000,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "procedure total repeated on lots' BT-271; one lot carries a ×10 slip, which is elected",
+   "evidence": "Hôpitaux Civils de Colmar, GAPSCA PAN (negotiated after a failed call), dressings 2024/2027, lots 17/24/38/39/40/42/48/58/69. CAN 23805862 (00165739-2024, 2024-03-19). BT-24-Procedure: 'montant maximum pour la durée totale du marché de 210 075 000 EUR HT'. BT-271-Lot is €210.075 m on 7 lots, €2,100.75 m on LOT-0058 (×10), and absent on LOT-0069. BT-720 tenders sum to only €223,877 (awards-first lot sum), which suggests the stated maximum is generous, but it is the buyer's figure. Served head €2.10 bn (×10). Same-kind lot sum €3.57 bn."
+  },
+  {
+   "id": 1142891,
+   "plausible_total_cents": 19000000000,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "procedure cap repeated on every lot as BT-271 (per-lot caps), 7 lots carry a x10 slip",
+   "evidence": "eForms CAN subtype 29, notice 27862012 (2026-08-12). BT-24-Procedure says 'montant maximum pour la durée totale du marché de 190 000 000 euros HT'. BT-271-Lot is EUR 190,000,000 on 95 of 102 lots and EUR 1,900,000,000 on 7 lots (LOT-0012/0055/0062/0069/0071/0081/0093). The served head is EUR 1.9bn (LOT-0093, a x10 slip). The lot sum is EUR 31.35bn (16.5x). No BT-27 is present. BT-1118-NoticeResult is EUR 1,853,994, which equals the sum of the 86 BT-660 re-estimates (the realistic re-estimate). The plausible framework value is the stated EUR 190m cap. Neither the head nor the lot sum gives it."
+  },
+  {
+   "id": 4534889,
+   "plausible_total_cents": 295000000000,
+   "currency": "GBP",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct per-lot estimates (VALUES.TYPE PER_LOT)",
+   "evidence": "Network Rail electricity supply. v1 notice 12298135 (2011-05-06) gives per-lot VALUE_COST only: LOT-1 traction HH 3,250 GWh/yr GBP 2.5bn, LOT-2 non-traction HH 250 GWh GBP 250m, LOT-3 NHH 200 GWh GBP 200m. TED-VALUES.TYPE is PER_LOT with no total. The figures scale with GWh. The lot sum is GBP 2.95bn against the GBP 2.5bn head (1.18). Caveat: the v2 head notice 17712448 (2014-01-29) is a re-procurement for non-traction plus HS1 (4 lots, about 690 GWh/yr) and carries no values. The served figures are v1's, now sitting under v2's lot titles."
+  },
+  {
+   "id": 4671850,
+   "plausible_total_cents": 1077200000000,
+   "currency": "GBP",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot estimates (one lot is a GBP 10bn pan-government framework)",
+   "evidence": "MoJ FITS PIN, notice 12549438 (2011-12-20). Five-year lot estimates: SIAM GBP 90m, security 25m, EUC 220m, networks 230m, ADMS 180m (it includes the lot-9 AD framework, which has no figure), mobile 7m, PPMS 20m, pan-government hosting framework GBP 10bn (MoJ's own hosting share is GBP 135m, inside it). The object-level LOT-1 has no value and lists annual run costs of GBP 181.4m/yr, about GBP 907m over 5 years for MoJ alone. The lot sum is GBP 10.772bn against the GBP 10bn head (1.077)."
+  },
+  {
+   "id": 4715842,
+   "plausible_total_cents": 237629474300,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "PIN listing separate contracts, distinct lot estimates, no procedure figure (one dominant lot)",
+   "evidence": "Regione Lombardia PIN, notice 16867808 (2012-02-29). 15 independent planned contracts. LOT-6 is the debt renegotiation at EUR 2,367,633,243.00, which the text confirms ('Importo € 2367633243.00 più eventuale penale'). The other lots are EUR 0.19m-3.5m; LOT-3/4/5 are EUR 0.00 ('importo da definirsi'). LOT-7 (EUR 200-300k) and LOT-15 (EUR 700-900k) are ranges and are not counted. The lot sum is EUR 2,376,294,743 against the head EUR 2,367,633,243 (1.0037). Both are acceptable; the lot sum is the exact total."
+  },
+  {
+   "id": 4787274,
+   "plausible_total_cents": 1000000000,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "object-level (II.1) figure stored as LOT-1 with a x100 slip; the real lots sum right",
+   "evidence": "Notice 16999498 (2012-06-21), Canarias court shelving. The old-format object section LOT-1 (parent of LOT-2/3) has VALUE_COST EUR 1,000,000,000.00, and TED-VALUE GLOBAL repeats it. The real lots are LOT-2 La Laguna EUR 2,380,000 and LOT-3 Las Palmas EUR 7,620,000, together EUR 10,000,000.00 exactly, so LOT-1 is 100x the true EUR 10m. The head is EUR 1bn. The lot sum including the pseudo-lot is EUR 1.01bn. The plausible total is the sum of the two real lots."
+  },
+  {
+   "id": 4894521,
+   "plausible_total_cents": 355300000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "PIN of several separate contracts, distinct estimates, no procedure figure",
+   "evidence": "Consip SPC PIN, notice 17210509 (2012-12-14). Six planned tenders, each DIV_INTO_LOT_NO: connettività EUR 2.5bn, cooperazione 700m, sistemi di accesso 300m, infrastrutture 30m (its sub-lots LOT-5/6 have no values, so no double count), governance 15m, sicurezza 8m. The coded TED-VALUE lists the same six. The lot sum is EUR 3.553bn against the EUR 2.5bn head (1.42)."
+  },
+  {
+   "id": 4925871,
+   "plausible_total_cents": 252217916,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "lot figures are sums insured (Versicherungssumme), not contract value; the real estimates are in the CAN and unmapped",
+   "evidence": "MVV insurance. In the CN, notice 17274977 (2013-02-09), every lot TOTAL_QUANTITY_OR_SCOPE reads 'Gesamt-Versicherungssumme ... Sachwert': EUR 1.5bn, 722m, 185m, 101m, 374m, 74m, 498m (EUR 3.454bn). These are insured values. The v2 CAN, notice 17529755 (2013-08-08), gives INITIAL_ESTIMATED_TOTAL_VALUE_CONTRACT per contract: 704,930.08, 924,411.74, 120,000, 302,535.09, 160,000, 73,302.25 and 237,000 (sum EUR 2,522,179.16), for a term of 2013-10-01 to 2014-09-30. The head (EUR 1.5bn) and the lot sum (EUR 3.454bn) are both wrong by about 1000x."
+  },
+  {
+   "id": 5316712,
+   "plausible_total_cents": 88800000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "modification restates the whole framework total on LOT-1 (double count); a mis-linked call-off",
+   "evidence": "YORbuild2 West. CN 18076284 (2014-10-30): TOTAL_ESTIMATED HIGH GBP 888m, lot highs 8+20+48+220+352+80+160 = 888m. CAN 18707218 (2016-03-26): VAL_TOTAL GBP 888m, lot awards the same. A 2021-04-12 call-off (21621784, depot, GBP 7.75m) is attached as RES-1/LOT-1. The 2021-10-26 F20 modification 22003389 has VAL_TOTAL GBP 888m on LOT-1 ('LOT_NO 1, 2, 3, 4, 5, 6, 7'). The award lot sum is GBP 1.768bn (1.99x). The head is GBP 888m, which is right."
+  },
+  {
+   "id": 5344896,
+   "plausible_total_cents": 177170893700,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "one lot = sum of others (object-level total stored as LOT-1)",
+   "evidence": "NHS Supply Chain PIN, notice 18134930 (2014-12-17). The object section LOT-1 ('Maintenance Calibration and Repair of Medical Equipment') has VALUE_COST GBP 1,771,708,937 'over an anticipated period of 6 years'. Its 14 child lots (LOT-2..15) sum to GBP 1,771,708,938. The lot sum is GBP 3.543bn (2.0x). The head is the LOT-1 total, which is right."
+  },
+  {
+   "id": 5543005,
+   "plausible_total_cents": 130000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "per-winner award rows repeat each lot's value (9 rows per lot); procedure total present",
+   "evidence": "N7 WS2/3 energy efficiency. CN 18529089 (2015-10-27): TOTAL_ESTIMATED GBP 1.12-1.3bn; lots WS2 L3 180-200m, L4/L5/L6 80-100m each, WS3 700-800m. CAN 18820815 (2016-06-15): VAL_TOTAL GBP 1.3bn, but 36 award rows give LOT-1..9 GBP 200m each and LOT-10..36 GBP 100m each (9 winners per lot). The WS3 CAN 18687711 is GBP 800m. The F20 21030507 (2020-05-22) has VAL_TOTAL GBP 1.3bn. The lot sum is GBP 4.4bn (3.38x). The GBP 1.3bn head is right."
+  },
+  {
+   "id": 5682171,
+   "plausible_total_cents": 1500000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award",
+   "evidence": "Energy supply framework. CAN 18808534 (2016-06-04): procedure VAL_TOTAL GBP 15bn. RES-1..4 (4 lots) each have VAL_TOTAL GBP 15bn. The lot sum is GBP 60bn (4x). The GBP 15bn head is the buyer's stated framework total."
+  },
+  {
+   "id": 5765706,
+   "plausible_total_cents": 123500000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total = lot sum (both agree; the head is the lot-null modification copy)",
+   "evidence": "MFD framework. CN 18966340 (2016-10-08): VAL_ESTIMATED_TOTAL GBP 1.235bn; lot VAL_OBJECT 500+100+500+60+30+30+15 = 1,235m. CAN 19110256 (2017-01-20): VAL_TOTAL GBP 1.235bn, with the same per-lot awards. F20 21434476 (2020-12-18): VAL_TOTAL GBP 1.235bn. The lot sum equals the head (ratio 1.0)."
+  },
+  {
+   "id": 5781391,
+   "plausible_total_cents": null,
+   "currency": "EUR",
+   "best": "unknown",
+   "shape": "slip-mixed awards; procedure total over the cap and inconsistent with the awards",
+   "evidence": "Puglia pharma supply, CAN 18998037 (2016-10-29). Procedure VAL_TOTAL is EUR 109,164,570,538.00 (refused as over EUR 100bn). The 104 award rows run from EUR 90.00 to EUR 26,625,843,970.00 (LOT-84, the served head) and 17,674,123,703.18 (LOT-21). Their sum is EUR 87.88bn, which does not match VAL_TOTAL. The large rows have no cents, so decimals were dropped on some rows and not on others; the small rows look genuine. No figure is trustworthy. The head (EUR 26.6bn) and the lot sum (EUR 87.9bn, 3.3x) are both absurd for a regional drug supply."
+  },
+  {
+   "id": 5855551,
+   "plausible_total_cents": 21150000000,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "procedure total repeated on every award row, and one x10 award slip beats it",
+   "evidence": "Programme régional de formation 2017-2019. CN 19151224 (2017-02-17): VAL_ESTIMATED_TOTAL EUR 211.5m, 3 lots x EUR 70.5m. CAN 19714847 (2018-03-29): VAL_TOTAL EUR 211.5m; 54 award rows each give VAL_TOTAL EUR 211,500,000, and RES-14/LOT-14 gives EUR 2,115,000,000 (x10). The served head is EUR 2.115bn (the slip). The lot sum is EUR 13.536bn (6.4x). The plausible total is the admitted procedure figure, EUR 211.5m."
+  },
+  {
+   "id": 6054105,
+   "plausible_total_cents": 150000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award",
+   "evidence": "SPA Housing Construction framework. CN 19528372 (2017-11-08): VAL_ESTIMATED_TOTAL GBP 1.5bn; INFO_ADD says 'The GBP1.5b value ... is based on a challenging target of circa 10,000 units'. CAN 19819085 (2018-05-23): VAL_TOTAL GBP 1.5bn, and every award row on LOT-1..16 is GBP 1.5bn. F20 21776834 (2021-06-28): GBP 1.5bn. The lot sum is GBP 16.5bn (11x). The head is right."
+  },
+  {
+   "id": 6125730,
+   "plausible_total_cents": 190000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (the per-lot maxima in the text sum to it)",
+   "evidence": "Network Rail IP-SNE framework. CN 19676396 (2018-02-10): VAL_ESTIMATED_TOTAL GBP 1.9bn, and each of 3 lots has VAL_OBJECT GBP 1.9bn. The text gives lot indicative values of GBP 320m/135m/190m and maxima of GBP 950m/450m/500m (= 1.9bn), 'total Framework Value of 1 900 000 000,00 GBP'. CAN 20216416 (2019-01-22): VAL_TOTAL GBP 1.9bn, each award GBP 1.9bn. The lot sum is GBP 5.7bn (3x). The head is right."
+  },
+  {
+   "id": 6450467,
+   "plausible_total_cents": 357476497928,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot awards (EN copy of the Lyon-Turin base-tunnel procedure; FR 6450469 and IT 6450473 are the same procedure)",
+   "evidence": "TELT Lyon-Turin base tunnel, framework. CN 123099-2019 (2019-03-15, n20329274): per-lot II.2.6 VAL_OBJECT EUR 1,000,000,000 / 1,130,000,000 / 180,000,000 (sum 2.31 bn), no II.1.5, and INFO_ADD says each lot is 'without any minimum or maximum amount', the estimate 'not contractually binding'. CAN 517556-2021 (2021-10-12, n21973146, head v3): no procedure II.1.7, only per-result VAL_TOTAL: RES-1/LOT-1 EUR 1,609,276,225.34 (Spie Batignolles/Eiffage/Ghella/Cogeis), RES-2/LOT-2 EUR 1,660,661,682.94 (Vinci/WeBuild), RES-3/LOT-3 EUR 304,827,071.00 (NGE/Implenia). The award lot sum is EUR 3,574,764,979.28 (results.jsonl same-kind awards ratio 2.153). Served head today: EUR 1,660,661,682.94, which is LOT-2's award stored lot-null (46% of the total). Three distinct lots won by three consortia, so the sum is the total."
+  },
+  {
+   "id": 6450469,
+   "plausible_total_cents": 357476497928,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot awards (FR copy of the Lyon-Turin procedure)",
+   "evidence": "French original of the same procedure. CN 123101-2019 (2019-03-15, n20329276) and corrigendum 145070-2019 (n20314727): lots EUR 1,000,000,000 / 1,130,000,000 / 180,000,000, no II.1.5. Corrigendum 145100-2019 changes the duration only. CAN 517558-2021 (2021-10-12, n21973705, head v4): no procedure VAL_TOTAL; results EUR 1,609,276,225.34 / 1,660,661,682.94 / 304,827,071.00, sum EUR 3,574,764,979.28 (ratio 2.153). Served head EUR 1,660,661,682.94 (LOT-2 award copy). Same pattern as 6450467."
+  },
+  {
+   "id": 6450473,
+   "plausible_total_cents": 357476497928,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot awards (IT copy of the Lyon-Turin procedure)",
+   "evidence": "Italian copy. CN 123105-2019 (2019-03-15, n20329280): lots EUR 1,000,000,000 / 1,130,000,000 / 180,000,000, no II.1.5. 147723-2019 (n20309665) is an F14 with no values. CAN 517557-2021 (2021-10-12, n21974887, head v3): no procedure VAL_TOTAL; results EUR 1,609,276,225.34 / 1,660,661,682.94 / 304,827,071.00, sum EUR 3,574,764,979.28. Served head EUR 1,660,661,682.94."
+  },
+  {
+   "id": 6631047,
+   "plausible_total_cents": 98000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award",
+   "evidence": "Northamptonshire CC LD commissioning framework. CN 486273-2019 (2019-10-16, n20685001): LOT-1 VAL_OBJECT GBP 980,000,000 only. CAN 091221-2020 (2020-02-24, n20899912, head v2): procedure II.1.7 VAL_TOTAL GBP 980,000,000 (VALUE.TYPE PROCUREMENT_TOTAL), and the same GBP 980,000,000 on all 9 results across 8 lots. Served head GBP 980,000,000 (the procedure total, stored lot-null and scored as an award copy). Same-kind lot sum GBP 7.84 bn (x8), which is wrong."
+  },
+  {
+   "id": 6885102,
+   "plausible_total_cents": 200000000000,
+   "currency": "GBP",
+   "best": "other",
+   "shape": "shifted head: a later one-lot call-off CAN superseded the framework total; per-lot figures repeated across awards",
+   "evidence": "CCS RM6177 National Fuels 2 'Gas Oil and Fuel Oil'. CN 435822-2020 (2020-09-16, n21245259): II.1.5 VAL_ESTIMATED_TOTAL GBP 2,000,000,000; lots GBP 1.5 bn / 200 m / 100 m / 100 m / 100 m, which sum to exactly GBP 2.0 bn. CAN 029376-2021 (2021-01-20, n21484547): II.1.7 VAL_TOTAL GBP 2,000,000,000; its 34 results each repeat their lot's figure (GBP 1.5 bn x19, 100 m, 200 m; some tagged EUR). v3 = 181791-2022 (2022-04-06, n22328187) is University of Ulster's call-off under RM6177 Lot 1 (eAuction 114), VAL_TOTAL GBP 238,540. It became the head version and displaced the GBP 2 bn. Served head GBP 1,500,000,000 (lot 1's estimate copied lot-null, 75%). Same-kind award lot sum GBP 500,238,540 (ratio 0.33; it puts the call-off's GBP 238,540 on LOT-1), which is wrong. The plausible total is the buyer's GBP 2 bn, stated in v1 and v2 and absent from the head version."
+  },
+  {
+   "id": 6887343,
+   "plausible_total_cents": 100000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award",
+   "evidence": "NHS SBS 'Link 3: IT Hardware and Services'. CN 440755-2020 (2020-09-18, n21270475): II.1.5 VAL_ESTIMATED_TOTAL GBP 1,000,000,000, with INFO_ADD 'value in II.1.5 is only an estimate'. CAN 153289-2021 (2021-03-26, n21619223): II.1.7 VAL_TOTAL GBP 1,000,000,000; 56 of 57 results (6 lots) carry GBP 1,000,000,000 and RES-44 carries GBP 166,666,666. Served head GBP 1 bn. Same-kind lot sum GBP 6 bn (x6), which is wrong."
+  },
+  {
+   "id": 7020118,
+   "plausible_total_cents": 400000000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award",
+   "evidence": "FRR, 'mandats de gestion responsable: réplication d'indices actions'. CN 107936-2021 (2021-03-03, n21573654) has no value fields. CAN 041498-2022 (2022-01-25, n22174309): II.1.7 VAL_TOTAL EUR 4,000,000,000 (PROCUREMENT_TOTAL); RES-1/2/3 (Amundi, BNP Paribas AM, Candriam) each VAL_TOTAL EUR 4,000,000,000, two also VAL_ESTIMATED_TOTAL EUR 4 bn. Served head EUR 4 bn. Same-kind lot sum EUR 12 bn (x3), which is wrong."
+  },
+  {
+   "id": 7058869,
+   "plausible_total_cents": 250000000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (CN and CAN)",
+   "evidence": "FRR, active responsible management of USD investment-grade corporate bonds (marché 2021FRR02). CN 191913-2021 (2021-04-19, n21636644): each of 5 lots VAL_OBJECT EUR 2,500,000,000, no II.1.5. CAN 300659-2022 (2022-06-03, n22472231): II.1.7 VAL_TOTAL EUR 2,500,000,000; RES-1/2/3 (Allspring, BFT, Franklin Templeton) each VAL_TOTAL and VAL_ESTIMATED_TOTAL EUR 2.5 bn. Served head EUR 2.5 bn. Lot sum EUR 7.5 bn (x3), which is wrong."
+  },
+  {
+   "id": 7211524,
+   "plausible_total_cents": 600000000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award",
+   "evidence": "FRR 'gestion des opérations de transition'. CN 533157-2021 (2021-10-20, n21991972): II.1.5 VAL_ESTIMATED_TOTAL EUR 6,000,000,000, LOT-1 VAL_OBJECT EUR 6 bn. CAN 226633-2022 (2022-04-29, n22317116): II.1.7 VAL_TOTAL EUR 6,000,000,000; RES-1 (BlackRock NL) and RES-2 (Russell Investments France) each EUR 6 bn (total and estimate). Served head EUR 6 bn. Lot sum EUR 12 bn (x2), which is wrong."
+  },
+  {
+   "id": 7291692,
+   "plausible_total_cents": 150000000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (CN and CAN)",
+   "evidence": "FRR, USD high-yield corporate bonds. CN 048559-2022 (2022-01-28, n22181803): II.1.5 VAL_ESTIMATED_TOTAL EUR 1,500,000,000 and each of 5 lots VAL_OBJECT EUR 1.5 bn. CAN 085748-2023 (2023-02-10, n22994201): II.1.7 VAL_TOTAL EUR 1,500,000,000; RES-1..4 (AllianceBernstein, BFT, JPMorgan AM, Nomura) each EUR 1.5 bn. Served head EUR 1.5 bn. Lot sum EUR 6 bn (x4), which is wrong."
+  },
+  {
+   "id": 7778307,
+   "plausible_total_cents": 690000000000,
+   "currency": "EUR",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award (concession, two joint concessionaires)",
+   "evidence": "F25 concession award 404207-2023 (2023-07-05, n23294531), the electricity distribution network concession: II.1.7 VAL_TOTAL EUR 6,900,000,000. INFO_ADD reads 'La valeur totale estimée de la concession 6 900 000 000 euro(s) correspond au chiffre d'affaires total hors taxes des concessionnaires sur la durée du contrat', i.e. the plural concessionaires together. RES-1 (Enedis) and RES-2 (EDF) each VAL_TOTAL EUR 6.9 bn. Served head EUR 6.9 bn. Lot sum EUR 13.8 bn (x2), which is wrong."
+  },
+  {
+   "id": 7955534,
+   "plausible_total_cents": 200000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (FTS BT-27-Procedure = BT-27-Lot = contract values); head version holds no procedure figure",
+   "evidence": "CCS 'Supply Teachers and Education Recruitment' (ocds-h6vhtk-050236). Planning UK1 014864-2025 (2025-04-14) BT-27-Procedure GBP 520 m, then UK2/UK1 029931/038119/042307/046620-2025 GBP 650 m. Tender notices UK4 074295-2025 (2025-11-17) and 074937-2025 (2025-11-18, n46763823): BT-27-Procedure GBP 2,000,000,000 and BT-27-Lot GBP 2 bn on each of 2 lots. UK6 035796-2026 (2026-04-20): BT-720 GBP 2 bn per lot. UK7 048884-2026 and 068930-2026 (head v10): CON-3 and CON-4 GBP 2 bn each, no procedure figure. Served head GBP 2 bn (lot 2's estimate). Lot sum GBP 4 bn (x2), which is wrong."
+  },
+  {
+   "id": 7955558,
+   "plausible_total_cents": 368000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (FTS, 19 lots)",
+   "evidence": "CCS 'Courier, Distribution, Storage and Specialist Solutions' (ocds-h6vhtk-0503cc). BT-27-Procedure GBP 3,680,000,000 in every planning and tender notice: UK1 015469-2025 (2025-04-16), UK2 031883-2025, UK1 038105-2025, UK4 043452/043538/047586-2025 (to 2025-08-11). Each of the 19 lots BT-27-Lot GBP 3.68 bn. UK6 006701-2026 (2026-01-26): BT-720 GBP 3.68 bn per tender. UK7 020397-2026 and 068927-2026 (head v9): contracts GBP 3.68 bn each. Served head GBP 3.68 bn (lot 4c). Lot sum GBP 69.92 bn (x19), which is wrong."
+  },
+  {
+   "id": 7955870,
+   "plausible_total_cents": 350000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (FTS, 11 lots)",
+   "evidence": "CCS/GCA 'Construction Professional Services 2' (ocds-h6vhtk-0513a7). BT-27-Procedure GBP 3,500,000,000 in UK1 021471-2025 (2025-05-14) through UK4 054659/055002-2025 (2025-09-08/09), and BT-27-Lot GBP 3.5 bn on each of 11 lots. UK6 031480/032784/054028-2026: BT-720 GBP 3.5 bn per tender. UK7 notices: contracts GBP 3.5 bn each. Head UK10 087715-2026 (2026-09-16, n46132712): 11 contracts at GBP 3.5 bn, no procedure figure. Served head GBP 3.5 bn (lot 9c). Lot sum GBP 38.5 bn (x11), which is wrong."
+  },
+  {
+   "id": 7991207,
+   "plausible_total_cents": 9837347200,
+   "currency": "GBP",
+   "best": "other",
+   "shape": "x1000 slip in procedure and lots, corrected by a text corrigendum; refused >EUR 100 bn procedure figure falls to lot 1's slipped figure",
+   "evidence": "HSC PaLS Belfast nutrition supply ('dietetic products'), 2012. v1 371898-2012 (2012-11-23, n17186185): VALUE_COST total GBP 98,373,472,000; lots GBP 71,505,784,000 / 15,381,592,000 / 0 / 11,486,096,000 / 0. v2 corrigendum 389470-2012 (2012-12-08, n17204893), text only: 'Instead of: Estimated value excluding VAT: 98 373 472 000 GBP … Read: 98 373 472,00 GBP'; the lots read 71 505 784,00 / 15 381 592,00 / 0,00 / 11 486 096,00. So the true total is GBP 98,373,472.00, and the true lots sum to exactly that. Today rule 366 (>EUR 100 bn) refuses the procedure figure, and the served head is lot 1's GBP 71,505,784,000 (x1000). The same-kind lot sum GBP 98,373,472,000 is also x1000. Neither is right. The corrigendum's 'Read' figure is the answer."
+  },
+  {
+   "id": 8374102,
+   "plausible_total_cents": 91000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award (framework refresh chain)",
+   "evidence": "Velindre NHS Trust All-Wales framework, Younger Adults 18-64 MH/LD care homes, a chain of three refresh rounds in one Tender. CN 042969-2016: aggregate GBP 1.04 bn, each lot GBP 1.04 bn. CAN 007170-2017: VAL_TOTAL GBP 520 m. Refresh CN 395103-2016 and CAN 287994-2017: GBP 975 m. Refresh CN 169858-2017 (2017-05-05): each of 9 lots GBP 910 m, 'aggregated value of all 9 lots over 7 years circa GBP nine hundred and ten million'. Head CAN 169727-2018 (2018-04-19, n19762620): II.1.7 VAL_TOTAL GBP 910,000,000 with the same 'aggregated value of all 9 lots … circa 910 000 000 GBP' text; 4 results each GBP 910 m. Served head GBP 910 m. Same-kind lot sum GBP 7.15 bn (mixes 520 m/975 m/910 m across rounds), which is wrong."
+  },
+  {
+   "id": 8391535,
+   "plausible_total_cents": 550000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award, with one x0.1 slip (LOT-20 £550m) and one EUR-coded slip (LOT-27); the CN's distinct lot estimates sum to 99.3% of the total",
+   "evidence": "CN 19073004 (436947-2016, 2016-12-13): VAL_ESTIMATED_TOTAL £5.5bn. Its 31 distinct II.2.6 VAL_OBJECTs sum to £5.462bn, but they sit only in v1. CAN 19341652 (291609-2017, 2017-07-27): VAL_TOTAL £5.5bn. 28 RES carry VAL_TOTAL £5.5bn, RES-20 £550m, RES-27 EUR 5.5bn, and RES-13 is closed with no award. Head v3 21767335 (298308-2021, 2021-06-14) is an F20 modification with VAL_TOTAL £5.5bn and before/after both £5.5bn. Served £5.5bn, which is the buyer's total. The awards lot sum is £154.55bn on 29 lots (28.1x)."
+  },
+  {
+   "id": 8414918,
+   "plausible_total_cents": 200000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award (value-band lots, no per-lot figure)",
+   "evidence": "CN 19749862 (120818-2018, 2018-03-20): VAL_ESTIMATED_TOTAL £2bn. CAN 19862963 (276575-2018, 2018-06-28): VAL_TOTAL £2bn, and RES-1..4 each carry VAL_TOTAL £2bn. The lots are value bands (£1-5m, £5-15m, £15-25m, £25m+). Served £2bn. The lot sum is £8bn (4x)."
+  },
+  {
+   "id": 8422921,
+   "plausible_total_cents": 100000000000,
+   "currency": "GBP",
+   "best": "other",
+   "shape": "procedure total repeated on every lot, plus a x10 slip in one lot's award that beats the admitted procedure figure",
+   "evidence": "CN 19978736 (367714-2018, 2018-08-23): VAL_ESTIMATED_TOTAL £1bn. CAN 20403245 (251092-2019, 2019-05-31): VAL_TOTAL £1bn. It has 22 RES on 18 of 56 lots. All carry VAL_ESTIMATED_TOTAL £1bn, and 21 carry VAL_TOTAL £1bn. RES-2 (LOT-2) carries VAL_TOTAL £10bn, a x10 slip. Served £10bn, the slip. The lot sum is £27bn (2.7x). The right figure is the admitted lot-null VAL_TOTAL/estimate of £1bn, which the max election drops."
+  },
+  {
+   "id": 8426318,
+   "plausible_total_cents": 300000000000,
+   "currency": "GBP",
+   "best": "lot_sum",
+   "shape": "no stored procedure figure; distinct lot awards sum exactly to the buyer's II.1.7 total, which is given as a range (LOW=HIGH) and not mapped",
+   "evidence": "Single CAN 20083570 (472398-2018, 2018-10-26), CCS Vehicle Purchase framework. Notice: VALUE_RANGE.TYPE PROCUREMENT_TOTAL with TED-LOW = TED-HIGH = £3,000,000,000, plus INFO_ADD 'The value provided in Section II1.7 is only an estimate'. Neither figure is stored. RES VAL_TOTAL: LOT-1 £2bn, LOT-2 £452m, LOT-3 £125m, LOT-4 £4m, LOT-5 £19m, LOT-6 £250m, LOT-7 £150m, which sum to £3,000,000,000 exactly. Served £2bn (LOT-1's award, 67%). The lot sum ratio is 1.5."
+  },
+  {
+   "id": 8434466,
+   "plausible_total_cents": 1000000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award (buyer states it is not a per-lot breakdown); head version is a chained call-off CAN from another buyer",
+   "evidence": "CN 20358877 (168075-2019, 2019-04-10): VAL_ESTIMATED_TOTAL £10bn. CAN 21035200 (205692-2020, 2020-05-04): VAL_TOTAL £10bn, and RES-1/3/4 carry £10bn each. Its INFO_ADD reads 'The values provided in V.2.4) under each lot is the overall value of the procurement of GBP 10 000 000 000.00 and not a breakdown per lot'. Head v3 21491797 (035109-2021, 2021-01-22) is an MoJ 'Call-off from CCS RM6011 energy framework' with VAL_TOTAL EUR 260m and no lots. It is chained in by its OJ reference. Served £10bn, the framework total. The lot sum is £30bn (3x)."
+  },
+  {
+   "id": 8435350,
+   "plausible_total_cents": 650000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award; head version is a chained call-off CAN (£513,678)",
+   "evidence": "CN 20387854 (196685-2019, 2019-04-29), CCS commodity technology framework: VAL_ESTIMATED_TOTAL £6.5bn. CAN 20851291 (025895-2020, 2020-01-20): VAL_TOTAL £6.5bn, and RES-1..4 carry £6.5bn each. Head v4 21457509 (634208-2020, 2020-12-24) is Cheshire East's Citrix call-off with VAL_TOTAL £513,678 and no lots. It supplies the tender title. Served £6.5bn. The awards lot sum is £19.5bn + £513,678 (3.0x), and the max-any sum is 4x."
+  },
+  {
+   "id": 8439324,
+   "plausible_total_cents": 100000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "distinct lot awards summing to about the procedure total (0.998); head is a modification restating the total",
+   "evidence": "CN 20520815 (328552-2019, 2019-07-15) carries no figure. CAN 20868816 (076420-2020, 2020-02-14): VAL_TOTAL £1bn, with 10 distinct lot awards of £17.15m, £3.23m, £40.64m, £2.72m, £246.19m, £243.20m, £44.02m, £166.78m, £37.14m and £196.79m. They sum to £997,868,920. v3 22055934 (598965-2021, 2021-11-23) restates the same figures. Head v4 23085990 (200189-2023, 2023-04-04) is an F20 modification: VAL_TOTAL £1bn, before/after both £1bn. Served £1bn, an exact match. The lot sum is within 0.2%, so either works."
+  },
+  {
+   "id": 8440393,
+   "plausible_total_cents": 800000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award",
+   "evidence": "CN 20559531 (368529-2019, 2019-08-06): VAL_ESTIMATED_TOTAL £8bn. CAN 20747166 (553188-2019, 2019-11-22): VAL_TOTAL £8bn, and 20 RES on 18 lots carry £8bn each. Served £8bn. The lot sum is £144bn (18x)."
+  },
+  {
+   "id": 8440698,
+   "plausible_total_cents": 300000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award",
+   "evidence": "CN 20582631 (374956-2019, 2019-08-08): VAL_ESTIMATED_TOTAL £3bn, and LOT-2 VAL_OBJECT £3bn. The F14s 20594470 and 20579421 change only dates. CANs 20854422 (017350-2020, 2020-01-14) and 20851764 (026471-2020, 2020-01-20): VAL_TOTAL £3bn, with 34 RES on 7 of 12 lots, all £3bn. Served £3bn. The lot sum is £18bn (6x)."
+  },
+  {
+   "id": 8444799,
+   "plausible_total_cents": 100000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award (buyer states it is an aggregate spread across lots)",
+   "evidence": "CN 20650080 (512289-2019, 2019-10-30): VAL_ESTIMATED_TOTAL £1bn. CAN 20970561 (167787-2020, 2020-04-08): VAL_TOTAL £1bn, and 9 RES carry £1bn each. Its INFO_ADD reads 'the GBP 1 000 000 000 quoted against each lot represents an aggregated figure which will be spread between all lots in the framework'. Served £1bn. The lot sum is £8bn (8x)."
+  },
+  {
+   "id": 8461370,
+   "plausible_total_cents": 250000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot award (buyer: no per-lot breakdown)",
+   "evidence": "CN 21209594 (395335-2020, 2020-08-21): VAL_ESTIMATED_TOTAL £2.5bn. CAN 21371400 (560703-2020, 2020-11-20): VAL_TOTAL £2.5bn, and 8 RES carry £2.5bn each. LOT-2 INFO_ADD: 'The authority is unable to provide a breakdown of the value per lot.' Served £2.5bn. The lot sum is £17.5bn (7x)."
+  },
+  {
+   "id": 8488015,
+   "plausible_total_cents": 11000000000,
+   "currency": "GBP",
+   "best": "other",
+   "shape": "procedure total repeated on every award, plus a digit slip in one award (£1.11bn for £110m) that beats the admitted procedure figure",
+   "evidence": "Single CAN 22051878 (596319-2021, 2021-11-22): VAL_TOTAL £110m. It has 109 RES. All 109 carry VAL_ESTIMATED_TOTAL £110m, and 108 carry VAL_TOTAL £110m. RES-4 (LOT 1 Adults Domiciliary Care, concluded 2021-08-13) carries VAL_TOTAL £1,110,000,000. Served £1.11bn, the slip. The awards lot sum is £440m (4x the total, 0.396 of the served figure). The right figure is the admitted lot-null £110m."
+  },
+  {
+   "id": 8596072,
+   "plausible_total_cents": 1400000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (BT-27-Lot, BT-720, contract values)",
+   "evidence": "G-Cloud 15. UK1 46875688 (015819-2025, 2025-04-17): BT-27-Procedure £4.8bn. UK2/UK1 46738196 and 46739266 (2025-08-15 and 08-20): £8bn. UK4 46756747 and 46757027 (067801/068082-2025, 2025-10-23 and 10-24): BT-27-Procedure £14bn, and BT-27-Lot £14bn on each of lots 1, 1b, 2a, 2b and 3. UK6 46844428 (070505-2026, 2026-07-24): BT-720 £14bn on 5 lot tenders. Head UK7 47159048 (083924-2026, 2026-09-04): 5 contracts at £14bn each. Served £14bn (lot 3's estimate, equal to the procedure total). The lot sum is £70bn (5x)."
+  },
+  {
+   "id": 8596561,
+   "plausible_total_cents": 90000000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (BT-27-Lot, BT-720, contract values)",
+   "evidence": "NFCC Emergency Response Vehicle framework. UK1/UK2 46879251, 46880566 and 46887339 (2025-05-07 to 05-27): BT-27-Procedure £900m. UK3 46728669 (039625-2025, 2025-07-14) and UK4 46743493 (054486-2025, 2025-09-08): BT-27-Procedure £900m, and BT-27-Lot £900m on all 6 lots (1, 2, 3a, 3b, 3c, 4). UK6 46797295 and 47297838 (022254-2026, 2026-03-12): BT-720 £900m x27. Head UK7 46805625 (030714-2026, 2026-04-02): 6 contracts at £900m. Served £900m. The lot sum is £5.4bn (6x)."
+  },
+  {
+   "id": 8596789,
+   "plausible_total_cents": 87600000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on both lots (the skeptic's 'one lot = sum of others' is degenerate here: two equal lots)",
+   "evidence": "Kent INMSS. UK2 46880807 and 46760535 (2025-05-13, 2025-11-06): market engagement, BT-27-Procedure £70m. UK4 46783961 (008594-2026, 2026-01-30): BT-27-Procedure £876m, and BT-27-Lot £876m on lots 1 and B. Its BT-24 reads 'an estimated maximum total value of £876 million across the full term'. Head UK6 46829295 (055271-2026, 2026-06-11): BT-720 £876m x2. Served £876m. The lot sum is £1.752bn (2x)."
+  },
+  {
+   "id": 8638929,
+   "plausible_total_cents": 494600000000,
+   "currency": "GBP",
+   "best": "current_head",
+   "shape": "procedure total repeated on every lot (BT-27-Lot, BT-720)",
+   "evidence": "Coventry, West Midlands Children's Residential Care. UK4 46888057 (028300-2025, 2025-05-29): BT-27-Procedure £4.946bn, and BT-27-Lot £4.946bn on all 6 lots. Its BT-24 reads 'The framework value of £4,946,000,000 exc. VAT includes potential framework extensions'. Head UK6 46746432 (057451-2025, 2025-09-17): BT-720 £4.946bn on 6 lot tenders, with no BT-27-Procedure in the head. Served £4.946bn (lot 6's estimate). The lot sum is £29.676bn (6x)."
+  },
+  {
+   "id": 8699396,
+   "plausible_total_cents": 250000000000,
+   "currency": "GBP",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot estimates (2 lots); award notice carries larger unmapped contract values",
+   "evidence": "B. FTS, TfL advertising concessions, ocds-h6vhtk-040d35. v1 is the tender notice FTS 030824-2023 (notice 46918005, 2023-10-18). It states BT-27-Lot Lot 1 Rail GBP 1,700,000,000 and Lot 2 Bus Shelters GBP 800,000,000, with no BT-27-Procedure. The lot text says the value covers the full 10 years. v2 is the head, award+contract FTS 031887-2024 (notice 46904506, 2024-10-04). It has no estimates. Its OCDS-ContractValue figures are GBP 2,322,600,000 (lot 1, Global Outdoor Media) and GBP 1,063,200,000 (lot 2, JCDecaux), GBP 3,385,800,000 in all; these are not mapped or elected. The served head is GBP 1.7bn, which is lot 1 only. The same-kind lot sum is GBP 2.5bn (ratio 1.47) and equals the buyer's two estimates added. The head is furthest from both the estimate total (68% of it) and the award total (50%). So the lot sum is the closest served-kind figure."
+  },
+  {
+   "id": 8743051,
+   "plausible_total_cents": 560000000000,
+   "currency": "GBP",
+   "best": "lot_sum",
+   "shape": "no procedure figure, distinct lot estimates (one dominant lot)",
+   "evidence": "B. FTS 014616-2023 (notice 46951371, 2023-05-23, single version), the Northumbria Healthcare / NHS Fleet Solutions vehicle framework. It states BT-27-Lot Lot 1 Vehicle Leasing GBP 600,000,000 and Lot 2 Vehicle Supply GBP 5,000,000,000. There is no BT-27-Procedure and no total in the text. The served head is GBP 5bn (lot 2). The lot sum is GBP 5.6bn (ratio 1.12). Caveat: the text says Lot 1 lessors place Call-Off Contracts with Lot 2 suppliers, so part of the lot 2 supply may fund lot 1 leases. That makes the sum an upper bound. Still, the buyer prints no total, and the sum of its two stated ceilings is the plausible figure. The head is within 11% of it."
+  },
+  {
+   "id": 8811130,
+   "plausible_total_cents": null,
+   "currency": "GBP",
+   "best": "other",
+   "shape": "lot sum equals the 366-refused procedure total; the buyer's own scale is implausible on every figure",
+   "evidence": "B. FTS, Efficiency East Midlands EEM0056 Property Improvement Works Framework, ocds-h6vhtk-03c8b4. The planning notice FTS 013750-2023 (46950549, 2023-05-15) has no value. The tender notice FTS 035812-2023 (46922777, 2023-12-05) states BT-27-Procedure GBP 150,000,000,000, Lot 1 GBP 80,000,000,000 and Lot 2 GBP 70,000,000,000. The award, FTS 015646-2024 (47151258, 2024-05-17), states six sublot contract values: 10 + 10 + 30 + 30 + 25 + 45 = GBP 150bn. The procedure figure is not-electable under 366 (over EUR 100bn, about EUR 175bn). The lot sum, GBP 150bn, is exactly that refused total, so the cap must refuse a lot sum too. The served head, GBP 80bn (EUR 93.4bn), is lot 1 of the same inflated set, just under the cap. A 4-year regional consortium works framework with up to 60 contractors is not worth GBP 150bn. The true scale (GBP 1.5bn or GBP 150m?) cannot be read from the notices. A reader is best served by null or withholding the figure, not by either candidate."
+  },
+  {
+   "id": 8822313,
+   "plausible_total_cents": 510000000,
+   "currency": "EUR",
+   "best": "other",
+   "shape": "x1000 slip on every lot estimate, with no award or procedure figure to anchor a scale rule; the lot sum carries the slip",
+   "evidence": "B. TED eForms, buyer ASF (motorway concessionaire). The PIN 00614104-2025 (25028959, 2025-09-19) has no amounts. The head CN 00855126-2025 (25406868, 2025-12-22) states BT-27-Lot EUR 1,600,000,000 / 1,500,000,000 / 2,000,000,000, with no BT-27-Procedure. The works are small: about 1 km of DN200-450 pipe, a 70 m microtunnel and a 9 x 10 m pumping station, with durations of 9 to 10.5 months. BT-300 says the CN relaunches the lots of procedure 95410-2025. That procedure is tender 8819836 (TED 00095410-2025, 2025-02-12), whose lots read EUR 1,380,000 / 1,500,000 / 2,040,000. So every lot here is x1000. The plausible total is about EUR 5.1m, the lot sum divided by 1000. The served head is EUR 2bn and the lot sum EUR 5.1bn: summing makes the error 2.55x worse. None of unit 1's guards catches this, and 537 cannot refuse it because there is no award. Aside: 8819836 itself serves EUR 2.04m (one lot) against a lot sum of EUR 4.92m."
+  },
+  {
+   "id": 585917,
+   "plausible_total_cents": 25000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "null head; award lot sum equals BT-118; BT-709 repeats the total on each lot (partner-only, must stay out of the sum)",
+   "evidence": "R. TED eForms, French parking meters. The CNs 00471595-2025, 00487821-2025 and 00544442-2025 (notices 24832625, 24848095, 24966501; 2025-07-18, 07-25, 08-20) carry no amounts. The head CAN 00840185-2025 (25416405, 2025-12-17) states BT-118-NoticeResult EUR 250,000 and BT-709 EUR 250,000 on each lot, which is the framework maximum repeated per lot and partner-only (506). Its BT-720 tender values are lot 1 EUR 165,000 (FLOWBIRD) and lot 2 EUR 85,000, EUR 250,000 together. The served head is null. The award lot sum, EUR 250,000, equals BT-118 exactly. Summing BT-709 would give a wrong EUR 500k, so the 506 exclusion matters."
+  },
+  {
+   "id": 667498,
+   "plausible_total_cents": 336000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "uniform per-lot estimate, no procedure figure (per-lot vs repeated total unconfirmed; per-lot favoured)",
+   "evidence": "R. TED eForms CN 00248262-2026 (notice 25729092, 2026-04-13, single version), legal assistance in the Bordeaux-Mérignac and Dunkerque Loon-Plage detention centres (CRA). Each lot states BT-27-Lot EUR 1,680,000. Each lot's own BT-300-Lot reads 'valeur estimée HT annuel 420 000 EUR ... 4 ans au total 1 680 000 EUR'. There is no procedure-level figure and no award. The served head is EUR 1.68m and the lot sum EUR 3.36m (uniform, ratio 2). The figure sits in each lot's own fields, and the two sites are comparable centres, which favours a per-lot reading, so the lot sum is the likely total. The confidence is only moderate: this could be the 'total repeated on every lot' pattern, and nothing in the chain confirms either reading. Compare 691343, where a uniform per-lot figure is confirmed by BT-118."
+  },
+  {
+   "id": 691343,
+   "plausible_total_cents": 855000000,
+   "currency": "EUR",
+   "best": "lot_sum",
+   "shape": "uniform per-lot estimate that really is per-lot (BT-118 = lots x3)",
+   "evidence": "R. Dutch Police preventive medical examinations, HR0157. The CN 00151876-2025 (24666841, 2025-03-07) carries only text in BT-24-Procedure: 'maximale waarde ... EUR 8.500.000 (excl. btw)'. The head CAN 00464128-2025 (24841630, 2025-07-16) states BT-27-Lot EUR 2,850,000 on each of the 3 regional lots, BT-709 and BT-660 EUR 2,850,000 per lot (partner-only), and BT-118 and BT-1118 EUR 8,550,000. The served head is EUR 2.85m (one lot). The lot sum, EUR 8.55m, equals BT-118 exactly and matches the CN's EUR 8.5m ceiling."
+  },
+  {
+   "id": 5995030,
+   "plausible_total_cents": 154951160,
+   "currency": "PLN",
+   "best": "lot_sum",
+   "shape": "split award notices: the head CAN's VAL_TOTAL covers only its one late lot (shifted head); the lot sum across versions is right",
+   "evidence": "R. TED 2017, Szpital Kliniczny Dzieciątka Jezus, spinal implants, 42 pakiety. The CN 2017/S 158-326863 (19419150, 2017-08-19) has no amounts. CAN1 2017/S 250-526890 (19612533, 2017-12-30) states VAL_TOTAL/VALUE (PROCUREMENT_TOTAL) PLN 1,546,390.00. Its 34 awarded lots' VAL_TOTALs sum to PLN 1,546,790.00, and 7 lots had no award. The head, CAN2 2018/S 012-022689 (19647033, 2018-01-18), awards only LOT-36 at PLN 2,721.60, with VAL_TOTAL PLN 2,721.60. The served head is PLN 2,721.60: the head's lot-null VAL_TOTAL, scored as an award copy of LOT-36. The lot sum over 35 awards is PLN 1,549,511.60. The buyer's two stated totals add to PLN 1,549,111.60, a PLN 400 arithmetic gap. Guard note: the head version does hold a real but partial procedure total, so a guard that refuses to sum whenever a lot-null figure equals a lot award would block the correct sum here."
+  }
+ ],
+ "designs": [
+  {
+   "rule": "GUARDED LOT-SUM FALLBACK, design A. A head changes only when the trigger fires and either path A or path B serves a sum. In every other case the head stays at today's figure.\n\nT (trigger): the election admitted no procedure-scope figure, meaning each one is absent, refused or not-electable. Award copies (Lot(None), 492 (c)) count as lot figures here, not procedure figures. A sum also needs at least 2 lots, so T is exactly unit 1's class of 88 (B 84 + R 4). Nothing outside it can change.\n\nA (537-vouched sum): use this path when a procedure figure F was refused by 537's lot-sum rule (F is about 10^k x a lot sum). Serve the electable lot sum that matches F under lot_sum_exponent. Kinds are tried in this order: 537's matched kind if it is electable, then awards, then BT-27-Lot (estimated_value), then BT-271-Lot (framework_maximum).\n- A partner-only match (BT-709/BT-660, issue 506) is never served. It only points to the electable kind on the same scale. Example: 1024214 matched on BT-709 and serves the BT-271 sum, EUR 3.4 m.\n- No repeat guard runs on this path, only the EUR 100 bn cap. The buyer's own total, slipped, is the sum. This is why 7427765 (6 equal EUR 500 k awards, each copied lot-null) is served EUR 3 m.\n\nB (same-kind sum): otherwise, sum the lots in the kind of today's elected figure, in its currency.\n- An award copy maps to awards. A head-lot estimated_value maps to estimated_value; framework_maximum to framework_maximum.\n- If today's head is null, take the first of awards, estimated_value, framework_maximum that at least 2 lots carry.\n- Each lot gives one figure, picked as elect.lot_sum does: the latest award, or the largest figure per field. Partner-only, withheld, sentinel and <= 10.00 figures are left out. Only Lots count; Parts count only in a head with no Lot; a LotsGroup never counts.\n- The sum is converted with the head's own rate for that currency.\n\nThe sum is served unless one of these guards fires, checked in this order:\n- **G0:** fewer than 2 lots, or the sum does not exceed today's figure. Equal means no change; smaller means the kinds disagree.\n- **G7:** a procedure figure is withheld (372).\n- **G5:** the sum is over EUR 100 bn, or any procedure or lot-null figure of the head is not-electable as over EUR 100 bn. Either way the buyer's scale is broken.\n- **G6:** the kind also carries lot figures in another currency.\n- **G1 (confirmed repeated total):** a figure carried by at least 2 summed lots also appears lot-null (any field), or as a procedure figure, in any version of the chain, AND it is at least 1/10 of the largest lot. The 1/10 condition keeps two small equal TED awards from firing it (5995030).\n- **G2 (unconfirmed repeated total):** at least 4 lots, and at least half of the lots, share one figure.\n- **G3 (one lot is a total):** with at least 3 lots, the largest lot is within 1 % of 10^k x the sum of the others, for k = 0..3.\n- **G4 (scale disagreement):** another electable kind on at least 2 of the same lots sums to less than 1/10, or more than 10x, of this sum.\n\nKind policy: \"kind of the elected figure\" wins, with awards first only when today's head is null. On the labels, awards-first scores identically: 175096 and 917292 end up the same through G0/G4, and 917292 has no valid awards. The elected kind is preferred because it keeps the head's meaning and is monotone: the served sum is never below today's figure.\n\nAdjacent class (a slip lot beating an admitted or award-copy total): OUT OF SCOPE.\n- T never fires when a procedure figure is admitted. 148 heads where a lot beats an admitted procedure figure (B 134, R 14) have 0 changes.\n- Inside T, G1/G2 refuse the repeated-total sums. The 7 labelled adjacent members stay at today's slipped figure, no better and no worse: 5855551, 8422921, 8488015, 631213, 1136952, 1140133, 1142891.\n- A separate follow-up rule (\"today's head = 10^k x a figure M repeated on 2 or more lots, with M confirmed lot-null or carried by 4 or more lots: serve M\") was measured on the side. It would make 6 of those 7 right; 8488015's GBP 1.11 bn vs GBP 110 m is not an exact 10^k. It would also fire on 4 unlabelled B heads that have admitted procedure figures: 8755619, 143300, 878305 and 8630332. That belongs in its own issue.\n\nThe issue's done line is met by the port: 7427765 gets EUR 3,000,000.00, 5943121 gets EUR 1,321,579.92, and 369057 gets EUR 62,378,736.29.",
+   "predicate_file": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/u2/rule_A.py\n\nserve(rec, entry=None) -> (eur_cents | None, reason, detail). It takes one results.jsonl record. The guards need per-lot figures, which the record does not hold, so it reads the Tender's head and chain rows from /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/u2/A/ctx.pkl. That cache was rebuilt by /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/u2/A/ctx.py from u1's /v1/sql bodies, using u1's own loader and source order, so the inputs are the same ones that wrote results.jsonl. The rule uses elect.py's lot_sum, ScalePartners.lot_sum_match, lot_sum_exponent and IMPLAUSIBLE_EUR_CENTS. DISABLE and KIND_POLICY are ablation switches; the defaults are the rule.\n\nSupporting files, all in /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/u2/A/:\n- labels_A.py: the labels.\n- score_A.py, which writes score_A.json: every change and every labelled verdict.\n- ablate_A.py: guard ablations and threshold sweeps.\n- spot_A.py, with its reads in api/: the API spot reads.\n- adjacent_A.py: the adjacent-class side measurement.\n\nNo repository files were touched.",
+   "scores": "The task says 92 labels, but its JSON carries 88 entries. That equals unit 1's class exactly (B 84 + R 4, 0 missing either way).\n\n(1) LABELLED, 88 members. \"Right\" means within 1 % of the label's figure, converted with the head's own rate.\n\n| label best | changed-right | changed-closer | changed-farther | unchanged-right | unchanged-wrong | n |\n|---|---|---|---|---|---|---|\n| lot_sum | 36 | 0 | 0 | 0 | 0 | 36 |\n| current_head | 0 | 0 | 0 | 36 | 0 | 36 |\n| other | 0 | 0 | 2 | 0 | 13 | 15 |\n| unknown | 0 | 0 | 0 | 0 | 1 | 1 |\n| ALL | 36 | 0 | 2 | 36 | 14 | 88 |\n\nRight after the rule: 72/88. Right today: 37/88.\n\n- **changed-right (36):**\n  - Path A (15, all of 537's refused shape): 251619, 369057, 380921, 392980, 425446, 706887, 1024214, 5779108, 5943121, 6342034, 6921980, 7044132, 7427765, 7829010, 8514592.\n  - Path B (21): 59219, 242212, 411001, 585917, 667498, 691343, 741063, 917292, 979673, 1122853, 4534889, 4671850, 4715842, 4894521, 5995030, 6450467, 6450469, 6450473, 8426318, 8699396, 8743051.\n- **changed-farther (2):**\n  - 4925871: the lot figures are sums insured; EUR 1.5 bn becomes EUR 3.454 bn against EUR 2.52 m.\n  - 8822313: every lot carries a x1000 slip; EUR 2 bn becomes EUR 5.1 bn against EUR 5.1 m.\n- **unchanged-right (36):**\n  - G1, 25: 1072480, 5543005, 5682171, 6054105, 6125730, 6631047, 6887343, 7020118, 7058869, 7211524, 7291692, 7778307, 7955534, 7955558, 7955870, 8374102, 8414918, 8435350, 8440698, 8444799, 8461370, 8596072, 8596561, 8596789, 8638929.\n  - G2, 3: 465993, 543944, 786738.\n  - G3, 2: 5316712, 5344896.\n  - G0, 3: 934033, 5765706, 8439324.\n  - G5, 2: 8391535, 8440393.\n  - G6, 1: 8434466.\n- **unchanged-wrong (14):**\n  - G2, 4: 631213, 1136952, 1140133, 1142891.\n  - G1, 2: 5855551, 8422921.\n  - G0, 2: 6885102, 8488015.\n  - G5, 4: 274271, 5781391, 7991207, 8811130.\n  - G3, 1: 4787274.\n  - G4, 1: 175096.\n\n**Ablations** (right / farther / unchanged-right):\n\n| variant | right | farther | unchanged-right | what moves |\n|---|---|---|---|---|\n| A as designed | 36 | 2 | 36 | |\n| without path A | 34 | 2 | 36 | loses 1024214 and 7427765 |\n| without G1 | 36 | 11 | 27 | |\n| without G2 | 36 | 6 | 34 | |\n| without G3 | 36 | 5 | 34 | |\n| without G4 | 36 | 3 | 36 | 175096 gets farther |\n| without G5 | 36 | 5 | 36 | |\n| without G6 or G7 | 36 | 2 | 36 | no change |\n| G1-G4 all off | 36 | 40 | 6 | |\n| no guards at all | 38 | 48 | 1 | |\n| awards-first kind | 36 | 2 | 36 | identical |\n\n**Threshold sweeps:**\n- G2 minimum lots: 2 loses 667498 and 691343; 3 loses 691343; any value 4–13 is identical.\n- G1 share-of-max: 1/100, or no share condition, loses 5995030; 1/1 to 1/10 are identical.\n- G3 tolerance: 0.5 % loses 5316712 (its gap is 0.9 %); 1–5 % are identical. Using k = 0 only lets 4787274 get farther.\n- G4 ratio: 3–20 are identical; 100 lets 175096 through.\n\n(2) ALL 4,745 records.\n- B: 34 of 3,751 heads change. 32 are right and 2 farther (4925871, 8822313).\n- R: 4 of 994 change, all right: 585917 null -> EUR 250 k; 667498 EUR 1.68 m -> 3.36 m; 691343 EUR 2.85 m -> 8.55 m; 5995030 PLN 2,721.60 -> PLN 1,549,511.60.\n- Changes outside the labelled set: 0. This holds by construction: T plus \"at least 2 lots in the summed kind\" is a subset of unit 1's class.\n- With nothing outside the set to spot-read, I spot-read the 10 largest changes on the public API (2026-10-16): 4671850, 8743051, 8822313, 1122853, 242212, 4534889, 6450469, 6450473, 6450467, 4894521. For all 10, the API still serves today's figure, and its lot amounts / lot_results add up exactly to the sum the rule would serve. Examples: 4671850 GBP 10 bn -> GBP 10.772 bn; the Lyon-Turin trio EUR 1,660,661,682.94 -> EUR 3,574,764,979.28.\n\n(3) PROJECTION from R: 4/994 = 0.40 % (95 % Wilson 0.16–1.03 %). Over unit 1's corpus of about 8,795,603, that is about 35,400 heads changing (13,800–90,600).\n- All 4 changes in R are right (Wilson 51–100 %).\n- 0 wrong of 994 puts at most 0.38 % (about 34 k heads, 95 % upper bound) changed wrongly corpus-wide.\n- B is a census of the ≥ EUR 1 bn band plus 537's 22, so its 34 changes (32 right, 2 farther) are exact counts, not a projection.",
+   "risks": "1. The guard thresholds are fitted to the 88 labels, and 84 of those come from the ≥ EUR 1 bn band. Below the band, only R's 4 members test the rule.\n   - G2 is pinned only at its lower end, by 691343 (3 equal lots, sum right). Anything from 4 to 13 lots scores the same.\n   - Equal lots without chain confirmation, between 4 and 12 lots, are therefore unmeasured. A true equal split there without a 537 refusal (7427765 is one, rescued by path A) would be refused. That is conservative: the head keeps today's single-lot figure.\n   - G3's 1 % tolerance keeps 5316712 at a 0.9 % gap.\n   - G4 (10x) rests on a single member, 175096.\n\n2. No guard can see a lot-only scale error. Summing multiplies the error by n: 4925871 (sums insured) and 8822313 (x1000 on every lot, no award or procedure figure to anchor it) both get farther. Any \"every lot slipped\" shape below the band gets worse in the same way.\n\n3. The false-positive bound from R is wide: 0/994 wrong still allows up to about 34 k wrong heads corpus-wide (95 %). R holds only 4 class members.\n\n4. Measurement fidelity:\n   - The rule reads ctx.pkl (u1's raw bodies), not the record alone.\n   - 906 compact chains keep no lot-null award copies from earlier versions, so G1 can only under-fire in this measurement, never over-fire. I checked the 38 changes: none is exposed. Only 4715842 has a repeated pair, and its 1/10-of-max condition excludes it anyway.\n   - A sum's EUR value uses the head's own row rate where Rust would call RatesLookup on the same date, so sub-cent differences are possible.\n\n5. G6 and G7 never decide a labelled member alone. G6 fires first on 8434466, which G1 also refuses; G7 fires on none. They are untested safety guards.\n\n6. Build surface: a derived head is a new kind of value.\n   - The read layer finds the elected row by eur_cents, and a sum matches no stored row. It needs a \"derived lot sum\" marker.\n   - SSE / change rows need it too.\n   - Value-band moves follow: 537's six null heads gain values, and several heads cross EUR 1 bn.\n   - G1 needs ScalePartners' chain figures with procedure / Lot(None) scope.\n   - Path A needs lot_sum_match to be reachable from the election.\n\n7. The adjacent class is left as it is:\n   - 7 labelled heads keep their x10 slips.\n   - 148 heads where a lot beats an admitted procedure figure (B 134, R 14) are untouched.\n   - The measured repeat-slip follow-up would fire on 4 unlabelled B heads with admitted procedure figures (8755619, 143300, 878305, 8630332), which would need reads before any build.\n\n8. Plausible-null labels (274271, 8811130, 5781391) stay at today's wrong figure. Serving null is not part of this design.\n\n9. The label list has 88 entries, not the 92 the task names."
+  },
+  {
+   "rule": "RULE B, the minimal rule, proposed.\n\nFor in-band frameworks nothing changes. `head_value_eur_cents_with` keeps its max election everywhere except in one shape. The head is replaced only when all four of these hold:\n\n(1) No procedure-scope figure of the head version survives. None is elected or admitted. Award copies (Lot(None)) do not count as procedure figures.\n\n(2) At least one procedure figure F was REFUSED by a scale rule, AND F is about 10^k x S for a head lot sum S. This is 537's LotSumMatch: k from 2 to 6, |F - 10^k*S| <= 10^k*n, at least 2 lots.\n- For a 537 refusal, S is the very sum the refusal named.\n- If that sum is a partner-only kind (BT-709/BT-660, issue 506), S becomes the electable lot sum (awards, BT-27-Lot or BT-271-Lot) that matches F at the SAME k, closest first. If no electable sum matches, keep the max election. This happens in 1024214: the BT-709 sum maps to the equal BT-271 sum.\n- For a 471/492 refusal, S is the electable lot sum that matches F at the refusal's k (471's 10^k; 492's k = 2).\n\n(3) Every refused F that yields an S yields the SAME S. If they conflict, keep the max election. A conflict was never observed.\n\n(4) S, converted at F's own rate (the head's date), is above EUR 0 and at most EUR 100 bn (the 366 cap).\n\nThen serve S in EUR cents. Mark the head DERIVED and record the reason: lot sum S, kind K, n lots, the rule and the k of the refusal of F. Otherwise keep the max election unchanged.\n\nHow S is used:\n- S replaces the max election even if an admitted lot figure of another kind is larger. This was never observed: in all 16 known firings S is above the old head or the old head is null.\n- No uniformity or distinctness guard is applied, because the buyer's own figure at exactly 100.000x or 1000.000x the sum vouches for it. 7427765's six equal EUR 500k awards are right, and its total is EUR 3 m.\n\nImplementation note: in Rust this is LotSums plus the LotSumMatch of each refused procedure fact. It is the same S whichever rule's detail string reports the refusal. In 928196, 492 is reported first, but 537 would also refuse, with guard T, against v1's EUR 46.8 m.\n\nR-SHAPE: evaluated, NOT included in B.\n- **Broad guard (r_shape2).** It needs:\n  - no procedure figure;\n  - no refused or over-EUR-100bn row;\n  - no lot-null figure repeated on 2 or more lots, or on a lotless award;\n  - sum the elected figure's kind;\n  - no figure repeated on 3 or more lots, or on half the lots or more;\n  - another kind's repeated figure caps S (+1 %);\n  - no lot equal to 10^j x the others, j from 0 to 3.\n\n  On fresh data it moves 1 in 6 the wrong way.\n- **Narrowest guard (r_split).** r_shape2, plus: the head figure is an award copy of ONE lot, and the lots' latest awards come from 2 or more award notices (each lot awarded by its own CAN). This is the only R sub-shape with no wrong-direction move. The evidence is thin: 5 fires, 4 right and 1 closer. If wanted, it should be a separate unit with its own sample, not part of B.\n- **Uniform per-lot members.** 691343 and 667498 cannot be covered by any guard on stored data. Allowing uniform sums only adds wrong x13 heads (465993, 786738). The fix for them is mapping BT-118 (issue 506).",
+   "predicate_file": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/u2/rule_B.py\n\n- `rule_B(rec, detail=None, variant=\"core\"|\"r_shape\"|\"r_shape_sentinel\"|\"r_shape2\"|\"r_split\")` returns `(eur_cents|None, reason, derived)`.\n- `core(rec)` reads only the results.jsonl record: it parses the refusal details, and `elect.lot_sum_exponent` gives the match.\n- `details()` rebuilds per-lot figures, lot-null copy facts and award rounds from u1/data, via u1/load.py and elect.py.\n\nWork files are in /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/u2/B/:\n- score_B.py, score_B.out, score_B.json: the scoring; labels.json: the 88 labels.\n- live_check.py, live_check.out: the live re-read.\n- api_probe.py, probe_471_492.out, ids_471_492.txt: an API approximation of core and r_shape2, and the 471/492 probe.\n- holdout.py, holdout.out, holdout_verdicts.json, ids_holdout.txt, hold/: the 1,493-tender holdout.\n- api/ and notices/: the cached public-API reads.",
+   "scores": "NOTE: the label JSON holds 88 entries, not 92. They are exactly unit 1's c551 class (84 B + 4 R).\n\n(1) THE 88 LABELLED MEMBERS (\"right\" means within 1 % of the plausible total, compared in EUR at the head's own rate)\n\n| variant | changed, now right | changed, closer | changed, farther | unchanged, right | unchanged, wrong |\n|---|---|---|---|---|---|\n| **core B** | **15** | 0 | **0** | 37 | 36 |\n| r_shape (strict distinct) | 31 | 0 | 3 | 37 | 17 |\n| r_shape2 (tuned) | 34 | 0 | 2 | 36 | 16 |\n| r_split | 16 | 0 | 0 | 37 | 35 |\n\nNotes on the table:\n- r_shape's 3 farther are 4787274, 4925871 and 8822313.\n- r_shape2's 2 farther are 4925871 (EUR 1.5 bn to 3.45 bn; the truth is EUR 2.5 m, sums insured) and 8822313 (EUR 2 bn to 5.1 bn; the truth is EUR 5.1 m, x1000 on every lot).\n- r_split's 16 right are the core 15 plus 5995030.\n\nCore by label:\n- current_head: 36 of 36 unchanged and right.\n- lot_sum: 15 changed and right; 1 unchanged and right (4715842, whose head is within 0.37 %); 20 unchanged and wrong (16 in-band without a procedure figure, plus 59219 and the R members 585917, 667498 and 691343 left untouched; 5995030 makes the count 20).\n- other: 15 unchanged and wrong.\n- unknown: 1 unchanged and wrong.\n\nThe 15 core changes (old head, then B; all 15 are the 537 all-refused set, and all 15 serve the buyer's own figure divided by 10^k):\n\n| tender | today | B serves |\n|---|---|---|\n| 251619 | null | EUR 24,338,758.08 |\n| 369057 | null | EUR 62,378,736.29 (label .28) |\n| 380921 | null | PLN 7,247,040.00 |\n| 392980 | null | EUR 35,740,042.72 |\n| 425446 | null | EUR 1,549,007.19 |\n| 706887 | null | PLN 70,560,792.75 |\n| 1024214 | EUR 1.2 m | EUR 3.4 m (BT-709 match mapped to the BT-271 sum) |\n| 5779108 | EUR 1.4 m | EUR 2.12 m |\n| 5943121 | EUR 416,053.05 | EUR 1,321,579.92 |\n| 6342034 | EUR 7,686,754.45 | EUR 10,836,754.45 |\n| 6921980 | EUR 10,369,747.89 | EUR 24,930,336.11 |\n| 7044132 | EUR 804,268 | EUR 2,385,992 |\n| 7427765 | EUR 500,000 | EUR 3,000,000 |\n| 7829010 | EUR 1,965,000 | EUR 2,000,000 |\n| 8514592 | DKK 158,639,473 | DKK 179,248,937 |\n\n(2) ALL 4,745 RECORDS\n\n| variant | B changed | R changed | outside the labelled set |\n|---|---|---|---|\n| **core** | **15** (all 537-refused, out of band; **0 in band**) | **0** | **0** |\n| r_shape2 | 34 (15 + 19 in band) | 2 (585917, 5995030) | 0 |\n| r_split | 15 | 1 (5995030) | 0 |\n\n- The 0 outside the labelled set holds by construction: any firing needs 2 or more lot figures and no surviving procedure figure, which is the c551 definition.\n- Unchanged by core:\n  - the 7 partial-refusal heads, where an admitted procedure figure survives: 114991, 165437, 470107, 508666, 801998, 867491, 1140407;\n  - 6360443, refused by 492 but with no lot sum.\n- **Live re-read** on the public API, 2026-10-16: all 36 changed heads still serve the pulled head (36/36), and the API's head version gives the same S (36/36).\n- **The 10 largest outside-set changes did not exist,** so the spot reads went to the reach outside the sample:\n  - **471/492-refused heads.** Most fell below EUR 1 bn, so they are not in B. The 81 known ones (471's 19, plus the 63 corrected in 492's drain) were probed on the API. Exactly 1 fires: 928196, an ES CT-scanner framework. Its v2 CN gives BT-27/BT-271-Procedure EUR 4,679,746,035 (x100), refused. Its 5 BT-27-Lot sum to EUR 46,797,460.35, which is exactly v1 CN 25669744's BT-27-Procedure. Today it serves EUR 20,111,268.60 (LOT-0003); B would serve EUR 46,797,460.35. RIGHT.\n  - **Holdout:** 1,500 fresh uniform ids, 1,493 read, all read by hand from the API/notices.\n    - core: 0 fires.\n    - r_shape2: 6 fires.\n      - RIGHT (3, each a split award across notices): 467176 (CHF 771,192 to 3,161,818), 294968 (CHF 528,747 to 4,440,992), 7256284 (EUR 109,100 to 574,873).\n      - CLOSER, not right (2): 5977060 (EUR 33,243 to 4.14 m, plausible about 5.39 m; a re-run lot keyed LOT-1) and 8771589 (GBP 10 m to 16 m; unmapped GBP 144 m contract values).\n      - FARTHER (1): 4930240 (EUR 2.40 m to 3.20 m; the object-level LOT-1 is exactly 3x the 8 area lots).\n    - r_split: 4 fires, 3 right and 1 closer.\n\n(3) CORPUS PROJECTION (N about 8,795,603)\n\n| variant | sample | rate | corpus estimate | 95 % Wilson |\n|---|---|---|---|---|\n| **core** | R | 0/994 | 0 | upper 33.9 k |\n| | R + holdout | 0/2,487 | 0 | upper 13.6 k |\n| r_shape2 | R | 2/994 | about 17.7 k | 4.9 k to 64 k |\n| | holdout | 6/1,493 | about 35.3 k | 16.2 k to 76.9 k |\n| | pooled | 8/2,487 | about 28.3 k | 14.3 k to 55.7 k |\n| r_split | pooled | 5/2,487 | about 17.7 k | 7.6 k to 41.3 k |\n\n- **Core, counted directly instead:** every 537 refusal is in B (22 in all, of which 15 fire), and the known 471/492 refused set gives 1 more. That makes **about 16 heads today**, plus future refusals at fold time.\n- **r_shape2's wrong-direction share:** 1 of the 6 untuned holdout fires. Pooled over the labelled set and the holdout: 27 fires, 22 right, 2 closer, 3 farther.",
+   "risks": "1. **A derived head has no amount row behind it.** The read layer and section 16 find the elected row by `s.eur_cents = t.current_value_eur_cents` (crates/store/src/read.rs:2537-2538; crates/ingest/src/data_quality.rs:1631). S matches no row. So the API `value` would read null, and section 16 would print \"elected row NOT FOUND\" (stale head). The head needs to store S's native cents and currency plus a derived marker, as a new column or a synthetic row. The SSE / change-row surfaces gain a new kind of value. This is the main build cost.\n\n2. **The proposed drain route reaches none of the cohort.** `refold-value-band`'s cohort is the Tenders with a stored head or lot value of at least EUR 1 bn (supervisor.rs:8444-8460, `value_band_tender_ids`). The 15 left the band at 537's drain, and 928196 serves EUR 20 m. Unit 3 needs an id-list refold, or a cohort keyed on head-version amount rows of at least EUR 1 bn.\n\n3. **506.** 1024214's 537 match is the BT-709 sum. B must map it to the electable sum at the same k (BT-271, equal here), never serve the partner-only sum. If no electable sum matches, keep the max election.\n\n4. **The 471/492 branch rests on one case** (928196, right). Defining S as the LotSumMatch of any refused procedure F covers it without depending on which rule's detail string is reported.\n\n5. **Condition (1) leaves the 7 partial-refusal heads alone.** 867491 (a EUR 491.4 m lot slip) and 114991 stay wrong; they belong to the adjacent class (31 B). They are unlabelled, so dropping condition (1) would need its own reads.\n\n6. **The labels are 88, not 92,** and the scores depend on the labellers' totals. Core's 15/15 rests on the buyer's own figure being exactly 100.000x or 1000.000x the sum in every member, and live reads confirm all 15 are unchanged.\n\n7. **EUR rounding.** S is converted at F's own rate, which leaves 1 to 4 cents against the labels (8514592). Rust should call RatesLookup at the head's date.\n\n8. **Do not add r_shape2 to B:**\n   - It was tuned on the labelled set: its R3', R4' and R5' guards each fix one member.\n   - On fresh data it moves 1 in 6 the wrong way.\n   - Its known wrong moves cannot be detected from stored data: sums insured (4925871), x1000 on every lot (8822313), and an object-level pseudo-lot at 3x (4930240). An integer-multiple guard would catch 4930240, but at m = 2 it also blocks 8426318, which is right.\n   - It raises 19 in-band heads by 7-130 %.\n   - The uniform members 691343 and 667498 need BT-118.\n\n   r_split is cleaner, but 5 fires is thin evidence.\n\n9. **The probes approximate the rule.** The holdout and the 471/492 probe use API data, so they see no refusal status, no chain and no EUR. They were checked against rule_B on all 37 changed Tenders and gave the same verdicts."
+  }
+ ],
+ "judged": {
+  "decision": "ADOPT A MERGE: B core (the \"vouched\" sum, which equals A's path A, with B's 471/492 extension) plus A's path B only when the summed kind is lot AWARDS, under stricter guards. A's path B over BT-27-Lot estimates and BT-271-Lot framework maxima is REJECTED. For those heads the max election stays, and a /docs line says the head can be one lot's figure.\n\nHow I checked:\n- Both rule files re-run on all 4,745 records with my own scorer and my own copy of the labels (they match both designers' copies exactly, 88 entries, not 92).\n- Scores reproduce exactly:\n  - A: 36 changed-right / 0 closer / 2 farther / 36 unchanged-right / 14 unchanged-wrong.\n  - B core: 15 / 0 / 0 / 37 / 36. B r_shape2: 34 / 0 / 2 / 36 / 16. B r_split: 16 / 0 / 0 / 37 / 35.\n  - Changes in A: B 34, R 4. Changes in B core: B 15, R 0. Neither changes anything outside the labelled set.\n- A's path A and B core serve the same value on all 15 of 537's refused heads (8514592 differs by 1 cent, from the rate).\n\nFresh data A never tested:\n- I ran an API approximation of A (T + path B + G0-G6) on B's 1,493 fresh holdout tenders. It fires 7 times:\n  - right (4): 467176, 294968, 7256284, and 423618 (new, which I read: BT-118 = EUR 14.75 m = the lot sum);\n  - closer (2): 5977060, 8771589;\n  - FARTHER (1): 4930240. Its LOT-1 is the old TED object section, exactly 3.000 x the 8 area lots (EUR 799,022.40 x 3); EUR 2.40 m, which is right, becomes EUR 3.20 m.\n- A's guards also blocked correctly out of sample: G1 stopped 7487018 (42 awards x EUR 450 k, the repeated total) and G3 stopped 5625591 (one lot = the sum of the others).\n\nSplit by summed kind, across labelled and fresh fires:\n- AWARDS: 10 fires, 9 right, 1 closer, 0 farther. The 9 right: 6450467/69/73, 8426318, 585917, 5995030, 467176, 294968, 7256284. The closer one: 5977060.\n- ESTIMATES / FRAMEWORK MAXIMA: 20 fires, 16 right, 1 closer, 3 farther (15 %, 95 % CI 5-36 %). The farther ones are 4925871 (sums insured), 8822313 (x1000 on every lot) and 4930240 (a pseudo-lot at 3x). No stored field can detect any of them. Two of them land in the EUR 1 bn band, and 4930240 was right before.\n\nWeighing it: wrong sums cost more than understated heads, and 537's S is already computed in ScalePartners. The vouched path is buyer-confirmed and costs almost nothing to build. On awards the evidence supports serving the sum (0 farther, a principled reason, every guard cheap on LotSums). On estimates it does not.\n\nLive reads (2026-10-16, public API, at most 2 req/s):\n- 15 changed heads: 1024214, 369057, 4671850, 4715842, 4894521, 585917, 59219, 5995030, 6450467, 667498, 691343, 7427765, 8426318, 8743051, 917292. All 15 still serve today's figure, and their API lot rows sum exactly to the rule's S.\n- Also read: 8822313 plus its predecessor 8819836 (lots EUR 1.38 m / 1.5 m / 2.04 m, so x1000 is confirmed), 4925871 (sums insured, confirmed), 423618 with CAN 24470145, 4930240, 8771589, 928196, 667498's CN 25729092 (both lots carry the identical BT-300 sentence, so it stays ambiguous), and fresh re-reads of 294968, 7256284, 5977060 and 467176.\n\nWork files: /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/u2/judge/ (run_both.py, both.pkl, score_J.py, probe_A.py, merge.py, labels_J.py, fetch.py, show.py, nshow.py, api/).",
+  "adopted_rule": "Change `head_value_eur_cents_with` so it returns a HeadValue: `eur_cents` plus `Option<Derived>`. `Derived` holds:\n- path: Vouched{rule: 537|471|492, f_field, f_cents, f_currency, k} or Awards;\n- kind: LotSumKind;\n- cents and currency (S in native money);\n- lots (n).\n\nThe max election stays everywhere except on the two paths below, tried in order.\n\nPATH V: the vouched lot sum. B core, exactly.\n1. Precondition: no procedure-scope figure of the head is elected or admitted. Award copies (Lot(None), 492 (c)) and partner-only rows (506) are not procedure figures.\n2. For each procedure-scope figure F refused by a scale rule, find S:\n   - Refused by 537: take `partners.lot_sum_match(currency, F)`, i.e. its LotSumMatch {kind, exponent k, sum, lots}.\n     - If that kind is electable (Awards, Estimate, FrameworkMaximum), S is that sum.\n     - If it is partner-only (BT-709/BT-660), S is the electable LotSums kind with `lot_sum_exponent(F, S', n') == k`: closest |F - 10^k*S'| first, ties broken Awards, then Estimate, then FrameworkMaximum. The partner-only sum is never served (1024214: BT-709 matches, so the BT-271 sum EUR 3.4 m is served).\n   - Refused by 471 or 492: S is the electable LotSums kind with `lot_sum_exponent(F, S', n') == the refusal's k` (471's own k; 2 for 492), chosen the same way (928196 gets EUR 46,797,460.35).\n3. Every refused F that yields an S must yield the same (currency, S). Otherwise keep the max election.\n4. Need n >= 2 and 0 < S_eur <= EUR 100 bn (366), with S_eur = S converted by RatesLookup at the head's date.\n5. V1: S is not one figure M repeated on every summed lot with F within 1 % of 10^j*M (j >= 0).\n6. No other repeat guard: the buyer's own figure at exactly 10^k vouches for the sum (7427765: 6 x EUR 500 k gives EUR 3,000,000.00).\n\nPATH W: unvouched AWARDS lot sum (A's path B, restricted). Taken only when path V does not fire.\n- T': every procedure-scope figure of the head is absent, or not-electable as a sentinel/placeholder (366/379). Any procedure figure that is refused, withheld or over the cap keeps today's head.\n- K: today's head is an award copy (Lot(None)) or null. The summed kind is LotSumKind::Awards (each Lot's latest award by notice id, as LotSums builds it) in the elected figure's currency. For a null head, use the currency with the most award lots.\n- Serve S = the awards sum unless a guard fires (see guards). Path W never sums Estimate or FrameworkMaximum, and never a partner-only kind.\n\nMARKER: never a tender_version_amounts row. A synthetic row would re-enter the fold's ScalePartners figures and 492's award-copy test, and could confirm itself on the next fold.\n- Add nullable columns on `tenders`:\n  - `current_value_derivation` ('lot-sum-vouched' | 'lot-sum-awards'),\n  - `current_value_cents`, `current_value_currency` (S in native money),\n  - `current_value_derivation_detail` (JSON: kind, lots, rule, k, F field/cents/currency).\n- `current_value_eur_cents` = S_eur, so value sorts and filters work unchanged.\n- Code that must branch on the marker:\n  - read.rs's elected-row pick (around lines 2525-2540, which matches `s.eur_cents = t.current_value_eur_cents` and would find no row);\n  - data_quality.rs section 16 (around line 1631);\n  - SSE and change rows (a new kind of value);\n  - the API `value` gains a `value_derivation` object.\n- /docs: one line that a head may be a derived lot sum (with its reason), and one line that a multi-lot Tender with only lot estimates and no procedure figure serves one lot's figure.\n\nPins for unit 3:\n- Positive:\n  - 7427765 EUR 3,000,000.00;\n  - 5943121 EUR 1,321,579.92;\n  - 369057 EUR 62,378,736.29;\n  - 1024214 EUR 3,400,000;\n  - 928196 EUR 46,797,460.35;\n  - 6450467 EUR 3,574,764,979.28;\n  - 585917 null -> EUR 250,000 (the BT-709 EUR 250 k x2 is never summed);\n  - 5995030 PLN 1,549,511.60 (its small repeated pair passes G1').\n- Negative (stay at today's figure):\n  - 8440393 (G1');\n  - 7487018 (G1');\n  - 5316712 (G3);\n  - 5625591 (G3);\n  - 6885102 (G0);\n  - 4930240, 8822313, 4925871 and 175096 (estimates, so path W cannot fire).",
+  "guards": [
+   "PATH V precondition: no procedure-scope figure elected or admitted (award copies and partner-only rows do not count); n >= 2 lots in S's kind.",
+   "PATH V S-selection: 537's LotSumMatch S when its kind is electable; for a partner-only (BT-709/BT-660) match, the electable sum at the SAME k (closest, then Awards > Estimate > FrameworkMaximum); for 471/492, the electable sum with lot_sum_exponent(F,S',n') == the refusal's k; none -> keep.",
+   "PATH V agreement: every refused F that yields an S yields the same (currency, S); else keep.",
+   "PATH V cap: 0 < S_eur <= EUR 100 bn (366), converted by RatesLookup at the head's date.",
+   "PATH V V1: refuse if every summed lot carries one figure M and F is within 1 % of 10^j*M (j >= 0). Then the lots ARE the slipped total, e.g. n = 10 lots each repeating T with F = 1000*T; 7427765 passes (F/M = 6000).",
+   "PATH W T': every procedure-scope figure absent or sentinel-not-electable (366/379); any refused (471/492/537 without a vouched match), withheld (372) or over-cap procedure figure keeps today's head.",
+   "PATH W K: today's head is an award copy (Lot(None)) or null; sum LotSumKind::Awards only (latest award per Lot by notice id), in the elected currency (null head: the currency with the most award lots). Never Estimate, FrameworkMaximum or partner-only kinds.",
+   "PATH W G0: n >= 2 award lots and S_eur > today's eur_cents (equal or below keeps today's head).",
+   "PATH W G5: S_eur <= EUR 100 bn, and no procedure or lot-null figure of the head is not-electable as over EUR 100 bn.",
+   "PATH W G6: no lot award of the head is in another currency.",
+   "PATH W G7: no withheld (372) procedure figure.",
+   "PATH W G8: every summed award names a lot of the head's counted unit (Lot, or Part in a Lot-less head). Stops a re-keyed chain (TED LOT-1 vs eForms LOT-0001) being counted twice; costs 0 of 10 rights.",
+   "PATH W G1' (repeat, confirmed or not): no figure on >= 2 summed lots that is >= 1/10 of the largest summed lot. Stricter than A's G1 (no lot-null confirmation needed) and covers 2-3 equal awards with no stored total; costs 0 rights (5995030's repeated PLN 8,000.00 is under 1/10 of its largest lot).",
+   "PATH W G2: no figure carried by >= 4 summed lots AND by >= half of them.",
+   "PATH W G3: with n >= 3, the largest lot is not within 1 % of 10^k x the sum of the others, for k = 0..3 (5316712, 5625591, 4787274 shapes).",
+   "PATH W G4: no Estimate or FrameworkMaximum LotSums kind on >= 2 of the same lots whose sum over those lots is < 1/10 or > 10x the awards over them.",
+   "Both paths: set the derivation marker columns; never write a synthetic amount row; partner-only rows (506) are never summed or served."
+  ],
+  "expected_effect": "LABELLED 88:\n- 21 changed-right, 0 closer, 0 farther, 37 unchanged-right, 30 unchanged-wrong.\n- Right after: 58/88. Right today: 37/88. A as designed: 72 right with 2 farther. B core: 52 right.\n- The 21:\n  - Path V (15): 251619, 369057, 380921, 392980, 425446, 706887, 1024214, 5779108, 5943121, 6342034, 6921980, 7044132, 7427765, 7829010, 8514592.\n  - Path W (6): 6450467, 6450469, 6450473 (EUR 1.66 bn -> EUR 3,574,764,979.28), 8426318 (GBP 2 bn -> GBP 3 bn), 585917 (null -> EUR 250 k), 5995030 (PLN 2,721.60 -> PLN 1,549,511.60).\n- Left understated on purpose (14 lot_sum labels):\n  - 12 in-band estimate / framework-maximum sums: 59219, 242212, 411001, 741063, 917292, 979673, 1122853, 4534889, 4671850, 4894521, 8699396, 8743051;\n  - R's 667498 and 691343 (uniform estimates; BT-118 would confirm them).\n- The 36 current_head labels all stay right. The 15 other and 1 unknown stay as today, with no new damage: 4925871 and 8822313 are NOT made worse.\n\nB (band census, 3,751 heads): 19 change.\n- 15 by path V. All end below EUR 1 bn; 6 null heads gain a value.\n- 4 by path W, raised inside the band: the Lyon-Turin trio and 8426318.\n- 0 changes outside the labelled class.\n\nR (994): 2 change, both right (585917, 5995030).\n\nHoldout (1,493 fresh, API approximation): path V 0; path W 4.\n- right: 467176 CHF 771,192 -> CHF 3,161,818; 294968 CHF 528,747 -> CHF 4,440,992; 7256284 EUR 109,100 -> EUR 574,873;\n- closer: 5977060 EUR 33,243 -> EUR 4.14 m, against a plausible EUR 5.39 m (a re-run lot reuses the key LOT-1).\n\nCORPUS (about 8,795,603 heads):\n- Path V: about 16 heads today (537's 15 plus 928196 from the 471/492 probe), all right on reads, plus future refusals at fold time.\n- Path W: 6/2,487 fresh = 0.24 %, about 21,200 heads (95 % Wilson 9,700-46,200).\n  - Fresh outcome 5 right, 1 closer, 0 farther. Over all 10 awards fires, 0 farther, with a 95 % upper bound of 28 %.\n- For comparison, A's full path B fires on about 38,900 (21,700-69,500), with 1 in 11 fresh fires farther and 3 in 27 overall.\n- Each path-W change fixes an understatement of 1.5x to 569x. The guards that matter (G1', G2, G3, G4) are pure functions of LotSums and ScalePartners.lot_only.\n\nBuild: change `head_value_eur_cents_with`'s return type; add per-lot accessors on LotSums; add the marker columns; branch read.rs, section 16, SSE / change rows and the API. Because refold-value-band's cohort (stored value >= EUR 1 bn) reaches neither path, the drain needs a corpus refold (as 2563/2564 did) or an id cohort.\n\nDone line: met through path V (7427765 EUR 3,000,000.00; 5943121 EUR 1,321,579.92; 369057 EUR 62,378,736.29, marked derived).",
+  "rejected": "1. A AS DESIGNED (estimate / framework-maximum path B): rejected.\n- Its estimate and framework-maximum sums move 3 of 20 the wrong way (15 %, 95 % CI 5-36 %):\n  - 4925871: sums insured, EUR 1.5 bn -> EUR 3.45 bn against EUR 2.5 m;\n  - 8822313: x1000 on every lot, EUR 2 bn -> EUR 5.1 bn against EUR 5.1 m (its predecessor 8819836 carries EUR 1.38 m / 1.5 m / 2.04 m);\n  - 4930240: object-section pseudo-lot at 3.000x, a right EUR 2.40 m becomes EUR 3.20 m.\n- No stored field can detect any of these shapes. An integer-multiple G3 that caught 4930240 would block 8426318 (GBP 2 bn = 2.000 x the others).\n- Two of the three inflate heads in the EUR 1 bn band, which pollutes the most visible sort.\n- The in-band gains are modest (x1.08-2.3), and several rest on labeller judgement: a PIN of separate contracts (4894521), an upper bound (8743051).\n- A ran no fresh holdout. Its approximation on B's 1,493 fresh ids fires 7: 4 right, 2 closer, 1 farther.\n\n2. A's G1 as written (lot-null confirmation required): replaced by G1', which costs no right and closes the gap of 2-3 equal awards with no stored total.\n\n3. A's path A matching at any k: replaced by B core's same-k matching, which is stricter and gives identical results on all 15.\n\n4. A's path B after a 537 miss, or after any refusal (refused F -> elected-kind sum): rejected. The buyer's scale is suspect, and there is no evidence either way (0 cases).\n\n5. B CORE ALONE: correct (15/15 plus 928196, 0 wrong) but leaves about 21 k lot-award understatements (x1.5-569) in place. The evidence shows these sum safely: 10 fires, 9 right, 1 closer, 0 farther, and the guards held out of sample (7487018, 5625591).\n\n6. B r_shape2: tuned to the labelled set (R3', R4' and R5' each fix one member), includes estimates (the same 2 farther), and moves 1 in 6 fresh fires the wrong way.\n\n7. B r_split: subsumed by path W. Path W also covers single-CAN multi-result awards (Lyon-Turin, 8426318) and null heads (585917), with no wrong move.\n\n8. (b) KEEP THE MAX ELECTION EVERYWHERE: fails the done line for 3 exhibits, and leaves 6 null heads whose total the buyer itself vouches for.\n\n9. Adjacent class (a x10 lot slip beating an admitted or award-copy total; repeat-slip follow-up \"serve M\"): out of scope. It fires on 4 unlabelled heads with admitted procedure figures (8755619, 143300, 878305, 8630332) and needs its own issue and reads.\n\n10. Serving null for plausible-null labels (274271, 8811130, 5781391): not part of this decision.",
+  "open_questions": [
+   "Marker shape: confirm columns on `tenders` (derivation, native cents, currency, detail JSON) over a synthetic amount row. A synthetic row would re-enter ScalePartners.lot_only and 492's award-copy test on the next fold. Which API field name carries it (`value_derivation`)?",
+   "Drain route: refold-value-band (cohort: stored value >= EUR 1 bn, supervisor.rs value_band_tender_ids) reaches neither the 15 path-V heads (all below EUR 1 bn or null since 537's drain) nor most path-W heads. Unit 3 needs a corpus refold (2563/2564 scale) or an id cohort: heads with >= 2 lot awards and no admitted procedure figure, plus heads with 471/492/537 refusals.",
+   "Path W's wrong-direction rate rests on 10 awards fires (0 farther, 95 % upper bound 28 %). Propose a post-drain bounded read: the derived awards heads >= EUR 100 m, plus a uniform sample of about 50 path-W changes, read before the change is called done.",
+   "Path V's 471/492 branch rests on one case (928196). The V1 guard (lots repeat M with F ~ 10^j*M) is theoretical, with 0 observed cases; keep it, but it is untested.",
+   "Re-keyed chains where BOTH key sets are typed lots (a TED CAN on LOT-1..n and an eForms modification on LOT-0001..n) would pass G8 and double count. Unmeasured; a test fixture should pin the expected behaviour.",
+   "Latest-award-per-lot undercounts when a re-run procedure reuses a lot key (5977060: the 2019 painting re-run keyed LOT-1 replaces Sogea's EUR 1.242 m). Accept as closer, or key the latest award by result key or winner?",
+   "Estimate-only multi-lot heads stay one lot's figure. Mapping BT-118-NoticeResult (issue 506) would confirm uniform per-lot sums (691343, 423618: BT-118 = the lot sum) and could later admit a BT-118-vouched estimate sum as a third path. Separate issue?",
+   "The pseudo-lot (TED object section stored as LOT-1, here at 3x) matters only if the estimate path is ever revisited. Possible signals: a lot title equal to the Tender title, or exact integer multiples (which blocks 8426318 at m = 2).",
+   "Thresholds inherited from A and fitted on the 88 labels: G1' share 1/10, G2 >= 4 lots and >= half, G3 1 % with k = 0..3, G4 10x. They are only weakly tested below the band (R: 2 awards members; holdout: 4).",
+   "EUR conversion: Rust should use RatesLookup at the head's date. The labels differ by 1-4 cents where the designers used a row rate (8514592).",
+   "The task named 92 labels; its JSON carries 88 (unit 1's class exactly, B 84 + R 4). Were 4 labels dropped upstream?"
+  ]
+ }
+}
