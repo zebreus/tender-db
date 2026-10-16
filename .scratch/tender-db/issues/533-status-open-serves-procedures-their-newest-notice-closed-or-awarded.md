@@ -53,6 +53,11 @@ a measurement.
 
   Each reads exactly as the re-made decision's exemplars say.
 - **Verify:** `[]`, `[]`, and the served description "By submission deadline, and by what the newest notice says …".
+- **Scale check (05:5x UTC, a plan-checked `tenders_current_deadline` range read).** Of 41,596 heads with a future
+  deadline, **152** carry `current_closed_by_notice = 1`. That matches the re-made decision's re-run on the step-0a
+  population (153 close, 33 open); the one-row gap is consistent with a deadline lapsing since the table was taken.
+  The rest of project 2536's 2,290 corrections are the open head's other unit-2 changes: 1(b)'s dropped sdk-0.1 award
+  deadlines, 2a's `dps` rows and 2b's reasons.
 - **Field refolds sized** (`expect: 1`, nothing written):
   - 2537 `SDK01-…-TenderSubmissionDeadlinePeriod-EndDate` (notice_dates): **531,134** carriers;
   - 2539 `TED-DPS` + the two reasons (notice_integers): **350,614**;
