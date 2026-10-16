@@ -1039,8 +1039,8 @@ const CLASSIFICATION_SCHEME_NOTE: &str = "One of: cpv (WHAT is bought, the EU Co
     German national us-*/de-* codes as published; Tender scope only, lot_id NULL, at most one \
     per version) and dps (a declared dynamic purchasing system since issue 533: eForms BT-766 \
     dps-list / dps-nlist at the lot that declared it, and dps at Tender scope for the r2.0.9 \
-    DPS marker; a later notice's 'none' never clears it. Complete for the open head and for \
-    Tenders folded since issue 533 deployed, until a fields refold reaches the rest). Filter on \
+    DPS marker; a later notice's 'none' never clears it. Complete since the 2026-10-16 fields \
+    refold, jobs 2563/2564). Filter on \
     scheme explicitly: scheme <> 'cpv' is NOT the NUTS codes.";
 const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts), \
     place_country (nuts: the level-0 code of a place published only as a country, only on a version \
@@ -1052,9 +1052,8 @@ const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts), 
 const RESULT_REASON_NOTE: &str = "Why no contract was awarded, where the notice says so. eForms: \
     the BT-144 non-award-justification code as published (e.g. 'other', 'chan-need', \
     'no-rece'). r2.0.9 (issue 533): 'discontinued' (PROCUREMENT_DISCONTINUED) or 'unsuccessful' \
-    (PROCUREMENT_UNSUCCESSFUL), legacy-only codes outside BT-144's list; complete for the open head \
-    and for Tenders folded since issue 533 deployed, until a fields refold reaches the rest (they \
-    read NULL there until the Tender is next re-folded). NULL otherwise.";
+    (PROCUREMENT_UNSUCCESSFUL), legacy-only codes outside BT-144's list; complete since the \
+    2026-10-16 fields refold, jobs 2563/2564. NULL otherwise.";
 
 /// Column notes and small enum vocabularies. Table `"*"` matches a column of
 /// that name in any table (the epoch columns recur widely). Open or
@@ -1292,7 +1291,14 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     publication day; all three unless the head is unfit to serve for a reason other than being all lower \
     case, or carries a standalone number the other name lacks while the other name drops at most one \
     other word of it (a number the other name prints joined to a neighbouring word, `SMD 3` against \
-    `Smd3`, is the name's own); on the 55% arm, while a name other than the winning one and the current \
+    `Smd3`, is the name's own); a head unfit only through a line break or a tab counts as unfit only when \
+    the other name's words lie inside one of its lines or are exactly those of a run of its whole lines, \
+    and a head held this way is instead served as its own words on one line when every break falls \
+    mid-phrase (the line before ends in an unspaced hyphen or a joining word such as `und`, `of` or `z`, \
+    or the next line starts lower case, and the line before does not end in a legal form, a comma, a \
+    semicolon or a colon) and the name on one line does not itself carry such a standalone number, \
+    unless that change would trip the legal-form, consortium, NHS or placeholder \
+    check above; on the 55% arm, while a name other than the winning one and the current \
     head's also has votes and no notice printed the winning name (any spelling of it) within a year \
     (365 days) before the job's plan (an undated one counts as not printed), unless one of those three holds \
     was lifted for the head; on the 55% and 25% arms, when the change would serve a review body's \

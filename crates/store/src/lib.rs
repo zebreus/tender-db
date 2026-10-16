@@ -91,14 +91,15 @@ pub use head_election::{
     DatedVote, HEAD_CURRENT_DAYS, HEAD_ELECT_TOP_MIN, HEAD_ELECTION_EPOCH, HEAD_HOLD_ADDRESS_ADDED, HEAD_HOLD_CAPS_VARIANT,
     HEAD_HOLD_CODE_ADDED, HEAD_HOLD_CURRENT, HEAD_HOLD_NO_FIT, HEAD_HOLD_ORGAN, HEAD_HOLD_RECENT, HEAD_HOLD_RESIDUE,
     HEAD_HOLD_REVIEW_BODY, HEAD_HOLD_UNDATED, HEAD_HOLD_DOUBLED, HEAD_HOLD_PLACEHOLDER_ID, HEAD_HOLD_SEAT_DROPPED,
-    HEAD_HOLD_TOP_STALE, HEAD_TOP_STALE_DAYS,
+    HEAD_HOLD_TOP_STALE, HEAD_TOP_STALE_DAYS, HEAD_WITHHELD_LINES, HEAD_WRAP_CONNECTORS,
     HEAD_RECENT_MIN_PROCEDURES, HEAD_SERVE_HOLDS, ORG_NAME_REFRESH_RELEASED_LISTED, ORG_NAME_REFRESH_SAMPLE_SALT, RecentReading,
     HeadElectFns, HeadElectOrg, HeadElection, HeadKeep,
     HeadRefreshEntry, HeadRule, HeadVerdict, ORG_NAME_REFRESH_APPLIED_SAMPLES, ORG_NAME_REFRESH_DRIFT_SAMPLES,
     ORG_NAME_REFRESH_LISTING_CAP, ORG_NAME_REFRESH_SPELLINGS, ORG_NAME_REFRESH_WINDOW, OrgNameRefreshApplied,
     OrgNameRefreshApplyArgs, OrgNameRefreshArgs, OrgNameRefreshDrift, OrgNameRefreshPlan, OrgNameRefreshRename,
     OrgNameRefreshReverted, OrgNameRefreshRevertArgs, OrgNameRefreshTarget, elect_head, elect_head_counted,
-    head_top_stale, head_top_stale_date, org_name_refresh_drift_limit,
+    head_control_only, head_line_wrap, head_lines_guard, head_top_stale, head_top_stale_date, head_wraps,
+    org_name_refresh_drift_limit,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;

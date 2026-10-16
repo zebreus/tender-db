@@ -263,8 +263,9 @@ fn serve_hold(old: &str, new: &str, _r2: bool) -> Option<&'static str> {
     (new.starts_with("Organ of ") && !old.starts_with("Organ of ")).then_some(store::HEAD_HOLD_ORGAN)
 }
 
+/// Stand-in for `crosswalk::head_tail_family` (rule v12): the family of the line's last word.
 const FNS: store::HeadElectFns =
-    store::HeadElectFns { vote_key: vote, not_a_name: class, unfit, hold, r2_hold, twin_key: twin, serve_hold };
+    store::HeadElectFns { vote_key: vote, not_a_name: class, unfit, hold, r2_hold, twin_key: twin, serve_hold, family };
 
 fn never() -> bool {
     false
@@ -576,11 +577,12 @@ async fn the_canaries_are_reported_whatever_their_verdict_and_paging_changes_not
 /// that sampled the oldest ids, or the listing, and ordered them by hash would pass. Eight orgs put
 /// the draw at `[8, 7]`, outside both, which keeps the test's point under the salt. Rule v10's epoch
 /// drew `[8, 3]` from the eight, so the listing is capped at 2 (`[1, 2]`), outside it again; rule v11's
-/// draws `[3, 8]`, still outside it.
+/// draws `[3, 8]`, still outside it. Rule v12's salt gives id 1 a small hash (it draws `[1, 4]` from ids
+/// 1–8, inside the listing), so the eight are ids 2–9: the listing is `[2, 3]` and the draw `[9, 4]`.
 #[tokio::test]
 async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
     let (db, conn) = open("ron-uniform").await;
-    for id in 1..=8i64 {
+    for id in 2..=9i64 {
         org(&conn, id, "DE", Some(format!("DE{id}").as_str()), "-", &[(format!("Firma {id}").as_str(), 2)]).await;
     }
     let r = db
@@ -589,13 +591,13 @@ async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
         .unwrap();
     assert_eq!(r.by_rule["R0n"], count(8, 16), "a blank head, R0n");
     let hash = |id: i64| (((id as u64) ^ store::ORG_NAME_REFRESH_SAMPLE_SALT).wrapping_mul(2_654_435_761) & 0xFFFF_FFFF, id);
-    let mut expected: Vec<i64> = (1..=8).collect();
+    let mut expected: Vec<i64> = (2..=9).collect();
     expected.sort_by_key(|&id| hash(id));
     expected.truncate(2);
-    assert_eq!(expected, vec![3, 8]);
-    assert_eq!(ids(&r.samples["change:R0n"]), expected, "smallest hash first, not 1 and 2 in id order");
+    assert_eq!(expected, vec![9, 4]);
+    assert_eq!(ids(&r.samples["change:R0n"]), expected, "smallest hash first, not 2 and 3 in id order");
     assert_eq!(r.samples_per_reason, 2);
-    assert_eq!(ids(&r.planned), vec![1, 2]);
+    assert_eq!(ids(&r.planned), vec![2, 3]);
     assert!(
         ids(&r.samples["change:R0n"]).iter().all(|id| !ids(&r.planned).contains(id)),
         "drawn from the whole class, not from the capped listing"
@@ -1316,7 +1318,7 @@ async fn the_planner_dates_its_candidates_and_holds_a_rename() {
     let (db, conn) = open("ron-dated").await;
     dated_corpus(&conn).await;
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v11");
+    assert_eq!(r.epoch, "524u2-v12");
     assert_eq!(r.by_hold.get("undated"), None, "a finished plan holds nothing undated");
     assert_eq!(r.by_hold.get("head_current"), None, "every head printed 3+ years before the plan");
     assert_eq!(r.by_hold["recent"], count(1, 11), "40, the rename");
@@ -1444,7 +1446,7 @@ async fn the_planner_counts_the_serve_holds_and_the_withheld_releases() {
         dated_org(&conn, id, head, &mentions).await;
     }
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v11");
+    assert_eq!(r.epoch, "524u2-v12");
     assert_eq!(r.by_hold["residue"], count(2, 12), "50 and 51 stay held under their v8 reason");
     assert_eq!(r.by_hold[store::HEAD_HOLD_ORGAN], count(1, 6), "53");
     assert_eq!(ids(&r.held), vec![50, 51, 53]);
@@ -1493,7 +1495,7 @@ async fn the_planner_holds_a_current_head_and_stores_its_as_of() {
     let before = crate_now();
     let r = plan(&db, 2_000, None, &[]).await;
     let after = crate_now();
-    assert_eq!(r.epoch, "524u2-v11");
+    assert_eq!(r.epoch, "524u2-v12");
     assert!(before <= r.as_of && r.as_of <= after, "as_of is the planner's start: {before} <= {} <= {after}", r.as_of);
     assert_eq!(r.as_of_date, store::rates::civil_date(r.as_of));
     assert_eq!(r.by_hold[store::HEAD_HOLD_CURRENT], count(1, 7), "60");
@@ -1598,7 +1600,7 @@ async fn the_planner_holds_a_stale_top_with_a_rival_and_the_wet_run_can_exclude_
         dated_org(&conn, id, head, &mentions).await;
     }
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v11");
+    assert_eq!(r.epoch, "524u2-v12");
     assert_eq!(r.by_hold[store::HEAD_HOLD_TOP_STALE], count(1, 8), "80");
     assert_eq!(r.by_hold.len(), 1);
     assert_eq!(ids(&r.held), vec![80]);
@@ -1629,4 +1631,72 @@ async fn the_planner_holds_a_stale_top_with_a_rival_and_the_wet_run_can_exclude_
     let w = db.apply_org_name_refresh(wet(targets(&r), 8)).await.unwrap();
     assert_eq!((w.ready, w.already, w.drifted, w.applied), (1, 1, 0, 1));
     assert_eq!(org_changes(&conn).await, vec![81, 82]);
+}
+
+// ---- Issue 524 rule v12 (issue 552): the lines guard and the wrap collapse, planned and applied.
+
+/// Rule v12 end to end: a control-only head the lines guard stops and whose break wraps is planned
+/// `R0w` (its own words, the break collapsed; `release_withheld: lines` on the entry, counted in
+/// `by_rule.R0w` and not in `release_withheld`); one whose break follows a legal form stays under its
+/// hold, counted `release_withheld.lines`; one the guard passes is released `unfit` as before. The wet
+/// run applies the R0w change under its own rule, and the re-plan HOLDS the written head on the same
+/// votes (the durability test, through the store): it is fit, and its vote key is the raw head's.
+#[tokio::test]
+async fn the_planner_plans_a_wrap_collapse_and_the_written_head_holds() {
+    let (db, conn) = open("ron-v12").await;
+    let today = crate_now() / DAY;
+    // Each head printed 400 and 399 days ago (within 3 years: head_current), the elected cluster newer.
+    let shape = |head: &'static str, elected: &'static str, tender: i64| {
+        let mut rows = spread(head, tender, today - 400, 2);
+        rows.extend(spread(elected, tender + 50, today - 300, 5));
+        rows
+    };
+    let wraps = "Rhine Port Chamber\nat the Ministry of Transport";
+    let branch = "Delta Works GmbH\nBranch Office North";
+    let street = "Echo Services\nHigh Street 5";
+    for (id, head, rows) in [
+        (90, wraps, shape(wraps, "Port Chamber Ministry of Transport", 9_000)),
+        (91, branch, shape(branch, "Delta Works Office North", 9_100)),
+        (92, street, shape(street, "Echo Services", 9_200)),
+    ] {
+        let mentions: Vec<(&str, &[(i64, i64)])> = rows.iter().map(|(name, v)| (*name, v.as_slice())).collect();
+        dated_org(&conn, id, head, &mentions).await;
+    }
+    let r = plan(&db, 2_000, None, &[]).await;
+    assert_eq!(r.epoch, "524u2-v12");
+    assert_eq!(ids(&r.planned), vec![90, 92]);
+    let (collapse, released) = (&r.planned[0], &r.planned[1]);
+    assert_eq!(
+        (collapse.verdict, collapse.reason, collapse.rule, collapse.new_name.as_deref()),
+        ("change", "R0w", Some("R0w"), Some("Rhine Port Chamber at the Ministry of Transport"))
+    );
+    assert_eq!((collapse.recent_released, collapse.release_withheld), (None, Some(store::HEAD_WITHHELD_LINES)));
+    assert_eq!(collapse.new_name_norm.as_deref(), Some(store::org_name_norm(wraps).as_str()), "name_norm does not move");
+    assert_eq!((released.reason, released.new_name.as_deref(), released.recent_released), ("R1", Some("Echo Services"), Some("unfit")));
+    assert_eq!(r.by_rule["R0w"], count(1, 7));
+    assert_eq!(r.by_rule["R1"], count(1, 7));
+    assert_eq!(ids(&r.held), vec![91]);
+    let held = &r.held[0];
+    assert_eq!((held.reason, held.new_name.as_deref(), held.release_withheld), ("head_current", Some("Delta Works Office North"), Some("lines")));
+    assert_eq!((r.release_withheld.len(), r.release_withheld["lines"], r.release_withheld_ids.clone()), (1, 1, vec![91]));
+    assert_eq!((r.recent_released.len(), r.recent_released["unfit"], r.recent_released_ids.clone()), (1, 1, vec![92]));
+    assert_eq!(ids(&r.samples["change:R0w"]), vec![90], "sampled per rule like every change");
+    // Wet: both planned changes apply, the collapse under its own rule.
+    let w = db.apply_org_name_refresh(wet(targets(&r), 7)).await.unwrap();
+    assert_eq!((w.ready, w.drifted, w.applied), (2, 0, 2));
+    let rows = ledger(&conn).await;
+    assert_eq!((rows[0][0].clone(), rows[0][2].clone(), rows[0][5].clone()), (Value::Integer(90), text("R0w"), text("Rhine Port Chamber at the Ministry of Transport")));
+    assert_eq!(org_changes(&conn).await, vec![90, 92]);
+    // The re-plan, on the same votes: the written head holds (head_current), never a change back or on.
+    let again = plan(&db, 2_000, None, &[]).await;
+    assert!(again.planned.is_empty(), "{:?}", ids(&again.planned));
+    assert_eq!(ids(&again.held), vec![90, 91]);
+    let written = &again.held[0];
+    assert_eq!(
+        (written.old_name.as_str(), written.reason, written.rule, written.new_name.as_deref()),
+        ("Rhine Port Chamber at the Ministry of Transport", "head_current", Some("R1"), Some("Port Chamber Ministry of Transport"))
+    );
+    assert_eq!((written.recent_released, written.release_withheld), (None, None));
+    assert_eq!(again.release_withheld["lines"], 1, "91 only");
+    assert!(!again.by_rule.contains_key("R0w"));
 }

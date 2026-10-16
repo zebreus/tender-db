@@ -287,6 +287,33 @@ Decided:
    filter (`exclude_stale_top`), which every wet run passes if the dated re-judge of the stale no-rival
    cell fails. Plan entries also carry `rival_newest`, the rival's newest print, which no verdict reads
    (for issue 548's direct supersede test).
+
+   **A head whose only defect is a line break is released only for its own lines, else served
+   collapsed when it wraps (rule `524u2-v12`, issue 552's decision of 2026-10-16, revised after the
+   adversarial check wf_0744b445-0ee).** Plan 2543's dated re-judge read 5 of its `unfit` junk releases
+   wrong, all five on heads whose only defect was control whitespace (a `\n`, `\r` or `\t`): the
+   release served a shorter sibling spelling (a review chamber without its Land, a school without its
+   patron and town) or a truncated or foreign one. So a CONTROL-ONLY head — `control` against itself,
+   its whitespace-collapsed form free of control characters and U+FFFD, and that form fit (or lower
+   case with no non-name class) — is released `unfit` from `recent`, `residue` or `head_current` only
+   when the elected key's tokens sit inside one of the head's lines' vote keys (lines split on the
+   characters that are both control and whitespace), or equal the union of a contiguous run of whole
+   lines. Otherwise the release is withheld (`release_withheld: lines`) and the hold stands. Such a
+   withheld head is instead CHANGED to itself with its whitespace collapsed (rule `R0w`) when it has a
+   break and every break is a WRAP: the line before ends in no legal form (the multi-token forms
+   included) and in no `,`, `;` or `:`, and its last word ends in an unspaced hyphen, or is a connector
+   word with no `.` (`und`, `of`, `z`, `και`, …), or the next line starts lower case — and when the
+   collapsed head would itself stay held: the junk exemption, asked of it against the same elected
+   key, does not release it (a bare number the elected key lacks would release it `digits` on the
+   next plan and serve the withheld spelling after all; then the `lines` hold stands). Only the bind
+   guards are asked of R0w (a reason holds it, as for (a)); the recency, residue, `head_current`,
+   `top_stale` and serve holds are not. No address is cut: the collapsed head keys as the raw head
+   (`head_vote_key` collapses whitespace), so it stays in its own cluster and the holds that protected
+   it keep standing on later plans; a cut would re-key it and lose them. Every other unfit head
+   (control plus `long`, control plus mojibake) releases as before. Every wet run passes
+   `exclude_rules: ["R2", "R0w"]` and keeps `exclude_released: ["unfit"]` until a dated re-judge of the
+   guard-passed releases and every R0w change passes. Accepted limit: an R0w head is fit, so once its
+   `head_current` lapses, v10's majority may again replace it (issue 548's over-blocking work).
 4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
    spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
    guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of

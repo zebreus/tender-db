@@ -172,7 +172,11 @@ Adopt (d) and (e) as one 524 epoch: rule v12, or folded into whatever epoch foll
    - it has at least one break, and every break is a wrap;
    - `c` passes the same fitness test as point 1;
    - no bind guard (`fns.hold`) names a reason, as for R0n. The recency, residue, `head_current`, `top_stale` and
-     serve holds are not asked.
+     serve holds are not asked;
+   - (added at unit 3's review) `c` would itself stay held: `recent_release(c, head key, elected key)` does not
+     release it. Otherwise a bare number the elected key lacks (`Szkoła Podstawowa nr 13\nw Tychach` against
+     `Szkoła Podstawowa w Tychach`) releases the written head `digits` on the next plan, and it changes R1 to the
+     spelling the guard withheld. Then the `lines` hold stands. The 4 real R0w rows all stay held.
 
    A break between line A and line B is a wrap when A does not end in a legal form (`HeadElectFns::family` reads a
    family on A's tail, multi-token forms such as `Sp. z o.o.` and `S.C.p.A.` included), A does not end in `,`, `;`
@@ -214,6 +218,8 @@ Not adopted:
 - 22354266 and 22650988: `long`, released `unfit`, the guard not asked.
 
 Add a synthetic pin for the legal-form clause: `X S.C.p.A.\nper il tramite …`, under 200 characters, is no wrap.
+Added at the review: `Szkoła Podstawowa nr 13\nw Tychach` against `Szkoła Podstawowa w Tychach` wraps but is no R0w
+(its collapse would be released `digits`), so it stays withheld `lines`.
 
 **Durability test.** Re-elect each R0w-written head on the same votes with a fresh elected date. It must come out a
 Hold, not a Change.

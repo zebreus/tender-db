@@ -176,7 +176,13 @@ within 3 years (1,095 days) before the job's plan; on the 55% and 25% arms, whil
 of the organization's names printed on its newest publication day; all three unless the head is unfit to serve
 for a reason other than being all lower case, or carries a standalone number the other name lacks while the other
 name drops at most one other word of it (a number the other name prints joined to a neighbouring
-word, `SMD 3` against `Smd3`, is the name's own); on the 55% arm, while a name other than the winning one and the
+word, `SMD 3` against `Smd3`, is the name's own); a head unfit only through a line break or a tab counts as unfit
+only when the other name's words lie inside one of its lines or are exactly those of a run of its whole lines, and a
+head held this way is instead served as its own words on one line when every break falls mid-phrase (the line before
+ends in an unspaced hyphen or a joining word such as `und`, `of` or `z`, or the next line starts lower case, and the
+line before does not end in a legal form, a comma, a semicolon or a colon) and the name on one line does not itself
+carry such a standalone number, unless that change would trip the legal-form, consortium, NHS or placeholder check
+above; on the 55% arm, while a name other than the winning one and the
 current head's also has votes and no notice printed the winning name (any spelling of it) within a year (365 days)
 before the job's plan (an undated one counts as not printed), unless one of those three holds was lifted for the head;
 on the 55% and 25% arms, when the change would serve a review body's name (a procurement review chamber or court) for
@@ -206,6 +212,22 @@ generic name by dropping its seat (`… w Kluczborku`), and every change of an o
 placeholder (`KEINEANGABE`, `UNBEKANNT`, `NICHTVORHANDEN`, all zeros) rather than a register number. The rename run
 can also leave out every 55% change not released as junk whose winning name (any spelling of it) is a year or more out
 of print, whatever the other names; the operator turns that on only if the dated review of that class fails.
+
+Rule v12 (2026-10-16, issue 552) narrows the junk release for a head whose only flaw is a line break or a tab inside
+the name. A dated review of one plan read five of its junk releases wrong, and all five were such heads: the change
+served a shorter or another spelling — a review chamber without its Land, a school without its patron and town, a
+ministry service as a bare acronym, a name cut mid-word. Such a head is now released only when the winning name's
+words lie inside one of its lines, or are exactly those of a run of its whole lines (`Landkreis Saalekreis` from
+`Landkreis Saalekreis` / `Domplatz 9` / `06217 Merseburg`); otherwise the hold that protected it stands. A head held
+this way whose every break falls mid-phrase is served as its own words on one line instead (`Szkoła Podstawowa nr 13`
+/ `z Oddziałami Dwujęzycznymi im. Jana III Sobieskiego w Tychach` becomes one line): the line before the break ends
+in a hyphen joined to its word (`Planungs-`) or a joining word (`und`, `of`, `z`, `και`, …), or the next line starts
+lower case, and the line before does not end in a legal form (`GmbH`, `Sp. z o.o.`, `S.C.p.A.`), a comma, a
+semicolon or a colon; and the name on one line does not carry a standalone number the winning name lacks (that
+would let a later run release it to the winning name after all). A head held this way whose break is not mid-phrase
+(after a legal form, or before an address, a branch, a person or a member list) keeps its line break for now. The
+name on one line has the same matching key as the head it replaces, so the holds that protected the head keep
+protecting it on later runs. Rename runs leave both changes out until a dated review of them passes.
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new

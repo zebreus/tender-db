@@ -340,7 +340,15 @@ arms, while the current head is the only one of the organization's names printed
 publication day; all three unless the head is unfit to serve for a reason other than being all lower
 case, or carries a standalone number the other name lacks while the other name drops at most
 one other word of it (a number the other name prints joined to a neighbouring word,
-<code>SMD 3</code> against <code>Smd3</code>, is the name's own); on the 55% arm, while a name
+<code>SMD 3</code> against <code>Smd3</code>, is the name's own); a head unfit only through a
+line break or a tab counts as unfit only when the other name's words lie inside one of its lines
+or are exactly those of a run of its whole lines, and a head held this way is instead served as
+its own words on one line when every break falls mid-phrase (the line before ends in an unspaced
+hyphen or a joining word such as <code>und</code>, <code>of</code> or <code>z</code>, or the next
+line starts lower case, and the line before does not end in a legal form, a comma, a semicolon or
+a colon) and the name on one line does not itself carry such a standalone number, unless that
+change would trip the legal-form, consortium, NHS or placeholder check above;
+on the 55% arm, while a name
 other than the winning one and the current head's also has votes and no notice printed the
 winning name (any spelling of it) within a year (365 days) before the job's plan (an undated one
 counts as not printed), unless one of those three holds was lifted for the head; on the 55% and
@@ -1263,6 +1271,11 @@ mod tests {
             // newest notice cancelled read `open` until that date passed.
             ("By submission deadline.", "status reads the newest notice too (issue 533)"),
             ("(by submission deadline)", "status reads the newest notice too (issue 533)"),
+            // Issue 533: its three field refolds ran (refold-fields 2563, project 2564, 2026-10-16), so
+            // the `dps` rows and the r2.0.9 `discontinued`/`unsuccessful` reasons are complete. The
+            // schema notes' and the OpenAPI classifications' pending caveats, retired.
+            ("until a fields refold reaches the rest", "the issue-533 field refolds ran, jobs 2563 and 2564 (issue 533)"),
+            ("once its field refolds have run", "the issue-533 field refolds ran, jobs 2563 and 2564 (issue 533)"),
         ];
         // Issue 534 review: an entry is only as good as its spelling. The `/docs` form
         // of the winner sentence, wrapped the way the page wraps prose, is caught.
@@ -1577,6 +1590,35 @@ mod tests {
             for needle in ["mention_name", "organization_name", "head", "identifier"] {
                 assert!(text.contains(needle), "{surface}'s parties text must name {needle:?}:\n{text}");
             }
+        }
+    }
+
+    /// Issue 552 (issue 524 rule v12): the served head-name rule carries its line-break clause on all
+    /// three surfaces — `/docs`'s Tender-detail section, the OpenAPI `Organization.name` and the
+    /// `organizations.name` schema note (the CHANGELOG repeats it, unserved). One phrase per part of the
+    /// clause, so dropping or rewording it on one surface fails here.
+    #[test]
+    fn the_docs_say_how_a_head_with_a_line_break_is_elected() {
+        let start = PAGE.find("<h2 id=\"detail\">").expect("/docs has a Tender-detail section");
+        let docs = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows the detail")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["schemas"]["Organization"]["properties"]["name"]["description"]
+            .as_str()
+            .expect("Organization.name is described");
+        let schema = crate::v1::sql::served_schema_notes();
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi), ("/v1/sql/schema", schema.as_str())] {
+            assert_says(
+                &format!("{surface}'s head-name rule"),
+                text,
+                &[
+                    "a head unfit only through a line break or a tab counts as unfit only when",
+                    "inside one of its lines or are exactly those of a run of its whole lines",
+                    "served as its own words on one line when every break falls mid-phrase",
+                    "the line before ends in an unspaced hyphen or a joining word such as und, of or z",
+                    "does not end in a legal form, a comma, a semicolon or a colon",
+                    "the name on one line does not itself carry such a standalone number",
+                ],
+            );
         }
     }
 

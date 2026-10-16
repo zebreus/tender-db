@@ -1897,6 +1897,59 @@ fn folded_family(name: &str, read: fn(&str) -> Option<&'static str>) -> Option<&
     })
 }
 
+/// Issue 552 (issue 524 rule `v12`): the legal forms a LINE may end in that [`family_token`] does not
+/// carry, each as [`head_tail_family`] reads a tail: its last words folded ([`fold_diacritics`]) and
+/// JOINED with every character that is not a letter or digit dropped (`S.C.p.A.` → `scpa`, `d.o.o.` →
+/// `doo`, `e. V.` → `ev`, `Sp. k.` → `spk`, `Α.Ε.` → `αε`, `Ges.m.b.H.` → `gesmbh`). Read only at a
+/// line's end, by the wrap test alone: a common word among them (`as`, `sa`) costs at most a wrap
+/// collapse not made (the line reads as complete), never a merge, a vote key or a veto. The reference
+/// regex of issue 552's decision (`scripts/decide_552_v2.py`'s `LEGAL_TAIL`) is covered: each of its
+/// forms is one of these, a [`family_token`] or a GB form, and each of its spaced spellings is at most
+/// five words (the longest, `S. C. a r. l.`), which [`head_tail_family`] joins whole.
+pub const HEAD_TAIL_FORMS: &[&str] = &[
+    // GB forms, abbreviated and spelled out (`gb_legal_family`'s): `Ltd`, `Public Limited Company`.
+    "ltd", "limited", "plc", "llp", "publiclimitedcompany", "limitedliabilitypartnership",
+    // German and Austrian: `GmbH & Co. KG` ends in `KG`; `Ges.m.b.H.`; partnerships, associations,
+    // cooperatives.
+    "gesmbh", "kg", "kgaa", "ohg", "ug", "ev", "eg", "gbr",
+    // Romance: S.A., S.L., S.L.U., S.C.p.A., S.C.a r.l., S.C.R.L., S.n.c., S.a.p.a., Lda.
+    "sa", "sl", "slu", "scpa", "scarl", "scrl", "snc", "sapa", "lda",
+    // English, Nordic, Slovenian/Croatian/Serbian, Greek (Latin and Greek letters), Bulgarian.
+    "inc", "corp", "as", "asa", "doo", "dd", "ae", "αε", "επε", "ικε", "οε", "ад", "еад", "оод", "еоод",
+    // Polish partnerships: Sp. k., Sp. j., Sp. p., S.K.A.
+    "spk", "spj", "spp", "ska",
+];
+
+/// Issue 552 (issue 524 rule `v12`): the legal form a LINE ends in, or `None` — the head election's
+/// wrap test (`store::HeadElectFns::family`) asks it of the line before each break of a
+/// control-whitespace head, and a line that ends in its legal form is a complete name, so the break
+/// after it is no wrap (22737299's `… Verkehrswesen GmbH\nHohenzollernstr. 18`, and `X S.C.p.A.\nper
+/// il tramite …`). The line's last k whitespace-separated words, k = 1 to 5, are joined as
+/// [`HEAD_TAIL_FORMS`] spells its entries; the first k whose join is a [`family_token`] or a
+/// [`HEAD_TAIL_FORMS`] entry answers (a [`family_token`] by its family, an entry as spelled). So the
+/// form ends the line — `Acme GmbH Niederlassung für` ends in none — and five words see the
+/// multi-token forms whole: `Sp. z o.o.` and `Sp. z o. o.` (`spzoo`), `spol. s r.o.` (`sro`), `S. à
+/// r.l.` (`sarl`), `GmbH & Co. KG` (`kg`), and the fully spaced `S. C. a r. l.` (`scarl`), the
+/// reference regex's longest. A last word with no letter or digit (a spaced ` -`) ends in
+/// no form. [`head_family`], [`legal_form_family`], [`family_token`], [`head_vote_key`] and
+/// [`NAME_KEY_EPOCH`] are read, never changed.
+pub fn head_tail_family(line: &str) -> Option<&'static str> {
+    let words: Vec<&str> = line.split_whitespace().collect();
+    if !words.last().is_some_and(|last| last.chars().any(char::is_alphanumeric)) {
+        return None;
+    }
+    let mut joined = String::new();
+    for word in words.iter().rev().take(5) {
+        let letters: String = fold_diacritics(word).chars().filter(|c| c.is_alphanumeric()).collect();
+        joined.insert_str(0, &letters);
+        let tail = family_token(&joined).or_else(|| HEAD_TAIL_FORMS.iter().copied().find(|form| *form == joined));
+        if tail.is_some() {
+            return tail;
+        }
+    }
+    None
+}
+
 // ---- Issue 524 rule v9: the serve holds (`## Rule v9 — decided`, panel wf_5cca11b1-622).
 
 /// Issue 524 rule `v9`: why an R1 or R2 change from `old` (the served head) to `new` (the display
@@ -2335,8 +2388,69 @@ fn caps_variant(old: &str, new: &str) -> bool {
 mod head_vote {
     use super::{
         NAME_KEY_EPOCH, altid_keys_agree, altid_name_key, family_token, fold_diacritics, head_change_hold, head_family,
-        head_r2_hold, head_spelling_unfit, head_twin_key, head_vote_key,
+        head_r2_hold, head_spelling_unfit, head_tail_family, head_twin_key, head_vote_key, legal_form_family,
     };
+
+    /// Issue 552 (issue 524 rule v12): the legal form a line ENDS in, read on its last 1–5 words joined
+    /// (letters and digits only) — the multi-token forms whole, the forms `family_token` lacks from
+    /// `HEAD_TAIL_FORMS`, and never a form a later word follows. The merge table, `head_family` and the
+    /// vote key do not move.
+    #[test]
+    fn a_lines_legal_form_tail_is_read_on_its_last_five_words() {
+        for (line, family) in [
+            ("Bauüberwachung im Verkehrswesen GmbH", "gmbh"),
+            ("Wolff & Müller Hoch- und Industriebau GmbH", "gmbh"),
+            ("BAUHAUF GmbH", "gmbh"),
+            ("MoreThanGood Sp. z o.o.", "spzoo"),
+            ("Adamietz Warszawa Sp. z o. o.", "spzoo"),
+            ("Ferrmont, spol. s r.o.", "sro"),
+            ("Acme S. à r.l.", "sarl"),
+            ("Acme S.à r.l.", "sarl"),
+            ("Società Acme S.p.A.", "spa"),
+            ("SRR Messina Provincia S.C.p.A.", "scpa"),
+            ("S.R.R. Messina Provincia s.c.p.a.", "scpa"),
+            ("WISAG Garten- & Landschaftspflege GmbH & Co. KG", "kg"),
+            ("Bauunternehmung Ges.m.b.H.", "gesmbh"),
+            ("Förderverein Musterstadt e. V.", "ev"),
+            ("Energetika Maribor d.o.o.", "doo"),
+            ("Dotación y Equipamiento, S. L.", "sl"),
+            ("Acme Polska Sp. z o.o. Sp. k.", "spk"),
+            ("KMS BUILDINGS Α.Ε.", "αε"),
+            ("Acme Holdings plc", "plc"),
+            ("Acme Holdings Ltd.", "ltd"),
+            ("Acme Public Limited Company", "publiclimitedcompany"),
+            // Five words: the reference regex's fully spaced `S. C. a r. l.` (the unit 3 review).
+            ("Acme S. C. A. R. L.", "scarl"),
+            ("Consorzio Acme S. C. a r. l.", "scarl"),
+            ("Acme S.C.A.R.L.", "scarl"),
+        ] {
+            assert_eq!(head_tail_family(line), Some(family), "{line:?}");
+        }
+        for line in [
+            "BPB - Büro für Planung und",
+            "Vergabekammer Rheinland-Pfalz",
+            "Szkoła Podstawowa nr 13",
+            "Zespół Szkół Centrum Kształcenia Rolniczego",
+            "Acme GmbH Niederlassung für",
+            "Acme Sp. z o.o. w",
+            "Acme s.r.o. v likvidaci",
+            "Υπουργείο Αγροτικής Ανάπτυξης και Τροφίμων (ΥΠΑΑΤ)",
+            "KMS BUILDINGS A.E. - ΚΤΗΡΙΑΚΑ ΜΕΤΑΛΛΙΚΑ",
+            "\"D.B.W. DROGI BUDOWY WYBURZENIA\" SPÓŁKA Z OGRANICZONĄ",
+            // A spaced dash after the form: the line ends in no form (the reference regex's reading).
+            "Acme GmbH -",
+            "",
+        ] {
+            assert_eq!(head_tail_family(line), None, "{line:?}");
+        }
+        // Read at a tail only: the merge table, the family and the vote key of a name are unchanged.
+        assert_eq!(family_token("scpa"), None);
+        assert_eq!(legal_form_family("SRR Messina Provincia S.C.p.A."), None);
+        assert_eq!(head_family("SRR Messina Provincia S.C.p.A."), None);
+        assert_eq!(head_vote_key("SRR Messina Provincia S.C.p.A."), "srr messina provincia scpa");
+        assert_eq!(head_vote_key("Acme GmbH & Co. KG"), "acme company kg");
+        assert_eq!(NAME_KEY_EPOCH, "n2v2+n3v1");
+    }
 
     /// Issue 524 rule v6's review: the vote key is whitespace-invariant. The election serves a display
     /// spelling with its whitespace collapsed, and `altid_name_key`'s trim matches its markers and its

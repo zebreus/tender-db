@@ -516,7 +516,8 @@ enum Spec {
     /// plan's pre-image, with an `org_name_refresh_log` row and one `organization changed` row
     /// (`store::Db::apply_org_name_refresh`). Refused without a plan, on a truncated one, or on one
     /// elected under another epoch or binary. `org_ids` scopes it to those planned ids; `max_groups`
-    /// caps the renames (the first by org id). Rule v9: `exclude_rules` (`R0e` `R0n` `R1` `R2`) and
+    /// caps the renames (the first by org id). Rule v9: `exclude_rules` (`R0e` `R0n` `R1` `R2`; rule v12
+    /// adds `R0w`, the wrap collapse) and
     /// `exclude_released` (`digits` `unfit`) drop the planned changes of those classes before the
     /// pre-pass (empty: none), so a class the dated re-judge failed is not applied, with no re-plan.
     /// Rule v11: `exclude_stale_top` (off unless the v11 re-judge's gate (a) fails) drops the planned
@@ -1270,7 +1271,8 @@ pub struct JobRequest {
     /// Every other kind ignores it, except that `revert-org-name-refresh` refuses it (it restores the whole job).
     pub org_ids: Option<Vec<i64>>,
     /// A WET `refresh-org-names` only (issue 524 rule v9, the per-class filters): drop the stored plan's
-    /// planned changes elected by these rules (`R0e`, `R0n`, `R1`, `R2`) before the pre-pass — the
+    /// planned changes elected by these rules (`R0e`, `R0n`, `R1`, `R2` and, since rule v12, `R0w`, the wrap
+    /// collapse) before the pre-pass — the
     /// pre-committed fallback when the dated re-judge's change:R2 list fails (`["R2"]`). Refused on a
     /// dry run, empty, with an unknown rule, or naming every rule; `revert-org-name-refresh` refuses
     /// it; every other kind ignores it.
@@ -1364,6 +1366,14 @@ struct RefreshCanary {
 ///   2857103 and 2715115 (stale tops with no rival: the exemption gate (a) tests) and 1800186 (a fresh
 ///   top with a rival above the head). 3042 stays `change:R1`: a release is exempt from `top_stale`
 ///   (its top, 2022-10-12, is stale and 4 clusters vote). 54 rows.
+/// - Rule v12 (issue 552; v11's rollout, step 4's re-point): wet job 2565 renamed v11's six fresh-top
+///   canaries 8765882, 5393731, 9856301, 7822785, 11268197 and 5011106 and the two stale no-rival tops
+///   2857103 and 2715115, so all eight read `keep:S1` (the six are new rows). Capped job 2567 renamed
+///   3042 and 1800186: `apply_org_name_refresh` sorts its targets by org id and keeps the first
+///   `max_groups` ready ones, 2567 read 15,994 ready, 0 drifted and 0 raced and renamed 500, and its
+///   applied samples reach org id 2,675,242, so every in-scope target below that id was renamed — both
+///   were planned `change:R1` in plan 2566 and neither filter dropped them. Both read `keep:S1`, and no
+///   canary expects `change:R1` any more. 60 rows.
 const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
     // The 2516 five, applied: keep:S1.
     RefreshCanary { id: 31_558_903, expect: Some("keep:S1"), serves: None },
@@ -1464,8 +1474,9 @@ const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
     RefreshCanary { id: 4_295_185, expect: Some("hold:residue"), serves: Some("Smd3") },
     RefreshCanary { id: 9_814, expect: Some("hold:residue"), serves: Some("Izrada šumskih sortimenata") },
     // Rule v9: a `digits` release kept (the window fires; `(68)` is the only number, no word lost).
-    // Rule v10: its head is current (2026-10-08), but the release ships it all the same.
-    RefreshCanary { id: 3_042, expect: Some("change:R1"), serves: Some("Hôpitaux civils de Colmar") },
+    // Rule v10: its head is current (2026-10-08), but the release ships it all the same. Rule v12:
+    // capped job 2567 renamed it (`Hôpitaux civils de Colmar`): keep:S1.
+    RefreshCanary { id: 3_042, expect: Some("keep:S1"), serves: None },
     // Rule v10: six judged-right R1 renames on heads not printed for 3+ years (plan 2527 planned each);
     // v10's wet canary step. Rule v11: job 2554 renamed all six, so they are live under the new names.
     RefreshCanary { id: 4_220_276, expect: Some("keep:S1"), serves: None },
@@ -1501,11 +1512,22 @@ const ORG_NAME_REFRESH_CANARIES: &[RefreshCanary] = &[
         expect: Some("hold:placeholder_id"),
         serves: Some("AOK PLUS - Die Gesundheitskasse für Sachsen und Thüringen"),
     },
-    // Rule v11: two stale tops with no rival (2 clusters; gate (a)'s cell, and step 4's wet canaries if
-    // it passes) and a fresh top with a rival above the head — all three ship.
-    RefreshCanary { id: 2_857_103, expect: Some("change:R1"), serves: Some("Itslearning Oy") },
-    RefreshCanary { id: 2_715_115, expect: Some("change:R1"), serves: Some("Lännen Tekstiilihuolto Oy") },
-    RefreshCanary { id: 1_800_186, expect: Some("change:R1"), serves: Some("Terveystalo Julkiset Palvelut Oy") },
+    // Rule v11: two stale tops with no rival (2 clusters; gate (a)'s cell, and step 4's wet canaries
+    // once it passed) and a fresh top with a rival above the head — all three shipped. Rule v12: wet job
+    // 2565 renamed 2857103 (`Itslearning Oy`) and 2715115 (`Lännen Tekstiilihuolto Oy`), and capped job
+    // 2567 renamed 1800186 (`Terveystalo Julkiset Palvelut Oy`): keep:S1.
+    RefreshCanary { id: 2_857_103, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 2_715_115, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 1_800_186, expect: Some("keep:S1"), serves: None },
+    // Rule v12: v11's six fresh-top R1 renames judged right, applied by wet job 2565 (`Kiesel Norge AS`,
+    // `Nodra AB`, `SKY & FACILITY s.r.o.`, `Parque Científico y Tecnológico Cartuja, S. A.`, `Centar za
+    // pružanje usluga u zajednici Osijek`, `Thage i Skåne AB`), live under the new names.
+    RefreshCanary { id: 8_765_882, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 5_393_731, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 9_856_301, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 7_822_785, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 11_268_197, expect: Some("keep:S1"), serves: None },
+    RefreshCanary { id: 5_011_106, expect: Some("keep:S1"), serves: None },
 ];
 
 /// Issue 524 unit 2a: the ingest side of the head election, as `store::elect_head` takes it.
@@ -1520,6 +1542,8 @@ fn head_elect_fns() -> store::HeadElectFns {
         // Rule v9: the planner and the wet pre-pass both take THIS value, so they ask the same serve
         // holds.
         serve_hold: ingest::crosswalk::head_serve_hold,
+        // Rule v12 (issue 552): the legal form a LINE ends in, for the wrap test of `R0w`.
+        family: ingest::crosswalk::head_tail_family,
     }
 }
 
@@ -1578,6 +1602,7 @@ fn org_name_refresh_json(plan: &store::OrgNameRefreshPlan, scope: Option<&[i64]>
                 "r2_hold": "ingest::crosswalk::head_r2_hold",
                 "twin_key": "ingest::crosswalk::head_twin_key",
                 "serve_hold": "ingest::crosswalk::head_serve_hold",
+                "tail_family": "ingest::crosswalk::head_tail_family",
                 "family": "ingest::crosswalk::head_family",
             }),
         );
@@ -1645,7 +1670,9 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
     );
     // Rule v9: each serve hold named, at zero too (so "none held" reads apart from "not built"), and the
     // digits releases v9 withheld, which stay under their v8 hold — the decision's accepted cost, listed
-    // for the re-judge like the releases (up to 500 ids in the report, 30 here).
+    // for the re-judge like the releases (up to 500 ids in the report, 30 here). Rule v12's `lines`
+    // withholdings share the map and the id list, so the clause names both kinds (the v12 clause counts
+    // `lines` again on its own).
     let serve_holds = store::HEAD_SERVE_HOLDS
         .iter()
         .map(|reason| format!("{reason} {}", plan.by_hold.get(reason).map_or(0, |c| c.orgs)))
@@ -1658,8 +1685,9 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
         String::new()
     };
     let v9 = format!(
-        "Rule v9: R1/R2 serve holds: {serve_holds}; digits releases withheld (held under their recent, \
-         residue or head_current hold, release_withheld): {} (ids {:?}{withheld_more}).",
+        "Rule v9: R1/R2 serve holds: {serve_holds}; releases withheld (digits, rule v9: glue, junk_only; \
+         control-only unfit, rule v12: lines; held under their recent, residue or head_current hold, \
+         release_withheld): {} (ids {:?}{withheld_more}).",
         tally(&plan.release_withheld),
         &plan.release_withheld_ids[..withheld_ids.min(RELEASED_SHOWN)],
     );
@@ -1681,10 +1709,21 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
         plan.by_hold.get(store::HEAD_HOLD_TOP_STALE).map_or(0, |c| c.orgs),
         plan.by_hold.get(store::HEAD_HOLD_PLACEHOLDER_ID).map_or(0, |c| c.orgs),
     );
+    // Rule v12 (issue 552): the control-only releases the lines guard withheld (held under their
+    // recent, residue or head_current hold) and the wrap collapses, each named at zero too.
+    let r0w = plan.by_rule.get(store::HeadRule::R0w.label()).copied().unwrap_or_default();
+    let v12 = format!(
+        "Rule v12: control-only unfit releases the lines guard withheld (release_withheld {}, held): {}; R0w wrap \
+         collapses (the head's own words, its line breaks collapsed): {} ({} mentions).",
+        store::HEAD_WITHHELD_LINES,
+        plan.release_withheld.get(store::HEAD_WITHHELD_LINES).copied().unwrap_or(0),
+        r0w.orgs,
+        r0w.mentions,
+    );
     format!(
         "refresh-org-names DRY (issue 524 unit 2a, rule {}): {} organization(s) and {} mention row(s) walked{}; \
          {} elected ({}+ mention rows; {} below), {} with an empty head. CHANGES {} ({} mentions; {} on merge \
-         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. {dated} {v9} {v10} {v11} \
+         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. {dated} {v9} {v10} {v11} {v12} \
          Listed {} planned{} and {} held{}. Family moves of the changes: {}. D4 keeps' ENG satellites: {}. \
          {} identifier-verdict probe(s). Canaries ({unexpected} unexpected): {}. NOTHING IS WRITTEN — a wet \
          run (`dry_run: false`, issue 524 unit 2b) applies this plan.",
@@ -1716,8 +1755,10 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
     )
 }
 
-/// Issue 524 rule v9: the change rules a wet `refresh-org-names` may exclude (`exclude_rules`).
-const ORG_NAME_REFRESH_EXCLUDABLE_RULES: [&str; 4] = ["R0e", "R0n", "R1", "R2"];
+/// Issue 524 rule v9: the change rules a wet `refresh-org-names` may exclude (`exclude_rules`). Rule
+/// v12 (issue 552) adds `R0w`, the wrap collapse: every wet run passes `"exclude_rules":["R2","R0w"]`
+/// until its re-judge passes.
+const ORG_NAME_REFRESH_EXCLUDABLE_RULES: [&str; 5] = ["R0e", "R0n", "R0w", "R1", "R2"];
 
 /// Issue 524 rule v9: the junk releases a wet `refresh-org-names` may exclude (`exclude_released`, a
 /// planned entry's `recent_released`).
@@ -22468,10 +22509,10 @@ mod tests {
         assert!(stoppable("refresh-org-names", &queued[0].params), "a cancel reaches the walk between pages");
         assert!(stoppable("refresh-org-names", &queued[2].params), "and the wet run between windows");
         assert!(stoppable("revert-org-name-refresh", &queued[4].params), "and the revert between windows");
-        // The 54 canaries (rule v11's nine on rule v10's 45 — v10's six on rule v9's 39, v9's nine on
-        // rule v8's 30, which kept the recency decision's 27), each id once.
+        // The 60 canaries (rule v12's six on rule v11's 54 — v11's nine on rule v10's 45, v10's six on
+        // rule v9's 39, v9's nine on rule v8's 30, which kept the recency decision's 27), each id once.
         let ids: std::collections::BTreeSet<i64> = ORG_NAME_REFRESH_CANARIES.iter().map(|c| c.id).collect();
-        assert_eq!((ids.len(), ORG_NAME_REFRESH_CANARIES.len()), (54, 54));
+        assert_eq!((ids.len(), ORG_NAME_REFRESH_CANARIES.len()), (60, 60));
         let expect = |id: i64| ORG_NAME_REFRESH_CANARIES.iter().find(|c| c.id == id).and_then(|c| c.expect);
         for id in [31_558_903, 22_713_056, 6_341_366, 760, 61, 10] {
             assert_eq!(expect(id), Some("keep:S1"), "{id}: applied by 2516, live under its new name");
@@ -22479,6 +22520,15 @@ mod tests {
         // Rule v11: the six v10 canaries, applied by job 2554, are live under their new names.
         for id in [4_220_276, 4_823_670, 8_092_631, 8_152_890, 9_766_149, 4_993_534] {
             assert_eq!(expect(id), Some("keep:S1"), "{id}: applied by 2554");
+        }
+        // Rule v12: v11's step-4 canaries, applied by job 2565 — the six fresh tops and two stale tops.
+        for id in [8_765_882, 5_393_731, 9_856_301, 7_822_785, 11_268_197, 5_011_106, 2_857_103, 2_715_115] {
+            assert_eq!(expect(id), Some("keep:S1"), "{id}: applied by 2565");
+        }
+        // Rule v12: v11's step 5, capped job 2567, renamed the first 500 ready targets by org id (up to
+        // past 2,675,242), 3042 and 1800186 among them.
+        for id in [3_042, 1_800_186] {
+            assert_eq!(expect(id), Some("keep:S1"), "{id}: applied by 2567");
         }
         // Rule v11: one canary per new hold, each naming the spelling it would serve (plan 2543's).
         for (id, reason) in [
@@ -22501,19 +22551,16 @@ mod tests {
             assert_eq!(expect(id), Some("hold:residue"), "{id}");
         }
         // Rule v10: v9's change:R1 canaries print their heads within 3 years of plan 2527, so seven hold
-        // `head_current` (with the spelling each would serve); 3042, a digits release, still changes
-        // (rule v11: a release is exempt from `top_stale`), and since rule v11 so do two stale tops with
-        // no rival (2857103, 2715115) and a fresh top with a rival (1800186).
+        // `head_current` (with the spelling each would serve); 3042, a digits release, still changed
+        // (rule v11: a release is exempt from `top_stale`), and so did a fresh top with a rival (1800186);
+        // rule v12: job 2567 renamed both (above), so no canary expects a change any more.
         for id in [1_220, 2_762, 3_406, 6_079, 11_179, 1_919, 791] {
             assert_eq!(expect(id), Some(format!("hold:{}", store::HEAD_HOLD_CURRENT).as_str()), "{id}");
             let canary = ORG_NAME_REFRESH_CANARIES.iter().find(|c| c.id == id).unwrap();
             assert!(canary.serves.is_some(), "{id}: the hold names the spelling it would serve");
         }
-        for id in [3_042, 2_857_103, 2_715_115, 1_800_186] {
-            assert_eq!(expect(id), Some("change:R1"), "{id}");
-        }
         let changes = ORG_NAME_REFRESH_CANARIES.iter().filter(|c| c.expect == Some("change:R1")).count();
-        assert_eq!(changes, 4, "the change:R1 canaries are 3042 and rule v11's three");
+        assert_eq!(changes, 0, "every change:R1 canary has been applied (3042 and 1800186 by job 2567)");
         // Rule v9: one canary per serve hold, each expecting the hold's reason by its store const.
         for (id, reason) in [
             (22_028_982, store::HEAD_HOLD_REVIEW_BODY),
@@ -22554,7 +22601,7 @@ mod tests {
             (strings(&["R3"]), None, "`exclude_rules` value \"R3\""),
             (strings(&["r2"]), None, "`exclude_rules` value \"r2\""),
             (None, strings(&["lowercase"]), "`exclude_released` value \"lowercase\""),
-            (strings(&["R0e", "R0n", "R1", "R2", "R2"]), None, "names every rule"),
+            (strings(&["R0e", "R0n", "R0w", "R1", "R2", "R2"]), None, "names every rule"),
         ] {
             let err = sup.enqueue_request(&ask(Some(false), rules, released)).await.expect_err(needle);
             assert!(err.contains(needle), "{needle}: {err}");
@@ -22848,7 +22895,7 @@ mod tests {
         assert!(plan["planned"][0]["top_newest"].is_null(), "{}", plan["planned"][0]);
         let msg = sup.run_spec(&wet_stale(5, &["R2"], &[], true)).await.expect("stale top and R2 filtered");
         for needle in [
-            "refresh-org-names WET (issue 524 unit 2b, rule 524u2-v11, job 5): 0 of the plan's 2 planned change(s) in scope.",
+            "refresh-org-names WET (issue 524 unit 2b, rule 524u2-v12, job 5): 0 of the plan's 2 planned change(s) in scope.",
             "Filters (rule v9, v11): exclude_rules=R2 exclude_stale_top=true — 2 planned change(s) in scope dropped before the pre-pass (1 by rule, 0 by junk release, 1 by stale top).",
             "RENAMED 0 head(s)",
         ] {
@@ -23104,7 +23151,8 @@ mod tests {
             "30914328 not found (reported)",
             // Rule v9's nine canaries are not seeded here either.
             r#"22028982 not found UNEXPECTED (want hold:review_body "Vergabekammer BW")"#,
-            r#"3042 not found UNEXPECTED (want change:R1 "Hôpitaux civils de Colmar")"#,
+            // Rule v12: 3042 and 1800186, renamed by job 2567, are keep:S1 (no spelling).
+            "3042 not found UNEXPECTED (want keep:S1)",
             // Rule v10: seven re-pointed to `hold:head_current`; v10's six change:R1 canaries, applied by
             // job 2554, are keep:S1 since rule v11 (no spelling).
             r#"1220 not found UNEXPECTED (want hold:head_current "Miasto Bielsko-Biała Urząd Miejski w Bielsku-Białej")"#,
@@ -23112,8 +23160,14 @@ mod tests {
             // Rule v11's nine are not seeded here either.
             r#"1556789 not found UNEXPECTED (want hold:top_stale "Instituto Navarro de Deporte y Juventud")"#,
             r#"22831984 not found UNEXPECTED (want hold:placeholder_id "AOK PLUS - Die Gesundheitskasse für Sachsen und Thüringen")"#,
-            r#"2857103 not found UNEXPECTED (want change:R1 "Itslearning Oy")"#,
-            "(50 unexpected)",
+            // Rule v12: job 2565's eight renames are keep:S1 (no spelling), the six fresh tops new rows.
+            "2857103 not found UNEXPECTED (want keep:S1)",
+            "8765882 not found UNEXPECTED (want keep:S1)",
+            "1800186 not found UNEXPECTED (want keep:S1)",
+            "(56 unexpected)",
+            // Rule v12's two counts, named at zero.
+            "Rule v12: control-only unfit releases the lines guard withheld (release_withheld lines, held): 0; R0w wrap \
+             collapses (the head's own words, its line breaks collapsed): 0 (0 mentions).",
             // Rule v7's and v8's counters: 334 is the one residue hold.
             "R1's recent hold: 0; R1/R2's residue hold: 1; undated 0 (MUST be 0)",
             "residue that still ships (planned changes whose org's newest procedure is the head's: R0, or released): none.",
@@ -23134,6 +23188,7 @@ mod tests {
             "{msg}"
         );
         assert_eq!(plan["fns"]["twin_key"], "ingest::crosswalk::head_twin_key");
+        assert_eq!(plan["fns"]["tail_family"], "ingest::crosswalk::head_tail_family", "rule v12");
         assert_eq!(plan["fns"]["r2_hold"], "ingest::crosswalk::head_r2_hold");
         assert_eq!(plan["fns"]["serve_hold"], "ingest::crosswalk::head_serve_hold", "rule v9");
         // Rule v9's counters, named at zero: no serve hold fires on these shapes, no release withheld.
@@ -23141,8 +23196,9 @@ mod tests {
         assert!(
             msg.contains(
                 "Rule v9: R1/R2 serve holds: review_body 0, organ 0, code_added 0, address_added 0, caps_variant 0, \
-                 doubled 0, seat_dropped 0; digits releases withheld (held under their recent, residue or \
-                 head_current hold, release_withheld): none (ids [])."
+                 doubled 0, seat_dropped 0; releases withheld (digits, rule v9: glue, junk_only; control-only \
+                 unfit, rule v12: lines; held under their recent, residue or head_current hold, \
+                 release_withheld): none (ids [])."
             ),
             "{msg}"
         );
@@ -23963,6 +24019,261 @@ mod tests {
         assert_eq!(e.recent.map(|r| (r.fires, r.released)), Some((true, Some("digits"))));
         assert!(store::head_top_stale(e.recent.unwrap().top_newest, as_of), "its top is stale");
         assert_eq!(e.verdict, change(colmar), "3042");
+    }
+
+    /// Issue 552 (issue 524 rule v12), unit 3's pins with the REAL ingest functions, on plan 2543's own
+    /// heads and listed spellings (`.scratch/tender-db/552-control-whitespace/cw_rows.json`; dates
+    /// synthetic, in the `head_current` shape plan 2543 released them from: every non-elected spelling
+    /// printed 2025-03-01, within 3 years of plan 2543's `as_of`, and the elected cluster 2026-09-01, a
+    /// fresh top). R0w: 22289866, 22661109, 22981989 and 23474998 change to the head collapsed.
+    /// Withheld `lines`, no R0w: 22737299 (`GmbH` ends line 2), 22862316 (`GmbH` ends line 1), 22299001
+    /// (a person's line), 22545991 and 22718921. The guard passes: 14770, 22216826, 22925490, 4040,
+    /// 22393047 and 22648679, released `unfit` as before. `long`, not asked: 22354266 and 22650988,
+    /// released `unfit` as before. Then the synthetic legal-form pin and the durability test: each
+    /// R0w-written head re-elected on the same votes with the fresh elected date HOLDS — and a wrapped
+    /// head whose collapse the junk exemption would release (`digits`) is no R0w at all.
+    #[test]
+    fn the_v12_pins_with_the_real_keys() {
+        use store::{DatedVote, HeadRule, HeadVerdict, elect_head_counted};
+        struct Pin {
+            org: i64,
+            kind: &'static str,
+            head: &'static str,
+            elected: &'static str,
+            votes: &'static [(&'static str, u64)],
+        }
+        let pins = [
+            // R0w
+            Pin { org: 22289866, kind: "R0w", head: "Vergabekammer Rheinland-Pfalz\nbei dem Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau", elected: "Vergabekammer Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau", votes: &[("Vergabekammer Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau", 18), ("Vergabekammer Rheinland-Pfalz\nbei dem Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau", 2), ("Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau", 2)] },
+            Pin { org: 22661109, kind: "R0w", head: "Szkoła Podstawowa nr 13\nz Oddziałami Dwujęzycznymi im. Jana III Sobieskiego w Tychach", elected: "Szkoła Podstawowa nr 13 z Oddziałami Dwujęzycznymi", votes: &[("Szkoła Podstawowa nr 13 z Oddziałami Dwujęzycznymi", 11), ("Szkoła Podstawowa nr 13\nz Oddziałami Dwujęzycznymi im. Jana III Sobieskiego w Tychach", 1)] },
+            Pin { org: 22981989, kind: "R0w", head: "Zespół Szkół Centrum Kształcenia Rolniczego\nim. Wł. St. Reymonta w Sokołowie Podlaskim", elected: "ZESPÓŁ SZKÓŁ CENTRUM KSZTAŁCENIA ROLNICZEGO IM. WŁADYSŁAWA STANISŁAWA REYMONTA W SOKOŁOWIE PODLASKIM", votes: &[("ZESPÓŁ SZKÓŁ CENTRUM KSZTAŁCENIA ROLNICZEGO IM. WŁADYSŁAWA STANISŁAWA REYMONTA W SOKOŁOWIE PODLASKIM", 9), ("Zespół Szkół Centrum Kształcenia Rolniczego\nim. Wł. St. Reymonta w Sokołowie Podlaskim", 2), ("Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Sokołowie Podlaskim", 2)] },
+            Pin { org: 23474998, kind: "R0w", head: "Zespół Szkół Centrum Kształcenia Rolniczego\nim. Władysława Stanisława Reymonta w Dobryszycach", elected: "Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Dobryszycach", votes: &[("Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Dobryszycach", 4), ("Zespół Szkół Centrum Kształcenia Rolniczego\nim. Władysława Stanisława Reymonta w Dobryszycach", 1)] },
+            // lines
+            Pin { org: 22737299, kind: "lines", head: "BPB - Büro für Planung und\nBauüberwachung im Verkehrswesen GmbH\nHohenzollernstr. 18\nD-56068 KOBLENZ", elected: "BPB Büro für Planung und Bauüberwac - im Verkehrswesen GmbH", votes: &[("BPB Büro für Planung und Bauüberwac - im Verkehrswesen GmbH", 4), ("BPB - Büro für Planung und\nBauüberwachung im Verkehrswesen GmbH\nHohenzollernstr. 18\nD-56068 KOBLENZ", 2)] },
+            Pin { org: 22862316, kind: "lines", head: "Wolff & Müller Hoch- und Industriebau GmbH\nZweigniederlassung Hamburg", elected: "Wolff & Müller Hoch- und Industriebau GmbH & Co. KG, ZNL HH", votes: &[("Wolff & Müller Hoch- und Industriebau GmbH & Co. KG, ZNL HH", 6), ("Wolff & Müller Hoch- und Industriebau GmbH\nZweigniederlassung Hamburg", 2)] },
+            Pin { org: 22299001, kind: "lines", head: "Stadt Remagen\nBürgermeister Björn Ingendahl", elected: "Stadt Remagen vertreten durch die Stadtverwaltung Remagen", votes: &[("Stadt Remagen vertreten durch die Stadtverwaltung Remagen", 24), ("Stadt Remagen\nBürgermeister Björn Ingendahl", 2)] },
+            Pin { org: 22545991, kind: "lines", head: "Υπουργείο Αγροτικής Ανάπτυξης και Τροφίμων (ΥΠΑΑΤ)\nΕιδική Υπηρεσία Διαχείρισης ΣΣ ΚΑΠ", elected: "ΕΥΔ ΣΣ ΚΑΠ", votes: &[("ΕΥΔ ΣΣ ΚΑΠ", 7), ("Υπουργείο Αγροτικής Ανάπτυξης και Τροφίμων (ΥΠΑΑΤ)\nΕιδική Υπηρεσία Διαχείρισης ΣΣ ΚΑΠ", 2), ("ΕΙΔΙΚΗ ΥΠΗΡΕΣΙΑ ΔΙΑΧΕΙΡΙΣΗΣ ΣΣ ΚΑΠ", 1)] },
+            Pin { org: 22718921, kind: "lines", head: "KMS BUILDINGS A.E. - ΚΤΗΡΙΑΚΑ ΜΕΤΑΛΛΙΚΑ\nΣΤΟΙΧΕΙΑ ΑΝΩΝΥΜΟΣ ΚΑΤΑΣΚΕΥΑΣΤΙΚΗ ΕΤΑΙΡΕΙΑ", elected: "«KMS BUILDINGS A.E. - ΚΤΗΡΙΑΚΑ ΜΕΤΑΛΛΙΚΑ ΣΤΟΙΧΕΙΑ ΑΝΩΝΥΜΟΣ ΚΑΤΑΣΚΕΥΑΣΤΙΚΗ ΕΤΑΙΡΕΙΑ» και με το διακριτικό τίτλο «ΚΜS BUILDINGS AE»", votes: &[("«KMS BUILDINGS A.E. - ΚΤΗΡΙΑΚΑ ΜΕΤΑΛΛΙΚΑ ΣΤΟΙΧΕΙΑ ΑΝΩΝΥΜΟΣ ΚΑΤΑΣΚΕΥΑΣΤΙΚΗ ΕΤΑΙΡΕΙΑ» και με το διακριτικό τίτλο «ΚΜS BUILDINGS AE»", 7), ("KMS BUILDINGS A.E. - ΚΤΗΡΙΑΚΑ ΜΕΤΑΛΛΙΚΑ\nΣΤΟΙΧΕΙΑ ΑΝΩΝΥΜΟΣ ΚΑΤΑΣΚΕΥΑΣΤΙΚΗ ΕΤΑΙΡΕΙΑ", 1), ("KMS BUILDINGS AE ΚΤΗΡΙΑΚΑ ΜΕΤΑΛΛΙΚΑ ΣΤΟΙΧΕΙΑ ΑΝΩΝΥΜΗ ΚΑΤΑΣΚΕΥΑΣΤΙΚΗ ΕΤΑΙΡΕΙΑ", 1)] },
+            // pass
+            Pin { org: 14770, kind: "pass", head: "Landkreis Saalekreis\nDomplatz 9\n06217 Merseburg", elected: "Landkreis Saalekreis", votes: &[("Landkreis Saalekreis", 152), ("Landkreis Saalekreis\nDomplatz 9\n06217 Merseburg", 46), ("Kreisverwaltung\nLandkreis Saalekreis", 12), ("Landkreis Saalekreis, Domplatz 9, 06217 Merseburg", 4), ("Kommunalverwaltung Landkreis Saalekreis", 2)] },
+            Pin { org: 22216826, kind: "pass", head: "Alexianer St. Hedwig-Kliniken Berlin GmbH - SHK\nc/o Alexianer Agamus GmbH", elected: "Alexianer St. Hedwig-Kliniken Berlin GmbH", votes: &[("Alexianer St. Hedwig-Kliniken Berlin GmbH", 66), ("Alexianer St. Hedwig-Kliniken Berlin GmbH - SHK \nc/o Alexianer Agamus GmbH", 8), ("Alexianer St. Hedwig Kliniken Berlin GmbH", 4), ("Alexianer St. Hedwig-Kliniken Berlin GmbH - SHK\nc/o Alexianer Agamus GmbH", 2), ("Klinikum Region Hannover GmbH", 2)] },
+            Pin { org: 22925490, kind: "pass", head: "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nImpel Defender Sp. z o.o.\nFM Integrated Solutions Sp. z o.o.", elected: "MoreThanGood Sp. z o.o.", votes: &[("MoreThanGood Sp. z o.o.", 4), ("MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.", 1), ("MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nImpel Defender Sp. z o.o.\nFM Integrated Solutions Sp. z o.o.", 1), ("MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nOmni Service Sp. z o.o.", 1)] },
+            Pin { org: 4040, kind: "pass", head: "Konsorcjum\nLider: WIMED Sp z o.o., Sp. K., \nPartner: BRUK-MAR F.H.U. MARCIN GĄSIOR,", elected: "WIMED Sp. z o.o., Sp. k.", votes: &[("WIMED Sp. z o.o., Sp. k.", 5), ("WIMED Sp. z o.o., Sp. K.", 3), ("WIMED Sp. z o.o.", 2), ("WIMED Sp. z o.o. Sp. K.", 2), ("Konsorcjum\nLider: WIMED Sp z o.o., Sp. K., \nPartner: BRUK-MAR F.H.U. MARCIN GĄSIOR,", 1)] },
+            Pin { org: 22393047, kind: "pass", head: "\"D.B.W. DROGI BUDOWY WYBURZENIA\" SPÓŁKA Z OGRANICZONĄ\nODPOWIEDZIALNOŚCIĄ", elected: "D.B.W. Drogi Budowy Wyburzenia sp. z o.o.", votes: &[("D.B.W. Drogi Budowy Wyburzenia sp. z o.o.", 2), ("\"D.B.W. DROGI BUDOWY WYBURZENIA\" SPÓŁKA Z OGRANICZONĄ\nODPOWIEDZIALNOŚCIĄ", 1), ("D.B.W. Drogi Budowy Wyburzenia Sp. z o. o.", 1)] },
+            Pin { org: 22648679, kind: "pass", head: "Amministrazione proponente: Comune di Sant’Antioco\nSede Municipale: Piazzetta Italo Diana, 1 -09017 – Sant’Antioco \nTel .0781 80301/2/3/4 - C.F. 81002570927 - P.I. 03109320923", elected: "COMUNE DI SANT ANTIOCO", votes: &[("COMUNE DI SANT ANTIOCO", 6), ("Amministrazione proponente: Comune di Sant’Antioco\nSede Municipale: Piazzetta Italo Diana, 1 -09017 – Sant’Antioco \nTel .0781 80301/2/3/4 - C.F. 81002570927 - P.I. 03109320923", 1)] },
+            // long
+            Pin { org: 22354266, kind: "long", head: "SRR Messina Provincia S.C.p.A.\nper il tramite della C.U.C. c/o Consorzio Tirreno Ecosviluppo 2000 Soc. Cons. a r.l., sede: Via Roma n. 7 Municipio - 98040 Venetico (ME) P. IVA 02129950834 - Tel. +39 090/9942498; e-mail: centrale@tirrenoecosviluppo.net; PEC: tirrenoecosviluppo@pec.it; web: www.tirrenoecosviluppo.it", elected: "S.R.R. Messina Provincia s.c.p.a.", votes: &[("S.R.R. Messina Provincia s.c.p.a.", 5), ("SRR Messina Provincia S.C.p.A.\nper il tramite della C.U.C. c/o Consorzio Tirreno Ecosviluppo 2000 Soc. Cons. a r.l., sede: Via Roma n. 7 Municipio - 98040 Venetico (ME) P. IVA 02129950834 - Tel. +39 090/9942498; e-mail: centrale@tirrenoecosviluppo.net; PEC: tirrenoecosviluppo@pec.it; web: www.tirrenoecosviluppo.it", 1)] },
+            Pin { org: 22650988, kind: "long", head: "Konsorcjum Firm: Adamietz Warszawa Sp. z o. o. (lider konsorcjum), ul. Pryzmaty 4a, 02-226 Warszawa, województwo mazowieckie, NIP: 5223240063, REGON: 523554452 \noraz EKSA Sp. z o.o. (partner konsorcjum), ul. Senatorska 21, 93-192 Łódź, województwo łódzkie\nNIP: 7270028041, REGON: 470524207", elected: "Adamietz Warszawa Sp. z o.o.", votes: &[("Adamietz Warszawa Sp. z o.o.", 12), ("ADAMIETZ WARSZAWA Sp. z o.o.", 1), ("ADAMIETZ Warszawa sp. z o.o.", 1), ("Konsorcjum Firm: Adamietz Warszawa Sp. z o. o. (lider konsorcjum), ul. Pryzmaty 4a, 02-226 Warszawa, województwo mazowieckie, NIP: 5223240063, REGON: 523554452 \noraz EKSA Sp. z o.o. (partner konsorcjum), ul. Senatorska 21, 93-192 Łódź, województwo łódzkie\nNIP: 7270028041, REGON: 470524207", 1)] },
+        ];
+        let fns = head_elect_fns();
+        let day = 86_400;
+        let as_of = 1_792_132_805; // plan 2543's
+        let (head_day, elected_day) = (20_148, 20_697); // 2025-03-01, 2026-09-01
+        assert_eq!(store::rates::civil_date(head_day * day), "2025-03-01");
+        assert_eq!(store::rates::civil_date(elected_day * day), "2026-09-01");
+        let key = ingest::crosswalk::head_vote_key;
+        let collapse = |s: &str| s.split_whitespace().collect::<Vec<_>>().join(" ");
+        // Every listed spelling dated, one item per vote: the elected cluster's on 2026-09-01 and back,
+        // every other cluster's (the head's included) on 2025-03-01 and back.
+        let dated = |pin: &Pin| -> Vec<DatedVote<'static>> {
+            let mut rows = Vec::new();
+            for (k, &(spelling, n)) in pin.votes.iter().enumerate() {
+                let newest = if key(spelling) == key(pin.elected) { elected_day } else { head_day };
+                for i in 0..n as i64 {
+                    rows.push(DatedVote { spelling, tender: k as i64 * 1_000 + i, at: (newest - i) * day });
+                }
+            }
+            rows
+        };
+        let elect = |votes: &[(&str, u64)], head: &str, rows: &[DatedVote<'_>]| {
+            let org = store::HeadElectOrg {
+                head,
+                identifier_kind: Some("national"),
+                identifier: Some("X1"),
+                bind_defect: false,
+                dated: Some(rows),
+                as_of,
+            };
+            elect_head_counted(votes, &org, &fns)
+        };
+        let current = |new: &str| HeadVerdict::Hold { reason: store::HEAD_HOLD_CURRENT, rule: HeadRule::R1, new: Some(new.into()) };
+        let mut seen = std::collections::BTreeMap::<&str, usize>::new();
+        for pin in &pins {
+            *seen.entry(pin.kind).or_default() += 1;
+            let rows = dated(pin);
+            let e = elect(pin.votes, pin.head, &rows);
+            let read = e.recent.expect("dated");
+            let c = collapse(pin.head);
+            let only = store::head_control_only(pin.head, &fns);
+            let id = pin.org;
+            match pin.kind {
+                "R0w" => {
+                    assert_eq!(only.as_deref(), Some(c.as_str()), "{id}");
+                    assert!(!store::head_lines_guard(pin.head, &key(pin.elected), &fns), "{id}: withheld");
+                    assert!(store::head_wraps(pin.head, &fns), "{id}: every break a wrap");
+                    assert_eq!(e.verdict, HeadVerdict::Change { rule: HeadRule::R0w, new: c.clone() }, "{id}");
+                    assert_eq!((read.released, read.release_withheld), (None, Some(store::HEAD_WITHHELD_LINES)), "{id}");
+                    assert_eq!(key(&c), key(pin.head), "{id}: the written head keys into its own cluster");
+                    // The durability test: the written head, on the same votes, the elected spelling
+                    // printed 2026-09-01: held (head_current), never changed back or on.
+                    let again = elect(pin.votes, &c, &rows);
+                    assert_eq!(again.verdict, current(pin.elected), "{id}: the R0w-written head holds");
+                    assert_eq!(again.recent.map(|r| (r.released, r.release_withheld)), Some((None, None)), "{id}");
+                }
+                "lines" => {
+                    assert_eq!(only.as_deref(), Some(c.as_str()), "{id}");
+                    assert!(!store::head_lines_guard(pin.head, &key(pin.elected), &fns), "{id}: withheld");
+                    assert!(!store::head_wraps(pin.head, &fns), "{id}: a break that is no wrap");
+                    assert_eq!(e.verdict, current(pin.elected), "{id}");
+                    assert_eq!((read.released, read.release_withheld), (None, Some(store::HEAD_WITHHELD_LINES)), "{id}");
+                }
+                "pass" => {
+                    assert_eq!(only.as_deref(), Some(c.as_str()), "{id}");
+                    assert!(store::head_lines_guard(pin.head, &key(pin.elected), &fns), "{id}: the guard passes");
+                    assert_eq!(e.verdict, HeadVerdict::Change { rule: HeadRule::R1, new: pin.elected.into() }, "{id}");
+                    assert_eq!((read.released, read.release_withheld), (Some("unfit"), None), "{id}");
+                }
+                "long" => {
+                    assert_eq!(only, None, "{id}: the guard is not asked");
+                    assert_eq!(ingest::crosswalk::head_spelling_unfit(&c, &c), Some("long"), "{id}");
+                    assert_eq!(e.verdict, HeadVerdict::Change { rule: HeadRule::R1, new: pin.elected.into() }, "{id}");
+                    assert_eq!((read.released, read.release_withheld), (Some("unfit"), None), "{id}");
+                }
+                other => panic!("{other}"),
+            }
+        }
+        assert_eq!(seen, [("R0w", 4), ("lines", 5), ("long", 2), ("pass", 6)].into_iter().collect());
+
+        // The synthetic legal-form pin: `X S.C.p.A.\nper il tramite …`, under 200 characters, withheld
+        // `lines`, and no wrap: its first line ends in its (multi-token) legal form. Without the form the
+        // same break wraps (the next line starts lower case).
+        let scpa = "SRR Messina Provincia S.C.p.A.\nper il tramite della C.U.C. di Venetico";
+        let plain = "SRR Messina Provincia\nper il tramite della C.U.C. di Venetico";
+        let elected = "S.R.R. Messina Venetico";
+        assert!(scpa.chars().count() < 200);
+        assert_eq!(ingest::crosswalk::head_tail_family("SRR Messina Provincia S.C.p.A."), Some("scpa"));
+        assert!(!store::head_line_wrap("SRR Messina Provincia S.C.p.A.", "per il tramite della C.U.C. di Venetico", &fns));
+        assert!(store::head_line_wrap("SRR Messina Provincia", "per il tramite della C.U.C. di Venetico", &fns));
+        for (head, want) in [
+            (scpa, current(elected)),
+            (plain, HeadVerdict::Change { rule: HeadRule::R0w, new: collapse(plain) }),
+        ] {
+            let votes = [(elected, 5), (head, 2)];
+            let rows = [
+                (0..5).map(|i| DatedVote { spelling: elected, tender: i, at: (elected_day - i) * day }).collect::<Vec<_>>(),
+                (0..2).map(|i| DatedVote { spelling: head, tender: 100 + i, at: (head_day - i) * day }).collect(),
+            ]
+            .concat();
+            assert!(store::head_control_only(head, &fns).is_some() && !store::head_lines_guard(head, &key(elected), &fns));
+            let e = elect(&votes, head, &rows);
+            assert_eq!(e.verdict, want, "{head:?}");
+            assert_eq!(e.recent.unwrap().release_withheld, Some(store::HEAD_WITHHELD_LINES), "{head:?}");
+        }
+
+        // The unit 3 review's shape: an R0w-written head must keep the raw head's hold. Here the head's
+        // key has a bare `13` the elected key lacks (not glued, no 3+-letter word lost), so the collapsed
+        // head would be released `digits` at the next plan and change R1 to the elected spelling the
+        // lines guard withheld. No R0w: the raw head stays held `head_current`, withheld `lines`.
+        let head = "Szkoła Podstawowa nr 13\nw Tychach";
+        let elected = "Szkoła Podstawowa w Tychach";
+        let votes = [(elected, 6), (head, 2)];
+        let rows = [
+            (0..6).map(|i| DatedVote { spelling: elected, tender: i, at: (elected_day - i) * day }).collect::<Vec<_>>(),
+            (0..2).map(|i| DatedVote { spelling: head, tender: 100 + i, at: (head_day - i) * day }).collect(),
+        ]
+        .concat();
+        assert!(store::head_control_only(head, &fns).is_some() && store::head_wraps(head, &fns));
+        assert!(!store::head_lines_guard(head, &key(elected), &fns));
+        let e = elect(&votes, head, &rows);
+        assert_eq!(e.verdict, current(elected), "no R0w on a head whose collapse would be released");
+        assert_eq!(e.recent.map(|r| (r.released, r.release_withheld)), Some((None, Some(store::HEAD_WITHHELD_LINES))));
+        let written = elect(&votes, &collapse(head), &rows);
+        assert_eq!(written.verdict, HeadVerdict::Change { rule: HeadRule::R1, new: elected.into() }, "the route it closes");
+        assert_eq!(written.recent.and_then(|r| r.released), Some("digits"));
+    }
+
+    /// Issue 524 rule v12: the summary names the control-only releases the lines guard withheld and the
+    /// R0w wrap collapses, at zero too; `R0w` is a rule the wet filters drop before the pre-pass, and
+    /// every wet run passes `"exclude_rules":["R2","R0w"]` with `"exclude_released":["unfit"]` until the
+    /// re-judge passes.
+    #[test]
+    fn the_v12_summary_names_lines_and_r0w_and_the_wet_filters_drop_r0w() {
+        let zero = org_name_refresh_summary(&store::OrgNameRefreshPlan::default(), None);
+        assert!(
+            zero.contains(
+                "Rule v12: control-only unfit releases the lines guard withheld (release_withheld lines, held): 0; R0w \
+                 wrap collapses (the head's own words, its line breaks collapsed): 0 (0 mentions)."
+            ),
+            "{zero}"
+        );
+        let mut plan = store::OrgNameRefreshPlan::default();
+        plan.release_withheld.insert(store::HEAD_WITHHELD_LINES, 21);
+        plan.by_rule.insert("R0w", store::HeadDriftCount { orgs: 4, mentions: 30 });
+        let line = org_name_refresh_summary(&plan, None);
+        assert!(line.contains("withheld (release_withheld lines, held): 21; R0w wrap collapses"), "{line}");
+        assert!(line.contains("its line breaks collapsed): 4 (30 mentions)."), "{line}");
+        assert!(line.contains("CHANGES 0 (0 mentions; 0 on merge survivors): R0w 4 (30 mentions)."), "{line}");
+        // The v9 clause reads the same `release_withheld` map: it names `lines` as rule v12's withholding,
+        // never as a digits release.
+        assert!(
+            line.contains(
+                "releases withheld (digits, rule v9: glue, junk_only; control-only unfit, rule v12: lines; held \
+                 under their recent, residue or head_current hold, release_withheld): lines 21 (ids [])."
+            ),
+            "{line}"
+        );
+        assert!(!line.contains("digits releases withheld"), "{line}");
+
+        let entry = |id: i64, rule: &str, released: Option<&str>| {
+            serde_json::json!({
+                "org_id": id, "verdict": "change", "rule": rule, "old_name": "Old", "old_name_norm": "old",
+                "new_name": "New", "recent_released": released,
+            })
+        };
+        let stored = serde_json::json!({
+            "epoch": store::HEAD_ELECTION_EPOCH, "rev": crate::v1::rev(), "stopped": false, "truncated": false,
+            "scope_ids": null, "by_hold": {}, "listing_cap": 100_000, "as_of": 1_792_108_800,
+            "planned": [entry(10, "R1", None), entry(11, "R0w", None), entry(12, "R1", Some("unfit")), entry(13, "R2", None)],
+        })
+        .to_string();
+        let owned = |v: &[&str]| v.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
+        let all = org_name_refresh_targets(&stored, 7, None, &[], &[], false).expect("no filter");
+        assert_eq!(all.targets.iter().map(|t| (t.org_id, t.rule.as_str())).collect::<Vec<_>>()[1], (11, "R0w"));
+        let v12 = org_name_refresh_targets(&stored, 7, None, &owned(&["R0w", "R2"]), &owned(&["unfit"]), false).expect("v12");
+        assert_eq!(v12.targets.iter().map(|t| t.org_id).collect::<Vec<_>>(), vec![10]);
+        assert_eq!((v12.excluded_by_rule, v12.excluded_by_release, v12.excluded_ids.clone()), (2, 1, vec![11, 12, 13]));
+        let r = store::OrgNameRefreshApplied { targets: 1, ready: 1, applied: 1, windows: 1, ..Default::default() };
+        let line = org_name_refresh_applied_summary(&r, 9, &v12, None);
+        assert!(
+            line.contains(
+                "Filters (rule v9): exclude_rules=R0w,R2 exclude_released=unfit — 3 planned change(s) in scope dropped \
+                 before the pre-pass (2 by rule, 1 by junk release)."
+            ),
+            "{line}"
+        );
+        assert_eq!(ORG_NAME_REFRESH_EXCLUDABLE_RULES, ["R0e", "R0n", "R0w", "R1", "R2"]);
+    }
+
+    /// Issue 524 rule v12 at enqueue: a wet run takes `R0w` in `exclude_rules` (sorted onto the params
+    /// line); naming all five rules is refused.
+    #[tokio::test]
+    async fn refresh_org_names_takes_r0w_in_exclude_rules() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ask = JobRequest {
+            kind: "refresh-org-names".into(),
+            dry_run: Some(false),
+            exclude_rules: Some(vec!["R2".into(), "R0w".into()]),
+            exclude_released: Some(vec!["unfit".into()]),
+            ..Default::default()
+        };
+        sup.enqueue_request(&ask).await.expect("the v12 wet filters");
+        assert_eq!(sup.queued()[0].params, "refresh-org-names wet exclude_rules=R0w,R2 exclude_released=unfit");
+        let every = JobRequest {
+            exclude_rules: Some(["R0e", "R0n", "R0w", "R1", "R2"].iter().map(|s| (*s).to_owned()).collect()),
+            ..ask
+        };
+        let err = sup.enqueue_request(&every).await.expect_err("every rule");
+        assert!(err.contains("names every rule"), "{err}");
     }
 
     /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a

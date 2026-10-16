@@ -518,7 +518,7 @@ pub(crate) const SCHEMA: &str = "
         org_id        INTEGER NOT NULL,
         at            INTEGER NOT NULL, -- unix seconds
         job_id        INTEGER,
-        rule          TEXT NOT NULL,    -- R0e | R0n | R1 | R2
+        rule          TEXT NOT NULL,    -- R0e | R0n | R0w | R1 | R2 (R0w: rule v12, issue 552)
         old_name      TEXT NOT NULL,
         old_name_norm TEXT,
         new_name      TEXT NOT NULL,

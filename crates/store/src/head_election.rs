@@ -67,8 +67,17 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// two serve holds join the five ([`HEAD_HOLD_DOUBLED`], [`HEAD_HOLD_SEAT_DROPPED`]) and a bind guard
 /// joins `head_change_hold`'s ([`HEAD_HOLD_PLACEHOLDER_ID`]); plan entries gain the diagnostic
 /// [`RecentReading::rival_newest`]; and a wet run may drop the stale-top targets
-/// ([`OrgNameRefreshApplyArgs::exclude_stale_top`], the decision's pre-built fallback).
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v11";
+/// ([`OrgNameRefreshApplyArgs::exclude_stale_top`], the decision's pre-built fallback). `v12` (issue
+/// 552 `## Unit 2 — decided`, after plan 2543's re-judge read all five wrong `unfit` releases on heads
+/// whose only defect is a line break): a CONTROL-ONLY head ([`head_control_only`]: unfit only through
+/// control whitespace) is released `unfit` from a `recent`, `residue` or `head_current` hold only when
+/// the elected key's tokens sit inside one of its lines' keys or equal a contiguous run of whole lines
+/// ([`head_lines_guard`]), else the release is withheld [`HEAD_WITHHELD_LINES`] and the hold stands;
+/// and such a withheld head whose every line break is a WRAP ([`head_wraps`]), and whose collapsed form
+/// the junk exemption would not release, changes to itself with its whitespace collapsed, rule
+/// [`HeadRule::R0w`] (no recency, residue, `head_current`, `top_stale` or serve hold asked; the bind
+/// guards are), whose vote key is the head's, so it stays in its own cluster and under its hold. [`HeadElectFns::family`] joins the injected functions for the wrap test.
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v12";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -207,6 +216,117 @@ pub fn head_top_stale_date(top_newest: Option<&str>, as_of: i64) -> bool {
     head_top_stale(top_newest.and_then(crate::rates::day_number).map(|day| day * 86_400), as_of)
 }
 
+/// Issue 524 rule `v12` (issue 552): the `release_withheld` reason when the junk exemption would have
+/// released a CONTROL-ONLY head `unfit` ([`head_control_only`]) and the lines guard
+/// ([`head_lines_guard`]) stops it: the elected key is neither inside one of the head's lines nor a
+/// contiguous run of whole lines, so the elected name is not the head's own words cut at a break
+/// (22289866 `Vergabekammer Rheinland-Pfalz\nbei dem Ministerium …` → a name without the Land; 22737299
+/// → a truncated `… Bauüberwac - im Verkehrswesen GmbH`). The `recent`, `residue` or `head_current`
+/// hold stands, unless every break is a wrap and the collapsed head would stay held: then
+/// [`HeadRule::R0w`].
+pub const HEAD_WITHHELD_LINES: &str = "lines";
+
+/// Issue 524 rule `v12` (issue 552, `## Unit 2 — decided` point 3): the connector words a line before
+/// a break may END in for the break to be a wrap ([`head_line_wrap`]) — a word with no `.`, compared
+/// lower-cased: German, English, Romance, Polish, Greek, Dutch, Czech and Slovak particles a name runs
+/// on after.
+pub const HEAD_WRAP_CONNECTORS: [&str; 38] = [
+    "und", "and", "de", "del", "della", "dei", "degli", "di", "du", "des", "der", "den", "of", "for", "für", "fur", "i",
+    "z", "w", "ze", "we", "e", "ed", "et", "y", "και", "του", "της", "των", "en", "van", "voor", "u", "na", "do", "od",
+    "a", "o",
+];
+
+/// Issue 524 rule `v12` (issue 552, `## Unit 2 — decided` point 1): the head with every whitespace run
+/// collapsed to one space when the head is CONTROL-ONLY — unfit against itself only through control
+/// whitespace — else `None`. All three must hold:
+/// - [`HeadElectFns::unfit`] reads the head against itself `control`;
+/// - the collapsed form `c` carries no control character and no U+FFFD (so the only control
+///   characters were whitespace: a line break, a tab);
+/// - `unfit(c, c)` is `None`, or is `lowercase` while [`HeadElectFns::not_a_name`] reads `c` as no
+///   class (the fitness test [`HeadRule::R0w`] asks of `c` too).
+///
+/// Every other unfit head (control plus `long`, control plus mojibake, a C1 control) is released
+/// `unfit` as before; a control-plus-lowercase head goes to the lines guard instead of bypassing rule
+/// v8's lower-case protection unasked. 22354266 (`… S.C.p.A.\nper il tramite …`, 315 characters
+/// collapsed) is `long` and not asked.
+pub fn head_control_only(head: &str, fns: &HeadElectFns) -> Option<String> {
+    if (fns.unfit)(head, head) != Some("control") {
+        return None;
+    }
+    let collapsed = collapse_whitespace(head);
+    collapsed_fit(&collapsed, fns).then_some(collapsed)
+}
+
+/// [`head_control_only`]'s fitness test of the collapsed head, and [`HeadRule::R0w`]'s.
+fn collapsed_fit(collapsed: &str, fns: &HeadElectFns) -> bool {
+    !collapsed.chars().any(|c| c.is_control() || c == '\u{FFFD}')
+        && match (fns.unfit)(collapsed, collapsed) {
+            None => true,
+            Some("lowercase") => (fns.not_a_name)(collapsed).is_none(),
+            Some(_) => false,
+        }
+}
+
+/// Issue 524 rule `v12`: a head's LINES — split on exactly the characters that are both control and
+/// whitespace (`\t`, `\n`, `\x0b`, `\x0c`, `\r`, `\x85`), each trimmed, empty ones dropped.
+fn head_lines(head: &str) -> Vec<&str> {
+    head.split(|c: char| c.is_control() && c.is_whitespace()).map(str::trim).filter(|line| !line.is_empty()).collect()
+}
+
+/// Issue 524 rule `v12` (issue 552, `## Unit 2 — decided` point 2): the LINES GUARD on a control-only
+/// head's `unfit` release — `true` (released) when the elected cluster's vote key `elected_key`, as a
+/// token set (split on spaces), is a subset of one line's [`HeadElectFns::vote_key`] tokens, or equals
+/// the union of the tokens of a contiguous run of whole lines; `false` (withheld,
+/// [`HEAD_WITHHELD_LINES`]) otherwise, and for an empty elected key. So the elected name may be the
+/// head's first line (14770 `Landkreis Saalekreis\nDomplatz 9\n06217 Merseburg` → `Landkreis
+/// Saalekreis`) or its lines rejoined, never a splice of words from several lines or a foreign wording.
+pub fn head_lines_guard(head: &str, elected_key: &str, fns: &HeadElectFns) -> bool {
+    if elected_key.is_empty() {
+        return false;
+    }
+    let elected: HashSet<&str> = elected_key.split(' ').collect();
+    let keys: Vec<String> = head_lines(head).into_iter().map(fns.vote_key).collect();
+    let lines: Vec<HashSet<&str>> = keys.iter().map(|key| key.split(' ').collect()).collect();
+    if lines.iter().any(|line| elected.is_subset(line)) {
+        return true;
+    }
+    (0..lines.len()).any(|from| {
+        let mut run: HashSet<&str> = HashSet::new();
+        lines[from..].iter().any(|line| {
+            run.extend(line.iter().copied());
+            run == elected
+        })
+    })
+}
+
+/// Issue 524 rule `v12` (issue 552, `## Unit 2 — decided` point 3): whether the break between line
+/// `a` and the next line `b` of a head is a WRAP — one name broken mid-phrase. `a` must not end in a
+/// legal form ([`HeadElectFns::family`] names none on its tail: `Sp. z o.o.`, `S.C.p.A.` and the other
+/// multi-token forms included) and must not end in `,`, `;` or `:`; and one of these holds:
+/// - `a`'s last word ends in a hyphen (`-` or `–`) with no space before it (`Planungs-`; a spaced
+///   ` -` is no wrap);
+/// - `a`'s last word has no `.` and is a connector ([`HEAD_WRAP_CONNECTORS`]);
+/// - `b` starts with a lower-case letter.
+pub fn head_line_wrap(a: &str, b: &str, fns: &HeadElectFns) -> bool {
+    let a = a.trim_end();
+    if (fns.family)(a).is_some() || a.ends_with([',', ';', ':']) {
+        return false;
+    }
+    let last = a.split_whitespace().last().unwrap_or_default();
+    let hyphen = last.chars().count() > 1 && last.ends_with(['-', '–']);
+    let connector = !last.contains('.') && HEAD_WRAP_CONNECTORS.contains(&last.to_lowercase().as_str());
+    hyphen || connector || b.chars().next().is_some_and(char::is_lowercase)
+}
+
+/// Issue 524 rule `v12`: whether a head has at least one line break and EVERY break is a wrap
+/// ([`head_line_wrap`] over each pair of consecutive [`head_lines`]) — [`HeadRule::R0w`]'s shape test.
+/// 22661109 `Szkoła Podstawowa nr 13\nz Oddziałami …` wraps; 22737299's second line ends in `GmbH`
+/// and 22299001's `Stadt Remagen\nBürgermeister …` starts a person's line, so neither does.
+pub fn head_wraps(head: &str, fns: &HeadElectFns) -> bool {
+    let lines = head_lines(head);
+    lines.len() >= 2 && lines.windows(2).all(|pair| head_line_wrap(pair[0], pair[1], fns))
+}
+
 /// Issue 524 rule `v7`: the fewest head procedures (k) the window fires at. At 2 the 2/3 bar means
 /// both newest items are the head's (2.2% by chance among 10 items, against 18% for 2 of 3).
 pub const HEAD_RECENT_MIN_PROCEDURES: u64 = 2;
@@ -256,7 +376,8 @@ pub struct RecentReading {
     /// or (rule `v10`) `head_current` hold stands: `glue` (every such number is glued to a
     /// neighbouring head word in the elected key: 4295185's `SMD 3` → `Smd3`, the name's own digit) or
     /// `junk_only` (the elected name also drops more than one word of 3+ letters the head prints:
-    /// 9814's owner and street).
+    /// 9814's owner and street); rule `v12`, an `unfit` release of a control-only head the lines guard
+    /// stops: [`HEAD_WITHHELD_LINES`] (on a hold, or on the [`HeadRule::R0w`] change it led to).
     pub release_withheld: Option<&'static str>,
 }
 
@@ -274,6 +395,17 @@ pub enum HeadRule {
     /// The head's cluster holds at most one vote, and a unique top cluster at least
     /// [`HEAD_ELECT_TOP_MIN`] and at least 25%.
     R2,
+    /// Rule `v12` (issue 552): the WRAP COLLAPSE — a control-only head ([`head_control_only`]) whose
+    /// `unfit` release the lines guard withheld ([`HEAD_WITHHELD_LINES`]) and whose every line break
+    /// is a wrap ([`head_wraps`]) changes to itself with its whitespace collapsed (22661109
+    /// `Szkoła Podstawowa nr 13\nz Oddziałami …` → one line), unless a bind guard
+    /// ([`HeadElectFns::hold`]) names a reason, which holds it as for R0n. No recency, residue,
+    /// `head_current`, `top_stale` or serve hold is asked. Its vote key is the head's
+    /// (`crosswalk::head_vote_key` collapses whitespace), so the written head stays in its own cluster;
+    /// and it is made only when the junk exemption would not release the collapsed head (no bare number
+    /// the elected key lacks, v8's `digits`), so the holds that protected it keep standing on later
+    /// plans. Otherwise the `lines` hold stands.
+    R0w,
 }
 
 impl HeadRule {
@@ -283,6 +415,7 @@ impl HeadRule {
             HeadRule::R0n => "R0n",
             HeadRule::R1 => "R1",
             HeadRule::R2 => "R2",
+            HeadRule::R0w => "R0w",
         }
     }
 }
@@ -332,6 +465,7 @@ pub enum HeadVerdict {
     /// `v9`) a serve hold's ([`HeadElectFns::serve_hold`]: [`HEAD_SERVE_HOLDS`]), for R1 (rule `v10`)
     /// [`HEAD_HOLD_CURRENT`], or for R1 (rule `v11`) [`HEAD_HOLD_TOP_STALE`] — with the spelling it would
     /// have served. Rule `v11`'s bind guard [`HEAD_HOLD_PLACEHOLDER_ID`] is one of [`HeadElectFns::hold`]'s.
+    /// Rule `v12`: a bind guard's reason on an [`HeadRule::R0w`] wrap collapse, with the collapsed head.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
 }
@@ -381,8 +515,9 @@ impl HeadVerdict {
 /// Issue 524 unit 2: the ingest functions [`elect_head`] runs with (store never depends on ingest). The
 /// app passes `crosswalk::head_vote_key`, `partyname::not_a_name` as its class label,
 /// `crosswalk::head_spelling_unfit`, `crosswalk::head_change_hold`, `crosswalk::head_r2_hold`,
-/// `crosswalk::head_twin_key` and (rule `v9`) `crosswalk::head_serve_hold` — one value, to the dry
-/// planner and the wet pre-pass alike, so they cannot elect differently.
+/// `crosswalk::head_twin_key`, (rule `v9`) `crosswalk::head_serve_hold` and (rule `v12`)
+/// `crosswalk::head_tail_family` — one value, to the dry planner and the wet pre-pass alike, so they
+/// cannot elect differently.
 #[derive(Clone, Copy)]
 pub struct HeadElectFns {
     /// The key mentions vote under: `altid_name_key` of the diacritic-folded name, with every
@@ -415,6 +550,12 @@ pub struct HeadElectFns {
     /// changes); the `recent`, `residue` and `undated` holds decide before it. `r2` is the rule. Pure:
     /// no DB read, so the plan and the pre-pass agree by construction.
     pub serve_hold: fn(&str, &str, bool) -> Option<&'static str>,
+    /// Issue 524 rule `v12` (issue 552): the legal form a LINE ends in, or `None`
+    /// (`crosswalk::head_tail_family`: the line's last words joined, the multi-token forms `Sp. z
+    /// o.o.` and `S.C.p.A.` included) — [`head_line_wrap`] reads no wrap after a line that ends in its
+    /// legal form. Not [`OrgNameRefreshArgs::family`], which reads a whole head's family for the plan's
+    /// family moves.
+    pub family: fn(&str) -> Option<&'static str>,
 }
 
 /// Issue 524 unit 2: the organization [`elect_head`] decides for.
@@ -536,6 +677,16 @@ struct Cluster<'a> {
 /// are never held by it. The serve holds' order (rule `v11`): the bind guards (with
 /// [`HEAD_HOLD_PLACEHOLDER_ID`], every rule), R2's initialism hold, then the seven serve holds.
 ///
+/// **The lines guard and the wrap collapse** (rule `v12`, issue 552): wherever the junk exemption is
+/// asked (the window, the residue holdout, `head_current`), a CONTROL-ONLY head ([`head_control_only`])
+/// is released `unfit` only when [`head_lines_guard`] passes — the elected key inside one line's key,
+/// or equal to a contiguous run of whole lines; otherwise the release is withheld
+/// ([`HEAD_WITHHELD_LINES`], read `release_withheld`) and the hold stands, unless the head has a break
+/// and every break is a wrap ([`head_wraps`]) and the junk exemption would not release the collapsed
+/// head (it must stay held on later plans): then it CHANGES to itself with its whitespace collapsed,
+/// rule [`HeadRule::R0w`] (a bind guard's reason holds that change, as for R0n), and no later hold
+/// (`head_current`, `top_stale`) or serve hold is asked. Every other unfit head releases as before.
+///
 /// The elected cluster serves its DISPLAY spelling: among the fit spellings only
 /// ([`HeadElectFns::unfit`], read on each spelling as published and on its collapsed form), each with
 /// its whitespace collapsed (trimmed, every run one space) and the spellings that collapse alike
@@ -626,7 +777,8 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
                 // Rule v9: the serve holds, for R1 and R2 only — R0's defective head always changes.
                 .or_else(|| match rule {
                     HeadRule::R1 | HeadRule::R2 => (fns.serve_hold)(org.head, &new, rule == HeadRule::R2),
-                    HeadRule::R0e | HeadRule::R0n => None,
+                    // R0w never reaches `serve` (`wrap_collapse` decides it).
+                    HeadRule::R0e | HeadRule::R0n | HeadRule::R0w => None,
                 });
             match held {
                 Some(reason) => HeadVerdict::Hold { reason, rule, new: Some(new) },
@@ -699,6 +851,10 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
                     // Rule v9: a release v8 would have made returns to the hold, read as withheld.
                     if let Junk::Withheld(why) = held {
                         read.release_withheld = Some(why);
+                        // Rule v12: a lines-withheld head whose every break is a wrap: R0w.
+                        if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], fns) {
+                            return counted(verdict, reading);
+                        }
                     }
                     let new = display_spelling(elected, org.head, fns);
                     return counted(HeadVerdict::Hold { reason: HEAD_HOLD_RECENT, rule, new }, reading);
@@ -717,6 +873,9 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
             held => {
                 if let Junk::Withheld(why) = held {
                     read.release_withheld = Some(why);
+                    if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], fns) {
+                        return counted(verdict, reading);
+                    }
                 }
                 let new = display_spelling(elected, org.head, fns);
                 return counted(HeadVerdict::Hold { reason: HEAD_HOLD_RESIDUE, rule, new }, reading);
@@ -737,6 +896,9 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
             held => {
                 if let Junk::Withheld(why) = held {
                     read.release_withheld = Some(why);
+                    if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], fns) {
+                        return counted(verdict, reading);
+                    }
                 }
                 let new = Some(new.clone());
                 return counted(HeadVerdict::Hold { reason: HEAD_HOLD_CURRENT, rule, new }, reading);
@@ -813,9 +975,41 @@ enum Junk {
     No,
     /// Junk (`unfit` | `digits`): released, the change goes on to `serve`, read `released`.
     Released(&'static str),
-    /// Rule `v9`: a `digits` release v8 would have made and v9 does not (`glue` | `junk_only`): the hold
-    /// stands, read `release_withheld`.
+    /// Rule `v9`: a `digits` release v8 would have made and v9 does not (`glue` | `junk_only`), or (rule
+    /// `v12`) an `unfit` release of a control-only head the lines guard stops ([`HEAD_WITHHELD_LINES`]):
+    /// the hold stands, read `release_withheld` — for `lines`, unless [`wrap_collapse`] answers.
     Withheld(&'static str),
+}
+
+/// Rule `v12` (issue 552): the WRAP COLLAPSE of a head whose release was withheld `why` — `Some` only
+/// for [`HEAD_WITHHELD_LINES`] on a control-only head ([`head_control_only`], whose collapsed form
+/// passes the fitness test) with a break and every break a wrap ([`head_wraps`]), and whose collapsed
+/// form would itself stay held: the junk exemption ([`recent_release`]) asked of it against the same
+/// `head_key` (the collapsed head keys as the raw one) and `elected_key` does not release it. A
+/// collapsed head with a bare number the elected key lacks (`Szkoła Podstawowa nr 13\nw Tychach`
+/// against `Szkoła Podstawowa w Tychach`) would be released `digits` at the next plan and change R1 to
+/// the very spelling the lines guard withheld, so its `lines` hold stands instead (the unit 3 review).
+/// Then a change to the collapsed head, rule [`HeadRule::R0w`], or a hold with it when a bind guard
+/// ([`HeadElectFns::hold`]) names a reason, as for R0n. No other hold is asked.
+fn wrap_collapse(
+    why: &'static str,
+    org: &HeadElectOrg<'_>,
+    head_key: &str,
+    elected_key: &str,
+    fns: &HeadElectFns,
+) -> Option<HeadVerdict> {
+    if why != HEAD_WITHHELD_LINES || !head_wraps(org.head, fns) {
+        return None;
+    }
+    let collapsed = head_control_only(org.head, fns)?;
+    // The written head must keep the hold the raw head had: never a two-step route around the guard.
+    if matches!(recent_release(&collapsed, head_key, elected_key, fns), Junk::Released(_)) {
+        return None;
+    }
+    Some(match (fns.hold)(org.head, &collapsed, org.identifier_kind, org.identifier) {
+        Some(reason) => HeadVerdict::Hold { reason, rule: HeadRule::R0w, new: Some(collapsed) },
+        None => HeadVerdict::Change { rule: HeadRule::R0w, new: collapsed },
+    })
 }
 
 /// The junk exemption (rule `v7`, narrowed by `v8` and `v9`, asked by `v10` too): whether a head the
@@ -839,10 +1033,22 @@ enum Junk {
 ///   acronym still releases (`SDIS 49` → `Service départemental …`). More is a different wording, not
 ///   a stripped template (9814's head names the owner, his town and street; plan 2526's Croatian
 ///   obrt cohort): `junk_only`.
+///
+/// Rule `v12` (issue 552) narrows `unfit` for a CONTROL-ONLY head ([`head_control_only`]: unfit only
+/// through control whitespace): released only when [`head_lines_guard`] passes on the elected key, else
+/// [`Junk::Withheld`] `lines` ([`HEAD_WITHHELD_LINES`]). Every other unfit head releases as before.
 fn recent_release(head: &str, head_key: &str, elected_key: &str, fns: &HeadElectFns) -> Junk {
     match (fns.unfit)(head, head) {
         // `unfit` answers `lowercase` before `non_name`: a lower-case non-name head still releases.
         Some("lowercase") if (fns.not_a_name)(head).is_none() => {}
+        // Rule v12: a head whose only defect is control whitespace releases through the lines guard.
+        Some("control") if head_control_only(head, fns).is_some() => {
+            return if head_lines_guard(head, elected_key, fns) {
+                Junk::Released("unfit")
+            } else {
+                Junk::Withheld(HEAD_WITHHELD_LINES)
+            };
+        }
         Some(_) => return Junk::Released("unfit"),
         None => {}
     }
@@ -1073,7 +1279,7 @@ pub struct HeadRefreshEntry {
     /// `keep` | `hold` | `change`.
     pub verdict: &'static str,
     /// The keep reason (`E1` `E2` `E3` `D4` `S1` `bar`), the hold reason, or the change's rule (`R0e`
-    /// `R0n` `R1` `R2`).
+    /// `R0n` `R1` `R2`, rule `v12`'s `R0w`).
     pub reason: &'static str,
     /// The rule of a change or a hold.
     pub rule: Option<&'static str>,
@@ -1122,8 +1328,9 @@ pub struct HeadRefreshEntry {
     pub newest_is_head: Option<bool>,
     pub undated_mentions: Option<u64>,
     pub recent_released: Option<&'static str>,
-    /// Rule `v9`: the `digits` release v9 withheld from this hold (`glue` | `junk_only`), `None`
-    /// otherwise ([`RecentReading::release_withheld`]).
+    /// Rule `v9`: the `digits` release v9 withheld from this hold (`glue` | `junk_only`), or (rule
+    /// `v12`) the control-only head's `unfit` release the lines guard withheld (`lines`, on its hold or
+    /// on the `R0w` change it led to), `None` otherwise ([`RecentReading::release_withheld`]).
     pub release_withheld: Option<&'static str>,
 }
 
@@ -1198,7 +1405,8 @@ pub struct OrgNameRefreshPlan {
     pub recent_released_ids: Vec<i64>,
     /// Rule `v9`: the HOLDS (in the population) whose `digits` release v9 withheld — v8 would have
     /// released them, so the `recent`, `residue` or (rule `v10`) `head_current` hold stands — by why
-    /// (`glue`, `junk_only`; see
+    /// (`glue`, `junk_only`; rule `v12`: `lines`, a control-only head's `unfit` release the lines guard
+    /// withheld — its `R0w` changes are changes, not counted here; see
     /// [`RecentReading::release_withheld`]), and the first [`ORG_NAME_REFRESH_RELEASED_LISTED`] of their
     /// ids by org id: the decision's accepted cost (plan 2526: 15 withheld, labelled 5 wrong, 2
     /// neutral, 8 right), listed so it can be read.
@@ -1230,8 +1438,8 @@ pub struct OrgNameRefreshPlan {
 pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 500;
 
 /// Issue 524 rule `v9`: the uniform samples' salt — the low 32 bits of FNV-1a 64 of
-/// [`HEAD_ELECTION_EPOCH`] (`524u2-v11`: 2,780,005,964; v10's `524u2-v10` was 2,780,006,399 and v9's
-/// `524u2-v9` 460,574,797). The
+/// [`HEAD_ELECTION_EPOCH`] (`524u2-v12`: 2,780,007,269; v11's `524u2-v11` was 2,780,005,964, v10's
+/// `524u2-v10` 2,780,006,399 and v9's `524u2-v9` 460,574,797). The
 /// protocol's dated re-judge reads "fresh" samples, and an unsalted hash makes every plan's class
 /// sample the same first ids: plan 2526's panel read the next 30 of each list ahead. Salted, each epoch draws anew, and a plan's samples stay
 /// reproducible from its epoch.
@@ -1800,7 +2008,7 @@ pub fn org_name_refresh_drift_limit(targets_read: u64) -> u64 {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OrgNameRefreshTarget {
     pub org_id: i64,
-    /// `R0e` | `R0n` | `R1` | `R2`: the rule the plan elected the change by.
+    /// `R0e` | `R0n` | `R1` | `R2` | (rule `v12`) `R0w`: the rule the plan elected the change by.
     pub rule: String,
     /// The pre-image the plan read: the compare-and-set's guard.
     pub old_name: String,
@@ -2123,7 +2331,9 @@ async fn read_readiness(
             // display spelling makes one) or `hold:head_current` (rule v10: the head printed within 3
             // years of the plan's `as_of` — a print since the plan), (rule v11) `hold:top_stale` (a new
             // rival cluster, or the elected spelling's dates read differently) or a v11 serve or bind
-            // hold is drifted like any other verdict that is not the plan's change.
+            // hold is drifted like any other verdict that is not the plan's change. Rule v12: an `R0w`
+            // target is ready when it re-elects `R0w` to the same collapsed head (its hold still
+            // withheld `lines`); a guard that now passes, or a hold that no longer fires, drifts it.
             match &election.verdict {
                 HeadVerdict::Change { rule, new } if rule.label() == target.rule && *new == target.new_name => {
                     match excluded_release(election.recent.as_ref().and_then(|r| r.released), exclude_released) {
@@ -2698,8 +2908,20 @@ mod tests {
         (new.starts_with("Organ of ") && !old.starts_with("Organ of ")).then_some(super::HEAD_HOLD_ORGAN)
     }
 
+    /// Stand-in for `crosswalk::head_tail_family` (rule v12): the line's last word, letters only, a
+    /// legal form.
+    fn tail(line: &str) -> Option<&'static str> {
+        let last: String = line.split_whitespace().last().unwrap_or("").chars().filter(|c| c.is_alphanumeric()).collect();
+        match last.to_lowercase().as_str() {
+            "gmbh" => Some("gmbh"),
+            "ltd" | "limited" => Some("ltd"),
+            "scpa" => Some("scpa"),
+            _ => None,
+        }
+    }
+
     const FNS: HeadElectFns =
-        HeadElectFns { vote_key: key, not_a_name: class, unfit, hold, r2_hold, twin_key: twin, serve_hold };
+        HeadElectFns { vote_key: key, not_a_name: class, unfit, hold, r2_hold, twin_key: twin, serve_hold, family: tail };
 
     /// Rule v10: the plan's `as_of` the rule tests before v10 elect with — day 40,000 (2079), long after
     /// every dated test item (days under 20,000), so no head is current and their meaning is v9's. The
@@ -3058,23 +3280,25 @@ mod tests {
 
     /// Rule v9 changed these values on purpose: the key is Knuth's hash of the id XOR the epoch's salt
     /// (FNV-1a 64 of the epoch, low 32 bits), so the dated re-judge's "fresh" samples are not the last
-    /// plan's predictable next 30. Rule v11's epoch `524u2-v11` draws anew (salt 2,780,005,964); v10's
-    /// `524u2-v10` salt was 2,780,006,399, its first three keys 1,744,442,526, 3,384,974,061 and
-    /// 4,011,601,370; v9's `524u2-v9` was 460,574,797 (keys 1,624,961,164, 998,333,855 and
+    /// plan's predictable next 30. Rule v12's epoch `524u2-v12` draws anew (salt 2,780,007,269); v11's
+    /// `524u2-v11` salt was 2,780,005,964, its first three keys 3,424,993,341, 1,784,461,806 and
+    /// 1,397,184,889; v10's `524u2-v10` was 2,780,006,399 (keys 1,744,442,526, 3,384,974,061 and
+    /// 4,011,601,370); v9's `524u2-v9` was 460,574,797 (keys 1,624,961,164, 998,333,855 and
     /// 3,892,120,008). Unsalted (v2–v8) they read 2,654,435,761, 1,013,904,226 and 387,276,917.
     #[test]
     fn the_sample_key_is_knuths_hash_of_the_salted_id_mod_two_to_the_32() {
-        assert_eq!(super::HEAD_ELECTION_EPOCH, "524u2-v11");
-        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_005_964);
-        assert_eq!(super::epoch_salt("524u2-v11"), 2_780_005_964);
+        assert_eq!(super::HEAD_ELECTION_EPOCH, "524u2-v12");
+        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_007_269);
+        assert_eq!(super::epoch_salt("524u2-v12"), 2_780_007_269);
+        assert_eq!(super::epoch_salt("524u2-v11"), 2_780_005_964, "v11's salt, as plans 2562 and 2566 drew it");
         assert_eq!(super::epoch_salt("524u2-v10"), 2_780_006_399, "v10's salt, as plan 2543 drew it");
         assert_eq!(super::epoch_salt("524u2-v9"), 460_574_797, "v9's salt, as plan 2527 drew it");
-        assert_ne!(super::epoch_salt("524u2-v10"), super::ORG_NAME_REFRESH_SAMPLE_SALT, "each epoch its own draw");
-        assert_eq!(sample_key(1), (3_424_993_341, 1));
-        assert_eq!(sample_key(2), (1_784_461_806, 2));
-        assert_eq!(sample_key(5), (1_397_184_889, 5));
-        assert_eq!(sample_key(31_558_903), (469_290_571, 31_558_903));
-        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_005_964) * 2_654_435_761) % (1 << 32));
+        assert_ne!(super::epoch_salt("524u2-v11"), super::ORG_NAME_REFRESH_SAMPLE_SALT, "each epoch its own draw");
+        assert_eq!(sample_key(1), (411_149_348, 1));
+        assert_eq!(sample_key(2), (4_079_489_335, 2));
+        assert_eq!(sample_key(5), (2_678_308_192, 5));
+        assert_eq!(sample_key(31_558_903), (514_407_922, 31_558_903));
+        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_007_269) * 2_654_435_761) % (1 << 32));
     }
 
     // ---- Rule v7: the R1 recency hold (the recency decision's tests 1-12).
@@ -4046,5 +4270,182 @@ mod tests {
         assert!(!super::excluded_stale_top(true, HeadRule::R1, Some(&read(Some(on("2026-10-01")), None)), as_of), "fresh");
         assert!(super::excluded_stale_top(true, HeadRule::R1, Some(&read(None, None)), as_of), "undated");
         assert!(super::excluded_stale_top(true, HeadRule::R1, None, as_of), "no reading");
+    }
+
+    // ---- Rule v12 (issue 552): the lines guard on a control-only head's release, and the wrap collapse.
+
+    fn r0w(new: &str) -> HeadVerdict {
+        HeadVerdict::Change { rule: HeadRule::R0w, new: new.to_owned() }
+    }
+
+    /// Point 1: a head is control-only when it reads `control` against itself, its collapsed form
+    /// carries no control character or U+FFFD, and that form is fit (or lower-case and no non-name).
+    #[test]
+    fn a_control_only_heads_one_defect_is_control_whitespace() {
+        use super::head_control_only;
+        assert_eq!(head_control_only("Acme\nServices", &FNS).as_deref(), Some("Acme Services"));
+        assert_eq!(head_control_only(" Acme\r\n\tServices \u{85}", &FNS).as_deref(), Some("Acme Services"));
+        assert_eq!(head_control_only("acme\nservices", &FNS).as_deref(), Some("acme services"), "lower-case goes to the guard");
+        assert_eq!(head_control_only("Acme\u{8c}Services", &FNS), None, "a C1 control is no whitespace");
+        assert_eq!(head_control_only("Acme\n\u{fffd}Services", &FNS), None, "U+FFFD survives the collapse");
+        assert_eq!(head_control_only("s.o.\n", &FNS), None, "a lower-case non-name once collapsed");
+        assert_eq!(head_control_only("Acme Services", &FNS), None, "no control character");
+        assert_eq!(super::HEAD_WITHHELD_LINES, "lines");
+        assert_eq!(HeadRule::R0w.label(), "R0w");
+    }
+
+    /// Point 2: the lines guard — the elected key inside one line's key, or equal to the union of a
+    /// contiguous run of whole lines. Lines split on the characters that are control AND whitespace,
+    /// never on a no-break space.
+    #[test]
+    fn the_lines_guard_passes_one_line_or_a_run_of_whole_lines() {
+        use super::head_lines_guard as guard;
+        let head = "Landkreis Saalekreis\nDomplatz 9\n06217 Merseburg";
+        assert!(guard(head, &key("Landkreis Saalekreis"), &FNS), "its first line");
+        assert!(guard(head, &key("Saalekreis"), &FNS), "a subset of one line");
+        assert!(guard(head, &key("Landkreis Saalekreis Domplatz 9"), &FNS), "lines 1-2 whole");
+        assert!(guard(head, &key("Domplatz 9 06217 Merseburg"), &FNS), "lines 2-3 whole");
+        assert!(!guard(head, &key("Landkreis Saalekreis Merseburg"), &FNS), "a splice of lines 1 and 3");
+        assert!(!guard(head, &key("Landkreis Saalekreis Domplatz"), &FNS), "line 1 and part of line 2");
+        assert!(!guard(head, &key("Kreisverwaltung Halle"), &FNS), "foreign");
+        assert!(!guard(head, "", &FNS), "an empty elected key");
+        for split in ["\t", "\r\n", "\u{b}", "\u{c}", "\u{85}"] {
+            assert!(guard(&format!("Acme Group{split}High Street 5"), &key("Acme Group"), &FNS), "{split:?}");
+        }
+        assert_eq!(super::head_lines(" A\tB \r\n\r\nC\u{85}D\u{b}E\u{c}F "), vec!["A", "B", "C", "D", "E", "F"]);
+        assert_eq!(super::head_lines("Acme Group\u{a0}High Street 5"), vec!["Acme Group\u{a0}High Street 5"], "a no-break space is no break");
+        assert_eq!(super::head_lines("Acme\u{8c}Group"), vec!["Acme\u{8c}Group"], "a C1 control that is no whitespace");
+    }
+
+    /// Point 3: a break is a wrap when the line before it ends in no legal form and no `,` `;` `:`,
+    /// and its last word ends in an unspaced hyphen, or is a connector with no `.`, or the next line
+    /// starts lower-case.
+    #[test]
+    fn a_wrap_is_an_unspaced_hyphen_a_connector_or_a_lower_case_next_line() {
+        use super::{head_line_wrap as wrap, head_wraps};
+        assert!(wrap("Vergabekammer Rheinland-Pfalz", "bei dem Ministerium", &FNS), "lower-case next line");
+        assert!(wrap("BPB - Büro für Planung und", "Bauüberwachung", &FNS), "a connector");
+        assert!(wrap("Gesellschaft für", "Planung", &FNS) && wrap("Office FOR", "Planning", &FNS), "case-insensitive");
+        assert!(wrap("Ingenieurbüro Planungs-", "Gesellschaft", &FNS), "an unspaced hyphen");
+        assert!(wrap("Ingenieurbüro Planungs–", "Gesellschaft", &FNS), "an unspaced en dash");
+        assert!(!wrap("Acme -", "Bau", &FNS), "a spaced dash");
+        assert!(!wrap("Acme Bau u.", "Partner", &FNS), "a connector with a dot is an abbreviation");
+        assert!(!wrap("Stadt Remagen", "Bürgermeister Björn Ingendahl", &FNS), "a person's line");
+        assert!(!wrap("Acme Works GmbH", "zweigniederlassung", &FNS), "after a legal form");
+        assert!(!wrap("X S.C.p.A.", "per il tramite della C.U.C.", &FNS), "after a multi-token legal form");
+        for end in [",", ";", ":"] {
+            assert!(!wrap(&format!("Acme und{end}"), "bau", &FNS), "{end}");
+        }
+        assert!(head_wraps("Szkoła Podstawowa nr 13\nz Oddziałami", &FNS));
+        assert!(!head_wraps("Acme Group\n", &FNS), "no break");
+        assert!(!head_wraps("BPB - Büro für Planung und\nBauüberwachung GmbH\nHohenzollernstr. 18", &FNS), "one break is no wrap");
+    }
+
+    /// The release paths: a control-only head the guard passes is released `unfit` (R1); one it stops
+    /// whose breaks do not all wrap stays under its hold, read `release_withheld: lines`; one whose every
+    /// break wraps changes to itself collapsed, R0w — from the window, the residue holdout and
+    /// `head_current` alike, with `release_withheld: lines` read and no release counted.
+    #[test]
+    fn a_lines_withheld_head_that_wraps_changes_to_itself_collapsed() {
+        // Released: the elected name is the head's first line.
+        let first = forward("Acme Group\nHigh Street 5", "Acme Group");
+        let e = dated_at(&first, "Acme Group\nHigh Street 5", 20 * DAY);
+        assert_eq!((e.verdict, e.recent.unwrap().released), (r1("Acme Group"), Some("unfit")));
+        // Withheld, no wrap (the first line ends in its legal form): head_current stands.
+        let branch = forward("Acme Works GmbH\nBranch Office North", "Acme Works Office North");
+        let e = dated_at(&branch, "Acme Works GmbH\nBranch Office North", 20 * DAY);
+        assert_eq!(e.verdict, current("Acme Works Office North"));
+        assert_eq!((e.recent.unwrap().released, e.recent.unwrap().release_withheld), (None, Some("lines")));
+        // Withheld and every break a wrap: R0w, from each of the three holds.
+        let (head, elected) = ("Vergabekammer Rheinland\nbei dem Ministerium Wirtschaft", "Vergabekammer Ministerium Wirtschaft");
+        let collapsed = "Vergabekammer Rheinland bei dem Ministerium Wirtschaft";
+        let e = dated_at(&forward(head, elected), head, 20 * DAY);
+        assert_eq!(e.verdict, r0w(collapsed), "head_current's");
+        assert_eq!((e.recent.unwrap().released, e.recent.unwrap().release_withheld), (None, Some("lines")));
+        let window = [items(elected, 1, 1, 8), items(head, 101, 100, 3)].concat();
+        let e = dated(&window, head);
+        assert_eq!((e.recent.unwrap().fires, e.verdict.clone()), (true, r0w(collapsed)), "the window's");
+        let stray = [items(elected, 1, 1, 5), items(head, 100, 100, 1)].concat();
+        let e = dated(&stray, head);
+        assert_eq!((e.recent.unwrap().newest_is_head, e.verdict.clone()), (true, r0w(collapsed)), "the residue holdout's");
+        // A control-plus-lowercase head goes to the guard: it wraps, so R0w serves its own words.
+        let lower = forward("acme services\nlimited liability", "Acme Group");
+        assert_eq!(dated_at(&lower, "acme services\nlimited liability", 20 * DAY).verdict, r0w("acme services limited liability"));
+        // A C1 control is no control-only head: released `unfit` as before v12.
+        let c1 = forward("Acme\u{8c}Services", "Acme Group");
+        assert_eq!(dated_at(&c1, "Acme\u{8c}Services", 20 * DAY).verdict, r1("Acme Group"));
+        // R0 never asks the exemption, and an S1 head is kept: neither reaches R0w.
+        let own = [items(head, 1, 1, 5), items(elected, 100, 10, 2)].concat();
+        assert_eq!(dated_at(&own, head, 20 * DAY).verdict, HeadVerdict::Keep(HeadKeep::S1));
+    }
+
+    /// R0w asks the bind guards (a reason holds it, as for R0n, with the collapsed head) and nothing
+    /// after: a rival on a stale top does not hold it `top_stale`.
+    #[test]
+    fn r0w_asks_the_bind_guards_and_no_later_hold() {
+        let (head, elected) = ("Vergabekammer Rheinland\nbei dem Ministerium Wirtschaft", "Vergabekammer Ministerium Wirtschaft");
+        let collapsed = "Vergabekammer Rheinland bei dem Ministerium Wirtschaft";
+        let placeholder = HeadElectFns {
+            hold: |_, _, _, identifier| (identifier == Some("KEINEANGABE")).then_some(super::HEAD_HOLD_PLACEHOLDER_ID),
+            ..FNS
+        };
+        // The window's hold (asked before `serve`, so no bind guard has answered yet).
+        let rows = [items(elected, 1, 1, 8), items(head, 101, 100, 3)].concat();
+        let org = HeadElectOrg { dated: Some(&rows), identifier: Some("KEINEANGABE"), ..org(head) };
+        let e = elect_head_counted(&votes_of(&rows), &org, &placeholder);
+        assert_eq!(
+            e.verdict,
+            HeadVerdict::Hold { reason: super::HEAD_HOLD_PLACEHOLDER_ID, rule: HeadRule::R0w, new: Some(collapsed.into()) }
+        );
+        assert_eq!(e.recent.unwrap().release_withheld, Some("lines"));
+        assert_eq!(dated(&rows, head).verdict, r0w(collapsed), "a real identifier: it changes");
+        // A rival cluster and a top more than a year before as_of: R0w is decided at head_current, before
+        // top_stale is reached.
+        let rival = [items(head, 1, 1, 2), items(elected, 100, 10, 5), items("Landesamt Mainz", 200, 5, 1)].concat();
+        let e = dated_at(&rival, head, 400 * DAY);
+        assert!(e.clusters == 3 && super::head_top_stale(e.recent.unwrap().top_newest, 400 * DAY));
+        assert_eq!(e.verdict, r0w(collapsed));
+    }
+
+    /// The durability test: each R0w-written head, re-elected on the same votes (the written head is
+    /// its own cluster's spelling, the raw head's mentions still voting) with a fresh elected date, is
+    /// a HOLD — the collapsed head is fit, so the junk exemption no longer releases it — never a change.
+    #[test]
+    fn an_r0w_written_head_is_held_on_the_same_votes() {
+        let (head, elected) = ("Vergabekammer Rheinland\nbei dem Ministerium Wirtschaft", "Vergabekammer Ministerium Wirtschaft");
+        let collapsed = "Vergabekammer Rheinland bei dem Ministerium Wirtschaft";
+        assert_eq!(key(head), key(collapsed), "the written head keys into its own cluster");
+        // head_current's shape, the elected spelling printed the day before the plan.
+        let current_shape = [forward(head, elected), items(elected, 300, 19, 1)].concat();
+        assert_eq!(dated_at(&current_shape, head, 20 * DAY).verdict, r0w(collapsed));
+        let e = dated_at(&current_shape, collapsed, 20 * DAY);
+        assert_eq!(e.verdict, current(elected));
+        assert_eq!((e.recent.unwrap().released, e.recent.unwrap().release_withheld), (None, None));
+        // The window's shape, the elected spelling printed after the head's newest item: it still fires.
+        let window = [items(elected, 1, 1, 8), items(head, 101, 100, 3), items(elected, 300, 200, 1)].concat();
+        assert_eq!(dated(&window, head).verdict, r0w(collapsed));
+        assert_eq!(dated(&window, collapsed).verdict, recent(Some(elected)));
+        // The residue holdout's shape (a fresh elected item would end the residue hold for the raw head
+        // too: neither is then held, and the raw head changes R1 as before v12).
+        let stray = [items(elected, 1, 1, 5), items(head, 100, 100, 1)].concat();
+        assert_eq!(dated(&stray, head).verdict, r0w(collapsed));
+        assert_eq!(dated(&stray, collapsed).verdict, residue(HeadRule::R1, elected));
+        // The unit 3 review's shape: a bare number the elected key lacks (`13`, not glued, no 3+-letter
+        // word lost). Collapsed, the head is fit, so the junk exemption would release it `digits` and the
+        // next plan would change it R1 to the spelling the lines guard withheld: no R0w, the `lines`
+        // hold (here `head_current`) stands on the raw head.
+        let (head, elected) = ("Szkola Podstawowa nr 13\nw Tychach", "Szkola Podstawowa w Tychach");
+        let collapsed = "Szkola Podstawowa nr 13 w Tychach";
+        assert!(super::head_wraps(head, &FNS) && !super::head_lines_guard(head, &key(elected), &FNS));
+        let e = dated_at(&forward(head, elected), head, 20 * DAY);
+        assert_eq!(e.verdict, current(elected));
+        assert_eq!((e.recent.unwrap().released, e.recent.unwrap().release_withheld), (None, Some("lines")));
+        let e = dated_at(&forward(head, elected), collapsed, 20 * DAY);
+        assert_eq!((e.verdict, e.recent.unwrap().released), (r1(elected), Some("digits")), "why: the collapsed head");
+        // The same number in the elected key keeps it held: R0w (22661109's shape).
+        let (head, elected) = ("Szkola Podstawowa nr 13\nw Tychach", "Szkola Podstawowa nr 13 Tychy");
+        let e = dated_at(&forward(head, elected), head, 20 * DAY);
+        assert_eq!(e.verdict, r0w(collapsed));
+        assert_eq!(dated_at(&forward(head, elected), collapsed, 20 * DAY).verdict, current(elected));
     }
 }
