@@ -1816,6 +1816,7 @@ Notes on the results:
   Per the protocol the class goes to issue 548, and nothing is released inside v11.
 
 **Sequencing note (2026-10-16, 15:2x UTC).** Issue 547 is gated on main (`323fd37`) and deploys after canary run 2565
-reads clean, with the queue idle. Its deploy changes the binary rev, and a wet run refuses a plan from another rev, so
-step 5 starts with a fresh dry plan on the 547 binary (v11 is unchanged; read it against plan 2562's counts, ±10%).
+reads clean, with the queue idle, together with issue 563 (gated and committed first; see 547's Status). Its deploy
+changes the binary rev, and a wet run refuses a plan from another rev, so step 5 starts with a fresh dry plan on the
+547 binary (v11 is unchanged; read it against plan 2562's counts, ±10%).
 The gates (a)–(c) stand: the epoch and the rule are the same, and only data drift separates the two plans.

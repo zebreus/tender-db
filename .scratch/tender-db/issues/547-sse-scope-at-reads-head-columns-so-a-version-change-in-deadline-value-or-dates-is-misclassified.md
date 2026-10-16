@@ -1,6 +1,6 @@
 # 547 — SSE's per-version probe reads the HEAD columns for deadline, value, published and status, so a version's entering or leaving a filter on those is misclassified
 
-Status: ready-for-agent — units 1-2 COMMITTED `323fd37` and GATED green 2026-10-16 (151 suites; three review rounds: wf_9679cf84-369, wf_c32a3269-1ec, wf_ea99545a-23c). On main. NEXT: deploy once the queue is idle AFTER 524 v11's canary wet run 2565 has run (a deploy changes the rev, so it must not land between plan 2562 and 2565), then the Verify (the date-bounded stream curl answers 200).
+Status: ready-for-agent — units 1-2 COMMITTED `323fd37` and GATED green 2026-10-16 (151 suites; three review rounds: wf_9679cf84-369, wf_c32a3269-1ec, wf_ea99545a-23c). On main. NEXT: deploy once the queue is idle AFTER 524 v11's canary wet run 2565 has run (a deploy changes the rev, so it must not land between plan 2562 and 2565), TOGETHER with 563 (uncommitted on 2026-10-16: gate and commit it first; 563 refuses the `now` streams this issue opens, and its CHANGELOG entry assumes one joint release), then the Verify (the date-bounded stream curl answers 200).
 of writing. Next: gate (`ops/check.sh`), commit, deploy — read path only, no backfill — then the Verify. Follow-ups
 filed: 560, 561, 562, 563. Was: needs-triage — filed 2026-10-15 from issue 533's unit-1 decision (accepted risk "Other
 head-relative SSE predicates").
@@ -117,4 +117,6 @@ Source and kind do not change between versions, so they are probably harmless.
 - 561's text: under `min_value` the superset also gives `changed` where `added` was due.
 - A `now` date bound is re-resolved on every (re)connect, so a resumed stream is not exact: documented on `/docs`
   and in openapi (pass an absolute timestamp), filed as **563**.
+  - Superseded 2026-10-16 by 563 (decision B): that caveat is retired from `/docs`, openapi and this issue's
+    CHANGELOG bullet, replaced by a 400 for a `now` date bound on a `/v1/tenders` stream. The two ship in one deploy.
 

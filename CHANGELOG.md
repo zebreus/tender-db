@@ -4,6 +4,26 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 563) — an event stream refuses a date bound spelled as the literal `now`
+
+A `/v1/tenders` stream (`Accept: text/event-stream`) whose `published_after`, `published_before`, `deadline_after`
+or `deadline_before` is the literal `now` (any case) now answers `400`, on a fresh connection and on a resume
+(`Last-Event-ID` or `?cursor=`) alike. A stream resolved `now` when its connection opened and again on every resume,
+so a resumed stream checked a later bound than the one the client's state was built under: under
+`deadline_after=now`, a Tender the client held whose deadline fell between the two connects was never sent
+`removed`. The message names the bound, says why, and what to send instead: an absolute timestamp (unix seconds,
+RFC 3339 or a bare date), and for `deadline_after` alone also `status=open` for tenders still open, with its caveat
+(below). A malformed date bound on such a stream gets a `400` that offers the absolute forms only, not `now`.
+- Until issue 547 (unreleased beside this one; the two ship in one deploy) a date-bounded stream answered `400`
+  unless it passed `sort=id`, so the one request that used to be accepted and is now refused is a `…=now&sort=id`
+  stream.
+- Pages accept `now` exactly as before. `/v1/lots`, `/v1/organizations` and `/v1/notices` ignore the date bounds,
+  so their streams are unchanged.
+- `status` reads the clock the same way when a stream connects and has no absolute spelling, so it stays
+  documented (`/docs`, Live feed): no event marks a deadline passing, so drop a Tender from a `status=open` state
+  once its deadline has passed; after a resume, a change that leaves such a Tender closed is not sent (a version
+  that reopens it arrives as `added`).
+
 ## Unreleased (issue 547) — an SSE subscription hears a Tender cross a value or date bound
 
 A subscription's diff re-evaluates its filter against the old and new version of the entity (`/docs`, Live feed), but
@@ -19,10 +39,8 @@ CURRENT figures on both sides. So a change that moved a Tender across one of tho
   does not apply to event streams", checked before the both-bounds `400` (whose "pass sort=…" advice is refused on a
   stream). `order=desc` on a stream without a date bound used to answer "descending id order is not supported",
   and `order=asc` beside a date bound used to be refused. Pages answer exactly as before.
-- A stream whose date bound is the literal `now` resolves it when the connection opens and again on every resume,
-  so a resumed stream is not exact: a Tender that crossed the moving bound between the two connects is not sent the
-  move. Unchanged here, but such a stream now opens without `sort=id`; pass an absolute timestamp for an exact resume
-  (issue 563).
+- A stream whose date bound is the literal `now` is refused (issue 563, above): a resume would resolve `now` again,
+  so its bound would move. The date-bounded streams this entry opens take an absolute timestamp.
 - The value bounds read the current value for the current version. An earlier version's elected value is not
   stored, so the earlier side matches when any amount that version published lies within the bound. On
   `/v1/tenders` a Tender whose current version leaves a bound always arrives as `removed`. An earlier version that

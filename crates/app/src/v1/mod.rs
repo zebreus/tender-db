@@ -886,6 +886,18 @@ pub struct Params {
 
 impl Params {
     fn filter(&self, now: i64) -> Result<Filter, ApiError> {
+        self.filter_on(now, &[])
+    }
+
+    /// [`Params::filter`] for a request whose event stream refuses the literal `now` on the date
+    /// bounds named in `now_refused` (issue 563: the bounds a `/v1/tenders` stream honours), so a
+    /// bad value there is not answered with advice to send `now`, which that stream then refuses.
+    /// The refusal of `now` itself stays in [`refuse_now_on_a_stream`], after 547's stream sort
+    /// check in `tenders()`.
+    fn filter_on(&self, now: i64, now_refused: &[&str]) -> Result<Filter, ApiError> {
+        let instant = |value: &Option<String>, name: &str| {
+            parse_instant(value.as_deref(), name, now_refused.contains(&name))
+        };
         let status = match self.status.as_deref() {
             None => None,
             Some("open") => Some(Status::Open),
@@ -994,10 +1006,10 @@ impl Params {
             // stores (`publication_lookup`).
             publication_id: self.publication_id.as_deref().map(publication_lookup),
             identifier: self.identifier.clone(),
-            published_after: parse_instant(self.published_after.as_deref(), "published_after")?,
-            published_before: parse_instant(self.published_before.as_deref(), "published_before")?,
-            deadline_after: parse_instant(self.deadline_after.as_deref(), "deadline_after")?,
-            deadline_before: parse_instant(self.deadline_before.as_deref(), "deadline_before")?,
+            published_after: instant(&self.published_after, "published_after")?,
+            published_before: instant(&self.published_before, "published_before")?,
+            deadline_after: instant(&self.deadline_after, "deadline_after")?,
+            deadline_before: instant(&self.deadline_before, "deadline_before")?,
             // Normalised HERE, once, by the function the name_norm column is
             // stored under (issue 432: lowercase, whitespace collapsed, trailing
             // `.`/`,`/`;` dropped), so `ACME Ltd.` still finds the row now keyed
@@ -1319,7 +1331,13 @@ async fn collection(
     headers: HeaderMap,
     params: Params,
 ) -> ApiResult {
-    let mut filter = params.filter(store::now_unix())?;
+    // Only the filters this collection honours: an ignored one is named in
+    // `ignored_filters` and must not also read as rewritten (issue 455, below). On a
+    // stream these are also the date bounds that refuse `now` (issue 563), so their
+    // bad-value 400 does not offer it.
+    let honoured = store::read::Collection::from(collection).honoured_params();
+    let now_refused: &[&str] = if wants_events(&headers) { honoured } else { &[] };
+    let mut filter = params.filter_on(store::now_unix(), now_refused)?;
     // Issue 415: `kind` is lowercased by `Params::filter` for the lowercase-only
     // vocabularies (organizations' identifier schemes, tender kinds), but lot kinds
     // are the eForms node kinds and stored capitalised — `Lot`, `LotsGroup`, `Part` —
@@ -1338,11 +1356,13 @@ async fn collection(
             }
         }
     }
+    // Issue 563: before the org resolution below, so a refused stream reads nothing.
+    if wants_events(&headers) {
+        refuse_now_on_a_stream(&params, honoured)?;
+    }
     // Issue 455: an org id a merge folded away filters by its survivor, on the
-    // page and on the stream alike (the SSE branch takes this same `filter`).
-    // Only the filters this collection honours: an ignored one is named in
-    // `ignored_filters` and must not also read as rewritten.
-    let honoured = store::read::Collection::from(collection).honoured_params();
+    // page and on the stream alike (the SSE branch takes this same `filter`),
+    // over the `honoured` filters only.
     let resolved = if [("buyer", filter.buyer), ("winner", filter.winner), ("bidder", filter.bidder)]
         .iter()
         .any(|(name, id)| id.is_some() && honoured.contains(name))
@@ -1515,8 +1535,11 @@ fn publication_resolution(
 /// served as a date since issue 367 unit 3, and what the API serves must paste
 /// back). A bare date is that day's midnight UTC: this API has no notion of the
 /// caller's zone, and the bound is documented so. Anything else is a 400 naming
-/// the parameter.
-fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiError> {
+/// the parameter. `now_refused` (issue 563): this bound is on an event stream that
+/// refuses `now` ([`refuse_now_on_a_stream`]), so that 400 offers the absolute forms
+/// only; `now` itself still resolves here and is refused there, after the stream's
+/// sort check.
+fn parse_instant(value: Option<&str>, name: &str, now_refused: bool) -> Result<Option<i64>, ApiError> {
     let Some(raw) = value else { return Ok(None) };
     // `now`, the moving instant (issue 391 unit 1). The spec has advertised
     // `deadline_after=now` as the headline "closes soon" query since issue 216 —
@@ -1532,7 +1555,10 @@ fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiErro
     // else is accepted: `today`, `tomorrow` and friends stay 400, because each
     // would need a timezone to mean anything and this API has no notion of the
     // caller's.
-    if raw.eq_ignore_ascii_case("now") {
+    //
+    // Pages only since issue 563: an event stream refuses the word
+    // ([`refuse_now_on_a_stream`]), which reads the same [`is_now`].
+    if is_now(raw) {
         return Ok(Some(store::now_unix()));
     }
     if let Ok(unix) = raw.parse::<i64>() {
@@ -1555,9 +1581,71 @@ fn parse_instant(value: Option<&str>, name: &str) -> Result<Option<i64>, ApiErro
     if let Ok(day) = chrono::NaiveDate::parse_from_str(candidate, "%Y-%m-%d") {
         return Ok(Some(day.and_hms_opt(0, 0, 0).expect("midnight").and_utc().timestamp()));
     }
+    if now_refused {
+        return Err(ApiError::bad_request(format!(
+            "{name} must be unix seconds, RFC 3339 or a date (YYYY-MM-DD, midnight UTC), not {raw:?}; \
+             the literal `now` is accepted on pages only, not on an event stream"
+        )));
+    }
     Err(ApiError::bad_request(format!(
         "{name} must be unix seconds, RFC 3339, a date (YYYY-MM-DD, midnight UTC), or the \
          literal `now`, not {raw:?}"
+    )))
+}
+
+/// The moving instant's spelling (issue 391 unit 1), case-insensitive. One definition, read by
+/// [`parse_instant`] (which resolves it) and [`refuse_now_on_a_stream`] (which refuses it on an
+/// event stream), so the two can never disagree on what counts as `now`.
+fn is_now(raw: &str) -> bool {
+    raw.eq_ignore_ascii_case("now")
+}
+
+/// Issue 563 (decision B, 2026-10-16): an event stream refuses a date bound spelled as the
+/// literal `now`, with a 400 that says why and what to send instead.
+///
+/// A stream resolves `now` once, when its connection opens: `Params::filter` builds one
+/// `Filter` and `sse::subscribe` keeps it for the snapshot and every diff, so within one
+/// connection the bound is fixed. A resume (`Last-Event-ID` or `?cursor=`) is a NEW connection
+/// and resolved `now` again, so the resumed diff checked a later bound than the one the
+/// client's state was built under. A deadline passing writes no change row, so a held Tender
+/// whose deadline fell between the two connects probed `(false, false)` on its next change and
+/// was dropped — never `removed` (reproduced end to end over a real socket in the 547
+/// re-review). Refused rather than pinned into the resume token (option A) because before 547
+/// a date-bounded stream was refused unless it passed `sort=id`, so almost no client can
+/// depend on `now` on a stream, and a refusal makes the stream contract exact instead of
+/// documenting a gap. Option A stays open as a later unit if a client needs a moving bound.
+///
+/// Only the bounds the collection honours: date bounds are `/v1/tenders`-only, and on any
+/// other collection they are ignored (a page names them in `ignored_filters`), so `now` moves
+/// nothing there. Pages are untouched — this runs on the stream branch alone. `status` reads
+/// `Filter.now` the same way and has no absolute spelling; it stays documented (`/docs`, Live
+/// feed).
+fn refuse_now_on_a_stream(params: &Params, honoured: &[&str]) -> Result<(), ApiError> {
+    let bounds = [
+        ("published_after", params.published_after.as_deref()),
+        ("published_before", params.published_before.as_deref()),
+        ("deadline_after", params.deadline_after.as_deref()),
+        ("deadline_before", params.deadline_before.as_deref()),
+    ];
+    let Some((name, _)) = bounds.iter().find(|(name, raw)| honoured.contains(name) && raw.is_some_and(is_now))
+    else {
+        return Ok(());
+    };
+    // `status=open` is offered in place of `deadline_after=now` alone: it is no substitute for a
+    // publication bound, and `deadline_before=now`'s counterpart would be `status=closed`. And it
+    // carries its caveat here, not only in `/docs`: it reads the clock when the stream connects
+    // too, so a client that reads just this 400 is not steered to an unqualified alternative.
+    let status = if *name == "deadline_after" {
+        ", or status=open for tenders still open, which also reads the clock when the stream \
+         connects (drop a Tender once its deadline passes; see /docs, Live feed)"
+    } else {
+        ""
+    };
+    Err(ApiError::bad_request(format!(
+        "{name}=now is refused on an event stream: a stream resolves `now` when it connects, and a \
+         resume (Last-Event-ID or cursor) would resolve it again, so the bound would move under the \
+         state the client already holds and the resume would not be exact; pass an absolute \
+         timestamp instead (unix seconds, RFC 3339 or YYYY-MM-DD){status}. Pages accept `now`"
     )))
 }
 
@@ -1605,7 +1693,10 @@ async fn tenders(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<
             )));
         }
     };
-    let filter = p.filter(store::now_unix())?;
+    // On a stream the date bounds refuse `now` (issue 563), so a bad bound's 400 must not offer it.
+    let now_refused: &[&str] =
+        if wants_events(&h) { store::read::Collection::Tenders.honoured_params() } else { &[] };
+    let filter = p.filter_on(store::now_unix(), now_refused)?;
     // One stream rule (issue 547 review). A stream snapshots in id order and then follows the
     // change log whatever its date bounds (`/docs`: sorted reads are REST-only), so on a stream
     // no bound implies an ordering: `sort` unset or `id`, and `order` unset or `asc`, are

@@ -4245,6 +4245,127 @@ async fn a_tenders_stream_takes_id_order_whatever_its_date_bounds() {
     }
 }
 
+/// Issue 563 (decision B): an event stream refuses a date bound spelled as the literal `now`.
+///
+/// A stream resolves `now` once, when it connects; a resume is a new connection and resolved it
+/// again, so a `deadline_after=now` stream resumed after a held Tender's deadline passed never
+/// heard that Tender's `removed` (the 547 re-review's probe over a real socket). The issue's
+/// Verify accepts "exact OR refused visibly": this is the refusal, on a fresh stream and on a
+/// resume alike, by `Last-Event-ID` and by `?cursor=`, for all four bounds and any case. Its
+/// message names the bound, says why and what to send instead. An absolute bound streams and
+/// resumes as before; `/v1/lots`, where date bounds are ignored, moves nothing and still opens.
+#[tokio::test]
+async fn a_resumed_now_stream_is_exact_or_refused() {
+    let server = Server::start("sse-now-refused").await;
+    server.ingest(CHAIN[0]).await;
+    let id = items(&server.get("/v1/tenders").await)[0]["id"].as_i64().expect("the CN's Tender");
+
+    // Each request its own `x-real-ip`, so the 5-stream budget never refuses one for the wrong reason.
+    let srv = &server;
+    let mut ip = 0;
+    let mut refused = move |path: &'static str, bound: &'static str| {
+        ip += 1;
+        async move {
+            let (status, content_type, message) = stream_answer(srv, path, ip).await;
+            assert_eq!(status, 400, "the stream {path} is refused: {message}");
+            assert_eq!(content_type, "application/json", "{path}");
+            for says in [
+                format!("{bound}=now is refused on an event stream"),
+                "would resolve it again".to_owned(),
+                "pass an absolute timestamp instead".to_owned(),
+            ] {
+                assert!(message.contains(&says), "{path}: the refusal must say {says:?}, not {message:?}");
+            }
+            // `status=open` stands in for `deadline_after=now` alone, and never without its caveat.
+            assert_eq!(
+                message.contains("status=open for tenders still open, which also reads the clock when the stream connects"),
+                bound == "deadline_after",
+                "{path}: {message:?}"
+            );
+            assert_eq!(message.contains("status=open"), bound == "deadline_after", "{path}: {message:?}");
+        }
+    };
+    refused("/v1/tenders?deadline_after=now", "deadline_after").await;
+    refused("/v1/tenders?published_before=now", "published_before").await;
+    refused("/v1/tenders?published_after=NOW", "published_after").await;
+    refused("/v1/tenders?deadline_before=Now&country=DE", "deadline_before").await;
+    // Beside an absolute bound, the `now` one is still named.
+    refused("/v1/tenders?published_after=2025-01-01&deadline_after=now", "deadline_after").await;
+    // A bad bound on that stream is not answered with advice to send the `now` it refuses; on
+    // /v1/lots, whose stream ignores date bounds and so opens under `now`, the advice stays.
+    let (status, _, message) = stream_answer(&server, "/v1/tenders?deadline_after=today", 104).await;
+    assert_eq!(status, 400, "{message}");
+    assert!(
+        !message.contains("or the literal `now`") && message.contains("`now` is accepted on pages only"),
+        "a stream's bad-bound 400 offers the absolute forms only: {message:?}"
+    );
+    let (status, _, message) = stream_answer(&server, "/v1/lots?deadline_after=today", 105).await;
+    assert_eq!(status, 400, "{message}");
+    assert!(message.contains("or the literal `now`"), "on a lots stream `now` opens: {message:?}");
+
+    // An absolute bound streams: the CN (deadline 2026-01-21) is after 2026-01-01.
+    let mut absolute = Tape::open(&server, "/v1/tenders?deadline_after=2026-01-01", None).await;
+    let (snapshot, live) = absolute.until_live().await;
+    assert_eq!(snapshot.len(), 1, "the absolute-bound stream snapshots the CN");
+    assert_eq!(snapshot[0].data["id"].as_i64(), Some(id), "{:?}", snapshot[0]);
+    let token = live.id.expect("the live marker carries the resume position");
+
+    // A RESUME under `now` is refused the same way, by either resume spelling — the case the
+    // issue is about: a fresh connection would resolve `now` afresh under the old state.
+    let resume = |query: &str, header: bool, ip: usize| {
+        let mut request = server
+            .http
+            .get(format!("{}/v1/tenders?{query}", server.base))
+            .header("accept", "text/event-stream")
+            .header("x-real-ip", format!("198.51.100.{ip}"));
+        if header {
+            request = request.header("last-event-id", token.clone());
+        }
+        request.send()
+    };
+    let by_header = resume("deadline_after=now", true, 101).await.expect("request");
+    assert_eq!(by_header.status().as_u16(), 400, "a Last-Event-ID resume under now is refused");
+    let body: Value = by_header.json().await.expect("a json error envelope");
+    assert!(
+        body["error"]["message"]
+            .as_str()
+            .is_some_and(|m| m.contains("deadline_after=now is refused on an event stream")),
+        "{body}"
+    );
+    let by_cursor = resume(&format!("deadline_after=now&cursor={token}"), false, 102).await.expect("request");
+    assert_eq!(by_cursor.status().as_u16(), 400, "a ?cursor= resume under now is refused");
+    // The same resume under the absolute bound opens, and skips the snapshot.
+    let mut resumed = Tape::open(&server, "/v1/tenders?deadline_after=2026-01-01", Some(&token)).await;
+    assert!(resumed.quiet().await, "a resume skips the snapshot and has nothing to deliver yet");
+
+    // Date bounds are /v1/tenders-only: on /v1/lots they are ignored, so `now` moves nothing there
+    // and the stream opens as before.
+    let (status, content_type, message) = stream_answer(&server, "/v1/lots?deadline_after=now", 103).await;
+    assert_eq!(status, 200, "a lots stream ignores date bounds: {message}");
+    assert!(content_type.starts_with("text/event-stream"), "{content_type}");
+}
+
+/// Issue 563: pages keep the literal `now` exactly as before — the refusal is the stream's alone.
+/// The CN's deadline (2026-01-21) and publication (2025-12-15) both lie before the real clock.
+#[tokio::test]
+async fn a_page_keeps_the_literal_now_that_a_stream_refuses() {
+    let server = Server::start("page-now-kept").await;
+    server.ingest(CHAIN[0]).await;
+
+    let (status, body) = server.get_with_status("/v1/tenders?deadline_after=now").await;
+    assert_eq!(status, 200, "{body}");
+    assert!(items(&body).is_empty(), "the CN closed before now: {body}");
+    for path in
+        ["/v1/tenders?deadline_before=now", "/v1/tenders?published_before=NOW", "/v1/tenders?published_before=now&sort=id"]
+    {
+        let (status, body) = server.get_with_status(path).await;
+        assert_eq!(status, 200, "the page {path}: {body}");
+        assert_eq!(items(&body).len(), 1, "the page {path} serves the CN: {body}");
+    }
+    let (status, body) = server.get_with_status("/v1/tenders?deadline_after=now&sort=deadline&order=asc&limit=3").await;
+    assert_eq!(status, 200, "the documented closes-soon page still answers: {body}");
+}
+
 #[tokio::test]
 async fn a_snapshot_larger_than_one_page_arrives_page_by_page_exactly_once() {
     // Page size 1 forces the snapshot through the keyset-paging path (issue

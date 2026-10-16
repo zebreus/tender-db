@@ -182,8 +182,8 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices. A TED number is found in any of its spellings &mdash; TED's own unpadded one, the 6 or 8 digits the archive stores, the OJ S form &mdash; on TED notices only; another source's number (FTS, DÖE) matches as that source stores it. On <code>/v1/notices</code> the notice itself; on <code>/v1/tenders</code> the tender it caused. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">identifier</td><td>An Organization's official identifier <em>value</em> (e.g. a VAT number); pair with <code>kind</code> for the scheme. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">name_prefix</td><td>Organization-name prefix, Unicode case-insensitive (<code>mü</code> matches <code>MÜLLER</code>); switches the list to name order. Must not be empty. See <a href="#lookups">lookups</a>.</td></tr>
-  <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds, RFC 3339 or a bare date (midnight UTC); a single bound implies <code>sort=published_at</code> (pages only; a stream snapshots in id order). See <a href="#ordering">ordering</a>.</td></tr>
-  <tr><td class="ep"><code>deadline_after</code><br><code>deadline_before</code></td><td>Bound Tenders by submission deadline (rows without one never match). A single bound implies <code>sort=deadline</code> (pages only; a stream snapshots in id order).</td></tr>
+  <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds, RFC 3339, a bare date (midnight UTC) or the literal <code>now</code>; <code>now</code> is accepted on pages only: an event stream refuses it with <code>400</code> (see <a href="#sse">Live feed</a>). A single bound implies <code>sort=published_at</code> (pages only; a stream snapshots in id order). See <a href="#ordering">ordering</a>.</td></tr>
+  <tr><td class="ep"><code>deadline_after</code><br><code>deadline_before</code></td><td>Bound Tenders by submission deadline (rows without one never match). Same formats as the published pair; <code>now</code> is accepted on pages only: an event stream refuses it with <code>400</code> (see <a href="#sse">Live feed</a>). A single bound implies <code>sort=deadline</code> (pages only; a stream snapshots in id order).</td></tr>
   <tr><td class="ep">sort</td><td>Tenders only: <code>id</code> (default), <code>published_at</code> or <code>deadline</code>. See <a href="#ordering">ordering</a>.</td></tr>
   <tr><td class="ep">order</td><td><code>asc</code> | <code>desc</code>. Defaults per sort: <code>published_at</code> newest-first, <code>deadline</code> soonest-first, <code>id</code> ascending (its only direction).</td></tr>
   <tr><td class="ep">limit</td><td>Page size, default 100. Must be 1&ndash;1000 inclusive &mdash; a value outside that range is a <code>400</code>, not silently clamped.</td></tr>
@@ -248,7 +248,9 @@ or the literal <code>now</code> &mdash; which is what makes
 <code>?deadline_after=now&amp;sort=deadline&amp;order=asc</code> the
 &ldquo;closes soon&rdquo; query without the caller computing a timestamp that
 goes stale the moment it is saved. No other word is accepted;
-<code>today</code> would need a timezone this API has no notion of. All of this composes with the
+<code>today</code> would need a timezone this API has no notion of. <code>now</code> is
+accepted on pages only: an event stream refuses it with <code>400</code>, because a resume
+would resolve it again (see <a href="#sse">Live feed</a>). All of this composes with the
 other filters, and pagination is unchanged: follow <code>next_cursor</code>, back
 into the <em>same</em> query shape — a cursor is specific to its sort. Sorted
 reads are REST-only; an SSE subscription snapshots in the list's own order (ascending id; the
@@ -475,11 +477,13 @@ generation.</p>
 
 <h2 id="sse">Live feed — Server-Sent Events</h2>
 <p>Send <code>Accept: text/event-stream</code> to any collection endpoint (with
-any filters). The one exception is
+any filters). Two exceptions answer <code>400</code> to a stream request rather than
+quietly returning JSON:
 <code>/v1/notices?tender=&lt;id&gt;</code>, which is a lookup rather than a
-subscription and answers <code>400</code> to a stream request rather than
-quietly returning JSON; subscribe to <code>/v1/notices</code> without
-<code>tender</code> if you need a live feed. The protocol:</p>
+subscription (subscribe to <code>/v1/notices</code> without
+<code>tender</code> if you need a live feed); and, on <code>/v1/tenders</code>, a date
+bound spelled as the literal <code>now</code> (pass an absolute timestamp; see resuming,
+below). The protocol:</p>
 <ol>
   <li><strong>Snapshot</strong> — one <code>added</code> event per row currently matching your filter, read page by page with no transaction held across the pages, so it is not a point-in-time view. Under concurrent writes it is <strong>at-least-once</strong>: an entity written during the snapshot can arrive as <code>added</code> and again as a <code>change</code> after <code>live</code>, and one that left your filter before its page was read is not sent, while its <code>removed</code> is. Apply <code>added</code> as an upsert by id and <code>removed</code> as an idempotent delete — a <code>removed</code> can name an entity you never received; the diff stream then makes your final state exact, with two known exceptions: on <code>/v1/lots</code> under <code>min_value</code>/<code>max_value</code>, a version that moves only its Tender's value re-evaluates no lot, so you keep a lot the bound now excludes and are not sent one it now admits (issue 560); and under <code>source</code> (or, on <code>/v1/tenders</code>, <code>kind</code>), the fold rewrites that label for the whole Tender (a DÖE Tender turns <code>ted</code> when its TED twin arrives), which reaches a subscriber to the old label as nothing (issue 562).</li>
   <li>A <code>live</code> marker carrying the snapshot's cursor.</li>
@@ -489,15 +493,18 @@ quietly returning JSON; subscribe to <code>/v1/notices</code> without
 (generation-qualified cursor, e.g. <code>3:193055</code>). On reconnect the
 browser <code>EventSource</code> replays it as <code>Last-Event-ID</code>; for
 curl and scripts pass it as that header or as <code>?cursor=</code>, verbatim.
-Resuming skips the snapshot and delivers exactly what you missed &mdash; except under a
-date bound spelled as the literal <code>now</code>. A stream resolves <code>now</code> when
-its connection opens and again on every reconnect, so a resumed stream checks a later bound
-than the one your state was built under, and a Tender that crossed the moving bound between
-the two connects is not sent the move: under <code>deadline_after=now</code>, a Tender you hold
-whose deadline fell in between is never sent <code>removed</code>, not even when a later
-version of it stays outside the bound (a deadline passing sends no event in any case).
-<code>status</code> reads the clock the same way. For an exact resume, pass an absolute
-timestamp instead of <code>now</code> (issue 563). A
+Resuming skips the snapshot and delivers exactly what you missed. That is why a
+<code>/v1/tenders</code> stream refuses a date bound spelled as the literal <code>now</code>
+with <code>400</code>: a stream resolves <code>now</code> when its connection opens, so a resume
+would resolve it again and check a later bound than the one your state was built under, and a
+Tender that crossed the moving bound between the two connects would not be sent the move. Pass
+an absolute timestamp instead (unix seconds, RFC 3339 or a bare date); pages accept
+<code>now</code> as before (issue 563). In place of <code>deadline_after=now</code>,
+<code>status=open</code> selects tenders still open, but <code>status</code> also reads the clock
+when the stream connects, and has no absolute spelling: no event marks a deadline passing, so drop
+a Tender from a <code>status=open</code> state once its deadline has passed (after a resume, a
+change that leaves such a Tender closed is not sent; a version that reopens it arrives as
+<code>added</code>). A
 <code>reset</code> event means your token cannot resume and you must drop local
 state and re-subscribe fresh: <code>{"reason":"cursor_expired"}</code> (the log's
 retained horizon passed your token), <code>{"reason":"cursor_ahead"}</code> (your
@@ -1833,8 +1840,9 @@ mod tests {
     /// Issue 547 re-review: a date bound implies its sort on a page only, and every text that
     /// says "implies" says so (the four OpenAPI bounds, the two `/docs` table rows, the
     /// both-bounds sentence); the ordering section states the one stream rule; and the Live feed
-    /// says, on both surfaces, that a resumed stream under a `now` bound is not exact (issue
-    /// 563) and that a `changed` can name an unreceived entity under `source`/`kind` too.
+    /// says, on both surfaces, that a `changed` can name an unreceived entity under
+    /// `source`/`kind` too. (Its "a resumed `now` stream is not exact" caveat became issue 563's
+    /// refusal, pinned in [`the_docs_say_a_stream_refuses_a_now_bound`].)
     #[test]
     fn the_docs_say_a_date_bound_implies_a_sort_on_pages_only() {
         const PAGES_ONLY: &str = "(pages only; a stream snapshots in id order)";
@@ -1869,14 +1877,97 @@ mod tests {
                 &format!("{surface}'s live feed"),
                 text,
                 &[
-                    "except under a date bound spelled as the literal now",
-                    "pass an absolute timestamp",
-                    "(issue 563)",
                     "source or (on /v1/tenders) kind a changed can name an entity",
                     "(issue 560)",
                     "(issue 562)",
                 ],
             );
         }
+    }
+
+    /// Issue 563 (decision B): an event stream refuses a date bound spelled as the literal `now`,
+    /// and both surfaces say so where a client looks. Each date bound's text (the four OpenAPI
+    /// parameters, the two `/docs` rows) and the ordering section's `now` sentence say `now` is
+    /// pages-only; the Live feed, on `/docs` and in openapi's `EventStream`, says why (a resume
+    /// would resolve it again), what to send instead, and keeps `status`'s clock documented. The
+    /// retired caveat ("a resumed `now` stream is not exact") is gone from both. `status=open` is
+    /// offered in place of `deadline_after=now` alone, and always with its clock caveat. The Live
+    /// feed's intro and openapi's `listTenders` name the refusal among a stream's 400s.
+    #[test]
+    fn the_docs_say_a_stream_refuses_a_now_bound() {
+        const PAGES_ONLY: &str = "now is accepted on pages only: an event stream refuses it with 400";
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        for name in ["published_after", "published_before", "deadline_after", "deadline_before"] {
+            let text = spec["components"]["parameters"][name]["description"].as_str().expect("the bound is described");
+            assert_says(
+                &format!("openapi's {name}"),
+                text,
+                &[PAGES_ONLY, "because a resume would resolve it again and its bound would move"],
+            );
+            if name == "deadline_after" {
+                assert_says(
+                    &format!("openapi's {name}"),
+                    text,
+                    &["or status=open for tenders still open, which also reads the clock when the stream connects"],
+                );
+            } else {
+                assert!(!plain(text).contains("status=open"), "openapi's {name} offers status=open:\n{text}");
+            }
+        }
+        let list = spec["paths"]["/v1/tenders"]["get"]["description"].as_str().expect("listTenders is described");
+        assert_says(
+            "openapi's listTenders",
+            list,
+            &["any other sort or order is 400, as is a date bound spelled as the literal now"],
+        );
+        for row in ["<td class=\"ep\"><code>published_after</code>", "<td class=\"ep\"><code>deadline_after</code>"] {
+            let start = PAGE.find(row).expect("/docs has the bound's row");
+            let text = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+            assert_says(&format!("/docs's {row} row"), text, &[PAGES_ONLY]);
+        }
+        let start = PAGE.find("<h2 id=\"ordering\">").expect("/docs has an ordering section");
+        let ordering = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows it")];
+        assert_says("/docs's ordering section", ordering, &[PAGES_ONLY, "because a resume would resolve it again"]);
+        let start = PAGE.find("<h2 id=\"sse\">").expect("/docs has an SSE section");
+        let sse = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows SSE")];
+        let stream = spec["components"]["schemas"]["EventStream"]["description"]
+            .as_str()
+            .expect("the EventStream schema is described");
+        for (surface, text) in [("/docs", sse), ("/v1/openapi.json", stream)] {
+            assert_says(
+                &format!("{surface}'s live feed"),
+                text,
+                &[
+                    "/v1/tenders stream refuses a date bound spelled as the literal now with 400",
+                    "a stream resolves now when its connection opens, so a resume would resolve it again",
+                    "would not be sent the move",
+                    "pass an absolute timestamp instead (unix seconds, rfc 3339 or a bare date); pages accept now \
+                     as before (issue 563)",
+                    "in place of deadline_after=now, status=open selects tenders still open, but status also reads \
+                     the clock when the stream connects, and has no absolute spelling",
+                    "drop a tender from a status=open state once its deadline has passed",
+                    "after a resume, a change that leaves such a tender closed is not sent; a version that reopens \
+                     it arrives as added",
+                ],
+            );
+            let plain = plain(text);
+            for retired in [
+                "except under a date bound spelled as the literal now",
+                "for an exact resume",
+                "or status=open for tenders still open",
+                "such a tender is sent no further change",
+            ] {
+                assert!(!plain.contains(retired), "{surface}'s live feed still carries the retired caveat {retired:?}");
+            }
+        }
+        assert_says(
+            "/docs's live feed intro",
+            sse,
+            &[
+                "two exceptions answer 400 to a stream request",
+                "and, on /v1/tenders, a date bound spelled as the literal now (pass an absolute timestamp",
+            ],
+        );
+        assert!(!plain(sse).contains("the one exception is"), "/docs's live feed intro still names one exception");
     }
 }
