@@ -871,6 +871,7 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
         ("200007-2020", "ted-export-r209"),  // 7: tender 7, SEK
         ("200008-2020", "ted-export-r209"),  // 8: tender 8, a tie on the elected eur_cents
         ("200009-2020", "ted-export-r209"),  // 9: tender 9, a stale head column
+        ("00522142-2025", "eforms:eforms-sdk-1.12"), // 10: tender 10, 369057's lot-sum slip (issue 537)
     ];
     for (i, (pubid, profile)) in notices.iter().enumerate() {
         exec(format!(
@@ -881,7 +882,7 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
         .await;
     }
     // (tender, current_seq, head eur_cents)
-    let tenders: [(i64, i64, Option<i64>); 8] = [
+    let tenders: [(i64, i64, Option<i64>); 9] = [
         (1, 2, Some(1_040_000_000_000)),
         (2, 1, Some(3_326_050_000_000)),
         (3, 1, Some(999_999_999_999)),
@@ -890,6 +891,7 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
         (7, 1, Some(4_400_000_000_000)),
         (8, 1, Some(2_000_000_000_000)),
         (9, 1, Some(1_200_000_000_000)),
+        (10, 1, Some(6_237_873_628_000)),
     ];
     for (id, seq, eur) in tenders {
         let eur = eur.map_or("NULL".to_owned(), |e| e.to_string());
@@ -900,7 +902,7 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
         .await;
     }
     // (tender, seq, notice)
-    for (tender, seq, notice) in [(1, 1, 1), (1, 2, 2), (2, 1, 3), (3, 1, 4), (4, 1, 5), (5, 1, 6), (7, 1, 7), (8, 1, 8), (9, 1, 9)] {
+    for (tender, seq, notice) in [(1, 1, 1), (1, 2, 2), (2, 1, 3), (3, 1, 4), (4, 1, 5), (5, 1, 6), (7, 1, 7), (8, 1, 8), (9, 1, 9), (10, 1, 10)] {
         exec(format!(
             "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id) \
              VALUES ({tender}, {seq}, {notice}, 0, '{}')",
@@ -948,6 +950,26 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
             .to_owned(),
     )
     .await;
+    // Tender 10 (issue 537): 369057's EUR 62,378,736,280.00 result over three Lots whose
+    // awards sum to EUR 62,378,736.29 and whose BT-709 rows sum to EUR 62,378,736.28, plus a
+    // LotsGroup. The column names the award-side match the election refuses on.
+    exec(amount(10, 1, "NULL", 6_237_873_628_000, "EUR", Some(6_237_873_628_000))).await;
+    for (lot, kind) in [(101, "Lot"), (102, "Lot"), (103, "Lot"), (104, "LotsGroup")] {
+        exec(format!("INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) VALUES (10, 1, {lot}, '{kind}')")).await;
+    }
+    for (lot, maximum, awarded) in [(101, 158_878_238i64, 158_878_238i64), (102, 3_367_786_340, 3_367_786_341), (103, 2_711_209_050, 2_711_209_050)] {
+        exec(format!(
+            "INSERT INTO tender_version_amounts (tender_id, seq, lot_id, field, cents, currency, eur_cents) \
+             VALUES (10, 1, {lot}, 'result_framework_maximum', {maximum}, 'EUR', {maximum})"
+        ))
+        .await;
+        exec(format!("INSERT INTO lot_results (id, tender_id, notice_id, result_key) VALUES ({lot}, 10, 10, 'RES-{lot}')")).await;
+        exec(format!(
+            "INSERT INTO tender_version_lot_results (tender_id, seq, lot_result_id, lot_id, awarded_cents, awarded_currency) \
+             VALUES (10, 1, {lot}, {lot}, {awarded}, 'EUR')"
+        ))
+        .await;
+    }
     // Tender 1's corrigendum: a CHG-1 block naming II.1.7 (with the trailing `)`) and
     // its NEW_VALUE.TEXT, plus an unrelated CHG-2 naming IV.2.2.
     for (section, field, value) in [
@@ -967,7 +989,7 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
     db.build_tender_indexes().await.expect("tender indexes");
     let report = measure(&db, "http://x").await;
     let ids: Vec<i64> = report.band.iter().map(|r| r.tender_id).collect();
-    assert_eq!(ids, vec![7, 2, 8, 9, 1, 4], "top-down index order, one row per Tender; under the floor and NULL are out");
+    assert_eq!(ids, vec![10, 7, 2, 8, 9, 1, 4], "top-down index order, one row per Tender; under the floor and NULL are out");
     let row = |id: i64| report.band.iter().find(|r| r.tender_id == id).expect("row");
     assert_eq!((row(1).currency.as_str(), row(1).cents), ("GBP", 900_000_000_000));
     assert_eq!(row(1).profile, "ted-export-r209");
@@ -982,6 +1004,13 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
     assert_eq!((row(4).pow10_partner, row(4).smallest_sibling), (None, None), "a 1.00 placeholder is no sibling");
     assert_eq!((row(8).currency.as_str(), row(8).cents), ("DKK", 14_920_000_000_000), "the read layer's tiebreak");
     assert_eq!((row(9).currency.as_str(), row(9).eur_cents), ("", 1_200_000_000_000), "a stale head is listed, figure-less");
+    let m = row(10).lot_sum.expect("tender 10's lot sum");
+    assert_eq!(
+        (m.kind, m.exponent, m.sum, m.lots, m.refuses()),
+        (store::canonical::LotSumKind::Awards, 3, 6_237_873_629, 3, true),
+        "the awards, a cent off, over the three Lots"
+    );
+    assert_eq!((row(1).lot_sum, row(2).lot_sum, row(9).lot_sum), (None, None, None), "no lots, a lone figure, a stale head");
 
     let text = data_quality::render_text(&report);
     let s10 = text.find("== 10.").expect("section 10");
@@ -992,11 +1021,12 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
     let band = &text[s16..];
     assert!(band.contains("issue 471"), "{band}");
     assert!(band.contains("33,260,500,000.00"), "the unique head is in the band:\n{band}");
-    for group in ["-- EUR (2 Tender(s)) --", "-- GBP (1 Tender(s)) --", "-- SEK (1 Tender(s)) --"] {
+    for group in ["-- EUR (3 Tender(s)) --", "-- GBP (1 Tender(s)) --", "-- SEK (1 Tender(s)) --"] {
         assert!(band.contains(group), "{group}:\n{band}");
     }
     assert!(!band.contains("9,999,999,999.99"), "{band}");
     assert!(band.contains("1 with no elected row found"), "{band}");
+    assert!(band.contains("10^3 x awards (3)"), "the lot-sum column (issue 537):\n{band}");
 
     // The bound. Driving read: a range seek on the value index, not a scan of tenders.
     let sql = data_quality::band_listing_sql();
@@ -1047,6 +1077,11 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
     }
     exec("INSERT INTO tender_version_lot_results (tender_id, seq, lot_result_id, awarded_cents, awarded_currency) \
           SELECT 100 + value, 1, 1, 400000 + value, 'EUR' FROM generate_series(1, 2000)"
+        .to_owned()).await;
+    // Issue 537: each filler head version names its lot, so `tender_version_lots` has prod's
+    // shape too (with tender 10's four rows alone, the analyzed planner scans it).
+    exec("INSERT INTO tender_version_lots (tender_id, seq, lot_id, kind) \
+          SELECT 100 + value, 1, 1000 + value, 'Lot' FROM generate_series(1, 2000)"
         .to_owned()).await;
 
     // The same plan with statistics (issue 428: turso plans with `sqlite_stat1`; issue

@@ -1,6 +1,6 @@
 # 538 — publisher double-escaped HTML entities (`&#224;`, `&amp;quot;`, `&amp;lt;br/&amp;gt;`, `&apos;`) reach served titles, descriptions and party names
 
-Status: ready-for-agent — unit 1 MEASURED and unit 2 DECIDED 2026-10-16 (below): TED eForms carries the class, 0.9–2.1 % of Tenders per window; legacy about 0.2–0.35 %; FTS, DÖE and old TED about 0; org names 0.02 %. Texts: decode at projection (numeric refs plus the five XML names, case-insensitive, ≤ 3 passes, `<br/>` → newline). Names: deferred to unit 4. Next: unit 3 (build) after 533 and 524 v10 leave the tree.
+Status: ready-for-agent — unit 3 BUILT 2026-10-16 (wf_c928afc4-2e2, with 537 unit 3; 4-lens review, findings fixed) and in the gate. Next: deploy, then the drain, batched with 533's three field refolds into one full refold, then the Verify with D7's completeness check.
 Kind: data quality (served text and names) — needs a decision
 Relates to:
 - 11 (resolved): the text era's UTF8 variant unescapes the five XML entities (`unescape`, crates/ingest/src/text/
@@ -177,3 +177,21 @@ every one.
    - A names build, if decided, is its own unit behind 524's re-key path.
 4. **Names (decided 2026-10-16: deferred, its own unit).** Decode mention and head names in the resolver, with a
    re-key of the identifier-less orgs whose `name_norm` changes (about 1–2 k orgs). Only after 524's wet runs.
+
+## Unit 3 build notes (2026-10-16)
+
+- `crates/ingest/src/project/escapes.rs`: `decode_publisher_escapes` is pure. It decodes decimal/hex refs and the five
+  XML names (ASCII case-insensitive), at most 3 passes. A decoded `<br>` becomes a newline and a decoded PUA code
+  point becomes `•`, but only characters the decode produced are rewritten. A ref to a control character other than
+  tab/LF/CR is left as published.
+- It is applied at projection to `title` and `description` (Tender and lot) and to the `TED-TI_DOC` fallback title.
+  The parse layer and organization names are untouched.
+- Tests: `a_double_escaped_title_is_served_decoded` (real XML through parse and fold) and
+  `only_titles_and_descriptions_are_decoded`.
+- **No `PROJECTION_EPOCH` bump** (ADR-0017 R3: a field-id finder lists the cohort). The note is in the epoch doc.
+- **The drain re-queues effectively the whole corpus.** Every notice carries a title field id; `TED-TI_DOC` alone
+  covers every legacy notice. Decision (owner, 2026-10-16): accept it, batched with 533's three field refolds in one
+  `refold-fields` sweep and one `project`. That size of refold plans the whole corpus anyway, so the planning is
+  paid once. A stored-text finder (refold only Tenders whose stored text holds `&`) would be smaller, but it needs a
+  new job kind; it is noted in operations.md as the fallback if the batch falls through.
+- The `/docs` caveats opening now names the decode as the one place tender-db rewrites published text.

@@ -1,6 +1,6 @@
 # 537 — a head figure 1,000× the sum of its own lots (to the cent) is served: 369057 at €62.4 bn, 165437 at €20.0 bn
 
-Status: ready-for-agent — unit 1 MEASURED and unit 2 DECIDED 2026-10-16 (below): of 3,750 heads ≥ €1 bn, 48 match 10ᵏ × a lot sum; adjudicated 43 head_wrong, 4 lots_wrong, 1 coincidence. Rule: k 2..6, n ≥ 2, award-side S unconditional, estimate-side S only under a third-figure guard. It refuses 22 heads, all wrong, 0 wrong refusals. Next: unit 3 (build) after 533 and 524 v10 leave the tree; the lot-sum fallback is filed as 551.
+Status: ready-for-agent — unit 3 BUILT 2026-10-16 (wf_c928afc4-2e2, with 538 unit 3; 4-lens review, 15 findings fixed) and in the gate. Next: deploy, then the drain (`refold-value-band` → `project`), then the Verify and a section-16 re-read.
 Kind: data quality (amount plausibility: the head election)
 Relates to:
 - 471 (done 2026-10-08). Two of its decisions border this one, and neither covers it:
@@ -189,3 +189,28 @@ Adopt the synthesis's recommended rule.
    - Pin it with `a_total_ten_to_the_k_times_its_lot_award_sum_is_not_elected` (369057's figures and 165437's
      three-decimal shape), plus a k€-lots case that keeps its head.
    - Drain with `refold-value-band` → `project` (505's route). Re-read section 16 and the Verify.
+
+## Unit 3 build notes (2026-10-16)
+
+- **The rule** sits in `ScalePartners::refuses` (Procedure scope). `LotSums` is the one definition of S, shared with
+  section 16's new `lot sum` column.
+  - Sums are built once per head and cached; the review measured the uncached path as quadratic.
+  - Placeholders at or below 10.00 are skipped in S.
+  - "Latest award per lot" means the round with the largest notice id.
+  - BT-709/BT-660 take each lot's largest figure.
+  - Guard T rejects sentinels.
+- **Extension found by the review: a LotsGroup copy.** A LotsGroup figure equal to a refused procedure F is refused
+  too (`lot_sum_group_copy`); otherwise the head re-elects F through the group. It cannot touch the 22 and stays
+  inside the `refold-value-band` cohort. Lot-award copies and a Lot's or Part's own figure stay outside the rule.
+- **No `PROJECTION_EPOCH` bump**, as with 492. The drain is `refold-value-band` → `project`, whose cohort (a stored head
+  or lot value ≥ €1 bn) covers everything the rule can move.
+- **143300 adjudicated (owner, 2026-10-16): head_wrong.**
+  - The head is €1,000,000,000.00 (estimated value and framework maximum alike) on an `Acordo Quadro` for water
+    infrastructure accessories.
+  - Its four lot estimates sum to €1,000,000.00 (600k + 100k + 200k + 100k), and its LotsGroup GLO-0001 is
+    €1,000,000.00.
+  - Unit 1 counted the group in S, but the build does not. So the rule refuses the head only if guard T finds a
+    procedure figure in [€100k, €10 m] in an earlier contract notice (00379665-2024, 00382458-2024).
+  - Either way, a refusal is right, and it falls to the €1,000,000 group figure.
+- CHANGELOG, the `/docs` value caveat (the scale-rule list's closing sentence), and the `/v1/sql` note on
+  `v_tender_amounts` are updated and pinned.

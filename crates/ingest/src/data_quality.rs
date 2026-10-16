@@ -1650,7 +1650,15 @@ fn band_powers_of_ten() -> String {
 /// - the value corrigendum is the newest version whose causing notice carries an F14
 ///   `TED-NEW_VALUE.TEXT` in a `CHG-n` section whose `TED-SECTION` names one of
 ///   [`BAND_VALUE_CORRIGENDUM_SECTIONS`] — a seek on `notice_texts`' `notice_id` prefix
-///   per version.
+///   per version;
+/// - the lot-sum signal (issue 537) reads the HEAD version's lots (`tender_version_lots`,
+///   PK seek), their figures in the head's currency in the four fields
+///   [`store::canonical::LotSumKind`] sums (`tender_version_amounts` by `(tender_id, seq)`)
+///   and their awards with each result's notice (`tender_version_lot_results` PK prefix,
+///   `lot_results` PK), plus the chain's procedure-scope figures in the currency (any
+///   version, an award's lot-null copy excluded) for guard T. Each arrives as ONE
+///   `group_concat` per Tender, so the listing stays one row per Tender, and
+///   [`band_lot_sum`] builds S with the election's own [`store::canonical::LotSums`].
 ///
 /// **The plan pin holds on an EMPTY `sqlite_stat1` and on a fixture-ANALYZEd one**
 /// (`the_band_listing_shows_a_head_that_repeats_nowhere`); prod-scale statistics (issue
@@ -1670,6 +1678,13 @@ pub fn band_listing_sql() -> String {
     // The election's partner floor, the same 10.00 as `SENTINEL_AMOUNT_CEILING`
     // (pinned equal in `the_band_partner_floor_is_the_elections`).
     let low = store::canonical::SCALE_PARTNER_FLOOR_CENTS;
+    // Issue 537: the lot-scope fields a lot sum is built from, named by the election's enum.
+    let lot_fields = store::canonical::LotSumKind::ALL
+        .iter()
+        .filter_map(|k| k.field())
+        .map(|f| format!("'{f}'"))
+        .collect::<Vec<_>>()
+        .join(", ");
     format!(
         "SELECT t.id AS tender_id, t.source AS source, t.current_value_eur_cents AS eur_cents, \
                 h.currency AS currency, h.cents AS cents, \
@@ -1699,7 +1714,25 @@ pub fn band_listing_sql() -> String {
                     AND EXISTS (SELECT 1 FROM notice_texts y \
                                  WHERE y.notice_id = x.notice_id AND y.section_id = x.section_id \
                                    AND y.field_id = 'TED-NEW_VALUE.TEXT') \
-                  ORDER BY v.seq DESC LIMIT 1) AS value_corrigendum \
+                  ORDER BY v.seq DESC LIMIT 1) AS value_corrigendum, \
+                (SELECT group_concat(lv.lot_id || ':' || lv.kind, ',') FROM tender_version_lots lv \
+                  WHERE lv.tender_id = t.id AND lv.seq = t.current_seq) AS lot_kinds, \
+                (SELECT group_concat(a.lot_id || ':' || a.field || ':' || a.cents, ',') \
+                   FROM tender_version_amounts a \
+                  WHERE a.tender_id = t.id AND a.seq = t.current_seq AND a.lot_id IS NOT NULL \
+                    AND a.currency = h.currency AND a.quality IS NULL AND a.cents > {low} \
+                    AND a.field IN ({lot_fields})) AS lot_amounts, \
+                (SELECT group_concat(r.lot_id || ':' || x.notice_id || ':' || r.lot_result_id || ':' || r.awarded_cents, ',') \
+                   FROM tender_version_lot_results r JOIN lot_results x ON x.id = r.lot_result_id \
+                  WHERE r.tender_id = t.id AND r.seq = t.current_seq AND r.lot_id IS NOT NULL \
+                    AND r.awarded_currency = h.currency AND r.awarded_cents > {low}) AS lot_awards, \
+                (SELECT group_concat(a.cents, ',') FROM tender_version_amounts a \
+                  WHERE a.tender_id = t.id AND a.lot_id IS NULL AND a.currency = h.currency \
+                    AND a.cents > {low} \
+                    AND NOT EXISTS (SELECT 1 FROM tender_version_lot_results r \
+                                     WHERE r.tender_id = a.tender_id AND r.seq = a.seq \
+                                       AND r.awarded_currency = a.currency \
+                                       AND r.awarded_cents = a.cents)) AS procedure_figures \
            FROM tenders t \
            LEFT JOIN tender_version_amounts h \
              ON h.rowid = (SELECT s.rowid FROM tender_version_amounts s \
@@ -2210,6 +2243,11 @@ pub struct BandRow {
     /// The newest version whose notice is an F14 value corrigendum (II.1.5, II.1.7,
     /// II.2.6 or V.2.4), by publication id.
     pub value_corrigendum: Option<String>,
+    /// Issue 537: the head is 10^k (k = 2..6) times a sum of its head version's own lots
+    /// (n >= 2, one cent per lot of slack), built and matched by the election's own code
+    /// ([`band_lot_sum`]): the first match the rule refuses on, else the first it keeps.
+    /// `None` when no sum matches (or the head is stale).
+    pub lot_sum: Option<store::canonical::LotSumMatch>,
 }
 
 /// One publication id carried by many distinct notices of a source (issue 394 b).
@@ -2722,20 +2760,92 @@ fn band_rows(rows: &Rows) -> Vec<BandRow> {
                 (Some(a), Some(b)) => Some(pick(a, b)),
                 (a, b) => a.or(b),
             };
+            let currency = as_str(r.get(3));
+            let cents = as_i64(r.get(4));
+            let lot_sum = (!currency.is_empty())
+                .then(|| band_lot_sum(cents, &as_str(r.get(12)), &as_str(r.get(13)), &as_str(r.get(14)), &as_str(r.get(15))))
+                .flatten();
             BandRow {
                 tender_id: as_i64(r.first()),
                 source: as_str(r.get(1)),
                 eur_cents: as_i64(r.get(2)),
-                currency: as_str(r.get(3)),
-                cents: as_i64(r.get(4)),
+                currency,
+                cents,
                 profile: as_str(r.get(5)),
                 head_notice: as_str(r.get(6)),
                 pow10_partner: both(as_opt_i64(r.get(7)), as_opt_i64(r.get(8)), i64::max),
                 smallest_sibling: both(as_opt_i64(r.get(9)), as_opt_i64(r.get(10)), i64::min),
                 value_corrigendum: r.get(11).and_then(Value::as_str).map(str::to_owned),
+                lot_sum,
             }
         })
         .collect()
+}
+
+/// Issue 537: the lot-sum signal of one band row, from [`band_listing_sql`]'s four
+/// concatenated columns, all in the head's published currency:
+/// - `lot_kinds`: the head version's lots as `lot_id:kind`;
+/// - `lot_amounts`: their figures as `lot_id:field:cents` (not withheld, above the floor);
+/// - `lot_awards`: their awards as `lot_id:notice_id:lot_result_id:cents`, offered in
+///   (notice, result) order, so the LATEST award of a lot is the one that stays;
+/// - `procedure_figures`: the chain's procedure-scope figures (guard T's candidates).
+///
+/// S is built by [`store::canonical::LotSums`] and matched by
+/// [`store::canonical::match_lot_sums`], the election's own code, so the column and the
+/// election cannot disagree on what S is or on the match. Malformed parts are skipped.
+fn band_lot_sum(
+    cents: i64,
+    lot_kinds: &str,
+    lot_amounts: &str,
+    lot_awards: &str,
+    procedure_figures: &str,
+) -> Option<store::canonical::LotSumMatch> {
+    fn parts(s: &str) -> Vec<Vec<&str>> {
+        s.split(',').filter(|p| !p.is_empty()).map(|p| p.split(':').collect()).collect()
+    }
+    let kinds = parts(lot_kinds);
+    let mut sums = store::canonical::LotSums::new(kinds.iter().filter_map(|p| match p[..] {
+        [lot, kind] => Some((lot, kind)),
+        _ => None,
+    }));
+    for p in parts(lot_amounts) {
+        if let [lot, field, c] = p[..]
+            && let Ok(c) = c.parse()
+        {
+            sums.amount(lot, field, c, None);
+        }
+    }
+    let mut awards: Vec<(i64, i64, &str, i64)> = parts(lot_awards)
+        .into_iter()
+        .filter_map(|p| match p[..] {
+            [lot, notice, result, c] => Some((notice.parse().ok()?, result.parse().ok()?, lot, c.parse().ok()?)),
+            _ => None,
+        })
+        .collect();
+    awards.sort();
+    for (notice, _, lot, c) in awards {
+        sums.award(lot, notice, c);
+    }
+    let figures: Vec<i64> = procedure_figures.split(',').filter_map(|x| x.parse().ok()).collect();
+    store::canonical::match_lot_sums(cents, &sums.sums(), |sum| {
+        figures.iter().any(|&x| store::canonical::lot_sum_vouches(cents, sum, x))
+    })
+}
+
+/// Issue 537: section 16's lot-sum cell — `10^k x <kind> (n)`, an estimate-side match
+/// marked `T` when guard T holds and `no T` when it does not.
+fn band_lot_sum_cell(m: Option<&store::canonical::LotSumMatch>) -> String {
+    match m {
+        None => "—".to_owned(),
+        Some(m) => {
+            let guard = match (m.kind.award_side(), m.third_figure) {
+                (true, _) => "",
+                (false, true) => " T",
+                (false, false) => " no T",
+            };
+            format!("10^{} x {} ({}){guard}", m.exponent, m.kind.label(), m.lots)
+        }
+    }
 }
 
 /// Turn the raw result sets into a [`Report`]. Every era that appears as a
@@ -3945,8 +4055,8 @@ fn render_band(out: &mut String, report: &Report) {
         let _ = writeln!(out, "  -- {currency} ({} Tender(s)) --", rows.len());
         let _ = writeln!(
             out,
-            "  {:>10}  {:<20} {:<16} {:>26} {:>22}  {:<30} {:>12}  {}",
-            "tender", "era", "head notice", "published", "EUR", "exact 10^k partner", "x smallest", "value corrigendum"
+            "  {:>10}  {:<20} {:<16} {:>26} {:>22}  {:<30} {:>12}  {:<28}  {}",
+            "tender", "era", "head notice", "published", "EUR", "exact 10^k partner", "x smallest", "lot sum", "value corrigendum"
         );
         for r in rows {
             let partner = match r.pow10_partner {
@@ -3962,7 +4072,7 @@ fn render_band(out: &mut String, report: &Report) {
             };
             let _ = writeln!(
                 out,
-                "  {:>10}  {:<20} {:<16} {:>26} {:>22}  {:<30} {:>12}  {}",
+                "  {:>10}  {:<20} {:<16} {:>26} {:>22}  {:<30} {:>12}  {:<28}  {}",
                 r.tender_id,
                 band_era(&r.profile),
                 r.head_notice,
@@ -3970,6 +4080,7 @@ fn render_band(out: &mut String, report: &Report) {
                 major(r.eur_cents),
                 partner,
                 ratio,
+                band_lot_sum_cell(r.lot_sum.as_ref()),
                 r.value_corrigendum.as_deref().unwrap_or("—"),
             );
         }
@@ -3984,7 +4095,17 @@ fn render_band(out: &mut String, report: &Report) {
          is a framework total over its lots; that pair is not listed here); figures at or below 10.00 as published (issue 380's bottom-of-range \
          placeholders) are never partners or siblings. `x smallest` is the head over the smallest \
          such sibling, for reading only: a plain ratio is not a signal (a GBP 19 bn framework over \
-         its lots reads x540 too). `value corrigendum` names the newest F14 in the chain correcting \
+         its lots reads x540 too). `lot sum` (issue 537) names a sum of the head version's own Lots, \
+         in the head's currency, that the head is 10^k times (k = 2..6, over n >= 2 lots, to one cent \
+         per lot): `awards` (each Lot's latest), `BT-709` or `BT-660` per lot, `BT-27-Lot` or \
+         `BT-271-Lot` (each Lot's largest), with n in brackets. The election refuses such a head on \
+         the award side, and on the estimate side when a third procedure figure of the chain sits \
+         within [S/10, 10 x S] (`T`); so once `refold-value-band` has run, a listed award-side or \
+         `T` row is a finding (issue 492's framework exemption keeps it, or it is not refolded) \
+         unless the head is no procedure figure: a lot award's tender-scope copy, or a Lot's or \
+         Part's own figure, which the rule does not judge (a LotsGroup's copy of a refused \
+         procedure figure falls with it). A `no T` row is the guard's keep (8312215's lots typed \
+         in thousands). `value corrigendum` names the newest F14 in the chain correcting \
          II.1.5, II.1.7, II.2.6 or V.2.4 — the publisher's own correction, stored as prose and not \
          yet applied. That column knows the 2014-directive (r2.0.9) numbering ONLY: an r2.0.8 F14 \
          names its value sections in the 2004 numbering, which nothing has measured, so on an \
@@ -4406,6 +4527,15 @@ pub fn render_json(report: &Report) -> String {
                     "pow10_partner": r.pow10_partner,
                     "smallest_sibling": r.smallest_sibling,
                     "value_corrigendum": r.value_corrigendum,
+                    // Issue 537: null = no lot sum matches.
+                    "lot_sum": r.lot_sum.map(|m| json!({
+                        "kind": m.kind.label(),
+                        "k": m.exponent,
+                        "sum": m.sum,
+                        "lots": m.lots,
+                        "third_figure": m.third_figure,
+                        "refused_by_rule": m.refuses(),
+                    })),
                 }))
                 .collect::<Vec<_>>(),
         },
@@ -5920,6 +6050,59 @@ mod tests {
         assert!(text.contains("what is cut is the band's LOWEST heads"), "{text}");
         let v: Value = serde_json::from_str(&render_json(&full)).expect("json");
         assert_eq!(v["head_value_band"]["full"], true);
+
+        // Issue 537: the lot-sum column, from the four concatenated lot columns. 369057's
+        // awards sum to 1/1000 of its head, a cent off; LOT 12's award in an EARLIER notice
+        // is not its latest, and the LotsGroup is no lot of the sum. 8312215's estimate-side
+        // match has no third figure (the head itself is not one): `no T`. The same Tender
+        // with a procedure figure at the lots' scale: `T`. No lot figures: `—`.
+        let lots = |id: i64, cents: i64, kinds: &str, amounts: &str, awards: &str, procedure: &str| {
+            let mut r = row(id, "EUR", cents, cents, n.clone(), n.clone(), n.clone(), n.clone(), n.clone());
+            r.extend([json!(kinds), json!(amounts), json!(awards), json!(procedure)]);
+            r
+        };
+        let mut signals = sentinel_scaffold();
+        put(
+            &mut signals,
+            "band_listing",
+            Some(vec![
+                lots(
+                    369_057,
+                    6_237_873_628_000,
+                    "11:Lot,12:Lot,13:Lot,14:LotsGroup",
+                    "14:estimated_value:6237873629",
+                    "11:7:1:158878238,12:7:2:3367786341,13:7:3:2711209050,12:6:9:123456789,14:7:4:500000000",
+                    "",
+                ),
+                lots(8_312_215, 400_000_000_000, "21:Lot,22:Lot", "21:estimated_value:20000000,22:estimated_value:20000000", "", "400000000000"),
+                lots(8_312_216, 400_000_000_000, "21:Lot,22:Lot", "21:estimated_value:20000000,22:estimated_value:20000000", "", "400000000000,35000000"),
+                lots(20_905, 3_326_050_000_000, "", "", "", ""),
+            ]),
+        );
+        let signals = assemble("x", &Raw::from_labelled(signals).expect("raw"));
+        let sum_of = |id: i64| signals.band.iter().find(|r| r.tender_id == id).expect("row").lot_sum;
+        let m = sum_of(369_057).expect("369057 matches");
+        assert_eq!(
+            (m.kind, m.exponent, m.sum, m.lots, m.refuses()),
+            (store::canonical::LotSumKind::Awards, 3, 6_237_873_629, 3, true),
+            "each lot's latest award, the group left out"
+        );
+        let kept = sum_of(8_312_215).expect("8312215 matches");
+        assert_eq!((kept.kind, kept.exponent, kept.third_figure, kept.refuses()), (store::canonical::LotSumKind::Estimate, 4, false, false));
+        assert!(sum_of(8_312_216).expect("T").refuses());
+        assert_eq!(sum_of(20_905), None);
+        let text = render_text(&signals);
+        assert!(text.contains("10^3 x awards (3) "), "{text}");
+        assert!(text.contains("10^4 x BT-27-Lot (2) no T "), "{text}");
+        assert!(text.contains("10^4 x BT-27-Lot (2) T "), "{text}");
+        assert!(text.contains("`lot sum` (issue 537)"), "{text}");
+        let v: Value = serde_json::from_str(&render_json(&signals)).expect("json");
+        let rows = v["head_value_band"]["rows"].as_array().expect("rows");
+        let json_of = |id: i64| rows.iter().find(|r| r["tender_id"] == id).expect("row")["lot_sum"].clone();
+        assert_eq!(json_of(369_057)["kind"], "awards");
+        assert_eq!(json_of(369_057)["refused_by_rule"], true);
+        assert_eq!(json_of(8_312_215)["refused_by_rule"], false);
+        assert!(json_of(20_905).is_null());
 
         let none = assemble("x", &Raw::from_labelled(sentinel_scaffold()).expect("raw"));
         assert!(render_text(&none).contains("none — no elected head value is at or above EUR 10,000,000,000.00"));

@@ -715,6 +715,38 @@ else moves; a sixth Tender is a finding. The rule never raises a value outside t
 slip it counts at its residual when judging P is one that survived the election before, so its
 Tender held a value of €1 bn or more.
 
+**The lot-sum rule (issue 537, 2026-10-16).** A procedure figure F of €1 bn or more (not a lot
+award's copy) is refused, with no single partner needed, when it is 10ᵏ (k = 2…6) times a sum S of
+its own head version's lots over n ≥ 2 of them, to one cent per lot after scaling
+(`|F − 10ᵏ·S| ≤ 10ᵏ·n`; `ScalePartners::lot_sum_match`, S built by `canonical::LotSums`). On the
+award side S is each Lot's latest award, or BT-709 or BT-660 per lot, and refuses unconditionally;
+on the estimate side S is each Lot's largest BT-27 or BT-271, and refuses only under guard T (a
+figure of the chain, in F's currency, recorded at procedure scope at least once, other than F,
+within [S/10, 10·S]). Lots of kind Lot only; withheld figures, sentinels and placeholders at or
+below 10.00 are no figure of their lot. 492's framework exemption wins; there is no corroboration
+exemption. A LotsGroup's figure equal to a refused F falls with it (the slip in a second slot); a
+lot award's tender-scope copy and a Lot's or Part's own figure are outside the rule. Decided on
+unit 1's 48 matched heads (`.scratch/tender-db/537-lot-sum/`): it refuses 22, every one a head
+slip. Drain as for the ×100 extension (`refold-value-band` dry, wet, `project`). Expected: those
+22 heads leave the €1 bn+ band (3,750 → 3,728 on unit 1's population, less any of the four
+below); 369057, 380921, 425446, 392980, 251619 and 706887 fall to no value, 165437 to
+€20,202,891.70, and the rest as the synthesis's "falls to" table says.
+
+Four more heads may move, none adjudicated. Unit 1 summed LotsGroup rows into S and the build
+leaves them out, which adds two estimate-side matches outside the 48. 74787 has one version and
+no procedure figure but F, so it never gets T and stays. 143300 (€1 bn in two fields over lot
+estimates summing to €1 m, k = 3, n = 4) is kept today only by 471's corroboration exemption
+against its €1 m group figure, and this rule has none: it falls to €1 m if either earlier contract
+notice (00379665-2024, 00382458-2024) stores a procedure figure within [€100,000, €10 m]. Read
+those two versions' amounts before the drain (a bounded `/v1/sql` read) and judge it as a possible
+23rd. Likewise 164283, 905123 and 8636199, head slips the synthesis kept as `no T` from the readers'
+reads, have earlier versions: a stored procedure figure there that gives T refuses them too
+(rightly, but it moves the count). Any other head that moved is a finding, read against its notice.
+Then re-read the Verify of issue 537 and section 16's `lot sum` column: a listed award-side or `T`
+row is a finding (492's exemption keeps it, or it was not refolded) unless its head is a lot
+award's tender-scope copy or a Lot's or Part's own figure, which the rule does not judge; a `no T`
+row is the guard's keep.
+
 **Result-level framework values as scale partners (issue 506, 2026-10-10).** An eForms award
 notice's framework maximum and re-estimate per lot result (BT-709, BT-660, and their eForms-DE 1.x
 spellings) are stored on the Lot their result names through BT-13713 as `result_framework_maximum` /
@@ -779,6 +811,79 @@ Until the last two have run, `dps` rows and the `discontinued`/`unsuccessful` re
 only for the open head and for Tenders folded since the deploy (the sandbox notes say so); `status`
 does not wait on them, since a past-deadline head is Closed by its deadline. Post-deploy reads:
 issue 533's `### Unit 2 order`, step 5.
+
+**Publisher-escaped titles and descriptions (issue 538 unit 3).** The fold decodes a publisher's
+extra escaping in every `title` and `description` fact, Tender and lot, every era
+(`ingest::project::escapes::decode_publisher_escapes`): numeric character references and the five
+XML names (ASCII case-insensitive, so the text era's `&Amp;` too), repeated while one remains, at
+most 3 passes; then a decoded `<br>` / `<br/>` / `<br />` becomes a line feed and a decoded
+U+E000–U+F8FF becomes `•`. It changes a text only where a reference was decoded. The notice layer
+is untouched (nothing is re-parsed), and so are organization names (deferred to the issue's unit 4,
+behind 524's wet runs) and the other text fields. No `PROJECTION_EPOCH` bump (ADR-0017 R3): the
+cohort is the carriers of the field ids the projection reads as a title or description, all in
+`notice_texts` (`TEXTS` rows mapped to `title`/`description` in `crates/ingest/src/project.rs`, plus
+`OJ_HEADING_FIELD`; a row added there joins this list):
+
+- eForms (TED SDK 1.x, eForms-DE 2.x) and FTS: `BT-21-Procedure`, `BT-21-Lot`, `BT-21-Part`,
+  `BT-21-LotsGroup`, `BT-24-Procedure`, `BT-24-Lot`, `BT-24-Part`, `BT-24-LotsGroup`;
+- eForms-DE 1.x: `DE1-ProcurementProject-Name`, `DE1-ProcurementProjectLot-ProcurementProject-Name`,
+  `DE1-ProcurementProject-Description`, `DE1-ProcurementProjectLot-ProcurementProject-Description`;
+- DÖE sdk-0.1: the same four with `SDK01-` for `DE1-`;
+- r2.0.8, r2.0.9 and internal-ojs: `TED-TITLE`, `TED-TITLE_CONTRACT`, `TED-CONTRACT_TITLE`,
+  `TED-TITLE_QUALIFICATION_SYSTEM`, `TED-TITLE_DESIGN_CONTACT_NOTICE`,
+  `TED-TITLE_RESULT_DESIGN_CONTEST`, `TED-TITLE_NOTICE_BUYER_PROFILE`, `TED-LOT_TITLE`,
+  `TED-LOT_DESCRIPTION`, `TED-SHORT_DESCR`, `TED-SHORT_CONTRACT_DESCRIPTION`,
+  `TED-SHORT_DESCRIPTION_CONTRACT`, `TED-NEW_VALUE.TEXT`, and `TED-TI_DOC` (the OJ heading, read as
+  the title only when a notice maps none of its own);
+- text era: `TXT-TI`, `TXT-TX`, `TXT-AB`.
+
+Only a Tender whose title or description holds an `&` can move, but a field id says nothing about
+the value, so the carriers are close to every notice of each era (nearly every notice publishes a
+title). Size each family with `"expect":1` (the abort names the count; nothing is written), then
+send it with that count as `expect` (the handler queues its own `project`), the eForms family first
+since it carries the class:
+
+```sh
+# eForms-structured: TED eForms, eForms-DE 1.x/2.x, FTS, DÖE sdk-0.1
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["BT-21-Procedure","BT-21-Lot","BT-21-Part","BT-21-LotsGroup","BT-24-Procedure","BT-24-Lot","BT-24-Part","BT-24-LotsGroup","DE1-ProcurementProject-Name","DE1-ProcurementProjectLot-ProcurementProject-Name","DE1-ProcurementProject-Description","DE1-ProcurementProjectLot-ProcurementProject-Description","SDK01-ProcurementProject-Name","SDK01-ProcurementProjectLot-ProcurementProject-Name","SDK01-ProcurementProject-Description","SDK01-ProcurementProjectLot-ProcurementProject-Description"],"tables":["notice_texts"],"expect":1}'
+# legacy TED and the text era
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-TITLE","TED-TITLE_CONTRACT","TED-CONTRACT_TITLE","TED-TITLE_QUALIFICATION_SYSTEM","TED-TITLE_DESIGN_CONTACT_NOTICE","TED-TITLE_RESULT_DESIGN_CONTEST","TED-TITLE_NOTICE_BUYER_PROFILE","TED-LOT_TITLE","TED-LOT_DESCRIPTION","TED-SHORT_DESCR","TED-SHORT_CONTRACT_DESCRIPTION","TED-SHORT_DESCRIPTION_CONTRACT","TED-NEW_VALUE.TEXT","TED-TI_DOC","TXT-TI","TXT-TX","TXT-AB"],"tables":["notice_texts"],"expect":1}'
+```
+
+Cost: if a count comes out at its eras' whole notice count, the cohort is those eras, and a `refold`
+over their profiles is the same requeue without the `notice_texts` sweep; either way the `project`
+behind it is a fold of millions of notices (the full fallback past `LEGACY_CLOSURE_CAP`; the 397
+all-profile fold measured ~442 min), so run it in one quiet window, off the daily tick, and batch it:
+these cohorts contain 533's three deferred field-refold cohorts above (BT-766 and DÖE award notices
+are eForms-structured notices with a title, the r2.0.9 markers legacy ones), so the two drains are
+one fold, and its `compare: … corrected` count is the sum of both changes. The cost is accepted
+knowingly. A finder over stored text would be as complete and far smaller: the decode is the
+identity on a text with no decodable reference and nothing else in the fold reads these values, so
+the Tenders whose `tender_version_texts` title or description holds `&#` or one of the five names
+(a windowed read on the reader pool), stamped and re-queued the way `refold-value-band` does, are
+the whole cohort. It needs a new job arm, so it is not built while the batch with 533 holds: that
+fold is owed anyway, though this cohort makes it several times larger (533's three are ~3.5 M
+notices; the carriers here are close to all ~31.7 M). If the batch falls through, build the finder
+rather than run this cohort alone. Expected for 538 alone: about 1–2 % of eForms Tenders corrected
+(unit 1: 0.9–2.1 % per window), 0.2–0.35 % of r2.0.8 and r2.0.9 Tenders, about none elsewhere. Size
+change rows by corrected Tenders, not one row each: a corrected Tender writes ADR-0017 D3's rows, one
+`tender changed` (rule T) plus a `lot changed` per rule-L lot, which is every lot of its head version
+when a head text moved, so a 10-lot eForms Tender writes 11. A corrected Tender that neither an `&`
+in its stored title or description nor another change folded in the same run (533's, or any
+deployed rule not yet refolded) explains is a finding. Verify, in order:
+- D7's R3 completeness: each wet `refold-fields` message reports `stamped N`, the distinct Tenders
+  of that job. The `project` messages' `compare: X verified, Y corrected`, summed, must be at least
+  the largest N (more if other Tenders were pending). It would equal the sum of the N for disjoint
+  cohorts, but these overlap (533's three lie inside the two families, and a Tender stamped by two
+  jobs is folded once), so the decisive half is a bounded window read that finds no
+  `projection_epoch = 0` residue. Until both hold the drain is not complete: a stopped `project`
+  (it is stoppable) is re-run, not read as done.
+- Issue 538's `## Verify` (8561858 prints `False Gara europea … modalità multilotto, per
+  l’affida`), 8561112's description reads `souscription & la gestion`, 8561120's lot descriptions
+  end in a line feed rather than `&amp;lt;br/&amp;gt;`, and `/v1/notices/45886825/content` still
+  holds `&#224;` (the notice layer keeps what the XML's one decode left).
+- Only after both: retire the `issue-538 refold` sentence of `/docs` and the OpenAPI through
+  `RETIRED` (`crates/app/src/v1/docs.rs`).
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|

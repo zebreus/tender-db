@@ -1432,6 +1432,71 @@ async fn reprocessing_and_reprojecting_a_package_changes_nothing() {
     let _ = std::fs::remove_file(&path);
 }
 
+/// Issue 538 unit 3: a publisher that escaped its text twice or three times reaches the parse
+/// layer escaped once or twice, after the XML's own decode, and the parse layer keeps it so
+/// (ADR-0001). The served title and description are decoded: 8561858's title (`&amp;#224;` in the
+/// XML), 8561112's description (`&amp;amp;amp;`), 8561120's lot description (an escaped HTML line
+/// break, `&amp;amp;lt;br/&amp;amp;gt;`). A mangled `modalità;` stays as published.
+#[tokio::test]
+async fn a_double_escaped_title_is_served_decoded() {
+    let (db, fetch_id, path) = scratch("double-escaped").await;
+    let fixture = "eforms/cn-16-00494343-2026.xml";
+    let xml = std::fs::read_to_string(format!("tests/fixtures/{fixture}")).expect("fixture");
+    // The fixture names its procedure and its one lot alike: the first of each element is the
+    // procedure's (BT-21-Procedure, BT-24-Procedure), the second the lot's.
+    let name = r#"<cbc:Name languageID="DEU">Dachdecker-/Spenglerarbeiten</cbc:Name>"#;
+    let description = r#"<cbc:Description languageID="DEU">Dachdecker- und Spenglerarbeiten</cbc:Description>"#;
+    assert_eq!((xml.matches(name).count(), xml.matches(description).count()), (2, 2), "premise: the fixture's shape");
+    let xml = xml
+        .replacen(
+            name,
+            r#"<cbc:Name languageID="ITA">Gara europea a procedura aperta telematica, in modalit&amp;#224; multilotto, per l&amp;#8217;affidamento</cbc:Name>"#,
+            1,
+        )
+        .replacen(name, r#"<cbc:Name languageID="ITA">in modalità; multilotto</cbc:Name>"#, 1)
+        .replacen(
+            description,
+            r#"<cbc:Description languageID="FRA">souscription &amp;amp;amp; la gestion</cbc:Description>"#,
+            1,
+        )
+        .replacen(
+            description,
+            r#"<cbc:Description languageID="FRA">épicerie bio&amp;amp;lt;br/&amp;amp;gt;</cbc:Description>"#,
+            1,
+        );
+    ingest_bytes(&db, fetch_id, SOURCE, fixture, xml.as_bytes()).await;
+    project::project(&db, false).await.expect("project");
+
+    // The notice layer keeps what the XML's one decode left.
+    let parsed = |field: &str| format!("SELECT value FROM notice_texts WHERE field_id = '{field}'");
+    assert_eq!(
+        query_text(&db, &parsed("BT-21-Procedure")).await.as_deref(),
+        Some("Gara europea a procedura aperta telematica, in modalit&#224; multilotto, per l&#8217;affidamento")
+    );
+    assert_eq!(query_text(&db, &parsed("BT-24-Procedure")).await.as_deref(), Some("souscription &amp;amp; la gestion"));
+    assert_eq!(query_text(&db, &parsed("BT-24-Lot")).await.as_deref(), Some("épicerie bio&amp;lt;br/&amp;gt;"));
+
+    // The served texts are decoded: the version's texts and the list row's title.
+    let decoded = "Gara europea a procedura aperta telematica, in modalità multilotto, per l’affidamento";
+    assert_eq!(title(&db, 1).await.as_deref(), Some(decoded));
+    assert_eq!(query_text(&db, "SELECT current_title FROM tenders").await.as_deref(), Some(decoded));
+    let served = |field: &str, lot: bool| {
+        format!(
+            "SELECT value FROM tender_version_texts WHERE field = '{field}' AND lot_id IS {}NULL",
+            if lot { "NOT " } else { "" }
+        )
+    };
+    assert_eq!(query_text(&db, &served("description", false)).await.as_deref(), Some("souscription & la gestion"));
+    assert_eq!(query_text(&db, &served("description", true)).await.as_deref(), Some("épicerie bio\n"));
+    assert_eq!(
+        query_text(&db, &served("title", true)).await.as_deref(),
+        Some("in modalità; multilotto"),
+        "a mangled form stays"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
 /// An empty notice layer projects to an empty canonical layer rather than to an
 /// error — the stages are independent (CONTEXT.md).
 #[tokio::test]

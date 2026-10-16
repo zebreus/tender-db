@@ -4,6 +4,43 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 537) — a procedure total 10^k times the sum of its own lots is refused
+
+A Tender's `value` (and what `min_value` / `max_value` compare) no longer elects a procedure-level figure of €1 bn or
+more that is 100× to 1,000,000× a sum of the notice's own lots, over two or more lots and to within a cent per lot:
+the lot total printed with its decimal separator gone. No single figure of the Tender needs to match. The lots'
+latest awards and the award notice's framework maximum or re-estimate per lot (issue 506) always count; the lots'
+estimates and framework maxima count only when another procedure-level figure of the Tender lies between a tenth of
+their sum and ten times it. A framework total that issue 492 keeps is still kept, and a lots group restating the
+refused figure is refused with it. Example: 369057's €62,378,736,280.00 over lot awards summing to €62,378,736.29
+now has no `value`, and 165437's €19,975,274,626.00 falls to its €20,202,891.70 procedure estimate. The figure stays
+in `amounts`; refused is not corrected, so the value falls to the next accepted figure, or to none. The affected
+Tenders (22 on the October 2026 band) are re-folded and announced as corrections.
+
+## Unreleased (issue 538) — a title or description its publisher escaped twice is served decoded
+
+Some publishers escape a text two or three times before it reaches the notice. The notice's own XML decoding removes
+one level, so `title` and the detail's `texts[]` served `in modalit&#224; multilotto`, `souscription &amp;amp; la
+gestion` or `épicerie bio&amp;lt;br/&amp;gt;`: about 1–2 % of TED eForms Tenders, a few per thousand in TED's
+r2.0.8 and r2.0.9 formats, about none elsewhere. In every `title` and `description`, Tender and lot, every source:
+- numeric character references (`&#224;`, `&#x2019;`) and the five XML names (`&amp;`, `&lt;`, `&gt;`, `&quot;`,
+  `&apos;`, in any letter case, so `&Amp;` too) are decoded, again while one remains, up to three levels;
+- an escaped `<br>`, `<br/>` or `<br />` (any case) becomes a line feed, and an escaped private-use code point
+  (U+E000–U+F8FF, a Symbol-font bullet such as `&#61655;`) becomes `•`;
+- nothing else changes. Other markup, other entity names (`&nbsp;`), a reference to a control character other than
+  tab, line feed and carriage return (`&#0;`, `&#150;`), to a surrogate or past U+10FFFF, markup the text carries
+  literally, and text mangled at the source (`modalità;`) are served as published. A fourth level of escaping
+  stays escaped once (`&amp;amp;amp;amp;` serves `&amp;`).
+
+Where: `title` on `/v1/tenders` and `/v1/lots`, the detail's `texts[]` (fields `title` and `description`), and on
+`/v1/sql` `tender_version_texts.value` for those two fields and `tenders.current_title`, so a text match there
+(`LIKE '%&amp;%'`) answers accordingly. Not changed: `/v1/notices/{id}/content` and `notice_texts` keep the text as
+parsed; the other text fields (`funding_program`, `selection_criterion`, `tenderer_requirement`, `appeal_terms`);
+and organization names (`name`, `organization_name`, `mention_name`), whose decode changes the name key that binds
+organizations without an identifier and waits for its own unit. New notices are served decoded from the deploy; a
+stored Tender changes when the refold after the deploy reaches it, and the change arrives on the change feed and SSE
+like any other.
+
 ## Unreleased (issue 533) — `status=open` leaves out a procedure its newest notice closed
 
 `status` was the submission deadline alone. A result notice usually publishes no deadline, so the Tender carries its

@@ -1003,7 +1003,9 @@ const TABLE_NOTES: &[(&str, &str)] = &[
          result_framework_maximum and result_framework_reestimate, an award notice's framework \
          maximum and re-estimate per lot result (BT-709, BT-660). They are always lot-scoped and \
          never elected as any value; they only let the scale rules refuse a figure exactly \
-         10^k times them, so a MAX(cents) over this view is not the Tender's value.",
+         10^k times one of them, or a procedure figure 10^k times their sum over a version's \
+         lots, to a cent per lot (issue 537), so a MAX(cents) over this view is not the \
+         Tender's value.",
     ),
     ("v_tender_dates", "Dates of each current Tender (utc_seconds epoch + offset_minutes). \
       NOT FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_dates d ON \

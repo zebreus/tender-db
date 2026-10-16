@@ -726,7 +726,8 @@ milliseconds.</p>
 <h2 id="caveats">Data caveats</h2>
 <p>The corpus is served as published. Where the source is wrong, odd, or silent,
 tender-db keeps the published value and documents the pattern here rather than
-&ldquo;fixing&rdquo; data underneath you. These are the measured patterns a consumer
+&ldquo;fixing&rdquo; data underneath you, except where a caveat below names a decode
+(titles and descriptions, issue 538). These are the measured patterns a consumer
 should know about; the <a href="/">dashboard</a> carries the live per-era quality
 rates and the quarantine resolution ledger.</p>
 
@@ -779,6 +780,31 @@ rates and the quarantine resolution ledger.</p>
   winner is read as the authority's name and is flagged as the authority's own award.
   Withheld names (<code>N/A</code>, <code>Confidential</code>) on both sides are not
   taken as the same party.</li>
+</ul>
+
+<h3>Texts</h3>
+<ul>
+  <li><strong>Titles and descriptions are served with a publisher&rsquo;s extra escaping
+  decoded</strong> (issue 538). Some publishers escape a text two or three times before it
+  reaches the notice (about 1&ndash;2&nbsp;% of TED eForms Tenders, a few per thousand in TED&rsquo;s
+  r2.0.8 and r2.0.9 XML formats, about none elsewhere), so after the notice&rsquo;s own
+  decoding it still read <code>modalit&amp;#224;</code>, <code>&amp;amp;quot;offre&amp;amp;quot;</code>
+  or <code>&amp;amp;lt;br/&amp;amp;gt;</code>. In every <code>title</code> and
+  <code>description</code> (Tender and lot: the list rows&rsquo; <code>title</code>, the detail&rsquo;s
+  <code>texts[]</code>, and on <a href="#sql">/v1/sql</a> <code>tender_version_texts</code> and
+  <code>tenders.current_title</code>) numeric character references (<code>&amp;#224;</code>,
+  <code>&amp;#x2019;</code>) and the five XML names (<code>&amp;amp;</code>, <code>&amp;lt;</code>,
+  <code>&amp;gt;</code>, <code>&amp;quot;</code>, <code>&amp;apos;</code>, in any letter case) are
+  decoded, up to three levels deep. An escaped <code>&lt;br&gt;</code>, <code>&lt;br/&gt;</code> or
+  <code>&lt;br /&gt;</code> becomes a line break, and an escaped private-use symbol (U+E000&ndash;U+F8FF,
+  a Symbol-font bullet such as <code>&amp;#61655;</code>) becomes <code>&bull;</code>. Nothing else
+  changes: other markup, other entity names (<code>&amp;nbsp;</code>), a reference to a control
+  character other than tab, line feed and carriage return, and text mangled at the source
+  (<code>modalit&agrave;;</code>) are served as published. The notice keeps the text as parsed
+  (<code>/v1/notices/{id}/content</code>, <code>notice_texts</code>). The other text fields and organization names are not decoded: a
+  name can still read <code>D&amp;apos;ACTION</code> or <code>Gore &amp;Amp; Associ&eacute;s</code>.
+  Until the issue-538 refold reaches it, a Tender folded before the change serves its old text; the
+  decoded text then arrives on the <a href="#changes">change feed</a> as a change.</li>
 </ul>
 
 <h3>Amounts</h3>
@@ -862,10 +888,16 @@ rates and the quarantine resolution ledger.</p>
   notice states an accepted procedure total at least as large. A lot's figure is also
   refused when it is exactly 100&times; to 1,000,000&times; what the notice's accepted
   procedure total leaves after its other lots that state the same field, where that
-  remainder is at least a hundredth of the total. A part carried from a prior
+  remainder is at least a hundredth of the total. A procedure-level figure of
+  &euro;1bn or more is refused with no partner at all when it is 100&times; to
+  1,000,000&times; a sum of the notice's own lots, two or more of them, to within a cent
+  per lot (issue 537): their latest awards and their award-notice framework values always
+  count, their estimates and framework maxima only when another procedure-level figure of
+  the Tender sits at the lots' scale; a framework total kept as above still stands, and a
+  lots group restating the refused figure falls with it. A part carried from a prior
   information notice into a contract notice with lots is not elected while the
   notice has any other accepted figure; it stays on the part's own row. The refused figure stays in <code>amounts</code> and the election
-  falls to the next one. A figure with no such partner is served as published,
+  falls to the next one. A figure with neither such a partner nor such a lot sum is served as published,
   so a very large single value can still be a typo: in a sample of the residual
   &euro;10bn-and-up band (issue 471, October 2026) roughly a third were. Check
   the notice before quoting one.</li>
@@ -1697,5 +1729,77 @@ mod tests {
                 ],
             );
         }
+    }
+
+    /// Issue 538 unit 3: both surfaces say which texts are decoded of a publisher's extra
+    /// escaping, how far, what becomes of a line break, and what is left as parsed. Read from
+    /// the `/docs` Texts caveats and the OpenAPI `Tender.title` / `TenderDetail.texts`
+    /// descriptions, not the whole surface. One phrase per sentence. The pre-refold sentence
+    /// carries `issue-538 refold`: once the drain has run, retire it through RETIRED.
+    #[test]
+    fn the_docs_say_titles_and_descriptions_are_decoded_of_extra_escaping() {
+        let start = PAGE.find("<h3>Texts</h3>").expect("/docs has the text caveats");
+        let docs = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h3>").expect("a section follows it")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let title = spec["components"]["schemas"]["Tender"]["properties"]["title"]["description"]
+            .as_str()
+            .expect("Tender.title is described");
+        let texts = spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"]["texts"]["description"]
+            .as_str()
+            .expect("TenderDetail.texts is described");
+        assert_says(
+            "/docs's text caveat",
+            docs,
+            &[
+                "titles and descriptions are served with a publisher&rsquo;s extra escaping decoded",
+                "up to three levels deep",
+                "becomes a line break",
+                "nothing else changes",
+                "the notice keeps the text as parsed",
+                "organization names are not decoded",
+                "until the issue-538 refold reaches it",
+            ],
+        );
+        assert_says(
+            "Tender.title",
+            title,
+            &[
+                "decoded of a publisher's extra escaping (issue 538)",
+                "up to three levels deep",
+                "as a line break",
+                "nothing else is changed",
+                "the notice content keeps the text as parsed",
+                "until the issue-538 refold reaches it",
+            ],
+        );
+        assert_says(
+            "TenderDetail.texts",
+            texts,
+            &["title and description values are decoded", "every other field is served as parsed"],
+        );
+        // The caveats' opening names the decode as the exception to "served as published", and
+        // the Texts caveat names the three control characters it does decode.
+        let intro = PAGE.find("<h2 id=\"caveats\">").expect("/docs has the caveats");
+        let intro = &PAGE[intro..intro + PAGE[intro..].find("<h3>").expect("a section follows it")];
+        assert_says("/docs's caveats opening", intro, &["except where a caveat below names a decode"]);
+        assert_says("/docs's text caveat", docs, &["control character other than tab, line feed and carriage return"]);
+    }
+
+    /// Issue 537 unit 3 (review): the `/docs` value caveat names the lot-sum rule beside the
+    /// partner rules, and no longer says every figure without a partner is served. Read from
+    /// the Amounts caveats, not the whole surface. One phrase per sentence.
+    #[test]
+    fn the_docs_say_a_total_ten_to_the_k_times_its_lot_sum_is_refused() {
+        let start = PAGE.find("<h3>Amounts</h3>").expect("/docs has the amount caveats");
+        let docs = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h3>").expect("a section follows it")];
+        assert_says(
+            "/docs's amount caveat",
+            docs,
+            &[
+                "1,000,000&times; a sum of the notice's own lots",
+                "only when another procedure-level figure of the tender sits at the lots' scale",
+                "a figure with neither such a partner nor such a lot sum is served as published",
+            ],
+        );
     }
 }

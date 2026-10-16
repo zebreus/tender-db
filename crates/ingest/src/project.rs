@@ -873,6 +873,21 @@ pub mod key_census;
 /// buyer slot).
 pub mod role_census;
 
+/// Issue 538 unit 3: the publisher's extra escapes, decoded in served titles and descriptions.
+pub mod escapes;
+
+/// The value a canonical text fact serves. Issue 538: a `title` or `description` (lot ones
+/// included, every era) is decoded of the publisher's extra escapes
+/// ([`escapes::decode_publisher_escapes`]); every other text field is served as parsed, and so are
+/// party names, whose decode the issue deferred (it would re-key `name_norm`).
+fn served_text(field: &str, value: &str) -> String {
+    if field == "title" || field == "description" {
+        escapes::decode_publisher_escapes(value).into_owned()
+    } else {
+        value.to_owned()
+    }
+}
+
 /// The section a lots-group composition lives in, and the two fields naming its ends
 /// (issue 237). Named constants rather than literals in the reader because both ids are
 /// `-Procedure`-suffixed and read as procedure-level facts, which is exactly the
@@ -5484,11 +5499,13 @@ impl NoticeState {
                             field != "title" || enclosing(&sections, &value.section_id, RESULT_KINDS).is_none()
                         })
                         .map(|field| Fact::Text {
+                            // Issue 538: a title or description decoded of the publisher's
+                            // extra escapes; the notice layer keeps them (ADR-0001).
+                            value: served_text(&field, v),
                             field,
                             // issue 292: one language vocabulary across eras, or the
                             // read layer's 'ENG'-wins picks never fire for legacy tags.
                             lang: normalize_lang(lang.as_deref()),
-                            value: v.clone(),
                         })
                 }
                 NoticeValue::Amount { cents, currency } => {
@@ -5630,7 +5647,8 @@ impl NoticeState {
                 facts.insert(Fact::Text {
                     field: "title".to_owned(),
                     lang: normalize_lang(lang.as_deref()),
-                    value,
+                    // Issue 538: a served title like any other.
+                    value: served_text("title", &value),
                 });
             }
         }
@@ -11308,6 +11326,93 @@ mod tests {
         assert!(
             state.facts.iter().any(|f| matches!(f, Fact::Text { field, value, .. } if field != "title" && value == "Lot 1 : autocars")),
             "a non-title text in the award block still folds where it always did"
+        );
+    }
+
+    /// Issue 538 unit 3: the decode reaches the `title` and `description` facts, at Tender and
+    /// Lot scope and in every era, the OJ-heading fallback title included, and no other text
+    /// field. The parse layer's values are what it holds after its own XML decode.
+    #[test]
+    fn only_titles_and_descriptions_are_decoded() {
+        fn texts<'a>(facts: impl IntoIterator<Item = &'a Fact>) -> Vec<(String, String)> {
+            facts
+                .into_iter()
+                .filter_map(|f| match f {
+                    Fact::Text { field, value, .. } => Some((field.clone(), value.clone())),
+                    _ => None,
+                })
+                .collect()
+        }
+        let pair = |field: &str, value: &str| (field.to_owned(), value.to_owned());
+        let notice = |id: i64, profile: &str| store::NoticeRef {
+            id,
+            source: "ted".into(),
+            publication_id: format!("{id:08}-2026"),
+            profile: profile.into(),
+        };
+
+        // eForms: 8561858's title, 8561112's description, 8561120's lot description, and a
+        // mangled lot title no decode repairs. The funding programme is a text, not a title.
+        let eforms = Parsed {
+            sections: vec![
+                store::Section { id: "ROOT".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "LOT-0001".into(), kind: "Lot".into(), parent: Some("ROOT".into()) },
+            ],
+            values: vec![
+                text_value(
+                    "ROOT",
+                    "BT-21-Procedure",
+                    0,
+                    Some("ITA"),
+                    "Gara europea a procedura aperta telematica, in modalit&#224; multilotto, per l&#8217;affidamento",
+                ),
+                text_value("ROOT", "BT-24-Procedure", 1, Some("FRA"), "souscription &amp;amp; la gestion"),
+                text_value("ROOT", "UBL-FundingProgram", 2, Some("FRA"), "FEDER &amp;amp; Etat"),
+                text_value("LOT-0001", "BT-21-Lot", 3, Some("ITA"), "in modalità; multilotto"),
+                text_value("LOT-0001", "BT-24-Lot", 4, Some("FRA"), "épicerie bio&amp;lt;br/&amp;gt;"),
+            ],
+        };
+        let state = NoticeState::read(&notice(1, "eforms:eforms-sdk-1.13"), &eforms);
+        let mut tender = texts(&state.facts);
+        tender.sort();
+        assert_eq!(
+            tender,
+            vec![
+                pair("description", "souscription & la gestion"),
+                pair("funding_program", "FEDER &amp;amp; Etat"),
+                pair(
+                    "title",
+                    "Gara europea a procedura aperta telematica, in modalità multilotto, per l’affidamento"
+                ),
+            ]
+        );
+        let lot = state.lots.iter().find(|l| l.key == "LOT-0001").expect("the lot");
+        let mut lot = texts(&lot.facts);
+        lot.sort();
+        assert_eq!(lot, vec![pair("description", "épicerie bio\n"), pair("title", "in modalità; multilotto")]);
+
+        // A legacy notice with no title element: the OJ heading it falls back to is decoded too.
+        let heading = Parsed {
+            sections: vec![store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }],
+            values: vec![text_value("PROCEDURE", OJ_HEADING_FIELD, 0, Some("FR"), "FR-Paris: services d&amp;apos;entretien")],
+        };
+        let state = NoticeState::read(&notice(2, "internal-ojs"), &heading);
+        assert_eq!(texts(&state.facts), vec![pair("title", "FR-Paris: services d'entretien")]);
+
+        // The text era's title-cased `&Amp;`, which the parse layer's own unescape does not read.
+        let text_era = Parsed {
+            sections: vec![store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }],
+            values: vec![
+                text_value("PROCEDURE", "TXT-TI", 0, Some("FR"), "Livraison de chariots O&Amp;K"),
+                text_value("PROCEDURE", "TXT-TX", 1, Some("FR"), "Fourniture &amp;quot;clé en main&amp;quot;"),
+            ],
+        };
+        let state = NoticeState::read(&notice(3, "text"), &text_era);
+        let mut era = texts(&state.facts);
+        era.sort();
+        assert_eq!(
+            era,
+            vec![pair("description", "Fourniture \"clé en main\""), pair("title", "Livraison de chariots O&K")]
         );
     }
 

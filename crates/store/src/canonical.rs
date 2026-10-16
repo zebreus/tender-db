@@ -1886,6 +1886,20 @@ pub struct CarrierSweepStop {
 /// the lot values). That cohort is refolded by Tender (ADR-0017 D6's route R3) after the
 /// deploy, and since issue 495 the refold compares and announces only what moved.
 ///
+/// NOT bumped for issue 537's lot-sum rule, on 492's reasoning: it refuses only a
+/// procedure figure of at least EUR 1 bn, so it can move only a Tender whose stored head
+/// is at least that (22 of 3,750 on 2026-10-16), and the lot values it can reach (a lot
+/// whose x100 sibling exemption or 505 bound was such a figure, and a LotsGroup restating
+/// a refused figure) are of EUR 1 bn or more too. `refold-value-band` is exactly that
+/// cohort.
+///
+/// NOT bumped for issue 538's title and description decode either, although it changes
+/// `NoticeState::read` for every profile: ADR-0017 D6's route R3 covers it. Its cohort is
+/// the carriers of the field ids the projection reads as a title or description
+/// (`refold-fields`, listed in docs/operations.md), the decode changes only a text holding
+/// a decodable `&` reference, and the compare announces only the Tenders whose text moved.
+/// An in-place walk (R2) would be wrong: the decode is not idempotent on stored text.
+///
 /// NOT bumped for issue 234's identifier-less mention merge, and the reasoning
 /// is worth keeping because the bump was made and then REVERTED after its first
 /// live no-op: the resolver's `(notice, section)` idempotency preload returns
@@ -3451,10 +3465,13 @@ pub fn elect_lot_value<'a>(
 /// where judgement would be needed and none is applied — €10–100 bn genuinely
 /// mixes NHS England's €10.6 bn commissioning contract and the Île-de-France
 /// transport contract with a €10.5 bn homecare notice for an island of 140,000,
-/// and no threshold separates those. That needs the tender-versus-lot-sum ratio,
-/// not a bigger constant. Issue 471 unit 4(a) reaches the part of the band that
-/// carries an exact-10^k sibling, by a rule rather than a constant
-/// ([`ScalePartners`]).
+/// and no threshold separates those, so no bigger constant is the answer. Issue 471
+/// unit 4(a) reaches the part of the band (and of the EUR 1-10 bn decade below it) that
+/// carries an exact-10^k sibling, and the tender-versus-lot-sum ratio this note once
+/// called for is issue 537's lot-sum rule: a procedure figure 10^k (k = 2..6) times a sum
+/// of its own head version's lots, to one cent per lot, is refused. Both are rules rather
+/// than constants ([`ScalePartners`]); a head with no lot figure and no sibling is still
+/// served as published (471 unit 5).
 pub const IMPLAUSIBLE_EUR_CENTS: i64 = 10_000_000_000_000;
 
 /// The smallest power of ten that marks a scale slip outright (issue 471 unit 4(a)):
@@ -3494,6 +3511,20 @@ pub const SCALE_PARTNER_FLOOR_CENTS: i64 = 1_000;
 /// The data-quality band listing keeps its own EUR 10 bn floor
 /// (`data_quality.rs`, `BAND_FLOOR_EUR_CENTS`); it is no longer this constant.
 pub const SCALE_ERROR_MIN_EUR_CENTS: i64 = 100_000_000_000;
+
+/// Issue 537: the powers of ten the lot-sum rule tests, `10^k` for k in
+/// `LOT_SUM_MIN_EXPONENT..=LOT_SUM_MAX_EXPONENT`. k = 1 was measured and NOT adopted
+/// (2026-10-16): it sits below every scale rule's floor, all 17 of its sums were round
+/// numbers (no digit information), and it held the one coincidence (1039053's deliberate
+/// 10x framework ceiling). The unit-1 sweep found no match above k = 4; 6 is the measured
+/// range of every scale rule so far (505's residual rule stops there too).
+pub const LOT_SUM_MIN_EXPONENT: u32 = 2;
+/// See [`LOT_SUM_MIN_EXPONENT`].
+pub const LOT_SUM_MAX_EXPONENT: u32 = 6;
+/// Issue 537: the fewest lots a sum of the lot-sum rule may be over. A single lot is one
+/// partner figure, which is 471's and 492's case with their floor and exemptions (471's
+/// corroboration exemption keeps 8400892, the genuine GBP 10.8 bn housing framework).
+pub const LOT_SUM_MIN_LOTS: usize = 2;
 
 /// Which kind of figure [`ScalePartners::refuses_amount`] is asked about, for the x100
 /// rule's exemptions (issue 492).
@@ -3576,6 +3607,40 @@ pub enum FigureScope<'k> {
 /// elected from a lot 10x or more above the procedure figure, no ratio separated the 18
 /// slips from the 5 genuine; this shape had no false positive.
 ///
+/// **The lot-sum rule (issue 537, decided 2026-10-16).** A procedure figure F of the head
+/// version (not a lot award's copy), worth [`SCALE_ERROR_MIN_EUR_CENTS`] to
+/// [`IMPLAUSIBLE_EUR_CENTS`], is refused with no single partner needed when, for some k in
+/// [`LOT_SUM_MIN_EXPONENT`]`..=`[`LOT_SUM_MAX_EXPONENT`] and some sum S of the head version's
+/// own lots over n >= [`LOT_SUM_MIN_LOTS`] of them, `|F - 10^k x S| <= 10^k x n` cents: the
+/// publisher printed the lot total with its decimal separator gone, and the slack is one
+/// cent per lot after scaling ([`lot_sum_exponent`]). 369057's EUR 62,378,736,280.00 sits
+/// over awards of EUR 62,378,736.29 (BT-709 rows of exactly EUR 62,378,736.28); 165437's
+/// EUR 19,975,274,626.00 is its awards' EUR 19,975,274.62 written to three decimals with no
+/// separator. S is one of five sums ([`LotSums`], [`LotSumKind`]):
+/// - the AWARD side, unconditionally: each Lot's latest award, BT-709 per lot, BT-660 per
+///   lot. The partner-only rows (issue 506) serve as S and nowhere else: still never
+///   elected, never in [`Self::head_lot_sums`];
+/// - the ESTIMATE side (each Lot's largest BT-27, each Lot's largest BT-271) only under
+///   guard T: some figure X of the chain in F's currency, recorded at procedure scope at
+///   least once, other than F, above [`SCALE_PARTNER_FLOOR_CENTS`] and
+///   between S / 10 and 10 x S, vouches that the lots are at the right scale ([`lot_sum_vouches`]).
+///
+/// Lots of kind Lot only (Parts only in a head with no Lot, [`Self::set_head`]'s rule);
+/// withheld figures, sentinels and placeholders at or below the partner floor are no figure
+/// of their lot. There is no corroboration exemption (492's reason: one notice copies a
+/// slip into two slots), and 492's framework-total exemption wins over this rule. A
+/// LotsGroup's figure equal to a refused F is that slip in a second slot and is refused
+/// with it (74787's GLO-0005 restates its procedure BT-27; the head election offers a
+/// group's figures as lot candidates and would re-elect F from it), as 471's and 492's
+/// pair tests refuse a copy at every scope. A lot award's tender-scope copy (`Lot(None)`)
+/// and a Lot's or Part's own figure stay outside the rule (the decision judges procedure
+/// figures only), so a head of either kind keeps a matching F. Decided on
+/// the 48 EUR 1 bn+ heads that matched some k in 1..=6 (43 head slips, 4 lot slips, 1
+/// coincidence): award-side sums over two or more lots were 20 / 0 at k >= 2, estimate-side
+/// ones 7 / 2 unguarded and 2 / 0 under T; the rule refuses 22, every one a head slip.
+/// Recorded cost: a correct total over award lots published in thousands is refused (0 of
+/// the 20 award-side refusals had that shape, and a guard against it also loses 369057).
+///
 /// Every figure is tested on its own, so a second scaled figure falls too, and
 /// a refused figure still counts as a partner of a bigger one. Refused is not
 /// corrected: the head falls to the next admitted figure, which may itself be
@@ -3649,6 +3714,29 @@ pub struct ScalePartners<'a> {
     /// Issue 492: the head version's lot awards by (currency, cents). A tender-scope
     /// amount equal to one is that award's lot-null copy, a lot figure (decision (c)).
     head_awards: std::collections::HashSet<(&'a str, i64)>,
+    /// Issue 537: the head version itself, for the lot-sum rule's sums. They are built on
+    /// demand ([`Self::lot_sum_match`]), only for a procedure figure of EUR 1 bn or more,
+    /// so the fold's per-version [`Self::set_head`] pays nothing for them.
+    head_version: Option<&'a TenderVersion>,
+    /// Issue 537: the head version's lot sums in every currency, built once on the first
+    /// [`Self::lot_sum_match`] after [`Self::set_head`] (which empties it) and reused, so a
+    /// repeated procedure test (492's sibling-lot exemption asks once per x100 lot figure)
+    /// costs O(sums) rather than a rebuild over every lot and award.
+    lot_sums: LotSumsCache,
+}
+
+/// [`ScalePartners::lot_sums`]: derived from the head version alone, so equality ignores
+/// it (a rule that has answered a lot-sum question equals one that has not). A `OnceLock`
+/// rather than a `OnceCell`, since the fold holds `&ScalePartners` across awaits and so
+/// needs it `Sync`; owned currency keys, so the cell leaves `ScalePartners` covariant in
+/// its lifetime.
+#[derive(Debug, Default)]
+struct LotSumsCache(std::sync::OnceLock<std::collections::HashMap<String, Vec<(LotSumKind, i64, usize)>>>);
+
+impl PartialEq for LotSumsCache {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
 }
 
 impl<'a> ScalePartners<'a> {
@@ -3669,6 +3757,8 @@ impl<'a> ScalePartners<'a> {
             head_lots: 0,
             head_lot_sums: Default::default(),
             head_awards: Default::default(),
+            head_version: None,
+            lot_sums: Default::default(),
         }
     }
 
@@ -3760,6 +3850,8 @@ impl<'a> ScalePartners<'a> {
     /// earlier head (issue 490: the fold's running rule moves its head forward
     /// one version at a time).
     pub fn set_head(&mut self, head: &'a TenderVersion) {
+        self.head_version = Some(head);
+        self.lot_sums = LotSumsCache::default();
         self.head.clear();
         for (field, currency, cents) in Self::amounts(head) {
             self.add_head_amount(field, currency, cents);
@@ -4058,14 +4150,24 @@ impl<'a> ScalePartners<'a> {
     /// `field` and worth `eur_cents`, is refused: at or above
     /// [`SCALE_ERROR_MIN_EUR_CENTS`] (EUR 1 bn), with a partner, and not corroborated by a
     /// different field of the head; or, without one, with a x100 partner and no
-    /// exemption for its `scope`. The ONE predicate: the fold's head and lot
-    /// elections both call it.
+    /// exemption for its `scope`; or, for a lot figure, 10^k times its procedure's
+    /// residual (issue 505); or, for a procedure figure, 10^k times a sum of the head's
+    /// own lots (issue 537). The ONE predicate: the fold's head and lot elections both
+    /// call it.
     pub fn refuses_amount(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, scope: FigureScope<'_>) -> bool {
         self.refuses(field, currency, cents, eur_cents, scope, None)
     }
 
     /// [`Self::refuses_amount`] with an optional override of the lot sum the framework
     /// exemption reads (issue 505's residual rule; `None` everywhere else).
+    ///
+    /// Issue 537's lot-sum rule judges a PROCEDURE figure only, so a lot award's
+    /// tender-scope copy (`Lot(None)`, the head election's test) and every lot figure are
+    /// outside it, except a LotsGroup's restatement of a procedure figure it refuses
+    /// ([`Self::lot_sum_group_copy`]). Because [`Self::admits_procedure`] asks this predicate too, a procedure
+    /// figure the rule refuses no longer bounds 492's sibling-lot exemption (which errs
+    /// toward refusing the lot) nor serves as 505's admitted total (recorded in the issue:
+    /// neither overlaps the 22 heads the rule refuses).
     fn refuses(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, scope: FigureScope<'_>, lot_sum: Option<i64>) -> bool {
         if eur_cents < SCALE_ERROR_MIN_EUR_CENTS {
             return false;
@@ -4076,6 +4178,101 @@ impl<'a> ScalePartners<'a> {
             return true;
         }
         self.refuses_by_partner(field, currency, cents, eur_cents, scope, lot_sum)
+            || match scope {
+                FigureScope::Procedure => self.lot_sum_slip(field, currency, cents, eur_cents, lot_sum),
+                FigureScope::Lot(Some(key)) | FigureScope::HeadLot(Some(key)) => self.lot_sum_group_copy(key, currency, cents, eur_cents),
+                FigureScope::Lot(None) | FigureScope::HeadLot(None) => false,
+            }
+    }
+
+    /// Issue 537 (review): whether `cents`, a figure of the head's lot `key` worth
+    /// `eur_cents`, is a LotsGroup restating a procedure figure of the head that
+    /// [`Self::lot_sum_slip`] refuses: the slip in a second slot, refused with it as 471's
+    /// and 492's pair tests refuse a copy at every scope. Without it the head election, which
+    /// offers a group's figures as lot candidates, re-elects the refused figure from the
+    /// group (74787's GLO-0005 restates its procedure BT-27). The procedure figure is judged
+    /// on its own (no lot-sum override) and is worth `eur_cents` too: same cents, currency
+    /// and version. A Lot's or Part's own figure is not tested.
+    fn lot_sum_group_copy(&self, key: &str, currency: &str, cents: i64, eur_cents: i64) -> bool {
+        self.head_procedure.iter().any(|&(_, c, procedure)| c == currency && procedure == cents)
+            && self.head_version.is_some_and(|head| head.lots.iter().any(|l| l.key == key && l.kind == "LotsGroup"))
+            && self.head_procedure.iter().any(|&(field, c, procedure)| {
+                c == currency && procedure == cents && self.lot_sum_slip(field, c, procedure, eur_cents, None)
+            })
+    }
+
+    /// Issue 537: whether the procedure figure `cents` (field `field`, currency `currency`,
+    /// worth `eur_cents`, already at or above the EUR 1 bn gate) is a lot sum with its
+    /// decimal separator dropped: a match of [`Self::lot_sum_match`] that refuses, not over
+    /// [`IMPLAUSIBLE_EUR_CENTS`], and not a total 492's framework exemption keeps.
+    fn lot_sum_slip(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, lot_sum: Option<i64>) -> bool {
+        eur_cents <= IMPLAUSIBLE_EUR_CENTS
+            && self.lot_sum_match(currency, cents).is_some_and(|m| m.refuses())
+            && !self.framework_kept(field, currency, cents, eur_cents, lot_sum)
+    }
+
+    /// Whether 492's framework-total exemption is what keeps the procedure figure `cents`:
+    /// it has no k >= 3 partner (else 471's test judges it, and 492 is never asked), it has a
+    /// x100 partner, and [`Self::framework_total`] holds with the lot sum
+    /// [`Self::refuses_by_partner`] would read. Issue 537's rule yields to it.
+    fn framework_kept(&self, field: &str, currency: &str, cents: i64, eur_cents: i64, lot_sum: Option<i64>) -> bool {
+        self.partner(currency, cents).is_none()
+            && self.partner_x100(currency, cents).is_some_and(|p| {
+                let lot_sum = lot_sum.or_else(|| self.residual_lot_sum(field, currency, cents, eur_cents));
+                self.framework_total(currency, cents, p, lot_sum)
+            })
+    }
+
+    /// Issue 537: the head version's candidate lot sums in `currency` ([`LotSums`]): each
+    /// Lot's latest award, its largest figure in each of the four lot fields
+    /// [`LotSumKind`] names. Empty without a head.
+    pub fn head_lot_sums_by_kind(&self, currency: &str) -> Vec<(LotSumKind, i64, usize)> {
+        self.cached_lot_sums(currency).to_vec()
+    }
+
+    /// [`Self::head_lot_sums_by_kind`] from [`Self::lot_sums`], built for every currency
+    /// of the head on the first call after [`Self::set_head`].
+    fn cached_lot_sums(&self, currency: &str) -> &[(LotSumKind, i64, usize)] {
+        let Some(head) = self.head_version else { return &[] };
+        match self.lot_sums.0.get_or_init(|| Self::lot_sums_of(head)).get(currency) {
+            Some(sums) => sums,
+            None => &[],
+        }
+    }
+
+    /// The head version's lot sums ([`LotSums`]) per currency: each lot amount and each lot
+    /// award offered to its own currency's sums, the awards in round order.
+    fn lot_sums_of(head: &'a TenderVersion) -> std::collections::HashMap<String, Vec<(LotSumKind, i64, usize)>> {
+        let mut by_currency: std::collections::HashMap<&'a str, LotSums<'a>> = std::collections::HashMap::new();
+        let new = || LotSums::new(head.lots.iter().map(|l| (l.key.as_str(), l.kind.as_str())));
+        for lot in &head.lots {
+            for f in &lot.facts {
+                if let Fact::Amount { field, cents, currency, quality, .. } = f {
+                    by_currency.entry(currency.as_str()).or_insert_with(new).amount(lot.key.as_str(), field, *cents, quality.as_deref());
+                }
+            }
+        }
+        for round in &head.rounds {
+            for r in &round.lot_results {
+                if let (Some(lot), Some(currency), Some(cents)) = (r.lot_key.as_deref(), r.awarded_currency.as_deref(), r.awarded_cents) {
+                    by_currency.entry(currency).or_insert_with(new).award(lot, round.notice_id, cents);
+                }
+            }
+        }
+        by_currency.into_iter().map(|(currency, sums)| (currency.to_owned(), sums.sums())).collect()
+    }
+
+    /// Issue 537: the lot-sum match of the figure `cents` in `currency` against the head
+    /// version's own lots ([`match_lot_sums`]), with guard T read over the chain's figures:
+    /// a figure counts as X when SOME occurrence of it is at procedure scope (`lot_only` is
+    /// false), so a lot-null copy of an award does not. `None` when no sum matches.
+    pub fn lot_sum_match(&self, currency: &str, cents: i64) -> Option<LotSumMatch> {
+        if cents <= 0 {
+            return None;
+        }
+        match_lot_sums(cents, self.cached_lot_sums(currency), |sum| {
+            self.lot_only.iter().any(|(&(c, x), &only)| c == currency && !only && lot_sum_vouches(cents, sum, x))
+        })
     }
 
     /// The partner rules of [`Self::refuses`] (471's k >= 3, 492's x100 and their
@@ -4111,6 +4308,229 @@ impl Default for ScalePartners<'_> {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Issue 537: which sum of a head version's own lots a lot-sum match is against. The
+/// AWARD side ([`Self::award_side`]) refuses unconditionally; the ESTIMATE side only under
+/// guard T ([`lot_sum_vouches`]). Declared award side first, the order
+/// [`match_lot_sums`] tries them in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum LotSumKind {
+    /// Each Lot's latest award (`lot_results.awarded`, the round with the largest notice id).
+    Awards,
+    /// BT-709 per lot ([`RESULT_FRAMEWORK_MAXIMUM`], partner-only, issue 506).
+    ResultFrameworkMaximum,
+    /// BT-660 per lot ([`RESULT_FRAMEWORK_REESTIMATE`], partner-only, issue 506).
+    ResultFrameworkReestimate,
+    /// BT-27-Lot: each Lot's largest `estimated_value`.
+    Estimate,
+    /// BT-271-Lot: each Lot's largest `framework_maximum`.
+    FrameworkMaximum,
+}
+
+impl LotSumKind {
+    /// Every kind, in [`match_lot_sums`]'s order.
+    pub const ALL: [LotSumKind; 5] = [
+        LotSumKind::Awards,
+        LotSumKind::ResultFrameworkMaximum,
+        LotSumKind::ResultFrameworkReestimate,
+        LotSumKind::Estimate,
+        LotSumKind::FrameworkMaximum,
+    ];
+
+    /// The lot-scope amount field the kind sums; `None` for the awards.
+    pub fn field(self) -> Option<&'static str> {
+        match self {
+            LotSumKind::Awards => None,
+            LotSumKind::ResultFrameworkMaximum => Some(RESULT_FRAMEWORK_MAXIMUM),
+            LotSumKind::ResultFrameworkReestimate => Some(RESULT_FRAMEWORK_REESTIMATE),
+            LotSumKind::Estimate => Some("estimated_value"),
+            LotSumKind::FrameworkMaximum => Some("framework_maximum"),
+        }
+    }
+
+    /// The kind summing lot-scope amounts of `field`, if any.
+    pub fn of_field(field: &str) -> Option<Self> {
+        Self::ALL.into_iter().find(|k| k.field() == Some(field))
+    }
+
+    /// Whether the kind is on the award side, where a match refuses with no guard: on the
+    /// 48 adjudicated heads, award-side sums over two or more lots were 20 / 0 at k >= 2.
+    pub fn award_side(self) -> bool {
+        matches!(self, LotSumKind::Awards | LotSumKind::ResultFrameworkMaximum | LotSumKind::ResultFrameworkReestimate)
+    }
+
+    /// The name the data-quality listing prints.
+    pub fn label(self) -> &'static str {
+        match self {
+            LotSumKind::Awards => "awards",
+            LotSumKind::ResultFrameworkMaximum => "BT-709",
+            LotSumKind::ResultFrameworkReestimate => "BT-660",
+            LotSumKind::Estimate => "BT-27-Lot",
+            LotSumKind::FrameworkMaximum => "BT-271-Lot",
+        }
+    }
+}
+
+/// Issue 537: one head version's candidate lot sums in ONE currency, by [`LotSumKind`]. The
+/// fold's election ([`ScalePartners::head_lot_sums_by_kind`]) and the data-quality band
+/// listing (section 16) both build them here, so the two cannot disagree on what S is.
+///
+/// - **Which lots.** Lots of kind `Lot` only; Parts only in a head with no Lot at all (a
+///   PIN's parts stay in the head beside the CN's lots); never a LotsGroup, whose figure
+///   covers its members. An award naming a lot key the head does not type counts (the
+///   fold's lot results resolve their key defensively), as in 492's lot sums.
+/// - **Which figures.** A withheld figure, a sentinel and a placeholder at or below
+///   [`SCALE_PARTNER_FLOOR_CENTS`] are no figure of their lot: offered, they are skipped,
+///   so an earlier award stands where the latest is a placeholder.
+/// - **One figure per lot.** An award: the lot's LATEST, by the round's notice id, a tie
+///   going to the later offer (unit 1 measured S the same way; 392980's head followed a
+///   lot correction, and the per-lot maximum misses it). An amount kind: the lot's
+///   LARGEST figure in that field.
+#[derive(Debug, Default)]
+pub struct LotSums<'a> {
+    /// Keys of the lots that count (the head's unit kind).
+    counted: std::collections::HashSet<&'a str>,
+    /// Keys of the head's lots of another kind (LotsGroups, and Parts beside Lots).
+    excluded: std::collections::HashSet<&'a str>,
+    /// Per lot, `(notice id, cents)` of its latest award so far.
+    awards: std::collections::BTreeMap<&'a str, (i64, i64)>,
+    /// Per (kind, lot), the lot's largest figure in the kind's field.
+    amounts: std::collections::BTreeMap<(LotSumKind, &'a str), i64>,
+}
+
+impl<'a> LotSums<'a> {
+    /// Sums over a head whose lots are `(key, kind)`.
+    pub fn new(lots: impl IntoIterator<Item = (&'a str, &'a str)>) -> Self {
+        let lots: Vec<(&'a str, &'a str)> = lots.into_iter().collect();
+        let unit = if lots.iter().any(|&(_, kind)| kind == "Lot") { "Lot" } else { "Part" };
+        let mut sums = LotSums::default();
+        for (key, kind) in lots {
+            if kind == unit {
+                sums.counted.insert(key);
+            } else {
+                sums.excluded.insert(key);
+            }
+        }
+        sums
+    }
+
+    /// Whether `cents` can be a figure of its lot.
+    fn figure(cents: i64) -> bool {
+        cents > SCALE_PARTNER_FLOOR_CENTS && !sentinel_amount(cents)
+    }
+
+    /// Offer the lot award `cents` of the lot `lot`, from the results round of notice
+    /// `notice_id`. Offer them in round order.
+    pub fn award(&mut self, lot: &'a str, notice_id: i64, cents: i64) {
+        if self.excluded.contains(lot) || !Self::figure(cents) {
+            return;
+        }
+        let latest = self.awards.entry(lot).or_insert((notice_id, cents));
+        if notice_id >= latest.0 {
+            *latest = (notice_id, cents);
+        }
+    }
+
+    /// Offer the lot-scope amount `cents` of `field` (with its issue-372 `quality`) of the
+    /// lot `lot`. A field no [`LotSumKind`] sums is ignored.
+    pub fn amount(&mut self, lot: &'a str, field: &str, cents: i64, quality: Option<&str>) {
+        let Some(kind) = LotSumKind::of_field(field) else { return };
+        if !self.counted.contains(lot) || quality.is_some() || !Self::figure(cents) {
+            return;
+        }
+        let best = self.amounts.entry((kind, lot)).or_insert(cents);
+        *best = (*best).max(cents);
+    }
+
+    /// Every kind with at least one lot, as `(kind, S, n)`, in [`LotSumKind::ALL`]'s order.
+    pub fn sums(&self) -> Vec<(LotSumKind, i64, usize)> {
+        let mut out: Vec<(LotSumKind, i64, usize)> = Vec::new();
+        if !self.awards.is_empty() {
+            let sum = self.awards.values().fold(0i64, |s, &(_, c)| s.saturating_add(c));
+            out.push((LotSumKind::Awards, sum, self.awards.len()));
+        }
+        for (&(kind, _), &cents) in &self.amounts {
+            match out.last_mut() {
+                Some((k, sum, n)) if *k == kind => {
+                    *sum = sum.saturating_add(cents);
+                    *n += 1;
+                }
+                _ => out.push((kind, cents, 1)),
+            }
+        }
+        out
+    }
+}
+
+/// Issue 537: a figure F that is 10^k times a sum S of its own head version's lots.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct LotSumMatch {
+    pub kind: LotSumKind,
+    /// k: F is within `10^k x lots` cents of `10^k x sum`.
+    pub exponent: u32,
+    /// S, in cents of F's currency.
+    pub sum: i64,
+    /// n, the lots summed.
+    pub lots: usize,
+    /// Whether guard T holds for S ([`lot_sum_vouches`]): read for every kind, needed by
+    /// the estimate side only.
+    pub third_figure: bool,
+}
+
+impl LotSumMatch {
+    /// Whether issue 537's rule refuses F on this match: the award side always, the
+    /// estimate side under guard T.
+    pub fn refuses(&self) -> bool {
+        self.kind.award_side() || self.third_figure
+    }
+}
+
+/// Issue 537: the k in [`LOT_SUM_MIN_EXPONENT`]`..=`[`LOT_SUM_MAX_EXPONENT`] for which
+/// `|f - 10^k x sum| <= 10^k x lots` cents, when `sum` is over at least
+/// [`LOT_SUM_MIN_LOTS`] lots; `None` otherwise. The slack is one cent per lot after
+/// scaling: each lot is rounded to the cent, and a total printed to three decimals with the
+/// separator gone (165437) or a sum off by a cent of rounding (369057's awards, 1000 cents
+/// off at k = 3 over three lots; 6921980's +200 at k = 2 over 15) stays a match. At most one
+/// k can match a sum of two or more lots each above the partner floor.
+pub fn lot_sum_exponent(f: i64, sum: i64, lots: usize) -> Option<u32> {
+    if f <= 0 || sum <= 0 || lots < LOT_SUM_MIN_LOTS {
+        return None;
+    }
+    (LOT_SUM_MIN_EXPONENT..=LOT_SUM_MAX_EXPONENT).find(|&k| {
+        let scale = 10i128.pow(k);
+        (i128::from(f) - scale * i128::from(sum)).abs() <= scale * lots as i128
+    })
+}
+
+/// Issue 537's guard T for one candidate X: a figure other than F, above
+/// [`SCALE_PARTNER_FLOOR_CENTS`], no sentinel, between `sum / 10` and `10 x sum`. The caller
+/// offers only figures in F's currency that the chain records at procedure scope at least
+/// once. On the 48 adjudicated heads it held for both estimate-side head slips it lets the
+/// rule refuse (508666's procedure BT-27, 114991's BT-161) and for neither lot slip at
+/// k >= 2 (8312215, 8720567).
+pub fn lot_sum_vouches(f: i64, sum: i64, x: i64) -> bool {
+    x != f
+        && x > SCALE_PARTNER_FLOOR_CENTS
+        && !sentinel_amount(x)
+        && i128::from(x) * 10 >= i128::from(sum)
+        && i128::from(x) <= i128::from(sum) * 10
+}
+
+/// Issue 537: the lot-sum match of F against `sums` (`(kind, S, n)`, from [`LotSums::sums`]),
+/// with `third_figure(S)` answering guard T: the first match that refuses, else the first
+/// that does not (the data-quality listing names the latter too), else `None`.
+pub fn match_lot_sums(f: i64, sums: &[(LotSumKind, i64, usize)], third_figure: impl Fn(i64) -> bool) -> Option<LotSumMatch> {
+    let mut kept = None;
+    for &(kind, sum, lots) in sums {
+        let Some(exponent) = lot_sum_exponent(f, sum, lots) else { continue };
+        let m = LotSumMatch { kind, exponent, sum, lots, third_figure: third_figure(sum) };
+        if m.refuses() {
+            return Some(m);
+        }
+        kept.get_or_insert(m);
+    }
+    kept
 }
 
 /// How far past its own publication a submission deadline may sit before it is
@@ -43911,6 +44331,393 @@ mod tests {
             vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 15_000)])],
         );
         assert_eq!(lot_value(&far, "LOT-1"), Some(100_000_000_000), "k = 7 is not reached");
+    }
+
+    /// Issue 537 unit 3, decided 2026-10-16 on the 48 EUR 1 bn+ heads that matched 10^k x a
+    /// sum of their own lots (43 head slips, 4 lot slips, 1 coincidence): a procedure figure F
+    /// with `|F - 10^k x S| <= 10^k x n` cents for k in 2..=6 and S over n >= 2 lots is
+    /// refused, S on the award side unconditionally, on the estimate side only under guard T.
+    /// Each case carries an adjudicated Tender's figures (in EUR so the empty lookup converts
+    /// at 1.0); the lots' split is invented where the synthesis gives only the sum.
+    #[test]
+    fn a_total_ten_to_the_k_times_its_lot_award_sum_is_not_elected() {
+        use super::{LotResultState, LotSumKind, RESULT_FRAMEWORK_MAXIMUM, Round, ScalePartners, head_value_eur_cents};
+        let rates = crate::rates::RatesLookup::default();
+        let amt = |field: &str, cents: i64| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: "EUR".into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let key = |i: usize| format!("LOT-{:04}", i + 1);
+        let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
+        let award_in = |lot_key: &str, cents: i64, currency: &str| LotResultState {
+            key: format!("RES-{lot_key}"),
+            lot_key: Some(lot_key.into()),
+            decision: None,
+            reason: None,
+            awarded_cents: Some(cents),
+            awarded_currency: Some(currency.into()),
+            decided: None,
+            winners: Vec::new(),
+            buyer_winners: Vec::new(),
+            statistics: Vec::new(),
+        };
+        let award = |lot_key: &str, cents: i64| award_in(lot_key, cents, "EUR");
+        // Results rounds as (notice id, the round's lot results), in fold order.
+        let with_rounds = |mut v: TenderVersion, rounds: Vec<(i64, Vec<LotResultState>)>| {
+            v.rounds = rounds
+                .into_iter()
+                .map(|(notice_id, lot_results)| Round { notice_id, logical_notice_id: None, lot_results, bids: Vec::new(), contracts: Vec::new() })
+                .collect();
+            v
+        };
+        let with_awards = |v: TenderVersion, awards: Vec<LotResultState>| with_rounds(v, vec![(1, awards)]);
+        let one = |v: &TenderVersion| head_value_eur_cents(std::slice::from_ref(v), &rates);
+        let elect = |chain: &[TenderVersion]| head_value_eur_cents(chain, &rates);
+
+        // ---- Refused ----
+
+        // 369057 (TED eForms sdk-1.12, one version): the BT-161 result EUR 62,378,736,280.00
+        // over three lot awards summing to EUR 62,378,736.29 (1000 cents under 1000 x F's
+        // sum, inside the 3,000-cent slack) and three BT-709 rows summing to EUR
+        // 62,378,736.28 (exact). Nothing else is electable: the head falls to null.
+        let f = 6_237_873_628_000;
+        let awards = [158_878_238, 3_367_786_341, 2_711_209_050];
+        let bt709 = [158_878_238, 3_367_786_340, 2_711_209_050];
+        let migranti = |awarded: bool, partner_only: bool| {
+            let lots = (0..3)
+                .map(|i| lot(&key(i), if partner_only { vec![amt(RESULT_FRAMEWORK_MAXIMUM, bt709[i])] } else { Vec::new() }))
+                .collect();
+            let v = version(vec![amt("result_value", f)], lots);
+            if awarded { with_awards(v, (0..3).map(|i| award(&key(i), awards[i])).collect()) } else { v }
+        };
+        assert_eq!(one(&migranti(true, true)), None, "369057: refused, and nothing is left to elect");
+        assert_eq!(one(&migranti(true, false)), None, "the awards alone refuse it, inside the slack");
+        assert_eq!(one(&migranti(false, true)), None, "the BT-709 rows alone refuse it, exactly (partner-only rows serve as S)");
+        assert_eq!(one(&migranti(false, false)), Some(f), "with no lot figure there is no signal: 471 unit 5's class");
+        let full = migranti(true, true);
+        let rule = ScalePartners::of_chain(std::slice::from_ref(&full));
+        let m = rule.lot_sum_match("EUR", f).expect("369057 matches");
+        assert_eq!((m.kind, m.exponent, m.sum, m.lots), (LotSumKind::Awards, 3, 6_237_873_629, 3));
+        assert!(rule.refuses_amount("result_value", "EUR", f, f, FigureScope::Procedure));
+        assert!(!rule.refuses_amount("result_value", "EUR", f, f, FigureScope::Lot(None)), "a lot award's tender-scope copy is outside the rule");
+        assert!(!rule.refuses_amount("result_value", "EUR", f, f, FigureScope::HeadLot(Some("LOT-0001"))), "and so is a lot figure");
+        // Lot figures in another currency are no sum of F's.
+        let usd = with_awards(version(vec![amt("result_value", f)], (0..3).map(|i| lot(&key(i), Vec::new())).collect()), (0..3).map(|i| award_in(&key(i), awards[i], "USD")).collect());
+        assert_eq!(one(&usd), Some(f), "a USD lot sum does not refuse an EUR total");
+        // The sums are built once per head and reused (review: a repeated procedure test
+        // rebuilt them), and `set_head` empties them: moved to a head with no lots, the
+        // running rule matches nothing.
+        let bare = version(vec![amt("result_value", f)], Vec::new());
+        let mut running = ScalePartners::of_chain(std::slice::from_ref(&full));
+        assert_eq!(running.lot_sum_match("EUR", f), Some(m), "asked again, the same answer");
+        assert_eq!(running.lot_sum_match("EUR", f), Some(m));
+        running.set_head(&bare);
+        assert_eq!(running.lot_sum_match("EUR", f), None, "a new head, new sums");
+        assert!(running.head_lot_sums_by_kind("EUR").is_empty());
+
+        // No corroboration exemption (492's reason): a figure in two fields of the head is
+        // refused all the same. EUR 2 bn as both estimated_value and result_value over two Lot
+        // awards summing to EUR 2 m, no single partner (the review's probe P3).
+        let corroborated = with_awards(
+            version(vec![amt("estimated_value", 200_000_000_000), amt("result_value", 200_000_000_000)], (0..2).map(|i| lot(&key(i), Vec::new())).collect()),
+            vec![award("LOT-0001", 150_000_000), award("LOT-0002", 50_000_000)],
+        );
+        assert_eq!(one(&corroborated), None, "two fields are no exemption from the lot-sum rule");
+
+        // 165437 (two versions): the contract notice's procedure estimate EUR 20,202,891.70
+        // over three lot estimates summing to it exactly, then the award notice's BT-161 EUR
+        // 19,975,274,626.00: its awards' EUR 19,975,274.62 written to three decimals with no
+        // separator (+600 at k = 3). It falls to the estimate, the Verify's "done".
+        let lot_estimates = [673_000_000, 670_000_000, 677_289_170];
+        let estimated = |procedure: Vec<Fact>| version(procedure, (0..3).map(|i| lot(&key(i), vec![amt("estimated_value", lot_estimates[i])])).collect());
+        let cn = estimated(vec![amt("estimated_value", 2_020_289_170)]);
+        let mut can = with_awards(
+            estimated(vec![amt("estimated_value", 2_020_289_170), amt("result_value", 1_997_527_462_600)]),
+            vec![award("LOT-0001", 635_231_758), award("LOT-0002", 676_534_710), award("LOT-0003", 685_760_994)],
+        );
+        can.caused_by_notice_id = 2;
+        assert_eq!(elect(&[cn, can]), Some(2_020_289_170), "165437 falls to its procedure estimate");
+
+        // Tolerance at k = 2. 6921980: EUR 2,493,033,613.00 over 15 awards summing to EUR
+        // 24,930,336.11 (+200 against a 1,500-cent slack); an earlier version's estimate of EUR
+        // 25 m is not carried into the head. Each lot restates its award as its lot value, so
+        // the head falls to the largest, LOT-0008's EUR 10,369,747.89.
+        let mut tolls: Vec<i64> = vec![104_004_201; 15];
+        tolls[0] = 104_004_209;
+        tolls[7] = 1_036_974_789;
+        assert_eq!(tolls.iter().sum::<i64>(), 2_493_033_611);
+        let v1 = version(vec![amt("estimated_value", 2_500_000_000)], (0..15).map(|i| lot(&key(i), Vec::new())).collect());
+        let mut v2 = with_awards(
+            version(vec![amt("result_value", 249_303_361_300)], (0..15).map(|i| lot(&key(i), vec![amt("result_value", tolls[i])])).collect()),
+            (0..15).map(|i| award(&key(i), tolls[i])).collect(),
+        );
+        v2.caused_by_notice_id = 2;
+        assert_eq!(elect(&[v1, v2]), Some(1_036_974_789), "6921980: +200 over 15 lots is inside the slack");
+        // 801998: EUR 1,290,405,282.00 over 14 awards (of 17 lots) summing to EUR
+        // 12,904,052.83 (-100). It falls to the procedure estimate, EUR 12,711,190.00.
+        let mut awarded: Vec<i64> = vec![92_171_806; 14];
+        awarded[0] = 92_171_805;
+        assert_eq!(awarded.iter().sum::<i64>(), 1_290_405_283);
+        let hospital = with_awards(
+            version(vec![amt("result_value", 129_040_528_200), amt("estimated_value", 1_271_119_000)], (0..17).map(|i| lot(&key(i), Vec::new())).collect()),
+            (0..14).map(|i| award(&key(i), awarded[i])).collect(),
+        );
+        assert_eq!(one(&hospital), Some(1_271_119_000), "801998: -100 over the 14 awarded lots");
+
+        // Latest award per lot. 392980: two lots, the second corrected in a later round; the
+        // head followed the correction, x100. The latest awards sum to EUR 35,740,042.72; the
+        // per-lot maximum (what 492's `head_lot_sums` keeps) to EUR 37,609,128.19, which misses.
+        let f = 357_400_427_200;
+        let corrected = |first: i64, second: i64| {
+            with_rounds(
+                version(vec![amt("result_value", f)], vec![lot("LOT-0001", Vec::new()), lot("LOT-0002", Vec::new())]),
+                vec![(10, vec![award("LOT-0001", 1_787_002_136), award("LOT-0002", first)]), (11, vec![award("LOT-0002", second)])],
+            )
+        };
+        assert_eq!(one(&corrected(1_973_910_683, 1_787_002_136)), None, "392980: each lot's latest award");
+        assert_eq!(super::lot_sum_exponent(f, 1_787_002_136 + 1_973_910_683, 2), None, "the per-lot maximum misses");
+        assert_eq!(one(&corrected(1_787_002_136, 1_973_910_683)), Some(f), "the same awards the other way round: no match");
+
+        // Partner-only rows as S. 1024214: EUR 3.4 bn over three lots whose BT-271 maxima and
+        // BT-709 rows both sum to EUR 3.4 m. The BT-271 match is estimate side and fails T
+        // (no third figure), so only the BT-709 rows refuse it; it falls to one lot's BT-271.
+        let caps = [120_000_000, 110_000_000, 110_000_000];
+        let shelter = |partner_only: bool| {
+            version(
+                vec![amt("result_value", 340_000_000_000)],
+                (0..3)
+                    .map(|i| {
+                        let mut facts = vec![amt("framework_maximum", caps[i])];
+                        if partner_only {
+                            facts.push(amt(RESULT_FRAMEWORK_MAXIMUM, caps[i]));
+                        }
+                        lot(&key(i), facts)
+                    })
+                    .collect(),
+            )
+        };
+        assert_eq!(one(&shelter(true)), Some(120_000_000), "1024214: BT-709 as S");
+        assert_eq!(one(&shelter(false)), Some(340_000_000_000), "the BT-271 sum alone fails guard T");
+        let unguarded = shelter(false);
+        let m = ScalePartners::of_chain(std::slice::from_ref(&unguarded)).lot_sum_match("EUR", 340_000_000_000).expect("a kept match");
+        assert_eq!((m.kind, m.exponent, m.third_figure, m.refuses()), (LotSumKind::FrameworkMaximum, 3, false, false));
+
+        // The estimate side through T. 508666: a EUR 8.82 bn framework maximum over four lots
+        // whose BT-271 maxima (1.5 x their BT-27) sum to EUR 8.82 m; the procedure's own
+        // BT-27, EUR 5.88 m, is X. It falls to that estimate.
+        let framework = |procedure: Vec<Fact>| {
+            version(procedure, (0..4).map(|i| lot(&key(i), vec![amt("estimated_value", 147_000_000), amt("framework_maximum", 220_500_000)])).collect())
+        };
+        assert_eq!(
+            one(&framework(vec![amt("framework_maximum", 882_000_000_000), amt("estimated_value", 588_000_000)])),
+            Some(588_000_000),
+            "508666: BT-271-Lot as S under T"
+        );
+        assert_eq!(one(&framework(vec![amt("framework_maximum", 882_000_000_000)])), Some(882_000_000_000), "no X, no refusal");
+        // X may sit in any version of the chain.
+        let earlier = framework(vec![amt("estimated_value", 588_000_000)]);
+        let mut later = framework(vec![amt("framework_maximum", 882_000_000_000)]);
+        later.caused_by_notice_id = 2;
+        assert_eq!(elect(&[earlier, later]), Some(220_500_000), "an earlier version's procedure figure is X");
+        // 114991: a EUR 1.765 bn procedure estimate over lot estimates summing to EUR 1.765 m;
+        // X is the BT-161, EUR 756,837.00. It falls to LOT-0001's EUR 1 m estimate, the
+        // largest candidate left (not the BT-161 the readers named).
+        let zones = |procedure: Vec<Fact>| {
+            version(procedure, [100_000_000, 50_000_000, 26_500_000].iter().enumerate().map(|(i, c)| lot(&key(i), vec![amt("estimated_value", *c)])).collect())
+        };
+        assert_eq!(one(&zones(vec![amt("estimated_value", 176_500_000_000), amt("result_value", 75_683_700)])), Some(100_000_000), "114991: BT-27-Lot as S under T");
+        assert_eq!(one(&zones(vec![amt("estimated_value", 176_500_000_000)])), Some(176_500_000_000), "no X, no refusal");
+        // X must be recorded at procedure scope at least once: the same BT-161 as the lot-null
+        // copy of an award is a lot figure, and vouches for nothing.
+        let copied = with_awards(zones(vec![amt("estimated_value", 176_500_000_000), amt("result_value", 75_683_700)]), vec![award("LOT-0003", 75_683_700)]);
+        assert_eq!(one(&copied), Some(176_500_000_000), "an award's copy is no third figure");
+        // 143300's shape, outside the 48 because unit 1 summed the LotsGroup into S: a EUR 1 bn
+        // head in two fields over four lot estimates summing to EUR 1 m (k = 3, n = 4), beside
+        // a EUR 1 m group figure that is the head's k = 3 partner. 471's corroboration
+        // exemption keeps it and this rule has none, so guard T decides: with an earlier
+        // version's procedure figure at the lots' scale it falls to the group's EUR 1 m.
+        let catering = |procedure: Vec<Fact>| {
+            let mut lots: Vec<LotState> =
+                [60_000_000, 10_000_000, 20_000_000, 10_000_000].iter().enumerate().map(|(i, c)| lot(&key(i), vec![amt("estimated_value", *c)])).collect();
+            lots.push(LotState { key: "GLO-0001".into(), kind: "LotsGroup".into(), facts: vec![amt("estimated_value", 100_000_000)].into_iter().collect() });
+            version(procedure, lots)
+        };
+        let both = || vec![amt("estimated_value", 100_000_000_000), amt("framework_maximum", 100_000_000_000)];
+        assert_eq!(one(&catering(both())), Some(100_000_000_000), "no T: kept");
+        let notice = version(vec![amt("estimated_value", 100_000_000)], Vec::new());
+        let mut award_notice = catering(both());
+        award_notice.caused_by_notice_id = 2;
+        assert_eq!(elect(&[notice, award_notice]), Some(100_000_000), "T from an earlier version, despite two fields and a corroborated partner");
+
+        // A LotsGroup restating a refused F is the slip in a second slot (review of the rule).
+        // 74787's figures: EUR 4,649,400,000.00 as the procedure BT-27 and as GLO-0005's, over
+        // two lot estimates summing to F / 1000. As stored it has no third figure and is kept;
+        // with a procedure figure X at the lots' scale the head falls to X, not back to F
+        // through the group, and the group's own lot value is refused with F.
+        let f = 464_940_000_000;
+        let grouped = |procedure: Vec<Fact>| {
+            version(
+                procedure,
+                vec![
+                    lot("LOT-0001", vec![amt("estimated_value", 388_080_000)]),
+                    lot("LOT-0002", vec![amt("estimated_value", 76_860_000)]),
+                    LotState { key: "GLO-0005".into(), kind: "LotsGroup".into(), facts: vec![amt("estimated_value", f)].into_iter().collect() },
+                ],
+            )
+        };
+        assert_eq!(one(&grouped(vec![amt("estimated_value", f)])), Some(f), "74787 as stored: no T");
+        let vouched = grouped(vec![amt("estimated_value", f), amt("result_value", 400_000_000)]);
+        assert_eq!(one(&vouched), Some(400_000_000), "the group's copy of a refused F is refused too");
+        let rule = ScalePartners::of_chain(std::slice::from_ref(&vouched));
+        assert!(rule.refuses_amount("estimated_value", "EUR", f, f, FigureScope::Lot(Some("GLO-0005"))), "and so is the group's lot value");
+        assert!(!rule.refuses_amount("estimated_value", "EUR", f, f, FigureScope::HeadLot(Some("LOT-0001"))), "a Lot's own figure is not tested");
+
+        // ---- Kept ----
+
+        // 8400892, the genuine GBP 10.8 bn housing framework: its award is ONE lot (n = 1),
+        // 471's case, and 471's corroboration keeps it.
+        let housing = with_awards(
+            version(vec![amt("estimated_value", 1_080_000_000_000), amt("result_value", 1_080_000_000_000)], vec![lot("LOT-0001", vec![amt("result_value", 1_080_000_000)])]),
+            vec![award("LOT-0001", 1_080_000_000)],
+        );
+        assert_eq!(one(&housing), Some(1_080_000_000_000), "8400892: n = 1 is not this rule's");
+        // 8312215, lots typed in thousands: a GBP 4 bn estimate over two lots printed GBP
+        // 200,000 (the value texts say 2 bn each), k = 4, estimate side, no third figure. Kept;
+        // a figure at the lots' scale would refuse it, so the guard is what decides.
+        let thousands = |procedure: Vec<Fact>| version(procedure, vec![lot("LOT-0001", vec![amt("estimated_value", 20_000_000)]), lot("LOT-0002", vec![amt("estimated_value", 20_000_000)])]);
+        assert_eq!(one(&thousands(vec![amt("estimated_value", 400_000_000_000)])), Some(400_000_000_000), "8312215: the k-euro lots keep the head");
+        assert_eq!(one(&thousands(vec![amt("estimated_value", 400_000_000_000), amt("result_value", 35_000_000)])), Some(35_000_000), "T decides");
+        // 8720567 (FTS): a GBP 1.6 bn estimate over two lot estimates summing to GBP 16 m, k = 2,
+        // no third figure. Kept.
+        let fts = version(vec![amt("estimated_value", 160_000_000_000)], vec![lot("LOT-0001", vec![amt("estimated_value", 800_000_000)]), lot("LOT-0002", vec![amt("estimated_value", 800_000_000)])]);
+        assert_eq!(one(&fts), Some(160_000_000_000), "8720567: estimate side without T");
+        // 8596393 (FTS): awards and estimates both F / 10, k = 1, which is not adopted.
+        let tenfold = with_awards(
+            version(vec![amt("estimated_value", 130_000_000_000)], (0..2).map(|i| lot(&key(i), vec![amt("estimated_value", 6_500_000_000)])).collect()),
+            (0..2).map(|i| award(&key(i), 6_500_000_000)).collect(),
+        );
+        assert_eq!(one(&tenfold), Some(130_000_000_000), "8596393: k = 1");
+        // 1039053, the coincidence: a deliberate 10x framework ceiling over 52 lot estimates
+        // (k = 1), whose lot BT-271 maxima sum to the head itself (k = 0).
+        let ceiling = version(
+            vec![amt("framework_maximum", 520_000_000_000)],
+            (0..52).map(|i| lot(&key(i), vec![amt("estimated_value", 1_000_000_000), amt("framework_maximum", 10_000_000_000)])).collect(),
+        );
+        assert_eq!(one(&ceiling), Some(520_000_000_000), "1039053: k = 1 and k = 0 are outside the rule");
+        // 7955574 (PSSV): nine lots summing exactly to the head, ratio 1.
+        let pssv = with_awards(
+            version(vec![amt("result_value", 180_000_000_000)], (0..9).map(|i| lot(&key(i), vec![amt("estimated_value", 20_000_000_000)])).collect()),
+            (0..9).map(|i| award(&key(i), 20_000_000_000)).collect(),
+        );
+        assert_eq!(one(&pssv), Some(180_000_000_000), "7955574: k = 0");
+        // Under the EUR 1 bn gate nothing changes: EUR 500 m over two awards of EUR 250,000.
+        let small = with_awards(version(vec![amt("result_value", 50_000_000_000)], (0..2).map(|i| lot(&key(i), Vec::new())).collect()), (0..2).map(|i| award(&key(i), 25_000_000)).collect());
+        assert_eq!(one(&small), Some(50_000_000_000), "below the gate");
+
+        // 492's framework exemption wins: 8800131's shape (a framework total over lots summing
+        // to it, one lot at 1/100), whose awards happen to sum to F / 100. Kept. Without the
+        // x100 lot 492 is silent, and the award sum refuses the total: the recorded cost, a
+        // correct total over award lots published in thousands (0 of the 20 award-side
+        // refusals had that shape).
+        let (f, p) = (120_000_000_000, 1_200_000_000);
+        let exempt = with_awards(
+            version(
+                vec![amt("estimated_value", f)],
+                vec![
+                    lot("LOT-1", vec![amt("estimated_value", 60_000_000_000)]),
+                    lot("LOT-2", vec![amt("estimated_value", 58_800_000_000)]),
+                    lot("LOT-3", vec![amt("estimated_value", p)]),
+                ],
+            ),
+            vec![award("LOT-1", 600_000_000), award("LOT-2", 600_000_000)],
+        );
+        assert_eq!(one(&exempt), Some(f), "492's framework total is kept");
+        let cost = with_awards(
+            version(vec![amt("estimated_value", f)], vec![lot("LOT-1", vec![amt("estimated_value", 60_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 60_000_000_000)])]),
+            vec![award("LOT-1", 600_000_000), award("LOT-2", 600_000_000)],
+        );
+        assert_eq!(one(&cost), Some(60_000_000_000), "the recorded cost");
+
+        // A refused procedure figure no longer bounds 492's sibling-lot exemption (recorded on
+        // the issue; it errs toward refusing): a EUR 1 bn lot beside a sibling's EUR 10 m, under
+        // a EUR 3 bn total whose awards sum to EUR 3 m.
+        let bounded = with_awards(
+            version(
+                vec![amt("result_value", 300_000_000_000)],
+                vec![lot("LOT-1", vec![amt("estimated_value", 100_000_000_000)]), lot("LOT-2", vec![amt("estimated_value", 1_000_000_000)])],
+            ),
+            vec![award("LOT-1", 150_000_000), award("LOT-2", 150_000_000)],
+        );
+        let rule = ScalePartners::of_chain(std::slice::from_ref(&bounded));
+        assert!(rule.refuses_amount("estimated_value", "EUR", 100_000_000_000, 100_000_000_000, FigureScope::Lot(Some("LOT-1"))), "no admitted bound");
+        assert_eq!(one(&bounded), Some(1_000_000_000));
+    }
+
+    /// Issue 537: [`super::LotSums`] is the one definition of S, shared by the election and
+    /// section 16 of the data-quality report: which lots count, which figures, and one figure
+    /// per lot.
+    #[test]
+    fn the_lot_sums_count_each_lot_once_and_only_lots() {
+        use super::{LotSumKind, LotSums, RESULT_FRAMEWORK_MAXIMUM, lot_sum_exponent, lot_sum_vouches, match_lot_sums};
+        let mut sums = LotSums::new([("LOT-1", "Lot"), ("LOT-2", "Lot"), ("PAR-1", "Part"), ("GLO-1", "LotsGroup")]);
+        // Each lot's LATEST award by notice id; a tie goes to the later offer.
+        sums.award("LOT-1", 10, 100_000);
+        sums.award("LOT-1", 11, 90_000);
+        sums.award("LOT-1", 9, 500_000);
+        sums.award("LOT-2", 12, 40_000);
+        sums.award("LOT-2", 12, 50_000);
+        // A sentinel or a placeholder at or below the floor is no figure: the earlier stands.
+        sums.award("LOT-2", 13, 2_222_222_222_222);
+        sums.award("LOT-2", 13, 1_000);
+        // A group and a Part beside Lots never count; a key the head does not type does.
+        sums.award("GLO-1", 10, 999_000);
+        sums.award("PAR-1", 10, 999_000);
+        sums.award("LOT-9", 10, 7_000);
+        // Amounts: each lot's largest per field; withheld, unmapped fields and Parts skipped.
+        sums.amount("LOT-1", "estimated_value", 300_000, None);
+        sums.amount("LOT-1", "estimated_value", 200_000, None);
+        sums.amount("LOT-2", "estimated_value", 400_000, Some("withheld"));
+        sums.amount("PAR-1", "estimated_value", 400_000, None);
+        sums.amount("LOT-1", "result_value", 400_000, None);
+        sums.amount("LOT-2", RESULT_FRAMEWORK_MAXIMUM, 60_000, None);
+        sums.amount("LOT-9", "framework_maximum", 60_000, None);
+        assert_eq!(
+            sums.sums(),
+            vec![(LotSumKind::Awards, 147_000, 3), (LotSumKind::ResultFrameworkMaximum, 60_000, 1), (LotSumKind::Estimate, 300_000, 1)]
+        );
+        // A head with no Lot sums its Parts.
+        let mut pin = LotSums::new([("PAR-1", "Part"), ("PAR-2", "Part")]);
+        pin.amount("PAR-1", "estimated_value", 5_000, None);
+        pin.amount("PAR-2", "estimated_value", 6_000, None);
+        assert_eq!(pin.sums(), vec![(LotSumKind::Estimate, 11_000, 2)]);
+
+        // The match: k in 2..=6, n >= 2, one cent per lot after scaling.
+        let s = 1_000_000;
+        assert_eq!(lot_sum_exponent(100 * s + 100 * 3, s, 3), Some(2), "at the slack's edge");
+        assert_eq!(lot_sum_exponent(100 * s + 100 * 3 + 1, s, 3), None, "a cent past it");
+        assert_eq!(lot_sum_exponent(100 * s - 100 * 3, s, 3), Some(2));
+        assert_eq!(lot_sum_exponent(10 * s, s, 3), None, "k = 1 is not adopted");
+        assert_eq!(lot_sum_exponent(s, s, 3), None, "nor ratio 1");
+        assert_eq!(lot_sum_exponent(1_000_000 * s, s, 3), Some(6));
+        assert_eq!(lot_sum_exponent(10_000_000 * s, s, 3), None, "k = 7 is past the measured range");
+        assert_eq!(lot_sum_exponent(1000 * s, s, 1), None, "one lot is 471's");
+        // Guard T: another figure, above the floor, within [S / 10, 10 x S].
+        assert!(lot_sum_vouches(1000 * s, s, s / 10) && lot_sum_vouches(1000 * s, s, 10 * s));
+        assert!(!lot_sum_vouches(1000 * s, s, s / 10 - 1) && !lot_sum_vouches(1000 * s, s, 10 * s + 1));
+        assert!(!lot_sum_vouches(10 * s, s, 10 * s), "F itself is no third figure");
+        assert!(!lot_sum_vouches(1000 * 9_000, 9_000, 1_000), "a placeholder vouches for nothing");
+        assert!(lot_sum_vouches(1000 * 50_000_000, 50_000_000, 111_111_112) && !lot_sum_vouches(1000 * 50_000_000, 50_000_000, 111_111_111), "nor does a sentinel");
+        // The award side refuses before an estimate-side match is reported.
+        let both = [(LotSumKind::Awards, s, 2), (LotSumKind::Estimate, s, 2)];
+        assert_eq!(match_lot_sums(1000 * s, &both, |_| false).map(|m| (m.kind, m.refuses())), Some((LotSumKind::Awards, true)));
+        let estimate = [(LotSumKind::Estimate, s, 2)];
+        assert_eq!(match_lot_sums(1000 * s, &estimate, |_| false).map(|m| m.refuses()), Some(false), "kept, but named");
+        assert_eq!(match_lot_sums(1000 * s, &estimate, |_| true).map(|m| m.refuses()), Some(true));
+        assert_eq!(match_lot_sums(1000 * s + 5_000, &estimate, |_| true), None);
     }
 
     /// Issue 507, measured 2026-10-09: in a version with Lots, a carried PIN Part's figure is
