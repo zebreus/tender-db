@@ -1,6 +1,6 @@
 # 563 — a resumed SSE stream re-resolves the literal `now`, so its date bound moves and the resume is not exact
 
-Status: ready-for-agent — built (uncommitted) 2026-10-16, decision B, review fixes applied the same day; NEXT: gate
+Status: ready-for-agent — decision B COMMITTED `3a1845d` and GATED green 2026-10-16 (151 suites; built and reviewed wf_2d9bc7e2-2c9, 9 findings fixed). On main. NEXT: ship in ONE deploy with 547 (after 524's canary run 2565, queue idle), then the Verify curl; close as DONE <date>.
 (`ops/check.sh`), commit, ship in ONE deploy with 547 (547's Status names the coupling), then the Verify curl; close
 as `DONE <date>` when it reads done. A `/v1/tenders` event stream refuses a date bound spelled as the literal `now`
 with 400 (fresh connect and resume alike); pages keep `now`. Filed 2026-10-16 from issue 547's re-review (finding

@@ -1,6 +1,6 @@
 # 547 — SSE's per-version probe reads the HEAD columns for deadline, value, published and status, so a version's entering or leaving a filter on those is misclassified
 
-Status: ready-for-agent — units 1-2 COMMITTED `323fd37` and GATED green 2026-10-16 (151 suites; three review rounds: wf_9679cf84-369, wf_c32a3269-1ec, wf_ea99545a-23c). On main. NEXT: deploy once the queue is idle AFTER 524 v11's canary wet run 2565 has run (a deploy changes the rev, so it must not land between plan 2562 and 2565), TOGETHER with 563 (uncommitted on 2026-10-16: gate and commit it first; 563 refuses the `now` streams this issue opens, and its CHANGELOG entry assumes one joint release), then the Verify (the date-bounded stream curl answers 200).
+Status: ready-for-agent — units 1-2 COMMITTED `323fd37` and GATED green 2026-10-16 (151 suites; three review rounds: wf_9679cf84-369, wf_c32a3269-1ec, wf_ea99545a-23c). On main, with 563 (`3a1845d`, gated green) on top. NEXT: deploy main (547 + 563 in one deploy) once the queue is idle AFTER 524 v11's canary wet run 2565 has run (a deploy changes the rev, so it must not land between plan 2562 and 2565), then both Verifies (the date-bounded stream answers 200; a `now`-bounded stream answers the refusal).
 of writing. Next: gate (`ops/check.sh`), commit, deploy — read path only, no backfill — then the Verify. Follow-ups
 filed: 560, 561, 562, 563. Was: needs-triage — filed 2026-10-15 from issue 533's unit-1 decision (accepted risk "Other
 head-relative SSE predicates").
