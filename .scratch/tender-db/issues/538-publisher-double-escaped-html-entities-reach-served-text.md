@@ -1,6 +1,6 @@
 # 538 — publisher double-escaped HTML entities (`&#224;`, `&amp;quot;`, `&amp;lt;br/&amp;gt;`, `&apos;`) reach served titles, descriptions and party names
 
-Status: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, size the class by source and by field, names included (S).
+Status: ready-for-agent — unit 1 MEASURED and unit 2 DECIDED 2026-10-16 (below): TED eForms carries the class, 0.9–2.1 % of Tenders per window; legacy about 0.2–0.35 %; FTS, DÖE and old TED about 0; org names 0.02 %. Texts: decode at projection (numeric refs plus the five XML names, case-insensitive, ≤ 3 passes, `<br/>` → newline). Names: deferred to unit 4. Next: unit 3 (build) after 533 and 524 v10 leave the tree.
 Kind: data quality (served text and names) — needs a decision
 Relates to:
 - 11 (resolved): the text era's UTF8 variant unescapes the five XML entities (`unescape`, crates/ingest/src/text/
@@ -77,6 +77,80 @@ Not measured: FTS, r208/r209 and DÖE slices; the share of org names; whether an
   - its scope left out party names.
   - There is no `q=` search to retokenize (ADR-0016).
 
+## Unit 1 — measured (2026-10-16, bounded windows)
+
+`size_538.py` (session scratchpad; plan-checked: `tender_version_texts_version` range + rowid probe, organizations
+rowid range). Fourteen 2,000-tender windows of `tender_version_texts`, joined to `tenders.source`. Nine 100k-id
+windows of `organizations`. One read each, no 408.
+
+**Texts.** Tenders whose title or description holds `&#…;` or a named entity (`&amp;`, `&quot;`, `&apos;`, `&lt;`,
+`&gt;`; LIKE is ASCII case-insensitive, so `&Amp;` counts):
+
+| window | era (probe) | TED tenders | desc tenders | title tenders | rows `&#` / named |
+| --- | --- | --- | --- | --- | --- |
+| 60,000 | eForms 2025 | 1,900 | 30 | 13 | 43 / 165 |
+| 100,000 | eForms 2024 | 1,890 | 26 | 12 | 26 / 110 |
+| 369,000 | eForms 2025 | 1,905 | 20 | 4 | 18 / 41 |
+| 1,000,000 | eForms 2024 | 1,882 | 30 | 5 | 15 / 121 |
+| 7,960,000 | eForms 2026 (+797 FTS, 27 DÖE) | 1,117 | 10 | 6 | 18 / 17 |
+| 8,561,000 | eForms 2026 | 1,896 | 40 | 28 | 64 / 104 |
+| 5,000,000 | r2.0.8 2013 | 2,000 | 3 | 4 | 19 / 11 |
+| 6,000,000 | r2.0.9 2018 | 2,000 | 3 | 5 | 0 / 11 |
+| 8,300,000 | 2013 | 2,000 | 1 | 0 | 0 / 1 |
+| 2,000,000 / 3,000,000 / 4,000,000 / 7,000,000 | 1995 / 2003 / 2009 / 2021 | 2,000 each | 0 / 1 / 0 / 0 | 0 | — |
+| 8,700,000 | FTS 2024 | 1,640 FTS | 1 | 0 | 0 / 2 |
+
+Reading by era and source:
+- **TED eForms carries the class:** 0.9–2.1 % of Tenders per window.
+- **Legacy r2.0.8/r2.0.9:** about 0.2–0.35 %, mostly text-era `&Amp;`. That is a title-cased `&amp;`, in which the
+  parse layer's single decode found no entity.
+- **Old TED, FTS (OCDS JSON) and DÖE:** about 0. The DÖE Tenders in the windows (27–70 each) never hit.
+
+The dominant shapes are:
+- `&amp;lt;br/&amp;gt;`: double-escaped HTML line breaks. This is most French platform descriptions, and the first
+  shape in 60092, 369157, 1000122 and 7960906.
+- `&#8217;` / `&#8220;` / `&#224;`: Italian platforms (100083, 8561858).
+- `&amp;amp;`: three times escaped (8561112).
+
+No legitimate literal entity was seen in any example read. After the parse layer's own decode, a remaining `&amp;`
+means the publisher escaped twice. FTS is JSON and has no entity layer, so a `&amp;` there is also a publisher
+escape.
+
+**Names** (`organizations.name` with the same patterns, per 100k-id window; `&#` 0 everywhere):
+
+| window | orgs | named entity | examples |
+| --- | --- | --- | --- |
+| 0 | 24,307 | 7 | 2482 `Martin &amp; Servera …`, 5653 `Johnson &amp; Johnson …`, 19495 `… &quot;Bode Wipper&quot;` |
+| 5,000,000 | 17,322 | 5 | text era `&Amp;` (5001545, 5012758) |
+| 10,000,000 | 12,318 | 11 | text era `&Amp;` (10005239 `w.l. Gore &Amp; Associés`, 10007330 `iss H&Amp;P`) |
+| 22,000,000 | 10,667 | 6 | 22023251 `Scholz &amp; Volkmer GmbH`, 22072601 `&quot;UNSER LAGERHAUS&quot; …` |
+| 1M / 15M / 20M / 25M / 30M | 1,507–20,441 | 0 | — |
+
+That is 29 of 123,490 (0.02 %); on the order of 1–2 thousand orgs corpus-wide. They are mostly `&amp;` and `&Amp;`
+in company names (`Johnson & Johnson`, `Gore & Associés`). `name_norm` folds them to `amp`, so a decode re-keys
+every one.
+
+## Decision (2026-10-16, owner)
+
+1. **Texts: option (a).** At projection, decode titles and descriptions (lot ones included). The parse layer
+   stays as delivered (ADR-0001).
+   - Decode HTML character references (decimal and hex) and the five XML named entities. The named entities are
+     matched ASCII case-insensitively, so text-era `&Amp;` decodes too.
+   - Repeat while one remains, bounded at 3 passes.
+   - A decoded `<br>` / `<br/>` / `<br />` becomes a newline. No other markup is touched (none was seen).
+   - A private-use code point (U+E000–U+F8FF, the Symbol-font bullet `&#61655;`) becomes `•`.
+   - Mangled forms (`modalità;`) stay as they are: no decode can repair them.
+
+   The full HTML named set is NOT accepted. Only the five names were seen, and `&nbsp;`-style names would widen
+   the input a decode touches without evidence.
+2. **Names: not in this issue's build.** The class is about 0.02 % of orgs. A decode changes `name_norm`, the bind
+   key of identifier-less orgs (234), so it needs a re-key path. It also needs the head refresh to elect decoded
+   spellings, and 524's refresh elects among mention spellings that are all escaped the same way. Recorded as a
+   follow-up unit (unit 4 below), sized from this measurement, behind 524's wet runs.
+3. **Build after 533 and 524 v10 leave the tree** (`crates/ingest/src/project.rs` is in 533's change). Drain sized
+   from the carriers of the eForms text fields. 495's compare engine announces each changed row as a D5
+   correction, so expect about 1–2 % of eForms Tenders to get a correction row.
+
 ## Proposed units
 
 1. **Measure (S).** Run the same bounded `tender_version_texts` read over 4–5 more slices: TED eForms 2023 and
@@ -101,3 +175,5 @@ Not measured: FTS, r208/r209 and DÖE slices; the share of org names; whether an
    - Drain with `refold-fields` over the text fields. The 495 compare engine announces each changed row as a D5
      correction, so size the change rows from unit 1 before draining.
    - A names build, if decided, is its own unit behind 524's re-key path.
+4. **Names (decided 2026-10-16: deferred, its own unit).** Decode mention and head names in the resolver, with a
+   re-key of the identifier-less orgs whose `name_norm` changes (about 1–2 k orgs). Only after 524's wet runs.
