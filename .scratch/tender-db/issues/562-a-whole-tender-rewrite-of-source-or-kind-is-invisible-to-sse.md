@@ -1,6 +1,6 @@
 # 562 — a whole-Tender rewrite of `source` or `kind` (a DÖE Tender turning `ted`) is invisible to an SSE subscription on it
 
-Status: ready-for-agent — DECIDED 2026-10-17 (wf_3176baf8-d14, judge + adversarial check, amendments adopted): B — a non-acting fold that rewrites a Tender's `source` or `kind` writes ADR-0017 D3's seq-less rows (rule T + every head lot), head lots read from disk when the write loop did not run; no read-path, schema or refold change. NEXT: unit 2 (store; name the `a_refold_corrects_a_stored_tender_kind` change), unit 3 (api test pinning event sequences), unit 4 (served text), unit 5 (deploy + paired read).
+Status: ready-for-agent — DECIDED 2026-10-17 (wf_3176baf8-d14, judge + adversarial check, amendments adopted): B — a non-acting fold that rewrites a Tender's `source` or `kind` writes ADR-0017 D3's seq-less rows (rule T + every head lot), head lots read from disk when the write loop did not run; no read-path, schema or refold change. Units 2-4 BUILT 2026-10-17 (uncommitted, focused runs green; build review's findings fixed, re-run green in scratchpad b560/fix/run1.log; see "Build notes" and "Build review fixes"). NEXT: gate with ops/check.sh beside 560, then unit 5 (deploy + paired read).
 read, or a seq-less tender `changed` when the label flips), then build.
 Kind: correctness (SSE `added`/`removed` on `source` and `kind`)
 Relates to:
@@ -61,8 +61,8 @@ This also covers the unchanged-chain early return. `acting` folds are left alone
 - Every flip has a seq-carrying tender row at the TED version.
 - Today each flip leaves a permanent ghost in a `source=doe` subscription.
 - Kind moves: 0 in 12,794 later versions.
-- 1,128 of the 1,275 DÖE+TED merges in that window were co-minted or minted TED-first, so `moved` stays false and B never touches them.
-- B's cost is about 370 extra seq-less rows a week.
+- At most 1,128 of the 1,275 DÖE+TED merges in that window were co-minted or minted TED-first, so `moved` stays false and B never touches them (a TED notice fetched before, but parsed after, a DÖE-only fold is a flip the created_at criterion files as co-minted; B announces it, correctly).
+- B's cost is at least about 370 extra seq-less rows a week.
 
 **Not built:**
 - **Option 3 (announced-label columns `source_prior`/`source_since`).** It only buys exact operations: `added` instead of `changed` on the new-label tape, and no extra `removed` on unrelated filtered tapes. The house bar for the diff stream is an exact final state, with over-delivered `removed` (164/287) and `changed`-as-upsert (D4, 547/561) as the accepted errors. Clients have to keep upsert handling anyway for `max_value` (561), so op-exactness for `source` alone saves them nothing. The cost is an M-sized build: a schema change on a public, allow-listed table, and a new invariant ("the label as announced at a seq") that every replay, every stale refold under Off/Shadow/On, and every rebuild must keep. Its failure mode is the error the house does not accept. A stale `source_since` after a later prepend to a flipped Tender gives a doe tape a fake `added` at v1, unless a clamp rule holds on every path. B can never send an old-label tape anything but `removed`.
@@ -148,9 +148,9 @@ grep -c 'fn a_ted_twin_joining_a_doe_tender_reaches_a_source_subscription' crate
 The assertion 'no ted tape hears a removed' holds only because CHAIN[1] keeps lot 1 and drops no lot. Write that down next to it, because a lot dropped at the TED version gives the ted lots tape a (true,false) `removed`.
 - Unit 4: restate the Diff reason accurately. Suggested text: 'both the version's own change and the version: null correction that follows read the Tender's current label on both sides, so a new-label subscriber hears changed (issue 562)'. In crates/app/data/openapi.json, edit line 1146 (ChangeEvent.version, which lists the causes of version: null) together with line 1153. CHANGELOG: tell source- and kind-filtered SSE consumers to re-subscribe once without Last-Event-ID after the deploy. A resumed stream keeps ghosts from earlier flips.
 - Unit 5 and the Verify 'done' line: replace the absolute '50-100 seq-less tender rows on ted Tenders' with a paired read. Over the cursor range of that day's daily fold:
-- Take each seq-carrying `tender` row whose version is caused by a TED notice, where v1 is caused by a DÖE notice, there is no earlier TED version, and tenders.created_at < that notice's ingested_at. These are the flips.
+- Take each seq-carrying `tender` row whose version is caused by a TED notice n, where tenders.created_at < n's ingested_at, the Tender's chain holds a DÖE notice of LOWER notice id than n (ingested earlier), and no TED notice of lower id. These are the flips: the decision's own q1 criterion (scratchpad/d56x/i562/q1.sql, `src_flips`). *Restated 2026-10-17 (build review): the wording here was 'v1 is caused by a DÖE notice, there is no earlier TED version', which leaves out a TED notice published before, but ingested after, the DÖE notice that minted the Tender. The fold replays that Tender from v1, so the TED version becomes v1; its label still moves doe → ted and B announces it, correctly (q1 counts it under `flips_prepended`: 0 of 59 on 10-12..10-16). Notice ids order ingestion, not publication, so the lower-id test keeps it a flip.*
 - Count the flips that have a seq-less `tender changed` row for the same entity_id with the SAME changed_at (the fold's `now`) and a higher cursor. Expect all of them.
-- Count same-changed_at seq-less tender rows on TED joins that are not flips: co-minted, TED-first or prepend. Expect 0.
+- Count same-changed_at seq-less tender rows on TED joins that are not flips. TED-first (a TED notice of lower id already in the chain): expect 0. Co-minted (tenders.created_at ≥ n's ingested_at): expect ≥ 0, each one explained as a TED notice fetched before, but parsed after, the DÖE-only fold that minted the Tender (the line on decision text below). *Restated 2026-10-17 (build review): this line read 'co-minted, TED-first or prepend. Expect 0'; a prepend is a flip (above), and the co-minted class holds real flips that B announces, so neither is an expect-0 bucket.*
 - Drive the read from the rowid range (`+entity_kind` so the planner cannot take changes_entity, as my first plan showed it would) and plan-read it on a copy of v551/plan.db.
 - Cross-check against the new Applied counter in that job's log.
 - Decision text: change '1,128 ... B never touches them' to 'at most 1,128', and '~370 rows a week' to 'at least ~370 rows a week'. A TED notice fetched before, but parsed after, a DÖE-only fold is a flip that the created_at criterion files as co-minted, and B announces it, which is correct. Keep 'kind measured 0' as stated.
@@ -166,3 +166,73 @@ The assertion 'no ted tape hears a removed' holds only because CHAIN[1] keeps lo
 - The restated Diff reason in unit 4 is slightly wrong. The new-label tape first hears `changed` with `version: 2`: the transition row is classified (true,true), because both probes read the rewritten label. The `version: null` correction then repeats it. The text 'a label move arrives as a version: null correction, which a new-label subscriber hears as changed' implies the null event is the only one.
 - The no-walk decision rests on one gauge sample (`tender_db_sse_streams 0` at 06:05; metrics.rs:52 exposes only a live gauge). It cannot show that no client resumes source- or kind-filtered streams through Last-Event-ID between connections. Accepting the leftover ghosts is defensible, but only if the CHANGELOG tells such clients what to do, and the planned wording ('keeps ghosts until it re-snapshots') does not say that.
 
+### Build notes (units 2-4, 2026-10-17)
+
+Built in the tree beside issue 560's uncommitted change (they share `apply_tender_tx`); not yet gated.
+
+- **Store (unit 2).** `Db::apply_tender_tx` (crates/store/src/canonical.rs) calls one helper,
+  `announce_label_move`, which writes `inplace::correction_rows(tender_id, &head_lots)` as seq-less
+  `changed` rows through `stmts.append_change` and returns `1 + lots` for `Applied.changes`, so the doorbell
+  rings. Two call sites:
+  - (a) `!acting && stored_identity.moved`, after the transition rows, the sweep's `removed` rows and
+    `stmts.ids.reset()`, just before the final `Ok`. Not guarded by `!stale`: stale Off and Shadow refolds are
+    in scope; the acting compare returns earlier with D3's own set. The head lots never come from the write
+    loop: no version gives rule T alone; a head the call did not rewrite (`keep == p.versions.len()`, a chain
+    cut back to its prefix) is read from disk with `inplace::head_lots` (now `pub(crate)`); a written head
+    (its rows still in `Pending`) is looked up by lot key with `lot_identity`, after the reset.
+  - (b) The unchanged-chain early return, when `moved` is set: `inplace::head_lots` at the stored
+    `current_seq`. Its SQL is the statement the adversarial check plan-read on a copy of v551/plan.db
+    (`SEARCH tender_version_lots USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)`);
+    not re-read here (no prod or plan.db access in this build).
+  - Both futures are `Box::pin`ned, so `apply_tender_tx`'s frame gains only a pointer.
+  - New `Applied.label_corrections` (one per Tender announced by B; the acting set stays under
+    `tenders_corrected`), printed on the supervisor's durable fold line (`…, N verified unchanged, M relabelled
+    (issue 562)`) and on ingest's `[project] done:` line, for unit 5's job-log check.
+- **The fold cannot move `source` on an unchanged chain** (adversarial check): `fold` emits one version per
+  group notice and `primary_source` reads those same notices' sources, so (b) is reached only from a stored
+  label that disagrees with the derivation (a hand-set or pre-fix one, as with issue 462's kinds) and a bare
+  requeue. `a_label_moved_on_an_unchanged_chain_writes_the_correction` builds exactly that.
+- **The named test that changed:** `a_refold_corrects_a_stored_tender_kind` (crates/ingest/tests/project.rs).
+  Part 1 (stale, compare refused so not acting) now expects `[(tender, Some(1), "added"), (tender, None,
+  "changed")]`; part 2 (the early return) asserts the trailing `(tender, None, "changed")`, `changes > 0` and
+  `label_corrections == 1`.
+- **Tests.** crates/store/tests/label_move_corrections.rs: `a_label_moved_by_an_ordinary_fold_writes_rule_t_and_the_head_lots_seqless`
+  (includes a lot minted by the TED version, so the written-head lookup is exercised),
+  `a_fold_that_leaves_the_label_alone_writes_no_correction`, `a_ted_first_tender_gaining_its_doe_notice_writes_no_correction`,
+  `a_co_minted_doe_and_ted_pair_writes_no_correction`, `a_stale_refold_that_moves_the_label_writes_one_correction_set`
+  (On: exactly one set, D3's, `label_corrections` 0; Off and Shadow: identical rows, the replay then B's set),
+  `a_label_moved_by_a_chain_shrinking_to_its_prefix_announces_the_head_lots` (the sweep's `removed`, then rule T
+  and every head lot read from disk). crates/ingest/tests/project.rs: `a_label_moved_on_an_unchanged_chain_writes_the_correction`
+  (source, keyed Tender with a lot) beside the kind half in the 462 test.
+- **App (unit 3).** `a_ted_twin_joining_a_doe_tender_reaches_a_source_subscription` (crates/app/tests/api.rs),
+  with a new `Server::record_bytes_from(source, …)`: CHAIN[0] recorded as DÖE, four tapes, CHAIN[1] as TED. Pins
+  the doe tenders tape's FIRST event (`removed`, `version: null`), the doe lots tape's lot `removed` null, each ted
+  tape's exact `[changed v2, changed null]`, every tape quiet, the pages, and `/v1/changes`
+  (`added v1 ×2, changed v2 ×2, changed null ×2`). The "no ted tape hears removed" note (CHAIN[1] keeps lot 1 and
+  drops none) sits beside it.
+- **Served text (unit 4).** /docs and openapi EventStream: the 562 exception is dropped from the Snapshot list
+  (the remaining exceptions are 565 and 561, after 560's rewrite); the Diff says both the version's own change and
+  the `version: null` correction read the current label on both sides, so the new label hears `changed` and the
+  old `removed`. The `version: null` cause lists (docs event schema, openapi `ChangeEvent.version`) name the fold
+  re-labelling a Tender's source or kind. Docs pins: the new phrases, absence of "reaches a subscriber to the old
+  label as nothing" on both surfaces, and the null-version cause. read.rs comment, CHANGELOG entry (with the
+  re-subscribe-once advice; the 547 bullet now points here), ADR-0017 dated note under D3.
+
+
+### Build review fixes (2026-10-17, uncommitted)
+
+- **CHANGELOG SSE bullet.** "`added` is not sent there" was false: SSE classifies by presence at head and head−1,
+  so a new-label subscriber hears `added` for an entity the version before did not hold. Reproduced by the review:
+  a lot first written by the re-labelling version (LOT-3 in
+  `a_label_moved_by_an_ordinary_fold_writes_rule_t_and_the_head_lots_seqless`: `added` for both events), every
+  entity when the fold leaves the Tender at version 1 (the shrink to a one-version DÖE prefix: `added` once, no
+  version of its own), and every entity at v1 when the fold rewrites it from version 1 (a TED notice prepended to a
+  DÖE-minted Tender). The bullet now says `changed` for an entity it held (twice when a version moved the label),
+  `added` for one the version before did not hold, either applied as an upsert. /docs and openapi's Diff say "hears
+  `changed` (or `added`, for an entity the version before did not hold)"; the docs pin follows.
+- **Unit 5's paired read** (amendment above, restated in place): the flip criterion is q1's notice-id form, so a TED
+  notice prepended to a DÖE-minted Tender counts as a flip; the expect-0 bucket is TED-first only, and co-minted is
+  expect ≥ 0, each one explained.
+- **docs/operations.md** "Reading a `project` job's `counts` line": the template gains `, <r> relabelled (issue
+  562)`, with what it counts (B's announcements: ordinary folds, the unchanged-chain early return, Off/Shadow stale
+  refolds) and what it does not (an `on` refold's label moves count under the compare's `corrected`).

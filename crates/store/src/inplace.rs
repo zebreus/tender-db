@@ -141,8 +141,9 @@ async fn head_seq(conn: &Connection, tender_id: i64) -> turso::Result<Option<i64
 }
 
 /// Add the lots of `tender_id`'s version `seq` to `lots`, off the `tender_version_lots`
-/// primary key.
-async fn head_lots(conn: &Connection, tender_id: i64, seq: i64, lots: &mut BTreeSet<i64>) -> turso::Result<()> {
+/// primary key. The fold reads it too (issue 562), for a Tender whose label it moved while
+/// its head version stayed on disk.
+pub(crate) async fn head_lots(conn: &Connection, tender_id: i64, seq: i64, lots: &mut BTreeSet<i64>) -> turso::Result<()> {
     let mut rows = conn
         .query(
             "SELECT lot_id FROM tender_version_lots WHERE tender_id = ? AND seq = ?",

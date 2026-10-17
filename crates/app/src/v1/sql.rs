@@ -1103,8 +1103,9 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
         "current_value_derivation",
         "Issue 551: NULL when the head value is one published figure (the elected amount row); \
          'lot-sum-vouched' when it is the sum of the head version's lots that a refused procedure \
-         figure vouches for (that figure is exactly 10^k times the sum), 'lot-sum-awards' when it is \
-         the lots' latest awards added up on a head with no procedure figure. The four \
+         figure vouches for (that figure is exactly 10^k times the sum). 'lot-sum-awards' (the \
+         lots' latest awards added up on a head with no procedure figure) is withdrawn (issue 551 \
+         unit 4a): no fold writes it, and refold-lot-sum re-elects the heads that carried it. The four \
          current_value_* derivation columns are written and cleared together by the fold; a head \
          not folded since issue 551 deployed reads NULL until its refold (refold-lot-sum).",
     ),

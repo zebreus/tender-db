@@ -2135,13 +2135,14 @@ pub async fn project_with_progress_phase2_stoppable(
     eprintln!("[project] apply: {} tenders in {:.1}s", report.tenders, t2.elapsed().as_secs_f64());
     eprintln!(
         "[project] done: {} notices → {} tenders ({} islands), {} versions, {} entities swept, \
-         {} change rows in {:.1}s",
+         {} change rows ({} tenders relabelled, issue 562) in {:.1}s",
         report.notices,
         report.tenders,
         report.islands,
         report.applied.versions_written,
         report.applied.entities_swept,
         report.applied.changes,
+        report.applied.label_corrections,
         t0.elapsed().as_secs_f64()
     );
     if let Some(line) = report.applied.compare_line() {

@@ -1,6 +1,6 @@
 # 560 — a version that moves only the Tender's value writes no lot change row, so a `/v1/lots` value-bound subscriber keeps a lot its bound now excludes
 
-Status: ready-for-agent — DECIDED 2026-10-17 (wf_3176baf8-d14, judge + adversarial check, amendments adopted): build A-EUR — a version whose elected Tender EUR value moved writes lot `changed` (and tender `changed`) rows beside 533's closure flip, with a net-move rule at the last written version and the stored-head seed for a pure append; no epoch bump, no refold. Units below (U-a filed as issue 565). NEXT: U-b (store), then U-c (api test + served text), U-d (deploy + coverage read crediting D5's seq-less rows).
+Status: ready-for-agent — DECIDED 2026-10-17 (wf_3176baf8-d14, judge + adversarial check, amendments adopted): build A-EUR — a version whose elected Tender EUR value moved writes lot `changed` (and tender `changed`) rows beside 533's closure flip, with a net-move rule at the last written version and the stored-head seed for a pure append; no epoch bump, no refold. Units below (U-a filed as issue 565). U-b + U-c BUILT 2026-10-17 (uncommitted; build review's findings fixed, focused runs green 2026-10-17 — scratchpad b560/fix/run1.log, 216 passed, EXIT=0; fold_writer golden regenerated and reviewed with rowid/cursor stripped, b560/golden-review-foldwriter.txt; see "Build notes" and "Build review fixes"). NEXT: gate with ops/check.sh beside 562, then U-d (deploy + coverage read crediting D5's seq-less rows).
 over a real SSE socket). Next: decide between emitting lot `changed` rows on a Tender head-value move (533's closure-flip
 shape) and documenting the gap as permanent; measure the extra rows first.
 Kind: correctness (SSE `added`/`removed` on `/v1/lots`)
@@ -137,3 +137,52 @@ Open (2026-10-17): the api test count is 0 and CHANGELOG 547's /v1/lots bullet n
 - THE SEED FOR A PURE APPEND IS RECOMPUTED, NOT READ FROM WHAT SUBSCRIBERS HOLD. When keep == stored.len() and the Tender is not stale, the stored head value (StoredIdentity.head.value_eur_cents) is already read, free, by tender_identity's SELECT. It is what every snapshot and head probe saw. A recomputed of_chain(prefix) value differs from it whenever the election or the rates changed without a refold of that Tender, for example a head that 551's walk did not stamp. In that case A can skip a row that a subscriber needs. This is minor and rare.
 - THE RATE-ONLY SHARE IS INCONSISTENT ACROSS THE RECORD. The judge leans on COMPLETE's W1 figure of 5.5% (all native figures identical). MINIMAL's me-not-mp measure on 10-14 is about 27%: FTS 102 of 103 lots, TED 237 of 1,165. 'Exactness is cheap' holds either way, in absolute rows. But the record should not state 5.5% as the share.
 
+
+## Build notes (2026-10-17, U-b + U-c, uncommitted)
+
+- **Reach, restated (adversarial objection 1).** Before the deploy, TED heads with a non-EUR amount were already
+  re-announced to lot streams by the next morning's `rederive-eur-recent` (ADR-0017 D5 rule-L seq-less lot `changed`
+  rows): 1,011 of 2026-10-14's 1,165 TED me_lots, 1,009 of them on non-EUR versions. The gap that persisted was
+  EUR-only Tenders and FTS, about 124 + 30 + 103 ≈ 257 lots a day, not 1,069–1,268. For TED non-EUR rows A buys latency,
+  for EUR-only and FTS correctness. The rate-only share is ~27% by MINIMAL's me-not-mp measure (FTS 102/103, TED
+  237/1,165), not COMPLETE's 5.5%. The CHANGELOG entry says this.
+- **Cost note.** An Off-mode or Shadow epoch refold, and a rebuild, replay every version through
+  `append_version_changes`, so they now write value-moved lot rows for every historical version: on the order of W2's
+  +59% lot rows, O(versions × lots) on long non-EUR chains, plus one head election per version. On mode (the default)
+  is unaffected beyond one election at the compared prefix's last version.
+- **Built beyond the amendment text (flagged):** on a pure append the stored head value is also compared at the run's
+  LAST version (the net-move rule), not only at the first appended one; over-delivery only, when the stored head and
+  the recomputed prefix value disagree.
+- **Not covered (flagged):** a FRESH Tender (keep = 0, nothing stored) whose several versions fold in one run has no
+  seed, so its last version is announced only when its own step moved; and an Off/Shadow stale refold has no seed
+  either (the amendment scoped the stored-head seed to a pure append).
+
+## Build review fixes (2026-10-17, uncommitted)
+
+The build review's confirmed findings, each fixed minimally in the tree:
+- **The stored head at the last version, for any stored chain.** The fold compared the stored head value only on a
+  pure append, so two rewrites that start from a head subscribers hold wrote no lot row when the stored head S
+  differed from the recomputed value R and the new head V equalled R: a replaced tail (keep < stored.len(), S the
+  dropped version's value) and an `On` refold appending past a compared prefix (D3's head compare stands aside for an
+  appended head; S ≠ R in a 551-style drain window). The run's last written version now also compares against
+  `stored_identity.head.value_eur_cents` whenever the Tender had a stored chain; the first-written-version compare
+  stays limited to the pure append. Off/Shadow replays can only over-deliver. Pinned by
+  `a_replaced_tail_compares_its_head_against_the_stored_head` (with a deadline, and bare: the value move alone then
+  writes the Tender's row too) and `an_on_mode_refold_with_an_append_compares_its_head_against_the_stored_head`
+  (stored head hand-set to EUR 400k under a chain that re-derives to EUR 1M, plus an untouched control).
+- **The kept-prefix seed is pinned through the fold.** `a_late_notice_inserted_mid_chain_compares_against_the_kept_prefix_and_the_run`:
+  stored [v1 EUR 1M, v3 EUR 2M + deadline], folded [v1, v2 EUR 2M, v3], keep = 1 < 2, so no stored head is compared at
+  the first written version; `lot:LOT-1@2` needs the prefix seed, `lot:LOT-1@3` the run seed. The pure-append test's
+  docstring no longer claims a missing seed misses the move (there the stored head catches it).
+- **The served text no longer overclaims the net-move rule.** A Tender with nothing stored (fresh, the co-minted
+  DÖE+TED pair, a rebuild) has no seed, and a run whose value moves and moves back (1M → 2M → 1M, then a
+  deadline-only version) moves neither at the last step nor net; in both, non-last lot rows read superset against
+  superset and a live, caught-up value-bound lots client can end holding a lot outside its bound. CHANGELOG 560,
+  read.rs `ValueBy::Version`, the 561 note, and the /docs + openapi 561 exception now say a version superseded
+  within the same fold reads the superset too, and that a `changed` or an `added` can name an entity outside the
+  bound on a live stream. Text, not code: seeding fresh runs would not make the claim true (move-and-back).
+- **Pin updated:** `head_election_agreement::the_derived_head_marker_has_one_writer` expected
+  `&self.rates_lookup())` at the head election; the amendment's hoisted `rates` made it `&rates)`.
+- **Still open, pre-existing, not built:** the review's probe found that a chain cut back to its prefix ([n1 EUR 1M,
+  n2 EUR 400k] → [n1]) moves the head with no version written and so no change row at all, the Tender's own included (outside 560's scope:
+  every head column moves there, not only the value).

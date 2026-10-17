@@ -177,6 +177,15 @@ Versions past the common prefix still get today's transition rows. A stale Tende
 that also gained a notice gets those, plus one correction set if its prefix
 differed.
 
+**Note (2026-10-17, issue 562):** D3's `source`/`kind` rule now also covers folds
+that do not act on a compare: ordinary current-epoch folds, the unchanged-chain
+early return, and stale refolds under `Off` and `Shadow`. A fold that moves a
+Tender's `source` or `kind` in place (a DÖE Tender turning `ted` when its TED twin
+joins) writes one correction set, rule T plus every lot of the head version, last
+for the Tender, after the transition rows and the sweep's `removed` rows. The head
+lots are read from disk when the call did not rewrite the head version. The acting
+compare writes its own set and gets no second; a rebuild never moves a label.
+
 ### D4 — The consumer contract
 
 - `version: null` on a `tender` or `lot` event means: existing versions of this

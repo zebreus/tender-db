@@ -159,3 +159,25 @@ grep -c 'tender_versions ADD COLUMN value_eur_cents' crates/store/src/lib.rs; gr
 - Minor inaccuracies in the rationale. Correction rows' labels do depend on the old side: (false,true) gives added and (true,true) gives changed. That does not matter, because head-1 is not the state before the correction anyway. '300-600 wrong-op events a day per subscriber' applies to an unfiltered value-only stream, and '×10 on lots streams' was not measured. Neither changes the choice of A over B. Reach was measured adequately: the two methods agree, there were 0 false negatives, and the per-day volume of about 3k transitions is consistent.
 - Unit 3's wording merges two separate legs. The >= leg compares the sum of the version's lot-level amount rows (any field, EUR 0 to cap, plus one cent a row) and, separately, the sum of its lot award results. The proposed parenthetical reads as one combined sum.
 
+
+## Note from issue 560's build (2026-10-17): the superset inside one fold run and across runs
+
+560's adversarial check (wf_3176baf8-d14) named two places where this superset decides what a value-bound subscriber
+ends up holding, and 560's served text (`/docs` Live feed, openapi `EventStream`) now names 561 for both:
+- **In-run.** `apply_tender_tx` writes all of a Tender's appended versions in one transaction, so SSE probes every
+  non-last appended version superset against superset. Under `max_value` on a multi-lot Tender that is almost always
+  `(true, true)` `changed`: an in-to-out move (EUR 400k → 1M, then 1M) never sends `removed`, an out-to-out one
+  (1M → 2M, then 2M) upserts a lot outside the bound. Measured on 2026-10-14 (d56x/adv/q_run.sql, q_run.out): 151 of
+  2,751 later TED versions were followed by another version of the same Tender published the same day. 560 NARROWS
+  the in-run case for the lots stream; it does not close it. Its net-move rule makes the run's last version a lot row
+  whenever the value differs from the one before the run's first written version (a kept or `On`-compared prefix's)
+  or from the stored head's (any Tender that already had versions), so such a head is probed exactly. The non-last
+  versions still read the superset, and two shapes leave a live, caught-up value-bound lots client holding a lot
+  outside its bound (review of 560's build, 2026-10-17, reproduced over a real SSE socket): a Tender with nothing
+  stored whose first fold carries several versions (a fresh Tender, the co-minted DÖE+TED pair, a rebuild), where
+  v1's lot `added` is probed superset at a non-head version and the last version has no value to compare against;
+  and a run whose value moves and moves back (EUR 1M → 2M → 1M, then a deadline-only version), where the steps'
+  lot rows read superset against superset and neither the last step nor the net moved. Both stay 561's to close.
+- **Cross-run.** A client that resumes, or lags, past a version since superseded reads both of that version's probes
+  as the superset, so a `changed` can name an entity outside the bound until a later change probes the current
+  version. That stays 561's to close (a stored per-version value).

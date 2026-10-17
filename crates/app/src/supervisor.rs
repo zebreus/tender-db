@@ -694,7 +694,9 @@ enum Spec {
     /// (`Db::lot_sum_cohort_tender_ids`: a tender-scope figure of EUR 1 bn or more at the head, or
     /// two or more awarded lots with no procedure figure outside the sentinels' range) — neither
     /// path of the new election is reachable from `refold-value-band`'s cohort, since every
-    /// path-V head now sits below EUR 1 bn or null and path W raises heads from below. ADR-0017
+    /// path-V head now sits below EUR 1 bn or null and path W raises heads from below. Since
+    /// unit 4a withdrew path W (`canonical::LOT_SUM_AWARDS_PATH`), the same cohort is the way
+    /// back: a wet run re-elects every drained `lot-sum-awards` head to the max election. ADR-0017
     /// D6's route R3 by tender id; the fold compares and announces only what moved. `dry_run`
     /// (the default) walks the cohort and writes nothing; a wet run needs `expect`, the dry run's
     /// count, and aborts before any write when the cohort is off by more than a quarter. The wet
@@ -4113,6 +4115,10 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
     // counts line: a later G2 breach can then be read against what
     // each fold actually did — "written 0 / unchanged N" points at
     // the watermark over-claiming, a large `written` at the fold.
+    // Beside it, the Tenders whose label the fold moved and announced
+    // (issue 562), always printed: a job log is checked against the
+    // feed's seq-less rows, and an unchanged Tender that wrote a
+    // correction is not otherwise visible here.
     // A cancelled run's log row must SAY so (issue 256): its tallies
     // are real, committed work — but a summary that looks complete is
     // how a stopped fold gets mistaken for a finished one (the same
@@ -4154,13 +4160,14 @@ fn fold_summary(report: &ingest::project::Report, sweep: &str) -> String {
     // Issue 495 unit 3: the shadow compare's tally, when a stale Tender was compared.
     let compare = report.applied.compare_line().map(|line| format!("; {line}")).unwrap_or_default();
     format!(
-        "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged{compare}{wall}{alias}{refreshed}{retired}{dropped}{extracted}{sweep}{citations}",
+        "{cancelled}{} notices → {} tenders ({} islands), {} versions; {} tenders written, {} verified unchanged, {} relabelled (issue 562){compare}{wall}{alias}{refreshed}{retired}{dropped}{extracted}{sweep}{citations}",
         report.notices,
         report.tenders,
         report.islands,
         report.applied.versions_written,
         report.applied.tenders_written,
-        report.applied.tenders_unchanged
+        report.applied.tenders_unchanged,
+        report.applied.label_corrections
     )
 }
 

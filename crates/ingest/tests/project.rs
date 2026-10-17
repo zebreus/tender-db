@@ -1184,6 +1184,9 @@ async fn notices_without_a_procedure_key_become_island_tenders() {
 /// right from the start, so the prod state is made by hand, and then the
 /// `refold-sections BusinessCapability` job's steps run through the production
 /// functions it calls — and a bare requeue after them, the path no stamp drives.
+/// Issue 562: both folds announce the moved kind with ADR-0017 D3's seq-less
+/// `tender changed`, last for the Tender (the stale one is not acting here, the
+/// requeue takes the unchanged-chain early return).
 #[tokio::test]
 async fn a_refold_corrects_a_stored_tender_kind() {
     let (db, fetch_id, path) = scratch("kind-refold").await;
@@ -1219,14 +1222,19 @@ async fn a_refold_corrects_a_stored_tender_kind() {
     assert_eq!(scalar(&db, &x02_tender).await, tender, "corrected in place, not re-minted");
     assert_eq!(scalar(&db, "SELECT COUNT(*) FROM tenders WHERE kind = 'registration'").await, 2);
     // The stale stamp rewrites the chain, so the correction reaches the change
-    // feed: the rewritten version reads `added` again, and nothing else moved.
-    let feed: Vec<(i64, Option<i64>, String)> = changes(&db, cursor, 100)
-        .await
-        .into_iter()
-        .filter(|c| c.entity_kind == "tender")
-        .map(|c| (c.entity_id, c.version_seq, c.op))
-        .collect();
-    assert_eq!(feed, vec![(tender, Some(1), "added".to_owned())], "the refold rang the cursor for the X02");
+    // feed: the rewritten version reads `added` again, and (issue 562) the moved
+    // kind is announced last with ADR-0017 D3's seq-less `changed`. On this
+    // database the compare is refused (`project(&db, false)` defers
+    // `tender_version_bid_parties_version`), so the fold is stale but not acting:
+    // exactly the Off refold the label correction must not skip.
+    let tender_feed = |all: Vec<store::Change>| -> Vec<(i64, Option<i64>, String)> {
+        all.into_iter().filter(|c| c.entity_kind == "tender").map(|c| (c.entity_id, c.version_seq, c.op)).collect()
+    };
+    assert_eq!(
+        tender_feed(changes(&db, cursor, 100).await),
+        vec![(tender, Some(1), "added".to_owned()), (tender, None, "changed".to_owned())],
+        "the refold rang the cursor for the X02, and announced its kind"
+    );
 
     // Nor does the correction hang on that stamp. `tender_identity` runs before
     // `apply_tender_tx`'s unchanged early return, so a requeue the epoch passes
@@ -1235,6 +1243,7 @@ async fn a_refold_corrects_a_stored_tender_kind() {
     db.execute_for_test(&format!("UPDATE tenders SET kind = 'procedure' WHERE island_notice_id = {x02}"))
         .await
         .expect("mint the prod state again");
+    let cursor = changes(&db, 0, 1000).await.last().expect("the refold's change rows").cursor;
     assert_eq!(db.unmark_projected_by_ids(&[x02]).await.expect("requeue"), 1);
     let report = project::project_incremental(&db).await.expect("refold, unstamped");
     assert_eq!(
@@ -1247,6 +1256,71 @@ async fn a_refold_corrects_a_stored_tender_kind() {
         Some("registration"),
         "the unchanged chain's fold corrected the stored kind"
     );
+    // Issue 562: the early return announces the correction too, so a `kind=registration`
+    // subscriber hears the X02 and a `kind=procedure` one loses it; the report counts it.
+    assert!(report.applied.changes > 0, "the early return wrote the correction: {:?}", report.applied);
+    assert_eq!(report.applied.label_corrections, 1, "{:?}", report.applied);
+    assert_eq!(
+        tender_feed(changes(&db, cursor, 100).await),
+        vec![(tender, None, "changed".to_owned())],
+        "the unchanged chain's correction is one seq-less tender changed"
+    );
+
+    let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 562 (unit 2 (b)): the unchanged-chain early return announces a label it corrected,
+/// here `source` on a keyed Tender with lots. The fold itself cannot move `source` on an
+/// unchanged chain — one version per notice, and `primary_source` reads those same notices'
+/// sources — so the path is reached from a STORED label that disagrees with the derivation (a
+/// hand-set or pre-fix one, as with issue 462's kinds), then a bare requeue. The chain is the
+/// same, so the head version's lots are read from disk (`inplace::head_lots`): rule T, then
+/// one seq-less lot `changed` per head lot, and the report counts the Tender.
+#[tokio::test]
+async fn a_label_moved_on_an_unchanged_chain_writes_the_correction() {
+    let (db, fetch_id, path) = scratch("label-unchanged").await;
+    ingest(&db, fetch_id, "eforms-chain/1-cn-16-831374-2025.xml").await;
+    project::project(&db, false).await.expect("project");
+    let tender = scalar(&db, "SELECT id FROM tenders").await;
+    assert_eq!(query_text(&db, "SELECT source FROM tenders").await.as_deref(), Some("ted"));
+    let mut head_lots: Vec<i64> = Vec::new();
+    while let Some(turso::Value::Integer(lot)) = db
+        .scalar(&format!(
+            "SELECT lot_id FROM tender_version_lots WHERE tender_id = {tender}
+                AND seq = (SELECT current_seq FROM tenders WHERE id = {tender}) ORDER BY lot_id LIMIT 1 OFFSET {}",
+            head_lots.len()
+        ))
+        .await
+        .expect("head lots")
+    {
+        head_lots.push(lot);
+    }
+    assert!(!head_lots.is_empty(), "the CN's head version has lots");
+
+    // A stored label the derivation disagrees with, then a requeue the epoch passes over.
+    db.execute_for_test(&format!("UPDATE tenders SET source = 'doe' WHERE id = {tender}"))
+        .await
+        .expect("hand-set the stored label");
+    let notice = scalar(&db, "SELECT id FROM notices").await;
+    let cursor = changes(&db, 0, 1000).await.last().expect("the first fold's change rows").cursor;
+    assert_eq!(db.unmark_projected_by_ids(&[notice]).await.expect("requeue"), 1);
+    let report = project::project_incremental(&db).await.expect("refold, unstamped");
+    assert_eq!(
+        (report.applied.tenders_unchanged, report.applied.tenders_written, report.applied.label_corrections),
+        (1, 0, 1),
+        "the early return was the fold's exit, and it announced the label: {:?}",
+        report.applied
+    );
+    assert_eq!(query_text(&db, "SELECT source FROM tenders").await.as_deref(), Some("ted"), "corrected in place");
+    let feed: Vec<(String, i64, Option<i64>, String)> = changes(&db, cursor, 100)
+        .await
+        .into_iter()
+        .map(|c| (c.entity_kind, c.entity_id, c.version_seq, c.op))
+        .collect();
+    let mut expected = vec![("tender".to_owned(), tender, None, "changed".to_owned())];
+    expected.extend(head_lots.iter().map(|&lot| ("lot".to_owned(), lot, None, "changed".to_owned())));
+    assert_eq!(feed, expected, "rule T, then every head lot, all seq-less");
+    assert_eq!(report.applied.changes, expected.len() as u64, "{:?}", report.applied);
 
     let _ = std::fs::remove_file(&path);
 }

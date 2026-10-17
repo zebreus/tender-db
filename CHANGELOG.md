@@ -4,6 +4,87 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 551 unit 4a) — `lot-sum-awards` is withdrawn: a Tender with no procedure figure no longer serves its lot awards' sum
+
+Issue 551 (below) served a Tender that publishes no procedure-level figure the sum of its lots' latest awards,
+marked `value_derivation.method` = `lot-sum-awards`. Read against the notices after its rollout (2026-10-17; the drain
+changed 15,352 Tenders), that sum was wrong on 9 of a uniform sample of 50 (18 %, 95 % ~9–31 %) and on 96 of the 229
+Tenders it served at EUR 100 m or more (42 %): framework ceilings or per-supplier maxima added up across lots that share
+one envelope, one lot under two keys or a re-issued award added to its original, a sum farther from the notice's
+stated total than the figure it replaced, a ×10^k award slip. Its guards do not separate those shapes, so it is off.
+- From the deploy on, no fold derives `lot-sum-awards`. Such a Tender serves the value election's one figure again
+  (often an award's Tender-level copy, i.e. one lot's award) or `null`, with `value_derivation` null. E.g. 585917
+  serves `null` again (not EUR 250,000.00), 5995030 PLN 2,721.60 (not PLN 1,549,511.60), 8426318 GBP 2,000,000,000.00
+  (not GBP 3,000,000,000.00), and 6450467, 6450469 and 6450473 EUR 1,660,661,682.94 (not EUR 3,574,764,979.28).
+- The Tenders that carry it are refolded back after the deploy (`refold-lot-sum`, the cohort issue 551's drain used:
+  about 15,352 values move back). Each move is announced like any value correction: a `version: null` `changed` row
+  (ADR-0017 D3), so a `min_value`/`max_value` subscriber hears `removed` when the value leaves its bound, and
+  `added` or `changed` (apply it as an upsert) when it enters it: under `max_value`, on a Tender with an earlier
+  version, the entry usually arrives as `changed` (the earlier version is read as a superset, issue 547 below).
+  Until its refold a Tender still serves the sum and its marker.
+- `lot-sum-vouched` is unchanged: a refused procedure total that is exactly 10^k times the lot sum still vouches for
+  it (all 16 adjudicated heads read right after the drain).
+- A Tender with no convertible amount again matches no value bound (`/docs`, the filter table and the Amounts
+  caveat).
+- OpenAPI keeps `lot-sum-awards` in the `value_derivation.method` enum, described as withdrawn and not currently
+  served; a redesign is open (issue 551 unit 4b). `/v1/sql`'s `current_value_derivation` note says the same.
+
+## Unreleased (issue 562) — a Tender re-labelled `ted` (or re-kinded) reaches a `source` (or `kind`) subscription
+
+The fold rewrites a Tender's `source` for the whole Tender (a DÖE Tender turns `ted` when its TED twin arrives,
+ADR-0003) and, rarely, its `kind` (issue 462). A subscription's diff re-evaluates its filter against the old and new
+version, but both sides read the one rewritten label, so such a move reached a `source=doe` subscriber as nothing (it
+kept a ghost of the Tender and its lots for good) and a `source=ted` one as `changed`.
+- From the deploy on, a fold that moves a Tender's `source` or `kind` also writes a `version: null` `changed` row for
+  the Tender and one for each lot of its current version, after the version's own rows (ADR-0017 D3's correction
+  shape; `/docs`, event schema). The same holds when a refold corrects a stored label without writing a version.
+- SSE: a subscriber to the old label hears `removed` (for the Tender on `/v1/tenders`, each current lot on
+  `/v1/lots`). One to the new label hears `changed` for an entity it already held (twice when a version moved the
+  label: the version's own event and the correction), and `added` for one the version before did not hold: a lot
+  first written by the re-labelling version, or every entity when the fold leaves the Tender at version 1 or
+  rewrites it from version 1. Apply either as an upsert, as `/docs` already says. Other filtered streams can get an
+  extra `removed` for a Tender they never held (an idempotent delete).
+- Polls (`/v1/changes`) and webhooks are unfiltered and get the extra rows: at least ~370 a week, almost all on
+  Mondays and Tuesdays, when weekend DÖE publications meet their TED twins (110–150 Tenders a week, measured
+  2026-10-05 to 2026-10-16). A Tender minted from its TED notice, or from both notices in one fold, never moves its
+  label and gets none.
+- Change rows written before the deploy keep the gap: no walk re-announces past flips. A `source`- or `kind`-filtered
+  SSE client holding state from before the deploy should re-subscribe once without a cursor (no `Last-Event-ID`); a
+  stream resumed across the deploy keeps the ghosts of earlier flips until it re-snapshots.
+
+## Unreleased (issue 560) — a move of a Tender's value alone reaches a `/v1/lots` value-bound subscription
+
+A lot's `min_value`/`max_value` bound reads its Tender's value, but a lots stream re-evaluated a lot only when a change
+row was written for the lot itself: its facts, its kind or its Tender's closure moved. A version that moved only the
+Tender's value (a corrigendum of the procedure total, another lot's figure, an award value beside unchanged lot facts,
+or the exchange rate on a non-EUR Tender) wrote none, so a lots subscriber kept a lot its bound now excluded and never
+heard one it now admitted.
+- From the deploy on, a version that moves the Tender's EUR value (to or from no value included) writes a `changed`
+  row for the Tender and for each lot present on both sides. A lots value-bound stream hears `removed`, and `added` or
+  `changed` (apply it as an upsert, as `/docs` already says). For a Tender that already had versions, the last
+  version a fold writes is also announced whenever its value differs from the one the Tender served before the fold,
+  or from the one before the fold's first written version, so the current version is probed. That does not make a
+  fold of several versions exact: a version written in the same fold as a later one is still read as a superset on
+  both sides, and a Tender first folded with several versions has nothing to compare its last version against (issue
+  561, below).
+- Unfiltered lots streams, `/v1/changes` polls and lot webhooks get those extra `changed` rows: about 1,000–3,000 a
+  day. They include moves caused only by the rate on non-EUR Tenders. A TED version published today is compared at
+  the previous day's fixing, and the next morning's rate re-derivation still re-announces its lots as a `version:
+  null` correction, as before.
+- What it fixes: before the deploy, TED Tenders with a non-EUR amount were already re-announced to lot streams by that
+  next-morning re-derivation, so for them this only makes the event immediate. The error that persisted was on
+  EUR-only Tenders and FTS, about 250 lots a day (measured on 2026-10-14), and it accumulated in a value-bound lots
+  subscription.
+- Change rows written before the deploy keep the gap. A lots value-bound client holding state from before the deploy
+  (EUR-only and FTS Tenders above all) should re-subscribe once without a cursor (no `Last-Event-ID`).
+- Still open, and named in `/docs`: a lots stream under a filter that reads the lot's Tender (`country`, `cpv`,
+  `buyer`, `winner`, `bidder`, `procedure_type`, `currency`, `status`) checks a lot again only when a change row is
+  written for the lot itself (issue 565); and under `min_value`/`max_value` a version since superseded is read as a
+  superset on both sides, whether a later version was written in the same fold (a Tender first folded with several
+  versions, or a value that moved and moved back within one fold) or the stream resumes, or lags, past it. So a
+  `changed` or an `added` can name an entity outside the bound, on a live stream as well as a resumed one, until a
+  later change probes the current version (issue 561).
+
 ## Unreleased (issue 551) — a Tender's `value` can be the sum of its lots, marked `value_derivation`
 
 `value` was always ONE published figure: the largest the value election accepts. When a scale rule refused the
@@ -17,8 +98,8 @@ the SUM of the current version's lots, in the lots' own currency:
   figure the election would serve without it. Pinned on unit 2's 15 adjudicated heads,
   e.g. 7427765 now serves EUR 3,000,000.00 (six awards of EUR 500,000.00) instead of EUR 500,000.00, 5943121
   EUR 1,321,579.92 instead of EUR 416,053.05, and 369057 EUR 62,378,736.29 instead of `null`.
-- **`lot-sum-awards`**: the Tender has no procedure-level figure at all (only placeholders), its value was an award's
-  copy or `null`, and each lot's latest award is added up, unless one figure repeats across the lots (a total
+- **`lot-sum-awards`** (withdrawn by unit 4a, above): the Tender has no procedure-level figure at all (only
+  placeholders), its value was an award's copy or `null`, and each lot's latest award is added up, unless one figure repeats across the lots (a total
   printed on every award), one lot equals 1, 10, 100 or 1,000 times the others, an award is in another currency or
   names a lot the notice does not type, two awarded lots carry one lot number under two keys (a Tender re-keyed from
   TED's `LOT-1` to eForms' `LOT-0001` would count that lot twice; the number is read from the key, and TED's
@@ -86,15 +167,8 @@ CURRENT figures on both sides. So a change that moved a Tender across one of tho
   the snapshot already requires), or `changed` where `added` was due, which under `max_value` is the usual outcome
   on a Tender with several lots: apply `changed` as an upsert by id too (re-read it, or subscribe with `include_data`).
   Exact needs the elected value stored per version (issue 561).
-- On `/v1/lots`, whose value bound is the Tender's value, the same holds only for a version that writes the lot's
-  own change row — its facts, its kind or its Tender's closure moved. A version that moves only the Tender's value
-  (a corrigendum of the procedure total, another lot's figure, an award value beside unchanged lot facts)
-  re-evaluates no lot, so a lots subscriber keeps a lot its bound now excludes, and does not hear one it now admits
-  (issue 560).
-- `source` and `kind` still read the Tender's current label on both sides: the fold rewrites both for the whole
-  Tender (a DÖE Tender turns `ted` when its TED twin arrives; the kind is re-derived), so no stored row holds the
-  earlier label. Such a move reaches a `source=doe` subscriber as nothing and a `source=ted` one as `changed`
-  (issue 562).
+- `source` and `kind` still read the Tender's current label on both sides; a move of either is announced by the
+  fold's `version: null` correction since issue 562 (above).
 - Pages, polls and webhooks are unchanged.
 
 ## Unreleased (issue 537) — a procedure total 10^k times the sum of its own lots is refused

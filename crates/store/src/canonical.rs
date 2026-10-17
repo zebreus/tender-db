@@ -1588,6 +1588,17 @@ struct StoredIdentity {
     moved: bool,
 }
 
+/// Issue 562: where the fold finds the head version's lots for a label move's correction set.
+enum LabelHead<'a> {
+    /// No version: rule T alone.
+    Empty,
+    /// The head version is on disk at this seq: this call did not rewrite it.
+    Stored(i64),
+    /// This call wrote the head version: its lot rows are still in `Pending`, so its lots are
+    /// looked up by key.
+    Written(&'a TenderVersion),
+}
+
 /// One stale Tender's shadow compare (issue 495 unit 3), folded into [`Applied`] when the
 /// Tender is done.
 #[derive(Default)]
@@ -1935,7 +1946,8 @@ pub struct CarrierSweepStop {
 /// sentinels' range (path W), and `refold-lot-sum` enumerates exactly that superset by tender
 /// id (`Db::lot_sum_cohort_tender_ids`, ADR-0017 D6's route R3). `refold-value-band`'s cohort
 /// reaches neither path: since 537's drain every path-V head is below EUR 1 bn or null, and
-/// path W raises heads from below.
+/// path W raises heads from below. Unit 4a's withdrawal of path W is the same cohort the other
+/// way: `refold-lot-sum` re-elects every drained path-W head back to the max election.
 ///
 /// NOT bumped for issue 538's title and description decode either, although it changes
 /// `NoticeState::read` for every profile: ADR-0017 D6's route R3 covers it. Its cohort is
@@ -3363,9 +3375,10 @@ pub fn head_value(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) ->
 ///
 /// **Issue 551: the head may be a DERIVED lot sum.** The max election below serves one
 /// figure; when a scale rule refuses the procedure total, that is one lot's figure or null,
-/// never the total of the lots. Two paths, tried in order after the max election, serve the
-/// sum of the head version's own lots instead ([`derive_lot_sum`]); every other head is the
-/// max election unchanged. A derived head is returned with its [`DerivedValue`] (the fold
+/// never the total of the lots. Path V, tried after the max election, serves the sum of the
+/// head version's own lots instead ([`derive_lot_sum`]); every other head is the max election
+/// unchanged. (Path W, the unvouched awards sum, is withdrawn since unit 4a:
+/// [`LOT_SUM_AWARDS_PATH`].) A derived head is returned with its [`DerivedValue`] (the fold
 /// stores it on `tenders` beside the EUR column, never as an amount row), and its EUR is the
 /// sum converted by `rates` at the head's date, so value sorts and filters read it as they
 /// read any head.
@@ -3374,11 +3387,35 @@ pub fn head_value_eur_cents_with(
     partners: &ScalePartners<'_>,
     rates: &crate::rates::RatesLookup,
 ) -> HeadValue {
+    head_value_on_paths(head, partners, rates, LOT_SUM_AWARDS_PATH)
+}
+
+/// [`head_value_eur_cents_with`] with path W (`lot-sum-awards`) on or off: production passes
+/// [`LOT_SUM_AWARDS_PATH`] (off since issue 551 unit 4a); the path-W guard tests pass `true`
+/// (the test-only `head_value_with_awards_path`), so the path and its pins stay exercised for
+/// unit 4b.
+fn head_value_on_paths(
+    head: &TenderVersion,
+    partners: &ScalePartners<'_>,
+    rates: &crate::rates::RatesLookup,
+    awards_path: bool,
+) -> HeadValue {
     let date = crate::rates::civil_date(head.published_at);
     let today = elect_head_figure(head, partners, rates, &date);
-    match derive_lot_sum(head, partners, rates, &date, today.as_ref()) {
+    match derive_lot_sum(head, partners, rates, &date, today.as_ref(), awards_path) {
         Some((eur_cents, derived)) => HeadValue { eur_cents: Some(eur_cents), derived: Some(derived) },
         None => HeadValue { eur_cents: today.map(|t| t.eur_cents), derived: None },
+    }
+}
+
+/// Issue 551 unit 4a: [`head_value`] with path W switched ON whatever [`LOT_SUM_AWARDS_PATH`]
+/// says. Only the path-W tests read it: its guards and its labelled pins, kept for unit 4b's
+/// redesign. Production never serves what it returns for a path-W head.
+#[cfg(test)]
+fn head_value_with_awards_path(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> HeadValue {
+    match chain.last() {
+        Some(head) => head_value_on_paths(head, &ScalePartners::of_chain(chain), rates, true),
+        None => HeadValue::default(),
     }
 }
 
@@ -3566,6 +3603,7 @@ pub enum DerivationPath {
     /// lot sum — the buyer's own total, slipped, vouches for it.
     Vouched { rule: ScaleRule, field: String, cents: i64, currency: String, exponent: u32 },
     /// Path W: the lots' latest awards, with no procedure figure at all and every guard passed.
+    /// Withdrawn since unit 4a ([`LOT_SUM_AWARDS_PATH`]): production derives none.
     Awards,
 }
 
@@ -3593,7 +3631,9 @@ impl ScaleRule {
 
 /// Issue 551: `tenders.current_value_derivation` for a path-V head (a refusal vouched for S).
 pub const VALUE_DERIVATION_VOUCHED: &str = "lot-sum-vouched";
-/// Issue 551: `tenders.current_value_derivation` for a path-W head (an awards lot sum).
+/// Issue 551: `tenders.current_value_derivation` for a path-W head (an awards lot sum). Not
+/// written while path W is withdrawn ([`LOT_SUM_AWARDS_PATH`], unit 4a); a row folded before
+/// that keeps it until `refold-lot-sum` re-elects its head.
 pub const VALUE_DERIVATION_AWARDS: &str = "lot-sum-awards";
 
 impl DerivedValue {
@@ -3658,6 +3698,21 @@ const LOT_SUM_KIND_RATIO: i128 = 10;
 /// then FrameworkMaximum). The partner-only kinds (issue 506) are never served.
 const DERIVABLE_KINDS: [LotSumKind; 3] = [LotSumKind::Awards, LotSumKind::Estimate, LotSumKind::FrameworkMaximum];
 
+/// Issue 551 unit 4a (decided 2026-10-17): path W, the unvouched awards lot sum
+/// (`lot-sum-awards`, [`awards_lot_sum`]), is OFF in production. The post-drain bounded read
+/// (wf_dc85fa7e-c00; the issue's "post-drain bounded read — FAILED" section) found its sum wrong
+/// on 9 of a uniform 50 of its 15,352 drained changes (18 %) and on 96 of the 229 derived heads
+/// of EUR 100 m or more (42 %): framework ceilings or per-supplier maxima summed across lots that
+/// share one envelope, one lot under two keys or a re-issued award beside its original, a sum
+/// farther from the notice's stated total than the figure it replaced, a x10^k award summed. The
+/// guards G0–G8b do not separate those shapes. Fail closed: while this is `false`,
+/// [`derive_lot_sum`] never returns an awards sum, such a head keeps the max election (one
+/// figure, or null), and `refold-lot-sum` re-elects the drained path-W heads back. Path V
+/// (`lot-sum-vouched`) is unchanged. The path and its guards stay compiled and tested (the tests
+/// switch it on through the test-only `head_value_with_awards_path`), so unit 4b's redesign keeps their pins;
+/// unit 4b turns this back on only with a redesign that meets its bar.
+const LOT_SUM_AWARDS_PATH: bool = false;
+
 /// Issue 551 (decided 2026-10-16, wf_3d72c491-993): the lot sum a head serves instead of the
 /// max election's figure, as `(EUR cents, derivation)`, or `None` to keep `today`.
 ///
@@ -3679,7 +3734,9 @@ const DERIVABLE_KINDS: [LotSumKind; 3] = [LotSumKind::Awards, LotSumKind::Estima
 /// F within 1 % of 10^j M (the lots would BE the slipped total). No repeat guard beyond V1:
 /// the buyer's own figure at exactly 10^k vouches for the sum (7427765: 6 x EUR 500 k).
 ///
-/// **Path W, the unvouched awards lot sum**, only where path V does not fire. T': every
+/// **Path W, the unvouched awards lot sum**, only where `awards_path` (production passes
+/// [`LOT_SUM_AWARDS_PATH`], `false` since issue 551 unit 4a: path W is withdrawn and returns
+/// nothing) and only where path V does not fire. T': every
 /// procedure figure is absent or a sentinel (366/379); one refused, withheld, unconvertible
 /// or over the cap keeps the head. K: the head is an award copy or null, and the sum is
 /// [`LotSumKind::Awards`] in its currency (a null head: the currency with the most award
@@ -3702,6 +3759,7 @@ fn derive_lot_sum(
     rates: &crate::rates::RatesLookup,
     date: &str,
     today: Option<&HeadFigure<'_>>,
+    awards_path: bool,
 ) -> Option<(i64, DerivedValue)> {
     // The head's procedure figures (Fact order), with the election's judgement of each.
     let mut procedure: Vec<(&str, &str, i64, Judged)> = Vec::new();
@@ -3720,10 +3778,12 @@ fn derive_lot_sum(
     }
     // Path V needs a refused procedure figure and no admitted one; path W needs every
     // procedure figure to be a sentinel (T') and an award copy or nothing as today's head (K).
-    // The two exclude each other, so a head reaching neither pays for no lot sums.
+    // The two exclude each other, so a head reaching neither pays for no lot sums. Path W runs
+    // only where `awards_path` switches it on (off in production since unit 4a).
     let vouched = procedure.iter().any(|p| matches!(p.3, Judged::Refused(_)))
         && !procedure.iter().any(|p| matches!(p.3, Judged::Admitted(_)));
-    let awards_only = procedure.iter().all(|p| p.3 == Judged::Sentinel) && today.is_none_or(|t| t.award_copy);
+    let awards_only =
+        awards_path && procedure.iter().all(|p| p.3 == Judged::Sentinel) && today.is_none_or(|t| t.award_copy);
     if !vouched && !awards_only {
         return None;
     }
@@ -13961,6 +14021,11 @@ pub struct Applied {
     /// identical share per table.
     pub tables_skipped_by_leaf: [u64; LEAF_COUNT],
     pub tables_rewritten_by_leaf: [u64; LEAF_COUNT],
+    /// Issue 562: Tenders whose `source` or `kind` this fold moved in place, announced with
+    /// ADR-0017 D3's correction set (rule T plus every head lot) by a fold that does not act on
+    /// a compare, the unchanged-chain early return included: one per Tender. The acting
+    /// compare's own set counts under `tenders_corrected`.
+    pub label_corrections: u64,
 }
 
 impl Applied {
@@ -13985,6 +14050,7 @@ impl Applied {
         self.compare_rows += other.compare_rows;
         self.compare_versions += other.compare_versions;
         self.compare_nanos += other.compare_nanos;
+        self.label_corrections += other.label_corrections;
         for i in 0..LEAF_COUNT {
             self.tables_skipped_by_leaf[i] += other.tables_skipped_by_leaf[i];
             self.tables_rewritten_by_leaf[i] += other.tables_rewritten_by_leaf[i];
@@ -22768,6 +22834,15 @@ impl Db {
             // everything is distinguishable from one that wrote everything by
             // its report alone (issue 108).
             applied.tenders_unchanged += 1;
+            // Issue 562: `tender_identity` corrected a stored label that disagrees with the
+            // derivation (a hand-set or pre-fix one: the fold itself cannot move `source` on an
+            // unchanged chain, one version per notice and `primary_source` reading the same
+            // notices). The chain stays, so the head version's lots are read from disk.
+            if let Some(head_seq) = stored_identity.as_ref().filter(|s| s.moved).map(|s| s.head.seq) {
+                let head = head_seq.map_or(LabelHead::Empty, LabelHead::Stored);
+                applied.changes += Box::pin(self.announce_label_move(conn, stmts, tender_id, head, now)).await?;
+                applied.label_corrections += 1;
+            }
             return Ok((applied, None));
         }
         applied.tenders_written += 1;
@@ -22846,10 +22921,68 @@ impl Db {
         for version in &p.versions[..keep] {
             partners.add_version_figures(version);
         }
+        // Issue 560: a version whose elected EUR value moved is a change of the Tender and of
+        // every lot present on both sides, beside 533's closure flip (a lot's value bound reads
+        // its Tender's value, issue 490 decision 6). The running rule elects each version's
+        // value as it goes: `prev_value` is the previous version's (`None`: no previous version
+        // in this run), so one head election per written version, in memory. The rates are
+        // read ONCE, so every election of this Tender, the head UPDATE's below included, sees
+        // one table.
+        let rates = self.rates_lookup();
+        let mut prev_value: Option<Option<i64>> = None;
+        // The value before the first version this run writes, for the net-move rule at the run's
+        // last version: the kept prefix's, or the compared prefix's last in `On` mode.
+        let mut run_seed: Option<Option<i64>> = None;
+        if keep > 0 && keep < p.versions.len() {
+            // `set_head` overwrites the whole head, so this rule is `of_chain` of the kept prefix
+            // (`the_running_head_value_is_head_value_of_each_prefix`); the first written version
+            // replaces the head again.
+            let last_kept = &p.versions[keep - 1];
+            partners.set_head(last_kept);
+            let seed = head_value_eur_cents_with(last_kept, &partners, &rates).eur_cents;
+            prev_value = Some(seed);
+            run_seed = Some(seed);
+        }
+        // The STORED head value, whenever the Tender had a stored chain: what every snapshot and
+        // head probe served. It differs from a recomputed prefix value when the election or the
+        // rates changed without a refold of this Tender (an `On` refold appending past a prefix
+        // that compares identical included), and after a rewrite that dropped stored versions (a
+        // replaced tail, a mid-chain insert) it is a dropped version's value. The run's last
+        // written version compares against it, so the head is probed whenever it moved from what
+        // subscribers hold (an Off/Shadow replay can only over-deliver); a pure append's first
+        // written version does too. Only the figure is held.
+        let stored_head_value: Option<Option<i64>> =
+            if stored.is_empty() { None } else { stored_identity.as_ref().map(|s| s.head.value_eur_cents) };
+        let pure_append = keep > 0 && keep == stored.len();
         for (i, version) in p.versions.iter().enumerate().skip(keep) {
             let seq = i as i64 + 1;
             partners.add_version_figures(version);
             partners.set_head(version);
+            // Issue 560: elected only where a transition row reads it — this version's own, or
+            // (`On`) the compared prefix's last value, which the first appended version reads.
+            let announced = !(acting && i < compared);
+            let value_moved = if announced || (i + 1 == compared && compared < p.versions.len()) {
+                let value_now = head_value_eur_cents_with(version, &partners, &rates).eur_cents;
+                let mut moved = prev_value.is_some_and(|before| before != value_now);
+                if i == keep && pure_append {
+                    moved |= stored_head_value.is_some_and(|stored| stored != value_now);
+                }
+                // The net-move rule: a version written in the same run as a later one is probed
+                // superset against superset by SSE (only the head reads exact), so the head is
+                // probed whenever the run's net value moved, even when its own step did not, and
+                // whenever it moved from the stored head (any stored chain, above).
+                if i + 1 == p.versions.len() {
+                    moved |= run_seed.is_some_and(|seed| seed != value_now)
+                        || stored_head_value.is_some_and(|stored| stored != value_now);
+                }
+                if acting && i + 1 == compared {
+                    run_seed = Some(value_now);
+                }
+                prev_value = Some(value_now);
+                moved
+            } else {
+                false
+            };
             let prior = if i < compared {
                 let started = std::time::Instant::now();
                 let (stored_rows, read) = Self::stored_version(stmts, tender_id, seq).await?;
@@ -22889,9 +23022,9 @@ impl Db {
             }
             // `On` replays no history for the prefix (ADR-0017 D3): its corrections come after
             // the sweep. Every other version is announced by its transition rows, as today.
-            if !(acting && i < compared) {
+            if announced {
                 applied.changes += self
-                    .append_version_changes(conn, tender_id, seq, &p.versions[..=i], now, stmts)
+                    .append_version_changes(conn, tender_id, seq, &p.versions[..=i], value_moved, now, stmts)
                     .await?;
             }
             if shadow && i + 1 == compared {
@@ -22947,7 +23080,7 @@ impl Db {
             partners.set_head(head);
             // Issue 551: the election's EUR figure and, for a derived lot-sum head, its marker:
             // written (or cleared) together with every other head column below.
-            let value = head_value_eur_cents_with(head, &partners, &self.rates_lookup());
+            let value = head_value_eur_cents_with(head, &partners, &rates);
             let (derivation, derived_cents, derived_currency, derivation_detail) = StoredHead::derivation_columns(&value);
             let fresh = StoredHead {
                 seq: Some(p.versions.len() as i64),
@@ -23047,9 +23180,57 @@ impl Db {
                 return Ok((applied, chain_moved.then_some(tender_id)));
             }
         }
+        // Issue 562: a fold that moved the Tender's `source` or `kind` in place (a DÖE Tender
+        // turning `ted` when its TED twin joins) announces it with ADR-0017 D3's correction set,
+        // last for the Tender: every transition row reads the one rewritten label on both
+        // sides, so without it a subscriber to the old label heard nothing. Every fold that does
+        // not act on a compare (the acting compare wrote its own set above): stale Off and
+        // Shadow refolds as much as current-epoch ones. The head lots do not depend on what the
+        // write loop did: a head version this call did not rewrite (a chain cut back to its
+        // prefix) is read from disk, a written one by its lot keys.
+        if !acting && stored_identity.as_ref().is_some_and(|s| s.moved) {
+            let head = match p.versions.last() {
+                None => LabelHead::Empty,
+                Some(_) if keep == p.versions.len() => LabelHead::Stored(keep as i64),
+                Some(version) => LabelHead::Written(version),
+            };
+            applied.changes += Box::pin(self.announce_label_move(conn, stmts, tender_id, head, now)).await?;
+            applied.label_corrections += 1;
+        }
         // The chain changed, so this run owns this Tender's head pointer — the
         // batch checks it before committing (see `assert_heads_match`).
         Ok((applied, Some(tender_id)))
+    }
+
+    /// Issue 562: ADR-0017 D3's correction set for a Tender whose `source` or `kind` the fold
+    /// moved in place: rule T's seq-less `tender changed`, then one seq-less `lot changed` per
+    /// lot of the head version, ascending (lots inherit the Tender's label, and a lots stream
+    /// reads only `lot` rows). Written through [`crate::inplace::correction_rows`], the shape
+    /// every correction takes. Returns the rows written, for `Applied.changes`, so the doorbell
+    /// rings. Called after the sweep and its `stmts.ids.reset()`, so a written head's lot ids are
+    /// looked up afresh.
+    async fn announce_label_move(
+        &self,
+        conn: &Connection,
+        stmts: &mut TenderInserts,
+        tender_id: i64,
+        head: LabelHead<'_>,
+        now: i64,
+    ) -> turso::Result<u64> {
+        let mut lots = BTreeSet::new();
+        match head {
+            LabelHead::Empty => {}
+            LabelHead::Stored(seq) => crate::inplace::head_lots(conn, tender_id, seq, &mut lots).await?,
+            LabelHead::Written(version) => {
+                for lot in &version.lots {
+                    lots.insert(self.lot_identity(conn, tender_id, &lot.key, stmts).await?);
+                }
+            }
+        }
+        for (kind, id) in crate::inplace::correction_rows(tender_id, &lots) {
+            stmts.append_change(kind, id, None, "changed", now).await?;
+        }
+        Ok(1 + lots.len() as u64)
     }
 
     /// Issue 495 unit 4: write one compared version's differing tables (the [`Rewrite`]
@@ -41185,13 +41366,18 @@ impl Db {
     /// The diff-based change scoping of ADR-0001's amendment: what this version
     /// changed is what differs from the previous one, per entity. `chain` is the version
     /// prefix ending at this version (`versions[..=seq-1]`), never empty: the closing rule
-    /// (issue 533) reads a prefix, not a pair.
+    /// (issue 533) reads a prefix, not a pair. `value_moved` (issue 560): the Tender's elected
+    /// EUR value moved at this version (NULL to a value and back count), as the write loop
+    /// decided it — against the previous version, the stored head on a pure append's first
+    /// version, and the run's seed and the stored head (any stored chain) at its last version.
+    #[allow(clippy::too_many_arguments)]
     async fn append_version_changes(
         &self,
         conn: &Connection,
         tender_id: i64,
         seq: i64,
         chain: &[TenderVersion],
+        value_moved: bool,
         now: i64,
         stmts: &mut TenderInserts,
     ) -> turso::Result<u64> {
@@ -41218,11 +41404,15 @@ impl Db {
             // canonical sorted order (project.rs sort_unstable+dedup; silent
             // versions clone the already-sorted prev), so a Vec compare is a set
             // compare — no spurious change on a byte-identical re-fold.
+            // Issue 560: a value move with identical facts, rounds and groups (a non-EUR figure
+            // moving with the rate) is the Tender's change too, so a value-bound subscription
+            // hears it.
             Some(prev)
                 if prev.facts != v.facts
                     || prev.rounds != v.rounds
                     || prev.group_members != v.group_members
-                    || closed_before != closed_now =>
+                    || closed_before != closed_now
+                    || value_moved =>
             {
                 stmts.append_change("tender", tender_id, Some(seq), "changed", now).await?;
                 count += 1;
@@ -41233,19 +41423,25 @@ impl Db {
         let previous_lots = previous.map(|p| p.lots.as_slice()).unwrap_or_default();
         for lot in &v.lots {
             let lot_id = self.lot_identity(conn, tender_id, &lot.key, stmts).await?;
-            // Issue 493: a lot's served `value` (issue 490's `elect_lot_value`) also depends on
-            // things outside its own facts, such as the scale rule's tender-level partners and the
-            // version's rate date, so it can in principle move while the facts stay equal, and no
-            // lot row is written. Measured 2026-10-09 over ten 10–20k-Tender windows of prod: 0 of
-            // 14,480 consecutive-version value moves lacked a lot `changed` row at their seq. The
-            // gap is documented rather than closed, because emitting on every value move would
-            // cost each daily append a row per lot.
-            // Issue 533: a lot present on both sides is also `changed` when its Tender's closure
-            // moved, which is its own.
+            // A lot present on both sides is `changed` when its own facts or kind moved, and when
+            // its Tender's closure (issue 533) or its Tender's elected EUR value (issue 560) moved:
+            // a lot is closed exactly when its Tender is, and its `min_value`/`max_value` bound
+            // reads its Tender's value (issue 490 decision 6), so both are the lot's own change.
+            // A lots stream reads only lot rows, so without them a version that moved only the
+            // procedure total, a sibling lot's figure or the rate never re-probed the lot.
+            // Issue 493 still holds for the lot's OWN served `value` (issue 490's
+            // `elect_lot_value`): it depends on things outside its facts (the scale rule's
+            // tender-level partners, the version's rate date), so it can move while the facts
+            // and the Tender's value stay equal, with no lot row. Measured 2026-10-09 over ten
+            // 10–20k-Tender windows of prod: 0 of 14,480 consecutive-version value moves lacked a
+            // lot `changed` row at their seq, so that gap stays documented.
             let op = match previous_lots.iter().find(|l| l.key == lot.key) {
                 None => "added",
                 Some(before)
-                    if before.facts != lot.facts || before.kind != lot.kind || closed_before != closed_now =>
+                    if before.facts != lot.facts
+                        || before.kind != lot.kind
+                        || closed_before != closed_now
+                        || value_moved =>
                 {
                     "changed"
                 }
@@ -44054,6 +44250,82 @@ mod tests {
             running.set_head(&chain[n]);
             assert_eq!(running, ScalePartners::of_chain(&chain[..=n]), "prefix 1..={}", n + 1);
         }
+        // Issue 560: a fold that keeps a prefix seeds the rule with the prefix's figures and ONE
+        // `set_head` of its last version, to elect the prefix's value. `set_head` overwrites the
+        // whole head, so that is `of_chain` of the prefix, and the run goes on from it exactly
+        // as from a rule built one version at a time.
+        for keep in 1..chain.len() {
+            let mut seeded = ScalePartners::new();
+            for v in &chain[..keep] {
+                seeded.add_version_figures(v);
+            }
+            seeded.set_head(&chain[keep - 1]);
+            assert_eq!(seeded, ScalePartners::of_chain(&chain[..keep]), "the seed of 1..={keep}");
+            for n in keep..chain.len() {
+                seeded.add_version_figures(&chain[n]);
+                seeded.set_head(&chain[n]);
+                assert_eq!(seeded, ScalePartners::of_chain(&chain[..=n]), "seeded at {keep}, prefix 1..={}", n + 1);
+            }
+        }
+    }
+
+    /// Issue 560: the fold elects each written version's EUR value with its running rule and
+    /// compares it with the previous version's, so a version whose value moved is a change row
+    /// for the Tender and its lots. That running value must be `head_value` of each prefix,
+    /// from a fresh chain (keep = 0) and from every kept-prefix seed (keep > 0: the prefix's
+    /// figures, then `set_head` of its last version), or a move would be missed or invented.
+    /// The chain moves the value every way the fold must see: a scale slip refused, a version
+    /// with no figure (NULL), a GBP figure restated four days later at another rate (the rate
+    /// alone moves it), and a figure restated under a second field.
+    #[test]
+    fn the_running_head_value_is_head_value_of_each_prefix() {
+        use super::{ScalePartners, head_value, head_value_eur_cents_with};
+        let amt = |field: &str, cents: i64, currency: &str| Fact::Amount {
+            field: field.into(),
+            cents,
+            currency: currency.into(),
+            tax_basis: None,
+            quality: None,
+        };
+        let mut rates = crate::rates::RatesLookup::default();
+        rates.insert_for_test("GBP", "2026-01-01", 0.8);
+        rates.insert_for_test("GBP", "2026-01-05", 0.9);
+        // 2026-01-01T12:00:00Z, one version a day.
+        let day = |n: usize| 1_767_268_800 + n as i64 * 86_400;
+        let mut chain = vec![
+            head(vec![amt("estimated_value", 3_000_000_000, "EUR")], vec![amt("estimated_value", 1_000_000, "EUR")]),
+            head(vec![amt("estimated_value", 3_000_000_000_000, "EUR")], vec![amt("estimated_value", 1_000_000, "EUR")]),
+            head(Vec::new(), Vec::new()),
+            head(vec![amt("estimated_value", 80_000_000, "GBP")], Vec::new()),
+            head(vec![amt("estimated_value", 80_000_000, "GBP")], Vec::new()),
+            head(vec![amt("estimated_value", 5_000_000, "EUR"), amt("result_value", 5_000_000, "EUR")], Vec::new()),
+        ];
+        for (i, v) in chain.iter_mut().enumerate() {
+            v.caused_by_notice_id = i as i64 + 1;
+            v.published_at = day(i);
+        }
+        let expected: Vec<Option<i64>> = (0..chain.len()).map(|n| head_value(&chain[..=n], &rates).eur_cents).collect();
+        assert_eq!(expected[2], None, "no figure, no value: {expected:?}");
+        assert_eq!((expected[3], expected[4]), (Some(100_000_000), Some(88_888_889)), "the rate alone moves the value");
+        assert_ne!(expected[0], expected[1], "the slip is refused, not elected: {expected:?}");
+        for keep in 0..chain.len() {
+            let mut running = ScalePartners::new();
+            for v in &chain[..keep] {
+                running.add_version_figures(v);
+            }
+            let mut got = Vec::new();
+            if keep > 0 {
+                running.set_head(&chain[keep - 1]);
+                assert_eq!(running, ScalePartners::of_chain(&chain[..keep]), "the seed of 1..={keep}");
+                got.push(head_value_eur_cents_with(&chain[keep - 1], &running, &rates).eur_cents);
+            }
+            for v in &chain[keep..] {
+                running.add_version_figures(v);
+                running.set_head(v);
+                got.push(head_value_eur_cents_with(v, &running, &rates).eur_cents);
+            }
+            assert_eq!(got, expected[keep.saturating_sub(1)..], "keep = {keep}");
+        }
     }
 
     /// Issue 490: `elect_lot_value` is the lot pick the REST row served before it
@@ -45495,11 +45767,14 @@ mod tests {
     /// Issue 551 path W on its labelled heads (the Lyon-Turin trio, 8426318, 585917, 5995030) and
     /// unit 2's fresh holdout (467176, 294968, 7256284 right; 5977060 closer, the accepted cost of
     /// the latest award per lot key): no procedure figure, today's head an award copy or null,
-    /// and the lots' latest awards pass every guard.
+    /// and the lots' latest awards pass every guard. Unit 4a withdrew path W
+    /// ([`super::LOT_SUM_AWARDS_PATH`]), so these run with the path switched on
+    /// ([`super::head_value_with_awards_path`]): the guards' pins, kept for unit 4b. What production
+    /// serves for them is [`path_w_is_withdrawn_so_its_pins_keep_the_max_election`].
     #[test]
     fn an_unvouched_awards_sum_is_served_under_its_guards() {
         use super::lot_sum_551_fixtures::{PUBLISHED_AT, fixture};
-        use super::{DerivationPath, LotSumKind, head_value, max_election_eur_cents};
+        use super::{DerivationPath, LotSumKind, head_value_with_awards_path as head_value, max_election_eur_cents};
         // (tender, S, currency, lots)
         let cases: [(i64, i64, &str, usize); 10] = [
             (6450467, 357_476_497_928, "EUR", 3),
@@ -45531,23 +45806,47 @@ mod tests {
         }
     }
 
+    /// Issue 551 unit 4a: path W is withdrawn after the post-drain read (18 % wrong on a uniform 50,
+    /// 42 % on heads of EUR 100 m or more), so the heads it summed keep the max election, unmarked:
+    /// the runbook's six path-W pins (the Lyon-Turin trio 6450467/69/73, 8426318, 585917, 5995030;
+    /// docs/operations.md's Verify after `refold-lot-sum`) and unit 2's four holdouts. 585917 serves
+    /// null again, 5995030 one lot's PLN 2,721.60, 8426318 its GBP 2 bn.
+    #[test]
+    fn path_w_is_withdrawn_so_its_pins_keep_the_max_election() {
+        use super::lot_sum_551_fixtures::fixture;
+        use super::{HeadValue, head_value, head_value_with_awards_path, max_election_eur_cents};
+        for id in [6450467, 6450469, 6450473, 8426318, 585917, 5995030, 467176, 294968, 7256284, 5977060] {
+            let fx = fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            let today = max_election_eur_cents(&chain, &rates);
+            assert_eq!(head_value(&chain, &rates), HeadValue { eur_cents: today, derived: None }, "{id}: the max election, no derivation");
+            assert_eq!(super::head_value_eur_cents(&chain, &rates), today, "{id}: the EUR column the fold stores");
+            let summed = head_value_with_awards_path(&chain, &rates);
+            assert!(summed.derived.is_some() && today < summed.eur_cents, "{id}: only the switch keeps path W's sum off the head");
+        }
+        let fx = fixture(585917);
+        assert_eq!(head_value(&fx.versions(), &fx.rates()), HeadValue::default(), "585917: null, as before issue 551");
+    }
+
     /// Issue 551: the shapes unit 2 rejected keep the max election, unmarked. 8440393 repeats
     /// its GBP 8 bn total on every award (G1', and its sum is past the cap); 7487018 repeats EUR
     /// 450 k on 42 awards (G1'); 5316712 restates the framework on LOT-1 (G3); 6885102's sum is
     /// below its head (G0); 4925871 (sums insured), 8822313 (x1000 on every lot), 175096, 274271
     /// (230 placeholders), 4930240 (a 3x pseudo-lot) and 5625591 carry estimates or framework
-    /// maxima only, which path W never sums.
+    /// maxima only, which path W never sums. Read in production (path W withdrawn, unit 4a) and with
+    /// path W switched on, so its guards keep these pins for unit 4b.
     #[test]
     fn the_rejected_shapes_keep_the_max_election() {
         use super::lot_sum_551_fixtures::fixture;
-        use super::{head_value, max_election_eur_cents};
+        use super::{head_value, head_value_with_awards_path, max_election_eur_cents};
         for id in [8440393, 7487018, 5316712, 6885102, 4925871, 8822313, 175096, 274271, 4930240, 5625591] {
             let fx = fixture(id);
             let (chain, rates) = (fx.versions(), fx.rates());
-            let value = head_value(&chain, &rates);
-            assert_eq!(value.derived, None, "{id}: no derived head");
-            assert_eq!(value.eur_cents, max_election_eur_cents(&chain, &rates), "{id}: today's figure stands");
-            assert!(value.eur_cents.is_some(), "{id}: every one serves a figure today");
+            for (path_w, value) in [("off", head_value(&chain, &rates)), ("on", head_value_with_awards_path(&chain, &rates))] {
+                assert_eq!(value.derived, None, "{id} (path W {path_w}): no derived head");
+                assert_eq!(value.eur_cents, max_election_eur_cents(&chain, &rates), "{id} (path W {path_w}): today's figure stands");
+                assert!(value.eur_cents.is_some(), "{id} (path W {path_w}): every one serves a figure today");
+            }
         }
     }
 
@@ -45691,10 +45990,13 @@ mod tests {
     }
 
     /// Issue 551 path W's guards, each on the smallest shape that isolates it: three lots awarded
-    /// EUR 1 m, 2 m and 3.3 m, today's head the EUR 3.3 m award's tender-scope copy.
+    /// EUR 1 m, 2 m and 3.3 m, today's head the EUR 3.3 m award's tender-scope copy. Path W is
+    /// withdrawn in production (unit 4a, [`super::LOT_SUM_AWARDS_PATH`]): the base shape is read
+    /// there once, and every guard below runs with the path switched on
+    /// ([`super::head_value_with_awards_path`]), so unit 4b keeps the pins.
     #[test]
     fn the_awards_path_refuses_every_shape_its_guards_name() {
-        use super::{LotResultState, Round, head_value};
+        use super::{LotResultState, Round, head_value_with_awards_path as head_value};
         let rates = crate::rates::RatesLookup::default();
         let amt_in = |field: &str, cents: i64, currency: &str| Fact::Amount { field: field.into(), cents, currency: currency.into(), tax_basis: None, quality: None };
         let amt = |field: &str, cents: i64| amt_in(field, cents, "EUR");
@@ -45733,6 +46035,11 @@ mod tests {
         let fires = |v: &TenderVersion| one(v).derived.is_some();
 
         let base = version(vec![amt("result_value", 330_000_000)], lots3(), awards3());
+        assert_eq!(
+            super::head_value(std::slice::from_ref(&base), &rates),
+            super::HeadValue { eur_cents: Some(330_000_000), derived: None },
+            "unit 4a: production keeps the max election, the EUR 3.3 m copy"
+        );
         assert_eq!(one(&base).eur_cents, Some(630_000_000), "the base serves the awards sum");
         // A null head (no tender-scope figure at all) sums too.
         assert_eq!(one(&version(Vec::new(), lots3(), awards3())).eur_cents, Some(630_000_000), "a null head");

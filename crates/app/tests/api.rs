@@ -175,6 +175,20 @@ impl Server {
     /// [`Self::ingest`] of a fixture's bytes as the test edited them, dispatched
     /// under the fixture's own name.
     async fn ingest_bytes(&self, relative: &str, bytes: &[u8]) {
+        self.record_bytes(relative, bytes).await;
+        project::project(&self.db, false).await.expect("project");
+    }
+
+    /// The dispatch, parse and store half of [`Self::ingest_bytes`], without the
+    /// projection: several notices recorded this way fold in ONE `project` run, as a
+    /// daily fold takes a day's notices of one Tender (issue 560's net-move rule).
+    async fn record_bytes(&self, relative: &str, bytes: &[u8]) {
+        self.record_bytes_from(SOURCE, relative, bytes).await;
+    }
+
+    /// [`Self::record_bytes`] under a named Source: a DÖE notice and its TED twin share one
+    /// procedure across Sources (ADR-0003), which is how a Tender's label moves (issue 562).
+    async fn record_bytes_from(&self, source: &str, relative: &str, bytes: &[u8]) {
         let profile::Disposition::Records(records) = profile::dispatch(relative, bytes) else {
             panic!("{relative}: dispatch skipped a fixture");
         };
@@ -192,7 +206,7 @@ impl Server {
         self.db
             .record_notice(
                 &Notice {
-                    source: SOURCE.into(),
+                    source: source.into(),
                     publication_id: n.publication_id.clone(),
                     content_hash: n.content_hash.clone(),
                     profile: n.profile.clone(),
@@ -207,7 +221,6 @@ impl Server {
             )
             .await
             .expect("record notice");
-        project::project(&self.db, false).await.expect("project");
     }
 
     async fn ingest_chain(&self) {
@@ -3932,9 +3945,9 @@ fn diff_op(op: &str, entity: &str, id: i64) -> Option<(String, String, i64)> {
 /// as a superset (any of its amounts inside the bound), so had the CN's lot been under EUR
 /// 500,000 — each lot's figure is below the procedure total on a Tender with several lots — the
 /// `max_value` subscriber would still hear `changed` (`ValueBy::Version`; issue 561). The lots
-/// stream bounds a lot by its Tender's value (issue 490 decision 6), and hears this move only
-/// because the lot's own figure moved too, which is what writes its change row (issue 493): a
-/// version that moves only the Tender's value probes no lot (issue 560).
+/// stream bounds a lot by its Tender's value (issue 490 decision 6). Here the lot's own figure
+/// moved too, but since issue 560 a move of the Tender's elected EUR value alone writes the
+/// lot's change row as well ([`a_tender_value_move_alone_reaches_a_lots_value_subscriber`]).
 #[tokio::test]
 async fn a_version_that_moves_the_value_across_a_bound_is_removed_and_added() {
     let server = Server::start("sse-value-bound").await;
@@ -3964,6 +3977,341 @@ async fn a_version_that_moves_the_value_across_a_bound_is_removed_and_added() {
         [diff_op("removed", "tender", id), diff_op("added", "tender", id), diff_op("removed", "lot", lot), diff_op("added", "lot", lot)],
         "tenders min_value, max_value; lots min_value, max_value"
     );
+}
+
+/// Issue 560: the committed R2.0.9 contract notice the value-move tests build on — one lot, no
+/// lot-scope party, so a later notice that names no lot moves none of the lot's facts.
+const R209_CN: &str = "r209/f02-000245-2019.xml";
+
+/// Issue 560: [`R209_CN`] with an estimated total (II.1.5) of EUR `total` (`1000000.00`) and an
+/// estimated value of EUR 300,000 on its one lot (`LOT-1`).
+fn r209_cn(total: &str) -> String {
+    let xml = std::fs::read_to_string(format!("{FIXTURES}/{R209_CN}")).expect("the R2.0.9 CN");
+    let procedure = "</SHORT_DESCR><NO_LOT_DIVISION/>";
+    assert_eq!(xml.matches(procedure).count(), 1, "the procedure's description, before its lot");
+    let xml = xml.replacen(
+        procedure,
+        &format!("</SHORT_DESCR><VAL_ESTIMATED_TOTAL CURRENCY=\"EUR\">{total}</VAL_ESTIMATED_TOTAL><NO_LOT_DIVISION/>"),
+        1,
+    );
+    let lot = "<AC><AC_PRICE/></AC>";
+    assert_eq!(xml.matches(lot).count(), 1, "the lot's award criteria");
+    xml.replacen(lot, &format!("<VAL_ESTIMATED_TOTAL CURRENCY=\"EUR\">300000.00</VAL_ESTIMATED_TOTAL>{lot}"), 1)
+}
+
+/// Issue 560: an R2.0.9 F14 corrigendum of [`r209_cn`], publication number `{number}-2019`,
+/// published (and dispatched) on `day` (`YYYYMMDD`), carrying the one `CHANGE` block `change`.
+/// Everything else is the CN's own — its coded data (buyer, country, CPV, deadline), its
+/// contracting body and its procedure title and description — so the corrigendum moves only
+/// what its block corrects. It names no lot.
+fn r209_f14(number: &str, day: &str, change: &str) -> String {
+    let cn = std::fs::read_to_string(format!("{FIXTURES}/{R209_CN}")).expect("the R2.0.9 CN");
+    let cut = |open: &str, close: &str| {
+        let start = cn.find(open).unwrap_or_else(|| panic!("the CN has {open}"));
+        let end = start + cn[start..].find(close).unwrap_or_else(|| panic!("the CN closes {open}")) + close.len();
+        cn[start..end].to_owned()
+    };
+    let contracting_body = cut("<CONTRACTING_BODY>", "</CONTRACTING_BODY>");
+    let object = cut("<OBJECT_CONTRACT>", "</SHORT_DESCR>");
+    let mut header = cn[..cn.find("<FORM_SECTION>").expect("a form section")].to_owned();
+    for (from, to) in [
+        ("DOC_ID=\"000245-2019\"".to_owned(), format!("DOC_ID=\"{number}-2019\"")),
+        ("<RECEPTION_ID>18-593575-001</RECEPTION_ID>".to_owned(), format!("<RECEPTION_ID>19-{number}-001</RECEPTION_ID>")),
+        ("<DATE_PUB>20190102</DATE_PUB>".to_owned(), format!("<DATE_PUB>{day}</DATE_PUB>")),
+        ("<NO_DOC_OJS>2019/S 001-000245</NO_DOC_OJS>".to_owned(), format!("<NO_DOC_OJS>2019/S 001-{number}</NO_DOC_OJS>")),
+        ("TED:NOTICE:000245-2019".to_owned(), format!("TED:NOTICE:{number}-2019")),
+        // The edge that joins the corrigendum to the CN's Tender.
+        (
+            "</n2016:CA_CE_NUTS></NOTICE_DATA>".to_owned(),
+            "</n2016:CA_CE_NUTS><REF_NOTICE><NO_DOC_OJS>2019/S 001-000245</NO_DOC_OJS></REF_NOTICE></NOTICE_DATA>".to_owned(),
+        ),
+        ("<DS_DATE_DISPATCH>20181228</DS_DATE_DISPATCH>".to_owned(), format!("<DS_DATE_DISPATCH>{day}</DS_DATE_DISPATCH>")),
+        (
+            "<TD_DOCUMENT_TYPE CODE=\"3\">Contract notice</TD_DOCUMENT_TYPE>".to_owned(),
+            "<TD_DOCUMENT_TYPE CODE=\"2\">Additional information</TD_DOCUMENT_TYPE>".to_owned(),
+        ),
+        ("<HEADING>01B02</HEADING>".to_owned(), "<HEADING>01F14</HEADING>".to_owned()),
+    ] {
+        assert_eq!(header.matches(from.as_str()).count(), 1, "the CN's header carries {from} once");
+        header = header.replacen(from.as_str(), &to, 1);
+    }
+    let dispatched = format!("{}-{}-{}", &day[..4], &day[4..6], &day[6..]);
+    format!(
+        "{header}<FORM_SECTION><NOTICE_UUID>4e05b54e-8714-46b8-b1f6-000000{number}</NOTICE_UUID>\
+         <F14_2014 CATEGORY=\"ORIGINAL\" FORM=\"F14\" LG=\"EN\"><LEGAL_BASIS VALUE=\"32014L0024\"/>\
+         {contracting_body}{object}</OBJECT_CONTRACT><COMPLEMENTARY_INFO>\
+         <DATE_DISPATCH_NOTICE>{dispatched}</DATE_DISPATCH_NOTICE><NOTICE_NUMBER_OJ>2019/S 001-000245</NOTICE_NUMBER_OJ>\
+         </COMPLEMENTARY_INFO><CHANGES>{change}</CHANGES></F14_2014></FORM_SECTION></TED_EXPORT>"
+    )
+}
+
+/// Issue 560: an F14 block correcting II.1.5, the procedure's estimated total, from `old` to
+/// `new` (published text, `1 000 000,00`), both in EUR.
+fn total_change(old: &str, new: &str) -> String {
+    format!(
+        "<CHANGE><WHERE><SECTION>II.1.5)</SECTION><LABEL>Estimated total value</LABEL></WHERE>\
+         <OLD_VALUE><TEXT><P>{old} EUR</P></TEXT></OLD_VALUE><NEW_VALUE><TEXT><P>{new} EUR</P></TEXT></NEW_VALUE></CHANGE>"
+    )
+}
+
+/// Issue 560: the published `value` of a Tender or lot row, in EUR cents.
+fn value_cents(row: &Value) -> Option<i64> {
+    assert!(row["value"].is_null() || row["value"]["currency"] == "EUR", "{row}");
+    row["value"]["cents"].as_i64()
+}
+
+/// Issue 560 (the Verify): a version that moves ONLY its Tender's value reaches a `/v1/lots`
+/// value-bound subscriber. An R2.0.9 CN states EUR 1,000,000 for the procedure and EUR 300,000
+/// for its one lot; an F14 corrects II.1.5 to EUR 400,000, a second F14 back to EUR 1,000,000.
+/// No lot-scope party and no lot figure moves, so before issue 560 no lot row was written at
+/// either version and every lots tape stayed silent while the pages flipped. Now each version
+/// is a lot `changed` row, and each tape, over a real SSE socket, hears:
+/// - `/v1/lots?min_value=` (EUR 500,000): `removed`, then `added`;
+/// - `/v1/lots?max_value=`: `changed` — version 1 is read as a superset, and its lot's EUR
+///   300,000 lies inside the bound (issue 561), so `changed` is applied as an upsert — then
+///   `removed`;
+/// - unfiltered `/v1/lots`: `changed`, `changed`;
+/// - the `/v1/tenders` tapes as before issue 560: `removed`/`added` and `changed`/`removed`.
+#[tokio::test]
+async fn a_tender_value_move_alone_reaches_a_lots_value_subscriber() {
+    let server = Server::start("sse-value-move-560").await;
+    server.ingest_bytes(R209_CN, r209_cn("1000000.00").as_bytes()).await;
+    let tender = items(&server.get("/v1/tenders").await)[0].clone();
+    let id = tender["id"].as_i64().expect("the CN's Tender");
+    assert_eq!(value_cents(&tender), Some(1_000_000_00), "the procedure total: {tender}");
+    let lot_row = items(&server.get("/v1/lots").await)[0].clone();
+    let lot = lot_row["id"].as_i64().expect("the CN's lot");
+    assert_eq!(value_cents(&lot_row), Some(300_000_00), "the lot's own figure: {lot_row}");
+
+    let paths = [
+        "/v1/tenders?min_value=50000000",
+        "/v1/tenders?max_value=50000000",
+        "/v1/lots?min_value=50000000",
+        "/v1/lots?max_value=50000000",
+        "/v1/lots",
+    ];
+    let mut tapes = Vec::new();
+    for path in paths {
+        tapes.push(Tape::open(&server, path, None).await);
+    }
+    let mut snapshots = Vec::new();
+    for tape in &mut tapes {
+        snapshots.push(tape.until_live().await.0.len());
+    }
+    assert_eq!(snapshots, [1, 0, 1, 0, 1], "EUR 1,000,000 is at least EUR 500,000, not at most: {paths:?}");
+
+    server.ingest_bytes("r209/f14-000300-2019.xml", r209_f14("000300", "20190109", &total_change("1 000 000,00", "400 000,00")).as_bytes()).await;
+    let tender = items(&server.get("/v1/tenders").await)[0].clone();
+    assert_eq!(value_cents(&tender), Some(400_000_00), "the F14 corrected the total: {tender}");
+    assert_eq!(value_cents(&items(&server.get("/v1/lots").await)[0]), Some(300_000_00), "the lot's figure did not move");
+    assert!(items(&server.get("/v1/lots?min_value=50000000").await).is_empty(), "the pages flip");
+    assert_eq!(items(&server.get("/v1/lots?max_value=50000000").await).len(), 1);
+    assert_eq!(
+        next_ops(&mut tapes.iter_mut().collect::<Vec<_>>()).await,
+        [
+            diff_op("removed", "tender", id),
+            diff_op("changed", "tender", id),
+            diff_op("removed", "lot", lot),
+            diff_op("changed", "lot", lot),
+            diff_op("changed", "lot", lot),
+        ],
+        "version 2, EUR 400,000: {paths:?}"
+    );
+
+    server.ingest_bytes("r209/f14-000400-2019.xml", r209_f14("000400", "20190116", &total_change("400 000,00", "1 000 000,00")).as_bytes()).await;
+    assert_eq!(value_cents(&items(&server.get("/v1/tenders").await)[0]), Some(1_000_000_00), "corrected back");
+    assert_eq!(items(&server.get("/v1/lots?min_value=50000000").await).len(), 1, "the pages flip back");
+    assert!(items(&server.get("/v1/lots?max_value=50000000").await).is_empty());
+    assert_eq!(
+        next_ops(&mut tapes.iter_mut().collect::<Vec<_>>()).await,
+        [
+            diff_op("added", "tender", id),
+            diff_op("removed", "tender", id),
+            diff_op("added", "lot", lot),
+            diff_op("removed", "lot", lot),
+            diff_op("changed", "lot", lot),
+        ],
+        "version 3, EUR 1,000,000: {paths:?}"
+    );
+    for (tape, path) in tapes.iter_mut().zip(paths) {
+        assert!(tape.quiet().await, "{path}: one event per version");
+    }
+
+    // The poll feed carries the same lot rows: the lot, `changed`, at versions 2 and 3.
+    let feed = server.get("/v1/changes?since=0&entity=lot").await;
+    let rows: Vec<(String, Option<i64>, i64)> = feed["events"]
+        .as_array()
+        .expect("events")
+        .iter()
+        .map(|e| (e["op"].as_str().unwrap_or_default().to_owned(), e["version"].as_i64(), e["id"].as_i64().unwrap_or_default()))
+        .collect();
+    assert_eq!(
+        rows,
+        [("added".to_owned(), Some(1), lot), ("changed".to_owned(), Some(2), lot), ("changed".to_owned(), Some(3), lot)],
+        "/v1/changes?entity=lot"
+    );
+}
+
+/// Issue 560's net-move rule, over the socket: a lot's value bound is read exactly only at the
+/// Tender's head, and SSE probes every other version as a superset on both sides. When a fold
+/// writes two versions of one Tender in ONE run — a day's corrigendum and a later notice of the
+/// same day — the first version's row is classified with the second already the head. Here the
+/// CN states EUR 400,000; then, in one batch, an F14 corrects the total to EUR 1,000,000 and a
+/// second F14 moves only the deadline (the value stays EUR 1,000,000). The `max_value=` (EUR
+/// 500,000) subscriber held the lot. Version 2 reads superset against superset (the lot's EUR
+/// 300,000 is inside the bound on both sides), so it is `changed`; version 3 moved no value
+/// against version 2, but the run's net value moved (EUR 400,000 to 1,000,000), so it is a lot
+/// row too, probes the head, and the tape ends with `removed`. Without the rule it ended with
+/// `changed`, the lot held outside the bound.
+#[tokio::test]
+async fn a_net_value_move_folded_in_one_run_ends_a_lots_tape_with_its_membership() {
+    let server = Server::start("sse-net-move-560").await;
+    server.ingest_bytes(R209_CN, r209_cn("400000.00").as_bytes()).await;
+    let lot = items(&server.get("/v1/lots").await)[0]["id"].as_i64().expect("the CN's lot");
+    let mut below = Tape::open(&server, "/v1/lots?max_value=50000000", None).await;
+    assert_eq!(below.until_live().await.0.len(), 1, "EUR 400,000 is at most EUR 500,000");
+
+    let deadline = "<CHANGE><WHERE><SECTION>IV.2.2)</SECTION><LABEL>Time limit for receipt of tenders</LABEL></WHERE>\
+                    <OLD_VALUE><DATE>2019-02-01</DATE><TIME>12:00</TIME></OLD_VALUE>\
+                    <NEW_VALUE><DATE>2019-02-15</DATE><TIME>12:00</TIME></NEW_VALUE></CHANGE>";
+    server.record_bytes("r209/f14-000300-2019.xml", r209_f14("000300", "20190109", &total_change("400 000,00", "1 000 000,00")).as_bytes()).await;
+    server.record_bytes("r209/f14-000400-2019.xml", r209_f14("000400", "20190110", deadline).as_bytes()).await;
+    project::project(&server.db, false).await.expect("one project run folds both");
+    let tender = items(&server.get("/v1/tenders").await)[0].clone();
+    assert_eq!((tender["version"].as_i64(), value_cents(&tender)), (Some(3), Some(1_000_000_00)), "{tender}");
+    assert!(items(&server.get("/v1/lots?max_value=50000000").await).is_empty(), "the page: outside the bound");
+    assert_eq!(
+        next_ops(&mut [&mut below]).await.into_iter().chain(next_ops(&mut [&mut below]).await).collect::<Vec<_>>(),
+        [diff_op("changed", "lot", lot), diff_op("removed", "lot", lot)],
+        "version 2 superset against superset, then version 3 at the head"
+    );
+    assert!(below.quiet().await);
+}
+
+/// Issue 562: one SSE event as the source tests read it — its op, entity kind, id and
+/// `version` (`None` for a seq-less correction).
+fn sse_event(event: Option<SseEvent>) -> Option<(String, String, i64, Option<i64>)> {
+    event.map(|e| {
+        (
+            e.data["op"].as_str().unwrap_or_default().to_owned(),
+            e.data["entity"].as_str().unwrap_or_default().to_owned(),
+            e.data["id"].as_i64().unwrap_or_default(),
+            e.data["version"].as_i64(),
+        )
+    })
+}
+
+/// Issue 562 (the Verify): a TED twin joining a DÖE Tender reaches a `source` subscription. The
+/// fold rewrites `tenders.source` for the whole Tender (`doe` → `ted`), and both SSE probes read
+/// that one label, so before issue 562 the `source=doe` tapes heard nothing and kept a ghost,
+/// and the `source=ted` tapes heard `changed`. Now the fold announces the move with ADR-0017
+/// D3's correction set (a seq-less tender `changed`, then one per head lot) after the version's
+/// transition rows, and over a real SSE socket:
+/// - the `source=doe` tenders tape's FIRST event is the Tender `removed` with `version: null`:
+///   the v2 transition reads `ted` on both sides and is dropped, so the correction carries the
+///   event; the `source=doe` lots tape hears lot 1 `removed`, `version: null`;
+/// - each `source=ted` tape hears exactly `[changed v2, changed null]`, applied as an upsert
+///   (ADR-0017 D4; `/docs`): the transition already reads the new label on both sides. `added`
+///   is not required (Decision 2026-10-17).
+///
+/// No `source=ted` tape hears a `removed` only because CHAIN[1] keeps lot 1 and drops no lot: a
+/// lot dropped at the TED version would give the ted lots tape a (true, false) `removed`.
+#[tokio::test]
+async fn a_ted_twin_joining_a_doe_tender_reaches_a_source_subscription() {
+    let server = Server::start("sse-source-562").await;
+    let read = |i: usize| std::fs::read(format!("{FIXTURES}/{}", CHAIN[i])).expect("a chain fixture");
+    server.record_bytes_from("doe", CHAIN[0], &read(0)).await;
+    project::project(&server.db, false).await.expect("project the DÖE CN");
+    let doe_tenders = items(&server.get("/v1/tenders?source=doe").await).clone();
+    assert_eq!(doe_tenders.len(), 1, "the CN folds as a DÖE Tender");
+    let tender = doe_tenders[0]["id"].as_i64().expect("the Tender");
+    let doe_lots = items(&server.get("/v1/lots?source=doe").await).clone();
+    assert_eq!(doe_lots.len(), 1, "with its one lot");
+    let lot = doe_lots[0]["id"].as_i64().expect("lot 1");
+
+    let paths = ["/v1/tenders?source=doe", "/v1/lots?source=doe", "/v1/tenders?source=ted", "/v1/lots?source=ted"];
+    let mut tapes = Vec::new();
+    for path in paths {
+        tapes.push(Tape::open(&server, path, None).await);
+    }
+    let mut snapshots = Vec::new();
+    for tape in &mut tapes {
+        let (snapshot, _) = tape.until_live().await;
+        snapshots.push(snapshot.into_iter().map(|e| sse_event(Some(e))).collect::<Vec<_>>());
+    }
+    let added = |entity: &str, id: i64| sse_event_of("added", entity, id, None);
+    assert_eq!(
+        snapshots,
+        [vec![added("tender", tender)], vec![added("lot", lot)], vec![], vec![]],
+        "the doe tapes hold the Tender and its lot, the ted tapes nothing: {paths:?}"
+    );
+
+    // The TED twin: the same procedure (one BT-04), published as CHAIN[1] on TED.
+    server.record_bytes_from("ted", CHAIN[1], &read(1)).await;
+    project::project(&server.db, false).await.expect("project the TED twin");
+    assert!(items(&server.get("/v1/tenders?source=doe").await).is_empty(), "the page no longer lists it as doe");
+    let ted_tenders = items(&server.get("/v1/tenders?source=ted").await).clone();
+    assert_eq!(
+        (ted_tenders.len(), ted_tenders.first().and_then(|t| t["id"].as_i64()), ted_tenders.first().and_then(|t| t["version"].as_i64())),
+        (1, Some(tender), Some(2)),
+        "one Tender, relabelled in place at version 2"
+    );
+    assert!(items(&server.get("/v1/lots?source=doe").await).is_empty());
+    assert_eq!(items(&server.get("/v1/lots?source=ted").await).len(), 1, "the lots surface agrees");
+
+    let [doe_t, doe_l, ted_t, ted_l] = &mut tapes[..] else { unreachable!("four tapes") };
+    assert_eq!(
+        sse_event(doe_t.next().await),
+        sse_event_of("removed", "tender", tender, None),
+        "the doe tenders tape's first event: the correction, the v2 transition dropped"
+    );
+    assert_eq!(sse_event(doe_l.next().await), sse_event_of("removed", "lot", lot, None), "the doe lots tape");
+    for (tape, entity, id) in [(ted_t, "tender", tender), (ted_l, "lot", lot)] {
+        let heard = [sse_event(tape.next().await), sse_event(tape.next().await)];
+        assert_eq!(
+            heard,
+            [sse_event_of("changed", entity, id, Some(2)), sse_event_of("changed", entity, id, None)],
+            "a ted {entity} tape: the v2 transition, then the correction, both changed"
+        );
+    }
+    for (tape, path) in tapes.iter_mut().zip(paths) {
+        assert!(tape.quiet().await, "{path}: nothing more");
+    }
+
+    // The poll feed: the v2 transitions, then rule T and the head lot, seq-less.
+    let feed = server.get("/v1/changes?since=0&limit=1000").await;
+    let rows: Vec<(String, String, i64, Option<i64>)> = feed["events"]
+        .as_array()
+        .expect("events")
+        .iter()
+        .filter(|e| e["entity"] == "tender" || e["entity"] == "lot")
+        .map(|e| {
+            (
+                e["op"].as_str().unwrap_or_default().to_owned(),
+                e["entity"].as_str().unwrap_or_default().to_owned(),
+                e["id"].as_i64().unwrap_or_default(),
+                e["version"].as_i64(),
+            )
+        })
+        .collect();
+    let row = |op: &str, entity: &str, id: i64, version: Option<i64>| (op.to_owned(), entity.to_owned(), id, version);
+    assert_eq!(
+        rows,
+        [
+            row("added", "tender", tender, Some(1)),
+            row("added", "lot", lot, Some(1)),
+            row("changed", "tender", tender, Some(2)),
+            row("changed", "lot", lot, Some(2)),
+            row("changed", "tender", tender, None),
+            row("changed", "lot", lot, None),
+        ],
+        "/v1/changes"
+    );
+}
+
+/// Issue 562: one expected [`sse_event`].
+fn sse_event_of(op: &str, entity: &str, id: i64, version: Option<i64>) -> Option<(String, String, i64, Option<i64>)> {
+    Some((op.to_owned(), entity.to_owned(), id, version))
 }
 
 /// Issue 547: the same for the submission-deadline bounds. The CN closes 2026-01-21, its first

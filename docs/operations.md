@@ -749,12 +749,15 @@ row is the guard's keep.
 
 **The derived lot-sum head (issue 551, 2026-10-16).** Where no procedure figure is admitted, the head
 election serves the SUM of the head version's lots instead of one figure or null, on two paths
-(`canonical::derive_lot_sum`; decision and evidence: `.scratch/tender-db/551-lot-sum/`):
+(`canonical::derive_lot_sum`; decision and evidence: `.scratch/tender-db/551-lot-sum/`). Path W is
+**withdrawn** since unit 4a (2026-10-17; `canonical::LOT_SUM_AWARDS_PATH = false`, below): only path V
+serves.
 - **path V, `lot-sum-vouched`**: a procedure figure F that 537, 471 or 492 refused is 10ᵏ times an electable lot
   sum S (each Lot's latest award, else its largest BT-27 or BT-271; a partner-only BT-709/BT-660 match only names
   k), every refused F names the same S, S is not one figure repeated on every lot with F ≈ 10ʲ of it (V1),
   0 < S ≤ €100 bn, and S is above the figure the max election serves (V0, added at unit 3's review);
-- **path W, `lot-sum-awards`**: every procedure figure is a sentinel or absent, today's head is an award copy or
+- **path W, `lot-sum-awards`** (WITHDRAWN by unit 4a; kept compiled and tested for unit 4b's redesign, see
+  "Path W withdrawn" below): every procedure figure is a sentinel or absent, today's head is an award copy or
   null, and the lots' latest awards (one currency, two or more lots, every one a typed Lot) pass G0/G1'/G2/G3/G4/G5
   (no repeated total, no lot that totals the others, estimates within 10×, above today's figure, above €0.00 and
   under the cap) and G5' (no award copy a scale rule refused, and no summed award one refuses at its own lot, copy
@@ -771,8 +774,9 @@ election serves the SUM of the head version's lots instead of one figure or null
 The fold writes S's EUR value to `current_value_eur_cents` and the marker beside it (`current_value_derivation`,
 `current_value_cents`, `current_value_currency`, `current_value_derivation_detail`), all four NULL on an
 elected head and written or cleared with every head write; never an amount row. Neither path is reachable from
-`refold-value-band`'s cohort: since 537's drain every path-V head sits below €1 bn or null, and path W raises heads
-from below. The drain is its own finder job, `refold-lot-sum` (ADR-0017 D6 route R3 by tender id; no epoch bump):
+`refold-value-band`'s cohort: since 537's drain every path-V head sits below €1 bn or null, and path W (withdrawn
+since unit 4a) raised heads from below. The drain is its own finder job, `refold-lot-sum` (ADR-0017 D6 route R3 by
+tender id; no epoch bump):
 
 ```sh
 /root/aj.sh /admin/jobs '{"kind":"refold-lot-sum"}'                               # dry: walks the cohort, writes nothing
@@ -787,24 +791,32 @@ from below. The drain is its own finder job, `refold-lot-sum` (ADR-0017 D6 route
   `tender_version_amounts_version` and `tender_version_lot_results`' PK).
 - **Size** (unit 1's random sample, 22 of 994 heads in the cohort): about **195,000 Tenders** corpus-wide (95 %
   Wilson 129,000–293,000), about 1.7 notices each. The walk itself reads every head (8.8 M Tenders, a few seeks each);
-  the dry run's elapsed time is its measurement. The fold then costs about 6–10 minutes at project 2564's rate (8.8 M
-  Tenders in 4 h 53 m), against a corpus refold's five hours. The looser cohort (any two awarded lots) is ~460,000.
+  the dry run's elapsed time is its measurement. The fold then costs **~2–2.5 h**, not the 6–10 minutes first
+  estimated from project 2564's rate: project 2575 (the 2026-10-17 drain, 194,404 stamped) took 2 h 18 m, the
+  incremental pass-1 identity stage alone 2,513 s over 598,710 changed notices (3.1 per Tender, not 1.7), the
+  sharded pre-pass ~1,630 s, and the touched expansion grew the fold to 219,278 Tenders at ~3,000 a minute
+  (multi-lot heads). Run it in a queue gap outside the daily ingest. The looser cohort (any two awarded lots) is
+  ~460,000.
 - **The wet run** needs `expect` (the dry run's count) and aborts before any write when the walk finds more than a
   quarter off it; it stamps the cohort epoch-stale, re-queues its notices, and queues `project` behind itself.
-- **Expected moves**: path V about 16 heads (537's 15 below, plus 928196 through 492: EUR 46,797,460.35); path W
-  about 21,200 (95 % 9,700–46,200), each an understatement of 1.5× to 569× raised to its awards sum. Every other
-  cohort Tender compares identical (`verified`).
+- **Expected moves** (the 2026-10-16 drain's, before unit 4a): path V about 16 heads (537's 15 below, plus 928196
+  through 492: EUR 46,797,460.35); path W about 21,200 (95 % 9,700–46,200), each an understatement of 1.5× to 569×
+  raised to its awards sum (the 2026-10-17 drain, project 2575: 15,352 corrected). Every other cohort Tender compares
+  identical (`verified`). Since unit 4a this job raises no path-W head: it re-elects them back, so for any run after
+  the 4a deploy the expected moves are those of "Path W withdrawn" below.
 
 Verify, in order:
 - The wet message's `stamped N` equals the dry count; the `project` message's `compare: N verified, M corrected`
-  sums to it (D7's completeness; more if other Tenders were pending). M is the expected moves above, give or take.
+  sums to it (D7's completeness; more if other Tenders were pending). M is the expected moves above, give or take;
+  for a run after unit 4a, the M of "Path W withdrawn" below.
 - The done line: `/v1/tenders/7427765` serves EUR 3,000,000.00, 5943121 EUR 1,321,579.92 and 369057
   EUR 62,378,736.29, each with `value_derivation.method` = `lot-sum-vouched`, `rule` 537. The other path-V pins:
   251619 EUR 24,338,758.08, 380921 PLN 7,247,040.00, 392980 EUR 35,740,042.72, 425446 EUR 1,549,007.19, 706887
   PLN 70,560,792.75, 1024214 EUR 3,400,000.00 (`summed` BT-271-Lot), 5779108 EUR 2,120,000.00, 6342034
   EUR 10,836,754.45, 6921980 EUR 24,930,336.11, 7044132 EUR 2,385,992.00, 7829010 EUR 2,000,000.00, 8514592
-  DKK 179,248,937.00. Path W (`lot-sum-awards`): 6450467, 6450469 and 6450473 EUR 3,574,764,979.28, 8426318
-  GBP 3,000,000,000.00, 585917 EUR 250,000.00, 5995030 PLN 1,549,511.60.
+  DKK 179,248,937.00. Path W's six pins (6450467, 6450469 and 6450473 EUR 3,574,764,979.28, 8426318
+  GBP 3,000,000,000.00, 585917 EUR 250,000.00, 5995030 PLN 1,549,511.60, `lot-sum-awards`) read right on
+  2026-10-17 and are withdrawn with path W: after unit 4a's refold they serve no derivation (below).
 - Unchanged, with `value_derivation` null: 8440393, 7487018 (a total repeated on every award), 5316712 (one lot
   restates the framework), 6885102 (the sum is below its head), and the estimate-only heads 4930240, 8822313,
   4925871, 175096 and 5625591.
@@ -827,6 +839,45 @@ Verify, in order:
   Every such head is €1 bn or more (the scale rules' gate), so the range seek above reaches it; read the lot's
   earlier versions for a 10ᵏ partner. 537's lot-sum rule never judges a lot award, so a slip ×10ᵏ a sum of other
   lots' figures, with no single 10ᵏ partner, is summed too and shows only in this read.
+
+**Path W withdrawn (issue 551 unit 4a, 2026-10-17).** The post-drain bounded read FAILED (wf_dc85fa7e-c00,
+evidence `.scratch/tender-db/551-lot-sum/postdrain/read_result.json`): path W's sum was wrong on 9 of a uniform 50 of
+project 2575's 15,352 corrections (18 %, 95 % ~9–31 %) and on 96 of the 229 derived awards heads of €100 m or more
+(42 %; 9 of the 21 at €1 bn or more), every wrong upheld by a skeptic. Classes: `not_additive` 41 (framework ceilings
+or per-supplier maxima summed across lots sharing one envelope), `double_count` 28 (one lot under two keys, a
+re-issued award beside its original), `farther` 21 (farther from the notice's total than the figure it replaced),
+`slip` 11, other 4. Decided (fail closed): `canonical::LOT_SUM_AWARDS_PATH` is `false`, so `derive_lot_sum` never
+returns an awards sum and such a head keeps the max election (an award copy, one figure, or null). Path V is
+unchanged. The path, its guards and its pins stay compiled and tested through `head_value_with_awards_path` (unit 4b,
+a redesign measured on the 279 labels, turns it back on only at ≤ 1 wrong in a fresh uniform 30 and 0 farther in the
+€100 m band). The marker columns, the SSE At probe's lot legs and the cohort SQL stay.
+
+The refold back is the same job and cohort as the drain (the cohort is path W's shape on stored rows, so it holds
+every stored `lot-sum-awards` head, the daily folds' since 4e5eaf7 included), after the 4a deploy, in a queue gap
+outside the daily ingest:
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"refold-lot-sum"}'                               # dry: expect ~194,000 (2573 found 194,404)
+/root/aj.sh /admin/jobs '{"kind":"refold-lot-sum","dry_run":false,"expect":N}'    # N = this dry run's count; queues project
+```
+
+- **Cost**: the dry walk ~3 minutes (2573: 170 s); `project` **~2–2.5 h** (2575: 2 h 18 m, above).
+- **Expected moves**: about 15,352 `corrected` back (2575's path-W changes), plus any path-W head the daily folds
+  derived since the 4e5eaf7 deploy; every path-V head and every other cohort Tender compares identical (`verified`).
+  Each move is announced as a correction (ADR-0017 D3, as the drain's were).
+
+Verify, in order:
+- The wet message's `stamped N` equals the dry count, and the `project` message's `compare: N verified, M corrected`
+  sums to it (D7); M ≈ 15,352 (the 2575 count, give or take the daily folds' path-W heads).
+- The 6 path-W pins serve no derivation (`value_derivation` null): 6450467, 6450469 and 6450473 EUR
+  1,660,661,682.94, 8426318 GBP 2,000,000,000.00, 585917 `null`, 5995030 PLN 2,721.60 (their pre-551 figures).
+- A bounded read of the value band finds no `lot-sum-awards` row: a range seek on `tenders_current_value_eur`,
+  `SELECT id FROM tenders WHERE current_value_eur_cents >= 10000000000 AND current_value_derivation = 'lot-sum-awards'
+  LIMIT 200` (the 229 heads the failed read found sat there), returns nothing. Plan-probe it first; there is no index
+  on `current_value_derivation`, so never run the predicate without the value range.
+- The 16 path-V pins are unchanged (the done line and the list above: 7427765 EUR 3,000,000.00, 5943121
+  EUR 1,321,579.92, 369057 EUR 62,378,736.29, …, each `lot-sum-vouched`, 928196 rule 492), and the must-stay heads
+  still serve no derivation.
 
 **Result-level framework values as scale partners (issue 506, 2026-10-10).** An eForms award
 notice's framework maximum and re-estimate per lot result (BT-709, BT-660, and their eForms-DE 1.x
@@ -1077,7 +1128,7 @@ said otherwise), but the journal is size-capped and rotates, while the job row i
 durable and is what `/admin/jobs`, `jobwatch` and the issues' Verify lines read:
 
 ```
-<n> notices → <t> tenders (<i> islands), <v> versions; <w> tenders written, <u> verified unchanged
+<n> notices → <t> tenders (<i> islands), <v> versions; <w> tenders written, <u> verified unchanged, <r> relabelled (issue 562)
 ; <the issue-318 genericness-wall suffix, when the wall was consulted>
 ; issue-448 alias asked A bound B refused R (poisoned …, no owner …, veto …, names …, generic …)   ← only when the altid alias was asked about a company-number merge
 ; issue-469 register alias asked A bound B refused R (poisoned …, no owner …, shared …, veto …, names …, generic …)   ← only when it was asked about a register merge
@@ -1087,6 +1138,14 @@ durable and is what `/admin/jobs`, `jobwatch` and the issues' Verify lines read:
 ; issue-385 F14 corrigendum dates: …
 ; issue-479 procedure type: eforms F folded / U unmapped / N none, r209 …, text …   ← one entry per profile family the run planned
 ```
+
+`<r> relabelled` is printed on every line, 0 included. It counts the Tenders whose `source` or `kind` the fold
+moved in place (a DÖE Tender turning `ted` when its TED twin joins) and announced with ADR-0017 D3's seq-less set,
+rule T plus every lot of the head version: ordinary folds, the unchanged-chain early return, and stale refolds
+under `TENDER_REFOLD_COMPARE=off` or `shadow`. A stale refold under the acting compare (`on`, the default) announces
+its label moves inside the compare's own correction set instead, so they count under the compare tally's
+`corrected`, not here: an `on` refold that moved labels reads `0 relabelled`. Issue 562's post-deploy paired read
+checks this number against the day's seq-less `tender changed` rows.
 
 The two issue-364 lines are two different gates and read differently:
 

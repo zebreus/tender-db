@@ -859,8 +859,11 @@ async fn a_derived_lot_sum_head_is_stored_and_served_as_the_fold_derived_it() {
 /// (`ValueBy::Version`), and a derived head is a sum no amount row carries, so the superset reads
 /// the version's lot figures too. Without them a later version that moves a derived head out of
 /// a bound probed `(false, false)` on both sides, the change was dropped, and the subscriber kept
-/// a ghost. Path W under `min_value`: lot awards of EUR 1.2 m and EUR 1.0 m beside the EUR 1.2 m
-/// award's copy derive EUR 2.2 m; a second notice admits a EUR 1.5 m estimate. Path V under
+/// a ghost. Path W's shape under `min_value`: lot awards of EUR 1.2 m and EUR 1.0 m beside the
+/// EUR 1.2 m award's copy derived EUR 2.2 m until unit 4a withdrew path W
+/// (`canonical::LOT_SUM_AWARDS_PATH`); v1 now keeps the max election, the copy, and the probe's
+/// lot legs (kept for path V and unit 4b) still read v1's lots as a superset, an idempotent
+/// over-delivered `removed`. A second notice admits a EUR 1.5 m estimate. Path V under
 /// `max_value`: six awards of EUR 500 k vouched by a refused EUR 3 bn (no copy) derive EUR 3 m;
 /// a second notice admits a EUR 5 m estimate.
 #[tokio::test]
@@ -910,13 +913,13 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
     let min = |eur_cents: i64| Filter { min_value: Some(eur_cents), ..Filter::default() };
     let max = |eur_cents: i64| Filter { max_value: Some(eur_cents), ..Filter::default() };
 
-    // Path W under min_value (EUR 2 m).
+    // Path W's shape under min_value (EUR 2 m). Unit 4a: path W is withdrawn, so v1 serves the
+    // EUR 1.2 m copy, unmarked.
     let (db, conn) = open("derived-at-w").await;
     let copy = || vec![amount("result_value", 120_000_000)];
     let awards = [120_000_000, 100_000_000];
     db.apply_tenders(&[tender(vec![version(1, copy(), &awards)])], PUBLISHED_AT, false).await.unwrap();
-    assert_eq!(marker(&conn).await.0, Some(220_000_000), "v1 derives the awards sum");
-    assert_eq!(marker(&conn).await.1.as_deref(), Some("lot-sum-awards"));
+    assert_eq!(marker(&conn).await, (Some(120_000_000), None, None, None, None), "v1 keeps the max election (path W withdrawn)");
     let estimated = {
         let mut facts = copy();
         facts.push(amount("estimated_value", 150_000_000));
@@ -925,7 +928,7 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
     db.apply_tenders(&[tender(vec![version(1, copy(), &awards), estimated])], PUBLISHED_AT, false).await.unwrap();
     assert_eq!(marker(&conn).await, (Some(150_000_000), None, None, None, None), "v2 elects the estimate");
     assert!(!at(conn.clone(), min(200_000_000), 2).await, "the new head is below EUR 2 m");
-    assert!(at(conn.clone(), min(200_000_000), 1).await, "v1's EUR 2.2 m was inside it: the probe pair reads `removed`");
+    assert!(at(conn.clone(), min(200_000_000), 1).await, "v1's lots total EUR 2.2 m: the superset reads it inside (an idempotent `removed`)");
     assert!(!at(conn.clone(), min(250_000_000), 1).await, "the superset is bounded: v1's lots total EUR 2.2 m");
     drop((db, conn));
     let _ = std::fs::remove_file(path("derived-at-w"));
@@ -950,6 +953,112 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
     assert!(at(conn.clone(), band, 1).await, "and inside a band around it");
     drop((db, conn));
     let _ = std::fs::remove_file(path("derived-at-v"));
+}
+
+/// Issue 551 unit 4a's refold back: 4e5eaf7's `refold-lot-sum` drain left path-W heads stored as
+/// their awards' sum, marked `lot-sum-awards`, and nothing else rewrites them. Path W's shape (a
+/// EUR 1.2 m award copy beside awards of EUR 1.2 m and EUR 1.0 m) is folded under the withdrawal,
+/// then the drained head is planted over it (`drained`), or only its four marker columns with the
+/// EUR figure left alone (`marker-only`). Stamped epoch-stale and refolded with the compare `On`,
+/// every version compares identical, but the stored head differs from the fresh one (its EUR
+/// column, or its marker alone), so the head write re-elects the copy and clears the marker, and
+/// ADR-0017 D3 announces it seq-less for the Tender and both lots; no version is rewritten.
+#[tokio::test]
+async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
+    use store::canonical::{LotResultState, LotState, Round};
+    let award = |lot: usize, cents: i64| LotResultState {
+        key: format!("RES-{lot}"),
+        lot_key: Some(format!("LOT-{lot}")),
+        decision: None,
+        reason: None,
+        awarded_cents: Some(cents),
+        awarded_currency: Some("EUR".into()),
+        decided: None,
+        winners: Vec::new(),
+        buyer_winners: Vec::new(),
+        statistics: Vec::new(),
+    };
+    let awards = [120_000_000, 100_000_000];
+    let chain = || TenderProjection {
+        source: "ted".into(),
+        procedure_key: Some("pk-551-back".into()),
+        island_notice_id: None,
+        kind: "procedure".into(),
+        versions: vec![TenderVersion {
+            caused_by_notice_id: 1,
+            published_at: PUBLISHED_AT,
+            dispatched_at: None,
+            notice_subtype: None,
+            original_lang: None,
+            publication_id: "1-2024".into(),
+            facts: [amount("result_value", 120_000_000)].into_iter().collect(),
+            lots: (1..=2).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default() }).collect(),
+            rounds: vec![Round {
+                notice_id: 1,
+                logical_notice_id: None,
+                lot_results: awards.iter().enumerate().map(|(i, c)| award(i + 1, *c)).collect(),
+                bids: Vec::new(),
+                contracts: Vec::new(),
+            }],
+            group_members: Vec::new(),
+        }],
+    };
+    for (name, drained_eur_cents) in [("drained", 220_000_000), ("marker-only", 120_000_000)] {
+        let (db, conn) = open(&format!("back-{name}")).await;
+        // The compare refuses to run without the by-version indexes.
+        db.build_tender_indexes().await.unwrap();
+        db.apply_tenders(&[chain()], PUBLISHED_AT, false).await.unwrap();
+        assert_eq!(marker(&conn).await, (Some(120_000_000), None, None, None, None), "{name}: path W withdrawn, the copy");
+        db.execute_for_test(&format!(
+            "UPDATE tenders SET current_value_eur_cents = {drained_eur_cents}, current_value_derivation = 'lot-sum-awards', \
+             current_value_cents = 220000000, current_value_currency = 'EUR', \
+             current_value_derivation_detail = '{{\"summed\":\"awards\",\"lots\":2}}' WHERE id = 1"
+        ))
+        .await
+        .unwrap();
+        assert_eq!(marker(&conn).await.1.as_deref(), Some("lot-sum-awards"), "{name}: the drained marker is planted");
+        db.set_projection_epoch_for_test(-1).await.unwrap();
+        db.set_refold_compare(store::RefoldCompare::On);
+        let cursor = scalar(&conn, "SELECT COALESCE(MAX(cursor), 0) FROM changes").await.unwrap_or(0);
+        let a = db.apply_tenders(&[chain()], PUBLISHED_AT, false).await.unwrap();
+        assert_eq!(marker(&conn).await, (Some(120_000_000), None, None, None, None), "{name}: re-elected, marker cleared");
+        assert_eq!((a.tenders_corrected, a.versions_written), (1, 0), "{name}: one D3 correction, no version rewritten: {a:?}");
+        assert_eq!(
+            tender_feed(&conn, cursor).await,
+            ["tender@-:changed", "lot:LOT-1@-:changed", "lot:LOT-2@-:changed"],
+            "{name}: the move is announced seq-less for the Tender and both lots"
+        );
+        let row = only_row(&conn).await;
+        assert_eq!((row.value_cents, row.value_derivation), (Some(120_000_000), None), "{name}: the copy is served, unmarked");
+        drop((db, conn));
+        let _ = std::fs::remove_file(path(&format!("back-{name}")));
+    }
+}
+
+/// Tender 1's change rows after `cursor`, each as `entity@seq:op` (`-` for a seq-less row).
+async fn tender_feed(conn: &turso::Connection, cursor: i64) -> Vec<String> {
+    let mut rows = conn
+        .query(
+            "SELECT c.entity_kind, c.version_seq, c.op, l.lot_key FROM changes c \
+               LEFT JOIN lots l ON c.entity_kind = 'lot' AND l.id = c.entity_id \
+              WHERE c.cursor > ? AND ((c.entity_kind = 'tender' AND c.entity_id = 1) \
+                 OR (c.entity_kind = 'lot' AND l.tender_id = 1)) \
+              ORDER BY c.cursor",
+            [Value::Integer(cursor)],
+        )
+        .await
+        .unwrap();
+    let mut out = Vec::new();
+    while let Some(row) = rows.next().await.unwrap() {
+        let text = |i: usize| row.get_value(i).unwrap().as_text().cloned().unwrap_or_default();
+        let seq = row.get_value(1).unwrap().as_integer().map_or_else(|| "-".to_owned(), |n| n.to_string());
+        let entity = match text(0).as_str() {
+            "lot" => format!("lot:{}", text(3)),
+            kind => kind.to_owned(),
+        };
+        out.push(format!("{entity}@{seq}:{}", text(2)));
+    }
+    out
 }
 
 /// Issue 551 (unit 3's third review): the At probe's lot-sum legs add an earlier version's lot
@@ -1023,7 +1132,9 @@ async fn an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes() {
 /// Round 3's `BETWEEN 1` dropped them: the earlier version probed outside a bound its served head
 /// was inside, the pair read `(false, false)`, and a `max_value` subscriber kept a ghost. IDR at
 /// 17,000/EUR: v1 awards IDR 80.00 and 84.00 on two lots (each EUR 0, S EUR 0.01); v2 admits a
-/// EUR 1.5 m estimate.
+/// EUR 1.5 m estimate. Only path W derived that S, and unit 4a withdrew it
+/// (`canonical::LOT_SUM_AWARDS_PATH`): v1's head is null now, and the probe's legs, kept for
+/// unit 4b, still read v1 inside both bounds as a superset.
 #[tokio::test]
 async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound() {
     use store::canonical::{LotResultState, LotState, Round};
@@ -1068,8 +1179,7 @@ async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound(
     db.upsert_currency_rates(&[("IDR".into(), store::rates::civil_date(PUBLISHED_AT), 17_000.0, "ecb".into())]).await.unwrap();
     db.reload_rates_lookup().await.unwrap();
     db.apply_tenders(&[tender(vec![version(1, Vec::new())])], PUBLISHED_AT, false).await.unwrap();
-    let derived = marker(&conn).await;
-    assert_eq!((derived.0, derived.1.as_deref(), derived.2, derived.3.as_deref()), (Some(1), Some("lot-sum-awards"), Some(16_400), Some("IDR")));
+    assert_eq!(marker(&conn).await, (None, None, None, None, None), "v1 serves null, unmarked (path W withdrawn)");
     db.apply_tenders(&[tender(vec![version(1, Vec::new()), version(2, vec![amount("estimated_value", 150_000_000)])])], PUBLISHED_AT, false)
         .await
         .unwrap();
@@ -1135,7 +1245,9 @@ fn the_derived_head_marker_has_one_writer() {
     assert_eq!(writers.len(), 1, "expected the fold's `head_update` alone to write the marker; found {writers:?}");
     let canonical = std::fs::read_to_string(root.join("src/canonical.rs")).unwrap();
     assert!(
-        canonical.contains("let value = head_value_eur_cents_with(head, &partners, &self.rates_lookup());"),
+        // Issue 560: the rates are read once per Tender (`let rates = self.rates_lookup();`), so
+        // every election of the fold, this one included, sees one table.
+        canonical.contains("let value = head_value_eur_cents_with(head, &partners, &rates);"),
         "the fold's head must take the value and its marker from the election"
     );
 }

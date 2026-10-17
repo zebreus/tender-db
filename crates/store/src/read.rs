@@ -1206,10 +1206,18 @@ enum ValueBy<'a> {
     /// S, given one cent a row for the conversion's half-up rounding, and under `<=` any one
     /// summed figure is at most S. Either way a version inside
     /// the bound always matches, and a PROBED change that takes the head out of the bound reaches
-    /// its subscriber as `removed`. Probed: a lots stream reads only `lot` change rows, and the
-    /// fold writes one only when the lot's facts, kind or its Tender's closure moved — a
-    /// version that moves only the Tender's value (a procedure-total corrigendum, a sibling
-    /// lot's figure) probes no lot, so a lots subscriber keeps it (issue 560). The error is
+    /// its subscriber as `removed`. Probed: a lots stream reads only `lot` change rows. Since
+    /// issue 560 the fold writes one for each lot present on both sides whenever the Tender's
+    /// elected EUR value moved, as it does when the lot's facts, kind or its Tender's closure
+    /// moved — so a version that moves only the Tender's value (a procedure-total corrigendum, a
+    /// sibling lot's figure, the rate) probes its lots too. A fold's last version of a Tender
+    /// that already had versions is also a lot row whenever its value differs from the stored
+    /// head's or, past a kept or compared prefix, from the value before the run. That does not
+    /// make a fold of several versions exact: a version written in the same fold as a later one
+    /// is probed superset against superset (below), and a Tender first folded with several
+    /// versions (or rebuilt) has no value to compare its last version against, so a
+    /// value-bound lots stream can end holding a lot outside its bound, live or not (issue
+    /// 561). Change rows written before that deploy keep the gap. The error is
     /// one-sided: an earlier version with any figure inside the bound that it did not elect —
     /// a refused one, or under `max_value` ANY smaller one, which a Tender with several lots
     /// usually has (each lot's figure is below the procedure total) — also matches: an
@@ -3028,7 +3036,10 @@ fn tenders_query(filter: &Filter, scope: Scope) -> Query {
         // source is the Tender's label (TED once any of its notices is: a DÖE Tender whose TED
         // twin arrives turns `ted`) and the kind its fold-first notice's (issue 462), each
         // rewritten for the whole Tender, so no row keeps the earlier value for the seq − 1
-        // probe and such a move reads the same on both sides (issue 547; the gap is issue 562).
+        // probe and such a move reads the same on both sides (issue 547). The probe does not
+        // close that gap; the fold's correction rows do (issue 562): a fold that moves the label
+        // writes ADR-0017 D3's seq-less `changed` for the Tender and every head lot, which the
+        // in-place arm classifies by the head alone — `removed` under the old label.
         if let Some(source) = &filter.source {
             q.push(" AND t.source = ?", [t(source)]);
         }
