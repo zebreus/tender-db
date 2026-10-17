@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — unit 3 BUILT 2026-10-16 (uncommitted on main, base afdc1dc on 2026-10-17, whose commits since 800b7e5 touch no 551 file; focused tests green, Rust port check 0 disagreements on 4,745, re-run after round 3), review findings fixed in four rounds (Unit 3, "Review fixes": round 1 G5', V0 and the SSE At probe's superset; round 2 G8b, which replaced the re-keyed pin's accepted double count; round 3, 2026-10-17: G5' widened to a summed award with no copy, G5's lower bound, the At probe's capped sums, the value-bound docs, G8b's ordinal caveat, this line; round 4, 2026-10-17: the At probe counts EUR 0 summands, the carried residual-risk sentence). Next: `ops/check.sh`, commit, deploy (552's v12 and 524's v11 are already live on prod as 3475272; v12's own wet-run rollout is tracked in 552), then the drain (`refold-lot-sum` dry → wet with `expect` → its queued `project`), then the post-drain bounded read (docs/operations.md, "The derived lot-sum head"). Unit 2 DECIDED 2026-10-16 (panel wf_3d72c491-993): path V plus path W, a derivation marker on `tenders`, never a synthetic amount row.
+Status: ready-for-agent — unit 3 DEPLOYED 2026-10-17 as `4e5eaf7` (gate green 1242 s, 151 suites; reviewed in four rounds, Unit 3's "Review fixes") and DRAINED: refold-lot-sum dry 2573 (194,404 Tenders, 598,710 notices, 170 s), wet 2574 (expect 194404; stamped 194,404), project 2575 (2 h 18 m: 179,052 verified + 15,352 corrected = the stamped count). All 31 runbook pins read right (16 vouched, 6 awards, 9 unchanged). NEXT: the post-drain bounded read (workflow wf_dc85fa7e-c00: all 229 derived awards heads of EUR 100 m or more + a uniform 50 of the 15,352 corrections), then close as DONE or file its findings.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -583,3 +583,24 @@ counts that as corroboration (round 4's case S3). Path W sums such an award unle
 the post-drain read of awards heads of EUR 100 m or more is where one would show, and it flags each path-W head whose
 summed award a lot figure of the head repeats at the same cents. G8b reads TED's ordinal `LOT-k` as a lot number (round 3): the
 post-drain read checks each summed TED key against `TED-LOT_NO`.
+
+## Unit 3 — deployed and drained (2026-10-17)
+
+- Deployed `4e5eaf7` 02:36 UTC (gate marker `gate-v2 4e5eaf7`, 1242 s; the first gate found the stoppable-kinds pin
+  missing `refold-lot-sum`, fixed in the same commit).
+- `refold-lot-sum` dry 2573: 194,404 Tenders, 598,710 notices, walk 170 s on the reader pool (the size estimate was
+  ~195,000, 95 % 129,000–293,000; notices ran 3.1 per Tender against the 1.7 assumed).
+- wet 2574 (`expect` 194404): stamped 194,404 epoch-stale, re-queued 598,710 notices, 2 s.
+- `project` 2575: 2 h 18 m, NOT the runbook's 6–10 minutes — the incremental pass-1 identity stage alone took 2,513 s
+  (598,710 changed notices, 325,955 of them legacy), the sharded pre-pass ~1,630 s, the touched expansion grew the fold
+  to 219,278 Tenders / 640,228 notices, and the fold ran ~3,000 Tenders a minute (multi-lot heads). The compare: 179,052
+  verified, 15,352 corrected (sums to the stamped 194,404: D7 complete), 108,018 correction rows. The runbook's cost line
+  should say ~2–2.5 h for a cohort refold of this shape (to fold into docs/operations.md with the next code change).
+- Expected moves were path W ~21,200 (95 % 9,700–46,200) and path V ~16: 15,352 corrected, and the first 50 corrected
+  Tenders in salted order are all `lot-sum-awards`.
+- Pins (docs/operations.md's Verify list): all 16 path-V heads serve their sums marked `lot-sum-vouched` (rule 537,
+  928196 rule 492), the 6 path-W pins `lot-sum-awards`, and the 9 must-stay heads serve no derivation.
+- The bounded read's population: 229 derived awards heads of EUR 100 m or more (1 at EUR 10 bn+: 8831876, GBP
+  25,999,999,986.00; 20 at EUR 1–10 bn; 208 at EUR 100 m–1 bn), read by a seek on `tenders_current_value_eur`
+  (plan-probed), and 50 salted-uniform path-W corrections from `/v1/changes` (cursor 955146761 → 955254530).
+
