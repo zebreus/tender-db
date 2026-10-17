@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; **M2 FAILED 2026-10-17** (wf_88da8542-c46: fresh 30 → 27 right, 3 wrong; band 15/15 right; bar ≤ 1 wrong). NEXT: the pre-committed fallback "vouched everywhere" (v2 + R10 at every size), once, from the same salted walk — pre-draw record `551-lot-sum/unit4b/M2-fallback-walk.md` (16:10Z); 25 new vouched ships to read. FAIL → unit X.
+Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); **fallback "vouched everywhere" PASSED 2026-10-17** (wf_03469a70-c1b: 29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). NEXT: B1 (carry the facts v2 reads, in the projection only) — B1 to B5 run with R10 at EVERY size; B5's stop window is 0.5×–2× of 1,669 (835–3,338). 567's refold (lot keys of legacy TED awards) runs first: B3's parity re-runs after it.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -943,3 +943,24 @@ Result file: `.scratch/tender-db/551-lot-sum/unit4b/M2-result.json` (per head: r
   `unit4b/M2-fallback-walk.md`, written before any new id was read). The 5 vouched ships among M1's 30 (7399356,
   6094289, 6527544, 307725, 1042997) were all read right and are reused; 25 new vouched ships are read. Projected
   fallback fires on M1's draw: 15,352 × 5/54 ≈ 1,420 (the decision expected about 2,450).
+
+## Unit 4b M2 fallback "vouched everywhere" — PASSED (2026-10-17)
+
+Pre-draw record, walk and read: `.scratch/tender-db/551-lot-sum/unit4b/M2-fallback-walk.md` (written 16:10Z before
+any new id was read); items `M2-fallback-items.json`; read `M2-fallback-result.json`.
+
+- **Walk:** the same salted order continued from position 54 to 276 (277 walked, 1,349 GETs): 134 v2 ships, 142
+  refused, 1 dropped. 30 vouched ships (5 reused from M1, all read right in M2; 25 new). Projected fires: 15,352 ×
+  30/276 ≈ **1,669** (decision: about 2,450). No vouched ship reached EUR 100 m (largest EUR 22.54 m), so M2's band
+  read stands.
+- **Read (M2's amended protocol, wf_03469a70-c1b):** new 25 → 24 right, 1 wrong; **29 right, 1 wrong of 30** (bar ≤ 1).
+  Band 15/15 right.
+- **The wrong, 5816379 (farther):** the vouching total (2017 award notice VAL_TOTAL 472,520 = S) is superseded by a
+  2018 re-award of lot 2's scope (head notice 19891093, LOT_NO 0, stored lot-less, VAL_TOTAL 322,400, served today).
+  Shape for B2 to weigh: a vouch from an earlier award notice while a later award notice in the chain states its own
+  different total. Recorded only; the bar is not re-scored.
+- **Per the decision:** B1 to B5 run with R10 applied at every size. B2's `a_band_sum_needs_a_buyer_stated_total`
+  becomes "every awards sum needs a buyer-stated total" (EUR 99,999,999.99 no longer exempt); B5's stop window is
+  0.5×–2× of 1,669 = 835–3,338; B5's confirmation read keeps the same bar.
+- **Order:** 567's refold (legacy TED award lot keys, deployed b957661) drains first; B3's projection-parity check
+  re-runs the port after it, as M1's note (4) says.

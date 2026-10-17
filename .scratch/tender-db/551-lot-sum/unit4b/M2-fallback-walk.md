@@ -41,6 +41,21 @@
 - Items for the read: `M2-fallback-items.json`. Read: workflow wf_03469a70-c1b (M2's script, file and group keys
   changed; items carry `vouched_by`).
 
-### Read
+### Read — PASS (workflow wf_03469a70-c1b, 10 agents, 2026-10-17)
 
-(pending)
+Result file: `M2-fallback-result.json`. Two independent reads per head (reader A, adversarial skeptic B); they agreed on
+all 25, so no tiebreak ran.
+
+- **New 25: 24 right, 1 wrong.** With the 5 reused (right): **29 right, 1 wrong of 30** — the bar (≤ 1 wrong) holds.
+- **Band:** no new band head; M2's 15/15 right stands. 0 farther / double_count.
+- **The one wrong, 5816379 (farther):** a merged chain. 2017 award notice 19334482 awarded lot 1 (Sofratel 219,790) and
+  lot 2 (Vitalis 252,730), VAL_TOTAL 472,520 = S, which vouches S. In 2018 the lot-2 scope was re-tendered on its own
+  (CN 19662618, ref 2018-103477-DEBOR) and the head notice 19891093 awarded it to Alta Etic for 322,400 with LOT_NO 0,
+  stored lot-less; its VAL_TOTAL 322,400 is what the API serves today. S swaps the head notice's own stated total for
+  the superseded 2017 total. Shape for B2 (recorded, not a guard added after the read): the vouching total comes from
+  an earlier award notice while a later award notice in the chain states its own, different total.
+- 13 of the 24 rights are vouched by BT-118 (the notice's framework value); the readers checked each lot's figure is
+  its own award, not a ceiling repeated per lot (202168 and 941214 repeat the notice total as every lot's BT-709; S
+  sums the per-lot BT-720 instead).
+
+**Outcome (pre-committed):** PASS → B1 to B5 run with R10 at every size ("vouched everywhere").
