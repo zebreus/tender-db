@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — the post-drain bounded read FAILED (2026-10-17): path W wrong on 18 % of a uniform 50 and 42 % of heads ≥ EUR 100 m. Unit 4a (path W switched OFF, path V kept) BUILT, reviewed (wf_2792aa8c-c74), GATED and DEPLOYED 2026-10-17 10:50 UTC as `900efeb`; the refold back is running: refold-lot-sum dry 2584 (194,411 Tenders), wet 2585 (expect 194411) → project 2586. NEXT: Verify the 6 path-W pins serve no derivation, the 16 path-V pins unchanged, a bounded value-band read finds no `lot-sum-awards` row; then unit 4b (path-W redesign on the 279 labels).
+Status: ready-for-agent — path V (`lot-sum-vouched`) LIVE since 4e5eaf7 (16 heads, every pin right); path W (`lot-sum-awards`) WITHDRAWN after the post-drain read failed: unit 4a deployed 900efeb and the refold back DONE (refold-lot-sum 2584/2585 + project 2586: 179,074 verified + 15,337 corrected; the 6 path-W pins, the 9 must-stay heads and all 50 sampled path-W heads serve no derivation; the value band holds 0 `lot-sum-awards` rows). NEXT: unit 4b, a path-W redesign from the 279 labels (design workflow wf_efa005fa-6a8 running); re-enable only at ≤ 1 wrong in a fresh uniform 30 and 0 farther/double-count in the ≥ EUR 100 m band.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -644,4 +644,13 @@ small. Units:
   published lot number (LOT_NO / BT-137 read, not the key), refuse framework or DPS procedures and multi-supplier
   lots outright, refuse when the sum exceeds every estimate on the head by 10×; adopt only at ≤ 1 wrong in a fresh
   uniform 30 and 0 farther in the ≥ EUR 100 m band.
+
+## Unit 4a — done (2026-10-17)
+
+Deployed `900efeb` (with 560 and 562; gate 1441 s) at 10:50 UTC. `refold-lot-sum` dry 2584 (194,411 Tenders, 598,751
+notices), wet 2585 (`expect` 194411), `project` 2586 (2 h 12 m: 179,074 verified + 15,337 corrected = 194,411; 0
+relabelled). Verify read: the 16 path-V pins unchanged (`lot-sum-vouched`, rule 537 / 492 for 928196); the 6 path-W pins
+back to their max election with no derivation (6450467/69/73 EUR 1,660,661,682.94, 8426318 GBP 2,000,000,000.00, 585917
+null, 5995030 PLN 2,721.60); the 9 must-stay heads unchanged; all 50 salted-uniform path-W heads of the failed read serve
+no derivation; a bounded seek of the value band (≥ EUR 100 m) finds 0 `lot-sum-awards` rows.
 
