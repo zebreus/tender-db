@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 BUILT** 2026-10-17 (commit after 3cd94c0, wf_443c0ebc-b4b; gating). NEXT: B2 (the v2 guards in canonical.rs, R10 at EVERY size, path W still off) — read the B1 notes below first. 567's refold runs first: B3's parity re-runs after it.
+Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** 2026-10-17 (3c81386, wf_443c0ebc-b4b; gate green 1418 s; on main, not deployed — it changes nothing served). NEXT: B2 (the v2 guards in canonical.rs, R10 at EVERY size, path W still off) — read the B1 notes below first. 567's refold runs first: B3's parity re-runs after it.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
