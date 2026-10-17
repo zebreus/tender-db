@@ -758,7 +758,7 @@
       "min_value": {
         "name": "min_value",
         "in": "query",
-        "description": "Minimum value in EUR cents, compared against the tender's highest amount converted to EUR at its publication date (derived eur_cents; rows with no convertible amount never match).",
+        "description": "Minimum value in EUR cents, compared against the tender's head value in EUR: its elected amount converted to EUR at its publication date (derived eur_cents) or, where value_derivation is set, the sum of its lots converted the same way. Rows with no convertible amount match only when their lot awards are summed (lot-sum-awards).",
         "schema": { "type": "integer", "format": "int64" }
       },
       "max_value": {
@@ -973,7 +973,27 @@
           "submission_deadline": { "type": "string", "format": "date-time", "nullable": true, "description": "The instant deadline_after/deadline_before filter on and sort=deadline orders by." },
           "submission_deadline_scope": { "type": "string", "nullable": true, "description": "Which scope submission_deadline came from (issue 370): `procedure` for the procedure's own date, `lot` when the elected deadline is a lot-level date — the head election takes the newest over both scopes. Null exactly when submission_deadline is. Whether the newest notice republished the date or the row carries it forward from an earlier version is not on the row; see /docs → caveats → Dates." },
           "lots": { "type": "integer", "description": "How many Lots (LotsGroups and Parts included) the current version carries: every one the Tender's notices published up to it. Whether a single-lot procurement serves 1 or 0 depends on the format (issue 535). It serves 1 on r2.0.9 (its object description is a Lot) and on eForms (DÖE sdk-0.1 included). It serves 0 on the text era (no lot structure), on internal-ojs 2008 without a `LOTS` section, and on r2.0.8 unless a contract notice published a lot annex (an r2.0.8 award notice carries no lot section, divided or not): the source publishes no lot, and none is invented. FTS makes a Lot only from a release's `tender.lots`, so an FTS Tender serves 0 until one of its releases lists a lot; award, contract and tenderUpdate releases often list none. Also lot-less: a Tender that is only an r2.0.9 F14 corrigendum, and an eForms prior-information notice with no lot or part section. A lot-less Tender has no row on /v1/lots; find it on /v1/tenders." },
-          "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "Headline value, or null when none was published." }
+          "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "Headline value: the ONE published figure the value election elects, or null when none survives it. Since issue 551 it can instead be a DERIVED lot sum, in the lots' own currency, when value_derivation is set: the head version's lots added up, served only where the buyer's own procedure total vouches for that sum or where the Tender has no procedure figure and its lot awards pass the guards. A multi-lot Tender whose only figures are lot estimates (BT-27-Lot) or framework maxima (BT-271-Lot), with no procedure figure, still serves ONE lot's figure, never their sum." },
+          "value_derivation": {
+            "type": "object",
+            "nullable": true,
+            "description": "Issue 551: null when value is a published figure; otherwise how the lot sum in value was derived. Set on the current version only. `method` is `lot-sum-vouched` (a procedure-level figure that a scale rule refused is exactly 10^exponent times this sum, so the buyer's own total, with its decimal separator lost, vouches for it; issue 537's lot-sum rule, 471's exact 10^k partner or 492's x100) or `lot-sum-awards` (each lot's latest award added up, on a Tender with no procedure figure at all, whose awards repeat no total, contain no lot that totals the others, sit in one currency and agree with any lot estimates within 10x). The published figures stay in amounts; no amount row is invented.",
+            "properties": {
+              "method": { "type": "string", "enum": ["lot-sum-vouched", "lot-sum-awards"] },
+              "summed": { "type": "string", "enum": ["awards", "BT-27-Lot", "BT-271-Lot"], "description": "Which lot figures were added: each lot's latest award, its largest estimated value, or its largest framework maximum. The award notice's partner-only framework values (BT-709 / BT-660) are never summed." },
+              "lots": { "type": "integer", "description": "How many lots the sum covers." },
+              "rule": { "type": "string", "enum": ["537", "471", "492"], "description": "lot-sum-vouched only: the issue whose scale rule refused the procedure figure." },
+              "exponent": { "type": "integer", "description": "lot-sum-vouched only: the refused figure is 10^exponent times the sum (to one cent per lot)." },
+              "refused": {
+                "type": "object",
+                "description": "lot-sum-vouched only: the refused procedure figure as published.",
+                "properties": {
+                  "field": { "type": "string" },
+                  "value": { "$ref": "#/components/schemas/Money" }
+                }
+              }
+            }
+          }
         },
         "additionalProperties": true
       },

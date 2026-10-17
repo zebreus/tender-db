@@ -4,6 +4,41 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 551) — a Tender's `value` can be the sum of its lots, marked `value_derivation`
+
+`value` was always ONE published figure: the largest the value election accepts. When a scale rule refused the
+procedure total (a figure 100x–1,000,000x a sum of the Tender's own lots, issue 537, or an exact 10^k or x100
+partner, issues 471 and 492), the head fell to one lot's figure or to `null`, and a multi-lot Tender whose only
+figures are lot awards served its largest award. Now, where no procedure-level figure is accepted, two cases serve
+the SUM of the current version's lots, in the lots' own currency:
+- **`lot-sum-vouched`**: a refused procedure figure is exactly 10^k times that sum, to a cent per lot, so the
+  buyer's own total (its decimal separator lost) vouches for it. Each lot's latest award, else its largest
+  estimated value or framework maximum, at the scale the refusal named, and only when that sum is above the
+  figure the election would serve without it. Pinned on unit 2's 15 adjudicated heads,
+  e.g. 7427765 now serves EUR 3,000,000.00 (six awards of EUR 500,000.00) instead of EUR 500,000.00, 5943121
+  EUR 1,321,579.92 instead of EUR 416,053.05, and 369057 EUR 62,378,736.29 instead of `null`.
+- **`lot-sum-awards`**: the Tender has no procedure-level figure at all (only placeholders), its value was an award's
+  copy or `null`, and each lot's latest award is added up, unless one figure repeats across the lots (a total
+  printed on every award), one lot equals 1, 10, 100 or 1,000 times the others, an award is in another currency or
+  names a lot the notice does not type, two awarded lots carry one lot number under two keys (a Tender re-keyed from
+  TED's `LOT-1` to eForms' `LOT-0001` would count that lot twice; the number is read from the key, and TED's
+  `LOT-k` is the notice's k-th lot section rather than its published lot number, so a re-keying whose numbers do not
+  line up is not caught), an award or its Tender-level copy is itself refused as a scale slip, that copy is over
+  EUR 100 bn, the lots' estimates disagree with the awards by more than 10x, or the sum
+  is not above both today's figure and EUR 0.00.
+- A new field `value_derivation` on every Tender row (`/v1/tenders`, the detail, SSE `include_data`):
+  `null` for a published figure; otherwise `{method, summed, lots}` and, for `lot-sum-vouched`, the `rule` (537,
+  471 or 492), its `exponent` and the `refused` figure as published. It describes the current version only.
+- `min_value`/`max_value` and `sort` compare the sum's EUR value. `amounts` is unchanged: no amount row is invented.
+- A multi-lot Tender whose only figures are lot estimates or framework maxima, with no procedure figure, still
+  serves ONE lot's figure (summed estimates moved 3 of 20 adjudicated heads the wrong way).
+- On `/v1/sql`, `tenders` gains `current_value_derivation`, `current_value_cents`, `current_value_currency` and
+  `current_value_derivation_detail` (NULL on every published-figure head), and `current_value_eur_cents` can be a
+  figure no amount row carries. A query that finds the elected amount row by `eur_cents = current_value_eur_cents`
+  finds none for a derived head: read the derivation columns there.
+- A Tender serves its derived value once refolded (`refold-lot-sum`, after the deploy); a change of value is
+  announced like any other value correction (a `changed` row, ADR-0017 D3).
+
 ## Unreleased (issue 563) — an event stream refuses a date bound spelled as the literal `now`
 
 A `/v1/tenders` stream (`Accept: text/event-stream`) whose `published_after`, `published_before`, `deadline_after`

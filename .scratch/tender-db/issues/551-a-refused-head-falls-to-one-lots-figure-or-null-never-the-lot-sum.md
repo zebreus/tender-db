@@ -1,9 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — unit 2 DECIDED 2026-10-16 (panel wf_3d72c491-993: 88 dated labels, designs A/B, adversarial judge). Adopted: path V (the lot sum a scale refusal vouched for) plus path W (an unvouched AWARDS-only lot sum under strict guards), a derivation marker on `tenders`, never a synthetic amount row. Next: unit 3 build (schema columns, election, API field, docs), then a drain by id cohort, then the post-drain bounded read.
-unit1-synthesis-2026-10-16.md`, "What each refused head falls to"). Next: measure how often an elected head is a
-single lot's figure while the Tender has two or more lot figures in the same currency, then decide whether the
-election may serve a lot sum.
+Status: ready-for-agent — unit 3 BUILT 2026-10-16 (uncommitted on main, base afdc1dc on 2026-10-17, whose commits since 800b7e5 touch no 551 file; focused tests green, Rust port check 0 disagreements on 4,745, re-run after round 3), review findings fixed in four rounds (Unit 3, "Review fixes": round 1 G5', V0 and the SSE At probe's superset; round 2 G8b, which replaced the re-keyed pin's accepted double count; round 3, 2026-10-17: G5' widened to a summed award with no copy, G5's lower bound, the At probe's capped sums, the value-bound docs, G8b's ordinal caveat, this line; round 4, 2026-10-17: the At probe counts EUR 0 summands, the carried residual-risk sentence). Next: `ops/check.sh`, commit, deploy (552's v12 and 524's v11 are already live on prod as 3475272; v12's own wet-run rollout is tracked in 552), then the drain (`refold-lot-sum` dry → wet with `expect` → its queued `project`), then the post-drain bounded read (docs/operations.md, "The derived lot-sum head"). Unit 2 DECIDED 2026-10-16 (panel wf_3d72c491-993): path V plus path W, a derivation marker on `tenders`, never a synthetic amount row.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -198,7 +195,7 @@ PATH V: the vouched lot sum. B core, exactly.
      - If it is partner-only (BT-709/BT-660), S is the electable LotSums kind with `lot_sum_exponent(F, S', n') == k`: closest |F - 10^k*S'| first, ties broken Awards, then Estimate, then FrameworkMaximum. The partner-only sum is never served (1024214: BT-709 matches, so the BT-271 sum EUR 3.4 m is served).
    - Refused by 471 or 492: S is the electable LotSums kind with `lot_sum_exponent(F, S', n') == the refusal's k` (471's own k; 2 for 492), chosen the same way (928196 gets EUR 46,797,460.35).
 3. Every refused F that yields an S must yield the same (currency, S). Otherwise keep the max election.
-4. Need n >= 2 and 0 < S_eur <= EUR 100 bn (366), with S_eur = S converted by RatesLookup at the head's date.
+4. Need n >= 2 and 0 < S_eur <= EUR 100 bn (366), with S_eur = S converted by RatesLookup at the head's date. (V0, added at unit 3's review: and S_eur above today's figure; see the guards.)
 5. V1: S is not one figure M repeated on every summed lot with F within 1 % of 10^j*M (j >= 0).
 6. No other repeat guard: the buyer's own figure at exactly 10^k vouches for the sum (7427765: 6 x EUR 500 k gives EUR 3,000,000.00).
 
@@ -234,26 +231,30 @@ Pins for unit 3:
   - 8440393 (G1');
   - 7487018 (G1');
   - 5316712 (G3);
-  - 5625591 (G3);
   - 6885102 (G0);
-  - 4930240, 8822313, 4925871 and 175096 (estimates, so path W cannot fire).
+  - 4930240, 8822313, 4925871, 175096 and 5625591 (estimates, so path W cannot fire; 5625591 was labelled
+    "(G3)" here until unit 3's review: that was design A's estimate-path G3, and path W never reaches a guard for
+    it).
 
 **Guards:**
 - PATH V precondition: no procedure-scope figure elected or admitted (award copies and partner-only rows do not count); n >= 2 lots in S's kind.
 - PATH V S-selection: 537's LotSumMatch S when its kind is electable; for a partner-only (BT-709/BT-660) match, the electable sum at the SAME k (closest, then Awards > Estimate > FrameworkMaximum); for 471/492, the electable sum with lot_sum_exponent(F,S',n') == the refusal's k; none -> keep.
 - PATH V agreement: every refused F that yields an S yields the same (currency, S); else keep.
 - PATH V cap: 0 < S_eur <= EUR 100 bn (366), converted by RatesLookup at the head's date.
+- PATH V V0 (added at unit 3's review, 2026-10-16): when today's head is not null, S_eur > today's eur_cents (path W's G0 test); a vouched sum at or below the max election's figure keeps it. Without it path V could LOWER a head: 537's recorded-cost shape (F = EUR 1.2 bn = the two lot estimates' sum, awards 2 x EUR 6 m, so 537 refuses F at k = 2) served the awards' EUR 12 m marked vouched, x100 under the true total, where the max election serves one lot's EUR 600 m. Costs 0 of the 16 path-V pins (each lifts its head) and 0 of the 4,745 records.
 - PATH V V1: refuse if every summed lot carries one figure M and F is within 1 % of 10^j*M (j >= 0). Then the lots ARE the slipped total, e.g. n = 10 lots each repeating T with F = 1000*T; 7427765 passes (F/M = 6000).
 - PATH W T': every procedure-scope figure absent or sentinel-not-electable (366/379); any refused (471/492/537 without a vouched match), withheld (372) or over-cap procedure figure keeps today's head.
 - PATH W K: today's head is an award copy (Lot(None)) or null; sum LotSumKind::Awards only (latest award per Lot by notice id), in the elected currency (null head: the currency with the most award lots). Never Estimate, FrameworkMaximum or partner-only kinds.
 - PATH W G0: n >= 2 award lots and S_eur > today's eur_cents (equal or below keeps today's head).
-- PATH W G5: S_eur <= EUR 100 bn, and no procedure or lot-null figure of the head is not-electable as over EUR 100 bn.
+- PATH W G5: 0 < S_eur <= EUR 100 bn, and no procedure or lot-null figure of the head is not-electable as over EUR 100 bn. (The lower bound came in unit 3's third review round, 2026-10-17, as path V's cap has it: on a null head, two awards above the 10.00 floor in a currency the rates table converts at more than ~4,000 per EUR, IDR or the pre-2005 ROL/TRL, sum to a figure that rounds to EUR 0, the value issue 378 reserves for "the election found nothing". 0 of the 4,745 records hold such a currency.)
+- PATH W G5' (added at unit 3's review, 2026-10-16; widened in its third round, 2026-10-17): no lot-null figure (an award's tender-scope copy) that a scale rule refused (471/492 at Lot(None)), AND no summed award that a scale rule refuses at its own lot (`refuses_amount("result_value", currency, c, eur, Lot(Some(key)))`), copy or none. A x1000 award's copy below EUR 100 bn is refused, not over the cap, so G5 missed it and the slip itself was summed: LOT-1 awarded EUR 1.2 bn beside LOT-2's EUR 1.2 m, copies of both, served EUR 1.2012 bn where today's head is EUR 1.2 m. Round 1 judged only the copy, so the same slip with NO copy turned a null head into EUR 1.2012 bn, and with LOT-2's copy alone raised EUR 1.2 m to it: the max election never reads lot results, so nothing else judges a copy-less award, but 471 refuses it when asked at its lot (partner: LOT-2's award). A refused figure says the buyer's scale is broken, so today's head stays. Every rule's EUR 1 bn gate makes the check free below it. Costs 0 of the 21 changes and 0 of the 4,745 records (summed awards refused at their lot occur in 4 records, 288191, 319527, 614457 and 666053, and T' already stops all 4).
 - PATH W G6: no lot award of the head is in another currency.
 - PATH W G7: no withheld (372) procedure figure.
 - PATH W G8: every summed award names a lot of the head's counted unit (Lot, or Part in a Lot-less head). Stops a re-keyed chain (TED LOT-1 vs eForms LOT-0001) being counted twice; costs 0 of 10 rights.
+- PATH W G8b (added in unit 3's second review round, 2026-10-16): no two DISTINCT summed lot keys that spell one lot number. A key is read as a number only where it is recognisably a numbered lot key: ASCII digits alone (an OCDS id, `1`), or `LOT` in any case then digits, directly or after one `-`, space or `_` (TED's synthetic `LOT-1..n`, eForms' `LOT-0001`, `Lot 2`, `LOT2`), leading zeros dropped; any other key (`1a`, `1.2`, `2/E`, `L1`, `PAR-0001`) never trips it. The number is the key's SPELLING, not the published lot number: TED's `LOT-k` is the notice's k-th lot section in document order (`r209::parse`; the published LOT_NO survives only as the `TED-LOT_NO` value, and nothing re-keys a TED lot by it), so `LOT-k` is lot k only where the notice describes every lot from 1 in order. Where it does not, G8b misses a misaligned re-keying (a TED CAN describing only lots 3 and 5 as `LOT-1`/`LOT-2` beside an eForms restatement on `LOT-0003`/`LOT-0005` reads {1, 2, 3, 5} and sums each lot twice) and can refuse distinct lots (TED's `LOT-1` for lot 3 beside eForms' `LOT-0001`), which is harmless because today's head stays. The stored key carries no LOT_NO, so there is no cheap fix; recorded at unit 3's third review round, and the post-drain read compares each summed TED key against its notice's `TED-LOT_NO`. Why: a re-keyed chain whose BOTH key families are typed Lots (TED LOT-1..n beside eForms LOT-0001..n) passes G8 and summed each lot twice; round 1 accepted that as a recorded cost because 0 of the 4,745 records showed it, but the drain folds ~195,000 Tenders, and a refused path W keeps today's head, so failing closed cannot regress a head. A pure function of the summed set, like G1'..G4. Costs 0 of the 21 changes and 0 of the 4,745 records.
 - PATH W G1' (repeat, confirmed or not): no figure on >= 2 summed lots that is >= 1/10 of the largest summed lot. Stricter than A's G1 (no lot-null confirmation needed) and covers 2-3 equal awards with no stored total; costs 0 rights (5995030's repeated PLN 8,000.00 is under 1/10 of its largest lot).
 - PATH W G2: no figure carried by >= 4 summed lots AND by >= half of them.
-- PATH W G3: with n >= 3, the largest lot is not within 1 % of 10^k x the sum of the others, for k = 0..3 (5316712, 5625591, 4787274 shapes).
+- PATH W G3: with n >= 3, the largest lot is not within 1 % of 10^k x the sum of the others, for k = 0..3 (5316712 and 4787274 shapes; 5625591 is the same shape in lot estimates, which path W never reaches).
 - PATH W G4: no Estimate or FrameworkMaximum LotSums kind on >= 2 of the same lots whose sum over those lots is < 1/10 or > 10x the awards over them.
 - Both paths: set the derivation marker columns; never write a synthetic amount row; partner-only rows (506) are never summed or served.
 
@@ -327,10 +328,258 @@ Done line: met through path V (7427765 EUR 3,000,000.00; 5943121 EUR 1,321,579.9
 - Drain route: refold-value-band (cohort: stored value >= EUR 1 bn, supervisor.rs value_band_tender_ids) reaches neither the 15 path-V heads (all below EUR 1 bn or null since 537's drain) nor most path-W heads. Unit 3 needs a corpus refold (2563/2564 scale) or an id cohort: heads with >= 2 lot awards and no admitted procedure figure, plus heads with 471/492/537 refusals.
 - Path W's wrong-direction rate rests on 10 awards fires (0 farther, 95 % upper bound 28 %). Propose a post-drain bounded read: the derived awards heads >= EUR 100 m, plus a uniform sample of about 50 path-W changes, read before the change is called done.
 - Path V's 471/492 branch rests on one case (928196). The V1 guard (lots repeat M with F ~ 10^j*M) is theoretical, with 0 observed cases; keep it, but it is untested.
-- Re-keyed chains where BOTH key sets are typed lots (a TED CAN on LOT-1..n and an eForms modification on LOT-0001..n) would pass G8 and double count. Unmeasured; a test fixture should pin the expected behaviour.
+- Re-keyed chains where BOTH key sets are typed lots (a TED CAN on LOT-1..n and an eForms modification on LOT-0001..n) would pass G8 and double count. Unmeasured; a test fixture should pin the expected behaviour. DECIDED at unit 3's review: accepted as a recorded cost and pinned; REVISED in its second round (2026-10-16): G8b refuses it (see Unit 3, "Review fixes").
 - Latest-award-per-lot undercounts when a re-run procedure reuses a lot key (5977060: the 2019 painting re-run keyed LOT-1 replaces Sogea's EUR 1.242 m). Accept as closer, or key the latest award by result key or winner?
 - Estimate-only multi-lot heads stay one lot's figure. Mapping BT-118-NoticeResult (issue 506) would confirm uniform per-lot sums (691343, 423618: BT-118 = the lot sum) and could later admit a BT-118-vouched estimate sum as a third path. Separate issue?
 - The pseudo-lot (TED object section stored as LOT-1, here at 3x) matters only if the estimate path is ever revisited. Possible signals: a lot title equal to the Tender title, or exact integer multiples (which blocks 8426318 at m = 2).
 - Thresholds inherited from A and fitted on the 88 labels: G1' share 1/10, G2 >= 4 lots and >= half, G3 1 % with k = 0..3, G4 10x. They are only weakly tested below the band (R: 2 awards members; holdout: 4).
 - EUR conversion: Rust should use RatesLookup at the head's date. The labels differ by 1-4 cents where the designers used a row rate (8514592).
 - The task named 92 labels; its JSON carries 88 (unit 1's class exactly, B 84 + R 4). Were 4 labels dropped upstream?
+
+## Unit 3 — built (2026-10-16, wf_69ed7f6c-050)
+
+Evidence and scripts: `.scratch/tender-db/551-lot-sum/unit3/` (`merge_rule.py` is the adopted rule written from
+the "Unit 2 — decided" text alone, over unit 1's `elect.py`; `gen_fixtures.py` writes the Rust fixtures;
+`export_lines.py` + `port_check_harness.rs` + `compare.py` are the port check).
+
+**The election** (`crates/store/src/canonical.rs`).
+- `head_value_eur_cents_with` returns `HeadValue { eur_cents, derived: Option<DerivedValue> }`. `DerivedValue` is
+  `{ path, kind: LotSumKind, cents, currency, lots }`; `path` is `DerivationPath::Vouched { rule: ScaleRule
+  (Partner 471 | Hundred 492 | LotSum 537), field, cents, currency, exponent }` or `DerivationPath::Awards`.
+  `head_value_eur_cents(chain)` still returns the EUR cents (every existing caller); `head_value(chain)` returns
+  the whole `HeadValue`.
+- The max election is unchanged, split out as `elect_head_figure` (the last of equal maxima, with its currency and
+  whether it is an award copy) over one judgement per candidate (`judge_head_amount`: partner-only, withheld,
+  sentinel, no rate, refused, over cap, zero, admitted — the election's order). `derive_lot_sum` then tries path V,
+  else path W, exactly as decided: V's precondition, S-selection (537's own electable S; a partner-only match →
+  the electable sum at the same k; 471/492 → `lot_sum_exponent(F, S', n') == k`; closest, then Awards > Estimate >
+  FrameworkMaximum), agreement on (currency, S), the cap, V1; W's T', K, G0, G5, G6, G7, G8, G1', G2, G3, G4 (V0, G5', G8b and G5's lower bound came with the review fixes).
+  Neither path ever sums a partner-only kind; W never sums Estimate or FrameworkMaximum.
+- New machinery: `ScalePartners::procedure_refusal` (which rule refused a procedure figure, branch for branch with
+  `refuses_amount`, debug-asserted equal), `ScaleRefusal`, `LotSums::by_currency` (the one construction 537's
+  cached sums and 551 read; `lot_sums_of` now delegates to it), `LotSums::per_lot` / `award_lots` / `counts`.
+- S's EUR value is `RatesLookup::eur_cents(S, currency, head date)`.
+
+**The marker.** Nullable `tenders` columns `current_value_derivation` ('lot-sum-vouched' | 'lot-sum-awards'),
+`current_value_cents`, `current_value_currency`, `current_value_derivation_detail` (JSON: `summed`, `lots`, and for
+path V `rule`, `exponent`, `refused {field, value {cents, currency}}`), added in canonical's SCHEMA,
+`reset_tender_layer`'s CREATE and `migrate()` (metadata-only ALTERs). `current_value_eur_cents` = S's EUR value. The
+fold's `head_update` writes all four (NULL for an elected head) with every head write; `StoredHead` carries them,
+so the shadow compare announces a head that becomes or stops being derived at an unchanged EUR figure. Never an
+amount row (pinned: the fold test counts the amount rows). One writer, pinned
+(`the_derived_head_marker_has_one_writer`).
+
+**The read path.**
+- `read.rs` `tender_select_head`: at the head version a derived head's `cents` / `currency` are the stored money
+  (`CASE WHEN t.current_value_derivation IS NOT NULL AND v.seq = t.current_seq THEN … ELSE <the elected-row pick>
+  END`), and two new columns carry the method and detail (head version only). Plan-probed on a copy of
+  `planchk/schema.db` with the four columns added: the list statement's plan is IDENTICAL to the pre-551 shape (diffed),
+  no new SCAN.
+- API: every Tender row gains `value_derivation` (null, or `{method, …detail}`); `value` stays Money. OpenAPI
+  declares it (`components.schemas.Tender.properties.value_derivation`).
+- Section 16 (`data_quality.rs`): a derived head is listed under its own currency with its sum (COALESCE of the
+  marker money and the elected row; the elected-row join is skipped for a derived head), its lot-sum column reads
+  `derived: <method>`, and it is never "elected row NOT FOUND". Plan-probed: all SEARCH, first line the value-index
+  seek, as before.
+- SSE / change rows: no code of their own. A derived head is a head-column change like any other: an appended
+  version announces it by its transition rows, a refold's compare by its correction rows (the marker is in
+  `StoredHead`). (The At probe's earlier-version superset did need code: see "Review fixes".)
+
+**Decisions beyond the spec.**
+- API field name: `value_derivation`, a top-level sibling of `value` (not inside it), so `value` keeps the Money
+  shape every client already parses. `method` names the column's value; the detail's keys are merged in.
+- Detail JSON keys: `summed` (the `LotSumKind` label: `awards`, `BT-27-Lot`, `BT-271-Lot`), `lots`, `rule` (the
+  deciding issue as a string), `exponent`, `refused`. Written by hand in the store (no JSON crate there, and adding
+  one would re-hash `Cargo.toml`); every string is JSON-escaped.
+- A derivation is served on the head version only; an older version's row keeps the elected-row pick.
+- Path V's S-selection uses `LotSums`' three electable kinds (as the issue specifies), not rule_B's extra
+  lot-scope `result_value` kind; the port check shows no record where that differs.
+- 537's tests (`a_total_ten_to_the_k_times_its_lot_award_sum_is_not_elected`) now pin the MAX election
+  (`max_election_eur_cents`, test-only): what a refusal falls to. The derivation on top is pinned separately on
+  real rows; `cost` and `bounded` also pin what is SERVED (`head_value`), which V0 keeps at the max election.
+- No epoch bump (recorded on `PROJECTION_EPOCH`): R3 by tender id.
+- No ADR: value-election decisions live in the issues and `canonical.rs` (366/471/492/505/537 have none either).
+
+**Tests** (focused command; logs in the scratchpad `b551/`).
+- `canonical_551_fixtures.rs` (generated): the stored rows of the 15 path-V heads, the 6 labelled path-W heads,
+  8440393, 5316712, 4925871, 8822313, 274271, 6885102, 175096 (unit 1's pull), and from the public API 4930240,
+  928196 (its x100 partner version restated from its refusal), 7487018, 5625591 and the holdout 467176, 294968,
+  7256284, 5977060.
+- `a_refused_total_serves_the_lot_sum_it_vouches_for`: all 16 path-V pins (rule, k, field, F, kind, S, currency,
+  n, EUR). `an_unvouched_awards_sum_is_served_under_its_guards`: the 10 path-W pins. `the_rejected_shapes_keep_the_max_election`:
+  8440393, 7487018, 5316712, 6885102, 4925871, 8822313, 175096, 274271, 4930240, 5625591.
+- `the_vouched_path_takes_only_the_sum_its_refusal_names` and `the_awards_path_refuses_every_shape_its_guards_name`:
+  one synthetic shape per guard (precondition, award copy not a procedure figure, 471 naming k, partner-only with
+  and without an electable same-k sum, agreement, V1 — a near-exact F so 537 rather than 471 refuses —, the cap;
+  T' admitted / sentinel / withheld / over cap, K, estimates never summed, G0 one lot and below today, G5 copy over
+  cap and S over cap, G6, G8, G8b (both typed families, one shared number, `1` beside `Lot 1`; each family alone and sub-lot keys still sum), G1' with the small-pair pass, G2, G3 k = 0 and k = 2, G4 off and near, the null-head
+  currency, a non-EUR sum, no rate).
+- Store: `a_derived_lot_sum_head_is_stored_and_served_as_the_fold_derived_it` (fold → columns → read row → a later
+  admitted figure clears the marker), `the_derived_head_marker_has_one_writer`. Ingest: section 16 lists a derived
+  head. App: `a_derived_head_says_how_its_value_was_derived` (json), `refold_lot_sum_requeues_the_tenders_a_derived_head_can_reach`.
+- The two fold goldens (`project_refold.snapshot`, `fold_writer.snapshot`) were recaptured for the schema change
+  only: the diff is the four new columns, NULL on every row, no value moved (533's precedent for its column).
+
+**Port check.** The Rust election (a temporary ignored harness, `unit3/port_check_harness.rs`, since removed) run on
+all 4,745 unit-1 records against `merge_rule.py` with the same rate table (each currency's rate from the head's
+largest stored conversion): **0 disagreements** — the max election equals Python's on 4,745/4,745 (and equals
+the stored production head on 4,745/4,745), and the 21 derived heads agree on path, rule, k, F, kind, S, currency
+and n. One harness artifact was fixed on the way (a legacy code, `SKR`, seeded under its spelling rather than
+`canonical_currency`'s). `merge_rule.py` itself reproduces unit 2's expected effect exactly: 21 changes, B 19
+(15 V + the Lyon-Turin trio + 8426318), R 2 (585917, 5995030), nothing outside the labelled class.
+
+**Drain design** (docs/operations.md, "The derived lot-sum head"; nothing run). A new job kind `refold-lot-sum`
+(R3 by tender id), dry by default; the wet run needs `expect` (the dry count), aborts off it by more than a quarter
+before any write, stamps the cohort stale, re-queues its notices and queues `project` behind itself; stoppable
+(the walk reads the stop flag per window; listed in `STOPPABLE_KINDS`, heavy-write, Box::pin'd arm).
+- Cohort (`canonical::lot_sum_cohort_sql`, 100k-id windows on the reader pool): a head version with a tender-scope
+  figure of €1 bn or more (path V needs a scale refusal, every rule gated there), or awards above 10.00 on ≥ 2
+  distinct lots with no tender-scope figure that is neither an award copy, nor partner-only, nor in the sentinels'
+  range (≤ 1, = 100, ≥ 111,111,111). A superset (it over-selects big real figures rather than copy the digit
+  walk); all 21 unit-2 changes are inside it. Plan-probed: PK range, then index seeks only.
+- Size: R's 22/994 → about 195,000 Tenders (95 % 129,000–293,000); the looser "≥ 2 awarded lots" cohort is
+  ~460,000. Fold ≈ 6–10 min at 2564's rate, against a corpus refold's ~5 h. Expected moves: path V ~16, path W
+  ~21,200 (9,700–46,200).
+- Why not refold-fields over the award value field ids: every award carrier of every era, a corpus-scale sweep
+  that still misses path V's estimate sums and re-folds millions of single-lot awards.
+
+**Review fixes (2026-10-16, on the uncommitted build).** Eleven confirmed findings, each fixed minimally:
+- **G5' (blocking).** Path W summed a lot award whose tender-scope copy 471/492 refused: `derive_lot_sum` counted
+  a `Lot(None)` copy only when it was over the cap. A refused copy now keeps today's head as an over-cap one does
+  (`copy_suspect`). Pinned in `the_awards_path_refuses_every_shape_its_guards_name` (shape C: EUR 1.2 bn + EUR
+  1.2 m with copies of both stays EUR 1.2 m, and the test asserts the copy is refused at `Lot(None)`). Recorded in
+  Unit 2's guards.
+- **V0.** Path V had no raise-only check, so 537's recorded-cost shape fell to a x100 understatement marked vouched
+  and `bounded` was lowered from EUR 10 m to EUR 3 m. `vouched_lot_sum` now keeps today's figure unless S_eur is
+  above it. Pinned on 537's own `cost` and `bounded` shapes (the test asserts `head_value` there) and on a minimal
+  shape in `the_vouched_path_takes_only_the_sum_its_refusal_names`. Recorded in Unit 2's guards.
+- **The SSE At probe (blocking).** `ValueBy::Version` read an earlier version as "an amount row inside the bound",
+  which a derived head never is. A later version moving a derived head out of a bound probed `(false, false)`,
+  the change was dropped, and the subscriber kept a ghost. Its ELSE leg now also accepts the version's lot figures:
+  under `>=` their total (`SUM(eur) + COUNT(*)` over the version's positive lot amount rows, or over its lot
+  results; the `COUNT` is one cent a row of conversion rounding), and under `<=` any one of them. Each leg seeks
+  `(tender_id, seq)` and carries the head guard. Pinned in store's
+  `an_earlier_derived_head_is_read_inside_the_bound_it_was_in` (path W under `min_value`, path V under `max_value`
+  and a band). The At plan test now also checks the `vr` (lot results) leg, and the statements were plan-probed on a
+  copy of `planchk/schema.db`: no SCAN.
+- **G8b (second round, 2026-10-16; replaces round 1's accepted double count).** A re-keyed chain whose BOTH key
+  families are typed Lots passed G8, and path W summed each lot twice. Round 1 accepted that as a recorded cost;
+  the drain folds ~195,000 Tenders, 40x the sample that saw none, so path W now fails closed: two distinct summed
+  keys that spell one lot number keep today's head (`canonical::lot_number` / `names_one_lot_twice`, read off the
+  spellings the walkers write: `r209::parse`'s synthetic `LOT-1..n`, eForms' `LOT-nnnn`, Find a Tender's OCDS
+  ids, plus unit 1's `Lot 2` / `LOT2`; leading zeros dropped; a key that is no numbered lot key never trips it).
+  Pinned in `the_awards_path_refuses_every_shape_its_guards_name`: LOT-1/2 at EUR 1.0/2.0 m beside LOT-0001/2 at
+  EUR 1.1/2.2 m now keeps today's EUR 2.2 m (was EUR 6.3 m over 4 lots), as do LOT-2 beside LOT-0002 alone and
+  `1` beside `Lot 1`; the positive controls (LOT-0001/2 alone, LOT-1/2 alone, numbers 1/2/3 across families,
+  `1`/`1a`/`1.2`) still sum. `the_awards_path_reads_a_lot_number_only_from_a_numbered_lot_key` pins the reader.
+  Mirrored in `merge_rule.py`: `run_py.py` gives output identical to round 1 on all 4,745 records (0 values, 0
+  reasons changed; the 21 changes stand). 27 records reach G8b (the 6 path-W changes, 20 G1' keeps, 1 G3 keep)
+  and none trips it. 12 heads type two keys of one number (`1` beside `Lot 1`, e.g. 8604792, 8713827), and 0
+  award both. Correction to round 1: 6978910 and 7775229 do not type both families. Their four-digit keys are
+  the TED walker's own numbering past 999 (`LOT-1000`..`LOT-2604`), which G8b reads as 1000.., apart from `LOT-1`.
+  The post-drain read still treats a double count as a finding: G8b cannot see one lot under keys it does not
+  read as numbers (`Lot A` re-keyed to `LOT-0001`), nor under numbers that do not line up. TED's `LOT-k` is the
+  notice's k-th lot section, not its published LOT_NO (corrected in round 3, below), so a TED CAN describing only
+  lots 3 and 5 (`LOT-1`/`LOT-2`) beside an eForms `LOT-0003`/`LOT-0005` passes G8b and double counts, and TED's
+  `LOT-1` for lot 3 beside eForms' `LOT-0001` is refused though the lots differ (harmless: today's head stays).
+  The `/docs` Amounts caveat (its phrase pinned in
+  `the_docs_say_a_head_can_be_a_derived_lot_sum`), CHANGELOG and docs/operations.md name the guard.
+- **Section 16 JSON.** `head_value_band.rows[]` gains `derivation`, asserted on the band test's derived row 11.
+- **Docs.** The `/docs` min_value/max_value bullet now says the bounds compare the head's EUR value (the lot sum's
+  where `value_derivation` is set), and that a Tender with only skipped-class amounts has no known value unless
+  its awards are summed. The Amounts caveat names V0 and G5'. A new
+  `the_docs_say_a_head_can_be_a_derived_lot_sum` pins one phrase per sentence across `/docs` (both caveat lines
+  Unit 2 required), OpenAPI `Tender.value` / `value_derivation` and the five `/v1/sql` `tenders` notes.
+- **CHANGELOG.** Webhooks dropped from the surfaces that carry `value_derivation`: a webhook body carries change
+  events only. V0 and G5' added to the two paths' descriptions.
+- **operations.md / pins.** 5625591 moved to the estimate-only group (it never reaches a path-W guard), and
+  5316712 is named as the only real-row G3 case, here and in canonical.rs's G3 comment.
+- **Scripts.** `unit3/` no longer reads the session scratchpad. `merge_rule.py` imports `../scripts/elect.py`, and
+  the inputs are committed under `unit3/data/`: `ctx.json.gz`, which is unit 1's 4,745-record pull as JSON, 1.3 MB,
+  and the 8 API reads. `run_py.py` reads `../results-slim.jsonl`, which matches the old results.jsonl on
+  population and stored head for all 4,745. From those inputs, `gen_fixtures.py` regenerates
+  `canonical_551_fixtures.rs` byte for byte. `run_py.py` with V0 and G5' added gives output identical to the
+  pre-review rule on all 4,745 records, so neither new guard fires there. `port_in.tsv` is generated
+  (`export_lines.py [path]`), not committed.
+
+**Review fixes, round 3 (2026-10-17, on the uncommitted build).** Six confirmed findings, each fixed minimally:
+- **G5' widened (blocking).** G5' judged only an award's tender-scope copy, at `Lot(None)`; a summed award with no
+  copy was never asked. LOT-1 awarded EUR 1.2 bn beside LOT-2's EUR 1.2 m, no copies: a null head became
+  EUR 1.2012 bn, and with LOT-2's copy alone EUR 1.2 m was raised to it, in the band 471/537 protect. Round 2's
+  carried note said such an award "is never judged by a scale rule"; true of the code, but `ScalePartners` refuses
+  it when asked at `Lot(Some(key))` (471, partner LOT-2's award). `awards_lot_sum` now keeps today's head when any
+  summed award converts and `refuses_amount("result_value", currency, c, eur, Lot(Some(lot)))` holds. Pinned in
+  `the_awards_path_refuses_every_shape_its_guards_name` (no copies: null stays null, with the refusal asserted at
+  LOT-1 and not at LOT-2; LOT-2's copy alone: EUR 1.2 m stays). Mirrored in `merge_rule.py` (each summed award judged
+  at `E.LOT(lot)`). Recorded in Unit 2's G5' line.
+- **G5's lower bound.** Path W tested only the cap and `eur <= today`, so on a null head an S that rounds to EUR 0
+  passed and the fold stored `current_value_eur_cents = 0`, which issue 378 reserves for "nothing elected" and the
+  `/docs` says never appears. Now `eur <= 0` keeps the head, as path V's `(0, cap]` does. Pinned with IDR 17,000/EUR
+  (awards IDR 20.01 + 25.00, with and without copies judged `Zero`). Mirrored in `merge_rule.py` (`s_eur <= 0`).
+  Recorded in Unit 2's G5 line.
+- **The At probe's sums (read.rs).** The `>=` legs' `SUM(eur) + COUNT(*)` could overflow i64 on an earlier version
+  whose lot rows or lot results sum past EUR 9.2e16; turso raises that as an error, the SSE diff loop sends a read
+  error and returns, and a resumed stream re-reads the same change. Every lot leg (both `SUM`s and both `<=`
+  EXISTS) now counts only rows `BETWEEN 1 AND` `IMPLAUSIBLE_EUR_CENTS` (from 0 since round 4, below): still a superset, since each summand of a
+  derived S converts to at most S, and S to at most EUR 100 bn. Pinned in store's
+  `an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes` (two lot estimates and two lot awards of
+  EUR 4.97e16 at v1, tenders and lots At `min_value` and a band); plan-probed on a copy of `planchk/schema.db`.
+- **Value-bound docs.** The `/docs` filter row and OpenAPI `min_value` still said a Tender with no convertible amount
+  never matches a value bound; path W breaks that (585917's only amounts are partner-only rows). Both now say the
+  bound compares the head's EUR value, the lot sum's where `value_derivation` is set, and that such a Tender matches
+  when its lot awards are summed; one phrase of each is pinned in `the_docs_say_a_head_can_be_a_derived_lot_sum`.
+  The "nothing this API returns is converted" bullet names the lot sum, and read.rs's value-bound comment is
+  current.
+- **G8b's ordinal caveat (docs only).** TED's `LOT-k` is the notice's k-th lot section, not its LOT_NO, so G8b
+  misses misaligned re-keyings and can refuse distinct lots (harmless). No cheap code fix (the stored key carries no
+  LOT_NO). Stated in the `lot_number` and `derive_lot_sum` doc comments, Unit 2's G8b line, round 2's bullet above,
+  `/docs`, CHANGELOG and operations.md; the post-drain read now compares each summed TED key against its notice's
+  `TED-LOT_NO`.
+- **Status line.** Rewritten against main at afdc1dc (552's v12 and 524's v11 are live), and the orphaned fragment of
+  an older status under it removed.
+
+`run_py.py`'s loop with round 3's guards (scratchpad `b551r2/fix/run_fix.py`) gives output identical to round 2 on
+all 4,745 records: 0 values, 0 derivations and 0 reasons changed; the 21 changes stand. The Rust election, re-run with round 1's temporary
+harness (`port_check_551`, inserted and removed again, canonical.rs restored byte for byte), agrees with it on
+all 4,745: 0 disagreements, the max election equal on 4,745 and the 21 derived heads equal on path, rule, k, F,
+kind, S, currency and n.
+
+**Review fixes, round 4 (2026-10-17, on the uncommitted build).** Two confirmed findings, neither blocking, each
+fixed minimally:
+- **The At probe counts EUR 0 summands (read.rs).** Round 3's `BETWEEN 1 AND` the cap dropped a lot row stored at
+  EUR 0, but each summand of a derived S can round to EUR 0 while S rounds to a cent (G5's floor is on S alone):
+  IDR 80.00 + 84.00 at 17,000/EUR derive EUR 0.01 from two EUR 0 awards. After a later version moved the head out
+  of a `max_value` bound, the earlier version probed outside the bound its served head was inside, the pair read
+  `(false, false)` and the subscriber kept a ghost; under `min_value` the `>=` leg (`> 0` since round 2) served
+  `added` where `changed` was due. Every lot leg now counts rows `BETWEEN 0 AND` the cap: under `>=`,
+  `SUM(round(x_i)) + n >= sum(x_i) + n/2 >= round(S)` for n >= 1 (each summand and S convert at the same date and
+  rate); under `<=` any summand is at most S. Overflow safety and the plans are unchanged (a residual after the
+  `(tender_id, seq)` seek; a zero adds nothing to `SUM`). Pinned in store's
+  `an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound` (tenders and lots At v1 inside
+  `max_value` EUR 1.00 and `min_value` EUR 0.01 after v2 admits EUR 1.5 m). Reach is nil today: only path W in a
+  currency above ~2,000 per EUR (IDR, the pre-2005 ROL/TRL), none in the 4,745 records; path V's S is at least
+  F/10^6 with F >= EUR 1 bn. read.rs's leg comment and the `ValueBy::Version` doc no longer say "positive".
+- **The carried residual-risk sentence (docs only).** It named the per-award check's blind spots wrongly. 537's
+  lot-sum rule never judges a lot award: at `Lot(Some(key))` it is reached only through `lot_sum_group_copy`,
+  which needs a LotsGroup key and a procedure figure of the head at the award's cents, and path W's head has none
+  (case LS: LOT-1's EUR 1,200,000,010.00 award, exactly 10^3 x its two siblings' BT-709 sum, has no 10^k or x100
+  partner and is served as EUR 1,200,600,010.00). And a k >= 3 slip WITH an exact partner is still summed when
+  another field of the head repeats its cents, 471's corroboration (case S3: v1 estimates LOT-1 at EUR 1.5 m; the
+  head estimates and awards LOT-1 at EUR 1.5 bn beside LOT-2's EUR 0.8 m award, no tender-scope copies; the award
+  is not refused at `Lot(Some("LOT-1"))` while the same estimate is refused at `HeadLot(Some("LOT-1"))`, and a null
+  head becomes EUR 1.5008 bn; with LOT-1's copy the max election itself admits EUR 1.5 bn). Both follow decided
+  rules (471's corroboration, 537 judging procedure figures), so no guard changed and `merge_rule.py` is untouched.
+  Rewritten in "Open (carried)" below; operations.md's post-drain read now flags a path-W head whose summed award
+  a lot figure of the head repeats.
+
+**Open (carried).** The post-drain bounded read (operations.md) before "done"; path V's 471/492 branch rests on
+928196 alone; V1 has no observed case (pinned synthetically); the latest award per lot key undercounts a re-run that
+reuses the key (5977060, pinned as the accepted "closer"); a BT-118-vouched estimate path (issue 506's unmapped
+BT-118) stays a separate question. A slipped lot award, copy or none, is now judged at its own lot by the scale rules
+(G5', round 3); what they cannot see is a slip below their EUR 1 bn gate, one with no exact 10^k partner (471's
+k >= 3, 492's x100; 537's lot-sum rule never judges a lot award, round 4's case LS), or a k >= 3 one whose figure
+another field of the head repeats (e.g. its lot's own estimate, which the head election refuses at `HeadLot`): 471
+counts that as corroboration (round 4's case S3). Path W sums such an award unless G1'/G2/G3/G4 or the cap stop it;
+the post-drain read of awards heads of EUR 100 m or more is where one would show, and it flags each path-W head whose
+summed award a lot figure of the head repeats at the same cents. G8b reads TED's ordinal `LOT-k` as a lot number (round 3): the
+post-drain read checks each summed TED key against `TED-LOT_NO`.

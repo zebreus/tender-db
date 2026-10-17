@@ -1093,9 +1093,39 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
     (
         "tenders",
         "current_value_eur_cents",
-        "The head version's highest amount as derived EUR cents (ADR-0014 D5) — what \
-         min_value/max_value compare against. NULL = no amount converts (or the row \
-         predates the backfill).",
+        "The head version's ELECTED amount as derived EUR cents (ADR-0014 D5) — what \
+         min_value/max_value and sort compare against. NULL = no amount converts (or the row \
+         predates the backfill). Since issue 551 it can be a derived lot sum's EUR value: then \
+         current_value_derivation is set and no amount row of the head carries this figure.",
+    ),
+    (
+        "tenders",
+        "current_value_derivation",
+        "Issue 551: NULL when the head value is one published figure (the elected amount row); \
+         'lot-sum-vouched' when it is the sum of the head version's lots that a refused procedure \
+         figure vouches for (that figure is exactly 10^k times the sum), 'lot-sum-awards' when it is \
+         the lots' latest awards added up on a head with no procedure figure. The four \
+         current_value_* derivation columns are written and cleared together by the fold; a head \
+         not folded since issue 551 deployed reads NULL until its refold (refold-lot-sum).",
+    ),
+    (
+        "tenders",
+        "current_value_cents",
+        "Issue 551: a derived head's lot sum in minor units of current_value_currency, as the API \
+         serves it in value; NULL on every elected head (read the elected amount row instead).",
+    ),
+    (
+        "tenders",
+        "current_value_currency",
+        "Issue 551: the currency of current_value_cents (the summed lots' own); NULL on every elected head.",
+    ),
+    (
+        "tenders",
+        "current_value_derivation_detail",
+        "Issue 551: a JSON object describing a derived head, served as value_derivation: summed \
+         (awards, BT-27-Lot or BT-271-Lot), lots, and for lot-sum-vouched the rule (the deciding \
+         issue: 537, 471 or 492), its exponent and the refused figure {field, value {cents, \
+         currency}}. NULL on every elected head.",
     ),
     (
         "tenders",

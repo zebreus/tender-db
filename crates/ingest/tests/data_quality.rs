@@ -872,6 +872,7 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
         ("200008-2020", "ted-export-r209"),  // 8: tender 8, a tie on the elected eur_cents
         ("200009-2020", "ted-export-r209"),  // 9: tender 9, a stale head column
         ("00522142-2025", "eforms:eforms-sdk-1.12"), // 10: tender 10, 369057's lot-sum slip (issue 537)
+        ("00600011-2025", "eforms:eforms-sdk-1.12"), // 11: tender 11, a derived lot-sum head (issue 551)
     ];
     for (i, (pubid, profile)) in notices.iter().enumerate() {
         exec(format!(
@@ -902,7 +903,7 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
         .await;
     }
     // (tender, seq, notice)
-    for (tender, seq, notice) in [(1, 1, 1), (1, 2, 2), (2, 1, 3), (3, 1, 4), (4, 1, 5), (5, 1, 6), (7, 1, 7), (8, 1, 8), (9, 1, 9), (10, 1, 10)] {
+    for (tender, seq, notice) in [(1, 1, 1), (1, 2, 2), (2, 1, 3), (3, 1, 4), (4, 1, 5), (5, 1, 6), (7, 1, 7), (8, 1, 8), (9, 1, 9), (10, 1, 10), (11, 1, 11)] {
         exec(format!(
             "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id) \
              VALUES ({tender}, {seq}, {notice}, 0, '{}')",
@@ -970,6 +971,17 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
         ))
         .await;
     }
+    // Tender 11 (issue 551): a DERIVED head, the sum of its lots (here EUR 15 bn) stored on
+    // `tenders` with no amount row behind it. It is listed under its own currency with the
+    // sum as its figure, never as "not found", and its lot-sum column names the derivation.
+    exec(
+        "INSERT INTO tenders (id, source, kind, created_at, current_seq, current_value_eur_cents, \
+         current_value_derivation, current_value_cents, current_value_currency) \
+         VALUES (11, 'ted', 'procedure', 0, 1, 1500000000000, 'lot-sum-awards', 1500000000000, 'EUR')"
+            .to_owned(),
+    )
+    .await;
+    exec(amount(11, 1, "1", 700_000_000_000, "EUR", Some(700_000_000_000))).await;
     // Tender 1's corrigendum: a CHG-1 block naming II.1.7 (with the trailing `)`) and
     // its NEW_VALUE.TEXT, plus an unrelated CHG-2 naming IV.2.2.
     for (section, field, value) in [
@@ -989,7 +1001,7 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
     db.build_tender_indexes().await.expect("tender indexes");
     let report = measure(&db, "http://x").await;
     let ids: Vec<i64> = report.band.iter().map(|r| r.tender_id).collect();
-    assert_eq!(ids, vec![10, 7, 2, 8, 9, 1, 4], "top-down index order, one row per Tender; under the floor and NULL are out");
+    assert_eq!(ids, vec![10, 7, 2, 8, 11, 9, 1, 4], "top-down index order, one row per Tender; under the floor and NULL are out");
     let row = |id: i64| report.band.iter().find(|r| r.tender_id == id).expect("row");
     assert_eq!((row(1).currency.as_str(), row(1).cents), ("GBP", 900_000_000_000));
     assert_eq!(row(1).profile, "ted-export-r209");
@@ -1011,6 +1023,12 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
         "the awards, a cent off, over the three Lots"
     );
     assert_eq!((row(1).lot_sum, row(2).lot_sum, row(9).lot_sum), (None, None, None), "no lots, a lone figure, a stale head");
+    assert_eq!(
+        (row(11).currency.as_str(), row(11).cents, row(11).derivation.as_deref(), row(11).lot_sum),
+        ("EUR", 1_500_000_000_000, Some("lot-sum-awards"), None),
+        "a derived head is listed with its sum, not as a stale head (issue 551)"
+    );
+    assert_eq!(row(10).derivation, None);
 
     let text = data_quality::render_text(&report);
     let s10 = text.find("== 10.").expect("section 10");
@@ -1021,12 +1039,23 @@ async fn the_band_listing_shows_a_head_that_repeats_nowhere() {
     let band = &text[s16..];
     assert!(band.contains("issue 471"), "{band}");
     assert!(band.contains("33,260,500,000.00"), "the unique head is in the band:\n{band}");
-    for group in ["-- EUR (3 Tender(s)) --", "-- GBP (1 Tender(s)) --", "-- SEK (1 Tender(s)) --"] {
+    for group in ["-- EUR (4 Tender(s)) --", "-- GBP (1 Tender(s)) --", "-- SEK (1 Tender(s)) --"] {
         assert!(band.contains(group), "{group}:\n{band}");
     }
     assert!(!band.contains("9,999,999,999.99"), "{band}");
     assert!(band.contains("1 with no elected row found"), "{band}");
     assert!(band.contains("10^3 x awards (3)"), "the lot-sum column (issue 537):\n{band}");
+    assert!(band.contains("derived: lot-sum-awards"), "the derived head's column (issue 551):\n{band}");
+    // And the JSON row carries it, so a machine consumer can tell the sum from a published figure.
+    let json: Value = serde_json::from_str(&data_quality::render_json(&report)).expect("valid json");
+    let rows = json["head_value_band"]["rows"].as_array().expect("the band rows");
+    let json_row = |id: i64| rows.iter().find(|r| r["tender_id"] == id).expect("json row").clone();
+    assert_eq!(
+        (json_row(11)["derivation"].clone(), json_row(11)["currency"].clone(), json_row(11)["cents"].clone()),
+        (json!("lot-sum-awards"), json!("EUR"), json!(1_500_000_000_000i64)),
+        "the JSON row names the derivation beside the sum (issue 551)"
+    );
+    assert!(json_row(10)["derivation"].is_null(), "an elected head carries none");
 
     // The bound. Driving read: a range seek on the value index, not a scan of tenders.
     let sql = data_quality::band_listing_sql();

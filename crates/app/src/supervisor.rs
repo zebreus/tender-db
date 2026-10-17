@@ -690,6 +690,16 @@ enum Spec {
     /// R3). Run `project` after it; the fold compares and announces only what moved.
     /// `dry_run` (the default) counts and writes nothing.
     RefoldValueBand { dry_run: bool },
+    /// Issue 551: stamp stale and re-queue every Tender whose head could serve a DERIVED lot sum
+    /// (`Db::lot_sum_cohort_tender_ids`: a tender-scope figure of EUR 1 bn or more at the head, or
+    /// two or more awarded lots with no procedure figure outside the sentinels' range) — neither
+    /// path of the new election is reachable from `refold-value-band`'s cohort, since every
+    /// path-V head now sits below EUR 1 bn or null and path W raises heads from below. ADR-0017
+    /// D6's route R3 by tender id; the fold compares and announces only what moved. `dry_run`
+    /// (the default) walks the cohort and writes nothing; a wet run needs `expect`, the dry run's
+    /// count, and aborts before any write when the cohort is off by more than a quarter. The wet
+    /// run queues `project` behind itself.
+    RefoldLotSum { dry_run: bool, expect: Option<u64> },
     /// Issue 533: stamp stale and re-queue the open head — every Tender whose stored
     /// `current_deadline` is after now (`Db::open_head_tender_ids`, about 42k on prod) — so the
     /// fold derives `current_closed_by_notice` for it and drops a DÖE award notice's own date
@@ -3640,6 +3650,26 @@ impl Supervisor {
                 let params = if dry_run { "refold-value-band dry-run" } else { "refold-value-band" }.to_owned();
                 Ok(vec![self.push("refold-value-band", params, Spec::RefoldValueBand { dry_run }).await])
             }
+            // Issue 551: the derived lot-sum cohort, dry by default like every census; a wet run
+            // is sized (`expect`, the dry run's count) and queues its `project`.
+            "refold-lot-sum" => {
+                let dry_run = req.dry_run.unwrap_or(true);
+                if dry_run {
+                    return Ok(vec![
+                        self.push("refold-lot-sum", "refold-lot-sum dry-run".into(), Spec::RefoldLotSum { dry_run, expect: req.expect })
+                            .await,
+                    ]);
+                }
+                let Some(expect) = req.expect else {
+                    return Err("refold-lot-sum dry_run:false needs \"expect\": the dry run's Tender count".into());
+                };
+                Ok(vec![
+                    self.push("refold-lot-sum", format!("refold-lot-sum expect={expect}"), Spec::RefoldLotSum { dry_run, expect: Some(expect) })
+                        .await,
+                    self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
+                        .await,
+                ])
+            }
             // Issue 533: the open-head cohort, dry by default like every census.
             "refold-open-head" => {
                 let dry_run = req.dry_run.unwrap_or(true);
@@ -5589,6 +5619,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // and the arm once more before its first write; a stop writes nothing. The re-queue
     // and its stale-stamp then run to the end together (the issue-179 pair).
     "refold-fields",
+    // Issue 551: read before every window of the cohort walk and once before the first write;
+    // the stamp and the re-queue then run together, as refold-fields' do.
+    "refold-lot-sum",
     // Issue 543 unit 3: read before every window; the committed windows stand, and the
     // next rederive-eur starts again at the first tender (only a recovered job resumes).
     "rederive-eur",
@@ -7918,6 +7951,7 @@ impl Supervisor {
             | Spec::RefoldDeniedSchemes { .. }
             | Spec::RefoldNotices { .. }
             | Spec::RefoldValueBand { .. }
+            | Spec::RefoldLotSum { .. }
             | Spec::RefoldOpenHead { .. }
             | Spec::RefoldFields { .. } => off_frame(|| self.run_maintenance_spec(job)).await,
             Spec::BackfillOrgNames
@@ -8503,6 +8537,12 @@ impl Supervisor {
                 ))
             })
             .await,
+            // Issue 551: the derived lot-sum cohort. Boxed (issue 467's rule): the walk, the size
+            // gate and the re-queue live in their own fn's future, not `run_maintenance_spec`'s.
+            Spec::RefoldLotSum { dry_run, expect } => {
+                let stop = || self.cancelled(job.id);
+                Box::pin(self.run_refold_lot_sum(*dry_run, *expect, &stop)).await
+            }
             // Issue 533: refold-value-band's shape over the open head. Boxed like it (issue 467's
             // rule), so the arm's locals do not grow `run_maintenance_spec`'s one future.
             Spec::RefoldOpenHead { dry_run } => Box::pin(async move {
@@ -8548,6 +8588,66 @@ impl Supervisor {
             }
             _ => Err(misrouted(job, "run_maintenance_spec")),
         }
+    }
+
+    /// The `refold-lot-sum` job (issue 551): walk the cohort a derived lot-sum head can come
+    /// from ([`store::canonical::lot_sum_cohort_sql`]), then, wet, gate on `expect` and stamp
+    /// and re-queue it. `stop` is the job's stop flag, read before every window of the walk and
+    /// once more before the first write; past that the stamp and the re-queue run together (the
+    /// issue-179 pair).
+    async fn run_refold_lot_sum(
+        &self,
+        dry_run: bool,
+        expect: Option<u64>,
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> Result<String, String> {
+        self.set_phase(
+            "finding",
+            None,
+            None,
+            "Tenders whose head could serve a derived lot sum: a tender-id walk of the head versions, read-only".into(),
+        );
+        let cohort = self.db.lot_sum_cohort_tender_ids(stop).await.map_err(|e| e.to_string())?;
+        if let Some(at) = cohort.stopped_at {
+            return Ok(format!(
+                "refold-lot-sum (issue 551) STOPPED by cancel during the cohort walk, before tender id {at} of {}: \
+                 {} Tender(s) found so far, nothing was re-queued or stamped, and a re-run walks from the start",
+                cohort.max_id,
+                cohort.ids.len()
+            ));
+        }
+        let found = cohort.ids.len() as u64;
+        if dry_run {
+            let (notices, _) = self.db.requeue_tender_notices(&cohort.ids, true).await.map_err(|e| e.to_string())?;
+            return Ok(format!(
+                "refold-lot-sum (issue 551) DRY RUN — nothing written: {found} Tender(s) whose head could serve a \
+                 derived lot sum, {notices} notice(s); run it with \"dry_run\":false,\"expect\":{found} to stamp \
+                 and re-queue them (a `project` is queued behind the wet run)"
+            ));
+        }
+        let Some(expect) = expect else {
+            return Err("refold-lot-sum: a wet run needs `expect`, the dry run's Tender count (nothing was written)".into());
+        };
+        if found.abs_diff(expect) > expect / 4 {
+            return Err(format!(
+                "refold-lot-sum aborted: {found} Tender(s) in the cohort, expected ~{expect} — re-run the dry run \
+                 (nothing was written)"
+            ));
+        }
+        if stop() {
+            return Ok(format!(
+                "refold-lot-sum (issue 551) STOPPED by cancel after the cohort walk ({found} Tender(s)): nothing \
+                 was re-queued or stamped"
+            ));
+        }
+        self.set_phase("re-queueing", Some(0), Some(found), "cohort Tenders stamped and their notices re-queued".into());
+        let stamped = self.db.stamp_stale_for_tenders(&cohort.ids).await.map_err(|e| e.to_string())?;
+        let (notices, requeued) = self.db.requeue_tender_notices(&cohort.ids, false).await.map_err(|e| e.to_string())?;
+        Ok(format!(
+            "refold-lot-sum (issue 551): {found} Tender(s) whose head could serve a derived lot sum, {notices} \
+             notice(s); re-queued {requeued}, stamped {stamped} epoch-stale — the `project` queued behind this \
+             job applies them"
+        ))
     }
 
     /// The `refold-fields` job (issues 88, 383, 549): sweep the carriers, gate on
@@ -17507,6 +17607,7 @@ fn heavy_write_kind(kind: &str) -> bool {
             | "refold-void-names"
             | "refold-placeholder-names"
             | "refold-value-band"
+            | "refold-lot-sum"
             | "refold-open-head"
             | "rederive-eur"
             | "rederive-eur-recent"
@@ -18520,6 +18621,9 @@ mod tests {
                 // Issue 543 unit 3: the carrier sweep reads it before every window and
                 // the arm before its first write; a stopped run writes nothing.
                 "refold-fields",
+                // Issue 551: the cohort walk reads it before every window and the arm
+                // before its first write; a stopped run writes nothing.
+                "refold-lot-sum",
                 // Issue 543 unit 3: `rederive-eur` reads it before every window; the
                 // committed windows stand and the next run starts at the first tender.
                 "rederive-eur"
@@ -25906,6 +26010,109 @@ mod tests {
         assert_eq!(projected(1).await, Some(store::turso::Value::Integer(0)));
         assert_eq!(projected(2).await, Some(store::turso::Value::Integer(0)), "a lot value in an old version counts");
         assert_eq!(projected(3).await, Some(store::turso::Value::Integer(1)), "below the floor is left alone");
+        remove_db(&path);
+    }
+
+    /// Issue 551: `refold-lot-sum` finds the Tenders whose head could serve a derived lot sum —
+    /// a tender-scope figure of EUR 1 bn or more at the head (path V's evidence), or two or more
+    /// awarded lots with no procedure figure outside the sentinels' range (path W's shape) — dry
+    /// by default; a wet run needs `expect`, aborts off it, and otherwise stamps and re-queues.
+    #[tokio::test]
+    async fn refold_lot_sum_requeues_the_tenders_a_derived_head_can_reach() {
+        let path = format!("/tmp/tender-db-sup-lot-sum-{}-{}.db", std::process::id(), store::now_unix());
+        remove_db(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        for id in 1..=8 {
+            for sql in [
+                format!(
+                    "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, \
+                     ingested_at, parse_state, projected) VALUES ({id}, 'ted', 'OJ-{id}', 'h{id}', 'text', 1, 'm{id}', 0, \
+                     'parsed', 1)"
+                ),
+                format!(
+                    "INSERT INTO tenders (id, source, procedure_key, kind, current_seq, current_published_at, created_at, \
+                     projection_epoch) VALUES ({id}, 'ted', 'p{id}', 'procedure', 1, 100, 0, 4)"
+                ),
+                format!(
+                    "INSERT INTO tender_versions (tender_id, seq, published_at, publication_id, caused_by_notice_id) \
+                     VALUES ({id}, 1, 100, 'OJ-{id}', {id})"
+                ),
+            ] {
+                conn.execute(&sql, ()).await.unwrap();
+            }
+        }
+        let amount = |id: i64, cents: i64, eur: i64, field: &str| {
+            format!(
+                "INSERT INTO tender_version_amounts (tender_id, seq, lot_id, field, cents, currency, eur_cents) \
+                 VALUES ({id}, 1, NULL, '{field}', {cents}, 'EUR', {eur})"
+            )
+        };
+        let award = |id: i64, result: i64, lot: i64, cents: i64| {
+            format!(
+                "INSERT INTO tender_version_lot_results (tender_id, seq, lot_result_id, lot_id, awarded_cents, awarded_currency) \
+                 VALUES ({id}, 1, {result}, {lot}, {cents}, 'EUR')"
+            )
+        };
+        let gate = store::canonical::SCALE_ERROR_MIN_EUR_CENTS;
+        for sql in [
+            // 1: path V's evidence, a EUR 1 bn procedure figure (refused or not: the fold decides).
+            amount(1, gate, gate, "result_value"),
+            // 2: path W's shape, two awarded lots and only an award's copy at tender scope.
+            award(2, 21, 201, 150_000_000),
+            award(2, 22, 202, 100_000_000),
+            amount(2, 150_000_000, 150_000_000, "result_value"),
+            // 3: two awarded lots beside a real procedure estimate (EUR 240,000): path W cannot fire.
+            award(3, 31, 301, 150_000_000),
+            award(3, 32, 302, 100_000_000),
+            amount(3, 24_000_000, 24_000_000, "estimated_value"),
+            // 8: the same beside EUR 2.4 m, at or above the smallest nine-digit repdigit: the
+            // cohort cannot tell it from a sentinel without copying the digit walk, so it keeps it
+            // (over-selection; the fold decides, and this head compares identical).
+            award(8, 81, 801, 150_000_000),
+            award(8, 82, 802, 100_000_000),
+            amount(8, 240_000_000, 240_000_000, "estimated_value"),
+            // 4: two awards on ONE lot is no lot sum.
+            award(4, 41, 401, 150_000_000),
+            award(4, 42, 401, 100_000_000),
+            // 5: two awarded lots beside a sentinel (EUR 1.00) and a partner-only figure: in.
+            award(5, 51, 501, 150_000_000),
+            award(5, 52, 502, 100_000_000),
+            amount(5, 100, 100, "estimated_value"),
+            amount(5, 77_700_000, 77_700_000, store::canonical::RESULT_FRAMEWORK_MAXIMUM),
+            // 6: placeholder awards at the partner floor are no lot figures.
+            award(6, 61, 601, 1_000),
+            award(6, 62, 602, 1_000),
+            // 7: a figure just under the gate.
+            amount(7, gate - 1, gate - 1, "result_value"),
+        ] {
+            conn.execute(&sql, ()).await.unwrap();
+        }
+        let never = || false;
+        assert_eq!(db.lot_sum_cohort_tender_ids(&never).await.unwrap().ids, vec![1, 2, 5, 8]);
+        let stopped = db.lot_sum_cohort_tender_ids(&|| true).await.unwrap();
+        assert_eq!((stopped.ids.len(), stopped.stopped_at), (0, Some(0)), "the stop flag is read before the first window");
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let projected = |id: i64| {
+            let db = db.clone();
+            async move { db.scalar(&format!("SELECT projected FROM notices WHERE id = {id}")).await.unwrap() }
+        };
+
+        let dry = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: true, expect: None })).await.expect("dry run");
+        assert!(dry.contains("DRY RUN") && dry.contains("4 Tender(s)") && dry.contains("\"expect\":4"), "got: {dry}");
+        assert_eq!(projected(1).await, Some(store::turso::Value::Integer(1)), "a dry run writes nothing");
+        let unsized_run = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: None })).await;
+        assert!(unsized_run.is_err_and(|e| e.contains("expect")), "a wet run is sized");
+        let off = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: Some(40) })).await;
+        assert!(off.is_err_and(|e| e.contains("aborted") && e.contains("nothing was written")));
+        assert_eq!(projected(2).await, Some(store::turso::Value::Integer(1)), "an aborted run writes nothing");
+
+        let wet = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: Some(4) })).await.expect("wet run");
+        assert!(wet.contains("re-queued 4, stamped 4"), "got: {wet}");
+        for (id, want) in [(1, 0), (2, 0), (3, 1), (4, 1), (5, 0), (6, 1), (7, 1), (8, 0)] {
+            assert_eq!(projected(id).await, Some(store::turso::Value::Integer(want)), "tender {id}");
+        }
         remove_db(&path);
     }
 

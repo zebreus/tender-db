@@ -369,13 +369,13 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 7|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'
 8|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'
 9|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'
---- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,projection_epoch) ---
-1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|NULL|4
-2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|NULL|4
-3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|NULL|4
-4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|NULL|4
-5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|NULL|4
-6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|NULL|4
+--- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,current_value_derivation,current_value_cents,current_value_currency,current_value_derivation_detail,projection_epoch) ---
+1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|NULL|NULL|NULL|NULL|NULL|4
+2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|NULL|NULL|NULL|NULL|NULL|4
+3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|NULL|NULL|NULL|NULL|NULL|4
+4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|NULL|NULL|NULL|NULL|NULL|4
+5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|4
+6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|NULL|NULL|NULL|NULL|NULL|4
 --- lots (6 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'
@@ -813,13 +813,13 @@ NYY-0 1 x 240 mm², ca. 65 lfm NYY-J 5x6 mm², ca. 160 lfm Fernmelde-Außenkabel
 8|4|1|8|1709164800|1709186986|'16'|'DEU'|'7d69b0f7-2605-448f-9495-676458dcddc2-01'
 9|5|1|4|1784246400|1784199584|'X01'|'DEU'|'00497689-2026'
 10|6|1|5|1784246400|1784211228|'4'|'LAV'|'00496860-2026'
---- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,projection_epoch) ---
-1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|NULL|4
-2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|NULL|4
-3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|NULL|4
-4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|NULL|4
-5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|NULL|4
-6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|NULL|4
+--- tenders (6 rows; id,source,procedure_key,island_notice_id,kind,created_at,current_seq,current_published_at,current_deadline,current_title,current_value_eur_cents,current_closed_by_notice,current_value_derivation,current_value_cents,current_value_currency,current_value_derivation_detail,projection_epoch) ---
+1|1|'ted'|'1af86e3c-411f-4c2e-aacc-ecac61717472'|NULL|'procedure'|2|1780272000|1783328340|'Grundinstandsetzung Hellinganlage am Bauhof Würzburg'|NULL|NULL|NULL|NULL|NULL|NULL|4
+2|2|'ted'|'32c34097-960e-4d02-b04d-3ceac32cf020'|NULL|'procedure'|4|1780444800|1770280200|'CT2377/2025 - Framework Contract for the supply of Ustekinumab 45mg Solution for Injection, Ustekinumab 90mg Solution for Injection , and Ustekinumab 130mg Concentrate for Solution for Infusion'|81686300|NULL|NULL|NULL|NULL|NULL|4
+3|3|'doe'|'469efb81-40de-4d7e-817f-8dd45659eaee'|NULL|'procedure'|1|1714608000|NULL|'NA 26a+b Dachabdichtungs- und Spenglerarbeiten'|607480963|NULL|NULL|NULL|NULL|NULL|4
+4|4|'doe'|'990acec0-88c0-48e2-86d5-92abb2293542'|NULL|'procedure'|1|1709164800|1712044800|'Erschließung Starkstrom'|NULL|NULL|NULL|NULL|NULL|NULL|4
+5|5|'ted'|NULL|4|'registration'|1|1784246400|NULL|NULL|NULL|NULL|NULL|NULL|NULL|NULL|4
+6|6|'ted'|NULL|5|'procedure'|1|1784246400|NULL|'Kodolmedicīnas radiofarmpreparātu, Mo/Tc ģeneratoru un izotopu piegāde scintigrāfijas izmeklējumu un terapijas procedūru veikšanai, preparāta 223-Ra dihlorīds (Xofigo) piegāde'|NULL|NULL|NULL|NULL|NULL|NULL|4
 --- lots (6 rows; id,tender_id,lot_key) ---
 1|1|1|'LOT-0001'
 2|2|1|'LOT-0002'

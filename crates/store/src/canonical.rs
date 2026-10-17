@@ -154,6 +154,23 @@ pub(crate) const SCHEMA: &str = "
         -- would offer the planner an `IS NULL` seek over ~7.9M rows. Also ALTERed in by
         -- migrate() and in reset_tender_layer's CREATE.
         current_closed_by_notice INTEGER,
+        -- Issue 551: the DERIVED head's marker, NULL on every elected head. When the head
+        -- election serves the sum of the head version's own lots instead of one published
+        -- figure (`canonical::DerivedValue`), current_value_derivation names how
+        -- ('lot-sum-vouched': a procedure figure a scale rule refused is 10^k times this sum;
+        -- 'lot-sum-awards': the lots' latest awards with no procedure figure),
+        -- current_value_cents / current_value_currency hold the sum as money (minor units, as
+        -- published), and current_value_derivation_detail a JSON object (summed kind, lots,
+        -- the refusal's rule, exponent and figure). current_value_eur_cents is that sum in EUR,
+        -- so the value bounds and sort read a derived head like any other. Fold-maintained,
+        -- written and cleared with every head write; never a tender_version_amounts row (a
+        -- synthetic row would re-enter the scale rules' figures on the next fold). Nullable
+        -- with no default, so metadata-only; also ALTERed in by migrate() and in
+        -- reset_tender_layer's CREATE.
+        current_value_derivation TEXT,
+        current_value_cents  INTEGER,
+        current_value_currency TEXT,
+        current_value_derivation_detail TEXT,
         -- Which PROJECTION LOGIC this Tender's content was last folded under
         -- (issue 99). The fold's early-return keys on the chain of causing
         -- notices, which is a state key only while the logic is fixed: a mapping
@@ -1542,6 +1559,25 @@ struct StoredHead {
     /// Issue 533: `current_closed_by_notice` — `Some(1)` when [`closed_by_notice`] holds at the
     /// head, `None` otherwise (never 0), so D1.5's head compare sees a flip.
     closed_by_notice: Option<i64>,
+    /// Issue 551: the derived head's marker, all four `None` for an elected head:
+    /// `current_value_derivation`, `current_value_cents`, `current_value_currency`,
+    /// `current_value_derivation_detail`. Compared like every head column, so a head that
+    /// becomes (or stops being) a lot sum at an unchanged EUR figure is still a correction.
+    derivation: Option<String>,
+    derived_cents: Option<i64>,
+    derived_currency: Option<String>,
+    derivation_detail: Option<String>,
+}
+
+impl StoredHead {
+    /// Issue 551: the four marker columns of a [`HeadValue`], `None` throughout for an elected
+    /// head. The one place the fold turns a derivation into what `tenders` stores.
+    fn derivation_columns(value: &HeadValue) -> (Option<String>, Option<i64>, Option<String>, Option<String>) {
+        match &value.derived {
+            Some(d) => (Some(d.derivation().to_owned()), Some(d.cents), Some(d.currency.clone()), Some(d.detail_json())),
+            None => (None, None, None, None),
+        }
+    }
 }
 
 /// What `tender_identity` found (issue 495 unit 3): the stored head of an existing Tender, and
@@ -1892,6 +1928,14 @@ pub struct CarrierSweepStop {
 /// whose x100 sibling exemption or 505 bound was such a figure, and a LotsGroup restating
 /// a refused figure) are of EUR 1 bn or more too. `refold-value-band` is exactly that
 /// cohort.
+///
+/// NOT bumped for issue 551's derived lot-sum head: it moves only a head whose version has a
+/// tender-scope figure of EUR 1 bn or more (path V needs a scale refusal, and every scale rule
+/// is gated there) or awards on two or more lots with no procedure figure outside the
+/// sentinels' range (path W), and `refold-lot-sum` enumerates exactly that superset by tender
+/// id (`Db::lot_sum_cohort_tender_ids`, ADR-0017 D6's route R3). `refold-value-band`'s cohort
+/// reaches neither path: since 537's drain every path-V head is below EUR 1 bn or null, and
+/// path W raises heads from below.
 ///
 /// NOT bumped for issue 538's title and description decode either, although it changes
 /// `NoticeState::read` for every profile: ADR-0017 D6's route R3 covers it. Its cohort is
@@ -3287,20 +3331,172 @@ pub fn head_title(head: &TenderVersion) -> Option<String> {
 /// partner figures of the exact-10ᵏ scale-error rule ([`ScalePartners`],
 /// issue 471 unit 4(a)), which looks for a partner in any version. An empty
 /// chain elects nothing.
+///
+/// Since issue 551 the figure can be a DERIVED lot sum's EUR value rather than one
+/// amount's ([`head_value_eur_cents_with`]); [`head_value`] returns it with its derivation.
 pub fn head_value_eur_cents(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> Option<i64> {
-    head_value_eur_cents_with(chain.last()?, &ScalePartners::of_chain(chain), rates)
+    head_value(chain, rates).eur_cents
+}
+
+/// Issue 551: the max election alone over a chain, without the derived lot sum: the figure a
+/// scale refusal leaves. For the scale rules' own tests, which pin what a refusal falls to.
+#[cfg(test)]
+fn max_election_eur_cents(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> Option<i64> {
+    let head = chain.last()?;
+    let partners = ScalePartners::of_chain(chain);
+    elect_head_figure(head, &partners, rates, &crate::rates::civil_date(head.published_at)).map(|h| h.eur_cents)
+}
+
+/// [`head_value_eur_cents`] with the derivation (issue 551): the whole [`HeadValue`] the fold
+/// stores for the chain's head. An empty chain elects nothing.
+pub fn head_value(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> HeadValue {
+    match chain.last() {
+        Some(head) => head_value_eur_cents_with(head, &ScalePartners::of_chain(chain), rates),
+        None => HeadValue::default(),
+    }
 }
 
 /// [`head_value_eur_cents`] with the scale rule already built: `partners` must
 /// be [`ScalePartners::of_chain`] of the chain whose last version is `head`.
 /// The fold calls this with the running rule it keeps for the lot values
 /// (issue 490), so the head election does not walk the chain a second time.
+///
+/// **Issue 551: the head may be a DERIVED lot sum.** The max election below serves one
+/// figure; when a scale rule refuses the procedure total, that is one lot's figure or null,
+/// never the total of the lots. Two paths, tried in order after the max election, serve the
+/// sum of the head version's own lots instead ([`derive_lot_sum`]); every other head is the
+/// max election unchanged. A derived head is returned with its [`DerivedValue`] (the fold
+/// stores it on `tenders` beside the EUR column, never as an amount row), and its EUR is the
+/// sum converted by `rates` at the head's date, so value sorts and filters read it as they
+/// read any head.
 pub fn head_value_eur_cents_with(
     head: &TenderVersion,
     partners: &ScalePartners<'_>,
     rates: &crate::rates::RatesLookup,
-) -> Option<i64> {
+) -> HeadValue {
     let date = crate::rates::civil_date(head.published_at);
+    let today = elect_head_figure(head, partners, rates, &date);
+    match derive_lot_sum(head, partners, rates, &date, today.as_ref()) {
+        Some((eur_cents, derived)) => HeadValue { eur_cents: Some(eur_cents), derived: Some(derived) },
+        None => HeadValue { eur_cents: today.map(|t| t.eur_cents), derived: None },
+    }
+}
+
+/// The figure the max election elects ([`elect_head_figure`]): its EUR value, its currency,
+/// and whether it is a lot award's tender-scope copy (`FigureScope::Lot(None)`, issue 492 (c)).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct HeadFigure<'a> {
+    eur_cents: i64,
+    currency: &'a str,
+    award_copy: bool,
+}
+
+/// What the head election makes of ONE candidate amount, in the order it asks
+/// ([`judge_head_amount`]). Only `Admitted` is a candidate; the rest name why not, which
+/// issue 551's paths read for the procedure-scope figures (a sentinel procedure figure lets
+/// path W run, a refused one is path V's evidence, any other keeps the max election).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum Judged {
+    /// Issue 506: BT-709 / BT-660, never a candidate.
+    PartnerOnly,
+    /// Issue 372.
+    Withheld,
+    /// Issues 366 / 379, read on the published figure.
+    Sentinel,
+    /// No rate converts it at the head's date.
+    NoRate,
+    /// A scale rule refuses it ([`ScalePartners::refuses_amount`]); its EUR value.
+    Refused(i64),
+    /// Over [`IMPLAUSIBLE_EUR_CENTS`] (issue 366).
+    OverCap,
+    /// Converts to EUR 0 (issue 378).
+    Zero,
+    /// A candidate, worth this many EUR cents.
+    Admitted(i64),
+}
+
+/// The head election's judgement of one amount of the head at `scope`. The order is the
+/// election's own: the sentinel test reads the PUBLISHED figure, not its conversion: a
+/// form-width maximum is a fact about what the publisher's field allowed, and converting it
+/// first would turn one currency's sentinel into another's ordinary number.
+fn judge_head_amount(
+    f: &Fact,
+    scope: FigureScope<'_>,
+    partners: &ScalePartners<'_>,
+    rates: &crate::rates::RatesLookup,
+    date: &str,
+) -> Option<Judged> {
+    let Fact::Amount { field, cents, currency, quality, .. } = f else { return None };
+    // Issue 506: a partner-only field is never a candidate (it only refuses).
+    if !electable_amount_field(field) {
+        return Some(Judged::PartnerOnly);
+    }
+    // Issue 372: a withheld figure is refused because the notice SAID so, not because of
+    // what its number happens to be. `sentinel_amount` already refuses the SDK's -1
+    // placeholder, so this arm changes no election today -- and it is the one that states
+    // the reason, which matters the moment a publisher withholds a field without writing -1.
+    if quality.is_some() {
+        return Some(Judged::Withheld);
+    }
+    if sentinel_amount(*cents) {
+        return Some(Judged::Sentinel);
+    }
+    let Some(eur) = rates.eur_cents(*cents, currency, date) else { return Some(Judged::NoRate) };
+    // Issue 471 unit 4(a): a figure exactly 10^k (k >= 3) above another figure of the same
+    // Tender and currency, published in only one amount field of the head and worth at
+    // least the band floor, is a scale slip, not a value. Refused here, beside the withheld
+    // and sentinel skips, so the fold's election stays the one place that decides which
+    // amounts count; the read layer finds the row this elects by `eur_cents` and follows
+    // with no edit (366 unit 3), and its per-lot pick calls the same
+    // [`ScalePartners::refuses_amount`].
+    if partners.refuses_amount(field, currency, *cents, eur, scope) {
+        return Some(Judged::Refused(eur));
+    }
+    if eur > IMPLAUSIBLE_EUR_CENTS {
+        return Some(Judged::OverCap);
+    }
+    // A conversion that lands on ZERO is declined (issue 378, decided 2026-09-11 on the
+    // measured residue of six Tenders).
+    //
+    // This is NOT a sentinel test and deliberately does not live in `sentinel_amount`,
+    // which reads the PUBLISHED figure by design. The published figures here are fine:
+    // CZK 0.10, CZK 0.12, HUF 0.79, HUF 1.48, LIT 2.89. They are simply smaller than half
+    // a euro cent, so ADR-0010's half-away-from-zero rounding puts them on 0 — and 0 is the
+    // one output value that already means something else in this column, namely "the
+    // election found nothing" (issues 366, 379).
+    //
+    // So the rule is about the COLUMN's vocabulary rather than the publisher's: a derived
+    // zero would be the column asserting €0.00 for a HUF 1.48 procurement, which is a
+    // wrong number, where declining says "no value this column can express", which is the
+    // true one. Every published figure survives in `amounts` either way (ADR-0004).
+    //
+    // Six Tenders today. The alternative on the table was a floor of one cent in the
+    // conversion itself (issue 378's fix 1), and it was declined: it touches every
+    // conversion in the corpus to repair six rows, where this touches one election and
+    // cannot reach anything else — nothing but a sub-half-cent amount converts to zero.
+    if eur == 0 {
+        return Some(Judged::Zero);
+    }
+    Some(Judged::Admitted(eur))
+}
+
+/// The scope the head election judges a TENDER-scope amount at. Issue 492: a tender-scope
+/// figure equal to a lot award of the head is that award's copy, a lot figure of no known
+/// lot, and so gets no x100 exemption.
+fn tender_scope_of<'k>(f: &Fact, partners: &ScalePartners<'_>) -> FigureScope<'k> {
+    let copy = matches!(f, Fact::Amount { cents, currency, .. } if partners.is_head_award(currency, *cents));
+    if copy { FigureScope::Lot(None) } else { FigureScope::Procedure }
+}
+
+/// The max election (issues 366, 372, 378, 379, 471, 492, 505, 506, 507, 537): the largest
+/// admitted EUR figure of the head's tender-scope and lot amounts, the LAST of equal maxima
+/// (`Iterator::max_by_key`), which issue 551's path W reads the scope of.
+fn elect_head_figure<'a>(
+    head: &'a TenderVersion,
+    partners: &ScalePartners<'_>,
+    rates: &crate::rates::RatesLookup,
+    date: &str,
+) -> Option<HeadFigure<'a>> {
     // Issue 507: a PIN's Parts stay in every later version beside the CN's Lots (the fold
     // never drops a lot), and a Part's figure is the planning-stage one the CN restates
     // under its own keys. So in a version with Lots, the election runs first WITHOUT the
@@ -3309,15 +3505,10 @@ pub fn head_value_eur_cents_with(
     // EUR 1.12 bn beside a CN of EUR 1.19 m). A Part that is the only admitted figure
     // stays the head (8819870's only figure; 8819939's EUR 12 m beside the x100 slips its
     // CN refuses), and the Part's own stored lot value is untouched.
-    let elect = |with_parts: bool| -> Option<i64> {
+    let elect = |with_parts: bool| -> Option<HeadFigure<'a>> {
         head.facts
             .iter()
-            // Issue 492: a tender-scope figure equal to a lot award of the head is that
-            // award's copy, a lot figure of no known lot, and so gets no x100 exemption.
-            .map(|f| {
-                let copy = matches!(f, Fact::Amount { cents, currency, .. } if partners.is_head_award(currency, *cents));
-                (f, if copy { FigureScope::Lot(None) } else { FigureScope::Procedure })
-            })
+            .map(|f| (f, tender_scope_of(f, partners)))
             // A lot candidate gets no sibling-lot exemption here: that exemption needs an
             // admitted procedure figure at least as large, which already wins this max, so it
             // could only ever raise a head through a figure the election refused (review of
@@ -3328,61 +3519,447 @@ pub fn head_value_eur_cents_with(
                     .filter(move |l| with_parts || l.kind != "Part")
                     .flat_map(|l| l.facts.iter().map(move |f| (f, FigureScope::HeadLot(Some(l.key.as_str()))))),
             )
-            .filter_map(|(f, scope)| match f {
-                // The sentinel test reads the PUBLISHED figure, not its conversion: a
-                // form-width maximum is a fact about what the publisher's field
-                // allowed, and converting it first would turn one currency's sentinel
-                // into another's ordinary number.
-                // Issue 372: a withheld figure is refused because the notice SAID so,
-                // not because of what its number happens to be. `sentinel_amount`
-                // already refuses the SDK's -1 placeholder, so this arm changes no
-                // election today -- and it is the one that states the reason, which
-                // matters the moment a publisher withholds a field without writing -1.
-                // Issue 506: a partner-only field is never a candidate (it only refuses).
-                Fact::Amount { field, cents, currency, quality, .. }
-                    if quality.is_none() && !sentinel_amount(*cents) && electable_amount_field(field) =>
-                {
-                    let eur = rates.eur_cents(*cents, currency, &date)?;
-                    // Issue 471 unit 4(a): a figure exactly 10^k (k >= 3) above
-                    // another figure of the same Tender and currency, published in
-                    // only one amount field of the head and worth at least the band
-                    // floor, is a scale slip, not a value. Refused here, beside the
-                    // withheld and sentinel skips, so the fold's election stays the
-                    // one place that decides which amounts count; the read layer
-                    // finds the row this elects by `eur_cents` and follows with no
-                    // edit (366 unit 3), and its per-lot pick calls the same
-                    // [`ScalePartners::refuses_amount`].
-                    (!partners.refuses_amount(field, currency, *cents, eur, scope)).then_some(eur)
-                }
+            .filter_map(|(f, scope)| match (judge_head_amount(f, scope, partners, rates, date)?, f) {
+                (Judged::Admitted(eur_cents), Fact::Amount { currency, .. }) => Some(HeadFigure {
+                    eur_cents,
+                    currency: currency.as_str(),
+                    award_copy: scope == FigureScope::Lot(None),
+                }),
                 _ => None,
             })
-            .filter(|eur| *eur <= IMPLAUSIBLE_EUR_CENTS)
-            // A conversion that lands on ZERO is declined (issue 378, decided
-            // 2026-09-11 on the measured residue of six Tenders).
-            //
-            // This is NOT a sentinel test and deliberately does not live in
-            // `sentinel_amount`, which reads the PUBLISHED figure by design. The
-            // published figures here are fine: CZK 0.10, CZK 0.12, HUF 0.79,
-            // HUF 1.48, LIT 2.89. They are simply smaller than half a euro cent, so
-            // ADR-0010's half-away-from-zero rounding puts them on 0 — and 0 is the
-            // one output value that already means something else in this column,
-            // namely "the election found nothing" (issues 366, 379).
-            //
-            // So the rule is about the COLUMN's vocabulary rather than the
-            // publisher's: a derived zero would be the column asserting €0.00 for a
-            // HUF 1.48 procurement, which is a wrong number, where declining says
-            // "no value this column can express", which is the true one. Every
-            // published figure survives in `amounts` either way (ADR-0004).
-            //
-            // Six Tenders today. The alternative on the table was a floor of one cent
-            // in the conversion itself (issue 378's fix 1), and it was declined:
-            // it touches every conversion in the corpus to repair six rows, where
-            // this touches one election and cannot reach anything else — nothing but
-            // a sub-half-cent amount converts to zero.
-            .filter(|eur| *eur != 0)
-            .max()
+            .max_by_key(|h| h.eur_cents)
     };
     if head.lots.iter().any(|l| l.kind == "Lot") { elect(false).or_else(|| elect(true)) } else { elect(true) }
+}
+
+/// Issue 551: what the head election serves — the EUR cents `tenders.current_value_eur_cents`
+/// stores, and, when the head is a lot sum rather than one published figure, how it was
+/// derived. `derived` is `None` for every head the max election decides.
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
+pub struct HeadValue {
+    pub eur_cents: Option<i64>,
+    pub derived: Option<DerivedValue>,
+}
+
+/// Issue 551: a head served as the sum of its head version's own lots (S), in S's own money.
+/// The fold stores it on `tenders` (`current_value_derivation`, `current_value_cents`,
+/// `current_value_currency`, `current_value_derivation_detail`), never as a
+/// `tender_version_amounts` row: a synthetic row would re-enter [`ScalePartners`]' figures and
+/// 492's award-copy test on the next fold and could confirm itself.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DerivedValue {
+    pub path: DerivationPath,
+    /// Which lot figures were summed: Awards, Estimate or FrameworkMaximum, never a
+    /// partner-only kind (issue 506).
+    pub kind: LotSumKind,
+    /// S, in minor units of `currency`.
+    pub cents: i64,
+    pub currency: String,
+    /// n, the lots summed.
+    pub lots: usize,
+}
+
+/// Issue 551: why a lot sum is served.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum DerivationPath {
+    /// Path V: a procedure figure F the scale rule `rule` refused is 10^`exponent` times this
+    /// lot sum — the buyer's own total, slipped, vouches for it.
+    Vouched { rule: ScaleRule, field: String, cents: i64, currency: String, exponent: u32 },
+    /// Path W: the lots' latest awards, with no procedure figure at all and every guard passed.
+    Awards,
+}
+
+/// The scale rule that refused a procedure figure ([`ScalePartners::procedure_refusal`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScaleRule {
+    /// Issue 471: exactly 10^k (k >= 3) times a partner figure.
+    Partner,
+    /// Issue 492: exactly 100 times a partner figure, no exemption.
+    Hundred,
+    /// Issue 537: 10^k (k = 2..6) times a sum of the head version's own lots.
+    LotSum,
+}
+
+impl ScaleRule {
+    /// The issue that decided the rule, as the derivation detail names it.
+    pub fn issue(self) -> &'static str {
+        match self {
+            ScaleRule::Partner => "471",
+            ScaleRule::Hundred => "492",
+            ScaleRule::LotSum => "537",
+        }
+    }
+}
+
+/// Issue 551: `tenders.current_value_derivation` for a path-V head (a refusal vouched for S).
+pub const VALUE_DERIVATION_VOUCHED: &str = "lot-sum-vouched";
+/// Issue 551: `tenders.current_value_derivation` for a path-W head (an awards lot sum).
+pub const VALUE_DERIVATION_AWARDS: &str = "lot-sum-awards";
+
+impl DerivedValue {
+    /// `tenders.current_value_derivation`.
+    pub fn derivation(&self) -> &'static str {
+        match self.path {
+            DerivationPath::Vouched { .. } => VALUE_DERIVATION_VOUCHED,
+            DerivationPath::Awards => VALUE_DERIVATION_AWARDS,
+        }
+    }
+
+    /// `tenders.current_value_derivation_detail`: a JSON object the API serves as
+    /// `value_derivation` beside the method: `summed` (the [`LotSumKind::label`]), `lots`, and
+    /// for path V the `rule` (the deciding issue), its `exponent` and the `refused` figure
+    /// `{field, value: {cents, currency}}`. Written by hand (the store carries no JSON crate):
+    /// every string is a fixed label, a canonical field name or an ISO 4217 code, escaped all
+    /// the same.
+    pub fn detail_json(&self) -> String {
+        let mut out = format!("{{\"summed\":{},\"lots\":{}", json_string(self.kind.label()), self.lots);
+        if let DerivationPath::Vouched { rule, field, cents, currency, exponent } = &self.path {
+            out.push_str(&format!(
+                ",\"rule\":{},\"exponent\":{exponent},\"refused\":{{\"field\":{},\"value\":{{\"cents\":{cents},\"currency\":{}}}}}",
+                json_string(rule.issue()),
+                json_string(field),
+                json_string(currency),
+            ));
+        }
+        out.push('}');
+        out
+    }
+}
+
+/// A JSON string literal of `s` (RFC 8259 escaping).
+fn json_string(s: &str) -> String {
+    let mut out = String::with_capacity(s.len() + 2);
+    out.push('"');
+    for c in s.chars() {
+        match c {
+            '"' => out.push_str("\\\""),
+            '\\' => out.push_str("\\\\"),
+            c if (c as u32) < 0x20 => out.push_str(&format!("\\u{:04x}", c as u32)),
+            c => out.push(c),
+        }
+    }
+    out.push('"');
+    out
+}
+
+/// Issue 551 path W's guard thresholds, inherited from design A and fitted on the 88 labels
+/// (recorded as weakly tested below the band). G1': a figure on two or more summed lots that
+/// is at least 1/`LOT_SUM_REPEAT_SHARE` of the largest summed lot is a repeated total.
+const LOT_SUM_REPEAT_SHARE: i128 = 10;
+/// G2: one figure on at least this many summed lots, and on at least half of them.
+const LOT_SUM_REPEAT_MIN_LOTS: usize = 4;
+/// G3: one lot within 1/`LOT_SUM_TOTAL_TOLERANCE` (1 %) of 10^k x the others, k = 0..=3.
+const LOT_SUM_TOTAL_TOLERANCE: i128 = 100;
+const LOT_SUM_TOTAL_MAX_EXPONENT: u32 = 3;
+/// G4: an estimate kind over the same lots more than this factor off the awards.
+const LOT_SUM_KIND_RATIO: i128 = 10;
+
+/// The electable kinds a derived head may sum, in path V's tie order (Awards, then Estimate,
+/// then FrameworkMaximum). The partner-only kinds (issue 506) are never served.
+const DERIVABLE_KINDS: [LotSumKind; 3] = [LotSumKind::Awards, LotSumKind::Estimate, LotSumKind::FrameworkMaximum];
+
+/// Issue 551 (decided 2026-10-16, wf_3d72c491-993): the lot sum a head serves instead of the
+/// max election's figure, as `(EUR cents, derivation)`, or `None` to keep `today`.
+///
+/// **Path V, the vouched lot sum.** No procedure figure of the head is admitted (a lot
+/// award's tender-scope copy and a partner-only row are no procedure figures), and some
+/// procedure figure F was refused by a scale rule. For each such F, S is:
+/// - refused by 537: its own match's sum when the matched kind is electable; for a
+///   partner-only match (BT-709 / BT-660) the electable sum at the SAME k (1024214: BT-709
+///   matches, the BT-271 sum is served);
+/// - refused by 471 or 492: the electable sum with [`lot_sum_exponent`]`(F, S', n') == k`
+///   (471's own k, 2 for 492; 928196);
+///
+/// the closest |F - 10^k S'| first, ties Awards > Estimate > FrameworkMaximum. Every F that
+/// yields an S must yield the same (currency, S); S converts to more than EUR 0 and at most
+/// [`IMPLAUSIBLE_EUR_CENTS`]; V0 (added at unit 3's review): S converts to more than today's
+/// figure, as path W's G0 asks (a lot figure larger than the whole vouched sum says the kinds
+/// disagree: 537's recorded cost, F = the lot estimates' sum, would fall to a x100 understatement
+/// of the awards); and V1: S is not one figure M repeated on every summed lot with
+/// F within 1 % of 10^j M (the lots would BE the slipped total). No repeat guard beyond V1:
+/// the buyer's own figure at exactly 10^k vouches for the sum (7427765: 6 x EUR 500 k).
+///
+/// **Path W, the unvouched awards lot sum**, only where path V does not fire. T': every
+/// procedure figure is absent or a sentinel (366/379); one refused, withheld, unconvertible
+/// or over the cap keeps the head. K: the head is an award copy or null, and the sum is
+/// [`LotSumKind::Awards`] in its currency (a null head: the currency with the most award
+/// lots), never an estimate or a framework maximum (3 of 20 such sums moved the wrong way).
+/// Guards: G0 n >= 2 and S above today's EUR figure; G5 S converts to more than EUR 0 (third
+/// review round) and at most the cap, and the cap on every procedure and award-copy figure; G5'
+/// (added at unit 3's review, widened in its third round) no award copy a scale rule refused and
+/// no summed award one refuses at its own lot, copy or none (a x1000 lot award: the slip itself
+/// would be summed); G6 no award lot in another currency; G7 no withheld procedure
+/// figure; G8 every summed award names a lot of the counted unit; G8b (added in unit 3's
+/// second review round) no two summed lot keys spelling one lot number ([`lot_number`]: TED's
+/// `LOT-1` beside eForms' `LOT-0001`, both typed, would count one lot twice where TED's
+/// ordinal lines up with the published number; see [`lot_number`] for where it does not); G1' no figure on two or
+/// more summed lots at a tenth of the largest or more; G2 no figure on four or more lots and
+/// half of them; G3 with three or more lots, the largest is not within 1 % of 10^k (k = 0..3)
+/// the others; G4 no estimate kind over two or more of the same lots 10x off the awards.
+fn derive_lot_sum(
+    head: &TenderVersion,
+    partners: &ScalePartners<'_>,
+    rates: &crate::rates::RatesLookup,
+    date: &str,
+    today: Option<&HeadFigure<'_>>,
+) -> Option<(i64, DerivedValue)> {
+    // The head's procedure figures (Fact order), with the election's judgement of each.
+    let mut procedure: Vec<(&str, &str, i64, Judged)> = Vec::new();
+    // G5 / G5': an award copy over the cap, or one a scale rule refused (471/492 at
+    // `Lot(None)`), says the buyer's scale is broken; path W keeps today's head.
+    let mut copy_suspect = false;
+    for f in &head.facts {
+        let Fact::Amount { field, cents, currency, .. } = f else { continue };
+        let scope = tender_scope_of(f, partners);
+        let Some(judged) = judge_head_amount(f, scope, partners, rates, date) else { continue };
+        match scope {
+            FigureScope::Lot(None) => copy_suspect |= matches!(judged, Judged::OverCap | Judged::Refused(_)),
+            _ if judged == Judged::PartnerOnly => {}
+            _ => procedure.push((field.as_str(), currency.as_str(), *cents, judged)),
+        }
+    }
+    // Path V needs a refused procedure figure and no admitted one; path W needs every
+    // procedure figure to be a sentinel (T') and an award copy or nothing as today's head (K).
+    // The two exclude each other, so a head reaching neither pays for no lot sums.
+    let vouched = procedure.iter().any(|p| matches!(p.3, Judged::Refused(_)))
+        && !procedure.iter().any(|p| matches!(p.3, Judged::Admitted(_)));
+    let awards_only = procedure.iter().all(|p| p.3 == Judged::Sentinel) && today.is_none_or(|t| t.award_copy);
+    if !vouched && !awards_only {
+        return None;
+    }
+    let sums = LotSums::by_currency(head);
+    if vouched {
+        vouched_lot_sum(&procedure, partners, rates, date, &sums, today)
+    } else {
+        awards_lot_sum(&procedure, copy_suspect, partners, &sums, rates, date, today)
+    }
+}
+
+/// Issue 551 path V ([`derive_lot_sum`]): `procedure` holds the head's procedure figures as
+/// (field, currency, cents, judgement), at least one refused and none admitted.
+fn vouched_lot_sum(
+    procedure: &[(&str, &str, i64, Judged)],
+    partners: &ScalePartners<'_>,
+    rates: &crate::rates::RatesLookup,
+    date: &str,
+    sums: &std::collections::HashMap<&str, LotSums<'_>>,
+    today: Option<&HeadFigure<'_>>,
+) -> Option<(i64, DerivedValue)> {
+    // (F's field, currency, cents, rule, k, the vouched kind, S, n)
+    let mut found: Vec<(&str, &str, i64, ScaleRule, u32, LotSumKind, i64, usize)> = Vec::new();
+    for &(field, currency, cents, judged) in procedure {
+        let Judged::Refused(eur) = judged else { continue };
+        let Some(refusal) = partners.procedure_refusal(field, currency, cents, eur) else { continue };
+        let (rule, k, direct) = match refusal {
+            ScaleRefusal::Partner { exponent } => (ScaleRule::Partner, exponent, None),
+            ScaleRefusal::Hundred => (ScaleRule::Hundred, 2, None),
+            // 537's own S when its kind is electable; a partner-only match (BT-709 / BT-660)
+            // only names the scale, and the electable sum at that k is served.
+            ScaleRefusal::LotSum(m) => {
+                (ScaleRule::LotSum, m.exponent, DERIVABLE_KINDS.contains(&m.kind).then_some((m.kind, m.sum, m.lots)))
+            }
+        };
+        let hit = direct.or_else(|| {
+            sums.get(currency)
+                .map(LotSums::sums)
+                .unwrap_or_default()
+                .into_iter()
+                .filter(|(kind, sum, lots)| DERIVABLE_KINDS.contains(kind) && lot_sum_exponent(cents, *sum, *lots) == Some(k))
+                .min_by_key(|(kind, sum, _)| {
+                    let gap = (i128::from(cents) - 10i128.pow(k) * i128::from(*sum)).abs();
+                    (gap, DERIVABLE_KINDS.iter().position(|d| d == kind))
+                })
+        });
+        if let Some((kind, sum, lots)) = hit {
+            found.push((field, currency, cents, rule, k, kind, sum, lots));
+        }
+    }
+    let &(field, currency, cents, rule, exponent, kind, sum, lots) = found.first()?;
+    // Agreement: every refused F that yields an S yields the same one.
+    if found.iter().any(|h| (h.1, h.6) != (currency, sum)) {
+        return None;
+    }
+    // V1: the summed lots repeat one figure M and F is 10^j M (1 %): the lots are the slipped
+    // total itself, not its parts.
+    for h in &found {
+        let figures = sums.get(h.1).map(|s| s.per_lot(h.5)).unwrap_or_default();
+        if let Some(&(_, m)) = figures.first()
+            && figures.iter().all(|&(_, c)| c == m)
+            && (0..=18u32).any(|j| (i128::from(h.2) - 10i128.pow(j) * i128::from(m)).abs() * LOT_SUM_TOTAL_TOLERANCE <= i128::from(h.2))
+        {
+            return None;
+        }
+    }
+    let eur = rates.eur_cents(sum, currency, date).filter(|e| *e > 0 && *e <= IMPLAUSIBLE_EUR_CENTS)?;
+    // V0: never below today's figure (a lot figure larger than the whole vouched sum: the kinds
+    // disagree, and the max election's one lot is the smaller error). Costs none of the 16 pins.
+    if today.is_some_and(|t| eur <= t.eur_cents) {
+        return None;
+    }
+    let path = DerivationPath::Vouched { rule, field: field.to_owned(), cents, currency: currency.to_owned(), exponent };
+    Some((eur, DerivedValue { path, kind, cents: sum, currency: currency.to_owned(), lots }))
+}
+
+/// Issue 551 path W ([`derive_lot_sum`]): every procedure figure is a sentinel and today's
+/// head is an award copy or null.
+fn awards_lot_sum(
+    procedure: &[(&str, &str, i64, Judged)],
+    copy_suspect: bool,
+    partners: &ScalePartners<'_>,
+    sums: &std::collections::HashMap<&str, LotSums<'_>>,
+    rates: &crate::rates::RatesLookup,
+    date: &str,
+    today: Option<&HeadFigure<'_>>,
+) -> Option<(i64, DerivedValue)> {
+    // K: the elected copy's currency; a null head's, the currency with the most award lots (a
+    // tie to the greater code).
+    let currency: &str = match today {
+        Some(t) => t.currency,
+        None => sums.iter().filter(|(_, s)| s.award_lots() > 0).map(|(c, s)| (s.award_lots(), *c)).max()?.1,
+    };
+    let ls = sums.get(currency)?;
+    let awards = ls.per_lot(LotSumKind::Awards);
+    let n = awards.len();
+    // G0: two or more award lots.
+    if n < LOT_SUM_MIN_LOTS {
+        return None;
+    }
+    let sum = awards.iter().fold(0i64, |s, &(_, c)| s.saturating_add(c));
+    // G0: above today's figure (equal or below keeps it: the kinds disagree, 6885102); G5 on S:
+    // more than EUR 0 (unit 3's third review: issue 378 keeps 0 for "the election found nothing",
+    // and two awards above 10.00 in a currency worth under 1/4,000 EUR can round to it, as path V
+    // already refuses) and at most the cap.
+    let eur = rates.eur_cents(sum, currency, date)?;
+    if eur <= 0 || today.is_some_and(|t| eur <= t.eur_cents) || eur > IMPLAUSIBLE_EUR_CENTS {
+        return None;
+    }
+    // G5: a procedure or award-copy figure over the cap says the buyer's scale is broken; G5':
+    // so does an award copy a scale rule refused (shape C: LOT-1's EUR 1.2 bn award, x1000, beside
+    // LOT-2's EUR 1.2 m; summed, the slip itself would serve EUR 1.2012 bn).
+    if copy_suspect || procedure.iter().any(|p| p.3 == Judged::OverCap) {
+        return None;
+    }
+    // G5' (unit 3's third review): and so does a summed award a scale rule refuses at its own lot,
+    // copy or none. The max election never reads lot results, so without a tender-scope copy
+    // nothing else judges the award: shape C with no copies turned a null head into EUR 1.2012 bn,
+    // and with LOT-2's copy alone raised EUR 1.2 m to it. Judged as a `result_value` (the field a
+    // lot award is read from) at `Lot(Some(key))`; every rule's EUR 1 bn gate makes it free below.
+    if awards.iter().any(|&(lot, c)| {
+        rates
+            .eur_cents(c, currency, date)
+            .is_some_and(|e| partners.refuses_amount("result_value", currency, c, e, FigureScope::Lot(Some(lot))))
+    }) {
+        return None;
+    }
+    // G6: an award lot in another currency (the sum would be partial).
+    if sums.iter().any(|(c, s)| *c != currency && s.award_lots() > 0) {
+        return None;
+    }
+    // G7: a withheld procedure figure (a lot sum would publish it). T' already excludes one;
+    // stated for the reason.
+    if procedure.iter().any(|p| p.3 == Judged::Withheld) {
+        return None;
+    }
+    // G8: every summed award names a lot of the counted unit (a re-keyed chain's TED LOT-1
+    // beside its eForms LOT-0001 would count one lot twice).
+    if awards.iter().any(|(lot, _)| !ls.counts(lot)) {
+        return None;
+    }
+    // G8b (unit 3's second review round, 2026-10-16): two distinct summed keys spelling one lot
+    // number. A re-keyed chain whose BOTH key families are typed Lots (TED's LOT-1..n beside an
+    // eForms LOT-0001..n) passes G8 and would sum each lot twice. Unobserved in unit 1's 4,745
+    // records, but the drain folds ~195,000; refusing keeps today's head, so it cannot regress.
+    if names_one_lot_twice(awards.iter().map(|&(lot, _)| lot)) {
+        return None;
+    }
+    let largest = awards.iter().map(|&(_, c)| c).max()?;
+    let mut figures: Vec<i64> = awards.iter().map(|&(_, c)| c).collect();
+    figures.sort_unstable();
+    let mut repeats: Vec<(i64, usize)> = Vec::new();
+    for c in figures {
+        match repeats.last_mut() {
+            Some((v, k)) if *v == c => *k += 1,
+            _ => repeats.push((c, 1)),
+        }
+    }
+    // G1': a figure on two or more lots at a tenth of the largest lot or more is a repeated
+    // total (8440393, 7487018); a small repeated pair is not (5995030's PLN 8,000.00).
+    if repeats.iter().any(|&(v, k)| k >= 2 && i128::from(v) * LOT_SUM_REPEAT_SHARE >= i128::from(largest)) {
+        return None;
+    }
+    // G2: one figure on four or more lots and on half of them or more.
+    if repeats.iter().any(|&(_, k)| k >= LOT_SUM_REPEAT_MIN_LOTS && 2 * k >= n) {
+        return None;
+    }
+    // G3: one lot is a total of the others (5316712; 4787274 at k = 2. 5625591 is the same shape
+    // in lot estimates, which this path never sums).
+    if n >= 3 {
+        let rest = i128::from(sum) - i128::from(largest);
+        if (0..=LOT_SUM_TOTAL_MAX_EXPONENT).any(|k| {
+            let total = rest * 10i128.pow(k);
+            total > 0 && (i128::from(largest) - total).abs() * LOT_SUM_TOTAL_TOLERANCE <= i128::from(largest)
+        }) {
+            return None;
+        }
+    }
+    // G4: an estimate kind over two or more of the same lots 10x off the awards.
+    for kind in [LotSumKind::Estimate, LotSumKind::FrameworkMaximum] {
+        let other: std::collections::BTreeMap<&str, i64> = ls.per_lot(kind).into_iter().collect();
+        let common: Vec<(i64, i64)> = awards.iter().filter_map(|(lot, c)| other.get(lot).map(|o| (*c, *o))).collect();
+        if common.len() >= 2 {
+            let a: i128 = common.iter().map(|&(c, _)| i128::from(c)).sum();
+            let b: i128 = common.iter().map(|&(_, o)| i128::from(o)).sum();
+            if a > LOT_SUM_KIND_RATIO * b || b > LOT_SUM_KIND_RATIO * a {
+                return None;
+            }
+        }
+    }
+    let derived =
+        DerivedValue { path: DerivationPath::Awards, kind: LotSumKind::Awards, cents: sum, currency: currency.to_owned(), lots: n };
+    Some((eur, derived))
+}
+
+/// Issue 551 path W's G8b: the lot number a lot key spells, where the key is recognisably a
+/// numbered lot key, as its digits without leading zeros (`"0"` for all zeros). A numbered lot
+/// key is, once trimmed, ASCII digits alone (an OCDS lot id: Find a Tender's `1`), or `LOT` in
+/// any case followed by digits, directly or after one `-`, space or `_`: the TED walker's
+/// synthetic `LOT-1..n` (`r209::parse`'s section-id convention), eForms' `LOT-0001`, a
+/// publisher's `Lot 2` or `LOT2`. So `LOT-1`, `LOT-0001`, `Lot 1` and `1` all read `1`. Every
+/// other key reads `None` and never trips the guard: a sub-lot (`1a`, `1.2`, `2/E`), a code
+/// (`L1`, `C2 East`), a Part (`PAR-0001`, never summed beside Lots) or a group (`GLO-0001`).
+///
+/// The number is read off the key's SPELLING, and TED's `LOT-k` is no published lot number:
+/// `r209::parse` numbers a notice's lot sections in document order (`LOT-1..n`), keeps the
+/// published LOT_NO only as the `TED-LOT_NO` value, and nothing re-keys a TED lot by it across
+/// the chain (unit 3's third review). So `LOT-k` is lot k only where the notice describes every
+/// lot from 1 in published order. Where it does not, G8b both MISSES a re-keying (a TED CAN
+/// describing lots 3 and 5 as `LOT-1`/`LOT-2` beside an eForms restatement on
+/// `LOT-0003`/`LOT-0005` reads {1, 2, 3, 5} and is summed twice over) and REFUSES distinct lots
+/// (TED's `LOT-1` for lot 3 beside eForms' `LOT-0001`), which is harmless: today's head stays.
+/// The stored key carries no LOT_NO, so there is no cheap fix; the post-drain read
+/// (docs/operations.md) compares each summed TED key against its notice's `TED-LOT_NO`.
+fn lot_number(key: &str) -> Option<&str> {
+    let key = key.trim();
+    let digits = match key.get(..3) {
+        Some(prefix) if prefix.eq_ignore_ascii_case("lot") => {
+            let rest = &key[3..];
+            rest.strip_prefix(|c: char| matches!(c, '-' | ' ' | '_')).unwrap_or(rest)
+        }
+        _ => key,
+    };
+    if digits.is_empty() || !digits.bytes().all(|b| b.is_ascii_digit()) {
+        return None;
+    }
+    let number = digits.trim_start_matches('0');
+    Some(if number.is_empty() { "0" } else { number })
+}
+
+/// Issue 551 path W's G8b: whether two DISTINCT lot keys of `keys` spell one lot number
+/// ([`lot_number`]); a pure function of the summed set, as G1' to G4 are. One key offered twice
+/// is one lot, and a key that is no numbered lot key never counts.
+fn names_one_lot_twice<'k>(keys: impl IntoIterator<Item = &'k str>) -> bool {
+    let mut seen: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
+    keys.into_iter().any(|key| lot_number(key).is_some_and(|number| *seen.entry(number).or_insert(key) != key))
 }
 
 /// One lot-scoped amount offered to [`elect_lot_value`]: the published figure,
@@ -4240,26 +4817,9 @@ impl<'a> ScalePartners<'a> {
         }
     }
 
-    /// The head version's lot sums ([`LotSums`]) per currency: each lot amount and each lot
-    /// award offered to its own currency's sums, the awards in round order.
+    /// The head version's lot sums ([`LotSums::by_currency`]) per currency.
     fn lot_sums_of(head: &'a TenderVersion) -> std::collections::HashMap<String, Vec<(LotSumKind, i64, usize)>> {
-        let mut by_currency: std::collections::HashMap<&'a str, LotSums<'a>> = std::collections::HashMap::new();
-        let new = || LotSums::new(head.lots.iter().map(|l| (l.key.as_str(), l.kind.as_str())));
-        for lot in &head.lots {
-            for f in &lot.facts {
-                if let Fact::Amount { field, cents, currency, quality, .. } = f {
-                    by_currency.entry(currency.as_str()).or_insert_with(new).amount(lot.key.as_str(), field, *cents, quality.as_deref());
-                }
-            }
-        }
-        for round in &head.rounds {
-            for r in &round.lot_results {
-                if let (Some(lot), Some(currency), Some(cents)) = (r.lot_key.as_deref(), r.awarded_currency.as_deref(), r.awarded_cents) {
-                    by_currency.entry(currency).or_insert_with(new).award(lot, round.notice_id, cents);
-                }
-            }
-        }
-        by_currency.into_iter().map(|(currency, sums)| (currency.to_owned(), sums.sums())).collect()
+        LotSums::by_currency(head).into_iter().map(|(currency, sums)| (currency.to_owned(), sums.sums())).collect()
     }
 
     /// Issue 537: the lot-sum match of the figure `cents` in `currency` against the head
@@ -4273,6 +4833,33 @@ impl<'a> ScalePartners<'a> {
         match_lot_sums(cents, self.cached_lot_sums(currency), |sum| {
             self.lot_only.iter().any(|(&(c, x), &only)| c == currency && !only && lot_sum_vouches(cents, sum, x))
         })
+    }
+
+    /// Issue 551: WHICH rule refuses the procedure figure `cents` (field `field`, currency
+    /// `currency`, worth `eur_cents`), or `None` when none does: [`Self::refuses_amount`] at
+    /// [`FigureScope::Procedure`], branch for branch and in its order (471's partner, then
+    /// 492's x100, then 537's lot sum), so the two cannot disagree on whether it is refused.
+    /// Path V of the derived head reads the rule's exponent: the lot sum it serves must sit at
+    /// the scale the refusal named.
+    pub fn procedure_refusal(&self, field: &str, currency: &str, cents: i64, eur_cents: i64) -> Option<ScaleRefusal> {
+        let refusal = if eur_cents < SCALE_ERROR_MIN_EUR_CENTS {
+            None
+        } else if self.refuses_by_partner(field, currency, cents, eur_cents, FigureScope::Procedure, None) {
+            Some(match self.partner(currency, cents) {
+                Some(p) => ScaleRefusal::Partner { exponent: (cents / p).ilog10() },
+                None => ScaleRefusal::Hundred,
+            })
+        } else if self.lot_sum_slip(field, currency, cents, eur_cents, None) {
+            self.lot_sum_match(currency, cents).map(ScaleRefusal::LotSum)
+        } else {
+            None
+        };
+        debug_assert_eq!(
+            refusal.is_some(),
+            self.refuses_amount(field, currency, cents, eur_cents, FigureScope::Procedure),
+            "procedure_refusal must name a rule exactly when refuses_amount refuses"
+        );
+        refusal
     }
 
     /// The partner rules of [`Self::refuses`] (471's k >= 3, 492's x100 and their
@@ -4308,6 +4895,78 @@ impl Default for ScalePartners<'_> {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Issue 551: what [`Db::lot_sum_cohort_tender_ids`] found: the cohort's tender ids
+/// (ascending), and, when the stop flag cut the walk, the window it stopped before.
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct LotSumCohort {
+    pub ids: Vec<i64>,
+    /// The first tender id the walk did NOT read, when stopped; `None` when it finished.
+    pub stopped_at: Option<i64>,
+    /// `MAX(tenders.id)` when the walk began.
+    pub max_id: i64,
+}
+
+/// Issue 551: the tender-id window of the lot-sum cohort walk.
+pub const LOT_SUM_COHORT_WINDOW: i64 = 100_000;
+
+/// The smallest nine-digit repdigit (111,111,111): every [`sentinel_amount`] figure is at most
+/// 1, exactly 100, or at least this, so the lot-sum cohort's sentinel range is a superset of
+/// the election's sentinels without being a copy of the digit walk.
+const SENTINEL_RANGE_FLOOR_CENTS: i64 = 111_111_111;
+
+/// Issue 551: the lot-sum cohort's window statement, `(?1, ?2)` a half-open tender-id range.
+/// A Tender is in it when its stored head version (`current_seq`) has
+/// - **path V's evidence**: a tender-scope amount converting to at least
+///   [`SCALE_ERROR_MIN_EUR_CENTS`] (every scale rule's gate, so no figure below it can be
+///   refused); or
+/// - **path W's shape**: lot awards above [`SCALE_PARTNER_FLOOR_CENTS`] on two or more
+///   distinct lots, and no tender-scope amount that is neither a lot award's copy (the head's
+///   award in its currency and cents), nor partner-only (issue 506), nor in the sentinels'
+///   range (at most 1, exactly 100, or at least [`SENTINEL_RANGE_FLOOR_CENTS`]).
+///
+/// Both legs over-select: the fold's election decides (issue 375: a superset reads no rule it
+/// could drift from). Every read is a per-Tender seek through `tender_version_amounts_version`
+/// and `tender_version_lot_results`' primary key under a primary-key range on `tenders`.
+pub fn lot_sum_cohort_sql() -> String {
+    let partner_only = PARTNER_ONLY_AMOUNT_FIELDS.iter().map(|f| format!("'{f}'")).collect::<Vec<_>>().join(", ");
+    let floor = SCALE_PARTNER_FLOOR_CENTS;
+    let gate = SCALE_ERROR_MIN_EUR_CENTS;
+    let sentinel = SENTINEL_RANGE_FLOOR_CENTS;
+    format!(
+        "SELECT t.id FROM tenders t
+          WHERE t.id >= ?1 AND t.id < ?2 AND t.current_seq IS NOT NULL
+            AND (EXISTS (SELECT 1 FROM tender_version_amounts a
+                          WHERE a.tender_id = t.id AND a.seq = t.current_seq AND a.lot_id IS NULL
+                            AND a.eur_cents >= {gate})
+                 OR ((SELECT MIN(r.lot_id) FROM tender_version_lot_results r
+                       WHERE r.tender_id = t.id AND r.seq = t.current_seq AND r.lot_id IS NOT NULL
+                         AND r.awarded_cents > {floor})
+                     < (SELECT MAX(r.lot_id) FROM tender_version_lot_results r
+                         WHERE r.tender_id = t.id AND r.seq = t.current_seq AND r.lot_id IS NOT NULL
+                           AND r.awarded_cents > {floor})
+                     AND NOT EXISTS (SELECT 1 FROM tender_version_amounts a
+                                      WHERE a.tender_id = t.id AND a.seq = t.current_seq AND a.lot_id IS NULL
+                                        AND a.cents > 1 AND a.cents <> 100 AND a.cents < {sentinel}
+                                        AND a.field NOT IN ({partner_only})
+                                        AND NOT EXISTS (SELECT 1 FROM tender_version_lot_results c
+                                                         WHERE c.tender_id = a.tender_id AND c.seq = a.seq
+                                                           AND c.awarded_currency = a.currency
+                                                           AND c.awarded_cents = a.cents))))
+          ORDER BY t.id"
+    )
+}
+
+/// Issue 551: the rule that refused a procedure figure ([`ScalePartners::procedure_refusal`]).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScaleRefusal {
+    /// Issue 471: exactly 10^`exponent` (>= 3) times a partner figure, uncorroborated.
+    Partner { exponent: u32 },
+    /// Issue 492: exactly 100 times a partner figure, no framework-total exemption.
+    Hundred,
+    /// Issue 537: this lot-sum match.
+    LotSum(LotSumMatch),
 }
 
 /// Issue 537: which sum of a head version's own lots a lot-sum match is against. The
@@ -4441,6 +5100,50 @@ impl<'a> LotSums<'a> {
         }
         let best = self.amounts.entry((kind, lot)).or_insert(cents);
         *best = (*best).max(cents);
+    }
+
+    /// A head version's lot sums per currency: each lot amount and each lot award offered to
+    /// its own currency's sums, the awards in round order. The one construction issue 537's
+    /// rule ([`ScalePartners::head_lot_sums_by_kind`]) and issue 551's derived head read.
+    pub fn by_currency(head: &'a TenderVersion) -> std::collections::HashMap<&'a str, LotSums<'a>> {
+        let mut by_currency: std::collections::HashMap<&'a str, LotSums<'a>> = std::collections::HashMap::new();
+        let new = || LotSums::new(head.lots.iter().map(|l| (l.key.as_str(), l.kind.as_str())));
+        for lot in &head.lots {
+            for f in &lot.facts {
+                if let Fact::Amount { field, cents, currency, quality, .. } = f {
+                    by_currency.entry(currency.as_str()).or_insert_with(new).amount(lot.key.as_str(), field, *cents, quality.as_deref());
+                }
+            }
+        }
+        for round in &head.rounds {
+            for r in &round.lot_results {
+                if let (Some(lot), Some(currency), Some(cents)) = (r.lot_key.as_deref(), r.awarded_currency.as_deref(), r.awarded_cents) {
+                    by_currency.entry(currency).or_insert_with(new).award(lot, round.notice_id, cents);
+                }
+            }
+        }
+        by_currency
+    }
+
+    /// Issue 551: the figure each lot contributes to `kind`'s sum, as `(lot key, cents)` in key
+    /// order: what [`Self::sums`] adds up, for the derived head's guards (a figure repeated on
+    /// several lots, one lot that is a total of the others).
+    pub fn per_lot(&self, kind: LotSumKind) -> Vec<(&'a str, i64)> {
+        match kind {
+            LotSumKind::Awards => self.awards.iter().map(|(&lot, &(_, cents))| (lot, cents)).collect(),
+            _ => self.amounts.iter().filter(|((k, _), _)| *k == kind).map(|(&(_, lot), &cents)| (lot, cents)).collect(),
+        }
+    }
+
+    /// Issue 551: how many lots carry an award (the size of the awards sum).
+    pub fn award_lots(&self) -> usize {
+        self.awards.len()
+    }
+
+    /// Issue 551 (path W's G8): whether `lot` is a lot of the head's counted unit, rather than
+    /// an award's key the head does not type (which [`Self::award`] still counts).
+    pub fn counts(&self, lot: &str) -> bool {
+        self.counted.contains(lot)
     }
 
     /// Every kind with at least one lot, as `(kind, S, n)`, in [`LotSumKind::ALL`]'s order.
@@ -14626,6 +15329,45 @@ impl Db {
         Ok(ids.into_iter().collect())
     }
 
+    /// Issue 551: the Tenders whose head could serve a derived lot sum (`refold-lot-sum`'s
+    /// cohort, ADR-0017 D6's route R3), ascending, read off each stored head version
+    /// (`current_seq`) in tender-PK windows of [`LOT_SUM_COHORT_WINDOW`] on the reader pool,
+    /// with `stop` read before every window. [`lot_sum_cohort_sql`] holds the predicate: a
+    /// superset of both paths, so a Tender outside it cannot move, and a Tender inside it that
+    /// does not move compares identical and costs a compare.
+    pub async fn lot_sum_cohort_tender_ids(&self, stop: &(dyn Fn() -> bool + Sync)) -> turso::Result<LotSumCohort> {
+        let max_id = {
+            let conn = self.reader().await?;
+            let mut rows = conn.query("SELECT MAX(id) FROM tenders", ()).await?;
+            match rows.next().await? {
+                Some(row) => opt_int_of(&row, 0).unwrap_or(0),
+                None => 0,
+            }
+        };
+        let sql = lot_sum_cohort_sql();
+        let mut ids = Vec::new();
+        let mut lo = 0i64;
+        while lo <= max_id {
+            if stop() {
+                return Ok(LotSumCohort { ids, stopped_at: Some(lo), max_id });
+            }
+            let hi = lo.saturating_add(LOT_SUM_COHORT_WINDOW);
+            {
+                // One borrow per window, sequential, autocommit; `rows` drops before `conn`.
+                let conn = self.reader().await?;
+                let mut rows = conn.query(&sql, (Value::Integer(lo), Value::Integer(hi))).await?;
+                while let Some(row) = rows.next().await? {
+                    ids.push(int(&row, 0));
+                }
+            }
+            if lo % 1_000_000 == 0 {
+                eprintln!("[store] lot-sum cohort: {lo}/{max_id}, {} tender(s)", ids.len());
+            }
+            lo = hi;
+        }
+        Ok(LotSumCohort { ids, stopped_at: None, max_id })
+    }
+
     /// Stamp a TENDER-ID cohort epoch-stale — the third caller
     /// [`Db::stamp_tenders_stale`]'s doc anticipated, beside the profile join and
     /// the notice-id join.
@@ -16060,6 +16802,8 @@ impl Db {
                  current_deadline INTEGER, current_title TEXT,
                  current_value_eur_cents INTEGER,
                  current_closed_by_notice INTEGER,
+                 current_value_derivation TEXT, current_value_cents INTEGER,
+                 current_value_currency TEXT, current_value_derivation_detail TEXT,
                  projection_epoch INTEGER NOT NULL DEFAULT 0
              ) STRICT",
             (),
@@ -22201,14 +22945,22 @@ impl Db {
             // A chain that SHRANK can leave the write loop with nothing to do
             // (`keep == p.versions.len()`), so the rule's head is set here as well.
             partners.set_head(head);
+            // Issue 551: the election's EUR figure and, for a derived lot-sum head, its marker:
+            // written (or cleared) together with every other head column below.
+            let value = head_value_eur_cents_with(head, &partners, &self.rates_lookup());
+            let (derivation, derived_cents, derived_currency, derivation_detail) = StoredHead::derivation_columns(&value);
             let fresh = StoredHead {
                 seq: Some(p.versions.len() as i64),
                 published_at: Some(head.published_at),
                 deadline: head_deadline(head),
                 title: head_title(head),
-                value_eur_cents: head_value_eur_cents_with(head, &partners, &self.rates_lookup()),
+                value_eur_cents: value.eur_cents,
                 // Issue 533: the closing rule over the whole chain; 1 or NULL, never 0.
                 closed_by_notice: closed_by_notice(&p.versions).then_some(1),
+                derivation,
+                derived_cents,
+                derived_currency,
+                derivation_detail,
             };
             // An appended head is announced by its transition rows; otherwise a head column
             // that moved while every version compared identical is a correction.
@@ -22237,6 +22989,10 @@ impl Db {
                         opt_text(fresh.title.as_deref()),
                         opt_int(fresh.value_eur_cents),
                         opt_int(fresh.closed_by_notice),
+                        opt_text(fresh.derivation.as_deref()),
+                        opt_int(fresh.derived_cents),
+                        opt_text(fresh.derived_currency.as_deref()),
+                        opt_text(fresh.derivation_detail.as_deref()),
                         Value::Integer(tender_id),
                     ))
                     .await?;
@@ -22421,7 +23177,8 @@ impl Db {
                     conn.query(
                         "SELECT id, source, projection_epoch, kind, current_seq, current_published_at,
                                 current_deadline, current_title, current_value_eur_cents,
-                                current_closed_by_notice
+                                current_closed_by_notice, current_value_derivation, current_value_cents,
+                                current_value_currency, current_value_derivation_detail
                            FROM tenders WHERE procedure_key = ?",
                         (t(key),),
                     )
@@ -22431,7 +23188,8 @@ impl Db {
                     conn.query(
                         "SELECT id, source, projection_epoch, kind, current_seq, current_published_at,
                                 current_deadline, current_title, current_value_eur_cents,
-                                current_closed_by_notice
+                                current_closed_by_notice, current_value_derivation, current_value_cents,
+                                current_value_currency, current_value_derivation_detail
                            FROM tenders WHERE source = ? AND island_notice_id = ?",
                         (t(&p.source), Value::Integer(notice_id)),
                     )
@@ -22465,6 +23223,10 @@ impl Db {
                     title: opt_text_of(&row, 7),
                     value_eur_cents: opt_int_of(&row, 8),
                     closed_by_notice: opt_int_of(&row, 9),
+                    derivation: opt_text_of(&row, 10),
+                    derived_cents: opt_int_of(&row, 11),
+                    derived_currency: opt_text_of(&row, 12),
+                    derivation_detail: opt_text_of(&row, 13),
                 };
                 return Ok((id, false, int(&row, 2), Some(StoredIdentity { head, moved })));
             }
@@ -42226,7 +42988,7 @@ impl TenderInserts {
                 .prepare("INSERT INTO lots(tender_id, lot_key) VALUES(?, ?)")
                 .await?,
             head_update: conn
-                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ?, current_title = ?, current_value_eur_cents = ?, current_closed_by_notice = ? WHERE id = ?")
+                .prepare("UPDATE tenders SET current_seq = ?, current_published_at = ?, projection_epoch = ?, current_deadline = ?, current_title = ?, current_value_eur_cents = ?, current_closed_by_notice = ?, current_value_derivation = ?, current_value_cents = ?, current_value_currency = ?, current_value_derivation_detail = ? WHERE id = ?")
                 .await?,
             lot_lookup: conn
                 .prepare("SELECT id FROM lots WHERE tender_id = ? AND lot_key = ?")
@@ -42659,6 +43421,11 @@ async fn write_candidate_edges(
     }
     Ok(())
 }
+
+/// Issue 551 unit 3: the adjudicated Tenders' stored rows, for the derived head's pins.
+#[cfg(test)]
+#[path = "canonical_551_fixtures.rs"]
+mod lot_sum_551_fixtures;
 
 #[cfg(test)]
 mod tests {
@@ -44339,9 +45106,17 @@ mod tests {
     /// refused, S on the award side unconditionally, on the estimate side only under guard T.
     /// Each case carries an adjudicated Tender's figures (in EUR so the empty lookup converts
     /// at 1.0); the lots' split is invented where the synthesis gives only the sum.
+    ///
+    /// These pin the MAX election, which is what the refusal decides: the figure the head falls
+    /// to with F refused. Issue 551 serves a lot sum on top of it where F vouched for one
+    /// (369057, 1024214, ...); that derivation is pinned in
+    /// `a_refused_total_serves_the_lot_sum_it_vouches_for` on the same Tenders' stored rows.
+    /// `cost` and `bounded` below also pin what the head SERVES ([`super::head_value`]): there the
+    /// vouched sum is below the max election's figure, and path V's V0 keeps the latter.
     #[test]
     fn a_total_ten_to_the_k_times_its_lot_award_sum_is_not_elected() {
-        use super::{LotResultState, LotSumKind, RESULT_FRAMEWORK_MAXIMUM, Round, ScalePartners, head_value_eur_cents};
+        use super::{LotResultState, LotSumKind, RESULT_FRAMEWORK_MAXIMUM, Round, ScalePartners};
+        let head_value_eur_cents = super::max_election_eur_cents;
         let rates = crate::rates::RatesLookup::default();
         let amt = |field: &str, cents: i64| Fact::Amount {
             field: field.into(),
@@ -44641,6 +45416,11 @@ mod tests {
             vec![award("LOT-1", 600_000_000), award("LOT-2", 600_000_000)],
         );
         assert_eq!(one(&cost), Some(60_000_000_000), "the recorded cost");
+        // Issue 551: the awards' EUR 12 m that F vouches for is below the lot estimate the max
+        // election serves, so V0 keeps EUR 600 m (2x under the true EUR 1.2 bn) rather than serve
+        // a x100 understatement marked vouched.
+        let served = |v: &TenderVersion| super::head_value(std::slice::from_ref(v), &rates);
+        assert_eq!(served(&cost), super::HeadValue { eur_cents: Some(60_000_000_000), derived: None }, "V0: the vouched EUR 12 m is not served");
 
         // A refused procedure figure no longer bounds 492's sibling-lot exemption (recorded on
         // the issue; it errs toward refusing): a EUR 1 bn lot beside a sibling's EUR 10 m, under
@@ -44655,6 +45435,492 @@ mod tests {
         let rule = ScalePartners::of_chain(std::slice::from_ref(&bounded));
         assert!(rule.refuses_amount("estimated_value", "EUR", 100_000_000_000, 100_000_000_000, FigureScope::Lot(Some("LOT-1"))), "no admitted bound");
         assert_eq!(one(&bounded), Some(1_000_000_000));
+        // Issue 551: F vouches for the awards' EUR 3 m, below LOT-2's EUR 10 m: V0 keeps EUR 10 m.
+        assert_eq!(served(&bounded), super::HeadValue { eur_cents: Some(1_000_000_000), derived: None }, "V0: path V never lowers a head");
+    }
+
+    /// Issue 551 path V on the 15 heads 537 refused (unit 2's labels, every one read against its
+    /// notices: the lot sum is the buyer's own total) and 928196 (492's x100, the one 471/492
+    /// case): each serves the sum its refused figure vouches for, marked derived. The fixtures are
+    /// the Tenders' stored rows (`canonical_551_fixtures.rs`).
+    #[test]
+    fn a_refused_total_serves_the_lot_sum_it_vouches_for() {
+        use super::lot_sum_551_fixtures::fixture;
+        use super::{DerivationPath, LotSumKind, ScaleRule, head_value, max_election_eur_cents};
+        // (tender, rule, k, summed kind, S, currency, lots, F's field, F)
+        let cases: [(i64, ScaleRule, u32, LotSumKind, i64, &str, usize, &str, i64); 16] = [
+            (251619, ScaleRule::LotSum, 2, LotSumKind::Awards, 2_433_875_808, "EUR", 4, "result_value", 243_387_580_800),
+            (369057, ScaleRule::LotSum, 3, LotSumKind::Awards, 6_237_873_629, "EUR", 3, "result_value", 6_237_873_628_000),
+            (380921, ScaleRule::LotSum, 3, LotSumKind::Awards, 724_704_000, "PLN", 4, "result_value", 724_704_000_000),
+            (392980, ScaleRule::LotSum, 2, LotSumKind::Awards, 3_574_004_272, "EUR", 2, "result_value", 357_400_427_200),
+            (425446, ScaleRule::LotSum, 3, LotSumKind::Awards, 154_900_719, "EUR", 4, "result_value", 154_900_719_000),
+            (706887, ScaleRule::LotSum, 2, LotSumKind::Awards, 7_056_079_275, "PLN", 10, "result_value", 705_607_927_500),
+            // BT-709 matched (partner-only, never served): the BT-271 sum at the same k is.
+            (1024214, ScaleRule::LotSum, 3, LotSumKind::FrameworkMaximum, 340_000_000, "EUR", 3, "result_value", 340_000_000_000),
+            (5779108, ScaleRule::LotSum, 3, LotSumKind::Awards, 212_000_000, "EUR", 2, "result_value", 212_000_000_000),
+            (5943121, ScaleRule::LotSum, 3, LotSumKind::Awards, 132_157_992, "EUR", 10, "result_value", 132_157_992_000),
+            (6342034, ScaleRule::LotSum, 2, LotSumKind::Awards, 1_083_675_445, "EUR", 2, "result_value", 108_367_544_500),
+            (6921980, ScaleRule::LotSum, 2, LotSumKind::Awards, 2_493_033_611, "EUR", 15, "result_value", 249_303_361_300),
+            (7044132, ScaleRule::LotSum, 3, LotSumKind::Awards, 238_599_200, "EUR", 7, "result_value", 238_599_200_000),
+            // Six equal awards of EUR 500 k: uniform, but the buyer's own total vouches (V1 passes,
+            // F / M = 6000 is no power of ten). The done line's EUR 3,000,000.00.
+            (7427765, ScaleRule::LotSum, 3, LotSumKind::Awards, 300_000_000, "EUR", 6, "result_value", 300_000_000_000),
+            (7829010, ScaleRule::LotSum, 3, LotSumKind::Awards, 200_000_000, "EUR", 2, "result_value", 200_000_000_000),
+            (8514592, ScaleRule::LotSum, 2, LotSumKind::Awards, 17_924_893_700, "DKK", 2, "result_value", 1_792_489_370_000),
+            // 492: EUR 4,679,746,035.00 in two fields, 100 x the lots' BT-27 sum.
+            (928196, ScaleRule::Hundred, 2, LotSumKind::Estimate, 4_679_746_035, "EUR", 5, "estimated_value", 467_974_603_500),
+        ];
+        for (id, rule, k, kind, sum, currency, lots, field, f) in cases {
+            let fx = fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            let value = head_value(&chain, &rates);
+            let derived = value.derived.clone().unwrap_or_else(|| panic!("{id}: path V serves the vouched sum, got {value:?}"));
+            assert_eq!(
+                derived.path,
+                DerivationPath::Vouched { rule, field: field.into(), cents: f, currency: currency.into(), exponent: k },
+                "{id}: the refusal that vouched"
+            );
+            assert_eq!((derived.kind, derived.cents, derived.currency.as_str(), derived.lots), (kind, sum, currency, lots), "{id}: S");
+            let date = crate::rates::civil_date(super::lot_sum_551_fixtures::PUBLISHED_AT);
+            assert_eq!(value.eur_cents, rates.eur_cents(sum, currency, &date), "{id}: the EUR column is S at the head's date");
+            if currency == "EUR" {
+                assert_eq!(value.eur_cents, Some(sum), "{id}");
+            }
+            // The max election alone is one lot's figure or null, below S: the understatement.
+            assert!(max_election_eur_cents(&chain, &rates) < value.eur_cents, "{id}: the derived head lifts the max election");
+            assert_eq!(derived.derivation(), super::VALUE_DERIVATION_VOUCHED);
+        }
+    }
+
+    /// Issue 551 path W on its labelled heads (the Lyon-Turin trio, 8426318, 585917, 5995030) and
+    /// unit 2's fresh holdout (467176, 294968, 7256284 right; 5977060 closer, the accepted cost of
+    /// the latest award per lot key): no procedure figure, today's head an award copy or null,
+    /// and the lots' latest awards pass every guard.
+    #[test]
+    fn an_unvouched_awards_sum_is_served_under_its_guards() {
+        use super::lot_sum_551_fixtures::{PUBLISHED_AT, fixture};
+        use super::{DerivationPath, LotSumKind, head_value, max_election_eur_cents};
+        // (tender, S, currency, lots)
+        let cases: [(i64, i64, &str, usize); 10] = [
+            (6450467, 357_476_497_928, "EUR", 3),
+            (6450469, 357_476_497_928, "EUR", 3),
+            (6450473, 357_476_497_928, "EUR", 3),
+            // GBP 2 bn -> GBP 3 bn, the buyer's II.1.7 total.
+            (8426318, 300_000_000_000, "GBP", 7),
+            // null -> EUR 250 k; the BT-709 rows (EUR 250 k on each lot) are never summed.
+            (585917, 25_000_000, "EUR", 2),
+            // PLN 2,721.60 -> PLN 1,549,511.60; its small repeated pair passes G1'.
+            (5995030, 154_951_160, "PLN", 35),
+            (467176, 316_181_800, "CHF", 5),
+            (294968, 444_099_242, "CHF", 2),
+            (7256284, 57_487_328, "EUR", 2),
+            (5977060, 414_324_300, "EUR", 5),
+        ];
+        let date = crate::rates::civil_date(PUBLISHED_AT);
+        for (id, sum, currency, lots) in cases {
+            let fx = fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            let value = head_value(&chain, &rates);
+            let derived = value.derived.clone().unwrap_or_else(|| panic!("{id}: path W serves the awards sum, got {value:?}"));
+            assert_eq!(derived.path, DerivationPath::Awards, "{id}");
+            assert_eq!((derived.kind, derived.cents, derived.currency.as_str(), derived.lots), (LotSumKind::Awards, sum, currency, lots), "{id}");
+            assert_eq!(value.eur_cents, rates.eur_cents(sum, currency, &date), "{id}");
+            assert!(max_election_eur_cents(&chain, &rates) < value.eur_cents, "{id}: above today's figure (G0)");
+            assert_eq!(derived.derivation(), super::VALUE_DERIVATION_AWARDS);
+            assert_eq!(derived.detail_json(), format!("{{\"summed\":\"awards\",\"lots\":{lots}}}"), "{id}");
+        }
+    }
+
+    /// Issue 551: the shapes unit 2 rejected keep the max election, unmarked. 8440393 repeats
+    /// its GBP 8 bn total on every award (G1', and its sum is past the cap); 7487018 repeats EUR
+    /// 450 k on 42 awards (G1'); 5316712 restates the framework on LOT-1 (G3); 6885102's sum is
+    /// below its head (G0); 4925871 (sums insured), 8822313 (x1000 on every lot), 175096, 274271
+    /// (230 placeholders), 4930240 (a 3x pseudo-lot) and 5625591 carry estimates or framework
+    /// maxima only, which path W never sums.
+    #[test]
+    fn the_rejected_shapes_keep_the_max_election() {
+        use super::lot_sum_551_fixtures::fixture;
+        use super::{head_value, max_election_eur_cents};
+        for id in [8440393, 7487018, 5316712, 6885102, 4925871, 8822313, 175096, 274271, 4930240, 5625591] {
+            let fx = fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            let value = head_value(&chain, &rates);
+            assert_eq!(value.derived, None, "{id}: no derived head");
+            assert_eq!(value.eur_cents, max_election_eur_cents(&chain, &rates), "{id}: today's figure stands");
+            assert!(value.eur_cents.is_some(), "{id}: every one serves a figure today");
+        }
+    }
+
+    /// Issue 551 path V's guards, each on the smallest shape that isolates it (EUR, so the empty
+    /// lookup converts at 1.0).
+    #[test]
+    fn the_vouched_path_takes_only_the_sum_its_refusal_names() {
+        use super::{DerivationPath, LotResultState, LotSumKind, Round, ScaleRule, head_value, max_election_eur_cents};
+        let rates = crate::rates::RatesLookup::default();
+        let amt = |field: &str, cents: i64| Fact::Amount { field: field.into(), cents, currency: "EUR".into(), tax_basis: None, quality: None };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let award = |lot_key: &str, cents: i64| LotResultState {
+            key: format!("RES-{lot_key}"),
+            lot_key: Some(lot_key.into()),
+            decision: None,
+            reason: None,
+            awarded_cents: Some(cents),
+            awarded_currency: Some("EUR".into()),
+            decided: None,
+            winners: Vec::new(),
+            buyer_winners: Vec::new(),
+            statistics: Vec::new(),
+        };
+        let version = |facts: Vec<Fact>, awards: &[(&str, i64)]| TenderVersion {
+            lots: awards.iter().map(|(k, _)| lot(k, Vec::new())).collect(),
+            rounds: vec![Round {
+                notice_id: 1,
+                logical_notice_id: None,
+                lot_results: awards.iter().map(|(k, c)| award(k, *c)).collect(),
+                bids: Vec::new(),
+                contracts: Vec::new(),
+            }],
+            ..head(facts, Vec::new())
+        };
+        let one = |v: &TenderVersion| head_value(std::slice::from_ref(v), &rates);
+
+        // The base: EUR 2.5 bn over awards of EUR 1.5 m and 1 m (537, k = 3): EUR 2.5 m served.
+        let base = version(vec![amt("result_value", 250_000_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
+        let v = one(&base);
+        assert_eq!(v.eur_cents, Some(250_000_000), "the vouched sum");
+        let d = v.derived.expect("derived");
+        assert_eq!(
+            d.path,
+            DerivationPath::Vouched { rule: ScaleRule::LotSum, field: "result_value".into(), cents: 250_000_000_000, currency: "EUR".into(), exponent: 3 }
+        );
+        assert_eq!(
+            d.detail_json(),
+            "{\"summed\":\"awards\",\"lots\":2,\"rule\":\"537\",\"exponent\":3,\"refused\":{\"field\":\"result_value\",\"value\":{\"cents\":250000000000,\"currency\":\"EUR\"}}}"
+        );
+        assert_eq!(max_election_eur_cents(std::slice::from_ref(&base), &rates), None, "the max election serves null");
+
+        // Precondition: an admitted procedure figure keeps the max election, refusal or not.
+        let admitted = version(vec![amt("result_value", 250_000_000_000), amt("estimated_value", 240_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
+        assert_eq!(one(&admitted), super::HeadValue { eur_cents: Some(240_000_000), derived: None }, "an admitted procedure figure stands");
+        // ... but a lot award's tender-scope copy is no procedure figure (7427765's shape).
+        let copied = version(vec![amt("result_value", 250_000_000_000), amt("result_value", 150_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
+        assert_eq!(one(&copied).eur_cents, Some(250_000_000), "the copy does not block the vouched sum");
+        // V0 (unit 3's review): a lot figure above the whole vouched sum keeps the max election
+        // (LOT-1's EUR 3 m estimate against the awards' EUR 2.5 m): path V never lowers a head.
+        let mut above = version(vec![amt("result_value", 250_000_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
+        above.lots[0] = lot("LOT-1", vec![amt("estimated_value", 300_000_000)]);
+        assert_eq!(one(&above), super::HeadValue { eur_cents: Some(300_000_000), derived: None }, "V0: never below today's figure");
+
+        // 471: a k >= 3 partner of F in an earlier version names k; S is the awards sum at it.
+        let mut later = version(vec![amt("result_value", 250_000_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
+        later.caused_by_notice_id = 2;
+        let earlier = version(vec![amt("estimated_value", 250_000_000)], &[]);
+        let chain = [earlier, later];
+        let v = head_value(&chain, &rates);
+        assert_eq!(v.eur_cents, Some(250_000_000));
+        assert!(
+            matches!(v.derived.as_ref().map(|d| &d.path), Some(DerivationPath::Vouched { rule: ScaleRule::Partner, exponent: 3, .. })),
+            "471 refuses first and names k: {v:?}"
+        );
+
+        // A partner-only (BT-709) match with no electable sum at its k keeps the head: the
+        // partner-only sum is never served.
+        let bt709 = TenderVersion {
+            lots: vec![
+                lot("LOT-1", vec![amt(super::RESULT_FRAMEWORK_MAXIMUM, 150_000_000)]),
+                lot("LOT-2", vec![amt(super::RESULT_FRAMEWORK_MAXIMUM, 100_000_000)]),
+            ],
+            ..head(vec![amt("result_value", 250_000_000_000)], Vec::new())
+        };
+        assert_eq!(one(&bt709), super::HeadValue::default(), "refused by the BT-709 sum, and nothing electable to serve");
+        // With an electable estimate sum at the same k, that sum is served (1024214's shape).
+        let with_estimates = TenderVersion {
+            lots: vec![
+                lot("LOT-1", vec![amt(super::RESULT_FRAMEWORK_MAXIMUM, 150_000_000), amt("estimated_value", 150_000_000)]),
+                lot("LOT-2", vec![amt(super::RESULT_FRAMEWORK_MAXIMUM, 100_000_000), amt("estimated_value", 100_000_000)]),
+            ],
+            ..head(vec![amt("result_value", 250_000_000_000)], Vec::new())
+        };
+        let v = one(&with_estimates);
+        assert_eq!((v.eur_cents, v.derived.map(|d| d.kind)), (Some(250_000_000), Some(LotSumKind::Estimate)));
+
+        // Agreement: two refused figures vouching for different sums keep the max election. F1
+        // (537) vouches for the awards' EUR 2.5 m; F2 (471, its partner EUR 2.7 m in an earlier
+        // version) for the lot estimates' EUR 2.7 m.
+        let disagree = TenderVersion {
+            caused_by_notice_id: 2,
+            lots: vec![
+                lot("LOT-1", vec![amt("estimated_value", 160_000_000)]),
+                lot("LOT-2", vec![amt("estimated_value", 110_000_000)]),
+            ],
+            rounds: vec![Round {
+                notice_id: 1,
+                logical_notice_id: None,
+                lot_results: vec![award("LOT-1", 150_000_000), award("LOT-2", 100_000_000)],
+                bids: Vec::new(),
+                contracts: Vec::new(),
+            }],
+            ..head(vec![amt("result_value", 250_000_000_000), amt("estimated_value", 270_000_000_000)], Vec::new())
+        };
+        let v = head_value(&[version(vec![amt("estimated_value", 270_000_000)], &[]), disagree], &rates);
+        assert_eq!(v, super::HeadValue { eur_cents: Some(160_000_000), derived: None }, "no agreement: the max election, LOT-1's estimate");
+
+        // V1: ten lots each repeating M = EUR 2 m, and F within 1 % of 10^3 x M (500 cents over,
+        // so no exact 471 partner): 537 refuses F against the EUR 20 m sum at k = 2, and the lots
+        // are the slipped total itself, not its parts.
+        let tens: Vec<(String, i64)> = (1..=10).map(|i| (format!("LOT-{i}"), 200_000_000)).collect();
+        let tens: Vec<(&str, i64)> = tens.iter().map(|(k, c)| (k.as_str(), *c)).collect();
+        let repeated = version(vec![amt("result_value", 200_000_000_500)], &tens);
+        let rule = super::ScalePartners::of_chain(std::slice::from_ref(&repeated));
+        assert!(
+            matches!(rule.procedure_refusal("result_value", "EUR", 200_000_000_500, 200_000_000_500), Some(super::ScaleRefusal::LotSum(m)) if m.exponent == 2),
+            "537 refuses it at k = 2"
+        );
+        assert_eq!(one(&repeated), super::HeadValue::default(), "V1: no derived head, and nothing else to elect");
+        // Six equal lots with F / M = 6000 pass V1 (7427765).
+        let six: Vec<(String, i64)> = (1..=6).map(|i| (format!("LOT-{i}"), 50_000_000)).collect();
+        let six: Vec<(&str, i64)> = six.iter().map(|(k, c)| (k.as_str(), *c)).collect();
+        assert_eq!(one(&version(vec![amt("result_value", 300_000_000_000)], &six)).eur_cents, Some(300_000_000));
+
+        // The cap: a 471 refusal of a figure past EUR 100 bn names a sum past it too: kept.
+        let mut huge = version(vec![amt("result_value", 20_000_000_000_000_000)], &[("LOT-1", 10_000_000_000_000), ("LOT-2", 10_000_000_000_000)]);
+        huge.caused_by_notice_id = 2;
+        let partner = version(vec![amt("estimated_value", 20_000_000_000_000)], &[]);
+        let v = head_value(&[partner, huge], &rates);
+        assert_eq!(v.derived, None, "S over EUR 100 bn is not served");
+    }
+
+    /// Issue 551 path W's guards, each on the smallest shape that isolates it: three lots awarded
+    /// EUR 1 m, 2 m and 3.3 m, today's head the EUR 3.3 m award's tender-scope copy.
+    #[test]
+    fn the_awards_path_refuses_every_shape_its_guards_name() {
+        use super::{LotResultState, Round, head_value};
+        let rates = crate::rates::RatesLookup::default();
+        let amt_in = |field: &str, cents: i64, currency: &str| Fact::Amount { field: field.into(), cents, currency: currency.into(), tax_basis: None, quality: None };
+        let amt = |field: &str, cents: i64| amt_in(field, cents, "EUR");
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let award_in = |lot_key: &str, cents: i64, currency: &str| LotResultState {
+            key: format!("RES-{lot_key}"),
+            lot_key: Some(lot_key.into()),
+            decision: None,
+            reason: None,
+            awarded_cents: Some(cents),
+            awarded_currency: Some(currency.into()),
+            decided: None,
+            winners: Vec::new(),
+            buyer_winners: Vec::new(),
+            statistics: Vec::new(),
+        };
+        // (facts, lots with their own facts, rounds of awards as (lot, cents, currency))
+        let version = |facts: Vec<Fact>, lots: Vec<LotState>, rounds: Vec<Vec<(&str, i64, &str)>>| TenderVersion {
+            lots,
+            rounds: rounds
+                .into_iter()
+                .enumerate()
+                .map(|(i, awards)| Round {
+                    notice_id: i as i64 + 1,
+                    logical_notice_id: None,
+                    lot_results: awards.iter().map(|(k, c, cur)| award_in(k, *c, cur)).collect(),
+                    bids: Vec::new(),
+                    contracts: Vec::new(),
+                })
+                .collect(),
+            ..head(facts, Vec::new())
+        };
+        let lots3 = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new()), lot("LOT-3", Vec::new())];
+        let awards3 = || vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR"), ("LOT-3", 330_000_000, "EUR")]];
+        let one = |v: &TenderVersion| head_value(std::slice::from_ref(v), &rates);
+        let fires = |v: &TenderVersion| one(v).derived.is_some();
+
+        let base = version(vec![amt("result_value", 330_000_000)], lots3(), awards3());
+        assert_eq!(one(&base).eur_cents, Some(630_000_000), "the base serves the awards sum");
+        // A null head (no tender-scope figure at all) sums too.
+        assert_eq!(one(&version(Vec::new(), lots3(), awards3())).eur_cents, Some(630_000_000), "a null head");
+
+        // T': an admitted procedure figure keeps the head; a sentinel one does not (EUR 1.00).
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000), amt("estimated_value", 500_000_000)], lots3(), awards3())), "T': admitted");
+        assert!(fires(&version(vec![amt("result_value", 330_000_000), amt("estimated_value", 100)], lots3(), awards3())), "T': a sentinel");
+        // T' / G7: a withheld procedure figure keeps the head.
+        let withheld = Fact::Amount { field: "estimated_value".into(), cents: 500_000_000, currency: "EUR".into(), tax_basis: None, quality: Some(super::QUALITY_WITHHELD.into()) };
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000), withheld], lots3(), awards3())), "G7: withheld");
+        // T': a procedure figure over the cap keeps the head (G5 as well).
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000), amt("estimated_value", 12_345_678_901_234)], lots3(), awards3())), "T': over the cap");
+
+        // K: a lot's own figure as today's head keeps it (never an estimate sum: path W sums awards).
+        let estimates = vec![lot("LOT-1", vec![amt("estimated_value", 400_000_000)]), lot("LOT-2", vec![amt("estimated_value", 150_000_000)]), lot("LOT-3", Vec::new())];
+        assert!(!fires(&version(Vec::new(), estimates, awards3())), "K: today's head is a lot estimate");
+        // Estimates alone, no award: nothing to sum.
+        let only_estimates = vec![lot("LOT-1", vec![amt("estimated_value", 400_000_000)]), lot("LOT-2", vec![amt("estimated_value", 150_000_000)])];
+        assert!(!fires(&version(Vec::new(), only_estimates, Vec::new())), "never an estimate sum");
+
+        // G0: one award lot is no sum; a sum at or below today's figure keeps it (a corrected
+        // award's stale copy elected today: EUR 9 m before LOT-1's correction to EUR 1 m).
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), vec![vec![("LOT-3", 330_000_000, "EUR")]])), "G0: one lot");
+        let corrected = vec![vec![("LOT-1", 900_000_000, "EUR")], vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")]];
+        assert!(!fires(&version(vec![amt("result_value", 900_000_000)], lots3(), corrected)), "G0: below today's figure");
+
+        // G5: an award copy over the cap (a stale slip's copy) says the scale is broken.
+        let slipped = vec![vec![("LOT-1", 3_300_000_000_000_000, "EUR")], vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")]];
+        assert!(!fires(&version(vec![amt("result_value", 3_300_000_000_000_000)], lots3(), slipped)), "G5: a copy over the cap");
+        // G5: a sum past EUR 100 bn.
+        let giant = vec![vec![("LOT-1", 6_000_000_000_000, "EUR"), ("LOT-2", 5_000_000_000_000, "EUR")]];
+        assert!(!fires(&version(Vec::new(), lots3(), giant)), "G5: S over the cap");
+        // G5' (unit 3's review): an award copy a scale rule refused (471: LOT-1's EUR 1.2 bn award is
+        // exactly 1000x LOT-2's copy) keeps today's head, the EUR 1.2 m copy, where the sum would serve
+        // the slip itself, EUR 1.2012 bn. A refusal is a judgement, not the cap: G5 alone missed it.
+        let slip = || vec![vec![("LOT-1", 120_000_000_000, "EUR"), ("LOT-2", 120_000_000, "EUR")]];
+        let copies = version(vec![amt("result_value", 120_000_000_000), amt("result_value", 120_000_000)], lots3(), slip());
+        let rule = super::ScalePartners::of_chain(std::slice::from_ref(&copies));
+        assert!(rule.is_head_award("EUR", 120_000_000_000), "the slipped figure is LOT-1's award's copy");
+        assert!(rule.refuses_amount("result_value", "EUR", 120_000_000_000, 120_000_000_000, FigureScope::Lot(None)), "and refused at Lot(None)");
+        assert_eq!(one(&copies), super::HeadValue { eur_cents: Some(120_000_000), derived: None }, "G5': a refused copy keeps today's head");
+        // G5' (unit 3's third review): the same slip with NO tender-scope copy. Nothing judged the
+        // award itself, so a null head became EUR 1.2012 bn; 471 refuses it at its own lot (partner:
+        // LOT-2's EUR 1.2 m), and the null head stays null.
+        let no_copies = version(Vec::new(), lots3(), slip());
+        let rule = super::ScalePartners::of_chain(std::slice::from_ref(&no_copies));
+        assert!(rule.refuses_amount("result_value", "EUR", 120_000_000_000, 120_000_000_000, FigureScope::Lot(Some("LOT-1"))), "refused at its lot");
+        assert!(!rule.refuses_amount("result_value", "EUR", 120_000_000, 120_000_000, FigureScope::Lot(Some("LOT-2"))), "its partner is not");
+        assert_eq!(one(&no_copies), super::HeadValue::default(), "G5': a refused award with no copy keeps the null head");
+        // ... and with the small award's copy alone, today's EUR 1.2 m stays (was raised 1000x).
+        let small_copy = version(vec![amt("result_value", 120_000_000)], lots3(), slip());
+        assert_eq!(one(&small_copy), super::HeadValue { eur_cents: Some(120_000_000), derived: None }, "G5': only the partner's copy");
+
+        // G6: an award lot in another currency.
+        let mixed = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR"), ("LOT-3", 330_000_000, "PLN")]];
+        assert!(!fires(&version(vec![amt("result_value", 200_000_000)], lots3(), mixed)), "G6: a PLN award beside the EUR ones");
+
+        // G8: an award naming a lot the head does not type (a re-keyed chain's LOT-0001).
+        let rekeyed = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR"), ("LOT-0003", 330_000_000, "EUR")]];
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), rekeyed)), "G8: an untyped lot key");
+        // G8b (unit 3's second review round; it replaces round 1's accepted double count): a re-keyed
+        // chain whose BOTH key sets are typed Lots (a TED CAN on LOT-1/2, an eForms modification on
+        // LOT-0001/2 with changed values) passes G8, and summed it would serve EUR 6.3 m over 4 lots
+        // against a true ~EUR 3.3 m. Two summed keys spell lot 1 (and lot 2): today's head stays, the
+        // EUR 2.2 m copy.
+        let both_typed = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new()), lot("LOT-0001", Vec::new()), lot("LOT-0002", Vec::new())];
+        let restated = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")], vec![("LOT-0001", 110_000_000, "EUR"), ("LOT-0002", 220_000_000, "EUR")]];
+        let rekeyed_twice = version(vec![amt("result_value", 220_000_000)], both_typed(), restated);
+        assert_eq!(one(&rekeyed_twice), super::HeadValue { eur_cents: Some(220_000_000), derived: None }, "G8b: one lot number under two keys");
+        assert_eq!(one(&rekeyed_twice).eur_cents, super::max_election_eur_cents(std::slice::from_ref(&rekeyed_twice), &rates), "today's head");
+        // One collision is enough: LOT-2 beside LOT-0002, with LOT-1 and LOT-0003 apart.
+        let one_pair = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")], vec![("LOT-0002", 220_000_000, "EUR"), ("LOT-0003", 330_000_000, "EUR")]];
+        let typed4 = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new()), lot("LOT-0002", Vec::new()), lot("LOT-0003", Vec::new())];
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], typed4(), one_pair)), "G8b: LOT-2 and LOT-0002");
+        // Other spellings of one number: an OCDS `1` beside `Lot 1`.
+        let spelled = || vec![lot("1", Vec::new()), lot("Lot 1", Vec::new()), lot("2", Vec::new())];
+        let spelled_awards = vec![vec![("1", 100_000_000, "EUR"), ("2", 200_000_000, "EUR"), ("Lot 1", 330_000_000, "EUR")]];
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], spelled(), spelled_awards)), "G8b: 1 and Lot 1");
+        // Positive controls: each key family alone still sums (eForms LOT-0001/2, TED LOT-1/2), as do
+        // two families whose numbers do not meet, and keys that are no numbered lot key (1a beside 1).
+        let eforms = || vec![lot("LOT-0001", Vec::new()), lot("LOT-0002", Vec::new())];
+        let v = one(&version(vec![amt("result_value", 220_000_000)], eforms(), vec![vec![("LOT-0001", 110_000_000, "EUR"), ("LOT-0002", 220_000_000, "EUR")]]));
+        assert_eq!((v.eur_cents, v.derived.map(|d| d.lots)), (Some(330_000_000), Some(2)), "G8b: LOT-0001/LOT-0002 alone sums");
+        let ted = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new())];
+        let v = one(&version(vec![amt("result_value", 200_000_000)], ted(), vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")]]));
+        assert_eq!((v.eur_cents, v.derived.map(|d| d.lots)), (Some(300_000_000), Some(2)), "G8b: LOT-1/LOT-2 alone sums");
+        let apart = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")], vec![("LOT-0003", 330_000_000, "EUR")]];
+        let typed3 = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new()), lot("LOT-0003", Vec::new())];
+        assert_eq!(one(&version(vec![amt("result_value", 330_000_000)], typed3(), apart)).eur_cents, Some(630_000_000), "G8b: numbers 1, 2, 3 apart");
+        let sub_lots = || vec![lot("1", Vec::new()), lot("1a", Vec::new()), lot("1.2", Vec::new())];
+        let sub_awards = vec![vec![("1", 100_000_000, "EUR"), ("1a", 200_000_000, "EUR"), ("1.2", 330_000_000, "EUR")]];
+        assert_eq!(one(&version(vec![amt("result_value", 330_000_000)], sub_lots(), sub_awards)).eur_cents, Some(630_000_000), "G8b: 1a and 1.2 are no lot 1");
+        // Restated at EQUAL values, G1' catches it too (each figure on two lots).
+        let equal = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")], vec![("LOT-0001", 100_000_000, "EUR"), ("LOT-0002", 200_000_000, "EUR")]];
+        assert!(!fires(&version(vec![amt("result_value", 200_000_000)], both_typed(), equal)), "G1': an equal restatement");
+
+        // G1': a figure on two lots at a tenth of the largest or more is a repeated total ...
+        let twice = vec![vec![("LOT-1", 330_000_000, "EUR"), ("LOT-2", 330_000_000, "EUR"), ("LOT-3", 100_000_000, "EUR")]];
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), twice)), "G1': EUR 3.3 m on two lots");
+        // ... a small repeated pair is not (5995030's PLN 8,000.00).
+        let small_pair = vec![vec![("LOT-1", 800_000, "EUR"), ("LOT-2", 800_000, "EUR"), ("LOT-3", 330_000_000, "EUR")]];
+        assert!(fires(&version(vec![amt("result_value", 330_000_000)], lots3(), small_pair)), "G1': a pair under a tenth passes");
+
+        // G2: one small figure on four of eight lots.
+        let eight: Vec<String> = (1..=8).map(|i| format!("LOT-{i}")).collect();
+        let lots8 = || eight.iter().map(|k| lot(k, Vec::new())).collect::<Vec<_>>();
+        let mut spread: Vec<(&str, i64, &str)> = eight[..4].iter().map(|k| (k.as_str(), 800_000, "EUR")).collect();
+        spread.extend(eight[4..].iter().zip([300_000_000, 310_000_000, 320_000_000, 330_000_000]).map(|(k, c)| (k.as_str(), c, "EUR")));
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots8(), vec![spread.clone()])), "G2: four of eight lots repeat one figure");
+        spread[3].1 = 900_000;
+        assert!(fires(&version(vec![amt("result_value", 330_000_000)], lots8(), vec![spread])), "G2: three of eight do not");
+
+        // G3: one lot equal to the sum of the others (5316712), or 100x it (4787274).
+        let total = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 230_000_000, "EUR"), ("LOT-3", 330_000_000, "EUR")]];
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), total)), "G3: k = 0");
+        let hundredfold = vec![vec![("LOT-1", 1_000_000, "EUR"), ("LOT-2", 2_300_000, "EUR"), ("LOT-3", 330_000_000, "EUR")]];
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), hundredfold)), "G3: k = 2");
+
+        // G4: lot estimates over two or more of the same lots 10x off the awards.
+        let off = vec![lot("LOT-1", vec![amt("estimated_value", 100_000)]), lot("LOT-2", vec![amt("estimated_value", 200_000)]), lot("LOT-3", Vec::new())];
+        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], off, awards3())), "G4: 1000x off");
+        let near = vec![lot("LOT-1", vec![amt("estimated_value", 90_000_000)]), lot("LOT-2", vec![amt("estimated_value", 210_000_000)]), lot("LOT-3", Vec::new())];
+        let v = version(vec![amt("result_value", 330_000_000)], near, awards3());
+        assert_eq!(one(&v).eur_cents, Some(630_000_000), "G4: within 10x passes");
+
+        // A non-EUR sum converts at the head's date.
+        let mut pln = crate::rates::RatesLookup::default();
+        pln.insert_for_test("PLN", &crate::rates::civil_date(0), 4.0);
+        // A null head sums the currency with the most award lots (PLN, two) ... and G6 then refuses
+        // the partial sum all the same.
+        let two_currencies = vec![vec![("LOT-1", 100_000_000, "PLN"), ("LOT-2", 200_000_000, "PLN"), ("LOT-3", 330_000_000, "EUR")]];
+        assert_eq!(head_value(std::slice::from_ref(&version(Vec::new(), lots3(), two_currencies)), &pln).derived, None, "G6 on a null head");
+        let polish = version(vec![amt_in("result_value", 330_000_000, "PLN")], lots3(), vec![vec![("LOT-1", 100_000_000, "PLN"), ("LOT-2", 200_000_000, "PLN"), ("LOT-3", 330_000_000, "PLN")]]);
+        let v = head_value(std::slice::from_ref(&polish), &pln);
+        assert_eq!((v.eur_cents, v.derived.map(|d| (d.cents, d.currency))), (Some(157_500_000), Some((630_000_000, "PLN".to_owned()))));
+        // No rate, no EUR column: nothing derived.
+        assert_eq!(one(&polish), super::HeadValue::default());
+        // G5 (unit 3's third review): S must convert to more than EUR 0, as path V's must. Two awards
+        // above the 10.00 floor in a currency at 17,000 per EUR sum to IDR 45.01, EUR 0.26 cents,
+        // which rounds to the 0 issue 378 reserves for "the election found nothing".
+        let mut idr = crate::rates::RatesLookup::default();
+        idr.insert_for_test("IDR", &crate::rates::civil_date(0), 17_000.0);
+        let tiny = version(Vec::new(), lots3(), vec![vec![("LOT-1", 2_001, "IDR"), ("LOT-2", 2_500, "IDR")]]);
+        assert_eq!(head_value(std::slice::from_ref(&tiny), &idr), super::HeadValue::default(), "G5: S rounding to EUR 0 is no head");
+        let copied = version(vec![amt_in("result_value", 2_001, "IDR"), amt_in("result_value", 2_500, "IDR")], lots3(), vec![vec![("LOT-1", 2_001, "IDR"), ("LOT-2", 2_500, "IDR")]]);
+        assert_eq!(head_value(std::slice::from_ref(&copied), &idr), super::HeadValue::default(), "G5: nor with copies judged Zero");
+    }
+
+    /// Issue 551 path W's G8b: which lot keys read as a lot number. The spellings are the ones the
+    /// walkers write (TED's synthetic `LOT-n`, eForms' `LOT-nnnn`, an OCDS id) and the ones unit 1's
+    /// 4,745 records carry (`Lot 2`, `LOT2`); anything else is no numbered lot key.
+    #[test]
+    fn the_awards_path_reads_a_lot_number_only_from_a_numbered_lot_key() {
+        use super::{lot_number, names_one_lot_twice};
+        for (key, number) in [
+            ("LOT-1", Some("1")),
+            ("LOT-0001", Some("1")),
+            ("Lot 1", Some("1")),
+            ("lot_1", Some("1")),
+            ("LOT2", Some("2")),
+            ("1", Some("1")),
+            ("01", Some("1")),
+            (" LOT-10 ", Some("10")),
+            ("LOT-0000", Some("0")),
+            ("100", Some("100")),
+            ("1a", None),
+            ("1.2", None),
+            ("2/E", None),
+            ("L1", None),
+            ("C2 East", None),
+            ("PAR-0001", None),
+            ("GLO-0001", None),
+            ("LOT-", None),
+            ("Lot - 1", None),
+            ("LOT--1", None),
+            ("Lot No 1", None),
+            ("TBC", None),
+            ("", None),
+            ("é1", None),
+        ] {
+            assert_eq!(lot_number(key), number, "{key:?}");
+        }
+        assert!(names_one_lot_twice(["LOT-1", "LOT-0001"]));
+        assert!(names_one_lot_twice(["1", "LOT-2", "Lot 1"]));
+        assert!(!names_one_lot_twice(["LOT-1", "LOT-1"]), "one key offered twice is one lot");
+        assert!(!names_one_lot_twice(["LOT-0001", "LOT-0002", "LOT-0010"]));
+        assert!(!names_one_lot_twice(["1", "1a", "1b", "1.1"]), "sub-lots are no lot 1");
+        assert!(!names_one_lot_twice(std::iter::empty::<&str>()));
     }
 
     /// Issue 537: [`super::LotSums`] is the one definition of S, shared by the election and

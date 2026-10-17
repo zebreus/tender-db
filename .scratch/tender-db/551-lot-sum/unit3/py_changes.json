@@ -1,0 +1,374 @@
+{
+ "changed": {
+  "1024214": {
+   "derived": {
+    "cents": 340000000,
+    "currency": "EUR",
+    "f_cents": 340000000000,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 4,
+    "lots": 3,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 340000000,
+   "pop": "B",
+   "stored": 120000000,
+   "today": 120000000,
+   "why": "V"
+  },
+  "251619": {
+   "derived": {
+    "cents": 2433875808,
+    "currency": "EUR",
+    "f_cents": 243387580800,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 2,
+    "kind": 0,
+    "lots": 4,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 2433875808,
+   "pop": "B",
+   "stored": null,
+   "today": null,
+   "why": "V"
+  },
+  "369057": {
+   "derived": {
+    "cents": 6237873629,
+    "currency": "EUR",
+    "f_cents": 6237873628000,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 0,
+    "lots": 3,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 6237873629,
+   "pop": "B",
+   "stored": null,
+   "today": null,
+   "why": "V"
+  },
+  "380921": {
+   "derived": {
+    "cents": 724704000,
+    "currency": "PLN",
+    "f_cents": 724704000000,
+    "f_currency": "PLN",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 0,
+    "lots": 4,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 169588842,
+   "pop": "B",
+   "stored": null,
+   "today": null,
+   "why": "V"
+  },
+  "392980": {
+   "derived": {
+    "cents": 3574004272,
+    "currency": "EUR",
+    "f_cents": 357400427200,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 2,
+    "kind": 0,
+    "lots": 2,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 3574004272,
+   "pop": "B",
+   "stored": null,
+   "today": null,
+   "why": "V"
+  },
+  "425446": {
+   "derived": {
+    "cents": 154900719,
+    "currency": "EUR",
+    "f_cents": 154900719000,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 0,
+    "lots": 4,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 154900719,
+   "pop": "B",
+   "stored": null,
+   "today": null,
+   "why": "V"
+  },
+  "5779108": {
+   "derived": {
+    "cents": 212000000,
+    "currency": "EUR",
+    "f_cents": 212000000000,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 0,
+    "lots": 2,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 212000000,
+   "pop": "B",
+   "stored": 140000000,
+   "today": 140000000,
+   "why": "V"
+  },
+  "585917": {
+   "derived": {
+    "cents": 25000000,
+    "currency": "EUR",
+    "kind": 0,
+    "lots": 2,
+    "path": "lot-sum-awards"
+   },
+   "eur": 25000000,
+   "pop": "R",
+   "stored": null,
+   "today": null,
+   "why": "W"
+  },
+  "5943121": {
+   "derived": {
+    "cents": 132157992,
+    "currency": "EUR",
+    "f_cents": 132157992000,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 0,
+    "lots": 10,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 132157992,
+   "pop": "B",
+   "stored": 41605305,
+   "today": 41605305,
+   "why": "V"
+  },
+  "5995030": {
+   "derived": {
+    "cents": 154951160,
+    "currency": "PLN",
+    "kind": 0,
+    "lots": 35,
+    "path": "lot-sum-awards"
+   },
+   "eur": 37189759,
+   "pop": "R",
+   "stored": 65321,
+   "today": 65321,
+   "why": "W"
+  },
+  "6342034": {
+   "derived": {
+    "cents": 1083675445,
+    "currency": "EUR",
+    "f_cents": 108367544500,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 2,
+    "kind": 0,
+    "lots": 2,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 1083675445,
+   "pop": "B",
+   "stored": 768675445,
+   "today": 768675445,
+   "why": "V"
+  },
+  "6450467": {
+   "derived": {
+    "cents": 357476497928,
+    "currency": "EUR",
+    "kind": 0,
+    "lots": 3,
+    "path": "lot-sum-awards"
+   },
+   "eur": 357476497928,
+   "pop": "B",
+   "stored": 166066168294,
+   "today": 166066168294,
+   "why": "W"
+  },
+  "6450469": {
+   "derived": {
+    "cents": 357476497928,
+    "currency": "EUR",
+    "kind": 0,
+    "lots": 3,
+    "path": "lot-sum-awards"
+   },
+   "eur": 357476497928,
+   "pop": "B",
+   "stored": 166066168294,
+   "today": 166066168294,
+   "why": "W"
+  },
+  "6450473": {
+   "derived": {
+    "cents": 357476497928,
+    "currency": "EUR",
+    "kind": 0,
+    "lots": 3,
+    "path": "lot-sum-awards"
+   },
+   "eur": 357476497928,
+   "pop": "B",
+   "stored": 166066168294,
+   "today": 166066168294,
+   "why": "W"
+  },
+  "6921980": {
+   "derived": {
+    "cents": 2493033611,
+    "currency": "EUR",
+    "f_cents": 249303361300,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 2,
+    "kind": 0,
+    "lots": 15,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 2493033611,
+   "pop": "B",
+   "stored": 1036974789,
+   "today": 1036974789,
+   "why": "V"
+  },
+  "7044132": {
+   "derived": {
+    "cents": 238599200,
+    "currency": "EUR",
+    "f_cents": 238599200000,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 0,
+    "lots": 7,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 238599200,
+   "pop": "B",
+   "stored": 80426800,
+   "today": 80426800,
+   "why": "V"
+  },
+  "706887": {
+   "derived": {
+    "cents": 7056079275,
+    "currency": "PLN",
+    "f_cents": 705607927500,
+    "f_currency": "PLN",
+    "f_field": "result_value",
+    "k": 2,
+    "kind": 0,
+    "lots": 10,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 1646923554,
+   "pop": "B",
+   "stored": null,
+   "today": null,
+   "why": "V"
+  },
+  "7427765": {
+   "derived": {
+    "cents": 300000000,
+    "currency": "EUR",
+    "f_cents": 300000000000,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 0,
+    "lots": 6,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 300000000,
+   "pop": "B",
+   "stored": 50000000,
+   "today": 50000000,
+   "why": "V"
+  },
+  "7829010": {
+   "derived": {
+    "cents": 200000000,
+    "currency": "EUR",
+    "f_cents": 200000000000,
+    "f_currency": "EUR",
+    "f_field": "result_value",
+    "k": 3,
+    "kind": 0,
+    "lots": 2,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 200000000,
+   "pop": "B",
+   "stored": 196500000,
+   "today": 196500000,
+   "why": "V"
+  },
+  "8426318": {
+   "derived": {
+    "cents": 300000000000,
+    "currency": "GBP",
+    "kind": 0,
+    "lots": 7,
+    "path": "lot-sum-awards"
+   },
+   "eur": 338294993234,
+   "pop": "B",
+   "stored": 225529995489,
+   "today": 225529995489,
+   "why": "W"
+  },
+  "8514592": {
+   "derived": {
+    "cents": 17924893700,
+    "currency": "DKK",
+    "f_cents": 1792489370000,
+    "f_currency": "DKK",
+    "f_field": "result_value",
+    "k": 2,
+    "kind": 0,
+    "lots": 2,
+    "path": "lot-sum-vouched",
+    "rule": "537"
+   },
+   "eur": 2409389443,
+   "pop": "B",
+   "stored": 2132365624,
+   "today": 2132365624,
+   "why": "V"
+  }
+ },
+ "records": 4745
+}

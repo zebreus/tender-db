@@ -467,8 +467,16 @@ pub struct TenderRow {
     /// The version's original language (ADR-0013 D3), `None` where the era never said.
     pub original_lang: Option<String>,
     pub title: Option<String>,
+    /// The head value as money: the elected amount row's published figure, or, for a derived
+    /// head (issue 551), the lot sum stored on `tenders` (`current_value_cents`/`_currency`).
     pub value_cents: Option<i64>,
     pub currency: Option<String>,
+    /// Issue 551: how a derived head's `value` was derived — `tenders.current_value_derivation`
+    /// (`canonical::VALUE_DERIVATION_VOUCHED` / `VALUE_DERIVATION_AWARDS`) — and its JSON detail
+    /// (`current_value_derivation_detail`). `None` for an elected head, and on any version but
+    /// the head (the marker describes the head's value only).
+    pub value_derivation: Option<String>,
+    pub value_derivation_detail: Option<String>,
     pub deadline: Option<Stamp>,
     /// Which scope `deadline` came from; `None` exactly when `deadline` is (issue 370 unit 4).
     pub deadline_scope: Option<DeadlineScope>,
@@ -1187,9 +1195,17 @@ enum ValueBy<'a> {
     /// `head_value_eur_cents` runs for the head alone, and its rule (the sentinel digit walk,
     /// scale partners over the chain) is not transcribed into SQL (issues 366, 375) — so there
     /// the bound reads a SUPERSET: an amount row of the version whose `eur_cents` lies within
-    /// it. The fold elects one of the version's own stored rows (the amount pick in
-    /// `tender_select_head` finds it by `eur_cents` the same way), so a version inside the
-    /// bound always matches, and a PROBED change that takes the head out of the bound reaches
+    /// it, OR (issue 551) the version's lot figures read as a lot sum's bound. The fold elects
+    /// one of the version's own stored rows (the amount pick in `tender_select_head` finds it by
+    /// `eur_cents` the same way) or, since issue 551, a DERIVED lot sum S that no amount row
+    /// carries (`canonical::DerivedValue`: the lots' latest awards, which live in
+    /// `tender_version_lot_results`, or their estimates or framework maxima). S is a sum of lot
+    /// figures each converted at S's own date and rate, so each stored summand is between EUR 0
+    /// (a summand can round to 0 while S rounds to a cent) and S. Under `>=` the version's TOTAL
+    /// of lot figures from EUR 0 to the cap (its lot amount rows, or its lot results) is at least
+    /// S, given one cent a row for the conversion's half-up rounding, and under `<=` any one
+    /// summed figure is at most S. Either way a version inside
+    /// the bound always matches, and a PROBED change that takes the head out of the bound reaches
     /// its subscriber as `removed`. Probed: a lots stream reads only `lot` change rows, and the
     /// fold writes one only when the lot's facts, kind or its Tender's closure moved — a
     /// version that moves only the Tender's value (a procedure-total corrigendum, a sibling
@@ -1387,10 +1403,11 @@ fn version_predicates(
         }
     }
     // The value bounds compare the fold-maintained head column (ADR-0014 D5):
-    // EUR cents against the head version's MAX derived amount. NULL — no
-    // amount, nothing converts, or the row predates the backfill — fails both
-    // comparisons, so an unconvertible Tender never matches a value bound
-    // (the same one-sided honesty as every filter guard). The raw-cents
+    // EUR cents against the head version's elected amount or, where
+    // `current_value_derivation` is set, its derived lot sum (issue 551). NULL —
+    // nothing elected or summed, nothing converts, or the row predates the
+    // backfill — fails both comparisons, so such a Tender never matches a value
+    // bound (the same one-sided honesty as every filter guard). The raw-cents
     // comparison this replaces mixed currencies numerically; its retirement
     // is CHANGELOG.md's first entry.
     let bounds: Vec<(&str, i64)> =
@@ -1402,20 +1419,55 @@ fn version_predicates(
             }
         }
         // Issue 547: the stored value at the head, a superset (one amount row of the version
-        // inside every bound) before it — see `ValueBy::Version`.
+        // inside every bound) before it — see `ValueBy::Version`. Issue 551: or the version's
+        // lot figures inside every bound read as a lot sum's (a derived head is no amount row).
         ValueBy::Version { head_seq, head_value } if !bounds.is_empty() => {
             let at_head: Vec<String> = bounds.iter().map(|(op, _)| format!("{head_value} {op} ?")).collect();
             let a_row: Vec<String> = bounds.iter().map(|(op, _)| format!("va.eur_cents {op} ?")).collect();
+            // Each leg seeks the version's own rows and carries the head guard, as the amount
+            // EXISTS does. `SUM` over no row is NULL, so a version without lot figures fails it.
+            let version_rows = |alias: &str| format!("{alias}.tender_id = {tid} AND {alias}.seq = {seq} AND {seq} IS NOT {head_seq}");
+            let (va_rows, vr_rows) = (version_rows("va"), version_rows("vr"));
+            // Only a figure a derived sum can hold: non-negative and at most the cap, since each
+            // summand converts to at most S and S to at most `IMPLAUSIBLE_EUR_CENTS` (both paths
+            // refuse more). A summand can round to EUR 0 while S rounds to a cent (G5's floor is on
+            // S alone: IDR 80.00 + 84.00 at 17,000/EUR is EUR 0.01 from two EUR 0 rows), so 0 is
+            // counted (unit 3's fourth review). So the superset stands, and `SUM` cannot overflow
+            // i64 (unit 3's third review: two near-i64::MAX lot rows made turso raise `integer
+            // overflow`, failing the probe).
+            let cap = crate::canonical::IMPLAUSIBLE_EUR_CENTS;
+            let lot_sum: Vec<String> = bounds
+                .iter()
+                .map(|(op, _)| match *op {
+                    ">=" => format!(
+                        "((SELECT SUM(va.eur_cents) + COUNT(*) FROM tender_version_amounts va
+                            WHERE {va_rows} AND va.lot_id IS NOT NULL AND va.eur_cents BETWEEN 0 AND {cap}) >= ?
+                          OR (SELECT SUM(vr.awarded_eur_cents) + COUNT(*) FROM tender_version_lot_results vr
+                            WHERE {vr_rows} AND vr.awarded_eur_cents BETWEEN 0 AND {cap}) >= ?)"
+                    ),
+                    _ => format!(
+                        "(EXISTS (SELECT 1 FROM tender_version_amounts va
+                                   WHERE {va_rows} AND va.lot_id IS NOT NULL AND va.eur_cents BETWEEN 0 AND {cap}
+                                     AND va.eur_cents {op} ?)
+                          OR EXISTS (SELECT 1 FROM tender_version_lot_results vr
+                                      WHERE {vr_rows} AND vr.awarded_eur_cents BETWEEN 0 AND {cap}
+                                        AND vr.awarded_eur_cents {op} ?))"
+                    ),
+                })
+                .collect();
+            let mut params: Vec<Value> = bounds.iter().chain(&bounds).map(|(_, eur_cents)| Value::Integer(*eur_cents)).collect();
+            params.extend(bounds.iter().flat_map(|(_, eur_cents)| [Value::Integer(*eur_cents), Value::Integer(*eur_cents)]));
             q.push(
                 &format!(
                     " AND CASE WHEN {seq} = {head_seq} THEN ({})
-                          ELSE EXISTS (SELECT 1 FROM tender_version_amounts va
-                                        WHERE va.tender_id = {tid} AND va.seq = {seq}
-                                          AND {seq} IS NOT {head_seq} AND {}) END",
+                          ELSE (EXISTS (SELECT 1 FROM tender_version_amounts va
+                                         WHERE {va_rows} AND {})
+                                OR ({})) END",
                     at_head.join(" AND "),
                     a_row.join(" AND "),
+                    lot_sum.join(" AND "),
                 ),
-                bounds.iter().chain(&bounds).map(|(_, eur_cents)| Value::Integer(*eur_cents)).collect::<Vec<_>>(),
+                params,
             );
         }
         ValueBy::Version { .. } => {}
@@ -2132,6 +2184,8 @@ fn tender_row(row: &turso::Row) -> TenderRow {
         title: opt_text_of(row, 8),
         value_cents: opt_int_of(row, 9),
         currency: opt_text_of(row, 10),
+        value_derivation: opt_text_of(row, 25),
+        value_derivation_detail: opt_text_of(row, 26),
         deadline: stamp(row, 11),
         deadline_scope: deadline_scope(row, 11, 23),
         lots: int(row, 14),
@@ -2538,6 +2592,14 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
                AND s.eur_cents = t.current_value_eur_cents",
         )
     };
+    // Issue 551: a DERIVED head (the sum of the head version's lots, `canonical::DerivedValue`)
+    // has no amount row to find -- it is never written as one -- so at the head version its
+    // money is the fold's own `current_value_cents` / `current_value_currency`, and the pick
+    // is not run. The CASE is the same zero-drift move as the pick: the fold decided, this
+    // reads what it stored. Any other version keeps the pick, and serves no derivation.
+    let derived = "t.current_value_derivation IS NOT NULL AND v.seq = t.current_seq";
+    let value = |column: &'static str, stored: &str| format!("CASE WHEN {derived} THEN {stored} ELSE {} END", elected(column));
+    let derivation = |stored: &str| format!("CASE WHEN v.seq = t.current_seq THEN {stored} END");
     format!(
         "SELECT t.id, t.source, t.procedure_key, t.kind, v.seq, v.published_at,
                 v.publication_id, v.notice_subtype,
@@ -2570,11 +2632,15 @@ fn tender_select_head(from: &str, lang: Option<&str>) -> String {
                 -- version by the fold's election; MIN only makes the pick total.
                 (SELECT MIN(c.code) FROM tender_version_classifications c
                   WHERE c.tender_id = t.id AND c.seq = v.seq AND c.scheme = 'procedure'
-                    AND c.lot_id IS NULL)
+                    AND c.lot_id IS NULL),
+                -- Issue 551: a derived head's method and detail (head version only).
+                {derivation_method}, {derivation_detail}
            FROM {from}
            JOIN tender_versions v ON v.tender_id = t.id AND v.seq = ",
-        cents = elected("cents"),
-        currency = elected("currency"),
+        cents = value("cents", "t.current_value_cents"),
+        currency = value("currency", "t.current_value_currency"),
+        derivation_method = derivation("t.current_value_derivation"),
+        derivation_detail = derivation("t.current_value_derivation_detail"),
         utc = deadline("utc_seconds"),
         offset = deadline("offset_minutes"),
         has_time = deadline("has_time"),
@@ -6165,9 +6231,9 @@ mod at_probe_plan_tests {
         assert!(failures.is_empty(), "{} plan(s) failed:\n{}", failures.len(), failures.join("\n"));
     }
 
-    /// What is wrong with an At probe's plan: any SCAN, a missing `va` (value) or `vd`
-    /// (deadline) leg where the filter has one, either leg reached by anything but the
-    /// version's own `(tender_id=? AND seq=?)` rows, and on a lots probe a `vl` leg that does
+    /// What is wrong with an At probe's plan: any SCAN, a missing `va` (value: amount rows), `vr`
+    /// (value: lot results, issue 551) or `vd` (deadline) leg where the filter has one, any leg
+    /// reached by anything but the version's own `(tender_id=? AND seq=?)` rows, and on a lots probe a `vl` leg that does
     /// not seek the lot row's full key.
     fn faults(plan: &str, valued: bool, dated: bool, lots: bool) -> Vec<String> {
         let lines: Vec<&str> = plan.lines().map(str::trim).collect();
@@ -6183,7 +6249,7 @@ mod at_probe_plan_tests {
                     .map(|l| format!("`vl` does not seek the lot row: `{l}`")),
             );
         }
-        for (alias, used) in [("va", valued), ("vd", dated)] {
+        for (alias, used) in [("va", valued), ("vr", valued), ("vd", dated)] {
             let legs: Vec<&&str> = lines
                 .iter()
                 .filter(|l| l.starts_with(&format!("SEARCH {alias} ")) || l.contains(&format!(" AS {alias} ")))

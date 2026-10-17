@@ -1000,6 +1000,15 @@ async fn migrate(conn: &Connection) -> turso::Result<()> {
     // ALSO in canonical's SCHEMA and reset_tender_layer's CREATE (the current_deadline
     // lesson).
     add_column(conn, "ALTER TABLE tenders ADD COLUMN current_closed_by_notice INTEGER").await?;
+    // Issue 551: the derived head's marker (a lot sum served instead of one published figure):
+    // how it was derived, the sum as money, and the derivation's detail. Nullable with no
+    // default, so metadata-only like the flag above; every existing row reads NULL, which is
+    // what an elected head stores, until the fold (or the `refold-lot-sum` drain) writes one.
+    // ALSO in canonical's SCHEMA and reset_tender_layer's CREATE (the current_deadline lesson).
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN current_value_derivation TEXT").await?;
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN current_value_cents INTEGER").await?;
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN current_value_currency TEXT").await?;
+    add_column(conn, "ALTER TABLE tenders ADD COLUMN current_value_derivation_detail TEXT").await?;
     // ADR-0013 D3's third leg (2026-09-02): the version's original language.
     // O(1) at boot like the eur_cents columns; the standing corpus is stamped by
     // the `backfill-original-lang` job rather than a refold.

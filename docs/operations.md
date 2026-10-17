@@ -747,6 +747,87 @@ row is a finding (492's exemption keeps it, or it was not refolded) unless its h
 award's tender-scope copy or a Lot's or Part's own figure, which the rule does not judge; a `no T`
 row is the guard's keep.
 
+**The derived lot-sum head (issue 551, 2026-10-16).** Where no procedure figure is admitted, the head
+election serves the SUM of the head version's lots instead of one figure or null, on two paths
+(`canonical::derive_lot_sum`; decision and evidence: `.scratch/tender-db/551-lot-sum/`):
+- **path V, `lot-sum-vouched`**: a procedure figure F that 537, 471 or 492 refused is 10ᵏ times an electable lot
+  sum S (each Lot's latest award, else its largest BT-27 or BT-271; a partner-only BT-709/BT-660 match only names
+  k), every refused F names the same S, S is not one figure repeated on every lot with F ≈ 10ʲ of it (V1),
+  0 < S ≤ €100 bn, and S is above the figure the max election serves (V0, added at unit 3's review);
+- **path W, `lot-sum-awards`**: every procedure figure is a sentinel or absent, today's head is an award copy or
+  null, and the lots' latest awards (one currency, two or more lots, every one a typed Lot) pass G0/G1'/G2/G3/G4/G5
+  (no repeated total, no lot that totals the others, estimates within 10×, above today's figure, above €0.00 and
+  under the cap) and G5' (no award copy a scale rule refused, and no summed award one refuses at its own lot, copy
+  or none; added at unit 3's review and widened in its third round: a ×1000 award would put the slip itself in the
+  sum) and G8b (no two summed lot keys spelling one lot number, added in unit 3's second review round: a chain
+  re-keyed from TED's `LOT-1..n` to eForms' `LOT-0001..n` with both families typed and awarded would sum each lot
+  twice; `LOT-1`, `LOT-0001`, `Lot 1` and `1` all read lot 1, a key like `1a` or `2/E` reads none). G8b reads the
+  key's spelling: TED's `LOT-k` is the notice's k-th lot section in document order, not its published LOT_NO
+  (kept only as the `TED-LOT_NO` value), so it lines up with eForms' numbers only where the notice describes
+  every lot from 1 in order. A misaligned re-keying passes it (TED `LOT-1`/`LOT-2` for lots 3 and 5 beside eForms
+  `LOT-0003`/`LOT-0005` reads four lots), and distinct lots can be refused (harmless: today's head stays).
+  Estimates and framework maxima are never summed on this path.
+
+The fold writes S's EUR value to `current_value_eur_cents` and the marker beside it (`current_value_derivation`,
+`current_value_cents`, `current_value_currency`, `current_value_derivation_detail`), all four NULL on an
+elected head and written or cleared with every head write; never an amount row. Neither path is reachable from
+`refold-value-band`'s cohort: since 537's drain every path-V head sits below €1 bn or null, and path W raises heads
+from below. The drain is its own finder job, `refold-lot-sum` (ADR-0017 D6 route R3 by tender id; no epoch bump):
+
+```sh
+/root/aj.sh /admin/jobs '{"kind":"refold-lot-sum"}'                               # dry: walks the cohort, writes nothing
+/root/aj.sh /admin/jobs '{"kind":"refold-lot-sum","dry_run":false,"expect":N}'    # N = the dry run's Tender count
+```
+
+- **The cohort** (`canonical::lot_sum_cohort_sql`, read in 100k tender-id windows on the reader pool, the stop flag
+  read before each): a head version with a tender-scope figure converting to €1 bn or more (path V's evidence: every
+  scale rule is gated there), or with awards above 10.00 on two or more distinct lots and no tender-scope figure that
+  is neither an award's copy, nor partner-only, nor in the sentinels' range (≤ 1, = 100, or ≥ 111,111,111). Both legs
+  over-select; the fold decides. Every read is a seek (plan-probed 2026-10-16: tenders PK range, then
+  `tender_version_amounts_version` and `tender_version_lot_results`' PK).
+- **Size** (unit 1's random sample, 22 of 994 heads in the cohort): about **195,000 Tenders** corpus-wide (95 %
+  Wilson 129,000–293,000), about 1.7 notices each. The walk itself reads every head (8.8 M Tenders, a few seeks each);
+  the dry run's elapsed time is its measurement. The fold then costs about 6–10 minutes at project 2564's rate (8.8 M
+  Tenders in 4 h 53 m), against a corpus refold's five hours. The looser cohort (any two awarded lots) is ~460,000.
+- **The wet run** needs `expect` (the dry run's count) and aborts before any write when the walk finds more than a
+  quarter off it; it stamps the cohort epoch-stale, re-queues its notices, and queues `project` behind itself.
+- **Expected moves**: path V about 16 heads (537's 15 below, plus 928196 through 492: EUR 46,797,460.35); path W
+  about 21,200 (95 % 9,700–46,200), each an understatement of 1.5× to 569× raised to its awards sum. Every other
+  cohort Tender compares identical (`verified`).
+
+Verify, in order:
+- The wet message's `stamped N` equals the dry count; the `project` message's `compare: N verified, M corrected`
+  sums to it (D7's completeness; more if other Tenders were pending). M is the expected moves above, give or take.
+- The done line: `/v1/tenders/7427765` serves EUR 3,000,000.00, 5943121 EUR 1,321,579.92 and 369057
+  EUR 62,378,736.29, each with `value_derivation.method` = `lot-sum-vouched`, `rule` 537. The other path-V pins:
+  251619 EUR 24,338,758.08, 380921 PLN 7,247,040.00, 392980 EUR 35,740,042.72, 425446 EUR 1,549,007.19, 706887
+  PLN 70,560,792.75, 1024214 EUR 3,400,000.00 (`summed` BT-271-Lot), 5779108 EUR 2,120,000.00, 6342034
+  EUR 10,836,754.45, 6921980 EUR 24,930,336.11, 7044132 EUR 2,385,992.00, 7829010 EUR 2,000,000.00, 8514592
+  DKK 179,248,937.00. Path W (`lot-sum-awards`): 6450467, 6450469 and 6450473 EUR 3,574,764,979.28, 8426318
+  GBP 3,000,000,000.00, 585917 EUR 250,000.00, 5995030 PLN 1,549,511.60.
+- Unchanged, with `value_derivation` null: 8440393, 7487018 (a total repeated on every award), 5316712 (one lot
+  restates the framework), 6885102 (the sum is below its head), and the estimate-only heads 4930240, 8822313,
+  4925871, 175096 and 5625591.
+- **The post-drain bounded read** (unit 2's open question; path W's wrong-direction rate rests on 10 fires, 0 farther,
+  95 % upper bound 28 %): read every derived awards head of €100 m or more (a range seek on the value index,
+  `WHERE current_value_eur_cents >= 10000000000 AND current_value_derivation = 'lot-sum-awards'`, LIMIT 200) and a
+  uniform sample of about 50 path-W changes (the `tender changed` correction rows of project's run, or 50 random
+  100k-id windows of `tenders` read by primary key), each against its notices, before the issue is called done.
+  A sum that is farther from the notice's total than the figure it replaced is a finding, and so is a sum that
+  counts one lot twice: G8b refuses two keys spelling one lot number, but not one lot under keys it cannot read as
+  numbers (a re-keyed chain from `Lot A` to `LOT-0001`), nor one lot under two numbers. TED's `LOT-k` is an
+  ordinal, the notice's k-th lot section, so do NOT read its digits as the lot number: compare each summed TED key
+  against that notice's `TED-LOT_NO` value for the section (the version's lot fields), and treat TED `LOT-1`/`LOT-2`
+  beside eForms `LOT-0003`/`LOT-0005` as possibly the same two lots until the LOT_NOs say otherwise. The read
+  compares each head's summed lots against the notice's lot list. It also flags each path-W head whose summed award
+  another figure of the head repeats at the same cents, typically that lot's own estimate in the head version's
+  lot amount rows (a `(tender_id, seq)` seek): 471 counts the repeat as corroboration, so G5' passes a ×1000-or-more
+  slip that HAS an exact partner, while the head election refuses that same lot figure at its lot (a v1 estimate of
+  €1.5 m, then LOT-1 estimated and awarded €1.5 bn beside LOT-2's €0.8 m award, serves €1.5008 bn on a null head).
+  Every such head is €1 bn or more (the scale rules' gate), so the range seek above reaches it; read the lot's
+  earlier versions for a 10ᵏ partner. 537's lot-sum rule never judges a lot award, so a slip ×10ᵏ a sum of other
+  lots' figures, with no single 10ᵏ partner, is summed too and shows only in this read.
+
 **Result-level framework values as scale partners (issue 506, 2026-10-10).** An eForms award
 notice's framework maximum and re-estimate per lot result (BT-709, BT-660, and their eForms-DE 1.x
 spellings) are stored on the Lot their result names through BT-13713 as `result_framework_maximum` /
@@ -2564,6 +2645,23 @@ control-whitespace heads): about 79 control-only `unfit` releases, about 54 pass
 Run each plan and its wet run back to back, outside the daily ingest, so a new procedure does not
 drift the targets.
 
+**Rule v12's re-judge FAILED (2026-10-17, plan 2569; issue 552 units 4–5).** Plan 2569 (rev `3475272`) passed
+step 2's v12 bullet exactly (R0w 4, R1 77 — every one an `unfit` release —, `release_withheld.lines` 21), but step
+3's re-judge read 2 wrong among the 54 guard-passed control-only releases (4040 a revert to a former partnership
+name; 22678568 a brand short form), over the bar of 1. So **every rule-driven wet run keeps
+`"exclude_rules":["R2","R0w"],"exclude_released":["unfit"]`** — the weekly upkeep (unit 2c) included, when it is
+built — until issue 552 lands a fix for those shapes and a fresh re-judge passes. Plan 2569's class was then read
+item by item, and its judged-right ids shipped by explicit `org_ids` on that plan, one job per class with
+`"exclude_rules":["R2"]` (issue 552 unit 4, a one-off, decided before the blind second reading): jobs 2570 (R0w 4),
+2571 (control-only releases 49) and 2572 (other `unfit` releases 22), 0 drifted, dated spot check 55 right / 1
+neutral / 0 wrong. Undo per class: `{"kind":"revert-org-name-refresh","job":2570|2571|2572}`. The next v12 plan
+therefore reads about 0 `by_rule.R0w`, `recent_released.unfit` about 2 (4040 and 22678568, while their holds last:
+22678568's `head_current` lapses about 2027-07-10, then it is a plain R1 change no v12 filter drops — issue 552
+unit 5 must land first) plus new ones, `release_withheld.lines` about 21 less any head renamed since, and holds up
+by about 4 (the collapsed R0w heads, now fit, held by `recent`/`residue`/`head_current`); `by_rule.R1` about the
+unfit releases left plus drift and new elections. Read step 2's v12 bullet with those numbers, not its plan-2566
+arithmetic.
+
 1. **Build and gate**, then a 3-lens review; gate with `ops/check.sh` redirected to a file and read
    `GATE-EXIT=`. Deploy in a queue gap, never during a fold.
 2. **A fresh dry plan (full walk) on that binary.** `{"kind":"refresh-org-names"}` (rule v9 salts
@@ -2716,7 +2814,8 @@ drift the targets.
      worse. Go needs 0 R0w changes worse than the raw head and at most 1 wrong among the passed
      releases. Then every wet run drops `"R0w"` from `exclude_rules` and drops
      `"exclude_released":["unfit"]` (keeping `"exclude_rules":["R2"]`). A fail keeps both filters and
-     goes back to issue 552. The withheld heads (`release_withheld: lines`, about 21) write nothing and
+     goes back to issue 552. **Plan 2569's re-judge FAILED (2 wrong of 54; see the note above step 1):
+     both filters stand.** The withheld heads (`release_withheld: lines`, about 21) write nothing and
      are not re-judged: their forgone fixes are the decision's accepted cost.
    - rule v10 (`## Rule v10 — decided`): the fresh salted `change:R1` 30 (at most 1 wrong; a failure →
      stop and re-decide), and every `recent_released_ids` entry again if the list grew (at most 1

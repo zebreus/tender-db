@@ -84,6 +84,23 @@ pub fn money(cents: Option<i64>, currency: Option<&str>) -> Value {
     }
 }
 
+/// Issue 551: a derived head's `value_derivation` — `null` for an elected head (`method` is
+/// `None`), else `{"method": …}` with the fold's stored detail object merged in (`summed`,
+/// `lots`, and for `lot-sum-vouched` the `rule`, its `exponent` and the `refused` figure). A
+/// detail that does not parse as an object leaves the method alone: the method is the
+/// contract, the detail its evidence.
+pub fn value_derivation(method: Option<&str>, detail: Option<&str>) -> Value {
+    let Some(method) = method else { return Value::Null };
+    let mut out = serde_json::Map::new();
+    out.insert("method".into(), json!(method));
+    if let Some(Value::Object(fields)) = detail.and_then(|d| serde_json::from_str::<Value>(d).ok()) {
+        for (k, v) in fields {
+            out.entry(k).or_insert(v);
+        }
+    }
+    Value::Object(out)
+}
+
 /// A cursor as clients see it: an opaque string.
 pub fn cursor(value: i64) -> Value {
     json!(value.to_string())
@@ -103,6 +120,9 @@ pub fn tender(t: &TenderRow) -> Value {
         "notice_subtype": t.notice_subtype,
         "original_lang": t.original_lang,
         "value": money(t.value_cents, t.currency.as_deref()),
+        // Issue 551: null for an elected head; for a derived head (the sum of the head
+        // version's own lots), how `value` was derived.
+        "value_derivation": value_derivation(t.value_derivation.as_deref(), t.value_derivation_detail.as_deref()),
         "submission_deadline": stamp(t.deadline),
         "submission_deadline_scope": t.deadline_scope.map(|s| s.as_str()),
         "lots": t.lots,
@@ -523,6 +543,32 @@ mod tests {
         // The field is still named, so the reader learns WHICH value is missing
         // rather than the fact vanishing — the distinction option (b) exists for.
         assert_eq!(withheld["field"], json!("result_value"));
+    }
+
+    /// Issue 551: `value_derivation` is null for an elected head, and for a derived one the
+    /// stored method with the fold's detail object merged in; a detail that does not parse
+    /// leaves the method alone.
+    #[test]
+    fn a_derived_head_says_how_its_value_was_derived() {
+        use super::value_derivation;
+        assert_eq!(value_derivation(None, None), Value::Null);
+        assert_eq!(value_derivation(None, Some("{\"summed\":\"awards\"}")), Value::Null, "no method, no derivation");
+        let detail = "{\"summed\":\"awards\",\"lots\":6,\"rule\":\"537\",\"exponent\":3,\
+                      \"refused\":{\"field\":\"result_value\",\"value\":{\"cents\":300000000000,\"currency\":\"EUR\"}}}";
+        assert_eq!(
+            value_derivation(Some("lot-sum-vouched"), Some(detail)),
+            json!({
+                "method": "lot-sum-vouched",
+                "summed": "awards",
+                "lots": 6,
+                "rule": "537",
+                "exponent": 3,
+                "refused": {"field": "result_value", "value": {"cents": 300_000_000_000_i64, "currency": "EUR"}},
+            })
+        );
+        assert_eq!(value_derivation(Some("lot-sum-awards"), Some("not json")), json!({"method": "lot-sum-awards"}));
+        // A detail cannot overwrite the method.
+        assert_eq!(value_derivation(Some("lot-sum-awards"), Some("{\"method\":\"x\"}")), json!({"method": "lot-sum-awards"}));
     }
 
     /// Issue 372 unit 4: a withheld statistic leaves the `statistics` map rather

@@ -777,3 +777,365 @@ async fn the_sql_window_and_the_rust_window_agree_at_every_edge() {
         );
     }
 }
+
+/// Issue 551: a DERIVED head — the sum of the head version's own lots, served because the
+/// buyer's refused total vouches for it — is stored by the fold on `tenders` (the EUR column
+/// plus the four marker columns, never an amount row) and served by the read layer as money in
+/// the sum's own currency with its derivation; a later version that admits a procedure figure
+/// clears the marker with the same head write. 7427765's shape: EUR 3,000,000,000.00 over six
+/// lot awards of EUR 500,000.00 (issue 537 refuses it at 10^3), beside the award's tender-scope
+/// copy that the max election alone would serve.
+#[tokio::test]
+async fn a_derived_lot_sum_head_is_stored_and_served_as_the_fold_derived_it() {
+    use store::canonical::{LotResultState, LotState, Round};
+    let (db, conn) = open("derived").await;
+    let lots: Vec<LotState> =
+        (1..=6).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default() }).collect();
+    let awards: Vec<LotResultState> = (1..=6)
+        .map(|i| LotResultState {
+            key: format!("RES-{i}"),
+            lot_key: Some(format!("LOT-{i}")),
+            decision: None,
+            reason: None,
+            awarded_cents: Some(50_000_000),
+            awarded_currency: Some("EUR".into()),
+            decided: None,
+            winners: Vec::new(),
+            buyer_winners: Vec::new(),
+            statistics: Vec::new(),
+        })
+        .collect();
+    let version = |notice: i64, facts: Vec<Fact>| TenderVersion {
+        caused_by_notice_id: notice,
+        published_at: PUBLISHED_AT,
+        dispatched_at: None,
+        notice_subtype: None,
+        original_lang: None,
+        publication_id: format!("{notice}-2024"),
+        facts: facts.into_iter().collect(),
+        lots: lots.clone(),
+        rounds: vec![Round { notice_id: notice, logical_notice_id: None, lot_results: awards.clone(), bids: Vec::new(), contracts: Vec::new() }],
+        group_members: Vec::new(),
+    };
+    let tender = |versions: Vec<TenderVersion>| TenderProjection {
+        source: "ted".into(),
+        procedure_key: Some("pk-551".into()),
+        island_notice_id: None,
+        kind: "procedure".into(),
+        versions,
+    };
+    let slipped = || vec![amount("result_value", 300_000_000_000), amount("result_value", 50_000_000)];
+    db.apply_tenders(&[tender(vec![version(1, slipped())])], PUBLISHED_AT, false).await.unwrap();
+
+    let detail = "{\"summed\":\"awards\",\"lots\":6,\"rule\":\"537\",\"exponent\":3,\
+                  \"refused\":{\"field\":\"result_value\",\"value\":{\"cents\":300000000000,\"currency\":\"EUR\"}}}";
+    assert_eq!(
+        marker(&conn).await,
+        (Some(300_000_000), Some("lot-sum-vouched".into()), Some(300_000_000), Some("EUR".into()), Some(detail.into())),
+        "the fold stores S in EUR and the marker beside it"
+    );
+    let amounts = scalar(&conn, "SELECT COUNT(*) FROM tender_version_amounts WHERE tender_id = 1").await;
+    assert_eq!(amounts, Some(2), "no synthetic amount row: the two published figures only");
+    let row = only_row(&conn).await;
+    assert_eq!((row.value_cents, row.currency.as_deref()), (Some(300_000_000), Some("EUR")), "the read layer serves the sum");
+    assert_eq!(row.value_derivation.as_deref(), Some("lot-sum-vouched"));
+    assert_eq!(row.value_derivation_detail.as_deref(), Some(detail));
+
+    // A second notice publishes a procedure estimate the election admits: the max election
+    // stands again, and the head write clears the marker.
+    let corrected = {
+        let mut facts = slipped();
+        facts.push(amount("estimated_value", 290_000_000));
+        version(2, facts)
+    };
+    db.apply_tenders(&[tender(vec![version(1, slipped()), corrected])], PUBLISHED_AT, false).await.unwrap();
+    assert_eq!(marker(&conn).await, (Some(290_000_000), None, None, None, None), "an admitted procedure figure clears the marker");
+    let row = only_row(&conn).await;
+    assert_eq!((row.value_cents, row.currency.as_deref(), row.value_derivation), (Some(290_000_000), Some("EUR"), None));
+    let _ = std::fs::remove_file(path("derived"));
+}
+
+/// Issue 551 (unit 3's review): the SSE At probe reads an EARLIER version's value as a superset
+/// (`ValueBy::Version`), and a derived head is a sum no amount row carries, so the superset reads
+/// the version's lot figures too. Without them a later version that moves a derived head out of
+/// a bound probed `(false, false)` on both sides, the change was dropped, and the subscriber kept
+/// a ghost. Path W under `min_value`: lot awards of EUR 1.2 m and EUR 1.0 m beside the EUR 1.2 m
+/// award's copy derive EUR 2.2 m; a second notice admits a EUR 1.5 m estimate. Path V under
+/// `max_value`: six awards of EUR 500 k vouched by a refused EUR 3 bn (no copy) derive EUR 3 m;
+/// a second notice admits a EUR 5 m estimate.
+#[tokio::test]
+async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
+    use store::canonical::{LotResultState, LotState, Round};
+    let award = |lot: usize, cents: i64| LotResultState {
+        key: format!("RES-{lot}"),
+        lot_key: Some(format!("LOT-{lot}")),
+        decision: None,
+        reason: None,
+        awarded_cents: Some(cents),
+        awarded_currency: Some("EUR".into()),
+        decided: None,
+        winners: Vec::new(),
+        buyer_winners: Vec::new(),
+        statistics: Vec::new(),
+    };
+    let version = |notice: i64, facts: Vec<Fact>, awards: &[i64]| TenderVersion {
+        caused_by_notice_id: notice,
+        published_at: PUBLISHED_AT,
+        dispatched_at: None,
+        notice_subtype: None,
+        original_lang: None,
+        publication_id: format!("{notice}-2024"),
+        facts: facts.into_iter().collect(),
+        lots: (1..=awards.len()).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default() }).collect(),
+        rounds: vec![Round {
+            notice_id: 1,
+            logical_notice_id: None,
+            lot_results: awards.iter().enumerate().map(|(i, c)| award(i + 1, *c)).collect(),
+            bids: Vec::new(),
+            contracts: Vec::new(),
+        }],
+        group_members: Vec::new(),
+    };
+    let tender = |versions: Vec<TenderVersion>| TenderProjection {
+        source: "ted".into(),
+        procedure_key: Some("pk-551-at".into()),
+        island_notice_id: None,
+        kind: "procedure".into(),
+        versions,
+    };
+    // Whether Tender 1 matches `f` at version `seq` (the SSE probe's one statement).
+    let at = |conn: turso::Connection, f: Filter, seq: i64| async move {
+        !read::tenders(&conn, &f, Scope::At { id: 1, seq }).await.unwrap().is_empty()
+    };
+    let min = |eur_cents: i64| Filter { min_value: Some(eur_cents), ..Filter::default() };
+    let max = |eur_cents: i64| Filter { max_value: Some(eur_cents), ..Filter::default() };
+
+    // Path W under min_value (EUR 2 m).
+    let (db, conn) = open("derived-at-w").await;
+    let copy = || vec![amount("result_value", 120_000_000)];
+    let awards = [120_000_000, 100_000_000];
+    db.apply_tenders(&[tender(vec![version(1, copy(), &awards)])], PUBLISHED_AT, false).await.unwrap();
+    assert_eq!(marker(&conn).await.0, Some(220_000_000), "v1 derives the awards sum");
+    assert_eq!(marker(&conn).await.1.as_deref(), Some("lot-sum-awards"));
+    let estimated = {
+        let mut facts = copy();
+        facts.push(amount("estimated_value", 150_000_000));
+        version(2, facts, &awards)
+    };
+    db.apply_tenders(&[tender(vec![version(1, copy(), &awards), estimated])], PUBLISHED_AT, false).await.unwrap();
+    assert_eq!(marker(&conn).await, (Some(150_000_000), None, None, None, None), "v2 elects the estimate");
+    assert!(!at(conn.clone(), min(200_000_000), 2).await, "the new head is below EUR 2 m");
+    assert!(at(conn.clone(), min(200_000_000), 1).await, "v1's EUR 2.2 m was inside it: the probe pair reads `removed`");
+    assert!(!at(conn.clone(), min(250_000_000), 1).await, "the superset is bounded: v1's lots total EUR 2.2 m");
+    drop((db, conn));
+    let _ = std::fs::remove_file(path("derived-at-w"));
+
+    // Path V under max_value (EUR 4 m), and inside a value band.
+    let (db, conn) = open("derived-at-v").await;
+    let slipped = || vec![amount("result_value", 300_000_000_000)];
+    let awards = [50_000_000; 6];
+    db.apply_tenders(&[tender(vec![version(1, slipped(), &awards)])], PUBLISHED_AT, false).await.unwrap();
+    assert_eq!(marker(&conn).await.0, Some(300_000_000), "v1 derives the vouched sum");
+    assert_eq!(marker(&conn).await.1.as_deref(), Some("lot-sum-vouched"));
+    let estimated = {
+        let mut facts = slipped();
+        facts.push(amount("estimated_value", 500_000_000));
+        version(2, facts, &awards)
+    };
+    db.apply_tenders(&[tender(vec![version(1, slipped(), &awards), estimated])], PUBLISHED_AT, false).await.unwrap();
+    assert_eq!(marker(&conn).await.0, Some(500_000_000), "v2 elects the estimate");
+    assert!(!at(conn.clone(), max(400_000_000), 2).await, "the new head is above EUR 4 m");
+    assert!(at(conn.clone(), max(400_000_000), 1).await, "v1's EUR 3 m was inside it (its only amount row is the EUR 3 bn slip)");
+    let band = Filter { min_value: Some(250_000_000), max_value: Some(400_000_000), ..Filter::default() };
+    assert!(at(conn.clone(), band, 1).await, "and inside a band around it");
+    drop((db, conn));
+    let _ = std::fs::remove_file(path("derived-at-v"));
+}
+
+/// Issue 551 (unit 3's third review): the At probe's lot-sum legs add an earlier version's lot
+/// figures in SQL, and two near-i64::MAX rows (4490098 stores a EUR 4.97e16 figure; ingest
+/// accepts any amount that fits the integer) overflowed `SUM`, which turso raises as an error: the
+/// whole probe failed, and a value-bounded stream that reached the version was stuck on it. Only
+/// figures a derived sum can contain are summed (each converts to at most S, and S to at most
+/// EUR 100 bn), so the probe answers. Two lot estimates and two lot awards of EUR 4.97e16 at v1;
+/// v2 admits a procedure estimate.
+#[tokio::test]
+async fn an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes() {
+    use store::canonical::{LotResultState, LotState, Round};
+    const HUGE: i64 = 4_970_000_000_000_000_000;
+    let award = |lot: usize| LotResultState {
+        key: format!("RES-{lot}"),
+        lot_key: Some(format!("LOT-{lot}")),
+        decision: None,
+        reason: None,
+        awarded_cents: Some(HUGE),
+        awarded_currency: Some("EUR".into()),
+        decided: None,
+        winners: Vec::new(),
+        buyer_winners: Vec::new(),
+        statistics: Vec::new(),
+    };
+    let version = |notice: i64, facts: Vec<Fact>| TenderVersion {
+        caused_by_notice_id: notice,
+        published_at: PUBLISHED_AT,
+        dispatched_at: None,
+        notice_subtype: None,
+        original_lang: None,
+        publication_id: format!("{notice}-2024"),
+        facts: facts.into_iter().collect(),
+        lots: (1..=2)
+            .map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: [amount("estimated_value", HUGE)].into_iter().collect() })
+            .collect(),
+        rounds: vec![Round { notice_id: 1, logical_notice_id: None, lot_results: (1..=2).map(award).collect(), bids: Vec::new(), contracts: Vec::new() }],
+        group_members: Vec::new(),
+    };
+    let tender = |versions: Vec<TenderVersion>| TenderProjection {
+        source: "ted".into(),
+        procedure_key: Some("pk-551-ovf".into()),
+        island_notice_id: None,
+        kind: "procedure".into(),
+        versions,
+    };
+    let (db, conn) = open("derived-at-ovf").await;
+    db.apply_tenders(&[tender(vec![version(1, Vec::new()), version(2, vec![amount("estimated_value", 150_000_000)])])], PUBLISHED_AT, false)
+        .await
+        .unwrap();
+    assert_eq!(marker(&conn).await, (Some(150_000_000), None, None, None, None), "v2 elects the estimate");
+    let lot_rows = scalar(&conn, "SELECT COUNT(*) FROM tender_version_amounts WHERE tender_id = 1 AND seq = 1 AND lot_id IS NOT NULL AND eur_cents = 4970000000000000000").await;
+    assert_eq!(lot_rows, Some(2), "v1 stores both lot figures at full size");
+    let awards = scalar(&conn, "SELECT COUNT(*) FROM tender_version_lot_results WHERE tender_id = 1 AND seq = 1 AND awarded_eur_cents = 4970000000000000000").await;
+    assert_eq!(awards, Some(2), "and both lot awards");
+    let lot_id = scalar(&conn, "SELECT MIN(id) FROM lots WHERE tender_id = 1").await.expect("a lot");
+    let min = Filter { min_value: Some(1), ..Filter::default() };
+    let band = Filter { min_value: Some(1), max_value: Some(100_000_000_000), ..Filter::default() };
+    for (name, f, inside) in [("min_value", &min, true), ("value band", &band, false)] {
+        let tenders = read::tenders(&conn, f, Scope::At { id: 1, seq: 1 }).await;
+        assert_eq!(tenders.map(|rows| !rows.is_empty()).map_err(|e| e.to_string()), Ok(inside), "tenders At {name} answers");
+        let lots = read::lots(&conn, f, Scope::At { id: lot_id, seq: 1 }).await;
+        assert_eq!(lots.map(|rows| !rows.is_empty()).map_err(|e| e.to_string()), Ok(inside), "lots At {name} answers");
+    }
+    drop((db, conn));
+    let _ = std::fs::remove_file(path("derived-at-ovf"));
+}
+
+/// Issue 551 (unit 3's fourth review): a derived sum's summands can each convert to EUR 0 while S
+/// converts to a cent (G5's floor is on S alone), so the At probe's lot legs count rows from EUR 0.
+/// Round 3's `BETWEEN 1` dropped them: the earlier version probed outside a bound its served head
+/// was inside, the pair read `(false, false)`, and a `max_value` subscriber kept a ghost. IDR at
+/// 17,000/EUR: v1 awards IDR 80.00 and 84.00 on two lots (each EUR 0, S EUR 0.01); v2 admits a
+/// EUR 1.5 m estimate.
+#[tokio::test]
+async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound() {
+    use store::canonical::{LotResultState, LotState, Round};
+    let award = |lot: usize, cents: i64| LotResultState {
+        key: format!("RES-{lot}"),
+        lot_key: Some(format!("LOT-{lot}")),
+        decision: None,
+        reason: None,
+        awarded_cents: Some(cents),
+        awarded_currency: Some("IDR".into()),
+        decided: None,
+        winners: Vec::new(),
+        buyer_winners: Vec::new(),
+        statistics: Vec::new(),
+    };
+    let version = |notice: i64, facts: Vec<Fact>| TenderVersion {
+        caused_by_notice_id: notice,
+        published_at: PUBLISHED_AT,
+        dispatched_at: None,
+        notice_subtype: None,
+        original_lang: None,
+        publication_id: format!("{notice}-2024"),
+        facts: facts.into_iter().collect(),
+        lots: (1..=2).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default() }).collect(),
+        rounds: vec![Round {
+            notice_id: 1,
+            logical_notice_id: None,
+            lot_results: vec![award(1, 8_000), award(2, 8_400)],
+            bids: Vec::new(),
+            contracts: Vec::new(),
+        }],
+        group_members: Vec::new(),
+    };
+    let tender = |versions: Vec<TenderVersion>| TenderProjection {
+        source: "ted".into(),
+        procedure_key: Some("pk-551-zero".into()),
+        island_notice_id: None,
+        kind: "procedure".into(),
+        versions,
+    };
+    let (db, conn) = open("derived-at-zero").await;
+    db.upsert_currency_rates(&[("IDR".into(), store::rates::civil_date(PUBLISHED_AT), 17_000.0, "ecb".into())]).await.unwrap();
+    db.reload_rates_lookup().await.unwrap();
+    db.apply_tenders(&[tender(vec![version(1, Vec::new())])], PUBLISHED_AT, false).await.unwrap();
+    let derived = marker(&conn).await;
+    assert_eq!((derived.0, derived.1.as_deref(), derived.2, derived.3.as_deref()), (Some(1), Some("lot-sum-awards"), Some(16_400), Some("IDR")));
+    db.apply_tenders(&[tender(vec![version(1, Vec::new()), version(2, vec![amount("estimated_value", 150_000_000)])])], PUBLISHED_AT, false)
+        .await
+        .unwrap();
+    assert_eq!(marker(&conn).await, (Some(150_000_000), None, None, None, None), "v2 elects the estimate");
+    let zero = scalar(&conn, "SELECT COUNT(*) FROM tender_version_lot_results WHERE tender_id = 1 AND seq = 1 AND awarded_eur_cents = 0").await;
+    assert_eq!(zero, Some(2), "both v1 summands are stored at EUR 0");
+    let lot_id = scalar(&conn, "SELECT MIN(id) FROM lots WHERE tender_id = 1").await.expect("a lot");
+    let max = Filter { max_value: Some(100), ..Filter::default() };
+    let min = Filter { min_value: Some(1), ..Filter::default() };
+    for (name, f, at_v2) in [("max_value", &max, false), ("min_value", &min, true)] {
+        for (seq, inside) in [(2, at_v2), (1, true)] {
+            let tenders = !read::tenders(&conn, f, Scope::At { id: 1, seq }).await.unwrap().is_empty();
+            assert_eq!(tenders, inside, "tenders At v{seq} under {name}");
+            let lots = !read::lots(&conn, f, Scope::At { id: lot_id, seq }).await.unwrap().is_empty();
+            assert_eq!(lots, inside, "lots At v{seq} under {name}");
+        }
+    }
+    drop((db, conn));
+    let _ = std::fs::remove_file(path("derived-at-zero"));
+}
+
+/// Issue 551: the head's EUR column and its four marker columns, as the fold stored them.
+async fn marker(conn: &turso::Connection) -> (Option<i64>, Option<String>, Option<i64>, Option<String>, Option<String>) {
+    let mut rows = conn
+        .query(
+            "SELECT current_value_eur_cents, current_value_derivation, current_value_cents, current_value_currency,
+                    current_value_derivation_detail FROM tenders WHERE id = 1",
+            (),
+        )
+        .await
+        .unwrap();
+    let row = rows.next().await.unwrap().unwrap();
+    let int = |i| row.get_value(i).unwrap().as_integer().copied();
+    let text = |i| row.get_value(i).unwrap().as_text().cloned();
+    (int(0), text(1), int(2), text(3), text(4))
+}
+
+async fn scalar(conn: &turso::Connection, sql: &str) -> Option<i64> {
+    let mut rows = conn.query(sql, ()).await.unwrap();
+    rows.next().await.unwrap().and_then(|row| row.get_value(0).unwrap().as_integer().copied())
+}
+
+/// Issue 551: the derived head's four marker columns have ONE writer, the fold's head update,
+/// which takes them from `canonical::head_value_eur_cents_with`'s derivation — the issue-375
+/// rule for every head column. A walk that wrote them from SQL would be a second copy of the
+/// lot-sum election; the drain is `refold-lot-sum`, through the fold.
+#[test]
+fn the_derived_head_marker_has_one_writer() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
+    let mut writers: Vec<String> = Vec::new();
+    for rel in ["src/lib.rs", "src/canonical.rs", "src/read.rs", "src/rates.rs", "src/inplace.rs"] {
+        let text = std::fs::read_to_string(root.join(rel)).expect(rel);
+        for (n, line) in text.lines().enumerate() {
+            let code = line.split("//").next().unwrap_or("");
+            if ["current_value_derivation =", "current_value_cents =", "current_value_currency =", "current_value_derivation_detail ="]
+                .iter()
+                .any(|c| code.contains(c))
+            {
+                writers.push(format!("{rel}:{}", n + 1));
+            }
+        }
+    }
+    assert_eq!(writers.len(), 1, "expected the fold's `head_update` alone to write the marker; found {writers:?}");
+    let canonical = std::fs::read_to_string(root.join("src/canonical.rs")).unwrap();
+    assert!(
+        canonical.contains("let value = head_value_eur_cents_with(head, &partners, &self.rates_lookup());"),
+        "the fold's head must take the value and its marker from the election"
+    );
+}

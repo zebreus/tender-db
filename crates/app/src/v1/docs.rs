@@ -173,7 +173,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
   <tr><td class="ep">bidder</td><td>Organization id named as a tenderer on a published bid (TED eForms, eForms-DE), won or not. On FTS, an award supplier only: FTS publishes no losing bidders. The pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1 publish winners without bids, so a win there appears under <code>winner</code> only. To find every tender where an organization is named as a tenderer or a winner, query both; on the formats without bids, an award to the tender's own buyer is in neither (issue 531).</td></tr>
   <tr><td class="ep">status</td><td><code>open</code> or <code>closed</code>, by submission deadline <strong>and by what the newest notice says</strong> (issue 533). <code>open</code>: a submission deadline in the future, and the procedure not closed by its newest notice. <code>closed</code>: everything else &mdash; no deadline in the future, or a newest notice that published results when every result the procedure has published is a no-award (all <code>clos-nw</code>: a cancellation, an FTS UK12 termination) and together they decide every lot of kind <code>Lot</code> (lots groups and parts need no result; a Tender-scoped result decides no lot, so it closes only a Tender with no <code>Lot</code>-kind lot), because a result notice usually publishes no deadline and the Tender carries its contract notice's (see <a href="#caveats">caveats &rarr; Dates</a>). Not where the Tender declares an open-ended scheme, whose no-award result reports one round: a dynamic purchasing system, procedure <code>oth-single</code>/<code>oth-mult</code>, a qualification-system (eForms 15) or dynamic-market (UK13&ndash;UK16) notice, or a current deadline more than a year after the publication of the first notice that published a deadline (an admission window; an explicit r2.0.9 <em>discontinued</em>/<em>unsuccessful</em> no-award closes even then). A winner, or a decision the notice withheld, never closes a Tender here; a later notice that publishes no results of its own (a re-launch contract notice, but also e.g. a corrigendum) reopens it. On <code>/v1/lots</code> a lot is closed with its Tender: a no-award for some lots of a Tender that stays open does not close those lots. The deadline may be the procedure's rather than the lot's &mdash; see <a href="#caveats">caveats &rarr; Dates</a>. <code>sort=deadline</code> and <code>deadline_after</code>/<code>deadline_before</code> still read the deadline alone.</td></tr>
-  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the TENDER's elected headline figure converted to EUR at its publication date (on <code>/v1/lots</code> too: the bound reads the Tender's figure, not the lot's own <code>value</code>) (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount never matches a value bound.</td></tr>
+  <tr><td class="ep"><code>min_value</code> / <code>max_value</code></td><td>Value in <strong>EUR cents</strong>, compared against the TENDER's head value in EUR: its elected headline figure converted to EUR at its publication date or, where <code>value_derivation</code> is set, the sum of its lots converted the same way (on <code>/v1/lots</code> too: the bound reads the Tender's value, not the lot's own <code>value</code>) (the derived <code>eur_cents</code> — see <a href="#caveats">caveats</a>). A tender with no convertible amount matches no value bound unless its lots' awards are summed (<code>lot-sum-awards</code>): then the bound compares that sum.</td></tr>
   <tr><td class="ep">currency</td><td>ISO&nbsp;4217 code, case-insensitive (e.g. <code>EUR</code>, <code>sek</code>) — Tenders/Lots whose current version publishes at least one amount in that currency, <em>as published</em> &mdash; any amount row, including the partner-only award-notice framework values (issue 506).</td></tr>
   <tr><td class="ep">procedure_type</td><td>The <strong>procedure type</strong> (eForms BT-105, <code>procurement-procedure-type</code>): one or more codes, comma-separated, case-insensitive, at most 10 &mdash; <code>open</code>, <code>restricted</code>, <code>neg-w-call</code>, <code>neg-wo-call</code>, <code>comp-dial</code>, <code>innovation</code>, <code>oth-single</code>, <code>oth-mult</code>, and the German national codes as published (eForms-DE&rsquo;s below-threshold <code>us-*</code>, DÖE sdk-0.1&rsquo;s <code>de-*</code>; not cross-walked onto the EU list). Exact match on the current version&rsquo;s procedure type &mdash; the latest <em>mapped</em> type a notice of the Tender stated; lots inherit their Tender&rsquo;s. The pre-eForms TED eras fold the form&rsquo;s own procedure checkbox where it names one type, else the <code>PR</code> code through a closed table (1 open, 2/3 restricted, 4 neg-w-call, T neg-wo-call); any other value or a silent notice folds nothing, so the earlier type stays in place (it can predate the latest notice), and a Tender no notice typed matches no code. E.g. <code>procedure_type=neg-wo-call</code> for awards without a prior call &mdash; complete for eForms, <em>not</em> before it: a legacy award is typed only when its form ticked a without-call box, and FTS&rsquo;s Procurement Act routes (<em>Direct award</em>, <em>Competitive flexible procedure</em>, &hellip;) are not mapped. Tenders/Lots.</td></tr>
   <tr><td class="ep">lang</td><td>Preferred language for the <em>picked</em> text values (the <code>title</code> on tenders, lots and the detail header): ISO&nbsp;639 code, case-insensitive (<code>de</code> and <code>DEU</code> both work). Fallback chain: requested &rarr; English &rarr; the notice's original language &rarr; any labelled &rarr; unlabelled. A <em>selector</em>, not a filter &mdash; it changes which title a row serves, never which rows match, so it is never reported in <code>ignored_filters</code>. The detail's <code>texts</code> array always carries every stored language variant regardless.</td></tr>
@@ -577,7 +577,10 @@ against a view that cannot answer it at all.</p>
               ON v.tender_id = t.id AND v.seq = t.current_seq
            WHERE t.id = 12345'</code></pre>
 <p><strong>Values.</strong> A Tender's headline value is
-<code>tenders.current_value_eur_cents</code> (indexed). A lot's is stored per version
+<code>tenders.current_value_eur_cents</code> (indexed). Where it is a derived lot sum (issue
+551), <code>tenders.current_value_derivation</code> says so and
+<code>current_value_cents</code> / <code>current_value_currency</code> hold the sum as money
+(no amount row carries it; NULL on every elected head). A lot's is stored per version
 on <code>tender_version_lots</code> &mdash; <code>value_cents</code>,
 <code>value_currency</code>, <code>value_eur_cents</code> &mdash; and it is the figure
 <code>/v1/lots</code> serves, chosen by the same rule (issue 490). The raw
@@ -903,7 +906,9 @@ rates and the quarantine resolution ledger.</p>
   sums across eras without checking it.</li>
   <li>Served values are <strong>as published</strong> &mdash; 26 currency codes occur,
   including pre-euro national currencies, retired codes, and occasional codelist leaks
-  (e.g. <code>OP_DATPRO</code>); nothing this API returns is converted. A derived
+  (e.g. <code>OP_DATPRO</code>); nothing this API returns is converted (a <code>value</code>
+  marked by <code>value_derivation</code> is a sum of the lots' published figures, added up in
+  their own currency, not a conversion). A derived
   EUR-at-publication-date column lives <em>beside</em> the published values
   (<code>eur_cents</code> via <a href="#sql">/v1/sql</a>; official ECB/ECU daily series
   plus the irrevocable euro conversion rates; NULL where no official rate resolves)
@@ -912,7 +917,8 @@ rates and the quarantine resolution ledger.</p>
   <li>Only amounts that overflow the stored integer are refused at ingestion, so
   <code>amounts</code> carries every figure a notice published, however
   implausible. A Tender's <code>value</code> is the ONE figure elected from
-  them, and it is still the publisher's own &mdash; never a corrected one. One
+  them, and it is still the publisher's own &mdash; never a corrected one &mdash;
+  except where <code>value_derivation</code> says it is a lot sum (below). One
   scale slip is refused when the Tender itself holds the evidence: a figure worth
   &euro;1bn or more that is exactly 1,000&times; (or 10,000&times;, a
   million&times;&hellip;) another figure of the same Tender, in the same
@@ -933,12 +939,35 @@ rates and the quarantine resolution ledger.</p>
   lots group restating the refused figure falls with it. A part carried from a prior
   information notice into a contract notice with lots is not elected while the
   notice has any other accepted figure; it stays on the part's own row. The refused figure stays in <code>amounts</code> and the election
-  falls to the next one. A figure with neither such a partner nor such a lot sum is served as published,
+  falls to the next one &mdash; which, on a Tender with several lots, would be one lot's figure or
+  nothing. So where no procedure-level figure is accepted, two cases serve the SUM of the head
+  version's lots instead, in the lots' own currency, marked by <code>value_derivation</code>
+  (issue 551): <code>lot-sum-vouched</code>, when the refused figure is exactly 10<sup>k</sup>
+  times that sum (to a cent per lot) &mdash; the buyer's own total with its decimal separator
+  lost vouches for it (each lot's latest award, else its estimates or framework maxima at the
+  same k; the award notice's framework values, BT-709/BT-660, are never summed), when that sum is
+  above the figure the election would serve without it &mdash; and
+  <code>lot-sum-awards</code>, when the Tender publishes no procedure-level figure at all (only
+  placeholders) and its value is an award's copy or nothing: each lot's latest award is added up,
+  unless one figure repeats across the lots (a total printed on every award), one lot equals 1, 10,
+  100 or 1,000 times the others, an award is in another currency or names a lot the notice does not
+  type, two awarded lots carry one lot number under two keys (a Tender re-keyed from TED's
+  <code>LOT-1</code> to eForms' <code>LOT-0001</code> would count that lot twice; the number is read
+  from the key, and TED's <code>LOT-k</code> is the notice's k-th lot section rather than its
+  published lot number, so a re-keying whose numbers do not line up is not caught), an award or its
+  copy at Tender level is itself refused as a scale slip, that copy is over &euro;100bn, the
+  lots' estimates disagree with the awards by more than 10&times;, or the sum is not above today's
+  figure. No amount row is invented: <code>amounts</code> keeps what was published, and
+  the bounds and <code>sort</code> compare the sum's EUR value. A Tender with several lots whose only
+  figures are lot <em>estimates</em> or framework maxima, with no procedure figure, still serves ONE
+  lot's figure, never their sum (summed estimates moved 3 of 20 adjudicated heads the wrong way:
+  sums insured, a &times;1000 slip on every lot, a pseudo-lot restating the whole). A figure with neither such a partner nor such a lot sum is served as published,
   so a very large single value can still be a typo: in a sample of the residual
   &euro;10bn-and-up band (issue 471, October 2026) roughly a third were. Check
   the notice before quoting one.</li>
-  <li><strong><code>min_value</code>/<code>max_value</code> compare that elected
-  figure</strong>, as its derived EUR value. The election skips five
+  <li><strong><code>min_value</code>/<code>max_value</code> compare the head's EUR
+  value</strong>: the elected figure's derived EUR value or, where
+  <code>value_derivation</code> is set, the lot sum's (above). The election skips five
   classes: negative amounts (mostly the SDK's withheld marker, ~15,500 rows &mdash;
   but see above, a few are revenue-side contracts and this bound loses them too),
   exactly zero (an absence, not a price &mdash; see the zero bullet above), exactly
@@ -947,7 +976,8 @@ rates and the quarantine resolution ledger.</p>
   nine or more identical digits, which is a form-width maximum rather than a
   figure (&euro;999,999,999.99 on street cleaning in a town of 47,000), and
   anything above &euro;100bn EUR-equivalent. A Tender whose only published
-  amounts fall in those classes has <em>no known value</em>: its
+  amounts fall in those classes has <em>no known value</em> unless its lots'
+  awards are summed (<code>lot-sum-awards</code>, above): otherwise its
   <code>value</code> is null and NEITHER bound returns it (issue 366).</li>
 </ul>
 
@@ -1877,6 +1907,91 @@ mod tests {
                 "a figure with neither such a partner nor such a lot sum is served as published",
             ],
         );
+    }
+
+    /// Issue 551 (unit 3's review): every surface says a head can be a DERIVED lot sum, and how
+    /// to tell — the `/docs` Values paragraph and Amounts caveat (both paths, their guards, the
+    /// estimate-only head that still serves one lot's figure, the bounds), the OpenAPI `value` and
+    /// `value_derivation`, and the `/v1/sql` notes on the `tenders` marker columns. Unit 2 required
+    /// the two `/docs` lines (a derived head; the estimate-only head). One phrase per sentence,
+    /// lowercase (`plain`).
+    #[test]
+    fn the_docs_say_a_head_can_be_a_derived_lot_sum() {
+        let start = PAGE.find("<h3>Amounts</h3>").expect("/docs has the amount caveats");
+        let caveats = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h3>").expect("a section follows it")];
+        assert_says(
+            "/docs's amount caveat",
+            caveats,
+            &[
+                "except where value_derivation says it is a lot sum (below)",
+                "lot-sum-vouched, when the refused figure is exactly 10<sup>k</sup> times that sum",
+                "when that sum is above the figure the election would serve without it",
+                "lot-sum-awards, when the tender publishes no procedure-level figure at all",
+                "an award or its copy at tender level is itself refused as a scale slip, that copy is over &euro;100bn",
+                "two awarded lots carry one lot number under two keys",
+                "ted's lot-k is the notice's k-th lot section rather than its published lot number",
+                "no amount row is invented",
+                "still serves one lot's figure, never their sum",
+                "the elected figure's derived eur value or, where value_derivation is set, the lot sum's (above)",
+                "has <em>no known value</em> unless its lots' awards are summed (lot-sum-awards, above)",
+            ],
+        );
+        // The filter table's value-bound row, and the OpenAPI parameter (unit 3's third review: both
+        // still said a Tender with no convertible amount never matches, which path W breaks).
+        let start = PAGE.find("<td class=\"ep\"><code>min_value</code> / <code>max_value</code></td>").expect("/docs has the value-bound row");
+        let row = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+        assert_says(
+            "/docs's min_value/max_value row",
+            row,
+            &[
+                "where value_derivation is set, the sum of its lots converted the same way",
+                "matches no value bound unless its lots' awards are summed (lot-sum-awards): then the bound compares that sum",
+            ],
+        );
+        assert_says(
+            "/docs's served-values bullet",
+            caveats,
+            &["is a sum of the lots' published figures, added up in their own currency, not a conversion"],
+        );
+        let start = PAGE.find("<strong>Values.</strong>").expect("/docs has the SQL Values paragraph");
+        let values = &PAGE[start..start + PAGE[start..].find("</p>").expect("paragraph end")];
+        assert_says(
+            "/docs's SQL Values paragraph",
+            values,
+            &["where it is a derived lot sum (issue 551), tenders.current_value_derivation says so"],
+        );
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let min_value = spec["components"]["parameters"]["min_value"]["description"].as_str().expect("min_value is described");
+        assert_says(
+            "OpenAPI min_value",
+            min_value,
+            &[
+                "where value_derivation is set, the sum of its lots converted the same way",
+                "rows with no convertible amount match only when their lot awards are summed (lot-sum-awards)",
+            ],
+        );
+        let tender = &spec["components"]["schemas"]["Tender"]["properties"];
+        let described = |name: &str| tender[name]["description"].as_str().unwrap_or_else(|| panic!("Tender.{name} is described")).to_owned();
+        assert_says(
+            "OpenAPI Tender.value",
+            &described("value"),
+            &["it can instead be a derived lot sum, in the lots' own currency, when value_derivation is set", "still serves one lot's figure, never their sum"],
+        );
+        assert_says(
+            "OpenAPI Tender.value_derivation",
+            &described("value_derivation"),
+            &["null when value is a published figure", "method is lot-sum-vouched", "or lot-sum-awards", "no amount row is invented"],
+        );
+        let note = |column: &str| crate::v1::sql::column_note("tenders", column).unwrap_or_else(|| panic!("tenders.{column} is described"));
+        assert_says("/v1/sql tenders.current_value_eur_cents", note("current_value_eur_cents"), &["it can be a derived lot sum's eur value"]);
+        assert_says(
+            "/v1/sql tenders.current_value_derivation",
+            note("current_value_derivation"),
+            &["null when the head value is one published figure", "'lot-sum-vouched' when", "'lot-sum-awards' when"],
+        );
+        assert_says("/v1/sql tenders.current_value_cents", note("current_value_cents"), &["a derived head's lot sum in minor units"]);
+        assert_says("/v1/sql tenders.current_value_currency", note("current_value_currency"), &["the currency of current_value_cents"]);
+        assert_says("/v1/sql tenders.current_value_derivation_detail", note("current_value_derivation_detail"), &["served as value_derivation"]);
     }
 
     /// Issue 547 re-review: a date bound implies its sort on a page only, and every text that

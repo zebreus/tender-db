@@ -1636,7 +1636,10 @@ fn band_powers_of_ten() -> String {
 ///   because nothing here re-derives it, and exactly one SQL row per Tender, so the
 ///   LIMIT counts Tenders. It is a LEFT JOIN: a Tender whose head column matches no
 ///   amount row at its head version (a `rederive-eur` move not yet refolded, issue
-///   375) is still listed, with no published figure, instead of silently vanishing;
+///   375) is still listed, with no published figure, instead of silently vanishing.
+///   A DERIVED head (issue 551, `tenders.current_value_derivation` set) has no amount
+///   row by design: the join is skipped for it and its currency and cents are the
+///   stored lot sum's (`current_value_currency` / `current_value_cents`);
 /// - the head's profile and notice id are per-Tender chain seeks on `tender_versions`
 ///   (turso picks the `(tender_id, caused_by_notice_id)` autoindex and filters `seq`)
 ///   plus a PK seek on `notices`;
@@ -1687,7 +1690,8 @@ pub fn band_listing_sql() -> String {
         .join(", ");
     format!(
         "SELECT t.id AS tender_id, t.source AS source, t.current_value_eur_cents AS eur_cents, \
-                h.currency AS currency, h.cents AS cents, \
+                COALESCE(t.current_value_currency, h.currency) AS currency, \
+                COALESCE(t.current_value_cents, h.cents) AS cents, \
                 (SELECT n.profile FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id \
                   WHERE v.tender_id = t.id AND v.seq = t.current_seq) AS profile, \
                 (SELECT v.publication_id FROM tender_versions v \
@@ -1732,10 +1736,12 @@ pub fn band_listing_sql() -> String {
                     AND NOT EXISTS (SELECT 1 FROM tender_version_lot_results r \
                                      WHERE r.tender_id = a.tender_id AND r.seq = a.seq \
                                        AND r.awarded_currency = a.currency \
-                                       AND r.awarded_cents = a.cents)) AS procedure_figures \
+                                       AND r.awarded_cents = a.cents)) AS procedure_figures, \
+                t.current_value_derivation AS derivation \
            FROM tenders t \
            LEFT JOIN tender_version_amounts h \
-             ON h.rowid = (SELECT s.rowid FROM tender_version_amounts s \
+             ON t.current_value_derivation IS NULL \
+            AND h.rowid = (SELECT s.rowid FROM tender_version_amounts s \
                             WHERE s.tender_id = t.id AND s.seq = t.current_seq \
                               AND s.eur_cents = t.current_value_eur_cents \
                             ORDER BY s.cents DESC, s.currency LIMIT 1) \
@@ -2248,6 +2254,12 @@ pub struct BandRow {
     /// ([`band_lot_sum`]): the first match the rule refuses on, else the first it keeps.
     /// `None` when no sum matches (or the head is stale).
     pub lot_sum: Option<store::canonical::LotSumMatch>,
+    /// Issue 551: `tenders.current_value_derivation` for a DERIVED head (a lot sum the
+    /// election serves instead of one published figure). Such a head has no amount row to
+    /// find: `currency` and `cents` are the sum's own (`current_value_currency` /
+    /// `current_value_cents`), it is listed under its currency rather than as "not found",
+    /// and the per-figure signals are empty (the sum is no published figure to be a slip).
+    pub derivation: Option<String>,
 }
 
 /// One publication id carried by many distinct notices of a source (issue 394 b).
@@ -2762,7 +2774,8 @@ fn band_rows(rows: &Rows) -> Vec<BandRow> {
             };
             let currency = as_str(r.get(3));
             let cents = as_i64(r.get(4));
-            let lot_sum = (!currency.is_empty())
+            let derivation = r.get(16).and_then(Value::as_str).map(str::to_owned);
+            let lot_sum = (!currency.is_empty() && derivation.is_none())
                 .then(|| band_lot_sum(cents, &as_str(r.get(12)), &as_str(r.get(13)), &as_str(r.get(14)), &as_str(r.get(15))))
                 .flatten();
             BandRow {
@@ -2777,6 +2790,7 @@ fn band_rows(rows: &Rows) -> Vec<BandRow> {
                 smallest_sibling: both(as_opt_i64(r.get(9)), as_opt_i64(r.get(10)), i64::min),
                 value_corrigendum: r.get(11).and_then(Value::as_str).map(str::to_owned),
                 lot_sum,
+                derivation,
             }
         })
         .collect()
@@ -4080,7 +4094,10 @@ fn render_band(out: &mut String, report: &Report) {
                 major(r.eur_cents),
                 partner,
                 ratio,
-                band_lot_sum_cell(r.lot_sum.as_ref()),
+                match &r.derivation {
+                    Some(d) => format!("derived: {d}"),
+                    None => band_lot_sum_cell(r.lot_sum.as_ref()),
+                },
                 r.value_corrigendum.as_deref().unwrap_or("—"),
             );
         }
@@ -4527,6 +4544,10 @@ pub fn render_json(report: &Report) -> String {
                     "pow10_partner": r.pow10_partner,
                     "smallest_sibling": r.smallest_sibling,
                     "value_corrigendum": r.value_corrigendum,
+                    // Issue 551: the head's derivation (`lot-sum-vouched` / `lot-sum-awards`), null
+                    // for an elected figure. A derived row's currency and cents are the lot sum's,
+                    // and its per-figure signals are null because it is no published figure.
+                    "derivation": r.derivation,
                     // Issue 537: null = no lot sum matches.
                     "lot_sum": r.lot_sum.map(|m| json!({
                         "kind": m.kind.label(),
