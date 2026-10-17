@@ -1,6 +1,6 @@
 # 569 — a busy checkpoint over an empty WAL logs "WAL not fully reclaimed" on every plan chunk
 
-Status: done (pending deploy) — 2026-10-17, built with 568 (wf_0950d693-9da). **The filed premise was wrong** (found by
+Status: done — 2026-10-17, deployed 86f2745 (verify on project 2594's plan phase: the line now prints `wal_bytes=`), built with 568 (wf_0950d693-9da). **The filed premise was wrong** (found by
 the review, confirmed on the box): turso 0.7.2 reports `wal_frames=0 checkpointed=0` for EVERY TRUNCATE checkpoint
 (a busy one leaves both registers NULL; a completed one truncates to 0), so "busy over an empty WAL" was never what
 the line showed. Project 2590's `.diag.log` (`/data/db/tender-db.db.diag.log`) shows the WAL climbing from 1,459 MB

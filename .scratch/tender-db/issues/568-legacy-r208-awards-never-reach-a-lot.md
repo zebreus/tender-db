@@ -1,11 +1,11 @@
 # 568 — legacy R2.0.8 contract award notices never attach their awards to a lot, even on a multi-lot Tender
 
-Status: ready-for-agent — DECIDED 2026-10-17 (wf_4d23aefc-0d0); BUILT 2026-10-17 (unit 3, wf_0950d693-9da: rule steps
-1–9 + G1/G2 in `fold` via `match_inherited_lots` / `LegacyLotNumbers::inherited` / `lot_renumbered`; 13 named tests on
-real parsed values, both fold paths; port 679/679 and 5476747 three None; review found 5, all fixed). NEXT: gate,
-deploy (with 551 B1/B2 and 569), then the drain `refold-fields` TED-LOT_NUMBER BEFORE 551's B3, baseline first.
-Decision: `.scratch/tender-db/568-r208-lots/decision.md`. Note (review): a winner's `parties[]` row stays
-Tender-scoped for an R2.0.8 award — only `lot_results[].lot` moves (CHANGELOG says so).
+Status: ready-for-agent — DECIDED (wf_4d23aefc-0d0); BUILT (wf_0950d693-9da, b3cbfdf, gate green 1346 s); DEPLOYED
+86f2745 2026-10-17 23:00Z (with 551 B1/B2 and 569). SIZED: job 2591 — 719,732 notices carry TED-LOT_NUMBER. WET: job 2593
+(`"expect":719732`) + its project 2594, enqueued 23:08Z; baseline `568-r208-lots/drain/baseline-pre568.json` (3,729
+heads >= EUR 1 bn, 16 path-V). NEXT: read-back (decision unit 6: D7, 4748635, the 77 measured Tenders, a fresh 30 with
+>= 10 outside 2012–2015 at 30/30, band / path-V diff, status), then 551 B3.
+Note (review): a winner's `parties[]` row stays Tender-scoped for an R2.0.8 award — only `lot_results[].lot` moves.
 Kind: completeness (legacy lot results: R2.0.8 awards served tender-scoped)
 Relates to:
 - 567 (same-notice ITEM/LOT_NO mapping in read_legacy_results);
