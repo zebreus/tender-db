@@ -1,6 +1,6 @@
 # 569 — a busy checkpoint over an empty WAL logs "WAL not fully reclaimed" on every plan chunk
 
-Status: done — 2026-10-17, deployed 86f2745 (verify on project 2594's plan phase: the line now prints `wal_bytes=`), built with 568 (wf_0950d693-9da). **The filed premise was wrong** (found by
+Status: done — 2026-10-17, deployed 86f2745, VERIFIED on project 2594's plan phase (2026-10-18 01:39 box time: `busy=true wal_bytes=1686283072 wal_frames=0 checkpointed=0 — WAL not fully reclaimed`), built with 568 (wf_0950d693-9da). **The filed premise was wrong** (found by
 the review, confirmed on the box): turso 0.7.2 reports `wal_frames=0 checkpointed=0` for EVERY TRUNCATE checkpoint
 (a busy one leaves both registers NULL; a completed one truncates to 0), so "busy over an empty WAL" was never what
 the line showed. Project 2590's `.diag.log` (`/data/db/tender-db.db.diag.log`) shows the WAL climbing from 1,459 MB
@@ -20,8 +20,9 @@ Relates to:
 
     ssh root@zebreus.click 'journalctl -u tender-db --since "-1h" --no-pager | grep -c "WAL not fully reclaimed"'
 
-- **done (revised)**: the line fires when a busy checkpoint leaves a non-empty WAL file and prints its size in bytes;
-  it no longer prints turso's always-zero frame counts as if they were readings.
+- **done (revised)**: the line fires when a busy checkpoint leaves a non-empty WAL file and prints its size in bytes
+  (`wal_bytes=`); the frame fields stay beside it for an engine that reports them (turso 0.7.2 always reports 0, pinned
+  by the store test).
 - **open (2026-10-17)**: project 2590 printed `[project] plan checkpoint after chunk N (notices=…): busy=true
   wal_frames=0 checkpointed=0 — WAL not fully reclaimed` for every one of its ~1,494 chunks (one per 10,000 notices);
   550's project 2531 on 2026-10-15 did the same from chunk 1.
