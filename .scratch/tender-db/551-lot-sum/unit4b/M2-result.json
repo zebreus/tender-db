@@ -1,0 +1,877 @@
+{
+ "pass": false,
+ "fresh_counts": {
+  "right": 27,
+  "wrong": 3
+ },
+ "band_counts": {
+  "right": 15
+ },
+ "groups": [
+  {
+   "group": "fresh-1",
+   "items": [
+    {
+     "id": 36928,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 36928,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S equals the stated totals exactly. CAN 23949162 states BT-161 = EUR 129,224.00, which equals its four lots: LOT-0001 17,500 (Lolus), LOT-0002 101,115 (VBC GRUP), LOT-0004 3,610 (M.T.Z. Serviss) and LOT-0005 6,999 (IA-Laba). CAN 24009490 states BT-161 = EUR 14,984.08 for LOT-0003 alone (Agritech). 129,224.00 + 14,984.08 = 144,208.08 = S. Today the tender serves EUR 14,984.08, which is only the later notice's partial total for 1 of 5 lots. All lots are distinct, all selec-w, none a framework."
+     },
+     "b": {
+      "id": 36928,
+      "verdict": "right",
+      "class": "ok",
+      "why": "There are two separate award notices for the procedure (BT-04 06ea56c5\u2026, both BT-757 01, not modifications). 23949162 has BT-161 = EUR 129,224.00, which equals its four lots exactly: LOT-0001 17,500 + LOT-0002 101,115 + LOT-0004 3,610 + LOT-0005 6,999. 24009490 has BT-161 = EUR 14,984.08, which is LOT-0003 alone (Agritech, contract LI-24-207). Lot 3 does not appear in 23949162. Its submission statistics match lot 5's, but the winner (Agritech vs IA-Laba), amount and contract (LI-24-207 vs LI-24-161) all differ, so it is not a restatement. S = EUR 144,208.08 equals the sum of the two stated notice totals exactly. Today's EUR 14,984.08 is only the lot-3 notice total."
+     },
+     "c": null
+    },
+    {
+     "id": 108534,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 108534,
+      "verdict": "right",
+      "class": "ok",
+      "why": "One CAN, 23850324 (v1, the only version). It has 4 lots: LOT-0001 (Lot 3) and LOT-0003 (Lot 9) are clos-nw and correctly left out. The 2 awarded lots are LOT-0002 (Lot 7, PVC windows), EUR 96,588.03 to L'UNIVERS DU VERRE under contract 2023m0798007, and LOT-0004 (Lot 15, HVAC), EUR 343,289.54 to ETABLISSEMENTS SERGE POISSON under contract 2023m0798015. Both have BT-765=none, so no framework. The notice states no total (no BT-161, BT-118 or BT-27) and the tender value is null. S = EUR 439,877.57 adds distinct real awards for distinct works lots with distinct winners and contracts. That is better than one lot's 343,289.54 or null."
+     },
+     "b": {
+      "id": 108534,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Only one notice exists (23850324, can-standard, the only version), and it states no total: no BT-161, BT-118 or BT-1118. Two lots were awarded, LOT-0002 'Lot n\u00b07' (PVC windows: L'UNIVERS DU VERRE, TEN-0001, CON-0001 2023m0798007, EUR 96,588.03) and LOT-0004 'Lot n\u00b015' (HVAC: ETS SERGE POISSON, TEN-0002, CON-0002 2023m0798015, EUR 343,289.54). The two lots have different winners, tenders and contracts. LOT-0001 and LOT-0003 are clos-nw and correctly left out. No framework (BT-765 none), no repeated lot, no modification, and both figures are plausible works prices. S = EUR 439,877.57 is the total of the real awards and is better than today's single lot (EUR 343,289.54). I found nothing that makes S wrong."
+     },
+     "c": null
+    },
+    {
+     "id": 181177,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 181177,
+      "verdict": "right",
+      "class": "ok",
+      "why": "A fire-truck purchase in 2 lots. Los 1, the chassis, is EUR 51,500.00 to IVECO (contract V_2026-06 Kp BD L1). Los 2, the body, is EUR 171,590.00 to WISS (L2). Both CAN copies, 46706644 and 46699859, carry the same figures. S takes each lot once, both from 46706644, so nothing is counted twice. BT-161-NoticeResult is 0.00 EUR in both CANs, a placeholder rather than a stated total. The CNs 26957671 and 25817298 have no BT-27. S = EUR 223,090.00 is chassis plus body, the whole vehicle, which is better than one lot or null."
+     },
+     "b": {
+      "id": 181177,
+      "verdict": "right",
+      "class": "ok",
+      "why": "The lots are published twice with identical figures, in 46706644 (the national -02 publication) and its TED twin 46699859 (00658287-2026): LOT-0001 Fahrgestell (IVECO, EUR 51,500) and LOT-0002 Aufbau (WISS, EUR 171,590), with the same contract ids 'V_2026-06 Kp BD L1/L2'. S keys each lot once, from 46706644, giving EUR 223,090, not the double-counted EUR 446,180. Both notices carry BT-161-NoticeResult = 0.0 EUR. That is an eForms-DE placeholder, not a real total, so S does not really 'miss' it. The competition notice 25817298 states no estimate. Chassis plus body is one complete fire truck, and the two lots add up. Today the API serves null, so S is clearly better."
+     },
+     "c": null
+    },
+    {
+     "id": 193494,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 193494,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S equals the stated totals exactly. CAN 24671658 states BT-161 = PLN 983,484.94, which equals the sum of the BT-710 awards for LOT-0001 to LOT-0007 (68,069.57 + 81,936.67 + 1,540 + 262,453.50 + 283,000 + 270,571.70 + 15,913.50). Its LOT-0009 and LOT-0010 are clos-nw (no-rece) and are excluded. CAN 24658764 states BT-161 = PLN 268,800.00 for LOT-0008 (InPharm). 983,484.94 + 268,800 = 1,252,284.94 = S, about EUR 298k. Today the tender serves PLN 268,800, the later notice's partial total for one lot. These are 8 distinct drug lots with BT-765=none."
+     },
+     "b": {
+      "id": 193494,
+      "verdict": "right",
+      "class": "ok",
+      "why": "24671658 has BT-161 = PLN 983,484.94, which equals its lots 1-7 exactly: 68,069.57 + 81,936.67 + 1,540 + 262,453.50 + 283,000 + 270,571.70 + 15,913.50. Lots 9 and 10 are clos-nw (no-rece) and correctly left out. 24658764 is a later notice for the same procedure (BT-04 2976860f\u2026) covering only LOT-0008 'Zadanie 8' (InPharm, PLN 268,800), with BT-161 = PLN 268,800. Lot 8 is not in the first notice, so nothing overlaps. Not a framework (BT-765 none on every lot), every award equals the lowest tender (BT-710), and the competition notice 24467282 states no estimate. S = PLN 1,252,284.94 is the sum of the two stated totals. Today's PLN 268,800 covers lot 8 only."
+     },
+     "c": null
+    },
+    {
+     "id": 633332,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 633332,
+      "verdict": "right",
+      "class": "ok",
+      "why": "One CAN, 23967225 (the only version). It has 3 lots, one for each car park: LOT-0001 Huit mai 45, EUR 272,015.91 to Santerne Aquitaine (contract 2023fs06201); LOT-0002 Amplitude, EUR 140,073.11 to Quercus (2023fs06202); LOT-0003 Meriadeck, EUR 275,074.80 to Quercus (2023fs06203). All are selec-w with BT-765=none. Each value is a BT-720 winning tender with its own contract. The notice states no total and the tender value is null. S = EUR 687,163.82 is the sum of three distinct real awards for three distinct sites. Quercus winning two lots is two separate contracts, not a double count."
+     },
+     "b": {
+      "id": 633332,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Notice 23967225 is the only version and states no BT-161 total. Its three lots are three different car parks: Huit Mai 45 (Santerne, TEN-0001, CON 2023fs06201, EUR 272,015.91), Amplitude (Quercus, TEN-0002, CON 2023fs06202, EUR 140,073.11) and M\u00e9riadeck (Quercus, TEN-0003, CON 2023fs06203, EUR 275,074.80). Each lot has its own tender and contract, so Quercus winning two lots is not a double count. Not a framework (BT-765 none), no parallel offers, and every award equals the winning BT-720. S = EUR 687,163.82 is the sum of three separate real awards."
+     },
+     "c": null
+    }
+   ]
+  },
+  {
+   "group": "fresh-2",
+   "items": [
+    {
+     "id": 81906,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 81906,
+      "verdict": "right",
+      "class": "ok",
+      "why": "eForms award notice 24208042: Lot 1 to dagoba at BT-720 EUR 500,000; Lot 2 to Ginger Blue at BT-720 EUR 550,000; each lot has its own settled contract. The contract notice 23925354 (BT-300) describes a single-supplier framework per lot (fa-wo-rc) with no minimum and a maximum of EUR 500,000 HT (Lot 1) and EUR 550,000 HT (Lot 2) over the full term. These are separate per-lot ceilings, each with one supplier, not one ceiling shared across lots or suppliers, so they add up. S = 1,050,000 is the procedure's stated maximum (500k + 550k). Today serves null. Caveat: this is a ceiling, not actual spend."
+     },
+     "b": {
+      "id": 81906,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Award notice 24208042 (eForms, subtype 29) lists BT-720 tender values of EUR 500,000 for lot 1 (dagoba, contract 2024caao018601) and EUR 550,000 for lot 2 (Ginger Blue, contract 2024caao018602). These are framework maximums, not bid prices. Contract notice 23925354's BT-300 says each lot is a framework with no minimum and a maximum, awarded to a single supplier, and states lot 1 at 500,000 EUR HT and lot 2 at 550,000 EUR HT. BT-765 is fa-wo-rc on both lots. Each lot has its own ceiling and one supplier, so the ceilings are not shared across lots or suppliers and can be added. The phrase 'tous pouvoirs adjudicateurs confondus' means the ceiling is shared across buyers within one lot, not across lots. There is no BT-161 notice total and no estimate. S = EUR 1,050,000 is the procedure's combined maximum implied by BT-300. Today's figure is null."
+     },
+     "c": null
+    },
+    {
+     "id": 1091419,
+     "final": "wrong",
+     "cls": "other",
+     "a": {
+      "id": 1091419,
+      "verdict": "neutral",
+      "class": "other",
+      "why": "This record holds only three contract-modification notices (eForms subtype 38, can-modif, decision null), all for procedure 2022/4741: 24669280 (Lot 8, ITMA, BT-720 112,333.39), 24813844 (Lot 1, ISS, 200,301.48) and 44494162 (Lot 2, ISS, 186,862.68). The original 9-lot award sits on twin tender 7405521: award notice 23124586 covers lots 1-7 and 9 (ISS), and 23071915 covers lot 8 (ITMA, 92,837.51). S = 499,497.55 covers only 3 of the 9 lots. The original 9-lot award total is about EUR 1,044,065. S also mixes bases: the Lot 1 and Lot 2 figures equal the original awards, but the Lot 8 figure is post-modification (original 92,837.51). Lots 1 and 2 share buyer contract id 2022/4741-1 but carry different values and different modifications, so nothing is counted twice within this record. S is closer to the procedure total than any single lot, but it is a partial figure and not the procedure's total. Today serves null."
+     },
+     "b": {
+      "id": 1091419,
+      "verdict": "wrong",
+      "class": "other",
+      "why": "S is not this procedure's total. Tender 1091419 holds only three contract-modification notices (can-modif, subtype 38), and all three have decision null. They are 24669280 for lot 8, 24813844 for lot 1 and 44494162 for lot 2. BT-22 is 2022/4741, the same procedure as TED tender 7405521, which has 9 lots, call notice 22470566 and award notices 23124586 and 23071915. Lots 1 and 2, at 200,301.48 and 186,862.68, repeat the 2023 award values from 23124586 exactly. Their modifications add scope (a new office building; the pool and gym), so these are pre-modification values. Lot 8 at 112,333.39 is a post-modification value; the award in 23071915 was 92,837.51. S therefore mixes the two bases. It also covers 3 of 9 lots. The stated award totals are VAL_TOTAL 951,227.90 in 23124586 (the 8 ISS lots, all under contract 2022/4741-1) plus 92,837.51 in 23071915, which is EUR 1,044,065.41, so S misses that by 52%. The call notice 22470566 estimate is 5,624,546.08. Every summed lot is already valued on 7405521, so serving S counts those contracts twice across tenders. Today's figure is null."
+     },
+     "c": {
+      "id": 1091419,
+      "verdict": "wrong",
+      "class": "other",
+      "why": "S is not this procedure's total, so the verdict is wrong. Tender 1091419 holds only three contract-modification notices (subtype 38, decision null), all for procedure 2022/4741: 24669280 (Lot 8, ITMA, BT-720 112,333.39), 24813844 (Lot 1, ISS, 200,301.48) and 44494162 (Lot 2, ISS, 186,862.68). Each points back by BT-1501(n) to an original award notice, 237216-2023 or 228209-2023. Those are notices 23071915 and 23124586 on twin tender 7405521, which has 9 lots. Their stated totals are VAL_TOTAL 951,227.90 for the 8 ISS lots (the lot awards add up to exactly that) and 92,837.51 for Lot 8, so the procedure's award total is EUR 1,044,065.41. S = 499,497.55 covers 3 of the 9 lots and is 52% short of that total. It also mixes two bases. The Lot 1 and Lot 2 figures equal the 2023 awards exactly, but their modifications add scope (a new office building; the pool and gym), so those values are pre-modification. The Lot 8 figure is post-modification (the award was 92,837.51). So S is neither the original nor the current value of these three lots. Within this record nothing is counted twice: the three lots and tenders are distinct. Across records, though, all three contracts are already valued on 7405521, and path W would put a figure on a modification-only duplicate record that today honestly serves null. S beats any single lot (200k is 81% short), but a stated total exists and S does not approximate it, so I side with Reader B over Reader A's neutral."
+     }
+    },
+    {
+     "id": 6094289,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6094289,
+      "verdict": "right",
+      "class": "ok",
+      "why": "The F03 award notice 19961452 states a notice-level TED-VAL_TOTAL (PROCUREMENT_TOTAL) of HUF 139,974,900. That equals S exactly: 9,045,000 + 4,060,000 + 35,578,000 + 63,677,200 + 27,614,700 over 5 lots with distinct contracts. Today's figure is HUF 63,677,200 (Lot 4 only). The later F20 modifications 21176110 (lot 5), 21175651 (lot 3) and 21182144 (lot 4) give VAL_TOTAL_BEFORE equal to VAL_TOTAL_AFTER, so no value changed."
+     },
+     "b": {
+      "id": 6094289,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S matches a stated total exactly. Award notice 19961452 (F03) has a procedure-level VAL_TOTAL / PROCUREMENT_TOTAL of HUF 139,974,900 (13997490000 cents), which equals S. Its five LotResults are distinct contracts 1 to 5: 9,045,000, 4,060,000, 35,578,000, 63,677,200 and 27,614,700. Each lot is a single-supplier framework with its own ceiling, so the figures add up. Three later F20 modification notices restate lots 5, 3 and 4 with VAL_TOTAL_BEFORE equal to VAL_TOTAL_AFTER: 21176110 at 27,614,700, 21175651 at 35,578,000 and 21182144 at 63,677,200. They only extend durations, and their lot results are filed under no lot. S takes every lot from 19961452 only, so those restatements are not added twice. The bid prices listed in INFO_ADD are lower than the awards (Hartmann lot 4 bid 43,734,000 against 63,677,200), which means the awards are framework ceilings. Even so, the stated total confirms S. Today's figure, HUF 63,677,200, is lot 4 alone."
+     },
+     "c": null
+    },
+    {
+     "id": 6787755,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6787755,
+      "verdict": "right",
+      "class": "ok",
+      "why": "One F06 award notice, 21449988, with 8 insurance lots (property, all-risk, liability 1st and 2nd line, decennial, environment, fleet, cyber). Each lot is a separate contract (CONTRACT_NO 1-8, VALUES.PUBLICATION=YES) with its own VAL_TOTAL: 91,593.81 + 291,410 + 126,376.15 + 34,862.38 + 40,333.52 + 13,850 + 59,441.88 + 16,480 = EUR 674,347.74. Winners are AXA (lots 1-5), Filhet Allard, SMACL and MMA. No procedure-level total is stated in the award notice, and the contract notice 21053862 carries no values. Today's figure is 291,410 (Lot 2 only). These are distinct, additive awards of distinct lots."
+     },
+     "b": {
+      "id": 6787755,
+      "verdict": "right",
+      "class": "ok",
+      "why": "All eight figures come from one F06 award notice, 21449988. It has eight LotResults (RES-1 to RES-8) for lots 1 to 8, with eight distinct contracts numbered 1 to 8 and four different insurers: AXA on lots 1-5, Filhet Allard on lot 6, SMACL on lot 7 and MMA Inovence on lot 8. Each lot is a different insurance line, such as property damage, all-risk equipment, first- and second-line liability, ten-year construction cover, environmental, fleet and cyber. Each lot has its own VAL_TOTAL. Neither 21449988 nor the call notice 21053862 (F05) states a procedure total or an estimate. Nothing is counted twice, no lot is closed, and no figure is a shared ceiling. Lot 2 at EUR 291,410.00 is 43% of S, but that is plausible for all-risk equipment cover at an energy distributor, and nothing points to a x10 slip. S = EUR 674,347.74 is the sum of eight real, distinct lot awards. Today's figure, 291,410, is lot 2 alone."
+     },
+     "c": null
+    },
+    {
+     "id": 7399356,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 7399356,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Two separate F03 award notices, one per lot. 22556351 awards Lot 1 to Essi Projects for EUR 72,600.00 (its VAL_TOTAL; lot estimate 73,425). 22650139 awards Lot 2 to Indra for EUR 330,412.50. Each notice's procedure-level VAL_TOTAL covers only its own lot, so no admitted figure spans both lots. The contract notice 22405135 states VAL_ESTIMATED_TOTAL of EUR 403,837.50 (73,425 + 330,412.50). S = 403,012.50 is within 0.2% of that. Today's figure is 330,412.50 (Lot 2 only), which is 18% short. Distinct lots, distinct winners, real awards."
+     },
+     "b": {
+      "id": 7399356,
+      "verdict": "right",
+      "class": "ok",
+      "why": "I found nothing that makes S wrong. There are two lots and two separate award notices, and each notice covers only its own lot. Lot 1 is in 22556351: EUR 72,600.00, contract 2022-376, won by ESSI Projects, 2 tenders. That notice's VAL_TOTAL of 72,600 is lot 1 only, against a lot estimate of 73,425. Lot 2 is in 22650139: EUR 330,412.50, contract 2022-434, won by Indra, 1 tender. That notice's VAL_TOTAL and VAL_ESTIMATED_TOTAL of 330,412.50 are lot 2 only. The 330,412.50 that appears at procedure level is just lot 2's figure. Contract notice 22405135 states VAL_ESTIMATED_TOTAL EUR 403,837.50, which is 73,425 plus 330,412.50. S = 403,012.50 is 0.2% below that estimate. Today's figure, 330,412.50, is lot 2 alone. Notice 22497221 is an F14 correction that changes no values. There is no duplicate key, no re-issued award and no slip."
+     },
+     "c": null
+    }
+   ]
+  },
+  {
+   "group": "fresh-3",
+   "items": [
+    {
+     "id": 174041,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 174041,
+      "verdict": "right",
+      "class": "ok",
+      "why": "French framework (fa-wo-rc), 3 geographic lots, each awarded to one supplier in eForms CAN 25757261. Winning tenders (BT-720 = contract values CON-0001..3): Must 673,337, ENGIE 689,191, CLAIR'EQUEAUX 652,616, giving S = EUR 2,015,144. These are distinct real awards of distinct lots. Today serves null. The notice's BT-118 = EUR 2,660,000 is exactly the sum of the per-lot BT-709 framework maxima (765,000 + 1,190,000 + 705,000). That is a ceiling, a different measure; S is about 76% of it, as awarded values under ceilings should be. S is much closer to that total than null or any single lot (about 0.67 m). Nothing is counted twice and nothing non-additive is summed."
+     },
+     "b": {
+      "id": 174041,
+      "verdict": "right",
+      "class": "ok",
+      "why": "eForms CAN 25757261 has 3 distinct lots, each with exactly one tender and one contract. BT-720 values are EUR 673,337 (Must, LOT-0001), EUR 689,191 (ENGIE, LOT-0002) and EUR 652,616 (Clair'Equeaux, LOT-0003); CON-0001..3 carry the same values. There is no BT-161 notice value. BT-118 is EUR 2,660,000, which is only the sum of the BT-709 framework maxima (765,000 / 1,190,000 / 705,000): a ceiling, not an award. Each lot's tender is below its own maximum, so there is no slip, and S = EUR 2,015,144 stays below the ceiling sum. These are distinct real awards for distinct lots. Today's figure is null, so S is not farther from anything admitted. Caveat: this is a call-off framework with order forms (accord-cadre a bons de commande), so BT-720 is probably a price estimate from a quantity schedule, but it is still the awarded figure."
+     },
+     "c": null
+    },
+    {
+     "id": 855538,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 855538,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Sports-complex works in Romilly-sur-Seine split into 21 trade lots (eForms CAN 23861005, the only version). The notice has no BT-161 or BT-118 procedure total. Each of the 20 awarded lots has one winning tender: BT-720 equals the contract value in CON-0001..20, e.g. VRD 992,021, gros-oeuvre 1,380,620, electricity 845,239, CVC 671,008. LOT-0015 (ascenseur) is clos-nw and is correctly left out. acr metal wins lots 3, 6 and 7, but these are separate lots and contracts, not duplicates. S = EUR 7,278,412 (sum checked: 727,841,200 cents), a plausible total for the building. Today serves null."
+     },
+     "b": {
+      "id": 855538,
+      "verdict": "right",
+      "class": "ok",
+      "why": "eForms CAN 23861005 is a works procedure with 21 trade lots. 20 lots are selec-w, each with one tender and one contract (2023ao01901..21, no 15). BT-720 equals the contract value in each case, and the 20 values sum to exactly 727,841,200 cents, i.e. EUR 7,278,412. LOT-0015 (Ascenseur) is clos-nw and is correctly left out. BT-300 says it was abandoned (declared 'sans suite') and re-launched under ref 24-31082. There is no BT-161 or BT-118 and only one notice version. Lots 3, 6 and 7 share the winner acr metal but are separate lots with separate contracts, and lot 14's co-contractor is a group partner, not a second award. Today's figure is null."
+     },
+     "c": null
+    },
+    {
+     "id": 5658786,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 5658786,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Children's transport for the Rando Gli\u00e8res 2016 event (Haute-Savoie), 4 geographic lots, each with one winner in F03 notice 18758868. The values are lump sums for a single event: Bassin Ann\u00e9cien 13,200 (Transdev), Vall\u00e9e de l'Arve 5,370 (Jacquet), Chablais 4,690 and Genevois 1,140 (Transdev). The notice states no procedure total, and there is no earlier contract notice among the versions. S = EUR 24,400 is the sum of distinct real awards of distinct lots. Today serves 13,200 (lot 1 only)."
+     },
+     "b": {
+      "id": 5658786,
+      "verdict": "right",
+      "class": "ok",
+      "why": "TED F03 notice 18758868 covers 4 geographic lots: Bassin Annecien, Vallee de l'Arve, Chablais, Genevois. Each has one contractor and its own VAL_TOTAL: EUR 13,200 / 5,370 / 4,690 / 1,140, summing to EUR 24,400. No procedure-level total or range is stated. The tender has one version, so there are no re-issued or modified awards. These are one-off event transport contracts (Rando Glieres 2016), not unit rates or framework ceilings. Today's server gives EUR 13,200, which is lot 1 only. I found no basis for a double count, a slip or non-additivity."
+     },
+     "c": null
+    },
+    {
+     "id": 6527544,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6527544,
+      "verdict": "right",
+      "class": "ok",
+      "why": "R\u012bga school-food supply, 12 lots, each with one winner, all awarded in F03 notice 20738524. The PROCEDURE section states TED-VALUE / TED-VAL_TOTAL (PROCUREMENT_TOTAL) = EUR 2,534,623.69 (253,462,369 cents). The 12 lot VAL_TOTALs sum to exactly 253,462,369, so S equals the stated total. Today's served value is EUR 699,128.76 (LOT-4 only). Later F20 modifications raise LOT-3 (21054923: 69,675.30 to 72,279.11) and LOT-12 (21054925: 432,478.96 to 453,068.83), about +1.35% of the contract total. That does not change the verdict."
+     },
+     "b": {
+      "id": 6527544,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Award notice 20738524 states the procedure total TED-VAL_TOTAL (VALUE.TYPE=PROCUREMENT_TOTAL) as EUR 2,534,623.69 (253,462,369 cents). S equals it to the cent: 12 distinct lots (LOT_NO 1-12), each with one winner and its own VAL_TOTAL. Today's server gives EUR 699,128.76, which is lot 4 alone. Checked for double counting: F20 modifications 21054923-27 restate lots 3, 5, 12, 1 and 7 with no lot key and raise them (69,675.30->72,279.11; 110,666.40->114,860.47; 432,478.96->453,068.83; 131,392.70->135,733.72; 63,777.12->66,192.96, about +1.35% overall). None of them is in S, which is correct for an award total. One cosmetic issue: the lot_details titles are shifted against the CAN lot titles. This does not change the sum."
+     },
+     "c": null
+    },
+    {
+     "id": 6942121,
+     "final": "wrong",
+     "cls": "not_additive",
+     "a": {
+      "id": 6942121,
+      "verdict": "wrong",
+      "class": "farther",
+      "why": "Swedish framework (Motala, ramavtal konsultst\u00f6d) with 3 parallel suppliers per lot. Notice 21610301 (F03) has six LotResults: LOT-1 is SEK 460,200 Tyr\u00e9ns, 492,000 White and 477,120 \u00c5F/Afry; LOT-2 is 427,260 Structor, 459,960 Tyr\u00e9ns and 474,780 Afry. These are competing per-supplier figures, and S picks the last one in each lot (Afry 477,120 + 474,780 = 951,900). The notice states a procedure total: TED-VALUE_RANGE.TYPE=PROCUREMENT_TOTAL, TED-LOW SEK 427,260, TED-HIGH SEK 538,200. Today's served SEK 492,000 falls inside that range. S = 951,900 is far above its top, so S is farther from the stated total, and it sums one arbitrary supplier's figure per lot from parallel framework offers."
+     },
+     "b": {
+      "id": 6942121,
+      "verdict": "wrong",
+      "class": "not_additive",
+      "why": "Notice 21610301 is a ramavtal (framework agreement for call-offs as needed, 'for avrop vid behov') with THREE parallel winners per lot. Their TED VAL_TOTAL values are each winner's evaluated offer. Lot 1: RES-1 Tyrens SEK 460,200, RES-2 White SEK 492,000, RES-3 AF SEK 477,120. Lot 2: RES-4 Structor SEK 427,260, RES-5 Tyrens SEK 459,960, RES-6 AF SEK 474,780. S = RES-3 + RES-6 = SEK 951,900, which takes AF's offer in each lot only because it is the 'latest' key, so it sums two of six parallel competing offers. The notice's own procurement-total range (VALUE_RANGE.TYPE=PROCUREMENT_TOTAL) is LOW SEK 427,260 to HIGH SEK 538,200. S is 77% above the highest offer. Today's served SEK 492,000 sits inside that range, so S is also farther from the stated figure."
+     },
+     "c": null
+    }
+   ]
+  },
+  {
+   "group": "fresh-4",
+   "items": [
+    {
+     "id": 478682,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 478682,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Kitchen equipment for Alojas Ausek\u013ca school, LNP 2026/50, 3 lots, no framework. Award notice 45877674 has BT-161 = EUR 42,495.52 = LOT-0001 39,165.52 (GastroServiss) + LOT-0003 3,330.00 (Prof Rostuls). Award notice 27337818 has BT-161 = EUR 11,131.00 = LOT-0002 (iKitchen). S = EUR 53,626.52 is exactly the sum of the two stated notice totals and covers all three lots once, with distinct winners and contracts (4.10.3/26/59, /60, /61). Today's served EUR 11,131 is lot 2 alone. The contract notices 25720570 and 25712613 state no estimate."
+     },
+     "b": {
+      "id": 478682,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Three distinct lots, each with its own winner and contract, under one procedure (BT-04 68942659, LNP 2026/50). Notice 45877674 gives LOT-0001 to GastroServiss at 39,165.52 (contract 4.10.3/26/61) and LOT-0003 to Prof Rostuls at 3,330 (4.10.3/26/59), with BT-161 = 42,495.52. Notice 27337818 gives LOT-0002 to iKitchen at 11,131 (4.10.3/26/60), with BT-161 = 11,131. S = 53,626.52 is exactly the sum of the two notice totals, which cover non-overlapping lots. No lot is restated, there is no shared ceiling, no lot is closed and the contract notice 25712613 states no value. Today's figure of 11,131 covers only lot 2, so S is the better total."
+     },
+     "c": null
+    },
+    {
+     "id": 480181,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 480181,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Polish telecom equipment, 2616.14.2024.EM, 7 lots, no framework. Award notice 24360961 has BT-161 = PLN 4,456,271.48, which equals exactly lots 1-6: 1,690,000.00 + 201,640.00 + 1,940,000.00 + 550,000.00 + 58,936.68 + 15,694.80. Each lot has its own contract (Umowa cz\u0119\u015b\u0107 1-6). Award notice 24595677 has BT-161 = PLN 498,461.19 for LOT-0007 (BEMIT, Umowa cz\u0119\u015b\u0107 7). S = PLN 4,954,732.67 (EUR 1,187,814.99) is exactly the sum of the two stated notice totals, with 7 distinct lots each counted once. The round offers on lots 1, 3 and 4 are confirmed by the BT-161 total, so they are not slips. Today's served PLN 498,461.19 is lot 7 alone."
+     },
+     "b": {
+      "id": 480181,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Seven distinct lots (Cz\u0119\u015b\u0107 1-7), each with its own contract ('Umowa cz\u0119\u015b\u0107 N'), under one procedure (BT-04 68ebd84b, 2616.14.2024.EM). Notice 24360961 covers lots 1-6 with BT-161 = PLN 4,456,271.48, which equals 1,690,000 + 201,640 + 1,940,000 + 550,000 + 58,936.68 + 15,694.80. Notice 24595677 covers lot 7 (BEMIT) with BT-161 = BT-720 = PLN 498,461.19. Lot 7 reuses the keys RES-0001 and CON-0001 inside its own notice, but it is mapped to LOT-0007, so lot 1 is not double counted. S = 4,954,732.67 is exactly the sum of the two notice totals, which cover non-overlapping lots. Lot 7 is about 8x lot 5, but its BT-720 and BT-161 agree and the contract notice 23829283 gives no estimate to contradict it, so there is no evidence of a slip. Today's figure, 498,461.19 (lot 7 only), ignores the stated 4.46 m total, so S is clearly better."
+     },
+     "c": null
+    },
+    {
+     "id": 936207,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 936207,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Bavarian police (LZBP) framework for office and visitor chairs, LZBP-8014-1-3, 8 lots, fa-mix. Neither award notice (TED 23605116 and German national notice 26223478) states BT-161 or any procedure total, and today's served value is null. Each LotResult references one tender. The values are BT-720 offers, repeated as the DE1 PayableAmount in 26223478: 885,675.00 / 1,101,255.00 / 104,140.00 / 217,543.50 / 296,000.00 / 122,559.80 / 217,515.00 / 133,410.00 for lots 1-8. They are real per-lot awards to single suppliers (Interstuhl lots 1/3, Dauphin 2, Stolcomfort 4/6, Chairgo 5, Nowy Styl 7/8), not ceilings shared across lots or suppliers. S = EUR 3,078,098.30 counts each lot once, from 26223478 only, even though both notices repeat the same figures, so nothing is double-counted. With no stated total and distinct real awards of distinct lots, S beats null."
+     },
+     "b": {
+      "id": 936207,
+      "verdict": "right",
+      "class": "ok",
+      "why": "A framework for office and visitor chairs for the Bavarian police, in 8 lots. Each lot has exactly one winning tender, and the 8 figures are all different (885,675 / 1,101,255 / 104,140 / 217,543.50 / 296,000 / 122,559.80 / 217,515 / 133,410), so these are not shared ceilings. 23605116 (TED) and 26223478 (German national copy) are the same award notice, published at the same moment with identical BT-720 amounts. S takes each lot once, all from 26223478, so nothing is counted twice. Neither notice has a BT-161, BT-709 or BT-27 total, and the lot codes say 'fa-mix'. Single-winner frameworks for distinct lots add up, so S = 3,078,098.30 is the procedure total. Today the API serves null."
+     },
+     "c": null
+    },
+    {
+     "id": 1163033,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 1163033,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Hospital Cl\u00ednico San Carlos LAA-closure supply. The three award notices share procedure BT-04 ff1e7a90 (contract PA 2023-0-038) and each covers an extension (pr\u00f3rroga). 24591798 is the early first extension for LOT-0004 only, BT-161 = EUR 49,500.00. 24900467 is the first extension for LOT-0001/2/3/5, BT-161 = EUR 753,434.80, which equals exactly 155,053.12 + 479,887.68 + 89,100.00 + 29,394.00. 25763051 is the second extension for LOT-0004 only, BT-161 = EUR 24,750.00. S = 753,434.80 + 24,750.00 = EUR 778,184.80. That is five distinct lots, each taken once at its latest award, with no double count; the second-extension value replaces lot 4's earlier 49,500. Today's served EUR 24,750 equals the BT-161 of a notice that covers only lot 4, so it is one lot's award, not a procedure total. S is within 3.3% of the 753,434.80 notice total and within 3.1% of the full first-extension total (753,434.80 + 49,500 = 802,934.80). One caveat: S mixes extension periods (first extension for lots 1/2/3/5, second for lot 4), but it is still far better than one lot."
+     },
+     "b": {
+      "id": 1163033,
+      "verdict": "neutral",
+      "class": "other",
+      "why": "The record is a series of contract extensions ('pr\u00f3rrogas') of contract PA 2023-0-038 under one procedure id (BT-04 ff1e7a90). It spans three award notices, each with its own stated total. 24591798 is the advanced first extension of lot 4 (Palex), BT-161 = EUR 49,500, concluded 2024-05-15. 24900467 is the first extension of lots 1/2/3/5, BT-161 = EUR 753,434.80, which equals 155,053.12 + 479,887.68 + 89,100 + 29,394. 25763051 is the second extension of lot 4 only (BT-22 'SEGUNDA PR\u00d3RROGA ... PALEX'), BT-161 = EUR 24,750, concluded 2026-04-16. S = 753,434.80 + 24,750 = 778,184.80. No lot is counted twice, there is no slip, and these are five distinct lots with five suppliers. But S mixes rounds: first-extension prices for lots 1/2/3/5 plus second-extension lot 4, while dropping lot 4's real first-extension award of 49,500. As a result S equals none of the stated totals: not 24,750, not 753,434.80, not the first-extension total of 802,934.80, and not the all-awards total of 827,684.80. Today's figure, 24,750, exactly equals the latest notice's BT-161 and matches the record's title ('SEGUNDA PR\u00d3RROGA'). S is closer to the 753,434.80 total and better reflects scale, but it is a mixed-period figure, so it is not clearly the better served total."
+     },
+     "c": {
+      "id": 1163033,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Tiebreak goes to Reader A. I re-read all three notices; they share procedure BT-04 ff1e7a90 (contract PA 2023-0-038, earlier notice 00238329-2023) and none is a framework (BT-765 = none). 24591798 is the early first extension ('ADELANTO DE LA PRIMERA PR\u00d3RROGA') for LOT-0004 only (Palex), BT-161 = BT-720 = EUR 49,500. 24900467 is the first extension for LOT-0001/2/3/5 (Boston, Abbott, Sahajanand, World Medical, all concluded 2025-08-06), BT-161 = EUR 753,434.80, exactly 155,053.12 + 479,887.68 + 89,100.00 + 29,394.00. 25763051 is the second extension for LOT-0004 only (BT-22 'SEGUNDA PR\u00d3RROGA ... PALEX', concluded 2026-04-16), BT-161 = EUR 24,750. S = 753,434.80 + 24,750 = EUR 778,184.80. That is five distinct lots and five suppliers, each lot taken once at its latest award: no double count, no slip, nothing non-additive, and lot 4's superseded 49,500 is correctly left out. S is not an arbitrary mix of extension rounds: it is the sum of each lot's currently active extension, because lot 4 runs one extension ahead of the others. Today's EUR 24,750 does equal the latest notice's BT-161, but that notice covers only lot 4, so it is one lot's award and not a procedure total. The 'farther' test therefore does not apply here. Against the widest stated total (753,434.80, four lots) S is 3.3% off and today's figure is 96.7% off. S is also within 3.1% of the full first-extension total (802,934.80) and within 6% of the sum of all awards (827,684.80), so it approximates every coherent procedure-level figure. Today's value understates the procedure by about 97%. S is clearly better than one lot's award."
+     }
+    },
+    {
+     "id": 6697762,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6697762,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Swiss Post translation services, 2 lots: lot 1 external communication, lot 2 internal communication. In award notice 21195957, RES-1 has TED VAL_TOTAL CHF 23,149.36 (IZE SA) and RES-2 has VAL_TOTAL CHF 18,805.90 (Amplexor). These are different winners on different lots, and no notice-level total is stated. The contract notice 20845594 gives no estimate, only 48 months plus 2x12 renewal. S = CHF 41,955.26 (EUR 39,013.63) is the sum of two distinct real lot awards, against today's lot-1-only CHF 23,149.36. Caveat: the magnitudes look low for a 48-month Post framework and may be the evaluation price (the CN uses 'prix d'\u00e9valuation'). But both lots are on the same basis, so summing them is still additive and covers the procedure better than one lot."
+     },
+     "b": {
+      "id": 6697762,
+      "verdict": "right",
+      "class": "ok",
+      "why": "A Swiss Post translation-services contract in two lots: the contract notice 20845594 declares lots 1 and 2, each running 48 months. Award notice 21195957 gives lot 1 to IZE SA with VAL_TOTAL CHF 23,149.36 and lot 2 to Amplexor Switzerland AG with VAL_TOTAL CHF 18,805.90. Both contracts were concluded 2020-08-06 with 8 tenders each. These are two distinct lots with two winners. The notice is bilingual (two SIMAP document numbers, one French and one German), but it is not duplicated: the two award items have different winners and values. No total is stated. S = CHF 41,955.26. Caveat: the figures are small for 48-month frameworks and could be prices of a sample evaluation basket. Even so, both lots carry the same kind of figure, so S would be no worse than today's single-lot CHF 23,149.36."
+     },
+     "c": null
+    }
+   ]
+  },
+  {
+   "group": "fresh-5",
+   "items": [
+    {
+     "id": 236597,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 236597,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Twelve parts (Czesc 1-12). Eleven were awarded and LOT-0005 (Czesc 2) was closed with no award (clos-nw, notice 25663872), so it is correctly left out. The eleven awards come in nine separate award notices. Each notice's BT-161 equals the sum of its own lots: 25631637 = 349,588.00; 25647921 = 90,428.24 (LOT-0002 51,208.82 + LOT-0009 39,219.42); 25619431 = 95,750.00; 25619589 = 111,622.40 (LOT-0011 78,750.00 + LOT-0004 32,872.40); 25619613 = 171,340.00; 25617400 = 497,197.30; 25594925 = 47,271.00; 25665851 = 49,034.37; 25620726 = 337,118.00 PLN. The contracts are distinct (DZP/1A-1I/2026 czesc N), BT-765 is none (not a framework), and the winners differ by part. There is no procedure-level total. S = PLN 1,749,349.31 is the sum of the nine notice totals. Today the API serves PLN 47,271.00, which is only LOT-0008 (Czesc 10)."
+     },
+     "b": {
+      "id": 236597,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Adversarial check found nothing wrong. There are 11 distinct lots (Czesc 1,3-12), each awarded once in its own eForms CAN. All the CANs carry BT-757=01, so none is a modification, and each has its own contract id DZP/1A..1I. Each notice's BT-161 equals its own lots: 25631637 = 349,588.00 (Czesc 5); 25647921 = 90,428.24 (Czesc 9 51,208.82 + Czesc 8 39,219.42); 25619589 = 111,622.40 (Czesc 1 78,750 + Czesc 3 32,872.40); 25619431 = 95,750; 25619613 = 171,340; 25617400 = 497,197.30; 25594925 = 47,271; 25665851 = 49,034.37; 25620726 = 337,118. Czesc 2 (LOT-0005, 25663872) is clos-nw/all-rej and is correctly left out. No procedure-wide total or estimate is stated (CN 25523868 has none). S = PLN 1,749,349.31 is the exact sum of the per-notice BT-161s. Today's figure is one lot only (Czesc 10, 47,271)."
+     },
+     "c": null
+    },
+    {
+     "id": 321859,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 321859,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Two award notices. 25551449: LOT-0001 'PUT (Patient Universal Terminal)', BT-161 = BT-710 = BT-720 = CHF 1,920,611.00, 2 tenders, contract CON-0100. 25550656: LOT-0002 'Patientenportal', BT-161 = BT-720 = CHF 1,448,972.40, 6 tenders, contract CON-0200. Both lots went to the same winner (Berlinux), but they are distinct lots with separate 5-year contracts, the bid counts differ, and BT-765 is none, so these are not shared framework ceilings. Neither the procedure nor the CN 24907409 states a total. S = CHF 3,369,583.40. Today the API serves CHF 1,448,972.40 (LOT-0002 only, the smaller lot)."
+     },
+     "b": {
+      "id": 321859,
+      "verdict": "right",
+      "class": "ok",
+      "why": "There are two separate CANs for two distinct lots (Los 1 PUT, Los 2 Patientenportal), both won by Berlinux Solutions GmbH. CAN 25551449: BT-710/720/161 = CHF 1,920,611.00 (2 tenders, CON-0100). CAN 25550656: CHF 1,448,972.40 (6 tenders, CON-0200). The values differ and so do the tender counts, so this is not one shared or combined offer restated per lot. Each is a separate 5-year contract (+2x2y options). Neither is a framework ceiling. No procedure total or estimate is stated (CN 24907409 has none). S = CHF 3,369,583.40 is the correct sum. Today's figure (1,448,972.40) is Lot 2 only."
+     },
+     "c": null
+    },
+    {
+     "id": 469403,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 469403,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Two VEAT notices (subtype 25, oth-single relaunch after a 'sans suite'). Notice 24799515 states BT-161 = EUR 803,650.86, which equals exactly its 10 lot awards (LOT-0001-0003 and 0005-0011, e.g. Gros oeuvre SCHMITT 289,298.81). Notice 44527225 states BT-161 = EUR 38,556.97 for LOT-0004 Menuiseries exterieures (LE COGUIC). The contract ids run 2025.025-2025.035 with no gaps or repeats; 2025.028 is LOT-0004. S = EUR 842,207.83 is exactly the two stated notice totals added together. Today the API serves EUR 38,556.97 (LOT-0004 only). Decision is null because these are VEAT notices, but every lot has a named contractor and a contract."
+     },
+     "b": {
+      "id": 469403,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Both notices are VEAT (BT-02 veat) for the same procedure (BT-04 668ad36d, ref 25S0011), which is why decision is null. VEAT 24799515 awards 10 lots (1-3, 5-11) under contracts 2025.025-.027 and .029-.035. Its stated BT-161 = EUR 803,650.86 equals exactly the sum of those 10 lot values. VEAT 44527225 adds the missing Lot 4 (Menuiseries exterieures, LE COGUIC) at 38,556.97 with BT-161 = 38,556.97 and contract 2025.028, which fills the gap in the contract numbering. No lot appears twice. S = 803,650.86 + 38,556.97 = EUR 842,207.83, which is consistent with the stated 10-lot total plus the late lot. Today's figure (38,556.97) is Lot 4 only."
+     },
+     "c": null
+    },
+    {
+     "id": 533536,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 533536,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Three separate award notices, each with BT-161 equal to its one lot. 44557436: LOT-0001 (stadium design) EUR 21,700, Siltumelektroprojekts, contract 0542/2025. 24754549: LOT-0002 (Estrade) EUR 30,000, Buvdizains, contract 0398/2025. 24714086: LOT-0003 (Raina 11 energy efficiency) EUR 12,550, Lusis V, contract 0371/2025. The three later notices 25363512, 25425874 and 9514 are contract modifications (subtype 38, mod-cir, time extension only). They repeat LOT-0001 at 21,700 but are counted once. BT-765 is none, and the CN 24515324 states no value. S = EUR 64,250. Today the API serves EUR 21,700 (LOT-0001 only)."
+     },
+     "b": {
+      "id": 533536,
+      "verdict": "right",
+      "class": "ok",
+      "why": "There are 3 distinct lots, each awarded once: L3 EUR 12,550 (24714086, contract 0371/2025), L2 EUR 30,000 (24754549, 0398/2025), L1 EUR 21,700 (44557436, 0542/2025). Each notice's BT-161 equals its own lot. Lot 1 has three later can-modif notices (25363512, 25425874, 9514). They are BT-200 mod-cir and only extend the term ('Pagarinats liguma izpildes termins'), with the value unchanged at 21,700. S counts Lot 1 once (from 44557436), so nothing is double-counted. CN 24515324 states no estimate. S = EUR 64,250. Today's figure is 21,700 (L1 only)."
+     },
+     "c": null
+    },
+    {
+     "id": 6513295,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6513295,
+      "verdict": "right",
+      "class": "ok",
+      "why": "One TED F03 notice, 20822950. Its procedure figure VAL_TOTAL = EUR 1.00 (PROCUREMENT_TOTAL) is a placeholder, and the CN 20407047 lots are also EUR 1.00, so neither is a real stated total. Lot 1 (format saw, Jorlin et Fils, contract 1900025001) = EUR 28,467.88. Lot 2 (belt sander, Tibem, contract 1900026001) = EUR 24,019.00. Lot 3 was unsuccessful (PROCUREMENT_UNSUCCESSFUL) and is not counted. These are two distinct machines with distinct winners and contracts, so S = EUR 52,486.88. Today the API serves EUR 28,467.88 (lot 1 only)."
+     },
+     "b": {
+      "id": 6513295,
+      "verdict": "right",
+      "class": "ok",
+      "why": "CAN 20822950 awards Lot 1 at EUR 28,467.88 (Jorlin et Fils, contract 1900025001) and Lot 2 at EUR 24,019.00 (Tibem, contract 1900026001). These are distinct real lots and suppliers. Lot 3 is PROCUREMENT_UNSUCCESSFUL and correctly left out. The only stated total is TED VAL_TOTAL/VALUE PROCUREMENT_TOTAL = EUR 1.00. That is a placeholder: CN 20407047 also gives VAL_OBJECT = EUR 1.00 for every lot. So it is not a real total that S could be 'farther' from. S = 52,486.88 is the correct sum. Today's figure (28,467.88) is Lot 1 alone."
+     },
+     "c": null
+    }
+   ]
+  },
+  {
+   "group": "fresh-6",
+   "items": [
+    {
+     "id": 225020,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 225020,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Each lot has its own CAN. CAN 24864313 covers LOT-0001 only: BT-161 = BT-710 = BT-720 = PLN 678,129.02, Golden Line, contract 'CZ\u0118\u015a\u0106 NR 1'. CAN 44534007 covers LOT-0002 only: BT-161 = PLN 394,293.00, AZET Za\u0142\u0119cki, contract 'CZ\u0118\u015a\u0106 NR 2'; the lot 2 estimate BT-27 is 379,923.18. Each BT-161 is a single-lot total. No notice states a figure for the whole procedure, and the contract notice 24617133 has no total. S = PLN 1,072,422.02 sums two distinct real awards for distinct lots (toner and paper). Today's figure (lot 1, 678,129.02) leaves out the paper lot."
+     },
+     "b": {
+      "id": 225020,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Two separate CANs under the same BT-04 procedure, each covering one part. Notice 44534007 (published 2025-06-04) covers only LOT-0002 (paper): AZET, PLN 394,293.00, and its BT-161 = 394,293.00. Notice 24864313 (published 2025-07-17) covers only LOT-0001 (consumables): Golden Line, PLN 678,129.02 (lowest of 3 tenders; highest 823,701.48), and its BT-161 = 678,129.02. Each notice total covers only its own lot. Neither notice repeats the other lot. Lot numbers (ZP/PN/2/1 and ZP/PN/2/2), winners, contract dates and values all differ, and both notices are BT-757=01 first versions, not modifications. No procedure total or estimate is stated except the lot 2 estimate of 379,923.18. Today's figure is lot 1 alone, while S = PLN 1,072,422.02 sums two real, distinct awards."
+     },
+     "c": null
+    },
+    {
+     "id": 307725,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 307725,
+      "verdict": "right",
+      "class": "ok",
+      "why": "In CAN 28044262 (eForms subtype 29) BT-1118-NoticeResult is EUR 8,892,084.70, which equals S exactly. The parts: LOT-0001 BT-660 re-estimate 2,902,095.90 (Selecta, CON-0001 P1_Selecta) and LOT-0002 BT-660 5,989,988.80 (OKE Koffie, CON-0002 P2_OKE). That is two distinct lots with two distinct winners. BT-118 is 9,940,000 (maxima 3.49m + 6.45m), so S follows the notice's own re-estimated total. Today the API serves null."
+     },
+     "b": {
+      "id": 307725,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Result notice 28044262 (eForms CAN, subtype 29) states BT-1118-NoticeResult = EUR 8,892,084.70, which equals S exactly: BT-660 re-estimates of 2,902,095.90 (LOT-0001, Selecta) plus 5,989,988.80 (LOT-0002, OKE Koffie). Each lot has its own maximum (BT-709: 3,490,000 and 6,450,000), and these add up to the stated BT-118 of 9,940,000, so no ceiling is shared across lots. Both lots are fa-wo-rc frameworks with one winner each and separate contracts (P1_Selecta, P2_OKE). Today the API serves null, so S fills the gap with the notice's own stated total."
+     },
+     "c": null
+    },
+    {
+     "id": 1042997,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 1042997,
+      "verdict": "right",
+      "class": "ok",
+      "why": "In CAN 31275820 (subtype 30) BT-1118-NoticeResult and BT-118-NoticeResult are both EUR 523,926.06, which equals S exactly. The parts: LOT-0001 BT-660/709/710 334,174.58 (Krinkels, contract 'Lot1 Krinkels'), LOT-0002 140,922.78 and LOT-0003 48,828.70 (both Bois et Travaux, separate contracts Lot2 and Lot3). These are three distinct regional lots (Brussels, HSL 1, HSL 2), each with its own framework award. Today the API serves null."
+     },
+     "b": {
+      "id": 1042997,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Result notice 31275820 (subtype 30) states BT-118-NoticeResult = BT-1118-NoticeResult = EUR 523,926.06, which equals S exactly: LOT-0001 Krinkels 334,174.58 + LOT-0002 Bois et Travaux 140,922.78 + LOT-0003 Bois et Travaux 48,828.70. Each lot is its own single-operator fa-wo-rc framework with a separate contract (5752125024 Lot1/Lot2/Lot3) and its own BT-709 maximum, and each lot's BT-709 equals its BT-660. No ceiling is shared. Lots 2 and 3 go to the same supplier, but they cover different lines with different values and contracts, so they are not counted twice. Today the API serves null."
+     },
+     "c": null
+    },
+    {
+     "id": 6321416,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6321416,
+      "verdict": "right",
+      "class": "ok",
+      "why": "CAN 20353180 (TED F03) has three separate LotResults: RES-1/lot 1 VAL_TOTAL EUR 135,055.86 (Alpes Frais Production), RES-2/lot 2 EUR 5,468.96 (Alpes Frais Production), RES-3/lot 3 EUR 31,015.37 (ID Services). These are three different lots, each its own order-based framework (accord-cadre \u00e0 bons de commande), and each award sits inside that lot's own min/max (70k-300k, 2k-10k, 25k-110k). The only procedure-level figure is VALUE_RANGE.TYPE=PROCUREMENT_TOTAL with LOW 5,468.96 and HIGH 135,055.86. Those are just the smallest and largest lot awards (lot 2 and lot 1), so they give a range and no total. S = 171,540.19 is the real sum of the three lots. Today's EUR 135,055.86 leaves out lots 2 and 3."
+     },
+     "b": {
+      "id": 6321416,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Award notice 20353180 (TED F03) gives three separate lot results under contract ref 18-1140: lot 1 conventional savoury pastries EUR 135,055.86 (Alpes Frais), lot 2 organic EUR 5,468.96 (Alpes Frais) and lot 3 sweet pastries EUR 31,015.37 (ID Services). Each lot had one tender. CN 20070814 sets up a separate single-operator accord-cadre per lot (SINGLE_OPERATOR=1, 48 months) and states no estimate. I found no repeated lot and no shared ceiling. The one place S could look wrong: the F03 'total' field (VALUE_RANGE PROCUREMENT_TOTAL) holds LOW 5,468.96 and HIGH 135,055.86, and today's figure equals HIGH. But those are exactly the smallest and largest lot awards, so the buyer filled a lowest-offer/highest-offer range with lot figures. It is not a stated total, and a procedure cannot be worth less than its three awarded lots. So S = 171,540.19 is the real sum of three distinct awards."
+     },
+     "c": null
+    },
+    {
+     "id": 6759797,
+     "final": "wrong",
+     "cls": "not_additive",
+     "a": {
+      "id": 6759797,
+      "verdict": "wrong",
+      "class": "not_additive",
+      "why": "CAN 21299522 gives lot 1 VAL_TOTAL CHF 849,767 (EvoBus) and lot 2 CHF 711,683 (Solaris). No procedure total is stated. Contract notice 20965716 defines lot 1 as one vehicle type, 'Depotlader-Gelenkbus mit Elektroantrieb, 18 m, 4-t\u00fcrig', and lot 2 as another, 'Depotlader-Normalbus ... 12 m, 3-t\u00fcrig'. The contract is a 'Rahmen-Werkliefervertrag' (2020-10 to 2022-12, renewable by 2 years) for a buying group of four operators (VBL, ZVB, AAGS, STI). The two awards match the price of ONE 18 m e-articulated bus and ONE 12 m e-bus, so they look like per-vehicle unit prices. S (CHF 1,561,450) would then be the price of one bus of each kind, which is not a procedure total. This is inferred, since no quantity is published. Today's 849,767 is also a unit rate, so neither figure is right."
+     },
+     "b": {
+      "id": 6759797,
+      "verdict": "wrong",
+      "class": "not_additive",
+      "why": "The lot figures in notice 21299522 (F06, VAL_TOTAL CHF 849,767 for lot 1 EvoBus and CHF 711,683 for lot 2 Solaris) look like per-vehicle prices, not contract totals. CN 20965716 describes each lot as one vehicle type: lot 1 'Depotlader-Gelenkbus mit Elektroantrieb, 18 m, 4-t\u00fcrig', lot 2 'Depotlader-Normalbus ... 12 m, 3-t\u00fcrig'. The contract is a 'Rahmen-Werkliefervertrag' running 2020-10-01 to 2022-12-30 with a 2-year extension, for a joint buying group of four operators (VBL, ZVB, AAGS, STI). No quantity and no total is stated. CHF 850k and 712k are about the market price of one 18 m and one 12 m battery bus. So S = CHF 1,561,450 is the price of one articulated bus plus one standard bus, which is not the procedure value. Today's max (849,767) is also a unit price, but adding two unit rates for different vehicle types is not a meaningful total. This is inferred from the lot specs and price levels, since the notice states no quantity."
+     },
+     "c": null
+    }
+   ]
+  },
+  {
+   "group": "band-1",
+   "items": [
+    {
+     "id": 683951,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 683951,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Single CAN 24772240 (GCS GRAPS Grand Est pharmaceutical supply, 149 eForms lots). Each lot is a separate supplier grouping (BT-22-Lot names the supplier, e.g. LOT-0100 MSD, LOT-0119 Roche), with 143 distinct winners. Each lot has exactly one BT-660-LotResult framework re-estimate: no repeated lot, no duplicate values, no lot from another notice. The 149 lots sum to EUR 807,552,606.00, which equals the notice's own BT-1118-NoticeResult of EUR 807,552,606.0 to the cent. The largest lot is LOT-0100 at EUR 130.5 m and the smallest is EUR 40, with no x10^k outlier. The live GET (version 1) serves value=null, so S is the buyer's stated total where today shows nothing."
+     },
+     "b": {
+      "id": 683951,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Only CAN 24772240 (one version). It has 149 eForms lots (LOT-0001..0150; LOT-0066 is absent), and each is one supplier's single-operator framework (BT-765=fa-wo-rc for all 149), with 149 distinct LotResults, LotTenders and SettledContracts. No lot is keyed twice and there is no second notice. Sum of BT-660 = sum of BT-720 = 807,552,606.00 EUR, which equals BT-1118-NoticeResult 807,552,606.00 exactly. Adversarial checks: each eForms lot groups one supplier's original lot numbers. Eight original numbers out of about 1,319 appear under two suppliers (for example lot 1128 under Janssen LOT-0079 and Merz LOT-0097; lot 69 under Essential Pharma LOT-0056 and Viatris LOT-0143). These are typos in the buyer's lot lists, not a second money row: each supplier's value is its own BT-720 bid. The 40 EUR (ALLOGA LOT-0010) and 419 EUR (ORION LOT-0110) values are tiny and cannot move the sum. The largest values (MSD 130.5m, Roche 103.4m, BMS 82.0m) are plausible for a regional hospital pharmacy group over several years, so there is no x10^k slip. Today serves null, so S is the stated total."
+     },
+     "c": null
+    },
+    {
+     "id": 707424,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 707424,
+      "verdict": "right",
+      "class": "ok",
+      "why": "MAV-Magyar Kozut long-term vehicle lease: three framework agreements, one per lot (LOT-0001 passenger cars, LOT-0002 commercial vehicles, LOT-0003 special-body vehicles), all won by Mercarius. Latest per-lot awards (BT-720 bids): HUF 12,900,000,000, 21,887,000,000 and 12,899,558,000, summing to HUF 47,686,558,000. That equals BT-118-NoticeResult HUF 47,686,558,000 in both CAN 47360663 and corrigendum CAN 47394656. CAN 47360663 had inflated BT-709 figures (25.02 bn / 37.43 bn / 26.61 bn). 47394656 corrects them through BT-141 change notes to 12.9 bn / 21.887 bn / 12.8996 bn ('a BT-720 es a BT-118 cellak tartalmara tekintettel'), so S matches the corrected per-lot values. The two CANs repeat the same three lots, and S counts each once. Live value=null (version 3)."
+     },
+     "b": {
+      "id": 707424,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Three distinct lots (cars, commercial vehicles, special-body vehicles), each a single-winner framework won by Mercarius; LeasePlan's offers were declared invalid. Winning BT-720 bids: 12,900,000,000 + 21,887,000,000 + 12,899,558,000 = 47,686,558,000 HUF, which equals BT-118 in CAN 47360663 and in its cor-buy corrigendum 47394656. Trap checked: the first CAN's BT-709 values (25,017,028,691 / 37,434,909,775 / 26,605,991,876, totalling 89.06bn) were corrected by 47394656. Its BT-141 says 'helyett 25017028691 helyesen 12900000000' and so on, and its BT-762 says BT-709 was changed to match BT-720 and BT-118. S uses the corrected figures. The two CANs restate the same three lots, and S counts each lot once (n=3, not 6), so nothing is double-counted. Today serves null."
+     },
+     "c": null
+    },
+    {
+     "id": 726354,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 726354,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Vivantes textile full-supply framework with three geographically distinct lots: LOS 1 Hauptstadtpflege, LOS 2 Klinika Nord, LOS 3 Klinika Sud. All three went to Elis GmbH, with separate contracts 'VSG-VTX-2025-01 Los 1/2/3'. BT-709 equals BT-720 per lot: EUR 24,372,273.36 + 41,193,369.53 + 40,721,431.83 = EUR 106,287,074.72. BT-118-NoticeResult is EUR 106,287,074.73 in CAN 26858945 and in its TED twin 25463658, a 1-cent rounding gap. The twin CAN repeats the same lots, and S counts each lot once. Live value=null (version 6)."
+     },
+     "b": {
+      "id": 726354,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Three distinct lots (Hauptstadtpflege, Klinika Nord, Klinika Sued), each a single-supplier framework ('je Los mit einem Auftragnehmer') won by Elis GmbH. BT-709 = BT-720: 24,372,273.36 + 41,193,369.53 + 40,721,431.83 = 106,287,074.72 EUR, against BT-118 106,287,074.73 in 26858945 and in its TED twin 25463658. The 1-cent gap is rounding. Possible double counts checked: the CAN is published twice (national 26858945 and TED 25463658, same content), and S counts each lot once (n=3; a double count would give 212.6m). The CNs (24904823, 25121034, 26738571, 26750073) list a fourth lot ('LOS 4: Labor Berlin') in their text, but it was never awarded and is missing from both S and the stated total. No shared ceiling and no slip. Today serves null."
+     },
+     "c": null
+    },
+    {
+     "id": 1102571,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 1102571,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Ministere de la Justice 'DOMAINE PENAL' framework, CAN 25848303. LOT-0001 (Ecosysteme PPN) went to OPEN SAS with BT-709/BT-660/BT-720 of EUR 150,000,000. LOT-0002 (other penal-domain applications) went to Capgemini Technology Services at EUR 75,000,000. Each lot has its own ceiling and a different supplier, so the ceilings are not shared. The sum, EUR 225,000,000, equals both BT-1118-NoticeResult and BT-118-NoticeResult of EUR 225,000,000 in 25848303. Live value=null (version 1)."
+     },
+     "b": {
+      "id": 1102571,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Only CAN 25848303. Two distinct lots, each a single-operator framework (fa-wo-rc): LOT-0001 (PPN ecosystem) went to OPEN at 150,000,000 and LOT-0002 (other penal applications) to Capgemini at 75,000,000. In each lot BT-660 = BT-709 = BT-720. Sum 225,000,000 EUR = BT-118 = BT-1118 225,000,000. Each lot has its own ceiling (no ceiling shared across lots or suppliers), so the per-lot maxima add up to the procedure maximum the notice states. Possible slip checked: lot 1's BT-710 and BT-711 read 150,000.00 EUR, but BT-660, BT-709, BT-720, BT-118 and BT-1118 all agree on 150m, so the slip sits in the min/max-bid fields, not in S. Today serves null."
+     },
+     "c": null
+    },
+    {
+     "id": 1147190,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 1147190,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Belgian federal information-security procedure (S&L/DA/2023/043-2). LOT-0001 SECaaS went to Proximus at EUR 171,975,831: BT-709/BT-660/BT-720, first in CAN 24583800 and repeated in 25033715. LOT-0002 control & audit went to Sopra Steria at EUR 27,312,120 (CAN 25033715). S takes the latest award per lot and counts LOT-0001 once: 171,975,831 + 27,312,120 = EUR 199,287,951. That equals BT-1118-NoticeResult and BT-118-NoticeResult of EUR 199,287,951.0 in 25033715. The BT-711 high-tender figures (230.8 m / 39.1 m) are not used. Live value=null (version 2)."
+     },
+     "b": {
+      "id": 1147190,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Two distinct lots, each a single-operator framework: LOT-0001 SECaaS went to Proximus at 171,975,831 and LOT-0002 audit to Sopra Steria at 27,312,120 (BT-709 = BT-710 = BT-720; BT-711 shows the higher losing bids, 230.8m and 39.1m). Sum 199,287,951 EUR = BT-118 = BT-1118 in the latest CAN 25033715. Possible double count checked: lot 1 is awarded in both CAN 24583800 (where lot 2 was open-nw) and the restating CAN 25033715. S counts lot 1 once (n=2); counting it twice would give 371.3m. No closed lot is summed: lot 2's open-nw in 24583800 was superseded by its award in 25033715. Today serves null."
+     },
+     "c": null
+    }
+   ]
+  },
+  {
+   "group": "band-2",
+   "items": [
+    {
+     "id": 1148297,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 1148297,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 83,827,102,943.40 HUF, which exactly equals BT-118-NoticeResult 83,827,102,943.40 HUF in result notice 25724682. The notice covers 10 distinct lots, one per medicine (LOT-0001 guselkumab to LOT-0010 daratumumab). Each lot is its own single-supplier framework (BT-765 fa-wo-rc) with one tender, and every lot has its own RES/TEN/CON chain. The summed figures are the per-lot BT-720 tender values, which equal the per-lot contract values. No ceiling is shared across lots, and no lot is counted twice (10 latest lot awards, all from 25724682). Lot 5's BT-709 framework maximum (641,821,488) copies lot 6's, but S uses the BT-720 figure of 248,335,584, which is consistent with BT-118. Today's figure is null, so S is the stated total."
+     },
+     "b": {
+      "id": 1148297,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 83,827,102,943.40 HUF, which is exactly BT-118-NoticeResult on CAN 25724682. It is the sum of the ten BT-720 tender values, one tender per lot: LOT-0001..0010 are ten different drugs (guselkumab ... daratumumab), each a separate fa-wo-rc framework with its own winner. No lot key appears twice and there is no later notice. Possible trap checked: BT-709 framework max on LOT-0005 reads 641,821,488, a copy of LOT-0006's figure, while BT-720 is 248,335,584. S uses 248,335,584, which matches CON-0005 and BT-118. Summing BT-709 instead would give 84,220,588,847.40, which is wrong. Nothing is non-additive, slipped or closed. Today's API serves null, so S equalling the stated total is strictly better."
+     },
+     "c": null
+    },
+    {
+     "id": 5842187,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 5842187,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 101,031,420.60 EUR, which exactly equals TED VAL_TOTAL (VALUE.TYPE PROCUREMENT_TOTAL) in F06 award 19548423. The three lots are distinct: K06 north 34,968,713.37 (ETF/Eurovia/Mastellotto/Lafosse), K07 centre 36,422,195.50 (Colas Rail group) and K08 south 29,640,511.73 (TSO/Guintoli/NGE/Eiffage). Each has a different consortium and its own LotResult. The later F20 modifications 20788004 (K06, VAL_TOTAL_BEFORE 34,968,713.37) and 20788008 (K07, served with lot=null, 36,422,195.50) restate the same original values, and S does not count them again (n=3, and the sum matches exactly). Today serves 36,422,195.50, one lot."
+     },
+     "b": {
+      "id": 5842187,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 101,031,420.60 EUR, which is exactly TED VAL_TOTAL (VALUE.TYPE=PROCUREMENT_TOTAL) on F06 19548423. Lots: K06 34,968,713.37 + K07 36,422,195.50 + K08 29,640,511.73, three distinct sectors (Nord/Centre/Sud) with distinct consortia. Double-count check: the F20 modifications 20788004 (K06, VAL_TOTAL_BEFORE 34,968,713.37, AFTER 40,850,000) and 20788008 (k07, BEFORE 36,422,195.50, AFTER 41,945,000) restate the original awards. The 20788008 result has lot=null and is not in S. Hazard: 20788008 labels K07 as its LOT-1, which already overwrote the tender's LOT-1 title to 'K07'. Had its result been keyed to LOT-1, S would be 102.48m (K07 counted twice). It is not. Today serves 36.42m (one lot)."
+     },
+     "c": null
+    },
+    {
+     "id": 6017838,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6017838,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 93,658,000 GBP. The F21 award 19744792 states a procurement-total range of LOW 85,000,000 to HIGH 93,378,000 GBP, so S is 280,000 (0.3%) above HIGH. Today's 56,200,000 (lot 1b alone) is 37.2m below it. The summed lots are 6 distinct region/service lots: 1b Devon 56.2m, 1c Somerset 24.84m, 2b 6.48m, 2c 2.16m, 3b 3.314m and 3c 0.664m. Each equals its own VAL_OBJECT in contract notice 19457112, so no ceiling is repeated across lots. The discontinued Cornwall lots 1a, 2a and 3a (clos-nw, PROCUREMENT_DISCONTINUED) are correctly excluded. Each lot is a multi-supplier framework, but a lot's figure is that lot's total, not a per-supplier figure, so the sum across lots is additive."
+     },
+     "b": {
+      "id": 6017838,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 93,658,000 GBP, the sum of lots 1b 56.2m + 1c 24.84m + 2b 6.48m + 2c 2.16m + 3b 3.314m + 3c 0.664m. The stated procedure total on F21 19744792 is a range (VALUE_RANGE PROCUREMENT_TOTAL): LOW 85,000,000, HIGH 93,378,000. S is 280k (0.30%) above HIGH, which is a close approximation. Today's 56.2m (lot 1b alone) sits 34% below LOW. Closed lots 1a/2a/3a (Cornwall, PROCUREMENT_DISCONTINUED) are excluded, n=6. Framework check: 13-15 suppliers per lot, but each lot has one VAL_TOTAL equal to its own CN 19457112 VAL_OBJECT (distinct regions and placement types). The value is not repeated per supplier and no ceiling is shared across lots. Lot 1b's 56.2m looks like a procedure figure (the tender's estimated_value), but it is the lot's own CN VAL_OBJECT, and without it the lots could not reach LOW."
+     },
+     "c": null
+    },
+    {
+     "id": 6057925,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6057925,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 230,000,000 EUR, which exactly equals TED VAL_TOTAL (PROCUREMENT_TOTAL) 230,000,000 in F03 award 20297334. It also equals VAL_ESTIMATED_TOTAL in contract notice 19536156. The three lots are distinct Tuscan areas, each a single-operator framework with its own value: lot 1 nord ovest 85m, lot 2 centro 75m, lot 3 sud est 70m, matching VAL_OBJECT in 19536156. The same RTI (CNS/COOB/Sintesi) won all three, but the lot ceilings are separate, not shared. The F20 modification 22586741 for lot 3 (VAL_TOTAL 70m, before 70m, after 80,414,982.99) is not double-counted (n=3). Today serves 85m, lot 1 only."
+     },
+     "b": {
+      "id": 6057925,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 230,000,000 EUR, which equals TED VAL_TOTAL (PROCUREMENT_TOTAL) on F03 20297334 and VAL_ESTIMATED_TOTAL on CN 19536156. Lots: 1 nord ovest 85m + 2 centro 75m + 3 sud est 70m, each its own CIG (7257975E6E / 7257977019 / 72579780EC) and each equal to its CN VAL_OBJECT. These are single-RTI framework values per lot, not shared across lots. Double-count check: F20 22586741 (Lotto 3 COVID variant, VAL_TOTAL_BEFORE 70m, AFTER 80,414,982.99) restates lot 3 with lot=null and is not summed. Hazard: that F20 calls Lotto 3 its LOT-1, and this already overwrote the tender's LOT-1 title to 'area sud est'. Had its 70m been keyed to LOT-1, S would be 215m. It is not. Today serves 85m."
+     },
+     "c": null
+    },
+    {
+     "id": 6195903,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6195903,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 133,290,220 EUR, which exactly equals TED VAL_TOTAL (PROCUREMENT_TOTAL) in F23 concession award 20027347. The two lots are distinct: lot 1 Bautzen/Dresden 56,718,663 (DRF Stiftung Luftrettung) and lot 2 Leipzig/Zwickau 76,571,557 (ADAC Luftrettung), with different winners and stations. The F20 modification 21474058 (lot=null, VAL_TOTAL 56,718,633, a 663-to-633 typo of lot 1, before and after both 56,718,663) is not added again. Today serves 56,718,633, lot 1 only."
+     },
+     "b": {
+      "id": 6195903,
+      "verdict": "right",
+      "class": "ok",
+      "why": "S = 133,290,220 EUR, which is exactly TED VAL_TOTAL (PROCUREMENT_TOTAL) on F23 concession award 20027347. Lot 1 (Bautzen/Dresden, DRF) 56,718,663 + Lot 2 (Leipzig/Zwickau, ADAC) 76,571,557: distinct stations and distinct winners. Double-count check: F20 21474058 (lot 1, temporary extra helicopter, BEFORE = AFTER 56,718,663) has a lot=null result of 56,718,633, a typo of 663. It is not summed, and S uses the 663 award. There is no framework, slip or closed lot. Today serves 56,718,633 (the F20's typo figure, one lot only)."
+     },
+     "c": null
+    }
+   ]
+  },
+  {
+   "group": "band-3",
+   "items": [
+    {
+     "id": 5278856,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 5278856,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Award notices 19045609 (2016/S 251-463060) and 19045642 (2016/S 251-463093) are duplicate publications of one award. Both state procedure VAL_TOTAL 548,000,000 EUR, with LOT_NO 1 (RE 8) at 308 M and LOT_NO 2 (RB 33) at 240 M. S takes each lot once (308+240 = 548 M), so the duplicate is not counted twice and S equals the stated total. Today the API serves null. Caveat: this tender also folds in a separate RB 27 procedure (2016/S 077-137548), because both procedures cite PIN 2014/S 166-295721. That procedure's award, 19389135, puts a 1.00 EUR placeholder on LOT-1, and its INFO_ADD says the real contract value is not disclosed. S correctly leaves that out, but the grouping problem sits upstream and S cannot fix it."
+     },
+     "b": {
+      "id": 5278856,
+      "verdict": "right",
+      "class": "ok",
+      "why": "LOT-1 (RE 8) EUR 308 m plus LOT-2 (RB 33) EUR 240 m, both to DB Regio, gives EUR 548 m, which equals VAL_TOTAL in award notice 19045609. Two traps exist, and the rule avoids both. (1) The same award is published twice, as 19045609 (2016/S 251-463060, refs open CN 175985) and 19045642 (-463093, refs negotiated CN 137331), with identical lot values and total. S takes one award per lot (n=2), not 1,096 m. (2) The tender also absorbed the separate RB 27 award 19389135 (2017/S 154-320030, from CN 2016/S 077-137548, no lot number) as 'LOT-1' at EUR 1; its text says the real value is withheld. S does not let this EUR 1 placeholder displace RE 8. Caveat: the head is titled 'RB 27' and the 2014 PIN 18002514 covers RE8+RB27+RB33, so S is a lower bound that leaves out RB 27's undisclosed value. Even so, S equals the stated total and beats today's null."
+     },
+     "c": null
+    },
+    {
+     "id": 6370901,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 6370901,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Award notice 20317379 (F06, 2019/S 050-116103) states procedure TED-VAL_TOTAL 113,611,196,000 HUF (VALUE.TYPE PROCUREMENT_TOTAL). Its two LotResults are LOT_NO 1 (RES-1) at 99,572,650,000 HUF and LOT_NO 2 (RES-2) at 14,038,546,000 HUF. They are distinct lots (tanker-truck delivery vs public fuel stations), each a separate MOL contract, and their sum equals the stated total exactly. Later notice 21485159 (F20 modification, T\u00fcke Busz extension) only restates LOT-1 at 99,572,650,000, so neither lot is counted twice. Today the API serves 99,572,650,000 HUF (LOT-1 alone), so S is the stated procedure total."
+     },
+     "b": {
+      "id": 6370901,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Two distinct lots of the Vol\u00e1n fuel framework, both won by MOL: LOT-1 (tanker delivery) is HUF 99,572,650,000 and LOT-2 (public filling stations) is HUF 14,038,546,000, both from award notice 20317379. Their sum, HUF 113,611,196,000, equals that notice's own procedure-level TED-VAL_TOTAL (VALUE.TYPE PROCUREMENT_TOTAL) exactly. The 2021 modification 21485159 restates LOT-1 at the same figure (VAL_TOTAL_BEFORE = AFTER = HUF 99,572,650,000; it only extends T\u00fcke Busz's term). It is keyed to the same lot, so it replaces rather than adds: no double count. Each lot has its own ceiling and fuel volumes (124 M l vs 17 M l of diesel a year), so the figures are additive, and the size fits two years of fuel, so no 10^k slip. Today's figure is LOT-1 alone (99.57 bn); S is the stated total."
+     },
+     "c": null
+    },
+    {
+     "id": 7001924,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 7001924,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Contract notice 21525333 (F02, 2021/S 027-066965) states VAL_ESTIMATED_TOTAL 424,000,000 EUR, with lot estimates (VAL_OBJECT) of LOT-1 220 M, LOT-2 24 M and LOT-3 180 M. Each lot got its own award notice: 22192250 (LOT_NO 2, 24 M, veloce 21), 22353396 (LOT_NO 1, 220 M, vigma-amplitudes) and 22660681 (LOT_NO 3, 180 M, American Express GBT). Each notice's procedure VAL_TOTAL equals that one lot's award. These are single-operator frameworks per lot (SINGLE_OPERATOR=1), with a distinct winner and scope for each lot. So the three ceilings are additive, and 220+24+180 = 424 M equals the stated total. Today the API serves 180 M (LOT-3 only)."
+     },
+     "b": {
+      "id": 7001924,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Three lots, three winners, three separate award notices: LOT-2 EUR 24 m to Veloce 21 (22192250), LOT-1 EUR 220 m to Vigma-Amplitudes (22353396) and LOT-3 EUR 180 m to Amex GBT (22660681). Each notice's VAL_TOTAL equals that lot's own estimated value (the notice text says the 'valeur estimative' is that lot's business volume, 'sans montant minimum ni maximum'). It is never the procedure figure: the lot estimates in contract notice 21525333 are 220 m, 24 m and 180 m. Their sum, EUR 424 m, equals 21525333's VAL_ESTIMATED_TOTAL of 42,400,000,000 cents exactly. No shared ceiling, no re-issue, no closed lot. Today's figure (EUR 180 m, LOT-3) is 42% of the stated total; S matches it."
+     },
+     "c": null
+    },
+    {
+     "id": 7011414,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 7011414,
+      "verdict": "right",
+      "class": "ok",
+      "why": "VEAT notice 21543078 (F15, 2021/S 035-088710) states procedure VAL_TOTAL 1,144,774,260 PLN, with LotResult LOT_NO 1 (domestic rail) at 825,843,060 PLN and LOT_NO 2 (international rail) at 318,931,200 PLN. Both lots are single-supplier PKP Cargo frameworks covering distinct scopes, and their sum equals the stated total exactly. The later defence award notice 21595598 gives VALUE 0.0 PLN but repeats the same two initial estimates per contract (825,843,060 PLN and 318,931,200, tagged EUR, which looks like a currency typo). Neither lot is counted twice. Today the API serves 825,843,060 PLN (LOT-1 only), so S is the stated total."
+     },
+     "b": {
+      "id": 7011414,
+      "verdict": "right",
+      "class": "ok",
+      "why": "VEAT notice 21543078 gives LOT-1 (domestic military rail transport) PLN 825,843,060 and LOT-2 (international) PLN 318,931,200, both to PKP Cargo. The notice-level VAL_TOTAL is PLN 1,144,774,260, exactly S. The later defence award notice 21595598 carries RES-1/RES-2 with no lot and 0 values, and its own INITIAL_ESTIMATED figures restate 825.84 m and 318.93 m. Its LOT-2 figure is mislabelled EUR, but the VEAT's PLN total proves PLN, so no currency mix. Those 0 placeholders are correctly not elected. Two separate framework agreements with distinct values, so not a shared ceiling. Today's figure is LOT-1 alone (PLN 825.8 m); S equals the stated total."
+     },
+     "c": null
+    },
+    {
+     "id": 8426318,
+     "final": "right",
+     "cls": "ok",
+     "a": {
+      "id": 8426318,
+      "verdict": "right",
+      "class": "ok",
+      "why": "Award notice 20083570 (F03, CCS RM6060 Vehicle Purchase) states the procedure value range as LOW = HIGH = 3,000,000,000 GBP (PROCUREMENT_TOTAL). There are seven LotResults, one figure per distinct lot (cars 2,000 M, LCV 452 M, HGV 125 M, motorcycles 4 M, buses 19 M, blue-light 250 M, blue-light LCV 150 M). They sum to exactly 3,000 M. These are multi-supplier framework ceilings, but each is booked once per lot, not once per supplier, and the stated procedure total is their sum. So they are additive across lots. Today the API serves 2,000,000,000 GBP (LOT-1 only)."
+     },
+     "b": {
+      "id": 8426318,
+      "verdict": "right",
+      "class": "ok",
+      "why": "This is the CCS RM6060 Vehicle Purchase award notice 20083570. It has seven LotResults, one per lot (the winner is the placeholder 'List of successfully awarded suppliers...', not one row per supplier). The values are GBP 2,000 m, 452 m, 125 m, 4 m, 19 m, 250 m and 150 m, which sum to GBP 3,000 m. That equals the notice's PROCUREMENT_TOTAL range, TED-LOW = TED-HIGH = GBP 3,000,000,000, exactly. Each lot's framework estimate appears once and is distinct (not one ceiling booked on every lot or per supplier), so the sum is additive. Today's figure is LOT-1's GBP 2 bn; S is the stated total."
+     },
+     "c": null
+    }
+   ]
+  }
+ ]
+}

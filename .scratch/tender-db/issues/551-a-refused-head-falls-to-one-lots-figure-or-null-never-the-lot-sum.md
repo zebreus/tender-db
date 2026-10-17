@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE 2026-10-17 (wf_66e388ca-ef6): rule_v2.py (sha256 39be6d1e…05ce) reproduces the judge's v2 on all 279 labels; salted walk (salt 0x551B4) drew the fresh 30 from 54 walked v1 fires (24 refused), projected v2 fires ≈ 8,529 (95 % 6,356–10,605); fidelity check 10/10 identical. NEXT: M2 — read the 30 and re-read the band's 15 under the amended protocol (skeptic on every head, two agreeing reads); bar ≤ 1 wrong of 30, 0 wrong of any class in the band. 567's fix (lot keys of legacy TED awards) will change some v2 facts: B3's parity re-runs after its refold.
+Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; **M2 FAILED 2026-10-17** (wf_88da8542-c46: fresh 30 → 27 right, 3 wrong; band 15/15 right; bar ≤ 1 wrong). NEXT: the pre-committed fallback "vouched everywhere" (v2 + R10 at every size), once, from the same salted walk — pre-draw record `551-lot-sum/unit4b/M2-fallback-walk.md` (16:10Z); 25 new vouched ships to read. FAIL → unit X.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -922,3 +922,24 @@ unchanged, v2 ⊆ v1), `M1-port-check.md/.json`, `walk.py`, `walk.jsonl`, `M1-wa
   or not); unkeyed modification awards (6094289) must be keyed the same way in B1. (4) 567's fix changes legacy TED award
   lot keys: B3's parity check re-runs the port after 567's refold.
 
+
+## Unit 4b M2 — FAILED (2026-10-17, workflow wf_88da8542-c46)
+
+Result file: `.scratch/tender-db/551-lot-sum/unit4b/M2-result.json` (per head: reader A, skeptic B, tiebreak C).
+
+- **Fresh 30 (M1's walk):** 27 right, **3 wrong** (bar ≤ 1). Path W v2 fails.
+  - **1091419** (other): three contract-modification notices only (subtype 38) for procedure 2022/4741, whose 9-lot
+    award sits on twin tender 7405521. S = EUR 499,497.55 covers 3 of 9 lots (procedure award EUR 1,044,065.41) and mixes
+    pre-modification values (lots 1, 2) with a post-modification one (lot 8). 2 wrong + 1 neutral; the tiebreak read
+    wrong.
+  - **6942121** (not_additive / farther): a Swedish ramavtal with three parallel suppliers per lot; S sums the
+    "latest" supplier's offer per lot (SEK 951,900) while the notice's PROCUREMENT_TOTAL range is SEK 427,260–538,200.
+    The served SEK 492,000 sits inside it.
+  - **6759797** (not_additive): a Rahmen-Werkliefervertrag for e-buses; each lot's figure is one vehicle's price
+    (CHF 849,767 / 711,683), no quantity or total stated, so S adds two unit rates.
+  - None of the three carried a vouching stated total: R10 at every size refuses all three.
+- **Band (15 heads, re-read adversarially):** 15 right, 0 wrong of any class. The band half of the bar holds.
+- **Per the decision:** the fallback "vouched everywhere" is tested once from the same walk (pre-draw record
+  `unit4b/M2-fallback-walk.md`, written before any new id was read). The 5 vouched ships among M1's 30 (7399356,
+  6094289, 6527544, 307725, 1042997) were all read right and are reused; 25 new vouched ships are read. Projected
+  fallback fires on M1's draw: 15,352 × 5/54 ≈ 1,420 (the decision expected about 2,450).
