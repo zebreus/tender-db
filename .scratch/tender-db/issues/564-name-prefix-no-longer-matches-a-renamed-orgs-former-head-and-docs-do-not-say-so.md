@@ -1,8 +1,8 @@
 # 564 — `name_prefix` no longer matches a renamed organization's former head, and `/docs` does not say so
 
-Status: done (pending deploy) — 2026-10-17: the sentence is on all three surfaces (the `/docs` `name_prefix` row, the
-`/docs` lookups section, the OpenAPI `name_prefix` parameter), pinned by
-`the_docs_say_name_prefix_no_longer_matches_a_former_spelling`. It ships with the next code deploy; then run Verify.
+Status: done — 2026-10-17: deployed 3cd94c0 (gate green 1437 s at 126af59). Verify read live: the `/docs` `name_prefix` row and the
+lookups section both say "its former spelling no longer matches it"; the OpenAPI parameter says the same. Pinned by
+`the_docs_say_name_prefix_no_longer_matches_a_former_spelling`.
 Kind: docs (served API reference)
 Relates to:
 - 524 (the head refresh renamed 16,002 identifier-bearing heads in place on 2026-10-16: jobs 2565, 2567, 2568).
