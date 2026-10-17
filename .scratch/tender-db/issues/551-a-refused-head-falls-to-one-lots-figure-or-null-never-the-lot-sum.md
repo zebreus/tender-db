@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V (`lot-sum-vouched`) LIVE since 4e5eaf7 (16 heads, every pin right); path W (`lot-sum-awards`) WITHDRAWN after the post-drain read failed: unit 4a deployed 900efeb and the refold back DONE (refold-lot-sum 2584/2585 + project 2586: 179,074 verified + 15,337 corrected; the 6 path-W pins, the 9 must-stay heads and all 50 sampled path-W heads serve no derivation; the value band holds 0 `lot-sum-awards` rows). NEXT: unit 4b, a path-W redesign from the 279 labels (design workflow wf_efa005fa-6a8 running); re-enable only at ≤ 1 wrong in a fresh uniform 30 and 0 farther/double-count in the ≥ EUR 100 m band.
+Status: ready-for-agent — path V LIVE (16 heads); path W WITHDRAWN and refolded back (unit 4a done). Unit 4b DECIDED 2026-10-17 (wf_efa005fa-6a8; adversarial check found it unsound as written, amendments ADOPTED): path W v2 = v1's guards + refusals R1–R10 (R10: a stated total vouches every sum ≥ EUR 10 m per amendment (a)), measured BEFORE any Rust by a salted shadow walk; bar: ≤ 1 wrong in a fresh uniform 30 (skeptic on every head, two agreeing reads) and 0 wrong of ANY class among band heads. NEXT: M1 (rule_v2.py port + walk). Fallback fixed: 'vouched everywhere'; if both fail, path W closes for good (unit X).
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -653,4 +653,243 @@ relabelled). Verify read: the 16 path-V pins unchanged (`lot-sum-vouched`, rule 
 back to their max election with no derivation (6450467/69/73 EUR 1,660,661,682.94, 8426318 GBP 2,000,000,000.00, 585917
 null, 5995030 PLN 2,721.60); the 9 must-stay heads unchanged; all 50 salted-uniform path-W heads of the failed read serve
 no derivation; a bounded seek of the value band (≥ EUR 100 m) finds 0 `lot-sum-awards` rows.
+
+## Unit 4b — decided (2026-10-17, workflow wf_efa005fa-6a8)
+
+Failure-shape pass, per-tender features for all 279 labelled heads (174 cached + 105 fetched; the rebuilt sum equals the
+served `lot-sum-awards` value on all 279), an offline scorer over candidate guard sets, a judge, and an adversarial check
+(sound: False; its amendments are ADOPTED and override the judge where they differ). Evidence:
+`.scratch/tender-db/551-lot-sum/unit4b/` (`shapes.md`, `result.json`, `evidence.tar.gz` with the scorer, extractors
+and feature tables; `SHA256SUMS`). Every count below is IN-SAMPLE (thresholds were chosen on these 279).
+
+Shapes (from `shapes.md`): S1a ceiling copied per supplier (26), S1b parallel competing offers summed (10), S2 one
+multi-lot contract counted per lot (7), S3a–d TED ordinal `LOT-k` re-key / restated frameworks / merged call-offs /
+ITEM collisions (≈25), S4 eForms modification re-keyed (5), S5 procedure total booked as one lot's award (13), S6 nested
+lots (2), S7 pseudo-lots (2), S8 ×10ᵏ slip (10), S9 closed lot summed (2), S10 unit rates summed (3), S11 latest-by-id
+picks an older notice. The single largest fix would be storing a notice's stated total (II.1.7 / BT-161 / BT-27-Procedure
+/ BT-118) as a procedure figure instead of collapsing it into an award copy.
+
+Candidate scoring (uniform 50 / band 229, wrong among what ships): none 9/50, 96/229; best simple union A+B+C+D+E ships
+9/50 (0 wrong) and 28/229 (9 wrong); W13 ships 32/50 (0 wrong) but still ships a double count and a slip in the band.
+
+### The decision (judge)
+
+REDESIGN path W as "v2", but measure it before any Rust is built. The Rust switch LOT_SUM_AWARDS_PATH stays false until a fresh sample passes the bar.
+
+v2 is today's T', K and G0–G8b plus ten refusal families, R1–R10. One of them, R10, requires a total the buyer stated whenever the sum is EUR 100 m or more.
+
+How it is tested: a salted shadow walk over the failed drain's 15,352 path-W corrections, scored with the Python port of v2, gives the fresh uniform 30. The band heads v2 still ships (15 in-sample) are re-read in full. Only on a pass do the build units B1–B5 run.
+
+A fallback is fixed in advance. "Vouched everywhere" is v2 with R10 applied at every size. It is tested once, from the same walk, only if v2 fails. If it fails too, path W stays withdrawn for good and 551 closes on path V.
+
+Neither the shapes pass's W13 nor W12 is adopted as scored. On these same labels W13 ships 27915 (a double count) and 51385 (two x1000 slips; its reader calls the sum farther) in the EUR 100 m band. The band set is fixed, so a fresh band read would see both again and fail. W12 still ships 51385.
+
+### The rule (judge, before amendments)
+
+PATH W v2 (`lot-sum-awards`). It runs only where path V does not fire, as today.
+
+KEPT UNCHANGED (canonical.rs awards_lot_sum, store already has the inputs): T', K, G0, G5, G5', G6, G7, G8, G8b, G1', G2, G3, G4.
+
+NEW REFUSALS. Any one of them keeps today's head. "Summed award" means a lot's latest award by notice id, as LotSums builds it today.
+
+R1, a lot won by two or more separate tenders (Bm_g).
+- Refuse when a summed lot's result names 2 or more winners and they are not all tenderers of ONE LotTender for that lot in the same round.
+- A consortium on one LotTender counts as one tender.
+- A TED award block with AWARDED_TO_GROUP also counts as one tender, even with no LotTender rows.
+- No LotTender rows for the lot, 2 or more winners and no group flag: refuse.
+- Fields: LotResultState.winners and Round.bids (lot_key, parties with role tenderer) are already there. ADD LotResultState.group from TED-AWARDED_TO_GROUP inside the award block. r209 already parses it as a Rule::Marker, so no re-parse is needed.
+
+R2, published lot numbers (C_plus). Read each summed award's published lot number as a set of tokens: leading zeros dropped, ranges up to 50 expanded, lists split. Refuse when:
+- (a) two summed keys share a token;
+- (b) one award's lot number is a list of 2 or more;
+- (c) one key's award rounds name different lot numbers;
+- (d) the summed awards come from 2 or more notices and any of them has no lot number.
+- Fields to ADD: LotResultState.published_lot_no and LotState.published_lot_no.
+  - TED: the LOT_NO / LOT_NUMBER / ITEM value. project.rs's legacy results reader already reads it to resolve lot_key, and then drops it.
+  - eForms: BT-13713 as published.
+  - FTS: the OCDS lot id.
+- Today the stored key is TED's ordinal LOT-k. R2 closes G8b's ordinal blind spot (the S3a–d shapes).
+
+R3, a notice's total below the lots it awards (D_keys).
+- Take each round notice that awards a summed key and has an award-type total in S's currency: BT-161-NoticeResult, TED VAL_TOTAL at notice or procedure scope, BT-118-NoticeResult or BT-1118-NoticeResult. A single-lot notice's total equal to its own award does not count.
+- Refuse when the summed awards of the keys that notice awards exceed 1.01 × its largest such total.
+- With no such total anywhere: refuse when S > 10 × the largest estimate in the chain (BT-27 at Lot or Procedure, VAL_ESTIMATED_TOTAL, framework maximum).
+- Fields to ADD: TenderVersion.stated_totals, a list of {notice_id, field, cents, currency, lots the notice awards}, cumulative over the chain like rounds (or read from ScalePartners' chain-wide figures).
+  - BT-118 and BT-1118 are parsed but unmapped. They are READ here only, never written as an amount row and never elected (506 stands).
+  - Estimates are already there.
+
+R4 (E): a summed award at least 10 × its own lot's largest BT-27-Lot.
+- Already there for eForms and FTS lots.
+- TED lot estimates are stored with no lot, so R4 never fires on TED. That gap is recorded, not fixed.
+
+R5: the 15 shape checks from the shapes pass. All inputs are already there: rounds, LotState amount facts including the partner-only BT-709 / BT-660 rows (read, never summed), and bids.
+1. The summed result's decision starts with "clos", or it has no winner.
+2. A later result on the same lot is closed, or has neither a winner nor a value.
+3. An award is within 0.5 % of the sum of all lot estimates (at least 2 lots carry one).
+4. An award is within 0.5 % of the sum of every lot's figure in one other round, or in one kind (BT-27-Lot, BT-709, BT-660, BT-271-Lot), over at least 2 lots.
+5. An award is above 1.01 × the sum of its own valued bids in that round.
+6. An award is at least 1.9 × its lot's BT-709.
+7. S is above 1.5 × the sum of BT-709 over the summed lots that carry one.
+8. An award is at least 1.5 × its lot's smallest estimate.
+9. An award is at least 3 × its lot's estimate.
+10. S is above 3 × the sum of the estimates of the summed lots that carry one.
+11. Two or more equal valued bids equal the lot's BT-709, BT-660, BT-27 or BT-271 (within 0.1 %).
+12. An award equals n_winners × one of the lot's BT-709, BT-660, BT-27 or BT-271 (within 0.1 %), with n_winners at least 2.
+13. S is below 1,000.00 in its own currency.
+14. A procedure estimate equals every lot's estimate (within 0.1 %).
+15. All lot estimates are equal (at least 2 lots carry one).
+
+R6 (C_title): two summed keys, awarded in different notices, have the same non-empty winner set and the same normalised lot title. Already there (lot "title" facts).
+
+R7 (P10): a summed award is at least 10 × or at most 1/10 of an earlier valued award on the same key, in the same currency. Already there (rounds).
+
+R8 (DOM10): the largest summed award is at least 10 × the second largest. Already there.
+
+R9 (new; it refuses 27915 and 8597433 and 0 rights): the summed result's round publishes LotTenders, but none for the summed lot. This is the shape where an award is resolved through another lot's contract or tender. Already there (Round.bids lot_key).
+
+R10, the band vouch (new):
+- When S_eur is EUR 100,000,000.00 or more, refuse unless some stated total T vouches for S:
+  - T is in S's currency and comes from any notice in the chain;
+  - |T − S| ≤ 1 % of S;
+  - T equals no single summed award, and is not a single-lot notice's own award.
+- Kinds accepted: BT-161, TED VAL_TOTAL, BT-118, BT-1118, BT-27-Procedure, TED VAL_ESTIMATED_TOTAL, TED VAL_RANGE_TOTAL LOW/HIGH. Modification VAL_TOTAL_BEFORE/AFTER do not count.
+- Fields: the same stated_totals as R3 (ADD).
+- The detail JSON gains `vouched_by {field, notice_id, cents}` whenever a vouching total exists, at any size.
+
+NOT adopted:
+- A, the framework/DPS flag: 33 more lost fixes, including 8426318 and 585917, to catch one band wrong that R9 already catches.
+- B, "one contractor holds 2 or more lots": it hits 101 rights.
+- Z / Z_nototal, "sum only where no total is stated": the evidence runs the other way (see the rationale).
+
+PARSE: nothing new. Every fact above is already in the parse layer. The change is in the projection only (ingest project.rs feeding store's canonical types), kept in memory, with no new columns and no schema change.
+
+### Expected
+
+ON THE 279 LABELS (in-sample; every check was chosen on them)
+- Wrongs refused: 105 of 105. Neutrals refused: 13 of 14. Rights kept: 46 of 160 (114 lost fixes, 106 of them in the band).
+- Uniform 50: ships 32, all right, 0 wrong (exact 95 %: 0–10.9 %).
+- EUR 100 m band: ships 15 of 229 with 0 wrong of any class. They are 14 rights (683951, 707424, 726354, 1102571, 1147190, 1148297, 5842187, 6017838, 6057925, 6195903, 6370901, 7001924, 7011414, 8426318) and the neutral 5278856. That is down from 96 wrong under v1.
+
+FIRE COUNT
+- v2: about 9,800 heads, i.e. 15,352 × 32/50; 95 % 7,550–11,830. Because the count is in-sample, plan for 6,000–10,000.
+- Of those, about 15 sit in the EUR 100 m band; the rest are below it. The uniform 50 held no head at or above EUR 100 m.
+- Each fire fixes an understatement of 1.5x to 569x.
+- Fallback "vouched everywhere": about 2,450 heads (8/50; 95 % 1,100–4,470), the same 15 in the band.
+- Path V is unchanged: about 16 heads.
+
+PINS UNDER v2
+- Served:
+  - 585917: EUR 250,000.00 (vouched by BT-118);
+  - 5995030: PLN 1,549,511.60 (v2's VAL_TOTAL PLN 1,546,390, 0.2 % off);
+  - 8426318: GBP 3,000,000,000.00 (vouched by TED VAL_RANGE HIGH);
+  - holdout 467176 CHF 3,161,818.00 and 294968 CHF 4,440,992.42.
+- Now refused:
+  - the Lyon-Turin trio 6450467/69/73 (in the band with no stated total; they keep EUR 1,660,661,682.94);
+  - 7256284 and 5977060 (R2/R7);
+  - 8831876 (its GBP 26 bn total sits on a separate tender, 8831875).
+- Out of sample, v2 ships 5 of the 10 earlier fires, all right.
+
+CHANCE OF PASSING THE FRESH 30
+- If 2 % of v2's fires are wrong: 0.88. At 3 %: 0.77. At 5 %: 0.55.
+- At the in-sample upper bound of 11 %: 0.15.
+- Each of the sample's 9 wrongs is caught by a check with a stated reason, not one added after reading the leftovers: Bm_g, the closed-lot and below-1,000.00 shape checks, D_keys, or C_plus.
+
+MEASURING FIRST
+- Expect about 47 ids walked and about 190 GETs (about 5 min at 1 GET per 1.5 s) to collect 30 shipped heads.
+- Expect about 36 % of walked ids to be refused.
+
+### Go bar
+
+The bar is fixed and is not relaxed. Path W is switched on only when both of these hold:
+
+(1) At most 1 wrong in a FRESH uniform 30 of v2's fires.
+- None of the 30 may be among the 279 labelled ids.
+- The salt is recorded in the issue before the draw.
+- The draw is the shadow walk in M1, so nothing ships to make it. Walk the failed drain's 15,352 path-W corrections (project 2575, /v1/changes cursor 955146761 to 955254530) in salted order, score each id with the Python port of v2 on public-API facts, and keep the first 30 that v2 ships. v2 only adds refusals to v1, so this is a uniform draw of its fires.
+
+(2) 0 heads labelled farther or double_count when every v2 head of EUR 100 m or more is read in full.
+- That is the 15 band heads, re-read blind, plus any band head the walk finds that is not among them.
+
+Both reads use wf_dc85fa7e-c00's rubric and put a skeptic on every wrong.
+
+Order of tests, fixed in advance:
+- v2 first.
+- If v2 fails, "vouched everywhere" (R10 at every size) once, from the same walk.
+- If that also fails, path W stays withdrawn (unit X).
+
+Nothing in canonical.rs flips before (1) and (2) pass on the Python port. After B3, the Rust and the port must agree with 0 disagreements on every id walked or labelled.
+
+After the drain, B5 repeats both checks on the real population: 30 drawn by a new salt, plus the band in full. A failure there switches path W off and refolds back by unit 4a's route.
+
+Stop rules during the drain:
+- Corrections outside 0.5x–2x of M1's projection: stop.
+- A pin off: stop.
+- A band set different from M2's: stop.
+
+### Units
+
+- M1 (S, measure, no shipped code). Port v2 and run the salted shadow walk. Write .scratch/tender-db/551-lot-sum/unit4b/rule_v2.py: the scorer's facts() from d551w/score.py, plus R9 and R10 with the thresholds in the rule. Assert on the 279: 105/105 wrongs refused; the band ships exactly the 15 listed; the sample ships 32; out of sample it ships {294968, 467176, 585917, 5995030, 8426318}. Record the salt in the issue BEFORE drawing: sha256('551-4b-fresh30' + id). List project 2575's path-W corrections from /v1/changes (cursor 955146761 to 955254530, bounded pages) and drop the 279. For each id in salted order: GET /v1/tenders/{id} and each version notice's /v1/notices/{id}/content, at most 1 GET per 1.5 s, a 408 retried once, no ssh. Rebuild S (each lot's latest award, at least 2 lots, one currency). Check G0 against today's served head. Apply v2. Write walk.jsonl (id, S, ship or refuse, first refusing check, vouched). Stop at 30 shipped. Why the draw is fair: v2 only adds refusals to v1, so on the same data its fires are a subset of v1's fires, and taking the first 30 shipped in salted order is a uniform draw of them. The walk misses only heads folded after 2026-10-17; B5's confirmation read covers those.
+- M2 (S, read; blocked by M1). Fresh-30 and band read. Run a reader panel as wf_dc85fa7e-c00 did: each head read against its notices, verdict right/neutral/wrong with a class, and a skeptic on every wrong. Read the walk's 30, and re-read the 15 band heads blind to their old labels. Bar: at most 1 wrong of 30, and 0 farther or double_count among the band heads. Record the result in issue 551. PASS: B1 to B5 run with v2. FAIL: test the fallback once. Continue the same salted walk until 30 VOUCHED heads have shipped (vouched heads already read are reused), read only the new ones, and apply the same bar. If it passes, B1 to B5 run with R10 at every size. If it fails, run unit X.
+- X (S; only if both variants fail). Close out path W. Change the issue status, the /docs Amounts caveat, the openapi value_derivation text, CHANGELOG and operations.md from 'withdrawn pending unit 4b' to 'withdrawn'. Update the phrases pinned in the_docs_say_a_head_can_be_a_derived_lot_sum. LOT_SUM_AWARDS_PATH and its tests stay. File three issues with shapes.md as evidence: (1) TED lots keyed by ordinal LOT-k instead of LOT_NO (shapes S3a–d); (2) stated procedure totals collapsed into award copies by 492(c) (shape S5); (3) x10^k lot-award slips below the EUR 1 bn gate (shape S8). 551 closes on path V. Expected fires: 0.
+- B1 (M; blocked by M2 PASS). Carry the facts v2 reads, in the projection only: no parse change, no schema change, no stored rows. ADD to LotResultState: published_lot_no: Option<String> (TED LOT_NO/LOT_NUMBER/ITEM in the award block; eForms BT-13713; FTS the OCDS lot id) and group: bool (TED-AWARDED_TO_GROUP marker). ADD LotState.published_lot_no (TED lot section LOT_NO). ADD TenderVersion.stated_totals: Vec<StatedTotal{notice_id, field, cents, currency, lots_awarded}>, cumulative over the chain like rounds: BT-161-NoticeResult, TED-VAL_TOTAL at notice or procedure scope, BT-118 and BT-1118-NoticeResult (read only), BT-27-Procedure, TED-VAL_ESTIMATED_TOTAL, TED VAL_RANGE_TOTAL LOW/HIGH. Use serde(default) only: postcard spill rule. Tests in ingest/project.rs: a_ted_award_block_keeps_its_published_lot_number; a_ted_award_to_a_group_is_flagged; an_eforms_result_keeps_its_published_lot_id; a_single_section_ted_modification_keys_lot_1_but_keeps_its_lot_no; a_version_carries_its_notices_stated_totals; bt118_is_read_as_a_stated_total_and_never_elected (amount-row count and head election unchanged, per 506). Store: project_refold.snapshot and fold_writer.snapshot stay byte-identical (nothing stored moves). Run ops/check.sh and read GATE-EXIT.
+- B2 (M; blocked by B1). Build the v2 guards in canonical.rs awards_lot_sum, with path W still off. Add R1 to R10 after G4, each as a named pure function. Add vouched_by to the detail JSON. LOT_SUM_AWARDS_PATH stays false. New tests, all run through head_value_with_awards_path: a_lot_won_by_two_tenders_is_not_summed (R1; a consortium on one LotTender and TED AWARDED_TO_GROUP pass); published_lot_numbers_that_collide_or_list_refuse_the_sum (R2 a–d; TED LOT-1 for lot 3 beside eForms LOT-0001 now sums); a_notice_total_below_the_lots_it_awards_refuses_the_sum (R3, including the 10x-estimate branch); an_award_ten_times_its_lot_estimate_refuses_the_sum (R4); the_shape_checks_refuse_their_shapes (R5, one synthetic shape per check, 15); a_lot_restated_under_a_second_key_refuses_the_sum (R6); an_award_ten_times_its_own_earlier_award_refuses_the_sum (R7); a_dominant_award_refuses_the_sum (R8); an_award_resolved_through_another_lots_tender_refuses_the_sum (R9, the 27915 shape); a_band_sum_needs_a_buyer_stated_total (R10: the Lyon-Turin trio keeps EUR 1,660,661,682.94; 8426318 serves GBP 3,000,000,000.00; EUR 99,999,999.99 needs no vouch). Also add the_redesigned_awards_path_keeps_its_labelled_outcomes, on real-row fixtures written by a new unit4b/gen_fixtures.py with the B1 facts: one wrong per shape from S1a to S10 refused, and 585917, 5995030, 8426318, 467176, 294968 plus 3 sample rights served. Update an_unvouched_awards_sum_is_served_under_its_guards and the_awards_path_refuses_every_shape_its_guards_name: 6450467/69/73, 7256284 and 5977060 now refused. Verify with the focused command from CLAUDE.md, then ops/check.sh.
+- B3 (S; blocked by B2). Port check, as unit 3 did. Add a temporary ignored harness that runs the Rust v2 against rule_v2.py on the 279, the walk's ids and the 4,745 records. Expect 0 disagreements on ship or refuse, S, currency, n and the first refusing check. Remove the harness and leave canonical.rs byte for byte as before.
+- B4 (S; blocked by B3). Served text. Update the /docs Amounts caveat (path W re-enabled with its guards, and the EUR 100 m vouch), OpenAPI Tender.value_derivation (vouched_by), CHANGELOG, and docs/operations.md (the guard list, the shadow walk, the bar). Update the phrases pinned in the_docs_say_a_head_can_be_a_derived_lot_sum.
+- B5 (S, ops; blocked by B4). Flip, drain and confirm. Set LOT_SUM_AWARDS_PATH = true, run ops/check.sh and deploy. Run refold-lot-sum dry, then wet with expect, then its project (about 2–2.5 h, in a queue gap outside the daily ingest). Stop rule: corrections outside 0.5x–2x of M1's projection (about 9,800) mean switch off and investigate. Verify: 585917, 5995030 and 8426318 serve their pins marked lot-sum-awards; the Lyon-Turin trio has no derivation; the 16 path-V pins are unchanged; a bounded seek of the value band finds exactly M2's band set. Confirmation read: 30 drained path-W corrections drawn by a NEW salt, plus every band lot-sum-awards row outside M2's set, against the same bar. On failure, take unit 4a's route: switch off and refold back.
+
+### Adversarial check — amendments (ADOPTED)
+
+- R2/B1: published_lot_no takes TED LOT_NO / LOT_NUMBER (award block, and LotState from the lot section), eForms BT-13713 / BT-137, and the FTS OCDS lot id. It NEVER takes TED-ITEM, the ordinal attribute on every r209 section. With no LOT_NO the value is None, so R2(d) fires. Add a B1 test: a_ted_award_blocks_item_ordinal_is_not_a_lot_number (single-section CAN: ITEM="1", no LOT_NO → published_lot_no None). Add 6421819 to B2's labelled-outcomes fixtures as a must-refuse.
+- Strike 'TED LOT-1 for lot 3 beside eForms LOT-0001 now sums' from B2. G8b stays unchanged and that pair stays refused. State as an invariant, checked in B3: every v2 fire is a v1 fire, so no guard is relaxed and nothing is re-keyed.
+- Freeze one explicit field-to-kind table before the walk, shared by rule_v2.py and B1:
+- R3 award totals: BT-161-NoticeResult, BT-118-NoticeResult, BT-1118-NoticeResult, TED-VAL_TOTAL at notice scope of a CAN-type form, and, if kept, TED-VALUE / TED-VALUE_COST on CAN-type forms only.
+- Old-vintage TED contract-notice forms (numeric '2', '5', …) are estimates.
+- R10 vouches: the rule's list exactly. No TED-VALUE / VALUE_COST / estimate-range kinds (in-sample those vouched 0 right / 2 wrong).
+- R4 and R5 estimates: API-keyed lot estimates only.
+- Published lot number: no title fallback.
+- stated_totals: every version notice, with the same correction semantics in both implementations.
+- R9: count only bids with a resolved lot_key.
+Re-run the 279 asserts with the table: they still hold (adv/a2.py, 0 flips). Commit rule_v2.py and record its sha256 in the issue next to the salt. Any edit after the first walked id voids the draw and needs a new salt.
+- Walk population and preconditions:
+- rule_v2.py also ports v1's T', K, G0, G1', G2, G3, G4, G5, G5', G6, G7, G8 and G8b (from merge_rule.py) to API facts.
+- An id where v1 does not fire today is dropped and logged, not counted.
+- Prefer the ids corrected in BOTH 2575 and 2586 (moved to lot-sum-awards and back).
+- Read every version notice of a walked id; no bounded-chain shortcut like the scorer used for 8 chains.
+- Compute S_eur from the stored rate at the head date (a bounded /v1/sql read), and log ids within 2 % of EUR 100m (1062828 is one).
+- Parity protocol, fixed in advance:
+- B3 also runs a projection-parity check: B1's real projection fed the parsed /v1/notices/{id}/content of the 279 and the walked ids, compared field by field against the port's facts that feed R1, R2, R3 and R10.
+- Any id where the Rust ships but the port refused is read under the M2 bar before B4.
+- Any id where the Rust refuses but the port shipped is dropped from the 30; the salted walk continues until 30 Rust-and-port ships are read.
+- B5 then drains an id cohort first (the 279, the walked ids and the px2 fires) and confirms 0 ship/refuse disagreements with rule_v2.py before the corpus refold.
+- Reader protocol for M2 and B5: every shipped head gets a skeptic, not only the wrongs. A head counts as right only when both reads agree; a disagreement goes to a third reader. The 15 band heads are re-read adversarially (look for double counts, shared envelopes, x10^k slips), not just blind.
+- Band bar (2) becomes: 0 wrong of any class (farther, double_count, not_additive, slip, other) among band heads; neutral allowed. The same applies to B5's band confirmation.
+- Cover EUR 10m–100m before the walk, with one of these two:
+- (a) apply R10 from EUR 10m. In-sample cost is 0: the sample's only v2 ship at or above EUR 10m, 7647263 (EUR 12.04m), is vouched by TED VAL_TOTAL, and no pin is in that range;
+- (b) continue the salted walk until 10 v2 ships in [EUR 10m, 100m) are read, under bar (2).
+- Before M1, copy score.py, score_work/pxscripts (extract.py, common.py), shapes_work/features.py, judge/common.py, j6.py, j7.py, and px and px2 features_all.json plus shapes features.json into .scratch/tender-db/551-lot-sum/unit4b/ with their sha256. M1's asserts are run from those copies.
+- vouched_by goes only into lot-sum-awards detail. Path V's stored detail stays byte-identical, so the 16 path-V pins produce no corrections in B5.
+- Unit X, or a filed issue either way: project.rs read_legacy_results builds lot_by_no from both TED-ITEM ordinals and LOT_NO, with or_insert keeping the first. When a lot section's ITEM equals another section's LOT_NO, an award block resolves to the wrong lot key, for example lot sections published in an order other than 1..n. Record it beside the S3a–d ordinal-keying issue.
+
+### Adversarial check — objections (record)
+
+- B1 and the rule's R2 field text count TED-ITEM as a published lot number ('TED LOT_NO/LOT_NUMBER/ITEM in the award block'). That breaks the rule's own in-sample result. The r209 parser emits TED-ITEM from the ITEM attribute that every Section element carries (crates/ingest/src/r209/parse.rs:344): it is the block's position in document order, not a published lot number. So a single-section TED notice's award block reads as lot '1'. The Python scorer never used ITEM (extract.py files it as 'item'). Re-scoring v2 with ITEM as the fallback (adv/a5.py) ships 6421819, a sample wrong labelled farther. Only R2(d) refused it: LOT-1's notice 21205884 has ITEM 1 and no LOT_NO. The sample goes from 0/32 to 1 wrong in 33 ships, and M1's assert '105/105 wrongs refused' fails. 12 of the 279 hold a summed TED award with ITEM but no LOT_NO, 7 of them wrongs. This is the TED re-keying shape R2 exists to close.
+- B2 contradicts the rule. The rule keeps G8b unchanged, yet B2's R2 test says 'TED LOT-1 for lot 3 beside eForms LOT-0001 now sums'. G8b (canonical.rs names_one_lot_twice) refuses exactly that pair, because both keys spell 1. Making the test pass means weakening G8b. Then v2 is no longer v1 plus refusals: it fires on heads v1 never fired on. The 2575 correction set cannot sample those heads, so the walk's 'uniform draw of v2's fires' argument fails, and fails for the TED ordinal shapes (S3a–d) where double counts concentrate.
+- The walk cannot tell which ids are path-W fires, and the port as specified does not check. Unit 4a removed every lot-sum-awards row, and /v1/changes rows carry no derivation. So nothing confirms an id in cursor 955146761–955254530 was a v1 fire: the range may also hold path-V heads, incidental corrections or interleaved ingest. M1 builds rule_v2.py as 'the scorer's facts() plus R9 and R10' and checks only G0. facts() has no T', K, G1', G2, G3, G4, G5, G5', G6, G7, G8 or G8b, because all 279 were already served lot-sum-awards. A walked id with an admitted procedure figure (T' fails) or a repeated total (G1') could be 'shipped' by the port, read in M2 and counted as a v2 fire.
+- Port-to-Rust parity is not set out fact by fact, and B3 cannot catch the gap. B3 feeds the Rust from API-derived fixtures, so it compares two copies of the decision logic on the same inputs. It never tests whether B1's projection derives the same facts from the parsed notice. Known mismatches between score.py/extract.py and the rule text:
+- published lot number: titles are a fallback in the port (title_lot_no) and not in B1; ITEM is in B1 and not in the port;
+- lot estimates: R4 and R3's estimate branch use notice-text TED lot estimates (estimate_by_published_lot_no, TED-VAL_OBJECT in lot sections), which the rule says the store does not have;
+- stated totals: the port maps TED-VALUE and TED-VALUE_COST at notice scope to result_total and BT-271-Procedure to an award total, and its TED_CN_FORMS has only F-codes, so old-vintage contract notices (forms '2' and '5', e.g. 5561539's notice 18561389) are read as award totals; the rule text lists none of these;
+- correction-replacement: stated_totals are 'cumulative like rounds' (rounds have it) while the port has none;
+- bids: R9 in the port ignores bids with an unresolved lot.
+In-sample none of this changes an outcome (adv/a2.py: 0 flips), but out of sample each one can make the measured ship set differ from the built one. Several of them fail open: R3 missing an old-form CAN total, R2(a) collisions the port found only through titles.
+- The bar leans toward passing. Both reads put a skeptic on every wrong but never on a right. The 279 labels were built the same way (108 first-read wrongs, 105 upheld; rights never challenged). A false 'right' is exactly the error that lets a bad rule pass '≤1 wrong of 30'. The band bar re-reads 15 heads already labelled right/neutral with the same rubric, which tests reader consistency, not correctness.
+- Band bar (2) bars only farther and double_count. not_additive (41 of 105 wrongs, the largest class and dominant among large heads), slip and other could all ship in the band and still pass. The judge's own case against W13 treats 51385, a slip, as disqualifying. And v2 ships 0 band wrongs of any class in-sample, so the narrower bar buys nothing in expectation.
+- Heads of EUR 10m–100m are effectively untested. The uniform 50 held 2 heads there, so a fresh 30 will hold about 1. v1's wrong rate rose with size: 18 % in the sample, 42 % in the band. R10 starts at EUR 100m, so a few hundred visible heads between EUR 10m and 100m ride on R1–R9 alone, with no read aimed at them.
+- Overfitting, quantified. R10 is the only refuser of exactly 1 wrong (51385) and costs 60 band rights (W14 ships 74 band rights; v2 ships 14). The R5 checks were picked because each hit 0 rights on these labels. C_title, P10, DOM10, R9 and Bm_g's consortium exception were added after reading the leftover wrongs. 3 of the sample's 9 wrongs are sums under 1,000.00 (324582, 5779166, 6330626). Below the band, the in-sample 0/32 says little; only the fresh 30 measures it. The band is a fixed, fully read population, so it is not overfit in the usual sense, but its 'right' labels never had a skeptic.
+- Band membership needs the exact stored rate. The scorer used the label group as the band, while rule_v2.py and the Rust use S_eur at the head's date. 1062828 (CHF 93,401,086.97, band right) is in the band only if CHF/EUR at its head date is at most 0.934, so it sits within about 1 % of the threshold. A port using different rates fails M1's 'band ships exactly the 15' assert, or misclassifies walk ids.
+- The evidence the decision names lives in this session's /tmp scratchpad: d551w/score.py, px and px2 features_all.json, shapes_work/features.json, judge/common.py, j6.py, j7.py. That scratchpad is session-scoped. M1's asserts and B3's parity check cannot be reproduced once it is gone.
+- Smaller points:
+- R5.4 says 'one other round' but the scorer includes the award's own round (no in-sample difference, checked).
+- R10's estimate-kind vouches rest on 1 right (7001924). The one in-sample estimate-style match outside the rule's list (5561539, an old contract notice's VALUE) was farther.
+- TED-VALUE / TED-VALUE_COST-only vouches were 0 right / 2 wrong (adv/a10.py), so the rule's narrower list is better than the port's, which is one more reason the port must be aligned to it.
 
