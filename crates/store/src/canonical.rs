@@ -3377,8 +3377,9 @@ pub fn head_value(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) ->
 /// figure; when a scale rule refuses the procedure total, that is one lot's figure or null,
 /// never the total of the lots. Path V, tried after the max election, serves the sum of the
 /// head version's own lots instead ([`derive_lot_sum`]); every other head is the max election
-/// unchanged. (Path W, the unvouched awards sum, is withdrawn since unit 4a:
-/// [`LOT_SUM_AWARDS_PATH`].) A derived head is returned with its [`DerivedValue`] (the fold
+/// unchanged. (Path W, the awards sum, is withdrawn since unit 4a: [`LOT_SUM_AWARDS_PATH`]; unit
+/// 4b's redesign, v1's guards plus R1–R10 with a buyer-stated total vouching for every sum, is
+/// built behind that switch.) A derived head is returned with its [`DerivedValue`] (the fold
 /// stores it on `tenders` beside the EUR column, never as an amount row), and its EUR is the
 /// sum converted by `rates` at the head's date, so value sorts and filters read it as they
 /// read any head.
@@ -3409,14 +3410,27 @@ fn head_value_on_paths(
 }
 
 /// Issue 551 unit 4a: [`head_value`] with path W switched ON whatever [`LOT_SUM_AWARDS_PATH`]
-/// says. Only the path-W tests read it: its guards and its labelled pins, kept for unit 4b's
-/// redesign. Production never serves what it returns for a path-W head.
+/// says. Only the path-W tests read it: its guards (v1's and, since unit 4b's B2, v2's R1–R10) and
+/// its labelled pins. Production never serves what it returns for a path-W head.
 #[cfg(test)]
 fn head_value_with_awards_path(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> HeadValue {
     match chain.last() {
         Some(head) => head_value_on_paths(head, &ScalePartners::of_chain(chain), rates, true),
         None => HeadValue::default(),
     }
+}
+
+/// Issue 551 unit 4b (B2): what [`head_value_with_awards_path`] decides for the chain's head, as
+/// the derived sum or the name of the check that kept today's head ([`lot_sum_decision`]: `V`,
+/// `V1`, `V0`, `W/T'`, `W/K`, `W/G0` … `W/G4`, `R1` … `R10`), so the guard tests can pin WHICH check refused,
+/// as unit B3's port check compares it.
+#[cfg(test)]
+fn awards_path_check(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> Result<DerivedValue, &'static str> {
+    let head = chain.last().ok_or("no head")?;
+    let partners = ScalePartners::of_chain(chain);
+    let date = crate::rates::civil_date(head.published_at);
+    let today = elect_head_figure(head, &partners, rates, &date);
+    lot_sum_decision(head, &partners, rates, &date, today.as_ref(), true).map(|(_, derived)| derived)
 }
 
 /// The figure the max election elects ([`elect_head_figure`]): its EUR value, its currency,
@@ -3602,9 +3616,22 @@ pub enum DerivationPath {
     /// Path V: a procedure figure F the scale rule `rule` refused is 10^`exponent` times this
     /// lot sum — the buyer's own total, slipped, vouches for it.
     Vouched { rule: ScaleRule, field: String, cents: i64, currency: String, exponent: u32 },
-    /// Path W: the lots' latest awards, with no procedure figure at all and every guard passed.
+    /// Path W: the lots' latest awards, with no procedure figure at all and every guard passed —
+    /// since unit 4b (B2) v1's G0–G8b and v2's R1–R10 — and `vouched_by` the buyer-stated total
+    /// that vouches for the sum (R10). Under the "vouched everywhere" fallback (issue 551, PASSED
+    /// 2026-10-17) R10 applies at every size, so every awards sum has one; it is not optional.
     /// Withdrawn since unit 4a ([`LOT_SUM_AWARDS_PATH`]): production derives none.
-    Awards,
+    Awards { vouched_by: VouchingTotal },
+}
+
+/// Issue 551 unit 4b (B2): the stated total that vouched for a path-W sum (R10): its source
+/// field as published (`BT-118-NoticeResult`, `TED-VAL_TOTAL`, `TED-HIGH`, …), the notice that
+/// stated it and its cents, in S's currency. The detail JSON's `vouched_by`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct VouchingTotal {
+    pub field: String,
+    pub notice_id: i64,
+    pub cents: i64,
 }
 
 /// The scale rule that refused a procedure figure ([`ScalePartners::procedure_refusal`]).
@@ -3641,25 +3668,33 @@ impl DerivedValue {
     pub fn derivation(&self) -> &'static str {
         match self.path {
             DerivationPath::Vouched { .. } => VALUE_DERIVATION_VOUCHED,
-            DerivationPath::Awards => VALUE_DERIVATION_AWARDS,
+            DerivationPath::Awards { .. } => VALUE_DERIVATION_AWARDS,
         }
     }
 
     /// `tenders.current_value_derivation_detail`: a JSON object the API serves as
     /// `value_derivation` beside the method: `summed` (the [`LotSumKind::label`]), `lots`, and
     /// for path V the `rule` (the deciding issue), its `exponent` and the `refused` figure
-    /// `{field, value: {cents, currency}}`. Written by hand (the store carries no JSON crate):
-    /// every string is a fixed label, a canonical field name or an ISO 4217 code, escaped all
-    /// the same.
+    /// `{field, value: {cents, currency}}`; for path W (unit 4b, B2) the `vouched_by` total
+    /// `{field, notice_id, cents}` (in S's currency) — only there, so path V's stored detail is
+    /// byte-identical to what unit 3 wrote. Written by hand (the store carries no JSON crate):
+    /// every string is a fixed label, a canonical or published field name or an ISO 4217 code,
+    /// escaped all the same.
     pub fn detail_json(&self) -> String {
         let mut out = format!("{{\"summed\":{},\"lots\":{}", json_string(self.kind.label()), self.lots);
-        if let DerivationPath::Vouched { rule, field, cents, currency, exponent } = &self.path {
-            out.push_str(&format!(
+        match &self.path {
+            DerivationPath::Vouched { rule, field, cents, currency, exponent } => out.push_str(&format!(
                 ",\"rule\":{},\"exponent\":{exponent},\"refused\":{{\"field\":{},\"value\":{{\"cents\":{cents},\"currency\":{}}}}}",
                 json_string(rule.issue()),
                 json_string(field),
                 json_string(currency),
-            ));
+            )),
+            DerivationPath::Awards { vouched_by } => out.push_str(&format!(
+                ",\"vouched_by\":{{\"field\":{},\"notice_id\":{},\"cents\":{}}}",
+                json_string(&vouched_by.field),
+                vouched_by.notice_id,
+                vouched_by.cents,
+            )),
         }
         out.push('}');
         out
@@ -3710,7 +3745,9 @@ const DERIVABLE_KINDS: [LotSumKind; 3] = [LotSumKind::Awards, LotSumKind::Estima
 /// figure, or null), and `refold-lot-sum` re-elects the drained path-W heads back. Path V
 /// (`lot-sum-vouched`) is unchanged. The path and its guards stay compiled and tested (the tests
 /// switch it on through the test-only `head_value_with_awards_path`), so unit 4b's redesign keeps their pins;
-/// unit 4b turns this back on only with a redesign that meets its bar.
+/// unit 4b turns this back on only with a redesign that meets its bar. Unit 4b's B2 built that
+/// redesign behind this switch (v2: R1–R10 after G4, R10 at every size, [`awards_v2_check`]); it
+/// stays `false` until B5, after B3's port check and B4's served text.
 const LOT_SUM_AWARDS_PATH: bool = false;
 
 /// Issue 551 (decided 2026-10-16, wf_3d72c491-993): the lot sum a head serves instead of the
@@ -3753,6 +3790,11 @@ const LOT_SUM_AWARDS_PATH: bool = false;
 /// more summed lots at a tenth of the largest or more; G2 no figure on four or more lots and
 /// half of them; G3 with three or more lots, the largest is not within 1 % of 10^k (k = 0..3)
 /// the others; G4 no estimate kind over two or more of the same lots 10x off the awards.
+///
+/// **Path W v2 (unit 4b, B2): after G4, the ten refusal families R1–R10** of issue 551's
+/// "Unit 4b — decided" rule as its adopted amendments and the "vouched everywhere" fallback
+/// left them ([`awards_v2_check`]): every v2 fire is a v1 fire (nothing above is relaxed or
+/// re-keyed; G8b stands), and every awards sum needs a buyer-stated total that vouches for it.
 fn derive_lot_sum(
     head: &TenderVersion,
     partners: &ScalePartners<'_>,
@@ -3761,17 +3803,41 @@ fn derive_lot_sum(
     today: Option<&HeadFigure<'_>>,
     awards_path: bool,
 ) -> Option<(i64, DerivedValue)> {
+    lot_sum_decision(head, partners, rates, date, today, awards_path).ok()
+}
+
+/// [`derive_lot_sum`] with the reason a head keeps the max election: `Err` names the check
+/// that refused, in `rule_v2.py`'s vocabulary for path W (`W/T'`, `W/K`, `W/G0` … `W/G4`, then
+/// `R1`, `R2a`–`R2d`, `R3`, `R4`, `R5.1`–`R5.15`, `R6`–`R10`; [`awards_v2_check`]), so unit 4b's
+/// port check (B3) can compare the FIRST refusing check as well as the decision. Path V's
+/// refusals carry the port's names too ([`vouched_lot_sum`]: `V` for disagreeing refusals or an
+/// S with no EUR value in (0, cap], `V1`, `V0`), and a head whose refused figures name no sum
+/// goes on to path W as the port's `serve` does, where T' refuses it (`W/T'`: a refused figure is
+/// no sentinel). Path V's decisions and stored detail are unchanged by unit 4b; only the names
+/// are. `W/off` is path W switched off ([`LOT_SUM_AWARDS_PATH`]).
+fn lot_sum_decision(
+    head: &TenderVersion,
+    partners: &ScalePartners<'_>,
+    rates: &crate::rates::RatesLookup,
+    date: &str,
+    today: Option<&HeadFigure<'_>>,
+    awards_path: bool,
+) -> Result<(i64, DerivedValue), &'static str> {
     // The head's procedure figures (Fact order), with the election's judgement of each.
     let mut procedure: Vec<(&str, &str, i64, Judged)> = Vec::new();
-    // G5 / G5': an award copy over the cap, or one a scale rule refused (471/492 at
-    // `Lot(None)`), says the buyer's scale is broken; path W keeps today's head.
-    let mut copy_suspect = false;
+    // G5 / G5': an award copy over the cap (G5), or one a scale rule refused (471/492 at
+    // `Lot(None)`, G5'), says the buyer's scale is broken; path W keeps today's head.
+    let mut copy_over_cap = false;
+    let mut copy_refused = false;
     for f in &head.facts {
         let Fact::Amount { field, cents, currency, .. } = f else { continue };
         let scope = tender_scope_of(f, partners);
         let Some(judged) = judge_head_amount(f, scope, partners, rates, date) else { continue };
         match scope {
-            FigureScope::Lot(None) => copy_suspect |= matches!(judged, Judged::OverCap | Judged::Refused(_)),
+            FigureScope::Lot(None) => {
+                copy_over_cap |= judged == Judged::OverCap;
+                copy_refused |= matches!(judged, Judged::Refused(_));
+            }
             _ if judged == Judged::PartnerOnly => {}
             _ => procedure.push((field.as_str(), currency.as_str(), *cents, judged)),
         }
@@ -3782,21 +3848,45 @@ fn derive_lot_sum(
     // only where `awards_path` switches it on (off in production since unit 4a).
     let vouched = procedure.iter().any(|p| matches!(p.3, Judged::Refused(_)))
         && !procedure.iter().any(|p| matches!(p.3, Judged::Admitted(_)));
-    let awards_only =
-        awards_path && procedure.iter().all(|p| p.3 == Judged::Sentinel) && today.is_none_or(|t| t.award_copy);
-    if !vouched && !awards_only {
-        return None;
+    if vouched {
+        let sums = LotSums::by_currency(head);
+        if let Some(decision) = vouched_lot_sum(&procedure, partners, rates, date, &sums, today) {
+            return decision;
+        }
+        // No refused figure names a sum: the port (unit 3's `merge_rule.serve`) tries path V only
+        // when one does, and goes on to path W, whose T' refuses below. Nothing served changes:
+        // path W cannot fire beside a refused figure.
+    }
+    if !awards_path {
+        return Err("W/off");
+    }
+    if !procedure.iter().all(|p| p.3 == Judged::Sentinel) {
+        return Err("W/T'");
+    }
+    if !today.is_none_or(|t| t.award_copy) {
+        return Err("W/K");
     }
     let sums = LotSums::by_currency(head);
-    if vouched {
-        vouched_lot_sum(&procedure, partners, rates, date, &sums, today)
-    } else {
-        awards_lot_sum(&procedure, copy_suspect, partners, &sums, rates, date, today)
-    }
+    let copies = CopyJudgement { over_cap: copy_over_cap, refused: copy_refused };
+    awards_lot_sum(head, &procedure, copies, partners, &sums, rates, date, today)
+}
+
+/// Issue 551 path W's G5 / G5' inputs from the head's award copies (a lot award's tender-scope
+/// copy, `FigureScope::Lot(None)`): one over the cap (G5), one a scale rule refused (G5').
+#[derive(Debug, Clone, Copy)]
+struct CopyJudgement {
+    over_cap: bool,
+    refused: bool,
 }
 
 /// Issue 551 path V ([`derive_lot_sum`]): `procedure` holds the head's procedure figures as
-/// (field, currency, cents, judgement), at least one refused and none admitted.
+/// (field, currency, cents, judgement), at least one refused and none admitted. `None` when no
+/// refused figure names a sum (path V is not tried; [`lot_sum_decision`] goes on to path W, as the
+/// port does); else the vouched sum, or the guard that refused it in the port's names (unit 3's
+/// `merge_rule.serve`, reduced as `rule_v2.py`'s `v1_reason` reduces it): `V` the refusals disagree
+/// on S, `V1` the lots repeat the slipped total, `V` S has no EUR value in (0, cap], `V0` S not
+/// above today's figure. The names are for unit B3's first-refusing-check comparison only: what
+/// path V serves and stores is unchanged.
 fn vouched_lot_sum(
     procedure: &[(&str, &str, i64, Judged)],
     partners: &ScalePartners<'_>,
@@ -3804,7 +3894,7 @@ fn vouched_lot_sum(
     date: &str,
     sums: &std::collections::HashMap<&str, LotSums<'_>>,
     today: Option<&HeadFigure<'_>>,
-) -> Option<(i64, DerivedValue)> {
+) -> Option<Result<(i64, DerivedValue), &'static str>> {
     // (F's field, currency, cents, rule, k, the vouched kind, S, n)
     let mut found: Vec<(&str, &str, i64, ScaleRule, u32, LotSumKind, i64, usize)> = Vec::new();
     for &(field, currency, cents, judged) in procedure {
@@ -3837,7 +3927,7 @@ fn vouched_lot_sum(
     let &(field, currency, cents, rule, exponent, kind, sum, lots) = found.first()?;
     // Agreement: every refused F that yields an S yields the same one.
     if found.iter().any(|h| (h.1, h.6) != (currency, sum)) {
-        return None;
+        return Some(Err("V"));
     }
     // V1: the summed lots repeat one figure M and F is 10^j M (1 %): the lots are the slipped
     // total itself, not its parts.
@@ -3847,57 +3937,66 @@ fn vouched_lot_sum(
             && figures.iter().all(|&(_, c)| c == m)
             && (0..=18u32).any(|j| (i128::from(h.2) - 10i128.pow(j) * i128::from(m)).abs() * LOT_SUM_TOTAL_TOLERANCE <= i128::from(h.2))
         {
-            return None;
+            return Some(Err("V1"));
         }
     }
-    let eur = rates.eur_cents(sum, currency, date).filter(|e| *e > 0 && *e <= IMPLAUSIBLE_EUR_CENTS)?;
+    let Some(eur) = rates.eur_cents(sum, currency, date).filter(|e| *e > 0 && *e <= IMPLAUSIBLE_EUR_CENTS) else {
+        return Some(Err("V"));
+    };
     // V0: never below today's figure (a lot figure larger than the whole vouched sum: the kinds
     // disagree, and the max election's one lot is the smaller error). Costs none of the 16 pins.
     if today.is_some_and(|t| eur <= t.eur_cents) {
-        return None;
+        return Some(Err("V0"));
     }
     let path = DerivationPath::Vouched { rule, field: field.to_owned(), cents, currency: currency.to_owned(), exponent };
-    Some((eur, DerivedValue { path, kind, cents: sum, currency: currency.to_owned(), lots }))
+    Some(Ok((eur, DerivedValue { path, kind, cents: sum, currency: currency.to_owned(), lots })))
 }
 
 /// Issue 551 path W ([`derive_lot_sum`]): every procedure figure is a sentinel and today's
-/// head is an award copy or null.
+/// head is an award copy or null. v1's guards, each refusal named as `rule_v2.py` (through
+/// unit 3's `merge_rule.py`) names it and in its order, then v2's ([`awards_v2_check`]).
+#[allow(clippy::too_many_arguments)]
 fn awards_lot_sum(
+    head: &TenderVersion,
     procedure: &[(&str, &str, i64, Judged)],
-    copy_suspect: bool,
+    copies: CopyJudgement,
     partners: &ScalePartners<'_>,
     sums: &std::collections::HashMap<&str, LotSums<'_>>,
     rates: &crate::rates::RatesLookup,
     date: &str,
     today: Option<&HeadFigure<'_>>,
-) -> Option<(i64, DerivedValue)> {
+) -> Result<(i64, DerivedValue), &'static str> {
     // K: the elected copy's currency; a null head's, the currency with the most award lots (a
     // tie to the greater code).
     let currency: &str = match today {
         Some(t) => t.currency,
-        None => sums.iter().filter(|(_, s)| s.award_lots() > 0).map(|(c, s)| (s.award_lots(), *c)).max()?.1,
+        None => sums.iter().filter(|(_, s)| s.award_lots() > 0).map(|(c, s)| (s.award_lots(), *c)).max().ok_or("W/K")?.1,
     };
-    let ls = sums.get(currency)?;
+    let ls = sums.get(currency).ok_or("W/G0")?;
     let awards = ls.per_lot(LotSumKind::Awards);
     let n = awards.len();
     // G0: two or more award lots.
     if n < LOT_SUM_MIN_LOTS {
-        return None;
+        return Err("W/G0");
     }
     let sum = awards.iter().fold(0i64, |s, &(_, c)| s.saturating_add(c));
     // G0: above today's figure (equal or below keeps it: the kinds disagree, 6885102); G5 on S:
     // more than EUR 0 (unit 3's third review: issue 378 keeps 0 for "the election found nothing",
     // and two awards above 10.00 in a currency worth under 1/4,000 EUR can round to it, as path V
     // already refuses) and at most the cap.
-    let eur = rates.eur_cents(sum, currency, date)?;
-    if eur <= 0 || today.is_some_and(|t| eur <= t.eur_cents) || eur > IMPLAUSIBLE_EUR_CENTS {
-        return None;
+    let eur = rates.eur_cents(sum, currency, date).ok_or("W/G0")?;
+    if today.is_some_and(|t| eur <= t.eur_cents) {
+        return Err("W/G0");
     }
-    // G5: a procedure or award-copy figure over the cap says the buyer's scale is broken; G5':
-    // so does an award copy a scale rule refused (shape C: LOT-1's EUR 1.2 bn award, x1000, beside
-    // LOT-2's EUR 1.2 m; summed, the slip itself would serve EUR 1.2012 bn).
-    if copy_suspect || procedure.iter().any(|p| p.3 == Judged::OverCap) {
-        return None;
+    // G5: S at most the cap, and a procedure or award-copy figure over the cap says the buyer's
+    // scale is broken.
+    if eur <= 0 || eur > IMPLAUSIBLE_EUR_CENTS || copies.over_cap || procedure.iter().any(|p| p.3 == Judged::OverCap) {
+        return Err("W/G5");
+    }
+    // G5': so does an award copy a scale rule refused (shape C: LOT-1's EUR 1.2 bn award, x1000,
+    // beside LOT-2's EUR 1.2 m; summed, the slip itself would serve EUR 1.2012 bn).
+    if copies.refused {
+        return Err("W/G5'");
     }
     // G5' (unit 3's third review): and so does a summed award a scale rule refuses at its own lot,
     // copy or none. The max election never reads lot results, so without a tender-scope copy
@@ -3909,30 +4008,30 @@ fn awards_lot_sum(
             .eur_cents(c, currency, date)
             .is_some_and(|e| partners.refuses_amount("result_value", currency, c, e, FigureScope::Lot(Some(lot))))
     }) {
-        return None;
+        return Err("W/G5'");
     }
     // G6: an award lot in another currency (the sum would be partial).
     if sums.iter().any(|(c, s)| *c != currency && s.award_lots() > 0) {
-        return None;
+        return Err("W/G6");
     }
     // G7: a withheld procedure figure (a lot sum would publish it). T' already excludes one;
     // stated for the reason.
     if procedure.iter().any(|p| p.3 == Judged::Withheld) {
-        return None;
+        return Err("W/G7");
     }
     // G8: every summed award names a lot of the counted unit (a re-keyed chain's TED LOT-1
     // beside its eForms LOT-0001 would count one lot twice).
     if awards.iter().any(|(lot, _)| !ls.counts(lot)) {
-        return None;
+        return Err("W/G8");
     }
     // G8b (unit 3's second review round, 2026-10-16): two distinct summed keys spelling one lot
     // number. A re-keyed chain whose BOTH key families are typed Lots (TED's LOT-1..n beside an
     // eForms LOT-0001..n) passes G8 and would sum each lot twice. Unobserved in unit 1's 4,745
     // records, but the drain folds ~195,000; refusing keeps today's head, so it cannot regress.
     if names_one_lot_twice(awards.iter().map(|&(lot, _)| lot)) {
-        return None;
+        return Err("W/G8b");
     }
-    let largest = awards.iter().map(|&(_, c)| c).max()?;
+    let largest = awards.iter().map(|&(_, c)| c).max().ok_or("W/G0")?;
     let mut figures: Vec<i64> = awards.iter().map(|&(_, c)| c).collect();
     figures.sort_unstable();
     let mut repeats: Vec<(i64, usize)> = Vec::new();
@@ -3945,11 +4044,11 @@ fn awards_lot_sum(
     // G1': a figure on two or more lots at a tenth of the largest lot or more is a repeated
     // total (8440393, 7487018); a small repeated pair is not (5995030's PLN 8,000.00).
     if repeats.iter().any(|&(v, k)| k >= 2 && i128::from(v) * LOT_SUM_REPEAT_SHARE >= i128::from(largest)) {
-        return None;
+        return Err("W/G1'");
     }
     // G2: one figure on four or more lots and on half of them or more.
     if repeats.iter().any(|&(_, k)| k >= LOT_SUM_REPEAT_MIN_LOTS && 2 * k >= n) {
-        return None;
+        return Err("W/G2");
     }
     // G3: one lot is a total of the others (5316712; 4787274 at k = 2. 5625591 is the same shape
     // in lot estimates, which this path never sums).
@@ -3959,7 +4058,7 @@ fn awards_lot_sum(
             let total = rest * 10i128.pow(k);
             total > 0 && (i128::from(largest) - total).abs() * LOT_SUM_TOTAL_TOLERANCE <= i128::from(largest)
         }) {
-            return None;
+            return Err("W/G3");
         }
     }
     // G4: an estimate kind over two or more of the same lots 10x off the awards.
@@ -3970,13 +4069,36 @@ fn awards_lot_sum(
             let a: i128 = common.iter().map(|&(c, _)| i128::from(c)).sum();
             let b: i128 = common.iter().map(|&(_, o)| i128::from(o)).sum();
             if a > LOT_SUM_KIND_RATIO * b || b > LOT_SUM_KIND_RATIO * a {
-                return None;
+                return Err("W/G4");
             }
         }
     }
-    let derived =
-        DerivedValue { path: DerivationPath::Awards, kind: LotSumKind::Awards, cents: sum, currency: currency.to_owned(), lots: n };
-    Some((eur, derived))
+    // v2 (unit 4b, B2): R1–R10 on the summed awards, each lot's latest by its round's notice.
+    let mut summed: Vec<SummedAward<'_>> = Vec::with_capacity(n);
+    for (lot, notice_id, cents) in ls.latest_awards() {
+        // The award LotSums kept is a result of that round on that lot at that figure: the last
+        // such, as LotSums keeps the later offer of a tie (rule_v2.py's `rows[-1]`). LotSums was
+        // offered every award from these rounds, so one exists; if not, fail closed.
+        let result = head
+            .rounds
+            .iter()
+            .filter(|r| r.notice_id == notice_id)
+            .flat_map(|r| r.lot_results.iter())
+            .filter(|r| r.lot_key.as_deref() == Some(lot) && r.awarded_cents == Some(cents) && r.awarded_currency.as_deref() == Some(currency))
+            .last()
+            .ok_or("W/G0")?;
+        summed.push(SummedAward { key: lot, notice_id, cents, result });
+    }
+    let vouched_by = awards_v2_check(&AwardsView::new(head, currency, summed, sum), partners)?;
+    let vouched_by = VouchingTotal { field: vouched_by.field.clone(), notice_id: vouched_by.notice_id, cents: vouched_by.cents };
+    let derived = DerivedValue {
+        path: DerivationPath::Awards { vouched_by },
+        kind: LotSumKind::Awards,
+        cents: sum,
+        currency: currency.to_owned(),
+        lots: n,
+    };
+    Ok((eur, derived))
 }
 
 /// Issue 551 path W's G8b: the lot number a lot key spells, where the key is recognisably a
@@ -4020,6 +4142,753 @@ fn lot_number(key: &str) -> Option<&str> {
 fn names_one_lot_twice<'k>(keys: impl IntoIterator<Item = &'k str>) -> bool {
     let mut seen: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
     keys.into_iter().any(|key| lot_number(key).is_some_and(|number| *seen.entry(number).or_insert(key) != key))
+}
+
+// ---- Issue 551 unit 4b (B2): path W v2, the refusal families R1–R10 ----------------------------
+//
+// THE REFERENCE is `.scratch/tender-db/551-lot-sum/unit4b/rule_v2.py` (sha256 39be6d1e…05ce):
+// `v2_decision`, `v2_refusals` and the predicates `facts()` computes as `P['R1']`..`P['R10']`,
+// with the shape checks R5.1–R5.15 of `shapes_checks`. Unit B3 runs this code against that port on
+// the 279 labelled heads, the walked ids and unit 1's 4,745 records and expects 0 disagreements on
+// ship or refuse, S, currency, n and the FIRST refusing check, so the order and the semantics below
+// are the port's, check by check, wherever the port and the judge's rule text differ (the port +
+// the adopted amendments win; each such choice is recorded on its guard). The port's facts are the
+// public API's (`/v1/tenders/{id}`, the head version's stored rows, plus every version notice's
+// content); [`AwardsView`] reads the same head from memory in the API's terms.
+//
+// Not ported: the port's `W/G0-served` (its election checked against TODAY'S served head, which
+// only an API reader needs; the fold elects today's head itself), and its EUR flags.
+
+/// `rule_v2.py`'s R5 check names, in its `V2_ORDER` (the shapes pass's `R5_FEATURES`).
+const R5_CHECKS: [&str; 15] = [
+    "R5.1", "R5.2", "R5.3", "R5.4", "R5.5", "R5.6", "R5.7", "R5.8", "R5.9", "R5.10", "R5.11", "R5.12", "R5.13", "R5.14",
+    "R5.15",
+];
+
+/// The shapes pass's figure floor (score.py's `FLOOR`): a stated total, an estimate or an earlier
+/// award must be above 10.00 to count.
+const SCORER_FLOOR_CENTS: i64 = 1_000;
+
+/// Issue 551 path W v2: one summed award — a lot's latest award by its round's notice id, as
+/// [`LotSums`] keeps it — with the result row it came from.
+#[derive(Debug, Clone, Copy)]
+struct SummedAward<'a> {
+    key: &'a str,
+    notice_id: i64,
+    cents: i64,
+    result: &'a LotResultState,
+}
+
+/// Issue 551 path W v2: the head version as `rule_v2.py` reads it from `/v1/tenders/{id}`, here
+/// read from memory in the API's terms:
+/// - a lot award's `awarded` is a figure only when it states both cents and currency
+///   (json.rs `money`), and an amount or a bid the notice withheld (issue 372) has no value;
+/// - a result or bid "names a lot" only with a non-empty lot key (Python truthiness);
+/// - the results are every round's, in round order (the API's `lot_results`), each with its
+///   round's notice id.
+struct AwardsView<'a> {
+    head: &'a TenderVersion,
+    /// S's currency (K).
+    currency: &'a str,
+    /// The summed awards, in lot-key order (the port sorts its summed set by key).
+    summed: Vec<SummedAward<'a>>,
+    /// S.
+    sum: i64,
+    /// Every lot result naming a lot, by its lot key, as (round notice id, result) in round order.
+    results_by_lot: std::collections::HashMap<&'a str, Vec<(i64, &'a LotResultState)>>,
+}
+
+impl<'a> AwardsView<'a> {
+    fn new(head: &'a TenderVersion, currency: &'a str, summed: Vec<SummedAward<'a>>, sum: i64) -> Self {
+        let mut results_by_lot: std::collections::HashMap<&'a str, Vec<(i64, &'a LotResultState)>> = Default::default();
+        for (notice_id, r) in Self::results(head) {
+            if let Some(lot) = r.lot_key.as_deref().filter(|k| !k.is_empty()) {
+                results_by_lot.entry(lot).or_default().push((notice_id, r));
+            }
+        }
+        AwardsView { head, currency, summed, sum, results_by_lot }
+    }
+
+    /// Every lot result of `head` with its round's notice id, in round order.
+    fn results(head: &'a TenderVersion) -> impl Iterator<Item = (i64, &'a LotResultState)> {
+        head.rounds.iter().flat_map(|round| round.lot_results.iter().map(move |r| (round.notice_id, r)))
+    }
+
+    /// Every bid of the head with its round's notice id, in round order.
+    fn bids(&self) -> impl Iterator<Item = (i64, &'a BidState)> {
+        self.head.rounds.iter().flat_map(|round| round.bids.iter().map(move |b| (round.notice_id, b)))
+    }
+
+    /// The results naming `lot`, as (round notice id, result).
+    fn on_lot(&self, lot: &str) -> &[(i64, &'a LotResultState)] {
+        self.results_by_lot.get(lot).map(Vec::as_slice).unwrap_or_default()
+    }
+
+    /// The head's lot-scope amounts in S's currency that state a value (no withheld figure), as
+    /// (field, lot key, cents) over every lot of any kind (the API's keyed `amounts`).
+    fn lot_amounts(&self) -> impl Iterator<Item = (&'a str, &'a str, i64)> + '_ {
+        self.head.lots.iter().flat_map(move |lot| {
+            lot.facts.iter().filter_map(move |f| match f {
+                Fact::Amount { field, cents, currency, quality: None, .. } if currency == self.currency => {
+                    Some((field.as_str(), lot.key.as_str(), *cents))
+                }
+                _ => None,
+            })
+        })
+    }
+
+    /// The head's tender-scope amounts in S's currency that state a value, as (field, cents).
+    fn procedure_amounts(&self) -> impl Iterator<Item = (&'a str, i64)> + '_ {
+        self.head.facts.iter().filter_map(move |f| match f {
+            Fact::Amount { field, cents, currency, quality: None, .. } if currency == self.currency => Some((field.as_str(), *cents)),
+            _ => None,
+        })
+    }
+
+    /// Per lot key, the lot's figures of `field` in S's currency.
+    fn lot_figures(&self, field: &str) -> std::collections::BTreeMap<&'a str, Vec<i64>> {
+        let mut out: std::collections::BTreeMap<&'a str, Vec<i64>> = Default::default();
+        for (f, lot, cents) in self.lot_amounts() {
+            if f == field {
+                out.entry(lot).or_default().push(cents);
+            }
+        }
+        out
+    }
+
+    /// R3 / R4's lot estimates (`rule_v2.py` `lot_est`): per lot, its largest API-keyed
+    /// `estimated_value` in S's currency that is a scorer figure (amendment: "R4 and R5
+    /// estimates: API-keyed lot estimates only" — no notice-text TED lot estimate, which the store
+    /// keeps lot-less, so R4 never fires on TED; the gap is recorded, not fixed).
+    fn scored_lot_estimates(&self) -> std::collections::BTreeMap<&'a str, i64> {
+        self.lot_figures("estimated_value")
+            .into_iter()
+            .filter_map(|(lot, cs)| cs.into_iter().filter(|&c| scorer_figure(c)).max().map(|m| (lot, m)))
+            .collect()
+    }
+}
+
+/// A lot award as the API serves it: both cents and currency, or no figure.
+fn awarded(r: &LotResultState) -> Option<(i64, &str)> {
+    Some((r.awarded_cents?, r.awarded_currency.as_deref()?))
+}
+
+/// `rule_v2.py`'s `score_sentinel` (score.py): negative, or seven or more equal digits of major
+/// units with no cents. The shapes pass's scorer test, NOT [`sentinel_amount`].
+fn scorer_sentinel(cents: i64) -> bool {
+    if cents < 0 {
+        return true;
+    }
+    let major = (cents / 100).to_string();
+    major.len() >= 7 && major.bytes().all(|b| b == major.as_bytes()[0]) && cents % 100 == 0
+}
+
+/// `rule_v2.py`'s `score_figure`: above 10.00 and no scorer sentinel.
+fn scorer_figure(cents: i64) -> bool {
+    cents > SCORER_FLOOR_CENTS && !scorer_sentinel(cents)
+}
+
+/// Python's EXACT comparison `a > b` of an integer with a float. The port compares integer
+/// cents with float products (`t * 1.01`, `1.9 * bt709`, `0.01 * S`); Python never rounds the
+/// integer, so neither does this: `a > b` holds exactly when `a > floor(b)`.
+fn py_gt(a: i128, b: f64) -> bool {
+    if b.is_nan() {
+        return false;
+    }
+    let floor = b.floor();
+    if floor >= 1.0e38 {
+        return false;
+    }
+    if floor <= -1.0e38 {
+        return true;
+    }
+    a > floor as i128
+}
+
+/// Python's exact `a >= b` of an integer with a float: `a >= ceil(b)`.
+fn py_ge(a: i128, b: f64) -> bool {
+    if b.is_nan() {
+        return false;
+    }
+    let ceil = b.ceil();
+    if ceil >= 1.0e38 {
+        return false;
+    }
+    if ceil <= -1.0e38 {
+        return true;
+    }
+    a >= ceil as i128
+}
+
+/// Python's exact `a <= b` of an integer with a float.
+fn py_le(a: i128, b: f64) -> bool {
+    !b.is_nan() && !py_gt(a, b)
+}
+
+/// Python's `factor * n` for an integer `n`: `n` rounded to the nearest double (ties to even, as
+/// Python's int-to-float conversion), then one IEEE multiplication.
+fn py_times(factor: f64, n: i128) -> f64 {
+    factor * n as f64
+}
+
+/// The shapes pass's `near(a, b, tol)`: both positive and `|a - b| <= tol * max(a, b)`.
+fn near(a: i128, b: i128, tol: f64) -> bool {
+    a > 0 && b > 0 && py_le((a - b).abs(), py_times(tol, a.max(b)))
+}
+
+/// Python's `\w` for one character: a letter, a digit or `_` (Unicode, as Python 3's `re` on a
+/// `str`; Rust's alphanumeric test differs from Python's only on a few combining marks).
+fn py_word(c: char) -> bool {
+    c.is_alphanumeric() || c == '_'
+}
+
+/// R2's reading of a published lot number as a set of tokens (`rule_v2.py` `lot_nums`, score.py):
+/// lowercased; each `a-b` range — `-`, `–`, `to`, `bis`, `à` or `a` between two digit runs, the
+/// first not preceded and the second not followed by a word character — with `0 < b - a <= 50`
+/// expanded to its numbers; then each digit run with one following letter when no second letter
+/// follows (`\d+[a-z]?(?![a-z])`, backtracking as Python's `re` does, so `12bc` yields `1`),
+/// leading zeros dropped (`0` for all zeros). Empty means the number names none.
+///
+/// Where this can differ from the port (recorded for B3): Python's `\d` also matches non-ASCII
+/// decimal digits (here ASCII only), its `\s` four ASCII separators Rust's whitespace test does
+/// not, and a range end past 10^38 is not expanded here (Python's integers are unbounded).
+fn lot_number_tokens(published: &str) -> BTreeSet<String> {
+    let s: Vec<char> = published.to_lowercase().chars().collect();
+    let run_end = |from: usize| {
+        let mut j = from;
+        while j < s.len() && s[j].is_ascii_digit() {
+            j += 1;
+        }
+        j
+    };
+    let skip_space = |from: usize| {
+        let mut j = from;
+        while j < s.len() && s[j].is_whitespace() {
+            j += 1;
+        }
+        j
+    };
+    let number = |digits: &[char]| -> Option<u128> {
+        let text: String = digits.iter().collect();
+        let text = text.trim_start_matches('0');
+        if text.is_empty() { Some(0) } else { text.parse().ok() }
+    };
+    let token = |digits: &[char], letter: Option<char>| -> String {
+        let text: String = digits.iter().collect();
+        let text = text.trim_start_matches('0');
+        let mut out = if text.is_empty() { "0".to_owned() } else { text.to_owned() };
+        out.extend(letter);
+        out
+    };
+    let mut out = BTreeSet::new();
+    // The ranges (findall: non-overlapping, scanning on past each match, valid or not).
+    let mut i = 0;
+    while i < s.len() {
+        let mut matched = None;
+        if s[i].is_ascii_digit() && (i == 0 || !py_word(s[i - 1])) {
+            let a_end = run_end(i);
+            let k = skip_space(a_end);
+            let separator = ["-", "–", "to", "bis", "à", "a"].iter().find_map(|sep| {
+                let sep: Vec<char> = sep.chars().collect();
+                (s.len() >= k + sep.len() && s[k..k + sep.len()] == sep[..]).then_some(sep.len())
+            });
+            if let Some(len) = separator {
+                let m = skip_space(k + len);
+                if m < s.len() && s[m].is_ascii_digit() {
+                    let b_end = run_end(m);
+                    if b_end == s.len() || !py_word(s[b_end]) {
+                        matched = Some((a_end, m, b_end));
+                    }
+                }
+            }
+            if let Some((a_end, m, b_end)) = matched {
+                if let (Some(a), Some(b)) = (number(&s[i..a_end]), number(&s[m..b_end]))
+                    && b > a
+                    && b - a <= 50
+                {
+                    out.extend((a..=b).map(|n| n.to_string()));
+                }
+                i = b_end;
+                continue;
+            }
+        }
+        i += 1;
+    }
+    // The digit runs.
+    let letter = |j: usize| s.get(j).is_some_and(|c| c.is_ascii_lowercase());
+    let mut i = 0;
+    while i < s.len() {
+        if !s[i].is_ascii_digit() {
+            i += 1;
+            continue;
+        }
+        let j = run_end(i);
+        if !letter(j) {
+            out.insert(token(&s[i..j], None));
+            i = j;
+        } else if !letter(j + 1) {
+            out.insert(token(&s[i..j], Some(s[j])));
+            i = j + 1;
+        } else if j - i >= 2 {
+            // Two letters follow: the regex backs off one digit, which then ends the token.
+            out.insert(token(&s[i..j - 1], None));
+            i = j - 1;
+        } else {
+            i += 1;
+        }
+    }
+    out
+}
+
+/// R6's lot title normalisation (`rule_v2.py` `norm_title`): lowercased, every run of non-word
+/// characters one space, trimmed.
+fn normalised_title(title: &str) -> String {
+    let mut out = String::with_capacity(title.len());
+    let mut gap = false;
+    for c in title.to_lowercase().chars() {
+        if py_word(c) {
+            out.push(c);
+            gap = false;
+        } else if !gap {
+            out.push(' ');
+            gap = true;
+        }
+    }
+    out.trim().to_owned()
+}
+
+/// A lot's title as the API serves it (read.rs `summarise`, no requested language): ENG, then the
+/// version's original language, then any labelled language, then an unlabelled title; the first
+/// of a tie in `Fact` order.
+fn served_lot_title<'v>(lot: &'v LotState, original_lang: Option<&str>) -> Option<&'v str> {
+    let mut best: Option<(u8, &'v str)> = None;
+    for f in &lot.facts {
+        let Fact::Text { field, lang, value } = f else { continue };
+        if field != "title" {
+            continue;
+        }
+        let rank = match lang.as_deref() {
+            Some("ENG") => 3,
+            l if l.is_some() && l == original_lang => 2,
+            Some(_) => 1,
+            None => 0,
+        };
+        if best.is_none_or(|(r, _)| rank > r) {
+            best = Some((rank, value.as_str()));
+        }
+    }
+    best.map(|(_, v)| v)
+}
+
+/// R2's published lot number of `key` in the round of notice `notice_id`, whose result on the
+/// lot is `result`: the number the lot's own section printed in the version that notice caused
+/// ([`LotState::published_lot_no`]), else the result's own ([`LotResultState::published_lot_no`]);
+/// never TED's `ITEM` ordinal and never a title (amendments). B1's note, accepted: this is the
+/// port's precedence (lot section first, award block second). One recorded difference: B1 carries
+/// a lot a notice does not republish, so where the award notice prints no section for the key the
+/// carried number is an earlier notice's, where the port reads the award block's.
+fn printed_lot_number<'x>(partners: &ScalePartners<'x>, notice_id: i64, key: &str, result: &'x LotResultState) -> Option<&'x str> {
+    partners
+        .version_caused_by(notice_id)
+        .and_then(|v| v.lots.iter().find(|l| l.key == key))
+        .and_then(|l| l.published_lot_no.as_deref())
+        .or(result.published_lot_no.as_deref())
+}
+
+/// R1 (`P['R1']`, the judge's Bm_g): a summed lot whose result names two or more winners that are
+/// not all tenderers of ONE LotTender of that lot in the summed round. A consortium on one
+/// LotTender is one tender; so is a TED award block flagged `AWARDED_TO_GROUP`
+/// ([`LotResultState::group`]), with or without LotTender rows; two or more winners, no group
+/// flag and no LotTender on the lot in that round: refuse. (A winner with no organization id,
+/// which the port also refuses, cannot occur: a stored winner is an organization.)
+fn r1_lot_won_by_two_tenders(view: &AwardsView<'_>) -> bool {
+    view.summed.iter().any(|s| {
+        let winners: BTreeSet<i64> = s.result.winners.iter().copied().collect();
+        if winners.len() < 2 || s.result.group {
+            return false;
+        }
+        let mut bids = view.bids().filter(|(n, b)| *n == s.notice_id && b.lot_key.as_deref() == Some(s.key)).peekable();
+        if bids.peek().is_none() {
+            return true;
+        }
+        !bids.any(|(_, b)| winners.iter().all(|w| b.parties.iter().any(|p| p.role == "tenderer" && p.organization_id == *w)))
+    })
+}
+
+/// R2 (`P['R2a']`..`P['R2d']`, the judge's C_plus): the summed awards' published lot numbers
+/// ([`printed_lot_number`], read as [`lot_number_tokens`]). `R2a` two summed keys share a token;
+/// `R2b` one summed award's number lists two or more; `R2c` one key's award rounds name different
+/// numbers (port: a result with neither a figure nor a winner is skipped, and a number naming no
+/// token is no number); `R2d` the summed awards come from two or more notices and one names none.
+/// The first that fires, in that order.
+fn r2_published_lot_numbers(view: &AwardsView<'_>, partners: &ScalePartners<'_>) -> Option<&'static str> {
+    let tokens = |notice_id: i64, key: &str, result: &LotResultState| -> Option<BTreeSet<String>> {
+        printed_lot_number(partners, notice_id, key, result).map(lot_number_tokens).filter(|t| !t.is_empty())
+    };
+    let nums: Vec<Option<BTreeSet<String>>> = view.summed.iter().map(|s| tokens(s.notice_id, s.key, s.result)).collect();
+    for (i, a) in nums.iter().enumerate() {
+        for b in &nums[i + 1..] {
+            if let (Some(a), Some(b)) = (a, b)
+                && !a.is_disjoint(b)
+            {
+                return Some("R2a");
+            }
+        }
+    }
+    if nums.iter().flatten().any(|t| t.len() >= 2) {
+        return Some("R2b");
+    }
+    for s in &view.summed {
+        let mut seen: BTreeSet<BTreeSet<String>> = BTreeSet::new();
+        for &(notice_id, r) in view.on_lot(s.key) {
+            if awarded(r).is_none() && r.winners.is_empty() {
+                continue;
+            }
+            seen.extend(tokens(notice_id, s.key, r));
+        }
+        if seen.len() > 1 {
+            return Some("R2c");
+        }
+    }
+    let notices: BTreeSet<i64> = view.summed.iter().map(|s| s.notice_id).collect();
+    if notices.len() >= 2 && nums.iter().any(Option::is_none) {
+        return Some("R2d");
+    }
+    None
+}
+
+/// The stated totals R3 and R10 may read (`rule_v2.py` `usable`): every total of the chain so far
+/// ([`TenderVersion::stated_totals`], B1) in S's currency that is a scorer figure, each with
+/// whether it is a single-lot notice's own award (the port's `equals_its_single_lot_award`: its
+/// notice values exactly one lot result — a lot key and a scorer figure, in any currency — and
+/// the total is within 1 % of that award; the judge's text said "equal").
+fn usable_totals<'v>(view: &AwardsView<'v>) -> Vec<(&'v StatedTotal, bool)> {
+    view.head
+        .stated_totals
+        .iter()
+        .filter(|t| t.currency == view.currency && scorer_figure(t.cents))
+        .map(|t| {
+            let own: Vec<i64> = AwardsView::results(view.head)
+                .filter(|(n, r)| *n == t.notice_id && r.lot_key.as_deref().is_some_and(|k| !k.is_empty()))
+                .filter_map(|(_, r)| awarded(r).map(|(c, _)| c))
+                .filter(|&c| scorer_figure(c))
+                .collect();
+            let single = matches!(own.as_slice(), &[award] if (i128::from(t.cents) - i128::from(award)).abs() * 100 <= i128::from(award.max(1)));
+            (t, single)
+        })
+        .collect()
+}
+
+/// R3 (`P['R3']`, the judge's D_keys): an award-type total ([`StatedTotalKind::Award`]: BT-161,
+/// BT-118, BT-1118, a CAN-type form's notice-scope `TED-VAL_TOTAL`) of a round notice, not a
+/// single-lot notice's own award, below the summed awards of the keys that notice awards: their
+/// sum above 1.01 x the notice's largest such total. "The keys that notice awards" is pinned as
+/// the port reads it: every key a result of that notice's round names, closed and no-award
+/// results included. With no such total anywhere: S above 10 x the largest estimate — the
+/// Estimate-kind totals (BT-27-Procedure, `TED-VAL_ESTIMATED_TOTAL`, a CN-type form's
+/// `TED-VAL_TOTAL`), the head's procedure `estimated_value` and `framework_maximum`, and each
+/// lot's scored API-keyed estimate — every one in S's currency and a scorer figure.
+fn r3_notice_total_below_its_lots(view: &AwardsView<'_>, usable: &[(&StatedTotal, bool)]) -> bool {
+    let mut by_notice: std::collections::BTreeMap<i64, i64> = Default::default();
+    for (t, single) in usable {
+        if t.kind == StatedTotalKind::Award && !single {
+            let largest = by_notice.entry(t.notice_id).or_insert(t.cents);
+            *largest = (*largest).max(t.cents);
+        }
+    }
+    for (&notice_id, &total) in &by_notice {
+        let keys: i128 = view
+            .summed
+            .iter()
+            .filter(|s| view.on_lot(s.key).iter().any(|(n, _)| *n == notice_id))
+            .map(|s| i128::from(s.cents))
+            .sum();
+        if py_gt(keys, py_times(1.01, i128::from(total))) {
+            return true;
+        }
+    }
+    if !by_notice.is_empty() {
+        return false;
+    }
+    let mut estimates: Vec<i64> = usable.iter().filter(|(t, _)| t.kind == StatedTotalKind::Estimate).map(|(t, _)| t.cents).collect();
+    estimates.extend(
+        view.procedure_amounts()
+            .filter(|&(field, cents)| matches!(field, "estimated_value" | "framework_maximum") && scorer_figure(cents))
+            .map(|(_, cents)| cents),
+    );
+    estimates.extend(view.scored_lot_estimates().into_values());
+    estimates.iter().max().is_some_and(|&largest| i128::from(view.sum) > 10 * i128::from(largest))
+}
+
+/// R4 (`P['R4']`, the judge's E): a summed award at least 10 x its own lot's largest scored
+/// API-keyed estimate ([`AwardsView::scored_lot_estimates`]).
+fn r4_award_ten_times_its_estimate(view: &AwardsView<'_>) -> bool {
+    let estimates = view.scored_lot_estimates();
+    view.summed.iter().any(|s| estimates.get(s.key).is_some_and(|&e| i128::from(s.cents) >= 10 * i128::from(e)))
+}
+
+/// R5 (`P['R5.1']`..`P['R5.15']`): the shapes pass's 15 checks (`rule_v2.py` `shapes_checks`,
+/// from shapes_work/features.py) on the summed set in S's currency, numbered as the rule lists
+/// them; the first that fires. Their lot figures are every API-keyed lot amount in S's currency
+/// that states a value, UNFILTERED (features.py applies no figure floor, unlike R3/R4), each
+/// lot's largest (`est`, `bt709` (BT-709), `bt660` (BT-660), `bt271` (BT-271-Lot)) or smallest
+/// (`est_min`) per field. Where the port and the rule text differ, the port: R5.1 "no winner" is
+/// no distinct winner; R5.2 "neither a winner nor a value" is no winner and no non-zero awarded
+/// cents; R5.4 includes the award's own round (`rounds` over every result notice); R5.5 counts
+/// the round's bids with a non-zero value in S's currency.
+fn r5_shape_check(view: &AwardsView<'_>) -> Option<&'static str> {
+    let largest = |field: &str| {
+        view.lot_figures(field)
+            .into_iter()
+            .filter_map(|(lot, cs)| cs.into_iter().max().map(|m| (lot, m)))
+            .collect::<std::collections::BTreeMap<_, _>>()
+    };
+    let est = largest("estimated_value");
+    let est_min: std::collections::BTreeMap<&str, i64> =
+        view.lot_figures("estimated_value").into_iter().filter_map(|(lot, cs)| cs.into_iter().min().map(|m| (lot, m))).collect();
+    let bt709 = largest(RESULT_FRAMEWORK_MAXIMUM);
+    let bt660 = largest(RESULT_FRAMEWORK_REESTIMATE);
+    let bt271 = largest("framework_maximum");
+    let truthy = |v: Option<&i64>| v.copied().filter(|&c| c != 0);
+    // Each round's valued bids in S's currency, by (notice, lot key).
+    let mut bids: std::collections::HashMap<(i64, Option<&str>), Vec<i64>> = Default::default();
+    for (notice_id, b) in view.bids() {
+        if b.quality.is_none()
+            && let (Some(c), Some(cur)) = (b.cents, b.currency.as_deref())
+            && c != 0
+            && cur == view.currency
+        {
+            bids.entry((notice_id, b.lot_key.as_deref())).or_default().push(c);
+        }
+    }
+    struct Per<'p> {
+        lot: &'p str,
+        cents: i128,
+        decision: Option<&'p str>,
+        n_winners: usize,
+        bvals: Vec<i64>,
+        later_closed: bool,
+    }
+    let closed = |d: Option<&str>| d.is_some_and(|d| d.starts_with("clos"));
+    let per: Vec<Per<'_>> = view
+        .summed
+        .iter()
+        .map(|s| {
+            let on_lot = view.on_lot(s.key);
+            // features.py reads the summed result back by (notice, result key): the first such.
+            let lr = on_lot.iter().find(|(n, r)| *n == s.notice_id && r.key == s.result.key).map_or(s.result, |(_, r)| *r);
+            let winners: BTreeSet<i64> = lr.winners.iter().copied().collect();
+            Per {
+                lot: s.key,
+                cents: i128::from(s.cents),
+                decision: lr.decision.as_deref(),
+                n_winners: winners.len(),
+                bvals: bids.get(&(s.notice_id, Some(s.key))).cloned().unwrap_or_default(),
+                later_closed: on_lot.iter().any(|(n, o)| {
+                    *n > s.notice_id
+                        && (closed(o.decision.as_deref()) || (o.winners.is_empty() && awarded(o).is_none_or(|(c, _)| c == 0)))
+                }),
+            }
+        })
+        .collect();
+    let sum = i128::from(view.sum);
+    let est_total: i128 = est.values().map(|&c| i128::from(c)).sum();
+    // R5.4's figure sets: each lot field's per-lot largest over two or more lots, and each result
+    // notice's lot awards (above the floor, in S's currency; a later row of one lot replaces an
+    // earlier) over two or more lots.
+    let mut figure_sets: Vec<i128> = Vec::new();
+    for field in ["estimated_value", RESULT_FRAMEWORK_MAXIMUM, RESULT_FRAMEWORK_REESTIMATE, "framework_maximum"] {
+        let d = largest(field);
+        if d.len() >= 2 {
+            figure_sets.push(d.values().map(|&c| i128::from(c)).sum());
+        }
+    }
+    let mut rounds: std::collections::BTreeMap<i64, std::collections::BTreeMap<&str, i64>> = Default::default();
+    for (notice_id, r) in AwardsView::results(view.head) {
+        if let (Some(lot), Some((c, cur))) = (r.lot_key.as_deref().filter(|k| !k.is_empty()), awarded(r))
+            && c != 0
+            && c > SCORER_FLOOR_CENTS
+            && cur == view.currency
+        {
+            rounds.entry(notice_id).or_default().insert(lot, c);
+        }
+    }
+    figure_sets.extend(rounds.values().filter(|d| d.len() >= 2).map(|d| d.values().map(|&c| i128::from(c)).sum::<i128>()));
+    let bt709_summed: i128 = per.iter().map(|p| bt709.get(p.lot).map_or(0, |&c| i128::from(c))).sum();
+    let est_summed: i128 = per.iter().map(|p| est.get(p.lot).map_or(0, |&c| i128::from(c))).sum();
+    let procedure_estimates: Vec<i64> =
+        view.procedure_amounts().filter(|&(field, _)| field == "estimated_value").map(|(_, c)| c).collect();
+    let checks: [bool; 15] = [
+        // 1 clos_nw: a summed result closed, or with no winner.
+        per.iter().any(|p| closed(p.decision) || p.n_winners == 0),
+        // 2 later_closed: a later result on a summed lot closed, or with neither winner nor value.
+        per.iter().any(|p| p.later_closed),
+        // 3 award_eq_est_total: an award within 0.5 % of the sum of all lot estimates (>= 2 lots).
+        est.len() >= 2 && per.iter().any(|p| near(p.cents, est_total, 0.005)),
+        // 4 award_eq_whole: an award within 0.5 % of a figure set's sum.
+        per.iter().any(|p| figure_sets.iter().any(|&f| near(p.cents, f, 0.005))),
+        // 5 award_gt_bid_sum: an award above 1.01 x its round's valued bids on the lot.
+        per.iter().any(|p| !p.bvals.is_empty() && py_gt(p.cents, py_times(1.01, p.bvals.iter().map(|&c| i128::from(c)).sum()))),
+        // 6 gt2_bt709: an award at least 1.9 x its lot's BT-709.
+        per.iter().any(|p| truthy(bt709.get(p.lot)).is_some_and(|b| py_ge(p.cents, py_times(1.9, i128::from(b))))),
+        // 7 bt709_sum_lt_S: S above 1.5 x the BT-709 of the summed lots that carry one.
+        !bt709.is_empty() && bt709_summed > 0 && py_gt(sum, py_times(1.5, bt709_summed)),
+        // 8 ge15_est_min: an award at least 1.5 x its lot's smallest estimate.
+        per.iter().any(|p| truthy(est_min.get(p.lot)).is_some_and(|e| py_ge(p.cents, py_times(1.5, i128::from(e))))),
+        // 9 ge3_est: an award at least 3 x its lot's estimate.
+        per.iter().any(|p| truthy(est.get(p.lot)).is_some_and(|e| p.cents >= 3 * i128::from(e))),
+        // 10 est_sum_lt_S3: S above 3 x the estimates of the summed lots that carry one.
+        est_summed > 0 && sum > 3 * est_summed,
+        // 11 equal_bids_eq_ceiling: two or more equal valued bids equal to a lot reference (0.1 %).
+        per.iter().any(|p| {
+            let refs: Vec<i128> = [bt709.get(p.lot), bt660.get(p.lot), est.get(p.lot), est_min.get(p.lot), bt271.get(p.lot)]
+                .into_iter()
+                .filter_map(truthy)
+                .map(i128::from)
+                .collect();
+            p.bvals
+                .iter()
+                .filter(|v| p.bvals.iter().filter(|w| w == v).count() >= 2)
+                .any(|&d| refs.iter().any(|&r| near(i128::from(d), r, 0.001)))
+        }),
+        // 12 award_n_times_ref: an award n_winners x a lot reference (0.1 %), n_winners >= 2.
+        per.iter().any(|p| {
+            p.n_winners >= 2
+                && [bt709.get(p.lot), bt660.get(p.lot), est.get(p.lot), bt271.get(p.lot)]
+                    .into_iter()
+                    .filter_map(truthy)
+                    .any(|r| near(p.cents, i128::from(r) * p.n_winners as i128, 0.001))
+        }),
+        // 13 tiny: S below 1,000.00.
+        sum < 100_000,
+        // 14 proc_est_eq_each_lot_est: a procedure estimate equal to every lot's estimate (0.1 %).
+        est.len() >= 2 && procedure_estimates.iter().any(|&c| est.values().all(|&v| near(i128::from(v), i128::from(c), 0.001))),
+        // 15 lot_est_all_equal: every lot estimate equal (>= 2 lots).
+        est.len() >= 2 && est.values().collect::<BTreeSet<_>>().len() == 1,
+    ];
+    checks.iter().position(|&hit| hit).map(|i| R5_CHECKS[i])
+}
+
+/// R6 (`P['R6']`, the judge's C_title): two summed keys awarded in different notices with the
+/// same non-empty winner set and the same non-empty normalised lot title (the API's lot title,
+/// [`served_lot_title`]).
+fn r6_lot_restated_under_a_second_key(view: &AwardsView<'_>) -> bool {
+    let facts: Vec<(i64, BTreeSet<i64>, String)> = view
+        .summed
+        .iter()
+        .map(|s| {
+            let title = view
+                .head
+                .lots
+                .iter()
+                .find(|l| l.key == s.key)
+                .and_then(|l| served_lot_title(l, view.head.original_lang.as_deref()))
+                .map(normalised_title)
+                .unwrap_or_default();
+            (s.notice_id, s.result.winners.iter().copied().collect(), title)
+        })
+        .collect();
+    facts.iter().enumerate().any(|(i, (na, wa, ta))| {
+        facts[i + 1..].iter().any(|(nb, wb, tb)| na != nb && !wa.is_empty() && wa == wb && !ta.is_empty() && ta == tb)
+    })
+}
+
+/// R7 (`P['R7']`, the judge's P10): a summed award at least 10 x, or at most 1/10 of, an earlier
+/// valued award on the same key (an earlier round by notice id, in S's currency, a scorer figure).
+fn r7_award_ten_times_an_earlier_award(view: &AwardsView<'_>) -> bool {
+    view.summed.iter().any(|s| {
+        let c = i128::from(s.cents);
+        view.on_lot(s.key).iter().any(|&(n, r)| {
+            n < s.notice_id
+                && awarded(r).is_some_and(|(e, cur)| {
+                    cur == view.currency && scorer_figure(e) && (c >= 10 * i128::from(e) || c * 10 <= i128::from(e))
+                })
+        })
+    })
+}
+
+/// R8 (`P['R8']`, the judge's DOM10): the largest summed award at least 10 x the second largest.
+fn r8_dominant_award(view: &AwardsView<'_>) -> bool {
+    let mut figures: Vec<i128> = view.summed.iter().map(|s| i128::from(s.cents)).collect();
+    figures.sort_unstable_by(|a, b| b.cmp(a));
+    figures.len() >= 2 && figures[0] >= 10 * figures[1]
+}
+
+/// R9 (`P['R9']`): the summed result's round publishes LotTenders, none of them for the summed
+/// lot — an award resolved through another lot's contract or tender (27915). Amendment: only bids
+/// with a resolved lot key count.
+fn r9_award_through_another_lots_tender(view: &AwardsView<'_>) -> bool {
+    let mut lots_bid: std::collections::HashMap<i64, BTreeSet<&str>> = Default::default();
+    for (notice_id, b) in view.bids() {
+        if let Some(lot) = b.lot_key.as_deref().filter(|k| !k.is_empty()) {
+            lots_bid.entry(notice_id).or_default().insert(lot);
+        }
+    }
+    view.summed.iter().any(|s| lots_bid.get(&s.notice_id).is_some_and(|lots| !lots.is_empty() && !lots.contains(s.key)))
+}
+
+/// R10 (`P['R10']`, the band vouch): the first usable stated total ([`usable_totals`], in chain
+/// order) that vouches for S — not a single-lot notice's own award, equal to no single summed
+/// award, and within 1 % of S. Every [`StatedTotalKind`] vouches: B1's table is the rule's list
+/// exactly (BT-161, TED-VAL_TOTAL, BT-118, BT-1118, BT-27-Procedure, TED-VAL_ESTIMATED_TOTAL, TED
+/// VAL_RANGE_TOTAL LOW / HIGH; never TED-VALUE / VALUE_COST, an estimate range or a modification's
+/// VAL_TOTAL_BEFORE / AFTER).
+///
+/// **At every size.** The port's `R10_MIN_EUR_CENTS` (EUR 10 m, amendment (a)) is replaced by 0:
+/// issue 551's "vouched everywhere" fallback (M2 fallback PASSED, 2026-10-17: 29 right / 1 wrong
+/// of 30, the band 15 / 15) runs B1–B5 with R10 applied at every size, so an awards sum of any
+/// size with no vouching total is refused (EUR 99,999,999.99 is not exempt). The port's `S_eur`
+/// precondition always holds here: v1's G0 already needs S's EUR value.
+///
+/// Recorded difference: `vouched_by` is the first vouching total in B1's order (chain order, then
+/// the order a notice's values are read), where the port groups one section's totals by field.
+/// They can name different totals only when one notice states two that vouch; ship or refuse,
+/// the checks B3 compares, cannot differ.
+fn r10_vouching_total<'v>(view: &AwardsView<'_>, usable: &[(&'v StatedTotal, bool)]) -> Option<&'v StatedTotal> {
+    let singles: BTreeSet<i64> = view.summed.iter().map(|s| s.cents).collect();
+    let sum = i128::from(view.sum);
+    usable
+        .iter()
+        .find(|(t, single)| {
+            !single && !singles.contains(&t.cents) && py_le((i128::from(t.cents) - sum).abs(), py_times(0.01, sum))
+        })
+        .map(|(t, _)| *t)
+}
+
+/// Issue 551 path W v2 (unit 4b, B2): R1–R10 in `rule_v2.py`'s `V2_ORDER` (R1, R2a–R2d, R3, R4,
+/// R5.1–R5.15, R6, R7, R8, R9, R10), run after v1's G4 on a sum v1 would serve: `Err` names the
+/// first that refuses (today's head stays), `Ok` the total that vouches for S. v2 only adds
+/// refusals, so every v2 fire is a v1 fire.
+fn awards_v2_check<'v>(view: &AwardsView<'v>, partners: &ScalePartners<'_>) -> Result<&'v StatedTotal, &'static str> {
+    if r1_lot_won_by_two_tenders(view) {
+        return Err("R1");
+    }
+    if let Some(check) = r2_published_lot_numbers(view, partners) {
+        return Err(check);
+    }
+    let usable = usable_totals(view);
+    if r3_notice_total_below_its_lots(view, &usable) {
+        return Err("R3");
+    }
+    if r4_award_ten_times_its_estimate(view) {
+        return Err("R4");
+    }
+    if let Some(check) = r5_shape_check(view) {
+        return Err(check);
+    }
+    if r6_lot_restated_under_a_second_key(view) {
+        return Err("R6");
+    }
+    if r7_award_ten_times_an_earlier_award(view) {
+        return Err("R7");
+    }
+    if r8_dominant_award(view) {
+        return Err("R8");
+    }
+    if r9_award_through_another_lots_tender(view) {
+        return Err("R9");
+    }
+    r10_vouching_total(view, &usable).ok_or("R10")
 }
 
 /// One lot-scoped amount offered to [`elect_lot_value`]: the published figure,
@@ -4360,6 +5229,13 @@ pub struct ScalePartners<'a> {
     /// repeated procedure test (492's sibling-lot exemption asks once per x100 lot figure)
     /// costs O(sums) rather than a rebuild over every lot and award.
     lot_sums: LotSumsCache,
+    /// Issue 551 unit 4b (B2): each version of the chain so far by the notice that caused it
+    /// (a later version caused by the same notice replaces an earlier one), filled by
+    /// [`Self::add_version_figures`]. Path W's R2 reads a summed award's published lot number
+    /// from the version its round's notice caused ([`ScalePartners::version_caused_by`]); a
+    /// rule built without the chain ([`Self::new`] alone, the read layer's) holds none, and R2
+    /// then reads the award's own number. One pointer per version: the fold pays nothing else.
+    caused_by: std::collections::HashMap<i64, &'a TenderVersion>,
 }
 
 /// [`ScalePartners::lot_sums`]: derived from the head version alone, so equality ignores
@@ -4396,7 +5272,14 @@ impl<'a> ScalePartners<'a> {
             head_awards: Default::default(),
             head_version: None,
             lot_sums: Default::default(),
+            caused_by: Default::default(),
         }
+    }
+
+    /// Issue 551 unit 4b (B2): the version of the chain the notice `notice_id` caused, when the
+    /// rule was built over the chain ([`Self::add_version_figures`]).
+    fn version_caused_by(&self, notice_id: i64) -> Option<&'a TenderVersion> {
+        self.caused_by.get(&notice_id).copied()
     }
 
     /// A figure of ANY version of the chain, amount or lot award, that may be
@@ -4452,6 +5335,7 @@ impl<'a> ScalePartners<'a> {
     /// values need the rule over versions 1..=N, and rebuilding it per version
     /// would be quadratic on the long legacy chains.
     pub fn add_version_figures(&mut self, v: &'a TenderVersion) {
+        self.caused_by.insert(v.caused_by_notice_id, v);
         // Only a Lot's key can make a sibling-lot partner. A Part's or a LotsGroup's
         // figure is a lot figure of no known lot: a PIN's PAR-0001 figure may be the very
         // lot the CN calls LOT-0001, and a group's figure covers its member lots.
@@ -5193,6 +6077,13 @@ impl<'a> LotSums<'a> {
             LotSumKind::Awards => self.awards.iter().map(|(&lot, &(_, cents))| (lot, cents)).collect(),
             _ => self.amounts.iter().filter(|((k, _), _)| *k == kind).map(|(&(_, lot), &cents)| (lot, cents)).collect(),
         }
+    }
+
+    /// Issue 551 unit 4b (B2): each lot's latest award as `(lot key, the round's notice id,
+    /// cents)` in key order — [`Self::per_lot`]`(Awards)` with the notice each figure came from,
+    /// which path W's v2 guards read the award's own result by.
+    pub fn latest_awards(&self) -> Vec<(&'a str, i64, i64)> {
+        self.awards.iter().map(|(&lot, &(notice_id, cents))| (lot, notice_id, cents)).collect()
     }
 
     /// Issue 551: how many lots carry an award (the size of the awards sum).
@@ -43727,6 +44618,13 @@ async fn write_candidate_edges(
 #[path = "canonical_551_fixtures.rs"]
 mod lot_sum_551_fixtures;
 
+/// Issue 551 unit 4b (B2): the labelled Tenders WITH the B1 facts (published lot numbers, the
+/// group flag, stated totals), for path W v2's labelled outcomes.
+#[cfg(test)]
+#[path = "canonical_551_v2_fixtures.rs"]
+mod lot_sum_551_v2_fixtures;
+
+
 #[cfg(test)]
 mod tests {
     use super::{
@@ -45881,45 +46779,35 @@ mod tests {
         }
     }
 
-    /// Issue 551 path W on its labelled heads (the Lyon-Turin trio, 8426318, 585917, 5995030) and
-    /// unit 2's fresh holdout (467176, 294968, 7256284 right; 5977060 closer, the accepted cost of
-    /// the latest award per lot key): no procedure figure, today's head an award copy or null,
-    /// and the lots' latest awards pass every guard. Unit 4a withdrew path W
-    /// ([`super::LOT_SUM_AWARDS_PATH`]), so these run with the path switched on
-    /// ([`super::head_value_with_awards_path`]): the guards' pins, kept for unit 4b. What production
-    /// serves for them is [`path_w_is_withdrawn_so_its_pins_keep_the_max_election`].
+    /// Issue 551 unit 4b (B2): an awards sum is never served unvouched. Under the "vouched
+    /// everywhere" fallback (M2 fallback PASSED, 2026-10-17) R10 applies at every size: every
+    /// path-W sum needs a buyer-stated total within 1 % of it. Until B2 this test pinned the
+    /// opposite (unit 3's "unvouched awards sum served under its guards", the Lyon-Turin trio,
+    /// 8426318, 585917, 5995030 and unit 2's holdout). Now: the real heads that pass every other
+    /// guard (the three served pins, three sample rights, the trio, the holdouts 467176 and
+    /// 294968; `canonical_551_v2_fixtures.rs`, with the B1 facts) keep today's head, refused by
+    /// R10, once their chain's stated totals are taken away; and unit 3's fixtures of the ten heads
+    /// unit 3 served, which carry no B1 facts at all (no stated total, no winner), serve none.
+    /// Path W switched on throughout ([`super::head_value_with_awards_path`]).
     #[test]
-    fn an_unvouched_awards_sum_is_served_under_its_guards() {
-        use super::lot_sum_551_fixtures::{PUBLISHED_AT, fixture};
-        use super::{DerivationPath, LotSumKind, head_value_with_awards_path as head_value, max_election_eur_cents};
-        // (tender, S, currency, lots)
-        let cases: [(i64, i64, &str, usize); 10] = [
-            (6450467, 357_476_497_928, "EUR", 3),
-            (6450469, 357_476_497_928, "EUR", 3),
-            (6450473, 357_476_497_928, "EUR", 3),
-            // GBP 2 bn -> GBP 3 bn, the buyer's II.1.7 total.
-            (8426318, 300_000_000_000, "GBP", 7),
-            // null -> EUR 250 k; the BT-709 rows (EUR 250 k on each lot) are never summed.
-            (585917, 25_000_000, "EUR", 2),
-            // PLN 2,721.60 -> PLN 1,549,511.60; its small repeated pair passes G1'.
-            (5995030, 154_951_160, "PLN", 35),
-            (467176, 316_181_800, "CHF", 5),
-            (294968, 444_099_242, "CHF", 2),
-            (7256284, 57_487_328, "EUR", 2),
-            (5977060, 414_324_300, "EUR", 5),
-        ];
-        let date = crate::rates::civil_date(PUBLISHED_AT);
-        for (id, sum, currency, lots) in cases {
-            let fx = fixture(id);
+    fn an_unvouched_awards_sum_is_never_served() {
+        use super::{HeadValue, awards_path_check, head_value_with_awards_path, max_election_eur_cents};
+        for id in [585917, 5995030, 8426318, 6862672, 37368, 6483572, 6450467, 6450469, 6450473, 467176, 294968] {
+            let fx = super::lot_sum_551_v2_fixtures::fixture(id);
+            let rates = fx.rates();
+            let mut chain = fx.versions();
+            for v in &mut chain {
+                v.stated_totals.clear();
+            }
+            assert_eq!(awards_path_check(&chain, &rates).map(|d| d.cents), Err("R10"), "{id}: unvouched, R10 refuses");
+            let today = max_election_eur_cents(&chain, &rates);
+            assert_eq!(head_value_with_awards_path(&chain, &rates), HeadValue { eur_cents: today, derived: None }, "{id}: today's head stays");
+        }
+        for id in [6450467, 6450469, 6450473, 8426318, 585917, 5995030, 467176, 294968, 7256284, 5977060] {
+            let fx = super::lot_sum_551_fixtures::fixture(id);
             let (chain, rates) = (fx.versions(), fx.rates());
-            let value = head_value(&chain, &rates);
-            let derived = value.derived.clone().unwrap_or_else(|| panic!("{id}: path W serves the awards sum, got {value:?}"));
-            assert_eq!(derived.path, DerivationPath::Awards, "{id}");
-            assert_eq!((derived.kind, derived.cents, derived.currency.as_str(), derived.lots), (LotSumKind::Awards, sum, currency, lots), "{id}");
-            assert_eq!(value.eur_cents, rates.eur_cents(sum, currency, &date), "{id}");
-            assert!(max_election_eur_cents(&chain, &rates) < value.eur_cents, "{id}: above today's figure (G0)");
-            assert_eq!(derived.derivation(), super::VALUE_DERIVATION_AWARDS);
-            assert_eq!(derived.detail_json(), format!("{{\"summed\":\"awards\",\"lots\":{lots}}}"), "{id}");
+            let value = head_value_with_awards_path(&chain, &rates);
+            assert_eq!(value, HeadValue { eur_cents: max_election_eur_cents(&chain, &rates), derived: None }, "{id}: unit 3's rows state no total");
         }
     }
 
@@ -45927,22 +46815,120 @@ mod tests {
     /// 42 % on heads of EUR 100 m or more), so the heads it summed keep the max election, unmarked:
     /// the runbook's six path-W pins (the Lyon-Turin trio 6450467/69/73, 8426318, 585917, 5995030;
     /// docs/operations.md's Verify after `refold-lot-sum`) and unit 2's four holdouts. 585917 serves
-    /// null again, 5995030 one lot's PLN 2,721.60, 8426318 its GBP 2 bn.
+    /// null again, 5995030 one lot's PLN 2,721.60, 8426318 its GBP 2 bn. Read on unit 3's stored
+    /// rows and on unit 4b's API rows with the B1 facts (`canonical_551_v2_fixtures.rs`). Unit 4b
+    /// (B2): with the switch on, path W v2 would serve only the three pins a buyer-stated total
+    /// vouches for (585917, 5995030, 8426318); the trio and the holdouts are refused by its guards.
     #[test]
     fn path_w_is_withdrawn_so_its_pins_keep_the_max_election() {
-        use super::lot_sum_551_fixtures::fixture;
         use super::{HeadValue, head_value, head_value_with_awards_path, max_election_eur_cents};
-        for id in [6450467, 6450469, 6450473, 8426318, 585917, 5995030, 467176, 294968, 7256284, 5977060] {
-            let fx = fixture(id);
+        let pins = [6450467, 6450469, 6450473, 8426318, 585917, 5995030, 467176, 294968, 7256284, 5977060];
+        for id in pins {
+            for (rows, (chain, rates)) in [
+                ("unit 3", { let fx = super::lot_sum_551_fixtures::fixture(id); (fx.versions(), fx.rates()) }),
+                ("unit 4b", { let fx = super::lot_sum_551_v2_fixtures::fixture(id); (fx.versions(), fx.rates()) }),
+            ] {
+                let today = max_election_eur_cents(&chain, &rates);
+                assert_eq!(head_value(&chain, &rates), HeadValue { eur_cents: today, derived: None }, "{id} ({rows}): the max election, no derivation");
+                assert_eq!(super::head_value_eur_cents(&chain, &rates), today, "{id} ({rows}): the EUR column the fold stores");
+            }
+            let fx = super::lot_sum_551_v2_fixtures::fixture(id);
             let (chain, rates) = (fx.versions(), fx.rates());
             let today = max_election_eur_cents(&chain, &rates);
-            assert_eq!(head_value(&chain, &rates), HeadValue { eur_cents: today, derived: None }, "{id}: the max election, no derivation");
-            assert_eq!(super::head_value_eur_cents(&chain, &rates), today, "{id}: the EUR column the fold stores");
             let summed = head_value_with_awards_path(&chain, &rates);
-            assert!(summed.derived.is_some() && today < summed.eur_cents, "{id}: only the switch keeps path W's sum off the head");
+            if [585917, 5995030, 8426318].contains(&id) {
+                assert!(summed.derived.is_some() && today < summed.eur_cents, "{id}: only the switch keeps path W's sum off the head");
+            } else {
+                assert_eq!(summed, HeadValue { eur_cents: today, derived: None }, "{id}: path W v2 refuses it even switched on");
+            }
         }
-        let fx = fixture(585917);
+        let fx = super::lot_sum_551_fixtures::fixture(585917);
         assert_eq!(head_value(&fx.versions(), &fx.rates()), HeadValue::default(), "585917: null, as before issue 551");
+        let fx = super::lot_sum_551_v2_fixtures::fixture(585917);
+        assert_eq!(head_value(&fx.versions(), &fx.rates()), HeadValue::default(), "585917: null on the API rows too");
+    }
+
+    /// Issue 551 unit 4b (B2): path W v2 on the labelled Tenders, rebuilt with the B1 facts from
+    /// the inputs `rule_v2.py` decided them on (`canonical_551_v2_fixtures.rs`, written by
+    /// `unit4b/gen_fixtures.py`), each with the port's outcome under R10 at every size: the
+    /// decision, S, its currency, n and the FIRST refusing check, as unit B3 compares them. Served:
+    /// the pins 585917 (EUR 250,000.00, BT-118), 5995030 (PLN 1,549,511.60, TED-VAL_TOTAL PLN
+    /// 1,546,390.00) and 8426318 (GBP 3,000,000,000.00, TED-HIGH), and three sample rights the port
+    /// ships vouched. Refused: one wrong per shape S1a–S10 (shapes.md), 6421819 (the amendments'
+    /// must-refuse: its LOT-1 notice prints only TED-ITEM, so R2(d)), the Lyon-Turin trio (R10: no
+    /// stated total; they keep EUR 1,660,661,682.94), 7256284 and 5977060 (R2d), 8831876 (R1: its
+    /// GBP 26 bn total sits on 8831875) and the former holdouts 467176 and 294968 (unvouched: R10).
+    /// Production (path W off) keeps every head's max election.
+    #[test]
+    fn the_redesigned_awards_path_keeps_its_labelled_outcomes() {
+        use super::lot_sum_551_v2_fixtures::{FIXTURES, PUBLISHED_AT, fixture};
+        use super::{DerivationPath, HeadValue, LotSumKind, VouchingTotal, awards_path_check, head_value, head_value_with_awards_path, max_election_eur_cents};
+        // Served: (tender, S, currency, n, vouched_by (field, notice, cents)).
+        let served: [(i64, i64, &str, usize, (&str, i64, i64)); 6] = [
+            (585917, 25_000_000, "EUR", 2, ("BT-118-NoticeResult", 25416405, 25_000_000)),
+            (5995030, 154_951_160, "PLN", 35, ("TED-VAL_TOTAL", 19612533, 154_639_000)),
+            (8426318, 300_000_000_000, "GBP", 7, ("TED-HIGH", 20083570, 300_000_000_000)),
+            (6862672, 802_400_000, "HUF", 2, ("TED-VAL_TOTAL", 21374269, 802_400_000)),
+            (37368, 13_500_000, "EUR", 3, ("BT-118-NoticeResult", 25511131, 13_500_000)),
+            (6483572, 48_382_746, "EUR", 2, ("TED-LOW", 20577719, 48_382_696)),
+        ];
+        // Refused: (tender, the first refusing check).
+        let refused: [(i64, &str); 22] = [
+            (70706, "R1"),    // S1a ceiling copied per supplier
+            (249185, "R1"),   // S1b parallel competing offers summed
+            (793898, "R5.5"), // S2 one multi-lot contract counted in each lot (award above its lot's bids)
+            (5747154, "R2b"), // S3a a single TED section restating the framework on LOT-1 ("1, 2, ...")
+            (5976305, "R2a"), // S3b a single TED section of another lot keyed LOT-1
+            (6421819, "R2d"), // S3c a merged call-off; the amendments' must-refuse
+            (7239967, "R3"),  // S3d keys colliding inside one notice
+            (182819, "R6"),   // S4 an eForms modification re-keying one contract
+            (8648668, "R5.3"), // S5 the procedure total booked as one lot's award
+            (5849667, "R3"),  // S6 nested lots
+            (739642, "R3"),   // S7 pseudo-lots
+            (993254, "R8"),   // S8 a x10^k slip
+            (240143, "R5.1"), // S9 a closed lot summed
+            (324582, "R5.13"), // S10 unit rates summed
+            (6450467, "R10"),
+            (6450469, "R10"),
+            (6450473, "R10"),
+            (7256284, "R2d"),
+            (5977060, "R2d"),
+            (8831876, "R1"),
+            (467176, "R10"),
+            (294968, "R10"),
+        ];
+        assert_eq!(FIXTURES.len(), served.len() + refused.len(), "every fixture is pinned");
+        let date = crate::rates::civil_date(PUBLISHED_AT);
+        for (id, sum, currency, lots, (field, notice_id, cents)) in served {
+            let fx = fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            let vouched_by = VouchingTotal { field: field.into(), notice_id, cents };
+            let derived = awards_path_check(&chain, &rates).unwrap_or_else(|check| panic!("{id}: served, refused by {check}"));
+            assert_eq!(derived.path, DerivationPath::Awards { vouched_by }, "{id}: the vouching total");
+            assert_eq!((derived.kind, derived.cents, derived.currency.as_str(), derived.lots), (LotSumKind::Awards, sum, currency, lots), "{id}: S");
+            let value = head_value_with_awards_path(&chain, &rates);
+            assert_eq!(value, HeadValue { eur_cents: rates.eur_cents(sum, currency, &date), derived: Some(derived.clone()) }, "{id}");
+            assert!(max_election_eur_cents(&chain, &rates) < value.eur_cents, "{id}: above today's figure");
+            assert_eq!(
+                derived.detail_json(),
+                format!("{{\"summed\":\"awards\",\"lots\":{lots},\"vouched_by\":{{\"field\":\"{field}\",\"notice_id\":{notice_id},\"cents\":{cents}}}}}"),
+                "{id}: the detail names the vouching total"
+            );
+            assert_eq!(head_value(&chain, &rates), HeadValue { eur_cents: max_election_eur_cents(&chain, &rates), derived: None }, "{id}: production");
+        }
+        for (id, check) in refused {
+            let fx = fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            assert_eq!(awards_path_check(&chain, &rates).map(|d| d.cents), Err(check), "{id}: the first refusing check");
+            let today = HeadValue { eur_cents: max_election_eur_cents(&chain, &rates), derived: None };
+            assert_eq!(head_value_with_awards_path(&chain, &rates), today, "{id}: today's head stays");
+            assert_eq!(head_value(&chain, &rates), today, "{id}: production");
+        }
+        // The Lyon-Turin trio keeps EUR 1,660,661,682.94.
+        for id in [6450467, 6450469, 6450473] {
+            let fx = fixture(id);
+            assert_eq!(head_value_with_awards_path(&fx.versions(), &fx.rates()).eur_cents, Some(166_066_168_294), "{id}");
+        }
     }
 
     /// Issue 551: the shapes unit 2 rejected keep the max election, unmarked. 8440393 repeats
@@ -46001,6 +46987,9 @@ mod tests {
             ..head(facts, Vec::new())
         };
         let one = |v: &TenderVersion| head_value(std::slice::from_ref(v), &rates);
+        // The check that kept today's head, in the port's names (unit 4b B2's review: unit B3
+        // compares the first refusing check; path V's decisions are unchanged).
+        let check = |chain: &[TenderVersion]| super::awards_path_check(chain, &rates).map(|d| d.cents);
 
         // The base: EUR 2.5 bn over awards of EUR 1.5 m and 1 m (537, k = 3): EUR 2.5 m served.
         let base = version(vec![amt("result_value", 250_000_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
@@ -46016,6 +47005,7 @@ mod tests {
             "{\"summed\":\"awards\",\"lots\":2,\"rule\":\"537\",\"exponent\":3,\"refused\":{\"field\":\"result_value\",\"value\":{\"cents\":250000000000,\"currency\":\"EUR\"}}}"
         );
         assert_eq!(max_election_eur_cents(std::slice::from_ref(&base), &rates), None, "the max election serves null");
+        assert_eq!(check(std::slice::from_ref(&base)), Ok(250_000_000));
 
         // Precondition: an admitted procedure figure keeps the max election, refusal or not.
         let admitted = version(vec![amt("result_value", 250_000_000_000), amt("estimated_value", 240_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
@@ -46028,6 +47018,7 @@ mod tests {
         let mut above = version(vec![amt("result_value", 250_000_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
         above.lots[0] = lot("LOT-1", vec![amt("estimated_value", 300_000_000)]);
         assert_eq!(one(&above), super::HeadValue { eur_cents: Some(300_000_000), derived: None }, "V0: never below today's figure");
+        assert_eq!(check(std::slice::from_ref(&above)), Err("V0"));
 
         // 471: a k >= 3 partner of F in an earlier version names k; S is the awards sum at it.
         let mut later = version(vec![amt("result_value", 250_000_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
@@ -46051,6 +47042,7 @@ mod tests {
             ..head(vec![amt("result_value", 250_000_000_000)], Vec::new())
         };
         assert_eq!(one(&bt709), super::HeadValue::default(), "refused by the BT-709 sum, and nothing electable to serve");
+        assert_eq!(check(std::slice::from_ref(&bt709)), Err("W/T'"), "no electable sum: path V is not tried, and T' refuses");
         // With an electable estimate sum at the same k, that sum is served (1024214's shape).
         let with_estimates = TenderVersion {
             lots: vec![
@@ -46080,8 +47072,10 @@ mod tests {
             }],
             ..head(vec![amt("result_value", 250_000_000_000), amt("estimated_value", 270_000_000_000)], Vec::new())
         };
-        let v = head_value(&[version(vec![amt("estimated_value", 270_000_000)], &[]), disagree], &rates);
+        let chain = [version(vec![amt("estimated_value", 270_000_000)], &[]), disagree];
+        let v = head_value(&chain, &rates);
         assert_eq!(v, super::HeadValue { eur_cents: Some(160_000_000), derived: None }, "no agreement: the max election, LOT-1's estimate");
+        assert_eq!(check(&chain), Err("V"));
 
         // V1: ten lots each repeating M = EUR 2 m, and F within 1 % of 10^3 x M (500 cents over,
         // so no exact 471 partner): 537 refuses F against the EUR 20 m sum at k = 2, and the lots
@@ -46095,6 +47089,7 @@ mod tests {
             "537 refuses it at k = 2"
         );
         assert_eq!(one(&repeated), super::HeadValue::default(), "V1: no derived head, and nothing else to elect");
+        assert_eq!(check(std::slice::from_ref(&repeated)), Err("V1"));
         // Six equal lots with F / M = 6000 pass V1 (7427765).
         let six: Vec<(String, i64)> = (1..=6).map(|i| (format!("LOT-{i}"), 50_000_000)).collect();
         let six: Vec<(&str, i64)> = six.iter().map(|(k, c)| (k.as_str(), *c)).collect();
@@ -46104,18 +47099,43 @@ mod tests {
         let mut huge = version(vec![amt("result_value", 20_000_000_000_000_000)], &[("LOT-1", 10_000_000_000_000), ("LOT-2", 10_000_000_000_000)]);
         huge.caused_by_notice_id = 2;
         let partner = version(vec![amt("estimated_value", 20_000_000_000_000)], &[]);
-        let v = head_value(&[partner, huge], &rates);
+        let chain = [partner, huge];
+        let v = head_value(&chain, &rates);
         assert_eq!(v.derived, None, "S over EUR 100 bn is not served");
+        assert_eq!(check(&chain), Err("V"));
+
+        // A refused figure that names no sum: the port (unit 3's `merge_rule.serve`) tries path V
+        // only when one does, so the head goes on to path W and T' refuses it, a refused figure
+        // being no sentinel (6360443: GBP 195 bn refused by 492 at k = 2, with no lot sum at
+        // k = 2). Here 492 refuses EUR 2.5 bn against its x100 partner EUR 25 m in an earlier
+        // version, and the awards' EUR 2.5 m sits at k = 3, not 2. Nothing is derived either way.
+        let mut hundred = version(vec![amt("result_value", 250_000_000_000)], &[("LOT-1", 150_000_000), ("LOT-2", 100_000_000)]);
+        hundred.caused_by_notice_id = 2;
+        let chain = [version(vec![amt("estimated_value", 2_500_000_000)], &[]), hundred];
+        assert_eq!(
+            super::ScalePartners::of_chain(&chain).procedure_refusal("result_value", "EUR", 250_000_000_000, 250_000_000_000),
+            Some(super::ScaleRefusal::Hundred),
+            "492 refuses it"
+        );
+        assert_eq!(head_value(&chain, &rates), super::HeadValue { eur_cents: max_election_eur_cents(&chain, &rates), derived: None }, "no derived head");
+        assert_eq!(check(&chain), Err("W/T'"), "no sum at k = 2: path W's T', as the port reports it, not V");
     }
 
     /// Issue 551 path W's guards, each on the smallest shape that isolates it: three lots awarded
     /// EUR 1 m, 2 m and 3.3 m, today's head the EUR 3.3 m award's tender-scope copy. Path W is
     /// withdrawn in production (unit 4a, [`super::LOT_SUM_AWARDS_PATH`]): the base shape is read
     /// there once, and every guard below runs with the path switched on
-    /// ([`super::head_value_with_awards_path`]), so unit 4b keeps the pins.
+    /// ([`super::head_value_with_awards_path`]), so unit 4b keeps the pins. Unit 4b (B2): v2's R10
+    /// needs a buyer-stated total at every size, so every shape states one equal to its awards sum
+    /// (a BT-161-NoticeResult on its last round's notice) and every award names one winner; each
+    /// refusal is pinned to the check that makes it ([`super::awards_path_check`]), so a v1 guard
+    /// is still the one refusing its shape and not a v2 refusal behind it. Two pins moved: the
+    /// small repeated pair passes G1' and is then refused by R5.4 (its EUR 3.3 m lot is 99.5 % of
+    /// the round), and the lot numbers 1, 2, 3 summed across two notices need their published
+    /// numbers (R2d).
     #[test]
     fn the_awards_path_refuses_every_shape_its_guards_name() {
-        use super::{LotResultState, Round, head_value_with_awards_path as head_value};
+        use super::{LotResultState, LotSumKind, LotSums, Round, StatedTotal, StatedTotalKind, awards_path_check, head_value_with_awards_path as head_value};
         let rates = crate::rates::RatesLookup::default();
         let amt_in = |field: &str, cents: i64, currency: &str| Fact::Amount { field: field.into(), cents, currency: currency.into(), tax_basis: None, quality: None };
         let amt = |field: &str, cents: i64| amt_in(field, cents, "EUR");
@@ -46128,31 +47148,52 @@ mod tests {
             awarded_cents: Some(cents),
             awarded_currency: Some(currency.into()),
             decided: None,
-            winners: Vec::new(),
+            winners: vec![7],
             buyer_winners: Vec::new(),
             statistics: Vec::new(),
             published_lot_no: None,
             group: false,
         };
-        // (facts, lots with their own facts, rounds of awards as (lot, cents, currency))
-        let version = |facts: Vec<Fact>, lots: Vec<LotState>, rounds: Vec<Vec<(&str, i64, &str)>>| TenderVersion {
-            lots,
-            rounds: rounds
-                .into_iter()
-                .enumerate()
-                .map(|(i, awards)| Round {
-                    notice_id: i as i64 + 1,
+        // (facts, lots with their own facts, rounds of awards as (lot, cents, currency)), stating
+        // its awards sum per currency.
+        let version = |facts: Vec<Fact>, lots: Vec<LotState>, rounds: Vec<Vec<(&str, i64, &str)>>| {
+            let mut v = TenderVersion {
+                lots,
+                rounds: rounds
+                    .into_iter()
+                    .enumerate()
+                    .map(|(i, awards)| Round {
+                        notice_id: i as i64 + 1,
+                        logical_notice_id: None,
+                        lot_results: awards.iter().map(|(k, c, cur)| award_in(k, *c, cur)).collect(),
+                        bids: Vec::new(),
+                        contracts: Vec::new(),
+                    })
+                    .collect(),
+                ..head(facts, Vec::new())
+            };
+            let notice_id = v.rounds.last().map_or(v.caused_by_notice_id, |r| r.notice_id);
+            let mut totals: Vec<StatedTotal> = LotSums::by_currency(&v)
+                .iter()
+                .filter(|(_, s)| s.award_lots() > 0)
+                .map(|(currency, s)| StatedTotal {
+                    notice_id,
                     logical_notice_id: None,
-                    lot_results: awards.iter().map(|(k, c, cur)| award_in(k, *c, cur)).collect(),
-                    bids: Vec::new(),
-                    contracts: Vec::new(),
+                    field: "BT-161-NoticeResult".into(),
+                    kind: StatedTotalKind::Award,
+                    cents: s.per_lot(LotSumKind::Awards).iter().map(|&(_, c)| c).sum(),
+                    currency: (*currency).to_owned(),
+                    lots_awarded: Vec::new(),
                 })
-                .collect(),
-            ..head(facts, Vec::new())
+                .collect();
+            totals.sort_by(|a, b| a.currency.cmp(&b.currency));
+            v.stated_totals = totals;
+            v
         };
         let lots3 = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new()), lot("LOT-3", Vec::new())];
         let awards3 = || vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR"), ("LOT-3", 330_000_000, "EUR")]];
         let one = |v: &TenderVersion| head_value(std::slice::from_ref(v), &rates);
+        let check = |v: &TenderVersion| awards_path_check(std::slice::from_ref(v), &rates).map(|d| d.cents);
         let fires = |v: &TenderVersion| one(v).derived.is_some();
 
         let base = version(vec![amt("result_value", 330_000_000)], lots3(), awards3());
@@ -46162,37 +47203,38 @@ mod tests {
             "unit 4a: production keeps the max election, the EUR 3.3 m copy"
         );
         assert_eq!(one(&base).eur_cents, Some(630_000_000), "the base serves the awards sum");
+        assert_eq!(check(&base), Ok(630_000_000));
         // A null head (no tender-scope figure at all) sums too.
         assert_eq!(one(&version(Vec::new(), lots3(), awards3())).eur_cents, Some(630_000_000), "a null head");
 
         // T': an admitted procedure figure keeps the head; a sentinel one does not (EUR 1.00).
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000), amt("estimated_value", 500_000_000)], lots3(), awards3())), "T': admitted");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000), amt("estimated_value", 500_000_000)], lots3(), awards3())), Err("W/T'"), "T': admitted");
         assert!(fires(&version(vec![amt("result_value", 330_000_000), amt("estimated_value", 100)], lots3(), awards3())), "T': a sentinel");
         // T' / G7: a withheld procedure figure keeps the head.
         let withheld = Fact::Amount { field: "estimated_value".into(), cents: 500_000_000, currency: "EUR".into(), tax_basis: None, quality: Some(super::QUALITY_WITHHELD.into()) };
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000), withheld], lots3(), awards3())), "G7: withheld");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000), withheld], lots3(), awards3())), Err("W/T'"), "G7: withheld");
         // T': a procedure figure over the cap keeps the head (G5 as well).
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000), amt("estimated_value", 12_345_678_901_234)], lots3(), awards3())), "T': over the cap");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000), amt("estimated_value", 12_345_678_901_234)], lots3(), awards3())), Err("W/T'"), "T': over the cap");
 
         // K: a lot's own figure as today's head keeps it (never an estimate sum: path W sums awards).
         let estimates = vec![lot("LOT-1", vec![amt("estimated_value", 400_000_000)]), lot("LOT-2", vec![amt("estimated_value", 150_000_000)]), lot("LOT-3", Vec::new())];
-        assert!(!fires(&version(Vec::new(), estimates, awards3())), "K: today's head is a lot estimate");
+        assert_eq!(check(&version(Vec::new(), estimates, awards3())), Err("W/K"), "K: today's head is a lot estimate");
         // Estimates alone, no award: nothing to sum.
         let only_estimates = vec![lot("LOT-1", vec![amt("estimated_value", 400_000_000)]), lot("LOT-2", vec![amt("estimated_value", 150_000_000)])];
         assert!(!fires(&version(Vec::new(), only_estimates, Vec::new())), "never an estimate sum");
 
         // G0: one award lot is no sum; a sum at or below today's figure keeps it (a corrected
         // award's stale copy elected today: EUR 9 m before LOT-1's correction to EUR 1 m).
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), vec![vec![("LOT-3", 330_000_000, "EUR")]])), "G0: one lot");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], lots3(), vec![vec![("LOT-3", 330_000_000, "EUR")]])), Err("W/G0"), "G0: one lot");
         let corrected = vec![vec![("LOT-1", 900_000_000, "EUR")], vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")]];
-        assert!(!fires(&version(vec![amt("result_value", 900_000_000)], lots3(), corrected)), "G0: below today's figure");
+        assert_eq!(check(&version(vec![amt("result_value", 900_000_000)], lots3(), corrected)), Err("W/G0"), "G0: below today's figure");
 
         // G5: an award copy over the cap (a stale slip's copy) says the scale is broken.
         let slipped = vec![vec![("LOT-1", 3_300_000_000_000_000, "EUR")], vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")]];
-        assert!(!fires(&version(vec![amt("result_value", 3_300_000_000_000_000)], lots3(), slipped)), "G5: a copy over the cap");
+        assert_eq!(check(&version(vec![amt("result_value", 3_300_000_000_000_000)], lots3(), slipped)), Err("W/G5"), "G5: a copy over the cap");
         // G5: a sum past EUR 100 bn.
         let giant = vec![vec![("LOT-1", 6_000_000_000_000, "EUR"), ("LOT-2", 5_000_000_000_000, "EUR")]];
-        assert!(!fires(&version(Vec::new(), lots3(), giant)), "G5: S over the cap");
+        assert_eq!(check(&version(Vec::new(), lots3(), giant)), Err("W/G5"), "G5: S over the cap");
         // G5' (unit 3's review): an award copy a scale rule refused (471: LOT-1's EUR 1.2 bn award is
         // exactly 1000x LOT-2's copy) keeps today's head, the EUR 1.2 m copy, where the sum would serve
         // the slip itself, EUR 1.2012 bn. A refusal is a judgement, not the cap: G5 alone missed it.
@@ -46202,6 +47244,7 @@ mod tests {
         assert!(rule.is_head_award("EUR", 120_000_000_000), "the slipped figure is LOT-1's award's copy");
         assert!(rule.refuses_amount("result_value", "EUR", 120_000_000_000, 120_000_000_000, FigureScope::Lot(None)), "and refused at Lot(None)");
         assert_eq!(one(&copies), super::HeadValue { eur_cents: Some(120_000_000), derived: None }, "G5': a refused copy keeps today's head");
+        assert_eq!(check(&copies), Err("W/G5'"));
         // G5' (unit 3's third review): the same slip with NO tender-scope copy. Nothing judged the
         // award itself, so a null head became EUR 1.2012 bn; 471 refuses it at its own lot (partner:
         // LOT-2's EUR 1.2 m), and the null head stays null.
@@ -46210,35 +47253,37 @@ mod tests {
         assert!(rule.refuses_amount("result_value", "EUR", 120_000_000_000, 120_000_000_000, FigureScope::Lot(Some("LOT-1"))), "refused at its lot");
         assert!(!rule.refuses_amount("result_value", "EUR", 120_000_000, 120_000_000, FigureScope::Lot(Some("LOT-2"))), "its partner is not");
         assert_eq!(one(&no_copies), super::HeadValue::default(), "G5': a refused award with no copy keeps the null head");
+        assert_eq!(check(&no_copies), Err("W/G5'"));
         // ... and with the small award's copy alone, today's EUR 1.2 m stays (was raised 1000x).
         let small_copy = version(vec![amt("result_value", 120_000_000)], lots3(), slip());
         assert_eq!(one(&small_copy), super::HeadValue { eur_cents: Some(120_000_000), derived: None }, "G5': only the partner's copy");
 
         // G6: an award lot in another currency.
         let mixed = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR"), ("LOT-3", 330_000_000, "PLN")]];
-        assert!(!fires(&version(vec![amt("result_value", 200_000_000)], lots3(), mixed)), "G6: a PLN award beside the EUR ones");
+        assert_eq!(check(&version(vec![amt("result_value", 200_000_000)], lots3(), mixed)), Err("W/G6"), "G6: a PLN award beside the EUR ones");
 
         // G8: an award naming a lot the head does not type (a re-keyed chain's LOT-0001).
         let rekeyed = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR"), ("LOT-0003", 330_000_000, "EUR")]];
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), rekeyed)), "G8: an untyped lot key");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], lots3(), rekeyed)), Err("W/G8"), "G8: an untyped lot key");
         // G8b (unit 3's second review round; it replaces round 1's accepted double count): a re-keyed
         // chain whose BOTH key sets are typed Lots (a TED CAN on LOT-1/2, an eForms modification on
         // LOT-0001/2 with changed values) passes G8, and summed it would serve EUR 6.3 m over 4 lots
         // against a true ~EUR 3.3 m. Two summed keys spell lot 1 (and lot 2): today's head stays, the
-        // EUR 2.2 m copy.
+        // EUR 2.2 m copy. Unit 4b's amendments keep G8b unchanged (v2 relaxes nothing).
         let both_typed = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new()), lot("LOT-0001", Vec::new()), lot("LOT-0002", Vec::new())];
         let restated = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")], vec![("LOT-0001", 110_000_000, "EUR"), ("LOT-0002", 220_000_000, "EUR")]];
         let rekeyed_twice = version(vec![amt("result_value", 220_000_000)], both_typed(), restated);
         assert_eq!(one(&rekeyed_twice), super::HeadValue { eur_cents: Some(220_000_000), derived: None }, "G8b: one lot number under two keys");
         assert_eq!(one(&rekeyed_twice).eur_cents, super::max_election_eur_cents(std::slice::from_ref(&rekeyed_twice), &rates), "today's head");
+        assert_eq!(check(&rekeyed_twice), Err("W/G8b"));
         // One collision is enough: LOT-2 beside LOT-0002, with LOT-1 and LOT-0003 apart.
         let one_pair = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")], vec![("LOT-0002", 220_000_000, "EUR"), ("LOT-0003", 330_000_000, "EUR")]];
         let typed4 = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new()), lot("LOT-0002", Vec::new()), lot("LOT-0003", Vec::new())];
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], typed4(), one_pair)), "G8b: LOT-2 and LOT-0002");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], typed4(), one_pair)), Err("W/G8b"), "G8b: LOT-2 and LOT-0002");
         // Other spellings of one number: an OCDS `1` beside `Lot 1`.
         let spelled = || vec![lot("1", Vec::new()), lot("Lot 1", Vec::new()), lot("2", Vec::new())];
         let spelled_awards = vec![vec![("1", 100_000_000, "EUR"), ("2", 200_000_000, "EUR"), ("Lot 1", 330_000_000, "EUR")]];
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], spelled(), spelled_awards)), "G8b: 1 and Lot 1");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], spelled(), spelled_awards)), Err("W/G8b"), "G8b: 1 and Lot 1");
         // Positive controls: each key family alone still sums (eForms LOT-0001/2, TED LOT-1/2), as do
         // two families whose numbers do not meet, and keys that are no numbered lot key (1a beside 1).
         let eforms = || vec![lot("LOT-0001", Vec::new()), lot("LOT-0002", Vec::new())];
@@ -46247,41 +47292,48 @@ mod tests {
         let ted = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new())];
         let v = one(&version(vec![amt("result_value", 200_000_000)], ted(), vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")]]));
         assert_eq!((v.eur_cents, v.derived.map(|d| d.lots)), (Some(300_000_000), Some(2)), "G8b: LOT-1/LOT-2 alone sums");
+        // Summed from two notices, the awards need their published numbers (v2's R2d) to sum.
         let apart = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")], vec![("LOT-0003", 330_000_000, "EUR")]];
         let typed3 = || vec![lot("LOT-1", Vec::new()), lot("LOT-2", Vec::new()), lot("LOT-0003", Vec::new())];
-        assert_eq!(one(&version(vec![amt("result_value", 330_000_000)], typed3(), apart)).eur_cents, Some(630_000_000), "G8b: numbers 1, 2, 3 apart");
+        let mut numbered = version(vec![amt("result_value", 330_000_000)], typed3(), apart);
+        assert_eq!(check(&numbered), Err("R2d"), "G8b passes them; unnumbered, R2d refuses");
+        for r in numbered.rounds.iter_mut().flat_map(|r| r.lot_results.iter_mut()) {
+            r.published_lot_no = r.lot_key.as_deref().and_then(super::lot_number).map(Into::into);
+        }
+        assert_eq!(one(&numbered).eur_cents, Some(630_000_000), "G8b: numbers 1, 2, 3 apart");
         let sub_lots = || vec![lot("1", Vec::new()), lot("1a", Vec::new()), lot("1.2", Vec::new())];
         let sub_awards = vec![vec![("1", 100_000_000, "EUR"), ("1a", 200_000_000, "EUR"), ("1.2", 330_000_000, "EUR")]];
         assert_eq!(one(&version(vec![amt("result_value", 330_000_000)], sub_lots(), sub_awards)).eur_cents, Some(630_000_000), "G8b: 1a and 1.2 are no lot 1");
         // Restated at EQUAL values, G1' catches it too (each figure on two lots).
         let equal = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 200_000_000, "EUR")], vec![("LOT-0001", 100_000_000, "EUR"), ("LOT-0002", 200_000_000, "EUR")]];
-        assert!(!fires(&version(vec![amt("result_value", 200_000_000)], both_typed(), equal)), "G1': an equal restatement");
+        assert_eq!(check(&version(vec![amt("result_value", 200_000_000)], both_typed(), equal)), Err("W/G8b"), "G8b before G1'");
 
         // G1': a figure on two lots at a tenth of the largest or more is a repeated total ...
         let twice = vec![vec![("LOT-1", 330_000_000, "EUR"), ("LOT-2", 330_000_000, "EUR"), ("LOT-3", 100_000_000, "EUR")]];
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), twice)), "G1': EUR 3.3 m on two lots");
-        // ... a small repeated pair is not (5995030's PLN 8,000.00).
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], lots3(), twice)), Err("W/G1'"), "G1': EUR 3.3 m on two lots");
+        // ... a small repeated pair is not (5995030's PLN 8,000.00): G1' lets it through, and v2's
+        // R5.4 refuses this one (its EUR 3.3 m lot is within 0.5 % of the round's EUR 3.316 m).
         let small_pair = vec![vec![("LOT-1", 800_000, "EUR"), ("LOT-2", 800_000, "EUR"), ("LOT-3", 330_000_000, "EUR")]];
-        assert!(fires(&version(vec![amt("result_value", 330_000_000)], lots3(), small_pair)), "G1': a pair under a tenth passes");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], lots3(), small_pair)), Err("R5.4"), "G1': a pair under a tenth passes");
 
         // G2: one small figure on four of eight lots.
         let eight: Vec<String> = (1..=8).map(|i| format!("LOT-{i}")).collect();
         let lots8 = || eight.iter().map(|k| lot(k, Vec::new())).collect::<Vec<_>>();
         let mut spread: Vec<(&str, i64, &str)> = eight[..4].iter().map(|k| (k.as_str(), 800_000, "EUR")).collect();
         spread.extend(eight[4..].iter().zip([300_000_000, 310_000_000, 320_000_000, 330_000_000]).map(|(k, c)| (k.as_str(), c, "EUR")));
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots8(), vec![spread.clone()])), "G2: four of eight lots repeat one figure");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], lots8(), vec![spread.clone()])), Err("W/G2"), "G2: four of eight lots repeat one figure");
         spread[3].1 = 900_000;
         assert!(fires(&version(vec![amt("result_value", 330_000_000)], lots8(), vec![spread])), "G2: three of eight do not");
 
         // G3: one lot equal to the sum of the others (5316712), or 100x it (4787274).
         let total = vec![vec![("LOT-1", 100_000_000, "EUR"), ("LOT-2", 230_000_000, "EUR"), ("LOT-3", 330_000_000, "EUR")]];
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), total)), "G3: k = 0");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], lots3(), total)), Err("W/G3"), "G3: k = 0");
         let hundredfold = vec![vec![("LOT-1", 1_000_000, "EUR"), ("LOT-2", 2_300_000, "EUR"), ("LOT-3", 330_000_000, "EUR")]];
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], lots3(), hundredfold)), "G3: k = 2");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], lots3(), hundredfold)), Err("W/G3"), "G3: k = 2");
 
         // G4: lot estimates over two or more of the same lots 10x off the awards.
         let off = vec![lot("LOT-1", vec![amt("estimated_value", 100_000)]), lot("LOT-2", vec![amt("estimated_value", 200_000)]), lot("LOT-3", Vec::new())];
-        assert!(!fires(&version(vec![amt("result_value", 330_000_000)], off, awards3())), "G4: 1000x off");
+        assert_eq!(check(&version(vec![amt("result_value", 330_000_000)], off, awards3())), Err("W/G4"), "G4: 1000x off");
         let near = vec![lot("LOT-1", vec![amt("estimated_value", 90_000_000)]), lot("LOT-2", vec![amt("estimated_value", 210_000_000)]), lot("LOT-3", Vec::new())];
         let v = version(vec![amt("result_value", 330_000_000)], near, awards3());
         assert_eq!(one(&v).eur_cents, Some(630_000_000), "G4: within 10x passes");
@@ -46292,12 +47344,15 @@ mod tests {
         // A null head sums the currency with the most award lots (PLN, two) ... and G6 then refuses
         // the partial sum all the same.
         let two_currencies = vec![vec![("LOT-1", 100_000_000, "PLN"), ("LOT-2", 200_000_000, "PLN"), ("LOT-3", 330_000_000, "EUR")]];
-        assert_eq!(head_value(std::slice::from_ref(&version(Vec::new(), lots3(), two_currencies)), &pln).derived, None, "G6 on a null head");
+        let null_two = version(Vec::new(), lots3(), two_currencies);
+        assert_eq!(head_value(std::slice::from_ref(&null_two), &pln).derived, None, "G6 on a null head");
+        assert_eq!(awards_path_check(std::slice::from_ref(&null_two), &pln).map(|d| d.cents), Err("W/G6"));
         let polish = version(vec![amt_in("result_value", 330_000_000, "PLN")], lots3(), vec![vec![("LOT-1", 100_000_000, "PLN"), ("LOT-2", 200_000_000, "PLN"), ("LOT-3", 330_000_000, "PLN")]]);
         let v = head_value(std::slice::from_ref(&polish), &pln);
         assert_eq!((v.eur_cents, v.derived.map(|d| (d.cents, d.currency))), (Some(157_500_000), Some((630_000_000, "PLN".to_owned()))));
         // No rate, no EUR column: nothing derived.
         assert_eq!(one(&polish), super::HeadValue::default());
+        assert_eq!(check(&polish), Err("W/G0"));
         // G5 (unit 3's third review): S must convert to more than EUR 0, as path V's must. Two awards
         // above the 10.00 floor in a currency at 17,000 per EUR sum to IDR 45.01, EUR 0.26 cents,
         // which rounds to the 0 issue 378 reserves for "the election found nothing".
@@ -46305,6 +47360,7 @@ mod tests {
         idr.insert_for_test("IDR", &crate::rates::civil_date(0), 17_000.0);
         let tiny = version(Vec::new(), lots3(), vec![vec![("LOT-1", 2_001, "IDR"), ("LOT-2", 2_500, "IDR")]]);
         assert_eq!(head_value(std::slice::from_ref(&tiny), &idr), super::HeadValue::default(), "G5: S rounding to EUR 0 is no head");
+        assert_eq!(awards_path_check(std::slice::from_ref(&tiny), &idr).map(|d| d.cents), Err("W/G5"));
         let copied = version(vec![amt_in("result_value", 2_001, "IDR"), amt_in("result_value", 2_500, "IDR")], lots3(), vec![vec![("LOT-1", 2_001, "IDR"), ("LOT-2", 2_500, "IDR")]]);
         assert_eq!(head_value(std::slice::from_ref(&copied), &idr), super::HeadValue::default(), "G5: nor with copies judged Zero");
     }
@@ -46349,6 +47405,728 @@ mod tests {
         assert!(!names_one_lot_twice(["LOT-0001", "LOT-0002", "LOT-0010"]));
         assert!(!names_one_lot_twice(["1", "1a", "1b", "1.1"]), "sub-lots are no lot 1");
         assert!(!names_one_lot_twice(std::iter::empty::<&str>()));
+    }
+
+    // ---- Issue 551 unit 4b (B2): path W v2's refusal families R1–R10 (canonical.rs
+    // `awards_v2_check`, ported from `unit4b/rule_v2.py`), each on the smallest shape that isolates
+    // it. Path W is withdrawn in production ([`super::LOT_SUM_AWARDS_PATH`]); these run with it
+    // switched on ([`super::head_value_with_awards_path`]), and [`super::awards_path_check`] names
+    // the check that refused, as unit B3's port check compares it.
+
+    /// An EUR amount.
+    fn v2_eur(field: &str, cents: i64) -> Fact {
+        Fact::Amount { field: field.into(), cents, currency: "EUR".into(), tax_basis: None, quality: None }
+    }
+
+    /// A typed Lot with these facts and no published number.
+    fn v2_lot(key: &str, facts: Vec<Fact>) -> LotState {
+        LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None }
+    }
+
+    /// An EUR award on `lot` to `winners`, keyed `RES-<lot>`, with no decision and no number.
+    fn v2_award(lot: &str, cents: i64, winners: &[i64]) -> super::LotResultState {
+        super::LotResultState {
+            key: format!("RES-{lot}"),
+            lot_key: Some(lot.into()),
+            decision: None,
+            reason: None,
+            awarded_cents: Some(cents),
+            awarded_currency: Some("EUR".into()),
+            decided: None,
+            winners: winners.to_vec(),
+            buyer_winners: Vec::new(),
+            statistics: Vec::new(),
+            published_lot_no: None,
+            group: false,
+        }
+    }
+
+    /// An EUR LotTender on `lot` by `tenderers` (one tendering party each).
+    fn v2_bid(lot: &str, cents: i64, tenderers: &[i64]) -> super::BidState {
+        super::BidState {
+            key: format!("TEN-{lot}-{}", tenderers.first().copied().unwrap_or_default()),
+            lot_key: Some(lot.into()),
+            cents: Some(cents),
+            currency: Some("EUR".into()),
+            quality: None,
+            parties: tenderers.iter().map(|&organization_id| super::BidParty { role: "tenderer".into(), organization_id, section_id: String::new() }).collect(),
+        }
+    }
+
+    fn v2_round(notice_id: i64, lot_results: Vec<super::LotResultState>, bids: Vec<super::BidState>) -> super::Round {
+        super::Round { notice_id, logical_notice_id: None, lot_results, bids, contracts: Vec::new() }
+    }
+
+    /// An EUR total stated by `notice_id`.
+    fn v2_total(notice_id: i64, field: &str, kind: super::StatedTotalKind, cents: i64) -> super::StatedTotal {
+        super::StatedTotal { notice_id, logical_notice_id: None, field: field.into(), kind, cents, currency: "EUR".into(), lots_awarded: Vec::new() }
+    }
+
+    /// Path W v2's base: two eForms lots, LOT-0001 awarded EUR 1 m to organization 11 and LOT-0002
+    /// EUR 2 m to 12 in notice 10's round, each award on its winner's one LotTender at its value,
+    /// and notice 10's BT-161-NoticeResult stating the EUR 3 m. No procedure figure, so today's head
+    /// is null; every guard passes and path W serves EUR 3 m, vouched by the BT-161.
+    fn v2_base() -> TenderVersion {
+        TenderVersion {
+            caused_by_notice_id: 10,
+            lots: vec![v2_lot("LOT-0001", Vec::new()), v2_lot("LOT-0002", Vec::new())],
+            rounds: vec![v2_round(
+                10,
+                vec![v2_award("LOT-0001", 100_000_000, &[11]), v2_award("LOT-0002", 200_000_000, &[12])],
+                vec![v2_bid("LOT-0001", 100_000_000, &[11]), v2_bid("LOT-0002", 200_000_000, &[12])],
+            )],
+            stated_totals: vec![v2_total(10, "BT-161-NoticeResult", super::StatedTotalKind::Award, 300_000_000)],
+            ..head(Vec::new(), Vec::new())
+        }
+    }
+
+    /// The base with LOT-0001's award moved to an earlier round (notice 9), its results numbered
+    /// `numbers` (LOT-0001's, LOT-0002's): the summed awards come from two notices.
+    fn v2_two_notices(numbers: (Option<&str>, Option<&str>)) -> TenderVersion {
+        let mut v = v2_base();
+        let mut first = v2_award("LOT-0001", 100_000_000, &[11]);
+        first.published_lot_no = numbers.0.map(Into::into);
+        let mut second = v2_award("LOT-0002", 200_000_000, &[12]);
+        second.published_lot_no = numbers.1.map(Into::into);
+        v.rounds = vec![
+            v2_round(9, vec![first], vec![v2_bid("LOT-0001", 100_000_000, &[11])]),
+            v2_round(10, vec![second], vec![v2_bid("LOT-0002", 200_000_000, &[12])]),
+        ];
+        v
+    }
+
+    /// What path W makes of a one-version chain: the sum served, or the check that refused.
+    fn v2_check(v: &TenderVersion) -> Result<i64, &'static str> {
+        super::awards_path_check(std::slice::from_ref(v), &crate::rates::RatesLookup::default()).map(|d| d.cents)
+    }
+
+    /// R1: a summed lot won by two or more separate tenders is not summed; a consortium on one
+    /// LotTender is one tender, and so is a TED award block flagged AWARDED_TO_GROUP, with no
+    /// LotTender rows at all.
+    #[test]
+    fn a_lot_won_by_two_tenders_is_not_summed() {
+        use super::{HeadValue, head_value_with_awards_path};
+        let rates = crate::rates::RatesLookup::default();
+        assert_eq!(v2_check(&v2_base()), Ok(300_000_000), "the base serves EUR 3 m");
+        // LOT-0001 names two winners, and its round's one LotTender is the first winner's alone.
+        let mut split = v2_base();
+        split.rounds[0].lot_results[0].winners = vec![11, 21];
+        assert_eq!(v2_check(&split), Err("R1"));
+        assert_eq!(head_value_with_awards_path(std::slice::from_ref(&split), &rates), HeadValue::default(), "today's null head stays");
+        // Each winner on a LotTender of its own: two tenders all the same.
+        let mut apart = split.clone();
+        apart.rounds[0].bids.push(v2_bid("LOT-0001", 100_000_000, &[21]));
+        assert_eq!(v2_check(&apart), Err("R1"), "two LotTenders, one winner each");
+        // A subcontractor is no tenderer.
+        let mut subcontracted = split.clone();
+        subcontracted.rounds[0].bids[0].parties.push(super::BidParty { role: "subcontractor".into(), organization_id: 21, section_id: String::new() });
+        assert_eq!(v2_check(&subcontracted), Err("R1"), "the second winner only subcontracts");
+        // A consortium: both winners tender on ONE LotTender.
+        let mut consortium = split.clone();
+        consortium.rounds[0].bids[0] = v2_bid("LOT-0001", 100_000_000, &[11, 21]);
+        assert_eq!(v2_check(&consortium), Ok(300_000_000), "a consortium is one tender");
+        // One winner named twice is one winner.
+        let mut twice = v2_base();
+        twice.rounds[0].lot_results[0].winners = vec![11, 11];
+        assert_eq!(v2_check(&twice), Ok(300_000_000));
+        // Two winners, no LotTender on the lot in that round and no group flag: refused, and the
+        // consortium's LotTender in ANOTHER round does not count.
+        let mut bare = split.clone();
+        bare.rounds[0].bids.clear();
+        assert_eq!(v2_check(&bare), Err("R1"), "no LotTender rows, no group flag");
+        let mut elsewhere = bare.clone();
+        elsewhere.rounds.insert(0, v2_round(9, Vec::new(), vec![v2_bid("LOT-0001", 100_000_000, &[11, 21])]));
+        assert_eq!(v2_check(&elsewhere), Err("R1"), "the LotTender is another round's");
+        // TED AWARDED_TO_GROUP: the block's winners are one tender, with or without LotTender rows.
+        let mut group = bare.clone();
+        group.rounds[0].lot_results[0].group = true;
+        assert_eq!(v2_check(&group), Ok(300_000_000), "a group award is one tender");
+        let mut group_split = split.clone();
+        group_split.rounds[0].lot_results[0].group = true;
+        assert_eq!(v2_check(&group_split), Ok(300_000_000));
+    }
+
+    /// R2: the summed awards' published lot numbers, read as tokens (leading zeros dropped, ranges
+    /// up to 50 expanded, lists split): (a) two summed keys share a token; (b) one award's number
+    /// lists two or more; (c) one key's award rounds name different numbers; (d) the awards come
+    /// from two or more notices and one names none (6421819: a TED block placed by its ITEM ordinal
+    /// carries no number, amendment). The number is the lot section's in the version the award's
+    /// notice caused, else the award block's. G8b is unchanged: TED's LOT-1 for lot 3 beside
+    /// eForms' LOT-0001 stays refused (the amendments strike B2's "now sums").
+    #[test]
+    fn published_lot_numbers_that_collide_or_list_refuse_the_sum() {
+        use super::lot_number_tokens;
+        // The tokens, as rule_v2.py's `lot_nums` reads them (each expected set is the port's).
+        for (published, tokens) in [
+            ("LOT-0001", vec!["1"]),
+            ("01", vec!["1"]),
+            ("000", vec!["0"]),
+            ("Lot 2a", vec!["2a"]),
+            ("12bc", vec!["1"]),
+            ("5ab", vec![]),
+            ("1, 2", vec!["1", "2"]),
+            ("1-3", vec!["1", "2", "3"]),
+            ("1 - 3", vec!["1", "2", "3"]),
+            ("1\u{2013}3", vec!["1", "2", "3"]),
+            ("Lots 3 to 5", vec!["3", "4", "5"]),
+            ("3 bis 5", vec!["3", "4", "5"]),
+            ("1\u{e0}3", vec!["1", "2", "3"]),
+            ("1 a 3", vec!["1", "2", "3"]),
+            ("1 to 60", vec!["1", "60"]),
+            ("2-1", vec!["1", "2"]),
+            ("Lot No. 4/2019", vec!["2019", "4"]),
+            ("lot1-lot3", vec!["1", "3"]),
+            ("LOT-0001-0003", vec!["1", "2", "3"]),
+            ("1-3-5", vec!["1", "2", "3", "5"]),
+            ("3a, 3b", vec!["3a", "3b"]),
+            ("2.1", vec!["1", "2"]),
+            ("Part B", vec![]),
+            ("", vec![]),
+        ] {
+            assert_eq!(lot_number_tokens(published).iter().map(String::as_str).collect::<Vec<_>>(), tokens, "{published:?}");
+        }
+
+        let numbered = |first: Option<&str>, second: Option<&str>| {
+            let mut v = v2_base();
+            v.rounds[0].lot_results[0].published_lot_no = first.map(Into::into);
+            v.rounds[0].lot_results[1].published_lot_no = second.map(Into::into);
+            v
+        };
+        assert_eq!(v2_check(&numbered(Some("1"), Some("2"))), Ok(300_000_000), "two numbers apart");
+        assert_eq!(v2_check(&numbered(None, None)), Ok(300_000_000), "unnumbered, from one notice");
+        // (a) two summed keys share a token.
+        assert_eq!(v2_check(&numbered(Some("1"), Some("01"))), Err("R2a"));
+        assert_eq!(v2_check(&numbered(Some("Lot 1"), Some("1-3"))), Err("R2a"), "(a) before (b)");
+        // ... the lot's own section is read before the award block: LOT-0002's section prints 1.
+        let mut section = numbered(Some("1"), Some("2"));
+        section.lots[1].published_lot_no = Some("1".into());
+        assert_eq!(v2_check(&section), Err("R2a"), "the section's number first");
+        // (b) one summed award's number lists two or more.
+        assert_eq!(v2_check(&numbered(Some("1, 2"), None)), Err("R2b"));
+        assert_eq!(v2_check(&numbered(Some("Lots 3 to 5"), Some("6"))), Err("R2b"));
+        // (c) one key's award rounds name different numbers: LOT-0001 awarded as lot 3 in notice
+        // 9's round, then as lot 1 in notice 10's (summed).
+        let mut varying = numbered(Some("1"), Some("2"));
+        let mut earlier = v2_award("LOT-0001", 90_000_000, &[11]);
+        earlier.published_lot_no = Some("3".into());
+        varying.rounds.insert(0, v2_round(9, vec![earlier], vec![v2_bid("LOT-0001", 90_000_000, &[11])]));
+        assert_eq!(v2_check(&varying), Err("R2c"));
+        // ... a result with neither a figure nor a winner is no award round.
+        let mut empty = varying.clone();
+        empty.rounds[0].lot_results[0].awarded_cents = None;
+        empty.rounds[0].lot_results[0].winners.clear();
+        assert_eq!(v2_check(&empty), Ok(300_000_000), "an empty result names no number");
+        // (d) the summed awards come from two notices and one names no number.
+        assert_eq!(v2_check(&v2_two_notices((None, None))), Err("R2d"));
+        assert_eq!(v2_check(&v2_two_notices((None, Some("2")))), Err("R2d"), "6421819's shape: one award with no number");
+        assert_eq!(v2_check(&v2_two_notices((Some("1"), Some("2")))), Ok(300_000_000), "both numbered");
+        // The number of an award is read from the version ITS notice caused: notice 9's version
+        // prints LOT-0001's section as 2, which meets LOT-0002's 2, whatever the head prints.
+        let mut head_v = v2_two_notices((None, Some("2")));
+        head_v.lots[0].published_lot_no = Some("1".into());
+        let mut v9 = v2_base();
+        v9.caused_by_notice_id = 9;
+        v9.lots = vec![LotState { published_lot_no: Some("2".into()), ..v2_lot("LOT-0001", Vec::new()) }];
+        v9.rounds.clear();
+        v9.stated_totals.clear();
+        let chain = [v9, head_v.clone()];
+        assert_eq!(
+            super::awards_path_check(&chain, &crate::rates::RatesLookup::default()).map(|d| d.cents),
+            Err("R2a"),
+            "notice 9's own section number"
+        );
+        let chain = [head_v];
+        assert_eq!(
+            super::awards_path_check(&chain, &crate::rates::RatesLookup::default()).map(|d| d.cents),
+            Err("R2d"),
+            "without notice 9's version, LOT-0001's award names no number (the head's section is another notice's)"
+        );
+        // G8b unchanged: TED's ordinal LOT-1 (lot 3) beside eForms' LOT-0001, both typed, numbered
+        // 3 and 1, still spell lot 1 twice: v2 relaxes nothing, so every v2 fire is a v1 fire.
+        let mut rekeyed = v2_base();
+        rekeyed.lots = vec![v2_lot("LOT-1", Vec::new()), v2_lot("LOT-0001", Vec::new())];
+        rekeyed.rounds[0].lot_results = vec![v2_award("LOT-1", 100_000_000, &[11]), v2_award("LOT-0001", 200_000_000, &[12])];
+        rekeyed.rounds[0].lot_results[0].published_lot_no = Some("3".into());
+        rekeyed.rounds[0].lot_results[1].published_lot_no = Some("1".into());
+        rekeyed.rounds[0].bids = vec![v2_bid("LOT-1", 100_000_000, &[11]), v2_bid("LOT-0001", 200_000_000, &[12])];
+        assert_eq!(v2_check(&rekeyed), Err("W/G8b"), "G8b stands");
+    }
+
+    /// R3: a round notice's award-type total below the summed awards of the keys it awards (their
+    /// sum above 1.01 x the total), on the port's float arithmetic; a single-lot notice's total
+    /// within 1 % of its own award does not count; the keys a notice awards include its closed
+    /// results; and with no award-type total anywhere, S above 10 x the largest estimate.
+    #[test]
+    fn a_notice_total_below_the_lots_it_awards_refuses_the_sum() {
+        use super::StatedTotalKind::{Award, Estimate, Range};
+        let with_totals = |v: &TenderVersion, totals: Vec<super::StatedTotal>| TenderVersion { stated_totals: totals, ..v.clone() };
+        let base = v2_base();
+        assert_eq!(v2_check(&base), Ok(300_000_000));
+        // EUR 2.5 m stated for EUR 3 m awarded: refused (before R10 would refuse it too).
+        assert_eq!(v2_check(&with_totals(&base, vec![v2_total(10, "BT-161-NoticeResult", Award, 250_000_000)])), Err("R3"));
+        // The 1 % edge as the port computes it: 1.01 x 297,029,703 = 300,000,000.03 holds the EUR 3 m
+        // (and is within 1 % of it, so it vouches); 1.01 x 297,029,702 = 299,999,999.02 does not.
+        assert_eq!(v2_check(&with_totals(&base, vec![v2_total(10, "TED-VAL_TOTAL", Award, 297_029_703)])), Ok(300_000_000));
+        assert_eq!(v2_check(&with_totals(&base, vec![v2_total(10, "TED-VAL_TOTAL", Award, 297_029_702)])), Err("R3"));
+        // A notice's total bounds only the keys its notice awards: notice 10 awards LOT-0002 and
+        // LOT-0003 (EUR 2.5 m together) and states EUR 2.5 m; LOT-0001 is notice 9's. A range end
+        // vouches for the EUR 3.5 m.
+        let mut keyed = v2_two_notices((Some("1"), Some("2")));
+        keyed.lots.push(v2_lot("LOT-0003", Vec::new()));
+        let mut third = v2_award("LOT-0003", 50_000_000, &[13]);
+        third.published_lot_no = Some("3".into());
+        keyed.rounds[1].lot_results.push(third);
+        keyed.rounds[1].bids.push(v2_bid("LOT-0003", 50_000_000, &[13]));
+        keyed.stated_totals = vec![v2_total(10, "BT-161-NoticeResult", Award, 250_000_000), v2_total(10, "TED-HIGH", Range, 350_000_000)];
+        assert_eq!(v2_check(&keyed), Ok(350_000_000), "notice 10's EUR 2.5 m covers its own two lots");
+        // ... and a closed result is a key the notice awards: notice 10 also closes LOT-0001.
+        let mut closing = keyed.clone();
+        let mut closed = v2_award("LOT-0001", 0, &[]);
+        closed.awarded_cents = None;
+        closed.decision = Some(super::DECISION_NO_AWARD.into());
+        closing.rounds[1].lot_results.push(closed);
+        assert_eq!(v2_check(&closing), Err("R3"), "EUR 3.5 m against notice 10's EUR 2.5 m");
+        // A single-lot notice's total within 1 % of its own award does not count: notice 9 values
+        // LOT-0001 alone at EUR 1 m and states EUR 990,000.00 (1.01 x that is below EUR 1 m).
+        let mut single = v2_two_notices((Some("1"), Some("2")));
+        single.stated_totals = vec![v2_total(9, "BT-161-NoticeResult", Award, 99_000_000), v2_total(10, "BT-161-NoticeResult", Award, 300_000_000)];
+        assert_eq!(v2_check(&single), Ok(300_000_000), "its own award's copy bounds nothing");
+        single.stated_totals[0].cents = 98_900_000;
+        assert_eq!(v2_check(&single), Err("R3"), "1.1 % off its award, it is a total and bounds the lot");
+        // The 10x-estimate branch, with no award-type total anywhere (a range end vouches): S above
+        // 10 x the largest estimate — a keyed lot estimate (beside LOT-0002's award copy, so today's
+        // head is the copy and not the estimate, which K would keep) ...
+        let mut estimated = with_totals(&base, vec![v2_total(10, "TED-HIGH", Range, 300_000_000)]);
+        assert_eq!(v2_check(&estimated), Ok(300_000_000), "no estimate, no branch");
+        estimated.facts.insert(v2_eur("result_value", 200_000_000));
+        estimated.lots[0] = v2_lot("LOT-0001", vec![v2_eur("estimated_value", 20_000_000)]);
+        assert_eq!(v2_check(&estimated), Err("R3"), "EUR 3 m against a largest estimate of EUR 200,000.00");
+        // ... or an Estimate-kind stated total (BT-27-Procedure, VAL_ESTIMATED_TOTAL, a CN form's VAL_TOTAL).
+        let procedure = |cents: i64| with_totals(&base, vec![v2_total(10, "BT-27-Procedure", Estimate, cents), v2_total(10, "TED-HIGH", Range, 300_000_000)]);
+        assert_eq!(v2_check(&procedure(30_000_000)), Ok(300_000_000), "exactly 10 x");
+        assert_eq!(v2_check(&procedure(29_999_999)), Err("R3"), "past 10 x");
+        // ... or the head's own procedure `estimated_value` / `framework_maximum`. One equal to a
+        // lot award is that award's tender-scope copy (issue 492), so T' lets it through and it is
+        // today's head (K): LOT-0001's EUR 1 m beside LOT-0002's EUR 9.5 m, S EUR 10.5 m, a range
+        // end vouching. A `result_value` copy is no estimate.
+        let copied = |field: Option<&str>| {
+            let mut v = with_totals(&base, vec![v2_total(10, "TED-HIGH", Range, 1_050_000_000)]);
+            v.rounds[0].lot_results[1].awarded_cents = Some(950_000_000);
+            v.rounds[0].bids[1].cents = Some(950_000_000);
+            v.facts.extend(field.map(|field| v2_eur(field, 100_000_000)));
+            v
+        };
+        assert_eq!(v2_check(&copied(None)), Ok(1_050_000_000), "no procedure figure, no estimate");
+        assert_eq!(v2_check(&copied(Some("estimated_value"))), Err("R3"), "EUR 10.5 m against a procedure estimate of EUR 1 m");
+        assert_eq!(v2_check(&copied(Some("framework_maximum"))), Err("R3"), "and against a framework maximum");
+        assert_eq!(v2_check(&copied(Some("result_value"))), Ok(1_050_000_000), "a result_value copy is no estimate");
+        // An award-type total anywhere turns the branch off.
+        let both = with_totals(&base, vec![v2_total(10, "BT-27-Procedure", Estimate, 1_000_000), v2_total(10, "BT-161-NoticeResult", Award, 300_000_000)]);
+        assert_eq!(v2_check(&both), Ok(300_000_000), "the award total, not the estimate");
+    }
+
+    /// R4: a summed award at least 10 x its own lot's largest API-keyed estimate (a scorer figure
+    /// in S's currency). TED keeps its lot estimates lot-less, so R4 never fires on TED (recorded).
+    /// Each shape carries LOT-0002's award copy at tender scope: today's head is the copy (K), not
+    /// the larger lot estimate the max election would otherwise elect.
+    #[test]
+    fn an_award_ten_times_its_lot_estimate_refuses_the_sum() {
+        let with_estimate = |estimate: Fact| {
+            let mut v = v2_base();
+            v.facts.insert(v2_eur("result_value", 200_000_000));
+            v.lots[1] = v2_lot("LOT-0002", vec![estimate]);
+            v
+        };
+        assert_eq!(v2_check(&with_estimate(v2_eur("estimated_value", 20_000_000))), Err("R4"), "EUR 2 m on an estimate of EUR 200,000.00");
+        // Just under 10 x, R4 lets it through and the shape checks refuse it (R5.8: 1.5 x its estimate).
+        assert_eq!(v2_check(&with_estimate(v2_eur("estimated_value", 20_000_001))), Err("R5.8"));
+        // An estimate at or below 10.00 is no estimate of R4's (R5's unfiltered checks still read it).
+        assert_eq!(v2_check(&with_estimate(v2_eur("estimated_value", 1_000))), Err("R5.8"));
+        // An estimate in another currency is no estimate of S's.
+        let pln = Fact::Amount { field: "estimated_value".into(), cents: 20_000_000, currency: "PLN".into(), tax_basis: None, quality: None };
+        assert_eq!(v2_check(&with_estimate(pln)), Ok(300_000_000));
+        // TED's lot estimate is stored lot-less: a procedure figure, which path W never sums beside (T').
+        let mut ted = v2_base();
+        ted.facts.insert(v2_eur("estimated_value", 20_000_000));
+        assert_eq!(v2_check(&ted), Err("W/T'"));
+    }
+
+    /// R5: the shapes pass's 15 checks, one synthetic shape each, every one the FIRST check to
+    /// refuse its shape; then every check with a threshold (3–14) at its edge and one cent past
+    /// it. A shape with lot figures carries LOT-0002's award copy at tender scope, so today's head
+    /// is that copy (K) rather than a lot estimate.
+    #[test]
+    fn the_shape_checks_refuse_their_shapes() {
+        let with_lot_facts = |first: Vec<Fact>, second: Vec<Fact>| {
+            let mut v = v2_base();
+            v.facts.insert(v2_eur("result_value", 200_000_000));
+            v.lots = vec![v2_lot("LOT-0001", first), v2_lot("LOT-0002", second)];
+            v
+        };
+        let bt709 = |cents: i64| v2_eur(super::RESULT_FRAMEWORK_MAXIMUM, cents);
+        let bt660 = |cents: i64| v2_eur(super::RESULT_FRAMEWORK_REESTIMATE, cents);
+        let estimate = |cents: i64| v2_eur("estimated_value", cents);
+        assert_eq!(v2_check(&v2_base()), Ok(300_000_000));
+
+        // 1: a summed result closed, or with no winner.
+        let mut closed = v2_base();
+        closed.rounds[0].lot_results[0].decision = Some(super::DECISION_NO_AWARD.into());
+        assert_eq!(v2_check(&closed), Err("R5.1"), "closed");
+        let mut no_winner = v2_base();
+        no_winner.rounds[0].lot_results[0].winners.clear();
+        assert_eq!(v2_check(&no_winner), Err("R5.1"), "no winner");
+        // 2: a later result on a summed lot closed, or with neither a winner nor a value.
+        let mut later = v2_base();
+        let mut closing = v2_award("LOT-0001", 0, &[]);
+        closing.awarded_cents = None;
+        closing.decision = Some(super::DECISION_NO_AWARD.into());
+        later.rounds.push(v2_round(11, vec![closing], Vec::new()));
+        assert_eq!(v2_check(&later), Err("R5.2"), "a later closed result");
+        later.rounds[1].lot_results[0].decision = None;
+        assert_eq!(v2_check(&later), Err("R5.2"), "a later result with neither winner nor value");
+        // 3: an award within 0.5 % of the sum of all lot estimates (two lots carry one).
+        assert_eq!(v2_check(&with_lot_facts(vec![estimate(150_000_000)], vec![estimate(50_000_000)])), Err("R5.3"));
+        // 4: an award within 0.5 % of the sum of every lot's figure in one kind (BT-709 here) ...
+        assert_eq!(v2_check(&with_lot_facts(vec![bt709(120_000_000)], vec![bt709(80_000_000)])), Err("R5.4"), "a kind");
+        // ... or in one round (notice 9 awarded LOT-0001 EUR 300,000.00 and LOT-0002 EUR 1.7 m).
+        let mut whole = v2_base();
+        whole.rounds.insert(
+            0,
+            v2_round(9, vec![v2_award("LOT-0001", 30_000_000, &[11]), v2_award("LOT-0002", 170_000_000, &[12])], vec![v2_bid("LOT-0001", 30_000_000, &[11]), v2_bid("LOT-0002", 170_000_000, &[12])]),
+        );
+        assert_eq!(v2_check(&whole), Err("R5.4"), "a round");
+        // 5: an award above 1.01 x its own round's valued bids on the lot.
+        let mut over_bids = v2_base();
+        over_bids.rounds[0].bids[0].cents = Some(90_000_000);
+        assert_eq!(v2_check(&over_bids), Err("R5.5"));
+        // 6: an award at least 1.9 x its lot's BT-709.
+        assert_eq!(v2_check(&with_lot_facts(vec![bt709(50_000_000)], Vec::new())), Err("R5.6"));
+        // 7: S above 1.5 x the BT-709 of the summed lots that carry one.
+        assert_eq!(v2_check(&with_lot_facts(vec![bt709(70_000_000)], vec![bt709(125_000_000)])), Err("R5.7"));
+        // 8: an award at least 1.5 x its lot's smallest estimate.
+        assert_eq!(v2_check(&with_lot_facts(vec![estimate(60_000_000), estimate(90_000_000)], Vec::new())), Err("R5.8"));
+        // 9: an award at least 3 x its lot's estimate. Check 8 reads the smallest estimate first,
+        // so 9 comes first only beside a zero estimate (a falsy figure to the port's checks).
+        assert_eq!(v2_check(&with_lot_facts(vec![estimate(0), estimate(30_000_000)], Vec::new())), Err("R5.9"));
+        // 10: S above 3 x the estimates of the summed lots that carry one.
+        assert_eq!(v2_check(&with_lot_facts(vec![estimate(90_000_000)], Vec::new())), Err("R5.10"));
+        // 11: two or more equal valued bids equal to the lot's BT-709, BT-660, BT-27 or BT-271.
+        let mut ceiling = with_lot_facts(vec![bt660(50_000_000)], Vec::new());
+        ceiling.rounds[0].bids[0] = v2_bid("LOT-0001", 50_000_000, &[11]);
+        ceiling.rounds[0].bids.push(v2_bid("LOT-0001", 50_000_000, &[21]));
+        assert_eq!(v2_check(&ceiling), Err("R5.11"));
+        // 12: an award n_winners x one of the lot's references, n_winners at least 2 (a consortium,
+        // so R1 passes it).
+        let mut copied = with_lot_facts(vec![bt660(50_000_000)], Vec::new());
+        copied.rounds[0].lot_results[0].winners = vec![11, 21];
+        copied.rounds[0].bids[0] = v2_bid("LOT-0001", 100_000_000, &[11, 21]);
+        assert_eq!(v2_check(&copied), Err("R5.12"));
+        // 13: S below 1,000.00 in its own currency.
+        let mut tiny = v2_base();
+        for (r, b, c) in [(0, 0, 40_000), (1, 1, 50_000)] {
+            tiny.rounds[0].lot_results[r].awarded_cents = Some(c);
+            tiny.rounds[0].bids[b].cents = Some(c);
+        }
+        tiny.stated_totals[0].cents = 90_000;
+        assert_eq!(v2_check(&tiny), Err("R5.13"));
+        // 14: a procedure estimate equal to every lot's estimate (0.1 %). The procedure figure must
+        // be a sentinel for path W to run at all (T'): EUR 111,111,111.00, on both lots too.
+        // (Sentinel lot estimates are never elected, so today's head is null here: no copy.)
+        let mut procedure = with_lot_facts(vec![estimate(11_111_111_100)], vec![estimate(11_111_111_100)]);
+        procedure.facts = [estimate(11_111_111_100)].into_iter().collect();
+        for (i, c) in [(0, 10_000_000_000), (1, 12_000_000_000)] {
+            procedure.rounds[0].lot_results[i].awarded_cents = Some(c);
+            procedure.rounds[0].bids[i].cents = Some(c);
+        }
+        procedure.stated_totals[0].cents = 22_000_000_000;
+        assert_eq!(v2_check(&procedure), Err("R5.14"));
+        // 15: every lot estimate equal (two lots carry one).
+        assert_eq!(v2_check(&with_lot_facts(vec![estimate(150_000_000)], vec![estimate(150_000_000)])), Err("R5.15"));
+
+        // The edges: each threshold at its edge and one cent past it, on the port's arithmetic
+        // (an integer against a float product, Python's exact comparison; `near` inclusive), so a
+        // factor, a tolerance or a strict / inclusive comparison that drifts from rule_v2.py fails
+        // here. `shaped` sets LOT-0001's award (and its LotTender) and the BT-161 to the new S;
+        // LOT-0002 keeps its EUR 2 m and its tender-scope copy.
+        let shaped = |first_award: i64, first: Vec<Fact>, second: Vec<Fact>| {
+            let mut v = with_lot_facts(first, second);
+            v.rounds[0].lot_results[0].awarded_cents = Some(first_award);
+            v.rounds[0].bids[0].cents = Some(first_award);
+            v.stated_totals[0].cents = first_award + 200_000_000;
+            v
+        };
+        // 3: |EUR 2 m - E| <= 0.5 % of E holds at E = 2,010,050.25 and fails a cent above (R5.4
+        // reads the same estimate set, so a stricter R5.3 hands the shape to R5.4).
+        let estimates_summing = |first: i64| with_lot_facts(vec![estimate(first)], vec![estimate(134_000_000)]);
+        assert_eq!(v2_check(&estimates_summing(67_005_025)), Err("R5.3"), "0.5 % inclusive");
+        assert_eq!(v2_check(&estimates_summing(67_005_026)), Ok(300_000_000), "past 0.5 %");
+        // 4: the same edge on a BT-709 set (no estimates, so R5.3 cannot fire).
+        let bt709_summing = |first: i64| with_lot_facts(vec![bt709(first)], vec![bt709(134_000_000)]);
+        assert_eq!(v2_check(&bt709_summing(67_005_025)), Err("R5.4"), "0.5 % inclusive");
+        assert_eq!(v2_check(&bt709_summing(67_005_026)), Ok(300_000_000), "past 0.5 %");
+        // 5: EUR 1 m > 1.01 x bids, strict: 1.01 x 990,099.00 = 999,999.99 refuses, 1.01 x
+        // 990,099.01 = 1,000,000.0001 does not.
+        let mut bids_at = v2_base();
+        bids_at.rounds[0].bids[0].cents = Some(99_009_900);
+        assert_eq!(v2_check(&bids_at), Err("R5.5"), "above 1.01 x");
+        bids_at.rounds[0].bids[0].cents = Some(99_009_901);
+        assert_eq!(v2_check(&bids_at), Ok(300_000_000), "within 1.01 x");
+        // 6: an award >= 1.9 x its BT-709, inclusive: EUR 1.9 m on a BT-709 of EUR 1 m refuses,
+        // a cent less does not (LOT-0002's BT-709 keeps R5.7 quiet).
+        let bt709_of = |first_award: i64| shaped(first_award, vec![bt709(100_000_000)], vec![bt709(200_000_000)]);
+        assert_eq!(v2_check(&bt709_of(190_000_000)), Err("R5.6"), "1.9 x inclusive");
+        assert_eq!(v2_check(&bt709_of(189_999_999)), Ok(389_999_999), "below 1.9 x");
+        // 7: S > 1.5 x the summed BT-709, strict: EUR 4.5 m against BT-709s of EUR 3 m passes, a
+        // cent less of BT-709 refuses.
+        let bt709_total = |second: i64| shaped(250_000_000, vec![bt709(160_000_000)], vec![bt709(second)]);
+        assert_eq!(v2_check(&bt709_total(140_000_000)), Ok(450_000_000), "exactly 1.5 x");
+        assert_eq!(v2_check(&bt709_total(139_999_999)), Err("R5.7"), "above 1.5 x");
+        // 8: an award >= 1.5 x its lot's SMALLEST estimate, inclusive (EUR 1 m beside EUR 1.4 m).
+        let est_min_of = |first_award: i64| shaped(first_award, vec![estimate(100_000_000), estimate(140_000_000)], vec![estimate(150_000_000)]);
+        assert_eq!(v2_check(&est_min_of(150_000_000)), Err("R5.8"), "1.5 x inclusive");
+        assert_eq!(v2_check(&est_min_of(149_999_999)), Ok(349_999_999), "below 1.5 x");
+        // 9: an award >= 3 x its lot's estimate, inclusive (beside a zero estimate, so check 8
+        // reads nothing).
+        let est_of = |first_award: i64| shaped(first_award, vec![estimate(0), estimate(50_000_000)], vec![estimate(160_000_000)]);
+        assert_eq!(v2_check(&est_of(150_000_000)), Err("R5.9"), "3 x inclusive");
+        assert_eq!(v2_check(&est_of(149_999_999)), Ok(349_999_999), "below 3 x");
+        // 10: S > 3 x the summed estimates, strict.
+        assert_eq!(v2_check(&with_lot_facts(vec![estimate(100_000_000)], Vec::new())), Ok(300_000_000), "exactly 3 x");
+        assert_eq!(v2_check(&with_lot_facts(vec![estimate(99_999_999)], Vec::new())), Err("R5.10"), "above 3 x");
+        // 11: equal bids within 0.1 % of a reference, inclusive: EUR 500,000.00 bids against a
+        // BT-660 of EUR 499,500.00 refuse, against EUR 499,499.99 they do not.
+        let ceiling_at = |reference: i64| {
+            let mut v = with_lot_facts(vec![bt660(reference)], Vec::new());
+            v.rounds[0].bids[0] = v2_bid("LOT-0001", 50_000_000, &[11]);
+            v.rounds[0].bids.push(v2_bid("LOT-0001", 50_000_000, &[21]));
+            v
+        };
+        assert_eq!(v2_check(&ceiling_at(49_950_000)), Err("R5.11"), "0.1 % inclusive");
+        assert_eq!(v2_check(&ceiling_at(49_949_999)), Ok(300_000_000), "past 0.1 %");
+        // 12: an award within 0.1 % of n_winners x a reference, inclusive.
+        let copied_at = |reference: i64| {
+            let mut v = with_lot_facts(vec![bt660(reference)], Vec::new());
+            v.rounds[0].lot_results[0].winners = vec![11, 21];
+            v.rounds[0].bids[0] = v2_bid("LOT-0001", 100_000_000, &[11, 21]);
+            v
+        };
+        assert_eq!(v2_check(&copied_at(49_950_000)), Err("R5.12"), "0.1 % inclusive");
+        assert_eq!(v2_check(&copied_at(49_949_999)), Ok(300_000_000), "past 0.1 %");
+        // 13: S < 1,000.00, strict (two distinct awards: a repeated pair refuses at G1').
+        let tiny_at = |first: i64, second: i64| {
+            let mut v = v2_base();
+            for (i, c) in [(0, first), (1, second)] {
+                v.rounds[0].lot_results[i].awarded_cents = Some(c);
+                v.rounds[0].bids[i].cents = Some(c);
+            }
+            v.stated_totals[0].cents = first + second;
+            v
+        };
+        assert_eq!(v2_check(&tiny_at(49_999, 50_000)), Err("R5.13"), "999.99");
+        assert_eq!(v2_check(&tiny_at(49_999, 50_001)), Ok(100_000), "1,000.00");
+        // 14: every lot estimate within 0.1 % of the procedure estimate, inclusive. LOT-0001's
+        // estimate is no sentinel, so LOT-0002's award copy keeps it from being today's head (K).
+        let procedure_at = |first: i64| {
+            let mut v = procedure.clone();
+            v.lots[0] = v2_lot("LOT-0001", vec![estimate(first)]);
+            v.facts.insert(v2_eur("result_value", 12_000_000_000));
+            v
+        };
+        assert_eq!(v2_check(&procedure_at(11_099_999_989)), Err("R5.14"), "0.1 % inclusive");
+        assert_eq!(v2_check(&procedure_at(11_099_999_988)), Ok(22_000_000_000), "past 0.1 %");
+    }
+
+    /// R6: two summed keys awarded in different notices with the same non-empty winner set and the
+    /// same normalised lot title (the title the API serves: ENG first) are one lot restated.
+    #[test]
+    fn a_lot_restated_under_a_second_key_refuses_the_sum() {
+        let title = |lang: Option<&str>, value: &str| Fact::Text { field: "title".into(), lang: lang.map(Into::into), value: value.into() };
+        let restated = |winner: i64, first_title: Vec<Fact>, second_title: Vec<Fact>| {
+            let mut v = v2_two_notices((Some("1"), Some("2")));
+            v.rounds[1].lot_results[0].winners = vec![winner];
+            v.rounds[1].bids[0] = v2_bid("LOT-0002", 200_000_000, &[winner]);
+            v.lots = vec![v2_lot("LOT-0001", first_title), v2_lot("LOT-0002", second_title)];
+            v
+        };
+        let cleaning = || vec![title(Some("ENG"), "Cleaning services"), title(None, "Reinigung")];
+        assert_eq!(v2_check(&restated(11, cleaning(), vec![title(None, "cleaning  SERVICES!")])), Err("R6"), "same winner, same title");
+        assert_eq!(v2_check(&restated(12, cleaning(), vec![title(None, "cleaning  SERVICES!")])), Ok(300_000_000), "another winner");
+        assert_eq!(v2_check(&restated(11, cleaning(), vec![title(None, "Window cleaning")])), Ok(300_000_000), "another title");
+        assert_eq!(v2_check(&restated(11, Vec::new(), Vec::new())), Ok(300_000_000), "no title");
+        // The served title is the ENG one, not the unlabelled one.
+        assert_eq!(v2_check(&restated(11, cleaning(), vec![title(None, "Reinigung")])), Ok(300_000_000), "ENG beats unlabelled");
+        // Awarded in ONE notice, two lots with one winner and one title are two lots.
+        let mut together = v2_base();
+        together.rounds[0].lot_results[1].winners = vec![11];
+        together.rounds[0].bids[1] = v2_bid("LOT-0002", 200_000_000, &[11]);
+        together.lots = vec![v2_lot("LOT-0001", vec![title(None, "Cleaning")]), v2_lot("LOT-0002", vec![title(None, "Cleaning")])];
+        assert_eq!(v2_check(&together), Ok(300_000_000), "one notice");
+    }
+
+    /// R7: a summed award at least 10 x, or at most 1/10 of, an earlier valued award on the same
+    /// key in S's currency (an earlier award in another currency does not count).
+    #[test]
+    fn an_award_ten_times_its_own_earlier_award_refuses_the_sum() {
+        let after = |earlier: i64| {
+            let mut v = v2_base();
+            v.rounds.insert(0, v2_round(9, vec![v2_award("LOT-0001", earlier, &[11])], vec![v2_bid("LOT-0001", earlier, &[11])]));
+            v
+        };
+        assert_eq!(v2_check(&after(10_000_000)), Err("R7"), "EUR 1 m after EUR 100,000.00");
+        assert_eq!(v2_check(&after(1_000_000_000)), Err("R7"), "EUR 1 m after EUR 10 m");
+        assert_eq!(v2_check(&after(10_000_001)), Ok(300_000_000), "just under 10 x");
+        assert_eq!(v2_check(&after(999_999_990)), Ok(300_000_000), "just under 10 x the other way");
+        assert_eq!(v2_check(&after(900)), Ok(300_000_000), "EUR 9.00 is no award");
+        // In S's currency only. An earlier award LotSums counts in another currency refuses at G6
+        // first (the sum would be partial), so R7's currency test is reached only by one LotSums
+        // never counts but the scorer admits: 11,111,111.11, a repdigit run (issue 366's sentinel)
+        // and no scorer sentinel (which needs whole units). In EUR it is 10 x past the summed
+        // EUR 1 m and R7 refuses; in PLN it is no earlier award of S's.
+        let earlier_in = |currency: &str| {
+            let mut v = v2_base();
+            let mut earlier = v2_award("LOT-0001", 1_111_111_111, &[11]);
+            earlier.awarded_currency = Some(currency.into());
+            v.rounds.insert(0, v2_round(9, vec![earlier], Vec::new()));
+            v
+        };
+        assert_eq!(v2_check(&earlier_in("EUR")), Err("R7"), "EUR 1 m after EUR 11,111,111.11");
+        assert_eq!(v2_check(&earlier_in("PLN")), Ok(300_000_000), "an earlier award in PLN");
+    }
+
+    /// R8: the largest summed award at least 10 x the second largest.
+    #[test]
+    fn a_dominant_award_refuses_the_sum() {
+        let dominant = |cents: i64| {
+            let mut v = v2_base();
+            v.rounds[0].lot_results[1].awarded_cents = Some(cents);
+            v.rounds[0].bids[1].cents = Some(cents);
+            v.stated_totals[0].cents = 100_000_000 + cents;
+            v
+        };
+        assert_eq!(v2_check(&dominant(1_000_000_000)), Err("R8"), "EUR 10 m beside EUR 1 m");
+        assert_eq!(v2_check(&dominant(999_999_990)), Ok(1_099_999_990), "just under 10 x");
+    }
+
+    /// R9 (27915's shape): the summed result's round publishes LotTenders, none of them for the
+    /// summed lot — its award was resolved through another lot's contract or tender. Only bids
+    /// with a resolved lot key count (amendment).
+    #[test]
+    fn an_award_resolved_through_another_lots_tender_refuses_the_sum() {
+        let mut through = v2_base();
+        through.rounds[0].bids.remove(1);
+        assert_eq!(v2_check(&through), Err("R9"), "LOT-0002's round bids on LOT-0001 only");
+        // A bid naming no lot is no LotTender of LOT-0002's ...
+        let mut unkeyed = through.clone();
+        unkeyed.rounds[0].bids.push(super::BidState { lot_key: None, ..v2_bid("LOT-0002", 200_000_000, &[12]) });
+        assert_eq!(v2_check(&unkeyed), Err("R9"));
+        // ... and a round whose bids all name no lot publishes none.
+        let mut none_keyed = v2_base();
+        for b in &mut none_keyed.rounds[0].bids {
+            b.lot_key = None;
+        }
+        assert_eq!(v2_check(&none_keyed), Ok(300_000_000));
+        // A round with no LotTender at all is no evidence either way.
+        let mut bidless = v2_base();
+        bidless.rounds[0].bids.clear();
+        assert_eq!(v2_check(&bidless), Ok(300_000_000));
+    }
+
+    /// R10 at EVERY size (the "vouched everywhere" fallback, PASSED 2026-10-17): an awards sum is
+    /// served only when a buyer-stated total vouches for it — in S's currency, within 1 % of S, not
+    /// a single-lot notice's own award and equal to no single summed award; every kind of the frozen
+    /// table vouches, and the detail names the first that does. EUR 99,999,999.99 is not exempt.
+    /// On real rows: the Lyon-Turin trio states no total and keeps EUR 1,660,661,682.94; 8426318
+    /// serves GBP 3,000,000,000.00, vouched by its TED VAL_RANGE_TOTAL HIGH.
+    #[test]
+    fn an_awards_sum_needs_a_buyer_stated_total_at_every_size() {
+        use super::StatedTotalKind::{Award, Estimate, Range};
+        use super::{DerivationPath, VouchingTotal, awards_path_check, head_value_with_awards_path};
+        let rates = crate::rates::RatesLookup::default();
+        let unvouched = |first: i64, second: i64| {
+            let mut v = v2_base();
+            for (i, c) in [(0, first), (1, second)] {
+                v.rounds[0].lot_results[i].awarded_cents = Some(c);
+                v.rounds[0].bids[i].cents = Some(c);
+            }
+            v.stated_totals.clear();
+            v
+        };
+        let stating = |v: &TenderVersion, totals: Vec<super::StatedTotal>| TenderVersion { stated_totals: totals, ..v.clone() };
+        // EUR 3 m, EUR 99,999,999.99 and EUR 2,000.00 alike: no total, no sum.
+        for (first, second) in [(100_000_000, 200_000_000), (4_999_999_999, 5_000_000_000), (80_000, 120_000)] {
+            let v = unvouched(first, second);
+            assert_eq!(v2_check(&v), Err("R10"), "EUR {} unvouched", first + second);
+            assert_eq!(head_value_with_awards_path(std::slice::from_ref(&v), &rates), super::HeadValue::default(), "today's null head stays");
+            let vouched = stating(&v, vec![v2_total(10, "BT-161-NoticeResult", Award, first + second)]);
+            assert_eq!(v2_check(&vouched), Ok(first + second), "EUR {} vouched", first + second);
+        }
+        let base = unvouched(100_000_000, 200_000_000);
+        // Within 1 % of S, either side (a range end, so R3 holds no total against the lots).
+        for (cents, vouches) in [(297_000_000, true), (296_999_999, false), (303_000_000, true), (303_000_001, false)] {
+            let v = stating(&base, vec![v2_total(10, "TED-LOW", Range, cents)]);
+            assert_eq!(v2_check(&v).is_ok(), vouches, "{cents}");
+        }
+        // Every kind of the frozen table vouches, and the detail names it.
+        for (field, kind) in [
+            ("BT-161-NoticeResult", Award),
+            ("BT-118-NoticeResult", Award),
+            ("BT-1118-NoticeResult", Award),
+            ("TED-VAL_TOTAL", Award),
+            ("TED-VAL_TOTAL", Estimate),
+            ("BT-27-Procedure", Estimate),
+            ("TED-VAL_ESTIMATED_TOTAL", Estimate),
+            ("TED-LOW", Range),
+            ("TED-HIGH", Range),
+        ] {
+            let v = stating(&base, vec![v2_total(10, field, kind, 300_000_000)]);
+            let derived = awards_path_check(std::slice::from_ref(&v), &rates).unwrap_or_else(|check| panic!("{field}: refused by {check}"));
+            assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: field.into(), notice_id: 10, cents: 300_000_000 } });
+            assert_eq!(
+                derived.detail_json(),
+                format!("{{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{{\"field\":\"{field}\",\"notice_id\":10,\"cents\":300000000}}}}")
+            );
+        }
+        // The first vouching total in chain order is the one named.
+        let two = stating(&base, vec![v2_total(9, "TED-LOW", Range, 299_000_000), v2_total(10, "BT-161-NoticeResult", Award, 300_000_000)]);
+        let derived = awards_path_check(std::slice::from_ref(&two), &rates).expect("vouched");
+        assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: "TED-LOW".into(), notice_id: 9, cents: 299_000_000 } });
+        // A total in another currency vouches for nothing in S's.
+        let pln = super::StatedTotal { currency: "PLN".into(), ..v2_total(10, "BT-161-NoticeResult", Award, 300_000_000) };
+        assert_eq!(v2_check(&stating(&base, vec![pln])), Err("R10"));
+        // A single-lot notice's own award does not vouch: notice 8 awarded LOT-0001 alone at EUR 3 m
+        // (since re-awarded at EUR 1 m) and states EUR 3 m; stated by notice 10, the same figure does.
+        let mut reawarded = base.clone();
+        reawarded.rounds.insert(0, v2_round(8, vec![v2_award("LOT-0001", 300_000_000, &[11])], vec![v2_bid("LOT-0001", 300_000_000, &[11])]));
+        assert_eq!(v2_check(&stating(&reawarded, vec![v2_total(8, "BT-161-NoticeResult", Award, 300_000_000)])), Err("R10"), "notice 8's own award");
+        assert_eq!(v2_check(&stating(&reawarded, vec![v2_total(10, "BT-161-NoticeResult", Award, 300_000_000)])), Ok(300_000_000), "notice 10's total");
+        // A total equal to a single summed award vouches for nothing. (Within 1 % of S, such an award
+        // is at least 99 x the others, so R8 refuses the sum first; the clause is read on the pure
+        // R10 test, with S as given.)
+        let v = v2_base();
+        let summed: Vec<super::SummedAward<'_>> = v.rounds[0]
+            .lot_results
+            .iter()
+            .map(|r| super::SummedAward { key: r.lot_key.as_deref().unwrap(), notice_id: 10, cents: r.awarded_cents.unwrap(), result: r })
+            .collect();
+        let view = super::AwardsView::new(&v, "EUR", summed, 200_000_000);
+        let equal = v2_total(10, "BT-161-NoticeResult", Award, 200_000_000);
+        let near = v2_total(10, "BT-161-NoticeResult", Award, 199_000_000);
+        assert_eq!(super::r10_vouching_total(&view, &[(&equal, false)]), None, "LOT-0002's own figure");
+        assert_eq!(super::r10_vouching_total(&view, &[(&near, false)]), Some(&near));
+        assert_eq!(super::r10_vouching_total(&view, &[(&near, true)]), None, "a single-lot notice's own award");
+
+        // Real rows (`canonical_551_v2_fixtures.rs`).
+        for id in [6450467, 6450469, 6450473] {
+            let fx = super::lot_sum_551_v2_fixtures::fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            assert_eq!(awards_path_check(&chain, &rates).map(|d| d.cents), Err("R10"), "{id}: no stated total");
+            assert_eq!(head_value_with_awards_path(&chain, &rates), super::HeadValue { eur_cents: Some(166_066_168_294), derived: None }, "{id}");
+        }
+        let fx = super::lot_sum_551_v2_fixtures::fixture(8426318);
+        let value = head_value_with_awards_path(&fx.versions(), &fx.rates());
+        let derived = value.derived.expect("8426318 is served");
+        assert_eq!((derived.cents, derived.currency.as_str(), derived.lots), (300_000_000_000, "GBP", 7), "GBP 3,000,000,000.00");
+        assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: "TED-HIGH".into(), notice_id: 20083570, cents: 300_000_000_000 } });
     }
 
     /// Issue 537: [`super::LotSums`] is the one definition of S, shared by the election and
