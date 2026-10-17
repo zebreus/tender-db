@@ -1,0 +1,8834 @@
+{
+"what": "issue 567 fresh-30 read-back, group 3 fresh reader: every award block of each tender, rule placement (independent read of docs/operations.md) vs served lot_results[].lot; pre567 = mapping.py port",
+"tenders": {
+"6632582": {
+"blocks": 2,
+"wrong": [],
+"moved": 2,
+"rows": [
+{
+"notice": 20709957,
+"res": "RES-1",
+"refs": {
+"TED-ITEM": [
+"1"
+]
+},
+"rule": null,
+"how": "item-not-key",
+"served": null,
+"pre567": "LOT-1"
+},
+{
+"notice": 20709957,
+"res": "RES-2",
+"refs": {
+"TED-ITEM": [
+"2"
+]
+},
+"rule": null,
+"how": "item-not-key",
+"served": null,
+"pre567": "LOT-1"
+}
+]
+},
+"7397732": {
+"blocks": 3,
+"wrong": [],
+"moved": 1,
+"rows": [
+{
+"notice": 22692214,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22692214,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 22692214,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"3"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-3",
+"how": "exact",
+"served": "LOT-3",
+"pre567": "LOT-3"
+}
+]
+},
+"8514810": {
+"blocks": 5,
+"wrong": [],
+"moved": 5,
+"rows": [
+{
+"notice": 22963000,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": "LOT-1"
+},
+{
+"notice": 22963000,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": "LOT-2"
+},
+{
+"notice": 22963000,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": "LOT-1"
+},
+{
+"notice": 22963000,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": "LOT-1"
+},
+{
+"notice": 22963000,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": "LOT-2"
+}
+]
+},
+"5624004": {
+"blocks": 2,
+"wrong": [],
+"moved": 1,
+"rows": [
+{
+"notice": 19048669,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 19048669,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+}
+]
+},
+"6389627": {
+"blocks": 24,
+"wrong": [],
+"moved": 1,
+"rows": [
+{
+"notice": 20524440,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 20524440,
+"res": "RES-10",
+"refs": {
+"TED-LOT_NO": [
+"10"
+],
+"TED-ITEM": [
+"10"
+]
+},
+"rule": "LOT-10",
+"how": "exact",
+"served": "LOT-10",
+"pre567": "LOT-10"
+},
+{
+"notice": 20524440,
+"res": "RES-11",
+"refs": {
+"TED-LOT_NO": [
+"11"
+],
+"TED-ITEM": [
+"11"
+]
+},
+"rule": "LOT-11",
+"how": "exact",
+"served": "LOT-11",
+"pre567": "LOT-11"
+},
+{
+"notice": 20524440,
+"res": "RES-12",
+"refs": {
+"TED-LOT_NO": [
+"12"
+],
+"TED-ITEM": [
+"12"
+]
+},
+"rule": "LOT-12",
+"how": "exact",
+"served": "LOT-12",
+"pre567": "LOT-12"
+},
+{
+"notice": 20524440,
+"res": "RES-13",
+"refs": {
+"TED-LOT_NO": [
+"13"
+],
+"TED-ITEM": [
+"13"
+]
+},
+"rule": "LOT-13",
+"how": "exact",
+"served": "LOT-13",
+"pre567": "LOT-13"
+},
+{
+"notice": 20524440,
+"res": "RES-14",
+"refs": {
+"TED-LOT_NO": [
+"14"
+],
+"TED-ITEM": [
+"14"
+]
+},
+"rule": "LOT-14",
+"how": "exact",
+"served": "LOT-14",
+"pre567": "LOT-14"
+},
+{
+"notice": 20524440,
+"res": "RES-15",
+"refs": {
+"TED-LOT_NO": [
+"15"
+],
+"TED-ITEM": [
+"15"
+]
+},
+"rule": "LOT-15",
+"how": "exact",
+"served": "LOT-15",
+"pre567": "LOT-15"
+},
+{
+"notice": 20524440,
+"res": "RES-16",
+"refs": {
+"TED-LOT_NO": [
+"16"
+],
+"TED-ITEM": [
+"16"
+]
+},
+"rule": "LOT-16",
+"how": "exact",
+"served": "LOT-16",
+"pre567": "LOT-16"
+},
+{
+"notice": 20524440,
+"res": "RES-17",
+"refs": {
+"TED-LOT_NO": [
+"17"
+],
+"TED-ITEM": [
+"17"
+]
+},
+"rule": "LOT-17",
+"how": "exact",
+"served": "LOT-17",
+"pre567": "LOT-17"
+},
+{
+"notice": 20524440,
+"res": "RES-18",
+"refs": {
+"TED-LOT_NO": [
+"18"
+],
+"TED-ITEM": [
+"18"
+]
+},
+"rule": "LOT-18",
+"how": "exact",
+"served": "LOT-18",
+"pre567": "LOT-18"
+},
+{
+"notice": 20524440,
+"res": "RES-19",
+"refs": {
+"TED-LOT_NO": [
+"19"
+],
+"TED-ITEM": [
+"19"
+]
+},
+"rule": "LOT-19",
+"how": "exact",
+"served": "LOT-19",
+"pre567": "LOT-19"
+},
+{
+"notice": 20524440,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-2"
+},
+{
+"notice": 20524440,
+"res": "RES-20",
+"refs": {
+"TED-LOT_NO": [
+"20"
+],
+"TED-ITEM": [
+"20"
+]
+},
+"rule": "LOT-20",
+"how": "exact",
+"served": "LOT-20",
+"pre567": "LOT-20"
+},
+{
+"notice": 20524440,
+"res": "RES-21",
+"refs": {
+"TED-LOT_NO": [
+"22"
+],
+"TED-ITEM": [
+"21"
+]
+},
+"rule": "LOT-21",
+"how": "exact",
+"served": "LOT-21",
+"pre567": "LOT-21"
+},
+{
+"notice": 20524440,
+"res": "RES-22",
+"refs": {
+"TED-LOT_NO": [
+"23"
+],
+"TED-ITEM": [
+"22"
+]
+},
+"rule": "LOT-22",
+"how": "exact",
+"served": "LOT-22",
+"pre567": "LOT-22"
+},
+{
+"notice": 20524440,
+"res": "RES-23",
+"refs": {
+"TED-LOT_NO": [
+"24"
+],
+"TED-ITEM": [
+"23"
+]
+},
+"rule": "LOT-23",
+"how": "exact",
+"served": "LOT-23",
+"pre567": "LOT-23"
+},
+{
+"notice": 20524440,
+"res": "RES-24",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"24"
+]
+},
+"rule": "LOT-24",
+"how": "exact",
+"served": "LOT-24",
+"pre567": "LOT-21"
+},
+{
+"notice": 20524440,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"3"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-3",
+"how": "exact",
+"served": "LOT-3",
+"pre567": "LOT-3"
+},
+{
+"notice": 20524440,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"4"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-4",
+"how": "exact",
+"served": "LOT-4",
+"pre567": "LOT-4"
+},
+{
+"notice": 20524440,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"5"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-5"
+},
+{
+"notice": 20524440,
+"res": "RES-6",
+"refs": {
+"TED-LOT_NO": [
+"6"
+],
+"TED-ITEM": [
+"6"
+]
+},
+"rule": "LOT-6",
+"how": "exact",
+"served": "LOT-6",
+"pre567": "LOT-6"
+},
+{
+"notice": 20524440,
+"res": "RES-7",
+"refs": {
+"TED-LOT_NO": [
+"7"
+],
+"TED-ITEM": [
+"7"
+]
+},
+"rule": "LOT-7",
+"how": "exact",
+"served": "LOT-7",
+"pre567": "LOT-7"
+},
+{
+"notice": 20524440,
+"res": "RES-8",
+"refs": {
+"TED-LOT_NO": [
+"8"
+],
+"TED-ITEM": [
+"8"
+]
+},
+"rule": "LOT-8",
+"how": "exact",
+"served": "LOT-8",
+"pre567": "LOT-8"
+},
+{
+"notice": 20524440,
+"res": "RES-9",
+"refs": {
+"TED-LOT_NO": [
+"9"
+],
+"TED-ITEM": [
+"9"
+]
+},
+"rule": "LOT-9",
+"how": "exact",
+"served": "LOT-9",
+"pre567": "LOT-9"
+}
+]
+},
+"6565274": {
+"blocks": 1,
+"wrong": [],
+"moved": 1,
+"rows": [
+{
+"notice": 21129364,
+"res": "RES-1",
+"refs": {
+"TED-ITEM": [
+"1"
+]
+},
+"rule": null,
+"how": "item-not-key",
+"served": null,
+"pre567": "LOT-1"
+}
+]
+},
+"6343323": {
+"blocks": 2,
+"wrong": [],
+"moved": 2,
+"rows": [
+{
+"notice": 20582272,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"01"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "norm",
+"served": "LOT-1",
+"pre567": null
+},
+{
+"notice": 20582272,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"02"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "norm",
+"served": "LOT-2",
+"pre567": null
+}
+]
+},
+"7555624": {
+"blocks": 483,
+"wrong": [],
+"moved": 208,
+"rows": [
+{
+"notice": 22985422,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"39"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 22985422,
+"res": "RES-10",
+"refs": {
+"TED-LOT_NO": [
+"113"
+],
+"TED-ITEM": [
+"10"
+]
+},
+"rule": "LOT-19",
+"how": "exact",
+"served": "LOT-19",
+"pre567": "LOT-113"
+},
+{
+"notice": 22985422,
+"res": "RES-100",
+"refs": {
+"TED-LOT_NO": [
+"19"
+],
+"TED-ITEM": [
+"100"
+]
+},
+"rule": "LOT-82",
+"how": "exact",
+"served": "LOT-82",
+"pre567": "LOT-19"
+},
+{
+"notice": 22985422,
+"res": "RES-101",
+"refs": {
+"TED-LOT_NO": [
+"67"
+],
+"TED-ITEM": [
+"101"
+]
+},
+"rule": "LOT-101",
+"how": "exact",
+"served": "LOT-101",
+"pre567": "LOT-101"
+},
+{
+"notice": 22985422,
+"res": "RES-102",
+"refs": {
+"TED-LOT_NO": [
+"45"
+],
+"TED-ITEM": [
+"102"
+]
+},
+"rule": "LOT-111",
+"how": "exact",
+"served": "LOT-111",
+"pre567": "LOT-111"
+},
+{
+"notice": 22985422,
+"res": "RES-103",
+"refs": {
+"TED-LOT_NO": [
+"94"
+],
+"TED-ITEM": [
+"103"
+]
+},
+"rule": "LOT-115",
+"how": "exact",
+"served": "LOT-115",
+"pre567": "LOT-115"
+},
+{
+"notice": 22985422,
+"res": "RES-104",
+"refs": {
+"TED-LOT_NO": [
+"43"
+],
+"TED-ITEM": [
+"104"
+]
+},
+"rule": "LOT-122",
+"how": "exact",
+"served": "LOT-122",
+"pre567": "LOT-122"
+},
+{
+"notice": 22985422,
+"res": "RES-11",
+"refs": {
+"TED-LOT_NO": [
+"91"
+],
+"TED-ITEM": [
+"11"
+]
+},
+"rule": "LOT-16",
+"how": "exact",
+"served": "LOT-16",
+"pre567": "LOT-16"
+},
+{
+"notice": 22985422,
+"res": "RES-12",
+"refs": {
+"TED-LOT_NO": [
+"15"
+],
+"TED-ITEM": [
+"12"
+]
+},
+"rule": "LOT-20",
+"how": "exact",
+"served": "LOT-20",
+"pre567": "LOT-15"
+},
+{
+"notice": 22985422,
+"res": "RES-13",
+"refs": {
+"TED-LOT_NO": [
+"24"
+],
+"TED-ITEM": [
+"13"
+]
+},
+"rule": "LOT-21",
+"how": "exact",
+"served": "LOT-21",
+"pre567": "LOT-21"
+},
+{
+"notice": 22985422,
+"res": "RES-14",
+"refs": {
+"TED-LOT_NO": [
+"38"
+],
+"TED-ITEM": [
+"14"
+]
+},
+"rule": "LOT-22",
+"how": "exact",
+"served": "LOT-22",
+"pre567": "LOT-22"
+},
+{
+"notice": 22985422,
+"res": "RES-15",
+"refs": {
+"TED-LOT_NO": [
+"89"
+],
+"TED-ITEM": [
+"15"
+]
+},
+"rule": "LOT-23",
+"how": "exact",
+"served": "LOT-23",
+"pre567": "LOT-23"
+},
+{
+"notice": 22985422,
+"res": "RES-16",
+"refs": {
+"TED-LOT_NO": [
+"42"
+],
+"TED-ITEM": [
+"16"
+]
+},
+"rule": "LOT-24",
+"how": "exact",
+"served": "LOT-24",
+"pre567": "LOT-24"
+},
+{
+"notice": 22985422,
+"res": "RES-17",
+"refs": {
+"TED-LOT_NO": [
+"76"
+],
+"TED-ITEM": [
+"17"
+]
+},
+"rule": "LOT-25",
+"how": "exact",
+"served": "LOT-25",
+"pre567": "LOT-25"
+},
+{
+"notice": 22985422,
+"res": "RES-18",
+"refs": {
+"TED-LOT_NO": [
+"30"
+],
+"TED-ITEM": [
+"18"
+]
+},
+"rule": "LOT-26",
+"how": "exact",
+"served": "LOT-26",
+"pre567": "LOT-26"
+},
+{
+"notice": 22985422,
+"res": "RES-19",
+"refs": {
+"TED-LOT_NO": [
+"33"
+],
+"TED-ITEM": [
+"19"
+]
+},
+"rule": "LOT-29",
+"how": "exact",
+"served": "LOT-29",
+"pre567": "LOT-29"
+},
+{
+"notice": 22985422,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"37"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-2"
+},
+{
+"notice": 22985422,
+"res": "RES-20",
+"refs": {
+"TED-LOT_NO": [
+"121"
+],
+"TED-ITEM": [
+"20"
+]
+},
+"rule": "LOT-30",
+"how": "exact",
+"served": "LOT-30",
+"pre567": "LOT-121"
+},
+{
+"notice": 22985422,
+"res": "RES-21",
+"refs": {
+"TED-LOT_NO": [
+"122"
+],
+"TED-ITEM": [
+"21"
+]
+},
+"rule": "LOT-32",
+"how": "exact",
+"served": "LOT-32",
+"pre567": "LOT-122"
+},
+{
+"notice": 22985422,
+"res": "RES-22",
+"refs": {
+"TED-LOT_NO": [
+"110"
+],
+"TED-ITEM": [
+"22"
+]
+},
+"rule": "LOT-34",
+"how": "exact",
+"served": "LOT-34",
+"pre567": "LOT-110"
+},
+{
+"notice": 22985422,
+"res": "RES-23",
+"refs": {
+"TED-LOT_NO": [
+"44"
+],
+"TED-ITEM": [
+"23"
+]
+},
+"rule": "LOT-38",
+"how": "exact",
+"served": "LOT-38",
+"pre567": "LOT-38"
+},
+{
+"notice": 22985422,
+"res": "RES-24",
+"refs": {
+"TED-LOT_NO": [
+"77"
+],
+"TED-ITEM": [
+"24"
+]
+},
+"rule": "LOT-36",
+"how": "exact",
+"served": "LOT-36",
+"pre567": "LOT-36"
+},
+{
+"notice": 22985422,
+"res": "RES-25",
+"refs": {
+"TED-LOT_NO": [
+"50"
+],
+"TED-ITEM": [
+"25"
+]
+},
+"rule": "LOT-39",
+"how": "exact",
+"served": "LOT-39",
+"pre567": "LOT-39"
+},
+{
+"notice": 22985422,
+"res": "RES-26",
+"refs": {
+"TED-LOT_NO": [
+"79"
+],
+"TED-ITEM": [
+"26"
+]
+},
+"rule": "LOT-40",
+"how": "exact",
+"served": "LOT-40",
+"pre567": "LOT-40"
+},
+{
+"notice": 22985422,
+"res": "RES-27",
+"refs": {
+"TED-LOT_NO": [
+"93"
+],
+"TED-ITEM": [
+"27"
+]
+},
+"rule": "LOT-41",
+"how": "exact",
+"served": "LOT-41",
+"pre567": "LOT-41"
+},
+{
+"notice": 22985422,
+"res": "RES-28",
+"refs": {
+"TED-LOT_NO": [
+"51"
+],
+"TED-ITEM": [
+"28"
+]
+},
+"rule": "LOT-42",
+"how": "exact",
+"served": "LOT-42",
+"pre567": "LOT-42"
+},
+{
+"notice": 22985422,
+"res": "RES-29",
+"refs": {
+"TED-LOT_NO": [
+"82"
+],
+"TED-ITEM": [
+"29"
+]
+},
+"rule": "LOT-43",
+"how": "exact",
+"served": "LOT-43",
+"pre567": "LOT-43"
+},
+{
+"notice": 22985422,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"48"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-3",
+"how": "exact",
+"served": "LOT-3",
+"pre567": "LOT-3"
+},
+{
+"notice": 22985422,
+"res": "RES-30",
+"refs": {
+"TED-LOT_NO": [
+"118"
+],
+"TED-ITEM": [
+"30"
+]
+},
+"rule": "LOT-44",
+"how": "exact",
+"served": "LOT-44",
+"pre567": "LOT-118"
+},
+{
+"notice": 22985422,
+"res": "RES-31",
+"refs": {
+"TED-LOT_NO": [
+"31"
+],
+"TED-ITEM": [
+"31"
+]
+},
+"rule": "LOT-45",
+"how": "exact",
+"served": "LOT-45",
+"pre567": "LOT-31"
+},
+{
+"notice": 22985422,
+"res": "RES-32",
+"refs": {
+"TED-LOT_NO": [
+"17"
+],
+"TED-ITEM": [
+"32"
+]
+},
+"rule": "LOT-49",
+"how": "exact",
+"served": "LOT-49",
+"pre567": "LOT-17"
+},
+{
+"notice": 22985422,
+"res": "RES-33",
+"refs": {
+"TED-LOT_NO": [
+"106"
+],
+"TED-ITEM": [
+"33"
+]
+},
+"rule": "LOT-54",
+"how": "exact",
+"served": "LOT-54",
+"pre567": "LOT-106"
+},
+{
+"notice": 22985422,
+"res": "RES-34",
+"refs": {
+"TED-LOT_NO": [
+"120"
+],
+"TED-ITEM": [
+"34"
+]
+},
+"rule": "LOT-52",
+"how": "exact",
+"served": "LOT-52",
+"pre567": "LOT-120"
+},
+{
+"notice": 22985422,
+"res": "RES-35",
+"refs": {
+"TED-LOT_NO": [
+"81"
+],
+"TED-ITEM": [
+"35"
+]
+},
+"rule": "LOT-56",
+"how": "exact",
+"served": "LOT-56",
+"pre567": "LOT-56"
+},
+{
+"notice": 22985422,
+"res": "RES-36",
+"refs": {
+"TED-LOT_NO": [
+"20"
+],
+"TED-ITEM": [
+"36"
+]
+},
+"rule": "LOT-57",
+"how": "exact",
+"served": "LOT-57",
+"pre567": "LOT-20"
+},
+{
+"notice": 22985422,
+"res": "RES-37",
+"refs": {
+"TED-LOT_NO": [
+"41"
+],
+"TED-ITEM": [
+"37"
+]
+},
+"rule": "LOT-58",
+"how": "exact",
+"served": "LOT-58",
+"pre567": "LOT-41"
+},
+{
+"notice": 22985422,
+"res": "RES-38",
+"refs": {
+"TED-LOT_NO": [
+"32"
+],
+"TED-ITEM": [
+"38"
+]
+},
+"rule": "LOT-62",
+"how": "exact",
+"served": "LOT-62",
+"pre567": "LOT-32"
+},
+{
+"notice": 22985422,
+"res": "RES-39",
+"refs": {
+"TED-LOT_NO": [
+"55"
+],
+"TED-ITEM": [
+"39"
+]
+},
+"rule": "LOT-61",
+"how": "exact",
+"served": "LOT-61",
+"pre567": "LOT-55"
+},
+{
+"notice": 22985422,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"99"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-4",
+"how": "exact",
+"served": "LOT-4",
+"pre567": "LOT-4"
+},
+{
+"notice": 22985422,
+"res": "RES-40",
+"refs": {
+"TED-LOT_NO": [
+"109"
+],
+"TED-ITEM": [
+"40"
+]
+},
+"rule": "LOT-67",
+"how": "exact",
+"served": "LOT-67",
+"pre567": "LOT-109"
+},
+{
+"notice": 22985422,
+"res": "RES-41",
+"refs": {
+"TED-LOT_NO": [
+"6"
+],
+"TED-ITEM": [
+"41"
+]
+},
+"rule": "LOT-68",
+"how": "exact",
+"served": "LOT-68",
+"pre567": "LOT-6"
+},
+{
+"notice": 22985422,
+"res": "RES-42",
+"refs": {
+"TED-LOT_NO": [
+"87"
+],
+"TED-ITEM": [
+"42"
+]
+},
+"rule": "LOT-69",
+"how": "exact",
+"served": "LOT-69",
+"pre567": "LOT-69"
+},
+{
+"notice": 22985422,
+"res": "RES-43",
+"refs": {
+"TED-LOT_NO": [
+"102"
+],
+"TED-ITEM": [
+"43"
+]
+},
+"rule": "LOT-73",
+"how": "exact",
+"served": "LOT-73",
+"pre567": "LOT-102"
+},
+{
+"notice": 22985422,
+"res": "RES-44",
+"refs": {
+"TED-LOT_NO": [
+"90"
+],
+"TED-ITEM": [
+"44"
+]
+},
+"rule": "LOT-74",
+"how": "exact",
+"served": "LOT-74",
+"pre567": "LOT-74"
+},
+{
+"notice": 22985422,
+"res": "RES-45",
+"refs": {
+"TED-LOT_NO": [
+"78"
+],
+"TED-ITEM": [
+"45"
+]
+},
+"rule": "LOT-78",
+"how": "exact",
+"served": "LOT-78",
+"pre567": "LOT-78"
+},
+{
+"notice": 22985422,
+"res": "RES-46",
+"refs": {
+"TED-LOT_NO": [
+"101"
+],
+"TED-ITEM": [
+"46"
+]
+},
+"rule": "LOT-75",
+"how": "exact",
+"served": "LOT-75",
+"pre567": "LOT-101"
+},
+{
+"notice": 22985422,
+"res": "RES-47",
+"refs": {
+"TED-LOT_NO": [
+"104"
+],
+"TED-ITEM": [
+"47"
+]
+},
+"rule": "LOT-76",
+"how": "exact",
+"served": "LOT-76",
+"pre567": "LOT-104"
+},
+{
+"notice": 22985422,
+"res": "RES-48",
+"refs": {
+"TED-LOT_NO": [
+"66"
+],
+"TED-ITEM": [
+"48"
+]
+},
+"rule": "LOT-79",
+"how": "exact",
+"served": "LOT-79",
+"pre567": "LOT-66"
+},
+{
+"notice": 22985422,
+"res": "RES-49",
+"refs": {
+"TED-LOT_NO": [
+"92"
+],
+"TED-ITEM": [
+"49"
+]
+},
+"rule": "LOT-80",
+"how": "exact",
+"served": "LOT-80",
+"pre567": "LOT-80"
+},
+{
+"notice": 22985422,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"46"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": "LOT-7",
+"how": "exact",
+"served": "LOT-7",
+"pre567": "LOT-46"
+},
+{
+"notice": 22985422,
+"res": "RES-50",
+"refs": {
+"TED-LOT_NO": [
+"68"
+],
+"TED-ITEM": [
+"50"
+]
+},
+"rule": "LOT-86",
+"how": "exact",
+"served": "LOT-86",
+"pre567": "LOT-68"
+},
+{
+"notice": 22985422,
+"res": "RES-51",
+"refs": {
+"TED-LOT_NO": [
+"95"
+],
+"TED-ITEM": [
+"51"
+]
+},
+"rule": "LOT-83",
+"how": "exact",
+"served": "LOT-83",
+"pre567": "LOT-83"
+},
+{
+"notice": 22985422,
+"res": "RES-52",
+"refs": {
+"TED-LOT_NO": [
+"69"
+],
+"TED-ITEM": [
+"52"
+]
+},
+"rule": "LOT-84",
+"how": "exact",
+"served": "LOT-84",
+"pre567": "LOT-69"
+},
+{
+"notice": 22985422,
+"res": "RES-53",
+"refs": {
+"TED-LOT_NO": [
+"71"
+],
+"TED-ITEM": [
+"53"
+]
+},
+"rule": "LOT-85",
+"how": "exact",
+"served": "LOT-85",
+"pre567": "LOT-71"
+},
+{
+"notice": 22985422,
+"res": "RES-54",
+"refs": {
+"TED-LOT_NO": [
+"115"
+],
+"TED-ITEM": [
+"54"
+]
+},
+"rule": "LOT-87",
+"how": "exact",
+"served": "LOT-87",
+"pre567": "LOT-115"
+},
+{
+"notice": 22985422,
+"res": "RES-55",
+"refs": {
+"TED-LOT_NO": [
+"40"
+],
+"TED-ITEM": [
+"55"
+]
+},
+"rule": "LOT-88",
+"how": "exact",
+"served": "LOT-88",
+"pre567": "LOT-40"
+},
+{
+"notice": 22985422,
+"res": "RES-56",
+"refs": {
+"TED-LOT_NO": [
+"103"
+],
+"TED-ITEM": [
+"56"
+]
+},
+"rule": "LOT-90",
+"how": "exact",
+"served": "LOT-90",
+"pre567": "LOT-103"
+},
+{
+"notice": 22985422,
+"res": "RES-57",
+"refs": {
+"TED-LOT_NO": [
+"73"
+],
+"TED-ITEM": [
+"57"
+]
+},
+"rule": "LOT-94",
+"how": "exact",
+"served": "LOT-94",
+"pre567": "LOT-73"
+},
+{
+"notice": 22985422,
+"res": "RES-58",
+"refs": {
+"TED-LOT_NO": [
+"108"
+],
+"TED-ITEM": [
+"58"
+]
+},
+"rule": "LOT-91",
+"how": "exact",
+"served": "LOT-91",
+"pre567": "LOT-108"
+},
+{
+"notice": 22985422,
+"res": "RES-59",
+"refs": {
+"TED-LOT_NO": [
+"29"
+],
+"TED-ITEM": [
+"59"
+]
+},
+"rule": "LOT-93",
+"how": "exact",
+"served": "LOT-93",
+"pre567": "LOT-29"
+},
+{
+"notice": 22985422,
+"res": "RES-6",
+"refs": {
+"TED-LOT_NO": [
+"34"
+],
+"TED-ITEM": [
+"6"
+]
+},
+"rule": "LOT-8",
+"how": "exact",
+"served": "LOT-8",
+"pre567": "LOT-34"
+},
+{
+"notice": 22985422,
+"res": "RES-60",
+"refs": {
+"TED-LOT_NO": [
+"88"
+],
+"TED-ITEM": [
+"60"
+]
+},
+"rule": "LOT-95",
+"how": "exact",
+"served": "LOT-95",
+"pre567": "LOT-88"
+},
+{
+"notice": 22985422,
+"res": "RES-61",
+"refs": {
+"TED-LOT_NO": [
+"116"
+],
+"TED-ITEM": [
+"61"
+]
+},
+"rule": "LOT-96",
+"how": "exact",
+"served": "LOT-96",
+"pre567": "LOT-116"
+},
+{
+"notice": 22985422,
+"res": "RES-62",
+"refs": {
+"TED-LOT_NO": [
+"119"
+],
+"TED-ITEM": [
+"62"
+]
+},
+"rule": "LOT-97",
+"how": "exact",
+"served": "LOT-97",
+"pre567": "LOT-119"
+},
+{
+"notice": 22985422,
+"res": "RES-63",
+"refs": {
+"TED-LOT_NO": [
+"57"
+],
+"TED-ITEM": [
+"63"
+]
+},
+"rule": "LOT-98",
+"how": "exact",
+"served": "LOT-98",
+"pre567": "LOT-57"
+},
+{
+"notice": 22985422,
+"res": "RES-64",
+"refs": {
+"TED-LOT_NO": [
+"105"
+],
+"TED-ITEM": [
+"64"
+]
+},
+"rule": "LOT-100",
+"how": "exact",
+"served": "LOT-100",
+"pre567": "LOT-100"
+},
+{
+"notice": 22985422,
+"res": "RES-65",
+"refs": {
+"TED-LOT_NO": [
+"70"
+],
+"TED-ITEM": [
+"65"
+]
+},
+"rule": "LOT-104",
+"how": "exact",
+"served": "LOT-104",
+"pre567": "LOT-104"
+},
+{
+"notice": 22985422,
+"res": "RES-66",
+"refs": {
+"TED-LOT_NO": [
+"114"
+],
+"TED-ITEM": [
+"66"
+]
+},
+"rule": "LOT-105",
+"how": "exact",
+"served": "LOT-105",
+"pre567": "LOT-105"
+},
+{
+"notice": 22985422,
+"res": "RES-67",
+"refs": {
+"TED-LOT_NO": [
+"63"
+],
+"TED-ITEM": [
+"67"
+]
+},
+"rule": "LOT-106",
+"how": "exact",
+"served": "LOT-106",
+"pre567": "LOT-106"
+},
+{
+"notice": 22985422,
+"res": "RES-68",
+"refs": {
+"TED-LOT_NO": [
+"11"
+],
+"TED-ITEM": [
+"68"
+]
+},
+"rule": "LOT-110",
+"how": "exact",
+"served": "LOT-110",
+"pre567": "LOT-11"
+},
+{
+"notice": 22985422,
+"res": "RES-69",
+"refs": {
+"TED-LOT_NO": [
+"112"
+],
+"TED-ITEM": [
+"69"
+]
+},
+"rule": "LOT-107",
+"how": "exact",
+"served": "LOT-107",
+"pre567": "LOT-107"
+},
+{
+"notice": 22985422,
+"res": "RES-7",
+"refs": {
+"TED-LOT_NO": [
+"65"
+],
+"TED-ITEM": [
+"7"
+]
+},
+"rule": "LOT-10",
+"how": "exact",
+"served": "LOT-10",
+"pre567": "LOT-10"
+},
+{
+"notice": 22985422,
+"res": "RES-70",
+"refs": {
+"TED-LOT_NO": [
+"64"
+],
+"TED-ITEM": [
+"70"
+]
+},
+"rule": "LOT-108",
+"how": "exact",
+"served": "LOT-108",
+"pre567": "LOT-108"
+},
+{
+"notice": 22985422,
+"res": "RES-71",
+"refs": {
+"TED-LOT_NO": [
+"117"
+],
+"TED-ITEM": [
+"71"
+]
+},
+"rule": "LOT-113",
+"how": "exact",
+"served": "LOT-113",
+"pre567": "LOT-113"
+},
+{
+"notice": 22985422,
+"res": "RES-72",
+"refs": {
+"TED-LOT_NO": [
+"107"
+],
+"TED-ITEM": [
+"72"
+]
+},
+"rule": "LOT-118",
+"how": "exact",
+"served": "LOT-118",
+"pre567": "LOT-107"
+},
+{
+"notice": 22985422,
+"res": "RES-73",
+"refs": {
+"TED-LOT_NO": [
+"72"
+],
+"TED-ITEM": [
+"73"
+]
+},
+"rule": "LOT-116",
+"how": "exact",
+"served": "LOT-116",
+"pre567": "LOT-116"
+},
+{
+"notice": 22985422,
+"res": "RES-74",
+"refs": {
+"TED-LOT_NO": [
+"74"
+],
+"TED-ITEM": [
+"74"
+]
+},
+"rule": "LOT-117",
+"how": "exact",
+"served": "LOT-117",
+"pre567": "LOT-117"
+},
+{
+"notice": 22985422,
+"res": "RES-75",
+"refs": {
+"TED-LOT_NO": [
+"8"
+],
+"TED-ITEM": [
+"75"
+]
+},
+"rule": "LOT-119",
+"how": "exact",
+"served": "LOT-119",
+"pre567": "LOT-119"
+},
+{
+"notice": 22985422,
+"res": "RES-76",
+"refs": {
+"TED-LOT_NO": [
+"26"
+],
+"TED-ITEM": [
+"76"
+]
+},
+"rule": "LOT-121",
+"how": "exact",
+"served": "LOT-121",
+"pre567": "LOT-121"
+},
+{
+"notice": 22985422,
+"res": "RES-77",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"77"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 22985422,
+"res": "RES-78",
+"refs": {
+"TED-LOT_NO": [
+"12,100,14"
+],
+"TED-ITEM": [
+"78"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-79",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"79"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-8",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"8"
+]
+},
+"rule": "LOT-11",
+"how": "exact",
+"served": "LOT-11",
+"pre567": "LOT-11"
+},
+{
+"notice": 22985422,
+"res": "RES-80",
+"refs": {
+"TED-LOT_NO": [
+"10"
+],
+"TED-ITEM": [
+"80"
+]
+},
+"rule": "LOT-13",
+"how": "exact",
+"served": "LOT-13",
+"pre567": "LOT-10"
+},
+{
+"notice": 22985422,
+"res": "RES-81",
+"refs": {
+"TED-LOT_NO": [
+"3"
+],
+"TED-ITEM": [
+"81"
+]
+},
+"rule": "LOT-14",
+"how": "exact",
+"served": "LOT-14",
+"pre567": "LOT-14"
+},
+{
+"notice": 22985422,
+"res": "RES-82",
+"refs": {
+"TED-LOT_NO": [
+"84,1,83"
+],
+"TED-ITEM": [
+"82"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-83",
+"refs": {
+"TED-LOT_NO": [
+"62,97,49"
+],
+"TED-ITEM": [
+"83"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-84",
+"refs": {
+"TED-LOT_NO": [
+"85"
+],
+"TED-ITEM": [
+"84"
+]
+},
+"rule": "LOT-18",
+"how": "exact",
+"served": "LOT-18",
+"pre567": "LOT-18"
+},
+{
+"notice": 22985422,
+"res": "RES-85",
+"refs": {
+"TED-LOT_NO": [
+"96,111"
+],
+"TED-ITEM": [
+"85"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-86",
+"refs": {
+"TED-LOT_NO": [
+"86,80"
+],
+"TED-ITEM": [
+"86"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-87",
+"refs": {
+"TED-LOT_NO": [
+"61"
+],
+"TED-ITEM": [
+"87"
+]
+},
+"rule": "LOT-63",
+"how": "exact",
+"served": "LOT-63",
+"pre567": "LOT-61"
+},
+{
+"notice": 22985422,
+"res": "RES-88",
+"refs": {
+"TED-LOT_NO": [
+"22"
+],
+"TED-ITEM": [
+"88"
+]
+},
+"rule": "LOT-64",
+"how": "exact",
+"served": "LOT-64",
+"pre567": "LOT-22"
+},
+{
+"notice": 22985422,
+"res": "RES-89",
+"refs": {
+"TED-LOT_NO": [
+"5"
+],
+"TED-ITEM": [
+"89"
+]
+},
+"rule": "LOT-66",
+"how": "exact",
+"served": "LOT-66",
+"pre567": "LOT-5"
+},
+{
+"notice": 22985422,
+"res": "RES-9",
+"refs": {
+"TED-LOT_NO": [
+"4"
+],
+"TED-ITEM": [
+"9"
+]
+},
+"rule": "LOT-12",
+"how": "exact",
+"served": "LOT-12",
+"pre567": "LOT-12"
+},
+{
+"notice": 22985422,
+"res": "RES-90",
+"refs": {
+"TED-LOT_NO": [
+"13"
+],
+"TED-ITEM": [
+"90"
+]
+},
+"rule": "LOT-71",
+"how": "exact",
+"served": "LOT-71",
+"pre567": "LOT-13"
+},
+{
+"notice": 22985422,
+"res": "RES-91",
+"refs": {
+"TED-LOT_NO": [
+"23"
+],
+"TED-ITEM": [
+"91"
+]
+},
+"rule": "LOT-72",
+"how": "exact",
+"served": "LOT-72",
+"pre567": "LOT-23"
+},
+{
+"notice": 22985422,
+"res": "RES-92",
+"refs": {
+"TED-LOT_NO": [
+"75"
+],
+"TED-ITEM": [
+"92"
+]
+},
+"rule": "LOT-81",
+"how": "exact",
+"served": "LOT-81",
+"pre567": "LOT-75"
+},
+{
+"notice": 22985422,
+"res": "RES-93",
+"refs": {
+"TED-LOT_NO": [
+"27,28"
+],
+"TED-ITEM": [
+"93"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-94",
+"refs": {
+"TED-LOT_NO": [
+"56"
+],
+"TED-ITEM": [
+"94"
+]
+},
+"rule": "LOT-33",
+"how": "exact",
+"served": "LOT-33",
+"pre567": "LOT-33"
+},
+{
+"notice": 22985422,
+"res": "RES-95",
+"refs": {
+"TED-LOT_NO": [
+"58,60,53,98,59,16"
+],
+"TED-ITEM": [
+"95"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-96",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"96"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 22985422,
+"res": "RES-97",
+"refs": {
+"TED-LOT_NO": [
+"35,25"
+],
+"TED-ITEM": [
+"97"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 22985422,
+"res": "RES-98",
+"refs": {
+"TED-LOT_NO": [
+"52"
+],
+"TED-ITEM": [
+"98"
+]
+},
+"rule": "LOT-51",
+"how": "exact",
+"served": "LOT-51",
+"pre567": "LOT-51"
+},
+{
+"notice": 22985422,
+"res": "RES-99",
+"refs": {
+"TED-LOT_NO": [
+"7,9"
+],
+"TED-ITEM": [
+"99"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"39"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 23006386,
+"res": "RES-10",
+"refs": {
+"TED-LOT_NO": [
+"113"
+],
+"TED-ITEM": [
+"10"
+]
+},
+"rule": "LOT-19",
+"how": "exact",
+"served": "LOT-19",
+"pre567": "LOT-113"
+},
+{
+"notice": 23006386,
+"res": "RES-100",
+"refs": {
+"TED-LOT_NO": [
+"23"
+],
+"TED-ITEM": [
+"100"
+]
+},
+"rule": "LOT-72",
+"how": "exact",
+"served": "LOT-72",
+"pre567": "LOT-23"
+},
+{
+"notice": 23006386,
+"res": "RES-101",
+"refs": {
+"TED-LOT_NO": [
+"75"
+],
+"TED-ITEM": [
+"101"
+]
+},
+"rule": "LOT-81",
+"how": "exact",
+"served": "LOT-81",
+"pre567": "LOT-75"
+},
+{
+"notice": 23006386,
+"res": "RES-102",
+"refs": {
+"TED-LOT_NO": [
+"27,28"
+],
+"TED-ITEM": [
+"102"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-103",
+"refs": {
+"TED-LOT_NO": [
+"56"
+],
+"TED-ITEM": [
+"103"
+]
+},
+"rule": "LOT-33",
+"how": "exact",
+"served": "LOT-33",
+"pre567": "LOT-33"
+},
+{
+"notice": 23006386,
+"res": "RES-104",
+"refs": {
+"TED-LOT_NO": [
+"58,60,53,98,59,16"
+],
+"TED-ITEM": [
+"104"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-105",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"105"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 23006386,
+"res": "RES-106",
+"refs": {
+"TED-LOT_NO": [
+"35,25"
+],
+"TED-ITEM": [
+"106"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-107",
+"refs": {
+"TED-LOT_NO": [
+"52"
+],
+"TED-ITEM": [
+"107"
+]
+},
+"rule": "LOT-51",
+"how": "exact",
+"served": "LOT-51",
+"pre567": "LOT-51"
+},
+{
+"notice": 23006386,
+"res": "RES-108",
+"refs": {
+"TED-LOT_NO": [
+"7,9"
+],
+"TED-ITEM": [
+"108"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-109",
+"refs": {
+"TED-LOT_NO": [
+"19"
+],
+"TED-ITEM": [
+"109"
+]
+},
+"rule": "LOT-82",
+"how": "exact",
+"served": "LOT-82",
+"pre567": "LOT-19"
+},
+{
+"notice": 23006386,
+"res": "RES-11",
+"refs": {
+"TED-LOT_NO": [
+"91"
+],
+"TED-ITEM": [
+"11"
+]
+},
+"rule": "LOT-16",
+"how": "exact",
+"served": "LOT-16",
+"pre567": "LOT-16"
+},
+{
+"notice": 23006386,
+"res": "RES-110",
+"refs": {
+"TED-LOT_NO": [
+"67"
+],
+"TED-ITEM": [
+"110"
+]
+},
+"rule": "LOT-101",
+"how": "exact",
+"served": "LOT-101",
+"pre567": "LOT-101"
+},
+{
+"notice": 23006386,
+"res": "RES-111",
+"refs": {
+"TED-LOT_NO": [
+"45"
+],
+"TED-ITEM": [
+"111"
+]
+},
+"rule": "LOT-111",
+"how": "exact",
+"served": "LOT-111",
+"pre567": "LOT-111"
+},
+{
+"notice": 23006386,
+"res": "RES-112",
+"refs": {
+"TED-LOT_NO": [
+"94"
+],
+"TED-ITEM": [
+"112"
+]
+},
+"rule": "LOT-115",
+"how": "exact",
+"served": "LOT-115",
+"pre567": "LOT-115"
+},
+{
+"notice": 23006386,
+"res": "RES-113",
+"refs": {
+"TED-LOT_NO": [
+"43"
+],
+"TED-ITEM": [
+"113"
+]
+},
+"rule": "LOT-122",
+"how": "exact",
+"served": "LOT-122",
+"pre567": "LOT-122"
+},
+{
+"notice": 23006386,
+"res": "RES-114",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"114"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 23006386,
+"res": "RES-115",
+"refs": {
+"TED-LOT_NO": [
+"56,22,80"
+],
+"TED-ITEM": [
+"115"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-116",
+"refs": {
+"TED-LOT_NO": [
+"83"
+],
+"TED-ITEM": [
+"116"
+]
+},
+"rule": "LOT-112",
+"how": "exact",
+"served": "LOT-112",
+"pre567": "LOT-112"
+},
+{
+"notice": 23006386,
+"res": "RES-117",
+"refs": {
+"TED-LOT_NO": [
+"84"
+],
+"TED-ITEM": [
+"117"
+]
+},
+"rule": "LOT-15",
+"how": "exact",
+"served": "LOT-15",
+"pre567": "LOT-15"
+},
+{
+"notice": 23006386,
+"res": "RES-12",
+"refs": {
+"TED-LOT_NO": [
+"15"
+],
+"TED-ITEM": [
+"12"
+]
+},
+"rule": "LOT-20",
+"how": "exact",
+"served": "LOT-20",
+"pre567": "LOT-15"
+},
+{
+"notice": 23006386,
+"res": "RES-13",
+"refs": {
+"TED-LOT_NO": [
+"24"
+],
+"TED-ITEM": [
+"13"
+]
+},
+"rule": "LOT-21",
+"how": "exact",
+"served": "LOT-21",
+"pre567": "LOT-21"
+},
+{
+"notice": 23006386,
+"res": "RES-14",
+"refs": {
+"TED-LOT_NO": [
+"38"
+],
+"TED-ITEM": [
+"14"
+]
+},
+"rule": "LOT-22",
+"how": "exact",
+"served": "LOT-22",
+"pre567": "LOT-22"
+},
+{
+"notice": 23006386,
+"res": "RES-15",
+"refs": {
+"TED-LOT_NO": [
+"89"
+],
+"TED-ITEM": [
+"15"
+]
+},
+"rule": "LOT-23",
+"how": "exact",
+"served": "LOT-23",
+"pre567": "LOT-23"
+},
+{
+"notice": 23006386,
+"res": "RES-16",
+"refs": {
+"TED-LOT_NO": [
+"42"
+],
+"TED-ITEM": [
+"16"
+]
+},
+"rule": "LOT-24",
+"how": "exact",
+"served": "LOT-24",
+"pre567": "LOT-24"
+},
+{
+"notice": 23006386,
+"res": "RES-17",
+"refs": {
+"TED-LOT_NO": [
+"76"
+],
+"TED-ITEM": [
+"17"
+]
+},
+"rule": "LOT-25",
+"how": "exact",
+"served": "LOT-25",
+"pre567": "LOT-25"
+},
+{
+"notice": 23006386,
+"res": "RES-18",
+"refs": {
+"TED-LOT_NO": [
+"30"
+],
+"TED-ITEM": [
+"18"
+]
+},
+"rule": "LOT-26",
+"how": "exact",
+"served": "LOT-26",
+"pre567": "LOT-26"
+},
+{
+"notice": 23006386,
+"res": "RES-19",
+"refs": {
+"TED-LOT_NO": [
+"33"
+],
+"TED-ITEM": [
+"19"
+]
+},
+"rule": "LOT-29",
+"how": "exact",
+"served": "LOT-29",
+"pre567": "LOT-29"
+},
+{
+"notice": 23006386,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"37"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-2"
+},
+{
+"notice": 23006386,
+"res": "RES-20",
+"refs": {
+"TED-LOT_NO": [
+"121"
+],
+"TED-ITEM": [
+"20"
+]
+},
+"rule": "LOT-30",
+"how": "exact",
+"served": "LOT-30",
+"pre567": "LOT-121"
+},
+{
+"notice": 23006386,
+"res": "RES-21",
+"refs": {
+"TED-LOT_NO": [
+"122"
+],
+"TED-ITEM": [
+"21"
+]
+},
+"rule": "LOT-32",
+"how": "exact",
+"served": "LOT-32",
+"pre567": "LOT-122"
+},
+{
+"notice": 23006386,
+"res": "RES-22",
+"refs": {
+"TED-LOT_NO": [
+"110"
+],
+"TED-ITEM": [
+"22"
+]
+},
+"rule": "LOT-34",
+"how": "exact",
+"served": "LOT-34",
+"pre567": "LOT-110"
+},
+{
+"notice": 23006386,
+"res": "RES-23",
+"refs": {
+"TED-LOT_NO": [
+"44"
+],
+"TED-ITEM": [
+"23"
+]
+},
+"rule": "LOT-38",
+"how": "exact",
+"served": "LOT-38",
+"pre567": "LOT-38"
+},
+{
+"notice": 23006386,
+"res": "RES-24",
+"refs": {
+"TED-LOT_NO": [
+"77"
+],
+"TED-ITEM": [
+"24"
+]
+},
+"rule": "LOT-36",
+"how": "exact",
+"served": "LOT-36",
+"pre567": "LOT-36"
+},
+{
+"notice": 23006386,
+"res": "RES-25",
+"refs": {
+"TED-LOT_NO": [
+"50"
+],
+"TED-ITEM": [
+"25"
+]
+},
+"rule": "LOT-39",
+"how": "exact",
+"served": "LOT-39",
+"pre567": "LOT-39"
+},
+{
+"notice": 23006386,
+"res": "RES-26",
+"refs": {
+"TED-LOT_NO": [
+"79"
+],
+"TED-ITEM": [
+"26"
+]
+},
+"rule": "LOT-40",
+"how": "exact",
+"served": "LOT-40",
+"pre567": "LOT-40"
+},
+{
+"notice": 23006386,
+"res": "RES-27",
+"refs": {
+"TED-LOT_NO": [
+"93"
+],
+"TED-ITEM": [
+"27"
+]
+},
+"rule": "LOT-41",
+"how": "exact",
+"served": "LOT-41",
+"pre567": "LOT-41"
+},
+{
+"notice": 23006386,
+"res": "RES-28",
+"refs": {
+"TED-LOT_NO": [
+"51"
+],
+"TED-ITEM": [
+"28"
+]
+},
+"rule": "LOT-42",
+"how": "exact",
+"served": "LOT-42",
+"pre567": "LOT-42"
+},
+{
+"notice": 23006386,
+"res": "RES-29",
+"refs": {
+"TED-LOT_NO": [
+"82"
+],
+"TED-ITEM": [
+"29"
+]
+},
+"rule": "LOT-43",
+"how": "exact",
+"served": "LOT-43",
+"pre567": "LOT-43"
+},
+{
+"notice": 23006386,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"48"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-3",
+"how": "exact",
+"served": "LOT-3",
+"pre567": "LOT-3"
+},
+{
+"notice": 23006386,
+"res": "RES-30",
+"refs": {
+"TED-LOT_NO": [
+"118"
+],
+"TED-ITEM": [
+"30"
+]
+},
+"rule": "LOT-44",
+"how": "exact",
+"served": "LOT-44",
+"pre567": "LOT-118"
+},
+{
+"notice": 23006386,
+"res": "RES-31",
+"refs": {
+"TED-LOT_NO": [
+"31"
+],
+"TED-ITEM": [
+"31"
+]
+},
+"rule": "LOT-45",
+"how": "exact",
+"served": "LOT-45",
+"pre567": "LOT-31"
+},
+{
+"notice": 23006386,
+"res": "RES-32",
+"refs": {
+"TED-LOT_NO": [
+"17"
+],
+"TED-ITEM": [
+"32"
+]
+},
+"rule": "LOT-49",
+"how": "exact",
+"served": "LOT-49",
+"pre567": "LOT-17"
+},
+{
+"notice": 23006386,
+"res": "RES-33",
+"refs": {
+"TED-LOT_NO": [
+"106"
+],
+"TED-ITEM": [
+"33"
+]
+},
+"rule": "LOT-54",
+"how": "exact",
+"served": "LOT-54",
+"pre567": "LOT-106"
+},
+{
+"notice": 23006386,
+"res": "RES-34",
+"refs": {
+"TED-LOT_NO": [
+"120"
+],
+"TED-ITEM": [
+"34"
+]
+},
+"rule": "LOT-52",
+"how": "exact",
+"served": "LOT-52",
+"pre567": "LOT-120"
+},
+{
+"notice": 23006386,
+"res": "RES-35",
+"refs": {
+"TED-LOT_NO": [
+"81"
+],
+"TED-ITEM": [
+"35"
+]
+},
+"rule": "LOT-56",
+"how": "exact",
+"served": "LOT-56",
+"pre567": "LOT-56"
+},
+{
+"notice": 23006386,
+"res": "RES-36",
+"refs": {
+"TED-LOT_NO": [
+"20"
+],
+"TED-ITEM": [
+"36"
+]
+},
+"rule": "LOT-57",
+"how": "exact",
+"served": "LOT-57",
+"pre567": "LOT-20"
+},
+{
+"notice": 23006386,
+"res": "RES-37",
+"refs": {
+"TED-LOT_NO": [
+"41"
+],
+"TED-ITEM": [
+"37"
+]
+},
+"rule": "LOT-58",
+"how": "exact",
+"served": "LOT-58",
+"pre567": "LOT-41"
+},
+{
+"notice": 23006386,
+"res": "RES-38",
+"refs": {
+"TED-LOT_NO": [
+"32"
+],
+"TED-ITEM": [
+"38"
+]
+},
+"rule": "LOT-62",
+"how": "exact",
+"served": "LOT-62",
+"pre567": "LOT-32"
+},
+{
+"notice": 23006386,
+"res": "RES-39",
+"refs": {
+"TED-LOT_NO": [
+"55"
+],
+"TED-ITEM": [
+"39"
+]
+},
+"rule": "LOT-61",
+"how": "exact",
+"served": "LOT-61",
+"pre567": "LOT-55"
+},
+{
+"notice": 23006386,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"99"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-4",
+"how": "exact",
+"served": "LOT-4",
+"pre567": "LOT-4"
+},
+{
+"notice": 23006386,
+"res": "RES-40",
+"refs": {
+"TED-LOT_NO": [
+"109"
+],
+"TED-ITEM": [
+"40"
+]
+},
+"rule": "LOT-67",
+"how": "exact",
+"served": "LOT-67",
+"pre567": "LOT-109"
+},
+{
+"notice": 23006386,
+"res": "RES-41",
+"refs": {
+"TED-LOT_NO": [
+"6"
+],
+"TED-ITEM": [
+"41"
+]
+},
+"rule": "LOT-68",
+"how": "exact",
+"served": "LOT-68",
+"pre567": "LOT-6"
+},
+{
+"notice": 23006386,
+"res": "RES-42",
+"refs": {
+"TED-LOT_NO": [
+"87"
+],
+"TED-ITEM": [
+"42"
+]
+},
+"rule": "LOT-69",
+"how": "exact",
+"served": "LOT-69",
+"pre567": "LOT-69"
+},
+{
+"notice": 23006386,
+"res": "RES-43",
+"refs": {
+"TED-LOT_NO": [
+"102"
+],
+"TED-ITEM": [
+"43"
+]
+},
+"rule": "LOT-73",
+"how": "exact",
+"served": "LOT-73",
+"pre567": "LOT-102"
+},
+{
+"notice": 23006386,
+"res": "RES-44",
+"refs": {
+"TED-LOT_NO": [
+"90"
+],
+"TED-ITEM": [
+"44"
+]
+},
+"rule": "LOT-74",
+"how": "exact",
+"served": "LOT-74",
+"pre567": "LOT-74"
+},
+{
+"notice": 23006386,
+"res": "RES-45",
+"refs": {
+"TED-LOT_NO": [
+"78"
+],
+"TED-ITEM": [
+"45"
+]
+},
+"rule": "LOT-78",
+"how": "exact",
+"served": "LOT-78",
+"pre567": "LOT-78"
+},
+{
+"notice": 23006386,
+"res": "RES-46",
+"refs": {
+"TED-LOT_NO": [
+"101"
+],
+"TED-ITEM": [
+"46"
+]
+},
+"rule": "LOT-75",
+"how": "exact",
+"served": "LOT-75",
+"pre567": "LOT-101"
+},
+{
+"notice": 23006386,
+"res": "RES-47",
+"refs": {
+"TED-LOT_NO": [
+"104"
+],
+"TED-ITEM": [
+"47"
+]
+},
+"rule": "LOT-76",
+"how": "exact",
+"served": "LOT-76",
+"pre567": "LOT-104"
+},
+{
+"notice": 23006386,
+"res": "RES-48",
+"refs": {
+"TED-LOT_NO": [
+"66"
+],
+"TED-ITEM": [
+"48"
+]
+},
+"rule": "LOT-79",
+"how": "exact",
+"served": "LOT-79",
+"pre567": "LOT-66"
+},
+{
+"notice": 23006386,
+"res": "RES-49",
+"refs": {
+"TED-LOT_NO": [
+"92"
+],
+"TED-ITEM": [
+"49"
+]
+},
+"rule": "LOT-80",
+"how": "exact",
+"served": "LOT-80",
+"pre567": "LOT-80"
+},
+{
+"notice": 23006386,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"46"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": "LOT-7",
+"how": "exact",
+"served": "LOT-7",
+"pre567": "LOT-46"
+},
+{
+"notice": 23006386,
+"res": "RES-50",
+"refs": {
+"TED-LOT_NO": [
+"68"
+],
+"TED-ITEM": [
+"50"
+]
+},
+"rule": "LOT-86",
+"how": "exact",
+"served": "LOT-86",
+"pre567": "LOT-68"
+},
+{
+"notice": 23006386,
+"res": "RES-51",
+"refs": {
+"TED-LOT_NO": [
+"95"
+],
+"TED-ITEM": [
+"51"
+]
+},
+"rule": "LOT-83",
+"how": "exact",
+"served": "LOT-83",
+"pre567": "LOT-83"
+},
+{
+"notice": 23006386,
+"res": "RES-52",
+"refs": {
+"TED-LOT_NO": [
+"69"
+],
+"TED-ITEM": [
+"52"
+]
+},
+"rule": "LOT-84",
+"how": "exact",
+"served": "LOT-84",
+"pre567": "LOT-69"
+},
+{
+"notice": 23006386,
+"res": "RES-53",
+"refs": {
+"TED-LOT_NO": [
+"71"
+],
+"TED-ITEM": [
+"53"
+]
+},
+"rule": "LOT-85",
+"how": "exact",
+"served": "LOT-85",
+"pre567": "LOT-71"
+},
+{
+"notice": 23006386,
+"res": "RES-54",
+"refs": {
+"TED-LOT_NO": [
+"115"
+],
+"TED-ITEM": [
+"54"
+]
+},
+"rule": "LOT-87",
+"how": "exact",
+"served": "LOT-87",
+"pre567": "LOT-115"
+},
+{
+"notice": 23006386,
+"res": "RES-55",
+"refs": {
+"TED-LOT_NO": [
+"40"
+],
+"TED-ITEM": [
+"55"
+]
+},
+"rule": "LOT-88",
+"how": "exact",
+"served": "LOT-88",
+"pre567": "LOT-40"
+},
+{
+"notice": 23006386,
+"res": "RES-56",
+"refs": {
+"TED-LOT_NO": [
+"103"
+],
+"TED-ITEM": [
+"56"
+]
+},
+"rule": "LOT-90",
+"how": "exact",
+"served": "LOT-90",
+"pre567": "LOT-103"
+},
+{
+"notice": 23006386,
+"res": "RES-57",
+"refs": {
+"TED-LOT_NO": [
+"73"
+],
+"TED-ITEM": [
+"57"
+]
+},
+"rule": "LOT-94",
+"how": "exact",
+"served": "LOT-94",
+"pre567": "LOT-73"
+},
+{
+"notice": 23006386,
+"res": "RES-58",
+"refs": {
+"TED-LOT_NO": [
+"108"
+],
+"TED-ITEM": [
+"58"
+]
+},
+"rule": "LOT-91",
+"how": "exact",
+"served": "LOT-91",
+"pre567": "LOT-108"
+},
+{
+"notice": 23006386,
+"res": "RES-59",
+"refs": {
+"TED-LOT_NO": [
+"29"
+],
+"TED-ITEM": [
+"59"
+]
+},
+"rule": "LOT-93",
+"how": "exact",
+"served": "LOT-93",
+"pre567": "LOT-29"
+},
+{
+"notice": 23006386,
+"res": "RES-6",
+"refs": {
+"TED-LOT_NO": [
+"34"
+],
+"TED-ITEM": [
+"6"
+]
+},
+"rule": "LOT-8",
+"how": "exact",
+"served": "LOT-8",
+"pre567": "LOT-34"
+},
+{
+"notice": 23006386,
+"res": "RES-60",
+"refs": {
+"TED-LOT_NO": [
+"88"
+],
+"TED-ITEM": [
+"60"
+]
+},
+"rule": "LOT-95",
+"how": "exact",
+"served": "LOT-95",
+"pre567": "LOT-88"
+},
+{
+"notice": 23006386,
+"res": "RES-61",
+"refs": {
+"TED-LOT_NO": [
+"116"
+],
+"TED-ITEM": [
+"61"
+]
+},
+"rule": "LOT-96",
+"how": "exact",
+"served": "LOT-96",
+"pre567": "LOT-116"
+},
+{
+"notice": 23006386,
+"res": "RES-62",
+"refs": {
+"TED-LOT_NO": [
+"119"
+],
+"TED-ITEM": [
+"62"
+]
+},
+"rule": "LOT-97",
+"how": "exact",
+"served": "LOT-97",
+"pre567": "LOT-119"
+},
+{
+"notice": 23006386,
+"res": "RES-63",
+"refs": {
+"TED-LOT_NO": [
+"57"
+],
+"TED-ITEM": [
+"63"
+]
+},
+"rule": "LOT-98",
+"how": "exact",
+"served": "LOT-98",
+"pre567": "LOT-57"
+},
+{
+"notice": 23006386,
+"res": "RES-64",
+"refs": {
+"TED-LOT_NO": [
+"105"
+],
+"TED-ITEM": [
+"64"
+]
+},
+"rule": "LOT-100",
+"how": "exact",
+"served": "LOT-100",
+"pre567": "LOT-100"
+},
+{
+"notice": 23006386,
+"res": "RES-65",
+"refs": {
+"TED-LOT_NO": [
+"70"
+],
+"TED-ITEM": [
+"65"
+]
+},
+"rule": "LOT-104",
+"how": "exact",
+"served": "LOT-104",
+"pre567": "LOT-104"
+},
+{
+"notice": 23006386,
+"res": "RES-66",
+"refs": {
+"TED-LOT_NO": [
+"114"
+],
+"TED-ITEM": [
+"66"
+]
+},
+"rule": "LOT-105",
+"how": "exact",
+"served": "LOT-105",
+"pre567": "LOT-105"
+},
+{
+"notice": 23006386,
+"res": "RES-67",
+"refs": {
+"TED-LOT_NO": [
+"63"
+],
+"TED-ITEM": [
+"67"
+]
+},
+"rule": "LOT-106",
+"how": "exact",
+"served": "LOT-106",
+"pre567": "LOT-106"
+},
+{
+"notice": 23006386,
+"res": "RES-68",
+"refs": {
+"TED-LOT_NO": [
+"11"
+],
+"TED-ITEM": [
+"68"
+]
+},
+"rule": "LOT-110",
+"how": "exact",
+"served": "LOT-110",
+"pre567": "LOT-11"
+},
+{
+"notice": 23006386,
+"res": "RES-69",
+"refs": {
+"TED-LOT_NO": [
+"112"
+],
+"TED-ITEM": [
+"69"
+]
+},
+"rule": "LOT-107",
+"how": "exact",
+"served": "LOT-107",
+"pre567": "LOT-107"
+},
+{
+"notice": 23006386,
+"res": "RES-7",
+"refs": {
+"TED-LOT_NO": [
+"65"
+],
+"TED-ITEM": [
+"7"
+]
+},
+"rule": "LOT-10",
+"how": "exact",
+"served": "LOT-10",
+"pre567": "LOT-10"
+},
+{
+"notice": 23006386,
+"res": "RES-70",
+"refs": {
+"TED-LOT_NO": [
+"64"
+],
+"TED-ITEM": [
+"70"
+]
+},
+"rule": "LOT-108",
+"how": "exact",
+"served": "LOT-108",
+"pre567": "LOT-108"
+},
+{
+"notice": 23006386,
+"res": "RES-71",
+"refs": {
+"TED-LOT_NO": [
+"117"
+],
+"TED-ITEM": [
+"71"
+]
+},
+"rule": "LOT-113",
+"how": "exact",
+"served": "LOT-113",
+"pre567": "LOT-113"
+},
+{
+"notice": 23006386,
+"res": "RES-72",
+"refs": {
+"TED-LOT_NO": [
+"107"
+],
+"TED-ITEM": [
+"72"
+]
+},
+"rule": "LOT-118",
+"how": "exact",
+"served": "LOT-118",
+"pre567": "LOT-107"
+},
+{
+"notice": 23006386,
+"res": "RES-73",
+"refs": {
+"TED-LOT_NO": [
+"72"
+],
+"TED-ITEM": [
+"73"
+]
+},
+"rule": "LOT-116",
+"how": "exact",
+"served": "LOT-116",
+"pre567": "LOT-116"
+},
+{
+"notice": 23006386,
+"res": "RES-74",
+"refs": {
+"TED-LOT_NO": [
+"74"
+],
+"TED-ITEM": [
+"74"
+]
+},
+"rule": "LOT-117",
+"how": "exact",
+"served": "LOT-117",
+"pre567": "LOT-117"
+},
+{
+"notice": 23006386,
+"res": "RES-75",
+"refs": {
+"TED-LOT_NO": [
+"8"
+],
+"TED-ITEM": [
+"75"
+]
+},
+"rule": "LOT-119",
+"how": "exact",
+"served": "LOT-119",
+"pre567": "LOT-119"
+},
+{
+"notice": 23006386,
+"res": "RES-76",
+"refs": {
+"TED-LOT_NO": [
+"26"
+],
+"TED-ITEM": [
+"76"
+]
+},
+"rule": "LOT-121",
+"how": "exact",
+"served": "LOT-121",
+"pre567": "LOT-121"
+},
+{
+"notice": 23006386,
+"res": "RES-77",
+"refs": {
+"TED-LOT_NO": [
+"58,60,53,5,23,98,52,59"
+],
+"TED-ITEM": [
+"77"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-78",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"78"
+]
+},
+"rule": "LOT-60",
+"how": "exact",
+"served": "LOT-60",
+"pre567": "LOT-1"
+},
+{
+"notice": 23006386,
+"res": "RES-79",
+"refs": {
+"TED-LOT_NO": [
+"7,9"
+],
+"TED-ITEM": [
+"79"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-8",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"8"
+]
+},
+"rule": "LOT-11",
+"how": "exact",
+"served": "LOT-11",
+"pre567": "LOT-11"
+},
+{
+"notice": 23006386,
+"res": "RES-80",
+"refs": {
+"TED-LOT_NO": [
+"12,100"
+],
+"TED-ITEM": [
+"80"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-81",
+"refs": {
+"TED-LOT_NO": [
+"10,62,94,67,97,49,61,19"
+],
+"TED-ITEM": [
+"81"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-82",
+"refs": {
+"TED-LOT_NO": [
+"25"
+],
+"TED-ITEM": [
+"82"
+]
+},
+"rule": "LOT-47",
+"how": "exact",
+"served": "LOT-47",
+"pre567": "LOT-25"
+},
+{
+"notice": 23006386,
+"res": "RES-83",
+"refs": {
+"TED-LOT_NO": [
+"3,111"
+],
+"TED-ITEM": [
+"83"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-84",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"84"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-85",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"85"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 23006386,
+"res": "RES-86",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"86"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 23006386,
+"res": "RES-87",
+"refs": {
+"TED-LOT_NO": [
+"12,100,14"
+],
+"TED-ITEM": [
+"87"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-88",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"88"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-89",
+"refs": {
+"TED-LOT_NO": [
+"10"
+],
+"TED-ITEM": [
+"89"
+]
+},
+"rule": "LOT-13",
+"how": "exact",
+"served": "LOT-13",
+"pre567": "LOT-10"
+},
+{
+"notice": 23006386,
+"res": "RES-9",
+"refs": {
+"TED-LOT_NO": [
+"4"
+],
+"TED-ITEM": [
+"9"
+]
+},
+"rule": "LOT-12",
+"how": "exact",
+"served": "LOT-12",
+"pre567": "LOT-12"
+},
+{
+"notice": 23006386,
+"res": "RES-90",
+"refs": {
+"TED-LOT_NO": [
+"3"
+],
+"TED-ITEM": [
+"90"
+]
+},
+"rule": "LOT-14",
+"how": "exact",
+"served": "LOT-14",
+"pre567": "LOT-14"
+},
+{
+"notice": 23006386,
+"res": "RES-91",
+"refs": {
+"TED-LOT_NO": [
+"84,1,83"
+],
+"TED-ITEM": [
+"91"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-92",
+"refs": {
+"TED-LOT_NO": [
+"62,97,49"
+],
+"TED-ITEM": [
+"92"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-93",
+"refs": {
+"TED-LOT_NO": [
+"85"
+],
+"TED-ITEM": [
+"93"
+]
+},
+"rule": "LOT-18",
+"how": "exact",
+"served": "LOT-18",
+"pre567": "LOT-18"
+},
+{
+"notice": 23006386,
+"res": "RES-94",
+"refs": {
+"TED-LOT_NO": [
+"96,111"
+],
+"TED-ITEM": [
+"94"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-95",
+"refs": {
+"TED-LOT_NO": [
+"86,80"
+],
+"TED-ITEM": [
+"95"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23006386,
+"res": "RES-96",
+"refs": {
+"TED-LOT_NO": [
+"61"
+],
+"TED-ITEM": [
+"96"
+]
+},
+"rule": "LOT-63",
+"how": "exact",
+"served": "LOT-63",
+"pre567": "LOT-61"
+},
+{
+"notice": 23006386,
+"res": "RES-97",
+"refs": {
+"TED-LOT_NO": [
+"22"
+],
+"TED-ITEM": [
+"97"
+]
+},
+"rule": "LOT-64",
+"how": "exact",
+"served": "LOT-64",
+"pre567": "LOT-22"
+},
+{
+"notice": 23006386,
+"res": "RES-98",
+"refs": {
+"TED-LOT_NO": [
+"5"
+],
+"TED-ITEM": [
+"98"
+]
+},
+"rule": "LOT-66",
+"how": "exact",
+"served": "LOT-66",
+"pre567": "LOT-5"
+},
+{
+"notice": 23006386,
+"res": "RES-99",
+"refs": {
+"TED-LOT_NO": [
+"13"
+],
+"TED-ITEM": [
+"99"
+]
+},
+"rule": "LOT-71",
+"how": "exact",
+"served": "LOT-71",
+"pre567": "LOT-13"
+},
+{
+"notice": 23082943,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"39"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 23082943,
+"res": "RES-10",
+"refs": {
+"TED-LOT_NO": [
+"113"
+],
+"TED-ITEM": [
+"10"
+]
+},
+"rule": "LOT-19",
+"how": "exact",
+"served": "LOT-19",
+"pre567": "LOT-113"
+},
+{
+"notice": 23082943,
+"res": "RES-100",
+"refs": {
+"TED-LOT_NO": [
+"96,111"
+],
+"TED-ITEM": [
+"100"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-101",
+"refs": {
+"TED-LOT_NO": [
+"86,80"
+],
+"TED-ITEM": [
+"101"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-102",
+"refs": {
+"TED-LOT_NO": [
+"61"
+],
+"TED-ITEM": [
+"102"
+]
+},
+"rule": "LOT-63",
+"how": "exact",
+"served": "LOT-63",
+"pre567": "LOT-61"
+},
+{
+"notice": 23082943,
+"res": "RES-103",
+"refs": {
+"TED-LOT_NO": [
+"22"
+],
+"TED-ITEM": [
+"103"
+]
+},
+"rule": "LOT-64",
+"how": "exact",
+"served": "LOT-64",
+"pre567": "LOT-22"
+},
+{
+"notice": 23082943,
+"res": "RES-104",
+"refs": {
+"TED-LOT_NO": [
+"5"
+],
+"TED-ITEM": [
+"104"
+]
+},
+"rule": "LOT-66",
+"how": "exact",
+"served": "LOT-66",
+"pre567": "LOT-5"
+},
+{
+"notice": 23082943,
+"res": "RES-105",
+"refs": {
+"TED-LOT_NO": [
+"13"
+],
+"TED-ITEM": [
+"105"
+]
+},
+"rule": "LOT-71",
+"how": "exact",
+"served": "LOT-71",
+"pre567": "LOT-13"
+},
+{
+"notice": 23082943,
+"res": "RES-106",
+"refs": {
+"TED-LOT_NO": [
+"23"
+],
+"TED-ITEM": [
+"106"
+]
+},
+"rule": "LOT-72",
+"how": "exact",
+"served": "LOT-72",
+"pre567": "LOT-23"
+},
+{
+"notice": 23082943,
+"res": "RES-107",
+"refs": {
+"TED-LOT_NO": [
+"75"
+],
+"TED-ITEM": [
+"107"
+]
+},
+"rule": "LOT-81",
+"how": "exact",
+"served": "LOT-81",
+"pre567": "LOT-75"
+},
+{
+"notice": 23082943,
+"res": "RES-108",
+"refs": {
+"TED-LOT_NO": [
+"27,28"
+],
+"TED-ITEM": [
+"108"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-109",
+"refs": {
+"TED-LOT_NO": [
+"56"
+],
+"TED-ITEM": [
+"109"
+]
+},
+"rule": "LOT-33",
+"how": "exact",
+"served": "LOT-33",
+"pre567": "LOT-33"
+},
+{
+"notice": 23082943,
+"res": "RES-11",
+"refs": {
+"TED-LOT_NO": [
+"91"
+],
+"TED-ITEM": [
+"11"
+]
+},
+"rule": "LOT-16",
+"how": "exact",
+"served": "LOT-16",
+"pre567": "LOT-16"
+},
+{
+"notice": 23082943,
+"res": "RES-110",
+"refs": {
+"TED-LOT_NO": [
+"58,60,53,98,59,16"
+],
+"TED-ITEM": [
+"110"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-111",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"111"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 23082943,
+"res": "RES-112",
+"refs": {
+"TED-LOT_NO": [
+"35,25"
+],
+"TED-ITEM": [
+"112"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-113",
+"refs": {
+"TED-LOT_NO": [
+"52"
+],
+"TED-ITEM": [
+"113"
+]
+},
+"rule": "LOT-51",
+"how": "exact",
+"served": "LOT-51",
+"pre567": "LOT-51"
+},
+{
+"notice": 23082943,
+"res": "RES-114",
+"refs": {
+"TED-LOT_NO": [
+"7,9"
+],
+"TED-ITEM": [
+"114"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-115",
+"refs": {
+"TED-LOT_NO": [
+"19"
+],
+"TED-ITEM": [
+"115"
+]
+},
+"rule": "LOT-82",
+"how": "exact",
+"served": "LOT-82",
+"pre567": "LOT-19"
+},
+{
+"notice": 23082943,
+"res": "RES-116",
+"refs": {
+"TED-LOT_NO": [
+"67"
+],
+"TED-ITEM": [
+"116"
+]
+},
+"rule": "LOT-101",
+"how": "exact",
+"served": "LOT-101",
+"pre567": "LOT-101"
+},
+{
+"notice": 23082943,
+"res": "RES-117",
+"refs": {
+"TED-LOT_NO": [
+"45"
+],
+"TED-ITEM": [
+"117"
+]
+},
+"rule": "LOT-111",
+"how": "exact",
+"served": "LOT-111",
+"pre567": "LOT-111"
+},
+{
+"notice": 23082943,
+"res": "RES-118",
+"refs": {
+"TED-LOT_NO": [
+"94"
+],
+"TED-ITEM": [
+"118"
+]
+},
+"rule": "LOT-115",
+"how": "exact",
+"served": "LOT-115",
+"pre567": "LOT-115"
+},
+{
+"notice": 23082943,
+"res": "RES-119",
+"refs": {
+"TED-LOT_NO": [
+"43"
+],
+"TED-ITEM": [
+"119"
+]
+},
+"rule": "LOT-122",
+"how": "exact",
+"served": "LOT-122",
+"pre567": "LOT-122"
+},
+{
+"notice": 23082943,
+"res": "RES-12",
+"refs": {
+"TED-LOT_NO": [
+"15"
+],
+"TED-ITEM": [
+"12"
+]
+},
+"rule": "LOT-20",
+"how": "exact",
+"served": "LOT-20",
+"pre567": "LOT-15"
+},
+{
+"notice": 23082943,
+"res": "RES-120",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"120"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 23082943,
+"res": "RES-121",
+"refs": {
+"TED-LOT_NO": [
+"56,22,80"
+],
+"TED-ITEM": [
+"121"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-122",
+"refs": {
+"TED-LOT_NO": [
+"83"
+],
+"TED-ITEM": [
+"122"
+]
+},
+"rule": "LOT-112",
+"how": "exact",
+"served": "LOT-112",
+"pre567": "LOT-112"
+},
+{
+"notice": 23082943,
+"res": "RES-123",
+"refs": {
+"TED-LOT_NO": [
+"84"
+],
+"TED-ITEM": [
+"123"
+]
+},
+"rule": "LOT-15",
+"how": "exact",
+"served": "LOT-15",
+"pre567": "LOT-15"
+},
+{
+"notice": 23082943,
+"res": "RES-124",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"124"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 23082943,
+"res": "RES-125",
+"refs": {
+"TED-LOT_NO": [
+"60,53,5,13,98,59,16"
+],
+"TED-ITEM": [
+"125"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-126",
+"refs": {
+"TED-LOT_NO": [
+"56,22"
+],
+"TED-ITEM": [
+"126"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-127",
+"refs": {
+"TED-LOT_NO": [
+"84"
+],
+"TED-ITEM": [
+"127"
+]
+},
+"rule": "LOT-15",
+"how": "exact",
+"served": "LOT-15",
+"pre567": "LOT-15"
+},
+{
+"notice": 23082943,
+"res": "RES-128",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"128"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 23082943,
+"res": "RES-13",
+"refs": {
+"TED-LOT_NO": [
+"24"
+],
+"TED-ITEM": [
+"13"
+]
+},
+"rule": "LOT-21",
+"how": "exact",
+"served": "LOT-21",
+"pre567": "LOT-21"
+},
+{
+"notice": 23082943,
+"res": "RES-14",
+"refs": {
+"TED-LOT_NO": [
+"38"
+],
+"TED-ITEM": [
+"14"
+]
+},
+"rule": "LOT-22",
+"how": "exact",
+"served": "LOT-22",
+"pre567": "LOT-22"
+},
+{
+"notice": 23082943,
+"res": "RES-15",
+"refs": {
+"TED-LOT_NO": [
+"89"
+],
+"TED-ITEM": [
+"15"
+]
+},
+"rule": "LOT-23",
+"how": "exact",
+"served": "LOT-23",
+"pre567": "LOT-23"
+},
+{
+"notice": 23082943,
+"res": "RES-16",
+"refs": {
+"TED-LOT_NO": [
+"42"
+],
+"TED-ITEM": [
+"16"
+]
+},
+"rule": "LOT-24",
+"how": "exact",
+"served": "LOT-24",
+"pre567": "LOT-24"
+},
+{
+"notice": 23082943,
+"res": "RES-17",
+"refs": {
+"TED-LOT_NO": [
+"76"
+],
+"TED-ITEM": [
+"17"
+]
+},
+"rule": "LOT-25",
+"how": "exact",
+"served": "LOT-25",
+"pre567": "LOT-25"
+},
+{
+"notice": 23082943,
+"res": "RES-18",
+"refs": {
+"TED-LOT_NO": [
+"30"
+],
+"TED-ITEM": [
+"18"
+]
+},
+"rule": "LOT-26",
+"how": "exact",
+"served": "LOT-26",
+"pre567": "LOT-26"
+},
+{
+"notice": 23082943,
+"res": "RES-19",
+"refs": {
+"TED-LOT_NO": [
+"33"
+],
+"TED-ITEM": [
+"19"
+]
+},
+"rule": "LOT-29",
+"how": "exact",
+"served": "LOT-29",
+"pre567": "LOT-29"
+},
+{
+"notice": 23082943,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"37"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-2"
+},
+{
+"notice": 23082943,
+"res": "RES-20",
+"refs": {
+"TED-LOT_NO": [
+"121"
+],
+"TED-ITEM": [
+"20"
+]
+},
+"rule": "LOT-30",
+"how": "exact",
+"served": "LOT-30",
+"pre567": "LOT-121"
+},
+{
+"notice": 23082943,
+"res": "RES-21",
+"refs": {
+"TED-LOT_NO": [
+"122"
+],
+"TED-ITEM": [
+"21"
+]
+},
+"rule": "LOT-32",
+"how": "exact",
+"served": "LOT-32",
+"pre567": "LOT-122"
+},
+{
+"notice": 23082943,
+"res": "RES-22",
+"refs": {
+"TED-LOT_NO": [
+"110"
+],
+"TED-ITEM": [
+"22"
+]
+},
+"rule": "LOT-34",
+"how": "exact",
+"served": "LOT-34",
+"pre567": "LOT-110"
+},
+{
+"notice": 23082943,
+"res": "RES-23",
+"refs": {
+"TED-LOT_NO": [
+"44"
+],
+"TED-ITEM": [
+"23"
+]
+},
+"rule": "LOT-38",
+"how": "exact",
+"served": "LOT-38",
+"pre567": "LOT-38"
+},
+{
+"notice": 23082943,
+"res": "RES-24",
+"refs": {
+"TED-LOT_NO": [
+"77"
+],
+"TED-ITEM": [
+"24"
+]
+},
+"rule": "LOT-36",
+"how": "exact",
+"served": "LOT-36",
+"pre567": "LOT-36"
+},
+{
+"notice": 23082943,
+"res": "RES-25",
+"refs": {
+"TED-LOT_NO": [
+"50"
+],
+"TED-ITEM": [
+"25"
+]
+},
+"rule": "LOT-39",
+"how": "exact",
+"served": "LOT-39",
+"pre567": "LOT-39"
+},
+{
+"notice": 23082943,
+"res": "RES-26",
+"refs": {
+"TED-LOT_NO": [
+"79"
+],
+"TED-ITEM": [
+"26"
+]
+},
+"rule": "LOT-40",
+"how": "exact",
+"served": "LOT-40",
+"pre567": "LOT-40"
+},
+{
+"notice": 23082943,
+"res": "RES-27",
+"refs": {
+"TED-LOT_NO": [
+"93"
+],
+"TED-ITEM": [
+"27"
+]
+},
+"rule": "LOT-41",
+"how": "exact",
+"served": "LOT-41",
+"pre567": "LOT-41"
+},
+{
+"notice": 23082943,
+"res": "RES-28",
+"refs": {
+"TED-LOT_NO": [
+"51"
+],
+"TED-ITEM": [
+"28"
+]
+},
+"rule": "LOT-42",
+"how": "exact",
+"served": "LOT-42",
+"pre567": "LOT-42"
+},
+{
+"notice": 23082943,
+"res": "RES-29",
+"refs": {
+"TED-LOT_NO": [
+"82"
+],
+"TED-ITEM": [
+"29"
+]
+},
+"rule": "LOT-43",
+"how": "exact",
+"served": "LOT-43",
+"pre567": "LOT-43"
+},
+{
+"notice": 23082943,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"48"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-3",
+"how": "exact",
+"served": "LOT-3",
+"pre567": "LOT-3"
+},
+{
+"notice": 23082943,
+"res": "RES-30",
+"refs": {
+"TED-LOT_NO": [
+"118"
+],
+"TED-ITEM": [
+"30"
+]
+},
+"rule": "LOT-44",
+"how": "exact",
+"served": "LOT-44",
+"pre567": "LOT-118"
+},
+{
+"notice": 23082943,
+"res": "RES-31",
+"refs": {
+"TED-LOT_NO": [
+"31"
+],
+"TED-ITEM": [
+"31"
+]
+},
+"rule": "LOT-45",
+"how": "exact",
+"served": "LOT-45",
+"pre567": "LOT-31"
+},
+{
+"notice": 23082943,
+"res": "RES-32",
+"refs": {
+"TED-LOT_NO": [
+"17"
+],
+"TED-ITEM": [
+"32"
+]
+},
+"rule": "LOT-49",
+"how": "exact",
+"served": "LOT-49",
+"pre567": "LOT-17"
+},
+{
+"notice": 23082943,
+"res": "RES-33",
+"refs": {
+"TED-LOT_NO": [
+"106"
+],
+"TED-ITEM": [
+"33"
+]
+},
+"rule": "LOT-54",
+"how": "exact",
+"served": "LOT-54",
+"pre567": "LOT-106"
+},
+{
+"notice": 23082943,
+"res": "RES-34",
+"refs": {
+"TED-LOT_NO": [
+"120"
+],
+"TED-ITEM": [
+"34"
+]
+},
+"rule": "LOT-52",
+"how": "exact",
+"served": "LOT-52",
+"pre567": "LOT-120"
+},
+{
+"notice": 23082943,
+"res": "RES-35",
+"refs": {
+"TED-LOT_NO": [
+"81"
+],
+"TED-ITEM": [
+"35"
+]
+},
+"rule": "LOT-56",
+"how": "exact",
+"served": "LOT-56",
+"pre567": "LOT-56"
+},
+{
+"notice": 23082943,
+"res": "RES-36",
+"refs": {
+"TED-LOT_NO": [
+"20"
+],
+"TED-ITEM": [
+"36"
+]
+},
+"rule": "LOT-57",
+"how": "exact",
+"served": "LOT-57",
+"pre567": "LOT-20"
+},
+{
+"notice": 23082943,
+"res": "RES-37",
+"refs": {
+"TED-LOT_NO": [
+"41"
+],
+"TED-ITEM": [
+"37"
+]
+},
+"rule": "LOT-58",
+"how": "exact",
+"served": "LOT-58",
+"pre567": "LOT-41"
+},
+{
+"notice": 23082943,
+"res": "RES-38",
+"refs": {
+"TED-LOT_NO": [
+"32"
+],
+"TED-ITEM": [
+"38"
+]
+},
+"rule": "LOT-62",
+"how": "exact",
+"served": "LOT-62",
+"pre567": "LOT-32"
+},
+{
+"notice": 23082943,
+"res": "RES-39",
+"refs": {
+"TED-LOT_NO": [
+"55"
+],
+"TED-ITEM": [
+"39"
+]
+},
+"rule": "LOT-61",
+"how": "exact",
+"served": "LOT-61",
+"pre567": "LOT-55"
+},
+{
+"notice": 23082943,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"99"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-4",
+"how": "exact",
+"served": "LOT-4",
+"pre567": "LOT-4"
+},
+{
+"notice": 23082943,
+"res": "RES-40",
+"refs": {
+"TED-LOT_NO": [
+"109"
+],
+"TED-ITEM": [
+"40"
+]
+},
+"rule": "LOT-67",
+"how": "exact",
+"served": "LOT-67",
+"pre567": "LOT-109"
+},
+{
+"notice": 23082943,
+"res": "RES-41",
+"refs": {
+"TED-LOT_NO": [
+"6"
+],
+"TED-ITEM": [
+"41"
+]
+},
+"rule": "LOT-68",
+"how": "exact",
+"served": "LOT-68",
+"pre567": "LOT-6"
+},
+{
+"notice": 23082943,
+"res": "RES-42",
+"refs": {
+"TED-LOT_NO": [
+"87"
+],
+"TED-ITEM": [
+"42"
+]
+},
+"rule": "LOT-69",
+"how": "exact",
+"served": "LOT-69",
+"pre567": "LOT-69"
+},
+{
+"notice": 23082943,
+"res": "RES-43",
+"refs": {
+"TED-LOT_NO": [
+"102"
+],
+"TED-ITEM": [
+"43"
+]
+},
+"rule": "LOT-73",
+"how": "exact",
+"served": "LOT-73",
+"pre567": "LOT-102"
+},
+{
+"notice": 23082943,
+"res": "RES-44",
+"refs": {
+"TED-LOT_NO": [
+"90"
+],
+"TED-ITEM": [
+"44"
+]
+},
+"rule": "LOT-74",
+"how": "exact",
+"served": "LOT-74",
+"pre567": "LOT-74"
+},
+{
+"notice": 23082943,
+"res": "RES-45",
+"refs": {
+"TED-LOT_NO": [
+"78"
+],
+"TED-ITEM": [
+"45"
+]
+},
+"rule": "LOT-78",
+"how": "exact",
+"served": "LOT-78",
+"pre567": "LOT-78"
+},
+{
+"notice": 23082943,
+"res": "RES-46",
+"refs": {
+"TED-LOT_NO": [
+"101"
+],
+"TED-ITEM": [
+"46"
+]
+},
+"rule": "LOT-75",
+"how": "exact",
+"served": "LOT-75",
+"pre567": "LOT-101"
+},
+{
+"notice": 23082943,
+"res": "RES-47",
+"refs": {
+"TED-LOT_NO": [
+"104"
+],
+"TED-ITEM": [
+"47"
+]
+},
+"rule": "LOT-76",
+"how": "exact",
+"served": "LOT-76",
+"pre567": "LOT-104"
+},
+{
+"notice": 23082943,
+"res": "RES-48",
+"refs": {
+"TED-LOT_NO": [
+"66"
+],
+"TED-ITEM": [
+"48"
+]
+},
+"rule": "LOT-79",
+"how": "exact",
+"served": "LOT-79",
+"pre567": "LOT-66"
+},
+{
+"notice": 23082943,
+"res": "RES-49",
+"refs": {
+"TED-LOT_NO": [
+"92"
+],
+"TED-ITEM": [
+"49"
+]
+},
+"rule": "LOT-80",
+"how": "exact",
+"served": "LOT-80",
+"pre567": "LOT-80"
+},
+{
+"notice": 23082943,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"46"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": "LOT-7",
+"how": "exact",
+"served": "LOT-7",
+"pre567": "LOT-46"
+},
+{
+"notice": 23082943,
+"res": "RES-50",
+"refs": {
+"TED-LOT_NO": [
+"68"
+],
+"TED-ITEM": [
+"50"
+]
+},
+"rule": "LOT-86",
+"how": "exact",
+"served": "LOT-86",
+"pre567": "LOT-68"
+},
+{
+"notice": 23082943,
+"res": "RES-51",
+"refs": {
+"TED-LOT_NO": [
+"95"
+],
+"TED-ITEM": [
+"51"
+]
+},
+"rule": "LOT-83",
+"how": "exact",
+"served": "LOT-83",
+"pre567": "LOT-83"
+},
+{
+"notice": 23082943,
+"res": "RES-52",
+"refs": {
+"TED-LOT_NO": [
+"69"
+],
+"TED-ITEM": [
+"52"
+]
+},
+"rule": "LOT-84",
+"how": "exact",
+"served": "LOT-84",
+"pre567": "LOT-69"
+},
+{
+"notice": 23082943,
+"res": "RES-53",
+"refs": {
+"TED-LOT_NO": [
+"71"
+],
+"TED-ITEM": [
+"53"
+]
+},
+"rule": "LOT-85",
+"how": "exact",
+"served": "LOT-85",
+"pre567": "LOT-71"
+},
+{
+"notice": 23082943,
+"res": "RES-54",
+"refs": {
+"TED-LOT_NO": [
+"115"
+],
+"TED-ITEM": [
+"54"
+]
+},
+"rule": "LOT-87",
+"how": "exact",
+"served": "LOT-87",
+"pre567": "LOT-115"
+},
+{
+"notice": 23082943,
+"res": "RES-55",
+"refs": {
+"TED-LOT_NO": [
+"40"
+],
+"TED-ITEM": [
+"55"
+]
+},
+"rule": "LOT-88",
+"how": "exact",
+"served": "LOT-88",
+"pre567": "LOT-40"
+},
+{
+"notice": 23082943,
+"res": "RES-56",
+"refs": {
+"TED-LOT_NO": [
+"103"
+],
+"TED-ITEM": [
+"56"
+]
+},
+"rule": "LOT-90",
+"how": "exact",
+"served": "LOT-90",
+"pre567": "LOT-103"
+},
+{
+"notice": 23082943,
+"res": "RES-57",
+"refs": {
+"TED-LOT_NO": [
+"73"
+],
+"TED-ITEM": [
+"57"
+]
+},
+"rule": "LOT-94",
+"how": "exact",
+"served": "LOT-94",
+"pre567": "LOT-73"
+},
+{
+"notice": 23082943,
+"res": "RES-58",
+"refs": {
+"TED-LOT_NO": [
+"108"
+],
+"TED-ITEM": [
+"58"
+]
+},
+"rule": "LOT-91",
+"how": "exact",
+"served": "LOT-91",
+"pre567": "LOT-108"
+},
+{
+"notice": 23082943,
+"res": "RES-59",
+"refs": {
+"TED-LOT_NO": [
+"29"
+],
+"TED-ITEM": [
+"59"
+]
+},
+"rule": "LOT-93",
+"how": "exact",
+"served": "LOT-93",
+"pre567": "LOT-29"
+},
+{
+"notice": 23082943,
+"res": "RES-6",
+"refs": {
+"TED-LOT_NO": [
+"34"
+],
+"TED-ITEM": [
+"6"
+]
+},
+"rule": "LOT-8",
+"how": "exact",
+"served": "LOT-8",
+"pre567": "LOT-34"
+},
+{
+"notice": 23082943,
+"res": "RES-60",
+"refs": {
+"TED-LOT_NO": [
+"88"
+],
+"TED-ITEM": [
+"60"
+]
+},
+"rule": "LOT-95",
+"how": "exact",
+"served": "LOT-95",
+"pre567": "LOT-88"
+},
+{
+"notice": 23082943,
+"res": "RES-61",
+"refs": {
+"TED-LOT_NO": [
+"116"
+],
+"TED-ITEM": [
+"61"
+]
+},
+"rule": "LOT-96",
+"how": "exact",
+"served": "LOT-96",
+"pre567": "LOT-116"
+},
+{
+"notice": 23082943,
+"res": "RES-62",
+"refs": {
+"TED-LOT_NO": [
+"119"
+],
+"TED-ITEM": [
+"62"
+]
+},
+"rule": "LOT-97",
+"how": "exact",
+"served": "LOT-97",
+"pre567": "LOT-119"
+},
+{
+"notice": 23082943,
+"res": "RES-63",
+"refs": {
+"TED-LOT_NO": [
+"57"
+],
+"TED-ITEM": [
+"63"
+]
+},
+"rule": "LOT-98",
+"how": "exact",
+"served": "LOT-98",
+"pre567": "LOT-57"
+},
+{
+"notice": 23082943,
+"res": "RES-64",
+"refs": {
+"TED-LOT_NO": [
+"105"
+],
+"TED-ITEM": [
+"64"
+]
+},
+"rule": "LOT-100",
+"how": "exact",
+"served": "LOT-100",
+"pre567": "LOT-100"
+},
+{
+"notice": 23082943,
+"res": "RES-65",
+"refs": {
+"TED-LOT_NO": [
+"70"
+],
+"TED-ITEM": [
+"65"
+]
+},
+"rule": "LOT-104",
+"how": "exact",
+"served": "LOT-104",
+"pre567": "LOT-104"
+},
+{
+"notice": 23082943,
+"res": "RES-66",
+"refs": {
+"TED-LOT_NO": [
+"114"
+],
+"TED-ITEM": [
+"66"
+]
+},
+"rule": "LOT-105",
+"how": "exact",
+"served": "LOT-105",
+"pre567": "LOT-105"
+},
+{
+"notice": 23082943,
+"res": "RES-67",
+"refs": {
+"TED-LOT_NO": [
+"63"
+],
+"TED-ITEM": [
+"67"
+]
+},
+"rule": "LOT-106",
+"how": "exact",
+"served": "LOT-106",
+"pre567": "LOT-106"
+},
+{
+"notice": 23082943,
+"res": "RES-68",
+"refs": {
+"TED-LOT_NO": [
+"11"
+],
+"TED-ITEM": [
+"68"
+]
+},
+"rule": "LOT-110",
+"how": "exact",
+"served": "LOT-110",
+"pre567": "LOT-11"
+},
+{
+"notice": 23082943,
+"res": "RES-69",
+"refs": {
+"TED-LOT_NO": [
+"112"
+],
+"TED-ITEM": [
+"69"
+]
+},
+"rule": "LOT-107",
+"how": "exact",
+"served": "LOT-107",
+"pre567": "LOT-107"
+},
+{
+"notice": 23082943,
+"res": "RES-7",
+"refs": {
+"TED-LOT_NO": [
+"65"
+],
+"TED-ITEM": [
+"7"
+]
+},
+"rule": "LOT-10",
+"how": "exact",
+"served": "LOT-10",
+"pre567": "LOT-10"
+},
+{
+"notice": 23082943,
+"res": "RES-70",
+"refs": {
+"TED-LOT_NO": [
+"64"
+],
+"TED-ITEM": [
+"70"
+]
+},
+"rule": "LOT-108",
+"how": "exact",
+"served": "LOT-108",
+"pre567": "LOT-108"
+},
+{
+"notice": 23082943,
+"res": "RES-71",
+"refs": {
+"TED-LOT_NO": [
+"117"
+],
+"TED-ITEM": [
+"71"
+]
+},
+"rule": "LOT-113",
+"how": "exact",
+"served": "LOT-113",
+"pre567": "LOT-113"
+},
+{
+"notice": 23082943,
+"res": "RES-72",
+"refs": {
+"TED-LOT_NO": [
+"107"
+],
+"TED-ITEM": [
+"72"
+]
+},
+"rule": "LOT-118",
+"how": "exact",
+"served": "LOT-118",
+"pre567": "LOT-107"
+},
+{
+"notice": 23082943,
+"res": "RES-73",
+"refs": {
+"TED-LOT_NO": [
+"72"
+],
+"TED-ITEM": [
+"73"
+]
+},
+"rule": "LOT-116",
+"how": "exact",
+"served": "LOT-116",
+"pre567": "LOT-116"
+},
+{
+"notice": 23082943,
+"res": "RES-74",
+"refs": {
+"TED-LOT_NO": [
+"74"
+],
+"TED-ITEM": [
+"74"
+]
+},
+"rule": "LOT-117",
+"how": "exact",
+"served": "LOT-117",
+"pre567": "LOT-117"
+},
+{
+"notice": 23082943,
+"res": "RES-75",
+"refs": {
+"TED-LOT_NO": [
+"8"
+],
+"TED-ITEM": [
+"75"
+]
+},
+"rule": "LOT-119",
+"how": "exact",
+"served": "LOT-119",
+"pre567": "LOT-119"
+},
+{
+"notice": 23082943,
+"res": "RES-76",
+"refs": {
+"TED-LOT_NO": [
+"26"
+],
+"TED-ITEM": [
+"76"
+]
+},
+"rule": "LOT-121",
+"how": "exact",
+"served": "LOT-121",
+"pre567": "LOT-121"
+},
+{
+"notice": 23082943,
+"res": "RES-77",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"77"
+]
+},
+"rule": "LOT-60",
+"how": "exact",
+"served": "LOT-60",
+"pre567": "LOT-1"
+},
+{
+"notice": 23082943,
+"res": "RES-78",
+"refs": {
+"TED-LOT_NO": [
+"7"
+],
+"TED-ITEM": [
+"78"
+]
+},
+"rule": "LOT-55",
+"how": "exact",
+"served": "LOT-55",
+"pre567": "LOT-55"
+},
+{
+"notice": 23082943,
+"res": "RES-79",
+"refs": {
+"TED-LOT_NO": [
+"12,100"
+],
+"TED-ITEM": [
+"79"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-8",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"8"
+]
+},
+"rule": "LOT-11",
+"how": "exact",
+"served": "LOT-11",
+"pre567": "LOT-11"
+},
+{
+"notice": 23082943,
+"res": "RES-80",
+"refs": {
+"TED-LOT_NO": [
+"62,94,67,61,19"
+],
+"TED-ITEM": [
+"80"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-81",
+"refs": {
+"TED-LOT_NO": [
+"23"
+],
+"TED-ITEM": [
+"81"
+]
+},
+"rule": "LOT-72",
+"how": "exact",
+"served": "LOT-72",
+"pre567": "LOT-23"
+},
+{
+"notice": 23082943,
+"res": "RES-82",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"82"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-83",
+"refs": {
+"TED-LOT_NO": [
+"58,60,53,5,23,98,52,59"
+],
+"TED-ITEM": [
+"83"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-84",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"84"
+]
+},
+"rule": "LOT-60",
+"how": "exact",
+"served": "LOT-60",
+"pre567": "LOT-1"
+},
+{
+"notice": 23082943,
+"res": "RES-85",
+"refs": {
+"TED-LOT_NO": [
+"7,9"
+],
+"TED-ITEM": [
+"85"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-86",
+"refs": {
+"TED-LOT_NO": [
+"12,100"
+],
+"TED-ITEM": [
+"86"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-87",
+"refs": {
+"TED-LOT_NO": [
+"10,62,94,67,97,49,61,19"
+],
+"TED-ITEM": [
+"87"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-88",
+"refs": {
+"TED-LOT_NO": [
+"25"
+],
+"TED-ITEM": [
+"88"
+]
+},
+"rule": "LOT-47",
+"how": "exact",
+"served": "LOT-47",
+"pre567": "LOT-25"
+},
+{
+"notice": 23082943,
+"res": "RES-89",
+"refs": {
+"TED-LOT_NO": [
+"3,111"
+],
+"TED-ITEM": [
+"89"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-9",
+"refs": {
+"TED-LOT_NO": [
+"4"
+],
+"TED-ITEM": [
+"9"
+]
+},
+"rule": "LOT-12",
+"how": "exact",
+"served": "LOT-12",
+"pre567": "LOT-12"
+},
+{
+"notice": 23082943,
+"res": "RES-90",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"90"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-91",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"91"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 23082943,
+"res": "RES-92",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"92"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 23082943,
+"res": "RES-93",
+"refs": {
+"TED-LOT_NO": [
+"12,100,14"
+],
+"TED-ITEM": [
+"93"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-94",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"94"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-95",
+"refs": {
+"TED-LOT_NO": [
+"10"
+],
+"TED-ITEM": [
+"95"
+]
+},
+"rule": "LOT-13",
+"how": "exact",
+"served": "LOT-13",
+"pre567": "LOT-10"
+},
+{
+"notice": 23082943,
+"res": "RES-96",
+"refs": {
+"TED-LOT_NO": [
+"3"
+],
+"TED-ITEM": [
+"96"
+]
+},
+"rule": "LOT-14",
+"how": "exact",
+"served": "LOT-14",
+"pre567": "LOT-14"
+},
+{
+"notice": 23082943,
+"res": "RES-97",
+"refs": {
+"TED-LOT_NO": [
+"84,1,83"
+],
+"TED-ITEM": [
+"97"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-98",
+"refs": {
+"TED-LOT_NO": [
+"62,97,49"
+],
+"TED-ITEM": [
+"98"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23082943,
+"res": "RES-99",
+"refs": {
+"TED-LOT_NO": [
+"85"
+],
+"TED-ITEM": [
+"99"
+]
+},
+"rule": "LOT-18",
+"how": "exact",
+"served": "LOT-18",
+"pre567": "LOT-18"
+},
+{
+"notice": 23303960,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"117"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-113",
+"how": "exact",
+"served": "LOT-113",
+"pre567": "LOT-113"
+},
+{
+"notice": 23303960,
+"res": "RES-10",
+"refs": {
+"TED-LOT_NO": [
+"99"
+],
+"TED-ITEM": [
+"10"
+]
+},
+"rule": "LOT-4",
+"how": "exact",
+"served": "LOT-4",
+"pre567": "LOT-4"
+},
+{
+"notice": 23303960,
+"res": "RES-100",
+"refs": {
+"TED-LOT_NO": [
+"62,97,49"
+],
+"TED-ITEM": [
+"100"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-101",
+"refs": {
+"TED-LOT_NO": [
+"85"
+],
+"TED-ITEM": [
+"101"
+]
+},
+"rule": "LOT-18",
+"how": "exact",
+"served": "LOT-18",
+"pre567": "LOT-18"
+},
+{
+"notice": 23303960,
+"res": "RES-102",
+"refs": {
+"TED-LOT_NO": [
+"96,111"
+],
+"TED-ITEM": [
+"102"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-103",
+"refs": {
+"TED-LOT_NO": [
+"86,80"
+],
+"TED-ITEM": [
+"103"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-104",
+"refs": {
+"TED-LOT_NO": [
+"61"
+],
+"TED-ITEM": [
+"104"
+]
+},
+"rule": "LOT-63",
+"how": "exact",
+"served": "LOT-63",
+"pre567": "LOT-61"
+},
+{
+"notice": 23303960,
+"res": "RES-105",
+"refs": {
+"TED-LOT_NO": [
+"22"
+],
+"TED-ITEM": [
+"105"
+]
+},
+"rule": "LOT-64",
+"how": "exact",
+"served": "LOT-64",
+"pre567": "LOT-22"
+},
+{
+"notice": 23303960,
+"res": "RES-106",
+"refs": {
+"TED-LOT_NO": [
+"5"
+],
+"TED-ITEM": [
+"106"
+]
+},
+"rule": "LOT-66",
+"how": "exact",
+"served": "LOT-66",
+"pre567": "LOT-5"
+},
+{
+"notice": 23303960,
+"res": "RES-107",
+"refs": {
+"TED-LOT_NO": [
+"13"
+],
+"TED-ITEM": [
+"107"
+]
+},
+"rule": "LOT-71",
+"how": "exact",
+"served": "LOT-71",
+"pre567": "LOT-13"
+},
+{
+"notice": 23303960,
+"res": "RES-108",
+"refs": {
+"TED-LOT_NO": [
+"23"
+],
+"TED-ITEM": [
+"108"
+]
+},
+"rule": "LOT-72",
+"how": "exact",
+"served": "LOT-72",
+"pre567": "LOT-23"
+},
+{
+"notice": 23303960,
+"res": "RES-109",
+"refs": {
+"TED-LOT_NO": [
+"75"
+],
+"TED-ITEM": [
+"109"
+]
+},
+"rule": "LOT-81",
+"how": "exact",
+"served": "LOT-81",
+"pre567": "LOT-75"
+},
+{
+"notice": 23303960,
+"res": "RES-11",
+"refs": {
+"TED-LOT_NO": [
+"46"
+],
+"TED-ITEM": [
+"11"
+]
+},
+"rule": "LOT-7",
+"how": "exact",
+"served": "LOT-7",
+"pre567": "LOT-46"
+},
+{
+"notice": 23303960,
+"res": "RES-110",
+"refs": {
+"TED-LOT_NO": [
+"27,28"
+],
+"TED-ITEM": [
+"110"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-111",
+"refs": {
+"TED-LOT_NO": [
+"56"
+],
+"TED-ITEM": [
+"111"
+]
+},
+"rule": "LOT-33",
+"how": "exact",
+"served": "LOT-33",
+"pre567": "LOT-33"
+},
+{
+"notice": 23303960,
+"res": "RES-112",
+"refs": {
+"TED-LOT_NO": [
+"58,60,53,98,59,16"
+],
+"TED-ITEM": [
+"112"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-113",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"113"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 23303960,
+"res": "RES-114",
+"refs": {
+"TED-LOT_NO": [
+"35,25"
+],
+"TED-ITEM": [
+"114"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-115",
+"refs": {
+"TED-LOT_NO": [
+"52"
+],
+"TED-ITEM": [
+"115"
+]
+},
+"rule": "LOT-51",
+"how": "exact",
+"served": "LOT-51",
+"pre567": "LOT-51"
+},
+{
+"notice": 23303960,
+"res": "RES-116",
+"refs": {
+"TED-LOT_NO": [
+"7,9"
+],
+"TED-ITEM": [
+"116"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-117",
+"refs": {
+"TED-LOT_NO": [
+"19"
+],
+"TED-ITEM": [
+"117"
+]
+},
+"rule": "LOT-82",
+"how": "exact",
+"served": "LOT-82",
+"pre567": "LOT-19"
+},
+{
+"notice": 23303960,
+"res": "RES-118",
+"refs": {
+"TED-LOT_NO": [
+"67"
+],
+"TED-ITEM": [
+"118"
+]
+},
+"rule": "LOT-101",
+"how": "exact",
+"served": "LOT-101",
+"pre567": "LOT-101"
+},
+{
+"notice": 23303960,
+"res": "RES-119",
+"refs": {
+"TED-LOT_NO": [
+"45"
+],
+"TED-ITEM": [
+"119"
+]
+},
+"rule": "LOT-111",
+"how": "exact",
+"served": "LOT-111",
+"pre567": "LOT-111"
+},
+{
+"notice": 23303960,
+"res": "RES-12",
+"refs": {
+"TED-LOT_NO": [
+"34"
+],
+"TED-ITEM": [
+"12"
+]
+},
+"rule": "LOT-8",
+"how": "exact",
+"served": "LOT-8",
+"pre567": "LOT-34"
+},
+{
+"notice": 23303960,
+"res": "RES-120",
+"refs": {
+"TED-LOT_NO": [
+"94"
+],
+"TED-ITEM": [
+"120"
+]
+},
+"rule": "LOT-115",
+"how": "exact",
+"served": "LOT-115",
+"pre567": "LOT-115"
+},
+{
+"notice": 23303960,
+"res": "RES-121",
+"refs": {
+"TED-LOT_NO": [
+"43"
+],
+"TED-ITEM": [
+"121"
+]
+},
+"rule": "LOT-122",
+"how": "exact",
+"served": "LOT-122",
+"pre567": "LOT-122"
+},
+{
+"notice": 23303960,
+"res": "RES-122",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"122"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 23303960,
+"res": "RES-123",
+"refs": {
+"TED-LOT_NO": [
+"56,22,80"
+],
+"TED-ITEM": [
+"123"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-124",
+"refs": {
+"TED-LOT_NO": [
+"83"
+],
+"TED-ITEM": [
+"124"
+]
+},
+"rule": "LOT-112",
+"how": "exact",
+"served": "LOT-112",
+"pre567": "LOT-112"
+},
+{
+"notice": 23303960,
+"res": "RES-125",
+"refs": {
+"TED-LOT_NO": [
+"84"
+],
+"TED-ITEM": [
+"125"
+]
+},
+"rule": "LOT-15",
+"how": "exact",
+"served": "LOT-15",
+"pre567": "LOT-15"
+},
+{
+"notice": 23303960,
+"res": "RES-126",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"126"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 23303960,
+"res": "RES-127",
+"refs": {
+"TED-LOT_NO": [
+"60,53,5,13,98,59,16"
+],
+"TED-ITEM": [
+"127"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-128",
+"refs": {
+"TED-LOT_NO": [
+"56,22"
+],
+"TED-ITEM": [
+"128"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-129",
+"refs": {
+"TED-LOT_NO": [
+"84"
+],
+"TED-ITEM": [
+"129"
+]
+},
+"rule": "LOT-15",
+"how": "exact",
+"served": "LOT-15",
+"pre567": "LOT-15"
+},
+{
+"notice": 23303960,
+"res": "RES-13",
+"refs": {
+"TED-LOT_NO": [
+"65"
+],
+"TED-ITEM": [
+"13"
+]
+},
+"rule": "LOT-10",
+"how": "exact",
+"served": "LOT-10",
+"pre567": "LOT-10"
+},
+{
+"notice": 23303960,
+"res": "RES-130",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"130"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 23303960,
+"res": "RES-131",
+"refs": {
+"TED-LOT_NO": [
+"85"
+],
+"TED-ITEM": [
+"131"
+]
+},
+"rule": "LOT-18",
+"how": "exact",
+"served": "LOT-18",
+"pre567": "LOT-18"
+},
+{
+"notice": 23303960,
+"res": "RES-132",
+"refs": {
+"TED-LOT_NO": [
+"97"
+],
+"TED-ITEM": [
+"132"
+]
+},
+"rule": "LOT-103",
+"how": "exact",
+"served": "LOT-103",
+"pre567": "LOT-103"
+},
+{
+"notice": 23303960,
+"res": "RES-133",
+"refs": {
+"TED-LOT_NO": [
+"43"
+],
+"TED-ITEM": [
+"133"
+]
+},
+"rule": "LOT-122",
+"how": "exact",
+"served": "LOT-122",
+"pre567": "LOT-122"
+},
+{
+"notice": 23303960,
+"res": "RES-134",
+"refs": {
+"TED-LOT_NO": [
+"45"
+],
+"TED-ITEM": [
+"134"
+]
+},
+"rule": "LOT-111",
+"how": "exact",
+"served": "LOT-111",
+"pre567": "LOT-111"
+},
+{
+"notice": 23303960,
+"res": "RES-14",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"14"
+]
+},
+"rule": "LOT-11",
+"how": "exact",
+"served": "LOT-11",
+"pre567": "LOT-11"
+},
+{
+"notice": 23303960,
+"res": "RES-15",
+"refs": {
+"TED-LOT_NO": [
+"4"
+],
+"TED-ITEM": [
+"15"
+]
+},
+"rule": "LOT-12",
+"how": "exact",
+"served": "LOT-12",
+"pre567": "LOT-12"
+},
+{
+"notice": 23303960,
+"res": "RES-16",
+"refs": {
+"TED-LOT_NO": [
+"113"
+],
+"TED-ITEM": [
+"16"
+]
+},
+"rule": "LOT-19",
+"how": "exact",
+"served": "LOT-19",
+"pre567": "LOT-113"
+},
+{
+"notice": 23303960,
+"res": "RES-17",
+"refs": {
+"TED-LOT_NO": [
+"91"
+],
+"TED-ITEM": [
+"17"
+]
+},
+"rule": "LOT-16",
+"how": "exact",
+"served": "LOT-16",
+"pre567": "LOT-16"
+},
+{
+"notice": 23303960,
+"res": "RES-18",
+"refs": {
+"TED-LOT_NO": [
+"15"
+],
+"TED-ITEM": [
+"18"
+]
+},
+"rule": "LOT-20",
+"how": "exact",
+"served": "LOT-20",
+"pre567": "LOT-15"
+},
+{
+"notice": 23303960,
+"res": "RES-19",
+"refs": {
+"TED-LOT_NO": [
+"24"
+],
+"TED-ITEM": [
+"19"
+]
+},
+"rule": "LOT-21",
+"how": "exact",
+"served": "LOT-21",
+"pre567": "LOT-21"
+},
+{
+"notice": 23303960,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"107"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-118",
+"how": "exact",
+"served": "LOT-118",
+"pre567": "LOT-107"
+},
+{
+"notice": 23303960,
+"res": "RES-20",
+"refs": {
+"TED-LOT_NO": [
+"38"
+],
+"TED-ITEM": [
+"20"
+]
+},
+"rule": "LOT-22",
+"how": "exact",
+"served": "LOT-22",
+"pre567": "LOT-22"
+},
+{
+"notice": 23303960,
+"res": "RES-21",
+"refs": {
+"TED-LOT_NO": [
+"89"
+],
+"TED-ITEM": [
+"21"
+]
+},
+"rule": "LOT-23",
+"how": "exact",
+"served": "LOT-23",
+"pre567": "LOT-23"
+},
+{
+"notice": 23303960,
+"res": "RES-22",
+"refs": {
+"TED-LOT_NO": [
+"42"
+],
+"TED-ITEM": [
+"22"
+]
+},
+"rule": "LOT-24",
+"how": "exact",
+"served": "LOT-24",
+"pre567": "LOT-24"
+},
+{
+"notice": 23303960,
+"res": "RES-23",
+"refs": {
+"TED-LOT_NO": [
+"76"
+],
+"TED-ITEM": [
+"23"
+]
+},
+"rule": "LOT-25",
+"how": "exact",
+"served": "LOT-25",
+"pre567": "LOT-25"
+},
+{
+"notice": 23303960,
+"res": "RES-24",
+"refs": {
+"TED-LOT_NO": [
+"30"
+],
+"TED-ITEM": [
+"24"
+]
+},
+"rule": "LOT-26",
+"how": "exact",
+"served": "LOT-26",
+"pre567": "LOT-26"
+},
+{
+"notice": 23303960,
+"res": "RES-25",
+"refs": {
+"TED-LOT_NO": [
+"33"
+],
+"TED-ITEM": [
+"25"
+]
+},
+"rule": "LOT-29",
+"how": "exact",
+"served": "LOT-29",
+"pre567": "LOT-29"
+},
+{
+"notice": 23303960,
+"res": "RES-26",
+"refs": {
+"TED-LOT_NO": [
+"121"
+],
+"TED-ITEM": [
+"26"
+]
+},
+"rule": "LOT-30",
+"how": "exact",
+"served": "LOT-30",
+"pre567": "LOT-121"
+},
+{
+"notice": 23303960,
+"res": "RES-27",
+"refs": {
+"TED-LOT_NO": [
+"122"
+],
+"TED-ITEM": [
+"27"
+]
+},
+"rule": "LOT-32",
+"how": "exact",
+"served": "LOT-32",
+"pre567": "LOT-122"
+},
+{
+"notice": 23303960,
+"res": "RES-28",
+"refs": {
+"TED-LOT_NO": [
+"110"
+],
+"TED-ITEM": [
+"28"
+]
+},
+"rule": "LOT-34",
+"how": "exact",
+"served": "LOT-34",
+"pre567": "LOT-110"
+},
+{
+"notice": 23303960,
+"res": "RES-29",
+"refs": {
+"TED-LOT_NO": [
+"44"
+],
+"TED-ITEM": [
+"29"
+]
+},
+"rule": "LOT-38",
+"how": "exact",
+"served": "LOT-38",
+"pre567": "LOT-38"
+},
+{
+"notice": 23303960,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"72"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-116",
+"how": "exact",
+"served": "LOT-116",
+"pre567": "LOT-116"
+},
+{
+"notice": 23303960,
+"res": "RES-30",
+"refs": {
+"TED-LOT_NO": [
+"77"
+],
+"TED-ITEM": [
+"30"
+]
+},
+"rule": "LOT-36",
+"how": "exact",
+"served": "LOT-36",
+"pre567": "LOT-36"
+},
+{
+"notice": 23303960,
+"res": "RES-31",
+"refs": {
+"TED-LOT_NO": [
+"50"
+],
+"TED-ITEM": [
+"31"
+]
+},
+"rule": "LOT-39",
+"how": "exact",
+"served": "LOT-39",
+"pre567": "LOT-39"
+},
+{
+"notice": 23303960,
+"res": "RES-32",
+"refs": {
+"TED-LOT_NO": [
+"79"
+],
+"TED-ITEM": [
+"32"
+]
+},
+"rule": "LOT-40",
+"how": "exact",
+"served": "LOT-40",
+"pre567": "LOT-40"
+},
+{
+"notice": 23303960,
+"res": "RES-33",
+"refs": {
+"TED-LOT_NO": [
+"93"
+],
+"TED-ITEM": [
+"33"
+]
+},
+"rule": "LOT-41",
+"how": "exact",
+"served": "LOT-41",
+"pre567": "LOT-41"
+},
+{
+"notice": 23303960,
+"res": "RES-34",
+"refs": {
+"TED-LOT_NO": [
+"51"
+],
+"TED-ITEM": [
+"34"
+]
+},
+"rule": "LOT-42",
+"how": "exact",
+"served": "LOT-42",
+"pre567": "LOT-42"
+},
+{
+"notice": 23303960,
+"res": "RES-35",
+"refs": {
+"TED-LOT_NO": [
+"82"
+],
+"TED-ITEM": [
+"35"
+]
+},
+"rule": "LOT-43",
+"how": "exact",
+"served": "LOT-43",
+"pre567": "LOT-43"
+},
+{
+"notice": 23303960,
+"res": "RES-36",
+"refs": {
+"TED-LOT_NO": [
+"118"
+],
+"TED-ITEM": [
+"36"
+]
+},
+"rule": "LOT-44",
+"how": "exact",
+"served": "LOT-44",
+"pre567": "LOT-118"
+},
+{
+"notice": 23303960,
+"res": "RES-37",
+"refs": {
+"TED-LOT_NO": [
+"31"
+],
+"TED-ITEM": [
+"37"
+]
+},
+"rule": "LOT-45",
+"how": "exact",
+"served": "LOT-45",
+"pre567": "LOT-31"
+},
+{
+"notice": 23303960,
+"res": "RES-38",
+"refs": {
+"TED-LOT_NO": [
+"17"
+],
+"TED-ITEM": [
+"38"
+]
+},
+"rule": "LOT-49",
+"how": "exact",
+"served": "LOT-49",
+"pre567": "LOT-17"
+},
+{
+"notice": 23303960,
+"res": "RES-39",
+"refs": {
+"TED-LOT_NO": [
+"106"
+],
+"TED-ITEM": [
+"39"
+]
+},
+"rule": "LOT-54",
+"how": "exact",
+"served": "LOT-54",
+"pre567": "LOT-106"
+},
+{
+"notice": 23303960,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"74"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-117",
+"how": "exact",
+"served": "LOT-117",
+"pre567": "LOT-117"
+},
+{
+"notice": 23303960,
+"res": "RES-40",
+"refs": {
+"TED-LOT_NO": [
+"120"
+],
+"TED-ITEM": [
+"40"
+]
+},
+"rule": "LOT-52",
+"how": "exact",
+"served": "LOT-52",
+"pre567": "LOT-120"
+},
+{
+"notice": 23303960,
+"res": "RES-41",
+"refs": {
+"TED-LOT_NO": [
+"81"
+],
+"TED-ITEM": [
+"41"
+]
+},
+"rule": "LOT-56",
+"how": "exact",
+"served": "LOT-56",
+"pre567": "LOT-56"
+},
+{
+"notice": 23303960,
+"res": "RES-42",
+"refs": {
+"TED-LOT_NO": [
+"20"
+],
+"TED-ITEM": [
+"42"
+]
+},
+"rule": "LOT-57",
+"how": "exact",
+"served": "LOT-57",
+"pre567": "LOT-20"
+},
+{
+"notice": 23303960,
+"res": "RES-43",
+"refs": {
+"TED-LOT_NO": [
+"41"
+],
+"TED-ITEM": [
+"43"
+]
+},
+"rule": "LOT-58",
+"how": "exact",
+"served": "LOT-58",
+"pre567": "LOT-41"
+},
+{
+"notice": 23303960,
+"res": "RES-44",
+"refs": {
+"TED-LOT_NO": [
+"32"
+],
+"TED-ITEM": [
+"44"
+]
+},
+"rule": "LOT-62",
+"how": "exact",
+"served": "LOT-62",
+"pre567": "LOT-32"
+},
+{
+"notice": 23303960,
+"res": "RES-45",
+"refs": {
+"TED-LOT_NO": [
+"55"
+],
+"TED-ITEM": [
+"45"
+]
+},
+"rule": "LOT-61",
+"how": "exact",
+"served": "LOT-61",
+"pre567": "LOT-55"
+},
+{
+"notice": 23303960,
+"res": "RES-46",
+"refs": {
+"TED-LOT_NO": [
+"109"
+],
+"TED-ITEM": [
+"46"
+]
+},
+"rule": "LOT-67",
+"how": "exact",
+"served": "LOT-67",
+"pre567": "LOT-109"
+},
+{
+"notice": 23303960,
+"res": "RES-47",
+"refs": {
+"TED-LOT_NO": [
+"6"
+],
+"TED-ITEM": [
+"47"
+]
+},
+"rule": "LOT-68",
+"how": "exact",
+"served": "LOT-68",
+"pre567": "LOT-6"
+},
+{
+"notice": 23303960,
+"res": "RES-48",
+"refs": {
+"TED-LOT_NO": [
+"87"
+],
+"TED-ITEM": [
+"48"
+]
+},
+"rule": "LOT-69",
+"how": "exact",
+"served": "LOT-69",
+"pre567": "LOT-69"
+},
+{
+"notice": 23303960,
+"res": "RES-49",
+"refs": {
+"TED-LOT_NO": [
+"102"
+],
+"TED-ITEM": [
+"49"
+]
+},
+"rule": "LOT-73",
+"how": "exact",
+"served": "LOT-73",
+"pre567": "LOT-102"
+},
+{
+"notice": 23303960,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"8"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": "LOT-119",
+"how": "exact",
+"served": "LOT-119",
+"pre567": "LOT-119"
+},
+{
+"notice": 23303960,
+"res": "RES-50",
+"refs": {
+"TED-LOT_NO": [
+"90"
+],
+"TED-ITEM": [
+"50"
+]
+},
+"rule": "LOT-74",
+"how": "exact",
+"served": "LOT-74",
+"pre567": "LOT-74"
+},
+{
+"notice": 23303960,
+"res": "RES-51",
+"refs": {
+"TED-LOT_NO": [
+"78"
+],
+"TED-ITEM": [
+"51"
+]
+},
+"rule": "LOT-78",
+"how": "exact",
+"served": "LOT-78",
+"pre567": "LOT-78"
+},
+{
+"notice": 23303960,
+"res": "RES-52",
+"refs": {
+"TED-LOT_NO": [
+"101"
+],
+"TED-ITEM": [
+"52"
+]
+},
+"rule": "LOT-75",
+"how": "exact",
+"served": "LOT-75",
+"pre567": "LOT-101"
+},
+{
+"notice": 23303960,
+"res": "RES-53",
+"refs": {
+"TED-LOT_NO": [
+"104"
+],
+"TED-ITEM": [
+"53"
+]
+},
+"rule": "LOT-76",
+"how": "exact",
+"served": "LOT-76",
+"pre567": "LOT-104"
+},
+{
+"notice": 23303960,
+"res": "RES-54",
+"refs": {
+"TED-LOT_NO": [
+"66"
+],
+"TED-ITEM": [
+"54"
+]
+},
+"rule": "LOT-79",
+"how": "exact",
+"served": "LOT-79",
+"pre567": "LOT-66"
+},
+{
+"notice": 23303960,
+"res": "RES-55",
+"refs": {
+"TED-LOT_NO": [
+"92"
+],
+"TED-ITEM": [
+"55"
+]
+},
+"rule": "LOT-80",
+"how": "exact",
+"served": "LOT-80",
+"pre567": "LOT-80"
+},
+{
+"notice": 23303960,
+"res": "RES-56",
+"refs": {
+"TED-LOT_NO": [
+"68"
+],
+"TED-ITEM": [
+"56"
+]
+},
+"rule": "LOT-86",
+"how": "exact",
+"served": "LOT-86",
+"pre567": "LOT-68"
+},
+{
+"notice": 23303960,
+"res": "RES-57",
+"refs": {
+"TED-LOT_NO": [
+"95"
+],
+"TED-ITEM": [
+"57"
+]
+},
+"rule": "LOT-83",
+"how": "exact",
+"served": "LOT-83",
+"pre567": "LOT-83"
+},
+{
+"notice": 23303960,
+"res": "RES-58",
+"refs": {
+"TED-LOT_NO": [
+"69"
+],
+"TED-ITEM": [
+"58"
+]
+},
+"rule": "LOT-84",
+"how": "exact",
+"served": "LOT-84",
+"pre567": "LOT-69"
+},
+{
+"notice": 23303960,
+"res": "RES-59",
+"refs": {
+"TED-LOT_NO": [
+"71"
+],
+"TED-ITEM": [
+"59"
+]
+},
+"rule": "LOT-85",
+"how": "exact",
+"served": "LOT-85",
+"pre567": "LOT-71"
+},
+{
+"notice": 23303960,
+"res": "RES-6",
+"refs": {
+"TED-LOT_NO": [
+"26"
+],
+"TED-ITEM": [
+"6"
+]
+},
+"rule": "LOT-121",
+"how": "exact",
+"served": "LOT-121",
+"pre567": "LOT-121"
+},
+{
+"notice": 23303960,
+"res": "RES-60",
+"refs": {
+"TED-LOT_NO": [
+"115"
+],
+"TED-ITEM": [
+"60"
+]
+},
+"rule": "LOT-87",
+"how": "exact",
+"served": "LOT-87",
+"pre567": "LOT-115"
+},
+{
+"notice": 23303960,
+"res": "RES-61",
+"refs": {
+"TED-LOT_NO": [
+"40"
+],
+"TED-ITEM": [
+"61"
+]
+},
+"rule": "LOT-88",
+"how": "exact",
+"served": "LOT-88",
+"pre567": "LOT-40"
+},
+{
+"notice": 23303960,
+"res": "RES-62",
+"refs": {
+"TED-LOT_NO": [
+"103"
+],
+"TED-ITEM": [
+"62"
+]
+},
+"rule": "LOT-90",
+"how": "exact",
+"served": "LOT-90",
+"pre567": "LOT-103"
+},
+{
+"notice": 23303960,
+"res": "RES-63",
+"refs": {
+"TED-LOT_NO": [
+"73"
+],
+"TED-ITEM": [
+"63"
+]
+},
+"rule": "LOT-94",
+"how": "exact",
+"served": "LOT-94",
+"pre567": "LOT-73"
+},
+{
+"notice": 23303960,
+"res": "RES-64",
+"refs": {
+"TED-LOT_NO": [
+"108"
+],
+"TED-ITEM": [
+"64"
+]
+},
+"rule": "LOT-91",
+"how": "exact",
+"served": "LOT-91",
+"pre567": "LOT-108"
+},
+{
+"notice": 23303960,
+"res": "RES-65",
+"refs": {
+"TED-LOT_NO": [
+"29"
+],
+"TED-ITEM": [
+"65"
+]
+},
+"rule": "LOT-93",
+"how": "exact",
+"served": "LOT-93",
+"pre567": "LOT-29"
+},
+{
+"notice": 23303960,
+"res": "RES-66",
+"refs": {
+"TED-LOT_NO": [
+"88"
+],
+"TED-ITEM": [
+"66"
+]
+},
+"rule": "LOT-95",
+"how": "exact",
+"served": "LOT-95",
+"pre567": "LOT-88"
+},
+{
+"notice": 23303960,
+"res": "RES-67",
+"refs": {
+"TED-LOT_NO": [
+"116"
+],
+"TED-ITEM": [
+"67"
+]
+},
+"rule": "LOT-96",
+"how": "exact",
+"served": "LOT-96",
+"pre567": "LOT-116"
+},
+{
+"notice": 23303960,
+"res": "RES-68",
+"refs": {
+"TED-LOT_NO": [
+"119"
+],
+"TED-ITEM": [
+"68"
+]
+},
+"rule": "LOT-97",
+"how": "exact",
+"served": "LOT-97",
+"pre567": "LOT-119"
+},
+{
+"notice": 23303960,
+"res": "RES-69",
+"refs": {
+"TED-LOT_NO": [
+"57"
+],
+"TED-ITEM": [
+"69"
+]
+},
+"rule": "LOT-98",
+"how": "exact",
+"served": "LOT-98",
+"pre567": "LOT-57"
+},
+{
+"notice": 23303960,
+"res": "RES-7",
+"refs": {
+"TED-LOT_NO": [
+"39"
+],
+"TED-ITEM": [
+"7"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 23303960,
+"res": "RES-70",
+"refs": {
+"TED-LOT_NO": [
+"105"
+],
+"TED-ITEM": [
+"70"
+]
+},
+"rule": "LOT-100",
+"how": "exact",
+"served": "LOT-100",
+"pre567": "LOT-100"
+},
+{
+"notice": 23303960,
+"res": "RES-71",
+"refs": {
+"TED-LOT_NO": [
+"70"
+],
+"TED-ITEM": [
+"71"
+]
+},
+"rule": "LOT-104",
+"how": "exact",
+"served": "LOT-104",
+"pre567": "LOT-104"
+},
+{
+"notice": 23303960,
+"res": "RES-72",
+"refs": {
+"TED-LOT_NO": [
+"114"
+],
+"TED-ITEM": [
+"72"
+]
+},
+"rule": "LOT-105",
+"how": "exact",
+"served": "LOT-105",
+"pre567": "LOT-105"
+},
+{
+"notice": 23303960,
+"res": "RES-73",
+"refs": {
+"TED-LOT_NO": [
+"63"
+],
+"TED-ITEM": [
+"73"
+]
+},
+"rule": "LOT-106",
+"how": "exact",
+"served": "LOT-106",
+"pre567": "LOT-106"
+},
+{
+"notice": 23303960,
+"res": "RES-74",
+"refs": {
+"TED-LOT_NO": [
+"11"
+],
+"TED-ITEM": [
+"74"
+]
+},
+"rule": "LOT-110",
+"how": "exact",
+"served": "LOT-110",
+"pre567": "LOT-11"
+},
+{
+"notice": 23303960,
+"res": "RES-75",
+"refs": {
+"TED-LOT_NO": [
+"112"
+],
+"TED-ITEM": [
+"75"
+]
+},
+"rule": "LOT-107",
+"how": "exact",
+"served": "LOT-107",
+"pre567": "LOT-107"
+},
+{
+"notice": 23303960,
+"res": "RES-76",
+"refs": {
+"TED-LOT_NO": [
+"64"
+],
+"TED-ITEM": [
+"76"
+]
+},
+"rule": "LOT-108",
+"how": "exact",
+"served": "LOT-108",
+"pre567": "LOT-108"
+},
+{
+"notice": 23303960,
+"res": "RES-77",
+"refs": {
+"TED-LOT_NO": [
+"84"
+],
+"TED-ITEM": [
+"77"
+]
+},
+"rule": "LOT-15",
+"how": "exact",
+"served": "LOT-15",
+"pre567": "LOT-15"
+},
+{
+"notice": 23303960,
+"res": "RES-78",
+"refs": {
+"TED-LOT_NO": [
+"85"
+],
+"TED-ITEM": [
+"78"
+]
+},
+"rule": "LOT-18",
+"how": "exact",
+"served": "LOT-18",
+"pre567": "LOT-18"
+},
+{
+"notice": 23303960,
+"res": "RES-79",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"79"
+]
+},
+"rule": "LOT-60",
+"how": "exact",
+"served": "LOT-60",
+"pre567": "LOT-1"
+},
+{
+"notice": 23303960,
+"res": "RES-8",
+"refs": {
+"TED-LOT_NO": [
+"37"
+],
+"TED-ITEM": [
+"8"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-2"
+},
+{
+"notice": 23303960,
+"res": "RES-80",
+"refs": {
+"TED-LOT_NO": [
+"7"
+],
+"TED-ITEM": [
+"80"
+]
+},
+"rule": "LOT-55",
+"how": "exact",
+"served": "LOT-55",
+"pre567": "LOT-55"
+},
+{
+"notice": 23303960,
+"res": "RES-81",
+"refs": {
+"TED-LOT_NO": [
+"12,100"
+],
+"TED-ITEM": [
+"81"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-82",
+"refs": {
+"TED-LOT_NO": [
+"62,94,67,61,19"
+],
+"TED-ITEM": [
+"82"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-83",
+"refs": {
+"TED-LOT_NO": [
+"23"
+],
+"TED-ITEM": [
+"83"
+]
+},
+"rule": "LOT-72",
+"how": "exact",
+"served": "LOT-72",
+"pre567": "LOT-23"
+},
+{
+"notice": 23303960,
+"res": "RES-84",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"84"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-85",
+"refs": {
+"TED-LOT_NO": [
+"58,60,53,5,23,98,52,59"
+],
+"TED-ITEM": [
+"85"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-86",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"86"
+]
+},
+"rule": "LOT-60",
+"how": "exact",
+"served": "LOT-60",
+"pre567": "LOT-1"
+},
+{
+"notice": 23303960,
+"res": "RES-87",
+"refs": {
+"TED-LOT_NO": [
+"7,9"
+],
+"TED-ITEM": [
+"87"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-88",
+"refs": {
+"TED-LOT_NO": [
+"12,100"
+],
+"TED-ITEM": [
+"88"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-89",
+"refs": {
+"TED-LOT_NO": [
+"10,62,94,67,97,49,61,19"
+],
+"TED-ITEM": [
+"89"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-9",
+"refs": {
+"TED-LOT_NO": [
+"48"
+],
+"TED-ITEM": [
+"9"
+]
+},
+"rule": "LOT-3",
+"how": "exact",
+"served": "LOT-3",
+"pre567": "LOT-3"
+},
+{
+"notice": 23303960,
+"res": "RES-90",
+"refs": {
+"TED-LOT_NO": [
+"25"
+],
+"TED-ITEM": [
+"90"
+]
+},
+"rule": "LOT-47",
+"how": "exact",
+"served": "LOT-47",
+"pre567": "LOT-25"
+},
+{
+"notice": 23303960,
+"res": "RES-91",
+"refs": {
+"TED-LOT_NO": [
+"3,111"
+],
+"TED-ITEM": [
+"91"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-92",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"92"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-93",
+"refs": {
+"TED-LOT_NO": [
+"21"
+],
+"TED-ITEM": [
+"93"
+]
+},
+"rule": "LOT-46",
+"how": "exact",
+"served": "LOT-46",
+"pre567": "LOT-21"
+},
+{
+"notice": 23303960,
+"res": "RES-94",
+"refs": {
+"TED-LOT_NO": [
+"36"
+],
+"TED-ITEM": [
+"94"
+]
+},
+"rule": "LOT-5",
+"how": "exact",
+"served": "LOT-5",
+"pre567": "LOT-36"
+},
+{
+"notice": 23303960,
+"res": "RES-95",
+"refs": {
+"TED-LOT_NO": [
+"12,100,14"
+],
+"TED-ITEM": [
+"95"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-96",
+"refs": {
+"TED-LOT_NO": [
+"54,47,18"
+],
+"TED-ITEM": [
+"96"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+},
+{
+"notice": 23303960,
+"res": "RES-97",
+"refs": {
+"TED-LOT_NO": [
+"10"
+],
+"TED-ITEM": [
+"97"
+]
+},
+"rule": "LOT-13",
+"how": "exact",
+"served": "LOT-13",
+"pre567": "LOT-10"
+},
+{
+"notice": 23303960,
+"res": "RES-98",
+"refs": {
+"TED-LOT_NO": [
+"3"
+],
+"TED-ITEM": [
+"98"
+]
+},
+"rule": "LOT-14",
+"how": "exact",
+"served": "LOT-14",
+"pre567": "LOT-14"
+},
+{
+"notice": 23303960,
+"res": "RES-99",
+"refs": {
+"TED-LOT_NO": [
+"84,1,83"
+],
+"TED-ITEM": [
+"99"
+]
+},
+"rule": null,
+"how": "unmatched",
+"served": null,
+"pre567": null
+}
+]
+},
+"5621271": {
+"blocks": 6,
+"wrong": [],
+"moved": 1,
+"rows": [
+{
+"notice": 19058375,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 19058375,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 19058375,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"3"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-3",
+"how": "exact",
+"served": "LOT-3",
+"pre567": "LOT-3"
+},
+{
+"notice": 19058375,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"4"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-4",
+"how": "exact",
+"served": "LOT-4",
+"pre567": "LOT-4"
+},
+{
+"notice": 19058375,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"6"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": "LOT-6",
+"how": "exact",
+"served": "LOT-6",
+"pre567": "LOT-6"
+},
+{
+"notice": 19058375,
+"res": "RES-6",
+"refs": {
+"TED-LOT_NO": [
+"7"
+],
+"TED-ITEM": [
+"6"
+]
+},
+"rule": "LOT-7",
+"how": "exact",
+"served": "LOT-7",
+"pre567": "LOT-7"
+}
+]
+},
+"6825286": {
+"blocks": 20,
+"wrong": [],
+"moved": 15,
+"rows": [
+{
+"notice": 21317712,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 21317712,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 21323853,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 21323853,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 21323853,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 21469187,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 21469187,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 21469187,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 21469187,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22140760,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 22140760,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22140760,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22140760,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22140760,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22256951,
+"res": "RES-1",
+"refs": {
+"TED-LOT_NO": [
+"2"
+],
+"TED-ITEM": [
+"1"
+]
+},
+"rule": "LOT-1",
+"how": "exact",
+"served": "LOT-1",
+"pre567": "LOT-1"
+},
+{
+"notice": 22256951,
+"res": "RES-2",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"2"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22256951,
+"res": "RES-3",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"3"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22256951,
+"res": "RES-4",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"4"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22256951,
+"res": "RES-5",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"5"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+},
+{
+"notice": 22256951,
+"res": "RES-6",
+"refs": {
+"TED-LOT_NO": [
+"1"
+],
+"TED-ITEM": [
+"6"
+]
+},
+"rule": "LOT-2",
+"how": "exact",
+"served": "LOT-2",
+"pre567": "LOT-1"
+}
+]
+}
+}
+}
