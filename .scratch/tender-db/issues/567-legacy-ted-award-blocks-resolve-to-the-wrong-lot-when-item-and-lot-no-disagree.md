@@ -1,6 +1,6 @@
 # 567 — a legacy TED award block resolves to the wrong lot when a section's ITEM ordinal equals another section's LOT_NO
 
-Status: ready-for-agent — MEASURED 2026-10-17 (wf_3865d965-f11, 304 multi-lot legacy CANs read from the parsed layer, every misattribution re-traced by a skeptic): 0/100 in 2012–2015 (R2.0.8 has no lot sections), 4/100 in 2016–2019, 11/104 in 2020–2023 (10.6 %, 95 % 5.4–18.1 %; 6.1 % of award blocks), 12 of 15 verified cases put a winner or value on the wrong lot. DECIDED: fix read_legacy_results to match by published lot number, order-independent; refold the legacy R2.0.9 CANs. BUILT 2026-10-17 (unit 3, commit b957661, gate green 1411 s): `LegacyLotNumbers` + `normalise_lot_number`; one deliberate widening of unit 2 recorded below (a no-number award block keeps its ordinal where every lot's number is its ordinal). DEPLOYED b957661 2026-10-17 16:22Z. SIZED: job 2587 (dry, expect 1) — 1,381,903 notices carry TED-LOT_NO (estimate ~1.4 M, 95 % 0.96–2.0 M); its paired project 2588 ran over 0 notices. WET 2026-10-17 17:12Z: `refold-fields` TED-LOT_NO `"expect":1381903` enqueued as job 2589 with its project 2590 (3cd94c0 deployed first; 551's fallback walk and read had finished on the pre-567 projection). NEXT: read 2589's `stamped N` and 2590's compare counts (D7: verified + corrected ≥ N), then the 15 read back and a fresh uniform 30.
+Status: done — 2026-10-17. Fixed in b957661 (deployed 16:22Z); refold 2589/2590 (727,412 stamped; 686,704 verified + 40,708 corrected, D7 complete); read-back PASSED (wf_8e33e7af-3be): the 15 named Tenders 15/15 (all 45 moves), a fresh salted 30 of the 40,708 corrected 30/30 (reader and skeptic agree on every Tender); the 16 path-V heads unchanged. Filed from the read-back: 570 (legacy lots keyed by each notice's section ordinal merge different lots across notices — 567 is right within a notice; the Tender-level key is the defect).
 by a code read. Next: measure the reach — a bounded census of R2.0.9/R2.0.8 notices whose lot sections carry LOT_NO values
 that are not their ITEM ordinal in document order (e.g. lots published 2, 1 or 3, 5 with sections numbered 1, 2), and of
 those how many award blocks resolved to a lot whose LOT_NO differs from the block's own LOT_NO.
@@ -156,3 +156,19 @@ from the `project`'s `version: null` `tender changed` rows, bar 30 of 30.
   `version: null` row with cursor in (955381197, 956239230], distinct ids; order by
   `sha256("567-fresh30-" + id)` hex ascending; the first 30 ids are read. Bar: 30 of 30, each moved award block where
   the runbook's rule puts it.
+
+## Read-back — PASSED (2026-10-17, wf_8e33e7af-3be)
+
+Result: `567-lot-mapping/readback/readback_result.json` (population.json: the 40,708 corrected ids; fresh30.json: the
+salted draw, `sha256("567-fresh30-"+id)`).
+- Named: 15/15 right; every listed move served (45), every other block where the rule puts it (7153808's ten multi-number
+  blocks like '18,19' on none, as the rule says).
+- Fresh 30: 30/30 right under the rule, reader and skeptic agreeing on all 30. Classes seen: rotated / swapped /
+  scrambled numbering (exact LOT_NO), `01`/`Lot 1` normalised matches (none → lot), comma lists on none, ITEM-only blocks
+  correctly refused where a lot prints a non-ordinal number.
+- Path V: 16/16 unchanged (5943121 was corrected, its head unchanged).
+- Outside the rule (filed as 570): legacy lot keys are per-notice section ordinals, so where notices of one Tender
+  number lots differently an award can follow its own notice's LOT_NO onto a key that is another Tender lot (8375276:
+  120 blocks now on the lot with the other title; 8387180, 8480304, 7697322 unchanged by 567). And the decided
+  no-number clause drops a correct placement on a one-lot Tender whose single section prints a number other than 1
+  (6120045, 7025760) — a refinement that must wait for 570.

@@ -1,0 +1,542 @@
+{
+ "named": {
+  "items": [
+   {
+    "tender_id": 5984445,
+    "verdict": "right",
+    "blocks_checked": 13,
+    "why": "Named notice 19411290: the lot sections print LOT_NO 1-5 and 7-14 (LOT-6..13 are off by one). The listed move RES-9 (LOT_NO 10) is served on LOT-9, which prints 10. All 13 blocks are on the lot section that prints their LOT_NO exactly. RES-3 has LOT_NO 3 but LOT-2's title; the rule follows LOT_NO, so it stays on LOT-3.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 6352468,
+    "verdict": "right",
+    "blocks_checked": 5,
+    "why": "Named notice 20128178: lot sections print 4,2,3,1,5 (LOT-1 and LOT-4 swapped). The listed move RES-2 (LOT_NO 1) is served on LOT-4, which prints 1. All 5 blocks are on their exact LOT_NO lot.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 6439745,
+    "verdict": "right",
+    "blocks_checked": 10,
+    "why": "Named notice 20296603: LOT-3 prints 4 and LOT-4 prints 3. The listed move RES-4 (LOT_NO 3) is served on LOT-4. RES-3 (LOT_NO 4) is on LOT-3, and the other 8 blocks are on their exact lots.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 6445785,
+    "verdict": "right",
+    "blocks_checked": 5,
+    "why": "Named notice 20451472: lots print 3,4,5,1,2. The listed move RES-3 (LOT_NO 1) is served on LOT-4. RES-1 goes to LOT-2 (LOT_NO 4), RES-2 to LOT-3 (5) and RES-4 to LOT-1 (3), all correct. The second award notice 20403973 has RES-1 (LOT_NO 3) on LOT-1, which prints 3: correct.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 6565774,
+    "verdict": "right",
+    "blocks_checked": 15,
+    "why": "Named notice 20852084: lots print 1,5,5.2,6,7,7.2,8,9,10,10.2,11,12,14,15,16. The listed move RES-9 (LOT_NO 10) is served on LOT-9, which prints 10. All 15 blocks match exactly, including the 5.2, 7.2 and 10.2 lots.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 6397695,
+    "verdict": "right",
+    "blocks_checked": 15,
+    "why": "Named notice 21072522: 19 lots in fully shuffled numbering. All six listed moves are served as listed: RES-2->LOT-11 (prints 1), RES-6->LOT-2 (18), RES-7->LOT-3 (19), RES-10->LOT-7 (4), RES-14->LOT-16 (13), RES-15->LOT-18 (14). The other 9 blocks are each on the lot that prints their LOT_NO exactly.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 6980424,
+    "verdict": "right",
+    "blocks_checked": 2,
+    "why": "Named notice 21769762: the listed move RES-2 (LOT_NO 5) is served on LOT-8, which prints 5. RES-1 (LOT_NO 6) is on LOT-1, which prints 6.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 6997164,
+    "verdict": "right",
+    "blocks_checked": 38,
+    "why": "Named notice 21871346 (15 blocks, 16 shuffled lots): all eight listed moves are served as listed. RES-4 and RES-6 (LOT_NO 5) are on LOT-9, RES-5 and RES-10 (10) on LOT-13, RES-9 and RES-14 (15) on LOT-7, RES-12 and RES-15 (12) on LOT-5. The other 7 are exact. The other award notices of this tender, 21632726 (9 blocks) and 21777813 (14 blocks), have the same lot numbering, and every block there is also on its exact LOT_NO lot.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 7080411,
+    "verdict": "right",
+    "blocks_checked": 4,
+    "why": "Named notice 21923286: lots print 2,3,4,1. The listed move RES-4 (LOT_NO 1) is served on LOT-4. RES-1, RES-2 and RES-3 are on LOT-1, LOT-2 and LOT-3 (their LOT_NOs 2, 3 and 4 match).",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 7006083,
+    "verdict": "right",
+    "blocks_checked": 9,
+    "why": "Named notice 21943329: 14 shuffled lots. The five listed moves are served as listed: RES-1->LOT-2 (prints 14), RES-2->LOT-7 (12), RES-3->LOT-9 (11), RES-4->LOT-4 (2), RES-7->LOT-6 (10). RES-5->LOT-13 (8), RES-6->LOT-1 (1), RES-8->LOT-12 (4) and RES-9->LOT-11 (6) are exact.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 7590694,
+    "verdict": "right",
+    "blocks_checked": 7,
+    "why": "Named notice 23000792: lots print 1,2,3,4a,4b,5,6. The listed moves RES-6 (LOT_NO 6) -> LOT-7 and RES-7 (5) -> LOT-6 are served. RES-1..5 are exact, including 4a and 4b.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 7153808,
+    "verdict": "right",
+    "blocks_checked": 104,
+    "why": "Named notice 23074890 (34 blocks, 22 shuffled lots): all 12 listed moves are served as listed. RES-7, RES-24 and RES-26 (LOT_NO 15) are on LOT-3; RES-9, RES-20 and RES-31 (21) on LOT-5. Also RES-10->LOT-6 (12), RES-11->LOT-7 (17), RES-13->LOT-9 (13), RES-17->LOT-20 (1), RES-19->LOT-22 (14) and RES-23->LOT-12 (10). Ten blocks print a multi-lot LOT_NO ('18,19', '19,18', '10,11', '8,9,7,11', '12,22,14,17,13', '13,12') that no lot section prints, even normalised. The rule leaves those on no lot, and all ten are served on none. The other award notices 22129003 (18 blocks), 22252131 (19) and 23107151 (33) match the rule block for block too, including their multi-number blocks on none.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 7693726,
+    "verdict": "right",
+    "blocks_checked": 12,
+    "why": "Named notice 23256169: lots print 1-6,8,11,13,14,15,16. The listed move RES-8 (LOT_NO 11) is served on LOT-8. The other 11 blocks are on their exact LOT_NO lots.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 7644019,
+    "verdict": "right",
+    "blocks_checked": 3,
+    "why": "Named notice 23319363: lots print 2,3,1. The listed move RES-2 (LOT_NO 1) is served on LOT-3. RES-1 (2) is on LOT-1 and RES-3 (3) on LOT-2, both correct.",
+    "wrong_blocks": []
+   },
+   {
+    "tender_id": 7697322,
+    "verdict": "right",
+    "blocks_checked": 15,
+    "why": "Named notice 23413021: lots print 01,03,04,05,06,08,10..17. The listed moves RES-7 (LOT_NO 10) -> LOT-7, RES-8 (11) -> LOT-8 and RES-9 (12) -> LOT-9 are served. The other 11 blocks are exact. The second award notice 23276289 has a single lot section, LOT-1, printing '02' (terrassement), and its RES-1 (LOT_NO 02) is served on LOT-1, which the rule requires. Outside 567's rule: lots are keyed by the section ids of each award notice, so this block lands on the tender lot keyed LOT-1, which the tender titles 'v.r.d' (lot 01 of the named notice). That is a separate cross-notice keying question, not a 567 misplacement.",
+    "wrong_blocks": []
+   }
+  ]
+ },
+ "named_counts": {
+  "right": 15
+ },
+ "fresh_reader": [
+  {
+   "tender_id": 7025548,
+   "verdict": "right",
+   "blocks_checked": 40,
+   "wrong_blocks": [],
+   "why": "Award notice 21742060 (F03 R2.0.9, 299440-2021) has 44 lot sections. Each prints a scrambled LOT_NO that is not its ITEM (LOT-1=42, LOT-11=4, LOT-26=1, LOT-44=2 ...), and no number appears twice. All 40 award blocks carry a LOT_NO, each matching exactly one lot section, and the served lot is that section in 40 of 40 (e.g. RES-1 LOT_NO 44 -> LOT-20, RES-13 LOT_NO 1 -> LOT-26, RES-28 LOT_NO 2 -> LOT-44). Under the old first-claim rule 22 blocks sat on the lot at their ordinal (e.g. RES-13 on LOT-1); 567 moved them. Block titles match the Tender's lot titles 32/32 where a title is present."
+  },
+  {
+   "tender_id": 7327554,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "Award notice 22532830 (F03, 353381-2022): lots LOT-1..LOT-5 print LOT_NO 1..5. The blocks print LOT_NO '01'..'05', so nothing matches exactly, and each has exactly one normalised match. Served RES-k -> LOT-k for all 5. Before 567 all 5 blocks were on no lot (the '0k' LOT_NO missed and was the last reference). They moved none -> lot through the normalised number, as the rule allows. Block titles agree with the lot titles."
+  },
+  {
+   "tender_id": 7074480,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Award notice 21858408 (F03, 402053-2021): lots print LOT_NO 1 and 2; the blocks print '01' and '02'. Each has one normalised match, so RES-1 -> LOT-1 and RES-2 -> LOT-2, and both are served there. Before 567 both were on no lot. This is the normalised-number class (none -> lot), consistent with the rule."
+  },
+  {
+   "tender_id": 6495832,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Award notice 20472047 (F03, 279547-2019): LOT-1 prints 3, LOT-2 prints 2, LOT-3 prints 1 (rotated numbering). RES-1 has LOT_NO 3, goes to LOT-1 and is served there. RES-2 has LOT_NO 1, goes to LOT-3 and is served there. RES-2 was on LOT-1 before 567, a misattribution, and moved to LOT-3. Block titles ('Echipament pentru recuperarea mersului', 'Aparate fizioterapie') match the served lots' titles."
+  },
+  {
+   "tender_id": 7340618,
+   "verdict": "right",
+   "blocks_checked": 11,
+   "wrong_blocks": [],
+   "why": "Award notice 22510410 (F03, 411504-2022): 11 lots with scrambled LOT_NOs (LOT-1=11, LOT-10=1, LOT-9=2 ...). All 11 blocks match their LOT_NO exactly and are served on that section (e.g. RES-1 LOT_NO 4 -> LOT-7, RES-9 LOT_NO 1 -> LOT-10, RES-10 LOT_NO 11 -> LOT-1). Five moved from the old wrong lot (RES-1 LOT-4->7, RES-2 LOT-6->8, RES-3 LOT-2->9, RES-7 LOT-10->6, RES-9 LOT-1->10). The other version notices are a contract notice and four F14 corrigenda; none has an award block."
+  },
+  {
+   "tender_id": 7415397,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "There are two award notices, each with one lot section and one block that prints no number (ITEM 1 only). In 22568917 (437227-2022) the lot LOT-1 prints LOT_NO 1 and ITEM 1, so every lot's number is its ordinal and RES-1 goes to LOT-1, as served (title 'Spraugas lampa...' matches). In 22583013 (432061-2022) the lot LOT-1 prints LOT_NO 2 but ITEM 1, so the no-number block goes on no lot, and it is served on none. Before 567 that block sat on Tender LOT-1 'Spraugas lampa', the wrong lot; its title 'Oftalmologa darba vietas aprikojuma komplekts' is the Tender's LOT-2. 567 moved it off the wrong lot. The rule cannot put it on LOT-2 because the block prints no number."
+  },
+  {
+   "tender_id": 7098202,
+   "verdict": "right",
+   "blocks_checked": 540,
+   "wrong_blocks": [],
+   "why": "There are 12 award notices (F03, 570950-2021 through 716891-2023), and all 540 blocks match the rule. Every notice and the contract notice print the same 12-lot numbering, which is not the ordinals (LOT-1=8, LOT-2=10, LOT-8=2, LOT-11=1 ...), so lot keys are consistent across notices. 512 blocks match their LOT_NO exactly and are served on that section. The other 28 print LOT_NO '2,1', which no lot section prints, even normalised, so the rule puts them on no lot, and all 28 are served on none. They were on none before 567 too. 344 blocks moved from the old ordinal lot to the LOT_NO lot (e.g. LOT-11->LOT-7 x14, LOT-6->LOT-9 x13, LOT-10->LOT-2 x11). Block titles match the Tender lot titles in 484 blocks; 8 differ only by a truncated title."
+  },
+  {
+   "tender_id": 6120045,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "Award notice 19666745 (F15, 052721-2018) has one lot section, LOT-1, which prints LOT_NO 2 and ITEM 1. The block prints only ITEM 1, and the lot's number is not its ordinal, so the rule puts the block on no lot; it is served lot null. Before 567 it was on LOT-1. Caveat: this is the Tender's only lot, and the block title equals that lot's title ('14-0481 Electricite courants forts... Lot no 2'). The old placement was arguably correct, and the rule's no-number clause now drops it to the Tender. That is what the rule says, but it loses information in this case."
+  },
+  {
+   "tender_id": 8375276,
+   "verdict": "right",
+   "blocks_checked": 155,
+   "wrong_blocks": [],
+   "why": "155 blocks in 12 award notices, and every one is on the section of its own notice that the rule picks. 18911154 (R2.0.8 form 3) has no lot sections, so its two LOT_NUMBER blocks are on none, as served. In 8 notices (19786640-20827122, 2018-2020) LOT-1 prints LOT_NO 2 ('Kojenecka voda') and LOT-2 prints LOT_NO 1 ('Lahve a savicky'). There the LOT_NO 1 blocks are served on LOT-2 and the LOT_NO 2 blocks on LOT-1, both matching exactly. 20827122 RES-18 prints no number and the lots are not ordinal, so it is on none, as served. In the 3 notices from 2020 the lots print 1/2 in order and blocks are served on LOT-1/LOT-2. 120 blocks moved LOT-1 -> LOT-2. FINDING OUTSIDE 567: the Tender merges lots by section id across notices, but section ids mean different lots in different notices. The Tender's lots[] (v13, from notice 21337435) say LOT-1 = 'Lahve a savicky' and LOT-2 = 'Kojenecka voda'. So 147 blocks from 2018-2020 (120 titled 'Lahve a savicky' on LOT-2, 27 titled 'Kojenecka voda' on LOT-1) now sit on the Tender lot with the other title. Before 567 the 120 Lahve blocks happened to sit on LOT-1, which matches their title. The rule is met per notice, but cross-notice lot-key identity needs its own issue."
+  },
+  {
+   "tender_id": 6444621,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "Award notice 20458615 (F03, 268151-2019) has 4 lots: LOT-1 prints 2, LOT-2 prints 1 (swapped), LOT-3 and LOT-4 print 3 and 4. Its one block RES-1 prints only ITEM 1 and no number. Not every lot's number is its ordinal, so the rule puts it on no lot; it is served lot null. Before 567 it was on LOT-1, which is lot number 2, so this is a to-none correction consistent with the rule. The block has no title to cross-check."
+  },
+  {
+   "tender_id": 8433493,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "One award notice, 20334631 (F06). Its lot sections print the numbers 1 and 2, which equal their ordinals. The blocks print LOT_NO 'Lot 1' (RES-1..3) and 'Lot 2' (RES-4..5). No lot prints these exactly. Once normalised they match exactly one lot each, so all five blocks belong on LOT-1 and LOT-2, which is what the API serves. All 5 moved in 567, from no lot to their lot through the normalised match. The block titles agree with the lot titles."
+  },
+  {
+   "tender_id": 7637676,
+   "verdict": "right",
+   "blocks_checked": 10,
+   "wrong_blocks": [],
+   "why": "One award notice, 23117767 (F03). It has 40 lot sections printing scrambled numbers. RES-1 prints LOT_NO 18, which only LOT-36 prints exactly, so it is on LOT-36. RES-5 prints 38, printed only by LOT-4, so it is on LOT-4. The other 8 blocks print comma lists such as '36,26' and '29,4,20,5'. No lot prints these, exactly or normalised, so they are on no lot and the API serves them on none. Two blocks moved in 567: RES-1 from LOT-18 to LOT-36 and RES-5 from LOT-38 to LOT-4."
+  },
+  {
+   "tender_id": 8387180,
+   "verdict": "right",
+   "blocks_checked": 26,
+   "wrong_blocks": [],
+   "why": "Two award notices. In 19043870 the 7 blocks match the 7 lot numbers exactly, and none of them moved. In 19152735 there are 23 lot sections with skipped and rotated numbers. 16 blocks match exactly; for example RES-10 prints LOT_NO 1 and is on LOT-4. Three blocks ('14 \u0438 15', '24, 25 \u0438 30', '8 \u0438 18') match no lot, so they are on none. Ten blocks moved in 567 to the lot their LOT_NO names, and the block titles agree. Outside the rule: 19043870's LOT-1..7 keys are its own ordinals, while the Tender's LOT-1..7 titles come from 19152735. Those 7 blocks therefore sit on Tender keys that carry another lot's title. This predates 567 and 567 did not change it."
+  },
+  {
+   "tender_id": 8461264,
+   "verdict": "right",
+   "blocks_checked": 31,
+   "wrong_blocks": [],
+   "why": "One award notice, 21479224, with 46 lot sections printing scrambled but unique numbers. All 31 blocks match a lot number exactly and are served on that lot. 17 of them moved in 567; for example RES-18 (LOT_NO 10) went from LOT-10 to LOT-3, and RES-27 (LOT_NO 1) from LOT-1 to LOT-27. Block titles match the lot titles."
+  },
+  {
+   "tender_id": 8480304,
+   "verdict": "right",
+   "blocks_checked": 30,
+   "wrong_blocks": [],
+   "why": "Two award notices. In 21927890 there are 7 lots printing 3, 5, 8, 9, 10, 16 and 30; its 7 blocks match exactly and none moved. In 22001080 there are 23 lots and all 23 blocks match exactly. Four of those moved in 567 (RES-6..9 from LOT-11..14 to LOT-6..9), and their titles agree. Outside the rule: as with 8387180, 21927890's LOT-1..7 keys are its ordinals, while the Tender's LOT-1..7 titles come from 22001080. For example, the 'Zad.3' award sits on the Tender's LOT-1, which is titled 'Zad.1'. This predates 567 and is unchanged."
+  },
+  {
+   "tender_id": 6650777,
+   "verdict": "right",
+   "blocks_checked": 1064,
+   "wrong_blocks": [],
+   "why": "15 award notices, each with the same 101 lot sections. The printed numbers are rotated, not ordinals. They are unique within each notice and keep the same number on the same key in all 15 notices. 1010 blocks match exactly and are served on that lot. 54 blocks, all in 22224369 and 22364170, print comma lists such as '98,99' or '25,64' that match no lot, and they are served on none. 692 blocks moved in 567; for example RES-1 (LOT_NO 3) went from LOT-3 to LOT-37, the lot with the same title. The title differences between notices are whitespace only."
+  },
+  {
+   "tender_id": 8391605,
+   "verdict": "right",
+   "blocks_checked": 178,
+   "wrong_blocks": [],
+   "why": "Notice 19545377 has 36 lots. LOT-1 and LOT-2 both print '1b', and LOT-9 and LOT-10 both print '1i'. So the 7 '1b' blocks and 5 '1i' blocks are on none, because two lots print the number. The '1a' and '1j' blocks match no lot and are on none. RES-136 prints '2L', which no lot prints exactly; normalised it matches only LOT-24 ('2l'), so it is on LOT-24. The other 148 blocks match exactly. Notice 20830825 is an F20 modification: its one lot prints '1, 2 and 3' and its block prints 'Lots 1, 2 and 3'. 'Lots' is not a prefix the normaliser drops, so that block is on none. Everything is served as the rule puts it. 13 blocks moved in 567: 12 from LOT-1 or LOT-10 to none (the duplicated numbers), and RES-136 from none to LOT-24."
+  },
+  {
+   "tender_id": 6305694,
+   "verdict": "right",
+   "blocks_checked": 7,
+   "wrong_blocks": [],
+   "why": "Notice 20395099 has two lots with swapped numbers: LOT-1 prints 2 and LOT-2 prints 1. The blocks printing 1 (RES-1, 3, 5) are on LOT-2 and the blocks printing 2 are on LOT-1. Titles confirm it ('centre copii' blocks are on the 'copii' lot). RES-1, 3 and 5 moved in 567 from LOT-1 to LOT-2. Notice 20798220 has one lot section that prints no number, so lots are keyed by ordinal and its ITEM-only block RES-1 goes to LOT-1, as served. That block did not move."
+  },
+  {
+   "tender_id": 7025760,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "Notice 21687822 has one lot section with ITEM 1 that prints LOT_NO 2. The single block RES-1 prints only ITEM 1. The rule places a block with no number by its ordinal only where every lot's number is its ordinal. Here 2 is not 1, so the block is on none, and the API serves lot null. It moved in 567 from LOT-1 to none. This is correct by the rule, but note the cost: the only award of a one-lot Tender now sits on the Tender, not the lot."
+  },
+  {
+   "tender_id": 6542332,
+   "verdict": "right",
+   "blocks_checked": 4,
+   "wrong_blocks": [],
+   "why": "Notice 20493982 has 4 lots with reversed numbering: LOT-1 to LOT-4 print 4, 3, 2 and 1. RES-1 to RES-4 print LOT_NO 4, 3, 2 and 1, so each matches its lot exactly and is served there. Two blocks moved in 567: RES-3 from LOT-2 to LOT-3 and RES-4 from LOT-1 to LOT-4."
+  },
+  {
+   "tender_id": 6632582,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Award notice 20709957 (489531-2019). Two lot sections print LOT_NO, and neither number is the section's ordinal: LOT-1 is ITEM 1 / LOT_NO 2 and LOT-2 is ITEM 2 / LOT_NO 3. RES-1 and RES-2 print only ITEM 1 and ITEM 2, with no LOT_NO or LOT_NUMBER. Under the rule, a block with no number goes on its ITEM ordinal only when every lot section's number is its ordinal, which is not the case here, so both go on none. The API serves RES-1 and RES-2 with lot null. Before 567 both sat on LOT-1, because the first-claim map gave ITEM 2 to LOT-1 through LOT-1's LOT_NO 2. The award titles (Papeterie, Supports) point at LOT-1 and LOT-2, but the rule does not read titles."
+  },
+  {
+   "tender_id": 7397732,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "Award notice 22692214 (542129-2022). The lot sections print swapped numbers: LOT-1 prints 2 ('Lotul 2'), LOT-2 prints 1 ('Lotul 1'), LOT-3 prints 3. Each block matches its LOT_NO exactly: RES-1 (LOT_NO 1) goes to LOT-2, RES-2 (LOT_NO 2) to LOT-1, RES-3 (LOT_NO 3) to LOT-3. The API serves exactly these. RES-1 moved from LOT-1 to LOT-2."
+  },
+  {
+   "tender_id": 8514810,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "Award notice 22963000 (073356-2023). The two lot sections print LOT_NO '1.34.7/2020/1' and '1.34.7/2020/2'. The five blocks print LOT_NO 1, 2, 1, 1, 2 (ITEMs 1 to 5). None of these numbers matches a lot section's printed number, either exactly or after normalising, so the rule leaves all five on the Tender (none). The API serves all five with lot null. Before 567 the bare LOT_NO hit the ITEM keys, putting RES-1, RES-3 and RES-4 on LOT-1 and RES-2 and RES-5 on LOT-2. All five moved to none, as the rule says ('a number no lot publishes leaves the award on the Tender')."
+  },
+  {
+   "tender_id": 5624004,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Award notice 19048669 (460763-2016). Swapped numbering: LOT-1 prints 2 ('Lot 2: NHH fixed') and LOT-2 prints 1 ('Lot 1: HH flexible'). RES-1 (LOT_NO 2) matches LOT-1 exactly and RES-2 (LOT_NO 1) matches LOT-2 exactly. The API serves both as the rule says, and the award titles agree. RES-2 moved from LOT-1 to LOT-2."
+  },
+  {
+   "tender_id": 6389627,
+   "verdict": "right",
+   "blocks_checked": 24,
+   "wrong_blocks": [],
+   "why": "Award notice 20524440 (332231-2019). There are 24 lot sections. Sections 1 to 20 print their own ordinal; the last four rotate: LOT-21 prints 22, LOT-22 prints 23, LOT-23 prints 24, LOT-24 prints 21. Each of the 24 blocks matches its LOT_NO exactly, including RES-24 (LOT_NO 21) going to LOT-24. The API serves all 24 as the rule says, and every award title agrees with its lot. RES-24 moved from LOT-21 to LOT-24."
+  },
+  {
+   "tender_id": 6565274,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "Award notice 21129364 (317155-2020). The four lot sections print LOT_NO 2, 4, 3, 1, so their numbers are not their ordinals. The only block, RES-1, prints just ITEM 1 and no number, which under the rule puts it on none. The API serves RES-1 with lot null. Before 567 it was on LOT-1."
+  },
+  {
+   "tender_id": 6343323,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Award notice 20582272 (374597-2019). The lot sections print 1 and 2. The blocks print LOT_NO '01' and '02'. Neither matches exactly; after normalising, each matches one lot: RES-1 goes to LOT-1 and RES-2 to LOT-2. The API serves both as the rule says. Before 567 both were on none, so this is the 'gains a lot where only the normalised number matched' case. Side note, not a rule question: the publisher's award titles look crossed against the lot titles (RES-1 'solutions de contr\u00f4le' vs LOT-1 'r\u00e9actifs'). The rule follows LOT_NO, not titles."
+  },
+  {
+   "tender_id": 7555624,
+   "verdict": "right",
+   "blocks_checked": 483,
+   "wrong_blocks": [],
+   "why": "Four award notices: 22985422 (104 blocks), 23006386 (117), 23082943 (128) and 23303960 (134). All four carry the same 122 lot sections, 121 of which print a number that is not their ordinal (for example LOT-1 prints 39, LOT-6 prints 12, LOT-11 prints 2). No number is printed twice. 412 blocks match their LOT_NO exactly, and the API serves each on that lot. 71 blocks carry a list of numbers as their LOT_NO (for example '12,100,14' or '7,9'). No lot prints such a list, so the rule puts those on none, and the API serves them with lot null. The API has no lot_result without a matching block. 208 blocks moved, all onto the lot their LOT_NO names (for example RES-10 of 22985422 from LOT-113 to LOT-19)."
+  },
+  {
+   "tender_id": 5621271,
+   "verdict": "right",
+   "blocks_checked": 6,
+   "wrong_blocks": [],
+   "why": "Award notice 19058375 (422679-2016). Seven lot sections; LOT-1 prints 2 and LOT-2 prints 1, and LOT-3 to LOT-7 print their own ordinal. The six blocks carry LOT_NO 1, 2, 3, 4, 6, 7, and the API serves them exactly as the rule says: RES-1 on LOT-2, RES-2 on LOT-1, RES-3 on LOT-3, RES-4 on LOT-4, RES-5 on LOT-6, RES-6 on LOT-7. The award titles agree. Lot 5 has no award. RES-1 moved from LOT-1 to LOT-2."
+  },
+  {
+   "tender_id": 6825286,
+   "verdict": "right",
+   "blocks_checked": 20,
+   "wrong_blocks": [],
+   "why": "Five award notices: 21317712, 21323853, 21469187, 22140760 and 22256951. In each, LOT-1 prints 2 ('Lot 2 ACI N\u0103dlac') and LOT-2 prints 1 ('Lot 1 ... Sediul Central'). In every notice RES-1 has LOT_NO 2 and goes to LOT-1; every other block has LOT_NO 1 and goes to LOT-2. All 20 blocks are served exactly as the rule says, and the award titles naming 'Lot 1' agree. 15 blocks moved from LOT-1 to LOT-2. The lot titles in the earlier notices are worded differently ('doi ani' instead of '2 ani'), but every notice has the same numbering."
+  }
+ ],
+ "fresh_skeptic": [
+  {
+   "tender_id": 7025548,
+   "verdict": "right",
+   "blocks_checked": 40,
+   "wrong_blocks": [],
+   "why": "Agree. I fetched the Tender and both notices again myself and placed the blocks with my own code. Award notice 21742060 has 44 lot sections. Each prints one LOT_NO, the numbers are scrambled against the ordinals, and none is printed twice. All 40 blocks carry exactly one LOT_NO, each with exactly one exact match, and all 40 are served on that lot (RES-1 44->LOT-20, RES-13 1->LOT-26, RES-28 2->LOT-44). My copy of the old rule moves 22 of them. All 32 titled blocks match their lot's title. One thing outside 567: the contract notice 21593860 numbers 10 lot sections differently from the award notice (CN LOT-12 is LOT_NO 9, award LOT-12 is LOT_NO 19). The Tender's lots follow the award notice, so the awards still line up."
+  },
+  {
+   "tender_id": 7327554,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "Agree. In 22532830 the lots print LOT_NO 1..5 and every lot's number is its ordinal. The blocks print '01'..'05'. No lot prints these exactly, and each has one normalised match, so RES-k goes to LOT-k. That is what is served. All 5 moved from none to a lot. The titles agree; RES-5 only adds the suffix '- partie Ville et Caisse des ecoles'."
+  },
+  {
+   "tender_id": 7074480,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Agree. In 21858408 the lots print 1 and 2 and the blocks print '01' and '02'. No lot prints these exactly, and each has one normalised match. RES-1 is served on LOT-1 and RES-2 on LOT-2; both were on none before. The block titles ('lot no 01 : Controle ... feux de trafic', 'lot n0 02 : ... ancrages d'illuminations') name the same lots."
+  },
+  {
+   "tender_id": 6495832,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Agree. In 20472047 the lots are numbered in rotation (LOT-1=3, LOT-2=2, LOT-3=1). RES-1 has LOT_NO 3 and is on LOT-1. RES-2 has LOT_NO 1 and is on LOT-3; the old rule had it on LOT-1. Both titles match their lots."
+  },
+  {
+   "tender_id": 7340618,
+   "verdict": "right",
+   "blocks_checked": 11,
+   "wrong_blocks": [],
+   "why": "Agree. In 22510410 the 11 lots carry scrambled LOT_NOs and none repeats. All 11 blocks have one exact match and are served on it; my old-rule copy gives the same 5 moves. The block titles are all the generic 'Contract lucrari reparatii curente', so I checked another way: the CONTRACT_NO values 23..33 rise in step with the blocks' LOT_NO 1..11. The other five versions are the contract notice (lots only) and four notices with only Change sections, so there are no other award blocks."
+  },
+  {
+   "tender_id": 7415397,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Agree. Award notice 22568917: its one lot prints LOT_NO 1 with ITEM 1, so every lot's number is its ordinal. Its block prints no number (ITEM 1 only), goes to LOT-1 and is served there. Award notice 22583013: its one lot is section LOT-1 but prints LOT_NO 2 ('Oftalmologa...'), so the ordinal clause does not apply. The block prints ITEM 1 only, so it goes on none, and it is served on none (the old rule had it on LOT-1). This is the same section-id issue as 8375276: this notice's LOT-1 is the Tender's LOT-2. Here it makes no difference because the block goes on none."
+  },
+  {
+   "tender_id": 7098202,
+   "verdict": "right",
+   "blocks_checked": 540,
+   "wrong_blocks": [],
+   "why": "Agree on placement. The 12 award notices and the contract notice 21777544 all number the 12 lots the same way (LOT-1=8 ... LOT-11=1), with no repeats. 512 blocks have one exact LOT_NO match and are served on it. The other 28 print LOT_NO '2,1', which no lot matches even normalised, so they go on none and are served on none. My old-rule copy gives 344 moves, the same as the reader. Small correction to the reader's title counts: I get 361 equal and 107 truncated or prefixed. Another 44 differ, either by a truncated or prefixed title on the same lot, or by a generic 'Contract sub.dez' title that names no lot. None names a different lot."
+  },
+  {
+   "tender_id": 6120045,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "Agree. F15 notice 19666745 is the Tender's only version. Its one lot prints LOT_NO 2 with ITEM 1, so its number is not its ordinal. The block prints only ITEM 1, so the rule puts it on none, and it is served on none (the old rule had it on LOT-1). The reader's caveat holds: the block title is the lot's own title ('14-0481 Electricite courants forts ... Lot no 2'). So the no-number clause drops a placement that was correct, but that is what the rule says."
+  },
+  {
+   "tender_id": 8375276,
+   "verdict": "right",
+   "blocks_checked": 155,
+   "wrong_blocks": [],
+   "why": "Agree that every block is where the rule puts it within its own notice. 18911154 (R2.0.8) has no lot sections, so its LOT_NUMBER 1 and 2 blocks are on none; 568 has not been refolded yet. In the 8 notices from 2018-2020, LOT-1 prints 2 and LOT-2 prints 1, so the LOT_NO 1 blocks are on LOT-2 and the LOT_NO 2 blocks on LOT-1, all exact matches. 20827122 RES-18 has ITEM only and the lots are not ordinal, so it is on none. The 3 notices from 2020 print 1/2 in order. I also confirm the reader's finding outside 567: the Tender merges lots by section id, and its lots[] (v13) say LOT-1 = Lahve and LOT-2 = Kojenecka. So 147 blocks now sit on the Tender lot with the other title. Corrected counts: 120 LOT_NO-1 blocks on LOT-2 (110 titled Lahve, 10 untitled), and 27 LOT_NO-2 blocks on LOT-1 (25 titled Kojenecka, 2 untitled). By Tender lot title, 567 made 120 blocks worse: before, all 147 sat on LOT-1. The issue predates 567 (lot identity across notices) and needs its own issue."
+  },
+  {
+   "tender_id": 6444621,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "Agree. In 20458615 the lots print 2, 1, 3, 4 (the first two swapped), so not every lot's number is its ordinal. The only block, RES-1, prints only ITEM 1, so it goes on none, and it is served on none (the old rule had it on LOT-1). The contract notice 20322408 has the same numbering."
+  },
+  {
+   "tender_id": 8433493,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "I agree. I re-fetched the Tender and notice 20334631 myself. Its lots print 1 and 2, the same as their ordinals. The blocks print LOT_NO 'Lot 1' (RES-1..3) and 'Lot 2' (RES-4..5). No lot prints either exactly. Once normalised, each matches exactly one lot, so the blocks belong on LOT-1 and LOT-2, which is what the API serves. No block has a second or conflicting reference. A simulation of the old pre-567 code reproduces the claimed 5 moves, all from no lot to a lot."
+  },
+  {
+   "tender_id": 7637676,
+   "verdict": "right",
+   "blocks_checked": 10,
+   "wrong_blocks": [],
+   "why": "I agree. Notice 23117767 has 40 lots, each printing a different number (none repeated), and those numbers are not their ordinals. RES-1 prints '18', which only LOT-36 prints, so it is on LOT-36. RES-5 prints '38', printed only by LOT-4, so it is on LOT-4. The other 8 blocks print comma lists that no lot prints, either exactly or normalised, so they are served on no lot. The pre-567 simulation gives exactly 2 moves: LOT-18 to LOT-36 and LOT-38 to LOT-4."
+  },
+  {
+   "tender_id": 8387180,
+   "verdict": "right",
+   "blocks_checked": 26,
+   "wrong_blocks": [],
+   "why": "I agree. In 19043870, 7 lots print 19, 26, 27, 28, 29, 16 and 17. Each of its 7 blocks matches one of these exactly and is served there. In 19152735 there are 23 lots, with no number printed twice. 16 blocks match exactly. The blocks '14 \u0438 15', '24, 25 \u0438 30' and '8 \u0438 18' match no lot and are on none. The pre-567 simulation gives the claimed 10 moves, all in 19152735. The reader's note outside the rule also holds. 19043870 keys its own lots LOT-1..7 by ordinal, so its awards for lots 19, 26 and so on sit on Tender keys LOT-1..7. Those keys carry 19152735's titles, and in the contract notice 18927620 the matching lots are LOT-19, LOT-26 and so on. This predates 567: the simulation shows those 7 blocks unchanged."
+  },
+  {
+   "tender_id": 8461264,
+   "verdict": "right",
+   "blocks_checked": 31,
+   "wrong_blocks": [],
+   "why": "I agree. Notice 21479224 has 46 lots printing digits only, with no number repeated. All 31 blocks have a single LOT_NO that one lot prints exactly, and each is served on that lot. Every block title matches its lot's title. The simulation reproduces 17 moves, for example RES-18 from LOT-10 to LOT-3 and RES-27 from LOT-1 to LOT-27."
+  },
+  {
+   "tender_id": 8480304,
+   "verdict": "right",
+   "blocks_checked": 30,
+   "wrong_blocks": [],
+   "why": "I agree. 21927890 has 7 lots printing 3, 5, 8, 9, 10, 16 and 30, and its 7 blocks match these exactly. 22001080 has 23 lots and all 23 blocks match exactly. No number is printed twice, and every block title matches its lot in its own notice. The simulation gives 4 moves (RES-6..9 from LOT-11..14 to LOT-6..9) and none in 21927890. The reader's note outside the rule holds. 21927890's ordinal keys put, for example, the 'Zad.3' award on the Tender's LOT-1, which is titled 'Zad.1'. The contract notice 21788395 numbers its lots so that LOT-k is Zad.k. This predates 567 and 567 did not change it."
+  },
+  {
+   "tender_id": 6650777,
+   "verdict": "right",
+   "blocks_checked": 1064,
+   "wrong_blocks": [],
+   "why": "I agree with the verdict. I re-fetched all 15 award notices. Each has the same 101 lots, with no number repeated, and every key prints the same number in all 15. 1010 blocks match a lot exactly and are served there. 54 blocks in 22224369 and 22364170 print comma lists such as '98,99' that match no lot, and they are on none. No block carries two LOT_NO values. The simulation reproduces the 692 moves. One side claim needs correcting: not every title difference is whitespace. In both 22224369 and 22364170, three blocks have titles that name a different lot from the one their LOT_NO names. RES-23 prints LOT_NO 2, but its title is LOT-71's (which prints 6). RES-24 and RES-30 print 95 and 99, but their titles are LOT-37's (which prints 3). This is the publisher's own inconsistency. The rule follows LOT_NO, so these 6 blocks are where it puts them."
+  },
+  {
+   "tender_id": 8391605,
+   "verdict": "right",
+   "blocks_checked": 178,
+   "wrong_blocks": [],
+   "why": "I agree. In 19545377, LOT-1 and LOT-2 both print '1b', and LOT-9 and LOT-10 both print '1i'. So 7 '1b' blocks and 5 '1i' blocks are on none. The 8 '1a' blocks and 8 '1j' blocks match no lot and are also on none. RES-136 prints '2L', which no lot prints exactly. The code's normaliser lowercases, so it matches only LOT-24 ('2l') and sits there. The other 148 blocks match exactly. In 20830825, the single lot prints '1, 2 and 3' and has no ITEM. The block prints 'Lots 1, 2 and 3', and 'Lots' is not a dropped prefix, so the block is on none. The simulation gives the claimed 13 moves: 12 from a lot to none and 1 from none to LOT-24."
+  },
+  {
+   "tender_id": 6305694,
+   "verdict": "right",
+   "blocks_checked": 7,
+   "wrong_blocks": [],
+   "why": "I agree. In 20395099, LOT-1 prints 2 and LOT-2 prints 1. The blocks printing 1 (RES-1, 3, 5) are on LOT-2 and the blocks printing 2 are on LOT-1. The titles confirm this ('copii' blocks are on the 'copii' lot). In 20798220 no lot prints a number, so lots are keyed by ordinal and the ITEM-only block RES-1 is on LOT-1. The simulation gives 3 moves, RES-1, 3 and 5 from LOT-1 to LOT-2."
+  },
+  {
+   "tender_id": 7025760,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "I agree. In 21687822 the one lot prints LOT_NO 2 with ITEM 1. The only block prints only ITEM 1: it has no LOT_NO, LOT_NUMBER or nested reference. A lot does print a number, and that number is not its ordinal, so the ITEM may not be used and the block is on none. The API serves lot null. This was the only ITEM fallback that came up where a lot prints a number, and it was correctly refused. The contract notice 21594444 prints no number on its lot. The simulation confirms the one move, from LOT-1 to none."
+  },
+  {
+   "tender_id": 6542332,
+   "verdict": "right",
+   "blocks_checked": 4,
+   "wrong_blocks": [],
+   "why": "I agree. In 20493982, LOT-1..4 print 4, 3, 2 and 1. RES-1..4 print LOT_NO 4, 3, 2 and 1, so each matches its lot exactly and is served there. The simulation gives 2 moves: RES-3 from LOT-2 to LOT-3 and RES-4 from LOT-1 to LOT-4."
+  },
+  {
+   "tender_id": 6632582,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Re-read award notice 20709957. LOT-1 is ITEM 1 / LOT_NO 2 and LOT-2 is ITEM 2 / LOT_NO 3. A lot section prints a number, and no section's number is its ordinal, so ITEM is not a key. RES-1 and RES-2 print only ITEM 1 and ITEM 2, with no LOT_NO or LOT_NUMBER, so the rule puts both on none. The API serves both with lot null. The award titles match the lot titles, but the rule does not read titles. No duplicate number and no conflicting reference."
+  },
+  {
+   "tender_id": 7397732,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "Re-read award notice 22692214. The lot sections print LOT-1=2, LOT-2=1 and LOT-3=3, with no duplicates. RES-1 (LOT_NO 1) matches LOT-2 exactly, RES-2 (LOT_NO 2) matches LOT-1, and RES-3 (LOT_NO 3) matches LOT-3. Each block prints exactly one LOT_NO. The API serves exactly LOT-2, LOT-1 and LOT-3."
+  },
+  {
+   "tender_id": 8514810,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "Re-read award notice 22963000. The lot sections print LOT_NO '1.34.7/2020/1' and '1.34.7/2020/2', which normalise to themselves. The blocks print LOT_NO 1, 2, 1, 1, 2. No lot prints '1' or '2', either exactly or after normalising, so all five go on none and there is no fall-back to ITEM. The API serves all five with lot null. The award titles fit the lots (RES-1 'Kategorie NABYTEK' and LOT-1), but the rule leaves an unpublished number on the Tender."
+  },
+  {
+   "tender_id": 5624004,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Re-read award notice 19048669. LOT-1 prints 2 and LOT-2 prints 1. RES-1 (LOT_NO 2) matches LOT-1 exactly and RES-2 (LOT_NO 1) matches LOT-2 exactly. The API agrees on both, and so do the award titles."
+  },
+  {
+   "tender_id": 6389627,
+   "verdict": "right",
+   "blocks_checked": 24,
+   "wrong_blocks": [],
+   "why": "Re-read award notice 20524440. It has 24 lot sections: LOT-1 to LOT-20 print their own ordinal, and LOT-21, 22, 23 and 24 print 22, 23, 24 and 21. No number is printed twice. All 24 blocks match their single LOT_NO exactly: RES-21 (22) goes to LOT-21, RES-22 (23) to LOT-22, RES-23 (24) to LOT-23 and RES-24 (21) to LOT-24. The API serves all 24 on those lots, and every award title ('Lot N: ...') agrees with its lot's title."
+  },
+  {
+   "tender_id": 6565274,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "Re-read award notice 21129364. The lot sections print LOT_NO 2, 4, 3 and 1 (LOT-1 to LOT-4), so the numbers are not all their ordinals. The only block, RES-1, prints just ITEM 1 and no LOT_NO or LOT_NUMBER, so the rule puts it on none. The API serves lot null."
+  },
+  {
+   "tender_id": 6343323,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Re-read award notice 20582272. The lot sections print 1 and 2. The blocks print LOT_NO '01' and '02', which no lot prints exactly. After normalising, each matches exactly one lot, so there is no exact match for a normalised one to lose to: RES-1 goes to LOT-1 and RES-2 to LOT-2. The API serves both that way. The award titles look crossed against the lot titles, but that is the publisher's data and the rule follows LOT_NO."
+  },
+  {
+   "tender_id": 7555624,
+   "verdict": "right",
+   "blocks_checked": 483,
+   "wrong_blocks": [],
+   "why": "Re-read all four award notices: 22985422, 23006386, 23082943 and 23303960. Their 122 lot sections are identical, with LOT_NO and ITEM on every section. 121 sections print a number that is not their ordinal, all numbers are plain digits, and none is printed twice, either exactly or after normalising. Each block carries exactly one LOT_NO. 412 blocks match exactly, and the API serves each on that lot (for example RES-10 of 22985422, LOT_NO 113, goes to LOT-19, which prints 113). 71 blocks carry list values such as '54,47,18', '7,9' or '12,100,14'. None of these matches any lot, exactly or normalised, and the API serves all 71 with lot null. No API lot_result is missing its block, and no block is missing from the API."
+  },
+  {
+   "tender_id": 5621271,
+   "verdict": "right",
+   "blocks_checked": 6,
+   "wrong_blocks": [],
+   "why": "Re-read award notice 19058375. LOT-1 prints 2, LOT-2 prints 1, and LOT-3 to LOT-7 print their own ordinal, with no duplicates. The blocks print LOT_NO 1, 2, 3, 4, 6 and 7 and go to LOT-2, LOT-1, LOT-3, LOT-4, LOT-6 and LOT-7, all exact matches. The API serves exactly these. Lot 5 has no award, and the award titles agree with their lots."
+  },
+  {
+   "tender_id": 6825286,
+   "verdict": "right",
+   "blocks_checked": 20,
+   "wrong_blocks": [],
+   "why": "Re-read all five award notices: 21317712 (2 blocks), 21323853 (3), 21469187 (4), 22140760 (5) and 22256951 (6). In each, LOT-1 prints LOT_NO 2 (title 'lot 2 - ACI Nadlac') and LOT-2 prints LOT_NO 1 (title 'lot 1 - ... Sediul central'). In every notice RES-1 prints LOT_NO 2 and goes to LOT-1, and every other block prints LOT_NO 1 and goes to LOT-2, all exact matches. The API serves all 20 that way, and the award titles naming 'Lot 1' agree."
+  }
+ ],
+ "fresh_counts": {
+  "right": 30
+ },
+ "pass": true
+}
