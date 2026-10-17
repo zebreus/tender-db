@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** 2026-10-17 (3c81386, wf_443c0ebc-b4b; gate green 1418 s; on main, not deployed — it changes nothing served). NEXT: B2 (the v2 guards in canonical.rs, R10 at EVERY size, path W still off) — read the B1 notes below first. 567's refold runs first: B3's parity re-runs after it.
+Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; on main, not deployed — nothing served changes). NEXT: B3 parity — AFTER 567's refold (2590) and 568's drain (legacy award lot keys feed path W's sums); then B4, B5.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -988,3 +988,21 @@ Notes for B2 and B3 (the implementer's judgement calls, accepted):
   `normalise_lot_number` strips separators only after a Lot/Los/Lote/Lotto word); B1 keeps `"3"` on the result and
   `"3."` on the lot and re-keys nothing.
 - Values are kept raw (no trim, a blank stays a value); field presence decides, as in the port.
+
+## Unit 4b B2 — done (2026-10-17, wf_6743eeff-da0, d4b8d76)
+
+Guards R1–R10 (R10 at every size) in `awards_lot_sum`, path W still off; `lot_sum_decision` names the refusing check in
+the port's terms (`V`, `V0`, `V1`, `W/off`, `W/T'`, `W/K`, `W/G0`…`W/G8b`, `R1`…`R10`); `vouched_by` in the
+lot-sum-awards detail only. 28 real-row fixtures (`canonical_551_v2_fixtures.rs`) from `unit4b/gen_fixtures.py` over a
+committed, sha256-pinned input bundle (`fixtures_data/inputs.tar.gz`, byte-identical regeneration; `--all-port-check`
+re-decides all 285 port-check ids: 26 former ships now refuse at R10, 25 stay ships, every refusal keeps its first
+check). A temporary harness ran the Rust against rule_v2.py on all 562 cached ids: 0 disagreements on ship/refuse, S,
+currency, n, vouched field and first refusing check. Review (parity / invariants / tests): 5 findings fixed — path V's
+refusal names (`W/T'` where a refused figure names no sum, `V0`, `V1`), R5 thresholds pinned at-edge and past-edge, R7's
+currency filter and R3's procedure-estimate source tested, generator inputs committed; 22 deliberate mutations each
+now caught.
+
+Known B3 name-level differences (decisions agree): `vouched_by` names the first vouching total in B1's order where the
+port groups by field; `lot_number_tokens` takes ASCII digits only; equal-rank lot titles tie to the first in Fact
+order. R10's "equals a single summed award" clause can never be the first refusal (R8 fires first); R5.9 is first only
+with a zero estimate.
