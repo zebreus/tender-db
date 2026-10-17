@@ -1,0 +1,531 @@
+{
+ "groups": [
+  {
+   "key": "g1",
+   "items": [
+    {
+     "tender_id": 4581969,
+     "can_notice_id": 12580370,
+     "publication_id": "014371-2012",
+     "tender_lots": 5,
+     "n_award_lotnos": 5
+    },
+    {
+     "tender_id": 4716162,
+     "can_notice_id": 16952251,
+     "publication_id": "145942-2012",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4748733,
+     "can_notice_id": 17120114,
+     "publication_id": "305023-2012",
+     "tender_lots": 6,
+     "n_award_lotnos": 6
+    },
+    {
+     "tender_id": 4840245,
+     "can_notice_id": 17285512,
+     "publication_id": "054895-2013",
+     "tender_lots": 16,
+     "n_award_lotnos": 17
+    },
+    {
+     "tender_id": 4945774,
+     "can_notice_id": 17426530,
+     "publication_id": "162952-2013",
+     "tender_lots": 49,
+     "n_award_lotnos": 39
+    },
+    {
+     "tender_id": 5018063,
+     "can_notice_id": 17573632,
+     "publication_id": "308864-2013",
+     "tender_lots": 11,
+     "n_award_lotnos": 11
+    },
+    {
+     "tender_id": 5034708,
+     "can_notice_id": 17686870,
+     "publication_id": "422239-2013",
+     "tender_lots": 3,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 5128122,
+     "can_notice_id": 17760427,
+     "publication_id": "054135-2014",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 5111802,
+     "can_notice_id": 17977031,
+     "publication_id": "270238-2014",
+     "tender_lots": 4,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 5299002,
+     "can_notice_id": 18142031,
+     "publication_id": "435238-2014",
+     "tender_lots": 4,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 8346718,
+     "can_notice_id": 18246793,
+     "publication_id": "089050-2015",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 5414570,
+     "can_notice_id": 18482254,
+     "publication_id": "306568-2015",
+     "tender_lots": 14,
+     "n_award_lotnos": 5
+    }
+   ]
+  },
+  {
+   "key": "g2",
+   "items": [
+    {
+     "tender_id": 4625605,
+     "can_notice_id": 16848926,
+     "publication_id": "047798-2012",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4728099,
+     "can_notice_id": 16996466,
+     "publication_id": "189850-2012",
+     "tender_lots": 4,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 4746422,
+     "can_notice_id": 17120850,
+     "publication_id": "305207-2012",
+     "tender_lots": 3,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 4744936,
+     "can_notice_id": 17284861,
+     "publication_id": "054945-2013",
+     "tender_lots": 4,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 4929211,
+     "can_notice_id": 17426969,
+     "publication_id": "162850-2013",
+     "tender_lots": 6,
+     "n_award_lotnos": 6
+    },
+    {
+     "tender_id": 4961767,
+     "can_notice_id": 17573156,
+     "publication_id": "309620-2013",
+     "tender_lots": 11,
+     "n_award_lotnos": 11
+    },
+    {
+     "tender_id": 5004315,
+     "can_notice_id": 17686864,
+     "publication_id": "423167-2013",
+     "tender_lots": 5,
+     "n_award_lotnos": 5
+    },
+    {
+     "tender_id": 4967785,
+     "can_notice_id": 17779412,
+     "publication_id": "073363-2014",
+     "tender_lots": 3,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 5214582,
+     "can_notice_id": 18011597,
+     "publication_id": "304804-2014",
+     "tender_lots": 12,
+     "n_award_lotnos": 15
+    },
+    {
+     "tender_id": 5275876,
+     "can_notice_id": 18141415,
+     "publication_id": "434622-2014",
+     "tender_lots": 7,
+     "n_award_lotnos": 7
+    },
+    {
+     "tender_id": 5235468,
+     "can_notice_id": 18289158,
+     "publication_id": "137844-2015",
+     "tender_lots": 4,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 5428876,
+     "can_notice_id": 18532297,
+     "publication_id": "380154-2015",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    }
+   ]
+  },
+  {
+   "key": "g3",
+   "items": [
+    {
+     "tender_id": 4598515,
+     "can_notice_id": 16902983,
+     "publication_id": "095395-2012",
+     "tender_lots": 3,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 4653898,
+     "can_notice_id": 16996870,
+     "publication_id": "189664-2012",
+     "tender_lots": 20,
+     "n_award_lotnos": 20
+    },
+    {
+     "tender_id": 4788488,
+     "can_notice_id": 17137106,
+     "publication_id": "322061-2012",
+     "tender_lots": 5,
+     "n_award_lotnos": 5
+    },
+    {
+     "tender_id": 4846789,
+     "can_notice_id": 17307645,
+     "publication_id": "077325-2013",
+     "tender_lots": 3,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 4964788,
+     "can_notice_id": 17477615,
+     "publication_id": "212731-2013",
+     "tender_lots": 16,
+     "n_award_lotnos": 15
+    },
+    {
+     "tender_id": 4974795,
+     "can_notice_id": 17603250,
+     "publication_id": "333012-2013",
+     "tender_lots": 7,
+     "n_award_lotnos": 6
+    },
+    {
+     "tender_id": 5045830,
+     "can_notice_id": 17738142,
+     "publication_id": "001836-2014",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 5086044,
+     "can_notice_id": 17829045,
+     "publication_id": "122252-2014",
+     "tender_lots": 8,
+     "n_award_lotnos": 7
+    },
+    {
+     "tender_id": 5209588,
+     "can_notice_id": 18011612,
+     "publication_id": "304819-2014",
+     "tender_lots": 21,
+     "n_award_lotnos": 20
+    },
+    {
+     "tender_id": 5274468,
+     "can_notice_id": 18184217,
+     "publication_id": "031005-2015",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 5385848,
+     "can_notice_id": 18290031,
+     "publication_id": "138717-2015",
+     "tender_lots": 6,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 5451454,
+     "can_notice_id": 18543753,
+     "publication_id": "411835-2015",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    }
+   ]
+  },
+  {
+   "key": "g4",
+   "items": [
+    {
+     "tender_id": 4652117,
+     "can_notice_id": 16902114,
+     "publication_id": "095743-2012",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4730243,
+     "can_notice_id": 17036980,
+     "publication_id": "229935-2012",
+     "tender_lots": 26,
+     "n_award_lotnos": 26
+    },
+    {
+     "tender_id": 4766443,
+     "can_notice_id": 17136469,
+     "publication_id": "321740-2012",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4853465,
+     "can_notice_id": 17398968,
+     "publication_id": "134297-2013",
+     "tender_lots": 4,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 4952015,
+     "can_notice_id": 17511570,
+     "publication_id": "247255-2013",
+     "tender_lots": 5,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4996449,
+     "can_notice_id": 17603370,
+     "publication_id": "332567-2013",
+     "tender_lots": 16,
+     "n_award_lotnos": 14
+    },
+    {
+     "tender_id": 5104038,
+     "can_notice_id": 17738256,
+     "publication_id": "001890-2014",
+     "tender_lots": 3,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 5128746,
+     "can_notice_id": 17888117,
+     "publication_id": "181324-2014",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 5221004,
+     "can_notice_id": 18058951,
+     "publication_id": "352158-2014",
+     "tender_lots": 5,
+     "n_award_lotnos": 5
+    },
+    {
+     "tender_id": 5218711,
+     "can_notice_id": 18184190,
+     "publication_id": "030978-2015",
+     "tender_lots": 4,
+     "n_award_lotnos": 7
+    },
+    {
+     "tender_id": 5322276,
+     "can_notice_id": 18325090,
+     "publication_id": "176020-2015",
+     "tender_lots": 8,
+     "n_award_lotnos": 8
+    },
+    {
+     "tender_id": 5467928,
+     "can_notice_id": 18580156,
+     "publication_id": "457334-2015",
+     "tender_lots": 4,
+     "n_award_lotnos": 3
+    }
+   ]
+  },
+  {
+   "key": "g5",
+   "items": [
+    {
+     "tender_id": 4641248,
+     "can_notice_id": 16915321,
+     "publication_id": "109120-2012",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4757109,
+     "can_notice_id": 17036957,
+     "publication_id": "230075-2012",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4748635,
+     "can_notice_id": 17187125,
+     "publication_id": "371231-2012",
+     "tender_lots": 9,
+     "n_award_lotnos": 8
+    },
+    {
+     "tender_id": 4682879,
+     "can_notice_id": 17398541,
+     "publication_id": "134363-2013",
+     "tender_lots": 3,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 5001475,
+     "can_notice_id": 17531189,
+     "publication_id": "266433-2013",
+     "tender_lots": 4,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 4932211,
+     "can_notice_id": 17640907,
+     "publication_id": "378103-2013",
+     "tender_lots": 6,
+     "n_award_lotnos": 6
+    },
+    {
+     "tender_id": 5115407,
+     "can_notice_id": 17760480,
+     "publication_id": "054231-2014",
+     "tender_lots": 3,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 8328657,
+     "can_notice_id": 17922059,
+     "publication_id": "215266-2014",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 5248391,
+     "can_notice_id": 18058309,
+     "publication_id": "351516-2014",
+     "tender_lots": 4,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 5340243,
+     "can_notice_id": 18220062,
+     "publication_id": "066393-2015",
+     "tender_lots": 3,
+     "n_award_lotnos": 3
+    },
+    {
+     "tender_id": 5284511,
+     "can_notice_id": 18411714,
+     "publication_id": "258115-2015",
+     "tender_lots": 154,
+     "n_award_lotnos": 139
+    },
+    {
+     "tender_id": 5527847,
+     "can_notice_id": 18580399,
+     "publication_id": "457577-2015",
+     "tender_lots": 9,
+     "n_award_lotnos": 8
+    }
+   ]
+  },
+  {
+   "key": "g6",
+   "items": [
+    {
+     "tender_id": 4682655,
+     "can_notice_id": 16915724,
+     "publication_id": "108951-2012",
+     "tender_lots": 5,
+     "n_award_lotnos": 5
+    },
+    {
+     "tender_id": 4728789,
+     "can_notice_id": 17083611,
+     "publication_id": "267842-2012",
+     "tender_lots": 4,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 4766711,
+     "can_notice_id": 17234400,
+     "publication_id": "005290-2013",
+     "tender_lots": 5,
+     "n_award_lotnos": 4
+    },
+    {
+     "tender_id": 4910832,
+     "can_notice_id": 17371414,
+     "publication_id": "134001-2013",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4967773,
+     "can_notice_id": 17530780,
+     "publication_id": "266445-2013",
+     "tender_lots": 2,
+     "n_award_lotnos": 2
+    },
+    {
+     "tender_id": 4935181,
+     "can_notice_id": 17641195,
+     "publication_id": "378333-2013",
+     "tender_lots": 12,
+     "n_award_lotnos": 12
+    },
+    {
+     "tender_id": 5071935,
+     "can_notice_id": 17760667,
+     "publication_id": "052853-2014",
+     "tender_lots": 6,
+     "n_award_lotnos": 6
+    },
+    {
+     "tender_id": 5166620,
+     "can_notice_id": 17932775,
+     "publication_id": "225982-2014",
+     "tender_lots": 12,
+     "n_award_lotnos": 12
+    },
+    {
+     "tender_id": 5227380,
+     "can_notice_id": 18112627,
+     "publication_id": "405834-2014",
+     "tender_lots": 61,
+     "n_award_lotnos": 60
+    },
+    {
+     "tender_id": 5347760,
+     "can_notice_id": 18246379,
+     "publication_id": "088636-2015",
+     "tender_lots": 6,
+     "n_award_lotnos": 6
+    },
+    {
+     "tender_id": 5403922,
+     "can_notice_id": 18453791,
+     "publication_id": "276645-2015",
+     "tender_lots": 5,
+     "n_award_lotnos": 5
+    }
+   ]
+  }
+ ]
+}
