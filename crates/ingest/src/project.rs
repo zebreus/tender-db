@@ -1643,6 +1643,28 @@ const PLAN_CHECKPOINT_EVERY: usize = 1;
 /// (~160k notices) traces the WAL trend without flooding.
 const PLAN_DIAG_EVERY: usize = 16;
 
+/// Whether one phase-1 TRUNCATE checkpoint left the WAL unreclaimed, the outcome the
+/// per-chunk line exists to report (issue 63): the checkpoint was busy (a reader's
+/// snapshot refused it) AND the `-wal` file, read right after, still holds bytes.
+///
+/// Decided from the file, never from the frame counts: on turso_core 0.7.2 a TRUNCATE
+/// either completes, truncates the file to 0 bytes and reports `(0, 0)`, or fails Busy
+/// and leaves both count columns NULL, which `store` reads as 0. So `wal_frames` is 0 on
+/// EVERY phase-1 result, a 40 MB reader-pin included (pinned by
+/// `store::checkpoint`'s `a_busy_truncate_reports_no_frame_counts_even_over_a_pinned_wal`),
+/// and a frame predicate cannot tell a pin from nothing: `busy && wal_frames > 0` would
+/// never fire, and a frame backlog past what was written back cannot occur.
+///
+/// Issue 569: a TRUNCATE is busy whenever a reader holds a snapshot, which the live box's
+/// public readers always do, even with nothing to checkpoint. Busy over an empty `-wal`
+/// file is reclaimed, else every chunk of a whole-corpus plan (about 1,500) logs the line
+/// and a real reader-pin reads as noise. Not busy is reclaimed whatever the file holds by
+/// the time it is read: a completed TRUNCATE emptied it, so its bytes are a later write.
+/// Logging only.
+fn plan_checkpoint_unreclaimed(busy: bool, wal_bytes: u64) -> bool {
+    busy && wal_bytes > 0
+}
+
 /// Issue 497 P0: where phase 1's wall time goes, half by half. Phase 1 is a producer
 /// thread (read the parsed layer, decode it into plan rows and mentions) feeding the
 /// writer through a rendezvous channel, and its time grew from about 5.3k s to
@@ -2413,24 +2435,28 @@ async fn build_plan(
         // plan-row inserts are a burst; truncate at the clean point between chunks.
         chunks += 1;
         // Truncate every chunk to keep the WAL (and its in-RAM index) tiny, and
-        // log the outcome when it does NOT fully reclaim — `busy` means a reader
-        // pinned frames (a reader-pin), a large `wal_frames` residual over
-        // `checkpointed` means the checkpoint could not keep up (throughput
-        // divergence). Silence = healthy; the first line tells us which failure
-        // mode a ballooning WAL is, in the first minute, not at OOM (issue 63).
+        // log the outcome when it does NOT fully reclaim: busy with bytes still in
+        // the `-wal` file means a reader pinned frames (a reader-pin; issue 569:
+        // busy over an empty file is not one). A completed TRUNCATE always empties
+        // the file, so busy=false leaves nothing to report; the every-16-chunks
+        // trace keeps the `wal=` trend. Silence = healthy; the first line tells us
+        // a ballooning WAL is a reader-pin, in the first minute, not at OOM
+        // (issue 63).
         let checkpointing = std::time::Instant::now();
         if chunks.is_multiple_of(PLAN_CHECKPOINT_EVERY) {
             match db.checkpoint_gated(store::CheckpointMode::Truncate).await {
                 Ok(c) => {
-                    let unreclaimed = c.busy || c.wal_frames > c.checkpointed + 20_000;
+                    let wal_bytes = db.wal_bytes().unwrap_or(0);
+                    let unreclaimed = plan_checkpoint_unreclaimed(c.busy, wal_bytes);
                     // Trace to the .diag.log every PLAN_DIAG_EVERY chunks (the WAL
                     // trend + busy flag), and ALWAYS when a checkpoint fails to fully
                     // reclaim — this is what tells us busy=true (reader-pin → the
-                    // reader-gate) vs a climbing WAL at busy=false (throughput).
+                    // reader-gate). `wal_frames` / `checkpointed` print as turso
+                    // reports them: 0 on every TRUNCATE (see the predicate).
                     if unreclaimed || chunks.is_multiple_of(PLAN_DIAG_EVERY) {
                         db.log_diag(&format!(
                             "phase1 chunk={chunks} notices={notices} wal={}MB ckpt_busy={} wal_frames={} checkpointed={}{}",
-                            db.wal_bytes().unwrap_or(0) / 1_048_576,
+                            wal_bytes / 1_048_576,
                             c.busy,
                             c.wal_frames,
                             c.checkpointed,
@@ -2444,8 +2470,8 @@ async fn build_plan(
                     if unreclaimed {
                         eprintln!(
                             "[project] plan checkpoint after chunk {chunks} (notices={notices}): \
-                             busy={} wal_frames={} checkpointed={} — WAL not fully reclaimed",
-                            c.busy, c.wal_frames, c.checkpointed
+                             busy={} wal_bytes={} wal_frames={} checkpointed={} — WAL not fully reclaimed",
+                            c.busy, wal_bytes, c.wal_frames, c.checkpointed
                         );
                     }
                 }
@@ -6655,6 +6681,11 @@ fn primary_source(sources: &[String]) -> String {
 /// previous version's, per field — except results, which are *additive*.
 fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
     let mut versions: Vec<TenderVersion> = Vec::with_capacity(chain.len());
+    // Issue 568 G2: a notice folded so far republished an inherited lot under another number
+    // (or without one), so a later award's printed number may name either numbering and no
+    // cross-notice match is made ([`match_inherited_lots`]). Set in the lot carry below, never
+    // cleared.
+    let mut lots_renumbered = false;
     for state in chain {
         let previous = versions.last();
         let mut facts = previous.map(|p| p.facts.clone()).unwrap_or_default();
@@ -6679,6 +6710,8 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             match lots.iter_mut().find(|l| l.key == published.key) {
                 Some(carried) => {
                     carried.kind.clone_from(&published.kind);
+                    lots_renumbered |=
+                        lot_renumbered(carried.published_lot_no.as_deref(), published.published_lot_no.as_deref());
                     // Issue 551 unit 4b (B1): like the kind, the latest section's number, `None`
                     // included — the version a notice causes carries that notice's own.
                     carried.published_lot_no.clone_from(&published.published_lot_no);
@@ -6717,7 +6750,15 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             if state.is_correction && round.logical_notice_id.is_some() {
                 rounds.retain(|r| r.logical_notice_id != round.logical_notice_id);
             }
-            rounds.push(round.clone());
+            let mut round = round.clone();
+            // Issue 568: an award notice with no lot section of its own resolves its legacy
+            // blocks against the lots this version inherits, once, here: the round is carried
+            // as resolved into every later version (frozen at the award's version), and
+            // `lots_awarded` below reads it.
+            if state.lots.is_empty() && !lots_renumbered {
+                match_inherited_lots(&mut round, &lots);
+            }
+            rounds.push(round);
         }
 
         // Membership carries forward like lots and facts, and for the same reason: the
@@ -7430,6 +7471,84 @@ impl<'a> LegacyLotNumbers<'a> {
         }
         only(self.normalised.get(&normalise_lot_number(published)?)?)
     }
+
+    /// Issue 568: the numbers a Tender's inherited lots print, keyed like a notice's own
+    /// ([`Self::read`]) so [`Self::lookup`] reads them the same way: exact first, normalised only
+    /// where no lot prints the number exactly, one lot or none. Only lots of kind `Lot`, each by
+    /// its carried [`LotState::published_lot_no`] (the latest section's `TED-LOT_NO`, else
+    /// `TED-LOT_NUMBER`; never `TED-ITEM`, never a title). A lot with no number, or a blank one,
+    /// takes no part, and no ordinal ever keys these lots.
+    fn inherited(lots: &'a [LotState]) -> Self {
+        let mut exact: HashMap<&str, BTreeSet<&str>> = HashMap::new();
+        let mut normalised: HashMap<String, BTreeSet<&str>> = HashMap::new();
+        for lot in lots.iter().filter(|l| l.kind == "Lot") {
+            let Some(number) = lot.published_lot_no.as_deref().map(str::trim).filter(|n| !n.is_empty()) else {
+                continue;
+            };
+            exact.entry(number).or_default().insert(lot.key.as_str());
+            if let Some(key) = normalise_lot_number(number) {
+                normalised.entry(key).or_default().insert(lot.key.as_str());
+            }
+        }
+        LegacyLotNumbers { ordinal_is_key: false, exact, normalised }
+    }
+}
+
+/// Issue 568: a legacy award block that resolved to no lot in its own notice takes the lot an
+/// earlier notice of the same Tender printed under the block's own number (`.scratch/tender-db/
+/// 568-r208-lots/decision.md`, rule steps 1-9). [`fold`] calls it for the round of an award
+/// notice that published no lot section of its own (step 2: one that did keeps issue 567's
+/// same-notice resolution, its `None` included) while no inherited lot was renumbered (G2,
+/// [`lot_renumbered`]); `inherited` is the version's carried lots.
+///
+/// - Which results (step 1): `lot_key` `None` and a non-blank `published_lot_no`, the block's
+///   own first `TED-LOT_NO`, else first `TED-LOT_NUMBER` ([`award_block_lot_number`]). Only a
+///   legacy block has that pair: eForms and FTS set both from BT-13713. A block that printed no
+///   number is never matched, whatever its `TED-ITEM`.
+/// - The match (steps 3-4): [`LegacyLotNumbers::inherited`] and its `lookup`. Exactly one
+///   inherited lot names the key; two (ambiguous) or none leave the result on the Tender.
+/// - G1 (step 5): when two or more numbered blocks all normalise to one number and the inherited
+///   lots print two or more distinct numbers, no block is matched (5476747's CAN 18543084 prints
+///   `LOT_NUMBER 1` on all three awards of a 3-lot Tender). A single-lot Tender is exempt:
+///   several awards of its one lot are the expected shape.
+/// - Kept as published (step 8): `published_lot_no` is never touched. Never a lot key (step 9):
+///   the key's ordinal, the block's `TED-ITEM`, a title, corrigendum prose, `CONTRACT_NUMBER`,
+///   the block's position.
+fn match_inherited_lots(round: &mut Round, inherited: &[LotState]) {
+    let printed = |r: &LotResultState| -> Option<String> {
+        if r.lot_key.is_some() {
+            return None;
+        }
+        r.published_lot_no.as_deref().map(str::trim).filter(|p| !p.is_empty()).map(str::to_owned)
+    };
+    let numbered: Vec<(usize, String)> =
+        round.lot_results.iter().enumerate().filter_map(|(k, r)| printed(r).map(|p| (k, p))).collect();
+    if numbered.is_empty() {
+        return;
+    }
+    let numbers = LegacyLotNumbers::inherited(inherited);
+    if numbers.exact.is_empty() {
+        return;
+    }
+    // G1. Distinct numbers compare in normalised form on both sides (`None` for a number that
+    // normalises to nothing counts as one value): `01` beside `1` is one number.
+    let block_numbers: BTreeSet<Option<String>> = numbered.iter().map(|(_, p)| normalise_lot_number(p)).collect();
+    let lot_numbers: BTreeSet<Option<String>> = numbers.exact.keys().map(|n| normalise_lot_number(n)).collect();
+    if numbered.len() >= 2 && block_numbers.len() == 1 && lot_numbers.len() >= 2 {
+        return;
+    }
+    for (k, p) in numbered {
+        round.lot_results[k].lot_key = numbers.lookup(&p).map(str::to_owned);
+    }
+}
+
+/// Issue 568 G2 (rule step 6): a lot section republishing a carried lot renumbers it when the
+/// carried section printed a number and the new one prints another once normalised, or none (a
+/// blank number is none). `01` for `1` is the same number; a lot that printed none and now
+/// prints one is not renumbered.
+fn lot_renumbered(carried: Option<&str>, republished: Option<&str>) -> bool {
+    let Some(carried) = carried.and_then(normalise_lot_number) else { return false };
+    republished.and_then(normalise_lot_number).as_ref() != Some(&carried)
 }
 
 /// Issue 567: a published lot number in comparable form: trimmed and lower-cased, a leading
@@ -19251,6 +19370,546 @@ mod tests {
         for unread in ["BT-118-NoticeResult", "BT-1118-NoticeResult"] {
             assert!(!has_destination(unread, Channel::Amount), "{unread} stays unmapped (issue 506)");
         }
+    }
+
+    // ---- Issue 569: a busy checkpoint over an empty WAL is reclaimed ----
+
+    /// Issue 569: phase 1's per-chunk "WAL not fully reclaimed" line fires for a busy
+    /// TRUNCATE that left bytes in the `-wal` file (a reader-pin), never for one a reader's
+    /// snapshot made `busy` over an empty file, and never for a completed one. The inputs
+    /// are the shapes turso_core 0.7.2 produces (`store::checkpoint`'s
+    /// `a_busy_truncate_reports_no_frame_counts_even_over_a_pinned_wal` measures them):
+    /// every TRUNCATE reports 0 frames, busy or not, so only the file's size tells a 40 MB
+    /// pin from nothing.
+    #[test]
+    fn a_busy_checkpoint_over_an_empty_wal_is_reclaimed() {
+        assert!(!plan_checkpoint_unreclaimed(true, 0), "busy over an empty -wal file: nothing to reclaim");
+        assert!(plan_checkpoint_unreclaimed(true, 40_825_112), "busy over a 40 MB -wal file: a reader-pin");
+        assert!(plan_checkpoint_unreclaimed(true, 1), "busy over any bytes at all: not reclaimed");
+        assert!(!plan_checkpoint_unreclaimed(false, 0), "a completed TRUNCATE: reclaimed");
+        assert!(
+            !plan_checkpoint_unreclaimed(false, 4_120),
+            "not busy: the TRUNCATE emptied the file, so bytes read after it are a later write"
+        );
+    }
+
+    // ---- Issue 568: an R2.0.8 award takes the lot its contract notice numbered ----
+
+    /// An R2.0.8 notice as `/v1/notices/{id}/content` serves one, of form `form` (2: contract
+    /// notice, 3: award notice): one `Lot` section per entry of `lots` (`LOT-1`, … in document
+    /// order) and one award block per entry of `blocks` (`RES-1`, …), each carrying exactly its
+    /// own `(field, value)` lot references as published, plus `extra`. The notices below are
+    /// reduced to the values the rule reads (and an award value where one shows it travelling
+    /// with the lot); every number is as published unless a comment says it is added.
+    fn r208(
+        id: i64,
+        form: &str,
+        lots: &[Vec<(&str, &str)>],
+        blocks: &[Vec<(&str, &str)>],
+        extra: Vec<store::ValueRow>,
+    ) -> (store::NoticeRef, Parsed) {
+        let lot_ids: Vec<String> = (1..=lots.len()).map(|k| format!("LOT-{k}")).collect();
+        let res_ids: Vec<String> = (1..=blocks.len()).map(|k| format!("RES-{k}")).collect();
+        let mut sections = vec![("PROCEDURE", "Notice")];
+        sections.extend(lot_ids.iter().map(|s| (s.as_str(), "Lot")));
+        sections.extend(res_ids.iter().map(|s| (s.as_str(), "LotResult")));
+        let mut values = vec![b1_form(form)];
+        for (section, refs) in lot_ids.iter().zip(lots).chain(res_ids.iter().zip(blocks)) {
+            values.extend(refs.iter().map(|(field, value)| b1_id(section, field, value)));
+        }
+        values.extend(extra);
+        (b1_notice(id, "ted", "ted-export-r208"), b1_parsed(&sections, values))
+    }
+
+    /// One section per number, each printing that `TED-LOT_NUMBER` alone; `-` prints nothing.
+    fn r208_numbered<'a>(numbers: &[&'a str]) -> Vec<Vec<(&'static str, &'a str)>> {
+        numbers.iter().map(|n| if *n == "-" { Vec::new() } else { vec![("TED-LOT_NUMBER", *n)] }).collect()
+    }
+
+    /// A contract notice whose lots print `numbers`.
+    fn r208_cn(id: i64, numbers: &[&str]) -> (store::NoticeRef, Parsed) {
+        r208(id, "2", &r208_numbered(numbers), &[], Vec::new())
+    }
+
+    /// An award notice (no lot section) whose blocks print `numbers`.
+    fn r208_can(id: i64, numbers: &[&str]) -> (store::NoticeRef, Parsed) {
+        r208(id, "3", &[], &r208_numbered(numbers), Vec::new())
+    }
+
+    /// An R2.0.8 corrigendum as served: the notice section alone (`TD_DOCUMENT_TYPE` 2, no
+    /// form, no lot section) — 4840245's 17121760 and 17140425, 4945774's 17330504.
+    fn r208_corrigendum(id: i64) -> (store::NoticeRef, Parsed) {
+        let td = b1_value("PROCEDURE", "TED-TD_DOCUMENT_TYPE", NoticeValue::Code { list: None, code: "2".into() });
+        (b1_notice(id, "ted", "ted-export-r208"), b1_parsed(&[("PROCEDURE", "Notice")], vec![td]))
+    }
+
+    /// `numbers` split on whitespace, for the long published lists below.
+    fn r208_words(numbers: &str) -> Vec<&str> {
+        numbers.split_whitespace().collect()
+    }
+
+    /// One section per number, printing the walker's `TED-ITEM` ordinal (`1`, `2`, …) beside
+    /// that `TED-LOT_NUMBER`, as 4840245's, 4945774's and 4746422's notices do.
+    fn r208_items(numbers: &[&str]) -> Vec<Vec<(&'static str, String)>> {
+        numbers
+            .iter()
+            .enumerate()
+            .map(|(k, n)| vec![("TED-ITEM", (k + 1).to_string()), ("TED-LOT_NUMBER", (*n).to_owned())])
+            .collect()
+    }
+
+    /// [`r208_items`]' sections borrowed in the shape [`r208`] takes.
+    fn r208_refs<'a>(owned: &'a [Vec<(&'static str, String)>]) -> Vec<Vec<(&'static str, &'a str)>> {
+        owned.iter().map(|refs| refs.iter().map(|(f, v)| (*f, v.as_str())).collect()).collect()
+    }
+
+    /// Folds `chain` the streaming way (`NoticeState::read` + bind) and the bucketed way
+    /// (`BucketRow::snapshot`, framed through postcard as the spill writes it, then
+    /// `to_notice_state`), asserts both give the same versions, and returns them.
+    fn r208_fold(chain: &[(store::NoticeRef, Parsed)]) -> Vec<TenderVersion> {
+        let direct: Vec<NoticeState> = chain.iter().map(|(n, p)| b1_bound(n, p)).collect();
+        let versions = fold(&direct.iter().collect::<Vec<_>>());
+        let bucketed: Vec<NoticeState> = chain
+            .iter()
+            .map(|(n, p)| {
+                let bytes = postcard::to_stdvec(&BucketRow::snapshot("g".into(), n, b1_bound(n, p))).expect("serialize");
+                postcard::from_bytes::<BucketRow>(&bytes).expect("deserialize").to_notice_state()
+            })
+            .collect();
+        assert_eq!(fold(&bucketed.iter().collect::<Vec<_>>()), versions, "the bucket path folds the same");
+        versions
+    }
+
+    /// The lot key of each result of `notice`'s round in `version`, `RES-1` first.
+    fn r208_keys(version: &TenderVersion, notice: i64) -> Vec<Option<String>> {
+        let round = version.rounds.iter().find(|r| r.notice_id == notice).expect("the notice's round");
+        round.lot_results.iter().map(|r| r.lot_key.clone()).collect()
+    }
+
+    /// Where a CN printing `1..=lots` on `LOT-1..` puts a block printing `n`: on `LOT-n`, else none.
+    fn r208_on_printed(printed: &[&str], lots: usize) -> Vec<Option<String>> {
+        printed.iter().map(|p| p.parse::<usize>().ok().filter(|n| (1..=lots).contains(n)).and_then(on_lot)).collect()
+    }
+
+    /// Issue 568, the issue's own shape: 4748733. Its CN 16929923 (123519-2012) prints
+    /// `LOT_NUMBER` 1-6 on LOT-1..LOT-6; its CAN 17120114 (305023-2012) has no lot section and
+    /// six award blocks printing 1-6. Each block resolves to no lot in its own notice and takes
+    /// the lot its CN printed under its number on the CAN's version; its printed number stays
+    /// as published. The CAN states no total (R2.0.8 writes its totals as `VALUE_COST`, which
+    /// the frozen table does not read), so the test ADDS a notice-level `VAL_TOTAL` to pin that
+    /// the version's `stated_totals[].lots_awarded` names the matched keys: the match runs
+    /// before `lots_awarded` reads the rounds.
+    #[test]
+    fn an_r208_award_takes_the_lot_its_contract_notice_numbered_4748733() {
+        let numbers = ["1", "2", "3", "4", "5", "6"];
+        let cn = r208_cn(16929923, &numbers);
+        let added_total = b1_amount("PROCEDURE", "TED-VAL_TOTAL", 50_000_000, "EUR");
+        let can = r208(17120114, "3", &[], &r208_numbered(&numbers), vec![added_total]);
+        assert!(
+            b1_results(&b1_bound(&can.0, &can.1)).iter().all(|(_, lot, _, _)| lot.is_none()),
+            "premise: on its own the CAN resolves no block"
+        );
+        let versions = r208_fold(&[cn, can]);
+        assert_eq!(r208_keys(&versions[1], 17120114), (1..=6).map(on_lot).collect::<Vec<_>>());
+        let printed: Vec<Option<String>> =
+            versions[1].rounds[0].lot_results.iter().map(|r| r.published_lot_no.clone()).collect();
+        assert_eq!(printed, numbers.iter().map(|n| b1_s(n)).collect::<Vec<_>>(), "kept as published");
+        assert_eq!(
+            b1_totals(&versions[1]),
+            vec![(
+                17120114,
+                "TED-VAL_TOTAL",
+                StatedTotalKind::Award,
+                50_000_000,
+                "EUR",
+                b1_keys(&["LOT-1", "LOT-2", "LOT-3", "LOT-4", "LOT-5", "LOT-6"]),
+            )],
+            "lots_awarded reads the matched keys"
+        );
+        assert_eq!(b1_lots(&versions[1].lots), b1_lots(&versions[0].lots), "the lots are the CN's, unchanged");
+    }
+
+    /// Issue 568: 4748635, the issue's Verify. Its CN 16929463 (123397-2012) skips lot 5: LOT-1..
+    /// LOT-9 print 1-4 and 6-10. Its CAN 17187125 (371231-2012) awards 1, 2, 3, 6, 7, 8, 9, 10,
+    /// each with its `VALUE_COST`. RES-4..RES-8 land on LOT-5..LOT-9, the lots that print their
+    /// numbers, never on the key whose ordinal is the number (LOT-6..LOT-9 and a missing
+    /// LOT-10); each value travels with its award. A block printing 5 (ADDED, the CAN prints
+    /// none) names no lot: none prints 5.
+    #[test]
+    fn a_cross_notice_match_reads_the_printed_number_not_the_key_ordinal_4748635() {
+        let cn = r208_cn(16929463, &["1", "2", "3", "4", "6", "7", "8", "9", "10"]);
+        let awarded = ["1", "2", "3", "6", "7", "8", "9", "10", "5"];
+        let cents = [104_860_195, 77_674_776, 34_039_280, 65_458_626, 66_338_200, 16_588_035, 7_361_032, 110_518_950];
+        let values: Vec<store::ValueRow> =
+            cents.iter().enumerate().map(|(k, c)| b1_amount(&format!("RES-{}", k + 1), "TED-VALUE_COST", *c, "EUR")).collect();
+        let can = r208(17187125, "3", &[], &r208_numbered(&awarded), values);
+        let versions = r208_fold(&[cn, can]);
+        let served: Vec<(Option<String>, Option<i64>)> =
+            versions[1].rounds[0].lot_results.iter().map(|r| (r.lot_key.clone(), r.awarded_cents)).collect();
+        let lots = [1, 2, 3, 5, 6, 7, 8, 9];
+        let mut want: Vec<(Option<String>, Option<i64>)> = lots.iter().zip(cents).map(|(k, c)| (on_lot(*k), Some(c))).collect();
+        want.push((None, None));
+        assert_eq!(served, want);
+    }
+
+    /// Issue 568: 4581969. Its CN 12382165 (227730-2011) prints 1-5; its CAN 12580370
+    /// (014371-2012) prints `01`, `02`, `3`, `04`, `05`. No lot prints `01` exactly, so the
+    /// normalised form decides and names one lot each. Where a lot prints `01` beside one
+    /// printing `1` (ADDED), the exact `01` wins, and `001`, normalising to both, names neither.
+    #[test]
+    fn a_normalised_number_matches_only_where_no_lot_prints_it_exactly_4581969() {
+        let versions =
+            r208_fold(&[r208_cn(12382165, &["1", "2", "3", "4", "5"]), r208_can(12580370, &["01", "02", "3", "04", "05"])]);
+        assert_eq!(r208_keys(&versions[1], 12580370), (1..=5).map(on_lot).collect::<Vec<_>>());
+
+        let versions = r208_fold(&[r208_cn(1, &["1", "01", "2"]), r208_can(2, &["01", "1", "001", "2"])]);
+        assert_eq!(r208_keys(&versions[1], 2), vec![on_lot(2), on_lot(1), None, on_lot(3)]);
+    }
+
+    /// Issue 568: a number no inherited lot prints leaves its award on the Tender, as published:
+    /// - 4840245: the CN 17107803 prints 1-16 (beside each lot's `TED-ITEM`); pakiet 17 and 18
+    ///   exist only in the prose of its corrigenda 17121760 and 17140425, which publish no lot
+    ///   section, so the CAN 17285512's 17 and 18 stay on the Tender while its other blocks match;
+    /// - 5214582: the CN 17877843 prints 1-12; the CAN 18011597 awards 1-15 and three blocks that
+    ///   print no number, so 13-15 (and the three) stay;
+    /// - 4746422: the CN 16925302 letters its lots A, B, C (each beside its `TED-ITEM` 1-3); the
+    ///   CAN 17120850's blocks print 1, 2, 3, each beside a `TED-ITEM` of the same. Neither
+    ///   side's ordinal is a lot number, so nothing matches.
+    #[test]
+    fn a_number_no_inherited_lot_prints_stays_on_the_tender() {
+        let cn_4840245 = r208_items(&r208_words("1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16"));
+        let awarded = r208_words("1 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18");
+        let versions = r208_fold(&[
+            r208(17107803, "2", &r208_refs(&cn_4840245), &[], Vec::new()),
+            r208_corrigendum(17121760),
+            r208_corrigendum(17140425),
+            r208_can(17285512, &awarded),
+        ]);
+        let keys = r208_keys(&versions[3], 17285512);
+        assert_eq!(keys, r208_on_printed(&awarded, 16));
+        assert_eq!(keys[15..], [None, None], "pakiet 17 and 18, added only in corrigendum prose");
+        assert_eq!(keys.iter().flatten().count(), 15);
+
+        let awarded = r208_words("1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 - - -");
+        let twelve = r208_words("1 2 3 4 5 6 7 8 9 10 11 12");
+        let versions = r208_fold(&[r208_cn(17877843, &twelve), r208_can(18011597, &awarded)]);
+        let keys = r208_keys(&versions[1], 18011597);
+        assert_eq!(keys, r208_on_printed(&awarded, 12));
+        assert_eq!(keys[12..], [None, None, None, None, None, None], "13-15 no notice printed; three print none");
+
+        let cn_4746422 = r208_items(&["A", "B", "C"]);
+        let can_4746422 = r208_items(&["1", "2", "3"]);
+        let versions = r208_fold(&[
+            r208(16925302, "2", &r208_refs(&cn_4746422), &[], Vec::new()),
+            r208(17120850, "3", &[], &r208_refs(&can_4746422), Vec::new()),
+        ]);
+        assert_eq!(r208_keys(&versions[1], 17120850), vec![None, None, None], "letters against numbers; no ITEM is a number");
+    }
+
+    /// Issue 568: a number two inherited lots print names neither, exactly or (where no lot
+    /// prints it exactly) once normalised; the award stays on the Tender, the others still match.
+    #[test]
+    fn a_number_two_inherited_lots_print_names_neither() {
+        let versions = r208_fold(&[r208_cn(1, &["1", "1", "2"]), r208_can(2, &["1", "2"])]);
+        assert_eq!(r208_keys(&versions[1], 2), vec![None, on_lot(3)]);
+        let versions = r208_fold(&[r208_cn(1, &["01", "Lot 1", "2"]), r208_can(2, &["1", "2"])]);
+        assert_eq!(r208_keys(&versions[1], 2), vec![None, on_lot(3)], "`01` and `Lot 1` both normalise to 1");
+        // Two lots printing one number in two notices are two lots too: a later notice adds
+        // LOT-3 printing 1 and republishes neither LOT-1 nor LOT-2.
+        let adds_lot_3 = (
+            b1_notice(3, "ted", "ted-export-r208"),
+            b1_parsed(&[("PROCEDURE", "Notice"), ("LOT-3", "Lot")], vec![b1_form("2"), b1_id("LOT-3", "TED-LOT_NUMBER", "1")]),
+        );
+        let versions = r208_fold(&[r208_cn(1, &["1", "2"]), adds_lot_3, r208_can(2, &["1", "2"])]);
+        assert_eq!(b1_lots(&versions[1].lots).len(), 3, "premise: three lots inherited");
+        assert_eq!(r208_keys(&versions[2], 2), vec![None, on_lot(2)], "LOT-1 and LOT-3 both print 1");
+        // Rule step 3: only lots of kind `Lot` count. A numbered Part (or LotsGroup) printing a
+        // Lot's number makes it no ambiguity, and a number only a Part prints names nothing
+        // (ADDED shape: an R2.0.8 chain carries no Part; this pins the kind filter).
+        let with_parts = (
+            b1_notice(1, "ted", "ted-export-r208"),
+            b1_parsed(
+                &[
+                    ("PROCEDURE", "Notice"),
+                    ("LOT-1", "Lot"),
+                    ("LOT-2", "Lot"),
+                    ("PAR-0001", "Part"),
+                    ("PAR-0002", "Part"),
+                    ("GLO-0001", "LotsGroup"),
+                ],
+                vec![
+                    b1_form("2"),
+                    b1_id("LOT-1", "TED-LOT_NUMBER", "1"),
+                    b1_id("LOT-2", "TED-LOT_NUMBER", "2"),
+                    b1_id("PAR-0001", "BT-137-Part", "1"),
+                    b1_id("PAR-0002", "BT-137-Part", "3"),
+                    b1_id("GLO-0001", "BT-137-LotsGroup", "2"),
+                ],
+            ),
+        );
+        let versions = r208_fold(&[with_parts, r208_can(2, &["1", "2", "3"])]);
+        let carried: Vec<(&str, &str, Option<&str>)> =
+            versions[0].lots.iter().map(|l| (l.key.as_str(), l.kind.as_str(), l.published_lot_no.as_deref())).collect();
+        for part in [("PAR-0001", "Part", Some("1")), ("PAR-0002", "Part", Some("3")), ("GLO-0001", "LotsGroup", Some("2"))] {
+            assert!(carried.contains(&part), "premise: {part:?} is inherited with its number, got {carried:?}");
+        }
+        assert_eq!(r208_keys(&versions[1], 2), vec![on_lot(1), on_lot(2), None], "only kind Lot counts");
+    }
+
+    /// Issue 568: a block that prints no number is never matched, whatever else it carries.
+    /// 4945774: the CN 17312546 prints 1-49 (each beside its `TED-ITEM`), a corrigendum 17330504
+    /// publishes no lot, and the CAN 17426530's 48 blocks print 45 numbers, repeats among them
+    /// (42 four times, 47 four times: partial awards), while RES-41, RES-46 and RES-48 print
+    /// none. Every numbered block takes its lot, repeats included, and the three stay on the
+    /// Tender. A CAN block that carries only a `TED-ITEM` (ADDED) stays too: an ordinal is no
+    /// printed number.
+    #[test]
+    fn a_block_with_no_printed_number_stays_on_the_tender_even_with_an_item() {
+        let numbers: Vec<String> = (1..=49).map(|k: usize| k.to_string()).collect();
+        let cn_lots = r208_items(&numbers.iter().map(String::as_str).collect::<Vec<_>>());
+        let awarded = r208_words(
+            "2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 23 24 26 27 28 30 31 32 33 34 35 36 37 38 40 \
+             42 42 42 42 44 45 - 47 47 47 47 - 48 -",
+        );
+        assert_eq!(awarded.len(), 48);
+        let versions = r208_fold(&[
+            r208(17312546, "2", &r208_refs(&cn_lots), &[], Vec::new()),
+            r208_corrigendum(17330504),
+            r208_can(17426530, &awarded),
+        ]);
+        let keys = r208_keys(&versions[2], 17426530);
+        assert_eq!(keys, r208_on_printed(&awarded, 49));
+        assert_eq!((keys[40].clone(), keys[45].clone(), keys[47].clone()), (None, None, None), "RES-41, RES-46, RES-48");
+        assert_eq!(keys[34..38], [on_lot(42), on_lot(42), on_lot(42), on_lot(42)], "four partial awards of lot 42");
+
+        let item_only = r208(2, "3", &[], &[vec![("TED-ITEM", "1")], vec![("TED-ITEM", "2")]], Vec::new());
+        let versions = r208_fold(&[r208_cn(1, &["1", "2"]), item_only]);
+        assert_eq!(r208_keys(&versions[1], 2), vec![None, None]);
+        let published: Vec<Option<String>> =
+            versions[1].rounds[0].lot_results.iter().map(|r| r.published_lot_no.clone()).collect();
+        assert_eq!(published, vec![None, None], "premise: an ITEM is no published number");
+    }
+
+    /// Issue 568 rule step 2: an award notice that publishes a lot section of its own keeps issue
+    /// 567's same-notice resolution, its `None` included. An r209 F03 (ADDED shape) after the
+    /// R2.0.8 CN of lots 1-3 publishes LOT-1 printing 1, as the CN did: its RES-1 (`LOT_NO 1`)
+    /// resolves to LOT-1 in its own notice, and its RES-2 (`LOT_NO 3`), which no section of its
+    /// own prints, stays on the Tender, although the inherited LOT-3 prints 3. The F20 of
+    /// 6094289 (21175651 as served: its one section prints `3.`, its block `3`) stays unkeyed
+    /// the same way (its `3.` also renumbers LOT-1, so G2 holds as well).
+    /// `a_ted_award_block_keeps_its_published_lot_number` and
+    /// `a_single_section_ted_modification_keys_lot_1_but_keeps_its_lot_no` pin the rest.
+    #[test]
+    fn an_award_notice_with_its_own_lot_sections_keeps_its_same_notice_resolution() {
+        let f03 = (
+            b1_notice(2, "ted", "ted-export-r209"),
+            b1_parsed(
+                &[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("RES-1", "LotResult"), ("RES-2", "LotResult")],
+                vec![
+                    b1_form("F03"),
+                    b1_id("LOT-1", "TED-ITEM", "1"),
+                    b1_id("LOT-1", "TED-LOT_NO", "1"),
+                    b1_id("RES-1", "TED-ITEM", "1"),
+                    b1_id("RES-1", "TED-LOT_NO", "1"),
+                    b1_id("RES-2", "TED-ITEM", "2"),
+                    b1_id("RES-2", "TED-LOT_NO", "3"),
+                ],
+            ),
+        );
+        let versions = r208_fold(&[r208_cn(1, &["1", "2", "3"]), f03]);
+        assert_eq!(r208_keys(&versions[1], 2), vec![on_lot(1), None]);
+
+        let f20 = (
+            b1_notice(21175651, "ted", "ted-export-r209"),
+            b1_parsed(
+                &[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("RES-1", "LotResult")],
+                vec![b1_form("F20"), b1_id("LOT-1", "TED-LOT_NO", "3."), b1_id("RES-1", "TED-LOT_NO", "3")],
+            ),
+        );
+        let versions = r208_fold(&[r208_cn(1, &["1", "2", "3"]), f20]);
+        assert_eq!(r208_keys(&versions[1], 21175651), vec![None]);
+    }
+
+    /// Issue 568 G1: an award notice whose two or more numbered blocks all print one number, on a
+    /// Tender whose inherited lots print two or more, matches none of them. 5476747 (from the
+    /// judge's extra strata): the CN 18395736 prints 1-3; the CAN 18543084 prints `LOT_NUMBER 1`
+    /// on all three blocks (titled "Lot 1 / Lot 2 / Lot 3"), so without G1 RES-2 and RES-3 would
+    /// land on LOT-1, wrongly. Counter-cases that still match:
+    /// - 4945774's repeats beside other numbers (its CAN's tail: 40, 42 × 4, 44, 45, 47 × 4, 48);
+    /// - a 1-lot Tender whose blocks all print 1 (several awards of its one lot);
+    /// - a single award block (8288447's CAN 17121740 awards lot 2 of 2 alone);
+    /// - a 2-lot Tender whose second lot prints a blank number or none (one number inherited).
+    ///
+    /// `01` beside `1` is one number: G1 holds.
+    #[test]
+    fn one_number_on_every_block_matches_none_5476747() {
+        let versions = r208_fold(&[r208_cn(18395736, &["1", "2", "3"]), r208_can(18543084, &["1", "1", "1"])]);
+        assert_eq!(r208_keys(&versions[1], 18543084), vec![None, None, None]);
+
+        let lots: Vec<String> = (1..=49).map(|k: usize| k.to_string()).collect();
+        let lots: Vec<&str> = lots.iter().map(String::as_str).collect();
+        let tail = r208_words("40 42 42 42 42 44 45 47 47 47 47 48");
+        let versions = r208_fold(&[r208_cn(17312546, &lots), r208_can(17426530, &tail)]);
+        assert_eq!(r208_keys(&versions[1], 17426530), r208_on_printed(&tail, 49));
+
+        let versions = r208_fold(&[r208_cn(1, &["1"]), r208_can(2, &["1", "1", "1"])]);
+        assert_eq!(r208_keys(&versions[1], 2), vec![on_lot(1), on_lot(1), on_lot(1)], "a 1-lot Tender is exempt");
+
+        let versions = r208_fold(&[r208_cn(16864728, &["1", "2"]), r208_can(17121740, &["2"])]);
+        assert_eq!(r208_keys(&versions[1], 17121740), vec![on_lot(2)], "one block: no G1");
+
+        let versions = r208_fold(&[r208_cn(1, &["1", "2", "3"]), r208_can(2, &["01", "1"])]);
+        assert_eq!(r208_keys(&versions[1], 2), vec![None, None], "`01` and `1` are one number");
+
+        // G1 counts the distinct numbers the inherited lots PRINT, not the lots: a lot printing a
+        // blank number, or none, takes no part (rule step 3), so a 2-lot Tender of which only
+        // LOT-1 prints a number inherits one number and is exempt like a 1-lot Tender (ADDED).
+        for unnumbered in [" ", "-"] {
+            let versions = r208_fold(&[r208_cn(1, &["1", unnumbered]), r208_can(2, &["1", "1"])]);
+            let lot_2 = (unnumbered != "-").then(|| unnumbered.to_owned());
+            assert_eq!(
+                b1_lots(&versions[1].lots),
+                vec![("LOT-1".to_owned(), b1_s("1")), ("LOT-2".to_owned(), lot_2)],
+                "premise: two lots inherited, LOT-2's number carried as published"
+            );
+            assert_eq!(r208_keys(&versions[1], 2), vec![on_lot(1), on_lot(1)], "LOT-2 prints {unnumbered:?}: one number");
+        }
+    }
+
+    /// Issue 568 G2: once a notice folded before the award republishes an inherited lot under a
+    /// different normalised number, or without one, no block of a later award notice is matched.
+    /// A CN prints 1/2; a later notice republishes LOT-1 as 2 and LOT-2 as 1, and the CAN's 1 and
+    /// 2 stay on the Tender. Counter-cases: a republish under the same normalised number (`01`
+    /// for `1`) and a lot that printed no number and gains one (a PIN's unnumbered lots, then the
+    /// CN's numbers) renumber nothing.
+    #[test]
+    fn a_renumbered_inherited_lot_disables_the_cross_notice_match() {
+        let republish = |id: i64, lots: &[Vec<(&str, &str)>]| r208(id, "2", lots, &[], Vec::new());
+        let control = r208_fold(&[r208_cn(1, &["1", "2"]), r208_can(3, &["1", "2"])]);
+        assert_eq!(r208_keys(&control[1], 3), vec![on_lot(1), on_lot(2)], "premise: matched without the republish");
+
+        let swapped = r208_fold(&[r208_cn(1, &["1", "2"]), r208_cn(2, &["2", "1"]), r208_can(3, &["1", "2"])]);
+        assert_eq!(r208_keys(&swapped[2], 3), vec![None, None]);
+
+        let dropped = r208_fold(&[r208_cn(1, &["1", "2"]), republish(2, &[vec![("TED-ITEM", "1")]]), r208_can(3, &["1", "2"])]);
+        assert_eq!(dropped[1].lots[0].published_lot_no, None, "premise: LOT-1 republished with no number");
+        assert_eq!(r208_keys(&dropped[2], 3), vec![None, None], "a dropped number renumbers too");
+
+        let blank = r208_fold(&[r208_cn(1, &["1", "2"]), r208_cn(2, &[" "]), r208_can(3, &["1", "2"])]);
+        assert_eq!(r208_keys(&blank[2], 3), vec![None, None], "a blank number is none");
+
+        let same = r208_fold(&[r208_cn(1, &["1", "2"]), r208_cn(2, &["01"]), r208_can(3, &["1", "2"])]);
+        assert_eq!(same[1].lots[0].published_lot_no, b1_s("01"), "premise: LOT-1 republished as 01");
+        assert_eq!(r208_keys(&same[2], 3), vec![on_lot(1), on_lot(2)], "`01` for `1` renumbers nothing");
+
+        let pin = republish(1, &[vec![("TED-ITEM", "1")], vec![("TED-ITEM", "2")]]);
+        let gained = r208_fold(&[pin, r208_cn(2, &["1", "2"]), r208_can(3, &["1", "2"])]);
+        assert_eq!(r208_keys(&gained[2], 3), vec![on_lot(1), on_lot(2)], "a lot that gains a number is not renumbered");
+    }
+
+    /// Issue 568 rule step 7: the key is set once, on the version the award notice causes, and
+    /// later versions carry the round as resolved. A CN prints 1/2 and its CAN awards 1, 2 and 3
+    /// (3 names no lot). A later notice adds LOT-3 printing 3 and a second CAN awards 3: that
+    /// one takes LOT-3, while the first CAN's 3 stays on the Tender in every later version.
+    /// Where the later notice also swaps LOT-1 and LOT-2, the first CAN keeps its LOT-1 and
+    /// LOT-2, and the second CAN, after the renumbering, matches nothing (G2).
+    #[test]
+    fn a_cross_notice_match_is_frozen_at_the_award_version() {
+        let first = [on_lot(1), on_lot(2), None];
+        let versions = r208_fold(&[
+            r208_cn(1, &["1", "2"]),
+            r208_can(2, &["1", "2", "3"]),
+            r208_cn(3, &["1", "2", "3"]),
+            r208_can(4, &["3"]),
+        ]);
+        for version in &versions[1..] {
+            let caused_by = version.caused_by_notice_id;
+            assert_eq!(r208_keys(version, 2), first, "the first CAN's round as resolved, version of {caused_by}");
+        }
+        assert_eq!(r208_keys(&versions[3], 4), vec![on_lot(3)]);
+
+        let versions = r208_fold(&[
+            r208_cn(1, &["1", "2"]),
+            r208_can(2, &["1", "2", "3"]),
+            r208_cn(3, &["2", "1", "3"]),
+            r208_can(4, &["1", "3"]),
+        ]);
+        for version in &versions[1..] {
+            assert_eq!(r208_keys(version, 2), first, "a renumbering never re-keys an earlier round");
+        }
+        assert_eq!(r208_keys(&versions[3], 4), vec![None, None]);
+    }
+
+    /// Issue 568: several awards of one lot all take it. 5218711: the CN 17886006 prints 1-4; its
+    /// CAN 18184190's 36 blocks are framework awards, six on lot 1, five on 2, six on 3, three on
+    /// 4, and 16 printing 5, 6 and 7 (the CAN's own renumbering of sub-lots 3.B-3.D, which no
+    /// notice printed as lots). Each numbered 1-4 lands on its lot; 5, 6 and 7 stay on the Tender.
+    #[test]
+    fn several_awards_on_one_lot_all_take_it_5218711() {
+        let awarded = r208_words("1 1 1 1 1 1 2 2 2 2 2 3 3 3 3 3 3 5 5 5 5 5 5 6 6 6 6 7 7 7 7 7 7 4 4 4");
+        let versions = r208_fold(&[r208_cn(17886006, &["1", "2", "3", "4"]), r208_can(18184190, &awarded)]);
+        let keys = r208_keys(&versions[1], 18184190);
+        assert_eq!(keys, r208_on_printed(&awarded, 4));
+        assert_eq!(keys[..6], [on_lot(1), on_lot(1), on_lot(1), on_lot(1), on_lot(1), on_lot(1)], "six awards on lot 1");
+        assert_eq!(keys.iter().filter(|k| k.is_none()).count(), 16, "5, 6 and 7 name no lot");
+    }
+
+    /// Issue 568 rule step 1: only a legacy block can be matched. An eForms award notice with no
+    /// lot section of its own, after an eForms CN of LOT-0001/LOT-0002: a result with no
+    /// BT-13713 has no published number and stays on the Tender; one with BT-13713 keeps it as
+    /// published, even one naming no lot of the chain.
+    #[test]
+    fn an_eforms_result_is_never_matched_across_notices() {
+        let eforms = |id: i64| b1_notice(id, "ted", "eforms:eforms-sdk-1.13");
+        let cn = (
+            eforms(1),
+            b1_parsed(
+                &[("PROCEDURE", "Notice"), ("LOT-0001", "Lot"), ("LOT-0002", "Lot")],
+                vec![b1_id("LOT-0001", "BT-137-Lot", "LOT-0001"), b1_id("LOT-0002", "BT-137-Lot", "LOT-0002")],
+            ),
+        );
+        let can = (
+            eforms(2),
+            b1_parsed(
+                &[("PROCEDURE", "Notice"), ("RES-0001", "LotResult"), ("RES-0002", "LotResult"), ("RES-0003", "LotResult")],
+                vec![
+                    b1_value("RES-0001", "BT-142-LotResult", NoticeValue::Code { list: None, code: "selec-w".into() }),
+                    b1_id("RES-0002", "BT-13713-LotResult", "LOT-0002"),
+                    b1_id("RES-0003", "BT-13713-LotResult", "LOT-0009"),
+                ],
+            ),
+        );
+        let versions = r208_fold(&[cn, can]);
+        let served: Vec<(Option<String>, Option<String>)> =
+            versions[1].rounds[0].lot_results.iter().map(|r| (r.lot_key.clone(), r.published_lot_no.clone())).collect();
+        assert_eq!(served, vec![(None, None), (b1_s("LOT-0002"), b1_s("LOT-0002")), (b1_s("LOT-0009"), b1_s("LOT-0009"))]);
+    }
+
+    /// Issue 568: the bucketed fold (`BucketRow::snapshot(..)`, through the postcard spill, then
+    /// `to_notice_state()`) gives the same keys as the streaming fold, on a chain that exercises
+    /// the exact and normalised matches, the frozen key, G1 and G2 in turn: 4748635's CN and CAN,
+    /// a CAN printing `01`, a CAN printing one number on two blocks (G1), a republish swapping
+    /// LOT-1 and LOT-2 (G2), and a CAN after it. Every test above folds through both paths too.
+    #[test]
+    fn the_cross_notice_match_is_identical_on_the_bucketed_path() {
+        let chain = [
+            r208_cn(16929463, &["1", "2", "3", "4", "6", "7", "8", "9", "10"]),
+            r208_can(17187125, &["1", "2", "3", "6", "7", "8", "9", "10"]),
+            r208_can(3, &["01", "6"]),
+            r208_can(4, &["2", "2"]),
+            r208_cn(5, &["2", "1"]),
+            r208_can(6, &["3"]),
+        ];
+        let versions = r208_fold(&chain);
+        assert_eq!(r208_keys(&versions[5], 17187125), [1, 2, 3, 5, 6, 7, 8, 9].map(on_lot).to_vec());
+        assert_eq!(r208_keys(&versions[5], 3), vec![on_lot(1), on_lot(5)]);
+        assert_eq!(r208_keys(&versions[5], 4), vec![None, None], "G1");
+        assert_eq!(r208_keys(&versions[5], 6), vec![None], "G2");
+        // The snapshot carries what the rule reads: the CN's printed numbers and the CAN's blocks.
+        let row = BucketRow::snapshot("g".into(), &chain[0].0, b1_bound(&chain[0].0, &chain[0].1));
+        assert_eq!(row.to_notice_state().lots.iter().map(|l| l.published_lot_no.clone()).collect::<Vec<_>>()[4], b1_s("6"));
+        let row = BucketRow::snapshot("g".into(), &chain[1].0, b1_bound(&chain[1].0, &chain[1].1));
+        assert!(row.to_notice_state().lots.is_empty(), "premise: the CAN publishes no lot section");
     }
 
     // ---- Issue 514 unit 2: the GB register-spelling rewrite (decision §6) ----

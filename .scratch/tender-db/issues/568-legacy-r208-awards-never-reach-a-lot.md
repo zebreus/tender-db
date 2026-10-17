@@ -1,10 +1,11 @@
 # 568 — legacy R2.0.8 contract award notices never attach their awards to a lot, even on a multi-lot Tender
 
-Status: ready-for-agent — DECIDED 2026-10-17 (wf_4d23aefc-0d0): BUILD the cross-notice match (rule steps 1–9 + G1/G2,
-in `fold`). Measured 0 unique_wrong / 647 matched (95 % ≤ 0.57 % of blocks, ≤ 5.1 % of CANs); the one wrong shape
-outside the sample (5476747, one LOT_NUMBER on every block) is G1's. Reach ≈ 16 % of R2.0.8 CANs (12.8–19.6 %), 1.39
-blocks per CAN (0.80–2.16). NEXT: unit 3 build (project.rs `fold`; land with 569, after 551 B2 is gated), then drain
-`refold-fields` TED-LOT_NUMBER BEFORE 551's B3 parity. Decision: `.scratch/tender-db/568-r208-lots/decision.md`.
+Status: ready-for-agent — DECIDED 2026-10-17 (wf_4d23aefc-0d0); BUILT 2026-10-17 (unit 3, wf_0950d693-9da: rule steps
+1–9 + G1/G2 in `fold` via `match_inherited_lots` / `LegacyLotNumbers::inherited` / `lot_renumbered`; 13 named tests on
+real parsed values, both fold paths; port 679/679 and 5476747 three None; review found 5, all fixed). NEXT: gate,
+deploy (with 551 B1/B2 and 569), then the drain `refold-fields` TED-LOT_NUMBER BEFORE 551's B3, baseline first.
+Decision: `.scratch/tender-db/568-r208-lots/decision.md`. Note (review): a winner's `parties[]` row stays
+Tender-scoped for an R2.0.8 award — only `lot_results[].lot` moves (CHANGELOG says so).
 Kind: completeness (legacy lot results: R2.0.8 awards served tender-scoped)
 Relates to:
 - 567 (same-notice ITEM/LOT_NO mapping in read_legacy_results);

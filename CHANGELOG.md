@@ -4,6 +4,39 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 568) — an R2.0.8 award is served on the lot its contract notice numbered
+
+TED's R2.0.8 award notices print each award's lot number (LOT_NUMBER) but carry no lot section of their own: the
+lots exist only in the Tender's contract notice. The fold matched an award only against the lots of its
+own notice, so every R2.0.8 award was served on the Tender (`lot_results[].lot` null), even where the contract
+notice had published the very lot it names. Measured 2026-10-17 on 470 R2.0.8 award notices (2012–2015): about
+16 % sit on a Tender that gains a lot key, 1.4 award blocks per award notice; of the 647 blocks the new rule
+places in a re-read sample of 71 multi-lot Tenders, none was placed on a wrong lot. E.g. 4748635's eight awards
+now serve LOT-1, LOT-2, LOT-3 and LOT-5 to LOT-9, the lots that print 1, 2, 3 and 6 to 10 (its contract notice
+skips lot 5).
+- From the deploy on, an award notice with no lot section of its own puts each award on the lot an earlier notice
+  of the same Tender printed under the award's own number: the number as printed, else its one other spelling among
+  those lots (`01` and `1` match, as issue 567's do). Two lots printing the number, or none, leave the award on the
+  Tender. So do: lots lettered A, B, C against awards numbered 1, 2, 3; a number only the award prints; a lot added
+  only in a corrigendum's prose; an award notice that prints one number on all of its two or more awards while the
+  Tender's lots print several numbers (5476747 prints `1` on all three); a Tender whose earlier notice renumbered
+  its lots; an award that prints no number. The lot is never guessed from its key's position, nor from the award's
+  position, title or item ordinal. An award notice with lot sections of its own (R2.0.9) keeps issue 567's
+  matching, unchanged.
+- The lot is set on the version the award notice causes and carried as it was: a later notice that adds or
+  renumbers lots never moves an earlier award.
+- What moves: `lot_results[].lot`, and with it the lot a winner and an awarded value belong to (`/v1/lots?winner=`,
+  a lot's award value; on `/v1/sql`, `v_lot_results.lot_key` and `v_awards.lot_key`). Several awards of one lot
+  (framework suppliers, partial awards) all land on it. What does not: the winner's `parties[]` row stays on the
+  Tender (`lot` null), because a notice's parties take only the notice's own lots and an R2.0.8 award notice has
+  none. Rarely a Tender's `value` and `value_derivation` move too: the rules that check a procedure figure of €1 bn
+  or more against its lots' award sums (issues 492 and 537, and `lot-sum-vouched`) now see R2.0.8 award lots for
+  the first time, so a kept figure can turn refused or a refused one kept, a move by a power of ten.
+- Tenders already stored are corrected by a refold after the deploy (the notices that carry a LOT_NUMBER: R2.0.8
+  award notices and the contract notices whose lots they match; an estimated 130–160 k Tenders are expected to move).
+  Each move is announced as a correction: a `version: null` `changed` row for the Tender and its affected lots
+  (ADR-0017 D3). Until its refold a Tender serves its R2.0.8 awards on no lot.
+
 ## Unreleased (issue 567) — a legacy TED award is served on the lot its own lot number names
 
 TED's 2016–2024 award notices (R2.0.9) tie each award to a lot by the lot number the publisher printed (LOT_NO).

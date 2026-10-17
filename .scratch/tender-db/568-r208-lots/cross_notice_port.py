@@ -12,9 +12,18 @@ Mirrors, in Python, the rule decision.md states, on the parsed values the projec
   3. a block with no same-notice lot and a printed number (`award_block_lot_number`: first
      TED-LOT_NO, else first TED-LOT_NUMBER, in primary-key value order) is matched against the
      inherited lots of kind `Lot` that print a number: exact (trimmed) first; only if no lot prints
-     it exactly, `normalise_lot_number`; exactly one lot -> that key, else no lot.
+     it exactly, `normalise_lot_number`; exactly one lot -> that key, else no lot;
+  4. G1 (unit 3): an award notice whose two or more numbered blocks all normalise to one number, on
+     a Tender whose inherited `Lot`s print two or more distinct (normalised) numbers, matches none
+     of its blocks (5476747's CAN 18543084: `LOT_NUMBER 1` on all three);
+  5. G2 (unit 3): once a notice folded before the award republished an inherited lot key under a
+     different normalised number, or with none (the carried one had a number), no award block is
+     matched -- `fold`'s `lots_renumbered` flag, set in the lot carry (`lot_renumbered`).
 
-Usage: python3 -I cross_notice_port.py <measurement.json> <out.json> <cache dir>...
+Usage: python3 -I cross_notice_port.py <measurement.json> <out.json> [--extra <extra_port.jsonl>] <cache dir>...
+With --extra, the judge's extra strata are replayed too: every award notice of each listed chain
+(the jsonl's `chain` rows), compared with the jsonl's pre-guard `port`; a block that G1 or G2 now
+refuses is listed under `extra.guard_refusals`.
 Each cache dir is searched recursively for <id>.json, tenders_<id>.json, v1_tenders_<id>.json,
 notices_<id>_content.json and v1_notices_<id>_content.json.
 """
@@ -146,8 +155,105 @@ def cross_notice_lookup(carried, printed):
     return None, ("ambiguous" if norm else "no_match")
 
 
+def lot_renumbered(carried, republished):
+    """G2, `project.rs` `lot_renumbered`: the carried section printed a number and the republished
+    one prints another once normalised, or none (a blank number is none)."""
+    old = normalise_lot_number(carried) if carried is not None else None
+    if old is None:
+        return False
+    new = normalise_lot_number(republished) if republished is not None else None
+    return new != old
+
+
+def carry(carried, secs):
+    """The fold's lot carry for one notice: each lot section (re)places its key's (kind, number).
+    Returns (the notice's own lot sections, whether it renumbered an inherited lot -- G2)."""
+    lots = [s for s in secs.values() if s["kind"] in LOT_KINDS]
+    renumbered = False
+    for s in lots:
+        number = published_number(s)
+        old = carried.get(s["section_id"])
+        if old is not None and lot_renumbered(old[1], number):
+            renumbered = True
+        carried[s["section_id"]] = (s["kind"], number)
+    return lots, renumbered
+
+
+def match_notice(carried, renumbered, own_lots, refs):
+    """`project.rs` `fold` + `match_inherited_lots` for one award notice: {result key: (lot, why)}."""
+    printed = {res: award_block_lot_number(r) for res, r in refs.items()}
+    numbered = {res: p.strip() for res, p in printed.items() if p is not None and p.strip()}
+    lot_numbers = {normalise_lot_number(n.strip()) for kind, n in carried.values()
+                   if kind == "Lot" and n is not None and n.strip()}
+    g1 = (len(numbered) >= 2 and len({normalise_lot_number(p) for p in numbered.values()}) == 1
+          and len(lot_numbers) >= 2)
+    out = {}
+    for res, p in printed.items():
+        if own_lots:
+            out[res] = (None, "can_has_own_lots")
+        elif p is None:
+            out[res] = (None, "no_number")
+        elif renumbered:
+            out[res] = (None, "g2")
+        elif g1 and res in numbered:
+            out[res] = (None, "g1")
+        else:
+            out[res] = cross_notice_lookup(carried, p)
+    return out
+
+
+def res_order(k):
+    return int(k.split("-")[1]) if k.split("-")[1].isdigit() else 0
+
+
+def replay_extra(extra_path, tenders_idx, notices_idx):
+    """The judge's extra strata: every award notice of each chain, with the guards."""
+    chains, pre = {}, {}
+    with open(extra_path, encoding="utf-8") as fh:
+        for line in fh:
+            row = json.loads(line)
+            if "chain" in row:
+                chains[row["tender"]] = row["chain"]
+            else:
+                pre[(row["tender"], row["notice"], row["res"])] = row["port"]
+    blocks, refusals, missing = [], [], []
+    for tid, chain in chains.items():
+        carried, renumbered = {}, False
+        for n in chain:
+            if n not in notices_idx:
+                missing.append(n)
+                continue
+            secs = sections_of(load(notices_idx[n]))
+            own_lots, renumbers = carry(carried, secs)
+            renumbered = renumbered or renumbers
+            refs = award_refs(secs)
+            if not refs:
+                continue
+            for res, (port, why) in sorted(match_notice(carried, renumbered, own_lots, refs).items(),
+                                           key=lambda kv: res_order(kv[0])):
+                before = pre.get((tid, n, res), "absent")
+                blocks.append({"tender_id": tid, "notice": n, "result_key": res, "port_lot": port,
+                               "port_reason": why, "pre_guard_port": before, "agree_pre_guard": port == before})
+                if why in ("g1", "g2"):
+                    refusals.append(blocks[-1])
+    return {
+        "tenders": len(chains),
+        "blocks": len(blocks),
+        "agree_with_pre_guard_port": sum(b["agree_pre_guard"] for b in blocks),
+        "matched": sum(b["port_lot"] is not None for b in blocks),
+        "guard_refusals": refusals,
+        "disagreements_other_than_guards": [b for b in blocks if not b["agree_pre_guard"] and b["port_reason"] not in ("g1", "g2")],
+        "missing_notices": missing,
+        "tender_5476747": [b["port_lot"] for b in blocks if b["tender_id"] == 5476747],
+        "rows": blocks,
+    }
+
+
 def main():
     meas_path, out_path, *dirs = sys.argv[1:]
+    extra_path = None
+    if dirs[:1] == ["--extra"]:
+        extra_path, dirs = dirs[1], dirs[2:]
     meas = load(meas_path)
     tenders_idx, notices_idx = index_cache(dirs)
     out, tally, disagreements = [], Counter(), []
@@ -167,18 +273,18 @@ def main():
             out.append(rec)
             continue
         before = chain[: chain.index(can)]
-        carried, lot_publishers, missing = {}, Counter(), []
+        carried, lot_publishers, missing, renumbered = {}, Counter(), [], False
         for n in before:
             if n not in notices_idx:
                 missing.append(n)
                 continue
             secs = sections_of(load(notices_idx[n]))
-            lots = [s for s in secs.values() if s["kind"] in LOT_KINDS]
+            lots, renumbers = carry(carried, secs)
+            renumbered = renumbered or renumbers
             if lots:
                 lot_publishers[n] = len(lots)
-            for s in lots:
-                carried[s["section_id"]] = (s["kind"], published_number(s))
         rec["missing_notices"] = missing
+        rec["lots_renumbered"] = renumbered
         rec["lot_publishing_notices"] = dict(lot_publishers)
         rec["carried_lots"] = {k: v[1] for k, v in sorted(carried.items())}
         if can not in notices_idx:
@@ -189,17 +295,13 @@ def main():
         own_lots = [s for s in can_secs.values() if s["kind"] in LOT_KINDS]
         rec["can_own_lot_sections"] = len(own_lots)
         refs = award_refs(can_secs)
+        matched = match_notice(carried, renumbered, own_lots, refs)
         measured = {b["result_key"]: b for b in t["blocks"]}
         blocks = []
-        for res in sorted(refs, key=lambda k: int(k.split("-")[1]) if k.split("-")[1].isdigit() else 0):
+        for res in sorted(refs, key=res_order):
             printed = award_block_lot_number(refs[res])
             items = [v for f, v in refs[res] if f == "TED-ITEM"]
-            if own_lots:
-                port, why = None, "can_has_own_lots"
-            elif printed is None:
-                port, why = None, "no_number"
-            else:
-                port, why = cross_notice_lookup(carried, printed)
+            port, why = matched[res]
             m = measured.get(res)
             exp = None if m is None else m.get("matched_lot_key") if m["cls"] in ("unique_right", "unique_unverifiable", "unique_wrong") else None
             agree = m is not None and port == exp
@@ -226,10 +328,19 @@ def main():
         "tenders_with_two_lot_publishing_notices": [r["tender_id"] for r in out if len(r.get("lot_publishing_notices", {})) > 1],
         "tenders_where_a_can_has_own_lots": [r["tender_id"] for r in out if r.get("can_own_lot_sections")],
         "blocks_matched_only_by_normalisation": sum(1 for r in out for b in r.get("blocks", []) if b["port_reason"] == "normalised"),
+        "agree": sum(1 for r in out for b in r.get("blocks", []) if b["agree"]),
+        "g1_refused_blocks": sum(1 for r in out for b in r.get("blocks", []) if b["port_reason"] == "g1"),
+        "g2_refused_blocks": sum(1 for r in out for b in r.get("blocks", []) if b["port_reason"] == "g2"),
+        "tenders_with_a_renumbered_lot": [r["tender_id"] for r in out if r.get("lots_renumbered")],
     }
+    result = {"summary": summary, "tenders": out}
+    if extra_path:
+        extra = replay_extra(extra_path, tenders_idx, notices_idx)
+        result["extra"] = extra
+        summary["extra"] = {k: v for k, v in extra.items() if k != "rows"}
     with open(out_path, "w", encoding="utf-8") as fh:
-        json.dump({"summary": summary, "tenders": out}, fh, ensure_ascii=False, indent=1)
-    print(json.dumps(summary, ensure_ascii=False, indent=1)[:6000])
+        json.dump(result, fh, ensure_ascii=False, indent=1)
+    print(json.dumps(summary, ensure_ascii=False, indent=1)[:8000])
 
 
 if __name__ == "__main__":

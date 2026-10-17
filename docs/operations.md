@@ -1100,6 +1100,73 @@ Verify, in order:
   Bar: 30 of 30. A wrong one, or a correction neither 567 nor another deployed rule awaiting its refold explains,
   is a finding.
 
+**R2.0.8 awards by their contract notice's lot number (issue 568, 2026-10-17).** An R2.0.8 award form repeats
+`AWARD_OF_CONTRACT` with a `LOT_NUMBER` and publishes no lot section, so 567's same-notice map is empty there and
+every block resolved to no lot. `fold` (`crates/ingest/src/project.rs`, `match_inherited_lots`, with
+`LegacyLotNumbers::inherited` beside 567's map) now resolves such a block against the lots the award's version
+inherits from the notices folded before it, when the round is pushed and before `lots_awarded` reads the rounds,
+on both fold paths (streaming and `BucketRow::to_notice_state`). The rule (`.scratch/tender-db/568-r208-lots/
+decision.md`, steps 1–9):
+- only a result with `lot_key` null and its own printed number (first `TED-LOT_NO`, else first `TED-LOT_NUMBER`;
+  only a legacy block has that pair), and only in an award notice with no lot section of its own (one with lot
+  sections keeps 567's resolution, its null included);
+- against the inherited lots of kind `Lot` that print a number (the latest section's `TED-LOT_NO`, else
+  `TED-LOT_NUMBER`, never `TED-ITEM`): the exact trimmed number first, the `normalise_lot_number` form only where
+  no lot prints it exactly; one lot names the key, two or none leave the block on the Tender;
+- G1: two or more numbered blocks that all normalise to one number, on a Tender whose inherited lots print two or
+  more numbers, match none (5476747's CAN 18543084 prints `1` on all three); a single-lot Tender is exempt;
+- G2: once a notice folded before the award republished an inherited lot under another normalised number, or
+  without one, no later award is matched (a lot that printed none and gains one is not renumbered);
+- frozen: the key is set on the award's own version and carried as resolved; `published_lot_no` stays the
+  block's; never the key's ordinal, `TED-ITEM`, a title, corrigendum prose, `CONTRACT_NUMBER` or the position.
+
+The parsed layer is right, so this is a refold (ADR-0017 R3, no epoch bump). The cohort is the `TED-LOT_NUMBER`
+carriers: every R2.0.8 award block that can move prints it, and so does the R2.0.8 CN lot annex it matches (those
+CN-only Tenders ride along and compare `verified`). `TED-LOT_NO` stays out: 567's refold covered it, and R2.0.9
+CANs keep their same-notice resolution.
+
+```sh
+# size: aborts naming the carrier count, writes nothing
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_NUMBER"],"tables":["notice_ids"],"expect":1}'
+#   → error "refold-fields aborted: N notices carry [\"TED-LOT_NUMBER\"], expected ~1 — check the field ids (nothing was written)"
+# wet, with that N; the handler queues its own `project` (do not queue a second)
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_NUMBER"],"tables":["notice_ids"],"expect":N}'
+```
+
+- **Order**: after 567's drain is read back (2589/2590), clear of the 07:35 UTC daily chain and of a running
+  refold, and **before 551's B3 parity**: legacy award lot keys feed path W's sums, so a B3 run before this drain
+  re-runs after it, for the reason it waits for 567.
+- **Baseline first**: before the wet run, snapshot the ≥ EUR 1 bn value band and the path V `lot-sum-vouched`
+  heads; read (e) below against them.
+- **Size and cost**: carriers likely about 0.5–0.9 M, so the `project` probably falls back to FULL (issue 305's
+  500 k closure cap): about 4.3 h, like 2531 and 2590. Stoppable (issue 543); a stopped `project` is re-run, not
+  read as done.
+- **Expected moves** (an assumption, not a measurement: 0.8–1.0 M R2.0.8 award notices): about 130–160 k Tenders
+  corrected (100–195 k), 1.1–1.4 M award blocks from `lot: null` to a lot. The dry run's carrier count and the wet
+  run's `stamped N` replace the estimate. Each corrected Tender writes a `tender changed` plus a `lot changed` per
+  touched lot (5284511 alone about 140), order 10⁶ change rows in all: lot subscribers (SSE, webhooks) see the
+  burst.
+- **The head value can ride along**: 537's award-side scale refusal and 551's path V see R2.0.8 award lot sums
+  for the first time, so a ≥ EUR 1 bn head can flip kept ↔ refused or vouched ↔ not. Expect a handful at most;
+  each must be a 568 move (e). `LotSums` keeps one award per lot, so a lot with several awards sums its latest.
+
+Verify, in order:
+- (a) D7's completeness: the `project`'s `compare: X verified, Y corrected` summing to at least the wet run's
+  `stamped N`, and a bounded window read finds no `projection_epoch = 0` residue.
+- (b) The issue's Verify: 4748635 serves `[LOT-1, LOT-2, LOT-3, LOT-5, LOT-6, LOT-7, LOT-8, LOT-9]` (`curl -s
+  https://tenders.zebreus.click/v1/tenders/4748635 | jq -c '[.lot_results[].lot]'`).
+- (c) The 77 measured Tenders (the 71 of `.scratch/tender-db/568-r208-lots/port_result.json` and the 6 of
+  `extra_port.jsonl`), through `/v1/tenders/{id}` at one GET per 1.5 s: every block on the port's lot (647 + 8);
+  5476747's three, the 26 no_match, the 6 no_number and 4634188 RES-2 stay `null`; nothing else moved.
+- (d) A fresh uniform 30 corrected Tenders from the `project`'s `tender changed` rows (note the `/v1/changes`
+  cursor before and after; `version: null`), at least 10 from outside 2012–2015, each moved block adjudicated by
+  title or figure against its notices' `/v1/notices/<id>/content`. **Bar: 30 of 30 with no wrong block**; one
+  wrong reopens the decision.
+- (e) The band and path V diff against the baseline: every head that moved is a Tender whose R2.0.8 awards gained
+  keys, each read as 568's.
+- (f) Status: R2.0.8 Tenders whose served `status` changed should be about none (533's `closed_by_notice` can flip
+  in the projection where every result is a no-award, but 2010–2019 deadlines are past).
+
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|
 refold-notices|refold-sections|reparse|data-quality|backfill-titles|mark-skipped-siblings|clear-rebuild-flag,

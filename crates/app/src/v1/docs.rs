@@ -800,7 +800,18 @@ rates and the quarantine resolution ledger.</p>
   r2.0.9 (its object description is a Lot) and on eForms. It serves <code>lots: 0</code>
   on the text era (no lot structure), on internal-ojs 2008 without a <code>LOTS</code>
   section, and on r2.0.8 unless a contract notice published a lot annex: an r2.0.8 award
-  notice carries no lot section, divided or not. FTS makes a
+  notice carries no lot section, divided or not. An r2.0.8 award takes the lot its contract
+  notice printed under the same number (issue 568). It stays on the Tender
+  (<code>lot_results[].lot</code> null) where the lots are lettered and the awards numbered,
+  where the award prints no number, where only the award prints the number or two lots print
+  it, where a lot was added only in a corrigendum's prose, where an earlier notice renumbered
+  the lots, and where an award notice prints one number on all of its two or more awards while
+  the Tender's lots print several numbers. An r2.0.9 award takes the lot section of its own
+  notice that prints its <code>LOT_NO</code> (else <code>LOT_NUMBER</code>), an exact match
+  first, then the one lot whose number matches once normalised (<code>Lot 01</code> is
+  <code>1</code>) (issue 567); an r2.0.9 award printing a list of numbers (<code>18,19</code>),
+  a number two lot sections print, or no number where the sections' numbers are not their
+  positions stays on the Tender. FTS makes a
   Lot only from a release's <code>tender.lots</code>, so an FTS Tender serves 0 until one
   of its releases lists a lot; award, contract and tenderUpdate releases often list none.
   A Tender that is only an r2.0.9 F14 corrigendum, or an eForms prior-information notice
@@ -1600,6 +1611,64 @@ mod tests {
                 ],
             );
         }
+    }
+
+    /// Issue 568: the coverage bullet's `lots` rule says where an r2.0.8 award goes (the lot
+    /// its contract notice printed under the award's number) and which awards stay on the
+    /// Tender: lettered lots against numbered awards, no number, a number only the award
+    /// prints or two lots print, a lot added only in corrigendum prose, renumbered lots (G2),
+    /// and one number printed on all of two or more awards of a Tender whose lots print
+    /// several (G1 — so not a single-award notice, nor a single-lot Tender). Read from the
+    /// one coverage bullet that names `notice_subtype` (the bullet that states the `lots`
+    /// rule), so a mention elsewhere cannot satisfy it; one phrase per clause.
+    #[test]
+    fn the_docs_say_an_r208_award_takes_the_lot_its_contract_notice_numbered() {
+        let start = PAGE.find("<h3>Coverage varies by era</h3>").expect("/docs has the coverage caveats");
+        let section = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h3>").expect("a section follows it")];
+        let docs = section
+            .split("<li>")
+            .find(|item| item.contains("<code>notice_subtype</code>"))
+            .expect("/docs's coverage caveats carry a notice_subtype bullet");
+        assert_says(
+            "/docs's lots rule",
+            docs,
+            &[
+                "an r2.0.8 award takes the lot its contract notice printed under the same number (issue 568)",
+                "it stays on the tender (lot_results[].lot null)",
+                "where the lots are lettered and the awards numbered",
+                "where the award prints no number",
+                "where only the award prints the number or two lots print it",
+                "where a lot was added only in a corrigendum's prose",
+                "where an earlier notice renumbered the lots",
+                "where an award notice prints one number on all of its two or more awards while the tender's lots print several numbers",
+            ],
+        );
+    }
+
+    /// Issue 567: the same coverage bullet says where an r2.0.9 award goes (the lot section of
+    /// its own notice printing its LOT_NO, else LOT_NUMBER, exact then normalised) and which
+    /// awards stay on the Tender (a list of numbers, a number two sections print, no number
+    /// where the sections are not numbered by position). The read-back of the 567 refold saw
+    /// all three null shapes served; before this the served reference named none of them.
+    #[test]
+    fn the_docs_say_an_r209_award_takes_the_lot_its_own_notice_numbered() {
+        let start = PAGE.find("<h3>Coverage varies by era</h3>").expect("/docs has the coverage caveats");
+        let section = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h3>").expect("a section follows it")];
+        let docs = section
+            .split("<li>")
+            .find(|item| item.contains("<code>notice_subtype</code>"))
+            .expect("/docs's coverage caveats carry a notice_subtype bullet");
+        assert_says(
+            "/docs's lots rule",
+            docs,
+            &[
+                "an r2.0.9 award takes the lot section of its own notice that prints its lot_no (else lot_number)",
+                "an exact match first, then the one lot whose number matches once normalised (lot 01 is 1) (issue 567)",
+                "an r2.0.9 award printing a list of numbers (18,19)",
+                "a number two lot sections print",
+                "or no number where the sections' numbers are not their positions stays on the tender",
+            ],
+        );
     }
 
     /// Issue 456: a party on the detail carries two names, and both surfaces a

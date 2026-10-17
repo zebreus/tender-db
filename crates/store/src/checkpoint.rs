@@ -327,6 +327,56 @@ mod tests {
         }
     }
 
+    /// Issue 569: what turso_core 0.7.2 reports for a TRUNCATE, and why phase 1's "WAL not
+    /// fully reclaimed" predicate (`ingest::project`'s `plan_checkpoint_unreclaimed`) reads
+    /// the `-wal` file's size, never the frame counts. A busy TRUNCATE fails inside the
+    /// engine, which sets only the busy column and leaves `log` and `checkpointed` NULL
+    /// (read as 0) — over an empty WAL and over a pinned multi-MB one alike. A completed
+    /// TRUNCATE reports `(0, 0)` as well, because it reports after truncating. Only the
+    /// file tells a reader-pin from nothing. If an engine upgrade starts reporting real
+    /// counts here, this fails, and the predicate may read them again.
+    #[tokio::test]
+    async fn a_busy_truncate_reports_no_frame_counts_even_over_a_pinned_wal() {
+        let (path, db) = scratch("busy-counts").await;
+        let nothing = Checkpointed { busy: false, wal_frames: 0, checkpointed: 0 };
+        let busy = Checkpointed { busy: true, wal_frames: 0, checkpointed: 0 };
+
+        grow_wal(&db, 4_000).await;
+        let grown = db.wal_bytes().unwrap_or(0);
+        assert!(grown > 0, "the WAL grew");
+        let done = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        assert_eq!(done, nothing, "a completed TRUNCATE reports its counts after truncating");
+        assert_eq!(db.wal_bytes().unwrap_or(0), 0, "and leaves the -wal file empty");
+
+        // A reader holds a snapshot over the empty WAL.
+        let pool = db.readers(4).unwrap();
+        let reader = pool.get().await.unwrap();
+        reader.execute("BEGIN", ()).await.unwrap();
+        let mut rows = reader.query("SELECT COUNT(*) FROM fetches", ()).await.unwrap();
+        while rows.next().await.unwrap().is_some() {}
+        drop(rows);
+
+        let over_empty = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        assert_eq!(over_empty, busy, "a reader's snapshot makes a TRUNCATE busy with nothing to checkpoint");
+        assert_eq!(db.wal_bytes().unwrap_or(0), 0, "busy over an empty -wal file");
+
+        // The same snapshot pins what is written next: busy, the SAME counts, a full file.
+        grow_wal(&db, 4_000).await;
+        let pinned = db.checkpoint(CheckpointMode::Truncate).await.unwrap();
+        assert_eq!(pinned, busy, "a real reader-pin reports exactly what busy over nothing reports");
+        let held = db.wal_bytes().unwrap_or(0);
+        assert!(held > 200_000, "the pinned frames stay in the -wal file, got {held} (grown {grown})");
+
+        reader.execute("COMMIT", ()).await.unwrap();
+        drop(reader);
+        assert_eq!(db.checkpoint(CheckpointMode::Truncate).await.unwrap(), nothing);
+        assert_eq!(db.wal_bytes().unwrap_or(0), 0, "unpinned, the TRUNCATE reclaims the file");
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Issue 63: with the WAL read-gate ON, the gated checkpoint takes the gate's
     /// EXCLUSIVE side, drains readers, truncates, and releases — wired end-to-end,
     /// reclaiming fully and never deadlocking (a reader never blocks itself: it
