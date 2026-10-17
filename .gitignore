@@ -2,6 +2,7 @@
 /result
 *.db
 *.db-wal
+*.db-shm
 # turso's experimental multiprocess-WAL coordination file (issue 431's soak)
 *.db-tshm
 # `log_diag` writes beside the database it is logging for (checkpoint.rs), so a
