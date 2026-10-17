@@ -26,4 +26,21 @@
 
 ## Result
 
+### Walk — COMPLETE (2026-10-17T16:10:44Z → 16:45:15Z, 1,349 GETs)
+
+- 223 new ids walked (order positions 54..276), 277 in all. Outcomes over all 277: 134 v2 ships, 142 refused,
+  1 dropped (179732: v1 does not fire, its procedure figure is not a sentinel), 0 unread, 0 port errors.
+- **Vouched ships: 30** (5 reused + 25 new): 941214, 64640, 6535408, 202168, 100472, 655266, 672947, 8451328, 7721890,
+  881605, 5816379, 775393, 161565, 481715, 590618, 5618652, 7278290, 674079, 1084063, 131063, 7810318, 316811,
+  1027821, 5889767, 6311845. Vouching kinds of the 25: BT-118 13, TED VAL_TOTAL 6, BT-1118 3, TED VAL_RANGE LOW 2,
+  HIGH 1.
+- **Projected fallback fires:** 15,352 × 30/276 ≈ **1,669** (the decision expected about 2,450; 95 % 1,100–4,470).
+- **Band:** no vouched ship at or above EUR 100 m (largest 481715, EUR 22.54 m); M2's band read (15 right) stands.
+- First refusing check of the 118 new refusals: R3 36, R8 19, R2c 19, R1 11, R2a 8, R2d 6, R10 5, R5.15 3, R7 3,
+  R5.1 2, R6 2, R5.13 2, R5.3 1, R5.2 1.
+- Items for the read: `M2-fallback-items.json`. Read: workflow wf_03469a70-c1b (M2's script, file and group keys
+  changed; items carry `vouched_by`).
+
+### Read
+
 (pending)

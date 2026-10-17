@@ -1,0 +1,1017 @@
+{
+ "groups": [
+  {
+   "key": "fb-1",
+   "kind": "fresh",
+   "items": [
+    {
+     "id": 941214,
+     "S_display": "EUR 475,000.00",
+     "S_eur_display": "EUR 475,000.00",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 24875440,
+       "cents": 25000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 24875440,
+       "cents": 22500000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 24875440,
+      "cents": 47500000
+     }
+    },
+    {
+     "id": 64640,
+     "S_display": "HUF 17,305,702,609.20",
+     "S_eur_display": "EUR 42,247,156.24",
+     "n": 8,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 24380565,
+       "cents": 366760800000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 24380565,
+       "cents": 36016794000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 24380565,
+       "cents": 61746300000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      },
+      {
+       "key": "LOT-0004",
+       "notice_id": 24380565,
+       "cents": 23775897600,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0004"
+      },
+      {
+       "key": "LOT-0005",
+       "notice_id": 24380565,
+       "cents": 297234630000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0005"
+      },
+      {
+       "key": "LOT-0006",
+       "notice_id": 24380565,
+       "cents": 562091735520,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0006"
+      },
+      {
+       "key": "LOT-0007",
+       "notice_id": 24380565,
+       "cents": 336942943800,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0007"
+      },
+      {
+       "key": "LOT-0008",
+       "notice_id": 24380565,
+       "cents": 46001160000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0008"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 24380565,
+      "cents": 1730570260920
+     }
+    },
+    {
+     "id": 6535408,
+     "S_display": "PLN 676,400.00",
+     "S_eur_display": "EUR 154,383.40",
+     "n": 3,
+     "summed": [
+      {
+       "key": "LOT-1",
+       "notice_id": 20617353,
+       "cents": 20990000,
+       "decision": "selec-w",
+       "published_lot_no": "1"
+      },
+      {
+       "key": "LOT-2",
+       "notice_id": 20617353,
+       "cents": 21500000,
+       "decision": "selec-w",
+       "published_lot_no": "2"
+      },
+      {
+       "key": "LOT-3",
+       "notice_id": 20617353,
+       "cents": 25150000,
+       "decision": "selec-w",
+       "published_lot_no": "3"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-HIGH",
+      "notice_id": 20617353,
+      "cents": 67640000
+     }
+    },
+    {
+     "id": 202168,
+     "S_display": "EUR 2,037,500.00",
+     "S_eur_display": "EUR 2,037,500.00",
+     "n": 10,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 27017544,
+       "cents": 11000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 27017544,
+       "cents": 10000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 27017544,
+       "cents": 32000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      },
+      {
+       "key": "LOT-0004",
+       "notice_id": 27017544,
+       "cents": 17500000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0004"
+      },
+      {
+       "key": "LOT-0006",
+       "notice_id": 27017544,
+       "cents": 4500000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0006"
+      },
+      {
+       "key": "LOT-0008",
+       "notice_id": 27017544,
+       "cents": 5000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0008"
+      },
+      {
+       "key": "LOT-0009",
+       "notice_id": 27017544,
+       "cents": 62500000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0009"
+      },
+      {
+       "key": "LOT-0010",
+       "notice_id": 27017544,
+       "cents": 45000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0010"
+      },
+      {
+       "key": "LOT-0011",
+       "notice_id": 27017544,
+       "cents": 12500000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0011"
+      },
+      {
+       "key": "LOT-0012",
+       "notice_id": 27017544,
+       "cents": 3750000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0012"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 27017544,
+      "cents": 203750000
+     }
+    },
+    {
+     "id": 100472,
+     "S_display": "EUR 633,777.00",
+     "S_eur_display": "EUR 633,777.00",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 24966553,
+       "cents": 31177700,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 24966553,
+       "cents": 32200000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 24966553,
+      "cents": 63377700
+     }
+    }
+   ]
+  },
+  {
+   "key": "fb-2",
+   "kind": "fresh",
+   "items": [
+    {
+     "id": 655266,
+     "S_display": "EUR 1,474,000.00",
+     "S_eur_display": "EUR 1,474,000.00",
+     "n": 3,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 23695135,
+       "cents": 55000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 23695135,
+       "cents": 26400000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 23695135,
+       "cents": 66000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 23695135,
+      "cents": 147400000
+     }
+    },
+    {
+     "id": 672947,
+     "S_display": "EUR 1,900,000.00",
+     "S_eur_display": "EUR 1,900,000.00",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 25899556,
+       "cents": 157000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 25899556,
+       "cents": 33000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25899556,
+      "cents": 190000000
+     }
+    },
+    {
+     "id": 8451328,
+     "S_display": "EUR 5,000,000.00",
+     "S_eur_display": "EUR 5,000,000.00",
+     "n": 4,
+     "summed": [
+      {
+       "key": "LOT-1",
+       "notice_id": 20875978,
+       "cents": 200000000,
+       "decision": "selec-w",
+       "published_lot_no": "1"
+      },
+      {
+       "key": "LOT-2",
+       "notice_id": 20875978,
+       "cents": 150000000,
+       "decision": "selec-w",
+       "published_lot_no": "2"
+      },
+      {
+       "key": "LOT-3",
+       "notice_id": 20875978,
+       "cents": 100000000,
+       "decision": "selec-w",
+       "published_lot_no": "3"
+      },
+      {
+       "key": "LOT-4",
+       "notice_id": 20875978,
+       "cents": 50000000,
+       "decision": "selec-w",
+       "published_lot_no": "4"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20875978,
+      "cents": 500000000
+     }
+    },
+    {
+     "id": 7721890,
+     "S_display": "EUR 466,657.00",
+     "S_eur_display": "EUR 466,657.00",
+     "n": 4,
+     "summed": [
+      {
+       "key": "LOT-1",
+       "notice_id": 23385050,
+       "cents": 12175000,
+       "decision": "selec-w",
+       "published_lot_no": "1"
+      },
+      {
+       "key": "LOT-2",
+       "notice_id": 23385050,
+       "cents": 25375500,
+       "decision": "selec-w",
+       "published_lot_no": "2"
+      },
+      {
+       "key": "LOT-3",
+       "notice_id": 23385050,
+       "cents": 5848400,
+       "decision": "selec-w",
+       "published_lot_no": "3"
+      },
+      {
+       "key": "LOT-4",
+       "notice_id": 23385050,
+       "cents": 3266800,
+       "decision": "selec-w",
+       "published_lot_no": "4"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 23385050,
+      "cents": 46665700
+     }
+    },
+    {
+     "id": 881605,
+     "S_display": "EUR 1,297,518.00",
+     "S_eur_display": "EUR 1,297,518.00",
+     "n": 3,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 23858388,
+       "cents": 78512300,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 23858388,
+       "cents": 24793300,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 23858388,
+       "cents": 26446200,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 23858388,
+      "cents": 129751800
+     }
+    }
+   ]
+  },
+  {
+   "key": "fb-3",
+   "kind": "fresh",
+   "items": [
+    {
+     "id": 5816379,
+     "S_display": "EUR 472,520.00",
+     "S_eur_display": "EUR 472,520.00",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-1",
+       "notice_id": 19334482,
+       "cents": 21979000,
+       "decision": "selec-w",
+       "published_lot_no": "1"
+      },
+      {
+       "key": "LOT-2",
+       "notice_id": 19334482,
+       "cents": 25273000,
+       "decision": "selec-w",
+       "published_lot_no": "2"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19334482,
+      "cents": 47252000
+     }
+    },
+    {
+     "id": 775393,
+     "S_display": "EUR 259,075.00",
+     "S_eur_display": "EUR 259,075.00",
+     "n": 5,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 24420398,
+       "cents": 10597800,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 24420398,
+       "cents": 3343000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 24420398,
+       "cents": 3391600,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      },
+      {
+       "key": "LOT-0004",
+       "notice_id": 24420398,
+       "cents": 3480300,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0004"
+      },
+      {
+       "key": "LOT-0005",
+       "notice_id": 24420398,
+       "cents": 5094800,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0005"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 24420398,
+      "cents": 25907600
+     }
+    },
+    {
+     "id": 161565,
+     "S_display": "EUR 4,300,000.00",
+     "S_eur_display": "EUR 4,300,000.00",
+     "n": 3,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 25516039,
+       "cents": 190000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 25516039,
+       "cents": 100000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 25516039,
+       "cents": 140000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25516039,
+      "cents": 430000000
+     }
+    },
+    {
+     "id": 481715,
+     "S_display": "EUR 22,540,621.00",
+     "S_eur_display": "EUR 22,540,621.00",
+     "n": 13,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 27264043,
+       "cents": 88952960,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 27264043,
+       "cents": 278553600,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 27264043,
+       "cents": 574784925,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      },
+      {
+       "key": "LOT-0004",
+       "notice_id": 27264043,
+       "cents": 36760510,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0004"
+      },
+      {
+       "key": "LOT-0005",
+       "notice_id": 27264043,
+       "cents": 154121625,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0005"
+      },
+      {
+       "key": "LOT-0006",
+       "notice_id": 27264043,
+       "cents": 54517365,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0006"
+      },
+      {
+       "key": "LOT-0007",
+       "notice_id": 27264043,
+       "cents": 255928050,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0007"
+      },
+      {
+       "key": "LOT-0008",
+       "notice_id": 27264043,
+       "cents": 117774600,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0008"
+      },
+      {
+       "key": "LOT-0009",
+       "notice_id": 27264043,
+       "cents": 366945600,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0009"
+      },
+      {
+       "key": "LOT-0010",
+       "notice_id": 27264043,
+       "cents": 88670875,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0010"
+      },
+      {
+       "key": "LOT-0012",
+       "notice_id": 27264043,
+       "cents": 135400290,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0012"
+      },
+      {
+       "key": "LOT-0014",
+       "notice_id": 27264043,
+       "cents": 48667100,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0014"
+      },
+      {
+       "key": "LOT-0015",
+       "notice_id": 27264043,
+       "cents": 52984600,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0015"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 27264043,
+      "cents": 2254062100
+     }
+    },
+    {
+     "id": 590618,
+     "S_display": "EUR 909,200.00",
+     "S_eur_display": "EUR 909,200.00",
+     "n": 3,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 25584483,
+       "cents": 12880000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 25584483,
+       "cents": 10440000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 25584483,
+       "cents": 67600000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25584483,
+      "cents": 90920000
+     }
+    }
+   ]
+  },
+  {
+   "key": "fb-4",
+   "kind": "fresh",
+   "items": [
+    {
+     "id": 5618652,
+     "S_display": "EUR 37,000.00",
+     "S_eur_display": "EUR 37,000.00",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-1",
+       "notice_id": 18852732,
+       "cents": 2500000,
+       "decision": "selec-w",
+       "published_lot_no": "1"
+      },
+      {
+       "key": "LOT-2",
+       "notice_id": 18852732,
+       "cents": 1200000,
+       "decision": "selec-w",
+       "published_lot_no": "2"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-LOW",
+      "notice_id": 18852732,
+      "cents": 3700000
+     }
+    },
+    {
+     "id": 7278290,
+     "S_display": "HUF 205,023,350.00",
+     "S_eur_display": "EUR 502,225.09",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-1",
+       "notice_id": 22759753,
+       "cents": 11972335000,
+       "decision": "selec-w",
+       "published_lot_no": "1"
+      },
+      {
+       "key": "LOT-2",
+       "notice_id": 22480086,
+       "cents": 8530000000,
+       "decision": "selec-w",
+       "published_lot_no": "2"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22480086,
+      "cents": 20502335000
+     }
+    },
+    {
+     "id": 674079,
+     "S_display": "EUR 389,250.00",
+     "S_eur_display": "EUR 389,250.00",
+     "n": 3,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 25018754,
+       "cents": 11860000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 25018754,
+       "cents": 14470000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 25018754,
+       "cents": 12595000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25018754,
+      "cents": 38925000
+     }
+    },
+    {
+     "id": 1084063,
+     "S_display": "EUR 2,000,000.00",
+     "S_eur_display": "EUR 2,000,000.00",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 28228223,
+       "cents": 128000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 28228223,
+       "cents": 72000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 28228223,
+      "cents": 200000000
+     }
+    },
+    {
+     "id": 131063,
+     "S_display": "EUR 4,700,000.00",
+     "S_eur_display": "EUR 4,700,000.00",
+     "n": 3,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 45883577,
+       "cents": 300000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 45883577,
+       "cents": 50000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 45883577,
+       "cents": 120000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 45883577,
+      "cents": 470000000
+     }
+    }
+   ]
+  },
+  {
+   "key": "fb-5",
+   "kind": "fresh",
+   "items": [
+    {
+     "id": 7810318,
+     "S_display": "EUR 82,000.00",
+     "S_eur_display": "EUR 82,000.00",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-1",
+       "notice_id": 23384695,
+       "cents": 2500000,
+       "decision": "selec-w",
+       "published_lot_no": "1"
+      },
+      {
+       "key": "LOT-2",
+       "notice_id": 23384695,
+       "cents": 5700000,
+       "decision": "selec-w",
+       "published_lot_no": "2"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-LOW",
+      "notice_id": 23384695,
+      "cents": 8200000
+     }
+    },
+    {
+     "id": 316811,
+     "S_display": "EUR 520,000.00",
+     "S_eur_display": "EUR 520,000.00",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 44498816,
+       "cents": 20000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 44498816,
+       "cents": 32000000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 44498816,
+      "cents": 52000000
+     }
+    },
+    {
+     "id": 1027821,
+     "S_display": "EUR 139,466.80",
+     "S_eur_display": "EUR 139,466.80",
+     "n": 7,
+     "summed": [
+      {
+       "key": "LOT-0001",
+       "notice_id": 25638640,
+       "cents": 598100,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0001"
+      },
+      {
+       "key": "LOT-0002",
+       "notice_id": 25638640,
+       "cents": 1127000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0002"
+      },
+      {
+       "key": "LOT-0003",
+       "notice_id": 25638640,
+       "cents": 4929043,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0003"
+      },
+      {
+       "key": "LOT-0004",
+       "notice_id": 25638640,
+       "cents": 2271537,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0004"
+      },
+      {
+       "key": "LOT-0005",
+       "notice_id": 25638640,
+       "cents": 2320000,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0005"
+      },
+      {
+       "key": "LOT-0006",
+       "notice_id": 25638640,
+       "cents": 826200,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0006"
+      },
+      {
+       "key": "LOT-0007",
+       "notice_id": 25638640,
+       "cents": 1874800,
+       "decision": "selec-w",
+       "published_lot_no": "LOT-0007"
+      }
+     ],
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25638640,
+      "cents": 13946680
+     }
+    },
+    {
+     "id": 5889767,
+     "S_display": "HUF 3,480,066,469.00",
+     "S_eur_display": "EUR 10,682,259.41",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-5",
+       "notice_id": 19614525,
+       "cents": 99484359500,
+       "decision": "selec-w",
+       "published_lot_no": "5"
+      },
+      {
+       "key": "LOT-7",
+       "notice_id": 19614525,
+       "cents": 248522287400,
+       "decision": "selec-w",
+       "published_lot_no": "7"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19614525,
+      "cents": 348006646900
+     }
+    },
+    {
+     "id": 6311845,
+     "S_display": "EUR 3,864,873.68",
+     "S_eur_display": "EUR 3,864,873.68",
+     "n": 2,
+     "summed": [
+      {
+       "key": "LOT-1",
+       "notice_id": 20261370,
+       "cents": 314376305,
+       "decision": "selec-w",
+       "published_lot_no": "1"
+      },
+      {
+       "key": "LOT-2",
+       "notice_id": 20261370,
+       "cents": 72111063,
+       "decision": "selec-w",
+       "published_lot_no": "2"
+      }
+     ],
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20261370,
+      "cents": 386487368
+     }
+    }
+   ]
+  }
+ ]
+}
