@@ -1,0 +1,1290 @@
+{
+ "source": "567 part-1/2 draws (2016-2023: one multi-lot legacy CAN per random OJ S day, seeded RNG 567001/567002)",
+ "n": 204,
+ "groups": [
+  {
+   "key": "k1",
+   "items": [
+    {
+     "tender_id": 5528997,
+     "can_notice_id": 18637738,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5647345,
+     "can_notice_id": 18831619,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5816562,
+     "can_notice_id": 19071962,
+     "profile": "ted-export-r209",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5868950,
+     "can_notice_id": 19310343,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5914432,
+     "can_notice_id": 19589079,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6115187,
+     "can_notice_id": 19886044,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6017990,
+     "can_notice_id": 20148555,
+     "profile": "ted-export-r208",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6445785,
+     "can_notice_id": 20451472,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6573698,
+     "can_notice_id": 20757663,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6696682,
+     "can_notice_id": 20997081,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6809887,
+     "can_notice_id": 21269096,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6950746,
+     "can_notice_id": 21591504,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7080411,
+     "can_notice_id": 21923286,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7274985,
+     "can_notice_id": 22223285,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7348336,
+     "can_notice_id": 22564340,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7502181,
+     "can_notice_id": 22939732,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7676397,
+     "can_notice_id": 23305948,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k2",
+   "items": [
+    {
+     "tender_id": 5529063,
+     "can_notice_id": 18629365,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5608579,
+     "can_notice_id": 18859444,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5709970,
+     "can_notice_id": 19106723,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5890591,
+     "can_notice_id": 19374575,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6053531,
+     "can_notice_id": 19647803,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6138021,
+     "can_notice_id": 19860946,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6294876,
+     "can_notice_id": 20172561,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6326490,
+     "can_notice_id": 20475946,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6619935,
+     "can_notice_id": 20764625,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6695729,
+     "can_notice_id": 21033863,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6686949,
+     "can_notice_id": 21312776,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6961202,
+     "can_notice_id": 21622699,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7006083,
+     "can_notice_id": 21943329,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7246452,
+     "can_notice_id": 22247410,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 8503930,
+     "can_notice_id": 22600688,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7511890,
+     "can_notice_id": 22980479,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7644019,
+     "can_notice_id": 23319363,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k3",
+   "items": [
+    {
+     "tender_id": 5526177,
+     "can_notice_id": 18670452,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5621155,
+     "can_notice_id": 18869092,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5775903,
+     "can_notice_id": 19089711,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5974937,
+     "can_notice_id": 19346476,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6026257,
+     "can_notice_id": 19657371,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6243140,
+     "can_notice_id": 19901228,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6393358,
+     "can_notice_id": 20211834,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6458976,
+     "can_notice_id": 20506309,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6606044,
+     "can_notice_id": 20792981,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6688970,
+     "can_notice_id": 21059660,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6792500,
+     "can_notice_id": 21317021,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 7016110,
+     "can_notice_id": 21665906,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 6891171,
+     "can_notice_id": 21974313,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7259677,
+     "can_notice_id": 22273223,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7369941,
+     "can_notice_id": 22628313,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 8515809,
+     "can_notice_id": 22937129,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7553042,
+     "can_notice_id": 23362617,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k4",
+   "items": [
+    {
+     "tender_id": 5476527,
+     "can_notice_id": 18660440,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5588262,
+     "can_notice_id": 18915096,
+     "profile": "ted-export-r209",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5674082,
+     "can_notice_id": 19138003,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5984445,
+     "can_notice_id": 19411290,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5897292,
+     "can_notice_id": 19645087,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6186953,
+     "can_notice_id": 19930991,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6250059,
+     "can_notice_id": 20232182,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6432702,
+     "can_notice_id": 20527561,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6429112,
+     "can_notice_id": 20805235,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6802604,
+     "can_notice_id": 21080700,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6773668,
+     "can_notice_id": 21338576,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6934075,
+     "can_notice_id": 21728468,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7138312,
+     "can_notice_id": 21976715,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7111026,
+     "can_notice_id": 22274063,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 8506083,
+     "can_notice_id": 22662552,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7590694,
+     "can_notice_id": 23000792,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7722628,
+     "can_notice_id": 23348115,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k5",
+   "items": [
+    {
+     "tender_id": 5496077,
+     "can_notice_id": 18696907,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5522286,
+     "can_notice_id": 18904371,
+     "profile": "ted-export-r209",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5807821,
+     "can_notice_id": 19121055,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5863721,
+     "can_notice_id": 19413721,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6081184,
+     "can_notice_id": 19684553,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6172563,
+     "can_notice_id": 19957634,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6412768,
+     "can_notice_id": 20241239,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6460622,
+     "can_notice_id": 20556448,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6565774,
+     "can_notice_id": 20852084,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6397695,
+     "can_notice_id": 21072522,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6882585,
+     "can_notice_id": 21377311,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6951826,
+     "can_notice_id": 21694829,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7103211,
+     "can_notice_id": 22027387,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 8496575,
+     "can_notice_id": 22353706,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7385913,
+     "can_notice_id": 22680227,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7077834,
+     "can_notice_id": 23038012,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7697322,
+     "can_notice_id": 23413021,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k6",
+   "items": [
+    {
+     "tender_id": 5529451,
+     "can_notice_id": 18722526,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5740924,
+     "can_notice_id": 18919726,
+     "profile": "ted-export-r209",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5787834,
+     "can_notice_id": 19167246,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6016695,
+     "can_notice_id": 19455222,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5937259,
+     "can_notice_id": 19687419,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6174432,
+     "can_notice_id": 19993222,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6430411,
+     "can_notice_id": 20276083,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6581378,
+     "can_notice_id": 20577015,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 8449282,
+     "can_notice_id": 20822492,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6684838,
+     "can_notice_id": 21106357,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6853217,
+     "can_notice_id": 21414166,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 7005973,
+     "can_notice_id": 21715163,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7098097,
+     "can_notice_id": 22033348,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 6994978,
+     "can_notice_id": 22329066,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7495648,
+     "can_notice_id": 22732333,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7596364,
+     "can_notice_id": 23049879,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7721489,
+     "can_notice_id": 23455315,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k7",
+   "items": [
+    {
+     "tender_id": 5579001,
+     "can_notice_id": 18738386,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5587976,
+     "can_notice_id": 18955068,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5656281,
+     "can_notice_id": 19177614,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5956189,
+     "can_notice_id": 19469482,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6003542,
+     "can_notice_id": 19723092,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6290638,
+     "can_notice_id": 20004819,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6439745,
+     "can_notice_id": 20296603,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6399916,
+     "can_notice_id": 20648374,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 5317587,
+     "can_notice_id": 20865073,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 5540787,
+     "can_notice_id": 21137920,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 8464093,
+     "can_notice_id": 21434539,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 7103646,
+     "can_notice_id": 21771193,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7122601,
+     "can_notice_id": 22094066,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7239498,
+     "can_notice_id": 22400159,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7452392,
+     "can_notice_id": 22788190,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7647671,
+     "can_notice_id": 23125590,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7663609,
+     "can_notice_id": 23484375,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k8",
+   "items": [
+    {
+     "tender_id": 8369783,
+     "can_notice_id": 18749234,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5718307,
+     "can_notice_id": 18994535,
+     "profile": "ted-export-r209",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5903062,
+     "can_notice_id": 19229811,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6001257,
+     "can_notice_id": 19501422,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5964532,
+     "can_notice_id": 19738611,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6198966,
+     "can_notice_id": 20019560,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6371582,
+     "can_notice_id": 20316906,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6564429,
+     "can_notice_id": 20617743,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6640090,
+     "can_notice_id": 20881549,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6787571,
+     "can_notice_id": 21156475,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6894667,
+     "can_notice_id": 21479359,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 6980424,
+     "can_notice_id": 21769762,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7227351,
+     "can_notice_id": 22127154,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7184617,
+     "can_notice_id": 22364197,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7371183,
+     "can_notice_id": 22767175,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7153808,
+     "can_notice_id": 23074890,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7465548,
+     "can_notice_id": 23461598,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k9",
+   "items": [
+    {
+     "tender_id": 5582046,
+     "can_notice_id": 18799115,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5697502,
+     "can_notice_id": 18982479,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5847165,
+     "can_notice_id": 19213219,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5939039,
+     "can_notice_id": 19505376,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6082428,
+     "can_notice_id": 19757497,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6171104,
+     "can_notice_id": 20060746,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6395046,
+     "can_notice_id": 20356321,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6439142,
+     "can_notice_id": 20675983,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6683210,
+     "can_notice_id": 20935863,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6565589,
+     "can_notice_id": 21200405,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6860418,
+     "can_notice_id": 21493436,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7028780,
+     "can_notice_id": 21805579,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7116944,
+     "can_notice_id": 22148159,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7112657,
+     "can_notice_id": 22462819,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7366473,
+     "can_notice_id": 22862381,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7525259,
+     "can_notice_id": 23183197,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7805827,
+     "can_notice_id": 23548507,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k10",
+   "items": [
+    {
+     "tender_id": 5565077,
+     "can_notice_id": 18788182,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5602216,
+     "can_notice_id": 19023719,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5827131,
+     "can_notice_id": 19259840,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5936713,
+     "can_notice_id": 19520606,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6003591,
+     "can_notice_id": 19764277,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6228293,
+     "can_notice_id": 20064779,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6391289,
+     "can_notice_id": 20383793,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6544744,
+     "can_notice_id": 20678918,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6633011,
+     "can_notice_id": 20957186,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6715921,
+     "can_notice_id": 21213475,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6939722,
+     "can_notice_id": 21521456,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 6986534,
+     "can_notice_id": 21826184,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7149945,
+     "can_notice_id": 22151155,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7338227,
+     "can_notice_id": 22454892,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7497865,
+     "can_notice_id": 22817524,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7635745,
+     "can_notice_id": 23192043,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7812497,
+     "can_notice_id": 23566174,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k11",
+   "items": [
+    {
+     "tender_id": 5620789,
+     "can_notice_id": 18797292,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5733924,
+     "can_notice_id": 19037143,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5846196,
+     "can_notice_id": 19264402,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6060809,
+     "can_notice_id": 19541135,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6097829,
+     "can_notice_id": 19815768,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6094131,
+     "can_notice_id": 20123983,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6466590,
+     "can_notice_id": 20445259,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 8433088,
+     "can_notice_id": 20739611,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 8442573,
+     "can_notice_id": 21009516,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6645917,
+     "can_notice_id": 21215610,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6731769,
+     "can_notice_id": 21541496,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7154996,
+     "can_notice_id": 21859969,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 6939153,
+     "can_notice_id": 22239704,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7289863,
+     "can_notice_id": 22509575,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7325299,
+     "can_notice_id": 22903429,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7693726,
+     "can_notice_id": 23256169,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7849831,
+     "can_notice_id": 23627822,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  },
+  {
+   "key": "k12",
+   "items": [
+    {
+     "tender_id": 5626897,
+     "can_notice_id": 18809110,
+     "profile": "ted-export-r208",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5755154,
+     "can_notice_id": 19063813,
+     "profile": "ted-export-r209",
+     "year": "2016"
+    },
+    {
+     "tender_id": 5937426,
+     "can_notice_id": 19299165,
+     "profile": "ted-export-r209",
+     "year": "2017"
+    },
+    {
+     "tender_id": 5988423,
+     "can_notice_id": 19578630,
+     "profile": "ted-export-r208",
+     "year": "2017"
+    },
+    {
+     "tender_id": 6016286,
+     "can_notice_id": 19824266,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6352468,
+     "can_notice_id": 20128178,
+     "profile": "ted-export-r209",
+     "year": "2018"
+    },
+    {
+     "tender_id": 6391062,
+     "can_notice_id": 20413649,
+     "profile": "ted-export-r208",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6513426,
+     "can_notice_id": 20744391,
+     "profile": "ted-export-r209",
+     "year": "2019"
+    },
+    {
+     "tender_id": 6706725,
+     "can_notice_id": 21017722,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 8462907,
+     "can_notice_id": 21272117,
+     "profile": "ted-export-r209",
+     "year": "2020"
+    },
+    {
+     "tender_id": 6864419,
+     "can_notice_id": 21589575,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 6997164,
+     "can_notice_id": 21871346,
+     "profile": "ted-export-r209",
+     "year": "2021"
+    },
+    {
+     "tender_id": 7004364,
+     "can_notice_id": 22237777,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7390688,
+     "can_notice_id": 22488160,
+     "profile": "ted-export-r209",
+     "year": "2022"
+    },
+    {
+     "tender_id": 7273507,
+     "can_notice_id": 22907537,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7541505,
+     "can_notice_id": 23217857,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    },
+    {
+     "tender_id": 7853535,
+     "can_notice_id": 23624853,
+     "profile": "ted-export-r209",
+     "year": "2023"
+    }
+   ]
+  }
+ ]
+}
