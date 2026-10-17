@@ -136,3 +136,13 @@ the `project` about 550's (4.3 h), so 3–4 h in a queue gap. Expected: tens of 
 (6 of the 60 are multi-lot CANs with award LOT_NOs, ~450 k, at unit 1's 4–10.6 %). Then the 15 notices read back
 (their tenders and the 45 expected moves are listed in the runbook) and a fresh uniform 30 corrected Tenders
 from the `project`'s `version: null` `tender changed` rows, bar 30 of 30.
+
+## Drain notes (2026-10-17)
+
+- Job 2590 fell back INCREMENTAL → FULL (issue 305: 1,381,903 un-projected legacy notices exceed the 500,000 closure
+  cap), so it re-projects all 14,934,797 notices. Same shape as 550's 2531 on 2026-10-15 (2,006,441 → full, 4.3 h): the
+  planning pace matched it chunk for chunk (8.0 M planned at +75 min in both). Expected end ≈ 21:40Z, clear of the
+  07:35Z daily chain.
+- Pre-refold baseline of the 16 path-V heads (all `lot-sum-vouched`, every value as docs/operations.md lists it):
+  `567-lot-mapping/pathv-baseline-pre567.json`. After 2590, re-read them: the runbook's "head value can ride along"
+  note says a lot move can flip a lot-sum head; any change there is 567's and is read as such.

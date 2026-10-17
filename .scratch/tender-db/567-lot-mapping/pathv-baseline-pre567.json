@@ -1,0 +1,325 @@
+{
+ "taken_at": "2026-10-17T18:49:57Z",
+ "heads": {
+  "7427765": {
+   "value": {
+    "cents": 300000000,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 6,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 300000000000,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "5943121": {
+   "value": {
+    "cents": 132157992,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 10,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 132157992000,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "369057": {
+   "value": {
+    "cents": 6237873629,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 3,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 6237873628000,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "251619": {
+   "value": {
+    "cents": 2433875808,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 2,
+    "lots": 4,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 243387580800,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "380921": {
+   "value": {
+    "cents": 724704000,
+    "currency": "PLN"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 4,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 724704000000,
+      "currency": "PLN"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "392980": {
+   "value": {
+    "cents": 3574004272,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 2,
+    "lots": 2,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 357400427200,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "425446": {
+   "value": {
+    "cents": 154900719,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 4,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 154900719000,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "706887": {
+   "value": {
+    "cents": 7056079275,
+    "currency": "PLN"
+   },
+   "derivation": {
+    "exponent": 2,
+    "lots": 10,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 705607927500,
+      "currency": "PLN"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "1024214": {
+   "value": {
+    "cents": 340000000,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 3,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 340000000000,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "BT-271-Lot"
+   }
+  },
+  "5779108": {
+   "value": {
+    "cents": 212000000,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 2,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 212000000000,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "6342034": {
+   "value": {
+    "cents": 1083675445,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 2,
+    "lots": 2,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 108367544500,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "6921980": {
+   "value": {
+    "cents": 2493033611,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 2,
+    "lots": 15,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 249303361300,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "7044132": {
+   "value": {
+    "cents": 238599200,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 7,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 238599200000,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "7829010": {
+   "value": {
+    "cents": 200000000,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 3,
+    "lots": 2,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 200000000000,
+      "currency": "EUR"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "8514592": {
+   "value": {
+    "cents": 17924893700,
+    "currency": "DKK"
+   },
+   "derivation": {
+    "exponent": 2,
+    "lots": 2,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "result_value",
+     "value": {
+      "cents": 1792489370000,
+      "currency": "DKK"
+     }
+    },
+    "rule": "537",
+    "summed": "awards"
+   }
+  },
+  "928196": {
+   "value": {
+    "cents": 4679746035,
+    "currency": "EUR"
+   },
+   "derivation": {
+    "exponent": 2,
+    "lots": 5,
+    "method": "lot-sum-vouched",
+    "refused": {
+     "field": "estimated_value",
+     "value": {
+      "cents": 467974603500,
+      "currency": "EUR"
+     }
+    },
+    "rule": "492",
+    "summed": "BT-27-Lot"
+   }
+  }
+ }
+}
