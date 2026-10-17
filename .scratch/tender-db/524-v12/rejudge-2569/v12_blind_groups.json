@@ -1,0 +1,608 @@
+{
+ "groups": [
+  {
+   "key": "blind-1",
+   "kind": "blind",
+   "items": [
+    {
+     "org_id": 22879656,
+     "identifier": "00100920602",
+     "country": "IT",
+     "old_name": "FRATELLI MAZZOCCHIA SPA (AGGIUDICATARIO\nTERZO CLASSIFICATO)",
+     "new_name": "FRATELLI MAZZOCCHIA SPA",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 8,
+     "top": 7,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "FRATELLI MAZZOCCHIA SPA",
+       6
+      ],
+      [
+       "FRATELLI MAZZOCCHIA S.P.A.",
+       1
+      ],
+      [
+       "FRATELLI MAZZOCCHIA SPA (AGGIUDICATARIO\nTERZO CLASSIFICATO)",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-24",
+     "top_newest": "2026-07-16",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22715252,
+     "identifier": "8921249810",
+     "country": "PL",
+     "old_name": "9)\tZespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+     "new_name": "Zespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 5,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Zespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+       3
+      ],
+      [
+       "9)\tZespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+       2
+      ],
+      [
+       "Zespól Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-18",
+     "top_newest": "2026-08-18",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22623942,
+     "identifier": "07018900014",
+     "country": "IT",
+     "old_name": "r.t.i. S.I.C.E.T. S.R.L. (mandataria) / S.A.I.S.E.F. S.P.A. IMPRESE STRADALI E FORNITURE (mandante) / COSTRUZIONI GENERALI ZOLDAN S.R.L. (mandante) / MELLO S.R.L. (mandante) / MARAZZATO SOLUZIONI AMBIENTALI S.R.L. a socio unico (mandante)",
+     "new_name": "S.I.C.E.T. S.R.L.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 10,
+     "top": 9,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "S.I.C.E.T. S.R.L.",
+       9
+      ],
+      [
+       "r.t.i. S.I.C.E.T. S.R.L. (mandataria) / S.A.I.S.E.F. S.P.A. IMPRESE STRADALI E FORNITURE (mandante) / COSTRUZIONI GENERALI ZOLDAN S.R.L. (mandante) / MELLO S.R.L. (mandante) / MARAZZATO SOLUZIONI AMBIENTALI S.R.L. a socio unico (mandante)",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-06-04",
+     "top_newest": "2026-10-15",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22611512,
+     "identifier": "DE149521821",
+     "country": "DE",
+     "old_name": "W. Schmitt GmbH \nFeuerwehrtechnik \nRheinstraße 182\n56564 Neuwied",
+     "new_name": "W. Schmitt GmbH Feuerwehrtechnik",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 4,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "W. Schmitt GmbH \nFeuerwehrtechnik \nRheinstraße 182\n56564 Neuwied",
+       2
+      ],
+      [
+       "W. Schmitt GmbH Feuerwehrtechnik",
+       2
+      ],
+      [
+       "W. Schmitt Feuerwehrtechnik GmbH",
+       1
+      ],
+      [
+       "W. Schmitt GmBH Feuerwehrtechnik",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-05-02",
+     "top_newest": "2026-09-02",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22901833,
+     "identifier": "02345670307",
+     "country": "IT",
+     "old_name": "SocietÃÂ  Ferrovie Udine Cividale",
+     "new_name": "Società Ferrovie Udine Cividale",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 5,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Società Ferrovie Udine Cividale",
+       3
+      ],
+      [
+       "SocietÃÃÃÂ  Ferrovie Udine Cividale",
+       1
+      ],
+      [
+       "SocietÃÂ  Ferrovie Udine Cividale",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-13",
+     "top_newest": "2026-10-06",
+     "rival_newest": "2025-03-12",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22576286,
+     "identifier": "00754150100",
+     "country": "IT",
+     "old_name": "Universit� degli Studi di Genova",
+     "new_name": "Università degli Studi di Genova",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 40,
+     "top": 38,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Universita degli Studi di Genova",
+       14
+      ],
+      [
+       "Università degli Studi di Genova",
+       11
+      ],
+      [
+       "Università degli studi di Genova",
+       8
+      ],
+      [
+       "Universita' degli Studi di Genova",
+       2
+      ],
+      [
+       "universita degli studi di genova",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-04-09",
+     "top_newest": "2026-09-21",
+     "rival_newest": "2025-03-14",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 15395,
+     "identifier": "6270011376",
+     "country": "PL",
+     "old_name": "Konsorcjum firm:\n1) Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o. o. – Lider konsorcjum\n2) Miejskie Przedsiębiorstwo Gospodarki Komunalnej i Mieszkaniowej Sp. z o.o. - Konsorcjant",
+     "new_name": "Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 47,
+     "top": 37,
+     "head": 6,
+     "second": 6,
+     "clusters": 6,
+     "spellings": [
+      [
+       "Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o.o.",
+       20
+      ],
+      [
+       "Przedsiębiorstwo Techniki Sanitarnej ALBA sp. z o.o.",
+       10
+      ],
+      [
+       "Konsorcjum firm:\n1) Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o. o. – Lider konsorcjum\n2) Miejskie Przedsiębiorstwo Gospodarki Komunalnej i Mieszkaniowej Sp. z o.o. - Konsorcjant",
+       6
+      ],
+      [
+       "Przedsiębiorstwo Techniki Sanitarnej Alba Sp. z o.o.",
+       4
+      ],
+      [
+       "Konsorcjant: Przedsiębiorstwo Techniki Sanitarnej ALBA sp. z o.o. Chorzów",
+       1
+      ]
+     ],
+     "head_procs": 3,
+     "head_in_window": 1,
+     "head_newest": "2026-07-20",
+     "top_newest": "2026-09-08",
+     "rival_newest": "2024-09-17",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22428673,
+     "identifier": "8271340539",
+     "country": "PL",
+     "old_name": "Waldemar Kuras Zakład Usług Leśnych\n„Modrzew”]",
+     "new_name": "Zakład Usług Leśnych \"Modrzew\" Waldemar Kuras",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Zakład Usług Leśnych \"Modrzew\" Waldemar Kuras",
+       3
+      ],
+      [
+       "Waldemar Kuras Zakład Usług Leśnych\n„Modrzew”]",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-01-17",
+     "top_newest": "2026-09-07",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "blind-2",
+   "kind": "blind",
+   "items": [
+    {
+     "org_id": 22925490,
+     "identifier": "525180613",
+     "country": "PL",
+     "old_name": "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nImpel Defender Sp. z o.o.\nFM Integrated Solutions Sp. z o.o.",
+     "new_name": "MoreThanGood Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 4,
+     "spellings": [
+      [
+       "MoreThanGood Sp. z o.o.",
+       4
+      ],
+      [
+       "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.",
+       1
+      ],
+      [
+       "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nImpel Defender Sp. z o.o.\nFM Integrated Solutions Sp. z o.o.",
+       1
+      ],
+      [
+       "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nOmni Service Sp. z o.o.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-01-29",
+     "top_newest": "2026-07-24",
+     "rival_newest": "2025-04-28",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22744515,
+     "identifier": "24470044900014",
+     "country": "FR",
+     "old_name": "CommunautÃ© de communes du Pays de Duras",
+     "new_name": "Communauté de communes du Pays de Duras",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 9,
+     "top": 7,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Communauté de communes du Pays de Duras",
+       7
+      ],
+      [
+       "CommunautÃ© de communes du Pays de Duras",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-27",
+     "top_newest": "2025-11-25",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22765274,
+     "identifier": "7766559900129",
+     "country": "FR",
+     "old_name": "Agence FranÃ§aise de DÃ©veloppement",
+     "new_name": "Agence Française de Développement",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 13,
+     "top": 9,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Agence Française de Développement",
+       9
+      ],
+      [
+       "Agence FranÃ§aise de DÃ©veloppement",
+       4
+      ]
+     ],
+     "head_procs": 4,
+     "head_in_window": 0,
+     "head_newest": "2024-11-08",
+     "top_newest": "2025-08-01",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22562109,
+     "identifier": "DE312018042",
+     "country": "DE",
+     "old_name": "Campus Unity GmbH\nKurt-Schumacher-Straße 1\n63322 Rödermark",
+     "new_name": "Campus Unity GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 8,
+     "top": 6,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Campus Unity GmbH",
+       6
+      ],
+      [
+       "Campus Unity GmbH\nKurt-Schumacher-Straße 1\n63322 Rödermark",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-04-12",
+     "top_newest": "2025-07-03",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22307905,
+     "identifier": "DE133714413",
+     "country": "DE",
+     "old_name": "Studentenwerk Niederbayern / Oberpfalz\nAnstalt des öffentlichen Rechts",
+     "new_name": "Studentenwerk Niederbayern Oberpfalz",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 22,
+     "top": 16,
+     "head": 2,
+     "second": 2,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Studentenwerk Niederbayern Oberpfalz",
+       16
+      ],
+      [
+       "Studentenwerk Niederbayern / Oberpfalz\nAnstalt des öffentlichen Rechts",
+       2
+      ],
+      [
+       "Studentenwerk Niederbayern / Oberpflaz, \nAnstalt des öffentlichen Rechts",
+       2
+      ],
+      [
+       "Studierendenwerk Niederbayern / Oberpfalz",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2023-12-08",
+     "top_newest": "2026-07-31",
+     "rival_newest": "2025-10-14",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22393047,
+     "identifier": "6272764051",
+     "country": "PL",
+     "old_name": "\"D.B.W. DROGI BUDOWY WYBURZENIA\" SPÓŁKA Z OGRANICZONĄ\nODPOWIEDZIALNOŚCIĄ",
+     "new_name": "D.B.W. Drogi Budowy Wyburzenia sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "D.B.W. Drogi Budowy Wyburzenia sp. z o.o.",
+       2
+      ],
+      [
+       "\"D.B.W. DROGI BUDOWY WYBURZENIA\" SPÓŁKA Z OGRANICZONĄ\nODPOWIEDZIALNOŚCIĄ",
+       1
+      ],
+      [
+       "D.B.W. Drogi Budowy Wyburzenia Sp. z o. o.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-01-16",
+     "top_newest": "2025-11-19",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22388718,
+     "identifier": "11455594478",
+     "country": "DE",
+     "old_name": "SLS Ingenieurbüro im Bauwesen\nDipl.-Ing. Ludwig Schmitz\nSicherheitsingenieur",
+     "new_name": "SLS-Ingenieurbüro im Bauwesen",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 12,
+     "top": 8,
+     "head": 2,
+     "second": 2,
+     "clusters": 3,
+     "spellings": [
+      [
+       "SLS-Ingenieurbüro im Bauwesen",
+       8
+      ],
+      [
+       "Ludwig Schmitz SLS-INGENIEURBÜRO FÜR SICHERHEITSTECHNIK",
+       2
+      ],
+      [
+       "SLS Ingenieurbüro im Bauwesen\nDipl.-Ing. Ludwig Schmitz\nSicherheitsingenieur",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2023-12-19",
+     "top_newest": "2026-07-28",
+     "rival_newest": "2024-03-05",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22521607,
+     "identifier": "9911980697",
+     "country": "DE",
+     "old_name": "Generaldirektion Wasserstraßen- und Schifffahrt\nDezernat U20 - Nachprüfungsstelle -",
+     "new_name": "Generaldirektion Wasserstraßen und Schifffahrt",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 78,
+     "top": 50,
+     "head": 6,
+     "second": 14,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Generaldirektion Wasserstraßen und Schifffahrt",
+       38
+      ],
+      [
+       "Generaldirektion Wasserstraßen und Schiffahrt",
+       14
+      ],
+      [
+       "Generaldirektion Wasserstraßen- und Schifffahrt",
+       12
+      ],
+      [
+       "Generaldirektion Wasserstraßen und Schiffahrt, Dezernat G20 - Nachprüfungsstelle -",
+       8
+      ],
+      [
+       "Generaldirektion Wasserstraßen- und Schifffahrt\nDezernat U20 - Nachprüfungsstelle -",
+       6
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-09-05",
+     "top_newest": "2026-10-08",
+     "rival_newest": "2026-10-14",
+     "newest_is_head": false
+    }
+   ]
+  }
+ ]
+}

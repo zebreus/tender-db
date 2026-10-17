@@ -1,0 +1,205 @@
+{
+ "blind_final": {
+  "15395": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22307905": {
+   "verdict": "neutral",
+   "revert": false
+  },
+  "22388718": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22393047": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22428673": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22521607": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22562109": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22576286": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22611512": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22623942": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22715252": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22744515": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22765274": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22879656": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22901833": {
+   "verdict": "right",
+   "revert": false
+  },
+  "22925490": {
+   "verdict": "right",
+   "revert": false
+  }
+ },
+ "blind": [
+  {
+   "group": "blind-1",
+   "items": [
+    {
+     "org_id": 22879656,
+     "verdict": "right",
+     "revert": false,
+     "why": "IT 00100920602 (Frosinone office code 060, the Ceccano truck-body maker). The head is a ranking note added to the name: it was printed only on 948669 (2024-12-24, the AMA side-loader framework) as 'FRATELLI MAZZOCCHIA SPA (AGGIUDICATARIO\\nTERZO CLASSIFICATO)', and the two other winners on that notice carry the same kind of ranking suffix. Later notices print new_name exactly: 8564033 (2026-07-16), 8566193 (2026-07-13), 37982 (2026-05-27) and 184353 (2026-01-20) all print 'FRATELLI MAZZOCCHIA SPA'. 100144 (2026-05-27) prints the variant 'FRATELLI MAZZOCCHIA S.P.A.'. This is the same company, and the clean name beats the collapsed head, which still carries the ranking note."
+    },
+    {
+     "org_id": 22715252,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 8921249810 (Rypin tax office), a member buyer of the Rypin buying group. The head '9)\\tZespół Szkół ...' carries a list-item number and tab and was printed only on 642948 (2024-12-18). Newer notices print new_name without the number: 7923353 (2026-08-18, Procedure-Buyer) and 538128 (2025-10-16, Buyer/Signatory/Paying) both print 'Zespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu'. 189665 (2026-04-23) prints the misspelling 'Zespól'. new_name is the correctly spelled full school name, without the list number."
+    },
+    {
+     "org_id": 22623942,
+     "verdict": "right",
+     "revert": false,
+     "why": "IT 07018900014 (Torino office code 001). The head is joint-venture (r.t.i.) text listing S.I.C.E.T. as lead (mandataria) plus four members (mandanti), printed only on 545669 (2024-06-04, SMAT network maintenance, LOT-0004). Every later notice for this identifier prints the lead company alone: 8844653 (2026-10-15), 327764 (2026-08-04), 1033402 (2026-05-22), 800923 (2026-01-29) and 55766 (2025-10-31) all print 'S.I.C.E.T. S.R.L.' as Tenderer. So the identifier denotes S.I.C.E.T. itself, and new_name is that entity's name, not one member standing in for a consortium."
+    },
+    {
+     "org_id": 22611512,
+     "verdict": "right",
+     "revert": false,
+     "why": "DE VAT DE149521821. The head embeds the street address and postcode ('... Rheinstraße 182\\n56564 Neuwied') and was printed only on 1036646 (2024-05-02). Newer notices print the bare company name: 56545 (2026-09-02) prints 'W. Schmitt GmbH Feuerwehrtechnik', exactly new_name. 877137 (2026-07-15) prints 'W. Schmitt GmBH Feuerwehrtechnik' and 202304 (2026-07-07) prints 'W. Schmitt Feuerwehrtechnik GmbH'. Same firm. new_name is the newest printed spelling, without the address text, so it beats the collapsed head."
+    },
+    {
+     "org_id": 22901833,
+     "verdict": "right",
+     "revert": false,
+     "why": "IT 02345670307. The head is double-encoded mojibake ('SocietÃÂ ...'), printed on 120936 (2024-12-13); 206307 (2025-03-12) prints an even worse 'SocietÃÃÃÂ ...'. The three newest notices print the correctly encoded name: 8828044 (2026-10-06), 1038731 (2026-08-13) and 460936 (2026-08-03) all print 'Società Ferrovie Udine Cividale' as Procedure-Buyer. new_name is the same entity with the encoding repaired."
+    },
+    {
+     "org_id": 22576286,
+     "verdict": "right",
+     "revert": false,
+     "why": "IT 00754150100 (VAT IT00754150100 is merged in). The head contains U+FFFD ('Universit� ...'). Recent buyer notices print the correct accented name: 237635 (2026-09-17) prints 'Università degli Studi di Genova', exactly new_name. 347010 (2026-09-21), 523546 (2026-08-06), 560360 (2026-08-04) and 1025251 (2026-07-10) print 'Università degli studi di Genova', which differs only in case. new_name is the university's proper name, correctly accented and capitalized."
+    },
+    {
+     "org_id": 15395,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 6270011376 (Chorzów tax office), which is PTS ALBA's own number. The head is consortium text ('Konsorcjum firm: 1) PTS ALBA – Lider konsorcjum 2) MPGKiM – Konsorcjant'). It is still printed on the recurring Siemianowice Śląskie contract: 332584 (2026-07-20), 338546 (2026-07-01), 773399 (2026-02-03). But the newest notices print ALBA alone under this identifier: 278047 (2026-09-03, KWP Katowice, lots 7-9) prints 'Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o.o.', exactly new_name, and 7962244 (2026-09-08, Gmina Mszana) prints 'PRZEDSIĘBIORSTWO TECHNIKI SANITARNEJ ALBA'. The identifier denotes the lead company, so new_name names that entity, not the consortium."
+    },
+    {
+     "org_id": 22428673,
+     "verdict": "right",
+     "revert": false,
+     "why": "PL NIP 8271340539, a sole trader (Waldemar Kuras). The head 'Waldemar Kuras Zakład Usług Leśnych\\n„Modrzew”]' has a line break and a stray ']'. It was printed only once, as LOT-0002 subcontractor on 8818339 (2025-02-13, Nadleśnictwo Złoczew 2025). That same notice prints 'Zakład Usług Leśnych \"Modrzew\" Waldemar Kuras' as Tenderer, and the newest notice 8819808 (2026-09-07, Nadleśnictwo Złoczew 2026, LOT-0036 Tenderer) prints that same spelling, exactly new_name. Same business. new_name is clean and complete; the collapsed head still has the stray bracket."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-2",
+   "items": [
+    {
+     "org_id": 22925490,
+     "verdict": "right",
+     "revert": false,
+     "why": "The identifier 525180613 is a single company's 9-digit REGON. A consortium has no REGON, and MoreThanGood Sp. z o.o. was incorporated in 2023, which fits the 52xxxxxxx range. The notices after the consortium head (dated 2025-01-29) print this company alone under the same org: 231384 (2025-09-05), 334967 (2026-01-28), 181122 (2026-05-07) and 571581 (2026-07-24) all have Tenderer and bids[].parties 'MoreThanGood Sp. z o.o.'. Only 574548 (2025-04-28, Tenderer-MainCont) still printed 'MoreThanGood Sp. z o.o.\\nImpel Facility Services Sp. z o.o.'. The head is a list of four consortium members. new_name is the leader that the identifier denotes, so it is not 'a member for a consortium'."
+    },
+    {
+     "org_id": 22744515,
+     "verdict": "right",
+     "revert": false,
+     "why": "This is a mojibake repair of the same name. The newest notice, 306033 (2025-11-25), prints 'Communauté de communes du Pays de Duras' as Procedure-Buyer and Contract-Signatory. So do 1082046 and 691603 (both 2024-12-27). Only 393641 (2024-12-27) printed the mojibake 'CommunautÃ© de communes du Pays de Duras'. new_name is the correct UTF-8 spelling of the same entity."
+    },
+    {
+     "org_id": 22765274,
+     "verdict": "right",
+     "revert": false,
+     "why": "This is a mojibake repair. Every notice in the newest five prints 'Agence Française de Développement' in all its buyer roles: 222836 and 365718 (2025-05-21), 8543813 (2025-06-11), 66385 (2025-07-01) and 154579 (2025-08-01). The head 'Agence FranÃ§aise de DÃ©veloppement' (newest 2024-11-08) is double-encoded. Same entity, correct spelling."
+    },
+    {
+     "org_id": 22562109,
+     "verdict": "right",
+     "revert": false,
+     "why": "The change strips an address block. The head 'Campus Unity GmbH\\nKurt-Schumacher-Straße 1\\n63322 Rödermark' was printed only by 8086 (2024-04-12, Tenderer). The later notices print 'Campus Unity GmbH' as Tenderer and in bids[].parties: 297679 (2024-08-16), 200412 (2024-10-10) and 1158007 (2025-07-03). It is the complete company name with its legal form."
+    },
+    {
+     "org_id": 22307905,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "Same entity, and the change is lateral. The buyer's newest notices print new_name exactly as Procedure-Buyer, Contract-Signatory and Paying: 8814903 (2026-01-29), 8812349 (2026-05-26), 8811769 (2026-06-19), 8813920 (2026-06-22), 8811364 and 8814353 (2026-06-25) and 8812632 (2026-07-31). So it is not a name the later notices stopped printing, and revert is false. However, STWNO renamed itself 'Studierendenwerk' in May 2024 (a University of Passau student-parliament motion says so, and stwno.de uses the new name). The 2025-10-14 competition notice 1204211 for the same Goldener Turm project prints 'Studierendenwerk Niederbayern / Oberpfalz'. So new_name and the head share the superseded 'Studentenwerk' term. The head was printed by 822215 (2023-12-08): 'Studentenwerk Niederbayern / Oberpfalz\\nAnstalt des öffentlichen Rechts'. Collapsed, it differs from new_name only in the legal-form tail and the official slash. new_name is cleaner but drops the slash, so neither is clearly better. The better target would be the Studierendenwerk spelling."
+    },
+    {
+     "org_id": 22393047,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head was printed once, by 976453 (2024-01-16): an all-caps KRS rendering with a stray quote and a line break, '\"D.B.W. DROGI BUDOWY WYBURZENIA\" SPÓŁKA Z OGRANICZONĄ\\nODPOWIEDZIALNOŚCIĄ'. The later notices print new_name: 1105194 (2025-08-26) and 584301 (2025-11-19) show 'D.B.W. Drogi Budowy Wyburzenia sp. z o.o.' as Tenderer and in bids[].parties. 311855 (2025-07-04) shows 'D.B.W. Drogi Budowy Wyburzenia Sp. z o. o.'. The full proper name is kept, and 'sp. z o.o.' is the standard legal-form abbreviation, not a brand short form."
+    },
+    {
+     "org_id": 22388718,
+     "verdict": "right",
+     "revert": false,
+     "why": "All four 2026 notices print new_name as Tenderer and in bids[].parties: 623303 (2026-02-09), 92913 (2026-04-20), 113955 (2026-06-15) and 1072800 (2026-07-28) show 'SLS-Ingenieurbüro im Bauwesen'. The head (2023-12-19) is a letterhead block: firm, then the owner 'Dipl.-Ing. Ludwig Schmitz', then the job title 'Sicherheitsingenieur'. Collapsed, it still carries a profession line that is not part of any name. The older rival 'Ludwig Schmitz SLS-INGENIEURBÜRO FÜR SICHERHEITSTECHNIK' (483906, 2024-03-05) has not been printed since. new_name is the firm's current designation. It drops the owner's personal name, but the firm itself prints exactly that."
+    },
+    {
+     "org_id": 22521607,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head tacks on a review-desk organ: 'Generaldirektion Wasserstraßen- und Schifffahrt\\nDezernat U20 - Nachprüfungsstelle -' (newest 2024-09-05). The buyer's own notices print the authority name with no organ tail as Procedure-Buyer, Part-ReviewOrg and Part-Mediator. These are 1181111 (2024-08-07), 1199623 (2025-07-24), 1203829 (2025-10-30), 8569271 (2026-07-16) and 8833682 (2026-10-08), all showing 'Generaldirektion Wasserstraßen- und Schifffahrt'. new_name 'Generaldirektion Wasserstraßen und Schifffahrt' is in the same cluster and is the authority's official spelling (GDWS, no hyphen, current 'Schifffahrt'). It avoids the old-orthography rival 'Schiffahrt'. It is the whole authority rather than an organ, and better than the head collapsed."
+    }
+   ],
+   "checks": []
+  }
+ ],
+ "decision": {
+  "sound": true,
+  "objections": [
+   "It is not runbook compliance, it is an amendment made after seeing the result. Step 3's v12 bullet says 'A fail keeps both filters'. The proposed wet run carries neither filter: no \"R0w\" in exclude_rules and no exclude_released at all. Re-wording the fail branch to 'every wet run of an UNJUDGED plan' narrows a pre-committed consequence after the fact. It also breaks house precedent: 552 unit 1 left 17 judged-right withheld heads unshipped, and v9/v12 called release_withheld's judged rights an 'accepted cost'. The distinction that saves it is real but has to be argued and recorded. Those were HOLDS the rule makes. These are planned CHANGES that the filter only defers until they are judged.",
+   "In substance it is safer than a pass, but only for a fixed set of labels. The 79 are a strict subset of what a pass would have shipped (all 81, including up to 1 known wrong), and the filters stay on afterwards. But with both filters off, the single per-item label becomes the only safety layer, and this class's labels are demonstrably noisy. Plan 2543's re-judge (rejudge2543_result.json) read both of today's wrongs as not-wrong: 4040 'right', its own text noting the 'WIMED Sp. z o.o. (dawniej WIMED 4.0 …)' print, and 22678568 'neutral'. That is 0 of 2 agreement on the wrong boundary. With a judge miss rate m, the residual wrongs among the shipped rights are about 2m/(1-m). This matches the pass's tolerance only if m is about 1/3 or less, and nothing yet measures m.",
+   "The 16-item blind second reading is too small and gates nothing. At this class's ~3-4% wrong rate, 16 items are expected to hold about 0.5 wrongs. Zero findings bounds the miss rate only at about 17% (95%). The proposal also does not say what result prunes or stops the run. The skeptic-on-every-wrong protocol is one-sided: it can only turn wrongs into rights, so every 'right' got exactly one reading.",
+   "Shipping the 1 released neutral has no upside by definition. Neutral is also the boundary class where readings flip (22678568 went neutral -> wrong).",
+   "One job is one undo unit. revert-org-name-refresh refuses org_ids, so there is no per-org or per-class revert. A single wrong found after the apply forces reverting all 79 or keeping it. Putting R0w (4 items, the head's own words, near zero risk), the 52 control-only releases and the 23 other unfit releases in one job ties their undo together.",
+   "Plan identity is not checked. The wet run reads latest_report(\"org-name-refresh-plan\") and checks only epoch, rev, as_of, undated, stopped, truncated and scope (supervisor.rs org_name_refresh_targets). Any dry plan enqueued in between silently replaces 2569, and a SCOPED one is accepted by a scoped (org_ids) wet run. A deploy changes the rev and is refused, and 551 unit 3 is mid-flight toward a deploy. After an abort and re-plan, the same id list would apply the NEW plan's new_name, which may differ from the judged spelling.",
+   "Drift is safe by construction, so this is a timing point, not a safety one. read_readiness marks a target Ready only on the same rule label and a byte-identical new_name, and the window's compare-and-set keys on the pre-image, so drift never ships an unjudged spelling. The drift limit is max(79/50, 5) = 5: 6 or more drifted or gone aborts with nothing written. The ~07:00 UTC ingest adds the mentions that move elections. It is now ~00:00 UTC, so there are about 6 h of margin.",
+   "'The 2 wrongs simply stay held' is only true for a while. exclude_released matches the entry's recent_released, so it holds them only while they remain junk releases. 22678568's head was printed only on 2024-07-10, so its head_current hold lapses around 2027-07-10. 'MZP-Ingenieure' then becomes a plain R1 change that no v12 filter drops. 4040 lapses around 2029-07. Canary readings compare verdict:reason only (change:R1 either way), so a canary cannot flag this. R0w heads lapse the same way (552 unit 2 point 6: 22661109 around 2027-08). That is neutral against not shipping them, because the raw head's hold lapses identically.",
+   "Unit 2c (the weekly auto-run) is not built: there is no scheduler code for a wet refresh. The runbook text it would inherit says it carries only exclude_rules R2. Built from that text, it would ship the 2 wrongs and every new unjudged unfit release and R0w.",
+   "The next plan will read as a 'port bug'. Step 2's v12 GO bullet expects about 4 R0w (22289866, 22661109, 22981989, 23474998 among them), recent_released.unfit about 77 and by_rule.R1 about 77. After this run the next plan reads about 0 R0w, about 2 unfit releases plus new ones, and about 4 more holds (the collapsed R0w heads, now fit, held by recent/residue/head_current per the durability test). Unless the bullet is re-based, the next operator stops on a false alarm, or worse, talks themselves past a real one.",
+   "The post-apply dated check of 30 applied_samples is not independent. The samples are drawn from the same 79 census-judged items, so it is a partial third reading. The proposal states no bar for it. No canary or test conflicts: none of the 81 ids is among the 60 ORG_NAME_REFRESH_CANARIES, and the R0w pins in supervisor.rs and head_election.rs are fixture strings, unaffected by prod renames."
+  ],
+  "conditions": [
+   "Before anything runs, record in 524 and 552 that the v12 bar FAILED (2 > 1). The 2 wrongs and their shapes go to 552. Record the amendment explicitly: 'a class judged item by item may ship its judged-right items by explicit org_ids on the same stored plan; every rule-driven wet run keeps exclude_rules [R2,R0w] and exclude_released [unfit]'. Also record whether it is a one-off for plan 2569 or a codified step. Fix the acceptance rule for the second reading BEFORE its results are seen.",
+   "Read again, blind and dated, all 79 (or at least all 75 releases), not 16. The second reader must not see the first verdicts. Also use the existing plan-2543 verdicts as a free earlier reading for the ~76 items it judged, where the (old_name, new_name) pair is unchanged. Ship only items that every reading calls right (R0w: better). Any wrong or worse in any reading drops the id. A skeptic may restore one only on cited dated prints. Pre-commit the stop: 2 or more new wrongs among the 77 rights means no census ship, and the whole class goes to 552. Drop the 1 released neutral unless both readings say right.",
+   "Build the id list mechanically from the result files and assert it before enqueue. Every id must be in plan 2569's planned list with verdict change and rule R1 or R0w. No id may be R2, and 4040 and 22678568 must be absent. The R0w ids must equal the plan's by_rule.R0w set. The count must match the surviving judgments. Keep the list file and its checksum under .scratch.",
+   "Same-plan guard, immediately before each enqueue. Prod rev is 3475272. The latest org-name-refresh-plan is 2569's (same computed_at, planned length 1,607). Nothing else is queued or running: no other refresh-org-names, no other dry plan, no deploy (hold 551 unit 3 until after), no fold or refold, no altid/nhs-body/r3 dry-to-wet pair. No identifier verdicts are posted while it runs. Enqueue well before the ~07:00 UTC ingest (aim before 06:00). On an abort (more than 5 drifted or gone) or a missed window: re-plan, then re-check every id's (old_name, new_name) byte-for-byte against the judged pair and drop any that changed. Never reapply the list blindly.",
+   "Split it into separate wet jobs by judgment class: R0w (4), control-only releases (about 51), other unfit (about 23 or fewer). Each is {\"kind\":\"refresh-org-names\",\"dry_run\":false,\"org_ids\":[…],\"exclude_rules\":[\"R2\"]}, so each class can be reverted alone.",
+   "After each job, check the report. Its job is this job and plan_computed_at is 2569's. excluded_by_rule is 0, excluded_by_release is 0, unplanned is 0, window_error is null, and ready+already+drifted+gone equals the ids asked. GET every applied id: the served name must equal the plan's new_name. Then a dated read against a bar stated in advance: 0 former-name reverts and 0 wrongs, since every item was judged. A revert or wrong reverts that class's job.",
+   "Same day, update docs/operations.md. Step 3 v12 is FAILED, so every wet run, and unit 2c's weekly run when it is built, keeps \"exclude_rules\":[\"R2\",\"R0w\"],\"exclude_released\":[\"unfit\"]. Record the census ship with its job ids. Re-base step 2's v12 expectations: R0w about 0, recent_released.unfit about 2 plus new, holds up by about 4, the four R0w heads held and serving the collapsed head.",
+   "On 552's board, list 4040 and 22678568 with their lapse dates (22678568 about 2027-07-10, 4040 about 2029-07). After that, no filter holds them: they become plain R1 changes. 552 must land a rule, a held-id mechanism, or a canary that knows about releases before 22678568's date."
+  ],
+  "why": "In substance this is not a loophole. The 79 ids are a strict subset of what a pass would have shipped (all 81 R0w and unfit changes, including up to 1 known wrong). The filters also stay on every later rule-driven run, which a pass would have lifted. So on a fixed set of labels it is safer on both counts.\n\nProcedurally, though, it rewrites a pre-committed fail branch after seeing the result. The proposed run omits both filters that 'a fail keeps both filters' names, and the house has so far treated forgone judged-right fixes as accepted cost. It is defensible because these are planned changes the filter only defers until judged, not holds. But it has to be recorded as a decision, with its acceptance rule fixed before more evidence comes in.\n\nThe real risk moves from the rule to the judge. With the filters off, a single reading per item is the only safety layer, and on the wrong boundary the plan-2543 reading agreed with today's on 0 of the 2 wrongs. A 16-item blind reading with no gate cannot bound that. A blind re-read of all 79, with agreement required, can.\n\nThe mechanics checked out in code (supervisor.rs org_name_refresh_targets, head_election.rs read_readiness and org_name_refresh_drift_limit):\n- org_ids with exclude_rules [R2] and no exclude_released puts the listed unfit releases and R0w in scope.\n- Drift can only skip a target, never ship an unjudged spelling: the pre-pass needs the same rule and a byte-identical new_name, and the write compares and sets on the pre-image.\n- 79 ids abort at 6 or more drifted or gone, with nothing written.\n- No canary or test expects these ids held.\n\nThe gaps that remain:\n- The wet run never checks which stored plan it is applying (only epoch and rev).\n- Undo is whole-job only, hence the split into class jobs.\n- The 2 wrongs and the R0w heads stay protected only until their head_current holds lapse (from about 2027-07). After that no filter catches them.\n- Unit 2c, the weekly run, is not built yet, and the runbook text it would inherit carries only exclude_rules R2.\n- The runbook's step-2 v12 expectations will misfire on the next plan unless they are re-based."
+ }
+}

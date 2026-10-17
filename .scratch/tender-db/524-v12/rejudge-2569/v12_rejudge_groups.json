@@ -1,0 +1,3062 @@
+{
+ "groups": [
+  {
+   "key": "released-1",
+   "kind": "released",
+   "items": [
+    {
+     "org_id": 4040,
+     "identifier": "6852209596",
+     "country": "PL",
+     "old_name": "Konsorcjum\nLider: WIMED Sp z o.o., Sp. K., \nPartner: BRUK-MAR F.H.U. MARCIN GĄSIOR,",
+     "new_name": "WIMED Sp. z o.o., Sp. k.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 25,
+     "top": 14,
+     "head": 1,
+     "second": 3,
+     "clusters": 10,
+     "spellings": [
+      [
+       "WIMED Sp. z o.o., Sp. k.",
+       5
+      ],
+      [
+       "WIMED Sp. z o.o.",
+       3
+      ],
+      [
+       "WIMED Sp. z o.o., Sp. K.",
+       3
+      ],
+      [
+       "WIMED Sp. z o.o. Sp. K.",
+       2
+      ],
+      [
+       "Konsorcjum\nLider: WIMED Sp z o.o., Sp. K., \nPartner: BRUK-MAR F.H.U. MARCIN GĄSIOR,",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2026-07-17",
+     "top_newest": "2026-06-15",
+     "rival_newest": "2026-10-16",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 14770,
+     "identifier": "15088000025",
+     "country": "DE",
+     "old_name": "Landkreis Saalekreis\nDomplatz 9\n06217 Merseburg",
+     "new_name": "Landkreis Saalekreis",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 216,
+     "top": 152,
+     "head": 50,
+     "second": 50,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Landkreis Saalekreis",
+       152
+      ],
+      [
+       "Landkreis Saalekreis\nDomplatz 9\n06217 Merseburg",
+       46
+      ],
+      [
+       "Kreisverwaltung\nLandkreis Saalekreis",
+       12
+      ],
+      [
+       "Landkreis Saalekreis, Domplatz 9, 06217 Merseburg",
+       4
+      ],
+      [
+       "Kommunalverwaltung Landkreis Saalekreis",
+       2
+      ]
+     ],
+     "head_procs": 9,
+     "head_in_window": 1,
+     "head_newest": "2026-07-20",
+     "top_newest": "2026-10-02",
+     "rival_newest": "2024-05-21",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 15395,
+     "identifier": "6270011376",
+     "country": "PL",
+     "old_name": "Konsorcjum firm:\n1) Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o. o. – Lider konsorcjum\n2) Miejskie Przedsiębiorstwo Gospodarki Komunalnej i Mieszkaniowej Sp. z o.o. - Konsorcjant",
+     "new_name": "Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 47,
+     "top": 37,
+     "head": 6,
+     "second": 6,
+     "clusters": 6,
+     "spellings": [
+      [
+       "Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o.o.",
+       20
+      ],
+      [
+       "Przedsiębiorstwo Techniki Sanitarnej ALBA sp. z o.o.",
+       10
+      ],
+      [
+       "Konsorcjum firm:\n1) Przedsiębiorstwo Techniki Sanitarnej ALBA Sp. z o. o. – Lider konsorcjum\n2) Miejskie Przedsiębiorstwo Gospodarki Komunalnej i Mieszkaniowej Sp. z o.o. - Konsorcjant",
+       6
+      ],
+      [
+       "Przedsiębiorstwo Techniki Sanitarnej Alba Sp. z o.o.",
+       4
+      ],
+      [
+       "Konsorcjant: Przedsiębiorstwo Techniki Sanitarnej ALBA sp. z o.o. Chorzów",
+       1
+      ]
+     ],
+     "head_procs": 3,
+     "head_in_window": 1,
+     "head_newest": "2026-07-20",
+     "top_newest": "2026-09-08",
+     "rival_newest": "2024-09-17",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 21955455,
+     "identifier": "00374200715",
+     "country": "IT",
+     "old_name": "PROVINCIA DI FOGGIA\nSETTORE SUA, APPALTI E CONTRATTI",
+     "new_name": "PROVINCIA DI FOGGIA",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 119,
+     "top": 115,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "PROVINCIA DI FOGGIA",
+       115
+      ],
+      [
+       "PROVINCIA DI FOGGIA\nSETTORE SUA, APPALTI E CONTRATTI",
+       2
+      ],
+      [
+       "PROVINCIA DI FOGGIA SETTORE SUA, APPALTI E CONTRATTI –",
+       2
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 0,
+     "head_newest": "2026-07-09",
+     "top_newest": "2026-10-15",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22214994,
+     "identifier": "020415084590000059",
+     "country": "DE",
+     "old_name": "Stadt Zeitz\nDer Oberbügermeister \nAltmarkt 1\n06712 Zeitz",
+     "new_name": "Stadt Zeitz",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 144,
+     "top": 112,
+     "head": 6,
+     "second": 20,
+     "clusters": 6,
+     "spellings": [
+      [
+       "Stadt Zeitz",
+       112
+      ],
+      [
+       "Stadt Zeitz, Der Oberbürgermeister, Fachbereich Ordnungswesen",
+       18
+      ],
+      [
+       "Stadt Zeitz\nDer Oberbügermeister \nAltmarkt 1\n06712 Zeitz",
+       6
+      ],
+      [
+       "Stadt Zeitz\nDer Oberbürgermeister\nAltmarkt 1\n06712 Zeitz",
+       2
+      ],
+      [
+       "Stadt Zeitz - Der Oberbürgermeister - Fachbereich Ordnungswesen - Vergabestelle",
+       2
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 0,
+     "head_newest": "2024-04-10",
+     "top_newest": "2026-09-15",
+     "rival_newest": "2025-10-30",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22216826,
+     "identifier": "HRB99850B",
+     "country": "DE",
+     "old_name": "Alexianer St. Hedwig-Kliniken Berlin GmbH - SHK\nc/o Alexianer Agamus GmbH",
+     "new_name": "Alexianer St. Hedwig-Kliniken Berlin GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 82,
+     "top": 70,
+     "head": 10,
+     "second": 10,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Alexianer St. Hedwig-Kliniken Berlin GmbH",
+       66
+      ],
+      [
+       "Alexianer St. Hedwig-Kliniken Berlin GmbH - SHK \nc/o Alexianer Agamus GmbH",
+       8
+      ],
+      [
+       "Alexianer St. Hedwig Kliniken Berlin GmbH",
+       4
+      ],
+      [
+       "Alexianer St. Hedwig-Kliniken Berlin GmbH - SHK\nc/o Alexianer Agamus GmbH",
+       2
+      ],
+      [
+       "Klinikum Region Hannover GmbH",
+       2
+      ]
+     ],
+     "head_procs": 4,
+     "head_in_window": 0,
+     "head_newest": "2024-04-23",
+     "top_newest": "2025-01-20",
+     "rival_newest": "2024-09-09",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22219908,
+     "identifier": "DE160004118",
+     "country": "DE",
+     "old_name": "C&E Consulting und Engineering GmbH\nNL Berlin/Brandenburg",
+     "new_name": "C&E Consulting und Engineering GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 12,
+     "top": 10,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "C&E Consulting und Engineering GmbH",
+       10
+      ],
+      [
+       "C&E Consulting und Engineering GmbH\nNL Berlin/Brandenburg",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2023-11-13",
+     "top_newest": "2026-05-22",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "released-2",
+   "kind": "released",
+   "items": [
+    {
+     "org_id": 22265259,
+     "identifier": "14111450170",
+     "country": "DE",
+     "old_name": "Markt Haag i. OB\nMarktplatz 7\n83527 Haag i. OB\nJuristische Person des öffentlichen Rechts",
+     "new_name": "Markt Haag i. OB",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 86,
+     "top": 72,
+     "head": 14,
+     "second": 14,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Markt Haag i. OB",
+       72
+      ],
+      [
+       "Markt Haag i. OB\nMarktplatz 7\n83527 Haag i. OB\nJuristische Person des öffentlichen Rechts",
+       10
+      ],
+      [
+       "Markt Haag i.OB, Marktplatz 7,83527 Haag i.OB, Juristische Person des öffentlichen Rechts",
+       4
+      ]
+     ],
+     "head_procs": 4,
+     "head_in_window": 0,
+     "head_newest": "2024-01-22",
+     "top_newest": "2026-10-13",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22307905,
+     "identifier": "DE133714413",
+     "country": "DE",
+     "old_name": "Studentenwerk Niederbayern / Oberpfalz\nAnstalt des öffentlichen Rechts",
+     "new_name": "Studentenwerk Niederbayern Oberpfalz",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 22,
+     "top": 16,
+     "head": 2,
+     "second": 2,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Studentenwerk Niederbayern Oberpfalz",
+       16
+      ],
+      [
+       "Studentenwerk Niederbayern / Oberpfalz\nAnstalt des öffentlichen Rechts",
+       2
+      ],
+      [
+       "Studentenwerk Niederbayern / Oberpflaz, \nAnstalt des öffentlichen Rechts",
+       2
+      ],
+      [
+       "Studierendenwerk Niederbayern / Oberpfalz",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2023-12-08",
+     "top_newest": "2026-07-31",
+     "rival_newest": "2025-10-14",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22388718,
+     "identifier": "11455594478",
+     "country": "DE",
+     "old_name": "SLS Ingenieurbüro im Bauwesen\nDipl.-Ing. Ludwig Schmitz\nSicherheitsingenieur",
+     "new_name": "SLS-Ingenieurbüro im Bauwesen",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 12,
+     "top": 8,
+     "head": 2,
+     "second": 2,
+     "clusters": 3,
+     "spellings": [
+      [
+       "SLS-Ingenieurbüro im Bauwesen",
+       8
+      ],
+      [
+       "Ludwig Schmitz SLS-INGENIEURBÜRO FÜR SICHERHEITSTECHNIK",
+       2
+      ],
+      [
+       "SLS Ingenieurbüro im Bauwesen\nDipl.-Ing. Ludwig Schmitz\nSicherheitsingenieur",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2023-12-19",
+     "top_newest": "2026-07-28",
+     "rival_newest": "2024-03-05",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22393047,
+     "identifier": "6272764051",
+     "country": "PL",
+     "old_name": "\"D.B.W. DROGI BUDOWY WYBURZENIA\" SPÓŁKA Z OGRANICZONĄ\nODPOWIEDZIALNOŚCIĄ",
+     "new_name": "D.B.W. Drogi Budowy Wyburzenia sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "D.B.W. Drogi Budowy Wyburzenia sp. z o.o.",
+       2
+      ],
+      [
+       "\"D.B.W. DROGI BUDOWY WYBURZENIA\" SPÓŁKA Z OGRANICZONĄ\nODPOWIEDZIALNOŚCIĄ",
+       1
+      ],
+      [
+       "D.B.W. Drogi Budowy Wyburzenia Sp. z o. o.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-01-16",
+     "top_newest": "2025-11-19",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22399126,
+     "identifier": "04322602181",
+     "country": "DE",
+     "old_name": "Magistrat der Stadt Flörsheim am Main\nStadtbauamt - Vergabestelle",
+     "new_name": "Magistrat der Stadt Flörsheim am Main",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 76,
+     "top": 74,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Magistrat der Stadt Flörsheim am Main",
+       74
+      ],
+      [
+       "Magistrat der Stadt Flörsheim am Main\nStadtbauamt - Vergabestelle",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-01-26",
+     "top_newest": "2026-09-09",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22428673,
+     "identifier": "8271340539",
+     "country": "PL",
+     "old_name": "Waldemar Kuras Zakład Usług Leśnych\n„Modrzew”]",
+     "new_name": "Zakład Usług Leśnych \"Modrzew\" Waldemar Kuras",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Zakład Usług Leśnych \"Modrzew\" Waldemar Kuras",
+       3
+      ],
+      [
+       "Waldemar Kuras Zakład Usług Leśnych\n„Modrzew”]",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-01-17",
+     "top_newest": "2026-09-07",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22496731,
+     "identifier": "DE206345605",
+     "country": "DE",
+     "old_name": "solution-MUC\nStefan Schmidt",
+     "new_name": "solution-MUC",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 4,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "solution-MUC",
+       4
+      ],
+      [
+       "solution-MUC\nStefan Schmidt",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-02-08",
+     "top_newest": "2025-03-28",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "released-3",
+   "kind": "released",
+   "items": [
+    {
+     "org_id": 22502674,
+     "identifier": "DE273706612",
+     "country": "DE",
+     "old_name": "Geosys-Eber Ingenieure \nSachverständige für Vermessung",
+     "new_name": "Geosys-Eber Ingenieure",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 4,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Geosys-Eber Ingenieure",
+       4
+      ],
+      [
+       "Geosys-Eber Ingenieure \nSachverständige für Vermessung",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-02-27",
+     "top_newest": "2026-01-14",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22503765,
+     "identifier": "9151004377",
+     "country": "PL",
+     "old_name": "Konsorcjum:\n1.TAKMA Tadeusz Tiuchty, \n51-128 Wrocław, ul. Poświęcka 1 -lider konsorcjum\n2. SCANTER Sp. z o.o. \n51-128 Wrocław, ul. Poświęcka 1a- partner",
+     "new_name": "TAKMA Tadeusz Tiuchty",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 9,
+     "top": 6,
+     "head": 1,
+     "second": 1,
+     "clusters": 4,
+     "spellings": [
+      [
+       "TAKMA Tadeusz Tiuchty",
+       3
+      ],
+      [
+       "Takma Tadeusz Tiuchty",
+       3
+      ],
+      [
+       "Konsorcjum:\n1.TAKMA Tadeusz Tiuchty, \n51-128 Wrocław, ul. Poświęcka 1 -lider konsorcjum\n2. SCANTER Sp. z o.o. \n51-128 Wrocław, ul. Poświęcka 1a- partner",
+       1
+      ],
+      [
+       "TAKMA Tadeusz Tiuchty cz.1",
+       1
+      ],
+      [
+       "TAKMA Tadeusz Tiuchty cz.3",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-02-27",
+     "top_newest": "2026-09-25",
+     "rival_newest": "2025-10-27",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22508374,
+     "identifier": "DE250013752",
+     "country": "DE",
+     "old_name": "Universitätsklinikum Würzburg\nAnstalt des öffentlichen Rechts",
+     "new_name": "Universitätsklinikum Würzburg",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 82,
+     "top": 66,
+     "head": 8,
+     "second": 8,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Universitätsklinikum Würzburg",
+       66
+      ],
+      [
+       "Universitätsklinikum Würzburg A.d.ö.R.",
+       6
+      ],
+      [
+       "Universitätsklinikum Würzburg\nAnstalt des öffentlichen Rechts",
+       4
+      ],
+      [
+       "Universitätsklinikum Würzburg - Anstalt des öffentlichen Rechts",
+       4
+      ],
+      [
+       "Uniklinikum Würzburg",
+       2
+      ]
+     ],
+     "head_procs": 4,
+     "head_in_window": 0,
+     "head_newest": "2024-07-24",
+     "top_newest": "2026-07-01",
+     "rival_newest": "2026-03-06",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22521607,
+     "identifier": "9911980697",
+     "country": "DE",
+     "old_name": "Generaldirektion Wasserstraßen- und Schifffahrt\nDezernat U20 - Nachprüfungsstelle -",
+     "new_name": "Generaldirektion Wasserstraßen und Schifffahrt",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 78,
+     "top": 50,
+     "head": 6,
+     "second": 14,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Generaldirektion Wasserstraßen und Schifffahrt",
+       38
+      ],
+      [
+       "Generaldirektion Wasserstraßen und Schiffahrt",
+       14
+      ],
+      [
+       "Generaldirektion Wasserstraßen- und Schifffahrt",
+       12
+      ],
+      [
+       "Generaldirektion Wasserstraßen und Schiffahrt, Dezernat G20 - Nachprüfungsstelle -",
+       8
+      ],
+      [
+       "Generaldirektion Wasserstraßen- und Schifffahrt\nDezernat U20 - Nachprüfungsstelle -",
+       6
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-09-05",
+     "top_newest": "2026-10-08",
+     "rival_newest": "2026-10-14",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22562109,
+     "identifier": "DE312018042",
+     "country": "DE",
+     "old_name": "Campus Unity GmbH\nKurt-Schumacher-Straße 1\n63322 Rödermark",
+     "new_name": "Campus Unity GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 8,
+     "top": 6,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Campus Unity GmbH",
+       6
+      ],
+      [
+       "Campus Unity GmbH\nKurt-Schumacher-Straße 1\n63322 Rödermark",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-04-12",
+     "top_newest": "2025-07-03",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22573069,
+     "identifier": "89071205200012",
+     "country": "FR",
+     "old_name": "Société INARI MEDICAL EUROPE Gmbh\nSofradom",
+     "new_name": "INARI MEDICAL EUROPE",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 5,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "INARI MEDICAL EUROPE",
+       5
+      ],
+      [
+       "Société INARI MEDICAL EUROPE Gmbh\nSofradom",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-04-22",
+     "top_newest": "2026-10-16",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22581610,
+     "identifier": "DE140207696",
+     "country": "DE",
+     "old_name": "BG Industriesammler Nord BA 1.2 Dresden\nHeinz Lange Bauunternehmen GmbH",
+     "new_name": "Heinz Lange Bauunternehmen GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 10,
+     "top": 6,
+     "head": 2,
+     "second": 2,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Heinz Lange Bauunternehmen GmbH",
+       6
+      ],
+      [
+       "BG Industriesammler Nord BA 1.2 Dresden\nHeinz Lange Bauunternehmen GmbH",
+       2
+      ],
+      [
+       "BG Industriesammler Nord BA 2.2 - Heinz Lange Bauunternehmen GmbH",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-04-16",
+     "top_newest": "2026-09-18",
+     "rival_newest": "2024-06-12",
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "released-4",
+   "kind": "released",
+   "items": [
+    {
+     "org_id": 22590144,
+     "identifier": "DE262449554",
+     "country": "DE",
+     "old_name": "Atelier 30 Architekten GmbH, Kassel \nmit Landschaftsarchitekt GTL Michael Triebswetter Landschaftsarchitekt, Kassel",
+     "new_name": "ATELIER 30 Architekten GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 14,
+     "top": 8,
+     "head": 2,
+     "second": 2,
+     "clusters": 4,
+     "spellings": [
+      [
+       "ATELIER 30 Architekten GmbH",
+       4
+      ],
+      [
+       "1. Preis: ATELIER 30 Architekten",
+       2
+      ],
+      [
+       "1.Anerkennung Atelier 30 Architekten GmbH, Kassel mit GTL Landschaftsarchitektur mbB, Kassel",
+       2
+      ],
+      [
+       "ATELIER 30 Architekten",
+       2
+      ],
+      [
+       "Atelier 30 Architekten GmbH",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-04-30",
+     "top_newest": "2026-09-11",
+     "rival_newest": "2025-03-05",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22603984,
+     "identifier": "03677260980",
+     "country": "IT",
+     "old_name": "RTI G4 Vigilanza SpA (Mandataria) / B.T.V. S.p.A. (Mandante) /\nSicuritalia IVRI S.p.A. (Mandante)",
+     "new_name": "G4 VIGILANZA S.p.A.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 5,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "G4 VIGILANZA SPA",
+       2
+      ],
+      [
+       "G4 VIGILANZA  S.p.A.",
+       1
+      ],
+      [
+       "G4 VIGILANZA S.P.A.",
+       1
+      ],
+      [
+       "RTI G4 Vigilanza SpA (Mandataria) / B.T.V. S.p.A. (Mandante) /\nSicuritalia IVRI S.p.A. (Mandante)",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-05-28",
+     "top_newest": "2026-08-13",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22611512,
+     "identifier": "DE149521821",
+     "country": "DE",
+     "old_name": "W. Schmitt GmbH \nFeuerwehrtechnik \nRheinstraße 182\n56564 Neuwied",
+     "new_name": "W. Schmitt GmbH Feuerwehrtechnik",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 4,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "W. Schmitt GmbH \nFeuerwehrtechnik \nRheinstraße 182\n56564 Neuwied",
+       2
+      ],
+      [
+       "W. Schmitt GmbH Feuerwehrtechnik",
+       2
+      ],
+      [
+       "W. Schmitt Feuerwehrtechnik GmbH",
+       1
+      ],
+      [
+       "W. Schmitt GmBH Feuerwehrtechnik",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-05-02",
+     "top_newest": "2026-09-02",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22612907,
+     "identifier": "DE179733481",
+     "country": "DE",
+     "old_name": "ray facility management group |\nNils Bogdol GmbH,",
+     "new_name": "Nils Bogdol GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 46,
+     "top": 32,
+     "head": 14,
+     "second": 14,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Nils Bogdol GmbH",
+       32
+      ],
+      [
+       "ray facility management group | Nils Bogdol GmbH",
+       6
+      ],
+      [
+       "ray facility management group  Nils Bogdol GmbH",
+       4
+      ],
+      [
+       "ray facility management group |\nNils Bogdol GmbH,",
+       2
+      ],
+      [
+       "ray facility management group |Nils Bogdol GmbH",
+       2
+      ]
+     ],
+     "head_procs": 7,
+     "head_in_window": 2,
+     "head_newest": "2026-03-16",
+     "top_newest": "2026-10-01",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22632467,
+     "identifier": "13072062K00048",
+     "country": "DE",
+     "old_name": "Gemeinde Hohen Sprenz\nüber die Stadt Laage als geschäftsführende Gemeinde des Amtes Laage",
+     "new_name": "Stadt Laage",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 16,
+     "top": 12,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Stadt Laage",
+       12
+      ],
+      [
+       "Gemeinde Hohen Sprenz\nüber die Stadt Laage als geschäftsführende Gemeinde des Amtes Laage",
+       4
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-09-13",
+     "top_newest": "2025-04-11",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22639255,
+     "identifier": "DE133545793",
+     "country": "DE",
+     "old_name": "Ziehm Imaging GmbH\nLina-Ammon-Str. 10\n90471 Nürnberg",
+     "new_name": "Ziehm Imaging GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 20,
+     "top": 18,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Ziehm Imaging GmbH",
+       18
+      ],
+      [
+       "Ziehm Imaging GmbH\nLina-Ammon-Str. 10\n90471 Nürnberg",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-06-26",
+     "top_newest": "2026-06-25",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22648679,
+     "identifier": "81002570927",
+     "country": "IT",
+     "old_name": "Amministrazione proponente: Comune di Sant’Antioco\nSede Municipale: Piazzetta Italo Diana, 1 -09017 – Sant’Antioco \nTel .0781 80301/2/3/4 - C.F. 81002570927 - P.I. 03109320923",
+     "new_name": "COMUNE DI SANT ANTIOCO",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 6,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "COMUNE DI SANT ANTIOCO",
+       6
+      ],
+      [
+       "Amministrazione proponente: Comune di Sant’Antioco\nSede Municipale: Piazzetta Italo Diana, 1 -09017 – Sant’Antioco \nTel .0781 80301/2/3/4 - C.F. 81002570927 - P.I. 03109320923",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-06-06",
+     "top_newest": "2026-10-09",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "released-5",
+   "kind": "released",
+   "items": [
+    {
+     "org_id": 22667173,
+     "identifier": "DE157997318",
+     "country": "DE",
+     "old_name": "BAUHAUF GmbH\nHoch- und Tiefbau",
+     "new_name": "BAUHAUF GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 24,
+     "top": 16,
+     "head": 8,
+     "second": 8,
+     "clusters": 2,
+     "spellings": [
+      [
+       "BAUHAUF GmbH",
+       16
+      ],
+      [
+       "BAUHAUF GmbH\nHoch- und Tiefbau",
+       6
+      ],
+      [
+       "BAUHAUF GmbH Hoch- und Tiefbau",
+       2
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 1,
+     "head_newest": "2026-08-20",
+     "top_newest": "2026-05-07",
+     "rival_newest": null,
+     "newest_is_head": true
+    },
+    {
+     "org_id": 22670558,
+     "identifier": "DE138603413",
+     "country": "DE",
+     "old_name": "Schandert GmbH\nRaumgestaltung",
+     "new_name": "Schandert GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 5,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Schandert GmbH",
+       5
+      ],
+      [
+       "Schandert GmbH\nRaumgestaltung",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-07-12",
+     "top_newest": "2026-07-03",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22675343,
+     "identifier": "5421002660",
+     "country": "PL",
+     "old_name": "Konsorcjum firm: REMEX Sp. z o.o., ul. Bitwy Białostockiej 6/1, 15-103 Białystok – Lider konsorcjum i „NAWEC” Sp. z o.o., ul. Gen. Władysława Andersa 15\n15-124 Białystok – Partner Konsorcjum",
+     "new_name": "Remex Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 8,
+     "top": 7,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Remex Sp. z o.o.",
+       6
+      ],
+      [
+       "Konsorcjum firm: REMEX Sp. z o.o., ul. Bitwy Białostockiej 6/1, 15-103 Białystok – Lider konsorcjum i „NAWEC” Sp. z o.o., ul. Gen. Władysława Andersa 15\n15-124 Białystok – Partner Konsorcjum",
+       1
+      ],
+      [
+       "REMEX Sp. z o. o",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-07-01",
+     "top_newest": "2025-11-28",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22678568,
+     "identifier": "DE255267354",
+     "country": "DE",
+     "old_name": "MZP-Ingenieure MARKS + ZIMMERMANN und PARTNER Beratende \nIngenieure für Bauwesen mbB",
+     "new_name": "MZP-Ingenieure",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 8,
+     "top": 6,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "MZP-Ingenieure",
+       6
+      ],
+      [
+       "MZP-Ingenieure MARKS + ZIMMERMANN und PARTNER Beratende \nIngenieure für Bauwesen mbB",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-07-10",
+     "top_newest": "2025-05-06",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22685142,
+     "identifier": "DE150936160",
+     "country": "DE",
+     "old_name": "ReFood GmbH & Co. KG\nNiederlassung Hüttenfeld",
+     "new_name": "ReFood GmbH & Co. KG",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 10,
+     "top": 8,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "ReFood GmbH & Co. KG",
+       6
+      ],
+      [
+       "ReFood GmbH & Co. KG\nNiederlassung Hüttenfeld",
+       2
+      ],
+      [
+       "ReFood GmbH & Co.KG",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-08-16",
+     "top_newest": "2026-08-31",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22693690,
+     "identifier": "DE150095036",
+     "country": "DE",
+     "old_name": "Bennert GmbH\nBetrieb für Bauwerksicherung",
+     "new_name": "Bennert GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 12,
+     "top": 8,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Bennert GmbH",
+       8
+      ],
+      [
+       "Bennert GmbH\nBetrieb für Bauwerksicherung",
+       2
+      ],
+      [
+       "Bennert GmbH Betrieb für Bauwerksicherung",
+       2
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 0,
+     "head_newest": "2024-11-11",
+     "top_newest": "2026-10-09",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22714498,
+     "identifier": "NIP1132826097REGON142806977",
+     "country": "PL",
+     "old_name": "Partner4Medicine Sp. z o.o. \nAdres: Aleje Zygmunta Krasińskiego 20A, 64-100 Leszno \nNIP 1132826097 REGON 142806977",
+     "new_name": "Partner4Medicine Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Partner4Medicine Sp. z o.o.",
+       3
+      ],
+      [
+       "Partner4Medicine Sp. z o.o. \nAdres: Aleje Zygmunta Krasińskiego 20A, 64-100 Leszno \nNIP 1132826097 REGON 142806977",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-09-17",
+     "top_newest": "2026-02-17",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "released-6",
+   "kind": "released",
+   "items": [
+    {
+     "org_id": 22715251,
+     "identifier": "8921435926",
+     "country": "PL",
+     "old_name": "2)\tGmina Brzuze",
+     "new_name": "Gmina Brzuze",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 9,
+     "top": 7,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Gmina Brzuze",
+       7
+      ],
+      [
+       "2)\tGmina Brzuze",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-18",
+     "top_newest": "2026-08-18",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22715252,
+     "identifier": "8921249810",
+     "country": "PL",
+     "old_name": "9)\tZespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+     "new_name": "Zespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 5,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Zespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+       3
+      ],
+      [
+       "9)\tZespół Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+       2
+      ],
+      [
+       "Zespól Szkół Centrum Kształcenia Rolniczego im. Ziemi Dobrzyńskiej w Nadrożu",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-18",
+     "top_newest": "2026-08-18",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22722707,
+     "identifier": "DE147317393",
+     "country": "DE",
+     "old_name": "Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur \nvertreten durch: Rems-Murr-Immobilien Management GmbH (RMIM)",
+     "new_name": "Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 24,
+     "top": 16,
+     "head": 8,
+     "second": 8,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur",
+       16
+      ],
+      [
+       "Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur \nvertreten durch: Rems-Murr-Immobilien Management GmbH (RMIM)",
+       4
+      ],
+      [
+       "Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur, \nvertreten durch:\n\nRems-Murr-Immobilien Management GmbH (RMIM)",
+       2
+      ],
+      [
+       "Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur, vertreten durch: Rems-Murr-Immobilien Management GmbH (RMIM)",
+       2
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 1,
+     "head_newest": "2025-11-21",
+     "top_newest": "2026-05-08",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22738452,
+     "identifier": "117706401000",
+     "country": "GR",
+     "old_name": "HELLENIC CABLES S.A. HELLENIC CABLE INDUSTRY SINGLE MEMBER \nSOCIETE ANONYME",
+     "new_name": "Hellenic Cables S.A.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 5,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Hellenic Cables S.A.",
+       2
+      ],
+      [
+       "HELLENIC CABLES S.A.",
+       1
+      ],
+      [
+       "HELLENIC CABLES S.A. HELLENIC CABLE INDUSTRY SINGLE MEMBER \nSOCIETE ANONYME",
+       1
+      ],
+      [
+       "Hellenic Cables SA",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-09-05",
+     "top_newest": "2026-03-13",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22755546,
+     "identifier": "75218229500044",
+     "country": "FR",
+     "old_name": "BAIE D'ARMOR AMENAGEMENT\n(POUR LE COMPTE DE SAINT-BRIEUC ARMOR AGGLOMERATION)",
+     "new_name": "Baie d'Armor Aménagement",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 5,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "BAIE D'ARMOR AMENAGEMENT",
+       3
+      ],
+      [
+       "Baie d'Armor Aménagement",
+       2
+      ],
+      [
+       "BAIE D'ARMOR AMENAGEMENT\n(POUR LE COMPTE DE SAINT-BRIEUC ARMOR AGGLOMERATION)",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-10-10",
+     "top_newest": "2026-03-20",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22774437,
+     "identifier": "DE351136840",
+     "country": "DE",
+     "old_name": "Landesanstalt für Landwirtschaft und Gartenbau \nSachsen-Anhalt\nStrenzfelder Allee 22\n06406 Bernburg",
+     "new_name": "Landesanstalt für Landwirtschaft und Gartenbau Sachsen-Anhalt",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 4,
+     "head": 2,
+     "second": 2,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Landesanstalt für Landwirtschaft und Gartenbau Sachsen-Anhalt",
+       4
+      ],
+      [
+       "Landesanstalt für Landwirtschaft und Gartenbau \nSachsen-Anhalt\nStrenzfelder Allee 22\n06406 Bernburg",
+       2
+      ],
+      [
+       "Landesanstalt für Landwirtschaft und Gartenbau",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-10-04",
+     "top_newest": "2025-09-18",
+     "rival_newest": "2026-07-03",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22819677,
+     "identifier": "NIP5220019702REGON010478403",
+     "country": "PL",
+     "old_name": "GE Medical Systems Polska Sp z.o.o\nAdres: ul. Wołoska 9, 02-583 Warszawa",
+     "new_name": "GE Medical Systems Polska Sp.z.o.o",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 5,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "GE Medical Systems Polska Sp.z.o.o",
+       4
+      ],
+      [
+       "GE Medical Systems Polska Sp z.o.o\nAdres: ul. Wołoska 9, 02-583 Warszawa",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-11-19",
+     "top_newest": "2026-10-02",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "released-7",
+   "kind": "released",
+   "items": [
+    {
+     "org_id": 22879656,
+     "identifier": "00100920602",
+     "country": "IT",
+     "old_name": "FRATELLI MAZZOCCHIA SPA (AGGIUDICATARIO\nTERZO CLASSIFICATO)",
+     "new_name": "FRATELLI MAZZOCCHIA SPA",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 8,
+     "top": 7,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "FRATELLI MAZZOCCHIA SPA",
+       6
+      ],
+      [
+       "FRATELLI MAZZOCCHIA S.P.A.",
+       1
+      ],
+      [
+       "FRATELLI MAZZOCCHIA SPA (AGGIUDICATARIO\nTERZO CLASSIFICATO)",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-24",
+     "top_newest": "2026-07-16",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22925490,
+     "identifier": "525180613",
+     "country": "PL",
+     "old_name": "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nImpel Defender Sp. z o.o.\nFM Integrated Solutions Sp. z o.o.",
+     "new_name": "MoreThanGood Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 4,
+     "spellings": [
+      [
+       "MoreThanGood Sp. z o.o.",
+       4
+      ],
+      [
+       "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.",
+       1
+      ],
+      [
+       "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nImpel Defender Sp. z o.o.\nFM Integrated Solutions Sp. z o.o.",
+       1
+      ],
+      [
+       "MoreThanGood Sp. z o.o.\nImpel Facility Services Sp. z o.o.\nOmni Service Sp. z o.o.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-01-29",
+     "top_newest": "2026-07-24",
+     "rival_newest": "2025-04-28",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23017077,
+     "identifier": "01170840548",
+     "country": "IT",
+     "old_name": "RTI – TECNOSTRADE S.R.L. (Mandataria – C.f. 01170840548) – M.C.I. S.R.L.\n(Mandante – C.f. 01990420547) – TROVATI S.R.L. con Socio Unico (Mandante – C.f. 03238440543)",
+     "new_name": "TECNOSTRADE S.r.l.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "RTI – TECNOSTRADE S.R.L. (Mandataria – C.f. 01170840548) – M.C.I. S.R.L.\n(Mandante – C.f. 01990420547) – TROVATI S.R.L. con Socio Unico (Mandante – C.f. 03238440543)",
+       1
+      ],
+      [
+       "TECNOSTRADE S.R.L.",
+       1
+      ],
+      [
+       "TECNOSTRADE S.r.l.",
+       1
+      ],
+      [
+       "TECNOSTRADE SRL",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-02-17",
+     "top_newest": "2026-08-03",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23035020,
+     "identifier": "047468757",
+     "country": "DE",
+     "old_name": "Gemeinde Hagen im Bremischen\nAmtsplatz 3\n27628 Hagen im Bremischen",
+     "new_name": "Gemeinde Hagen im Bremischen",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 4,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Gemeinde Hagen im Bremischen",
+       4
+      ],
+      [
+       "Gemeinde Hagen im Bremischen\nAmtsplatz 3\n27628 Hagen im Bremischen",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-03-21",
+     "top_newest": "2025-04-18",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23038177,
+     "identifier": "DE213506170",
+     "country": "DE",
+     "old_name": "BERNDT Gebäudereinigung\nMeisterbetrieb GmbH",
+     "new_name": "Gebäudereinigung Berndt Meisterbetrieb GmbH",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 4,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Gebäudereinigung Berndt Meisterbetrieb GmbH",
+       4
+      ],
+      [
+       "BERNDT Gebäudereinigung\nMeisterbetrieb GmbH",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-03-31",
+     "top_newest": "2026-09-02",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23066511,
+     "identifier": "NIP5360015638REGON010757273",
+     "country": "PL",
+     "old_name": "Balton Sp. z o.o.\nAdres: ul. Nowy Świat 7 m 14, 00-496 Warszawa\nNIP 536-00-15-638 REGON 010757273",
+     "new_name": "Balton Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 5,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Balton Sp. z o.o.",
+       3
+      ],
+      [
+       "Balton Sp. z o.o.\nAdres: ul. Nowy Świat 7 m 14, 00-496 Warszawa\nNIP 536-00-15-638 REGON 010757273",
+       2
+      ],
+      [
+       "Balton Sp.z.o.o",
+       2
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 1,
+     "head_newest": "2026-06-08",
+     "top_newest": "2026-07-22",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23066716,
+     "identifier": "NIP8822038205REGON020546953",
+     "country": "PL",
+     "old_name": "BOXMET MEDICAL Sp. z o. o.\nAdres: Piskorzów 51, 58-250 Pieszyce\nNIP 882-203-82-05 REGON 020546953",
+     "new_name": "Boxmet Medical Sp.z.o.o",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Boxmet Medical Sp.z.o.o",
+       2
+      ],
+      [
+       "BOXMET MEDICAL Sp. z o. o.\nAdres: Piskorzów 51, 58-250 Pieszyce\nNIP 882-203-82-05 REGON 020546953",
+       1
+      ],
+      [
+       "BOXMET MEDICAL Sp. z o.o.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-04-08",
+     "top_newest": "2026-10-02",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "released-8",
+   "kind": "released",
+   "items": [
+    {
+     "org_id": 23150170,
+     "identifier": "DE120871761",
+     "country": "DE",
+     "old_name": "Klingenstadt Solingen\nStadtdienst 23 - Gebäudemanagement\nvertreten durch den Oberbürgermeister\nBonner Str. 100\n42697 Solingen",
+     "new_name": "Klingenstadt Solingen",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 12,
+     "top": 8,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Klingenstadt Solingen",
+       8
+      ],
+      [
+       "Klingenstadt Solingen\nStadtdienst 23 - Gebäudemanagement\nvertreten durch den Oberbürgermeister\nBonner Str. 100\n42697 Solingen",
+       4
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2026-03-09",
+     "top_newest": "2026-07-28",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23329783,
+     "identifier": "DE207055164",
+     "country": "DE",
+     "old_name": "AOK Rheinland/Hamburg – Die Gesundheitskasse\nStrategisches Immobilienmanagement",
+     "new_name": "AOK Rheinland/Hamburg - Die Gesundheitskasse",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 17,
+     "top": 13,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "AOK Rheinland/Hamburg - Die Gesundheitskasse",
+       12
+      ],
+      [
+       "AOK Rheinland/Hamburg – Die Gesundheitskasse\nStrategisches Immobilienmanagement",
+       4
+      ],
+      [
+       "AOK Rheinland/Hamburg - Die Gesundheitskasse.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2026-06-09",
+     "top_newest": "2026-09-25",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23455902,
+     "identifier": "8961609315",
+     "country": "PL",
+     "old_name": "TEAM MP Sp. z o.o.\nul. Wrocławska 56, 55-095 Długołęka",
+     "new_name": "TEAM MP Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "TEAM MP Sp. z o.o.",
+       3
+      ],
+      [
+       "TEAM MP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+       1
+      ],
+      [
+       "TEAM MP Sp. z o. o.",
+       1
+      ],
+      [
+       "TEAM MP Sp. z o.o.\nul. Wrocławska 56, 55-095 Długołęka",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-12-01",
+     "top_newest": "2026-09-21",
+     "rival_newest": "2026-02-23",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 30914521,
+     "identifier": "GBCOH14861405",
+     "country": "GB",
+     "old_name": "Name of Supplier\tPublic Sector Media Ltd",
+     "new_name": "PUBLIC SECTOR MEDIA LTD",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "PUBLIC SECTOR MEDIA LTD",
+       3
+      ],
+      [
+       "Name of Supplier\tPublic Sector Media Ltd",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-06-05",
+     "top_newest": "2026-01-22",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 31571858,
+     "identifier": "GBNHSFLT32FYM17FNR77FWX94FJD74FC339",
+     "country": "GB",
+     "old_name": "Sedem Pharmacy Ltd\tSedem Pharmacy",
+     "new_name": "Sedem Pharmacy Ltd",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 5,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Sedem Pharmacy Ltd",
+       5
+      ],
+      [
+       "Sedem Pharmacy Ltd\tSedem Pharmacy",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2026-04-22",
+     "top_newest": "2026-04-23",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "r0w-1",
+   "kind": "r0w",
+   "items": [
+    {
+     "org_id": 22289866,
+     "identifier": "TELEFON06131162234",
+     "country": "DE",
+     "old_name": "Vergabekammer Rheinland-Pfalz\nbei dem Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+     "new_name": "Vergabekammer Rheinland-Pfalz bei dem Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+     "rule": "R0w",
+     "reason": "R0w",
+     "recent_released": null,
+     "release_withheld": "lines",
+     "voting": 22,
+     "top": 18,
+     "head": 2,
+     "second": 2,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Vergabekammer Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+       18
+      ],
+      [
+       "Vergabekammer Rheinland-Pfalz\nbei dem Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+       2
+      ],
+      [
+       "Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2023-12-22",
+     "top_newest": "2025-03-28",
+     "rival_newest": "2026-09-01",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22661109,
+     "identifier": "6462958396",
+     "country": "PL",
+     "old_name": "Szkoła Podstawowa nr 13\nz Oddziałami Dwujęzycznymi im. Jana III Sobieskiego w Tychach",
+     "new_name": "Szkoła Podstawowa nr 13 z Oddziałami Dwujęzycznymi im. Jana III Sobieskiego w Tychach",
+     "rule": "R0w",
+     "reason": "R0w",
+     "recent_released": null,
+     "release_withheld": "lines",
+     "voting": 12,
+     "top": 11,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Szkoła Podstawowa nr 13 z Oddziałami Dwujęzycznymi",
+       11
+      ],
+      [
+       "Szkoła Podstawowa nr 13\nz Oddziałami Dwujęzycznymi im. Jana III Sobieskiego w Tychach",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-07-18",
+     "top_newest": "2026-06-19",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22981989,
+     "identifier": "8231155511",
+     "country": "PL",
+     "old_name": "Zespół Szkół Centrum Kształcenia Rolniczego\nim. Wł. St. Reymonta w Sokołowie Podlaskim",
+     "new_name": "Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Sokołowie Podlaskim",
+     "rule": "R0w",
+     "reason": "R0w",
+     "recent_released": null,
+     "release_withheld": "lines",
+     "voting": 13,
+     "top": 9,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "ZESPÓŁ SZKÓŁ CENTRUM KSZTAŁCENIA ROLNICZEGO IM. WŁADYSŁAWA STANISŁAWA REYMONTA W SOKOŁOWIE PODLASKIM",
+       9
+      ],
+      [
+       "Zespół Szkół Centrum Kształcenia Rolniczego\nim. Wł. St. Reymonta w Sokołowie Podlaskim",
+       2
+      ],
+      [
+       "Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Sokołowie Podlaskim",
+       2
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 0,
+     "head_newest": "2025-10-15",
+     "top_newest": "2026-02-18",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23474998,
+     "identifier": "7220017162",
+     "country": "PL",
+     "old_name": "Zespół Szkół Centrum Kształcenia Rolniczego\nim. Władysława Stanisława Reymonta w Dobryszycach",
+     "new_name": "Zespół Szkół Centrum Kształcenia Rolniczego im. Władysława Stanisława Reymonta w Dobryszycach",
+     "rule": "R0w",
+     "reason": "R0w",
+     "recent_released": null,
+     "release_withheld": "lines",
+     "voting": 5,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Dobryszycach",
+       4
+      ],
+      [
+       "Zespół Szkół Centrum Kształcenia Rolniczego\nim. Władysława Stanisława Reymonta w Dobryszycach",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2026-01-23",
+     "top_newest": "2026-06-30",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "other_unfit-1",
+   "kind": "other_unfit",
+   "items": [
+    {
+     "org_id": 7899,
+     "identifier": "8131106223",
+     "country": "PL",
+     "old_name": "Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ul. Wronia 53, 00-874 Warszawa, Prowadzący postępowanie: Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Rzeszowie 35-959 Rzeszów, ul. Legionów 20",
+     "new_name": "Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ul. Wronia 53, 00-874 Warszawa, Prowadzący postępowanie: Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Rzeszowie",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 268,
+     "top": 170,
+     "head": 77,
+     "second": 77,
+     "clusters": 5,
+     "spellings": [
+      [
+       "Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ul. Wronia 53, 00-874 Warszawa, Prowadzący postępowanie: Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Rzeszowie",
+       170
+      ],
+      [
+       "Skarb Państwa\nGeneralny Dyrektor Dróg Krajowych i Autostrad\nul. Wronia 53\n00-874 Warszawa\nProwadzący postępowanie:\nGeneralna Dyrekcja Dróg Krajowych i Autostrad Oddział w Rzeszowie\n35-959 Rzeszów, ul. Legionów 20",
+       44
+      ],
+      [
+       "Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ul. Wronia 53, 00-874 Warszawa, Prowadzący postępowanie: Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Rzeszowie 35-959 Rzeszów, ul. Legionów 20",
+       31
+      ],
+      [
+       "Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Rzeszowie",
+       14
+      ],
+      [
+       "Generalna Dyrekcja Dróg Krajowych i Autostrad",
+       6
+      ]
+     ],
+     "head_procs": 23,
+     "head_in_window": 7,
+     "head_newest": "2026-10-08",
+     "top_newest": "2026-10-05",
+     "rival_newest": "2026-10-12",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22292733,
+     "identifier": "08A556445",
+     "country": "DE",
+     "old_name": "Land Schleswig-Holstein vertreten durch das Ministerium für Justiz und Gesundheit des Landes Schleswig-Holstein und das Land Baden-Württemberg vertreten durch den Präsidenten des Amtsgerichts Stuttgart - Grundbuchdatenzentrale Baden-Württemberg",
+     "new_name": "Land Baden-Württemberg, vertreten durch das Ministerium der Justiz und für Migration Baden-Württemberg",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 28,
+     "top": 22,
+     "head": 4,
+     "second": 4,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Land Baden-Württemberg, vertreten durch das Ministerium der Justiz und für Migration Baden-Württemberg",
+       20
+      ],
+      [
+       "Land Schleswig-Holstein vertreten durch das Ministerium für Justiz und Gesundheit des Landes Schleswig-Holstein und das Land Baden-Württemberg vertreten durch den Präsidenten des Amtsgerichts Stuttgart - Grundbuchdatenzentrale Baden-Württemberg",
+       4
+      ],
+      [
+       "Land Baden-Württemberg vertreten durch das Ministerium der Justiz und für Migration Baden-Württemberg",
+       2
+      ],
+      [
+       "Land SH (vertr. dch. Ministerium f. Justiz u. Gesundheit SH), Land BW (vertr. dch. Präsidenten d. AG Stuttgart -GBDZ BW- u. dch, OLG Stuttgart -IuK-Fz Justiz-), EVB FOLIA: Land SH (s. vorst.), Land BW (vertr. dch. Ministerium d. Justiz u. f. Migration BW)",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-01-16",
+     "top_newest": "2026-05-06",
+     "rival_newest": "2024-03-20",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22354266,
+     "identifier": "03279530830",
+     "country": "IT",
+     "old_name": "SRR Messina Provincia S.C.p.A.\nper il tramite della C.U.C. c/o Consorzio Tirreno Ecosviluppo 2000 Soc. Cons. a r.l., sede: Via Roma n. 7 Municipio - 98040 Venetico (ME) P. IVA 02129950834 - Tel. +39 090/9942498; e-mail: centrale@tirrenoecosviluppo.net; PEC: tirrenoecosviluppo@pec.it; web: www.tirrenoecosviluppo.it",
+     "new_name": "S.R.R. Messina Provincia s.c.p.a.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 5,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "S.R.R. Messina Provincia s.c.p.a.",
+       5
+      ],
+      [
+       "SRR Messina Provincia S.C.p.A.\nper il tramite della C.U.C. c/o Consorzio Tirreno Ecosviluppo 2000 Soc. Cons. a r.l., sede: Via Roma n. 7 Municipio - 98040 Venetico (ME) P. IVA 02129950834 - Tel. +39 090/9942498; e-mail: centrale@tirrenoecosviluppo.net; PEC: tirrenoecosviluppo@pec.it; web: www.tirrenoecosviluppo.it",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2023-12-15",
+     "top_newest": "2026-08-26",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22486519,
+     "identifier": "5422752914",
+     "country": "PL",
+     "old_name": "Generalna Dyrekcja Dróg Krajowych i Autostrad ul. Wronia 53, 00-874 Warszawa Prowadzący postępowanie: Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku ul. Zwycięstwa 2, 15-703 Białystok",
+     "new_name": "Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 38,
+     "top": 32,
+     "head": 2,
+     "second": 3,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku",
+       32
+      ],
+      [
+       "Generalna Dyrekcja Dróg Krajowych i Autostrad",
+       3
+      ],
+      [
+       "Generalna Dyrekcja Dróg Krajowych i Autostrad ul. Wronia 53, 00-874 Warszawa Prowadzący postępowanie: Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku ul. Zwycięstwa 2, 15-703 Białystok",
+       2
+      ],
+      [
+       "Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział Białystok",
+       1
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 0,
+     "head_newest": "2024-02-06",
+     "top_newest": "2026-09-28",
+     "rival_newest": "2026-06-19",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22504194,
+     "identifier": "21240322400430",
+     "country": "FR",
+     "old_name": "Mairie de PÃ©rigueux (24)",
+     "new_name": "Mairie de Périgueux (24)",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 16,
+     "top": 15,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Mairie de Périgueux (24)",
+       15
+      ],
+      [
+       "Mairie de PÃ©rigueux (24)",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-02-28",
+     "top_newest": "2026-09-18",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22521288,
+     "identifier": "106020100000000001",
+     "country": "GR",
+     "old_name": "ΥΠΟΥΡΓΕΙΟ ΚΛΙΜΑΤΙΚΗΣ ΚΡΙΣΗΣ ΚΑΙ ΠΟΛΙΤΙΚΗΣ ΠΡΟΣΤΑΣΙΑΣ , ΓΕΝΙΚΗ ΓΡΑΜΜΑΤΕΙΑ ΠΟΛΙΤΙΚΗΣ ΠΡΟΣΤΑΣΙΑΣ, ΓΕΝΙΚΗ ΔΙΕΥΘΥΝΣΗ ΟΙΚΟΝΟΜΙΚΩΝ ΥΠΗΡΕΣΙΩΝ /ΔΙΕΥΘΥΝΣΗ ΠΡΟΜΗΘΕΙΩΝ/ Α΄ ΤΜΗΜΑ ΔΙΕΝΕΡΓΕΙΑΣ ΔΙΑΔΙΚΑΣΙΩΝ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ",
+     "new_name": "Υπουργείο Κλιματικής Κρίσης και Πολιτικής Προστασίας",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 44,
+     "top": 41,
+     "head": 3,
+     "second": 3,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Υπουργείο Κλιματικής Κρίσης και Πολιτικής Προστασίας",
+       22
+      ],
+      [
+       "ΥΠΟΥΡΓΕΙΟ ΚΛΙΜΑΤΙΚΗΣ ΚΡΙΣΗΣ ΚΑΙ ΠΟΛΙΤΙΚΗΣ ΠΡΟΣΤΑΣΙΑΣ",
+       19
+      ],
+      [
+       "ΥΠΟΥΡΓΕΙΟ ΚΛΙΜΑΤΙΚΗΣ ΚΡΙΣΗΣ ΚΑΙ ΠΟΛΙΤΙΚΗΣ ΠΡΟΣΤΑΣΙΑΣ, ΓΕΝΙΚΗ ΓΡΑΜΜΑΤΕΙΑ ΠΟΛΙΤΙΚΗΣ ΠΡΟΣΤΑΣΙΑΣ, ΓΕΝΙΚΗ ΔΙΕΥΘΥΝΣΗ ΟΙΚΟΝΟΜΙΚΩΝ ΥΠΗΡΕΣΙΩΝ /ΔΙΕΥΘΥΝΣΗ ΠΡΟΜΗΘΕΙΩΝ/ Α΄ ΤΜΗΜΑ ΔΙΕΝΕΡΓΕΙΑΣ ΔΙΑΔΙΚΑΣΙΩΝ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ",
+       2
+      ],
+      [
+       "ΥΠΟΥΡΓΕΙΟ ΚΛΙΜΑΤΙΚΗΣ ΚΡΙΣΗΣ ΚΑΙ ΠΟΛΙΤΙΚΗΣ ΠΡΟΣΤΑΣΙΑΣ , ΓΕΝΙΚΗ ΓΡΑΜΜΑΤΕΙΑ ΠΟΛΙΤΙΚΗΣ ΠΡΟΣΤΑΣΙΑΣ, ΓΕΝΙΚΗ ΔΙΕΥΘΥΝΣΗ ΟΙΚΟΝΟΜΙΚΩΝ ΥΠΗΡΕΣΙΩΝ /ΔΙΕΥΘΥΝΣΗ ΠΡΟΜΗΘΕΙΩΝ/ Α΄ ΤΜΗΜΑ ΔΙΕΝΕΡΓΕΙΑΣ ΔΙΑΔΙΚΑΣΙΩΝ ΔΗΜΟΣΙΩΝ ΣΥΜΒΑΣΕΩΝ",
+       1
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 0,
+     "head_newest": "2025-05-22",
+     "top_newest": "2026-10-12",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "other_unfit-2",
+   "kind": "other_unfit",
+   "items": [
+    {
+     "org_id": 22563722,
+     "identifier": "00196350904",
+     "country": "IT",
+     "old_name": "Universit� degli Studi di Sassari",
+     "new_name": "Università degli Studi di Sassari",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 32,
+     "top": 29,
+     "head": 3,
+     "second": 3,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Università degli Studi di Sassari",
+       25
+      ],
+      [
+       "Universit� degli Studi di Sassari",
+       3
+      ],
+      [
+       "UNIVERSITA' DEGLI STUDI DI SASSARI",
+       2
+      ],
+      [
+       "Università degli studi di Sassari",
+       2
+      ]
+     ],
+     "head_procs": 2,
+     "head_in_window": 0,
+     "head_newest": "2024-05-15",
+     "top_newest": "2026-08-07",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22576286,
+     "identifier": "00754150100",
+     "country": "IT",
+     "old_name": "Universit� degli Studi di Genova",
+     "new_name": "Università degli Studi di Genova",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 40,
+     "top": 38,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Universita degli Studi di Genova",
+       14
+      ],
+      [
+       "Università degli Studi di Genova",
+       11
+      ],
+      [
+       "Università degli studi di Genova",
+       8
+      ],
+      [
+       "Universita' degli Studi di Genova",
+       2
+      ],
+      [
+       "universita degli studi di genova",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-04-09",
+     "top_newest": "2026-09-21",
+     "rival_newest": "2025-03-14",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22623942,
+     "identifier": "07018900014",
+     "country": "IT",
+     "old_name": "r.t.i. S.I.C.E.T. S.R.L. (mandataria) / S.A.I.S.E.F. S.P.A. IMPRESE STRADALI E FORNITURE (mandante) / COSTRUZIONI GENERALI ZOLDAN S.R.L. (mandante) / MELLO S.R.L. (mandante) / MARAZZATO SOLUZIONI AMBIENTALI S.R.L. a socio unico (mandante)",
+     "new_name": "S.I.C.E.T. S.R.L.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 10,
+     "top": 9,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "S.I.C.E.T. S.R.L.",
+       9
+      ],
+      [
+       "r.t.i. S.I.C.E.T. S.R.L. (mandataria) / S.A.I.S.E.F. S.P.A. IMPRESE STRADALI E FORNITURE (mandante) / COSTRUZIONI GENERALI ZOLDAN S.R.L. (mandante) / MELLO S.R.L. (mandante) / MARAZZATO SOLUZIONI AMBIENTALI S.R.L. a socio unico (mandante)",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-06-04",
+     "top_newest": "2026-10-15",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22625139,
+     "identifier": "7756559900129",
+     "country": "FR",
+     "old_name": "Agence FranÃ§aise de DÃ©veloppement",
+     "new_name": "Agence Française du développement",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 165,
+     "top": 123,
+     "head": 15,
+     "second": 25,
+     "clusters": 4,
+     "spellings": [
+      [
+       "Agence Française du développement",
+       115
+      ],
+      [
+       "Agence Française de Développement",
+       18
+      ],
+      [
+       "Agence FranÃ§aise de DÃ©veloppement",
+       15
+      ],
+      [
+       "Agence Française du Développement",
+       8
+      ],
+      [
+       "AFD",
+       2
+      ]
+     ],
+     "head_procs": 15,
+     "head_in_window": 0,
+     "head_newest": "2024-11-14",
+     "top_newest": "2026-10-13",
+     "rival_newest": "2026-06-19",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22633301,
+     "identifier": "97076950589",
+     "country": "IT",
+     "old_name": "Autorit� Garante della Concorrenza e del Mercato",
+     "new_name": "Autorità Garante della Concorrenza e del Mercato",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 13,
+     "top": 11,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Autorità Garante della Concorrenza e del Mercato",
+       8
+      ],
+      [
+       "AUTORITA' GARANTE DELLA CONCORRENZA E DEL MERCATO",
+       3
+      ],
+      [
+       "AUTORITA' GARANTE DELLA CONCORERNZA E DEL MERCATO",
+       1
+      ],
+      [
+       "Autorit� Garante della Concorrenza e del Mercato",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-06-27",
+     "top_newest": "2026-08-18",
+     "rival_newest": "2025-02-11",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22650988,
+     "identifier": "523554452",
+     "country": "PL",
+     "old_name": "Konsorcjum Firm: Adamietz Warszawa Sp. z o. o. (lider konsorcjum), ul. Pryzmaty 4a, 02-226 Warszawa, województwo mazowieckie, NIP: 5223240063, REGON: 523554452 \noraz EKSA Sp. z o.o. (partner konsorcjum), ul. Senatorska 21, 93-192 Łódź, województwo łódzkie\nNIP: 7270028041, REGON: 470524207",
+     "new_name": "Adamietz Warszawa Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 15,
+     "top": 14,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Adamietz Warszawa Sp. z o.o.",
+       12
+      ],
+      [
+       "ADAMIETZ WARSZAWA Sp. z o.o.",
+       1
+      ],
+      [
+       "ADAMIETZ Warszawa sp. z o.o.",
+       1
+      ],
+      [
+       "Konsorcjum Firm: Adamietz Warszawa Sp. z o. o. (lider konsorcjum), ul. Pryzmaty 4a, 02-226 Warszawa, województwo mazowieckie, NIP: 5223240063, REGON: 523554452 \noraz EKSA Sp. z o.o. (partner konsorcjum), ul. Senatorska 21, 93-192 Łódź, województwo łódzkie\nNIP: 7270028041, REGON: 470524207",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-07-23",
+     "top_newest": "2026-09-04",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "other_unfit-3",
+   "kind": "other_unfit",
+   "items": [
+    {
+     "org_id": 22692119,
+     "identifier": "069206803",
+     "country": "GR",
+     "old_name": "Ένωση οικονομικών φορέων: \"1. ΕΔΑΦΟΣ - ΣΥΜΒΟΥΛΟΙ ΜΗΧΑΝΙΚΟΙ ΑΕ, 2. G.T.B. ΑΝΟΔΟΣ ΣΥΜΒΟΥΛΟΙ ΜΗΧΑΝΙΚΟΙ ΑΝΩΝΥΜΟΣ ΕΤΑΙΡΕΙΑ Δ.Τ.: ''G.T.B. ΑΝΟΔΟΣ Α.Ε.'' 3. ΟΜΙΛΟΣ ΤΕΧΝΙΚΩΝ ΜΕΛΕΤΩΝ ΑΤΕ Διακρ. τίτλος Ο. Τ. Μ. Α.Ε.\"",
+     "new_name": "ΜΠΑΡΔΑΝΗΣ ΜΙΧΑΗΛ",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "ΜΠΑΡΔΑΝΗΣ ΜΙΧΑΗΛ",
+       3
+      ],
+      [
+       "Ένωση οικονομικών φορέων: \"1. ΕΔΑΦΟΣ - ΣΥΜΒΟΥΛΟΙ ΜΗΧΑΝΙΚΟΙ ΑΕ, 2. G.T.B. ΑΝΟΔΟΣ ΣΥΜΒΟΥΛΟΙ ΜΗΧΑΝΙΚΟΙ ΑΝΩΝΥΜΟΣ ΕΤΑΙΡΕΙΑ Δ.Τ.: ''G.T.B. ΑΝΟΔΟΣ Α.Ε.'' 3. ΟΜΙΛΟΣ ΤΕΧΝΙΚΩΝ ΜΕΛΕΤΩΝ ΑΤΕ Διακρ. τίτλος Ο. Τ. Μ. Α.Ε.\"",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-08-14",
+     "top_newest": "2026-01-19",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22705773,
+     "identifier": "5564867660",
+     "country": "SE",
+     "old_name": "EksjÃ¶ ElnÃ¤t AB",
+     "new_name": "Eksjö Elnät AB",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 6,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Eksjö Elnät AB",
+       6
+      ],
+      [
+       "EksjÃ¶ ElnÃ¤t AB",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-08-22",
+     "top_newest": "2026-05-13",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22744515,
+     "identifier": "24470044900014",
+     "country": "FR",
+     "old_name": "CommunautÃ© de communes du Pays de Duras",
+     "new_name": "Communauté de communes du Pays de Duras",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 9,
+     "top": 7,
+     "head": 2,
+     "second": 2,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Communauté de communes du Pays de Duras",
+       7
+      ],
+      [
+       "CommunautÃ© de communes du Pays de Duras",
+       2
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-27",
+     "top_newest": "2025-11-25",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22765274,
+     "identifier": "7766559900129",
+     "country": "FR",
+     "old_name": "Agence FranÃ§aise de DÃ©veloppement",
+     "new_name": "Agence Française de Développement",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 13,
+     "top": 9,
+     "head": 4,
+     "second": 4,
+     "clusters": 2,
+     "spellings": [
+      [
+       "Agence Française de Développement",
+       9
+      ],
+      [
+       "Agence FranÃ§aise de DÃ©veloppement",
+       4
+      ]
+     ],
+     "head_procs": 4,
+     "head_in_window": 0,
+     "head_newest": "2024-11-08",
+     "top_newest": "2025-08-01",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22840099,
+     "identifier": "8952256521",
+     "country": "PL",
+     "old_name": "MoreThanGood Sp. z o.o.  (lider konsorcjum), Impel Security Solutions Sp. z o.o. (partner konsorcjum),  FM Integrated Solutions Sp. z o.o.  (partner konsorcjum) , Impel Facility Services Sp. z o.o. (partner konsorcjum)",
+     "new_name": "MoreThanGood Sp. z o.o.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 7,
+     "top": 4,
+     "head": 2,
+     "second": 2,
+     "clusters": 3,
+     "spellings": [
+      [
+       "MoreThanGood Sp. z o.o.",
+       2
+      ],
+      [
+       "MoreThanGood Sp. z o.o.  (lider konsorcjum), Impel Security Solutions Sp. z o.o. (partner konsorcjum),  FM Integrated Solutions Sp. z o.o.  (partner konsorcjum) , Impel Facility Services Sp. z o.o. (partner konsorcjum)",
+       2
+      ],
+      [
+       "MORETHANGOOD Sp. z o.o.",
+       1
+      ],
+      [
+       "MoreThanGood Sp. z o.o",
+       1
+      ],
+      [
+       "MoreThanGood Sp.zo.o.",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-11-13",
+     "top_newest": "2026-07-28",
+     "rival_newest": "2026-04-23",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22859214,
+     "identifier": "03987491200",
+     "country": "IT",
+     "old_name": "RTI tra la capogruppo TECO+Partners S.T.P. S.r.l. (P.IVA e C.F. 03987491200) con sede a Bologna – Viale Aldo Moro n. 64 e le mandanti FA.MA. Ingegneria S.r.l. di Milano (MI), Studio Nadalin & Associati di Pieve di Soligo (TV), Dott. Geol. Luca Luoni di Busto Arsizio (VA) e Dott.ssa Roberta Rava di Cotignola (RA)",
+     "new_name": "TECO+ PARTNERS S.T.P. srl",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 8,
+     "top": 6,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "TECO+ PARTNERS S.T.P. srl",
+       4
+      ],
+      [
+       "RTI tra la capogruppo TECO+Partners S.T.P. S.r.l. (P.IVA e C.F. 03987491200) con sede a Bologna – Viale Aldo Moro n. 64 e le mandanti FA.MA. Ingegneria S.r.l. di Milano (MI), Studio Nadalin & Associati di Pieve di Soligo (TV), Dott. Geol. Luca Luoni di Busto Arsizio (VA) e Dott.ssa Roberta Rava di Cotignola (RA)",
+       1
+      ],
+      [
+       "TECO+ PARTNERS S.T.P. SRL",
+       1
+      ],
+      [
+       "TECO+PARTENRS S.T.P. S. r.l.",
+       1
+      ],
+      [
+       "TECO+Partners stp srl",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-11-08",
+     "top_newest": "2026-07-31",
+     "rival_newest": "2026-09-21",
+     "newest_is_head": false
+    }
+   ]
+  },
+  {
+   "key": "other_unfit-4",
+   "kind": "other_unfit",
+   "items": [
+    {
+     "org_id": 22901833,
+     "identifier": "02345670307",
+     "country": "IT",
+     "old_name": "SocietÃÂ  Ferrovie Udine Cividale",
+     "new_name": "Società Ferrovie Udine Cividale",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 5,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Società Ferrovie Udine Cividale",
+       3
+      ],
+      [
+       "SocietÃÃÃÂ  Ferrovie Udine Cividale",
+       1
+      ],
+      [
+       "SocietÃÂ  Ferrovie Udine Cividale",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2024-12-13",
+     "top_newest": "2026-10-06",
+     "rival_newest": "2025-03-12",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22933084,
+     "identifier": "13380990153",
+     "country": "IT",
+     "old_name": "Deloitte Business Solution S.r.l. SocietÃÃÃÃÂ  Benefit",
+     "new_name": "Deloitte Business Solution S.r.l. Società Benefit",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 5,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Deloitte Business Solution S.r.l. Società Benefit",
+       2
+      ],
+      [
+       "\"DELOITTE BUSINESS SOLUTION S.R.L. SOCIETA' BENEFIT\", OVVERO IN FORMA ABBREVIATA \"DELOITTE BUSINESS SOLUTION S.R.L. S.B.\"",
+       1
+      ],
+      [
+       "DELOITTE BUSINESS SOLUTION S.R.L. Società Benefit",
+       1
+      ],
+      [
+       "Deloitte Business Solution S.r.l. SocietÃÃÃÃÂ  Benefit",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-01-20",
+     "top_newest": "2026-10-09",
+     "rival_newest": "2025-05-26",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 22969820,
+     "identifier": "02793590270",
+     "country": "IT",
+     "old_name": "Coges don Lorenzo Milani SocietÃÃÃÂ  Cooperativa",
+     "new_name": "CO.GE.S. DON LORENZO MILANI SOCIETÀ COOPERATIVA SOCIALE",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 4,
+     "top": 3,
+     "head": 1,
+     "second": 1,
+     "clusters": 2,
+     "spellings": [
+      [
+       "CO.GE.S. DON LORENZO MILANI SOCIETA' COOPERATIVA SOCIALE",
+       2
+      ],
+      [
+       "CO.GE.S. DON LORENZO MILANI SOCIETÀ COOPERATIVA SOCIALE",
+       1
+      ],
+      [
+       "Coges don Lorenzo Milani SocietÃÃÃÂ  Cooperativa",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-01-21",
+     "top_newest": "2026-06-17",
+     "rival_newest": null,
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23066207,
+     "identifier": "00177050432",
+     "country": "IT",
+     "old_name": "UniversitÃÃÃÂ  degli Studi di Macerata - Area Servizi Tecnici e Infrastrutture (ASTI)",
+     "new_name": "Università degli Studi di Macerata - Area Procurement, edilizia e sostenibilità",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 6,
+     "top": 4,
+     "head": 1,
+     "second": 1,
+     "clusters": 3,
+     "spellings": [
+      [
+       "Università degli Studi di Macerata - Area Procurement, edilizia e sostenibilità",
+       4
+      ],
+      [
+       "UniversitÃÃÃÂ  degli Studi di Macerata - Area Servizi Tecnici e Infrastrutture (ASTI)",
+       1
+      ],
+      [
+       "Università degli Studi di Macerata - Area Servizi Tecnici e Infrastrutture (ASTI)",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-04-08",
+     "top_newest": "2026-10-05",
+     "rival_newest": "2025-07-01",
+     "newest_is_head": false
+    },
+    {
+     "org_id": 23073668,
+     "identifier": "352000",
+     "country": "ES",
+     "old_name": "ABBOTT MEDICAL ESPAÃ¿A, S.A.",
+     "new_name": "ABBOTT MEDICAL ESPAÑA, S.A.",
+     "rule": "R1",
+     "reason": "R1",
+     "recent_released": "unfit",
+     "release_withheld": null,
+     "voting": 17,
+     "top": 14,
+     "head": 3,
+     "second": 3,
+     "clusters": 2,
+     "spellings": [
+      [
+       "ABBOTT MEDICAL ESPAÑA, S.A.",
+       13
+      ],
+      [
+       "ABBOTT MEDICAL ESPAÃ¿A, S.A.",
+       3
+      ],
+      [
+       "ABBOTT MEDICAL ESPAÑA SA",
+       1
+      ]
+     ],
+     "head_procs": 1,
+     "head_in_window": 0,
+     "head_newest": "2025-10-29",
+     "top_newest": "2025-11-11",
+     "rival_newest": null,
+     "newest_is_head": false
+    }
+   ]
+  }
+ ]
+}

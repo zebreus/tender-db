@@ -1,6 +1,6 @@
 # 552 — a head whose only defect is a line break is swapped for another spelling instead of being served collapsed
 
-Status: ready-for-agent — unit 3 BUILT as 524 rule v12 and GATED green 2026-10-16 (`da95dd4`, 151 suites; built and reviewed in wf_bc376053-44d, 13 confirmed findings fixed; the Rust matches decide_552_v2.py on all 104 rows). On main, NOT deployed: it deploys only after 524 v11's step 6 (a new epoch refuses the stored v11 plan). NEXT, after the deploy: the v12 protocol in docs/operations.md (re-plan, then re-judge every control-only release and every R0w change before the wet runs lift `exclude_rules:["R2","R0w"]` / `exclude_released:["unfit"]`).
+Status: ready-for-agent — unit 3 (rule v12) DEPLOYED 2026-10-17 as `3475272`; plan 2569 passed the GO bullet; the v12 re-judge FAILED its bar (2 wrong of 54 passed releases: 4040 a revert, 22678568 a brand short form), so the filters stay on every wet run (`exclude_rules:["R2","R0w"]`, `exclude_released:["unfit"]`). Unit 4 (below, decided before the second reading's results): plan 2569's judged census ships by explicit `org_ids` only where every reading says right, one wet job per class. NEXT: the blind second reading, then the three class jobs and their checks, then unit 5 (the two wrongs' shapes; 22678568's hold lapses ~2027-07-10).
 check wf_0744b445-0ee (5 blocking findings, all taken; below). Next: unit 3, built as a 524 epoch after rule v11 has
 rolled out (v11's wet runs keep `exclude_released: ["unfit"]` until this ships).
 Kind: data quality (served organization names; issue 524's head election)
@@ -233,3 +233,58 @@ since 2026-10-16. The control-only `unfit` releases should be about 79, of which
 - go needs 0 R0w changes worse than the raw head, and at most 1 wrong among the passed releases.
 
 Then the wet runs drop `"R0w"` from `exclude_rules` and drop `exclude_released: ["unfit"]`.
+
+## Unit 4 — the v12 re-judge FAILED; census ship decided (2026-10-17, before the second reading's results)
+
+**The re-judge** (plan 2569, rev `3475272`, epoch `524u2-v12`, as_of 2026-10-16; workflow wf_a5e2383f-61d, dated,
+a skeptic on every wrong; evidence in `.scratch/tender-db/524-v12/rejudge-2569/`). Plan 2569 passed step 2's v12 GO
+bullet exactly: `undated` 0, `truncated` false, 59/60 canaries as expected (30914328 reported only), every hold count
+unchanged but `head_current` +21 (the `lines` withholdings), `release_withheld.lines` 21, `by_rule.R0w` 4,
+`recent_released.unfit` 77, `by_rule.R1` 77 (all 77 R1 changes are `unfit` releases; with v12's filters the wet
+scope is EMPTY). All 81 judgeable changes were read:
+- the 54 guard-passed control-only releases: 51 right, 1 neutral (23038177), **2 wrong** —
+  - 4040, a REVERT: `WIMED Sp. z o.o., Sp. k.` is the limited partnership's name; the same NIP now prints
+    `WIMED 4.0 Sp. z o.o.` and then `WIMED Sp. z o.o. (dawniej WIMED 4.0 …)` (206463 2026-10-01, 266036
+    2026-10-16). The head is a consortium label; the better name is the rival cluster.
+  - 22678568, borderline: `MZP-Ingenieure` is the firm's brand short form for a complete head whose only defect is
+    the line break (precedent 4609556 `McKinsey & Company` → `McKinsey`).
+- the 4 R0w changes: 4 better than the raw head, 0 worse;
+- the 23 other `unfit` releases (not gated by the bar, but they ship once `exclude_released` lifts): 23 right.
+
+**The bar fails** (2 wrong > 1). Per step 3, both filters STAY on every wet run of a plan whose class has not been
+judged item by item: `"exclude_rules":["R2","R0w"],"exclude_released":["unfit"]`, including unit 2c's weekly run
+when it is built. The two wrongs' shapes are this issue's to study (unit 5): a release whose elected spelling is a
+former name while a fresher rival exists, and a brand short form electing over a complete head.
+
+**The amendment (decided, recorded before the second reading's results).** A pre-committed bar bounds the wrongs a
+rule ships UNSEEN. Plan 2569's class was read item by item (a census, not a sample), so its judged-right items may ship
+by explicit `org_ids` on the SAME stored plan — a strict subset of what a pass would have shipped, with the filters
+kept for every later plan. A one-off for plan 2569, not a codified step. The decision review (wf_f02eaa69-6f2) found it
+sound on conditions, all adopted:
+1. **A blind second reading of every shippable id** (dated, the reader not told the first verdict; a skeptic on every
+   wrong). The 16 already read blind count (15 right, 1 neutral). Acceptance, fixed now: an id ships only if EVERY
+   reading calls it right (R0w: better than the raw head) — today's, the blind second, and plan 2543's for a
+   release it judged (R0w ids excepted: 2543 judged the elected spelling, not the collapse). Any neutral or wrong in
+   any reading drops the id. Dropped already: 4040 and 22678568 (wrong), 23038177 (neutral today), 22307905
+   (neutral blind), 7899 (neutral in 2543). **Stop:** 2 or more confirmed wrongs in the blind reading among the
+   items today's judge called right → no census ship at all; the class goes to unit 5.
+2. **The id list is built mechanically** from the result files and asserted before enqueue: every id is in plan
+   2569's `planned` with verdict `change` and rule `R1` or `R0w`, none `R2`, 4040 and 22678568 absent, the R0w ids
+   ⊆ the plan's `by_rule.R0w`. The list and its sha256 are kept under `.scratch/tender-db/524-v12/`.
+3. **Same-plan guard** before each enqueue: prod rev `3475272`, the stored plan is 2569's (planned 1,607), nothing
+   queued or running, no deploy (551 unit 3 deploys AFTER), and the run lands before the ~07:00 UTC ingest. On an
+   abort (more than 5 drifted or gone) or a missed window: re-plan and re-check each id's (old_name, new_name)
+   byte-for-byte against the judged pair; never re-apply the list blindly.
+4. **One wet job per class**, each `{"kind":"refresh-org-names","dry_run":false,"org_ids":[…],"exclude_rules":["R2"]}`
+   so each reverts alone: R0w, then the control-only releases, then the other `unfit` releases.
+5. **After each job**: the report's job is that job, `excluded_by_rule` 0, `excluded_by_release` 0, `unplanned` 0,
+   `window_error` null, ready + already + drifted + gone = the ids asked; GET every applied id (served name = the
+   plan's `new_name`); then a dated read of its applied samples, bar 0 reverts and 0 wrongs (every item was judged):
+   a fail reverts that class's job.
+6. **Same day**: docs/operations.md records step 3 v12 FAILED (filters stay), the census ship with its job ids, and
+   re-bases step 2's v12 expectations for the next plan (R0w ~0, `recent_released.unfit` ~2 plus new ones, holds
+   up by ~4: the collapsed R0w heads are held and serve the collapse).
+7. **Lapse dates** (unit 5 must land a rule, a held-id mechanism or a release-aware canary before the first): the two
+   wrongs stay held only while their holds last — 22678568's head was printed only on 2024-07-10, so its
+   `head_current` hold lapses about 2027-07-10 and `MZP-Ingenieure` becomes a plain R1 change no v12 filter drops;
+   4040 about 2029-07.
