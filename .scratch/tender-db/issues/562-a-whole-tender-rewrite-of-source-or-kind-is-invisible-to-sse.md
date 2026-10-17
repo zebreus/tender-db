@@ -1,6 +1,6 @@
 # 562 — a whole-Tender rewrite of `source` or `kind` (a DÖE Tender turning `ted`) is invisible to an SSE subscription on it
 
-Status: ready-for-agent — DECIDED 2026-10-17 (wf_3176baf8-d14, judge + adversarial check, amendments adopted): B — a non-acting fold that rewrites a Tender's `source` or `kind` writes ADR-0017 D3's seq-less rows (rule T + every head lot), head lots read from disk when the write loop did not run; no read-path, schema or refold change. Units 2-4 BUILT 2026-10-17 (uncommitted, focused runs green; build review's findings fixed, re-run green in scratchpad b560/fix/run1.log; see "Build notes" and "Build review fixes"). NEXT: gate with ops/check.sh beside 560, then unit 5 (deploy + paired read).
+Status: ready-for-agent — units 2–4 BUILT, reviewed (wf_250ada72-32e), GATED (900efeb) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 560 and 551 unit 4a. NEXT: unit 5 — the paired read over the next Monday/Tuesday DÖE→TED flips (2026-10-19/20 daily folds) against the fold line's `relabelled` count; then close.
 read, or a seq-less tender `changed` when the label flips), then build.
 Kind: correctness (SSE `added`/`removed` on `source` and `kind`)
 Relates to:

@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — the post-drain bounded read FAILED (2026-10-17, wf_dc85fa7e-c00): path W (`lot-sum-awards`) is wrong on 9 of a uniform 50 of its 15,352 changes (18 %) and on 96 of the 229 derived heads of EUR 100 m or more (42 %), every wrong upheld by a skeptic. DECIDED: path W is switched OFF (fail closed; path V, all 16 pins right, stays), deployed with the next build, and `refold-lot-sum` re-run so the path-W heads return to the max election. NEXT: unit 4a (the switch, built on top of 560/562's tree), gate, deploy, refold-lot-sum dry → wet → project, read that path-W derivations are gone; then unit 4b, a path-W redesign against the 279 labels.
+Status: ready-for-agent — the post-drain bounded read FAILED (2026-10-17): path W wrong on 18 % of a uniform 50 and 42 % of heads ≥ EUR 100 m. Unit 4a (path W switched OFF, path V kept) BUILT, reviewed (wf_2792aa8c-c74), GATED and DEPLOYED 2026-10-17 10:50 UTC as `900efeb`; the refold back is running: refold-lot-sum dry 2584 (194,411 Tenders), wet 2585 (expect 194411) → project 2586. NEXT: Verify the 6 path-W pins serve no derivation, the 16 path-V pins unchanged, a bounded value-band read finds no `lot-sum-awards` row; then unit 4b (path-W redesign on the 279 labels).
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
