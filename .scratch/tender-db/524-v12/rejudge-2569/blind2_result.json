@@ -1,0 +1,738 @@
+{
+ "final": {
+  "14770": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-1"
+  },
+  "21955455": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-1"
+  },
+  "22214994": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-1"
+  },
+  "22216826": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-1"
+  },
+  "22219908": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-1"
+  },
+  "22265259": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-1"
+  },
+  "22289866": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-r0w"
+  },
+  "22292733": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-1"
+  },
+  "22354266": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-2"
+  },
+  "22399126": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-2"
+  },
+  "22486519": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-2"
+  },
+  "22496731": {
+   "verdict": "neutral",
+   "revert": false,
+   "group": "blind-rel-2"
+  },
+  "22502674": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-2"
+  },
+  "22503765": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-2"
+  },
+  "22504194": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-2"
+  },
+  "22508374": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-3"
+  },
+  "22521288": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-3"
+  },
+  "22563722": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-3"
+  },
+  "22573069": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-3"
+  },
+  "22581610": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-3"
+  },
+  "22590144": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-3"
+  },
+  "22603984": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-3"
+  },
+  "22612907": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-4"
+  },
+  "22625139": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-4"
+  },
+  "22632467": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-4"
+  },
+  "22633301": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-4"
+  },
+  "22639255": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-4"
+  },
+  "22648679": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-4"
+  },
+  "22650988": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-4"
+  },
+  "22661109": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-r0w"
+  },
+  "22667173": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-5"
+  },
+  "22670558": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-5"
+  },
+  "22675343": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-5"
+  },
+  "22685142": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-5"
+  },
+  "22692119": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-5"
+  },
+  "22693690": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-5"
+  },
+  "22705773": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-5"
+  },
+  "22714498": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-6"
+  },
+  "22715251": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-6"
+  },
+  "22722707": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-6"
+  },
+  "22738452": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-6"
+  },
+  "22755546": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-6"
+  },
+  "22774437": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-6"
+  },
+  "22819677": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-6"
+  },
+  "22840099": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-7"
+  },
+  "22859214": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-7"
+  },
+  "22933084": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-7"
+  },
+  "22969820": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-7"
+  },
+  "22981989": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-r0w"
+  },
+  "23017077": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-7"
+  },
+  "23035020": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-7"
+  },
+  "23066207": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-7"
+  },
+  "23066511": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-8"
+  },
+  "23066716": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-8"
+  },
+  "23073668": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-8"
+  },
+  "23150170": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-8"
+  },
+  "23329783": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-8"
+  },
+  "23455902": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-8"
+  },
+  "23474998": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-r0w"
+  },
+  "30914521": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-8"
+  },
+  "31571858": {
+   "verdict": "right",
+   "revert": false,
+   "group": "blind-rel-9"
+  }
+ },
+ "groups": [
+  {
+   "group": "blind-r0w",
+   "items": [
+    {
+     "org_id": 22289866,
+     "verdict": "right",
+     "revert": false,
+     "why": "Better than the raw head: the collapse only removes the break, keeps the same words, and gives the review body's full name. The tender list filters (winner/buyer/bidder) return nothing for this org because it only appears as a review body (Lot-ReviewOrg). I took three tender ids that name it from earlier local cache files (ids only, no verdicts) and re-fetched each one live. T 7943791 (00601687-2026, published 2026-09-01, newest) prints 'Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau', the same name with 'beim' for 'bei dem', so the ministry name is still current. T 72821 (00200726-2025, 2025-03-28) prints 'Vergabekammer Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau', which leaves out 'Rheinland-Pfalz'. T 990997 (00783545-2023, 2023-12-22) prints the raw head exactly, with the line break before 'bei dem'. The break falls between name and attribution, so collapsing it does not merge different fields. The org record /v1/organizations/22289866 currently serves the raw head."
+    },
+    {
+     "org_id": 22661109,
+     "verdict": "right",
+     "revert": false,
+     "why": "Better than the raw head: same words with the break removed, and it is the school's full proper name. Read as buyer; the list has 3 items and more=false. T 547533 (00423127-2026, 2026-06-19) prints Procedure-Buyer 'Szkoła Podstawowa nr 13 z Oddziałami Dwujęzycznymi'. T 484722 (00050439-2026, 2026-01-23) and T 1036539 (00176979-2025, 2025-03-19) print the same short form. That short form drops 'im. Jana III Sobieskiego w Tychach' but matches the first part of the head exactly, so it is the same school. Collapsing only joins the full name across its line break ('...Dwujęzycznymi im. Jana III Sobieskiego w Tychach'), and no other field is glued in."
+    },
+    {
+     "org_id": 22981989,
+     "verdict": "right",
+     "revert": false,
+     "why": "Better than the raw head: same words with the break removed, and the result is a spelling the buyer itself printed. Read as buyer, newest 5 tenders. T 1071850 (00115949-2026, 2026-02-18), T 441573 (00112125-2026, 2026-02-17), T 72613 (00027919-2026, 2026-01-15) and T 848552 (00797221-2025, 2025-12-02) print 'ZESPÓŁ SZKÓŁ CENTRUM KSZTAŁCENIA ROLNICZEGO IM. WŁADYSŁAWA STANISŁAWA REYMONTA W SOKOŁOWIE PODLASKIM', i.e. the same school with the patron's names written out. T 898904 (00676251-2025, 2025-10-15) prints exactly the collapsed new_name, 'Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Sokołowie Podlaskim'. Collapsing therefore produces a printed, correct full name, and nothing false is glued in."
+    },
+    {
+     "org_id": 23474998,
+     "verdict": "right",
+     "revert": false,
+     "why": "Better than the raw head: same words with the break removed, and the full patron name is kept. Read as buyer; only 2 procedures exist (more=false). T 1045248 (00448995-2026, 2026-06-30, newest) prints Procedure-Buyer 'Zespół Szkół Centrum Kształcenia Rolniczego im. Wł. St. Reymonta w Dobryszycach', the same school with abbreviated patron names. T 1017612 (00053168-2026, 2026-01-23) prints the raw head exactly, with a line break before 'im. Władysława Stanisława Reymonta w Dobryszycach'. The break sits inside one name, so the collapse 'Zespół Szkół Centrum Kształcenia Rolniczego im. Władysława Stanisława Reymonta w Dobryszycach' is the school's complete name, with nothing glued in."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-1",
+   "items": [
+    {
+     "org_id": 14770,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is the name with the street address and postcode attached (Domplatz 9 / 06217 Merseburg). The five newest buyer notices print only the bare name for org 14770 in every role: tender 745095 (2026-10-02), 44187 (2026-08-05), 468979 (2026-07-27), 723074 (2026-07-23) and 195090 (2026-07-21) all read 'Landkreis Saalekreis'. That is the district itself, which fits identifier 15088000025 (AGS 15088). new_name is the head's own entity name with the address dropped, so it is the better served name."
+    },
+    {
+     "org_id": 21955455,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head adds the department line 'SETTORE SUA, APPALTI E CONTRATTI' to the province name. The newest buyer notices print only 'PROVINCIA DI FOGGIA' as Procedure-Buyer, Lot-AddInfo and Lot-ReviewInfo: tender 8845933 (2026-10-15), 8680410 (2026-09-30), 8679896 (2026-09-30) and 8679588 (2026-09-30). The fiscal code 00374200715 stands for the province, not its procurement department, so new_name is the right entity name and better than the head."
+    },
+    {
+     "org_id": 22214994,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is 'Stadt Zeitz' plus the mayor line, misspelled as 'Oberbügermeister', plus the address Altmarkt 1 / 06712 Zeitz. The newest notices all print 'Stadt Zeitz' (as Procedure-Buyer, and as Contract-Signatory where present): tender 52730 (2026-09-15), 953555 (2026-08-28), 764034 (2026-08-28) and 429571 (2026-08-21). The head form was last seen on 2024-04-10. new_name is the municipality's proper name, with no organ, address or misspelling."
+    },
+    {
+     "org_id": 22216826,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head adds a ' - SHK' short form and a 'c/o Alexianer Agamus GmbH' agent line to the legal name. The newest buyer notices print the full legal name 'Alexianer St. Hedwig-Kliniken Berlin GmbH' as Procedure-Buyer, Lot-AddInfo and Lot-DocProvider: tender 9328 (2025-01-20), 8791 (2024-11-08), 8789 (2024-11-08) and 8787 (2024-11-08). The head form was last seen on 2024-04-23. new_name is the GmbH that register number HRB99850B denotes, without the agent tail."
+    },
+    {
+     "org_id": 22219908,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head adds the branch line 'NL Berlin/Brandenburg'. A VAT number (DE160004118) covers the whole company, not one branch. The newest winner/bidder notices print 'C&E Consulting und Engineering GmbH' on both parties[] and bids[].parties[]: tender 45696 (2026-05-22), 219149 (2025-09-11), 223357 (2024-06-07) and 971924 (2024-01-11). The branch form was last seen on 2023-11-13. new_name is the company's complete legal name and the better served name."
+    },
+    {
+     "org_id": 22265259,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head has the name, then the address (Marktplatz 7 / 83527 Haag i. OB), then a legal-type line ('Juristische Person des öffentlichen Rechts'). The newest buyer notices print 'Markt Haag i. OB': tender 8840492 (2026-10-13), 8581318 (2026-09-23), 1088617 (2026-08-06) and 458932 (2026-04-01). The head form was last seen on 2024-01-22. new_name is the municipality's own proper name."
+    },
+    {
+     "org_id": 22292733,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is consortium text: Land Schleswig-Holstein plus Land Baden-Württemberg represented by the Amtsgericht Stuttgart Grundbuchdatenzentrale. It comes from the 2024-01-16 version of the single joint FOLIA procedure, tender 81235. That procedure's latest version (2024-03-20) prints an abbreviated consortium form ('Land SH (vertr. dch. ...), Land BW ...'). Every other procedure under identifier 08A556445 has Land Baden-Württemberg alone, represented by its justice ministry, as Procedure-Buyer. Tender 471852 (2026-05-06), 295225 (2026-05-06), 545323 (2025-10-21), 295663 (2025-01-31) and 1017927 (2024-12-19) print 'Land Baden-Württemberg, vertreten durch das Ministerium der Justiz und für Migration Baden-Württemberg'. Tender 373282 (2024-01-30) and 923020 (2023-12-20) also have this org as sole buyer; 373282 prints the same name without the comma. So the identifier belongs to this buyer, not to the consortium. new_name is its current complete name and is better than the over-long consortium head."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-2",
+   "items": [
+    {
+     "org_id": 22354266,
+     "verdict": "right",
+     "revert": false,
+     "why": "IT 03279530830 is SRR Messina Provincia's own number. The head's P.IVA 02129950834 belongs to the CUC Consorzio Tirreno Ecosviluppo, and the head carries that CUC's address, phone and PEC tail. All four newest buyer notices print the new name: 7936460 (2026-08-26) 'S.R.R. Messina Provincia s.c.p.a.' as Procedure-Buyer, Lot-AddInfo and ReviewOrg; 1033274 (2026-02-19) the same as Buyer and Contract-Signatory; 759317 (2025-12-19) the same as Buyer and SProvider; 1006146 (2025-02-03) the same. The head was printed once, newest 2023-12-15. The new name is the entity's own full name with the agent tail removed."
+    },
+    {
+     "org_id": 22399126,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head's second line, 'Stadtbauamt - Vergabestelle', is a department (procurement office) tail. The new name is the authority itself. Notices printing it: 635189 (2026-09-09) 'Magistrat der Stadt Flörsheim am Main' as Procedure-Buyer and Contract-Signatory; 75646 (2026-09-09) the same; 805877 (2026-06-03) the same; 371491 (2026-06-03) the same. The head was last printed 2024-01-26. The new name is better than the collapsed head."
+    },
+    {
+     "org_id": 22486519,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 5422752914 has a Białystok tax-office prefix (542), and other GDDKiA branches are separate orgs as co-buyers in the same joint procurement: 1016783 lists Oddział we Wrocławiu (886), w Łodzi (1191) and w Warszawie (3889). So the identifier denotes the Białystok branch. Newest notice 1016783 (2026-09-28) prints 'Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Białymstoku', and 139777 (2025-12-08) prints the same. Notices 668164 and 161665 (2026-06-19, S19 road) print the parent name 'Generalna Dyrekcja Dróg Krajowych i Autostrad', but these are older than the 09-28 branch print, so the new name is not a former name. The head is an address and 'Prowadzący postępowanie' text and was last printed 2024-02-06."
+    },
+    {
+     "org_id": 22496731,
+     "verdict": "neutral",
+     "revert": false,
+     "why": "The head's second line is the person 'Stefan Schmidt', the proprietor or contact of a sole-trader VAT id. Notice 363722 (2024-02-08, Fürstenfeldbruck) printed 'solution-MUC\\nStefan Schmidt'. The two later notices from different buyers print only 'solution-MUC': 323290 (2024-11-05, LH München) and 408095 (2025-03-28, TU München, Tenderer and bids on lots 1 and 2). It is the same entity and the new name matches current printing. But it drops the proprietor's name that the collapsed head 'solution-MUC Stefan Schmidt' carries, so it is about as good, not clearly better."
+    },
+    {
+     "org_id": 22502674,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head's second line, 'Sachverständige für Vermessung', is a generic description of the trade, not part of the firm name. Notice 473702 (2024-02-27) printed the head. The later notices print 'Geosys-Eber Ingenieure' as Tenderer and in bids: 1045692 (2024-11-20) and 191105 (2026-01-14, the newest). The new name is the firm name without the tagline."
+    },
+    {
+     "org_id": 22503765,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is a consortium listing: TAKMA as leader, SCANTER as partner, with addresses. In every later notice this identifier stands for TAKMA alone, so the NIP is TAKMA's own and not a consortium identifier. Notices: 363737 (2026-09-25) 'Takma Tadeusz Tiuchty' as Tenderer on lots 3-6; 345357 (2026-01-19) 'Takma Tadeusz Tiuchty'; 822872 (2025-10-27) 'TAKMA Tadeusz Tiuchty cz.1' and 'cz.3'; 546382 (2025-04-30) 'TAKMA Tadeusz Tiuchty'. The new name 'TAKMA Tadeusz Tiuchty' is the same words; only the newest two print 'Takma' in mixed case. It is the full sole-trader name."
+    },
+    {
+     "org_id": 22504194,
+     "verdict": "right",
+     "revert": false,
+     "why": "This is a mojibake repair: 'PÃ©rigueux' becomes 'Périgueux', and the SIRET 21240322400430 belongs to the commune of Périgueux. Notices printing 'Mairie de Périgueux (24)' as Procedure-Buyer: 8573586 (2026-09-18), 529622 (2026-07-31), 154550 (2026-06-18, also as Contract-Signatory) and 936364 (2026-03-02, also as Signatory and DocProvider). 936364 still prints the mojibake form only in its FiscalLegis and ReviewInfo roles. Same words, correctly encoded."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-3",
+   "items": [
+    {
+     "org_id": 22508374,
+     "verdict": "right",
+     "revert": false,
+     "why": "VAT DE250013752 is the Würzburg university hospital. The newest buyer notices print exactly the new name: 282768 (2026-07-01, Procedure-Buyer 'Universitätsklinikum Würzburg'), 1155943 (2026-06-29, same) and 879470 (2026-06-09, same). Bidder notice 1045809 (2026-03-06) prints 'Uniklinikum Würzburg'. The head only adds the legal-form line 'Anstalt des öffentlichen Rechts' after a line break, and the later notices stopped printing it. The new name is the entity's current proper name, not a truncation."
+    },
+    {
+     "org_id": 22521288,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is the ministry followed by its directorate/procurement-department chain, which is over-long organ text, and it was last printed on 547124 (2025-05-22, Buyer/AddInfo/ReviewInfo). Every later buyer notice under this identifier prints only the ministry: 8839053 (2026-10-12) 'ΥΠΟΥΡΓΕΙΟ ΚΛΙΜΑΤΙΚΗΣ ΚΡΙΣΗΣ ΚΑΙ ΠΟΛΙΤΙΚΗΣ ΠΡΟΣΤΑΣΙΑΣ', 545512 (2026-03-04, same) and 1099195 (2025-12-26, same). The new name has the same words in title case. It names the entity itself, not an organ of it, and is current."
+    },
+    {
+     "org_id": 22563722,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head contains U+FFFD mojibake ('Universit� ...'). Recent buyer notices print the correct name: 637189 (2026-08-07) 'Università degli studi di Sassari', 181510 (2026-07-31) and 8559981 (2026-07-16) \"UNIVERSITA' DEGLI STUDI DI SASSARI\". The new name 'Università degli Studi di Sassari' is the correctly encoded full proper name of the entity behind identifier 00196350904."
+    },
+    {
+     "org_id": 22573069,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head 'Société INARI MEDICAL EUROPE Gmbh\\nSofradom' carries the domiciliation-agent tail 'Sofradom' and was last printed in 2024. All recent bidder notices under this SIRET print the new name: 8846775 (2026-10-16) 'INARI MEDICAL EUROPE', 8581361 (2026-09-23), 634379 (2026-02-20) and 702046 (2025-10-09), the same each time. The new name is the company's own name without the agent tail, so it reads better than the head collapsed."
+    },
+    {
+     "org_id": 22581610,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is consortium text ('BG Industriesammler Nord BA 1.2 Dresden\\nHeinz Lange ...'), printed on 7116 (2024-04-16). 7681 (2024-06-12) printed a different BG ('BG Industriesammler Nord BA 2.2 - Heinz Lange Bauunternehmen GmbH') under the same VAT. Since then this VAT appears only for the company on its own: 8573016 (2026-09-18) 'Heinz Lange Bauunternehmen GmbH', 106156 (2026-09-15, same) and 720482 (2026-05-11, same). So DE140207696 is Heinz Lange's own identifier, not a consortium's, and the new name is the right entity."
+    },
+    {
+     "org_id": 22590144,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is team text (the firm plus 'mit Landschaftsarchitekt GTL ...'), printed in 2024. Newest notice 7973248 (2026-09-11) prints 'ATELIER 30 Architekten GmbH'. 775430 (2025-02-03) prints 'ATELIER 30 Architekten' and 1146022 (2024-05-27) prints 'Atelier 30 Architekten GmbH'. 544469 (2025-10-08) prints ranking text ('1.Anerkennung Atelier 30 ... mit GTL ...'). The new name is the firm's full name with its legal form and nothing else, which is better than the head."
+    },
+    {
+     "org_id": 22603984,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is RTI (consortium) text naming G4 as mandataria plus two mandanti. Every later notice under this P.IVA prints G4 on its own as tenderer: 1148960 (2026-08-13) 'G4 VIGILANZA S.P.A.', 751129 (2026-07-06) 'G4 VIGILANZA  S.p.A.', 1010306 (2026-01-22) 'G4 VIGILANZA SPA' and 93657 (2025-05-27) 'G4 VIGILANZA SPA'. So 03677260980 is G4 Vigilanza's own identifier, not the RTI's, and 'G4 VIGILANZA S.p.A.' is the correct current name."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-4",
+   "items": [
+    {
+     "org_id": 22612907,
+     "verdict": "right",
+     "revert": false,
+     "why": "VAT DE179733481 belongs to the legal entity Nils Bogdol GmbH. The head adds the group brand 'ray facility management group |' in front and leaves a stray comma at the end. The four newest procedures all print 'Nils Bogdol GmbH' for this org, both on parties[] (Tenderer) and on bids[].parties[]: 1058537 (2026-10-01, Spiesen-Elversberg Reinigung, LOT-0002/0003), 1119791 (2026-09-23, Gebäudereinigung Wittmund), 66517 (2026-09-23, Gebäudereinigung Schortens/Jever) and 565237 (2026-09-16, Neuenkirchen-Vörden, LOT-0002). The head spelling was last seen 2026-03-16. new_name is the complete legal name these notices print and is better than the head collapsed."
+    },
+    {
+     "org_id": 22625139,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is mojibake ('FranÃ§aise ... DÃ©veloppement'). Collapsing it does not fix that, so it stays unreadable. As Procedure-Buyer and in the lot roles, the four newest notices all print 'Agence Française du développement': 8538108 (2026-10-13, fonds fiduciaire study), 8839164 (2026-10-12, APV FLEGT evaluation), 840043 (2026-10-06, carbon offset 2024, also Contract-Signatory) and 8824297 (2026-10-05, continuum terre-mer). It is the same entity under its current printed spelling. One caveat: the official form is 'de Développement' (18 votes, newest 2026-06-19), so 'du développement' is a minor grammatical variant. It is still clearly better than the mojibake head."
+    },
+    {
+     "org_id": 22632467,
+     "verdict": "right",
+     "revert": false,
+     "why": "Buyer list for this identifier, newest first: 874357 (2025-04-11, RecknitzHallen Laage), 783728 (2024-12-19, Baumpflegearbeiten Stadt Laage und Gemeinde Wardow) and 831310 (2024-10-18, RecknitzCampus Laage). All three print 'Stadt Laage' as Procedure-Buyer, Contract-Signatory and in the lot roles, and they are Laage's own projects. Only 1052588 (2024-09-13, Neubau Feuerwehrgebäude Hohen Sprenz) prints the head 'Gemeinde Hohen Sprenz\\nüber die Stadt Laage als geschäftsführende Gemeinde des Amtes Laage'. That head is a one-off mandate phrase in which Stadt Laage procures for a member municipality. The identifier (prefix 13072062) is the one Stadt Laage uses for itself, so 'Stadt Laage' is the entity's name and not an agent tail. I could not confirm 13072062 against a published municipal-key list."
+    },
+    {
+     "org_id": 22633301,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head contains U+FFFD ('Autorit�'). new_name restores the accent on the same full proper name. Notices read as Procedure-Buyer: 883501 (2026-06-16, copertura assicurativa) and 343408 (2025-09-05, cyber risk, also Lot-ReviewInfo) print \"AUTORITA' GARANTE DELLA CONCORRENZA E DEL MERCATO\". 759318 (2025-07-01, iniziative di comunicazione) and 219827 (2025-05-16, procedura aperta telematica) print 'Autorità Garante della Concorrenza e del Mercato'. All of these are the same words, and new_name is the correctly accented, properly cased form of the entity's current name."
+    },
+    {
+     "org_id": 22639255,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head appends the street address and postcode/city ('Lina-Ammon-Str. 10 / 90471 Nürnberg') to the company name. The four newest procedures all print 'Ziehm Imaging GmbH' as Tenderer on parties[] and bids[].parties[]: 1006020 (2026-06-25, Einkauf von mobilen C-Bögen, LOT-0001..0003), 783912 (2026-06-09, Mobiler C-Bogen), 354157 (2026-03-24, C-Bogen-Systeme) and 1000425 (2025-08-25, 3D-C-Bogensystem). new_name is the complete legal name without the address."
+    },
+    {
+     "org_id": 22648679,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is a letterhead ('Amministrazione proponente: Comune di Sant’Antioco / Sede Municipale: Piazzetta Italo Diana ... Tel ... C.F. ... P.I. ...'). The only notice that printed it is 815699 (2024-06-06, concessione servizio). The three newest procedures print 'COMUNE DI SANT ANTIOCO' as Procedure-Buyer: 8834997 (2026-10-09, igiene urbana Sant'Antioco), 1101622 (2026-04-01, mensa scolastica) and 911989 (2026-03-09, gestione centro). new_name is the plain entity name the current notices print. It drops the apostrophe and is all caps, but it is far better than the address-laden head collapsed."
+    },
+    {
+     "org_id": 22650988,
+     "verdict": "right",
+     "revert": false,
+     "why": "Identifier 523554452 is the REGON of Adamietz Warszawa itself: the head text lists 'NIP: 5223240063, REGON: 523554452' for the leader, while EKSA has REGON 470524207. So the identifier denotes the member company, not the consortium, and the head is consortium text with addresses. The newest procedures print, as Tenderer on parties[] and bids[].parties[]: 7950912 (2026-09-04, Modernizacja Sali Kongresowej PKiN) 'Adamietz Warszawa Sp. z o.o.'; 767418 (2026-08-26, Budowa mostu Nowa Sól) 'ADAMIETZ WARSZAWA Sp. z o.o.'; 821085 and 774977 (both 2026-08-05, Sala Kongresowa) 'Adamietz Warszawa Sp. z o.o.'. new_name is the company's complete current name."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-5",
+   "items": [
+    {
+     "org_id": 22667173,
+     "verdict": "right",
+     "revert": false,
+     "why": "VAT DE157997318. The City of Dresden's new 2026 awards all print 'BAUHAUF GmbH' as tenderer: t237350 (notices 2026-01-23 and 2026-01-26), t517925 (2026-03-11, 2026-03-12), t410637 (2026-04-02, 2026-04-03) and t373721 (2026-05-06, 2026-05-07). The head 'BAUHAUF GmbH\\nHoch- und Tiefbau' appears only on SachsenEnergie's t952979, from the 2024 award (2024-07-26/29) through modification notices of 2025-09-24/26 and 2026-08-18/20 (subtype 38). Those modifications reprint the 2024 contract data, so they are not a fresh spelling. 'Hoch- und Tiefbau' is a line-of-business descriptor on a second line, after the legal form. New_name is the full company name with its legal form, not a truncation, and it is what every fresh 2026 notice prints. Weak case for right: the 2026-08-20 modification is the newest notice overall and still prints the head, so neutral is defensible."
+    },
+    {
+     "org_id": 22670558,
+     "verdict": "right",
+     "revert": false,
+     "why": "VAT DE138603413. The head 'Schandert GmbH\\nRaumgestaltung' appears only on t265645 (notices 2024-07-11 and 2024-07-12). Every later procedure prints 'Schandert GmbH': t1147917 (2024-10-16, 2024-10-18), t343055 (2025-06-03), t832660 (2025-06-13) and t99677 (2026-07-03). 'Raumgestaltung' is a trade descriptor on a second line that the later notices dropped. New_name is the company with its legal form and is today's printed name."
+    },
+    {
+     "org_id": 22675343,
+     "verdict": "right",
+     "revert": false,
+     "why": "NIP 5421002660 (542 is the Białystok tax-office prefix). The head is consortium text with addresses ('Konsorcjum firm: REMEX Sp. z o.o., ul. Bitwy Białostockiej 6/1 ... – Lider konsorcjum i „NAWEC” Sp. z o.o. ...') from t517539 (notice 2024-07-01). It names REMEX as leader, and a Polish konsorcjum has no NIP of its own, so the identifier belongs to REMEX. Later notices print the company alone: t1059872 'Remex Sp. z o.o.' (2024-12-16, 2024-12-18), t767152 'REMEX Sp. z o. o' (2025-01-30), t920669 'Remex Sp. z o.o.' (2025-04-15, 2025-06-04), t309891 'Remex Sp. z o.o.' (2025-06-16) and t613205 'Remex Sp. z o.o.' (2025-11-28). The head is unfit (address, consortium text, line break). New_name is the entity the NIP denotes."
+    },
+    {
+     "org_id": 22685142,
+     "verdict": "right",
+     "revert": false,
+     "why": "VAT DE150936160 is the company's. The head 'ReFood GmbH & Co. KG\\nNiederlassung Hüttenfeld' names a branch and appears only on t288447, Pfalzklinikum (notices 2024-08-16). Later notices print the company: t55984 'ReFood GmbH & Co.KG' (2024-08-21, 2024-08-23), t971978 'ReFood GmbH & Co. KG' (2026-03-03, 2026-03-04), t555716 'ReFood GmbH & Co. KG' (2026-03-03, 2026-03-05) and t561379 'ReFood GmbH & Co. KG' (2026-08-27, 2026-08-31). New_name is the legal entity, not the branch, and is today's printed name."
+    },
+    {
+     "org_id": 22692119,
+     "verdict": "right",
+     "revert": false,
+     "why": "AFM 069206803 has a valid check digit. Its 8-digit form 69206803 is in the natural-person range (legal entities' old AFMs start with 9), so it denotes a person, not the union. A Greek 'Ένωση οικονομικών φορέων' has no AFM of its own. The head is the consortium text 'Ένωση οικονομικών φορέων: \"1. ΕΔΑΦΟΣ - ΣΥΜΒΟΥΛΟΙ ΜΗΧΑΝΙΚΟΙ ΑΕ, 2. G.T.B. ΑΝΟΔΟΣ ... 3. ΟΜΙΛΟΣ ΤΕΧΝΙΚΩΝ ΜΕΛΕΤΩΝ ΑΤΕ ...\"' from t1087663 (2024-08-14) only. The newer t277566 (Πανεπιστήμιο Δυτικής Αττικής research equipment, LOT-0100 'Συσκευή Άμεσης Διάτμησης ... Μερικώς Κορεσμένα Εδάφη') prints 'ΜΠΑΡΔΑΝΗΣ ΜΙΧΑΗΛ' as tenderer on notices 2025-08-25, 2025-11-05 and 2026-01-19. A web search found Michalis Bardanis as a partner and lab director of ΕΔΑΦΟΣ, which explains why his personal AFM appeared on the 2024 union notice. New_name is the person the identifier denotes. The consortium head is unfit and names other entities. Not a member-for-consortium case, because the identifier is not the consortium's. Residual uncertainty: the AFM's holder was not confirmed in any registry."
+    },
+    {
+     "org_id": 22693690,
+     "verdict": "right",
+     "revert": false,
+     "why": "VAT DE150095036. The head 'Bennert GmbH\\nBetrieb für Bauwerksicherung' did not appear in any of the 5 newest procedures I read. The oldest of them, t578822 (Hochschule Karlsruhe, notices 2024-11-08 and 2024-11-11), prints the collapsed 'Bennert GmbH Betrieb für Bauwerksicherung'. Every newer procedure prints 'Bennert GmbH': t699571 (2025-02-10, 2025-02-11), t872388 (2025-07-15, 2025-07-16), t194570 (2026-09-21, 2026-09-23) and t7925385 (2026-10-08, 2026-10-09). New_name is the company with its legal form, printed by every notice since 2025-02 including the newest of 2026-10-09. The dropped part is a descriptor tagline. Weak case for right: if the registered name includes 'Betrieb für Bauwerksicherung', the collapsed head is about as good, so neutral is defensible."
+    },
+    {
+     "org_id": 22705773,
+     "verdict": "right",
+     "revert": false,
+     "why": "Org number 5564867660. The head 'EksjÃ¶ ElnÃ¤t AB' is UTF-8 mojibake, reported newest on 2024-08-22. That notice was not in the buyer list, so I did not read it. Every buyer notice I read prints 'Eksjö Elnät AB' as Procedure-Buyer: t716971 (2024-10-14), t712018 (2024-11-04), t768486 (2025-10-27, also as Lot-AddInfo) and t717893 (2026-05-13). New_name is the correctly encoded same name."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-6",
+   "items": [
+    {
+     "org_id": 22714498,
+     "verdict": "right",
+     "revert": false,
+     "why": "Read winner/bidder listings (no buyer hits) and 3 procedures. Tender 294265 (2026-02-17, bid TEN-0002, notice 25569638) prints 'Partner4Medicine Sp. z o.o.'. Tender 282206 (2026-01-16, notices 25499687/25477118) prints 'Partner4Medicine Sp. z o.o.'. The head appears only on tender 879882 (2024-09-17, notice 24192727), where the name runs on into 'Adres: Aleje Zygmunta Krasińskiego 20A, 64-100 Leszno NIP 1132826097 REGON 142806977'. Collapsing the line breaks would still leave the address and registry numbers attached. new_name is the same company's clean name, and both newer notices print exactly that."
+    },
+    {
+     "org_id": 22715251,
+     "verdict": "right",
+     "revert": false,
+     "why": "Buyer listing, joint purchase group 'Rypińska Grupa Zakupowa'. Tender 7923353 (2026-08-18) prints Procedure-Buyer 'Gmina Brzuze'. Tender 538128 (2025-10-16) prints 'Gmina Brzuze' as Buyer, Signatory and Financing. The head '2)\\tGmina Brzuze' comes only from tender 642948 (2024-12-18), where every co-buyer has a list number in front ('4)\\tPowiat Golubsko-Dobrzyńskiego', '8)\\tPowiat Rypiński', ...). So the '2)' is a list-numbering artefact, not part of the name. Collapsing the tab would still serve '2) Gmina Brzuze'. new_name is the same municipality's proper name."
+    },
+    {
+     "org_id": 22722707,
+     "verdict": "right",
+     "revert": false,
+     "why": "Buyer listing. Tender 328284 (2026-05-08, newest) prints Procedure-Buyer/Contract-Signatory 'Landratsamt Rems-Murr-Kreis, Amt für Schulen, Bildung, Kultur' under this same org and VAT id. Tender 264769 (2025-10-16) prints the head form, which adds '\\nvertreten durch: Rems-Murr-Immobilien Management GmbH (RMIM)'. That tail names an agent acting for the buyer, not part of the buyer's name. The head itself carries the same Amt wording, so new_name is the head without the agent tail, and it is what the newest notice prints. new_name is better than the head collapsed."
+    },
+    {
+     "org_id": 22738452,
+     "verdict": "right",
+     "revert": false,
+     "why": "Winner/bidder listings, 5 procedures. Tender 451260 (2026-03-13, notice 25628965) prints 'Hellenic Cables S.A.'. Tender 59219 (2026-02-10, notice 25542657) prints 'Hellenic Cables S.A.'. Tender 8545576 (2025-06-26) prints 'Hellenic Cables SA'. Tender 115293 (2025-04-03) prints 'HELLENIC CABLES S.A.'. Only tender 1039609 (2024-09-05) printed the head 'HELLENIC CABLES S.A. HELLENIC CABLE INDUSTRY SINGLE MEMBER \\nSOCIETE ANONYME'. 'Hellenic Cables S.A.' carries the company's legal form and is how it signs every bid since 2025. It is not a bare brand: the long form is just this name plus a descriptive subtitle. Same entity, mixed case, current, so it beats the all-caps head collapsed. Caveat: a strict reader might call it the leading part of the full legal name."
+    },
+    {
+     "org_id": 22755546,
+     "verdict": "right",
+     "revert": false,
+     "why": "Buyer listing, 4 procedures. Tender 424278 (2026-03-20, newest) prints Buyer/Signatory/AddInfo \"Baie d'Armor Aménagement\" (with the accent). Tender 599548 (2025-04-07) and tender 633942 (2025-03-04) print \"BAIE D'ARMOR AMENAGEMENT\". The head comes only from tender 665090 (2024-10-10), where the name is followed by '\\n(POUR LE COMPTE DE SAINT-BRIEUC ARMOR AGGLOMERATION)'. That is an on-behalf-of tail naming the principal, not this entity's name. new_name is the same SIRET entity's proper name in the newest printed spelling."
+    },
+    {
+     "org_id": 22774437,
+     "verdict": "right",
+     "revert": false,
+     "why": "Buyer listing, 2 procedures. Tender 79787 (2025-09-18) prints Buyer/Signatory 'Landesanstalt für Landwirtschaft und Gartenbau Sachsen-Anhalt'. The head comes from tender 669773 (2024-10-04), which prints the name plus the address '\\nStrenzfelder Allee 22\\n06406 Bernburg'. Collapsing the breaks would still leave the address in the name. The rival 'Landesanstalt für Landwirtschaft und Gartenbau' (rival_newest 2026-07-03) does not show in the buyer, winner or bidder listings. A bounded DEE 2026-07-03 list did not show it either. It drops the 'Sachsen-Anhalt' qualifier, so it reads as a truncation, not a newer name. new_name is the full proper name without the address."
+    },
+    {
+     "org_id": 22819677,
+     "verdict": "right",
+     "revert": false,
+     "why": "Winner/bidder listings, 3 procedures. Tender 8562419 (2026-10-02, notices 47152981/47154059) prints 'GE Medical Systems Polska Sp.z.o.o'. Tender 184830 (2025-09-23, notices 25018650/25048209) prints 'GE Medical Systems Polska Sp.z.o.o'. The head comes only from tender 376663 (2024-11-19, notice 24344545), which prints the name plus '\\nAdres: ul. Wołoska 9, 02-583 Warszawa'. Collapsing the break would still leave the address. new_name is the same company's name exactly as the two newer notices print it, legal-form spacing included."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-7",
+   "items": [
+    {
+     "org_id": 22840099,
+     "verdict": "right",
+     "revert": false,
+     "why": "Head is the consortium string from one notice: 638583 (2024-11-13) printed 'MoreThanGood Sp. z o.o. (lider konsorcjum), Impel Security Solutions ... Impel Facility Services Sp. z o.o. (partner konsorcjum)'. Polish consortia have no NIP of their own, so 8952256521 is the leader's NIP, and every later notice lists the partners as separate orgs. The newer notices print the leader alone: 685379 (2026-07-28) 'MoreThanGood Sp. z o.o.', with Impel Facility Services as its own org 9310205; 1129743 (2026-05-28) 'MORETHANGOOD Sp. z o.o.'; 536196 (2026-05-11) 'MoreThanGood Sp. z o.o'; 681400 (2026-04-23) 'MoreThanGood Sp.zo.o.'; 1057347 (2025-07-07) 'MoreThanGood Sp. z o.o.'. new_name is the entity's current full name, not a member split out of a consortium identifier."
+    },
+    {
+     "org_id": 22859214,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is consortium (RTI) text with an address. It names 'capogruppo TECO+Partners S.T.P. S.r.l. (P.IVA e C.F. 03987491200)', so the identifier belongs to TECO+Partners itself. Later notices print the firm alone: 915149 (2026-07-31) 'TECO+ PARTNERS S.T.P. SRL'; 8565543 (2026-07-14), 766722 (2026-05-20) and 168101 (2026-03-16) 'TECO+ PARTNERS S.T.P. srl'; 1142392 (2026-03-11) 'TECO+Partners stp srl'; 344004 (2026-09-21) prints the misspelling 'TECO+PARTENRS S.T.P. S. r.l.'. new_name is the most common correctly spelled full name, so it is better than the RTI text."
+    },
+    {
+     "org_id": 22933084,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is mojibake ('SocietÃÃÃÃÂ  Benefit') from one notice, 799839 (2025-01-20); collapsing line breaks does not fix it. Later notices print the clean name: 8579669 (2026-09-22) and 8548668 (2025-06-11) 'Deloitte Business Solution S.r.l. Società Benefit'; 1082222 (2026-10-09) 'DELOITTE BUSINESS SOLUTION S.R.L. Società Benefit'. 705430 (2025-05-26) printed the same name in capitals plus the short form 'S.B.'. new_name is the same entity's full legal name, correctly encoded."
+    },
+    {
+     "org_id": 22969820,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is mojibake ('Coges don Lorenzo Milani SocietÃÃÃÂ  Cooperativa') from one notice, 815168 (2025-01-21). Later notices print the full legal name: 562605 (2026-06-17) 'CO.GE.S. DON LORENZO MILANI SOCIETÀ COOPERATIVA SOCIALE'; 84939 (2026-05-26) and 6452 (2026-04-21) 'CO.GE.S. DON LORENZO MILANI SOCIETA' COOPERATIVA SOCIALE'. new_name is the same cooperative, properly encoded and more complete (it includes 'Sociale')."
+    },
+    {
+     "org_id": 23017077,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is RTI text with a literal line break from 334918 (2025-02-17). It reads 'RTI – TECNOSTRADE S.R.L. (Mandataria – C.f. 01170840548) – M.C.I. S.R.L. ... TROVATI S.R.L.', so the identifier is the lead firm Tecnostrade's own C.f., not the consortium's. Later notices print the firm alone: 278592 (2026-09-16) 'TECNOSTRADE S.R.L.'; 951792 (2025-09-03) 'TECNOSTRADE SRL'; 824472 (2025-04-09) 'TECNOSTRADE S.r.l.'. new_name is the correct entity name."
+    },
+    {
+     "org_id": 23035020,
+     "verdict": "right",
+     "revert": false,
+     "why": "The org has one procedure, 1077792. Its 2025-03-21 versions gave the head with the address glued on ('Gemeinde Hagen im Bremischen\\nAmtsplatz 3\\n27628 Hagen im Bremischen'). The newest version, 00254620-2025 published 2025-04-18, prints 'Gemeinde Hagen im Bremischen' as Procedure-Buyer and Lot-ReviewOrg. new_name is the municipality's own name with the address tail dropped, which is better than the head collapsed ('... Amtsplatz 3 27628 ...')."
+    },
+    {
+     "org_id": 23066207,
+     "verdict": "right",
+     "revert": false,
+     "why": "The head is mojibake ('UniversitÃÃÃÂ  degli Studi di Macerata - Area Servizi Tecnici e Infrastrutture (ASTI)'), last seen 2025-04-08. The clean ASTI spelling last appeared in 431311 (2025-07-01). Every newer notice prints the procurement area: 8823057 (2026-10-05), 1062790 (2026-07-29), 281043 (2025-12-17) and 702889 (2025-09-23) all read 'Università degli Studi di Macerata - Area Procurement, edilizia e sostenibilità'. Both names carry a department suffix, so this does not demote the entity to a branch. new_name is correctly encoded, is the university's current name in the notices, and no plain 'Università degli Studi di Macerata' spelling exists among the mentions."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-8",
+   "items": [
+    {
+     "org_id": 23066511,
+     "verdict": "right",
+     "revert": false,
+     "why": "Head is the name with an address/NIP/REGON tail glued on by line breaks (unfit). Newest notices print the plain name: ted 518175 (2026-07-22) parties[] and bids[] 'Balton Sp. z o.o.'; 265727 (2026-05-04) 'Balton Sp. z o.o.'; 332111 (2025-04-25) 'Balton Sp. z o.o.'. The head spelling appears only on 240382 (2026-06-08), bids notice 25835244, and 184830 (2025-09-23) prints 'Balton Sp.z.o.o'. new_name is the company's own complete name with no tail, so it is the better name to serve."
+    },
+    {
+     "org_id": 23066716,
+     "verdict": "right",
+     "revert": false,
+     "why": "Head is 'BOXMET MEDICAL Sp. z o. o.' plus an address and NIP/REGON block on new lines, printed only on ted 1163511 (2025-04-08). Later notices print the bare name: 8562419 (2026-10-02, the newest) 'Boxmet Medical Sp.z.o.o' on parties[] and bids[]; 184830 (2025-09-23) 'Boxmet Medical Sp.z.o.o'; 418436 (2025-06-05) 'BOXMET MEDICAL Sp. z o.o.'. new_name is the same company with its full proper name and legal form. The legal form is written informally (Sp.z.o.o), but the name reads clearly better than the head with its address tail collapsed."
+    },
+    {
+     "org_id": 23073668,
+     "verdict": "right",
+     "revert": false,
+     "why": "Head 'ABBOTT MEDICAL ESPAÃ¿A, S.A.' is mojibake. new_name is the same name correctly decoded. Recent notices print it: ted 233368 (2026-10-06) 'ABBOTT MEDICAL ESPAÑA, S.A.'; 415543 (2026-10-02) 'ABBOTT MEDICAL ESPAÑA, S.A.'; 580417 (2026-09-25) 'ABBOTT MEDICAL ESPAÑA, S.A.'; 671217 (2026-09-18) 'ABBOTT MEDICAL ESPAÑA SA'. The mojibake shows only on 339822 (2026-10-15), and there only on bids from the older notices 24685510, 24822966 and 25134782. new_name is the same words without the encoding damage, not a former name."
+    },
+    {
+     "org_id": 23150170,
+     "verdict": "right",
+     "revert": false,
+     "why": "Head is the city name plus a department ('Stadtdienst 23 - Gebäudemanagement'), a representation clause and a postal address on separate lines, printed only on ted 573607 (2026-03-09). The newest buyer notice, 656550 (2026-07-28), prints 'Klingenstadt Solingen' on every role (Procedure-Buyer, Contract-Signatory, Lot-AddInfo, Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt). 'Klingenstadt Solingen' is the city's official full style, so it names the entity behind identifier DE120871761 rather than an organ of it."
+    },
+    {
+     "org_id": 23329783,
+     "verdict": "right",
+     "revert": false,
+     "why": "Head adds the department line 'Strategisches Immobilienmanagement' to the insurer's name. That line appears only on ted 114517 (2026-06-09). Every other buyer notice prints 'AOK Rheinland/Hamburg - Die Gesundheitskasse': 464003 (2026-09-25, the newest), 851343 (2026-07-07), 390141 (2025-06-25) and 530345 (2025-06-03). new_name is the complete name of the entity itself, without the organ tail."
+    },
+    {
+     "org_id": 23455902,
+     "verdict": "right",
+     "revert": false,
+     "why": "Head is the name plus the address line 'ul. Wrocławska 56, 55-095 Długołęka'. None of the newest five notices prints it. The newest, ted 858623 (2026-09-21), prints 'TEAM MP Sp. z o. o.', the same words with different spacing. 26954 (2026-02-23) prints 'TEAM MP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ', and 8819032 (2026-02-17), 1086718 (2026-02-16) and 543593 (2026-01-05) print 'TEAM MP Sp. z o.o.'. new_name is the company's complete name with its legal form and no address."
+    },
+    {
+     "org_id": 30914521,
+     "verdict": "right",
+     "revert": false,
+     "why": "Head 'Name of Supplier<TAB>Public Sector Media Ltd' starts with a form label (unfit). It is printed only on fts 8697314 (2025-06-05). Later notices print 'PUBLIC SECTOR MEDIA LTD' on parties[] and bids[]: 8631187 (2026-01-22), 8630390 (2026-01-20) and 8599250 (2025-09-19). That is the company named by the Companies House number GBCOH14861405. Collapsing the head would still serve 'Name of Supplier Public Sector Media Ltd', which is worse."
+    }
+   ],
+   "checks": []
+  },
+  {
+   "group": "blind-rel-9",
+   "items": [
+    {
+     "org_id": 31571858,
+     "verdict": "right",
+     "revert": false,
+     "why": "The identifier GBNHSFLT32FYM17FNR77FWX94FJD74FC339 is an NHS pharmacy (FLT) code for one dispensing contractor. The head joins the legal name and the trading name with a literal tab. Collapsed, it reads 'Sedem Pharmacy Ltd Sedem Pharmacy', which repeats the name and is not a real name. new_name 'Sedem Pharmacy Ltd' is the complete legal name. It is printed on every other notice I read, including the newest one, so it is neither a former name nor a truncation. Notices read (mention_name on parties[] and bids[].parties[], all NHS Cheshire and Merseyside ICB awards): 037249-2026 (id 8651980, 2026-04-23, newest), 'Sedem Pharmacy Ltd'; 036822-2026 (id 8651747, 2026-04-22), 'Sedem Pharmacy Ltd\\tSedem Pharmacy', the only notice that carries the tab spelling; 035976-2026 (id 8816394, 2026-04-21), 'Sedem Pharmacy Ltd'; 018214-2025 (id 8691308, 2025-04-30), 'Sedem Pharmacy Ltd'; 018202-2025 (id 8691302, 2025-04-30), 'Sedem Pharmacy Ltd'. GET /v1/organizations/31571858 returns name 'Sedem Pharmacy Ltd\\tSedem Pharmacy' with 6 mentions. The buyer query returned nothing; the winner and bidder queries returned the same procedures."
+    }
+   ],
+   "checks": []
+  }
+ ],
+ "missing": []
+}
