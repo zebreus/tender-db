@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — unit 3 DEPLOYED 2026-10-17 as `4e5eaf7` (gate green 1242 s, 151 suites; reviewed in four rounds, Unit 3's "Review fixes") and DRAINED: refold-lot-sum dry 2573 (194,404 Tenders, 598,710 notices, 170 s), wet 2574 (expect 194404; stamped 194,404), project 2575 (2 h 18 m: 179,052 verified + 15,352 corrected = the stamped count). All 31 runbook pins read right (16 vouched, 6 awards, 9 unchanged). NEXT: the post-drain bounded read (workflow wf_dc85fa7e-c00: all 229 derived awards heads of EUR 100 m or more + a uniform 50 of the 15,352 corrections), then close as DONE or file its findings.
+Status: ready-for-agent — the post-drain bounded read FAILED (2026-10-17, wf_dc85fa7e-c00): path W (`lot-sum-awards`) is wrong on 9 of a uniform 50 of its 15,352 changes (18 %) and on 96 of the 229 derived heads of EUR 100 m or more (42 %), every wrong upheld by a skeptic. DECIDED: path W is switched OFF (fail closed; path V, all 16 pins right, stays), deployed with the next build, and `refold-lot-sum` re-run so the path-W heads return to the max election. NEXT: unit 4a (the switch, built on top of 560/562's tree), gate, deploy, refold-lot-sum dry → wet → project, read that path-W derivations are gone; then unit 4b, a path-W redesign against the 279 labels.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -603,4 +603,45 @@ post-drain read checks each summed TED key against `TED-LOT_NO`.
 - The bounded read's population: 229 derived awards heads of EUR 100 m or more (1 at EUR 10 bn+: 8831876, GBP
   25,999,999,986.00; 20 at EUR 1–10 bn; 208 at EUR 100 m–1 bn), read by a seek on `tenders_current_value_eur`
   (plan-probed), and 50 salted-uniform path-W corrections from `/v1/changes` (cursor 955146761 → 955254530).
+
+## The post-drain bounded read — FAILED (2026-10-17)
+
+Workflow wf_dc85fa7e-c00 (40 readers, a skeptic on every wrong: 105 wrongs upheld of 108 first-read wrongs; evidence
+`.scratch/tender-db/551-lot-sum/postdrain/read_result.json`). Each head was read against its notices: the procedure's
+stated total, each lot's latest award, distinct lots (TED `LOT-k` is an ordinal: checked against the notice's LOT_NO),
+slips, and the figure it replaced.
+
+| population | read | right | neutral | wrong |
+|---|---|---|---|---|
+| derived awards heads ≥ EUR 1 bn | 21 | 12 | 0 | 9 |
+| derived awards heads EUR 100 m – 1 bn | 208 | 108 | 13 | 87 |
+| uniform 50 of the 15,352 path-W changes | 50 | 40 | 1 | 9 (18 %; 95 % ~9–31 %) |
+
+Wrongs by class (all 105): `not_additive` 41 (framework ceilings or per-supplier maxima summed across lots that share
+one envelope, e.g. 176280, 244952, 524007), `double_count` 28 (one lot under two keys or a re-issued award summed
+with its original, e.g. 793898, 794186, 831972), `farther` 21 (the sum is farther from the notice's stated total
+than the one figure it replaced, e.g. 6330626, 6421819, 6545090), `slip` 11 (a ×10ᵏ award summed, e.g. 993254,
+51385), `other` 4. The sample's wrongs: 249185, 324582, 831972, 5779166, 5976305, 6330626, 6421819, 6545090, 7056700.
+The ≥ EUR 1 bn wrongs: 176280, 244952, 524007, 793898, 794186, 993254, 1160515, 5316736, 8638894.
+
+Unit 2's evidence for path W was 10 fires and 0 farther (95 % upper bound 28 %); the drain's 15,352 fires show the
+guards (G1'–G8b) do not separate the non-additive and double-counted shapes, which are common at scale and dominate
+the large heads, where a wrong sum is most visible (value filters, sorts, the data-quality band).
+
+**Decided (2026-10-17, the owner): switch path W off.** House rule: fail closed — a refusal keeps today's head, and no
+sampled re-judge in this project ships at 18 % wrong (524's bar is 1 in 30). Path V (`lot-sum-vouched`: a figure the
+buyer published at exactly 10ᵏ the lot sum vouches for it) stays: all 16 of its pins read right, and its cohort is
+small. Units:
+- **4a (S, build): the switch.** Path W behind a constant that is off in production (`derive_lot_sum` returns no
+  awards sum); its guards and tests stay, exercised through the inner function, so the redesign keeps its pins.
+  Head-value tests of the path-W pins flip to "keeps the max election, no derivation". Served text (/docs Amounts
+  caveat, openapi `value_derivation`, CHANGELOG, operations.md) says path W is withdrawn pending unit 4b. Gate, deploy,
+  then `refold-lot-sum` dry → wet (`expect`) → its `project` (expect ~2–2.5 h, and ~15,352 corrections back),
+  in a queue gap outside the daily ingest. Verify: the 6 path-W pins serve no derivation; a bounded read of the
+  value band finds no `lot-sum-awards` row; the 16 path-V pins unchanged.
+- **4b (M, decide + build): a path-W redesign** measured on the 279 labels above (and unit 1's 4,745 records):
+  candidates — sum only where a notice states no total AND each summed award is a distinct contractor on a distinct
+  published lot number (LOT_NO / BT-137 read, not the key), refuse framework or DPS procedures and multi-supplier
+  lots outright, refuse when the sum exceeds every estimate on the head by 10×; adopt only at ≤ 1 wrong in a fresh
+  uniform 30 and 0 farther in the ≥ EUR 100 m band.
 
