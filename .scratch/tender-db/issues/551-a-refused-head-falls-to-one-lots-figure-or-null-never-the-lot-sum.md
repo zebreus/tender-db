@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE (16 heads); path W WITHDRAWN and refolded back (unit 4a done). Unit 4b DECIDED 2026-10-17 (wf_efa005fa-6a8; adversarial check found it unsound as written, amendments ADOPTED): path W v2 = v1's guards + refusals R1–R10 (R10: a stated total vouches every sum ≥ EUR 10 m per amendment (a)), measured BEFORE any Rust by a salted shadow walk; bar: ≤ 1 wrong in a fresh uniform 30 (skeptic on every head, two agreeing reads) and 0 wrong of ANY class among band heads. NEXT: M1 (rule_v2.py port + walk). Fallback fixed: 'vouched everywhere'; if both fail, path W closes for good (unit X).
+Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE 2026-10-17 (wf_66e388ca-ef6): rule_v2.py (sha256 39be6d1e…05ce) reproduces the judge's v2 on all 279 labels; salted walk (salt 0x551B4) drew the fresh 30 from 54 walked v1 fires (24 refused), projected v2 fires ≈ 8,529 (95 % 6,356–10,605); fidelity check 10/10 identical. NEXT: M2 — read the 30 and re-read the band's 15 under the amended protocol (skeptic on every head, two agreeing reads); bar ≤ 1 wrong of 30, 0 wrong of any class in the band. 567's fix (lot keys of legacy TED awards) will change some v2 facts: B3's parity re-runs after its refold.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -892,4 +892,33 @@ In-sample none of this changes an outcome (adv/a2.py: 0 flips), but out of sampl
 - R5.4 says 'one other round' but the scorer includes the award's own round (no in-sample difference, checked).
 - R10's estimate-kind vouches rest on 1 right (7001924). The one in-sample estimate-style match outside the rule's list (5561539, an old contract notice's VALUE) was farther.
 - TED-VALUE / TED-VALUE_COST-only vouches were 0 right / 2 wrong (adv/a10.py), so the rule's narrower list is better than the port's, which is one more reason the port must be aligned to it.
+
+## Unit 4b M1 — done (2026-10-17, workflow wf_66e388ca-ef6)
+
+Deliverables in `.scratch/tender-db/551-lot-sum/unit4b/`: `rule_v2.py` (v1's T'/K/G0/G1'/G2/G3/G4/G5/G5'/G6/G7/G8/G8b
+ported to public-API facts plus R1–R10 with the amendments: R10 from EUR 10 m, `published_lot_no` never TED-ITEM, G8b
+unchanged, v2 ⊆ v1), `M1-port-check.md/.json`, `walk.py`, `walk.jsonl`, `M1-walk.md`, `M1-walk-30.json`,
+`M1-fidelity.md` (+ `fidelity/`).
+
+- **Port check (in-sample, a fidelity check of the port, not of v2):** wrongs refused 105/105; the band ships exactly the
+  judge's 15; the uniform 50 ships 32, all labelled right; out of sample ships {294968, 467176, 585917, 5995030,
+  8426318}; 0 decision differences against the judge's j7 and the amended strict table. v1 fires on all 285 ids and the
+  served head equals the port's max election on all 285; 3,106 version notices read. EUR conversion rebuilt from the
+  public series (ECB, Eurostat ECU, fixed rates), checked against `/v1/lots` value filters on 21 non-EUR heads (21/21).
+- **Shadow walk:** salt 0x551B4 (348,596), order `((id XOR salt) × 2654435761) mod 2³², id` over the failed drain's
+  15,352 corrected ids, skipping the 279. 54 walked (238 GETs), 54 v1 fires, 30 v2 ships, 24 refused (first refusing
+  check: R3 9, R1 4, R2c 4, R2d 2, R5.1, R5.13, R6, R7, R8 1 each). Projected v2 fires 15,352 × 30/54 ≈ **8,529** (95 %
+  6,356–10,605); B5's stop window 0.5×–2× = 4,264–17,058. No walked ship ≥ EUR 10 m (largest 307725, EUR 8.89 m), so the
+  band read stays the judge's 15 and the EUR 10–100 m stratum is empty in this draw.
+- **Fidelity:** 6 ships + 4 refusals derived by hand with independent code (550 field comparisons, 7 seeded errors all
+  caught): 0 mismatches, 0 flips.
+- **Recorded deviations:** (1) the salt and the port's sha256 were fixed in the workflow's script (persisted before the
+  run) and written into `M1-walk.md` at 15:02Z before the first draw, but NOT into this issue file first; the issue's
+  M1 text had named a `sha256('551-4b-fresh30' + id)` order — the salt was chosen without sight of any outcome, so the
+  draw stays uniform over v2's fires. (2) The amendment "prefer ids corrected in both 2575 and 2586" was not applied;
+  v1 fired on 54/54 walked ids, so no non-fire entered. (3) Notes for B2/B3 from the fidelity read: v1's "latest award
+  by notice id" is not always the latest published; eForms "published lot numbers" are the LOT-000N keys themselves (R2
+  cannot see a buyer's own part numbers); R3's "keys that notice awards" must be pinned (closed/no-award rows included
+  or not); unkeyed modification awards (6094289) must be keyed the same way in B1. (4) 567's fix changes legacy TED award
+  lot keys: B3's parity check re-runs the port after 567's refold.
 

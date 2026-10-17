@@ -1,0 +1,4380 @@
+{
+ "6094289": {
+  "id": 6094289,
+  "date": "2020-08-05",
+  "notices": [
+   19610083,
+   19661042,
+   19678301,
+   19961452,
+   21175651,
+   21176110,
+   21182144
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [
+   [
+    "estimated_value",
+    {
+     "cents": 406000000,
+     "currency": "HUF"
+    },
+    null,
+    "copy"
+   ],
+   [
+    "estimated_value",
+    {
+     "cents": 904500000,
+     "currency": "HUF"
+    },
+    null,
+    "copy"
+   ],
+   [
+    "estimated_value",
+    {
+     "cents": 2761470000,
+     "currency": "HUF"
+    },
+    null,
+    "copy"
+   ],
+   [
+    "estimated_value",
+    {
+     "cents": 3557800000,
+     "currency": "HUF"
+    },
+    null,
+    "copy"
+   ],
+   [
+    "estimated_value",
+    {
+     "cents": 6367720000,
+     "currency": "HUF"
+    },
+    null,
+    "copy"
+   ],
+   [
+    "result_value",
+    {
+     "cents": 6367720000,
+     "currency": "HUF"
+    },
+    null,
+    "copy"
+   ]
+  ],
+  "served": {
+   "cents": 6367720000,
+   "currency": "HUF"
+  },
+  "K_ok": true,
+  "currency": "HUF",
+  "other_currency_awards": [],
+  "n": 5,
+  "S": 13997490000,
+  "rate": 344.5,
+  "S_eur_cents": 40631321,
+  "served_eur_cents": 18483948,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-1",
+    "notice": 19961452,
+    "result_key": "RES-1",
+    "cents": 904500000,
+    "block_amounts": [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      904500000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      904500000,
+      "HUF"
+     ]
+    ],
+    "pn_section": "1",
+    "pn_block": "1",
+    "pn_frozen": "1",
+    "item": "1",
+    "title_section": "Seb-, bőr- és nyálkahártya fertőtlenítő",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-2"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      6829157,
+      "B. Braun Trading Kft."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-2",
+    "notice": 19961452,
+    "result_key": "RES-2",
+    "cents": 406000000,
+    "block_amounts": [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      406000000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      406000000,
+      "HUF"
+     ]
+    ],
+    "pn_section": "2",
+    "pn_block": "2",
+    "pn_frozen": "2",
+    "item": "2",
+    "title_section": "Kétfázisú bőrfertőtlenítőszer",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-3"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      4987234,
+      "TEVA Gyógyszergyár Zrt."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-3",
+    "notice": 19961452,
+    "result_key": "RES-3",
+    "cents": 3557800000,
+    "block_amounts": [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      3557800000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      3557800000,
+      "HUF"
+     ]
+    ],
+    "pn_section": "3",
+    "pn_block": "3",
+    "pn_frozen": "3",
+    "item": "3",
+    "title_section": "Kézfertőtlenítőszerek",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-4"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      1253113,
+      "HARTMANN-RICO Hungária Kft."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-4",
+    "notice": 19961452,
+    "result_key": "RES-4",
+    "cents": 6367720000,
+    "block_amounts": [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      6367720000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      6367720000,
+      "HUF"
+     ]
+    ],
+    "pn_section": "4",
+    "pn_block": "4",
+    "pn_frozen": "4",
+    "item": "4",
+    "title_section": "Felületfertőtlenítő szerek",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-5"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      1253113,
+      "HARTMANN-RICO Hungária Kft."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-5",
+    "notice": 19961452,
+    "result_key": "RES-5",
+    "cents": 2761470000,
+    "block_amounts": [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      2761470000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      2761470000,
+      "HUF"
+     ]
+    ],
+    "pn_section": "5",
+    "pn_block": "5",
+    "pn_frozen": "5",
+    "item": "5",
+    "title_section": "Eszköz- és műszerfertőtlenítőszer",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-6"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      2173937,
+      "Pannon Diagnosztika Kft."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [],
+  "stated_totals": [
+   {
+    "nid": 19961452,
+    "field": "TED-VAL_TOTAL",
+    "kind3": "award",
+    "cents": 13997490000,
+    "cur": "HUF",
+    "section": "PROCEDURE",
+    "form": "F03",
+    "logical_id": null,
+    "single_lot_own": false
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": [
+    [
+     "estimated_value",
+     null,
+     406000000
+    ],
+    [
+     "estimated_value",
+     null,
+     904500000
+    ],
+    [
+     "estimated_value",
+     null,
+     2761470000
+    ],
+    [
+     "estimated_value",
+     null,
+     3557800000
+    ],
+    [
+     "estimated_value",
+     null,
+     6367720000
+    ]
+   ]
+  },
+  "R3": [],
+  "R3_award_totals": [
+   [
+    19961452,
+    "TED-VAL_TOTAL",
+    13997490000
+   ]
+  ],
+  "vouches": [
+   [
+    "TED-VAL_TOTAL",
+    19961452,
+    13997490000
+   ]
+  ],
+  "R10": false,
+  "R6": [],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    19961452,
+    "RES-1",
+    "1",
+    null,
+    "1",
+    [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      904500000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      904500000,
+      "HUF"
+     ]
+    ],
+    1
+   ],
+   [
+    19961452,
+    "RES-2",
+    "2",
+    null,
+    "2",
+    [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      406000000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      406000000,
+      "HUF"
+     ]
+    ],
+    1
+   ],
+   [
+    19961452,
+    "RES-3",
+    "3",
+    null,
+    "3",
+    [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      3557800000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      3557800000,
+      "HUF"
+     ]
+    ],
+    1
+   ],
+   [
+    19961452,
+    "RES-4",
+    "4",
+    null,
+    "4",
+    [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      6367720000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      6367720000,
+      "HUF"
+     ]
+    ],
+    1
+   ],
+   [
+    19961452,
+    "RES-5",
+    "5",
+    null,
+    "5",
+    [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      2761470000,
+      "HUF"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      2761470000,
+      "HUF"
+     ]
+    ],
+    1
+   ],
+   [
+    21175651,
+    "RES-1",
+    "3",
+    null,
+    null,
+    [
+     [
+      "TED-VAL_TOTAL",
+      3557800000,
+      "HUF"
+     ]
+    ],
+    1
+   ],
+   [
+    21176110,
+    "RES-1",
+    "5",
+    null,
+    null,
+    [
+     [
+      "TED-VAL_TOTAL",
+      2761470000,
+      "HUF"
+     ]
+    ],
+    1
+   ],
+   [
+    21182144,
+    "RES-1",
+    "4",
+    null,
+    null,
+    [
+     [
+      "TED-VAL_TOTAL",
+      6367720000,
+      "HUF"
+     ]
+    ],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "19610083": [
+    "F02",
+    ""
+   ],
+   "19661042": [
+    "F14",
+    "change"
+   ],
+   "19678301": [
+    "F14",
+    "change"
+   ],
+   "19961452": [
+    "F03",
+    ""
+   ],
+   "21175651": [
+    "F20",
+    ""
+   ],
+   "21176110": [
+    "F20",
+    ""
+   ],
+   "21182144": [
+    "F20",
+    ""
+   ]
+  }
+ },
+ "236597": {
+  "id": 236597,
+  "date": "2026-03-25",
+  "notices": [
+   25497863,
+   25523868,
+   25594925,
+   25617400,
+   25619431,
+   25619589,
+   25619613,
+   25620726,
+   25631637,
+   25647921,
+   25663872,
+   25665851
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [
+   [
+    "result_value",
+    {
+     "cents": 4727100,
+     "currency": "PLN"
+    },
+    null,
+    "copy"
+   ]
+  ],
+  "served": {
+   "cents": 4727100,
+   "currency": "PLN"
+  },
+  "K_ok": true,
+  "currency": "PLN",
+  "other_currency_awards": [],
+  "n": 11,
+  "S": 174934931,
+  "rate": 4.2718,
+  "S_eur_cents": 40951105,
+  "served_eur_cents": 1106583,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-0001",
+    "notice": 25631637,
+    "result_key": "RES-0001",
+    "cents": 34958800,
+    "block_amounts": [
+     [
+      "BT-710-LotResult",
+      34958800,
+      "PLN"
+     ],
+     [
+      "BT-711-LotResult",
+      42538250,
+      "PLN"
+     ]
+    ],
+    "pn_section": "LOT-0001",
+    "pn_block": "LOT-0001",
+    "pn_frozen": "LOT-0001",
+    "item": null,
+    "title_section": "Część nr 5",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0003"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      22707570,
+      "Miron Krosnowski prowadzący działalność gospodarczą pod nazwą Miron Krosnowski „MARCHEWKA”"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0002",
+    "notice": 25647921,
+    "result_key": "RES-0002",
+    "cents": 5120882,
+    "block_amounts": [],
+    "pn_section": "LOT-0002",
+    "pn_block": "LOT-0002",
+    "pn_frozen": "LOT-0002",
+    "item": null,
+    "title_section": "Część nr 9",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      17744132,
+      "Aber sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0003",
+    "notice": 25619431,
+    "result_key": "RES-0001",
+    "cents": 9575000,
+    "block_amounts": [],
+    "pn_section": "LOT-0003",
+    "pn_block": "LOT-0003",
+    "pn_frozen": "LOT-0003",
+    "item": null,
+    "title_section": "Część nr 7",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      18708999,
+      "STEK Kałużny i Wspólnicy Sp.k."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0004",
+    "notice": 25619589,
+    "result_key": "RES-0002",
+    "cents": 3287240,
+    "block_amounts": [],
+    "pn_section": "LOT-0004",
+    "pn_block": "LOT-0004",
+    "pn_frozen": "LOT-0004",
+    "item": null,
+    "title_section": "Część nr 3",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      17744132,
+      "Aber sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0006",
+    "notice": 25619613,
+    "result_key": "RES-0001",
+    "cents": 17134000,
+    "block_amounts": [],
+    "pn_section": "LOT-0006",
+    "pn_block": "LOT-0006",
+    "pn_frozen": "LOT-0006",
+    "item": null,
+    "title_section": "Część nr 4",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      23585999,
+      "Bartłomiej Szulecki prowadzący działalność gospodarczą pod nazwą „Piekarnia Szulecki” Bartłomiej Szulecki, miejsc. Ciechocinek, kod pocztowy: 87-720, ul. gen. Józefa Bema nr 50, gm. Ciechocinek"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0007",
+    "notice": 25617400,
+    "result_key": "RES-0001",
+    "cents": 49719730,
+    "block_amounts": [],
+    "pn_section": "LOT-0007",
+    "pn_block": "LOT-0007",
+    "pn_frozen": "LOT-0007",
+    "item": null,
+    "title_section": "Część nr 6",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      23139272,
+      "ANIR Sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0008",
+    "notice": 25594925,
+    "result_key": "RES-0001",
+    "cents": 4727100,
+    "block_amounts": [],
+    "pn_section": "LOT-0008",
+    "pn_block": "LOT-0008",
+    "pn_frozen": "LOT-0008",
+    "item": null,
+    "title_section": "Część nr 10",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      17744132,
+      "Aber sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0009",
+    "notice": 25647921,
+    "result_key": "RES-0001",
+    "cents": 3921942,
+    "block_amounts": [],
+    "pn_section": "LOT-0009",
+    "pn_block": "LOT-0009",
+    "pn_frozen": "LOT-0009",
+    "item": null,
+    "title_section": "Część nr 8",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      17744132,
+      "Aber sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0010",
+    "notice": 25665851,
+    "result_key": "RES-0001",
+    "cents": 4903437,
+    "block_amounts": [],
+    "pn_section": "LOT-0010",
+    "pn_block": "LOT-0010",
+    "pn_frozen": "LOT-0010",
+    "item": null,
+    "title_section": "Część nr 11",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      18941125,
+      "Packman Sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0011",
+    "notice": 25619589,
+    "result_key": "RES-0001",
+    "cents": 7875000,
+    "block_amounts": [],
+    "pn_section": "LOT-0011",
+    "pn_block": "LOT-0011",
+    "pn_frozen": "LOT-0011",
+    "item": null,
+    "title_section": "Część nr 1",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      17744132,
+      "Aber sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0012",
+    "notice": 25620726,
+    "result_key": "RES-0001",
+    "cents": 33711800,
+    "block_amounts": [],
+    "pn_section": "LOT-0012",
+    "pn_block": "LOT-0012",
+    "pn_frozen": "LOT-0012",
+    "item": null,
+    "title_section": "Część nr 12",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      23586768,
+      "KUJAWSKA SPÓŁDZIELNIA MLECZARSKA, ul. Wysoka nr 15, 87-800 Włocławek"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [],
+  "stated_totals": [
+   {
+    "nid": 25594925,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 4727100,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "c27a355d-7e4c-49f4-997b-56a0d1534ab5",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25617400,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 49719730,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "c41d37d6-6ef9-4cc5-90f3-995223199ee5",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25619431,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 9575000,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "231f45d0-0225-4106-b247-e390c00c119b",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25619589,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 11162240,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "978deb6e-63d2-42cd-9f41-af672f8fd8fd",
+    "single_lot_own": false
+   },
+   {
+    "nid": 25619613,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 17134000,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "e6f2be5b-6517-4cb7-9152-8f61814ee2a3",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25620726,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 33711800,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "e7d05673-ebf6-419b-aecb-9a0ccaedd38d",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25631637,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 34958800,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "bdaa6404-b91e-4235-933d-7874a3c84d00",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25647921,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 9042824,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "ca4ce4c0-099d-449e-ad2c-3cc712f20ee3",
+    "single_lot_own": false
+   },
+   {
+    "nid": 25665851,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 4903437,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "fd3d7483-91b6-4e84-aac0-745c339f6e4d",
+    "single_lot_own": true
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": []
+  },
+  "R3": [],
+  "R3_award_totals": [
+   [
+    25619589,
+    "BT-161-NoticeResult",
+    11162240
+   ],
+   [
+    25647921,
+    "BT-161-NoticeResult",
+    9042824
+   ]
+  ],
+  "vouches": [],
+  "R10": false,
+  "R6": [],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    25594925,
+    "RES-0001",
+    null,
+    "LOT-0008",
+    null,
+    [],
+    1
+   ],
+   [
+    25617400,
+    "RES-0001",
+    null,
+    "LOT-0007",
+    null,
+    [],
+    1
+   ],
+   [
+    25619431,
+    "RES-0001",
+    null,
+    "LOT-0003",
+    null,
+    [],
+    1
+   ],
+   [
+    25619589,
+    "RES-0001",
+    null,
+    "LOT-0011",
+    null,
+    [],
+    1
+   ],
+   [
+    25619589,
+    "RES-0002",
+    null,
+    "LOT-0004",
+    null,
+    [],
+    1
+   ],
+   [
+    25619613,
+    "RES-0001",
+    null,
+    "LOT-0006",
+    null,
+    [],
+    1
+   ],
+   [
+    25620726,
+    "RES-0001",
+    null,
+    "LOT-0012",
+    null,
+    [],
+    1
+   ],
+   [
+    25631637,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [
+     [
+      "BT-710-LotResult",
+      34958800,
+      "PLN"
+     ],
+     [
+      "BT-711-LotResult",
+      42538250,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    25647921,
+    "RES-0001",
+    null,
+    "LOT-0009",
+    null,
+    [],
+    1
+   ],
+   [
+    25647921,
+    "RES-0002",
+    null,
+    "LOT-0002",
+    null,
+    [],
+    1
+   ],
+   [
+    25663872,
+    "RES-0001",
+    null,
+    "LOT-0005",
+    null,
+    [],
+    0
+   ],
+   [
+    25665851,
+    "RES-0001",
+    null,
+    "LOT-0010",
+    null,
+    [],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "25497863": [
+    "16",
+    "change"
+   ],
+   "25523868": [
+    "16",
+    ""
+   ],
+   "25594925": [
+    "29",
+    ""
+   ],
+   "25617400": [
+    "29",
+    ""
+   ],
+   "25619431": [
+    "29",
+    ""
+   ],
+   "25619589": [
+    "29",
+    ""
+   ],
+   "25619613": [
+    "29",
+    ""
+   ],
+   "25620726": [
+    "29",
+    ""
+   ],
+   "25631637": [
+    "29",
+    ""
+   ],
+   "25647921": [
+    "29",
+    ""
+   ],
+   "25663872": [
+    "29",
+    ""
+   ],
+   "25665851": [
+    "29",
+    ""
+   ]
+  }
+ },
+ "307725": {
+  "id": 307725,
+  "date": "2026-08-14",
+  "notices": [
+   25495334,
+   25586505,
+   25593277,
+   28044262
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [],
+  "served": null,
+  "K_ok": true,
+  "currency": "EUR",
+  "other_currency_awards": [],
+  "n": 2,
+  "S": 889208470,
+  "rate": 1.0,
+  "S_eur_cents": 889208470,
+  "served_eur_cents": null,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-0001",
+    "notice": 28044262,
+    "result_key": "RES-0002",
+    "cents": 290209590,
+    "block_amounts": [
+     [
+      "BT-660-LotResult",
+      290209590,
+      "EUR"
+     ],
+     [
+      "BT-709-LotResult",
+      349000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      290209590,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      290209590,
+      "EUR"
+     ]
+    ],
+    "pn_section": "LOT-0001",
+    "pn_block": "LOT-0001",
+    "pn_frozen": "LOT-0001",
+    "item": null,
+    "title_section": "2025/HFB/OP/153634  - 1",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      24611804,
+      "Selecta Belgium"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0002",
+    "notice": 28044262,
+    "result_key": "RES-0001",
+    "cents": 598998880,
+    "block_amounts": [
+     [
+      "BT-660-LotResult",
+      598998880,
+      "EUR"
+     ],
+     [
+      "BT-709-LotResult",
+      645000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      598998880,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      598998880,
+      "EUR"
+     ]
+    ],
+    "pn_section": "LOT-0002",
+    "pn_block": "LOT-0002",
+    "pn_frozen": "LOT-0002",
+    "item": null,
+    "title_section": "2025/HFB/OP/153634  - 2",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0005"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      24611805,
+      "OKE KOFFIE"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [],
+  "stated_totals": [
+   {
+    "nid": 28044262,
+    "field": "BT-1118-NoticeResult",
+    "kind3": "award",
+    "cents": 889208470,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "9c66debc-7e91-4ed4-8415-511ed5507ba2",
+    "single_lot_own": false
+   },
+   {
+    "nid": 28044262,
+    "field": "BT-118-NoticeResult",
+    "kind3": "award",
+    "cents": 994000000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "9c66debc-7e91-4ed4-8415-511ed5507ba2",
+    "single_lot_own": false
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": []
+  },
+  "R3": [],
+  "R3_award_totals": [
+   [
+    28044262,
+    "BT-1118-NoticeResult",
+    889208470
+   ],
+   [
+    28044262,
+    "BT-118-NoticeResult",
+    994000000
+   ]
+  ],
+  "vouches": [
+   [
+    "BT-1118-NoticeResult",
+    28044262,
+    889208470
+   ]
+  ],
+  "R10": false,
+  "R6": [],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    28044262,
+    "RES-0001",
+    null,
+    "LOT-0002",
+    null,
+    [
+     [
+      "BT-660-LotResult",
+      598998880,
+      "EUR"
+     ],
+     [
+      "BT-709-LotResult",
+      645000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      598998880,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      598998880,
+      "EUR"
+     ]
+    ],
+    1
+   ],
+   [
+    28044262,
+    "RES-0002",
+    null,
+    "LOT-0001",
+    null,
+    [
+     [
+      "BT-660-LotResult",
+      290209590,
+      "EUR"
+     ],
+     [
+      "BT-709-LotResult",
+      349000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      290209590,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      290209590,
+      "EUR"
+     ]
+    ],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "25495334": [
+    "16",
+    ""
+   ],
+   "25586505": [
+    "16",
+    "change"
+   ],
+   "25593277": [
+    "16",
+    "change"
+   ],
+   "28044262": [
+    "29",
+    ""
+   ]
+  }
+ },
+ "321859": {
+  "id": 321859,
+  "date": "2026-02-11",
+  "notices": [
+   24907409,
+   25550656,
+   25551449
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [
+   [
+    "result_value",
+    {
+     "cents": 144897240,
+     "currency": "CHF"
+    },
+    null,
+    "copy"
+   ]
+  ],
+  "served": {
+   "cents": 144897240,
+   "currency": "CHF"
+  },
+  "K_ok": true,
+  "currency": "CHF",
+  "other_currency_awards": [],
+  "n": 2,
+  "S": 336958340,
+  "rate": 0.9136,
+  "S_eur_cents": 368824803,
+  "served_eur_cents": 158600306,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-0001",
+    "notice": 25551449,
+    "result_key": "RES-0001",
+    "cents": 192061100,
+    "block_amounts": [
+     [
+      "BT-710-LotResult",
+      192061100,
+      "CHF"
+     ],
+     [
+      "BT-711-LotResult",
+      192061100,
+      "CHF"
+     ]
+    ],
+    "pn_section": "LOT-0001",
+    "pn_block": "LOT-0001",
+    "pn_frozen": "LOT-0001",
+    "item": null,
+    "title_section": "Los 1 - PUT (Patient Universal Terminal)",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0010"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      23539775,
+      "DE_Berlinux Solutions GmbH"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0002",
+    "notice": 25550656,
+    "result_key": "RES-0002",
+    "cents": 144897240,
+    "block_amounts": [
+     [
+      "BT-710-LotResult",
+      144897240,
+      "CHF"
+     ],
+     [
+      "BT-711-LotResult",
+      144897240,
+      "CHF"
+     ]
+    ],
+    "pn_section": "LOT-0002",
+    "pn_block": "LOT-0002",
+    "pn_frozen": "LOT-0002",
+    "item": null,
+    "title_section": "Los 2 - Patientenportal",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0010"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      23539775,
+      "DE_Berlinux Solutions GmbH"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [],
+  "stated_totals": [
+   {
+    "nid": 25550656,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 144897240,
+    "cur": "CHF",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "a5d6cb10-0475-4986-94d5-a1afb81a4a1e",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25551449,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 192061100,
+    "cur": "CHF",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "40bea6bc-dd95-49e8-86e7-b355eb3ee926",
+    "single_lot_own": true
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": []
+  },
+  "R3": [],
+  "R3_award_totals": [],
+  "vouches": [],
+  "R10": false,
+  "R6": [],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    25550656,
+    "RES-0002",
+    null,
+    "LOT-0002",
+    null,
+    [
+     [
+      "BT-710-LotResult",
+      144897240,
+      "CHF"
+     ],
+     [
+      "BT-711-LotResult",
+      144897240,
+      "CHF"
+     ]
+    ],
+    1
+   ],
+   [
+    25551449,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [
+     [
+      "BT-710-LotResult",
+      192061100,
+      "CHF"
+     ],
+     [
+      "BT-711-LotResult",
+      192061100,
+      "CHF"
+     ]
+    ],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "24907409": [
+    "16",
+    ""
+   ],
+   "25550656": [
+    "29",
+    ""
+   ],
+   "25551449": [
+    "29",
+    ""
+   ]
+  }
+ },
+ "855538": {
+  "id": 855538,
+  "date": "2024-04-08",
+  "notices": [
+   23861005
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [],
+  "served": null,
+  "K_ok": true,
+  "currency": "EUR",
+  "other_currency_awards": [],
+  "n": 20,
+  "S": 727841200,
+  "rate": 1.0,
+  "S_eur_cents": 727841200,
+  "served_eur_cents": null,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-0001",
+    "notice": 23861005,
+    "result_key": "RES-0001",
+    "cents": 99202100,
+    "block_amounts": [],
+    "pn_section": "LOT-0001",
+    "pn_block": "LOT-0001",
+    "pn_frozen": "LOT-0001",
+    "item": null,
+    "title_section": "VOIRIE ET RESEAUX DIVERS",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      7932862,
+      "Eiffage Route Nord Est"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0002",
+    "notice": 23861005,
+    "result_key": "RES-0002",
+    "cents": 138062000,
+    "block_amounts": [],
+    "pn_section": "LOT-0002",
+    "pn_block": "LOT-0002",
+    "pn_frozen": "LOT-0002",
+    "item": null,
+    "title_section": "MACONNERIE GROS-OEUVRE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0005"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      3245644,
+      "Batiteg"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0003",
+    "notice": 23861005,
+    "result_key": "RES-0003",
+    "cents": 50710000,
+    "block_amounts": [],
+    "pn_section": "LOT-0003",
+    "pn_block": "LOT-0003",
+    "pn_frozen": "LOT-0003",
+    "item": null,
+    "title_section": "CHARPENTE METALLIQUE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0006"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      9545627,
+      "acr metal"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0004",
+    "notice": 23861005,
+    "result_key": "RES-0004",
+    "cents": 60813500,
+    "block_amounts": [],
+    "pn_section": "LOT-0004",
+    "pn_block": "LOT-0004",
+    "pn_frozen": "LOT-0004",
+    "item": null,
+    "title_section": "COUVERTURE ETANCHEITE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0007"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      21350052,
+      "EZI"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0005",
+    "notice": 23861005,
+    "result_key": "RES-0005",
+    "cents": 25120700,
+    "block_amounts": [],
+    "pn_section": "LOT-0005",
+    "pn_block": "LOT-0005",
+    "pn_frozen": "LOT-0005",
+    "item": null,
+    "title_section": "BARDAGE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0008"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      3627652,
+      "Cibetanche"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0006",
+    "notice": 23861005,
+    "result_key": "RES-0006",
+    "cents": 38210000,
+    "block_amounts": [],
+    "pn_section": "LOT-0006",
+    "pn_block": "LOT-0006",
+    "pn_frozen": "LOT-0006",
+    "item": null,
+    "title_section": "MENUISERIE ALU",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0009"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      9545627,
+      "acr metal"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0007",
+    "notice": 23861005,
+    "result_key": "RES-0007",
+    "cents": 13550800,
+    "block_amounts": [],
+    "pn_section": "LOT-0007",
+    "pn_block": "LOT-0007",
+    "pn_frozen": "LOT-0007",
+    "item": null,
+    "title_section": "SERRURERIE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0010"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      9545627,
+      "acr metal"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0008",
+    "notice": 23861005,
+    "result_key": "RES-0008",
+    "cents": 3422400,
+    "block_amounts": [],
+    "pn_section": "LOT-0008",
+    "pn_block": "LOT-0008",
+    "pn_frozen": "LOT-0008",
+    "item": null,
+    "title_section": "PLATRERIE ISOLATION",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0011"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      1448806,
+      "WE SOL'D"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0009",
+    "notice": 23861005,
+    "result_key": "RES-0009",
+    "cents": 8580000,
+    "block_amounts": [],
+    "pn_section": "LOT-0009",
+    "pn_block": "LOT-0009",
+    "pn_frozen": "LOT-0009",
+    "item": null,
+    "title_section": "FAUX-PLAFONDS",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0012"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      1448806,
+      "WE SOL'D"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0010",
+    "notice": 23861005,
+    "result_key": "RES-0010",
+    "cents": 35044400,
+    "block_amounts": [],
+    "pn_section": "LOT-0010",
+    "pn_block": "LOT-0010",
+    "pn_frozen": "LOT-0010",
+    "item": null,
+    "title_section": "MENUISERIE INTERIEURE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0013"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      2023678,
+      "LOYER"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0011",
+    "notice": 23861005,
+    "result_key": "RES-0011",
+    "cents": 8696900,
+    "block_amounts": [],
+    "pn_section": "LOT-0011",
+    "pn_block": "LOT-0011",
+    "pn_frozen": "LOT-0011",
+    "item": null,
+    "title_section": "CARRELAGES",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0014"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      22564217,
+      "PEUGNET JOEL"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0012",
+    "notice": 23861005,
+    "result_key": "RES-0012",
+    "cents": 12645500,
+    "block_amounts": [],
+    "pn_section": "LOT-0012",
+    "pn_block": "LOT-0012",
+    "pn_frozen": "LOT-0012",
+    "item": null,
+    "title_section": "PEINTURE SOL SOUPLE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0015"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      19690746,
+      "BROGGI"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0013",
+    "notice": 23861005,
+    "result_key": "RES-0013",
+    "cents": 23013100,
+    "block_amounts": [],
+    "pn_section": "LOT-0013",
+    "pn_block": "LOT-0013",
+    "pn_frozen": "LOT-0013",
+    "item": null,
+    "title_section": "SOL SPORTIF",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0016"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      1964130,
+      "ART DAN IDF"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0014",
+    "notice": 23861005,
+    "result_key": "RES-0014",
+    "cents": 16049500,
+    "block_amounts": [],
+    "pn_section": "LOT-0014",
+    "pn_block": "LOT-0014",
+    "pn_frozen": "LOT-0014",
+    "item": null,
+    "title_section": "EQUIPEMENTS SPORTIFS",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0017"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      2988778,
+      "Nouansports"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0016",
+    "notice": 23861005,
+    "result_key": "RES-0016",
+    "cents": 67100800,
+    "block_amounts": [],
+    "pn_section": "LOT-0016",
+    "pn_block": "LOT-0016",
+    "pn_frozen": "LOT-0016",
+    "item": null,
+    "title_section": "CVC PLOMBERIE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0018"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      22564221,
+      "SANTERNE TUNZINI"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0017",
+    "notice": 23861005,
+    "result_key": "RES-0017",
+    "cents": 84523900,
+    "block_amounts": [],
+    "pn_section": "LOT-0017",
+    "pn_block": "LOT-0017",
+    "pn_frozen": "LOT-0017",
+    "item": null,
+    "title_section": "ELECTRICITE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0019"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      1229523,
+      "Aubelec"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0018",
+    "notice": 23861005,
+    "result_key": "RES-0018",
+    "cents": 2803900,
+    "block_amounts": [],
+    "pn_section": "LOT-0018",
+    "pn_block": "LOT-0018",
+    "pn_frozen": "LOT-0018",
+    "item": null,
+    "title_section": "SIGNALETIQUE",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0020"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      3252662,
+      "AS signaletique"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0019",
+    "notice": 23861005,
+    "result_key": "RES-0019",
+    "cents": 8463000,
+    "block_amounts": [],
+    "pn_section": "LOT-0019",
+    "pn_block": "LOT-0019",
+    "pn_frozen": "LOT-0019",
+    "item": null,
+    "title_section": "ESPACES VERTS",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0021"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      9471584,
+      "Artopia"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0020",
+    "notice": 23861005,
+    "result_key": "RES-0020",
+    "cents": 10004900,
+    "block_amounts": [],
+    "pn_section": "LOT-0020",
+    "pn_block": "LOT-0020",
+    "pn_frozen": "LOT-0020",
+    "item": null,
+    "title_section": "REGULATION GTB",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0022"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      1615611,
+      "HELA"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0021",
+    "notice": 23861005,
+    "result_key": "RES-0021",
+    "cents": 21823800,
+    "block_amounts": [],
+    "pn_section": "LOT-0021",
+    "pn_block": "LOT-0021",
+    "pn_frozen": "LOT-0021",
+    "item": null,
+    "title_section": "TRIBUNES",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0023"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      6755309,
+      "COS NV"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [],
+  "stated_totals": [],
+  "estimates": {
+   "notice": [],
+   "api": []
+  },
+  "R3": [],
+  "R3_award_totals": [],
+  "vouches": [],
+  "R10": false,
+  "R6": [],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    23861005,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0002",
+    null,
+    "LOT-0002",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0003",
+    null,
+    "LOT-0003",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0004",
+    null,
+    "LOT-0004",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0005",
+    null,
+    "LOT-0005",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0006",
+    null,
+    "LOT-0006",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0007",
+    null,
+    "LOT-0007",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0008",
+    null,
+    "LOT-0008",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0009",
+    null,
+    "LOT-0009",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0010",
+    null,
+    "LOT-0010",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0011",
+    null,
+    "LOT-0011",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0012",
+    null,
+    "LOT-0012",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0013",
+    null,
+    "LOT-0013",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0014",
+    null,
+    "LOT-0014",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0015",
+    null,
+    "LOT-0015",
+    null,
+    [],
+    0
+   ],
+   [
+    23861005,
+    "RES-0016",
+    null,
+    "LOT-0016",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0017",
+    null,
+    "LOT-0017",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0018",
+    null,
+    "LOT-0018",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0019",
+    null,
+    "LOT-0019",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0020",
+    null,
+    "LOT-0020",
+    null,
+    [],
+    1
+   ],
+   [
+    23861005,
+    "RES-0021",
+    null,
+    "LOT-0021",
+    null,
+    [],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "23861005": [
+    "29",
+    ""
+   ]
+  }
+ },
+ "533536": {
+  "id": 533536,
+  "date": "2026-07-20",
+  "notices": [
+   9514,
+   24515324,
+   24714086,
+   24754549,
+   25363512,
+   25425874,
+   44557436
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [
+   [
+    "result_value",
+    {
+     "cents": 2170000,
+     "currency": "EUR"
+    },
+    null,
+    "copy"
+   ]
+  ],
+  "served": {
+   "cents": 2170000,
+   "currency": "EUR"
+  },
+  "K_ok": true,
+  "currency": "EUR",
+  "other_currency_awards": [],
+  "n": 3,
+  "S": 6425000,
+  "rate": 1.0,
+  "S_eur_cents": 6425000,
+  "served_eur_cents": 2170000,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-0001",
+    "notice": 44557436,
+    "result_key": "RES-0001",
+    "cents": 2170000,
+    "block_amounts": [],
+    "pn_section": "LOT-0001",
+    "pn_block": "LOT-0001",
+    "pn_frozen": "LOT-0001",
+    "item": null,
+    "title_section": "Būvniecības dokumentācijas izstrāde un autoruzraudzība  pašvaldības objektam “V.Plūdoņa Kuldīgas vidusskolas stadiona pārbūve, Kuldīgā, Kuldīgas novadā”;",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0003"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      14797,
+      "Akciju sabiedrība \"Siltumelektroprojekts\""
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0002",
+    "notice": 24754549,
+    "result_key": "RES-0001",
+    "cents": 3000000,
+    "block_amounts": [],
+    "pn_section": "LOT-0002",
+    "pn_block": "LOT-0002",
+    "pn_frozen": "LOT-0002",
+    "item": null,
+    "title_section": "Būvniecības dokumentācijas izstrāde un autoruzraudzība  pašvaldības objektam “Estrādes pārbūve Saldus ielā 23, Skrundā, Kuldīgas novadā”;",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0003"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      11877632,
+      "SIA \"Būvdizains\""
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0003",
+    "notice": 24714086,
+    "result_key": "RES-0001",
+    "cents": 1255000,
+    "block_amounts": [],
+    "pn_section": "LOT-0003",
+    "pn_block": "LOT-0003",
+    "pn_frozen": "LOT-0003",
+    "item": null,
+    "title_section": "Būvniecības dokumentācijas izstrāde un autoruzraudzība  Ēkas energoefektivitātes uzlabošana Raiņa ielā 11, Skrundā, Kuldīgas novadā.",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0003"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      15050018,
+      "SIA “Lūsis V”"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [],
+  "stated_totals": [
+   {
+    "nid": 9514,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 2170000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "6718852a-67d3-483d-81b5-ec856223eb12",
+    "single_lot_own": true
+   },
+   {
+    "nid": 24714086,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 1255000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "84eef4f3-97a8-4ef3-bdd6-694a60a33cd8",
+    "single_lot_own": true
+   },
+   {
+    "nid": 24754549,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 3000000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "d693bd06-ca18-4d9e-84c2-b4b4b7917ed7",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25363512,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 2170000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "fea0825a-4070-49dd-bfb6-cb192599705a",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25425874,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 2170000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "f2577230-bf09-47cb-96b8-afafb97f60e6",
+    "single_lot_own": true
+   },
+   {
+    "nid": 44557436,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 2170000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "941891b7-1f1e-44ec-9f0d-643199287e81",
+    "single_lot_own": true
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": []
+  },
+  "R3": [],
+  "R3_award_totals": [],
+  "vouches": [],
+  "R10": false,
+  "R6": [],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    9514,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [],
+    1
+   ],
+   [
+    24714086,
+    "RES-0001",
+    null,
+    "LOT-0003",
+    null,
+    [],
+    1
+   ],
+   [
+    24754549,
+    "RES-0001",
+    null,
+    "LOT-0002",
+    null,
+    [],
+    1
+   ],
+   [
+    25363512,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [],
+    1
+   ],
+   [
+    25425874,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [],
+    1
+   ],
+   [
+    44557436,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "9514": [
+    "38",
+    ""
+   ],
+   "24515324": [
+    "16",
+    ""
+   ],
+   "24714086": [
+    "29",
+    ""
+   ],
+   "24754549": [
+    "29",
+    ""
+   ],
+   "25363512": [
+    "38",
+    ""
+   ],
+   "25425874": [
+    "38",
+    ""
+   ],
+   "44557436": [
+    "29",
+    ""
+   ]
+  }
+ },
+ "262408": {
+  "id": 262408,
+  "date": "2026-07-09",
+  "notices": [
+   25581110,
+   26868849,
+   26993722,
+   45872022
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [],
+  "served": null,
+  "K_ok": true,
+  "currency": "EUR",
+  "other_currency_awards": [],
+  "n": 3,
+  "S": 4040000000,
+  "rate": 1.0,
+  "S_eur_cents": 4040000000,
+  "served_eur_cents": null,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-0001",
+    "notice": 45872022,
+    "result_key": "RES-0001",
+    "cents": 1780000000,
+    "block_amounts": [
+     [
+      "BT-709-LotResult",
+      240000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      16603436,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      62300941,
+      "EUR"
+     ]
+    ],
+    "pn_section": "LOT-0001",
+    "pn_block": "LOT-0001",
+    "pn_frozen": "LOT-0001",
+    "item": null,
+    "title_section": "Objektplanungen für Gebäude und Innenräume einschließlich Tragwerksplanung",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ],
+     [
+      "ORG-0005"
+     ],
+     [
+      "ORG-0006"
+     ],
+     [
+      "ORG-0007"
+     ],
+     [
+      "ORG-0008"
+     ],
+     [
+      "ORG-0009"
+     ]
+    ],
+    "n_tenders": 6,
+    "group": null,
+    "api_winners": [
+     [
+      22552192,
+      "ZPP Ingenieure AG"
+     ],
+     [
+      24480308,
+      "IPROconsult GmbH, NL Greifswald"
+     ],
+     [
+      24480309,
+      "Architekten- und Ingenieurunion Stralsund GmbH"
+     ],
+     [
+      24480310,
+      "konzeptplan GmbH & Co. KG"
+     ],
+     [
+      24480311,
+      "PTB Ingenieurbüro GmbH"
+     ],
+     [
+      24480312,
+      "GNS Gesellschaft für Nuklear-Service mbH"
+     ]
+    ],
+    "R1": true,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0002",
+    "notice": 45872022,
+    "result_key": "RES-0002",
+    "cents": 1280000000,
+    "block_amounts": [
+     [
+      "BT-709-LotResult",
+      40000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      16219982,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      54394179,
+      "EUR"
+     ]
+    ],
+    "pn_section": "LOT-0002",
+    "pn_block": "LOT-0002",
+    "pn_frozen": "LOT-0002",
+    "item": null,
+    "title_section": "Objektplanungen Ingenieurbauwerke einschließlich Tragwerksplanung",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0010"
+     ],
+     [
+      "ORG-0004"
+     ],
+     [
+      "ORG-0005"
+     ],
+     [
+      "ORG-0006"
+     ],
+     [
+      "ORG-0008"
+     ]
+    ],
+    "n_tenders": 5,
+    "group": null,
+    "api_winners": [
+     [
+      22552192,
+      "ZPP Ingenieure AG"
+     ],
+     [
+      24480308,
+      "IPROconsult GmbH, NL Greifswald"
+     ],
+     [
+      24480309,
+      "Architekten- und Ingenieurunion Stralsund GmbH"
+     ],
+     [
+      24480311,
+      "PTB Ingenieurbüro GmbH"
+     ],
+     [
+      24480313,
+      "CN Europlan GmbH"
+     ]
+    ],
+    "R1": true,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0003",
+    "notice": 45872022,
+    "result_key": "RES-0003",
+    "cents": 980000000,
+    "block_amounts": [
+     [
+      "BT-709-LotResult",
+      60000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      13644476,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      23776713,
+      "EUR"
+     ]
+    ],
+    "pn_section": "LOT-0003",
+    "pn_block": "LOT-0003",
+    "pn_frozen": "LOT-0003",
+    "item": null,
+    "title_section": "Objektplanung Verkehrsanlagen",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0004"
+     ],
+     [
+      "ORG-0008"
+     ],
+     [
+      "ORG-0009"
+     ]
+    ],
+    "n_tenders": 3,
+    "group": null,
+    "api_winners": [
+     [
+      24480308,
+      "IPROconsult GmbH, NL Greifswald"
+     ],
+     [
+      24480311,
+      "PTB Ingenieurbüro GmbH"
+     ],
+     [
+      24480312,
+      "GNS Gesellschaft für Nuklear-Service mbH"
+     ]
+    ],
+    "R1": true,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [],
+  "stated_totals": [
+   {
+    "nid": 26993722,
+    "field": "BT-118-NoticeResult",
+    "kind3": "award",
+    "cents": 340000000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "025aa73e-5a85-45d3-b77a-1663c790475b",
+    "single_lot_own": false
+   },
+   {
+    "nid": 45872022,
+    "field": "BT-118-NoticeResult",
+    "kind3": "award",
+    "cents": 340000000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "025aa73e-5a85-45d3-b77a-1663c790475b",
+    "single_lot_own": false
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": []
+  },
+  "R3": [
+   [
+    "total",
+    26993722,
+    340000000,
+    4040000000
+   ],
+   [
+    "total",
+    45872022,
+    340000000,
+    4040000000
+   ]
+  ],
+  "R3_award_totals": [
+   [
+    26993722,
+    "BT-118-NoticeResult",
+    340000000
+   ],
+   [
+    45872022,
+    "BT-118-NoticeResult",
+    340000000
+   ]
+  ],
+  "vouches": [],
+  "R10": true,
+  "R6": [],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    26993722,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [
+     [
+      "BT-709-LotResult",
+      240000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      16603436,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      62300941,
+      "EUR"
+     ]
+    ],
+    6
+   ],
+   [
+    26993722,
+    "RES-0002",
+    null,
+    "LOT-0002",
+    null,
+    [
+     [
+      "BT-709-LotResult",
+      40000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      16219982,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      54394179,
+      "EUR"
+     ]
+    ],
+    5
+   ],
+   [
+    26993722,
+    "RES-0003",
+    null,
+    "LOT-0003",
+    null,
+    [
+     [
+      "BT-709-LotResult",
+      60000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      13644476,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      23776713,
+      "EUR"
+     ]
+    ],
+    3
+   ],
+   [
+    45872022,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [
+     [
+      "BT-709-LotResult",
+      240000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      16603436,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      62300941,
+      "EUR"
+     ]
+    ],
+    6
+   ],
+   [
+    45872022,
+    "RES-0002",
+    null,
+    "LOT-0002",
+    null,
+    [
+     [
+      "BT-709-LotResult",
+      40000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      16219982,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      54394179,
+      "EUR"
+     ]
+    ],
+    5
+   ],
+   [
+    45872022,
+    "RES-0003",
+    null,
+    "LOT-0003",
+    null,
+    [
+     [
+      "BT-709-LotResult",
+      60000000,
+      "EUR"
+     ],
+     [
+      "BT-710-LotResult",
+      13644476,
+      "EUR"
+     ],
+     [
+      "BT-711-LotResult",
+      23776713,
+      "EUR"
+     ]
+    ],
+    3
+   ]
+  ],
+  "notice_forms": {
+   "25581110": [
+    "16",
+    ""
+   ],
+   "26868849": [
+    "16",
+    ""
+   ],
+   "26993722": [
+    "29",
+    ""
+   ],
+   "45872022": [
+    "29",
+    ""
+   ]
+  }
+ },
+ "7495977": {
+  "id": 7495977,
+  "date": "2023-08-25",
+  "notices": [
+   22624802,
+   22658445,
+   23344948,
+   23355915,
+   23379689
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [
+   [
+    "estimated_value",
+    {
+     "cents": 969000,
+     "currency": "EUR"
+    },
+    null,
+    "copy"
+   ],
+   [
+    "result_value",
+    {
+     "cents": 969000,
+     "currency": "EUR"
+    },
+    null,
+    "copy"
+   ]
+  ],
+  "served": {
+   "cents": 969000,
+   "currency": "EUR"
+  },
+  "K_ok": true,
+  "currency": "EUR",
+  "other_currency_awards": [],
+  "n": 4,
+  "S": 59931000,
+  "rate": 1.0,
+  "S_eur_cents": 59931000,
+  "served_eur_cents": 969000,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-1",
+    "notice": 23379689,
+    "result_key": "RES-1",
+    "cents": 969000,
+    "block_amounts": [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      969000,
+      "EUR"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      969000,
+      "EUR"
+     ]
+    ],
+    "pn_section": null,
+    "pn_block": null,
+    "pn_frozen": null,
+    "item": "1",
+    "title_section": null,
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-2"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      9886597,
+      "SIA Rīgas zinātniskā ražošanas firma “EVA”"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-10",
+    "notice": 23355915,
+    "result_key": "RES-10",
+    "cents": 20895000,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      20895000,
+      "EUR"
+     ]
+    ],
+    "pn_section": "10",
+    "pn_block": "10",
+    "pn_frozen": "10",
+    "item": "10",
+    "title_section": "Kurpes (ikdienas) (VRS)",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-5"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      4238167,
+      "OÜ Baltic Armaments"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-4",
+    "notice": 23355915,
+    "result_key": "RES-4",
+    "cents": 14400000,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      14400000,
+      "EUR"
+     ]
+    ],
+    "pn_section": "4",
+    "pn_block": "4",
+    "pn_frozen": "4",
+    "item": "4",
+    "title_section": "Saišu zābaki (VUGD)",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-3"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      9832532,
+      "SIA “Synergy”"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-9",
+    "notice": 23355915,
+    "result_key": "RES-9",
+    "cents": 23667000,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      23667000,
+      "EUR"
+     ]
+    ],
+    "pn_section": "9",
+    "pn_block": "9",
+    "pn_frozen": "9",
+    "item": "9",
+    "title_section": "Zābaki (vissezonas) (VRS)",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-4"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      4238167,
+      "OÜ Baltic Armaments"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [
+   "LOT-1"
+  ],
+  "stated_totals": [
+   {
+    "nid": 23344948,
+    "field": "TED-VAL_TOTAL",
+    "kind3": "award",
+    "cents": 1958000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": "F03",
+    "logical_id": null,
+    "single_lot_own": true
+   },
+   {
+    "nid": 23355915,
+    "field": "TED-VAL_TOTAL",
+    "kind3": "award",
+    "cents": 59962000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": "F03",
+    "logical_id": null,
+    "single_lot_own": false
+   },
+   {
+    "nid": 23379689,
+    "field": "TED-VAL_TOTAL",
+    "kind3": "award",
+    "cents": 969000,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": "F03",
+    "logical_id": null,
+    "single_lot_own": true
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": [
+    [
+     "estimated_value",
+     null,
+     969000
+    ]
+   ]
+  },
+  "R3": [],
+  "R3_award_totals": [
+   [
+    23355915,
+    "TED-VAL_TOTAL",
+    59962000
+   ]
+  ],
+  "vouches": [
+   [
+    "TED-VAL_TOTAL",
+    23355915,
+    59962000
+   ]
+  ],
+  "R10": false,
+  "R6": [],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    23344948,
+    "RES-1",
+    null,
+    null,
+    "1",
+    [
+     [
+      "TED-VAL_TOTAL",
+      1958000,
+      "EUR"
+     ]
+    ],
+    1
+   ],
+   [
+    23355915,
+    "RES-1",
+    "1",
+    null,
+    "1",
+    [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      1000000,
+      "EUR"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      1000000,
+      "EUR"
+     ]
+    ],
+    1
+   ],
+   [
+    23355915,
+    "RES-10",
+    "10",
+    null,
+    "10",
+    [
+     [
+      "TED-VAL_TOTAL",
+      20895000,
+      "EUR"
+     ]
+    ],
+    1
+   ],
+   [
+    23355915,
+    "RES-2",
+    "2",
+    null,
+    "2",
+    [],
+    0
+   ],
+   [
+    23355915,
+    "RES-3",
+    "3",
+    null,
+    "3",
+    [],
+    0
+   ],
+   [
+    23355915,
+    "RES-4",
+    "4",
+    null,
+    "4",
+    [
+     [
+      "TED-VAL_TOTAL",
+      14400000,
+      "EUR"
+     ]
+    ],
+    1
+   ],
+   [
+    23355915,
+    "RES-5",
+    "5",
+    null,
+    "5",
+    [],
+    0
+   ],
+   [
+    23355915,
+    "RES-6",
+    "6",
+    null,
+    "6",
+    [],
+    0
+   ],
+   [
+    23355915,
+    "RES-7",
+    "7",
+    null,
+    "7",
+    [],
+    0
+   ],
+   [
+    23355915,
+    "RES-8",
+    "8",
+    null,
+    "8",
+    [],
+    0
+   ],
+   [
+    23355915,
+    "RES-9",
+    "9",
+    null,
+    "9",
+    [
+     [
+      "TED-VAL_TOTAL",
+      23667000,
+      "EUR"
+     ]
+    ],
+    1
+   ],
+   [
+    23379689,
+    "RES-1",
+    null,
+    null,
+    "1",
+    [
+     [
+      "TED-VAL_ESTIMATED_TOTAL",
+      969000,
+      "EUR"
+     ],
+     [
+      "TED-VAL_TOTAL",
+      969000,
+      "EUR"
+     ]
+    ],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "22624802": [
+    "F14",
+    ""
+   ],
+   "22658445": [
+    "F02",
+    ""
+   ],
+   "23344948": [
+    "F03",
+    ""
+   ],
+   "23355915": [
+    "F03",
+    ""
+   ],
+   "23379689": [
+    "F03",
+    ""
+   ]
+  }
+ },
+ "7298633": {
+  "id": 7298633,
+  "date": "2022-05-30",
+  "notices": [
+   22240068,
+   22375511,
+   22385634
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [
+   [
+    "result_value",
+    {
+     "cents": 59740,
+     "currency": "PLN"
+    },
+    null,
+    "copy"
+   ]
+  ],
+  "served": {
+   "cents": 59740,
+   "currency": "PLN"
+  },
+  "K_ok": true,
+  "currency": "PLN",
+  "other_currency_awards": [],
+  "n": 8,
+  "S": 358317235,
+  "rate": 4.5855,
+  "S_eur_cents": 78141366,
+  "served_eur_cents": 13028,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-1",
+    "notice": 22385634,
+    "result_key": "RES-1",
+    "cents": 115500000,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      115500000,
+      "PLN"
+     ]
+    ],
+    "pn_section": "1",
+    "pn_block": "1",
+    "pn_frozen": "1",
+    "item": "1",
+    "title_section": "Zadanie nr 1 - AGALSIDASE  ALFA",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-2"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      13670353,
+      "Takeda Pharma Sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-2",
+    "notice": 22385634,
+    "result_key": "RES-2",
+    "cents": 36241120,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      36241120,
+      "PLN"
+     ]
+    ],
+    "pn_section": "2",
+    "pn_block": "2",
+    "pn_frozen": "2",
+    "item": "2",
+    "title_section": "Zadanie nr 2 - AGALSIDASE  BETA",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-3"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      6385,
+      "Sanofi Sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-3",
+    "notice": 22385634,
+    "result_key": "RES-3",
+    "cents": 14203670,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      14203670,
+      "PLN"
+     ]
+    ],
+    "pn_section": "3",
+    "pn_block": "3",
+    "pn_frozen": "3",
+    "item": "3",
+    "title_section": "Zadanie nr 3 - ALIROCUMAB",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-4"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      6385,
+      "Sanofi Sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-4",
+    "notice": 22385634,
+    "result_key": "RES-4",
+    "cents": 18180000,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      18180000,
+      "PLN"
+     ]
+    ],
+    "pn_section": "5",
+    "pn_block": "5",
+    "pn_frozen": "5",
+    "item": "4",
+    "title_section": "Zadanie nr 5 - BOSENTAN II",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-5"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      19051049,
+      "Lek S.A."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-5",
+    "notice": 22385634,
+    "result_key": "RES-5",
+    "cents": 28873780,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      28873780,
+      "PLN"
+     ]
+    ],
+    "pn_section": "6",
+    "pn_block": "6",
+    "pn_frozen": "6",
+    "item": "5",
+    "title_section": "Zadanie nr 6 - EVOLOCUMAB",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-6"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      9321980,
+      "Amgen Sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-6",
+    "notice": 22385634,
+    "result_key": "RES-6",
+    "cents": 627465,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      627465,
+      "PLN"
+     ]
+    ],
+    "pn_section": "7",
+    "pn_block": "7",
+    "pn_frozen": "7",
+    "item": "6",
+    "title_section": "Zadanie nr 7 - ILOPROST",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-7"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      3387,
+      "Farmacol-Logistyka Sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-7",
+    "notice": 22385634,
+    "result_key": "RES-7",
+    "cents": 144444480,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      144444480,
+      "PLN"
+     ]
+    ],
+    "pn_section": "8",
+    "pn_block": "8",
+    "pn_frozen": "8",
+    "item": "7",
+    "title_section": "Zadanie nr 8 - MACITENTAN",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-8"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      7961,
+      "KOMTUR POLSKA SPÓŁKĄ Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-9",
+    "notice": 22385634,
+    "result_key": "RES-9",
+    "cents": 246720,
+    "block_amounts": [
+     [
+      "TED-VAL_TOTAL",
+      246720,
+      "PLN"
+     ]
+    ],
+    "pn_section": "10",
+    "pn_block": "10",
+    "pn_frozen": "10",
+    "item": "9",
+    "title_section": "Zadanie nr 10 - SILDENAFIL",
+    "win_src": "TED award block",
+    "winners_notice": [
+     [
+      "ORG-9"
+     ]
+    ],
+    "n_tenders": null,
+    "group": false,
+    "api_winners": [
+     [
+      3377,
+      "URTICA Sp. z o.o."
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [
+   [
+    "LOT-1",
+    [
+     [
+      "1"
+     ],
+     [
+      "4"
+     ]
+    ]
+   ]
+  ],
+  "R2d": [],
+  "stated_totals": [
+   {
+    "nid": 22375511,
+    "field": "TED-VAL_TOTAL",
+    "kind3": "award",
+    "cents": 59740,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": "F03",
+    "logical_id": null,
+    "single_lot_own": true
+   },
+   {
+    "nid": 22385634,
+    "field": "TED-VAL_TOTAL",
+    "kind3": "award",
+    "cents": 358317235,
+    "cur": "PLN",
+    "section": "PROCEDURE",
+    "form": "F03",
+    "logical_id": null,
+    "single_lot_own": false
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": []
+  },
+  "R3": [],
+  "R3_award_totals": [
+   [
+    22385634,
+    "TED-VAL_TOTAL",
+    358317235
+   ]
+  ],
+  "vouches": [
+   [
+    "TED-VAL_TOTAL",
+    22385634,
+    358317235
+   ]
+  ],
+  "R10": false,
+  "R6": [],
+  "R7": [
+   [
+    "LOT-1",
+    22375511,
+    59740,
+    115500000
+   ]
+  ],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    22375511,
+    "RES-1",
+    "4",
+    null,
+    "1",
+    [
+     [
+      "TED-VAL_TOTAL",
+      59740,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    22385634,
+    "RES-1",
+    "1",
+    null,
+    "1",
+    [
+     [
+      "TED-VAL_TOTAL",
+      115500000,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    22385634,
+    "RES-2",
+    "2",
+    null,
+    "2",
+    [
+     [
+      "TED-VAL_TOTAL",
+      36241120,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    22385634,
+    "RES-3",
+    "3",
+    null,
+    "3",
+    [
+     [
+      "TED-VAL_TOTAL",
+      14203670,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    22385634,
+    "RES-4",
+    "5",
+    null,
+    "4",
+    [
+     [
+      "TED-VAL_TOTAL",
+      18180000,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    22385634,
+    "RES-5",
+    "6",
+    null,
+    "5",
+    [
+     [
+      "TED-VAL_TOTAL",
+      28873780,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    22385634,
+    "RES-6",
+    "7",
+    null,
+    "6",
+    [
+     [
+      "TED-VAL_TOTAL",
+      627465,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    22385634,
+    "RES-7",
+    "8",
+    null,
+    "7",
+    [
+     [
+      "TED-VAL_TOTAL",
+      144444480,
+      "PLN"
+     ]
+    ],
+    1
+   ],
+   [
+    22385634,
+    "RES-8",
+    "9",
+    null,
+    "8",
+    [],
+    0
+   ],
+   [
+    22385634,
+    "RES-9",
+    "10",
+    null,
+    "9",
+    [
+     [
+      "TED-VAL_TOTAL",
+      246720,
+      "PLN"
+     ]
+    ],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "22240068": [
+    "F02",
+    ""
+   ],
+   "22375511": [
+    "F03",
+    ""
+   ],
+   "22385634": [
+    "F03",
+    ""
+   ]
+  }
+ },
+ "975665": {
+  "id": 975665,
+  "date": "2025-10-10",
+  "notices": [
+   24554865,
+   24697829,
+   25245587
+  ],
+  "T_prime_ok": true,
+  "procedure_figures": [
+   [
+    "result_value",
+    {
+     "cents": 20785400,
+     "currency": "EUR"
+    },
+    null,
+    "copy"
+   ]
+  ],
+  "served": {
+   "cents": 20785400,
+   "currency": "EUR"
+  },
+  "K_ok": true,
+  "currency": "EUR",
+  "other_currency_awards": [],
+  "n": 2,
+  "S": 42634566,
+  "rate": 1.0,
+  "S_eur_cents": 42634566,
+  "served_eur_cents": 20785400,
+  "G0_ok": true,
+  "G1p_repeated": false,
+  "summed": [
+   {
+    "key": "LOT-0000",
+    "notice": 24697829,
+    "result_key": "RES-0001",
+    "cents": 20785400,
+    "block_amounts": [],
+    "pn_section": "LOT-0000",
+    "pn_block": "LOT-0000",
+    "pn_frozen": "LOT-0000",
+    "item": null,
+    "title_section": "Angāra rekonstrukcijas būvprojekta izstrāde, būvdarbi un autoruzraudzība AREI Stendes pētniecības centrā",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0003"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      23081700,
+      "Vanagu muiža, SIA"
+     ]
+    ],
+    "R1": false,
+    "decision": "selec-w"
+   },
+   {
+    "key": "LOT-0001",
+    "notice": 25245587,
+    "result_key": "RES-0001",
+    "cents": 21849166,
+    "block_amounts": [],
+    "pn_section": "LOT-0001",
+    "pn_block": "LOT-0001",
+    "pn_frozen": "LOT-0001",
+    "item": null,
+    "title_section": "Angāra rekonstrukcijas būvprojekta izstrāde, būvdarbi un autoruzraudzība AREI Stendes pētniecības centrā",
+    "win_src": "eForms LotTender",
+    "winners_notice": [
+     [
+      "ORG-0003"
+     ]
+    ],
+    "n_tenders": 1,
+    "group": null,
+    "api_winners": [
+     [
+      23081700,
+      "Vanagu muiža, SIA"
+     ]
+    ],
+    "R1": false,
+    "decision": null
+   }
+  ],
+  "R2a": [],
+  "R2b": [],
+  "R2c": [],
+  "R2d": [],
+  "stated_totals": [
+   {
+    "nid": 24697829,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 20785400,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "f5327ae4-621e-45ad-86fd-f83c0a839a29",
+    "single_lot_own": true
+   },
+   {
+    "nid": 25245587,
+    "field": "BT-161-NoticeResult",
+    "kind3": "award",
+    "cents": 20785400,
+    "cur": "EUR",
+    "section": "PROCEDURE",
+    "form": null,
+    "logical_id": "dbfb951d-d821-48da-91e7-9d2dedfb90ea",
+    "single_lot_own": false
+   }
+  ],
+  "estimates": {
+   "notice": [],
+   "api": [
+    [
+     "estimated_value",
+     "LOT-0000",
+     20000000
+    ]
+   ]
+  },
+  "R3": [
+   [
+    "total",
+    25245587,
+    20785400,
+    21849166
+   ]
+  ],
+  "R3_award_totals": [
+   [
+    25245587,
+    "BT-161-NoticeResult",
+    20785400
+   ]
+  ],
+  "vouches": [],
+  "R10": false,
+  "R6": [
+   [
+    "LOT-0000",
+    "LOT-0001"
+   ]
+  ],
+  "R7": [],
+  "R8": false,
+  "all_award_blocks": [
+   [
+    24697829,
+    "RES-0001",
+    null,
+    "LOT-0000",
+    null,
+    [],
+    1
+   ],
+   [
+    25245587,
+    "RES-0001",
+    null,
+    "LOT-0001",
+    null,
+    [],
+    1
+   ]
+  ],
+  "notice_forms": {
+   "24554865": [
+    "16",
+    ""
+   ],
+   "24697829": [
+    "29",
+    ""
+   ],
+   "25245587": [
+    "38",
+    ""
+   ]
+  }
+ }
+}

@@ -1,0 +1,5229 @@
+{
+ "salt": 348596,
+ "order": "((id XOR salt) * 2654435761) mod 2^32, then id",
+ "rule_v2_sha256": "39be6d1ebc0ed2828ce3dd2a10b4db33f98bdf83ec5c5a7bb2d5fe4401a305ce",
+ "ships": [
+  {
+   "id": 108534,
+   "source": "ted",
+   "published_at": "2024-03-26",
+   "head_date": "2024-03-26",
+   "version": 1,
+   "S": 43987757,
+   "currency": "EUR",
+   "n": 2,
+   "S_eur_cents": 43987757,
+   "S_display": "EUR 439,877.57",
+   "S_eur_display": "EUR 439,877.57",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0002",
+     "notice_id": 23850324,
+     "result_key": "RES-0002",
+     "cents": 9658803,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 23850324",
+     "contractor_ids": [
+      22559318
+     ],
+     "contractor_names": [
+      "L'UNIVERS DU VERRE"
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 23850324,
+     "result_key": "RES-0004",
+     "cents": 34328954,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 23850324",
+     "contractor_ids": [
+      22559319
+     ],
+     "contractor_names": [
+      "ETABLISSEMENTS SERGE POISSON"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0002": 1,
+    "LOT-0004": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 1,
+   "notices": [
+    23850324
+   ],
+   "flags": [],
+   "seq": 1,
+   "order_pos": 0,
+   "fetched_at": "2026-10-17T15:04:06Z"
+  },
+  {
+   "id": 633332,
+   "source": "ted",
+   "published_at": "2024-05-10",
+   "head_date": "2024-05-10",
+   "version": 1,
+   "S": 68716382,
+   "currency": "EUR",
+   "n": 3,
+   "S_eur_cents": 68716382,
+   "S_display": "EUR 687,163.82",
+   "S_eur_display": "EUR 687,163.82",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 23967225,
+     "result_key": "RES-0001",
+     "cents": 27201591,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 23967225",
+     "contractor_ids": [
+      12177596
+     ],
+     "contractor_names": [
+      "Santerne Aquitaine"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 23967225,
+     "result_key": "RES-0002",
+     "cents": 14007311,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 23967225",
+     "contractor_ids": [
+      22612658
+     ],
+     "contractor_names": [
+      "Quercus"
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 23967225,
+     "result_key": "RES-0003",
+     "cents": 27507480,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 23967225",
+     "contractor_ids": [
+      22612658
+     ],
+     "contractor_names": [
+      "Quercus"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 1,
+   "notices": [
+    23967225
+   ],
+   "flags": [],
+   "seq": 4,
+   "order_pos": 3,
+   "fetched_at": "2026-10-17T15:04:18Z"
+  },
+  {
+   "id": 181177,
+   "source": "ted",
+   "published_at": "2026-09-24",
+   "head_date": "2026-09-24",
+   "version": 4,
+   "S": 22309000,
+   "currency": "EUR",
+   "n": 2,
+   "S_eur_cents": 22309000,
+   "S_display": "EUR 223,090.00",
+   "S_eur_display": "EUR 223,090.00",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 46706644,
+     "result_key": "RES-0001",
+     "cents": 5150000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 46706644",
+     "contractor_ids": [
+      23748692
+     ],
+     "contractor_names": [
+      "IVECO Deutschland AG"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 46706644,
+     "result_key": "RES-0002",
+     "cents": 17159000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 46706644",
+     "contractor_ids": [
+      23348580
+     ],
+     "contractor_names": [
+      "WISS GmbH und Co. KG Feuerwehrfahrzeuge"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 46706644,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 0,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 46699859,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 0,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 4,
+   "notices": [
+    26957671,
+    25817298,
+    46706644,
+    46699859
+   ],
+   "flags": [],
+   "seq": 5,
+   "order_pos": 4,
+   "fetched_at": "2026-10-17T15:04:25Z"
+  },
+  {
+   "id": 36928,
+   "source": "ted",
+   "published_at": "2024-06-17",
+   "head_date": "2024-06-17",
+   "version": 3,
+   "S": 14420808,
+   "currency": "EUR",
+   "n": 5,
+   "S_eur_cents": 14420808,
+   "S_display": "EUR 144,208.08",
+   "S_eur_display": "EUR 144,208.08",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 1498408,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 1498408,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 1498408
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 23949162,
+     "result_key": "RES-0001",
+     "cents": 1750000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 23949162",
+     "contractor_ids": [
+      21395428
+     ],
+     "contractor_names": [
+      "SIA \"Lolus\""
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 23949162,
+     "result_key": "RES-0002",
+     "cents": 10111500,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 23949162",
+     "contractor_ids": [
+      11912484
+     ],
+     "contractor_names": [
+      "Sabiedrība ar ierobežotu atbildību \"VBC GRUP\""
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 24009490,
+     "result_key": "RES-0001",
+     "cents": 1498408,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 24009490",
+     "contractor_ids": [
+      10783738
+     ],
+     "contractor_names": [
+      "Sabiedrība ar ierobežotu atbildību \"Agritech\""
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 23949162,
+     "result_key": "RES-0003",
+     "cents": 361000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 23949162",
+     "contractor_ids": [
+      11378956
+     ],
+     "contractor_names": [
+      "Latvijas Baltkrievijas kopuzņēmums SIA \"M.T.Z. Serviss\""
+     ]
+    },
+    {
+     "key": "LOT-0005",
+     "notice_id": 23949162,
+     "result_key": "RES-0004",
+     "cents": 699900,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0005",
+     "published_lot_no_src": "lot section LOT-0005 of notice 23949162",
+     "contractor_ids": [
+      14215676
+     ],
+     "contractor_names": [
+      "SIA \"IA-Laba\""
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 23949162,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 12922400,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 24009490,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 1498408,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1,
+    "LOT-0004": 1,
+    "LOT-0005": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 3,
+   "notices": [
+    23851686,
+    23949162,
+    24009490
+   ],
+   "flags": [],
+   "seq": 6,
+   "order_pos": 5,
+   "fetched_at": "2026-10-17T15:04:31Z"
+  },
+  {
+   "id": 193494,
+   "source": "ted",
+   "published_at": "2025-03-20",
+   "head_date": "2025-03-20",
+   "version": 3,
+   "S": 125228494,
+   "currency": "PLN",
+   "n": 8,
+   "S_eur_cents": 29814179,
+   "S_display": "PLN 1,252,284.94",
+   "S_eur_display": "EUR 298,141.79",
+   "rate_per_eur": 4.2003,
+   "served_head": {
+    "cents": 26880000,
+    "currency": "PLN"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 26880000,
+    "currency": "PLN",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 6399543
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 24671658,
+     "result_key": "RES-0001",
+     "cents": 6806957,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 24671658",
+     "contractor_ids": [
+      557
+     ],
+     "contractor_names": [
+      "Salus International Spółka z ograniczoną odpowiedzialnością"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 24671658,
+     "result_key": "RES-0002",
+     "cents": 8193667,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 24671658",
+     "contractor_ids": [
+      557
+     ],
+     "contractor_names": [
+      "Salus International Spółka z ograniczoną odpowiedzialnością"
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 24671658,
+     "result_key": "RES-0003",
+     "cents": 154000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 24671658",
+     "contractor_ids": [
+      504
+     ],
+     "contractor_names": [
+      "\"FARMACOL-LOGISTYKA\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 24671658,
+     "result_key": "RES-0004",
+     "cents": 26245350,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 24671658",
+     "contractor_ids": [
+      557
+     ],
+     "contractor_names": [
+      "Salus International Spółka z ograniczoną odpowiedzialnością"
+     ]
+    },
+    {
+     "key": "LOT-0005",
+     "notice_id": 24671658,
+     "result_key": "RES-0005",
+     "cents": 28300000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0005",
+     "published_lot_no_src": "lot section LOT-0005 of notice 24671658",
+     "contractor_ids": [
+      504
+     ],
+     "contractor_names": [
+      "\"FARMACOL-LOGISTYKA\" SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ"
+     ]
+    },
+    {
+     "key": "LOT-0006",
+     "notice_id": 24671658,
+     "result_key": "RES-0006",
+     "cents": 27057170,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0006",
+     "published_lot_no_src": "lot section LOT-0006 of notice 24671658",
+     "contractor_ids": [
+      6573
+     ],
+     "contractor_names": [
+      "Sanofi Sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0007",
+     "notice_id": 24671658,
+     "result_key": "RES-0007",
+     "cents": 1591350,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0007",
+     "published_lot_no_src": "lot section LOT-0007 of notice 24671658",
+     "contractor_ids": [
+      509
+     ],
+     "contractor_names": [
+      "CENTRALA FARMACEUTYCZNA \"CEFARM\" SPÓŁKA AKCYJNA"
+     ]
+    },
+    {
+     "key": "LOT-0008",
+     "notice_id": 24658764,
+     "result_key": "RES-0001",
+     "cents": 26880000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0008",
+     "published_lot_no_src": "lot section LOT-0008 of notice 24658764",
+     "contractor_ids": [
+      1465
+     ],
+     "contractor_names": [
+      "InPharm Sp. z o.o."
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 24671658,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 98348494,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 24658764,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 26880000,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1,
+    "LOT-0004": 1,
+    "LOT-0005": 1,
+    "LOT-0006": 1,
+    "LOT-0007": 1,
+    "LOT-0008": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 3,
+   "notices": [
+    24467282,
+    24671658,
+    24658764
+   ],
+   "flags": [],
+   "seq": 8,
+   "order_pos": 7,
+   "fetched_at": "2026-10-17T15:04:45Z"
+  },
+  {
+   "id": 7399356,
+   "source": "ted",
+   "published_at": "2022-09-09",
+   "head_date": "2022-09-09",
+   "version": 4,
+   "S": 40301250,
+   "currency": "EUR",
+   "n": 2,
+   "S_eur_cents": 40301250,
+   "S_display": "EUR 403,012.50",
+   "S_eur_display": "EUR 403,012.50",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 33041250,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 33041250,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 33041250
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 22556351,
+     "result_key": "RES-1",
+     "cents": 7260000,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 22556351",
+     "contractor_ids": [
+      12231010
+     ],
+     "contractor_names": [
+      "Essi Projects, S. A."
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 22650139,
+     "result_key": "RES-1",
+     "cents": 33041250,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 22650139",
+     "contractor_ids": [
+      7431
+     ],
+     "contractor_names": [
+      "Indra Soluciones Tecnologias De La Informacion S.L.U."
+     ]
+    }
+   ],
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 22405135,
+    "cents": 40383750
+   },
+   "vouches": [
+    [
+     "TED-VAL_ESTIMATED_TOTAL",
+     22405135,
+     40383750
+    ]
+   ],
+   "stated_totals": [
+    {
+     "notice_id": 22405135,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "section_kind": "Notice",
+     "cents": 40383750,
+     "currency": "EUR",
+     "r3_kind": "estimate",
+     "vouches": true,
+     "form": "F02",
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 22556351,
+     "field": "TED-VAL_TOTAL",
+     "section_kind": "Notice",
+     "cents": 7260000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 22650139,
+     "field": "TED-VAL_TOTAL",
+     "section_kind": "Notice",
+     "cents": 33041250,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 4,
+   "notices": [
+    22405135,
+    22497221,
+    22556351,
+    22650139
+   ],
+   "flags": [],
+   "seq": 13,
+   "order_pos": 12,
+   "fetched_at": "2026-10-17T15:05:15Z"
+  },
+  {
+   "id": 6787755,
+   "source": "ted",
+   "published_at": "2020-12-29",
+   "head_date": "2020-12-29",
+   "version": 2,
+   "S": 67434774,
+   "currency": "EUR",
+   "n": 8,
+   "S_eur_cents": 67434774,
+   "S_display": "EUR 674,347.74",
+   "S_eur_display": "EUR 674,347.74",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 29141000,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 29141000,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 29141000
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 21449988,
+     "result_key": "RES-1",
+     "cents": 9159381,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 21449988",
+     "contractor_ids": [
+      1392176
+     ],
+     "contractor_names": [
+      "AXA"
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 21449988,
+     "result_key": "RES-2",
+     "cents": 29141000,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 21449988",
+     "contractor_ids": [
+      1392176
+     ],
+     "contractor_names": [
+      "AXA"
+     ]
+    },
+    {
+     "key": "LOT-3",
+     "notice_id": 21449988,
+     "result_key": "RES-3",
+     "cents": 12637615,
+     "decision": "selec-w",
+     "published_lot_no": "3",
+     "published_lot_no_src": "lot section LOT-3 of notice 21449988",
+     "contractor_ids": [
+      1392176
+     ],
+     "contractor_names": [
+      "AXA"
+     ]
+    },
+    {
+     "key": "LOT-4",
+     "notice_id": 21449988,
+     "result_key": "RES-4",
+     "cents": 3486238,
+     "decision": "selec-w",
+     "published_lot_no": "4",
+     "published_lot_no_src": "lot section LOT-4 of notice 21449988",
+     "contractor_ids": [
+      1392176
+     ],
+     "contractor_names": [
+      "AXA"
+     ]
+    },
+    {
+     "key": "LOT-5",
+     "notice_id": 21449988,
+     "result_key": "RES-5",
+     "cents": 4033352,
+     "decision": "selec-w",
+     "published_lot_no": "5",
+     "published_lot_no_src": "lot section LOT-5 of notice 21449988",
+     "contractor_ids": [
+      1392176
+     ],
+     "contractor_names": [
+      "AXA"
+     ]
+    },
+    {
+     "key": "LOT-6",
+     "notice_id": 21449988,
+     "result_key": "RES-6",
+     "cents": 1385000,
+     "decision": "selec-w",
+     "published_lot_no": "6",
+     "published_lot_no_src": "lot section LOT-6 of notice 21449988",
+     "contractor_ids": [
+      1633689
+     ],
+     "contractor_names": [
+      "Filhet Allard"
+     ]
+    },
+    {
+     "key": "LOT-7",
+     "notice_id": 21449988,
+     "result_key": "RES-7",
+     "cents": 5944188,
+     "decision": "selec-w",
+     "published_lot_no": "7",
+     "published_lot_no_src": "lot section LOT-7 of notice 21449988",
+     "contractor_ids": [
+      1175947
+     ],
+     "contractor_names": [
+      "SMACL"
+     ]
+    },
+    {
+     "key": "LOT-8",
+     "notice_id": 21449988,
+     "result_key": "RES-8",
+     "cents": 1648000,
+     "decision": "selec-w",
+     "published_lot_no": "8",
+     "published_lot_no_src": "lot section LOT-8 of notice 21449988",
+     "contractor_ids": [
+      1505981
+     ],
+     "contractor_names": [
+      "MMA Inovence"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0,
+    "LOT-3": 0,
+    "LOT-4": 0,
+    "LOT-5": 0,
+    "LOT-6": 0,
+    "LOT-7": 0,
+    "LOT-8": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    21053862,
+    21449988
+   ],
+   "flags": [],
+   "seq": 15,
+   "order_pos": 14,
+   "fetched_at": "2026-10-17T15:05:35Z"
+  },
+  {
+   "id": 6094289,
+   "source": "ted",
+   "published_at": "2020-08-05",
+   "head_date": "2020-08-05",
+   "version": 7,
+   "S": 13997490000,
+   "currency": "HUF",
+   "n": 5,
+   "S_eur_cents": 40631321,
+   "S_display": "HUF 139,974,900.00",
+   "S_eur_display": "EUR 406,313.21",
+   "rate_per_eur": 344.5,
+   "served_head": {
+    "cents": 6367720000,
+    "currency": "HUF"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 6367720000,
+    "currency": "HUF",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 18483948
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 19961452,
+     "result_key": "RES-1",
+     "cents": 904500000,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 19961452",
+     "contractor_ids": [
+      6829157
+     ],
+     "contractor_names": [
+      "B. Braun Trading Kft."
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 19961452,
+     "result_key": "RES-2",
+     "cents": 406000000,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 19961452",
+     "contractor_ids": [
+      4987234
+     ],
+     "contractor_names": [
+      "TEVA Gyógyszergyár Zrt."
+     ]
+    },
+    {
+     "key": "LOT-3",
+     "notice_id": 19961452,
+     "result_key": "RES-3",
+     "cents": 3557800000,
+     "decision": "selec-w",
+     "published_lot_no": "3",
+     "published_lot_no_src": "lot section LOT-3 of notice 19961452",
+     "contractor_ids": [
+      1253113
+     ],
+     "contractor_names": [
+      "HARTMANN-RICO Hungária Kft."
+     ]
+    },
+    {
+     "key": "LOT-4",
+     "notice_id": 19961452,
+     "result_key": "RES-4",
+     "cents": 6367720000,
+     "decision": "selec-w",
+     "published_lot_no": "4",
+     "published_lot_no_src": "lot section LOT-4 of notice 19961452",
+     "contractor_ids": [
+      1253113
+     ],
+     "contractor_names": [
+      "HARTMANN-RICO Hungária Kft."
+     ]
+    },
+    {
+     "key": "LOT-5",
+     "notice_id": 19961452,
+     "result_key": "RES-5",
+     "cents": 2761470000,
+     "decision": "selec-w",
+     "published_lot_no": "5",
+     "published_lot_no_src": "lot section LOT-5 of notice 19961452",
+     "contractor_ids": [
+      2173937
+     ],
+     "contractor_names": [
+      "Pannon Diagnosztika Kft."
+     ]
+    }
+   ],
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 19961452,
+    "cents": 13997490000
+   },
+   "vouches": [
+    [
+     "TED-VAL_TOTAL",
+     19961452,
+     13997490000
+    ]
+   ],
+   "stated_totals": [
+    {
+     "notice_id": 19961452,
+     "field": "TED-VAL_TOTAL",
+     "section_kind": "Notice",
+     "cents": 13997490000,
+     "currency": "HUF",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0,
+    "LOT-3": 0,
+    "LOT-4": 0,
+    "LOT-5": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 7,
+   "notices": [
+    19610083,
+    19661042,
+    19678301,
+    19961452,
+    21176110,
+    21175651,
+    21182144
+   ],
+   "flags": [],
+   "seq": 16,
+   "order_pos": 15,
+   "fetched_at": "2026-10-17T15:05:46Z"
+  },
+  {
+   "id": 81906,
+   "source": "ted",
+   "published_at": "2024-09-10",
+   "head_date": "2024-09-10",
+   "version": 2,
+   "S": 105000000,
+   "currency": "EUR",
+   "n": 2,
+   "S_eur_cents": 105000000,
+   "S_display": "EUR 1,050,000.00",
+   "S_eur_display": "EUR 1,050,000.00",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 24208042,
+     "result_key": "RES-0001",
+     "cents": 50000000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 24208042",
+     "contractor_ids": [
+      19479334
+     ],
+     "contractor_names": [
+      "dagoba"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 24208042,
+     "result_key": "RES-0002",
+     "cents": 55000000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 24208042",
+     "contractor_ids": [
+      12023914
+     ],
+     "contractor_names": [
+      "Ginger Blue"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    23925354,
+    24208042
+   ],
+   "flags": [],
+   "seq": 17,
+   "order_pos": 16,
+   "fetched_at": "2026-10-17T15:05:51Z"
+  },
+  {
+   "id": 1091419,
+   "source": "ted",
+   "published_at": "2025-06-26",
+   "head_date": "2025-06-26",
+   "version": 3,
+   "S": 49949755,
+   "currency": "EUR",
+   "n": 3,
+   "S_eur_cents": 49949755,
+   "S_display": "EUR 499,497.55",
+   "S_eur_display": "EUR 499,497.55",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 24813844,
+     "result_key": "RES-0001",
+     "cents": 20030148,
+     "decision": null,
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 24813844",
+     "contractor_ids": [
+      10063
+     ],
+     "contractor_names": [
+      "ISS FACILITY SERVICES, S.A"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 44494162,
+     "result_key": "RES-0001",
+     "cents": 18686268,
+     "decision": null,
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 44494162",
+     "contractor_ids": [
+      10063
+     ],
+     "contractor_names": [
+      "ISS FACILITY SERVICES, S.A"
+     ]
+    },
+    {
+     "key": "LOT-0008",
+     "notice_id": 24669280,
+     "result_key": "RES-0001",
+     "cents": 11233339,
+     "decision": null,
+     "published_lot_no": "LOT-0008",
+     "published_lot_no_src": "lot section LOT-0008 of notice 24669280",
+     "contractor_ids": [
+      7385
+     ],
+     "contractor_names": [
+      "ITMA, S.L.U."
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0008": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 3,
+   "notices": [
+    24669280,
+    24813844,
+    44494162
+   ],
+   "flags": [],
+   "seq": 20,
+   "order_pos": 19,
+   "fetched_at": "2026-10-17T15:06:17Z"
+  },
+  {
+   "id": 6942121,
+   "source": "ted",
+   "published_at": "2021-03-15",
+   "head_date": "2021-03-15",
+   "version": 2,
+   "S": 95190000,
+   "currency": "SEK",
+   "n": 2,
+   "S_eur_cents": 9346097,
+   "S_display": "SEK 951,900.00",
+   "S_eur_display": "EUR 93,460.97",
+   "rate_per_eur": 10.185,
+   "served_head": {
+    "cents": 49200000,
+    "currency": "SEK"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 49200000,
+    "currency": "SEK",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 4830633
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 21610301,
+     "result_key": "RES-3",
+     "cents": 47712000,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 21610301",
+     "contractor_ids": [
+      4390
+     ],
+     "contractor_names": [
+      "Afry Infrastructure AB"
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 21610301,
+     "result_key": "RES-6",
+     "cents": 47478000,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 21610301",
+     "contractor_ids": [
+      4390
+     ],
+     "contractor_names": [
+      "Afry Infrastructure AB"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 21610301,
+     "field": "TED-HIGH",
+     "section_kind": "Notice",
+     "cents": 53820000,
+     "currency": "SEK",
+     "r3_kind": null,
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 21610301,
+     "field": "TED-HIGH",
+     "section_kind": "Notice",
+     "cents": 53820000,
+     "currency": "SEK",
+     "r3_kind": null,
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 21610301,
+     "field": "TED-LOW",
+     "section_kind": "Notice",
+     "cents": 42726000,
+     "currency": "SEK",
+     "r3_kind": null,
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 21610301,
+     "field": "TED-LOW",
+     "section_kind": "Notice",
+     "cents": 42726000,
+     "currency": "SEK",
+     "r3_kind": null,
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    21376303,
+    21610301
+   ],
+   "flags": [],
+   "seq": 22,
+   "order_pos": 21,
+   "fetched_at": "2026-10-17T15:06:28Z"
+  },
+  {
+   "id": 6527544,
+   "source": "ted",
+   "published_at": "2020-05-26",
+   "head_date": "2020-05-26",
+   "version": 8,
+   "S": 253462369,
+   "currency": "EUR",
+   "n": 12,
+   "S_eur_cents": 253462369,
+   "S_display": "EUR 2,534,623.69",
+   "S_eur_display": "EUR 2,534,623.69",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 69912876,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 69912876,
+    "currency": "EUR",
+    "field": "estimated_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 69912876
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 20738524,
+     "result_key": "RES-1",
+     "cents": 13139270,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 20738524",
+     "contractor_ids": [
+      10022013
+     ],
+     "contractor_names": [
+      "Sabiedrība ar ierobežotu atbildību S.A.V."
+     ]
+    },
+    {
+     "key": "LOT-10",
+     "notice_id": 20738524,
+     "result_key": "RES-10",
+     "cents": 9328450,
+     "decision": "selec-w",
+     "published_lot_no": "10",
+     "published_lot_no_src": "lot section LOT-10 of notice 20738524",
+     "contractor_ids": [
+      12726147
+     ],
+     "contractor_names": [
+      "SIA \"Kurzemes gaļsaimnieks\""
+     ]
+    },
+    {
+     "key": "LOT-11",
+     "notice_id": 20738524,
+     "result_key": "RES-11",
+     "cents": 6269765,
+     "decision": "selec-w",
+     "published_lot_no": "11",
+     "published_lot_no_src": "lot section LOT-11 of notice 20738524",
+     "contractor_ids": [
+      11645417
+     ],
+     "contractor_names": [
+      "SIA \"Nimaks\""
+     ]
+    },
+    {
+     "key": "LOT-12",
+     "notice_id": 20738524,
+     "result_key": "RES-12",
+     "cents": 43247896,
+     "decision": "selec-w",
+     "published_lot_no": "12",
+     "published_lot_no_src": "lot section LOT-12 of notice 20738524",
+     "contractor_ids": [
+      9733558
+     ],
+     "contractor_names": [
+      "SIA “LANEKSS”"
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 20738524,
+     "result_key": "RES-2",
+     "cents": 12596300,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 20738524",
+     "contractor_ids": [
+      12726147
+     ],
+     "contractor_names": [
+      "SIA \"Kurzemes gaļsaimnieks\""
+     ]
+    },
+    {
+     "key": "LOT-3",
+     "notice_id": 20738524,
+     "result_key": "RES-3",
+     "cents": 6967530,
+     "decision": "selec-w",
+     "published_lot_no": "3",
+     "published_lot_no_src": "lot section LOT-3 of notice 20738524",
+     "contractor_ids": [
+      10436296
+     ],
+     "contractor_names": [
+      "SIA “Svit un K”"
+     ]
+    },
+    {
+     "key": "LOT-4",
+     "notice_id": 20738524,
+     "result_key": "RES-4",
+     "cents": 69912876,
+     "decision": "selec-w",
+     "published_lot_no": "4",
+     "published_lot_no_src": "lot section LOT-4 of notice 20738524",
+     "contractor_ids": [
+      11645418
+     ],
+     "contractor_names": [
+      "Pilnsabiedrība \"Flamen\""
+     ]
+    },
+    {
+     "key": "LOT-5",
+     "notice_id": 20738524,
+     "result_key": "RES-5",
+     "cents": 11066640,
+     "decision": "selec-w",
+     "published_lot_no": "5",
+     "published_lot_no_src": "lot section LOT-5 of notice 20738524",
+     "contractor_ids": [
+      10022013
+     ],
+     "contractor_names": [
+      "Sabiedrība ar ierobežotu atbildību S.A.V."
+     ]
+    },
+    {
+     "key": "LOT-6",
+     "notice_id": 20738524,
+     "result_key": "RES-6",
+     "cents": 11370570,
+     "decision": "selec-w",
+     "published_lot_no": "6",
+     "published_lot_no_src": "lot section LOT-6 of notice 20738524",
+     "contractor_ids": [
+      12726147
+     ],
+     "contractor_names": [
+      "SIA \"Kurzemes gaļsaimnieks\""
+     ]
+    },
+    {
+     "key": "LOT-7",
+     "notice_id": 20738524,
+     "result_key": "RES-7",
+     "cents": 6377712,
+     "decision": "selec-w",
+     "published_lot_no": "7",
+     "published_lot_no_src": "lot section LOT-7 of notice 20738524",
+     "contractor_ids": [
+      10436296
+     ],
+     "contractor_names": [
+      "SIA “Svit un K”"
+     ]
+    },
+    {
+     "key": "LOT-8",
+     "notice_id": 20738524,
+     "result_key": "RES-8",
+     "cents": 52082920,
+     "decision": "selec-w",
+     "published_lot_no": "8",
+     "published_lot_no_src": "lot section LOT-8 of notice 20738524",
+     "contractor_ids": [
+      11645418
+     ],
+     "contractor_names": [
+      "Pilnsabiedrība \"Flamen\""
+     ]
+    },
+    {
+     "key": "LOT-9",
+     "notice_id": 20738524,
+     "result_key": "RES-9",
+     "cents": 11102440,
+     "decision": "selec-w",
+     "published_lot_no": "9",
+     "published_lot_no_src": "lot section LOT-9 of notice 20738524",
+     "contractor_ids": [
+      11645417
+     ],
+     "contractor_names": [
+      "SIA \"Nimaks\""
+     ]
+    }
+   ],
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20738524,
+    "cents": 253462369
+   },
+   "vouches": [
+    [
+     "TED-VAL_TOTAL",
+     20738524,
+     253462369
+    ]
+   ],
+   "stated_totals": [
+    {
+     "notice_id": 20465538,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "section_kind": "Notice",
+     "cents": 250000000,
+     "currency": "EUR",
+     "r3_kind": "estimate",
+     "vouches": true,
+     "form": "F02",
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 20738524,
+     "field": "TED-VAL_TOTAL",
+     "section_kind": "Notice",
+     "cents": 253462369,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-10": 0,
+    "LOT-11": 0,
+    "LOT-12": 0,
+    "LOT-2": 0,
+    "LOT-3": 0,
+    "LOT-4": 0,
+    "LOT-5": 0,
+    "LOT-6": 0,
+    "LOT-7": 0,
+    "LOT-8": 0,
+    "LOT-9": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 8,
+   "notices": [
+    20465538,
+    20485415,
+    20738524,
+    21054923,
+    21054924,
+    21054925,
+    21054926,
+    21054927
+   ],
+   "flags": [],
+   "seq": 23,
+   "order_pos": 22,
+   "fetched_at": "2026-10-17T15:06:41Z"
+  },
+  {
+   "id": 174041,
+   "source": "ted",
+   "published_at": "2026-05-18",
+   "head_date": "2026-05-18",
+   "version": 2,
+   "S": 201514400,
+   "currency": "EUR",
+   "n": 3,
+   "S_eur_cents": 201514400,
+   "S_display": "EUR 2,015,144.00",
+   "S_eur_display": "EUR 2,015,144.00",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 25757261,
+     "result_key": "RES-0001",
+     "cents": 67333700,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 25757261",
+     "contractor_ids": [
+      9121461
+     ],
+     "contractor_names": [
+      "Must"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 25757261,
+     "result_key": "RES-0002",
+     "cents": 68919100,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 25757261",
+     "contractor_ids": [
+      8768922
+     ],
+     "contractor_names": [
+      "ENGIE Home Service"
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 25757261,
+     "result_key": "RES-0003",
+     "cents": 65261600,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 25757261",
+     "contractor_ids": [
+      23673086
+     ],
+     "contractor_names": [
+      "CLAIR’EQUEAUX"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 25757261,
+     "field": "BT-118-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 266000000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    25534670,
+    25757261
+   ],
+   "flags": [],
+   "seq": 24,
+   "order_pos": 23,
+   "fetched_at": "2026-10-17T15:06:46Z"
+  },
+  {
+   "id": 5658786,
+   "source": "ted",
+   "published_at": "2016-04-23",
+   "head_date": "2016-04-23",
+   "version": 1,
+   "S": 2440000,
+   "currency": "EUR",
+   "n": 4,
+   "S_eur_cents": 2440000,
+   "S_display": "EUR 24,400.00",
+   "S_eur_display": "EUR 24,400.00",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 1320000,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 1320000,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 1320000
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 18758868,
+     "result_key": "RES-1",
+     "cents": 1320000,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 18758868",
+     "contractor_ids": [
+      8105996
+     ],
+     "contractor_names": [
+      "Trandev Haute-Savoie"
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 18758868,
+     "result_key": "RES-2",
+     "cents": 537000,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 18758868",
+     "contractor_ids": [
+      4942915
+     ],
+     "contractor_names": [
+      "Autocars Jacquet"
+     ]
+    },
+    {
+     "key": "LOT-3",
+     "notice_id": 18758868,
+     "result_key": "RES-3",
+     "cents": 469000,
+     "decision": "selec-w",
+     "published_lot_no": "3",
+     "published_lot_no_src": "lot section LOT-3 of notice 18758868",
+     "contractor_ids": [
+      7380947
+     ],
+     "contractor_names": [
+      "Transdev Haute-Savoie"
+     ]
+    },
+    {
+     "key": "LOT-4",
+     "notice_id": 18758868,
+     "result_key": "RES-4",
+     "cents": 114000,
+     "decision": "selec-w",
+     "published_lot_no": "4",
+     "published_lot_no_src": "lot section LOT-4 of notice 18758868",
+     "contractor_ids": [
+      7380947
+     ],
+     "contractor_names": [
+      "Transdev Haute-Savoie"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0,
+    "LOT-3": 0,
+    "LOT-4": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 1,
+   "notices": [
+    18758868
+   ],
+   "flags": [],
+   "seq": 27,
+   "order_pos": 26,
+   "fetched_at": "2026-10-17T15:07:07Z"
+  },
+  {
+   "id": 855538,
+   "source": "ted",
+   "published_at": "2024-04-08",
+   "head_date": "2024-04-08",
+   "version": 1,
+   "S": 727841200,
+   "currency": "EUR",
+   "n": 20,
+   "S_eur_cents": 727841200,
+   "S_display": "EUR 7,278,412.00",
+   "S_eur_display": "EUR 7,278,412.00",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 23861005,
+     "result_key": "RES-0001",
+     "cents": 99202100,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 23861005",
+     "contractor_ids": [
+      7932862
+     ],
+     "contractor_names": [
+      "Eiffage Route Nord Est"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 23861005,
+     "result_key": "RES-0002",
+     "cents": 138062000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 23861005",
+     "contractor_ids": [
+      3245644
+     ],
+     "contractor_names": [
+      "Batiteg"
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 23861005,
+     "result_key": "RES-0003",
+     "cents": 50710000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 23861005",
+     "contractor_ids": [
+      9545627
+     ],
+     "contractor_names": [
+      "acr metal"
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 23861005,
+     "result_key": "RES-0004",
+     "cents": 60813500,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 23861005",
+     "contractor_ids": [
+      21350052
+     ],
+     "contractor_names": [
+      "EZI"
+     ]
+    },
+    {
+     "key": "LOT-0005",
+     "notice_id": 23861005,
+     "result_key": "RES-0005",
+     "cents": 25120700,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0005",
+     "published_lot_no_src": "lot section LOT-0005 of notice 23861005",
+     "contractor_ids": [
+      3627652
+     ],
+     "contractor_names": [
+      "Cibetanche"
+     ]
+    },
+    {
+     "key": "LOT-0006",
+     "notice_id": 23861005,
+     "result_key": "RES-0006",
+     "cents": 38210000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0006",
+     "published_lot_no_src": "lot section LOT-0006 of notice 23861005",
+     "contractor_ids": [
+      9545627
+     ],
+     "contractor_names": [
+      "acr metal"
+     ]
+    },
+    {
+     "key": "LOT-0007",
+     "notice_id": 23861005,
+     "result_key": "RES-0007",
+     "cents": 13550800,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0007",
+     "published_lot_no_src": "lot section LOT-0007 of notice 23861005",
+     "contractor_ids": [
+      9545627
+     ],
+     "contractor_names": [
+      "acr metal"
+     ]
+    },
+    {
+     "key": "LOT-0008",
+     "notice_id": 23861005,
+     "result_key": "RES-0008",
+     "cents": 3422400,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0008",
+     "published_lot_no_src": "lot section LOT-0008 of notice 23861005",
+     "contractor_ids": [
+      1448806
+     ],
+     "contractor_names": [
+      "WE SOL'D"
+     ]
+    },
+    {
+     "key": "LOT-0009",
+     "notice_id": 23861005,
+     "result_key": "RES-0009",
+     "cents": 8580000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0009",
+     "published_lot_no_src": "lot section LOT-0009 of notice 23861005",
+     "contractor_ids": [
+      1448806
+     ],
+     "contractor_names": [
+      "WE SOL'D"
+     ]
+    },
+    {
+     "key": "LOT-0010",
+     "notice_id": 23861005,
+     "result_key": "RES-0010",
+     "cents": 35044400,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0010",
+     "published_lot_no_src": "lot section LOT-0010 of notice 23861005",
+     "contractor_ids": [
+      2023678
+     ],
+     "contractor_names": [
+      "LOYER"
+     ]
+    },
+    {
+     "key": "LOT-0011",
+     "notice_id": 23861005,
+     "result_key": "RES-0011",
+     "cents": 8696900,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0011",
+     "published_lot_no_src": "lot section LOT-0011 of notice 23861005",
+     "contractor_ids": [
+      22564217
+     ],
+     "contractor_names": [
+      "PEUGNET JOEL"
+     ]
+    },
+    {
+     "key": "LOT-0012",
+     "notice_id": 23861005,
+     "result_key": "RES-0012",
+     "cents": 12645500,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0012",
+     "published_lot_no_src": "lot section LOT-0012 of notice 23861005",
+     "contractor_ids": [
+      19690746
+     ],
+     "contractor_names": [
+      "BROGGI"
+     ]
+    },
+    {
+     "key": "LOT-0013",
+     "notice_id": 23861005,
+     "result_key": "RES-0013",
+     "cents": 23013100,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0013",
+     "published_lot_no_src": "lot section LOT-0013 of notice 23861005",
+     "contractor_ids": [
+      1964130
+     ],
+     "contractor_names": [
+      "ART DAN IDF"
+     ]
+    },
+    {
+     "key": "LOT-0014",
+     "notice_id": 23861005,
+     "result_key": "RES-0014",
+     "cents": 16049500,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0014",
+     "published_lot_no_src": "lot section LOT-0014 of notice 23861005",
+     "contractor_ids": [
+      2988778
+     ],
+     "contractor_names": [
+      "Nouansports"
+     ]
+    },
+    {
+     "key": "LOT-0016",
+     "notice_id": 23861005,
+     "result_key": "RES-0016",
+     "cents": 67100800,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0016",
+     "published_lot_no_src": "lot section LOT-0016 of notice 23861005",
+     "contractor_ids": [
+      22564221
+     ],
+     "contractor_names": [
+      "SANTERNE TUNZINI"
+     ]
+    },
+    {
+     "key": "LOT-0017",
+     "notice_id": 23861005,
+     "result_key": "RES-0017",
+     "cents": 84523900,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0017",
+     "published_lot_no_src": "lot section LOT-0017 of notice 23861005",
+     "contractor_ids": [
+      1229523
+     ],
+     "contractor_names": [
+      "Aubelec"
+     ]
+    },
+    {
+     "key": "LOT-0018",
+     "notice_id": 23861005,
+     "result_key": "RES-0018",
+     "cents": 2803900,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0018",
+     "published_lot_no_src": "lot section LOT-0018 of notice 23861005",
+     "contractor_ids": [
+      3252662
+     ],
+     "contractor_names": [
+      "AS signaletique"
+     ]
+    },
+    {
+     "key": "LOT-0019",
+     "notice_id": 23861005,
+     "result_key": "RES-0019",
+     "cents": 8463000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0019",
+     "published_lot_no_src": "lot section LOT-0019 of notice 23861005",
+     "contractor_ids": [
+      9471584
+     ],
+     "contractor_names": [
+      "Artopia"
+     ]
+    },
+    {
+     "key": "LOT-0020",
+     "notice_id": 23861005,
+     "result_key": "RES-0020",
+     "cents": 10004900,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0020",
+     "published_lot_no_src": "lot section LOT-0020 of notice 23861005",
+     "contractor_ids": [
+      1615611
+     ],
+     "contractor_names": [
+      "HELA"
+     ]
+    },
+    {
+     "key": "LOT-0021",
+     "notice_id": 23861005,
+     "result_key": "RES-0021",
+     "cents": 21823800,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0021",
+     "published_lot_no_src": "lot section LOT-0021 of notice 23861005",
+     "contractor_ids": [
+      6755309
+     ],
+     "contractor_names": [
+      "COS NV"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1,
+    "LOT-0004": 1,
+    "LOT-0005": 1,
+    "LOT-0006": 1,
+    "LOT-0007": 1,
+    "LOT-0008": 1,
+    "LOT-0009": 1,
+    "LOT-0010": 1,
+    "LOT-0011": 1,
+    "LOT-0012": 1,
+    "LOT-0013": 1,
+    "LOT-0014": 1,
+    "LOT-0016": 1,
+    "LOT-0017": 1,
+    "LOT-0018": 1,
+    "LOT-0019": 1,
+    "LOT-0020": 1,
+    "LOT-0021": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 1,
+   "notices": [
+    23861005
+   ],
+   "flags": [],
+   "seq": 28,
+   "order_pos": 27,
+   "fetched_at": "2026-10-17T15:07:10Z"
+  },
+  {
+   "id": 1163033,
+   "source": "ted",
+   "published_at": "2026-05-21",
+   "head_date": "2026-05-21",
+   "version": 3,
+   "S": 77818480,
+   "currency": "EUR",
+   "n": 5,
+   "S_eur_cents": 77818480,
+   "S_display": "EUR 778,184.80",
+   "S_eur_display": "EUR 778,184.80",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 2475000,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 2475000,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 2475000
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 24900467,
+     "result_key": "RES-0001",
+     "cents": 15505312,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 24900467",
+     "contractor_ids": [
+      12510
+     ],
+     "contractor_names": [
+      "BOSTON SCIENTIFIC IBERICA S A"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 24900467,
+     "result_key": "RES-0002",
+     "cents": 47988768,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 24900467",
+     "contractor_ids": [
+      7563
+     ],
+     "contractor_names": [
+      "ABBOTT MEDICAL ESPAÑA, S.A."
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 24900467,
+     "result_key": "RES-0003",
+     "cents": 8910000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 24900467",
+     "contractor_ids": [
+      3166
+     ],
+     "contractor_names": [
+      "SAHAJANAND MEDICAL TECHNOLOGIES IBERIA, SL"
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 25763051,
+     "result_key": "RES-0001",
+     "cents": 2475000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 25763051",
+     "contractor_ids": [
+      3238
+     ],
+     "contractor_names": [
+      "PALEX MEDICAL, S.A."
+     ]
+    },
+    {
+     "key": "LOT-0005",
+     "notice_id": 24900467,
+     "result_key": "RES-0005",
+     "cents": 2939400,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0005",
+     "published_lot_no_src": "lot section LOT-0005 of notice 24900467",
+     "contractor_ids": [
+      7568
+     ],
+     "contractor_names": [
+      "WORLD MEDICAL, S.L."
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 24591798,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 4950000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 24900467,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 75343480,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 25763051,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 2475000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1,
+    "LOT-0004": 1,
+    "LOT-0005": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 3,
+   "notices": [
+    24591798,
+    24900467,
+    25763051
+   ],
+   "flags": [],
+   "seq": 29,
+   "order_pos": 28,
+   "fetched_at": "2026-10-17T15:07:16Z"
+  },
+  {
+   "id": 478682,
+   "source": "ted",
+   "published_at": "2026-08-03",
+   "head_date": "2026-08-03",
+   "version": 4,
+   "S": 5362652,
+   "currency": "EUR",
+   "n": 3,
+   "S_eur_cents": 5362652,
+   "S_display": "EUR 53,626.52",
+   "S_eur_display": "EUR 53,626.52",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 1113100,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 1113100,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 1113100
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 45877674,
+     "result_key": "RES-0001",
+     "cents": 3916552,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 45877674",
+     "contractor_ids": [
+      30963364
+     ],
+     "contractor_names": [
+      "GastroServiss SIA"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 27337818,
+     "result_key": "RES-0001",
+     "cents": 1113100,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 27337818",
+     "contractor_ids": [
+      24587153
+     ],
+     "contractor_names": [
+      "iKitchen SIA"
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 45877674,
+     "result_key": "RES-0002",
+     "cents": 333000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 45877674",
+     "contractor_ids": [
+      13797460
+     ],
+     "contractor_names": [
+      "SIA “Prof Rostuls”"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 45877674,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 4249552,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 27337818,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 1113100,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 4,
+   "notices": [
+    25720570,
+    25712613,
+    45877674,
+    27337818
+   ],
+   "flags": [],
+   "seq": 37,
+   "order_pos": 36,
+   "fetched_at": "2026-10-17T15:08:07Z"
+  },
+  {
+   "id": 936207,
+   "source": "ted",
+   "published_at": "2023-12-06",
+   "head_date": "2023-12-06",
+   "version": 2,
+   "S": 307809830,
+   "currency": "EUR",
+   "n": 8,
+   "S_eur_cents": 307809830,
+   "S_display": "EUR 3,078,098.30",
+   "S_eur_display": "EUR 3,078,098.30",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 26223478,
+     "result_key": "RES-0001",
+     "cents": 88567500,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 26223478",
+     "contractor_ids": [
+      22268503
+     ],
+     "contractor_names": [
+      "Interstuhl Büromöbel GmbH & Co.KG"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 26223478,
+     "result_key": "RES-0002",
+     "cents": 110125500,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 26223478",
+     "contractor_ids": [
+      22268504
+     ],
+     "contractor_names": [
+      "Dauphin HumanDesign Group GmbH & Co. KG"
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 26223478,
+     "result_key": "RES-0003",
+     "cents": 10414000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 26223478",
+     "contractor_ids": [
+      22268503
+     ],
+     "contractor_names": [
+      "Interstuhl Büromöbel GmbH & Co.KG"
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 26223478,
+     "result_key": "RES-0004",
+     "cents": 21754350,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 26223478",
+     "contractor_ids": [
+      22268505
+     ],
+     "contractor_names": [
+      "Stolcomfort GmbH"
+     ]
+    },
+    {
+     "key": "LOT-0005",
+     "notice_id": 26223478,
+     "result_key": "RES-0005",
+     "cents": 29600000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0005",
+     "published_lot_no_src": "lot section LOT-0005 of notice 26223478",
+     "contractor_ids": [
+      22268506
+     ],
+     "contractor_names": [
+      "Chairgo GmbH"
+     ]
+    },
+    {
+     "key": "LOT-0006",
+     "notice_id": 26223478,
+     "result_key": "RES-0006",
+     "cents": 12255980,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0006",
+     "published_lot_no_src": "lot section LOT-0006 of notice 26223478",
+     "contractor_ids": [
+      22268505
+     ],
+     "contractor_names": [
+      "Stolcomfort GmbH"
+     ]
+    },
+    {
+     "key": "LOT-0007",
+     "notice_id": 26223478,
+     "result_key": "RES-0007",
+     "cents": 21751500,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0007",
+     "published_lot_no_src": "lot section LOT-0007 of notice 26223478",
+     "contractor_ids": [
+      22268507
+     ],
+     "contractor_names": [
+      "Nowy Styl Deutschland GmbH"
+     ]
+    },
+    {
+     "key": "LOT-0008",
+     "notice_id": 26223478,
+     "result_key": "RES-0008",
+     "cents": 13341000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0008",
+     "published_lot_no_src": "lot section LOT-0008 of notice 26223478",
+     "contractor_ids": [
+      22268507
+     ],
+     "contractor_names": [
+      "Nowy Styl Deutschland GmbH"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1,
+    "LOT-0004": 1,
+    "LOT-0005": 1,
+    "LOT-0006": 1,
+    "LOT-0007": 1,
+    "LOT-0008": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    26223478,
+    23605116
+   ],
+   "flags": [],
+   "seq": 38,
+   "order_pos": 37,
+   "fetched_at": "2026-10-17T15:08:12Z"
+  },
+  {
+   "id": 6697762,
+   "source": "ted",
+   "published_at": "2020-08-14",
+   "head_date": "2020-08-14",
+   "version": 2,
+   "S": 4195526,
+   "currency": "CHF",
+   "n": 2,
+   "S_eur_cents": 3901363,
+   "S_display": "CHF 41,955.26",
+   "S_eur_display": "EUR 39,013.63",
+   "rate_per_eur": 1.0754,
+   "served_head": {
+    "cents": 2314936,
+    "currency": "CHF"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 2314936,
+    "currency": "CHF",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 2152628
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 21195957,
+     "result_key": "RES-1",
+     "cents": 2314936,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 21195957",
+     "contractor_ids": [
+      11724553
+     ],
+     "contractor_names": [
+      "IZE SA"
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 21195957,
+     "result_key": "RES-2",
+     "cents": 1880590,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 21195957",
+     "contractor_ids": [
+      15679181
+     ],
+     "contractor_names": [
+      "Amplexor Switzerland AG"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    20845594,
+    21195957
+   ],
+   "flags": [],
+   "seq": 39,
+   "order_pos": 38,
+   "fetched_at": "2026-10-17T15:08:16Z"
+  },
+  {
+   "id": 480181,
+   "source": "ted",
+   "published_at": "2025-02-12",
+   "head_date": "2025-02-12",
+   "version": 3,
+   "S": 495473267,
+   "currency": "PLN",
+   "n": 7,
+   "S_eur_cents": 118781499,
+   "S_display": "PLN 4,954,732.67",
+   "S_eur_display": "EUR 1,187,814.99",
+   "rate_per_eur": 4.1713,
+   "served_head": {
+    "cents": 49846119,
+    "currency": "PLN"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 49846119,
+    "currency": "PLN",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 11949780
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 24360961,
+     "result_key": "RES-0001",
+     "cents": 169000000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 24360961",
+     "contractor_ids": [
+      22228081
+     ],
+     "contractor_names": [
+      "Cyfrowe Systemy Telekomunikacyjne Sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 24360961,
+     "result_key": "RES-0002",
+     "cents": 20164000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 24360961",
+     "contractor_ids": [
+      10430209
+     ],
+     "contractor_names": [
+      "DGT Sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 24360961,
+     "result_key": "RES-0003",
+     "cents": 194000000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 24360961",
+     "contractor_ids": [
+      22228081
+     ],
+     "contractor_names": [
+      "Cyfrowe Systemy Telekomunikacyjne Sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 24360961,
+     "result_key": "RES-0004",
+     "cents": 55000000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 24360961",
+     "contractor_ids": [
+      22228081
+     ],
+     "contractor_names": [
+      "Cyfrowe Systemy Telekomunikacyjne Sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0005",
+     "notice_id": 24360961,
+     "result_key": "RES-0005",
+     "cents": 5893668,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0005",
+     "published_lot_no_src": "lot section LOT-0005 of notice 24360961",
+     "contractor_ids": [
+      20875764
+     ],
+     "contractor_names": [
+      "BEMIT Marek Ambroziak"
+     ]
+    },
+    {
+     "key": "LOT-0006",
+     "notice_id": 24360961,
+     "result_key": "RES-0006",
+     "cents": 1569480,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0006",
+     "published_lot_no_src": "lot section LOT-0006 of notice 24360961",
+     "contractor_ids": [
+      20875764
+     ],
+     "contractor_names": [
+      "BEMIT Marek Ambroziak"
+     ]
+    },
+    {
+     "key": "LOT-0007",
+     "notice_id": 24595677,
+     "result_key": "RES-0001",
+     "cents": 49846119,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0007",
+     "published_lot_no_src": "lot section LOT-0007 of notice 24595677",
+     "contractor_ids": [
+      20875764
+     ],
+     "contractor_names": [
+      "BEMIT Marek Ambroziak"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 24360961,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 445627148,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 24595677,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 49846119,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1,
+    "LOT-0004": 1,
+    "LOT-0005": 1,
+    "LOT-0006": 1,
+    "LOT-0007": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 3,
+   "notices": [
+    23829283,
+    24360961,
+    24595677
+   ],
+   "flags": [],
+   "seq": 40,
+   "order_pos": 39,
+   "fetched_at": "2026-10-17T15:08:23Z"
+  },
+  {
+   "id": 236597,
+   "source": "ted",
+   "published_at": "2026-03-25",
+   "head_date": "2026-03-25",
+   "version": 12,
+   "S": 174934931,
+   "currency": "PLN",
+   "n": 11,
+   "S_eur_cents": 40951105,
+   "S_display": "PLN 1,749,349.31",
+   "S_eur_display": "EUR 409,511.05",
+   "rate_per_eur": 4.2718,
+   "served_head": {
+    "cents": 4727100,
+    "currency": "PLN"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 4727100,
+    "currency": "PLN",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 1106583
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 25631637,
+     "result_key": "RES-0001",
+     "cents": 34958800,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 25631637",
+     "contractor_ids": [
+      22707570
+     ],
+     "contractor_names": [
+      "Miron Krosnowski prowadzący działalność gospodarczą pod nazwą Miron Krosnowski „MARCHEWKA”"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 25647921,
+     "result_key": "RES-0002",
+     "cents": 5120882,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 25647921",
+     "contractor_ids": [
+      17744132
+     ],
+     "contractor_names": [
+      "Aber sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 25619431,
+     "result_key": "RES-0001",
+     "cents": 9575000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 25619431",
+     "contractor_ids": [
+      18708999
+     ],
+     "contractor_names": [
+      "STEK Kałużny i Wspólnicy Sp.k."
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 25619589,
+     "result_key": "RES-0002",
+     "cents": 3287240,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 25619589",
+     "contractor_ids": [
+      17744132
+     ],
+     "contractor_names": [
+      "Aber sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0006",
+     "notice_id": 25619613,
+     "result_key": "RES-0001",
+     "cents": 17134000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0006",
+     "published_lot_no_src": "lot section LOT-0006 of notice 25619613",
+     "contractor_ids": [
+      23585999
+     ],
+     "contractor_names": [
+      "Bartłomiej Szulecki prowadzący działalność gospodarczą pod nazwą „Piekarnia Szulecki” Bartłomiej Szulecki, miejsc. Ciechocinek, kod pocztowy: 87-720, ul. gen. Józefa Bema nr 50, gm. Ciechocinek"
+     ]
+    },
+    {
+     "key": "LOT-0007",
+     "notice_id": 25617400,
+     "result_key": "RES-0001",
+     "cents": 49719730,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0007",
+     "published_lot_no_src": "lot section LOT-0007 of notice 25617400",
+     "contractor_ids": [
+      23139272
+     ],
+     "contractor_names": [
+      "ANIR Sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0008",
+     "notice_id": 25594925,
+     "result_key": "RES-0001",
+     "cents": 4727100,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0008",
+     "published_lot_no_src": "lot section LOT-0008 of notice 25594925",
+     "contractor_ids": [
+      17744132
+     ],
+     "contractor_names": [
+      "Aber sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0009",
+     "notice_id": 25647921,
+     "result_key": "RES-0001",
+     "cents": 3921942,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0009",
+     "published_lot_no_src": "lot section LOT-0009 of notice 25647921",
+     "contractor_ids": [
+      17744132
+     ],
+     "contractor_names": [
+      "Aber sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0010",
+     "notice_id": 25665851,
+     "result_key": "RES-0001",
+     "cents": 4903437,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0010",
+     "published_lot_no_src": "lot section LOT-0010 of notice 25665851",
+     "contractor_ids": [
+      18941125
+     ],
+     "contractor_names": [
+      "Packman Sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0011",
+     "notice_id": 25619589,
+     "result_key": "RES-0001",
+     "cents": 7875000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0011",
+     "published_lot_no_src": "lot section LOT-0011 of notice 25619589",
+     "contractor_ids": [
+      17744132
+     ],
+     "contractor_names": [
+      "Aber sp. z o.o."
+     ]
+    },
+    {
+     "key": "LOT-0012",
+     "notice_id": 25620726,
+     "result_key": "RES-0001",
+     "cents": 33711800,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0012",
+     "published_lot_no_src": "lot section LOT-0012 of notice 25620726",
+     "contractor_ids": [
+      23586768
+     ],
+     "contractor_names": [
+      "KUJAWSKA SPÓŁDZIELNIA MLECZARSKA, ul. Wysoka nr 15, 87-800 Włocławek"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 25631637,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 34958800,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25647921,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 9042824,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 25619589,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 11162240,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 25619431,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 9575000,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25619613,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 17134000,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25617400,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 49719730,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25665851,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 4903437,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25620726,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 33711800,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25594925,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 4727100,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1,
+    "LOT-0004": 1,
+    "LOT-0006": 1,
+    "LOT-0007": 1,
+    "LOT-0008": 1,
+    "LOT-0009": 1,
+    "LOT-0010": 1,
+    "LOT-0011": 1,
+    "LOT-0012": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 12,
+   "notices": [
+    25523868,
+    25497863,
+    25631637,
+    25647921,
+    25619589,
+    25619431,
+    25619613,
+    25617400,
+    25663872,
+    25665851,
+    25620726,
+    25594925
+   ],
+   "flags": [],
+   "seq": 41,
+   "order_pos": 40,
+   "fetched_at": "2026-10-17T15:08:45Z"
+  },
+  {
+   "id": 6513295,
+   "source": "ted",
+   "published_at": "2020-01-03",
+   "head_date": "2020-01-03",
+   "version": 2,
+   "S": 5248688,
+   "currency": "EUR",
+   "n": 2,
+   "S_eur_cents": 5248688,
+   "S_display": "EUR 52,486.88",
+   "S_eur_display": "EUR 52,486.88",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 2846788,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 2846788,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 2846788
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 20822950,
+     "result_key": "RES-1",
+     "cents": 2846788,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 20822950",
+     "contractor_ids": [
+      14614957
+     ],
+     "contractor_names": [
+      "Jorlin et Fils"
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 20822950,
+     "result_key": "RES-2",
+     "cents": 2401900,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 20822950",
+     "contractor_ids": [
+      7171306
+     ],
+     "contractor_names": [
+      "Tibem"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 20822950,
+     "field": "TED-VAL_TOTAL",
+     "section_kind": "Notice",
+     "cents": 100,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    20407047,
+    20822950
+   ],
+   "flags": [],
+   "seq": 42,
+   "order_pos": 41,
+   "fetched_at": "2026-10-17T15:08:50Z"
+  },
+  {
+   "id": 469403,
+   "source": "ted",
+   "published_at": "2025-06-05",
+   "head_date": "2025-06-05",
+   "version": 2,
+   "S": 84220783,
+   "currency": "EUR",
+   "n": 11,
+   "S_eur_cents": 84220783,
+   "S_display": "EUR 842,207.83",
+   "S_eur_display": "EUR 842,207.83",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 3855697,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 3855697,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 3855697
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 24799515,
+     "result_key": "RES-0001",
+     "cents": 28929881,
+     "decision": null,
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 24799515",
+     "contractor_ids": [
+      23150201
+     ],
+     "contractor_names": [
+      "SCHMITT"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 24799515,
+     "result_key": "RES-0002",
+     "cents": 8201262,
+     "decision": null,
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 24799515",
+     "contractor_ids": [
+      23150202
+     ],
+     "contractor_names": [
+      "SAS BRUNO"
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 24799515,
+     "result_key": "RES-0003",
+     "cents": 2881363,
+     "decision": null,
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 24799515",
+     "contractor_ids": [
+      23150203
+     ],
+     "contractor_names": [
+      "FRANCE BATIMENTS"
+     ]
+    },
+    {
+     "key": "LOT-0004",
+     "notice_id": 44527225,
+     "result_key": "RES-0001",
+     "cents": 3855697,
+     "decision": null,
+     "published_lot_no": "LOT-0004",
+     "published_lot_no_src": "lot section LOT-0004 of notice 44527225",
+     "contractor_ids": [
+      30944401
+     ],
+     "contractor_names": [
+      "LE COGUIC DIDIER"
+     ]
+    },
+    {
+     "key": "LOT-0005",
+     "notice_id": 24799515,
+     "result_key": "RES-0004",
+     "cents": 8297858,
+     "decision": null,
+     "published_lot_no": "LOT-0005",
+     "published_lot_no_src": "lot section LOT-0005 of notice 24799515",
+     "contractor_ids": [
+      23150204
+     ],
+     "contractor_names": [
+      "LALANDE FREDERIC"
+     ]
+    },
+    {
+     "key": "LOT-0006",
+     "notice_id": 24799515,
+     "result_key": "RES-0005",
+     "cents": 2806337,
+     "decision": null,
+     "published_lot_no": "LOT-0006",
+     "published_lot_no_src": "lot section LOT-0006 of notice 24799515",
+     "contractor_ids": [
+      23150205
+     ],
+     "contractor_names": [
+      "TOUT EN COULEURS"
+     ]
+    },
+    {
+     "key": "LOT-0007",
+     "notice_id": 24799515,
+     "result_key": "RES-0006",
+     "cents": 4887648,
+     "decision": null,
+     "published_lot_no": "LOT-0007",
+     "published_lot_no_src": "lot section LOT-0007 of notice 24799515",
+     "contractor_ids": [
+      23150206
+     ],
+     "contractor_names": [
+      "SCHMITT"
+     ]
+    },
+    {
+     "key": "LOT-0008",
+     "notice_id": 24799515,
+     "result_key": "RES-0007",
+     "cents": 5900000,
+     "decision": null,
+     "published_lot_no": "LOT-0008",
+     "published_lot_no_src": "lot section LOT-0008 of notice 24799515",
+     "contractor_ids": [
+      23150207
+     ],
+     "contractor_names": [
+      "JANNELEC"
+     ]
+    },
+    {
+     "key": "LOT-0009",
+     "notice_id": 24799515,
+     "result_key": "RES-0008",
+     "cents": 9501384,
+     "decision": null,
+     "published_lot_no": "LOT-0009",
+     "published_lot_no_src": "lot section LOT-0009 of notice 24799515",
+     "contractor_ids": [
+      23150208
+     ],
+     "contractor_names": [
+      "ELAIRGIE"
+     ]
+    },
+    {
+     "key": "LOT-0010",
+     "notice_id": 24799515,
+     "result_key": "RES-0009",
+     "cents": 7898042,
+     "decision": null,
+     "published_lot_no": "LOT-0010",
+     "published_lot_no_src": "lot section LOT-0010 of notice 24799515",
+     "contractor_ids": [
+      23150209
+     ],
+     "contractor_names": [
+      "ELIE TRAVAUX PUBLICS"
+     ]
+    },
+    {
+     "key": "LOT-0011",
+     "notice_id": 24799515,
+     "result_key": "RES-0010",
+     "cents": 1061311,
+     "decision": null,
+     "published_lot_no": "LOT-0011",
+     "published_lot_no_src": "lot section LOT-0011 of notice 24799515",
+     "contractor_ids": [
+      23150210
+     ],
+     "contractor_names": [
+      "JANNELEC"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 24799515,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 80365086,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 44527225,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 3855697,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1,
+    "LOT-0004": 1,
+    "LOT-0005": 1,
+    "LOT-0006": 1,
+    "LOT-0007": 1,
+    "LOT-0008": 1,
+    "LOT-0009": 1,
+    "LOT-0010": 1,
+    "LOT-0011": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    24799515,
+    44527225
+   ],
+   "flags": [],
+   "seq": 46,
+   "order_pos": 45,
+   "fetched_at": "2026-10-17T15:09:08Z"
+  },
+  {
+   "id": 533536,
+   "source": "ted",
+   "published_at": "2026-07-20",
+   "head_date": "2026-07-20",
+   "version": 7,
+   "S": 6425000,
+   "currency": "EUR",
+   "n": 3,
+   "S_eur_cents": 6425000,
+   "S_display": "EUR 64,250.00",
+   "S_eur_display": "EUR 64,250.00",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 2170000,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 2170000,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 2170000
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 44557436,
+     "result_key": "RES-0001",
+     "cents": 2170000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 44557436",
+     "contractor_ids": [
+      14797
+     ],
+     "contractor_names": [
+      "Akciju sabiedrība \"Siltumelektroprojekts\""
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 24754549,
+     "result_key": "RES-0001",
+     "cents": 3000000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 24754549",
+     "contractor_ids": [
+      11877632
+     ],
+     "contractor_names": [
+      "SIA \"Būvdizains\""
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 24714086,
+     "result_key": "RES-0001",
+     "cents": 1255000,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 24714086",
+     "contractor_ids": [
+      15050018
+     ],
+     "contractor_names": [
+      "SIA “Lūsis V”"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 24714086,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 1255000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 24754549,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 3000000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 44557436,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 2170000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25363512,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 2170000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25425874,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 2170000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 9514,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 2170000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 7,
+   "notices": [
+    24515324,
+    24714086,
+    24754549,
+    44557436,
+    25363512,
+    25425874,
+    9514
+   ],
+   "flags": [],
+   "seq": 47,
+   "order_pos": 46,
+   "fetched_at": "2026-10-17T15:09:20Z"
+  },
+  {
+   "id": 321859,
+   "source": "ted",
+   "published_at": "2026-02-11",
+   "head_date": "2026-02-11",
+   "version": 3,
+   "S": 336958340,
+   "currency": "CHF",
+   "n": 2,
+   "S_eur_cents": 368824803,
+   "S_display": "CHF 3,369,583.40",
+   "S_eur_display": "EUR 3,688,248.03",
+   "rate_per_eur": 0.9136,
+   "served_head": {
+    "cents": 144897240,
+    "currency": "CHF"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 144897240,
+    "currency": "CHF",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 158600306
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 25551449,
+     "result_key": "RES-0001",
+     "cents": 192061100,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 25551449",
+     "contractor_ids": [
+      23539775
+     ],
+     "contractor_names": [
+      "DE_Berlinux Solutions GmbH"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 25550656,
+     "result_key": "RES-0002",
+     "cents": 144897240,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 25550656",
+     "contractor_ids": [
+      23539775
+     ],
+     "contractor_names": [
+      "DE_Berlinux Solutions GmbH"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 25551449,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 192061100,
+     "currency": "CHF",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 25550656,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 144897240,
+     "currency": "CHF",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 3,
+   "notices": [
+    24907409,
+    25551449,
+    25550656
+   ],
+   "flags": [],
+   "seq": 49,
+   "order_pos": 48,
+   "fetched_at": "2026-10-17T15:09:32Z"
+  },
+  {
+   "id": 6321416,
+   "source": "ted",
+   "published_at": "2019-04-08",
+   "head_date": "2019-04-08",
+   "version": 2,
+   "S": 17154019,
+   "currency": "EUR",
+   "n": 3,
+   "S_eur_cents": 17154019,
+   "S_display": "EUR 171,540.19",
+   "S_eur_display": "EUR 171,540.19",
+   "rate_per_eur": 1.0,
+   "served_head": {
+    "cents": 13505586,
+    "currency": "EUR"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 13505586,
+    "currency": "EUR",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 13505586
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 20353180,
+     "result_key": "RES-1",
+     "cents": 13505586,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 20353180",
+     "contractor_ids": [
+      1324935
+     ],
+     "contractor_names": [
+      "Alpes Frais Production"
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 20353180,
+     "result_key": "RES-2",
+     "cents": 546896,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 20353180",
+     "contractor_ids": [
+      1324935
+     ],
+     "contractor_names": [
+      "Alpes Frais Production"
+     ]
+    },
+    {
+     "key": "LOT-3",
+     "notice_id": 20353180,
+     "result_key": "RES-3",
+     "cents": 3101537,
+     "decision": "selec-w",
+     "published_lot_no": "3",
+     "published_lot_no_src": "lot section LOT-3 of notice 20353180",
+     "contractor_ids": [
+      1292496
+     ],
+     "contractor_names": [
+      "ID Services"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 20353180,
+     "field": "TED-HIGH",
+     "section_kind": "Notice",
+     "cents": 13505586,
+     "currency": "EUR",
+     "r3_kind": null,
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 20353180,
+     "field": "TED-HIGH",
+     "section_kind": "Notice",
+     "cents": 13505586,
+     "currency": "EUR",
+     "r3_kind": null,
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 20353180,
+     "field": "TED-LOW",
+     "section_kind": "Notice",
+     "cents": 546896,
+     "currency": "EUR",
+     "r3_kind": null,
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 20353180,
+     "field": "TED-LOW",
+     "section_kind": "Notice",
+     "cents": 546896,
+     "currency": "EUR",
+     "r3_kind": null,
+     "vouches": true,
+     "form": "F03",
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0,
+    "LOT-3": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 2,
+   "notices": [
+    20070814,
+    20353180
+   ],
+   "flags": [],
+   "seq": 50,
+   "order_pos": 49,
+   "fetched_at": "2026-10-17T15:09:37Z"
+  },
+  {
+   "id": 307725,
+   "source": "ted",
+   "published_at": "2026-08-14",
+   "head_date": "2026-08-14",
+   "version": 4,
+   "S": 889208470,
+   "currency": "EUR",
+   "n": 2,
+   "S_eur_cents": 889208470,
+   "S_display": "EUR 8,892,084.70",
+   "S_eur_display": "EUR 8,892,084.70",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 28044262,
+     "result_key": "RES-0002",
+     "cents": 290209590,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 28044262",
+     "contractor_ids": [
+      24611804
+     ],
+     "contractor_names": [
+      "Selecta Belgium"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 28044262,
+     "result_key": "RES-0001",
+     "cents": 598998880,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 28044262",
+     "contractor_ids": [
+      24611805
+     ],
+     "contractor_names": [
+      "OKE KOFFIE"
+     ]
+    }
+   ],
+   "vouched_by": {
+    "field": "BT-1118-NoticeResult",
+    "notice_id": 28044262,
+    "cents": 889208470
+   },
+   "vouches": [
+    [
+     "BT-1118-NoticeResult",
+     28044262,
+     889208470
+    ]
+   ],
+   "stated_totals": [
+    {
+     "notice_id": 28044262,
+     "field": "BT-1118-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 889208470,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 28044262,
+     "field": "BT-118-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 994000000,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 4,
+   "notices": [
+    25495334,
+    25586505,
+    25593277,
+    28044262
+   ],
+   "flags": [],
+   "seq": 51,
+   "order_pos": 50,
+   "fetched_at": "2026-10-17T15:09:44Z"
+  },
+  {
+   "id": 225020,
+   "source": "ted",
+   "published_at": "2025-07-17",
+   "head_date": "2025-07-17",
+   "version": 4,
+   "S": 107242202,
+   "currency": "PLN",
+   "n": 2,
+   "S_eur_cents": 25207362,
+   "S_display": "PLN 1,072,422.02",
+   "S_eur_display": "EUR 252,073.62",
+   "rate_per_eur": 4.2544,
+   "served_head": {
+    "cents": 67812902,
+    "currency": "PLN"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 67812902,
+    "currency": "PLN",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 15939475
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 24864313,
+     "result_key": "RES-0001",
+     "cents": 67812902,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 24864313",
+     "contractor_ids": [
+      17109002
+     ],
+     "contractor_names": [
+      "Golden Line Spółką z ograniczoną odpowiedzialnością"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 44534007,
+     "result_key": "RES-0001",
+     "cents": 39429300,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 44534007",
+     "contractor_ids": [
+      21054536
+     ],
+     "contractor_names": [
+      "AZET Załęcki spółka komandytowa"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [
+    {
+     "notice_id": 44534007,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 39429300,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    },
+    {
+     "notice_id": 24864313,
+     "field": "BT-161-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 67812902,
+     "currency": "PLN",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": true
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 4,
+   "notices": [
+    24573313,
+    24617133,
+    44534007,
+    24864313
+   ],
+   "flags": [],
+   "seq": 52,
+   "order_pos": 51,
+   "fetched_at": "2026-10-17T15:09:52Z"
+  },
+  {
+   "id": 6759797,
+   "source": "ted",
+   "published_at": "2020-10-14",
+   "head_date": "2020-10-14",
+   "version": 3,
+   "S": 156145000,
+   "currency": "CHF",
+   "n": 2,
+   "S_eur_cents": 145413485,
+   "S_display": "CHF 1,561,450.00",
+   "S_eur_display": "EUR 1,454,134.85",
+   "rate_per_eur": 1.0738,
+   "served_head": {
+    "cents": 84976700,
+    "currency": "CHF"
+   },
+   "served_derivation": null,
+   "port_max_election": {
+    "cents": 84976700,
+    "currency": "CHF",
+    "field": "result_value",
+    "scope": [
+     "L",
+     null
+    ],
+    "eur": 79136431
+   },
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-1",
+     "notice_id": 21299522,
+     "result_key": "RES-1",
+     "cents": 84976700,
+     "decision": "selec-w",
+     "published_lot_no": "1",
+     "published_lot_no_src": "lot section LOT-1 of notice 21299522",
+     "contractor_ids": [
+      2649646
+     ],
+     "contractor_names": [
+      "EvoBus (Schweiz) AG"
+     ]
+    },
+    {
+     "key": "LOT-2",
+     "notice_id": 21299522,
+     "result_key": "RES-2",
+     "cents": 71168300,
+     "decision": "selec-w",
+     "published_lot_no": "2",
+     "published_lot_no_src": "lot section LOT-2 of notice 21299522",
+     "contractor_ids": [
+      6709148
+     ],
+     "contractor_names": [
+      "Solaris Schweiz GmbH"
+     ]
+    }
+   ],
+   "vouched_by": null,
+   "vouches": [],
+   "stated_totals": [],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-1": 0,
+    "LOT-2": 0
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 3,
+   "notices": [
+    20965716,
+    21005844,
+    21299522
+   ],
+   "flags": [],
+   "seq": 53,
+   "order_pos": 52,
+   "fetched_at": "2026-10-17T15:09:58Z"
+  },
+  {
+   "id": 1042997,
+   "source": "ted",
+   "published_at": "2026-09-10",
+   "head_date": "2026-09-10",
+   "version": 4,
+   "S": 52392606,
+   "currency": "EUR",
+   "n": 3,
+   "S_eur_cents": 52392606,
+   "S_display": "EUR 523,926.06",
+   "S_eur_display": "EUR 523,926.06",
+   "rate_per_eur": 1.0,
+   "served_head": null,
+   "served_derivation": null,
+   "port_max_election": null,
+   "served_matches_election": true,
+   "v1_why": "W",
+   "summed": [
+    {
+     "key": "LOT-0001",
+     "notice_id": 31275820,
+     "result_key": "RES-0003",
+     "cents": 33417458,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0001",
+     "published_lot_no_src": "lot section LOT-0001 of notice 31275820",
+     "contractor_ids": [
+      30927252
+     ],
+     "contractor_names": [
+      "KRINKELS"
+     ]
+    },
+    {
+     "key": "LOT-0002",
+     "notice_id": 31275820,
+     "result_key": "RES-0001",
+     "cents": 14092278,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0002",
+     "published_lot_no_src": "lot section LOT-0002 of notice 31275820",
+     "contractor_ids": [
+      30927253
+     ],
+     "contractor_names": [
+      "BOIS ET TRAVAUX"
+     ]
+    },
+    {
+     "key": "LOT-0003",
+     "notice_id": 31275820,
+     "result_key": "RES-0002",
+     "cents": 4882870,
+     "decision": "selec-w",
+     "published_lot_no": "LOT-0003",
+     "published_lot_no_src": "lot section LOT-0003 of notice 31275820",
+     "contractor_ids": [
+      30927253
+     ],
+     "contractor_names": [
+      "BOIS ET TRAVAUX"
+     ]
+    }
+   ],
+   "vouched_by": {
+    "field": "BT-1118-NoticeResult",
+    "notice_id": 31275820,
+    "cents": 52392606
+   },
+   "vouches": [
+    [
+     "BT-1118-NoticeResult",
+     31275820,
+     52392606
+    ],
+    [
+     "BT-118-NoticeResult",
+     31275820,
+     52392606
+    ]
+   ],
+   "stated_totals": [
+    {
+     "notice_id": 31275820,
+     "field": "BT-1118-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 52392606,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    },
+    {
+     "notice_id": 31275820,
+     "field": "BT-118-NoticeResult",
+     "section_kind": "Notice",
+     "cents": 52392606,
+     "currency": "EUR",
+     "r3_kind": "award",
+     "vouches": true,
+     "form": null,
+     "equals_its_single_lot_award": false
+    }
+   ],
+   "bids_in_summed_notice_by_lot": {
+    "LOT-0001": 1,
+    "LOT-0002": 1,
+    "LOT-0003": 1
+   },
+   "checks": {
+    "R1": [],
+    "R2a": [],
+    "R2b": [],
+    "R2c": [],
+    "R2d": [],
+    "R3": [],
+    "R4": [],
+    "R5.1": false,
+    "R5.2": false,
+    "R5.3": false,
+    "R5.4": false,
+    "R5.5": false,
+    "R5.6": false,
+    "R5.7": false,
+    "R5.8": false,
+    "R5.9": false,
+    "R5.10": false,
+    "R5.11": false,
+    "R5.12": false,
+    "R5.13": false,
+    "R5.14": false,
+    "R5.15": false,
+    "R6": [],
+    "R7": [],
+    "R8": false,
+    "R9": [],
+    "R10": false
+   },
+   "n_notices": 4,
+   "notices": [
+    25256823,
+    25401114,
+    25519763,
+    31275820
+   ],
+   "flags": [],
+   "seq": 54,
+   "order_pos": 53,
+   "fetched_at": "2026-10-17T15:10:05Z"
+  }
+ ]
+}
