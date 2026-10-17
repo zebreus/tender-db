@@ -75,6 +75,7 @@ fn projection(notice: i64, facts: Vec<Fact>) -> TenderProjection {
             lots: Vec::new(),
             rounds: Vec::new(),
             group_members: Vec::new(),
+            stated_totals: Vec::new(),
         }],
     }
 }
@@ -232,6 +233,7 @@ async fn a_refused_lot_figure_is_not_served_as_the_lots_value() {
         key: key.into(),
         kind: "Lot".into(),
         facts: [amount("framework_maximum", cents)].into_iter().collect(),
+        published_lot_no: None,
     };
     let mut p = projection(1, Vec::new());
     p.versions[0].lots = vec![lot("LOT-0001", small), lot("LOT-0002", slip)];
@@ -276,7 +278,7 @@ async fn the_stored_lot_value_is_the_value_the_lot_row_serves() {
         tax_basis: None,
         quality: quality.map(Into::into),
     };
-    let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+    let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None };
 
     let small = 3_000_000_000; // EUR 30 m, published in version 1 only
     let mut p = projection(1, Vec::new());
@@ -391,6 +393,7 @@ async fn a_slip_partnered_only_by_a_kept_version_is_refused_on_the_append_path()
             key: "LOT-A".into(),
             kind: "Lot".into(),
             facts: [amount("framework_maximum", x * 1_000), amount("estimated_value", 2_000_000)].into_iter().collect(),
+            published_lot_no: None,
         }],
     );
 
@@ -790,7 +793,7 @@ async fn a_derived_lot_sum_head_is_stored_and_served_as_the_fold_derived_it() {
     use store::canonical::{LotResultState, LotState, Round};
     let (db, conn) = open("derived").await;
     let lots: Vec<LotState> =
-        (1..=6).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default() }).collect();
+        (1..=6).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default(), published_lot_no: None }).collect();
     let awards: Vec<LotResultState> = (1..=6)
         .map(|i| LotResultState {
             key: format!("RES-{i}"),
@@ -803,6 +806,8 @@ async fn a_derived_lot_sum_head_is_stored_and_served_as_the_fold_derived_it() {
             winners: Vec::new(),
             buyer_winners: Vec::new(),
             statistics: Vec::new(),
+            published_lot_no: None,
+            group: false,
         })
         .collect();
     let version = |notice: i64, facts: Vec<Fact>| TenderVersion {
@@ -816,6 +821,7 @@ async fn a_derived_lot_sum_head_is_stored_and_served_as_the_fold_derived_it() {
         lots: lots.clone(),
         rounds: vec![Round { notice_id: notice, logical_notice_id: None, lot_results: awards.clone(), bids: Vec::new(), contracts: Vec::new() }],
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     };
     let tender = |versions: Vec<TenderVersion>| TenderProjection {
         source: "ted".into(),
@@ -880,6 +886,8 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
         winners: Vec::new(),
         buyer_winners: Vec::new(),
         statistics: Vec::new(),
+        published_lot_no: None,
+        group: false,
     };
     let version = |notice: i64, facts: Vec<Fact>, awards: &[i64]| TenderVersion {
         caused_by_notice_id: notice,
@@ -889,7 +897,7 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
         original_lang: None,
         publication_id: format!("{notice}-2024"),
         facts: facts.into_iter().collect(),
-        lots: (1..=awards.len()).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default() }).collect(),
+        lots: (1..=awards.len()).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default(), published_lot_no: None }).collect(),
         rounds: vec![Round {
             notice_id: 1,
             logical_notice_id: None,
@@ -898,6 +906,7 @@ async fn an_earlier_derived_head_is_read_inside_the_bound_it_was_in() {
             contracts: Vec::new(),
         }],
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     };
     let tender = |versions: Vec<TenderVersion>| TenderProjection {
         source: "ted".into(),
@@ -977,6 +986,8 @@ async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
         winners: Vec::new(),
         buyer_winners: Vec::new(),
         statistics: Vec::new(),
+        published_lot_no: None,
+        group: false,
     };
     let awards = [120_000_000, 100_000_000];
     let chain = || TenderProjection {
@@ -992,7 +1003,7 @@ async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
             original_lang: None,
             publication_id: "1-2024".into(),
             facts: [amount("result_value", 120_000_000)].into_iter().collect(),
-            lots: (1..=2).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default() }).collect(),
+            lots: (1..=2).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default(), published_lot_no: None }).collect(),
             rounds: vec![Round {
                 notice_id: 1,
                 logical_notice_id: None,
@@ -1001,6 +1012,7 @@ async fn a_drained_awards_sum_head_is_refolded_back_to_the_max_election() {
                 contracts: Vec::new(),
             }],
             group_members: Vec::new(),
+            stated_totals: Vec::new(),
         }],
     };
     for (name, drained_eur_cents) in [("drained", 220_000_000), ("marker-only", 120_000_000)] {
@@ -1083,6 +1095,8 @@ async fn an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes() {
         winners: Vec::new(),
         buyer_winners: Vec::new(),
         statistics: Vec::new(),
+        published_lot_no: None,
+        group: false,
     };
     let version = |notice: i64, facts: Vec<Fact>| TenderVersion {
         caused_by_notice_id: notice,
@@ -1093,10 +1107,11 @@ async fn an_earlier_version_whose_lot_figures_overflow_a_sum_still_probes() {
         publication_id: format!("{notice}-2024"),
         facts: facts.into_iter().collect(),
         lots: (1..=2)
-            .map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: [amount("estimated_value", HUGE)].into_iter().collect() })
+            .map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: [amount("estimated_value", HUGE)].into_iter().collect(), published_lot_no: None })
             .collect(),
         rounds: vec![Round { notice_id: 1, logical_notice_id: None, lot_results: (1..=2).map(award).collect(), bids: Vec::new(), contracts: Vec::new() }],
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     };
     let tender = |versions: Vec<TenderVersion>| TenderProjection {
         source: "ted".into(),
@@ -1149,6 +1164,8 @@ async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound(
         winners: Vec::new(),
         buyer_winners: Vec::new(),
         statistics: Vec::new(),
+        published_lot_no: None,
+        group: false,
     };
     let version = |notice: i64, facts: Vec<Fact>| TenderVersion {
         caused_by_notice_id: notice,
@@ -1158,7 +1175,7 @@ async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound(
         original_lang: None,
         publication_id: format!("{notice}-2024"),
         facts: facts.into_iter().collect(),
-        lots: (1..=2).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default() }).collect(),
+        lots: (1..=2).map(|i| LotState { key: format!("LOT-{i}"), kind: "Lot".into(), facts: Default::default(), published_lot_no: None }).collect(),
         rounds: vec![Round {
             notice_id: 1,
             logical_notice_id: None,
@@ -1167,6 +1184,7 @@ async fn an_earlier_derived_head_of_zero_euro_summands_is_read_inside_its_bound(
             contracts: Vec::new(),
         }],
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     };
     let tender = |versions: Vec<TenderVersion>| TenderProjection {
         source: "ted".into(),

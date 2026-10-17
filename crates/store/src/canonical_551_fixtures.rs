@@ -55,7 +55,7 @@ impl Fixture {
                 original_lang: None,
                 publication_id: format!("{}-{}", self.id, i + 1),
                 facts: v.facts.iter().map(amount).collect(),
-                lots: v.lots.iter().map(|(key, kind, facts)| LotState { key: (*key).into(), kind: (*kind).into(), facts: facts.iter().map(amount).collect() }).collect(),
+                lots: v.lots.iter().map(|(key, kind, facts)| LotState { key: (*key).into(), kind: (*kind).into(), facts: facts.iter().map(amount).collect(), published_lot_no: None }).collect(),
                 rounds: v
                     .rounds
                     .iter()
@@ -75,6 +75,8 @@ impl Fixture {
                                 winners: Vec::new(),
                                 buyer_winners: Vec::new(),
                                 statistics: Vec::new(),
+                                published_lot_no: None,
+                                group: false,
                             })
                             .collect(),
                         bids: Vec::new(),
@@ -82,6 +84,7 @@ impl Fixture {
                     })
                     .collect(),
                 group_members: Vec::new(),
+                stated_totals: Vec::new(),
             })
             .collect()
     }

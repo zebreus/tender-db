@@ -53,7 +53,7 @@ fn deadline_at(at: i64) -> Fact {
 }
 
 fn lot(key: &str, facts: &[Fact]) -> LotState {
-    LotState { key: key.into(), kind: "Lot".into(), facts: facts.iter().cloned().collect() }
+    LotState { key: key.into(), kind: "Lot".into(), facts: facts.iter().cloned().collect(), published_lot_no: None }
 }
 
 /// One version as the fold carries it: `facts` and `lots` are the head's union.
@@ -69,6 +69,7 @@ fn version(notice: i64, published_at: i64, facts: &[Fact], lots: &[LotState]) ->
         lots: lots.to_vec(),
         rounds: Vec::new(),
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     }
 }
 

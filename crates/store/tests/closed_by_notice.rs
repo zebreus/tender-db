@@ -66,7 +66,7 @@ fn class(scheme: &str, code: &str) -> Fact {
 }
 
 fn lot(key: &str, kind: &str, facts: &[Fact]) -> LotState {
-    LotState { key: key.into(), kind: kind.into(), facts: facts.iter().cloned().collect() }
+    LotState { key: key.into(), kind: kind.into(), facts: facts.iter().cloned().collect(), published_lot_no: None }
 }
 
 fn result(key: &str, lot_key: Option<&str>, decision: Option<&str>) -> LotResultState {
@@ -81,6 +81,8 @@ fn result(key: &str, lot_key: Option<&str>, decision: Option<&str>) -> LotResult
         winners: Vec::new(),
         buyer_winners: Vec::new(),
         statistics: Vec::new(),
+        published_lot_no: None,
+        group: false,
     }
 }
 
@@ -117,6 +119,7 @@ fn version(
         lots: lots.to_vec(),
         rounds: rounds.to_vec(),
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     }
 }
 

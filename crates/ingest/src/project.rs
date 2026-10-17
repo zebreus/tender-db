@@ -43,7 +43,7 @@ use std::io::{BufReader, BufWriter, Read, Write};
 use std::path::Path;
 use store::{
     BidParty, BidState, ContractState, Db, Fact, Identifier, LotResultState, LotState, Mention,
-    NoticeValue, Parsed, QUALITY_WITHHELD, Round, TenderProjection, TenderVersion,
+    NoticeValue, Parsed, QUALITY_WITHHELD, Round, StatedTotal, StatedTotalKind, TenderProjection, TenderVersion,
 };
 
 /// What a projection run did. Not `Copy` since issue 511: [`Report::dropped`] carries a
@@ -1277,6 +1277,11 @@ const LEGACY_UNSUCCESSFUL_MARKER: &str = "TED-PROCUREMENT_UNSUCCESSFUL";
 /// stay open through K1 like an eForms BT-766 declaration. `TERMINATION_DPS` and
 /// `DPS_ADDITIONAL_PURCHASERS` are not folded.
 const LEGACY_DPS_MARKER: &str = "TED-DPS";
+/// Issue 551 unit 4b (B1): r209's `AWARDED_TO_GROUP` marker inside an award block — the contract
+/// went to a group of economic operators — and its negative twin. Read for
+/// [`LotResultState::group`] only.
+const LEGACY_GROUP_MARKER: &str = "TED-AWARDED_TO_GROUP";
+const LEGACY_NO_GROUP_MARKER: &str = "TED-NO_AWARDED_TO_GROUP";
 /// sdk-0.1's procedure folder id (its BT-04 analogue). Only a genuine uuid is a
 /// strong-enough cross-reference to key a Tender on (issue 34); the numeric
 /// channel's non-uuid folder ids are notice-local and stay islands.
@@ -4352,6 +4357,9 @@ struct BucketRow {
     /// `remove_dir_all`'d at the START of every sharded run and again at the end, so no
     /// run ever reads bytes another binary wrote.
     group_members: Vec<(String, String)>,
+    /// Issue 551 unit 4b (B1): [`NoticeState::stated_totals`], which [`fold`] reads (same
+    /// lifecycle note as `group_members` above).
+    stated_totals: Vec<StatedTotal>,
 }
 
 impl BucketRow {
@@ -4381,6 +4389,7 @@ impl BucketRow {
             value_corrections: state.value_corrections,
             round: state.round,
             group_members: state.group_members,
+            stated_totals: state.stated_totals,
         }
     }
 
@@ -4417,6 +4426,7 @@ impl BucketRow {
             round: self.round.clone(),
             // Already bound: no reference is left to alias (issue 259).
             org_alias: HashMap::new(),
+            stated_totals: self.stated_totals.clone(),
         }
     }
 }
@@ -4464,6 +4474,9 @@ struct NoticeState {
     /// (issue 259). A role or winner reference may name either end of a nest; both
     /// must land on the one party. Empty except in the legacy eras.
     org_alias: HashMap<String, String>,
+    /// Issue 551 unit 4b (B1): the totals this notice states ([`notice_stated_totals`]), each
+    /// with its `lots_awarded` still empty — [`fold`] fills that from each version's rounds.
+    stated_totals: Vec<StatedTotal>,
 }
 
 /// Where a value belongs: the Tender itself, or one of its Lots.
@@ -5247,9 +5260,18 @@ impl NoticeState {
             .iter()
             .filter(|s| LOT_KINDS.contains(&s.kind.as_str()))
             .map(|s| {
-                (s.id.clone(), LotState { key: s.id.clone(), kind: s.kind.clone(), facts: BTreeSet::new() })
+                (s.id.clone(), LotState { key: s.id.clone(), kind: s.kind.clone(), facts: BTreeSet::new(), published_lot_no: None })
             })
             .collect();
+        // Issue 551 unit 4b (B1): the number each lot section prints; an FTS lot's is its OCDS id,
+        // which is its key.
+        let printed = published_lot_numbers(parsed, &lots);
+        for lot in lots.values_mut() {
+            lot.published_lot_no = printed
+                .get(lot.key.as_str())
+                .map(|number| (*number).to_owned())
+                .or_else(|| (notice.source == "fts").then(|| lot.key.clone()));
+        }
 
         let legacy = is_legacy_profile(&notice.profile);
         let sdk01 = is_sdk01_profile(&notice.profile);
@@ -5722,6 +5744,9 @@ impl NoticeState {
         // invariant `notices_and_their_versions_carry_the_same_instants` pins.
         let (published_at, dispatched_at) = notice_instants(parsed);
         let published_at = published_at.unwrap_or(0);
+        let logical_id = first_id(parsed, LOGICAL_NOTICE_FIELD);
+        // Issue 551 unit 4b (B1): the totals this notice states, for path W's guards only.
+        let stated_totals = notice_stated_totals(notice, logical_id.as_deref(), parsed, &sections);
 
         NoticeState {
             notice_id: notice.id,
@@ -5731,7 +5756,7 @@ impl NoticeState {
             subtype: first_code(parsed, SUBTYPE_FIELD),
             original_lang: original_lang(parsed),
             group_members: group_members(notice.id, parsed),
-            logical_id: first_id(parsed, LOGICAL_NOTICE_FIELD),
+            logical_id,
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
             facts,
             lots: lots.into_values().collect(),
@@ -5742,6 +5767,7 @@ impl NoticeState {
             raw_results,
             round: None,
             org_alias,
+            stated_totals,
         }
     }
 
@@ -6653,6 +6679,9 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             match lots.iter_mut().find(|l| l.key == published.key) {
                 Some(carried) => {
                     carried.kind.clone_from(&published.kind);
+                    // Issue 551 unit 4b (B1): like the kind, the latest section's number, `None`
+                    // included — the version a notice causes carries that notice's own.
+                    carried.published_lot_no.clone_from(&published.published_lot_no);
                     if state.place_country_lots.contains(&published.key) {
                         carried.facts.retain(|f| !is_place_country(f));
                     }
@@ -6712,6 +6741,28 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             group_members.dedup();
         }
 
+        // Issue 551 unit 4b (B1): stated totals accumulate like rounds, with the same correction
+        // rule — a change notice with a logical id that states at least one total replaces the
+        // totals of every earlier notice under that id (a correction stating none leaves them).
+        // Each total's `lots_awarded` is re-read from THIS version's rounds whenever the rounds or
+        // the totals moved, so a total whose round a correction replaced awards no keys.
+        let mut stated_totals: Vec<StatedTotal> =
+            previous.map(|p| p.stated_totals.clone()).unwrap_or_default();
+        if !state.stated_totals.is_empty() {
+            if state.is_correction
+                && let Some(logical) = state.stated_totals[0].logical_notice_id.as_deref()
+            {
+                stated_totals.retain(|t| t.logical_notice_id.as_deref() != Some(logical));
+            }
+            stated_totals.extend(state.stated_totals.iter().cloned());
+        }
+        if !stated_totals.is_empty() && (state.round.is_some() || !state.stated_totals.is_empty()) {
+            let awarded = lots_awarded(&rounds, &stated_totals);
+            for total in &mut stated_totals {
+                total.lots_awarded = awarded.get(&total.notice_id).cloned().unwrap_or_default();
+            }
+        }
+
         versions.push(TenderVersion {
             caused_by_notice_id: state.notice_id,
             published_at: state.published_at,
@@ -6723,9 +6774,27 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             lots,
             rounds,
             group_members,
+            stated_totals,
         });
     }
     versions
+}
+
+/// Issue 551 unit 4b (B1): [`StatedTotal::lots_awarded`] for every notice that states one of
+/// `totals` — the lot keys that notice's round names among `rounds`: every LotResult with a lot
+/// key counts, closed and no-award results included (the reading the port measured: a result row
+/// on the key is enough); a result naming no lot adds nothing. A notice with no round among
+/// `rounds` is absent (no keys). Sorted, distinct. One pass over the rounds per call, so a long
+/// chain stays quadratic like the rounds it already clones per version.
+fn lots_awarded(rounds: &[Round], totals: &[StatedTotal]) -> HashMap<i64, Vec<String>> {
+    let stating: BTreeSet<i64> = totals.iter().map(|t| t.notice_id).collect();
+    let mut keys: HashMap<i64, BTreeSet<&str>> = HashMap::new();
+    for round in rounds.iter().filter(|r| stating.contains(&r.notice_id)) {
+        keys.entry(round.notice_id)
+            .or_default()
+            .extend(round.lot_results.iter().filter_map(|l| l.lot_key.as_deref()));
+    }
+    keys.into_iter().map(|(notice, keys)| (notice, keys.into_iter().map(str::to_owned).collect())).collect()
 }
 
 /// Issue 532 (decision D4): drop every derived `place_country` row from a version
@@ -6904,6 +6973,15 @@ struct RawLotResult {
     awarded_marker: bool,
     direct_cents: Option<i64>,
     direct_currency: Option<String>,
+    /// Issue 551 unit 4b (B1): the lot number the result itself names, as published
+    /// ([`LotResultState::published_lot_no`]): a legacy block's own `LOT_NO` / `LOT_NUMBER`
+    /// ([`award_block_lot_number`]), an eForms / FTS result's BT-13713.
+    published_lot_no: Option<String>,
+    /// Issue 551 unit 4b (B1): the legacy block's first `AWARDED_TO_GROUP` marker, and whether it
+    /// affirms the group ([`group_marker_affirms`]).
+    awarded_to_group: Option<bool>,
+    /// Issue 551 unit 4b (B1): the block carries `NO_AWARDED_TO_GROUP`.
+    not_awarded_to_group: bool,
 }
 
 #[derive(Default)]
@@ -6985,7 +7063,12 @@ fn read_results(
                 match (stem(&row.field_id), &row.value) {
                     ("BT-142", NoticeValue::Code { code, .. }) => r.decision = Some(code.clone()),
                     ("BT-144", NoticeValue::Code { code, .. }) => r.reason = Some(code.clone()),
-                    ("BT-13713", NoticeValue::Id { value, .. }) => r.lot_key = Some(value.clone()),
+                    // Issue 551 unit 4b (B1): the reference as published is also the result's
+                    // published lot number (eForms BT-13713; FTS's OCDS `relatedLots` id).
+                    ("BT-13713", NoticeValue::Id { value, .. }) => {
+                        r.lot_key = Some(value.clone());
+                        r.published_lot_no = Some(value.clone());
+                    }
                     ("OPT-320", NoticeValue::Id { value, .. }) => r.bid_refs.push(value.clone()),
                     ("OPT-315", NoticeValue::Id { value, .. }) => r.contract_refs.push(value.clone()),
                     // The winner-DECISION date where the source scopes it to the
@@ -7167,6 +7250,12 @@ fn read_legacy_results(
             (LEGACY_AWARDED_MARKER, NoticeValue::Integer(_) | NoticeValue::Code { .. }) => {
                 r.awarded_marker = true;
             }
+            // Issue 551 unit 4b (B1): the block's winners are one group of operators — one tender
+            // to path W's R1. Read, never a winner or a decision.
+            (LEGACY_GROUP_MARKER, marker) => {
+                r.awarded_to_group.get_or_insert_with(|| group_marker_affirms(marker));
+            }
+            (LEGACY_NO_GROUP_MARKER, _) => r.not_awarded_to_group = true,
             (LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(_) | NoticeValue::Code { .. }) => {
                 r.decision = Some("clos-nw".to_owned());
             }
@@ -7189,7 +7278,11 @@ fn read_legacy_results(
         }
     }
     for r in &mut raw.lot_results {
-        r.lot_key = lot_refs.get(r.key.as_str()).and_then(|refs| lot_numbers.resolve(refs)).map(str::to_owned);
+        let refs = lot_refs.get(r.key.as_str());
+        r.lot_key = refs.and_then(|refs| lot_numbers.resolve(refs)).map(str::to_owned);
+        // Issue 551 unit 4b (B1): the block's own printed number, kept whatever lot it resolved to
+        // (or none): the key is the notice's section, the number is the publisher's.
+        r.published_lot_no = refs.and_then(|refs| award_block_lot_number(refs)).map(str::to_owned);
     }
 
     // Decide from the evidence: a named winner or an awarded value is a win. A
@@ -7368,6 +7461,146 @@ fn normalise_lot_number(published: &str) -> Option<String> {
         rest = &rest[1..];
     }
     (!rest.is_empty()).then(|| rest.to_owned())
+}
+
+/// Issue 551 unit 4b (B1): the fields a lot section prints its own number in, in precedence
+/// order — the frozen table's "published lot number of a lot" (issue 551's adopted amendments,
+/// `unit4b/rule_v2.py` `LOT_NO_FIELDS`): TED's `LOT_NO`, then `LOT_NUMBER`, then eForms' BT-137
+/// per lot kind, then eForms-DE 1.x's lot id. Never `TED-ITEM`, the ordinal the r209 walker puts
+/// on every section, and never a title.
+const PUBLISHED_LOT_NO_FIELDS: &[&str] =
+    &["TED-LOT_NO", "TED-LOT_NUMBER", "BT-137-Lot", "BT-137-Part", "BT-137-LotsGroup", "DE1-ProcurementProjectLot-ID"];
+
+/// Issue 551 unit 4b (B1): the number each lot section of a notice prints
+/// ([`PUBLISHED_LOT_NO_FIELDS`]), exactly as published: the first value of the first of those
+/// fields the section itself carries (a field the section carries decides, even blank). Only
+/// lot sections ([`LOT_KINDS`], `lots`) and only values directly on them.
+fn published_lot_numbers<'a>(parsed: &'a Parsed, lots: &BTreeMap<String, LotState>) -> HashMap<&'a str, &'a str> {
+    let mut best: HashMap<&str, (usize, &str)> = HashMap::new();
+    for v in &parsed.values {
+        let Some(rank) = PUBLISHED_LOT_NO_FIELDS.iter().position(|f| *f == v.field_id) else { continue };
+        let NoticeValue::Id { value, .. } = &v.value else { continue };
+        if !lots.contains_key(&v.section_id) {
+            continue;
+        }
+        let slot = best.entry(v.section_id.as_str()).or_insert((rank, value.as_str()));
+        if rank < slot.0 {
+            *slot = (rank, value.as_str());
+        }
+    }
+    best.into_iter().map(|(section, (_, number))| (section, number)).collect()
+}
+
+/// Issue 551 unit 4b (B1): the number a legacy award block prints on itself, exactly as published
+/// — the first value of its own `TED-LOT_NO`, else of its own `TED-LOT_NUMBER`: the reference
+/// [`LegacyLotNumbers::resolve`] maps the block by. Never its `TED-ITEM` ordinal, which places a
+/// block only where the ordinals are a notice's key and says nothing the publisher printed; a
+/// block with neither has no number (`None`), whatever lot it resolved to.
+fn award_block_lot_number<'a>(refs: &[(&str, &'a str)]) -> Option<&'a str> {
+    ["TED-LOT_NO", "TED-LOT_NUMBER"]
+        .into_iter()
+        .find_map(|field| refs.iter().find(|(f, _)| *f == field).map(|(_, number)| *number))
+}
+
+/// Issue 551 unit 4b (B1): whether a legacy `AWARDED_TO_GROUP` marker's value affirms the group
+/// (the port's reading: absent, 0, `0`, `false` and `NO` do not). r209 writes the marker as
+/// `Integer(1)`.
+fn group_marker_affirms(value: &NoticeValue) -> bool {
+    match value {
+        NoticeValue::Integer(n) => *n != 0,
+        NoticeValue::Number { value, .. } => *value != 0.0,
+        NoticeValue::Code { code: v, .. } | NoticeValue::Text { value: v, .. } | NoticeValue::Id { value: v, .. } => {
+            !matches!(v.as_str(), "0" | "false" | "NO")
+        }
+        _ => false,
+    }
+}
+
+/// Issue 551 unit 4b (B1): the TED form numbers whose notice-level `VAL_TOTAL` is an estimate —
+/// contract-notice-type forms (PIN, contract notice, qualification system, buyer profile,
+/// concession and design-contest notices) under the frozen table. Every other form, and a notice
+/// with no `TED-FORM`, is CAN-type.
+const CN_TYPE_TED_FORMS: &[u64] = &[1, 2, 4, 5, 7, 8, 9, 10, 11, 12, 16, 17, 24];
+
+/// Issue 551 unit 4b (B1): whether a `TED-FORM` code is a contract-notice-type form: the code
+/// trimmed, one leading `F`/`f` and the leading zeros dropped, all digits, and its number in
+/// [`CN_TYPE_TED_FORMS`] — so old-vintage numeric forms (`2`, `5`) count as F-codes do (`F02`).
+fn cn_type_ted_form(form: Option<&str>) -> bool {
+    let Some(form) = form else { return false };
+    let form = form.trim();
+    let digits = form.strip_prefix(['F', 'f']).unwrap_or(form);
+    !digits.is_empty()
+        && digits.bytes().all(|b| b.is_ascii_digit())
+        && digits.parse::<u64>().is_ok_and(|n| CN_TYPE_TED_FORMS.contains(&n))
+}
+
+/// Issue 551 unit 4b (B1): the frozen field-to-kind table (issue 551's adopted amendments,
+/// `unit4b/rule_v2.py` `stated_kind`) — what one published amount is as a stated total, or `None`
+/// when the table does not read it. `section_kind` is the kind of the section the value sits in
+/// itself; `cn_form` is [`cn_type_ted_form`] of the notice.
+///
+/// | field | section | kind |
+/// |---|---|---|
+/// | BT-161 / BT-118 / BT-1118 `-NoticeResult` | any | award (BT-118/1118 read only: issue 506) |
+/// | BT-27-Procedure | any | estimate |
+/// | `TED-VAL_TOTAL` | `Notice` | award on a CAN-type form, estimate on a CN-type one |
+/// | `TED-VAL_ESTIMATED_TOTAL` | `Notice` | estimate |
+/// | `TED-LOW` / `TED-HIGH` (`VAL_RANGE_TOTAL`) | `Notice` | range |
+///
+/// Nothing else: not `TED-VALUE` / `TED-VALUE_COST`, not BT-271-Procedure, not the estimate
+/// ranges (`TED-LOW_VALUE`, `TED-HIGH_VALUE`, `TED-TOTAL_ESTIMATED.*`), and no TED field outside
+/// the notice's own section — an award block's `VAL_TOTAL` is a lot award, a Modification
+/// section's `VAL_TOTAL_BEFORE`/`_AFTER` and `VAL_TOTAL` are not totals of the procedure.
+fn stated_total_kind(field: &str, section_kind: &str, cn_form: bool) -> Option<StatedTotalKind> {
+    match field {
+        "BT-161-NoticeResult" | "BT-118-NoticeResult" | "BT-1118-NoticeResult" => Some(StatedTotalKind::Award),
+        "BT-27-Procedure" => Some(StatedTotalKind::Estimate),
+        _ if section_kind != "Notice" => None,
+        "TED-VAL_TOTAL" => Some(if cn_form { StatedTotalKind::Estimate } else { StatedTotalKind::Award }),
+        "TED-VAL_ESTIMATED_TOTAL" => Some(StatedTotalKind::Estimate),
+        "TED-LOW" | "TED-HIGH" => Some(StatedTotalKind::Range),
+        _ => None,
+    }
+}
+
+/// Issue 551 unit 4b (B1): every total one notice states ([`stated_total_kind`]), in the order its
+/// values are read, as published (a withheld or sentinel figure included), each carrying the
+/// notice's logical id for [`fold`]'s correction replacement and no `lots_awarded` yet.
+///
+/// An eForms-DE 1.x notice states none. The table names fields as published, and that dialect
+/// publishes its totals as `DE1-*` ids (`DE1-NoticeResult-TotalAmount`, the
+/// `-EstimatedOverallContractAmount` estimate); [`normalise_de1`] has already re-spelled two of
+/// them as BT-161 / BT-27 by the time this runs, so they are recognised by the profile rather than
+/// read under the projection's own aliases — the measured rule (`rule_v2.py`, which reads
+/// `/v1/notices/{id}/content` as published) never saw them.
+fn notice_stated_totals(
+    notice: &store::NoticeRef,
+    logical_id: Option<&str>,
+    parsed: &Parsed,
+    sections: &HashMap<&str, &store::Section>,
+) -> Vec<StatedTotal> {
+    if is_de1_profile(&notice.profile) {
+        return Vec::new();
+    }
+    let cn_form = cn_type_ted_form(first_code(parsed, "TED-FORM").as_deref());
+    parsed
+        .values
+        .iter()
+        .filter_map(|v| {
+            let NoticeValue::Amount { cents, currency } = &v.value else { return None };
+            let section_kind = sections.get(v.section_id.as_str()).map_or("", |s| s.kind.as_str());
+            let kind = stated_total_kind(&v.field_id, section_kind, cn_form)?;
+            Some(StatedTotal {
+                notice_id: notice.id,
+                logical_notice_id: logical_id.map(str::to_owned),
+                field: v.field_id.clone(),
+                kind,
+                cents: *cents,
+                currency: currency.clone(),
+                lots_awarded: Vec::new(),
+            })
+        })
+        .collect()
 }
 
 /// DÖE sdk-0.1 results (issue 29): each `TenderResult` section is a LotResult
@@ -7664,6 +7897,8 @@ impl RawResults {
                     winners,
                     buyer_winners,
                     statistics: r.statistics.clone(),
+                    published_lot_no: r.published_lot_no.clone(),
+                    group: r.awarded_to_group == Some(true) && !r.not_awarded_to_group,
                 }
             })
             .collect();
@@ -11109,6 +11344,9 @@ mod tests {
                 // codec that skipped or misread it would shift `statistics`.
                 buyer_winners: vec![8],
                 statistics: vec![("t1".into(), 4, None)],
+                // Issue 551 unit 4b (B1): non-default, so a codec that dropped them shows.
+                published_lot_no: Some("3".into()),
+                group: true,
             }],
             bids: vec![BidState {
                 key: "TEN-1".into(),
@@ -11140,7 +11378,7 @@ mod tests {
             original_lang: Some("DEU".into()),
             is_correction: true,
             facts,
-            lots: vec![LotState { key: "LOT-1".into(), kind: "Lot".into(), facts: lot_facts }],
+            lots: vec![LotState { key: "LOT-1".into(), kind: "Lot".into(), facts: lot_facts, published_lot_no: Some("01".into()) }],
             // Issue 532 review: the place-country flags ride the frame too, or the
             // bucketed fold would let an unmapped republish carry a stale code.
             place_country_tender: true,
@@ -11157,6 +11395,16 @@ mod tests {
             round: Some(round),
             // Issue 237: carried through the frame, so the round-trip covers it.
             group_members: vec![("GLO-1".into(), "LOT-1".into())],
+            // Issue 551 unit 4b (B1): the notice's stated totals ride the frame too.
+            stated_totals: vec![StatedTotal {
+                notice_id: 3,
+                logical_notice_id: Some("PID-9".into()),
+                field: "BT-118-NoticeResult".into(),
+                kind: StatedTotalKind::Award,
+                cents: 7_000,
+                currency: "EUR".into(),
+                lots_awarded: vec!["LOT-1".into()],
+            }],
         };
 
         // Frame exactly as write_buckets does, then read exactly as read_bucket does.
@@ -12856,6 +13104,7 @@ mod tests {
             key: key.into(),
             kind: "Lot".into(),
             facts: [amount(cents)].into_iter().collect(),
+            published_lot_no: None,
         };
         let state = |notice_id: i64, facts: Vec<Fact>, lots: Vec<LotState>, corrections: Vec<ValueCorrection>| NoticeState {
             notice_id,
@@ -12876,6 +13125,7 @@ mod tests {
             round: None,
             org_alias: HashMap::new(),
             group_members: Vec::new(),
+            stated_totals: Vec::new(),
         };
         let fix = |old: i64, new: i64, lot: bool| ValueCorrection {
             field: "estimated_value".into(),
@@ -12957,6 +13207,7 @@ mod tests {
                 .iter()
                 .map(|(g, m)| ((*g).to_owned(), (*m).to_owned()))
                 .collect(),
+            stated_totals: Vec::new(),
         };
         let pair = |group: &str, member: &str| (group.to_owned(), member.to_owned());
 
@@ -18348,6 +18599,658 @@ mod tests {
         );
         let parsed = legacy_lot_notice(&[("1", Some("2")), ("2", Some("1"))], &[&[("TED-ITEM", "1")], &[("TED-ITEM", "2")]]);
         assert_eq!(legacy_award_lots(&parsed), vec![None, None], "ordinal != number: no guess");
+    }
+
+    // ---- Issue 551 unit 4b (B1): the facts path W v2 reads, carried by the projection only ----
+
+    fn b1_notice(id: i64, source: &str, profile: &str) -> store::NoticeRef {
+        store::NoticeRef { id, source: source.into(), publication_id: format!("{id:08}-2020"), profile: profile.into() }
+    }
+
+    /// A parse from `(section id, kind)` pairs — the first is the root, every other its child — with
+    /// the values sorted the way the store returns them (section id as text, field, ordinal).
+    fn b1_parsed(sections: &[(&str, &str)], mut values: Vec<store::ValueRow>) -> Parsed {
+        let root = sections[0].0;
+        let sections = sections
+            .iter()
+            .map(|(id, kind)| store::Section {
+                id: (*id).into(),
+                kind: (*kind).into(),
+                parent: (*id != root).then(|| root.into()),
+            })
+            .collect();
+        values.sort_by(|a, b| (&a.section_id, &a.field_id, a.ordinal).cmp(&(&b.section_id, &b.field_id, b.ordinal)));
+        Parsed { sections, values }
+    }
+
+    fn b1_value(section: &str, field: &str, value: NoticeValue) -> store::ValueRow {
+        store::ValueRow { section_id: section.into(), field_id: field.into(), ordinal: 0, value }
+    }
+
+    fn b1_id(section: &str, field: &str, value: &str) -> store::ValueRow {
+        b1_value(section, field, NoticeValue::Id { scheme: None, value: value.into(), is_ref: false })
+    }
+
+    fn b1_amount(section: &str, field: &str, cents: i64, currency: &str) -> store::ValueRow {
+        b1_value(section, field, NoticeValue::Amount { cents, currency: currency.into() })
+    }
+
+    fn b1_form(form: &str) -> store::ValueRow {
+        b1_value("PROCEDURE", "TED-FORM", NoticeValue::Code { list: None, code: form.into() })
+    }
+
+    fn b1_s(s: &str) -> Option<String> {
+        Some(s.to_owned())
+    }
+
+    /// `NoticeState::read` and `bind_organizations` with every `ORG-n` bound to org 1000 + n.
+    fn b1_bound(notice: &store::NoticeRef, parsed: &Parsed) -> NoticeState {
+        let mut state = NoticeState::read(notice, parsed);
+        let orgs: HashMap<String, i64> = parsed
+            .sections
+            .iter()
+            .filter(|s| s.kind == ORGANIZATION_KIND)
+            .map(|s| (s.id.clone(), 1_000 + s.id.rsplit('-').next().and_then(|n| n.parse::<i64>().ok()).expect("ORG-n")))
+            .collect();
+        state.bind_organizations(&orgs);
+        state
+    }
+
+    /// `(result key, lot key, published lot number, group)` per result of the notice's round.
+    fn b1_results(state: &NoticeState) -> Vec<(String, Option<String>, Option<String>, bool)> {
+        let round = state.round.as_ref().expect("an award notice binds a round");
+        round.lot_results.iter().map(|r| (r.key.clone(), r.lot_key.clone(), r.published_lot_no.clone(), r.group)).collect()
+    }
+
+    /// `(lot key, published lot number)` per lot.
+    fn b1_lots(lots: &[LotState]) -> Vec<(String, Option<String>)> {
+        lots.iter().map(|l| (l.key.clone(), l.published_lot_no.clone())).collect()
+    }
+
+    /// A version's stated totals as `(notice, field, kind, cents, currency, lots awarded)`, in order.
+    fn b1_totals(version: &TenderVersion) -> Vec<(i64, &str, StatedTotalKind, i64, &str, Vec<String>)> {
+        version
+            .stated_totals
+            .iter()
+            .map(|t| (t.notice_id, t.field.as_str(), t.kind, t.cents, t.currency.as_str(), t.lots_awarded.clone()))
+            .collect()
+    }
+
+    fn b1_keys(keys: &[&str]) -> Vec<String> {
+        keys.iter().map(|k| (*k).to_owned()).collect()
+    }
+
+    /// Issue 551 unit 4b (B1): a legacy award block keeps the number it prints — its own `LOT_NO`,
+    /// else its own `LOT_NUMBER`, exactly as published — beside the lot key issue 567's mapping
+    /// resolved from that same reference; each lot section keeps its own `LOT_NO` (else
+    /// `LOT_NUMBER`). The keys are the mapping's, unchanged. Folded, a lot's number is the latest
+    /// section's: a later notice that republishes the lot without a number clears it, one that is
+    /// silent about the lot keeps it.
+    #[test]
+    fn a_ted_award_block_keeps_its_published_lot_number() {
+        let sections = [
+            ("PROCEDURE", "Notice"),
+            ("LOT-1", "Lot"),
+            ("LOT-2", "Lot"),
+            ("LOT-3", "Lot"),
+            ("RES-1", "LotResult"),
+            ("RES-2", "LotResult"),
+            ("RES-3", "LotResult"),
+        ];
+        let can = b1_parsed(
+            &sections,
+            vec![
+                b1_form("F03"),
+                b1_id("LOT-1", "TED-ITEM", "1"),
+                b1_id("LOT-1", "TED-LOT_NO", "2"),
+                b1_id("LOT-2", "TED-ITEM", "2"),
+                b1_id("LOT-2", "TED-LOT_NO", "1"),
+                b1_id("LOT-3", "TED-ITEM", "3"),
+                b1_id("LOT-3", "TED-LOT_NUMBER", "Lot 03"),
+                // LOT_NO over LOT_NUMBER, as the mapping reads it.
+                b1_id("RES-1", "TED-ITEM", "1"),
+                b1_id("RES-1", "TED-LOT_NO", "1"),
+                b1_id("RES-1", "TED-LOT_NUMBER", "9"),
+                b1_id("RES-2", "TED-ITEM", "2"),
+                b1_id("RES-2", "TED-LOT_NUMBER", "Lot 02"),
+                b1_id("RES-3", "TED-ITEM", "3"),
+                b1_id("RES-3", "TED-LOT_NO", " 03"),
+            ],
+        );
+        let state = b1_bound(&b1_notice(1, "ted", "ted-export-r209"), &can);
+        assert_eq!(
+            b1_results(&state),
+            vec![
+                ("RES-1".to_owned(), b1_s("LOT-2"), b1_s("1"), false),
+                ("RES-2".to_owned(), b1_s("LOT-1"), b1_s("Lot 02"), false),
+                ("RES-3".to_owned(), b1_s("LOT-3"), b1_s(" 03"), false),
+            ],
+            "each block keeps its own printed number, as published, beside the key it resolved to"
+        );
+        assert_eq!(
+            b1_lots(&state.lots),
+            vec![("LOT-1".to_owned(), b1_s("2")), ("LOT-2".to_owned(), b1_s("1")), ("LOT-3".to_owned(), b1_s("Lot 03"))]
+        );
+
+        // A later notice republishes LOT-1 with only its ordinal and is silent about LOT-2 and LOT-3.
+        let later = b1_parsed(
+            &[("PROCEDURE", "Notice"), ("LOT-1", "Lot")],
+            vec![b1_form("F14"), b1_id("LOT-1", "TED-ITEM", "1")],
+        );
+        let later = b1_bound(&b1_notice(2, "ted", "ted-export-r209"), &later);
+        let versions = fold(&[&state, &later]);
+        assert_eq!(b1_lots(&versions[0].lots), b1_lots(&state.lots));
+        assert_eq!(
+            b1_lots(&versions[1].lots),
+            vec![("LOT-1".to_owned(), None), ("LOT-2".to_owned(), b1_s("1")), ("LOT-3".to_owned(), b1_s("Lot 03"))],
+            "the latest section's number, None included; a lot the notice is silent about keeps its own"
+        );
+        let carried: Vec<Option<String>> =
+            versions[1].rounds[0].lot_results.iter().map(|r| r.published_lot_no.clone()).collect();
+        assert_eq!(carried, vec![b1_s("1"), b1_s("Lot 02"), b1_s(" 03")], "the round carries its blocks' numbers");
+    }
+
+    /// Issue 551 unit 4b (B1), the adversarial check's amendment: `TED-ITEM` is the ordinal the r209
+    /// walker puts on every section, not a number the publisher printed. A single-section CAN whose
+    /// award block carries `ITEM="1"` and no `LOT_NO` is still placed on `LOT-1` by that ordinal (the
+    /// mapping, unchanged), and has NO published lot number — so path W's R2(d) sees the gap. Its one
+    /// lot section prints none either.
+    #[test]
+    fn a_ted_award_blocks_item_ordinal_is_not_a_lot_number() {
+        let can = b1_parsed(
+            &[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("RES-1", "LotResult")],
+            vec![
+                b1_form("F03"),
+                b1_id("LOT-1", "TED-ITEM", "1"),
+                b1_id("RES-1", "TED-ITEM", "1"),
+                b1_amount("RES-1", "TED-VAL_TOTAL", 12_000_000, "EUR"),
+            ],
+        );
+        let state = b1_bound(&b1_notice(21205884, "ted", "ted-export-r209"), &can);
+        assert_eq!(b1_results(&state), vec![("RES-1".to_owned(), b1_s("LOT-1"), None, false)]);
+        assert_eq!(b1_lots(&state.lots), vec![("LOT-1".to_owned(), None)]);
+
+        // R2.0.8: an award form with no lot section — neither key nor number.
+        let r208 = b1_parsed(
+            &[("PROCEDURE", "Notice"), ("RES-1", "LotResult")],
+            vec![b1_id("RES-1", "TED-ITEM", "1"), b1_amount("RES-1", "TED-VALUE_COST", 12_000_000, "EUR")],
+        );
+        let state = b1_bound(&b1_notice(3, "ted", "ted-export-r208"), &r208);
+        assert_eq!(b1_results(&state), vec![("RES-1".to_owned(), None, None, false)]);
+    }
+
+    /// Issue 551 unit 4b (B1): r209's `AWARDED_TO_GROUP` marker inside an award block flags the
+    /// result as won by ONE group of operators (path W's R1 reads it where no LotTender rows exist).
+    /// `NO_AWARDED_TO_GROUP`, or no marker, leaves it unflagged; an eForms result is never flagged.
+    /// The flag is read only: winners, decision and value are the block's with or without it.
+    #[test]
+    fn a_ted_award_to_a_group_is_flagged() {
+        let can = |markers: &[&str]| {
+            let contractor = |ordinal: i64, org: &str| store::ValueRow {
+                section_id: "RES-1".into(),
+                field_id: "TED-ADDRESS_CONTRACTOR".into(),
+                ordinal,
+                value: NoticeValue::Id { scheme: None, value: org.into(), is_ref: true },
+            };
+            let mut values = vec![
+                b1_form("F03"),
+                b1_id("LOT-1", "TED-ITEM", "1"),
+                b1_id("LOT-1", "TED-LOT_NO", "1"),
+                b1_id("RES-1", "TED-ITEM", "1"),
+                b1_id("RES-1", "TED-LOT_NO", "1"),
+                contractor(0, "ORG-1"),
+                contractor(1, "ORG-2"),
+                b1_amount("RES-1", "TED-VAL_TOTAL", 50_000_000, "EUR"),
+                text_value("ORG-1", "TED-OFFICIALNAME", 0, None, "Alpha Bau GmbH"),
+                text_value("ORG-2", "TED-OFFICIALNAME", 0, None, "Beta Tiefbau AG"),
+            ];
+            values.extend(markers.iter().map(|m| b1_value("RES-1", m, NoticeValue::Integer(1))));
+            b1_parsed(
+                &[
+                    ("PROCEDURE", "Notice"),
+                    ("LOT-1", "Lot"),
+                    ("RES-1", "LotResult"),
+                    ("ORG-1", ORGANIZATION_KIND),
+                    ("ORG-2", ORGANIZATION_KIND),
+                ],
+                values,
+            )
+        };
+        let read = |markers: &[&str]| {
+            let state = b1_bound(&b1_notice(4, "ted", "ted-export-r209"), &can(markers));
+            let r = state.round.expect("a round").lot_results.remove(0);
+            (r.group, (r.decision, r.winners, r.awarded_cents, r.lot_key, r.published_lot_no))
+        };
+        let (group, outcome) = read(&[LEGACY_GROUP_MARKER]);
+        assert!(group, "AWARDED_TO_GROUP: one tender");
+        assert_eq!(outcome, (b1_s("selec-w"), vec![1001, 1002], Some(50_000_000), b1_s("LOT-1"), b1_s("1")));
+        let unflagged: [&[&str]; 3] = [&[LEGACY_NO_GROUP_MARKER], &[], &[LEGACY_GROUP_MARKER, LEGACY_NO_GROUP_MARKER]];
+        for markers in unflagged {
+            let (group, same) = read(markers);
+            assert!(!group, "{markers:?}");
+            assert_eq!(same, outcome, "the flag changes no winner, decision or value ({markers:?})");
+        }
+        // The port's reading of the marker's value: a zero or a NO does not affirm it.
+        assert!(group_marker_affirms(&NoticeValue::Integer(1)));
+        assert!(!group_marker_affirms(&NoticeValue::Integer(0)));
+        assert!(!group_marker_affirms(&NoticeValue::Code { list: None, code: "NO".into() }));
+
+        // eForms has no such marker: never flagged.
+        let eforms = b1_parsed(
+            &[("PROCEDURE", "Notice"), ("LOT-0001", "Lot"), ("RES-0001", "LotResult")],
+            vec![b1_id("LOT-0001", "BT-137-Lot", "LOT-0001"), b1_id("RES-0001", "BT-13713-LotResult", "LOT-0001")],
+        );
+        let state = b1_bound(&b1_notice(5, "ted", "eforms:eforms-sdk-1.13"), &eforms);
+        assert!(!b1_results(&state)[0].3);
+    }
+
+    /// Issue 551 unit 4b (B1): an eForms result's published lot number is its BT-13713 reference as
+    /// published, and each lot section's is its BT-137 (`-Lot`, `-LotsGroup`); a result that names
+    /// no lot has none. eForms-DE 1.x reads the same through its aliases (`DE1-ProcurementProjectLot-
+    /// ID` on the lot, the aliased result reference), and FTS's is the OCDS lot id on both sides.
+    /// eForms' numbers are its LOT-000N keys: R2 cannot see a buyer's own part numbers there.
+    #[test]
+    fn an_eforms_result_keeps_its_published_lot_id() {
+        let can = b1_parsed(
+            &[
+                ("PROCEDURE", "Notice"),
+                ("LOT-0001", "Lot"),
+                ("LOT-0002", "Lot"),
+                ("GLO-0001", "LotsGroup"),
+                ("RES-0001", "LotResult"),
+                ("RES-0002", "LotResult"),
+                ("RES-0003", "LotResult"),
+            ],
+            vec![
+                b1_id("LOT-0001", "BT-137-Lot", "LOT-0001"),
+                b1_id("LOT-0002", "BT-137-Lot", "LOT-0002"),
+                b1_id("GLO-0001", "BT-137-LotsGroup", "GLO-0001"),
+                b1_id("RES-0001", "BT-13713-LotResult", "LOT-0002"),
+                b1_id("RES-0002", "BT-13713-LotResult", "LOT-0001"),
+                b1_value("RES-0003", "BT-142-LotResult", NoticeValue::Code { list: None, code: "clos-nw".into() }),
+            ],
+        );
+        let state = b1_bound(&b1_notice(6, "ted", "eforms:eforms-sdk-1.13"), &can);
+        assert_eq!(
+            b1_results(&state),
+            vec![
+                ("RES-0001".to_owned(), b1_s("LOT-0002"), b1_s("LOT-0002"), false),
+                ("RES-0002".to_owned(), b1_s("LOT-0001"), b1_s("LOT-0001"), false),
+                ("RES-0003".to_owned(), None, None, false),
+            ]
+        );
+        assert_eq!(
+            b1_lots(&state.lots),
+            vec![
+                ("GLO-0001".to_owned(), b1_s("GLO-0001")),
+                ("LOT-0001".to_owned(), b1_s("LOT-0001")),
+                ("LOT-0002".to_owned(), b1_s("LOT-0002")),
+            ]
+        );
+
+        // eForms-DE 1.x, through the projection's aliases.
+        let mut de1 = vec![(
+            b1_notice(7, "doe", "eforms:eforms-de-1.2"),
+            b1_parsed(
+                &[("PROCEDURE", "Notice"), ("LOT-0001", "ProcurementProjectLot"), ("RES-0001", "LotResult")],
+                vec![
+                    b1_id("LOT-0001", "DE1-ProcurementProjectLot-ID", "LOT-0001"),
+                    b1_id("RES-0001", "DE1-NoticeResult-LotResult-TenderLot-ID", "LOT-0001"),
+                ],
+            ),
+        )];
+        normalise_de1(&mut de1);
+        let state = b1_bound(&de1[0].0, &de1[0].1);
+        assert_eq!(b1_results(&state), vec![("RES-0001".to_owned(), b1_s("LOT-0001"), b1_s("LOT-0001"), false)]);
+        assert_eq!(b1_lots(&state.lots), vec![("LOT-0001".to_owned(), b1_s("LOT-0001"))]);
+
+        // FTS: the OCDS lot id, which is the key, on the lot and on the result that names it.
+        let fts = b1_parsed(
+            &[("ROOT", "Notice"), ("1", "Lot"), ("2", "Lot"), ("RES-a1-1", "LotResult"), ("RES-a2", "LotResult")],
+            vec![b1_id("RES-a1-1", "BT-13713-LotResult", "1")],
+        );
+        let state = b1_bound(&b1_notice(8, "fts", "fts:ocds-1.1"), &fts);
+        assert_eq!(
+            b1_results(&state),
+            vec![("RES-a1-1".to_owned(), b1_s("1"), b1_s("1"), false), ("RES-a2".to_owned(), None, None, false)]
+        );
+        assert_eq!(b1_lots(&state.lots), vec![("1".to_owned(), b1_s("1")), ("2".to_owned(), b1_s("2"))]);
+    }
+
+    /// Issue 551 unit 4b (B1), M1's note (3): a single-section F20 modification's award block printing
+    /// `LOT_NO 3` keys the section it maps to — the notice's only lot, `LOT-1` — when that section
+    /// prints 3, and keeps its 3 beside the key; the tender's LOT-1 is then lot 1 in the CAN and lot
+    /// 3 in the F20, which is the re-keying R2 reads. Where the block's number names no section, it
+    /// stays unkeyed — exactly as stored today and as the port reads it off the API; B1 re-keys
+    /// nothing — and still keeps its 3. That is 6094289's shape (notices 21175651, 21176110 and
+    /// 21182144, as `/v1/notices` serves them): no `TED-ITEM` anywhere, the one section printing
+    /// `3.` / `5.` / `4.` and the block `3` / `5` / `4`; the exact lookup misses, and
+    /// [`normalise_lot_number`] keeps the `.`, since it drops separators only after a `Lot` word.
+    /// The variant whose section prints only an ordinal misses through the ordinal-keyed map instead.
+    /// Nothing in the Modification section is a stated total.
+    #[test]
+    fn a_single_section_ted_modification_keys_lot_1_but_keeps_its_lot_no() {
+        let f20 = |section_number: Option<&str>| {
+            let mut values = vec![
+                b1_form("F20"),
+                b1_id("LOT-1", "TED-ITEM", "1"),
+                b1_id("RES-1", "TED-ITEM", "1"),
+                b1_id("RES-1", "TED-LOT_NO", "3"),
+                b1_amount("RES-1", "TED-VAL_TOTAL", 3_557_800_000, "HUF"),
+                b1_amount("MOD-1", "TED-VAL_TOTAL", 3_600_000_000, "HUF"),
+                b1_amount("MOD-1", "TED-VAL_TOTAL_BEFORE", 3_557_800_000, "HUF"),
+                b1_amount("MOD-1", "TED-VAL_TOTAL_AFTER", 3_600_000_000, "HUF"),
+            ];
+            values.extend(section_number.map(|n| b1_id("LOT-1", "TED-LOT_NO", n)));
+            b1_parsed(&[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("RES-1", "LotResult"), ("MOD-1", "Modification")], values)
+        };
+        let numbered = b1_bound(&b1_notice(21175651, "ted", "ted-export-r209"), &f20(Some("3")));
+        assert_eq!(b1_results(&numbered), vec![("RES-1".to_owned(), b1_s("LOT-1"), b1_s("3"), false)]);
+        assert_eq!(b1_lots(&numbered.lots), vec![("LOT-1".to_owned(), b1_s("3"))]);
+        assert!(numbered.stated_totals.is_empty(), "{:?}", numbered.stated_totals);
+
+        let unnumbered = b1_bound(&b1_notice(21175651, "ted", "ted-export-r209"), &f20(None));
+        assert_eq!(b1_results(&unnumbered), vec![("RES-1".to_owned(), None, b1_s("3"), false)]);
+        assert_eq!(b1_lots(&unnumbered.lots), vec![("LOT-1".to_owned(), None)]);
+        assert!(unnumbered.stated_totals.is_empty());
+
+        // 21175651 as served: no ordinal on either side, the section's `3.` against the block's `3`,
+        // and the Modification section's amounts under their path-qualified ids.
+        let served = b1_parsed(
+            &[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("RES-1", "LotResult"), ("MOD-1", "Modification")],
+            vec![
+                b1_form("F20"),
+                b1_id("LOT-1", "TED-LOT_NO", "3."),
+                b1_id("RES-1", "TED-LOT_NO", "3"),
+                b1_value("RES-1", LEGACY_NO_GROUP_MARKER, NoticeValue::Integer(1)),
+                b1_amount("RES-1", "TED-VAL_TOTAL", 3_557_800_000, "HUF"),
+                b1_amount("MOD-1", "TED-DESCRIPTION_PROCUREMENT.VAL_TOTAL", 3_557_800_000, "HUF"),
+                b1_amount("MOD-1", "TED-INFO_MODIFICATIONS.VAL_TOTAL_BEFORE", 3_557_800_000, "HUF"),
+                b1_amount("MOD-1", "TED-INFO_MODIFICATIONS.VAL_TOTAL_AFTER", 3_557_800_000, "HUF"),
+            ],
+        );
+        let served = b1_bound(&b1_notice(21175651, "ted", "ted-export-r209"), &served);
+        assert_eq!(b1_results(&served), vec![("RES-1".to_owned(), None, b1_s("3"), false)], "unkeyed, still printing 3");
+        assert_eq!(b1_lots(&served.lots), vec![("LOT-1".to_owned(), b1_s("3."))], "the section's number as printed");
+        assert!(served.stated_totals.is_empty(), "{:?}", served.stated_totals);
+
+        // In its chain: the CAN awards lots 1-3 under LOT-1..LOT-3; after the F20, LOT-1 holds the
+        // CAN's lot-1 award (printed 1) and the F20's lot-3 award (printed 3). Each version's LOT-1
+        // carries the number its own notice printed.
+        let can = b1_parsed(
+            &[
+                ("PROCEDURE", "Notice"),
+                ("LOT-1", "Lot"),
+                ("LOT-2", "Lot"),
+                ("LOT-3", "Lot"),
+                ("RES-1", "LotResult"),
+                ("RES-2", "LotResult"),
+                ("RES-3", "LotResult"),
+            ],
+            (1..=3)
+                .flat_map(|k: i64| {
+                    let (lot, res, n) = (format!("LOT-{k}"), format!("RES-{k}"), k.to_string());
+                    [
+                        b1_id(&lot, "TED-ITEM", &n),
+                        b1_id(&lot, "TED-LOT_NO", &n),
+                        b1_id(&res, "TED-ITEM", &n),
+                        b1_id(&res, "TED-LOT_NO", &n),
+                        b1_amount(&res, "TED-VAL_TOTAL", k * 1_000_000_000, "HUF"),
+                    ]
+                })
+                .chain([b1_form("F03")])
+                .collect(),
+        );
+        let can = b1_bound(&b1_notice(19961452, "ted", "ted-export-r209"), &can);
+        let versions = fold(&[&can, &numbered]);
+        let on_lot_1: Vec<(i64, Option<String>)> = versions[1]
+            .rounds
+            .iter()
+            .flat_map(|r| r.lot_results.iter().filter(|l| l.lot_key.as_deref() == Some("LOT-1")).map(|l| (r.notice_id, l.published_lot_no.clone())))
+            .collect();
+        assert_eq!(on_lot_1, vec![(19961452, b1_s("1")), (21175651, b1_s("3"))]);
+        assert_eq!(versions[0].lots[0].published_lot_no, b1_s("1"));
+        assert_eq!(versions[1].lots[0].published_lot_no, b1_s("3"));
+
+        // The served shape in the same chain: the F20's award sits on no lot, and its version's LOT-1
+        // prints `3.`.
+        let versions = fold(&[&can, &served]);
+        let f20: Vec<(Option<String>, Option<String>)> = versions[1]
+            .rounds
+            .iter()
+            .filter(|r| r.notice_id == 21175651)
+            .flat_map(|r| r.lot_results.iter().map(|l| (l.lot_key.clone(), l.published_lot_no.clone())))
+            .collect();
+        assert_eq!(f20, vec![(None, b1_s("3"))]);
+        assert_eq!((versions[1].lots[0].key.as_str(), versions[1].lots[0].published_lot_no.as_deref()), ("LOT-1", Some("3.")));
+    }
+
+    /// Issue 551 unit 4b (B1): a version carries every total its chain's notices stated, read under
+    /// the frozen field-to-kind table, cumulative like rounds and with their correction rule; each
+    /// total names the lots its notice awards in that version's rounds (a closed lot included).
+    #[test]
+    fn a_version_carries_its_notices_stated_totals() {
+        use StatedTotalKind::{Award, Estimate, Range};
+        let r209 = |id: i64| b1_notice(id, "ted", "ted-export-r209");
+
+        // An old-vintage contract notice (form `2`): its notice-level VAL_TOTAL is an estimate; the
+        // range ends are read; VALUE / VALUE_COST and a lot's own VAL_TOTAL are not.
+        let cn = b1_parsed(
+            &[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("LOT-2", "Lot")],
+            vec![
+                b1_form("2"),
+                b1_amount("PROCEDURE", "TED-VAL_TOTAL", 100_000_000, "EUR"),
+                b1_amount("PROCEDURE", "TED-VAL_ESTIMATED_TOTAL", 90_000_000, "EUR"),
+                b1_amount("PROCEDURE", "TED-LOW", 80_000_000, "EUR"),
+                b1_amount("PROCEDURE", "TED-HIGH", 120_000_000, "EUR"),
+                b1_amount("PROCEDURE", "TED-VALUE", 70_000_000, "EUR"),
+                b1_amount("PROCEDURE", "TED-VALUE_COST", 71_000_000, "EUR"),
+                b1_amount("PROCEDURE", "TED-LOW_VALUE", 60_000_000, "EUR"),
+                b1_id("LOT-1", "TED-ITEM", "1"),
+                b1_id("LOT-1", "TED-LOT_NO", "1"),
+                b1_amount("LOT-1", "TED-VAL_TOTAL", 50_000_000, "EUR"),
+                b1_id("LOT-2", "TED-ITEM", "2"),
+                b1_id("LOT-2", "TED-LOT_NO", "2"),
+            ],
+        );
+        // Its CAN (F03): the notice-level VAL_TOTAL is an award total; the award blocks' VAL_TOTALs are
+        // lot awards, not totals. Lot 2 is closed and still counts as a lot the notice awards.
+        let can = b1_parsed(
+            &[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("LOT-2", "Lot"), ("RES-1", "LotResult"), ("RES-2", "LotResult")],
+            vec![
+                b1_form("F03"),
+                b1_amount("PROCEDURE", "TED-VAL_TOTAL", 95_000_000, "EUR"),
+                b1_id("LOT-1", "TED-ITEM", "1"),
+                b1_id("LOT-1", "TED-LOT_NO", "1"),
+                b1_id("LOT-2", "TED-ITEM", "2"),
+                b1_id("LOT-2", "TED-LOT_NO", "2"),
+                b1_id("RES-1", "TED-ITEM", "1"),
+                b1_id("RES-1", "TED-LOT_NO", "1"),
+                b1_amount("RES-1", "TED-VAL_TOTAL", 60_000_000, "EUR"),
+                b1_id("RES-2", "TED-ITEM", "2"),
+                b1_id("RES-2", "TED-LOT_NO", "2"),
+                b1_value("RES-2", LEGACY_NO_AWARD_MARKER, NoticeValue::Integer(1)),
+            ],
+        );
+        let (cn, can) = (b1_bound(&r209(101), &cn), b1_bound(&r209(102), &can));
+        let versions = fold(&[&cn, &can]);
+        let cn_totals = vec![
+            (101, "TED-HIGH", Range, 120_000_000, "EUR", Vec::new()),
+            (101, "TED-LOW", Range, 80_000_000, "EUR", Vec::new()),
+            (101, "TED-VAL_ESTIMATED_TOTAL", Estimate, 90_000_000, "EUR", Vec::new()),
+            (101, "TED-VAL_TOTAL", Estimate, 100_000_000, "EUR", Vec::new()),
+        ];
+        assert_eq!(b1_totals(&versions[0]), cn_totals);
+        let mut both = cn_totals.clone();
+        both.push((102, "TED-VAL_TOTAL", Award, 95_000_000, "EUR", b1_keys(&["LOT-1", "LOT-2"])));
+        assert_eq!(b1_totals(&versions[1]), both, "cumulative; the CAN's total awards both its lots");
+
+        // The form test: an `F` and leading zeros dropped, old-vintage numbers and F-codes alike.
+        for (form, cn_type) in
+            [("F02", true), ("2", true), ("05", true), ("f24", true), ("F03", false), ("3", false), ("F20", false), ("F", false), ("", false)]
+        {
+            assert_eq!(cn_type_ted_form(Some(form)), cn_type, "{form:?}");
+        }
+        assert!(!cn_type_ted_form(None), "no form: CAN-type");
+
+        // eForms, the correction rule. E1 states three totals under logical id ABC, each in its own
+        // currency; E2 corrects ABC and states one, which replaces all three, and its round replaces
+        // E1's; E3 corrects ABC stating none, so the totals stay — but its round replaces E2's, so E2's
+        // total awards no lot any more; E4 (another logical id) adds its own. E5 publishes under ABC
+        // WITHOUT a Change section — not a correction, so (as `rule_v2.py` replaces only on one) its
+        // total is added beside E2's and replaces none.
+        let eforms = |id: i64, logical: &str, correction: bool, totals: &[(&str, i64, &str)], awarded: &[&str]| {
+            let mut sections = vec![("PROCEDURE", "Notice"), ("LOT-0001", "Lot"), ("LOT-0002", "Lot")];
+            let results: Vec<String> = (1..=awarded.len()).map(|k| format!("RES-{k:04}")).collect();
+            sections.extend(results.iter().map(|r| (r.as_str(), "LotResult")));
+            if correction {
+                sections.push(("CHG-0001", "Change"));
+            }
+            let mut values = vec![
+                b1_id("PROCEDURE", LOGICAL_NOTICE_FIELD, logical),
+                b1_id("LOT-0001", "BT-137-Lot", "LOT-0001"),
+                b1_id("LOT-0002", "BT-137-Lot", "LOT-0002"),
+            ];
+            values.extend(totals.iter().map(|(field, cents, currency)| b1_amount("PROCEDURE", field, *cents, currency)));
+            values.extend(results.iter().zip(awarded).map(|(r, lot)| b1_id(r, "BT-13713-LotResult", lot)));
+            (b1_notice(id, "ted", "eforms:eforms-sdk-1.13"), b1_parsed(&sections, values))
+        };
+        let chain = [
+            eforms(
+                201,
+                "ABC",
+                false,
+                &[("BT-161-NoticeResult", 30_000_000, "PLN"), ("BT-27-Procedure", 40_000_000, "EUR"), ("BT-118-NoticeResult", 90_000_000, "CZK")],
+                &["LOT-0001"],
+            ),
+            eforms(202, "ABC", true, &[("BT-161-NoticeResult", 35_000_000, "EUR")], &["LOT-0001", "LOT-0002"]),
+            eforms(203, "ABC", true, &[], &["LOT-0002"]),
+            eforms(204, "XYZ", false, &[("BT-161-NoticeResult", 50_000_000, "EUR")], &[]),
+            eforms(205, "ABC", false, &[("BT-161-NoticeResult", 60_000_000, "EUR")], &["LOT-0001"]),
+        ];
+        let states: Vec<NoticeState> = chain.iter().map(|(n, p)| b1_bound(n, p)).collect();
+        let versions = fold(&states.iter().collect::<Vec<_>>());
+        assert_eq!(
+            b1_totals(&versions[0]),
+            vec![
+                (201, "BT-118-NoticeResult", Award, 90_000_000, "CZK", b1_keys(&["LOT-0001"])),
+                (201, "BT-161-NoticeResult", Award, 30_000_000, "PLN", b1_keys(&["LOT-0001"])),
+                (201, "BT-27-Procedure", Estimate, 40_000_000, "EUR", b1_keys(&["LOT-0001"])),
+            ],
+            "each total keeps its own currency"
+        );
+        let e2 = (202, "BT-161-NoticeResult", Award, 35_000_000, "EUR", b1_keys(&["LOT-0001", "LOT-0002"]));
+        assert_eq!(b1_totals(&versions[1]), vec![e2.clone()], "the correction's total replaces every ABC total");
+        let e2_orphaned = (202, "BT-161-NoticeResult", Award, 35_000_000, "EUR", Vec::new());
+        assert_eq!(b1_totals(&versions[2]), vec![e2_orphaned.clone()], "a correction stating none keeps them");
+        let e4 = (204, "BT-161-NoticeResult", Award, 50_000_000, "EUR", Vec::new());
+        assert_eq!(b1_totals(&versions[3]), vec![e2_orphaned.clone(), e4.clone()]);
+        assert_eq!(
+            b1_totals(&versions[4]),
+            vec![e2_orphaned, e4, (205, "BT-161-NoticeResult", Award, 60_000_000, "EUR", b1_keys(&["LOT-0001"]))],
+            "a non-correction under the same logical id adds its total and replaces none"
+        );
+
+        // The bucketed fold rebuilds its NoticeStates without their logical id; the totals carry it.
+        let bucketed: Vec<NoticeState> = chain
+            .iter()
+            .map(|(n, p)| BucketRow::snapshot("g".into(), n, b1_bound(n, p)).to_notice_state())
+            .collect();
+        assert_eq!(fold(&bucketed.iter().collect::<Vec<_>>()), versions, "the bucket path folds the same");
+
+        // eForms-DE 1.x publishes its totals as DE1 ids, which the table does not name: none read,
+        // although the projection has aliased the first onto BT-161.
+        let mut de1 = vec![(
+            b1_notice(9, "doe", "eforms:eforms-de-1.2"),
+            b1_parsed(
+                &[("PROCEDURE", "Notice")],
+                vec![
+                    b1_amount("PROCEDURE", "DE1-NoticeResult-TotalAmount", 30_000_000, "EUR"),
+                    b1_amount("PROCEDURE", "DE1-NoticeResult-OverallMaximumFrameworkContractsAmount", 90_000_000, "EUR"),
+                ],
+            ),
+        )];
+        normalise_de1(&mut de1);
+        assert!(de1[0].1.values.iter().any(|v| v.field_id == "BT-161-NoticeResult"), "premise: aliased");
+        assert!(NoticeState::read(&de1[0].0, &de1[0].1).stated_totals.is_empty());
+    }
+
+    /// Issue 551 unit 4b (B1) and issue 506: BT-118 / BT-1118 (the notice's framework totals) are
+    /// READ as award-type stated totals for path W's guards, and nothing else: no amount fact on
+    /// the Tender or a lot, no change to any round, and the same head as the notice without them
+    /// — even when they are its largest figures.
+    #[test]
+    fn bt118_is_read_as_a_stated_total_and_never_elected() {
+        use StatedTotalKind::Award;
+        let can = |framework_totals: bool| {
+            let mut values = vec![
+                b1_id("LOT-0001", "BT-137-Lot", "LOT-0001"),
+                b1_id("LOT-0002", "BT-137-Lot", "LOT-0002"),
+                b1_id("RES-0001", "BT-13713-LotResult", "LOT-0001"),
+                b1_id("RES-0001", "OPT-320-LotResult", "TEN-0001"),
+                b1_id("RES-0002", "BT-13713-LotResult", "LOT-0002"),
+                b1_id("RES-0002", "OPT-320-LotResult", "TEN-0002"),
+                b1_id("TEN-0001", "BT-13714-Tender", "LOT-0001"),
+                b1_amount("TEN-0001", "BT-720-Tender", 10_000_000, "EUR"),
+                b1_id("TEN-0002", "BT-13714-Tender", "LOT-0002"),
+                b1_amount("TEN-0002", "BT-720-Tender", 20_000_000, "EUR"),
+                b1_amount("PROCEDURE", "BT-161-NoticeResult", 30_000_000, "EUR"),
+            ];
+            if framework_totals {
+                values.push(b1_amount("PROCEDURE", "BT-118-NoticeResult", 900_000_000, "EUR"));
+                values.push(b1_amount("PROCEDURE", "BT-1118-NoticeResult", 800_000_000, "EUR"));
+            }
+            b1_parsed(
+                &[
+                    ("PROCEDURE", "Notice"),
+                    ("LOT-0001", "Lot"),
+                    ("LOT-0002", "Lot"),
+                    ("RES-0001", "LotResult"),
+                    ("RES-0002", "LotResult"),
+                    ("TEN-0001", "LotTender"),
+                    ("TEN-0002", "LotTender"),
+                ],
+                values,
+            )
+        };
+        let notice = b1_notice(10, "ted", "eforms:eforms-sdk-1.13");
+        let with = fold(&[&b1_bound(&notice, &can(true))]);
+        let without = fold(&[&b1_bound(&notice, &can(false))]);
+        let lots = b1_keys(&["LOT-0001", "LOT-0002"]);
+        assert_eq!(
+            b1_totals(&with[0]),
+            vec![
+                (10, "BT-1118-NoticeResult", Award, 800_000_000, "EUR", lots.clone()),
+                (10, "BT-118-NoticeResult", Award, 900_000_000, "EUR", lots.clone()),
+                (10, "BT-161-NoticeResult", Award, 30_000_000, "EUR", lots.clone()),
+            ]
+        );
+        assert_eq!(b1_totals(&without[0]), vec![(10, "BT-161-NoticeResult", Award, 30_000_000, "EUR", lots)]);
+
+        // Never an amount row: the same facts, lots (so the same amount count) and rounds.
+        let amount_rows = |v: &TenderVersion| {
+            v.facts.iter().chain(v.lots.iter().flat_map(|l| l.facts.iter())).filter(|f| matches!(f, Fact::Amount { .. })).count()
+        };
+        assert_eq!(amount_rows(&with[0]), amount_rows(&without[0]));
+        assert_eq!(with[0].facts, without[0].facts);
+        assert_eq!(with[0].lots, without[0].lots);
+        assert_eq!(with[0].rounds, without[0].rounds);
+        assert_eq!(
+            with[0].rounds[0].lot_results.iter().map(|r| r.awarded_cents).collect::<Vec<_>>(),
+            vec![Some(10_000_000), Some(20_000_000)],
+            "premise: the lots are awarded"
+        );
+
+        // Never elected: the same head, and neither framework total is it.
+        let rates = store::rates::RatesLookup::default();
+        let head = store::canonical::head_value(&with, &rates);
+        assert_eq!(head, store::canonical::head_value(&without, &rates));
+        assert!(head.eur_cents.is_some(), "premise: the notice elects a head");
+        assert!(![Some(900_000_000), Some(800_000_000)].contains(&head.eur_cents), "{head:?}");
+        // And the sieve still calls them unread.
+        for unread in ["BT-118-NoticeResult", "BT-1118-NoticeResult"] {
+            assert!(!has_destination(unread, Channel::Amount), "{unread} stays unmapped (issue 506)");
+        }
     }
 
     // ---- Issue 514 unit 2: the GB register-spelling rewrite (decision §6) ----

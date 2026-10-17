@@ -57,7 +57,7 @@ fn version(notice: i64, day: i64, nuts: &str, buyer: i64, deadline: i64, subtype
     let kind = if notice % 2 == 0 { "Lot" } else { "Part" };
     let lots = ["LOT-1", "LOT-2"]
         .iter()
-        .map(|key| LotState { key: (*key).into(), kind: kind.into(), facts: BTreeSet::new() })
+        .map(|key| LotState { key: (*key).into(), kind: kind.into(), facts: BTreeSet::new(), published_lot_no: None })
         .collect();
     TenderVersion {
         caused_by_notice_id: notice,
@@ -70,6 +70,7 @@ fn version(notice: i64, day: i64, nuts: &str, buyer: i64, deadline: i64, subtype
         lots,
         rounds: Vec::new(),
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     }
 }
 

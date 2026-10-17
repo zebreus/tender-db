@@ -50,7 +50,7 @@ pub use canonical::{
     MatchedLink, PlanGroup, PlanGroupTally, PlanRow, PlanScope, TenderLinkBackfill, TenderLinkRuleCounts, TenderLinkSample,
     QUALITY_WITHHELD, R2MergeArgs, version_stem,
     PARTNER_ONLY_AMOUNT_FIELDS, RESULT_FRAMEWORK_MAXIMUM, RESULT_FRAMEWORK_REESTIMATE, electable_amount_field,
-    R2MergeReport, R3MergeArgs, R3MergeReport, Round, TenderProjection, TenderVersion,
+    R2MergeReport, R3MergeArgs, R3MergeReport, Round, StatedTotal, StatedTotalKind, TenderProjection, TenderVersion,
     CountryCluster, CountryClusterReport, CountryTypoMove, CountryTypoRepairReport,
     DuplicateIdentity, GenericKeyProbe, ProvisionalEchoGroup, ProvisionalEchoReport, ProvisionalFoldArgs, ProvisionalFoldReport, EchoTier, NameVerdict, DuplicateIdentityReport,
     ProvisionalNameNormArgs, ProvisionalNameNormReport,
@@ -6291,6 +6291,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             lots: Vec::new(),
             rounds: Vec::new(),
             group_members: Vec::new(),
+            stated_totals: Vec::new(),
         };
         let projection = |versions: Vec<canonical::TenderVersion>| canonical::TenderProjection {
             source: "ted".into(),
@@ -7333,6 +7334,8 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 winners: Vec::new(),
                 buyer_winners: Vec::new(),
                 statistics: Vec::new(),
+                published_lot_no: None,
+                group: false,
             }],
             bids: Vec::new(),
             contracts: Vec::new(),
@@ -7348,6 +7351,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
             lots: Vec::new(),
             rounds,
             group_members: Vec::new(),
+            stated_totals: Vec::new(),
         };
         let projection = |versions: Vec<canonical::TenderVersion>| canonical::TenderProjection {
             source: "ted".into(),
@@ -7456,6 +7460,8 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 winners: Vec::new(),
                 buyer_winners: Vec::new(),
                 statistics: Vec::new(),
+                published_lot_no: None,
+                group: false,
             }],
             bids,
             contracts: Vec::new(),
@@ -7476,6 +7482,7 @@ tmpfs /data/ramcache tmpfs rw 0 0
                 lots: Vec::new(),
                 rounds: vec![round(bids)],
                 group_members: Vec::new(),
+                stated_totals: Vec::new(),
             }],
         };
         async fn count(db: &Db, sql: &str) -> i64 {

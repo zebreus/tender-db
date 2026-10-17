@@ -47,10 +47,11 @@ async fn fold(name: &str, lots: Vec<(&str, Vec<Fact>)>) -> turso::Connection {
         facts: Default::default(),
         lots: lots
             .into_iter()
-            .map(|(key, facts)| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() })
+            .map(|(key, facts)| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None })
             .collect(),
         rounds: Vec::new(),
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     };
     let p = TenderProjection {
         source: "ted".into(),

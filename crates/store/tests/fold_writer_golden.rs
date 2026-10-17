@@ -100,7 +100,7 @@ fn date(field: &str, utc_seconds: i64, offset_minutes: i64, has_time: bool) -> F
 }
 
 fn lot(key: &str, kind: &str, facts: Vec<Fact>) -> LotState {
-    LotState { key: key.into(), kind: kind.into(), facts: facts.into_iter().collect() }
+    LotState { key: key.into(), kind: kind.into(), facts: facts.into_iter().collect(), published_lot_no: None }
 }
 
 fn party(role: &str, organization_id: i64, section_id: &str) -> BidParty {
@@ -130,6 +130,8 @@ fn result(
         winners: winners.to_vec(),
         buyer_winners: buyer_winners.to_vec(),
         statistics: statistics.iter().map(|(k, n, q)| ((*k).into(), *n, q.map(Into::into))).collect(),
+        published_lot_no: None,
+        group: false,
     }
 }
 
@@ -431,6 +433,7 @@ fn mega_version(k: i64, late: bool, rounds: Vec<Round>) -> TenderVersion {
         lots,
         rounds,
         group_members,
+        stated_totals: Vec::new(),
     }
 }
 
@@ -481,6 +484,7 @@ fn island() -> TenderProjection {
             lots: Vec::new(),
             rounds: Vec::new(),
             group_members: Vec::new(),
+            stated_totals: Vec::new(),
         }],
     }
 }
@@ -501,6 +505,7 @@ fn keyed_parts() -> TenderProjection {
         lots: vec![lot("PAR-0001", "Part", vec![text("title", None, "Teil 1"), amount("estimated_value", 400_000, "GPB", None, None)])],
         rounds,
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     };
     let round = Round {
         notice_id: 4002,

@@ -43,7 +43,7 @@ async fn open(name: &str) -> (store::Db, turso::Connection) {
 }
 
 fn lot(key: &str) -> LotState {
-    LotState { key: key.into(), kind: "Lot".into(), facts: Default::default() }
+    LotState { key: key.into(), kind: "Lot".into(), facts: Default::default(), published_lot_no: None }
 }
 
 fn deadline(at: i64) -> Fact {
@@ -64,6 +64,7 @@ fn version(notice: i64, published_at: i64, lots: &[&str]) -> TenderVersion {
         lots: lots.iter().copied().map(lot).collect(),
         rounds: Vec::new(),
         group_members: Vec::new(),
+        stated_totals: Vec::new(),
     }
 }
 

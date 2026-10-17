@@ -5928,6 +5928,24 @@ pub struct LotState {
     pub key: String,
     pub kind: String,
     pub facts: BTreeSet<Fact>,
+    /// Issue 551 unit 4b (B1): the number the publisher printed on this lot's own section,
+    /// exactly as published — TED `LOT_NO`, else `LOT_NUMBER` (never the r209 walker's
+    /// `TED-ITEM` ordinal, which every section carries); eForms `BT-137-Lot` / `-Part` /
+    /// `-LotsGroup`; eForms-DE 1.x `DE1-ProcurementProjectLot-ID`; for FTS the OCDS lot id,
+    /// which is the key. No title fallback. `None` where the section prints none.
+    ///
+    /// Like `kind`, the latest section's: a notice that publishes the lot replaces it, `None`
+    /// included, so the version a notice causes carries that notice's OWN printed number for
+    /// every lot it publishes — the published lot number path W's R2 reads for a summed award
+    /// ("read from its own award notice only"), before the award block's
+    /// [`LotResultState::published_lot_no`].
+    ///
+    /// Projection-only: no column stores it, nothing is written from it, and the change feed's
+    /// lot comparison (facts and kind) does not read it. `serde(default)` only, no
+    /// `skip_serializing_if` — the projection's postcard bucket spill rule (see
+    /// [`LotResultState::buyer_winners`]).
+    #[serde(default)]
+    pub published_lot_no: Option<String>,
 }
 
 /// The entity ids one Tender's rewritten chain references — fed by
@@ -6024,6 +6042,30 @@ pub struct LotResultState {
     /// notice declared BT-759 or BT-760 suppressed for this statistics block
     /// (issue 372 unit 4), so neither the kind nor the count is a reading.
     pub statistics: Vec<(String, i64, Option<String>)>,
+    /// Issue 551 unit 4b (B1): the lot number the result itself names, exactly as published.
+    /// A legacy TED award block: its own `LOT_NO`, else its own `LOT_NUMBER` — the reference
+    /// issue 567's mapping resolves [`Self::lot_key`] from — else `None`; NEVER `TED-ITEM`,
+    /// the ordinal the r209 walker puts on every section, so an ordinal-placed block (a
+    /// single-section CAN's `ITEM="1"`) has none. eForms (and eForms-DE 1.x, aliased): the
+    /// result's BT-13713 lot reference as published; FTS: the OCDS lot id (`relatedLots`).
+    ///
+    /// Kept beside the resolved key because the two can disagree: a single-section F20
+    /// modification block printing `LOT_NO 3` keys `LOT-1` when its one section prints 3, and
+    /// TED stores ordinal `LOT-k` keys. Path W's R2 reads the number from the award notice's own
+    /// lot section first ([`LotState::published_lot_no`] of the version that notice caused) and
+    /// from this field where the section prints none.
+    ///
+    /// Projection-only: no column stores it. `serde(default)` only (the bucket spill rule above).
+    #[serde(default)]
+    pub published_lot_no: Option<String>,
+    /// Issue 551 unit 4b (B1): the legacy award block says the contract went to a group of
+    /// economic operators (`TED-AWARDED_TO_GROUP`, an r209 marker inside the block, with no
+    /// `TED-NO_AWARDED_TO_GROUP` beside it) — its several winners are ONE tender, which path
+    /// W's R1 reads where no LotTender rows exist. Always `false` outside the legacy eras.
+    ///
+    /// Projection-only: no column stores it. `serde(default)` only (the bucket spill rule above).
+    #[serde(default)]
+    pub group: bool,
 }
 
 /// A Bid (eForms LotTender, TEN-): one offer on one Lot.
@@ -6085,6 +6127,68 @@ pub struct TenderVersion {
     /// read from the notice's `GroupComposition` sections. Empty for the vast majority
     /// of notices, which declare no lots group at all.
     pub group_members: Vec<(String, String)>,
+    /// Issue 551 unit 4b (B1): every total a notice of the chain so far stated, read under the
+    /// frozen field-to-kind table ([`StatedTotal`]), in chain order and, within one notice, in
+    /// the order its values are read. Cumulative like [`Self::rounds`]: each version keeps the
+    /// earlier versions' totals and adds its notice's, except that a correction (a `Change`
+    /// section and a logical notice id) stating at least one total replaces the totals of every
+    /// earlier notice with that logical id.
+    ///
+    /// Projection-only and read only by path W's guards (R3, R10): no column stores it, the
+    /// writer never reads it, and it is never an amount row or an election candidate — BT-118
+    /// and BT-1118 in particular stay unmapped (issue 506). A field late to this struct; the
+    /// struct is not serialized, so no spill rule applies.
+    pub stated_totals: Vec<StatedTotal>,
+}
+
+/// Issue 551 unit 4b (B1): what a stated total is to path W's guards, under the frozen
+/// field-to-kind table (issue 551 "Adversarial check — amendments", `unit4b/rule_v2.py`).
+/// Every kind vouches for a sum (R10); only [`Self::Award`] bounds the lots its notice awards
+/// (R3), and only [`Self::Estimate`] feeds R3's 10x-estimate branch.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+pub enum StatedTotalKind {
+    /// An award-type total: BT-161-NoticeResult, BT-118-NoticeResult, BT-1118-NoticeResult
+    /// (any section), or `TED-VAL_TOTAL` in the notice's own section on a CAN-type form.
+    Award,
+    /// An estimate: BT-27-Procedure (any section), `TED-VAL_ESTIMATED_TOTAL` in the notice's
+    /// own section, or `TED-VAL_TOTAL` there on a CN-type form — the TED form number, an `F`
+    /// and leading zeros dropped, one of 1 2 4 5 7 8 9 10 11 12 16 17 24, old-vintage numeric
+    /// forms (`2`, `5`) and F-codes alike.
+    Estimate,
+    /// One end of a `VAL_RANGE_TOTAL` (`TED-LOW`, `TED-HIGH`) in the notice's own section.
+    Range,
+}
+
+/// Issue 551 unit 4b (B1): one total a notice states for the whole of what it publishes — the
+/// figure path W's R3 holds a lot sum against and R10 needs to vouch for it. Read from EVERY
+/// notice of the chain under the frozen table ([`StatedTotalKind`]); nothing else is read:
+/// not `TED-VALUE` / `TED-VALUE_COST`, not BT-271-Procedure, not the TED estimate-range
+/// fields (`TED-LOW_VALUE`, `TED-HIGH_VALUE`, `TED-TOTAL_ESTIMATED.*`), and nothing inside a
+/// Modification section (`VAL_TOTAL_BEFORE` / `_AFTER`). An eForms-DE 1.x notice states none:
+/// the table names fields as published, and that dialect publishes its totals under `DE1-*`
+/// ids (the projection's BT aliases of them are its own vocabulary, not the publisher's).
+///
+/// Serialized only inside the projection's postcard bucket spill (`serde` for that alone).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+pub struct StatedTotal {
+    /// The notice that stated it.
+    pub notice_id: i64,
+    /// That notice's logical notice id (BT-701), the correction-replacement key — carried on
+    /// the total because the fold's bucket path does not keep a notice's own.
+    pub logical_notice_id: Option<String>,
+    /// The source field id as published (`BT-161-NoticeResult`, `TED-VAL_TOTAL`, …).
+    pub field: String,
+    pub kind: StatedTotalKind,
+    /// As published: a withheld or sentinel figure is kept; the guards decide what is usable.
+    pub cents: i64,
+    pub currency: String,
+    /// The lot keys the stating notice awards, pinned for R3 ("the keys that notice awards"):
+    /// every distinct lot key a LotResult of that notice's round names in THIS version's
+    /// rounds — closed and no-award results INCLUDED (a result row on the key is enough, as
+    /// the port reads it), results that name no lot excluded. Recomputed from the version's
+    /// rounds, so a round a correction replaced contributes no keys, and a notice with no
+    /// round awards none. Sorted.
+    pub lots_awarded: Vec<String>,
 }
 
 /// A whole Tender as the projection computed it, ready to reconcile against
@@ -44055,9 +44159,11 @@ mod tests {
                 key: "LOT-0001".into(),
                 kind: "Lot".into(),
                 facts: lot_facts.into_iter().collect::<BTreeSet<_>>(),
+                published_lot_no: None,
             }],
             rounds: Vec::new(),
             group_members: Vec::new(),
+            stated_totals: Vec::new(),
         }
     }
 
@@ -44402,6 +44508,7 @@ mod tests {
             key: key.into(),
             kind: "Lot".into(),
             facts: facts.into_iter().collect(),
+            published_lot_no: None,
         };
         let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion {
             lots,
@@ -44418,6 +44525,8 @@ mod tests {
             winners: Vec::new(),
             buyer_winners: Vec::new(),
             statistics: Vec::new(),
+            published_lot_no: None,
+            group: false,
         };
         let with_awards = |mut v: TenderVersion, awards: Vec<LotResultState>| {
             v.rounds = vec![Round {
@@ -44683,6 +44792,8 @@ mod tests {
                         winners: Vec::new(),
                         buyer_winners: Vec::new(),
                         statistics: Vec::new(),
+                        published_lot_no: None,
+                        group: false,
                     })
                     .collect(),
                 bids: Vec::new(),
@@ -44748,7 +44859,7 @@ mod tests {
             tax_basis: None,
             quality: None,
         };
-        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
         let award = |lot_key: &str, cents: i64| LotResultState {
             key: format!("RES-{lot_key}"),
@@ -44761,6 +44872,8 @@ mod tests {
             winners: Vec::new(),
             buyer_winners: Vec::new(),
             statistics: Vec::new(),
+            published_lot_no: None,
+            group: false,
         };
         let with_awards = |mut v: TenderVersion, awards: Vec<LotResultState>| {
             v.rounds = vec![Round { notice_id: 1, logical_notice_id: None, lot_results: awards, bids: Vec::new(), contracts: Vec::new() }];
@@ -44847,7 +44960,7 @@ mod tests {
         // eForms BT-271-LotsGroup over all three lots) would double the sum to 2F; a PIN's
         // part carried in the head beside the CN's lots (the fold never drops a lot) would
         // add its figure again. Both kept.
-        let typed = |key: &str, kind: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: kind.into(), facts: facts.into_iter().collect() };
+        let typed = |key: &str, kind: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: kind.into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let mut grouped = framework.clone();
         grouped.lots.push(typed("GLO-1", "LotsGroup", vec![amt("framework_maximum", f)]));
         assert_eq!(one(grouped.clone()), Some(f), "a lots group's total is not a lot of the sum");
@@ -44907,7 +45020,7 @@ mod tests {
             tax_basis: None,
             quality: None,
         };
-        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
         let one = |v: &TenderVersion| head_value_eur_cents(std::slice::from_ref(v), &rates);
         let lot_value = |v: &TenderVersion, key: &str| {
@@ -45058,7 +45171,7 @@ mod tests {
             tax_basis: None,
             quality: None,
         };
-        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
         // The lot value the fold stores for `key` in the LAST version of `chain`.
         let lot_value = |chain: &[TenderVersion], key: &str| {
@@ -45144,7 +45257,7 @@ mod tests {
         assert_eq!(lot_value(std::slice::from_ref(&ladder), "LOT-1"), None, "a procedure figure refused at k = 3 is no bound");
         // A PIN's part is no sibling: its PAR-0001 figure may be the lot the CN calls
         // LOT-0001 (524394's shape across a PIN and a CN).
-        let pin = version(Vec::new(), vec![LotState { key: "PAR-0001".into(), kind: "Part".into(), facts: [amt("estimated_value", small)].into_iter().collect() }]);
+        let pin = version(Vec::new(), vec![LotState { key: "PAR-0001".into(), kind: "Part".into(), facts: [amt("estimated_value", small)].into_iter().collect(), published_lot_no: None }]);
         let mut cn = version(
             vec![amt("estimated_value", 150_000_000_000)],
             vec![lot("LOT-0001", vec![amt("estimated_value", big)]), lot("LOT-0002", vec![amt("estimated_value", 50_000_000_000)])],
@@ -45154,7 +45267,7 @@ mod tests {
         assert_eq!(lot_value(&[pin, cn], "LOT-0001"), None, "a part's figure is no sibling lot's");
         // The mirror: the slip on the PIN part, its true value on the CN lot. The part's
         // own figure gets no exemption either.
-        let pin = version(Vec::new(), vec![LotState { key: "PAR-0001".into(), kind: "Part".into(), facts: [amt("estimated_value", big)].into_iter().collect() }]);
+        let pin = version(Vec::new(), vec![LotState { key: "PAR-0001".into(), kind: "Part".into(), facts: [amt("estimated_value", big)].into_iter().collect(), published_lot_no: None }]);
         let mut cn = version(
             vec![amt("estimated_value", 150_000_000_000)],
             vec![lot("LOT-0001", vec![amt("estimated_value", small)]), lot("LOT-0002", vec![amt("estimated_value", 149_000_000_000)])],
@@ -45183,6 +45296,8 @@ mod tests {
                 winners: Vec::new(),
                 buyer_winners: Vec::new(),
                 statistics: Vec::new(),
+                published_lot_no: None,
+                group: false,
             }],
             bids: Vec::new(),
             contracts: Vec::new(),
@@ -45195,7 +45310,7 @@ mod tests {
             vec![amt("estimated_value", 271_000_000_000)],
             vec![lot("LOT-1", vec![amt("estimated_value", 268_290_000_000)]), lot("LOT-2", vec![amt("estimated_value", 2_710_000_000)])],
         );
-        grouped.lots.push(LotState { key: "GLO-1".into(), kind: "LotsGroup".into(), facts: [amt("framework_maximum", 271_000_000_000)].into_iter().collect() });
+        grouped.lots.push(LotState { key: "GLO-1".into(), kind: "LotsGroup".into(), facts: [amt("framework_maximum", 271_000_000_000)].into_iter().collect(), published_lot_no: None });
         assert_eq!(lot_value(std::slice::from_ref(&grouped), "GLO-1"), Some(271_000_000_000), "a group total over a sibling lot");
         assert_eq!(head_value_eur_cents(std::slice::from_ref(&grouped), &rates), Some(271_000_000_000));
     }
@@ -45216,7 +45331,7 @@ mod tests {
             tax_basis: None,
             quality: None,
         };
-        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
         let lot_value = |v: &TenderVersion, key: &str| {
             let rule = ScalePartners::of_chain(std::slice::from_ref(v));
@@ -45397,7 +45512,7 @@ mod tests {
             tax_basis: None,
             quality: None,
         };
-        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let key = |i: usize| format!("LOT-{:04}", i + 1);
         let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
         let award_in = |lot_key: &str, cents: i64, currency: &str| LotResultState {
@@ -45411,6 +45526,8 @@ mod tests {
             winners: Vec::new(),
             buyer_winners: Vec::new(),
             statistics: Vec::new(),
+            published_lot_no: None,
+            group: false,
         };
         let award = |lot_key: &str, cents: i64| award_in(lot_key, cents, "EUR");
         // Results rounds as (notice id, the round's lot results), in fold order.
@@ -45590,7 +45707,7 @@ mod tests {
         let catering = |procedure: Vec<Fact>| {
             let mut lots: Vec<LotState> =
                 [60_000_000, 10_000_000, 20_000_000, 10_000_000].iter().enumerate().map(|(i, c)| lot(&key(i), vec![amt("estimated_value", *c)])).collect();
-            lots.push(LotState { key: "GLO-0001".into(), kind: "LotsGroup".into(), facts: vec![amt("estimated_value", 100_000_000)].into_iter().collect() });
+            lots.push(LotState { key: "GLO-0001".into(), kind: "LotsGroup".into(), facts: vec![amt("estimated_value", 100_000_000)].into_iter().collect(), published_lot_no: None });
             version(procedure, lots)
         };
         let both = || vec![amt("estimated_value", 100_000_000_000), amt("framework_maximum", 100_000_000_000)];
@@ -45612,7 +45729,7 @@ mod tests {
                 vec![
                     lot("LOT-0001", vec![amt("estimated_value", 388_080_000)]),
                     lot("LOT-0002", vec![amt("estimated_value", 76_860_000)]),
-                    LotState { key: "GLO-0005".into(), kind: "LotsGroup".into(), facts: vec![amt("estimated_value", f)].into_iter().collect() },
+                    LotState { key: "GLO-0005".into(), kind: "LotsGroup".into(), facts: vec![amt("estimated_value", f)].into_iter().collect(), published_lot_no: None },
                 ],
             )
         };
@@ -45857,7 +45974,7 @@ mod tests {
         use super::{DerivationPath, LotResultState, LotSumKind, Round, ScaleRule, head_value, max_election_eur_cents};
         let rates = crate::rates::RatesLookup::default();
         let amt = |field: &str, cents: i64| Fact::Amount { field: field.into(), cents, currency: "EUR".into(), tax_basis: None, quality: None };
-        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let award = |lot_key: &str, cents: i64| LotResultState {
             key: format!("RES-{lot_key}"),
             lot_key: Some(lot_key.into()),
@@ -45869,6 +45986,8 @@ mod tests {
             winners: Vec::new(),
             buyer_winners: Vec::new(),
             statistics: Vec::new(),
+            published_lot_no: None,
+            group: false,
         };
         let version = |facts: Vec<Fact>, awards: &[(&str, i64)]| TenderVersion {
             lots: awards.iter().map(|(k, _)| lot(k, Vec::new())).collect(),
@@ -46000,7 +46119,7 @@ mod tests {
         let rates = crate::rates::RatesLookup::default();
         let amt_in = |field: &str, cents: i64, currency: &str| Fact::Amount { field: field.into(), cents, currency: currency.into(), tax_basis: None, quality: None };
         let amt = |field: &str, cents: i64| amt_in(field, cents, "EUR");
-        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect() };
+        let lot = |key: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: "Lot".into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let award_in = |lot_key: &str, cents: i64, currency: &str| LotResultState {
             key: format!("RES-{lot_key}"),
             lot_key: Some(lot_key.into()),
@@ -46012,6 +46131,8 @@ mod tests {
             winners: Vec::new(),
             buyer_winners: Vec::new(),
             statistics: Vec::new(),
+            published_lot_no: None,
+            group: false,
         };
         // (facts, lots with their own facts, rounds of awards as (lot, cents, currency))
         let version = |facts: Vec<Fact>, lots: Vec<LotState>, rounds: Vec<Vec<(&str, i64, &str)>>| TenderVersion {
@@ -46307,7 +46428,7 @@ mod tests {
             tax_basis: None,
             quality: None,
         };
-        let typed = |key: &str, kind: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: kind.into(), facts: facts.into_iter().collect() };
+        let typed = |key: &str, kind: &str, facts: Vec<Fact>| LotState { key: key.into(), kind: kind.into(), facts: facts.into_iter().collect(), published_lot_no: None };
         let version = |facts: Vec<Fact>, lots: Vec<LotState>| TenderVersion { lots, ..head(facts, Vec::new()) };
         let one = |v: TenderVersion| head_value_eur_cents(std::slice::from_ref(&v), &rates);
 

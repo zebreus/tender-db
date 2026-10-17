@@ -268,6 +268,7 @@ fn projection(key: &str, notice: i64, code: &str) -> TenderProjection {
             lots: Vec::new(),
             rounds: Vec::new(),
             group_members: Vec::new(),
+            stated_totals: Vec::new(),
         }],
     }
 }
