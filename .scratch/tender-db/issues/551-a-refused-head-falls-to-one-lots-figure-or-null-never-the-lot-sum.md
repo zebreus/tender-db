@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); **fallback "vouched everywhere" PASSED 2026-10-17** (wf_03469a70-c1b: 29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). NEXT: B1 (carry the facts v2 reads, in the projection only) — B1 to B5 run with R10 at EVERY size; B5's stop window is 0.5×–2× of 1,669 (835–3,338). 567's refold (lot keys of legacy TED awards) runs first: B3's parity re-runs after it.
+Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 BUILT** 2026-10-17 (commit after 3cd94c0, wf_443c0ebc-b4b; gating). NEXT: B2 (the v2 guards in canonical.rs, R10 at EVERY size, path W still off) — read the B1 notes below first. 567's refold runs first: B3's parity re-runs after it.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -964,3 +964,27 @@ any new id was read); items `M2-fallback-items.json`; read `M2-fallback-result.j
   0.5×–2× of 1,669 = 835–3,338; B5's confirmation read keeps the same bar.
 - **Order:** 567's refold (legacy TED award lot keys, deployed b957661) drains first; B3's projection-parity check
   re-runs the port after it, as M1's note (4) says.
+
+## Unit 4b B1 — built (2026-10-17, wf_443c0ebc-b4b)
+
+Projection only; nothing stored moves (fold_writer and project_refold snapshots byte-identical; head election and
+amount rows unchanged; BT-118 / BT-1118 never elected). Fields: `LotResultState.published_lot_no` / `group`,
+`LotState.published_lot_no`, `TenderVersion.stated_totals: Vec<StatedTotal>` (`notice_id`, `logical_notice_id`,
+`field`, `kind: Award | Estimate | Range`, `cents`, `currency`, `lots_awarded`). Seven B1 tests plus the bucket codec
+round trip; the review's three test findings (currency unpinned, the correction gate untested, 6094289's F20 shape
+misdescribed) were fixed, each checked by a deliberate break.
+
+Notes for B2 and B3 (the implementer's judgement calls, accepted):
+- `StatedTotal` carries two fields beyond the spec: `logical_notice_id` (the bucket fold path rebuilds a notice with
+  `logical_id: None`, so the correction rule travels on the total) and `kind` (whether `TED-VAL_TOTAL` is an award or an
+  estimate depends on the notice's `TED-FORM`, which B2 cannot see).
+- eForms-DE 1.x notices state NO totals: the projection has already renamed `DE1-NoticeResult-TotalAmount` to BT-161,
+  and rule_v2.py reads the published `DE1-*` ids and never sees them, so the dialect is excluded for parity.
+- **R2's published lot number:** B2 reads a summed award's number from the `LotState.published_lot_no` of the version
+  its round's notice caused, falling back to `LotResultState.published_lot_no`. That reproduces the port's precedence
+  (lot section first, award block second); without it, a block placed by its ordinal in a notice whose every section's
+  number is its ordinal gets `None` from B1 but the section's number from the port.
+- 6094289's F20s: the blocks stay unkeyed because the section prints `3.` and the block `3` (567's
+  `normalise_lot_number` strips separators only after a Lot/Los/Lote/Lotto word); B1 keeps `"3"` on the result and
+  `"3."` on the lot and re-keys nothing.
+- Values are kept raw (no trim, a blank stays a value); field presence decides, as in the port.
