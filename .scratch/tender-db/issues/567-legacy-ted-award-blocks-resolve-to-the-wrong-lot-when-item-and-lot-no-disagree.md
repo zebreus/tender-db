@@ -146,3 +146,13 @@ from the `project`'s `version: null` `tender changed` rows, bar 30 of 30.
 - Pre-refold baseline of the 16 path-V heads (all `lot-sum-vouched`, every value as docs/operations.md lists it):
   `567-lot-mapping/pathv-baseline-pre567.json`. After 2590, re-read them: the runbook's "head value can ride along"
   note says a lot move can flip a lot-sum head; any change there is 567's and is read as such.
+
+## Drain result and read-back pre-draw (2026-10-17 21:25Z)
+
+- Job 2589 stamped 727,412 Tenders; project 2590 (full fallback, ok, finished ~21:20Z): 727,412 written, compare
+  686,704 verified + 40,708 corrected = 727,412 (D7 complete); 858,033 correction rows; `/v1/changes` cursor
+  955381197 → 956239230.
+- **Fresh-30 pre-draw (fixed before any id is read):** the population is every `entity=tender`, `op=changed`,
+  `version: null` row with cursor in (955381197, 956239230], distinct ids; order by
+  `sha256("567-fresh30-" + id)` hex ascending; the first 30 ids are read. Bar: 30 of 30, each moved award block where
+  the runbook's rule puts it.
