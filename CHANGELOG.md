@@ -4,6 +4,32 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 567) — a legacy TED award is served on the lot its own lot number names
+
+TED's 2016–2024 award notices (R2.0.9) tie each award to a lot by the lot number the publisher printed (LOT_NO).
+The fold read that number mixed with each lot section's position in the notice, the first claim winning, and took
+an award's last reference. Where the printed numbers are not the sections' order (lots swapped, a number skipped,
+a rotated numbering), an award could land on another lot, which then served two results and the right one none; in
+a notice with ten or more lots the store's value order (`LOT-10` before `LOT-9`) decided which lot won. A notice
+whose lots print their own positions never put an award on another lot, at any lot count. Measured 2026-10-17 on
+304 multi-lot legacy award notices: 10.6 % of 2020–23 and 4 % of 2016–19 (6.1 % of 2020–23 award blocks), e.g.
+501322-2018's "Science Direct Backfiles" award (E-Nformation, RON 14,502,000) on the "Wiley Journal Backfiles" lot.
+- From the deploy on, an award goes to the lot section that publishes its own LOT_NO: the number as printed, else
+  its one other spelling among the lots (`Lot 01`, `Los 1` and `1` match). A number two lots publish, or no lot
+  publishes, leaves the award on the Tender (`lot_results[].lot` null), never on a guess. A notice whose lots print
+  no number keeps the positional link it had, and so does an award that prints none where every lot's number is its
+  position.
+- What moves: `lot_results[].lot`, and with it the lot a winner and an awarded value belong to (`parties[]`'s
+  winner rows, `/v1/lots?winner=`, a lot's award value; on `/v1/sql`, `v_lot_results.lot_key` and
+  `v_awards.lot_key`). The lot that carried two results keeps its own. Rarely a Tender's `value` and
+  `value_derivation` move too: the rules that check a procedure figure of €1 bn or more against its lots' award sums
+  (issues 492 and 537, and `lot-sum-vouched`) read each award's lot, so moving an award to its own lot can change
+  that sum and turn a kept figure refused or a refused one kept, a move by a power of ten.
+- Tenders already stored are corrected by a refold after the deploy (the r2.0.9 notices that carry a LOT_NO, about
+  1.4 M; tens of thousands of Tenders are expected to move). Each move is announced as a correction: a
+  `version: null` `changed` row for the Tender and its affected lots (ADR-0017 D3). Until its refold a Tender serves
+  the old lot.
+
 ## Unreleased (issue 551 unit 4a) — `lot-sum-awards` is withdrawn: a Tender with no procedure figure no longer serves its lot awards' sum
 
 Issue 551 (below) served a Tender that publishes no procedure-level figure the sum of its lots' latest awards,

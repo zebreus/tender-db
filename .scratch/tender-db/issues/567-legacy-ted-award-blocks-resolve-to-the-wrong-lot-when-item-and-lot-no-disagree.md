@@ -1,6 +1,6 @@
 # 567 — a legacy TED award block resolves to the wrong lot when a section's ITEM ordinal equals another section's LOT_NO
 
-Status: ready-for-agent — MEASURED 2026-10-17 (wf_3865d965-f11, 304 multi-lot legacy CANs read from the parsed layer, every misattribution re-traced by a skeptic): 0/100 in 2012–2015 (R2.0.8 has no lot sections), 4/100 in 2016–2019, 11/104 in 2020–2023 (10.6 %, 95 % 5.4–18.1 %; 6.1 % of award blocks), 12 of 15 verified cases put a winner or value on the wrong lot. DECIDED: fix read_legacy_results to match by published lot number, order-independent; refold the legacy R2.0.9 CANs. NEXT: build (wf running), gate, deploy, sized refold.
+Status: ready-for-agent — MEASURED 2026-10-17 (wf_3865d965-f11, 304 multi-lot legacy CANs read from the parsed layer, every misattribution re-traced by a skeptic): 0/100 in 2012–2015 (R2.0.8 has no lot sections), 4/100 in 2016–2019, 11/104 in 2020–2023 (10.6 %, 95 % 5.4–18.1 %; 6.1 % of award blocks), 12 of 15 verified cases put a winner or value on the wrong lot. DECIDED: fix read_legacy_results to match by published lot number, order-independent; refold the legacy R2.0.9 CANs. BUILT 2026-10-17 (unit 3, in the tree, focused tests green, not gated or committed): `LegacyLotNumbers` + `normalise_lot_number`; one deliberate widening of unit 2 recorded below (a no-number award block keeps its ordinal where every lot's number is its ordinal). NEXT: gate, commit, deploy, then the drain in docs/operations.md (`refold-fields` TED-LOT_NO on notice_ids, ~1.4 M carriers est.), the 15 read back, a fresh uniform 30.
 by a code read. Next: measure the reach — a bounded census of R2.0.9/R2.0.8 notices whose lot sections carry LOT_NO values
 that are not their ITEM ordinal in document order (e.g. lots published 2, 1 or 3, 5 with sections numbered 1, 2), and of
 those how many award blocks resolved to a lot whose LOT_NO differs from the block's own LOT_NO.
@@ -78,3 +78,61 @@ The fix is mechanical and the reach is real (≈ 10 % of 2020–23 multi-lot leg
   dry first for the size, wet with `expect`, its `project`; then a bounded read of the 15 misattributed notices above
   (each award on the lot its LOT_NO names) and a fresh uniform 30 of corrected Tenders.
 
+## Unit 3 — built (2026-10-17)
+
+`crates/ingest/src/project.rs`: `read_legacy_results` now collects each award block's own `(field, value)` lot
+references while it reads the values and resolves them once the block is read, through `LegacyLotNumbers`:
+- **The lot map** (`LegacyLotNumbers::read`) is keyed by a lot section's `TED-LOT_NO` / `TED-LOT_NUMBER` only;
+  `TED-ITEM` keys it only where no lot section of the notice publishes a number. Each key keeps the SET of lot
+  sections publishing it, so a number two sections publish is ambiguous and names none. Empty values are skipped.
+- **An award block** (`resolve`) is read by the first field it carries of `TED-LOT_NO`, `TED-LOT_NUMBER`,
+  `TED-ITEM` (an ITEM only where the ordinal is a key, below). Every value of that field must name the same lot; a
+  value that names none or two that disagree leave the block on no lot. No cascade to a lower field on a miss: a
+  block whose LOT_NO no lot publishes is lot-less, as it was under the old read (LOT_NO sorts after ITEM).
+- **A lookup** (`lookup`) takes the exact trimmed key first; only where no lot publishes it exactly, the
+  `normalise_lot_number` key (trimmed, lower-cased, a leading `Lot`/`Los`/`Lote`/`Lotto` word and a `nr`/`no`/`n°`
+  after it dropped, leading zeros of a number dropped; `Lots 2` stays itself), and it must name one lot section.
+- **Order**: sets throughout and a field choice by presence, so no value order matters. The tests read every
+  fixture in the store's primary-key order, its reverse and document order, and require one answer.
+
+**One widening of unit 2, deliberate.** Unit 2 limits an award block's ITEM to the ITEM-only notice. Taken
+literally, that unplaces award blocks that print no LOT_NO in a notice whose lots do: 27 blocks in 6 of the 694
+cached unit-1 notices (19645087, 20792981, 21414166, 20822492, 23049879, 21272117), all placed today on the lot of
+their ordinal; the 19 whose award title names its lot match it (20792981's eleven `Delaftale` lots, 21414166's five
+laptops, 23049879's two food lots, 21272117's `VL Linz`), the other 8 print one title for every award (19645087,
+20822492). The build keeps that placement
+where it cannot be 567's collision: `ordinal_is_key` is true in the ITEM-only notice AND in a notice where every lot
+section publishes exactly its ordinal as its number (normalised), and an ITEM is looked up only then. In a notice
+whose numbers are not its ordinals (swapped, skipped, rotated) a no-number block names no lot. The port finds 0
+such blocks in the 694. If the decision should stand literally, delete the `|| { ... }` arm of `ordinal_is_key`
+and the second half of `a_well_numbered_legacy_notice_maps_as_before`.
+
+**Port and replay.** `.scratch/tender-db/567-lot-mapping/new_mapping.py` mirrors the Rust; over the 694 cached
+legacy award notices of unit 1 against `mapping.py` (production, primary-key order): 3,413 award blocks, 3,362
+unchanged, 51 changed: 45 from the wrong lot to the lot their LOT_NO names (all 15 verified notices, every
+verified block) and 6 from no lot to it through the normalised number (20004819: awards `01`, `06`…`09` against
+lots `1`…`72`; 20356321: `01`), each right by its title. Nothing moved elsewhere and nothing dropped to the Tender
+(`new_mapping_result.json`).
+
+**Tests** (`project::tests`, beside issue 512's): `a_reverse_numbered_legacy_notice_puts_each_award_on_its_own_lot`
+(the issue's example), `a_swapped_lot_pair_resolves_by_the_published_number_501322_2018`,
+`a_skipped_lot_number_resolves_by_the_published_number_305919_2017` (13 sections, LOT-10 before LOT-9 asserted),
+`a_rotated_numbering_resolves_by_the_published_number_258495_2019` (the three from the notices' parsed values,
+`/v1/notices/{20128178,19411290,20451472}/content` read 2026-10-17, identical to unit 1's cache),
+`an_item_only_legacy_notice_keeps_its_ordinal_mapping` (and R2.0.8's no-lot-section case),
+`a_lot_number_published_twice_is_ambiguous`, `a_lot_number_matches_its_normalised_spelling_when_unique` (and
+`normalise_lot_number`'s cases), `a_well_numbered_legacy_notice_maps_as_before` (12 sections, numbered and
+no-number awards; a misnumbered no-number pair names no lot). Focused runs green (filters legacy, lot_result,
+read_legacy, project, golden, r209; and the r208, r209, project, text, internal_ojs integration binaries in full);
+no golden moved.
+
+**Drain (designed, docs/operations.md "Legacy award blocks by their published lot number").** `refold-fields` over
+`TED-LOT_NO` on `notice_ids`: dry with `"expect":1`, wet with the count (it queues its `project`). The job sweeps
+field ids, not section kinds, so the award-side LOT_NO cannot be selected alone; every notice whose mapping can move
+carries a LOT_NO (lot sections or award blocks), R2.0.8 award forms carry no lot section (nothing moves there), so
+`TED-LOT_NUMBER` stays out. Size, estimated from a uniform 60 `ted-export-r209` notices drawn from the public API
+(`size_sample.py`, `size_sample.jsonl`): 19 carry `TED-LOT_NO` → about 1.4 M carriers (95 % ~0.96–2.0 M) of 4,490,549;
+the `project` about 550's (4.3 h), so 3–4 h in a queue gap. Expected: tens of thousands of Tenders corrected
+(6 of the 60 are multi-lot CANs with award LOT_NOs, ~450 k, at unit 1's 4–10.6 %). Then the 15 notices read back
+(their tenders and the 45 expected moves are listed in the runbook) and a fresh uniform 30 corrected Tenders
+from the `project`'s `version: null` `tender changed` rows, bar 30 of 30.

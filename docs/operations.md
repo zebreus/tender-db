@@ -1017,6 +1017,89 @@ deployed rule not yet refolded) explains is a finding. Verify, in order:
 - Only after both: retire the `issue-538 refold` sentence of `/docs` and the OpenAPI through
   `RETIRED` (`crates/app/src/v1/docs.rs`).
 
+**Legacy award blocks by their published lot number (issue 567, 2026-10-17).** `read_legacy_results`
+(`crates/ingest/src/project.rs`, `LegacyLotNumbers`) puts a legacy award block on the lot section that
+publishes the block's own `TED-LOT_NO` (else `TED-LOT_NUMBER`): the exact number first, then, only where no lot
+publishes it exactly, a unique normalised one (`normalise_lot_number`: trimmed, a leading `Lot`/`Los`/`Lote`/`Lotto`
+and a `nr`/`no`/`n°` after it dropped, leading zeros dropped, so `Lot 01` is `1`). A number two lot sections publish
+names neither, and a number no lot publishes leaves the award on the Tender. The walker's `TED-ITEM` ordinal keys
+the lots only in a notice where no lot section publishes a number; an award block that names no number is placed by
+its own ordinal there, or where every lot section's number is its ordinal (the pre-567 placement, kept: in the
+unit-1 sample 27 such blocks in 6 notices, the 19 whose award title names a lot on that lot). Before, ITEM and LOT_NO went into
+one first-claim-wins map and an award's last reference won, so swapped, skipped or rotated numbering (a lot
+section printing a number that is not its ordinal) could put a winner or value on another lot: 10.6 % of 2020–23
+and 4 % of 2016–19 multi-lot legacy CANs (unit 1, `.scratch/tender-db/567-lot-mapping/`). Ten or more lot sections
+are no trigger alone (a notice whose every lot prints its ordinal mapped right at any count), but there the store's
+primary-key value order (`LOT-10` before `LOT-9`) decided which section won such a collision.
+The rule reads no value order. The parsed layer is right, so this is a refold (ADR-0017 R3, no epoch bump).
+
+The cohort is the `TED-LOT_NO` carriers: every notice whose mapping can move carries one, in the lot sections whose
+numbers decide (swapped, skipped, rotated, or not their ordinals) or on the award block (a normalised match). R2.0.8
+award forms carry no lot section, so nothing there resolves before or after, and `TED-LOT_NUMBER` stays out.
+`refold-fields` sweeps field ids, not section kinds, so it cannot keep only the award-side LOT_NO: contract notices
+and corrigenda that carry one ride along and compare `verified`.
+
+```sh
+# size: aborts naming the carrier count, writes nothing
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_NO"],"tables":["notice_ids"],"expect":1}'
+#   → error "refold-fields aborted: N notices carry [\"TED-LOT_NO\"], expected ~1 — check the field ids (nothing was written)"
+# wet, with that N; the handler queues its own `project` (do not queue a second)
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_NO"],"tables":["notice_ids"],"expect":N}'
+```
+
+- **Size (estimated 2026-10-17)**: about 1.4 M carriers (95 % ~0.96–2.0 M): 19 of a uniform 60 `ted-export-r209`
+  notices carry `TED-LOT_NO` (random ids 18.0–23.8 M kept on profile, 132 public-API reads; 4,490,549 r209 notices):
+  in lot sections (17), on award blocks (8), once in an F14 change block. Fewer Tenders are stamped than notices
+  re-queued (550's 1,899,575 carriers stamped 1,530,259).
+- **Cost**: the sweep reads `notice_ids` alone, on the reader pool. The `project` is about 550's (2531: 4.3 h for
+  1.53 M Tenders), so 3–4 h: a corpus-scale writer, run in a queue gap clear of the 07:35 UTC daily chain and of a
+  running refold; stoppable (issue 543), a stopped `project` is re-run, not read as done.
+- **Expected moves**: the misattributed Tenders among the era's multi-lot CANs (6 of the 60 above, so ~450 k with a
+  wide interval) at unit 1's 4–10.6 %: tens of thousands corrected (order 2–5 × 10⁴). A few gain a lot where only the
+  normalised number matched (2 of 694 sampled CANs: awards numbered `01`, `06`…`09` against lots `1`…`72`).
+  Nothing else moves in the 694 cached legacy CANs re-run through the port
+  (`.scratch/tender-db/567-lot-mapping/new_mapping.py`): 51 blocks change, 45 from the wrong lot to the lot their
+  LOT_NO names (the 15 notices below) and 6 from no lot to it. Each corrected Tender writes ADR-0017 D3's rows
+  (`tender changed`, plus `lot changed` per rule-L lot).
+- **The head value can ride along (rare)**: 492's framework exemption, 537's lot-sum refusal and 551's
+  `lot-sum-vouched` sum the awards by `lot_key` (`LotSums::by_currency` keeps one award per lot), so a lot that
+  carried two awards counted one and the right lot none. Where a procedure figure of EUR 1 bn or more meets such a
+  collision, the head's `value` / `value_derivation` can flip by 10^k either way (kept ↔ refused, vouched ↔ not).
+  Expect none to a handful; each rides on a 567 lot move, so the fresh 30 reads it as 567's. 551 unit 4b's shadow
+  walk read the pre-567 lots: its B3 parity re-runs after this refold (551's own note).
+
+Verify, in order:
+- D7's completeness: the wet message's `stamped N` and the `project` message's `compare: X verified, Y corrected`
+  summing to at least N (more if other Tenders were pending).
+- The 15 misattributed notices of unit 1, each award on the lot its LOT_NO names (`curl -s
+  https://tenders.zebreus.click/v1/tenders/<tender> | jq -c '[.lot_results[] | [.key, .lot]]'`; tender: the blocks
+  that move, was → is):
+  5984445 (19411290, 305919-2017): RES-9 LOT-10 → LOT-9 · 6352468 (20128178, 501322-2018): RES-2 LOT-1 → LOT-4 ·
+  6439745 (20296603): RES-4 LOT-3 → LOT-4 · 6445785 (20451472, 258495-2019): RES-3 LOT-1 → LOT-4 · 6565774
+  (20852084): RES-9 LOT-10 → LOT-9 · 6397695 (21072522): RES-2 → LOT-11, RES-6 → LOT-2, RES-7 → LOT-3, RES-10 → LOT-7,
+  RES-14 → LOT-16, RES-15 → LOT-18 · 6980424 (21769762): RES-2 LOT-5 → LOT-8 · 6997164 (21871346): RES-4 and RES-6
+  → LOT-9, RES-5 and RES-10 → LOT-13, RES-9 and RES-14 → LOT-7, RES-12 and RES-15 → LOT-5 · 7080411 (21923286): RES-4
+  LOT-1 → LOT-4 · 7006083 (21943329): RES-1 → LOT-2, RES-2 → LOT-7, RES-3 → LOT-9, RES-4 → LOT-4, RES-7 → LOT-6 ·
+  7590694 (23000792): RES-6 → LOT-7, RES-7 → LOT-6 · 7153808 (23074890): RES-7, RES-24 and RES-26 → LOT-3, RES-9,
+  RES-20 and RES-31 → LOT-5, RES-10 → LOT-6, RES-11 → LOT-7, RES-13 → LOT-9, RES-17 → LOT-20, RES-19 → LOT-22, RES-23 →
+  LOT-12 · 7693726 (23256169): RES-8 LOT-11 → LOT-8 · 7644019 (23319363): RES-2 LOT-1 → LOT-3 · 7697322 (23413021):
+  RES-7 → LOT-7, RES-8 → LOT-8, RES-9 → LOT-9. Every other block of these Tenders stays where it was (45 moves in all).
+- A fresh uniform 30 corrected Tenders: note the `/v1/changes` cursor before and after the `project`, draw 30
+  salted-uniform `tender changed` rows with `version: null` between them, and read each Tender's
+  `lot_results[].lot` against its award notice's `/v1/notices/<id>/content` (one GET per 1.5 s), each award block
+  where the rule above puts it. The block's reference is its LOT_NO, else its LOT_NUMBER, else its ITEM; every value
+  of it must name the same lot, or the block is on none.
+  - Where some lot section prints a LOT_NO or LOT_NUMBER: the block's LOT_NO (else LOT_NUMBER) goes on the lot
+    section that prints it exactly, else on the one lot section that prints it once normalised; on none where two
+    lot sections print it or none does. A block that prints no number goes on the lot at its ITEM ordinal only
+    where every lot section's number is its ordinal (normalised), else on none.
+  - Where no lot section prints a number: the lots are keyed by their ITEM ordinals, and the block's LOT_NO (else
+    LOT_NUMBER, else ITEM) is read against those, exact then normalised (RES-2 with LOT_NO 3 goes on LOT-3). A LOT_NO
+    that no ordinal matches leaves it on none: there is no fall-back to its ITEM.
+
+  Bar: 30 of 30. A wrong one, or a correction neither 567 nor another deployed rule awaiting its refold explains,
+  is a finding.
+
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|
 refold-notices|refold-sections|reparse|data-quality|backfill-titles|mark-skipped-siblings|clear-rebuild-flag,

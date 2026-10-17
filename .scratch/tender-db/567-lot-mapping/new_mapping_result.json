@@ -1,0 +1,833 @@
+{
+ "stats": {
+  "notices": 694,
+  "by_item": 511,
+  "blocks": 3413,
+  "how:unmatched": 1362,
+  "same": 3362,
+  "how:no-key": 988,
+  "numbered": 183,
+  "how:exact": 1028,
+  "chg:fix": 51,
+  "how:item-agree": 27,
+  "how:norm": 8
+ },
+ "changes": [
+  {
+   "notice_id": 19411290,
+   "res": "RES-9",
+   "old": "LOT-10",
+   "new": "LOT-9",
+   "how": "exact",
+   "correct": "LOT-9",
+   "award_lot_no": [
+    "10"
+   ],
+   "award_item": [
+    "9"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20451472,
+   "res": "RES-3",
+   "old": "LOT-1",
+   "new": "LOT-4",
+   "how": "exact",
+   "correct": "LOT-4",
+   "award_lot_no": [
+    "1"
+   ],
+   "award_item": [
+    "3"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20356321,
+   "res": "RES-1",
+   "old": null,
+   "new": "LOT-1",
+   "how": "norm",
+   "correct": "LOT-1",
+   "award_lot_no": [
+    "01"
+   ],
+   "award_item": [
+    "1"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20004819,
+   "res": "RES-1",
+   "old": null,
+   "new": "LOT-1",
+   "how": "norm",
+   "correct": "LOT-1",
+   "award_lot_no": [
+    "01"
+   ],
+   "award_item": [
+    "1"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20004819,
+   "res": "RES-2",
+   "old": null,
+   "new": "LOT-6",
+   "how": "norm",
+   "correct": "LOT-6",
+   "award_lot_no": [
+    "06"
+   ],
+   "award_item": [
+    "2"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20004819,
+   "res": "RES-3",
+   "old": null,
+   "new": "LOT-7",
+   "how": "norm",
+   "correct": "LOT-7",
+   "award_lot_no": [
+    "07"
+   ],
+   "award_item": [
+    "3"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20004819,
+   "res": "RES-4",
+   "old": null,
+   "new": "LOT-8",
+   "how": "norm",
+   "correct": "LOT-8",
+   "award_lot_no": [
+    "08"
+   ],
+   "award_item": [
+    "4"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20004819,
+   "res": "RES-5",
+   "old": null,
+   "new": "LOT-9",
+   "how": "norm",
+   "correct": "LOT-9",
+   "award_lot_no": [
+    "09"
+   ],
+   "award_item": [
+    "5"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20128178,
+   "res": "RES-2",
+   "old": "LOT-1",
+   "new": "LOT-4",
+   "how": "exact",
+   "correct": "LOT-4",
+   "award_lot_no": [
+    "1"
+   ],
+   "award_item": [
+    "2"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20296603,
+   "res": "RES-4",
+   "old": "LOT-3",
+   "new": "LOT-4",
+   "how": "exact",
+   "correct": "LOT-4",
+   "award_lot_no": [
+    "3"
+   ],
+   "award_item": [
+    "4"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23413021,
+   "res": "RES-7",
+   "old": "LOT-10",
+   "new": "LOT-7",
+   "how": "exact",
+   "correct": "LOT-7",
+   "award_lot_no": [
+    "10"
+   ],
+   "award_item": [
+    "7"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23413021,
+   "res": "RES-8",
+   "old": "LOT-11",
+   "new": "LOT-8",
+   "how": "exact",
+   "correct": "LOT-8",
+   "award_lot_no": [
+    "11"
+   ],
+   "award_item": [
+    "8"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23413021,
+   "res": "RES-9",
+   "old": "LOT-12",
+   "new": "LOT-9",
+   "how": "exact",
+   "correct": "LOT-9",
+   "award_lot_no": [
+    "12"
+   ],
+   "award_item": [
+    "9"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21923286,
+   "res": "RES-4",
+   "old": "LOT-1",
+   "new": "LOT-4",
+   "how": "exact",
+   "correct": "LOT-4",
+   "award_lot_no": [
+    "1"
+   ],
+   "award_item": [
+    "4"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 20852084,
+   "res": "RES-9",
+   "old": "LOT-10",
+   "new": "LOT-9",
+   "how": "exact",
+   "correct": "LOT-9",
+   "award_lot_no": [
+    "10"
+   ],
+   "award_item": [
+    "9"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23256169,
+   "res": "RES-8",
+   "old": "LOT-11",
+   "new": "LOT-8",
+   "how": "exact",
+   "correct": "LOT-8",
+   "award_lot_no": [
+    "11"
+   ],
+   "award_item": [
+    "8"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21871346,
+   "res": "RES-4",
+   "old": "LOT-5",
+   "new": "LOT-9",
+   "how": "exact",
+   "correct": "LOT-9",
+   "award_lot_no": [
+    "5"
+   ],
+   "award_item": [
+    "4"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21871346,
+   "res": "RES-5",
+   "old": "LOT-10",
+   "new": "LOT-13",
+   "how": "exact",
+   "correct": "LOT-13",
+   "award_lot_no": [
+    "10"
+   ],
+   "award_item": [
+    "5"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21871346,
+   "res": "RES-6",
+   "old": "LOT-5",
+   "new": "LOT-9",
+   "how": "exact",
+   "correct": "LOT-9",
+   "award_lot_no": [
+    "5"
+   ],
+   "award_item": [
+    "6"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21871346,
+   "res": "RES-9",
+   "old": "LOT-15",
+   "new": "LOT-7",
+   "how": "exact",
+   "correct": "LOT-7",
+   "award_lot_no": [
+    "15"
+   ],
+   "award_item": [
+    "9"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21871346,
+   "res": "RES-10",
+   "old": "LOT-10",
+   "new": "LOT-13",
+   "how": "exact",
+   "correct": "LOT-13",
+   "award_lot_no": [
+    "10"
+   ],
+   "award_item": [
+    "10"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21871346,
+   "res": "RES-12",
+   "old": "LOT-12",
+   "new": "LOT-5",
+   "how": "exact",
+   "correct": "LOT-5",
+   "award_lot_no": [
+    "12"
+   ],
+   "award_item": [
+    "12"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21871346,
+   "res": "RES-14",
+   "old": "LOT-15",
+   "new": "LOT-7",
+   "how": "exact",
+   "correct": "LOT-7",
+   "award_lot_no": [
+    "15"
+   ],
+   "award_item": [
+    "14"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21871346,
+   "res": "RES-15",
+   "old": "LOT-12",
+   "new": "LOT-5",
+   "how": "exact",
+   "correct": "LOT-5",
+   "award_lot_no": [
+    "12"
+   ],
+   "award_item": [
+    "15"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23319363,
+   "res": "RES-2",
+   "old": "LOT-1",
+   "new": "LOT-3",
+   "how": "exact",
+   "correct": "LOT-3",
+   "award_lot_no": [
+    "1"
+   ],
+   "award_item": [
+    "2"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21769762,
+   "res": "RES-2",
+   "old": "LOT-5",
+   "new": "LOT-8",
+   "how": "exact",
+   "correct": "LOT-8",
+   "award_lot_no": [
+    "5"
+   ],
+   "award_item": [
+    "2"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21072522,
+   "res": "RES-2",
+   "old": "LOT-1",
+   "new": "LOT-11",
+   "how": "exact",
+   "correct": "LOT-11",
+   "award_lot_no": [
+    "1"
+   ],
+   "award_item": [
+    "2"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21072522,
+   "res": "RES-6",
+   "old": "LOT-18",
+   "new": "LOT-2",
+   "how": "exact",
+   "correct": "LOT-2",
+   "award_lot_no": [
+    "18"
+   ],
+   "award_item": [
+    "6"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21072522,
+   "res": "RES-7",
+   "old": "LOT-19",
+   "new": "LOT-3",
+   "how": "exact",
+   "correct": "LOT-3",
+   "award_lot_no": [
+    "19"
+   ],
+   "award_item": [
+    "7"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21072522,
+   "res": "RES-10",
+   "old": "LOT-4",
+   "new": "LOT-7",
+   "how": "exact",
+   "correct": "LOT-7",
+   "award_lot_no": [
+    "4"
+   ],
+   "award_item": [
+    "10"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21072522,
+   "res": "RES-14",
+   "old": "LOT-13",
+   "new": "LOT-16",
+   "how": "exact",
+   "correct": "LOT-16",
+   "award_lot_no": [
+    "13"
+   ],
+   "award_item": [
+    "14"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21072522,
+   "res": "RES-15",
+   "old": "LOT-14",
+   "new": "LOT-18",
+   "how": "exact",
+   "correct": "LOT-18",
+   "award_lot_no": [
+    "14"
+   ],
+   "award_item": [
+    "15"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21943329,
+   "res": "RES-1",
+   "old": "LOT-14",
+   "new": "LOT-2",
+   "how": "exact",
+   "correct": "LOT-2",
+   "award_lot_no": [
+    "14"
+   ],
+   "award_item": [
+    "1"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21943329,
+   "res": "RES-2",
+   "old": "LOT-12",
+   "new": "LOT-7",
+   "how": "exact",
+   "correct": "LOT-7",
+   "award_lot_no": [
+    "12"
+   ],
+   "award_item": [
+    "2"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21943329,
+   "res": "RES-3",
+   "old": "LOT-11",
+   "new": "LOT-9",
+   "how": "exact",
+   "correct": "LOT-9",
+   "award_lot_no": [
+    "11"
+   ],
+   "award_item": [
+    "3"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21943329,
+   "res": "RES-4",
+   "old": "LOT-2",
+   "new": "LOT-4",
+   "how": "exact",
+   "correct": "LOT-4",
+   "award_lot_no": [
+    "2"
+   ],
+   "award_item": [
+    "4"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 21943329,
+   "res": "RES-7",
+   "old": "LOT-10",
+   "new": "LOT-6",
+   "how": "exact",
+   "correct": "LOT-6",
+   "award_lot_no": [
+    "10"
+   ],
+   "award_item": [
+    "7"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23000792,
+   "res": "RES-6",
+   "old": "LOT-6",
+   "new": "LOT-7",
+   "how": "exact",
+   "correct": "LOT-7",
+   "award_lot_no": [
+    "6"
+   ],
+   "award_item": [
+    "6"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23000792,
+   "res": "RES-7",
+   "old": "LOT-5",
+   "new": "LOT-6",
+   "how": "exact",
+   "correct": "LOT-6",
+   "award_lot_no": [
+    "5"
+   ],
+   "award_item": [
+    "7"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-7",
+   "old": "LOT-15",
+   "new": "LOT-3",
+   "how": "exact",
+   "correct": "LOT-3",
+   "award_lot_no": [
+    "15"
+   ],
+   "award_item": [
+    "7"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-9",
+   "old": "LOT-21",
+   "new": "LOT-5",
+   "how": "exact",
+   "correct": "LOT-5",
+   "award_lot_no": [
+    "21"
+   ],
+   "award_item": [
+    "9"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-10",
+   "old": "LOT-12",
+   "new": "LOT-6",
+   "how": "exact",
+   "correct": "LOT-6",
+   "award_lot_no": [
+    "12"
+   ],
+   "award_item": [
+    "10"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-11",
+   "old": "LOT-17",
+   "new": "LOT-7",
+   "how": "exact",
+   "correct": "LOT-7",
+   "award_lot_no": [
+    "17"
+   ],
+   "award_item": [
+    "11"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-13",
+   "old": "LOT-13",
+   "new": "LOT-9",
+   "how": "exact",
+   "correct": "LOT-9",
+   "award_lot_no": [
+    "13"
+   ],
+   "award_item": [
+    "13"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-17",
+   "old": "LOT-1",
+   "new": "LOT-20",
+   "how": "exact",
+   "correct": "LOT-20",
+   "award_lot_no": [
+    "1"
+   ],
+   "award_item": [
+    "17"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-19",
+   "old": "LOT-14",
+   "new": "LOT-22",
+   "how": "exact",
+   "correct": "LOT-22",
+   "award_lot_no": [
+    "14"
+   ],
+   "award_item": [
+    "19"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-20",
+   "old": "LOT-21",
+   "new": "LOT-5",
+   "how": "exact",
+   "correct": "LOT-5",
+   "award_lot_no": [
+    "21"
+   ],
+   "award_item": [
+    "20"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-23",
+   "old": "LOT-10",
+   "new": "LOT-12",
+   "how": "exact",
+   "correct": "LOT-12",
+   "award_lot_no": [
+    "10"
+   ],
+   "award_item": [
+    "23"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-24",
+   "old": "LOT-15",
+   "new": "LOT-3",
+   "how": "exact",
+   "correct": "LOT-3",
+   "award_lot_no": [
+    "15"
+   ],
+   "award_item": [
+    "24"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-26",
+   "old": "LOT-15",
+   "new": "LOT-3",
+   "how": "exact",
+   "correct": "LOT-3",
+   "award_lot_no": [
+    "15"
+   ],
+   "award_item": [
+    "26"
+   ],
+   "kind": "fix",
+   "by_item": false
+  },
+  {
+   "notice_id": 23074890,
+   "res": "RES-31",
+   "old": "LOT-21",
+   "new": "LOT-5",
+   "how": "exact",
+   "correct": "LOT-5",
+   "award_lot_no": [
+    "21"
+   ],
+   "award_item": [
+    "31"
+   ],
+   "kind": "fix",
+   "by_item": false
+  }
+ ]
+}

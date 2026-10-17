@@ -7112,19 +7112,11 @@ fn read_legacy_results(
     }
 
     // Published lot number → the Lot section it labels: legacy links a result to
-    // its lot positionally by LOT_NO (research §2.2), not by a section id-ref.
-    let mut lot_by_no: HashMap<String, String> = HashMap::new();
-    for value in &parsed.values {
-        let is_lot = sections
-            .get(value.section_id.as_str())
-            .is_some_and(|s| LOT_KINDS.contains(&s.kind.as_str()));
-        if is_lot
-            && matches!(value.field_id.as_str(), "TED-LOT_NO" | "TED-LOT_NUMBER" | "TED-ITEM")
-            && let NoticeValue::Id { value: no, .. } = &value.value
-        {
-            lot_by_no.entry(no.trim().to_owned()).or_insert_with(|| value.section_id.clone());
-        }
-    }
+    // its lot by LOT_NO (research §2.2), not by a section id-ref. Issue 567: keyed by the
+    // published number only, and resolved once every value of the block is read, because the
+    // values arrive in the store's primary-key order, not document order ([`LegacyLotNumbers`]).
+    let lot_numbers = LegacyLotNumbers::read(parsed);
+    let mut lot_refs: HashMap<&str, Vec<(&str, &str)>> = HashMap::new();
 
     for value in &parsed.values {
         let Some(owner) = enclosing(sections, &value.section_id, RESULT_KINDS) else { continue };
@@ -7147,7 +7139,7 @@ fn read_legacy_results(
                 }
             }
             ("TED-LOT_NO" | "TED-LOT_NUMBER" | "TED-ITEM", NoticeValue::Id { value: no, .. }) => {
-                r.lot_key = lot_by_no.get(no.trim()).cloned();
+                lot_refs.entry(owner).or_default().push((value.field_id.as_str(), no.as_str()));
             }
             // The awarded value. R2.0.9 writes `VAL_TOTAL`; R2.0.8/defence forms
             // write the locale-formatted `VALUE_COST` (research §2.5) — take it
@@ -7196,6 +7188,9 @@ fn read_legacy_results(
             _ => {}
         }
     }
+    for r in &mut raw.lot_results {
+        r.lot_key = lot_refs.get(r.key.as_str()).and_then(|refs| lot_numbers.resolve(refs)).map(str::to_owned);
+    }
 
     // Decide from the evidence: a named winner or an awarded value is a win. A
     // result with NEITHER but with an award DATE stays NULL — the publisher
@@ -7231,6 +7226,148 @@ fn read_legacy_results(
         }
     }
     raw
+}
+
+/// Issue 567: a legacy notice's published lot numbers, read from its lot sections, and the lot an
+/// award block's own lot reference names.
+///
+/// The key is the number the publisher printed on the lot (`TED-LOT_NO`, `TED-LOT_NUMBER`), never
+/// the walker's `TED-ITEM` ordinal, which every section carries: before 567 both went into one
+/// first-wins map, so a section's ordinal could claim another section's number (501322-2018: LOT-1
+/// is LOT_NO 4 and LOT-4 is LOT_NO 1, and lot 1's award landed on LOT-1). The ordinal keys the map
+/// only in a notice where no lot section publishes a number. A number two lot sections publish is
+/// ambiguous and names neither.
+///
+/// Nothing here depends on value order. The projection reads a notice's values in the store's
+/// primary-key order, where section ids compare as text (`LOT-10` before `LOT-9`): that order,
+/// not document order, is what put 305919-2017's lot-10 award on LOT-10 (its LOT_NO is 11).
+struct LegacyLotNumbers<'a> {
+    /// An award block that names no number may be placed by its own `TED-ITEM` ordinal: in a
+    /// notice whose lot sections publish no number (the ordinals are the key), or in one where
+    /// every lot section's number is its ordinal, so the ordinal cannot name another lot.
+    ordinal_is_key: bool,
+    /// Published key (trimmed) → the lot sections publishing it.
+    exact: HashMap<&'a str, BTreeSet<&'a str>>,
+    /// The same keys in [`normalise_lot_number`] form, consulted only when no key matches exactly.
+    normalised: HashMap<String, BTreeSet<&'a str>>,
+}
+
+impl<'a> LegacyLotNumbers<'a> {
+    fn read(parsed: &'a Parsed) -> Self {
+        let lots: BTreeSet<&str> = parsed
+            .sections
+            .iter()
+            .filter(|s| LOT_KINDS.contains(&s.kind.as_str()))
+            .map(|s| s.id.as_str())
+            .collect();
+        let (mut numbers, mut ordinals) = (Vec::new(), Vec::new());
+        for value in &parsed.values {
+            if !lots.contains(value.section_id.as_str()) {
+                continue;
+            }
+            let NoticeValue::Id { value: published, .. } = &value.value else { continue };
+            let published = published.trim();
+            if published.is_empty() {
+                continue;
+            }
+            match value.field_id.as_str() {
+                "TED-LOT_NO" | "TED-LOT_NUMBER" => numbers.push((value.section_id.as_str(), published)),
+                "TED-ITEM" => ordinals.push((value.section_id.as_str(), published)),
+                _ => {}
+            }
+        }
+        let by_ordinal = numbers.is_empty();
+        let ordinal_is_key = by_ordinal || {
+            let normalised_by_lot = |keys: &[(&'a str, &'a str)]| {
+                let mut by_lot: BTreeMap<&str, BTreeSet<Option<String>>> = BTreeMap::new();
+                for &(lot, key) in keys {
+                    by_lot.entry(lot).or_default().insert(normalise_lot_number(key));
+                }
+                by_lot
+            };
+            let (numbered, ordered) = (normalised_by_lot(&numbers), normalised_by_lot(&ordinals));
+            lots.iter().all(|lot| match (numbered.get(lot), ordered.get(lot)) {
+                (Some(number), Some(ordinal)) => number == ordinal && ordinal.len() == 1 && !ordinal.contains(&None),
+                _ => false,
+            })
+        };
+        let mut exact: HashMap<&str, BTreeSet<&str>> = HashMap::new();
+        let mut normalised: HashMap<String, BTreeSet<&str>> = HashMap::new();
+        for (lot, key) in if by_ordinal { ordinals } else { numbers } {
+            exact.entry(key).or_default().insert(lot);
+            if let Some(key) = normalise_lot_number(key) {
+                normalised.entry(key).or_default().insert(lot);
+            }
+        }
+        LegacyLotNumbers { ordinal_is_key, exact, normalised }
+    }
+
+    /// The lot an award block's own references `(field, value)` name: its `TED-LOT_NO`, else its
+    /// `TED-LOT_NUMBER`, else its `TED-ITEM` where the ordinal is a key. Every value of that field
+    /// must name the same lot; a value that names none, or two values that disagree, leave the
+    /// block on no lot (the Tender), never on a guess.
+    fn resolve(&self, refs: &[(&str, &str)]) -> Option<&'a str> {
+        let field = ["TED-LOT_NO", "TED-LOT_NUMBER", "TED-ITEM"]
+            .into_iter()
+            .find(|field| refs.iter().any(|(f, _)| f == field))?;
+        if field == "TED-ITEM" && !self.ordinal_is_key {
+            return None;
+        }
+        let mut named = None;
+        for (_, published) in refs.iter().filter(|(f, _)| *f == field) {
+            let lot = self.lookup(published)?;
+            if named.is_some_and(|named| named != lot) {
+                return None;
+            }
+            named = Some(lot);
+        }
+        named
+    }
+
+    /// One published reference's lot: the exact key first, and only where no lot publishes it
+    /// exactly, the normalised key. Either must name one lot section.
+    fn lookup(&self, published: &str) -> Option<&'a str> {
+        let only = |lots: &BTreeSet<&'a str>| match (lots.first(), lots.len()) {
+            (Some(lot), 1) => Some(*lot),
+            _ => None,
+        };
+        let published = published.trim();
+        if let Some(lots) = self.exact.get(published) {
+            return only(lots);
+        }
+        only(self.normalised.get(&normalise_lot_number(published)?)?)
+    }
+}
+
+/// Issue 567: a published lot number in comparable form: trimmed and lower-cased, a leading
+/// `Lot`/`Los`/`Lote`/`Lotto` word dropped (and a `nr`/`no`/`n°` after it), and leading zeros
+/// dropped from a number, so `Lot 01`, `Lot nr. 1` and `1` compare equal. None when nothing is
+/// left.
+fn normalise_lot_number(published: &str) -> Option<String> {
+    const SEPARATORS: &[char] = &[' ', '.', ':', '-', '#', '°', 'º'];
+    let lower = published.trim().to_lowercase();
+    let mut rest = lower.as_str();
+    for word in ["lotto", "lote", "lot", "los"] {
+        if let Some(after) = rest.strip_prefix(word)
+            && !after.starts_with(char::is_alphabetic)
+        {
+            rest = after.trim_start_matches(SEPARATORS);
+            for mark in ["nr", "no", "n"] {
+                if let Some(after) = rest.strip_prefix(mark)
+                    && !after.starts_with(char::is_alphabetic)
+                {
+                    rest = after.trim_start_matches(SEPARATORS);
+                    break;
+                }
+            }
+            break;
+        }
+    }
+    let mut rest = rest.trim();
+    while rest.len() > 1 && rest.starts_with('0') && rest[1..].starts_with(|c: char| c.is_ascii_digit()) {
+        rest = &rest[1..];
+    }
+    (!rest.is_empty()).then(|| rest.to_owned())
 }
 
 /// DÖE sdk-0.1 results (issue 29): each `TenderResult` section is a LotResult
@@ -17983,6 +18120,234 @@ mod tests {
         };
         let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
         assert_eq!(read_results(&sections, &parsed, true, false, &BTreeMap::new()).lot_results[0].decision, None);
+    }
+
+    // ---- Issue 567: a legacy award block resolves to the lot its own LOT_NO names ----
+
+    /// A legacy notice as the r209 walker parses one: `lots` are the lot sections in document order
+    /// (`LOT-1`, `LOT-2`, …), each its `TED-ITEM` ordinal and published `TED-LOT_NO` (if any);
+    /// `awards` are the award blocks (`RES-1`, …), each its own `(field, value)` lot references. The
+    /// values are sorted the way the store returns them, by primary key (section id as text, then
+    /// field id), which is the order the projection reads: `LOT-10` comes before `LOT-9`.
+    fn legacy_lot_notice(lots: &[(&str, Option<&str>)], awards: &[&[(&str, &str)]]) -> Parsed {
+        let section = |id: String, kind: &str| store::Section {
+            id,
+            kind: kind.into(),
+            parent: Some("PROCEDURE".into()),
+        };
+        let id = |section: &str, field: &str, value: &str| store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Id { scheme: None, value: value.into(), is_ref: false },
+        };
+        let mut parsed = Parsed {
+            sections: vec![store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None }],
+            values: Vec::new(),
+        };
+        for (k, (item, lot_no)) in lots.iter().enumerate() {
+            let lot = format!("LOT-{}", k + 1);
+            parsed.values.push(id(&lot, "TED-ITEM", item));
+            if let Some(lot_no) = lot_no {
+                parsed.values.push(id(&lot, "TED-LOT_NO", lot_no));
+            }
+            parsed.sections.push(section(lot, "Lot"));
+        }
+        for (k, refs) in awards.iter().enumerate() {
+            let res = format!("RES-{}", k + 1);
+            for (field, value) in *refs {
+                parsed.values.push(id(&res, field, value));
+            }
+            parsed.sections.push(section(res, "LotResult"));
+        }
+        parsed.values.sort_by(|a, b| {
+            (&a.section_id, &a.field_id, a.ordinal).cmp(&(&b.section_id, &b.field_id, b.ordinal))
+        });
+        parsed
+    }
+
+    /// Each award block's lot, `RES-1` first. Read in the store's order, in reverse and in document
+    /// order (sections numerically, `TED-ITEM` first as the walker emits it), which must all agree.
+    fn legacy_award_lots(parsed: &Parsed) -> Vec<Option<String>> {
+        let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+        let read = |values: Vec<store::ValueRow>| {
+            let parsed = Parsed { sections: parsed.sections.clone(), values };
+            let raw = read_results(&sections, &parsed, true, false, &BTreeMap::new());
+            (1..=raw.lot_results.len())
+                .map(|k| {
+                    let key = format!("RES-{k}");
+                    raw.lot_results.iter().find(|r| r.key == key).expect("an award block").lot_key.clone()
+                })
+                .collect::<Vec<_>>()
+        };
+        let stored = read(parsed.values.clone());
+        let mut reversed = parsed.values.clone();
+        reversed.reverse();
+        assert_eq!(read(reversed), stored, "reversed value order");
+        let mut document = parsed.values.clone();
+        document.sort_by_key(|v| {
+            let (prefix, n) = v.section_id.split_once('-').unwrap_or((&v.section_id, "0"));
+            (prefix.to_owned(), n.parse::<u32>().unwrap_or(0), v.field_id != "TED-ITEM", v.field_id.clone())
+        });
+        assert_eq!(read(document), stored, "document value order");
+        stored
+    }
+
+    fn on_lot(k: usize) -> Option<String> {
+        Some(format!("LOT-{k}"))
+    }
+
+    /// The issue's own example: lot sections published in reverse (section 1 = lot 2, section 2 =
+    /// lot 1). Before 567 both awards resolved to LOT-1: its ITEM "1" claimed the key "1" ahead of
+    /// LOT-2's LOT_NO, and lot 1's winner and value landed on lot 2.
+    #[test]
+    fn a_reverse_numbered_legacy_notice_puts_each_award_on_its_own_lot() {
+        let parsed = legacy_lot_notice(
+            &[("1", Some("2")), ("2", Some("1"))],
+            &[&[("TED-ITEM", "1"), ("TED-LOT_NO", "1")], &[("TED-ITEM", "2"), ("TED-LOT_NO", "2")]],
+        );
+        assert_eq!(legacy_award_lots(&parsed), vec![on_lot(2), on_lot(1)]);
+    }
+
+    /// 501322-2018 (notice 20128178), its parsed values as `/v1/notices/20128178/content` serves
+    /// them: LOT-1 publishes LOT_NO 4 ("Wiley Journal Backfiles") and LOT-4 LOT_NO 1 ("Science
+    /// Direct Backfiles"). RES-2 (LOT_NO 1, "Science Direct Backfiles", E-Nformation, RON
+    /// 14,502,000) was served on LOT-1 beside RES-5, and LOT-4 had no result.
+    #[test]
+    fn a_swapped_lot_pair_resolves_by_the_published_number_501322_2018() {
+        let parsed = legacy_lot_notice(
+            &[("1", Some("4")), ("2", Some("2")), ("3", Some("3")), ("4", Some("1")), ("5", Some("5"))],
+            &[
+                &[("TED-ITEM", "1"), ("TED-LOT_NO", "3")],
+                &[("TED-ITEM", "2"), ("TED-LOT_NO", "1")],
+                &[("TED-ITEM", "3"), ("TED-LOT_NO", "5")],
+                &[("TED-ITEM", "4"), ("TED-LOT_NO", "2")],
+                &[("TED-ITEM", "5"), ("TED-LOT_NO", "4")],
+            ],
+        );
+        assert_eq!(legacy_award_lots(&parsed), vec![on_lot(3), on_lot(4), on_lot(5), on_lot(2), on_lot(1)]);
+    }
+
+    /// 305919-2017 (notice 19411290): the publisher skipped lot 6, so LOT-6..LOT-13 carry LOT_NO =
+    /// ITEM + 1, and 13 sections put `LOT-10` before `LOT-9` in the store's order. LOT-10's ITEM
+    /// "10" used to claim the key "10" before LOT-9's LOT_NO 10, so RES-9 ("Revêtements de sols
+    /// souples", Renard Jacques, EUR 11,875.46) was served on LOT-10 ("Plomberie"). Every award
+    /// block here carries its section's ITEM and LOT_NO, as published.
+    #[test]
+    fn a_skipped_lot_number_resolves_by_the_published_number_305919_2017() {
+        let numbers: Vec<(String, String)> =
+            (1..=13).map(|k: usize| (k.to_string(), (if k < 6 { k } else { k + 1 }).to_string())).collect();
+        let lots: Vec<(&str, Option<&str>)> =
+            numbers.iter().map(|(item, no)| (item.as_str(), Some(no.as_str()))).collect();
+        let awards: Vec<[(&str, &str); 2]> =
+            numbers.iter().map(|(item, no)| [("TED-ITEM", item.as_str()), ("TED-LOT_NO", no.as_str())]).collect();
+        let awards: Vec<&[(&str, &str)]> = awards.iter().map(|a| &a[..]).collect();
+        let parsed = legacy_lot_notice(&lots, &awards);
+        let stored: Vec<&str> = parsed.values.iter().map(|v| v.section_id.as_str()).collect();
+        let (ten, nine) = (stored.iter().position(|s| *s == "LOT-10"), stored.iter().position(|s| *s == "LOT-9"));
+        assert!(ten < nine, "premise: the store's order reads LOT-10 before LOT-9");
+        assert_eq!(legacy_award_lots(&parsed), (1..=13).map(on_lot).collect::<Vec<_>>());
+    }
+
+    /// 258495-2019 (notice 20451472): the numbering is rotated (LOT-1..LOT-5 publish 3, 4, 5, 1, 2)
+    /// and four lots are awarded. RES-3 (LOT_NO 1, "Carne proaspătă porc și vită") was served on
+    /// LOT-1 ("Cârnați", LOT_NO 3), which then carried RES-3 and RES-4.
+    #[test]
+    fn a_rotated_numbering_resolves_by_the_published_number_258495_2019() {
+        let parsed = legacy_lot_notice(
+            &[("1", Some("3")), ("2", Some("4")), ("3", Some("5")), ("4", Some("1")), ("5", Some("2"))],
+            &[
+                &[("TED-ITEM", "1"), ("TED-LOT_NO", "4")],
+                &[("TED-ITEM", "2"), ("TED-LOT_NO", "5")],
+                &[("TED-ITEM", "3"), ("TED-LOT_NO", "1")],
+                &[("TED-ITEM", "4"), ("TED-LOT_NO", "3")],
+            ],
+        );
+        assert_eq!(legacy_award_lots(&parsed), vec![on_lot(2), on_lot(3), on_lot(4), on_lot(1)]);
+    }
+
+    /// A notice whose lot sections publish no LOT_NO keeps the ordinal mapping it had: the ITEMs
+    /// are the key, an award block's ITEM finds its section, and an award LOT_NO is looked up
+    /// against those ordinals (what the old last-value-wins read did, LOT_NO sorting after ITEM).
+    #[test]
+    fn an_item_only_legacy_notice_keeps_its_ordinal_mapping() {
+        let parsed = legacy_lot_notice(
+            &[("1", None), ("2", None), ("3", None)],
+            &[&[("TED-ITEM", "1")], &[("TED-ITEM", "2"), ("TED-LOT_NO", "3")], &[("TED-ITEM", "3"), ("TED-LOT_NO", "9")]],
+        );
+        assert_eq!(legacy_award_lots(&parsed), vec![on_lot(1), on_lot(3), None], "LOT_NO 9 names no lot: no guess");
+        // R2.0.8: award forms carry no lot section at all, so nothing resolves (as before).
+        let parsed = legacy_lot_notice(&[], &[&[("TED-ITEM", "1")], &[("TED-ITEM", "2"), ("TED-LOT_NO", "2")]]);
+        assert_eq!(legacy_award_lots(&parsed), vec![None, None]);
+    }
+
+    /// A number two lot sections publish names neither: the award that cites it stays on the
+    /// Tender. The other numbers still resolve.
+    #[test]
+    fn a_lot_number_published_twice_is_ambiguous() {
+        let parsed = legacy_lot_notice(
+            &[("1", Some("1")), ("2", Some("1")), ("3", Some("2"))],
+            &[&[("TED-ITEM", "1"), ("TED-LOT_NO", "1")], &[("TED-ITEM", "2"), ("TED-LOT_NO", "2")]],
+        );
+        assert_eq!(legacy_award_lots(&parsed), vec![None, on_lot(3)]);
+    }
+
+    /// Only where no lot publishes the award's number exactly does the normalised form decide, and
+    /// only when it names one lot: `Lot 01` matches an award's `1`, `Los 2` matches `Lot 02`, and
+    /// `001` against both `1` and `01` names two lots and resolves to none.
+    #[test]
+    fn a_lot_number_matches_its_normalised_spelling_when_unique() {
+        let parsed = legacy_lot_notice(
+            &[("1", Some("Lot 01")), ("2", Some("Lot 02"))],
+            &[&[("TED-ITEM", "1"), ("TED-LOT_NO", "1")], &[("TED-ITEM", "2"), ("TED-LOT_NO", "Los 2")]],
+        );
+        assert_eq!(legacy_award_lots(&parsed), vec![on_lot(1), on_lot(2)]);
+        let parsed = legacy_lot_notice(
+            &[("1", Some("1")), ("2", Some("01"))],
+            &[&[("TED-LOT_NO", "1")], &[("TED-LOT_NO", "01")], &[("TED-LOT_NO", "001")]],
+        );
+        assert_eq!(legacy_award_lots(&parsed), vec![on_lot(1), on_lot(2), None], "exact first; 001 is ambiguous");
+        for (published, normalised) in [
+            ("1", Some("1")),
+            ("  007 ", Some("7")),
+            ("0", Some("0")),
+            ("Lot 01", Some("1")),
+            ("LOT nr. 3", Some("3")),
+            ("Lot n° 4", Some("4")),
+            ("Los 2", Some("2")),
+            ("Lote 5", Some("5")),
+            ("Lotto n. 6", Some("6")),
+            ("Lot A", Some("a")),
+            ("Lots 2", Some("lots 2")),
+            ("Lot", None),
+            ("", None),
+        ] {
+            assert_eq!(normalise_lot_number(published).as_deref(), normalised, "{published:?}");
+        }
+    }
+
+    /// Regression pin: a well-numbered notice (every LOT_NO is its ITEM) maps exactly as before,
+    /// twelve sections so the store's order is not document order. An award block that names no
+    /// number is still placed by its ordinal there, as it was (21414166's five laptops); in a
+    /// notice whose numbers are not its ordinals the same block names no lot.
+    #[test]
+    fn a_well_numbered_legacy_notice_maps_as_before() {
+        let numbers: Vec<String> = (1..=12).map(|k: usize| k.to_string()).collect();
+        let lots: Vec<(&str, Option<&str>)> = numbers.iter().map(|n| (n.as_str(), Some(n.as_str()))).collect();
+        let awards: Vec<[(&str, &str); 2]> =
+            numbers.iter().map(|n| [("TED-ITEM", n.as_str()), ("TED-LOT_NO", n.as_str())]).collect();
+        let awards: Vec<&[(&str, &str)]> = awards.iter().map(|a| &a[..]).collect();
+        assert_eq!(legacy_award_lots(&legacy_lot_notice(&lots, &awards)), (1..=12).map(on_lot).collect::<Vec<_>>());
+
+        let unnumbered: Vec<[(&str, &str); 1]> = numbers.iter().map(|n| [("TED-ITEM", n.as_str())]).collect();
+        let unnumbered: Vec<&[(&str, &str)]> = unnumbered.iter().map(|a| &a[..]).collect();
+        assert_eq!(
+            legacy_award_lots(&legacy_lot_notice(&lots, &unnumbered)),
+            (1..=12).map(on_lot).collect::<Vec<_>>(),
+            "ordinal == number: the ordinal names the lot"
+        );
+        let parsed = legacy_lot_notice(&[("1", Some("2")), ("2", Some("1"))], &[&[("TED-ITEM", "1")], &[("TED-ITEM", "2")]]);
+        assert_eq!(legacy_award_lots(&parsed), vec![None, None], "ordinal != number: no guess");
     }
 
     // ---- Issue 514 unit 2: the GB register-spelling rewrite (decision §6) ----
