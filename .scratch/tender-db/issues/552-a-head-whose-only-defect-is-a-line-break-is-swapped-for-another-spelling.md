@@ -1,6 +1,6 @@
 # 552 — a head whose only defect is a line break is swapped for another spelling instead of being served collapsed
 
-Status: ready-for-agent — unit 3 (rule v12) DEPLOYED 2026-10-17 as `3475272`; plan 2569 passed the GO bullet; the v12 re-judge FAILED its bar (2 wrong of 54 passed releases: 4040 a revert, 22678568 a brand short form), so the filters stay on every wet run (`exclude_rules:["R2","R0w"]`, `exclude_released:["unfit"]`). Unit 4 (below, decided before the second reading's results): plan 2569's judged census ships by explicit `org_ids` only where every reading says right, one wet job per class. NEXT: the blind second reading, then the three class jobs and their checks, then unit 5 (the two wrongs' shapes; 22678568's hold lapses ~2027-07-10).
+Status: ready-for-agent — unit 3 (rule v12) DEPLOYED 2026-10-17 (`3475272`); the v12 re-judge FAILED its bar (2/54), so the filters stay on every rule-driven wet run; unit 4's census ship is DONE: jobs 2570 (R0w 4), 2571 (49), 2572 (22), 0 drifted, dated spot check 55 right / 1 neutral / 0 wrong, Verify reads done (22289866, 22661109, 23474998 serve the collapse; 22737299 its own head). NEXT: unit 5 — the two wrongs' shapes (4040: a release electing a former name while a fresher rival exists; 22678568: a brand short form over a complete head) before 22678568's head_current hold lapses ~2027-07-10; docs/operations.md re-base after 551 lands.
 check wf_0744b445-0ee (5 blocking findings, all taken; below). Next: unit 3, built as a 524 epoch after rule v11 has
 rolled out (v11's wet runs keep `exclude_released: ["unfit"]` until this ships).
 Kind: data quality (served organization names; issue 524's head election)
@@ -288,3 +288,11 @@ sound on conditions, all adopted:
    wrongs stay held only while their holds last — 22678568's head was printed only on 2024-07-10, so its
    `head_current` hold lapses about 2027-07-10 and `MZP-Ingenieure` becomes a plain R1 change no v12 filter drops;
    4040 about 2029-07.
+
+**Unit 4 — done (2026-10-17).** The blind second reading (wf_f02eaa69-6f2 16 ids, wf_245f67ad-624 61 ids) read 75
+right, 2 neutral (22307905, 22496731), 0 wrong: the stop did not fire. 75 ids shipped as jobs 2570 (R0w 4), 2571
+(control-only 49) and 2572 (other unfit 22), each on plan 2569 (`plan_computed_at` 1792191802) with 0 drifted, gone,
+raced or excluded, `window_error` null; every served name equals the plan's `new_name`; the dated read of the applied
+samples (wf_6a7d39fc-24f) found 55 right, 1 neutral (22693690), 0 wrong, 0 reverts: no class job reverted. Evidence:
+`.scratch/tender-db/524-v12/rejudge-2569/` (`blind2_result.json`, `spot_2570_2572_result.json`).
+

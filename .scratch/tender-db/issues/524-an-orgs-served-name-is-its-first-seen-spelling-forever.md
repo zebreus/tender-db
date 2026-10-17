@@ -1,6 +1,6 @@
 # 524 — an org's served name is its first-seen spelling forever, so merges and drops leave a wrong or junk head
 
-Status: ready-for-agent — RULE v11 DONE on prod 2026-10-16: 16,002 heads renamed (canaries 2565: 8; capped 2567: 500; full 2568: 15,494), every dated spot check passed (2568: 28 right / 2 neutral / 0 wrong / 0 reverts). NEXT: deploy main (rule v12, issue 552, gated `da95dd4`) and run v12's protocol (docs/operations.md). Open follow-ups: 548 (top_stale over-blocks 9/20), 552 (v12), 473 (junk identifiers such as 2272301's).
+Status: ready-for-agent — RULE v12 DEPLOYED 2026-10-17 (`3475272`) and its plan 2569 applied by census (issue 552 unit 4): the v12 re-judge FAILED its pre-committed bar (2 wrong of 54), so every rule-driven wet run keeps `"exclude_rules":["R2","R0w"],"exclude_released":["unfit"]`; the item-by-item judged census shipped by explicit ids where every reading said right — jobs 2570 (R0w 4), 2571 (control-only releases 49), 2572 (other unfit releases 22), 0 drifted, 0 raced, dated spot check 55 right / 1 neutral / 0 wrong / 0 reverts. Rule v11 before it: 16,002 heads renamed (2565/2567/2568). NEXT: docs/operations.md re-base of step 2's v12 expectations and step 3's FAILED record (after 551's uncommitted build lands — it edits operations.md); unit 2c (the weekly upkeep) must inherit the v12 filters. Open follow-ups: 548 (top_stale over-blocks 9/20), 552 unit 5 (the two wrongs; 22678568's hold lapses ~2027-07-10), 473 (junk identifiers such as 2272301's).
 Was: needs-triage — filed 2026-10-12 from the hourly audit after 514's rollout and 511's drain.
 Kind: data quality (served organization names)
 Relates to:
@@ -1906,3 +1906,30 @@ plan's samples, so 30 of the 30 were already read in step 3's gates, all right o
 
 **Rule v11 is rolled out.** Every gate and spot check passed. Undo stays available per job
 (`revert-org-name-refresh` with job 2565, 2567 or 2568).
+
+## Rule v12 — applied by census (2026-10-17)
+
+Deployed `3475272` (gate marker `da95dd4`, 2026-10-16 23:00 UTC). Dry plan 2569 (as_of 2026-10-16, 131 s) passed step
+2's v12 GO bullet exactly: R0w 4, R1 77 (every one an `unfit` release), `release_withheld.lines` 21, holds unchanged
+but `head_current` +21, 59/60 canaries as expected, `undated` 0. With v12's filters its wet scope is empty. Step 3's
+v12 re-judge (all 81 changes, dated, wf_a5e2383f-61d) FAILED the bar: 2 wrong among the 54 guard-passed control-only
+releases (4040 a revert; 22678568 a brand short form). Issue 552 unit 4 records the amendment, decided and pushed
+(`5ad6724`) before the blind second reading's results: the judged census ships by explicit `org_ids` where every
+reading (today's, a blind dated second reading of all 76 candidates, plan 2543's) says right, one wet job per class,
+`"exclude_rules":["R2"]`:
+
+| job | class | ids | ready | drifted / gone / raced | served = plan | dated spot check |
+|---|---|---|---|---|---|---|
+| 2570 | R0w (the head collapsed) | 4 | 4 | 0 / 0 / 0 | 4/4 | 4 better |
+| 2571 | control-only `unfit` releases | 49 | 49 | 0 / 0 / 0 | 49/49 | 29 right, 1 neutral (of 30) |
+| 2572 | other `unfit` releases | 22 | 22 | 0 / 0 / 0 | 22/22 | 22 right |
+
+Dropped (not shipped, still held or planned): 4040 and 22678568 (wrong), 23038177, 22307905, 22496731 and 7899 (a
+neutral in some reading). `/v1/changes` carries exactly 75 `organization changed` rows for the three jobs. Undo per
+class: `{"kind":"revert-org-name-refresh","job":2570|2571|2572}`. Evidence: `.scratch/tender-db/524-v12/`
+(`census_ship_ids.json` sha256 88e35552…, `rejudge-2569/`).
+
+Standing consequence: every later rule-driven wet run (and unit 2c's weekly run when built) passes
+`"exclude_rules":["R2","R0w"],"exclude_released":["unfit"]`; the next plan reads about 0 R0w, `recent_released.unfit`
+about 2 plus new ones, and holds up by about 4 (the collapsed R0w heads, now fit, held by recent/residue/head_current).
+
