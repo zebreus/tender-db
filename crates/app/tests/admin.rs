@@ -113,7 +113,11 @@ impl Harness {
     async fn drain(&self, min_runs: usize) -> Value {
         for _ in 0..200 {
             let state: Value = self.get(Some(SECRET)).await.json().await.unwrap();
-            let idle = state["current"].is_null();
+            // Idle means nothing running AND nothing queued: a job enqueued a moment ago
+            // sits queued with `current` still null, and a count already met by earlier
+            // runs would return before it ran (the wet nhs-body check read the dry run's
+            // row in the 564 gate, 2026-10-17).
+            let idle = state["current"].is_null() && state["queued"].as_array().is_some_and(Vec::is_empty);
             let runs = state["recent"].as_array().map(Vec::len).unwrap_or(0);
             if idle && runs >= min_runs {
                 return state;
@@ -287,7 +291,7 @@ async fn admin_api_drives_ingestion_end_to_end() {
     assert_eq!((census["dry_run"].clone(), census["codes"].clone()), (json!(true), json!([])), "{census}");
     let wet = h.enqueue(Some(SECRET), json!({"kind":"match-org-identifiers","rule":"nhs-body","dry_run":false})).await;
     assert_eq!(wet.status().as_u16(), 202, "the nhs-body wet path is U4's, and it is built");
-    let state = h.drain(3).await;
+    let state = h.drain(4).await;
     let wet_row = &state["recent"][0];
     assert_eq!(wet_row["outcome"], "error", "{wet_row}");
     let counts = wet_row["counts"].as_str().unwrap();
