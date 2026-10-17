@@ -842,7 +842,7 @@
       "name_prefix": {
         "name": "name_prefix",
         "in": "query",
-        "description": "Case-insensitive organization name prefix (Unicode-aware, so umlauts match either case). Returns matches in name order with a keyset cursor; combine with country/kind to narrow. /v1/organizations only; must not be empty.",
+        "description": "Case-insensitive organization name prefix (Unicode-aware, so umlauts match either case). Returns matches in name order with a keyset cursor; combine with country/kind to narrow. It matches the organization's served name only: after a head refresh renames an organization, its former spelling no longer matches it. /v1/organizations only; must not be empty.",
         "schema": { "type": "string", "minLength": 1 }
       },
       "identifier": {

@@ -181,7 +181,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
   <tr><td class="ep">tender</td><td>Restrict Lots to one Tender id; on <code>/v1/notices</code>, list the Notices that caused that Tender's versions.</td></tr>
   <tr><td class="ep">publication_id</td><td>The official notice number a source prints on its notices. A TED number is found in any of its spellings &mdash; TED's own unpadded one, the 6 or 8 digits the archive stores, the OJ S form &mdash; on TED notices only; another source's number (FTS, DÖE) matches as that source stores it. On <code>/v1/notices</code> the notice itself; on <code>/v1/tenders</code> the tender it caused. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep">identifier</td><td>An Organization's official identifier <em>value</em> (e.g. a VAT number); pair with <code>kind</code> for the scheme. See <a href="#lookups">lookups</a>.</td></tr>
-  <tr><td class="ep">name_prefix</td><td>Organization-name prefix, Unicode case-insensitive (<code>mü</code> matches <code>MÜLLER</code>); switches the list to name order. Must not be empty. See <a href="#lookups">lookups</a>.</td></tr>
+  <tr><td class="ep">name_prefix</td><td>Organization-name prefix, Unicode case-insensitive (<code>mü</code> matches <code>MÜLLER</code>); switches the list to name order. It matches the organization's served name only: after a head refresh renames an organization, its former spelling no longer matches it. Must not be empty. See <a href="#lookups">lookups</a>.</td></tr>
   <tr><td class="ep"><code>published_after</code><br><code>published_before</code></td><td>Bound Tenders by their current version's publication time. Unix seconds, RFC 3339, a bare date (midnight UTC) or the literal <code>now</code>; <code>now</code> is accepted on pages only: an event stream refuses it with <code>400</code> (see <a href="#sse">Live feed</a>). A single bound implies <code>sort=published_at</code> (pages only; a stream snapshots in id order). See <a href="#ordering">ordering</a>.</td></tr>
   <tr><td class="ep"><code>deadline_after</code><br><code>deadline_before</code></td><td>Bound Tenders by submission deadline (rows without one never match). Same formats as the published pair; <code>now</code> is accepted on pages only: an event stream refuses it with <code>400</code> (see <a href="#sse">Live feed</a>). A single bound implies <code>sort=deadline</code> (pages only; a stream snapshots in id order).</td></tr>
   <tr><td class="ep">sort</td><td>Tenders only: <code>id</code> (default), <code>published_at</code> or <code>deadline</code>. See <a href="#ordering">ordering</a>.</td></tr>
@@ -282,7 +282,7 @@ a company name — resolve directly, without knowing any internal id:</p>
 <ul>
   <li><code>publication_id</code> takes a TED number as TED prints it, unpadded (<code>79997-2017</code>), at the 6 or 8 digits the archive stores (<code>079997-2017</code>, <code>00079997-2017</code>), or in the OJ S form (<code>2017/S 044-079997</code>); surrounding whitespace is ignored. The stored width follows the notice's format, not its year — unpadded in the 1993–2010 text era, 6 digits in the XML era (2011–2024), 8 in eForms (2022 on) — and a TED number is one notice per year whichever width you send. Those widths answer TED notices only. Other sources match their own number exactly: a UK Find a Tender (FTS) number is its 6-digit release id, <code>083685-2026</code> (also asked as <code>2026/S 000-083685</code>: issue 000 is no TED issue, so that form looks up the FTS spelling only), and a DÖE number is <code>&lt;uuid or number&gt;-&lt;version&gt;</code>, version suffix included. FTS numbers from 2021 on coincide with TED's 6-digit ones, so <code>083685-2026</code> answers FTS's notice and TED's <code>00083685-2026</code> alike — pair with <code>source=</code>. When the page matched a stored spelling other than the one sent, it names it in <code>"resolved_filters": {"publication_id": {"asked": "79997-2017", "matched": ["079997-2017"]}}</code>. An unknown number is an empty page, not a <code>404</code>. The same number on <code>/v1/tenders</code> resolves the <em>tender</em> it caused — through any of its versions, so a corrigendum's number still finds the procedure. From the notice, <code>/v1/notices/{id}/content</code> gives its parsed payload and a tender detail's <code>versions[].caused_by_notice_id</code> links back the other way.</li>
   <li><code>identifier</code> matches the official identifier <em>value</em>; <code>kind</code> names its scheme. This is the front door to participation history: resolve the identifier to a canonical org id, then ask <code>/v1/tenders?buyer=</code>, <code>?winner=</code> or <code>?bidder=</code> with it. An identifier can resolve to MORE THAN ONE canonical org — the identity index is deliberately not unique, and a shared VAT (an Organschaft) or an unfolded duplicate both occur — so take every id the lookup returns rather than the first (issue 329). It also finds an identifier a merge folded into an organization — a PPON whose organization was merged into the company-number one, another spelling of one register key: the survivor lists those in <code>merged_identifiers</code>, and a page that reached an organization that way says so in <code>"resolved_filters": {"identifier": {"asked": "GBPPONPWYP8439MZWY", "merged_into": [5718658]}}</code> (an array, for the same reason). With <code>kind</code>, the kind of the identifier that matched is what must agree. The value is matched as stored (normalised: upper-case letters and digits, no separators), so <code>GB-PPON-PWYP-8439-MZWY</code> is asked as <code>GBPPONPWYP8439MZWY</code>.</li>
-  <li><code>name_prefix</code> is a prefix match on the organization's name, case-insensitive across the whole of Unicode (<code>müller</code>, <code>MÜLLER</code> and <code>Müller</code> all match); runs of whitespace and a trailing <code>.</code>, <code>,</code> or <code>;</code> do not matter (<code>ACME Ltd.</code> finds <code>ACME Ltd</code>), with one exception: an organization keyed before issue 432 while it had an identifier, and never renamed since (a reverted rename restores that key), keeps its plain lower-cased name as its key, so a prefix that crosses whitespace other than one plain space in its name (a doubled space, a tab, a no-break space) does not reach it (a shorter prefix does). It switches the response to <strong>name order</strong> (id order otherwise breaks name-ordered pagination). It composes with <code>country=</code>/<code>kind=</code>; an empty prefix is <code>400</code>.</li>
+  <li><code>name_prefix</code> is a prefix match on the organization's name, case-insensitive across the whole of Unicode (<code>müller</code>, <code>MÜLLER</code> and <code>Müller</code> all match); runs of whitespace and a trailing <code>.</code>, <code>,</code> or <code>;</code> do not matter (<code>ACME Ltd.</code> finds <code>ACME Ltd</code>), with one exception: an organization keyed before issue 432 while it had an identifier, and never renamed since (a reverted rename restores that key), keeps its plain lower-cased name as its key, so a prefix that crosses whitespace other than one plain space in its name (a doubled space, a tab, a no-break space) does not reach it (a shorter prefix does). It matches the organization's served <code>name</code> only: after a head refresh renames an organization (issue 524), its former spelling no longer matches it. The rename is an <code>organization</code> row with op <code>changed</code> on <code>/v1/changes</code>, and a party's <code>mention_name</code> on the Tender detail keeps the spelling its notice printed. It switches the response to <strong>name order</strong> (id order otherwise breaks name-ordered pagination). It composes with <code>country=</code>/<code>kind=</code>; an empty prefix is <code>400</code>.</li>
 </ul>
 <pre><code># VAT → canonical org → the tenders naming it as a winner, then as a tenderer
 # (ask both: a source without published bids serves its wins under winner only)
@@ -1622,6 +1622,35 @@ mod tests {
                 assert!(text.contains(needle), "{surface}'s parties text must name {needle:?}:\n{text}");
             }
         }
+    }
+
+    /// Issue 564: `name_prefix` seeks the served head's key, so after issue 524's head refresh renamed
+    /// an organization its former spelling no longer finds it (designed; the CHANGELOG said so, the
+    /// served reference did not). The `name_prefix` row, the lookups section and the OpenAPI parameter
+    /// each say it, read from that text only so a mention elsewhere cannot satisfy it.
+    #[test]
+    fn the_docs_say_name_prefix_no_longer_matches_a_former_spelling() {
+        let row_start = PAGE.find("<td class=\"ep\">name_prefix</td>").expect("/docs has a name_prefix row");
+        let row = &PAGE[row_start..row_start + PAGE[row_start..].find("</tr>").expect("the row ends")];
+        let start = PAGE.find("<h2 id=\"lookups\">").expect("/docs has a lookups section");
+        let lookups = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows lookups")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["parameters"]["name_prefix"]["description"]
+            .as_str()
+            .expect("the name_prefix parameter is described");
+        let phrases = [
+            "it matches the organization's served name only",
+            "after a head refresh renames an organization",
+            "its former spelling no longer matches it",
+        ];
+        for (surface, text) in [("/docs name_prefix row", row), ("/docs lookups", lookups), ("/v1/openapi.json", openapi)] {
+            assert_says(surface, text, &phrases);
+        }
+        assert_says(
+            "/docs lookups",
+            lookups,
+            &["an organization row with op changed on /v1/changes", "keeps the spelling its notice printed"],
+        );
     }
 
     /// Issue 552 (issue 524 rule v12): the served head-name rule carries its line-break clause on all
