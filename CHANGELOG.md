@@ -4,6 +4,37 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 568 unit 8) — an R2.0.8 award that names several lots, or another lot, stays on the Tender
+
+Issue 568 serves each R2.0.8 award on the lot its contract notice printed under the award's number. Its read-back
+found awards whose own text contradicts that number: one award for several lots that prints only one of them
+(8327340: `обособени позиции 5, 6, 15, 16`, its 709,431.63 BGN served on lot 5 alone), awards numbered by a contract
+counter rather than by lot (`Pakiet nr 5` printing 4), awards titled exactly as another lot, and one award printing
+six lot numbers. Measured 2026-10-18 on 180 uniformly drawn corrected Tenders: 12 (6.7 %, 95 % 3.5–11.4 %) served a
+wrong block.
+- From the deploy on, an R2.0.8 award whose own title names several lots, names another lot than both its printed
+  number and the lot that number finds (by that lot's own title or description: `Pakiet 8 poz. 1` printed 9 on a lot
+  titled `pakiet 8` agrees), or carries another lot's title, or that prints several lot numbers, stays on the Tender
+  (`lot_results[].lot` null), as it was before issue 568. Where two or more awards of one notice name another lot
+  that way, that notice does not number its awards by the contract notice's lots: every award of it stays on the
+  Tender too, except one whose own title names exactly the number it prints, as a lot (5051007's `Pakiet nr 1`..`3`
+  keep lots 1-3; a position within a lot, `Pakiet 16 zad.2` printing 16, confirms nothing). One such award alone
+  keeps only itself off its lot. A title is read language by language, and only
+  ever keeps an award off a lot, never puts it on one (an award titled `Zadanie 2` printing 1 is served on no lot,
+  not on lot 2). None of this applies on a Tender whose lots print fewer than two numbers.
+- What moves, on the corrected Tenders only: `lot_results[].lot` back to null, and with it the lot a winner and an
+  awarded value belong to (`parties[]`'s lot-scoped rows, `/v1/lots?winner=`, a lot's award value; on `/v1/sql`,
+  `v_lot_results.lot_key` and `v_awards.lot_key`), and a stated total's awarded lots. Rarely a Tender's `value` and
+  `value_derivation` move too, where an inflated lot sum shrinks back (issues 492 and 537, `lot-sum-vouched`).
+- Expected: about 7 k Tenders touched (3–15 k), about 3 k of them fully back on the Tender; no right award of the
+  2,081 measured (1,762 in sample, 319 out of sample) is refused with them (≤ 0.18 %). A residual stays: 5 of 230
+  uniformly drawn Tenders (2.2 %, 95 % 0.7–5.0 %) keep a wrong award (a renumbered award paraphrasing its title, a
+  single counter-numbered award with no lot word, a weld of another procedure, a lot that exists only in corrigendum
+  prose, duplicated placeholder lot sections); 2 of the 5 are issue 568's own.
+- Tenders already stored are corrected by the refold that also drains issue 570 (the notices that carry a LOT_NO or a
+  LOT_NUMBER). Each move is announced as a correction: a `version: null` `changed` row for the Tender and for its lots
+  (ADR-0017 D3). Until its refold a Tender serves its awards as before.
+
 ## Unreleased (issue 570) — a legacy TED lot keeps one identity across the notices of its Tender
 
 TED's legacy notices (2016–2024 R2.0.9, and R2.0.8) key each lot by its position in the notice (`LOT-1`, `LOT-2`,

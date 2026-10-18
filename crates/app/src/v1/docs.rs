@@ -807,7 +807,17 @@ rates and the quarantine resolution ledger.</p>
   it, where a lot was added only in a corrigendum's prose, where an earlier notice kept a lot at
   its position but dropped its number or printed another (a renumbering that cannot be joined,
   below), and where an award notice prints one number on all of its two or more awards while
-  the Tender's lots print several numbers. An r2.0.9 award takes the lot section of its own
+  the Tender's lots print several numbers. An r2.0.8 award whose own title names several lots,
+  names another lot than both its printed number and the lot that number finds (by that lot's
+  own title or description), or carries another lot's title, or that prints several lot
+  numbers, stays on the Tender (issue 568): a title only ever keeps an award off a lot, never
+  puts it on one. Where two or more awards of one notice are titled with another lot that way,
+  that notice does not number its awards by the contract notice's lots, and every award of it
+  not confirmed by its own title (one naming exactly the number the award prints, as a lot and
+  not as a position within one) stays on the Tender too. None of this applies on a Tender whose
+  lots print fewer than two numbers. An r2.0.8 award's lot is inferred from the number it
+  prints against the contract notice's lots; a small recorded residual (about 2 % of such
+  Tenders) keeps an award on another lot. An r2.0.9 award takes the lot section of its own
   notice that prints its <code>LOT_NO</code> (else <code>LOT_NUMBER</code>), an exact match
   first, then the one lot whose number matches once normalised (<code>Lot 01</code> is
   <code>1</code>) (issue 567); an r2.0.9 award printing a list of numbers (<code>18,19</code>),
@@ -1651,6 +1661,43 @@ mod tests {
                 "where an earlier notice kept a lot at its position but dropped its number or printed another",
                 "where an award notice prints one number on all of its two or more awards while the tender's lots print several numbers",
             ],
+        );
+    }
+
+    /// Issue 568 unit 7, as amended in unit 8 (round 2's R1 and R2 included): the same coverage
+    /// bullet says which r2.0.8 awards stay on the Tender by their own text or numbering (a title
+    /// naming several lots, another lot than both the printed number and the lot that number finds
+    /// by its own title or description, or another lot's title, and several printed numbers), that
+    /// a title never keys an award, that a notice whose awards are titled with other lots twice or
+    /// more keeps every award its own title does not confirm off the lots (a confirmation names the
+    /// printed number as a lot, not as a position within one; one such award keeps only itself
+    /// off), that a Tender whose lots print fewer than two numbers is exempt, and the decision's
+    /// residual caveat. Read from the one coverage bullet that names `notice_subtype`; one phrase
+    /// per clause.
+    #[test]
+    fn the_docs_say_an_r208_award_naming_several_lots_stays_on_the_tender() {
+        let start = PAGE.find("<h3>Coverage varies by era</h3>").expect("/docs has the coverage caveats");
+        let section = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h3>").expect("a section follows it")];
+        let docs = section
+            .split("<li>")
+            .find(|item| item.contains("<code>notice_subtype</code>"))
+            .expect("/docs's coverage caveats carry a notice_subtype bullet");
+        assert_says(
+            "/docs's lots rule",
+            docs,
+            &[
+                "an r2.0.8 award whose own title names several lots, names another lot than both its printed number and the lot that number finds (by that lot's own title or description), or carries another lot's title, or that prints several lot numbers, stays on the tender (issue 568)",
+                "a title only ever keeps an award off a lot, never puts it on one",
+                "where two or more awards of one notice are titled with another lot that way, that notice does not number its awards by the contract notice's lots",
+                "every award of it not confirmed by its own title (one naming exactly the number the award prints, as a lot and not as a position within one) stays on the tender too",
+                "none of this applies on a tender whose lots print fewer than two numbers",
+                "an r2.0.8 award's lot is inferred from the number it prints against the contract notice's lots",
+                "a small recorded residual (about 2 % of such tenders) keeps an award on another lot",
+            ],
+        );
+        assert!(
+            !plain(docs).contains("one award titled with another lot than the number it prints keeps every award"),
+            "the decided rule's notice level (one contradicting award) is gone: it takes two since unit 8"
         );
     }
 

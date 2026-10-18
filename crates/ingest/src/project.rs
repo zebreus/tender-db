@@ -880,6 +880,14 @@ pub mod escapes;
 #[cfg(test)]
 mod lot_keys_570;
 
+/// Issue 568 unit 8: the cached chains the unit-7 guards' tests fold (test data only).
+#[cfg(test)]
+mod lot_guards_568;
+
+/// Issue 568 unit 8: the NFKD fold G5's title key reads ([`title_key`]), generated from Python's
+/// `unicodedata` so it is the reference's exactly.
+mod title_key_nfkd;
+
 /// The value a canonical text fact serves. Issue 538: a `title` or `description` (lot ones
 /// included, every era) is decoded of the publisher's extra escapes
 /// ([`escapes::decode_publisher_escapes`]); every other text field is served as parsed, and so are
@@ -4395,6 +4403,11 @@ struct BucketRow {
     /// Issue 551 unit 4b (B1): [`NoticeState::stated_totals`], which [`fold`] reads (same
     /// lifecycle note as `group_members` above).
     stated_totals: Vec<StatedTotal>,
+    /// Issue 568 unit 7: [`NoticeState::award_text`], which [`fold`]'s cross-notice match reads
+    /// (same lifecycle note as `group_members` above: postcard is not self-describing, so
+    /// `serde(default)` changes nothing for old bytes; the bucket directory never outlives one run).
+    #[serde(default)]
+    award_text: BTreeMap<String, AwardText>,
 }
 
 impl BucketRow {
@@ -4426,6 +4439,7 @@ impl BucketRow {
             round: state.round,
             group_members: state.group_members,
             stated_totals: state.stated_totals,
+            award_text: state.award_text,
         }
     }
 
@@ -4464,6 +4478,7 @@ impl BucketRow {
             // Already bound: no reference is left to alias (issue 259).
             org_alias: HashMap::new(),
             stated_totals: self.stated_totals.clone(),
+            award_text: self.award_text.clone(),
         }
     }
 }
@@ -4519,6 +4534,12 @@ struct NoticeState {
     /// Issue 551 unit 4b (B1): the totals this notice states ([`notice_stated_totals`]), each
     /// with its `lots_awarded` still empty — [`fold`] fills that from each version's rounds.
     stated_totals: Vec<StatedTotal>,
+    /// Issue 568 unit 7: result key → what that legacy award block's own titles and numbering say
+    /// ([`AwardText`]), the refusal evidence [`match_inherited_lots`] reads once, at the award's
+    /// version. Fold input only: never on the round (`LotResultState`), so it is carried into no
+    /// later version and written nowhere. Empty except for an award notice with no lot section of
+    /// its own whose blocks print a number.
+    award_text: BTreeMap<String, AwardText>,
 }
 
 /// Where a value belongs: the Tender itself, or one of its Lots.
@@ -5740,6 +5761,14 @@ impl NoticeState {
         );
 
         let mut raw_results = read_results(&sections, parsed, legacy, sdk01, &dropped);
+        // Issue 568 unit 7: the guards' evidence leaves the results graph here, keyed by result key,
+        // so it rides beside the round rather than in it.
+        let award_text: BTreeMap<String, AwardText> = raw_results
+            .lot_results
+            .iter_mut()
+            .filter(|r| !r.award_text.is_empty())
+            .map(|r| (r.key.clone(), std::mem::take(&mut r.award_text)))
+            .collect();
         // Issue 484 unit 3: which winner sections are the notice's own buyer — judged
         // against the buyers the fix above left, so a demoted review body is no buyer
         // and a promoted real buyer is one. Award notices only.
@@ -5811,6 +5840,7 @@ impl NoticeState {
             round: None,
             org_alias,
             stated_totals,
+            award_text,
         }
     }
 
@@ -6801,9 +6831,10 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
             // Issue 568: an award notice with no lot section of its own resolves its legacy
             // blocks against the lots this version inherits, once, here: the round is carried
             // as resolved into every later version (frozen at the award's version), and
-            // `lots_awarded` below reads it.
+            // `lots_awarded` below reads it. Unit 7's guards read the notice's own block evidence
+            // and this version's Tender titles (`facts`, superseded above).
             if state.lots.is_empty() && !lots_renumbered {
-                match_inherited_lots(&mut round, &lots);
+                match_inherited_lots(&mut round, &lots, &facts, &state.award_text);
             }
             rounds.push(round);
         }
@@ -7070,6 +7101,9 @@ struct RawLotResult {
     awarded_to_group: Option<bool>,
     /// Issue 551 unit 4b (B1): the block carries `NO_AWARDED_TO_GROUP`.
     not_awarded_to_group: bool,
+    /// Issue 568 unit 7: what the block's own titles and numbering say of its lots, the guards'
+    /// evidence ([`AwardText`]). `NoticeState::read` moves it into [`NoticeState::award_text`].
+    award_text: AwardText,
 }
 
 #[derive(Default)]
@@ -7288,6 +7322,11 @@ fn read_legacy_results(
     // values arrive in the store's primary-key order, not document order ([`LegacyLotNumbers`]).
     let lot_numbers = LegacyLotNumbers::read(parsed);
     let mut lot_refs: HashMap<&str, Vec<(&str, &str)>> = HashMap::new();
+    // Issue 568 unit 7: each block's own titles, every value and language, read only from values
+    // directly on the `RES-n` section (never its Organization children), each with its language
+    // (unit 8: `""` for a value without one). Refusal evidence for the cross-notice match only
+    // ([`AwardText`]); issue 343 keeps them out of every fact.
+    let mut titles: HashMap<&str, Vec<(String, String)>> = HashMap::new();
 
     for value in &parsed.values {
         let Some(owner) = enclosing(sections, &value.section_id, RESULT_KINDS) else { continue };
@@ -7362,15 +7401,30 @@ fn read_legacy_results(
             (f, NoticeValue::Number { value: n, .. }) if LEGACY_BID_COUNT_FIELDS.contains(&f) => {
                 r.statistics.push(("tenders".to_owned(), *n as i64, None));
             }
+            (f, NoticeValue::Text { lang, value: title })
+                if AWARD_TITLE_FIELDS.contains(&f) && value.section_id == owner =>
+            {
+                // Decoded like the lot and Tender titles the guards compare it with.
+                let lang = lang.clone().unwrap_or_default();
+                titles.entry(owner).or_default().push((lang, served_text("title", title)));
+            }
             _ => {}
         }
     }
+    // Issue 568 unit 7: the guards read the evidence only where the cross-notice match can run, an
+    // award notice with no lot section of its own ([`fold`]), and only for a block that prints a
+    // number (a block without one is never matched).
+    let has_lot_sections = parsed.sections.iter().any(|s| LOT_KINDS.contains(&s.kind.as_str()));
     for r in &mut raw.lot_results {
         let refs = lot_refs.get(r.key.as_str());
         r.lot_key = refs.and_then(|refs| lot_numbers.resolve(refs)).map(str::to_owned);
         // Issue 551 unit 4b (B1): the block's own printed number, kept whatever lot it resolved to
         // (or none): the key is the notice's section, the number is the publisher's.
         r.published_lot_no = refs.and_then(|refs| award_block_lot_number(refs)).map(str::to_owned);
+        if !has_lot_sections && r.published_lot_no.as_deref().is_some_and(|p| !p.trim().is_empty()) {
+            let own = titles.get(r.key.as_str()).map_or(&[][..], Vec::as_slice);
+            r.award_text = AwardText::read(own, refs.map_or(&[][..], Vec::as_slice));
+        }
     }
 
     // Decide from the evidence: a named winner or an awarded value is a win. A
@@ -7561,7 +7615,20 @@ impl<'a> LegacyLotNumbers<'a> {
 /// - Kept as published (step 8): `published_lot_no` is never touched. Never a lot key (step 9):
 ///   the key's ordinal, the block's `TED-ITEM`, a title, corrigendum prose, `CONTRACT_NUMBER`,
 ///   the block's position.
-fn match_inherited_lots(round: &mut Round, inherited: &[LotState]) {
+/// - Unit 7's refusal guards G3-G6 (`.scratch/tender-db/568-r208-lots/u7/decision-u7.md`, "The
+///   rule" as amended in unit 8), [`unit7_refusals`]: a block the rule above matched stays on the
+///   Tender where its own title or numbering contradicts the number it prints, and every block of a
+///   notice where two or more do, except one its own title confirms. `tender_facts` is the version's Tender
+///   scope (its `title` facts never count as another lot's title); `award_text` the notice's own
+///   block evidence ([`NoticeState::award_text`]). A refused block keeps `lot_key` `None` and its
+///   `published_lot_no`, and is never re-keyed to the lot its title names: titles refuse, they
+///   never key.
+fn match_inherited_lots(
+    round: &mut Round,
+    inherited: &[LotState],
+    tender_facts: &BTreeSet<Fact>,
+    award_text: &BTreeMap<String, AwardText>,
+) {
     let printed = |r: &LotResultState| -> Option<String> {
         if r.lot_key.is_some() {
             return None;
@@ -7584,9 +7651,244 @@ fn match_inherited_lots(round: &mut Round, inherited: &[LotState]) {
     if numbered.len() >= 2 && block_numbers.len() == 1 && lot_numbers.len() >= 2 {
         return;
     }
-    for (k, p) in numbered {
-        round.lot_results[k].lot_key = numbers.lookup(&p).map(str::to_owned);
+    // Steps 3-4: each block's tentative lot. Unit 7's guards read only these, the blocks the rule
+    // matched (a block that names no lot says nothing about the numbers that did).
+    let matched: Vec<(usize, String, &str)> =
+        numbered.into_iter().filter_map(|(k, p)| numbers.lookup(&p).map(|lot| (k, p, lot))).collect();
+    let refused = unit7_refusals(round, &matched, inherited, tender_facts, award_text);
+    for (k, _, lot) in matched {
+        if !refused.contains(&k) {
+            round.lot_results[k].lot_key = Some(lot.to_owned());
+        }
     }
+}
+
+/// Issue 568 unit 7: one lot designator a text names ([`lot_designators`]): the normalised number a
+/// lot / part / position phrase names (`head`), and for a compound the positions inside it, which
+/// stay ONE designator under the head: `Pakiet 8 poz. 6` is `8` with `[6]`, and since unit 8 `Pakiet 8
+/// poz. 6 i 7` is `8` with `[6, 7]` and `Pakiet 16 zad.1` is `16` with `[1]`. A compound counts by its
+/// head (G3, and G4's agreement with the lot's own text, R1); only a plain designator, `positions`
+/// empty, can confirm a block's printed number (R2).
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+struct Designator {
+    head: String,
+    positions: Vec<String>,
+}
+
+/// Issue 568 unit 7: what a legacy award block says of its own lots besides the number it prints,
+/// read by [`read_legacy_results`] from the block's own `TED-CONTRACT_TITLE`, `TED-TITLE_CONTRACT`
+/// and `TED-TITLE` (every value, every language; never an Organization child's, never
+/// `CONTRACT_NUMBER`, the additional information, winner names or the notice title) and from its
+/// own lot references. Refusal evidence for [`unit7_refusals`] only, never a key.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+struct AwardText {
+    /// Unit 8 (the amendment's D): the designators the titles name, per language: the value's
+    /// language as parsed, `""` for a value without one; distinct and sorted within a language (the
+    /// union over its values), and only languages naming at least one.
+    named: BTreeMap<String, Vec<Designator>>,
+    /// The titles' [`title_key`]s over every language, distinct and sorted, blanks dropped (G5).
+    title_keys: Vec<String>,
+    /// G6: the block's numbering field (its `TED-LOT_NO`, else its `TED-LOT_NUMBER`, the field
+    /// [`award_block_lot_number`] reads) prints two or more distinct numbers once normalised.
+    several_numbers: bool,
+}
+
+/// The award block title fields unit 7 reads: R2.0.8 `TED-CONTRACT_TITLE` and its
+/// `TED-TITLE_CONTRACT` variant, R2.0.9 `AWARD_CONTRACT/TITLE` (`TED-TITLE`).
+const AWARD_TITLE_FIELDS: &[&str] = &["TED-CONTRACT_TITLE", "TED-TITLE_CONTRACT", "TED-TITLE"];
+
+impl AwardText {
+    /// The evidence of one block: its own titles as `(language, decoded text)` and its own lot
+    /// references.
+    fn read(titles: &[(String, String)], refs: &[(&str, &str)]) -> AwardText {
+        let mut named: BTreeMap<String, BTreeSet<Designator>> = BTreeMap::new();
+        for (lang, title) in titles {
+            let designators = lot_designators(title);
+            if !designators.is_empty() {
+                named.entry(lang.clone()).or_default().extend(designators);
+            }
+        }
+        let named = named.into_iter().map(|(lang, ds)| (lang, ds.into_iter().collect())).collect();
+        let title_keys: BTreeSet<String> =
+            titles.iter().map(|(_, t)| title_key(t)).filter(|k| !k.is_empty()).collect();
+        let field = ["TED-LOT_NO", "TED-LOT_NUMBER"].into_iter().find(|field| refs.iter().any(|(f, _)| f == field));
+        let numbers: BTreeSet<String> = refs
+            .iter()
+            .filter(|(f, _)| Some(*f) == field)
+            .filter_map(|(_, number)| normalise_lot_number(number))
+            .collect();
+        AwardText { named, title_keys: title_keys.into_iter().collect(), several_numbers: numbers.len() >= 2 }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.named.is_empty() && self.title_keys.is_empty() && !self.several_numbers
+    }
+}
+
+/// One matched block's G4 / G3 reading under unit 8's amended rule ([`unit7_refusals`]).
+#[derive(Clone, Copy, Default)]
+struct DesignatorReading {
+    /// G4 (R1): some language names a lot in N, and no language's names either have the printed
+    /// number as a head or share a HEAD with the designators of the tentative lot's own `title` /
+    /// `description`.
+    contradicts: bool,
+    /// R2: some language names a lot in N, and every such language names only plain (non-compound)
+    /// designators whose heads are exactly the printed number: spared by G4's notice level.
+    title_confirmed: bool,
+    /// G3: one language's names in N hold two or more distinct heads.
+    several_lots: bool,
+}
+
+/// Issue 568 unit 7, as amended in unit 8 (`.scratch/tender-db/568-r208-lots/u7/decision-u7.md`,
+/// "The rule", and "Amendment (unit 8, 2026-10-18)", "The rule, as amended", which wins where they
+/// differ): the indices of the `matched` blocks (index, printed number p, tentative lot l) that stay
+/// on the Tender.
+///
+/// N is the set of normalised numbers the inherited `Lot`s print (the ones G1 counts, a number that
+/// normalises to nothing left out). **If |N| < 2 no guard fires** (G1's exemption: on a one-lot
+/// Tender the one lot is the Tender's scope). Titles are read **per language** (D): a block's
+/// Dn[lang] is the union of its designators in that language whose head is in N; Dlot is every
+/// designator of l's own `title` / `description` facts (the lot side is not split by language, nor
+/// filtered by N), heads(Dlot) their heads.
+/// 1. **G4 (A, R1).** A block contradicts when some language's Dn is non-empty and no language's Dn
+///    either has p as a head or shares a HEAD with heads(Dlot), a compound counting by its head
+///    (5071935's `Lot 06 désamiantage` printed 3 agrees with the lot printing 3, itself titled `lot 06
+///    DESAMIANTAGE`; 5416534's counterfactual `Pakiet 16 zad.2` printed 17 agrees with LOT-17 `Pakiet
+///    16 - pozycja nr 2`). A contradicting block is refused. Contradictions are counted over ALL
+///    matched blocks first, the ones G6 or G3 refuse too; **with two or more** the notice numbers its
+///    awards by a contract counter, and every other matched block is refused as well, except a
+///    **title-confirmed** one (R2): some language's Dn is non-empty and in every such language every
+///    designator is non-compound and the heads are exactly {p} (5051007's `Pakiet nr 1..3`; 5416534
+///    RES-16 `Pakiet 16 zad.2` printed 16 is a compound and confirms nothing). One contradicting block
+///    refuses only itself.
+/// 2. **G6.** [`AwardText::several_numbers`] (5001424 prints 1-6 under one award).
+/// 3. **G3 (C).** In one language, Dn holds two or more distinct heads (8327340's `обособени позиции 5,
+///    6, 15, 16`); a compound counts by its head (`Pakiet 8 poz. 6, Pakiet 8 poz. 7` names 8 once).
+/// 4. **G5, unchanged.** No title key of the block (over every language) is one of l's, and one that is
+///    not the Tender's equals a title key of exactly one OTHER inherited `Lot` printing a number. One
+///    language agreeing with the lot is agreement (8303947 RES-2's Maltese copy of lot 1).
+fn unit7_refusals(
+    round: &Round,
+    matched: &[(usize, String, &str)],
+    inherited: &[LotState],
+    tender_facts: &BTreeSet<Fact>,
+    award_text: &BTreeMap<String, AwardText>,
+) -> BTreeSet<usize> {
+    let mut refused = BTreeSet::new();
+    if matched.is_empty() || award_text.is_empty() {
+        return refused;
+    }
+    let numbered_lots: Vec<&LotState> = inherited
+        .iter()
+        .filter(|l| l.kind == "Lot" && l.published_lot_no.as_deref().is_some_and(|n| !n.trim().is_empty()))
+        .collect();
+    let n: BTreeSet<String> =
+        numbered_lots.iter().filter_map(|l| l.published_lot_no.as_deref().and_then(normalise_lot_number)).collect();
+    if n.len() < 2 {
+        return refused;
+    }
+    let none = AwardText::default();
+    let evidence = |k: usize| award_text.get(&round.lot_results[k].key).unwrap_or(&none);
+    let lot_texts = |key: &str, fields: &[&str]| -> Vec<String> {
+        inherited.iter().find(|l| l.key == key).map_or_else(Vec::new, |lot| {
+            lot.facts
+                .iter()
+                .filter_map(|f| match f {
+                    Fact::Text { field, value, .. } if fields.contains(&field.as_str()) => Some(value.clone()),
+                    _ => None,
+                })
+                .collect()
+        })
+    };
+    // G4 and G3, read per language, for every matched block before any is refused.
+    let readings: Vec<DesignatorReading> = matched
+        .iter()
+        .map(|(k, printed, lot)| {
+            let dn: Vec<BTreeSet<&Designator>> = evidence(*k)
+                .named
+                .values()
+                .map(|named| named.iter().filter(|d| n.contains(&d.head)).collect::<BTreeSet<_>>())
+                .filter(|dn| !dn.is_empty())
+                .collect();
+            if dn.is_empty() {
+                return DesignatorReading::default();
+            }
+            fn heads<'a>(dn: &BTreeSet<&'a Designator>) -> BTreeSet<&'a str> {
+                dn.iter().map(|d| d.head.as_str()).collect()
+            }
+            let p = normalise_lot_number(printed);
+            let p_is_a_head = p.as_deref().is_some_and(|p| dn.iter().any(|dn| heads(dn).contains(p)));
+            // R1: agreement with l's own text compares HEADS (a compound counts by its head, as in G3):
+            // `Pakiet 16 zad.2` agrees with a lot titled `Pakiet 16 - pozycja nr 2`, read (16).
+            let agrees = p_is_a_head || {
+                let own: BTreeSet<String> = lot_texts(lot, &["title", "description"])
+                    .iter()
+                    .flat_map(|t| lot_designators(t))
+                    .map(|d| d.head)
+                    .collect();
+                dn.iter().any(|dn| dn.iter().any(|d| own.contains(&d.head)))
+            };
+            // R2: only plain designators confirm: in every language naming a lot in N, no compound,
+            // and the heads exactly {p} (`Pakiet 16 zad.2` printed 16 is no confirmation of LOT-16).
+            let title_confirmed = p.as_deref().is_some_and(|p| {
+                dn.iter().all(|dn| dn.iter().all(|d| d.positions.is_empty()) && heads(dn) == BTreeSet::from([p]))
+            });
+            DesignatorReading {
+                contradicts: !agrees,
+                title_confirmed,
+                several_lots: dn.iter().any(|dn| heads(dn).len() >= 2),
+            }
+        })
+        .collect();
+    let contradicting = readings.iter().filter(|r| r.contradicts).count();
+    // G5's sides, read once per notice: the Tender's title keys and each numbered lot's.
+    let keys_of = |titles: Vec<String>| -> BTreeSet<String> {
+        titles.iter().map(|t| title_key(t)).filter(|k| !k.is_empty()).collect()
+    };
+    let titled = matched.iter().any(|(k, _, _)| !evidence(*k).title_keys.is_empty());
+    let tender_keys: BTreeSet<String> = if titled {
+        keys_of(
+            tender_facts
+                .iter()
+                .filter_map(|f| match f {
+                    Fact::Text { field, value, .. } if field == "title" => Some(value.clone()),
+                    _ => None,
+                })
+                .collect(),
+        )
+    } else {
+        BTreeSet::new()
+    };
+    let lot_keys: Vec<(&str, BTreeSet<String>)> = if titled {
+        numbered_lots.iter().map(|l| (l.key.as_str(), keys_of(lot_texts(&l.key, &["title"])))).collect()
+    } else {
+        Vec::new()
+    };
+    for ((k, _, lot), reading) in matched.iter().zip(&readings) {
+        let text = evidence(*k);
+        // G4 (block level, then the notice level), G6, G3.
+        if reading.contradicts
+            || (contradicting >= 2 && !reading.title_confirmed)
+            || text.several_numbers
+            || reading.several_lots
+        {
+            refused.insert(*k);
+            continue;
+        }
+        // G5.
+        let mine = lot_keys.iter().find(|(key, _)| key == lot).map(|(_, keys)| keys);
+        if text.title_keys.iter().any(|t| mine.is_some_and(|m| m.contains(t))) {
+            continue;
+        }
+        let another_lots = text.title_keys.iter().any(|t| {
+            !tender_keys.contains(t)
+                && lot_keys.iter().filter(|(key, keys)| key != lot && keys.contains(t)).count() == 1
+        });
+        if another_lots {
+            refused.insert(*k);
+        }
+    }
+    refused
 }
 
 /// Issue 570: where a legacy notice's lot sections go among the lots a Tender carries
@@ -7709,6 +8011,610 @@ fn normalise_lot_number(published: &str) -> Option<String> {
         rest = &rest[1..];
     }
     (!rest.is_empty()).then(|| rest.to_owned())
+}
+
+// ---- Issue 568 unit 7: the lot designators an award block's own title names ----
+//
+// A hand-written port of `.scratch/tender-db/568-r208-lots/u7/lot_designators.py` (the reference, as
+// amended in unit 8; `lot_designators_reads_lists_ranges_roman_and_compounds` copies its 77 SELFTEST
+// cases), regex construct by construct, including where the regex engine backtracks and where a regex
+// is case-sensitive (its `FIRST_RE` / `NEXT_RE`: list separators, range words and Roman numerals; the
+// German `Los` keyword family; only the other keywords, their mark, a compound word, a count or
+// quantity word and a postfix word are `IGNORECASE`). ingest has no `regex` dependency, and the
+// reference's look-arounds are not `regex`-crate syntax anyway.
+//
+// Input, as pinned in unit 8's build review (`u7/decision-u7.md`, "Designators, as amended", "Input";
+// a SELFTEST case pins each part). The text is read as parsed, not normalised, in the reference too: a
+// decomposed (NFD) `Część 2` names nothing, and every one of the 348,446 text values the unit-7 cache
+// holds is NFC. A digit is ASCII `0-9` only (the reference's `[0-9]`): any other decimal digit is a
+// letter, so `Lot ３` names nothing. The decision records the one class where the reference and this
+// port still read differently: the reference's letter is Python's `\w` minus `[0-9_]` and its space is
+// `\s`; here a letter is `char::is_alphanumeric` minus ASCII digits and a space `char::is_whitespace`.
+// They disagree on the `Other_Alphabetic` combining marks and the enclosed letters (`Ⓐ`), letters here
+// only, and on U+001C..U+001F, which XML cannot carry. None occurs in the cached texts.
+//
+// Unit 8's amendment (`u7/decision-u7.md`, "Amendment (unit 8, 2026-10-18)", "Designators, as
+// amended"): (a) only a TIGHT dash joins numbers, a dash spaced on either side ends the list (`Część 1
+// – 50 miejsc` names 1); (b) `Los`, `Lose`, `Losnr` are lot words only capitalised or all upper-case
+// (lower-case `los` is the Spanish article); (c) a compound's second half also follows `zad.` /
+// `zadanie`, takes a list or a range and stays ONE designator (`Pakiet 8 poz. 6 i 7`), `pakiet N
+// pozycji` is a count, and a position word is a lot word only where no other clause named a number
+// before it in the same text; (d) a list's last number followed by a quantity or duration word is a
+// count, dropped (`Lot 2, 3 ans` names 2).
+
+/// The lot / part / position words a designator follows (`lot_designators.py` `LOT_WORDS`, expanded),
+/// matched as whole words, case-insensitively; the German `Los` family is [`LOS_DESIGNATOR_WORDS`].
+/// Not here, on purpose: bare `del` (Swedish "Del 1" beside Spanish "del 31.7.2008"), `Teil`,
+/// `Gruppe`, `groupe(s)` (5071935's groups inside one lot), `tranche`, `phase`, `Vergabepaket`,
+/// `Rejon`, `Sektor`, `obszar`, `Programa`; `item` and `position` only as a compound's second half. A
+/// missing word costs recall, never precision.
+const LOT_DESIGNATOR_WORDS: &[&str] = &[
+    // lot
+    "lot", "lots", "lotul", "loturi", "loturile", "lote", "lotes", "lotto", "lotti", "teillos", "fachlos",
+    // part
+    "part", "parts", "partie", "parties", "parte", "partes", "partida", "část", "části", "částí", "cast",
+    "casti", "časť", "częśc", "część", "części", "częśći", "czesc", "czesć", "czesś", "częsc", "częsć", "częsś",
+    "czesci", "czesći", "czesśi", "częsci", "częsći", "częsśi", "dalis", "dalys", "dalies", "dalių", "delaftale",
+    "delaftaler", "delkontrakt", "delkontraktet", "delområde", "osa", "osat", "τμήμα", "τμήματα", "τμήματος",
+    "sklop", "sklopa", "sklopi", "sklopov", "grupa", "grupe", "grupy", "skupina", "skupiny", "perceel",
+    "percelen",
+    // position / package / task
+    "pozycja", "pozycje", "pozycji", "pozycjy", "poz", "pozice", "позиция", "позиции", "pakiet", "pakiety",
+    "pakietu", "pakietów", "pakietach", "pakietami", "zadanie", "zadania", "zadań", "zad", "položka",
+    "položky",
+];
+
+/// Unit 8 (b): the German lot words, matched exactly as written (case-sensitively, the reference's
+/// `(?-i:Los(?:e|nr)?|LOS(?:E|NR)?)`): lower-case `los` is the Spanish article (`Suministro de los 2
+/// vehículos` names nothing).
+const LOS_DESIGNATOR_WORDS: &[&str] = &["Los", "Lose", "Losnr", "LOS", "LOSE", "LOSNR"];
+
+/// The two-word Bulgarian keyword `обособена/обособени позиция/позиции`: its first word.
+const LOT_DESIGNATOR_FIRST_WORDS: &[&str] = &["обособена", "обособени"];
+/// … and its second.
+const LOT_DESIGNATOR_SECOND_WORDS: &[&str] = &["позиция", "позиции"];
+
+/// The words that take their number BEFORE them: Hungarian `IV. rész`, Latvian `1. daļa`.
+const POSTFIX_DESIGNATOR_WORDS: &[&str] = &["rész", "része", "részek", "daļa", "dalis", "osa", "část", "część"];
+
+/// Unit 8 (c): the position words among [`LOT_DESIGNATOR_WORDS`] (the reference's `POSITION_KW`). A
+/// clause keyed by one is a lot clause only while no other clause has named a number before it in
+/// the same text (`Pakiet 3 (poz. 1-12)` names 3), and it names no compound. The Bulgarian two-word
+/// keyword is none of these.
+const POSITION_DESIGNATOR_WORDS: &[&str] =
+    &["pozycja", "pozycje", "pozycji", "pozycjy", "poz", "pozice", "позиция", "позиции", "položka", "položky"];
+
+/// Unit 8 (c): the package words (the reference's `PAKIET_KW`), after which `N pozycji` is a count.
+const PAKIET_DESIGNATOR_WORDS: &[&str] = &["pakiet", "pakiety", "pakietu", "pakietów", "pakietach", "pakietami"];
+
+/// A compound's second half (the reference's `COMPOUND_WORDS`): `Pakiet 8 poz. 6`, and since unit 8
+/// (c) `Pakiet 16 zad.1`.
+const POSITION_WORDS: &[&str] = &[
+    "pozycja", "pozycje", "pozycji", "pozycjy", "poz", "pozice", "položka", "položky", "item", "position", "zad",
+    "zadanie", "zadania",
+];
+
+/// Unit 8 (c): the words after which a package's number is a count (`(pakiet 8 pozycji)`, a package of
+/// eight items: the reference's `COUNT_RE`).
+const PAKIET_COUNT_WORDS: &[&str] = &["pozycji", "pozycje", "pozycja"];
+
+/// Unit 8 (d): the quantity and duration words after which a list's last number is a count, not a
+/// lot (the reference's `COUNT_WORDS`, expanded; whole words, case-insensitively): `Lot 2, 3 ans`,
+/// `Pakiet 5, 2 szt.`, `grupy 20 osób`.
+const QUANTITY_WORDS: &[&str] = &[
+    // pl
+    "szt", "sztuk", "sztuki", "osób", "osoby", "osob", "miejsc", "miejsca", "lat", "lata", "miesięcy", "miesiące",
+    "dni", "kpl",
+    // fr
+    "ans", "années", "mois", "jours",
+    // en
+    "years", "months", "days", "units", "pcs", "persons", "people",
+    // es pt it
+    "años", "anos", "meses", "días", "unidades", "anni", "mesi", "giorni",
+    // de
+    "jahre", "monate", "stück", "stk", "personen",
+    // cs sk
+    "let", "roky", "měsíců", "ks", "kusů",
+    // bg
+    "години", "месеца", "броя", "бр",
+];
+
+/// The number marks a keyword may carry before its list, in the reference's alternation order (so
+/// `nr` before `no` before `n`, and `num`, `nos`, `nrs` are never reached: `n` matches first).
+const DESIGNATOR_MARKS: &[&str] = &["nr", "no", "n", "num", "nos", "nrs", "číslo", "č"];
+
+/// List conjunctions, in the reference's order; each needs whitespace on both sides. Lower case
+/// only, exactly as written: the reference's `NEXT_RE` is not `IGNORECASE` (`LOTS 3 ET 2` names 3).
+const DESIGNATOR_CONJUNCTIONS: &[&str] =
+    &["i", "и", "oraz", "a", "et", "and", "und", "e", "y", "en", "és", "ir", "ja", "och", "og", "și", "si", "ou"];
+
+/// Range words, in the reference's order; each needs whitespace on both sides. Lower case only,
+/// exactly as written, like [`DESIGNATOR_CONJUNCTIONS`] (`PAKIETY 1 DO 4` names 1).
+const DESIGNATOR_RANGE_WORDS: &[&str] = &["do", "to", "à", "bis", "až", "au", "tot", "t/m", "al"];
+
+/// What joined a list item to the one before it.
+#[derive(Clone, Copy, PartialEq)]
+enum DesignatorSep {
+    List,
+    Dash,
+    Range,
+}
+
+/// The reference's case-insensitive comparison: one lower-case character, with the variants its
+/// regex engine also treats as one letter (`ı`, `ς`, the Kelvin sign, the long `s`).
+fn designator_fold(c: char) -> char {
+    match c {
+        'ı' | 'İ' => 'i',
+        'ς' => 'σ',
+        '\u{212A}' => 'k',
+        'ſ' => 's',
+        _ => c.to_lowercase().next().unwrap_or(c),
+    }
+}
+
+/// The reference's "letter": a word character that is neither an ASCII digit nor `_` (its `[^\W0-9_]`).
+fn designator_letter(c: char) -> bool {
+    c.is_alphanumeric() && !c.is_ascii_digit()
+}
+
+fn designator_letter_at(t: &[char], i: usize) -> bool {
+    t.get(i).is_some_and(|&c| designator_letter(c))
+}
+
+/// No letter right before `i`.
+fn designator_word_start(t: &[char], i: usize) -> bool {
+    i == 0 || !designator_letter(t[i - 1])
+}
+
+fn designator_word_end(t: &[char], mut i: usize) -> usize {
+    while designator_letter_at(t, i) {
+        i += 1;
+    }
+    i
+}
+
+fn designator_skip_ws(t: &[char], mut i: usize) -> usize {
+    while t.get(i).is_some_and(|c| c.is_whitespace()) {
+        i += 1;
+    }
+    i
+}
+
+/// `word` (case-insensitively) at `i`, as a prefix; its end.
+fn designator_prefix(t: &[char], i: usize, word: &str) -> Option<usize> {
+    let mut j = i;
+    for w in word.chars() {
+        if designator_fold(*t.get(j)?) != designator_fold(w) {
+            return None;
+        }
+        j += 1;
+    }
+    Some(j)
+}
+
+/// `word` exactly (case-sensitively) at `i`, as a prefix; its end.
+fn designator_exact(t: &[char], i: usize, word: &str) -> Option<usize> {
+    let mut j = i;
+    for w in word.chars() {
+        if *t.get(j)? != w {
+            return None;
+        }
+        j += 1;
+    }
+    Some(j)
+}
+
+/// `t[i..j]` is one of `words`, case-insensitively.
+fn designator_word_is(t: &[char], i: usize, j: usize, words: &[&str]) -> bool {
+    words.iter().any(|w| designator_prefix(t, i, w) == Some(j))
+}
+
+/// The reference's `ROMAN` (`M{0,3}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})`) matches all
+/// of `s`, whose letters are already upper-case ASCII.
+fn roman_numeral(s: &[u8]) -> bool {
+    fn digit(s: &[u8], at: usize, one: u8, five: u8, ten: u8) -> Vec<usize> {
+        let mut ends = Vec::new();
+        if s.get(at) == Some(&one) && (s.get(at + 1) == Some(&ten) || s.get(at + 1) == Some(&five)) {
+            ends.push(at + 2);
+        }
+        let start = if s.get(at) == Some(&five) { vec![at, at + 1] } else { vec![at] };
+        for p in start {
+            let mut q = p;
+            ends.push(q);
+            while q < p + 3 && s.get(q) == Some(&one) {
+                q += 1;
+                ends.push(q);
+            }
+        }
+        ends
+    }
+    let mut ends = vec![0];
+    while ends.len() <= 3 && s.get(ends.len() - 1) == Some(&b'M') {
+        ends.push(ends.len());
+    }
+    for (one, five, ten) in [(b'C', b'D', b'M'), (b'X', b'L', b'C'), (b'I', b'V', b'X')] {
+        let mut next: Vec<usize> = ends.iter().flat_map(|&at| digit(s, at, one, five, ten)).collect();
+        next.sort_unstable();
+        next.dedup();
+        ends = next;
+    }
+    ends.contains(&s.len())
+}
+
+/// A Roman numeral's value (`IV` → 4).
+fn roman_value(s: &str) -> u32 {
+    let value = |c: char| match c {
+        'I' => 1,
+        'V' => 5,
+        'X' => 10,
+        'L' => 50,
+        'C' => 100,
+        'D' => 500,
+        _ => 1000,
+    };
+    let chars: Vec<u32> = s.chars().map(value).collect();
+    let mut total = 0i64;
+    for (i, &v) in chars.iter().enumerate() {
+        if chars.get(i + 1).is_some_and(|&next| next > v) {
+            total -= i64::from(v);
+        } else {
+            total += i64::from(v);
+        }
+    }
+    u32::try_from(total).unwrap_or(0)
+}
+
+/// The reference's `NUM` at `i`: its end and token. Digits with an optional `.digits` and an optional
+/// single trailing letter not followed by a letter; else a whole word that is an UPPER-CASE Roman
+/// numeral (the reference's `FIRST_RE` and `NEXT_RE` are not `IGNORECASE`, so `vi` or `Vi` is no
+/// token and `Lot vi, VII` names nothing); else, at anything that is not a letter, an EMPTY token
+/// (the Roman alternative's empty match), which normalises to nothing but can still continue a Roman
+/// list. The postfix scan reads it too: its `IGNORECASE` lets `iv. rész` match, but a lower-case
+/// Roman normalises to nothing there, so reading none names the same.
+fn designator_number_at(t: &[char], i: usize) -> Option<(usize, String)> {
+    if t.get(i).is_some_and(char::is_ascii_digit) {
+        let mut j = i;
+        while t.get(j).is_some_and(char::is_ascii_digit) {
+            j += 1;
+        }
+        if t.get(j) == Some(&'.') && t.get(j + 1).is_some_and(char::is_ascii_digit) {
+            j += 1;
+            while t.get(j).is_some_and(char::is_ascii_digit) {
+                j += 1;
+            }
+        }
+        if t.get(j).is_some_and(char::is_ascii_alphabetic) && !designator_letter_at(t, j + 1) {
+            j += 1;
+        }
+        return Some((j, t[i..j].iter().collect()));
+    }
+    if designator_letter_at(t, i) {
+        let j = designator_word_end(t, i);
+        let upper: Option<Vec<u8>> =
+            t[i..j].iter().map(|&c| matches!(c, 'M' | 'D' | 'C' | 'L' | 'X' | 'V' | 'I').then_some(c as u8)).collect();
+        return upper.filter(|u| roman_numeral(u)).map(|_| (j, t[i..j].iter().collect()));
+    }
+    Some((i, String::new()))
+}
+
+/// A designator token's number: an upper-case Roman numeral as its value; else digits with their
+/// leading zeros dropped (one kept), an optional `.digits` sub-number and an optional letter,
+/// lower-cased (`02.1` → `2.1`, `1A` → `1a`). An empty, lower-case Roman or other token is none.
+fn designator_number(token: &str) -> Option<String> {
+    if token.is_empty() {
+        return None;
+    }
+    if token.bytes().all(|b| b"MDCLXVI".contains(&b)) && roman_numeral(token.as_bytes()) {
+        return Some(roman_value(token).to_string());
+    }
+    let chars: Vec<char> = token.chars().collect();
+    let digits = chars.iter().take_while(|c| c.is_ascii_digit()).count();
+    if digits == 0 {
+        return None;
+    }
+    let mut rest = digits;
+    let mut sub = String::new();
+    if chars.get(rest) == Some(&'.') {
+        let n = chars[rest + 1..].iter().take_while(|c| c.is_ascii_digit()).count();
+        if n == 0 {
+            return None;
+        }
+        sub = chars[rest..rest + 1 + n].iter().collect();
+        rest += 1 + n;
+    }
+    let letter = match &chars[rest..] {
+        [] => None,
+        [c] if c.is_ascii_alphabetic() => Some(c.to_ascii_lowercase()),
+        _ => return None,
+    };
+    let whole: String = chars[..digits].iter().collect();
+    let trimmed = whole.trim_start_matches('0');
+    let mut out = if trimmed.is_empty() { "0".to_owned() } else { trimmed.to_owned() };
+    out.push_str(&sub);
+    out.extend(letter);
+    Some(out)
+}
+
+/// A token starts a digit list or a Roman one (an empty token is Roman); a list never mixes them.
+fn designator_roman_token(token: &str) -> bool {
+    !token.starts_with(|c: char| c.is_ascii_digit())
+}
+
+/// `\s{min,}` then `NUM`, the whitespace greedy and given back one character at a time.
+fn designator_number_after_ws(t: &[char], from: usize, min: usize) -> Option<(usize, String)> {
+    let end = designator_skip_ws(t, from);
+    (from + min..=end).rev().find_map(|k| designator_number_at(t, k))
+}
+
+/// The reference's `NEXT_RE` at `end`: a separator, then a number. Its alternatives in order: a
+/// punctuation separator, a conjunction, a TIGHT dash (unit 8 (a): a dash with a space on either side
+/// ends the list, `Lot 1 - 5 ordinateurs` names 1), a range word.
+fn designator_next(t: &[char], end: usize) -> Option<(DesignatorSep, usize, String)> {
+    let a = designator_skip_ws(t, end);
+    if t.get(a).is_some_and(|c| [',', ';', '/', '+', '&', '、'].contains(c))
+        && let Some((e, token)) = designator_number_after_ws(t, a + 1, 0)
+    {
+        return Some((DesignatorSep::List, e, token));
+    }
+    let spaced_word = |words: &[&str]| {
+        (a > end)
+            .then(|| words.iter().find_map(|w| designator_exact(t, a, w).and_then(|b| designator_number_after_ws(t, b, 1))))
+            .flatten()
+    };
+    if let Some((e, token)) = spaced_word(DESIGNATOR_CONJUNCTIONS) {
+        return Some((DesignatorSep::List, e, token));
+    }
+    let dash = |c: Option<&char>| c.is_some_and(|c| ['-', '–', '—'].contains(c));
+    if dash(t.get(end))
+        && let Some((e, token)) = designator_number_at(t, end + 1)
+    {
+        return Some((DesignatorSep::Dash, e, token));
+    }
+    spaced_word(DESIGNATOR_RANGE_WORDS).map(|(e, token)| (DesignatorSep::Range, e, token))
+}
+
+/// The reference's `parse_list` at `pos`: the numbers of one list and its end. Exactly two numbers
+/// joined by a tight dash, or any two joined by a range word, with a < b ≤ a + 300, expand to a..b; a
+/// dash chain of three or more is a list (`11132-11193-11194`). Unit 8 (d): where the list's last item
+/// is followed by a quantity or duration word ([`QUANTITY_WORDS`]) it is a count, dropped, and the list
+/// ends at the item before it (`Lot 2, 3 ans` names 2; `grupy 20 osób` names nothing).
+fn designator_list(t: &[char], pos: usize) -> (Vec<String>, usize) {
+    let Some((mut end, first)) = designator_number_at(t, pos) else { return (Vec::new(), pos) };
+    let roman = designator_roman_token(&first);
+    let mut items: Vec<(String, Option<DesignatorSep>, usize)> = vec![(first, None, end)];
+    while let Some((sep, e, token)) = designator_next(t, end) {
+        if designator_roman_token(&token) != roman {
+            break;
+        }
+        items.push((token, Some(sep), e));
+        end = e;
+    }
+    if designator_word_after_ws(t, end, QUANTITY_WORDS).is_some() {
+        items.pop();
+        let Some((_, _, last)) = items.last() else { return (Vec::new(), pos) };
+        end = *last;
+    }
+    let dashes = items.iter().filter(|(_, sep, _)| *sep == Some(DesignatorSep::Dash)).count();
+    let pair = items.len() == 2;
+    let mut numbers: Vec<String> = Vec::new();
+    for (token, sep, _) in &items {
+        let Some(number) = designator_number(token) else { continue };
+        let ranged = match sep {
+            Some(DesignatorSep::Dash) => dashes == 1 && pair,
+            Some(DesignatorSep::Range) => true,
+            _ => false,
+        };
+        if ranged
+            && let Some(last) = numbers.last()
+            && let (Ok(a), Ok(b)) = (last.parse::<u128>(), number.parse::<u128>())
+            && last.bytes().all(|c| c.is_ascii_digit())
+            && number.bytes().all(|c| c.is_ascii_digit())
+            && a < b
+            && b <= a.saturating_add(300)
+        {
+            numbers.extend((a + 1..=b).map(|k| k.to_string()));
+            continue;
+        }
+        numbers.push(number);
+    }
+    (numbers, end)
+}
+
+/// The reference's `MARK` after a keyword ending at `j`, and the optional `.`/`:` and whitespace
+/// after it: where the list starts.
+fn designator_mark_end(t: &[char], j: usize) -> usize {
+    let a = designator_skip_ws(t, j);
+    let mut end = j;
+    if let Some(m) = DESIGNATOR_MARKS.iter().find_map(|m| designator_prefix(t, a, m)) {
+        let k = designator_skip_ws(t, m);
+        end = if t.get(k).is_some_and(|c| ['.', '°', 'º', ':'].contains(c)) { k + 1 } else { k };
+    } else if t.get(a).is_some_and(|c| ['№', '#'].contains(c)) {
+        end = a + 1;
+    }
+    let k = designator_skip_ws(t, end);
+    let k = if t.get(k).is_some_and(|c| ['.', ':'].contains(c)) { k + 1 } else { k };
+    designator_skip_ws(t, k)
+}
+
+/// `\s+`, then a whole word (case-insensitively) of `words` at `end`: the word's end. The reference's
+/// `QUANTITY_RE` (unit 8 (d)) and `COUNT_RE` (unit 8 (c)).
+fn designator_word_after_ws(t: &[char], end: usize, words: &[&str]) -> Option<usize> {
+    let k = designator_skip_ws(t, end);
+    let j = designator_word_end(t, k);
+    (k > end && j > k && designator_word_is(t, k, j, words)).then_some(j)
+}
+
+/// The next keyword at or after `pos`: its start and end.
+fn designator_keyword(t: &[char], pos: usize) -> Option<(usize, usize)> {
+    (pos..t.len()).find_map(|i| {
+        if !designator_word_start(t, i) || !designator_letter_at(t, i) {
+            return None;
+        }
+        let j = designator_word_end(t, i);
+        let los = || LOS_DESIGNATOR_WORDS.iter().any(|w| designator_exact(t, i, w) == Some(j));
+        if designator_word_is(t, i, j, LOT_DESIGNATOR_WORDS) || los() {
+            return Some((i, j));
+        }
+        let k = designator_skip_ws(t, j);
+        (designator_word_is(t, i, j, LOT_DESIGNATOR_FIRST_WORDS) && k > j && designator_letter_at(t, k))
+            .then(|| designator_word_end(t, k))
+            .filter(|&l| designator_word_is(t, k, l, LOT_DESIGNATOR_SECOND_WORDS))
+            .map(|l| (i, l))
+    })
+}
+
+/// The reference's `POS_RE` at `end` (an optional space, comma or period, then a position word and
+/// its mark): where the position's number starts.
+fn designator_position(t: &[char], end: usize) -> Option<usize> {
+    let mut starts = Vec::with_capacity(2);
+    if t.get(end).is_some_and(|&c| c.is_whitespace() || c == ',' || c == '.') {
+        starts.push(end + 1);
+    }
+    starts.push(end);
+    starts.into_iter().find_map(|s| {
+        let j = designator_word_end(t, s);
+        (designator_word_start(t, s) && j > s && designator_word_is(t, s, j, POSITION_WORDS))
+            .then(|| designator_mark_end(t, j))
+    })
+}
+
+/// Issue 568 unit 7: the lot designators `text` names, in order of appearance, duplicates kept
+/// (`u7/lot_designators.py` `designators`, as amended in unit 8, case for case). A clause is a keyword
+/// ([`LOT_DESIGNATOR_WORDS`], [`LOS_DESIGNATOR_WORDS`]) with an optional mark (`nr`, `no`, `n°`, `№`,
+/// …) and a list (`обособени позиции 5, 6, 15, 16`; `Pakiety nr 1-4`; `Pakiet I, II, III, VI`), or a
+/// number before a postfix word ([`POSTFIX_DESIGNATOR_WORDS`], `IV. rész`). A one-number clause that is
+/// no position, directly followed by a compound word and a list (`Pakiet 8 poz. 6`, `Pakiet 8 poz. 6 i
+/// 7`, `Pakiet 16 zad.1`), is ONE compound designator under the first number. Unit 8 (c): a package
+/// number followed by `pozycji` / `pozycje` / `pozycja` is a count (`(pakiet 8 pozycji)` names
+/// nothing), and a position word ([`POSITION_DESIGNATOR_WORDS`]) keys no clause once another clause
+/// has named a number in the text (`Pakiet 1 - pozycja 2` names 1).
+fn lot_designators(text: &str) -> Vec<Designator> {
+    let t: Vec<char> = text.chars().collect();
+    let single = |head: String| Designator { head, positions: Vec::new() };
+    let mut out = Vec::new();
+    let mut pos = 0;
+    // A lot / part / pakiet / zadanie clause (no position) has named a number in this text.
+    let mut clause_seen = false;
+    while let Some((start, keyword_end)) = designator_keyword(&t, pos) {
+        let list_start = designator_mark_end(&t, keyword_end);
+        let position = designator_word_is(&t, start, keyword_end, POSITION_DESIGNATOR_WORDS);
+        if position && clause_seen {
+            pos = list_start;
+            continue;
+        }
+        let (numbers, end) = designator_list(&t, list_start);
+        if numbers.is_empty() {
+            pos = list_start;
+            continue;
+        }
+        if numbers.len() == 1 && !position {
+            if let Some(position_start) = designator_position(&t, end) {
+                let (positions, positions_end) = designator_list(&t, position_start);
+                if !positions.is_empty() {
+                    out.push(Designator { head: numbers[0].clone(), positions });
+                    clause_seen = true;
+                    pos = positions_end;
+                    continue;
+                }
+            }
+            if designator_word_is(&t, start, keyword_end, PAKIET_DESIGNATOR_WORDS)
+                && let Some(count_end) = designator_word_after_ws(&t, end, PAKIET_COUNT_WORDS)
+            {
+                pos = count_end;
+                continue;
+            }
+        }
+        out.extend(numbers.into_iter().map(single));
+        clause_seen |= !position;
+        pos = end;
+    }
+    // Postfix: a number (`.` optional), whitespace, a postfix word; non-overlapping, left to right.
+    let mut i = 0;
+    while i < t.len() {
+        if designator_word_start(&t, i)
+            && let Some((e, token)) = designator_number_at(&t, i)
+        {
+            let k = if t.get(e) == Some(&'.') { e + 1 } else { e };
+            let w = designator_skip_ws(&t, k);
+            let we = designator_word_end(&t, w);
+            if w > k && we > w && designator_word_is(&t, w, we, POSTFIX_DESIGNATOR_WORDS) {
+                out.extend(designator_number(&token).map(single));
+                i = we;
+                continue;
+            }
+        }
+        i += 1;
+    }
+    out
+}
+
+/// The leading designator words [`title_key`] drops, in the reference's alternation order.
+const TITLE_KEY_WORDS: &[&str] =
+    &["lot", "lots", "los", "lote", "lotto", "pakiet", "czesc", "zadanie", "part", "partie", "perceel", "cast"];
+
+/// Issue 568 unit 7: a title in the form G5 compares (`u7/lot_designators.py` `title_key`, moved there
+/// from `g3_port.py` in unit 8): lower-cased (the whole text, so a word-final `Σ` is `ς`, as Python's
+/// `str.lower`), then NFKD with every combining character dropped ([`title_key_nfkd::NFKD_STRIPPED`]:
+/// `é` → `e`, `й` → `и`, `²` → `2`, `№` → `No`, while `ł`, `ø`, `æ`, `ß` and `ς` stay as they are),
+/// one leading designator dropped (`5. Snagging`, `Lot 1 : Dents`: an optional lot word and
+/// `no`/`nr`/`n°`, one to four of `0-9ivxlc`, then `.`, `:`, `)` or a dash) ONLY where that separator
+/// follows it (pinned in unit 8 round 2: `Pakiet 2` keeps the key `pakiet 2`), and every run of
+/// non-word characters made one space, trimmed. Unit 8 replaced the fold the unit-7 build used
+/// ([`crate::crosswalk::fold_diacritics`] and the Greek tonos), which also folded `ł`, `ø`, `æ`, `ß`
+/// and `ς` and left `й`, `²` and `№` alone, so 10,373 of the caches' 53,428 distinct texts keyed
+/// differently from the reference (no G5 outcome did).
+fn title_key(title: &str) -> String {
+    let mut folded = String::with_capacity(title.len());
+    for c in title.to_lowercase().chars() {
+        match title_key_nfkd::NFKD_STRIPPED.binary_search_by_key(&c, |(k, _)| *k) {
+            Ok(i) => folded.push_str(title_key_nfkd::NFKD_STRIPPED[i].1),
+            Err(_) => folded.push(c),
+        }
+    }
+    let t: Vec<char> = folded.chars().collect();
+    let tail = |p: usize| -> Option<usize> {
+        let run = t[p.min(t.len())..].iter().take_while(|c| c.is_ascii_digit() || "ivxlc".contains(**c)).count();
+        if run == 0 || run > 4 {
+            return None;
+        }
+        let s = designator_skip_ws(&t, p + run);
+        let punct = t[s..].iter().take_while(|c| ['.', ':', ')', '-', '–', '—'].contains(c)).count();
+        (punct > 0).then(|| designator_skip_ws(&t, s + punct))
+    };
+    let p0 = designator_skip_ws(&t, 0);
+    let start = TITLE_KEY_WORDS
+        .iter()
+        .find_map(|w| {
+            let at = p0 + w.chars().count();
+            if !t[p0.min(t.len())..].iter().copied().take(w.chars().count()).eq(w.chars()) {
+                return None;
+            }
+            let mut p = designator_skip_ws(&t, at);
+            if t.get(p) == Some(&'n') && t.get(p + 1).is_some_and(|c| ['o', 'r', '°', 'º'].contains(c)) {
+                p += 2;
+                if t.get(p) == Some(&'.') {
+                    p += 1;
+                }
+                p = designator_skip_ws(&t, p);
+            }
+            tail(p)
+        })
+        .or_else(|| tail(p0))
+        .unwrap_or(0);
+    let mut out = String::new();
+    let mut gap = false;
+    for &c in &t[start..] {
+        if c.is_alphanumeric() || c == '_' {
+            if gap && !out.is_empty() {
+                out.push(' ');
+            }
+            gap = false;
+            out.push(c);
+        } else {
+            gap = true;
+        }
+    }
+    out
 }
 
 /// Issue 551 unit 4b (B1): the fields a lot section prints its own number in, in precedence
@@ -11655,6 +12561,26 @@ mod tests {
                 currency: "EUR".into(),
                 lots_awarded: vec!["LOT-1".into()],
             }],
+            // Issue 568 unit 7: a block's guard evidence rides the frame, or the bucketed fold
+            // would never refuse (unit 8: per language, a compound with two positions).
+            award_text: [(
+                "RES-1".to_owned(),
+                AwardText {
+                    named: [
+                        ("".to_owned(), vec![Designator { head: "5".into(), positions: Vec::new() }]),
+                        (
+                            "PL".to_owned(),
+                            vec![Designator { head: "8".into(), positions: vec!["6".into(), "7".into()] }],
+                        ),
+                    ]
+                    .into_iter()
+                    .collect(),
+                    title_keys: vec!["snagging".into()],
+                    several_numbers: true,
+                },
+            )]
+            .into_iter()
+            .collect(),
         };
 
         // Frame exactly as write_buckets does, then read exactly as read_bucket does.
@@ -13377,6 +14303,7 @@ mod tests {
             org_alias: HashMap::new(),
             group_members: Vec::new(),
             stated_totals: Vec::new(),
+            award_text: BTreeMap::new(),
         };
         let fix = |old: i64, new: i64, lot: bool| ValueCorrection {
             field: "estimated_value".into(),
@@ -13460,6 +14387,7 @@ mod tests {
                 .map(|(g, m)| ((*g).to_owned(), (*m).to_owned()))
                 .collect(),
             stated_totals: Vec::new(),
+            award_text: BTreeMap::new(),
         };
         let pair = |group: &str, member: &str| (group.to_owned(), member.to_owned());
 
@@ -20693,6 +21621,7 @@ mod tests {
             round: state.round.clone(),
             group_members: state.group_members.clone(),
             stated_totals: state.stated_totals.clone(),
+            award_text: state.award_text.clone(),
         };
         let bytes = postcard::to_stdvec(&row).expect("serialize");
         postcard::from_bytes::<BucketRow>(&bytes).expect("deserialize").to_notice_state()
@@ -20790,6 +21719,1066 @@ mod tests {
             vec![("LOT-0001", Some("LOT-0001")), ("LOT-1", Some("2")), ("LOT-2", Some("1")), ("LOT-3", Some("2"))],
             "K3: LOT-0001 keeps its own number"
         );
+    }
+
+    // ---- Issue 568 unit 7: refusal guards G3-G6 on the cross-notice match (built in unit 8, amended) ----
+
+    /// Issue 568 unit 8: a cached notice ([`lot_guards_568`]) as the parse `NoticeState::read` takes: the notice
+    /// section with its Tender titles, then its lot sections (with their kind) and award blocks (`LotResult`) under
+    /// it, each carrying exactly its cached values (a text value with its language, `""` read as none; every other
+    /// value an id), in the store's order.
+    fn g568_notice(notice: &lot_guards_568::Notice) -> (store::NoticeRef, Parsed) {
+        let mut sections = vec![("PROCEDURE", "Notice")];
+        sections.extend(notice.lots.iter().map(|(id, kind, _)| (*id, *kind)));
+        sections.extend(notice.blocks.iter().map(|(id, _)| (*id, "LotResult")));
+        let rows = std::iter::once(("PROCEDURE", notice.tender))
+            .chain(notice.lots.iter().map(|(id, _, values)| (*id, *values)))
+            .chain(notice.blocks.iter().map(|(id, values)| (*id, *values)));
+        let mut values = Vec::new();
+        for (section, cached) in rows {
+            for (ordinal, (field, lang, value)) in cached.iter().enumerate() {
+                let mut row = match lang {
+                    Some(lang) => text_value(section, field, 0, Some(*lang).filter(|l| !l.is_empty()), value),
+                    None => b1_id(section, field, value),
+                };
+                row.ordinal = i64::try_from(ordinal).expect("a small ordinal");
+                values.push(row);
+            }
+        }
+        (b1_notice(notice.id, "ted", notice.profile), b1_parsed(&sections, values))
+    }
+
+    fn g568_chain(chain: &[lot_guards_568::Notice]) -> Vec<(store::NoticeRef, Parsed)> {
+        chain.iter().map(g568_notice).collect()
+    }
+
+    /// Issue 568 unit 8: `chain` folded with unit 7's evidence removed: the same bound states with
+    /// [`NoticeState::award_text`] cleared, which only the guards read, so this is the fold before unit 7 (568 as
+    /// built, with 570).
+    fn g568_fold_without_guards(chain: &[(store::NoticeRef, Parsed)]) -> Vec<TenderVersion> {
+        let states: Vec<NoticeState> =
+            chain.iter().map(|(n, p)| NoticeState { award_text: BTreeMap::new(), ..b1_bound(n, p) }).collect();
+        fold(&states.iter().collect::<Vec<_>>())
+    }
+
+    /// `g3_port.py`'s outcome per award block: `(notice, block, lot under 568 as built, lot under the amended
+    /// guards, guards fired)`.
+    type G568Port = &'static [(i64, &'static str, Option<&'static str>, Option<&'static str>, &'static str)];
+
+    /// The cached chain of `tender` and the port's outcomes for it.
+    fn g568_cached(tender: i64) -> (&'static [lot_guards_568::Notice], G568Port) {
+        use lot_guards_568::*;
+        match tender {
+            8327340 => (CHAIN_8327340, PORT_8327340),
+            5051007 => (CHAIN_5051007, PORT_5051007),
+            8364864 => (CHAIN_8364864, PORT_8364864),
+            5020611 => (CHAIN_5020611, PORT_5020611),
+            4945774 => (CHAIN_4945774, PORT_4945774),
+            5267810 => (CHAIN_5267810, PORT_5267810),
+            5071935 => (CHAIN_5071935, PORT_5071935),
+            5001424 => (CHAIN_5001424, PORT_5001424),
+            4854639 => (CHAIN_4854639, PORT_4854639),
+            4975428 => (CHAIN_4975428, PORT_4975428),
+            4889588 => (CHAIN_4889588, PORT_4889588),
+            5395010 => (CHAIN_5395010, PORT_5395010),
+            8303947 => (CHAIN_8303947, PORT_8303947),
+            5218711 => (CHAIN_5218711, PORT_5218711),
+            4485310 => (CHAIN_4485310, PORT_4485310),
+            4514627 => (CHAIN_4514627, PORT_4514627),
+            5693088 => (CHAIN_5693088, PORT_5693088),
+            4667265 => (CHAIN_4667265, PORT_4667265),
+            5476961 => (CHAIN_5476961, PORT_5476961),
+            6328307 => (CHAIN_6328307, PORT_6328307),
+            4846721 => (CHAIN_4846721, PORT_4846721),
+            8022925 => (CHAIN_8022925, PORT_8022925),
+            5106209 => (CHAIN_5106209, PORT_5106209),
+            5416534 => (CHAIN_5416534, PORT_5416534),
+            8286472 => (CHAIN_8286472, PORT_8286472),
+            _ => panic!("no cached chain for {tender}"),
+        }
+    }
+
+    /// Issue 568 unit 8, port parity: `tender`'s cached chain folded through both paths ([`r208_fold`]) puts every
+    /// award block where `g3_port.py`'s amended rule (`apply_amended`, decision-u7.md "Amendment (unit 8,
+    /// 2026-10-18)") puts it, and the fold without the guards ([`g568_fold_without_guards`]) puts it where 568 as
+    /// built does (the port's `lot_568`), block for block; every block the head carries is a port row. Returns the
+    /// guarded and the unguarded versions.
+    fn g568_port_parity(tender: i64) -> (Vec<TenderVersion>, Vec<TenderVersion>) {
+        let (chain, port) = g568_cached(tender);
+        let notices = g568_chain(chain);
+        let guarded = r208_fold(&notices);
+        let unguarded = g568_fold_without_guards(&notices);
+        let lots = |versions: &[TenderVersion]| -> BTreeMap<(i64, String), Option<String>> {
+            l570_blocks(versions.last().expect("a chain")).into_iter().map(|(n, b, l)| ((n, b), l)).collect()
+        };
+        let (with, without) = (lots(&guarded), lots(&unguarded));
+        assert_eq!(with.len(), port.len(), "{tender}: every block is a port row");
+        for (notice, block, built, decided, guards) in port {
+            let key = (*notice, (*block).to_owned());
+            assert_eq!(without[&key].as_deref(), *built, "{tender}: {notice} {block} under 568 as built");
+            assert_eq!(with[&key].as_deref(), *decided, "{tender}: {notice} {block} under the guards ({guards:?})");
+        }
+        (guarded, unguarded)
+    }
+
+    /// `block` of `notice`'s round in `version`: its lot key.
+    fn g568_lot(version: &TenderVersion, notice: i64, block: &str) -> Option<String> {
+        g568_result(version, notice, block).lot_key.clone()
+    }
+
+    fn g568_result<'a>(version: &'a TenderVersion, notice: i64, block: &str) -> &'a LotResultState {
+        let round = version.rounds.iter().find(|r| r.notice_id == notice).expect("the notice's round");
+        round.lot_results.iter().find(|r| r.key == block).expect("the block")
+    }
+
+    /// The guard evidence `NoticeState::read` keeps for `block` of the cached `notice` (empty when none).
+    fn g568_evidence(chain: &[lot_guards_568::Notice], notice: i64, block: &str) -> AwardText {
+        let (n, p) = g568_notice(chain.iter().find(|n| n.id == notice).expect("a cached notice"));
+        b1_bound(&n, &p).award_text.get(block).cloned().unwrap_or_default()
+    }
+
+    /// The designators a block's titles name, over every language, distinct and sorted.
+    fn g568_designators(text: &AwardText) -> Vec<Designator> {
+        text.named.values().flatten().cloned().collect::<BTreeSet<_>>().into_iter().collect()
+    }
+
+    /// Their heads, in that order.
+    fn g568_heads(text: &AwardText) -> Vec<String> {
+        g568_designators(text).into_iter().map(|d| d.head).collect()
+    }
+
+    /// One designator: `head` with `positions` (none for a plain one).
+    fn g568_d(head: &str, positions: &[&str]) -> Designator {
+        Designator { head: head.to_owned(), positions: positions.iter().map(|p| (*p).to_owned()).collect() }
+    }
+
+    /// `parsed` with only the award blocks `keep` (an ADDED reduction of a cached award notice).
+    fn g568_only_blocks(mut notice: (store::NoticeRef, Parsed), keep: &[&str]) -> (store::NoticeRef, Parsed) {
+        let gone = |id: &str| id.starts_with("RES-") && !keep.contains(&id);
+        notice.1.sections.retain(|s| !gone(&s.id));
+        notice.1.values.retain(|v| !gone(&v.section_id));
+        notice
+    }
+
+    /// An ADDED R2.0.8 award notice (no lot section): one block per entry, `RES-1` first, each printing its
+    /// `TED-LOT_NUMBER` and carrying its `TED-CONTRACT_TITLE` values as `(language, title)`.
+    fn g568_titled_can(id: i64, blocks: &[(&str, &[(Option<&str>, &str)])]) -> (store::NoticeRef, Parsed) {
+        let printed: Vec<&str> = blocks.iter().map(|(p, _)| *p).collect();
+        let titles = blocks.iter().enumerate().flat_map(|(k, (_, titles))| {
+            titles.iter().enumerate().map(move |(ordinal, (lang, title))| {
+                let ordinal = i64::try_from(ordinal).expect("a small ordinal");
+                text_value(&format!("RES-{}", k + 1), "TED-CONTRACT_TITLE", ordinal, *lang, title)
+            })
+        });
+        r208(id, "3", &[], &r208_numbered(&printed), titles.collect())
+    }
+
+    /// An ADDED R2.0.8 contract notice: one `Lot` section per entry, keyed `LOT-<printed>` (so a block printing
+    /// k lands on `LOT-k`, [`on_lot`]), printing that `TED-LOT_NUMBER` and carrying its `TED-LOT_TITLE` if any.
+    fn g568_titled_cn(id: i64, lots: &[(&str, Option<&str>)]) -> (store::NoticeRef, Parsed) {
+        let keys: Vec<String> = lots.iter().map(|(p, _)| format!("LOT-{p}")).collect();
+        let mut sections = vec![("PROCEDURE", "Notice")];
+        sections.extend(keys.iter().map(|k| (k.as_str(), "Lot")));
+        let mut values = vec![b1_form("2")];
+        for (key, (printed, title)) in keys.iter().zip(lots) {
+            values.push(b1_id(key, "TED-LOT_NUMBER", printed));
+            values.extend(title.map(|t| text_value(key, "TED-LOT_TITLE", 0, Some("PL"), t)));
+        }
+        (b1_notice(id, "ted", "ted-export-r208"), b1_parsed(&sections, values))
+    }
+
+    /// Issue 568 unit 7, G3 (`u7/decision-u7.md`): an award block whose own title names two or more lots the
+    /// inherited lots print stays on the Tender. 8327340, the read-back's failure: the CN 17694913 prints 1-37, and
+    /// the CANs 17821481 and 17830774 award several lots per block (`обособени позиции 5, 6, 15, 16` printing 5;
+    /// `33, 34, 35` printing 34), which 568 put on the one lot each prints, its value with it (709,431.63 BGN on
+    /// LOT-5). Those seven stay on the Tender, their printed numbers kept; 17821481 RES-3 (`обособена позиция 24`)
+    /// and RES-4 keep LOT-24 and LOT-32, and 17840150 RES-1 keeps LOT-2. A stated total on each CAN (ADDED: an
+    /// R2.0.8 CAN states none the frozen table reads) no longer awards the lots the seven print.
+    #[test]
+    fn an_award_naming_several_lots_stays_on_the_tender_8327340() {
+        let (guarded, unguarded) = g568_port_parity(8327340);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        let multi = [
+            (17821481, "RES-1", "5"),
+            (17821481, "RES-2", "28"),
+            (17821481, "RES-5", "3"),
+            (17821481, "RES-6", "21"),
+            (17821481, "RES-7", "12"),
+            (17830774, "RES-1", "34"),
+            (17830774, "RES-2", "1"),
+        ];
+        for (notice, block, printed) in multi {
+            let lot = format!("LOT-{printed}");
+            assert_eq!(g568_lot(before, notice, block), Some(lot.clone()), "premise: 568 as built put {notice} {block} on {lot}");
+            assert_eq!(g568_lot(head, notice, block), None, "{notice} {block} names several lots: the Tender");
+            assert_eq!(g568_result(head, notice, block).published_lot_no, b1_s(printed), "{notice} {block}: kept as published");
+        }
+        for (notice, block, lot) in [(17821481, "RES-3", "LOT-24"), (17821481, "RES-4", "LOT-32"), (17840150, "RES-1", "LOT-2")] {
+            assert_eq!(g568_lot(head, notice, block), b1_s(lot), "{notice} {block}");
+        }
+        let (chain, _) = g568_cached(8327340);
+        assert_eq!(g568_heads(&g568_evidence(chain, 17821481, "RES-1")), vec!["15", "16", "5", "6"], "обособени позиции 5, 6, 15, 16");
+        assert_eq!(g568_heads(&g568_evidence(chain, 17821481, "RES-3")), vec!["24"], "обособена позиция 24");
+
+        let mut notices = g568_chain(chain);
+        for (_, parsed) in notices.iter_mut().filter(|(n, _)| [17821481, 17830774].contains(&n.id)) {
+            parsed.values.push(b1_amount("PROCEDURE", "TED-VAL_TOTAL", 100_000_000, "BGN"));
+            parsed.values.sort_by(|a, b| (&a.section_id, &a.field_id, a.ordinal).cmp(&(&b.section_id, &b.field_id, b.ordinal)));
+        }
+        let awarded = |versions: &[TenderVersion], notice: i64| -> Vec<String> {
+            b1_totals(versions.last().expect("a chain")).into_iter().find(|t| t.0 == notice).expect("its stated total").5
+        };
+        let guarded = r208_fold(&notices);
+        assert_eq!(awarded(&guarded, 17821481), b1_keys(&["LOT-24", "LOT-32"]));
+        assert_eq!(awarded(&guarded, 17830774), Vec::<String>::new());
+        let unguarded = g568_fold_without_guards(&notices);
+        assert_eq!(
+            awarded(&unguarded, 17821481),
+            b1_keys(&["LOT-12", "LOT-21", "LOT-24", "LOT-28", "LOT-3", "LOT-32", "LOT-5"]),
+            "premise: 568 as built"
+        );
+        assert_eq!(awarded(&unguarded, 17830774), b1_keys(&["LOT-1", "LOT-34"]), "premise: 568 as built");
+    }
+
+    /// Issue 568 unit 8 (amended G4): a block whose title names a lot the inherited lots print, other than its
+    /// printed number and not named by its lot's own title, contradicts and stays on the Tender; with two or more
+    /// such blocks the notice numbers its awards by a contract counter, and every other block it matched stays on
+    /// the Tender too, except one its own title confirms (it names exactly its printed number). 5051007: the CN
+    /// 17548991 prints 1-22, a corrigendum 17556401 publishes no lot, and the CAN 17689000's 19 blocks print 1-19
+    /// under titles `Pakiet nr 1, 2, 3, 5, 6 … 21`: RES-1..3 (`Pakiet nr 1..3`, the counter still equal to the lot)
+    /// keep LOT-1..3, and RES-4..19 (16 contradicting blocks) stay on the Tender. 8364864 (CN 18435877 `Zadanie k`,
+    /// corrigendum 18460695, CAN 18524956): `Zadanie 2` printed 1 and `Zadanie 3` printed 2 both contradict and stay
+    /// on the Tender, never re-keyed to the lot their title names.
+    #[test]
+    fn a_counter_numbered_notice_keeps_only_its_title_confirmed_blocks_5051007() {
+        let (guarded, unguarded) = g568_port_parity(5051007);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        for k in 1..=19 {
+            let block = format!("RES-{k}");
+            assert_eq!(g568_lot(before, 17689000, &block), Some(format!("LOT-{k}")), "premise: 568 as built");
+            let want = (k <= 3).then(|| format!("LOT-{k}"));
+            assert_eq!(g568_lot(head, 17689000, &block), want, "{block}");
+            assert_eq!(g568_result(head, 17689000, &block).published_lot_no, Some(k.to_string()), "{block}: kept as published");
+        }
+        let (chain, _) = g568_cached(5051007);
+        assert_eq!(g568_heads(&g568_evidence(chain, 17689000, "RES-1")), vec!["1"], "RES-1's title confirms it");
+        assert_eq!(g568_heads(&g568_evidence(chain, 17689000, "RES-4")), vec!["5"], "RES-4 (printed 4) names Pakiet 5");
+
+        let (guarded, unguarded) = g568_port_parity(8364864);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        assert_eq!(g568_lot(before, 18524956, "RES-1"), b1_s("LOT-1"), "premise: 568 as built");
+        assert_eq!(g568_lot(head, 18524956, "RES-1"), None, "`Zadanie 2` printed 1: the Tender, never LOT-2");
+        assert_eq!(g568_lot(head, 18524956, "RES-2"), None, "`Zadanie 3` printed 2: the Tender, never LOT-3");
+    }
+
+    /// Issue 568 unit 8, out of sample (`u8-oos/cache_o1`, `cache_o2`): the counter notices keep their early,
+    /// title-confirmed blocks. 8286472: the CN 12587380 prints 1-19; the CAN 16994904's 17 blocks print 1-17 and
+    /// end their titles `- zadanie k`, k = the printed number for RES-1..8 and the next one after (`zadanie 10`
+    /// printed 9 …): RES-1..8 keep LOT-1..8 and RES-9..17 (nine contradicting blocks) stay on the Tender. RES-4's
+    /// `(pakiet 8 pozycji) … - zadanie 4` names 4 alone: `pakiet 8 pozycji` is a package of eight items. 5416534:
+    /// the CN 18269547 prints 1-111, all lots under one title, each lot's description naming its pakiet (`Pakiet
+    /// 16 - pozycja nr 1` on LOT-16, `… nr 2` on LOT-17); the CAN 18634900's 105 blocks are numbered by a counter
+    /// (`Pakiet 16 zad.1` printed 15): RES-1..14 (`Pakiet k` printed k) keep LOT-1..14, and the other 91 stay on the
+    /// Tender, 78 of them contradicting. RES-16 `Pakiet 16 zad.2` printed 16 (its lot is LOT-17) stays on the Tender
+    /// too: its compound's head is the printed counter, but a compound confirms nothing (R2), so the notice level
+    /// refuses it; the round-1 rule kept it on LOT-16. R1 is why RES-17 `Pakiet 16 zad. 3` (printed 17, on LOT-17,
+    /// described `Pakiet 16- pozycja nr 2.`) no longer contradicts: its head 16 is its lot's. The notice level holds
+    /// it, and that is the amendment's recorded risk 4: on the CAN reduced to RES-14, RES-16 and RES-17 (ADDED: no
+    /// contradiction left) all three keep their printed lot, the two same-pakiet offsets included, where the round-1
+    /// rule refused RES-17 (G4).
+    #[test]
+    fn a_counter_notice_keeps_its_title_confirmed_blocks_out_of_sample_8286472_5416534() {
+        let (guarded, unguarded) = g568_port_parity(8286472);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        for k in 1..=17 {
+            let block = format!("RES-{k}");
+            assert_eq!(g568_lot(before, 16994904, &block), Some(format!("LOT-{k}")), "premise: 568 as built");
+            assert_eq!(g568_lot(head, 16994904, &block), (k <= 8).then(|| format!("LOT-{k}")), "{block}");
+        }
+        let (chain, _) = g568_cached(8286472);
+        for (block, heads) in [("RES-4", vec!["4"]), ("RES-8", vec!["8"]), ("RES-9", vec!["10"])] {
+            assert_eq!(g568_heads(&g568_evidence(chain, 16994904, block)), heads, "{block}");
+        }
+
+        let (guarded, unguarded) = g568_port_parity(5416534);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        for k in 1..=105 {
+            let block = format!("RES-{k}");
+            assert_eq!(g568_lot(before, 18634900, &block), Some(format!("LOT-{k}")), "premise: 568 as built");
+            assert_eq!(g568_lot(head, 18634900, &block), (k <= 14).then(|| format!("LOT-{k}")), "{block}");
+        }
+        let (chain, _) = g568_cached(5416534);
+        assert_eq!(g568_designators(&g568_evidence(chain, 18634900, "RES-15")), vec![g568_d("16", &["1"])], "Pakiet 16 zad.1");
+        assert_eq!(g568_designators(&g568_evidence(chain, 18634900, "RES-16")), vec![g568_d("16", &["2"])], "Pakiet 16 zad.2");
+        assert_eq!(g568_designators(&g568_evidence(chain, 18634900, "RES-17")), vec![g568_d("16", &["3"])], "Pakiet 16 zad. 3");
+        let notices = g568_chain(chain);
+        let offsets = [notices[0].clone(), g568_only_blocks(notices[1].clone(), &["RES-14", "RES-16", "RES-17"])];
+        assert_eq!(
+            r208_keys(&r208_fold(&offsets)[1], 18634900),
+            vec![b1_s("LOT-14"), b1_s("LOT-16"), b1_s("LOT-17")],
+            "no contradiction left: the same-pakiet offsets keep (R1; risk 4)"
+        );
+    }
+
+    /// Issue 568 unit 7, G3 and G4 on Roman lists: 5020611's CN 17490851 prints 1-13; its CAN 17604929 titles its
+    /// four blocks `Pakiet I, II, III, VI` (printed 1), `Pakiet IV` (printed 2), `Pakiet V, X, XI, XII, XIII`
+    /// (printed 3) and `Pakiet VIII, IX` (printed 4). All four stay on the Tender: G3 on RES-1/3/4 (several lots
+    /// each), G4 on RES-2/3/4 (none names its printed number), and RES-1, which names its 1 among three others, by
+    /// the notice level too. Each guard alone, on the CAN reduced to one block (ADDED): RES-1 alone (no
+    /// contradiction) still stays on the Tender (G3), and RES-2 alone does too (one contradicting block refuses
+    /// itself).
+    #[test]
+    fn roman_pakiet_lists_and_a_contradicted_pakiet_5020611() {
+        let (guarded, unguarded) = g568_port_parity(5020611);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        for k in 1..=4 {
+            let block = format!("RES-{k}");
+            assert_eq!(g568_lot(before, 17604929, &block), Some(format!("LOT-{k}")), "premise: 568 as built");
+            assert_eq!(g568_lot(head, 17604929, &block), None, "{block}");
+        }
+        let (chain, _) = g568_cached(5020611);
+        let heads: Vec<Vec<String>> =
+            ["RES-1", "RES-2", "RES-3", "RES-4"].iter().map(|b| g568_heads(&g568_evidence(chain, 17604929, b))).collect();
+        assert_eq!(heads, vec![vec!["1", "2", "3", "6"], vec!["4"], vec!["10", "11", "12", "13", "5"], vec!["8", "9"]]);
+        let notices = g568_chain(chain);
+        for (keep, why) in [("RES-1", "G3"), ("RES-2", "G4")] {
+            let can = g568_only_blocks(notices[1].clone(), &[keep]);
+            let versions = r208_fold(&[notices[0].clone(), can.clone()]);
+            assert_eq!(g568_lot(&versions[1], 17604929, keep), None, "{keep} alone: {why}");
+            let before = g568_fold_without_guards(&[notices[0].clone(), can]);
+            assert!(g568_lot(&before[1], 17604929, keep).is_some(), "premise: {keep} alone matched before unit 7");
+        }
+    }
+
+    /// Issue 568 unit 7: a compound `Pakiet k poz. m` is ONE designator with head k. 4945774 (CN 17312546, 49
+    /// lots; corrigendum 17330504; CAN 17426530): `Pakiet 42 poz.3` printed 42 stays on LOT-42, and every block of
+    /// the chain is where 568 put it. Against it, 5267810 (CN 17979642, whose LOT-8..LOT-30 are positions of
+    /// pakiet 8; corrigendum 17996722; CAN 18199880) numbers its 32 awards by a counter (`PAKIET 10 POZ. 1` printed
+    /// 2, `Pakiet 8 poz. 6` printed 10 on LOT-10, titled `pakiet 8`): 15 contradict, RES-1 `PAKIET 1` printed 1
+    /// is title-confirmed and keeps LOT-1, and the other 31 stay on the Tender. The notice level alone refuses the
+    /// bare `Pakiet` (RES-8) and `Pakiet 1A` (RES-7), which name no number a lot prints, and (R1) RES-9..12,
+    /// 15..18 and 25..30, `Pakiet 8 poz. k` on a lot titled `pakiet 8 …`: each names another item of pakiet 8,
+    /// so it shares its lot's head and no longer contradicts (the round-1 rule counted 29). Unit 8's threshold on
+    /// the same CAN (ADDED reductions): beside ONE contradicting block (RES-2) the two keep LOT-7 and LOT-8;
+    /// beside two (RES-2, RES-3) they stay on the Tender, and RES-1 keeps LOT-1 throughout.
+    #[test]
+    fn a_compound_pakiet_position_agrees_with_its_pakiet_4945774() {
+        let (guarded, unguarded) = g568_port_parity(4945774);
+        assert_eq!(l570_blocks(guarded.last().expect("a chain")), l570_blocks(unguarded.last().expect("a chain")), "4945774 unchanged");
+        let head = guarded.last().expect("a chain");
+        for block in ["RES-35", "RES-36", "RES-37", "RES-38"] {
+            assert_eq!(g568_lot(head, 17426530, block), b1_s("LOT-42"), "{block}");
+        }
+        let (chain, _) = g568_cached(4945774);
+        assert_eq!(
+            g568_designators(&g568_evidence(chain, 17426530, "RES-35")),
+            vec![g568_d("42", &["3"])],
+            "Pakiet 42 poz.3 is one designator"
+        );
+
+        let (guarded, unguarded) = g568_port_parity(5267810);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        for k in 1..=32 {
+            let block = format!("RES-{k}");
+            assert_eq!(g568_lot(before, 18199880, &block), Some(format!("LOT-{k}")), "premise: 568 as built");
+            assert_eq!(g568_lot(head, 18199880, &block), (k == 1).then(|| "LOT-1".to_owned()), "{block}");
+        }
+        let (chain, _) = g568_cached(5267810);
+        assert!(g568_evidence(chain, 18199880, "RES-8").named.is_empty(), "the bare `Pakiet` names nothing");
+        assert_eq!(g568_heads(&g568_evidence(chain, 18199880, "RES-7")), vec!["1a"], "`Pakiet 1A` names 1a, which no lot prints");
+        assert_eq!(
+            g568_designators(&g568_evidence(chain, 18199880, "RES-10")),
+            vec![g568_d("8", &["6"])],
+            "`Pakiet 8 poz. 6` printed 10"
+        );
+        let notices = g568_chain(chain);
+        let reduced = |keep: &[&str]| -> Vec<Option<String>> {
+            let chain = [notices[0].clone(), notices[1].clone(), g568_only_blocks(notices[2].clone(), keep)];
+            let versions = r208_fold(&chain);
+            keep.iter().map(|b| g568_lot(&versions[2], 18199880, b)).collect()
+        };
+        assert_eq!(reduced(&["RES-2", "RES-7", "RES-8"]), vec![None, b1_s("LOT-7"), b1_s("LOT-8")], "one contradiction");
+        assert_eq!(reduced(&["RES-1", "RES-2", "RES-3", "RES-7", "RES-8"]), vec![b1_s("LOT-1"), None, None, None, None], "two");
+        // R1 (and its recorded cost, risk 4): `Pakiet 8 poz. 1` printed 9 on LOT-9 `pakiet 8` (the CN's pakiet 8
+        // item 2) shares its lot's head, so without the notice's contradictions it keeps LOT-9; the round-1 rule
+        // refused it (G4).
+        assert_eq!(reduced(&["RES-1", "RES-9"]), vec![b1_s("LOT-1"), b1_s("LOT-9")], "a same-pakiet offset agrees");
+    }
+
+    /// Issue 568 unit 7, G4's agreement: a designator the matched lot's own title also names agrees. 5071935's CN
+    /// 17622584 titles its lots `lot 02.1 …`, `lot 02.2 …`, `lot 06 DESAMIANTAGE …`, `lot 10 SOLS …`, `lot 14.1 …`,
+    /// `lot 15.1 …` and prints 1-6. Its CAN 17760667's `Lot 06 désamiantage` printed 3 stays on LOT-3 (its title
+    /// names lot 06 too), and `Lot 10 sols` printed 4 stays on LOT-4 (10 is no number a lot prints): all 13 are
+    /// unchanged. Without LOT-3's title (ADDED), its three `Lot 06` blocks contradict and the whole notice stays on
+    /// the Tender (no other block's title names its printed number); with that text as LOT-3's description instead
+    /// (ADDED), they agree through it and all 13 are unchanged.
+    #[test]
+    fn a_title_designator_the_matched_lot_also_carries_agrees_5071935() {
+        let (guarded, unguarded) = g568_port_parity(5071935);
+        let head = guarded.last().expect("a chain");
+        assert_eq!(l570_blocks(head), l570_blocks(unguarded.last().expect("a chain")), "all 13 unchanged");
+        assert_eq!(g568_lot(head, 17760667, "RES-3"), b1_s("LOT-3"), "Lot 06 désamiantage printed 3");
+        assert_eq!(g568_lot(head, 17760667, "RES-4"), b1_s("LOT-4"), "Lot 10 sols printed 4");
+        let (chain, _) = g568_cached(5071935);
+        assert_eq!(g568_heads(&g568_evidence(chain, 17760667, "RES-3")), vec!["6"]);
+        assert_eq!(g568_heads(&g568_evidence(chain, 17760667, "RES-1")), vec!["2.1"], "groupes are no keyword");
+
+        let mut notices = g568_chain(chain);
+        notices[0].1.values.retain(|v| !(v.section_id == "LOT-3" && v.field_id == "TED-LOT_TITLE"));
+        let versions = r208_fold(&notices);
+        let blocks = l570_blocks(versions.last().expect("a chain"));
+        assert_eq!(blocks.len(), 13);
+        assert!(blocks.iter().all(|(_, _, lot)| lot.is_none()), "untitled LOT-3: the notice contradicts, {blocks:?}");
+
+        // ADDED: LOT-3's `lot 06 …` moved from its title to its description agrees just the same.
+        let mut notices = g568_chain(chain);
+        for v in notices[0].1.values.iter_mut().filter(|v| v.section_id == "LOT-3" && v.field_id == "TED-LOT_TITLE") {
+            v.field_id = "TED-LOT_DESCRIPTION".into();
+        }
+        notices[0].1.values.sort_by(|a, b| (&a.section_id, &a.field_id, a.ordinal).cmp(&(&b.section_id, &b.field_id, b.ordinal)));
+        let versions = r208_fold(&notices);
+        assert_eq!(l570_blocks(versions.last().expect("a chain")), l570_blocks(head), "described LOT-3: all 13 unchanged");
+        assert_eq!(g568_lot(versions.last().expect("a chain"), 17760667, "RES-3"), b1_s("LOT-3"), "agrees through the description");
+    }
+
+    /// Issue 568 unit 7, G6: an award block that prints two or more lot numbers stays on the Tender. 5001424's CN
+    /// 17452649 prints 1-6; its CAN 17550359's one block prints `LOT_NUMBER` 1-6 under one award, one winner and one
+    /// value (issue 568 risk 7, measured), and 568 put it on LOT-1.
+    #[test]
+    fn a_block_printing_several_lot_numbers_stays_on_the_tender_5001424() {
+        let (guarded, unguarded) = g568_port_parity(5001424);
+        assert_eq!(g568_lot(unguarded.last().expect("a chain"), 17550359, "RES-1"), b1_s("LOT-1"), "premise: 568 as built");
+        let head = guarded.last().expect("a chain");
+        assert_eq!(g568_lot(head, 17550359, "RES-1"), None);
+        assert_eq!(g568_result(head, 17550359, "RES-1").published_lot_no, b1_s("1"), "kept as published: its first number");
+        let (chain, _) = g568_cached(5001424);
+        assert!(g568_evidence(chain, 17550359, "RES-1").several_numbers);
+    }
+
+    /// Issue 568 unit 7, G5: an award block titled exactly as one OTHER inherited lot (and as neither its own lot nor
+    /// the Tender) stays on the Tender. 4854639: the CN 17133208 titles its lots `1. Service for Cranes …` …
+    /// `5. Snagging`, `6. Repair painting`; the CAN 17286567 renumbers, so RES-7/8 `Snagging` print 4 and sit on
+    /// LOT-4 (`4. Service for WTG's`): they stay on the Tender, while RES-1..6 and RES-9/10 (`Painting` on LOT-5,
+    /// the recorded residual) are unchanged. 4975428 (CN 17403336, CAN 18326140): RES-2 prints 9 under LOT-8's
+    /// title and stays on the Tender; its other 6 are unchanged. Controls, unchanged:
+    /// - 4889588: `Toksyna botulinowa` titles lots 3 and 9, and the awards printing 3 and 9 keep both;
+    /// - 5395010: the procedure title copied into LOT-2's title, on both blocks, never counts;
+    /// - 8303947: RES-2's Maltese variant copies lot 1's title, its other languages are lot 2's: it keeps LOT-2;
+    /// - ADDED: a block titled as TWO other lots (and not as its own) keeps its lot: G5 needs exactly one.
+    #[test]
+    fn an_award_titled_as_another_lot_stays_on_the_tender_4854639() {
+        let (guarded, unguarded) = g568_port_parity(4854639);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        for block in ["RES-7", "RES-8"] {
+            assert_eq!(g568_lot(before, 17286567, block), b1_s("LOT-4"), "premise: 568 as built");
+            assert_eq!(g568_lot(head, 17286567, block), None, "{block} `Snagging`");
+        }
+        for block in ["RES-1", "RES-2", "RES-3", "RES-4", "RES-5", "RES-6", "RES-9", "RES-10"] {
+            assert_eq!(g568_lot(head, 17286567, block), g568_lot(before, 17286567, block), "{block} unchanged");
+        }
+        let (chain, _) = g568_cached(4854639);
+        assert_eq!(g568_evidence(chain, 17286567, "RES-7").title_keys, vec!["snagging".to_owned()]);
+
+        let (guarded, unguarded) = g568_port_parity(4975428);
+        let (head, before) = (guarded.last().expect("a chain"), unguarded.last().expect("a chain"));
+        assert_eq!(g568_lot(before, 18326140, "RES-2"), b1_s("LOT-9"), "premise: 568 as built");
+        assert_eq!(g568_lot(head, 18326140, "RES-2"), None, "RES-2 carries LOT-8's title");
+        for k in [1, 3, 4, 5, 6, 7] {
+            let block = format!("RES-{k}");
+            assert_eq!(g568_lot(head, 18326140, &block), g568_lot(before, 18326140, &block), "{block} unchanged");
+        }
+
+        for tender in [4889588, 5395010, 8303947] {
+            let (guarded, unguarded) = g568_port_parity(tender);
+            assert_eq!(
+                l570_blocks(guarded.last().expect("a chain")),
+                l570_blocks(unguarded.last().expect("a chain")),
+                "{tender} unchanged"
+            );
+        }
+        let (guarded, _) = g568_port_parity(4889588);
+        let head = guarded.last().expect("a chain");
+        assert_eq!((g568_lot(head, 17298081, "RES-2"), g568_lot(head, 17298081, "RES-8")), (b1_s("LOT-3"), b1_s("LOT-9")));
+        let (guarded, _) = g568_port_parity(8303947);
+        assert_eq!(g568_lot(guarded.last().expect("a chain"), 17500557, "RES-2"), b1_s("LOT-2"));
+
+        // ADDED: G5 needs EXACTLY one other lot. A CN printing 1-3; a CAN block printing 1 titled `Beta`. Where
+        // `Beta` titles LOT-2 alone, the block stays on the Tender; where it titles LOT-2 and LOT-3, it keeps LOT-1.
+        let titled_cn = |titles: [&str; 3]| -> (store::NoticeRef, Parsed) {
+            let lots = titles.iter().enumerate().map(|(k, t)| text_value(&format!("LOT-{}", k + 1), "TED-LOT_TITLE", 0, None, t));
+            r208(1, "2", &r208_numbered(&["1", "2", "3"]), &[], lots.collect())
+        };
+        let can = r208(2, "3", &[], &r208_numbered(&["1"]), vec![text_value("RES-1", "TED-CONTRACT_TITLE", 0, None, "Beta")]);
+        let one_other = [titled_cn(["Alpha", "Beta", "Gamma"]), can.clone()];
+        assert_eq!(r208_keys(&r208_fold(&one_other)[1], 2), vec![None], "`Beta` is LOT-2's title alone: G5");
+        assert_eq!(r208_keys(&g568_fold_without_guards(&one_other)[1], 2), vec![on_lot(1)], "premise: 568 as built");
+        let two_others = [titled_cn(["Alpha", "Beta", "Beta"]), can];
+        assert_eq!(r208_keys(&r208_fold(&two_others)[1], 2), vec![on_lot(1)], "`Beta` titles two other lots: no G5");
+    }
+
+    /// Issue 568 unit 7: G4 reads only the blocks the rule matched. 5218711's CN 17886006 prints 1-4; its CAN
+    /// 18184190's 16 blocks printing 5, 6 and 7 are the CAN's own numbers for sub-lots 3.B-3.D (`Lot 3.B:
+    /// Technical` printed 5 names lot 3), match no lot, and say nothing about the numbers that did: the 20 matched
+    /// blocks keep their lots, and the 16 stay on the Tender.
+    #[test]
+    fn a_contradicting_block_with_no_lot_does_not_refuse_the_notice_5218711() {
+        let (guarded, unguarded) = g568_port_parity(5218711);
+        let blocks = l570_blocks(guarded.last().expect("a chain"));
+        assert_eq!(blocks, l570_blocks(unguarded.last().expect("a chain")), "unchanged");
+        assert_eq!(blocks.iter().filter(|(_, _, lot)| lot.is_some()).count(), 20);
+        assert_eq!(blocks.iter().filter(|(_, _, lot)| lot.is_none()).count(), 16);
+        let (chain, _) = g568_cached(5218711);
+        assert_eq!(g568_heads(&g568_evidence(chain, 18184190, "RES-18")), vec!["3"], "premise: `Lot 3.B` printed 5 names 3");
+        assert_eq!(g568_lot(guarded.last().expect("a chain"), 18184190, "RES-18"), None);
+    }
+
+    /// Issue 568 unit 8 (amended G4): ONE contradicting block refuses only itself; the notice level needs two.
+    /// ADDED shapes, a CN printing 1-3: a CAN whose RES-1 prints 1 under `Lots 2 and 3` (G3, and it contradicts)
+    /// and whose RES-2 prints 2 under no title gives `[None, LOT-2]` (unit 8's review chain, which the decided rule
+    /// refused whole); a CAN whose RES-1 prints 1 under `Lot 2`, RES-2 prints 2 untitled and RES-3 prints 3 under
+    /// `Lot 3` gives `[None, LOT-2, LOT-3]`; and the amendment's own shape (decision-u7.md "Build deltas"), a CAN
+    /// whose RES-1 prints 1 under `Lot 1`, RES-2 prints 2 under `Lot 3` and RES-3 prints 3 untitled, gives `[LOT-1,
+    /// None, LOT-3]`.
+    #[test]
+    fn one_contradicting_block_refuses_only_itself() {
+        let cn = r208_cn(1, &["1", "2", "3"]);
+        let review = [cn.clone(), g568_titled_can(2, &[("1", &[(Some("EN"), "Lots 2 and 3")]), ("2", &[])])];
+        assert_eq!(r208_keys(&g568_fold_without_guards(&review)[1], 2), vec![on_lot(1), on_lot(2)], "premise: 568 as built");
+        assert_eq!(r208_keys(&r208_fold(&review)[1], 2), vec![None, on_lot(2)], "one contradiction: RES-1 alone");
+        let beside = [cn.clone(), g568_titled_can(2, &[("1", &[(Some("EN"), "Lot 2")]), ("2", &[]), ("3", &[(Some("EN"), "Lot 3")])])];
+        assert_eq!(r208_keys(&r208_fold(&beside)[1], 2), vec![None, on_lot(2), on_lot(3)], "RES-1 alone");
+        let agreeing = [cn, g568_titled_can(2, &[("1", &[(Some("EN"), "Lot 1")]), ("2", &[(Some("EN"), "Lot 3")]), ("3", &[])])];
+        assert_eq!(r208_keys(&r208_fold(&agreeing)[1], 2), vec![on_lot(1), None, on_lot(3)], "RES-2 alone");
+    }
+
+    /// Issue 568 unit 8 (amended G4, its order): contradictions are counted over EVERY matched block before G6 and
+    /// G3 refuse any, so a block G3 refuses still counts. ADDED shape: a CN printing 1-4; a CAN whose RES-1 prints 1
+    /// under `Lots 2 and 3` (G3, and it contradicts), RES-2 prints 2 under `Lot 4` (it contradicts) and RES-3
+    /// prints 3 untitled: two contradictions, so RES-3 stays on the Tender too. Counting after G3 would leave one
+    /// and keep RES-3 on LOT-3; without RES-1 it does keep LOT-3.
+    #[test]
+    fn contradictions_are_counted_before_g3_and_g6_refuse() {
+        let can = g568_titled_can(2, &[("1", &[(Some("EN"), "Lots 2 and 3")]), ("2", &[(Some("EN"), "Lot 4")]), ("3", &[])]);
+        let chain = [r208_cn(1, &["1", "2", "3", "4"]), can.clone()];
+        assert_eq!(r208_keys(&g568_fold_without_guards(&chain)[1], 2), vec![on_lot(1), on_lot(2), on_lot(3)], "premise");
+        assert_eq!(r208_keys(&r208_fold(&chain)[1], 2), vec![None, None, None], "two contradictions: the notice");
+        let alone = [r208_cn(1, &["1", "2", "3", "4"]), g568_only_blocks(can, &["RES-2", "RES-3"])];
+        assert_eq!(r208_keys(&r208_fold(&alone)[1], 2), vec![None, on_lot(3)], "premise: one contradiction keeps RES-3");
+    }
+
+    /// Issue 568 unit 8 (amended G4's exception): in a notice where two or more blocks contradict, a block whose
+    /// title names exactly its printed number in every language that names a printed lot keeps its lot; an untitled
+    /// block does not. ADDED shapes, a CN printing 1-4, a CAN whose RES-1 prints 1 under `Lot 2` and RES-2 prints 2
+    /// under `Lot 3` (two contradictions), RES-4 prints 4 untitled, and RES-3 prints 3 under
+    /// - `Lot 3`: title-confirmed, it keeps LOT-3, RES-4 stays on the Tender;
+    /// - EN `Lot 3` and DE `Los 3`: confirmed in both languages, it keeps LOT-3;
+    /// - EN `Lot 3` and DE `Los 4`: it agrees (EN names 3, so it does not contradict) but is not confirmed (DE
+    ///   names 4), so the notice level refuses it;
+    /// - PL `Pakiet 3 poz. 2`: its compound's head is 3, so it agrees, but only a plain designator confirms (R2),
+    ///   so the notice level refuses it.
+    ///
+    /// And the amendment's own shape (decision-u7.md "Build deltas"): a CN printing 1-5; `Lot 3` printed 1 and
+    /// `Lot 4` printed 2 contradict, `Lot 3` printed 3 keeps LOT-3, untitled printed 4 and `Pakiet 5 zad.2` printed 5
+    /// stay on the Tender (the round-1 rule kept the last on LOT-5).
+    #[test]
+    fn a_fired_notice_keeps_its_title_confirmed_blocks() {
+        let cn = r208_cn(1, &["1", "2", "3", "4"]);
+        let fold_with = |res3: &[(Option<&str>, &str)]| -> Vec<Option<String>> {
+            let can = g568_titled_can(
+                2,
+                &[("1", &[(Some("EN"), "Lot 2")]), ("2", &[(Some("EN"), "Lot 3")]), ("3", res3), ("4", &[])],
+            );
+            r208_keys(&r208_fold(&[cn.clone(), can])[1], 2)
+        };
+        assert_eq!(fold_with(&[(Some("EN"), "Lot 3")]), vec![None, None, on_lot(3), None], "RES-3 confirmed");
+        assert_eq!(fold_with(&[(Some("EN"), "Lot 3"), (Some("DE"), "Los 3")]), vec![None, None, on_lot(3), None], "both languages");
+        assert_eq!(fold_with(&[(Some("EN"), "Lot 3"), (Some("DE"), "Los 4")]), vec![None, None, None, None], "DE names 4");
+        assert_eq!(fold_with(&[(Some("PL"), "Pakiet 3 poz. 2")]), vec![None, None, None, None], "a compound confirms nothing");
+        assert_eq!(fold_with(&[]), vec![None, None, None, None], "untitled RES-3");
+
+        let can = g568_titled_can(
+            2,
+            &[
+                ("1", &[(Some("EN"), "Lot 3")]),
+                ("2", &[(Some("EN"), "Lot 4")]),
+                ("3", &[(Some("EN"), "Lot 3")]),
+                ("4", &[]),
+                ("5", &[(Some("PL"), "Pakiet 5 zad.2")]),
+            ],
+        );
+        let chain = [r208_cn(1, &["1", "2", "3", "4", "5"]), can];
+        assert_eq!(r208_keys(&g568_fold_without_guards(&chain)[1], 2), (1..=5).map(on_lot).collect::<Vec<_>>(), "premise");
+        assert_eq!(r208_keys(&r208_fold(&chain)[1], 2), vec![None, None, on_lot(3), None, None], "R2");
+    }
+
+    /// Issue 568 unit 8 round 2, R2 on the shape of OOS 5416534 RES-16: a counter notice (two or more blocks
+    /// contradict) whose block `Pakiet 16 zad.2` prints 16, the counter, while its lot is the CN's `Pakiet 16 -
+    /// pozycja nr 2`. ADDED shape (decision-u7.md "Build deltas"): a CN printing 14 `Pakiet 14`, 15 `Pakiet 15`, 16
+    /// `Pakiet 16 - pozycja nr 1`, 17 `Pakiet 16 - pozycja nr 2`, 18 `Pakiet 17`, 19 `Pakiet 18`; a CAN printing 14
+    /// `Pakiet 14`, 16 `Pakiet 16 zad.2`, 17 `Pakiet 18` and 18 `Pakiet 19`. The last two contradict, `Pakiet 14`
+    /// is title-confirmed and keeps LOT-14, and `Pakiet 16 zad.2` agrees (16 is its printed number) but, a
+    /// compound, confirms nothing: `[LOT-14, None, None, None]`, where the round-1 rule kept it on LOT-16.
+    #[test]
+    fn a_compound_title_confirms_nothing_in_a_fired_notice() {
+        let cn = g568_titled_cn(
+            1,
+            &[
+                ("14", Some("Pakiet 14")),
+                ("15", Some("Pakiet 15")),
+                ("16", Some("Pakiet 16 - pozycja nr 1")),
+                ("17", Some("Pakiet 16 - pozycja nr 2")),
+                ("18", Some("Pakiet 17")),
+                ("19", Some("Pakiet 18")),
+            ],
+        );
+        let can = g568_titled_can(
+            2,
+            &[
+                ("14", &[(Some("PL"), "Pakiet 14")]),
+                ("16", &[(Some("PL"), "Pakiet 16 zad.2")]),
+                ("17", &[(Some("PL"), "Pakiet 18")]),
+                ("18", &[(Some("PL"), "Pakiet 19")]),
+            ],
+        );
+        let chain = [cn, can];
+        assert_eq!(
+            r208_keys(&g568_fold_without_guards(&chain)[1], 2),
+            vec![on_lot(14), on_lot(16), on_lot(17), on_lot(18)],
+            "premise: 568 as built"
+        );
+        assert_eq!(r208_keys(&r208_fold(&chain)[1], 2), vec![on_lot(14), None, None, None]);
+        let only = |keep: &[&str]| r208_keys(&r208_fold(&[chain[0].clone(), g568_only_blocks(chain[1].clone(), keep)])[1], 2);
+        assert_eq!(only(&["RES-1", "RES-2"]), vec![on_lot(14), on_lot(16)], "premise: no contradiction, the compound agrees");
+    }
+
+    /// Issue 568 unit 8 round 2, R1: G4's agreement with the matched lot's own text compares HEADS, a compound
+    /// counting by its head. ADDED shapes (decision-u7.md "Build deltas"):
+    /// - the 5416534 counterfactual (its CAN numbered by the CN's own lots): a CN printing 16 `Pakiet 16 - pozycja
+    ///   nr 1`, 17 `Pakiet 16 - pozycja nr 2`, 18 `Pakiet 17`; a CAN printing 17 `Pakiet 16 zad.2`, 16 `Pakiet 16
+    ///   zad.1` and 18 `Pakiet 17`: `[LOT-17, LOT-16, LOT-18]`. The CN's `pozycja nr 2` is lost to the reader (a
+    ///   spaced dash ends the clause, a position word after a pakiet clause is no keyword: it reads (16)), so the
+    ///   round-1 rule, comparing whole designators, refused the first block (G4);
+    /// - the verifier's lot: a CN printing 3 `Pakiet 8 poz. 6 i 7`, 8 `Pakiet 8 poz. 1` and 4 untitled; a block
+    ///   `Pakiet 8 poz. 6` printed 3 keeps LOT-3 (heads 8 and 8), where (8, 6) against (8, 6, 7) refused it.
+    #[test]
+    fn a_compound_agrees_with_its_lot_by_head() {
+        let cn = g568_titled_cn(
+            1,
+            &[("16", Some("Pakiet 16 - pozycja nr 1")), ("17", Some("Pakiet 16 - pozycja nr 2")), ("18", Some("Pakiet 17"))],
+        );
+        let can = g568_titled_can(
+            2,
+            &[
+                ("17", &[(Some("PL"), "Pakiet 16 zad.2")]),
+                ("16", &[(Some("PL"), "Pakiet 16 zad.1")]),
+                ("18", &[(Some("PL"), "Pakiet 17")]),
+            ],
+        );
+        assert_eq!(r208_keys(&r208_fold(&[cn, can])[1], 2), vec![on_lot(17), on_lot(16), on_lot(18)]);
+        assert_eq!(lot_designators("Pakiet 16 - pozycja nr 2"), vec![g568_d("16", &[])], "premise: the CN side reads (16)");
+
+        let cn = g568_titled_cn(1, &[("3", Some("Pakiet 8 poz. 6 i 7")), ("8", Some("Pakiet 8 poz. 1")), ("4", None)]);
+        let can = g568_titled_can(2, &[("3", &[(Some("PL"), "Pakiet 8 poz. 6")])]);
+        let chain = [cn, can];
+        assert_eq!(r208_keys(&g568_fold_without_guards(&chain)[1], 2), vec![on_lot(3)], "premise: 568 as built");
+        assert_eq!(r208_keys(&r208_fold(&chain)[1], 2), vec![on_lot(3)], "heads 8 and 8 agree");
+    }
+
+    /// Issue 568 unit 8 (amended G3): G3 counts distinct HEADS, so the positions of one pakiet name one lot. ADDED
+    /// shapes: a CN printing 1-9; a CAN block printing 8 under `Pakiet 8 poz. 6, Pakiet 8 poz. 7` (two compounds,
+    /// one head) keeps LOT-8, and so does `Pakiet 8 poz. 6 i 7` (one compound, two positions); `Pakiet 8, Pakiet 7`
+    /// names two lots and stays on the Tender.
+    #[test]
+    fn g3_counts_heads_so_positions_of_one_pakiet_keep() {
+        let cn = r208_cn(1, &["1", "2", "3", "4", "5", "6", "7", "8", "9"]);
+        let keys = |title: &str| -> Vec<Option<String>> {
+            r208_keys(&r208_fold(&[cn.clone(), g568_titled_can(2, &[("8", &[(Some("PL"), title)])])])[1], 2)
+        };
+        assert_eq!(keys("Pakiet 8 poz. 6, Pakiet 8 poz. 7"), vec![on_lot(8)]);
+        assert_eq!(keys("Pakiet 8 poz. 6 i 7"), vec![on_lot(8)]);
+        assert_eq!(keys("Pakiet 8, Pakiet 7"), vec![None], "two heads: G3");
+        assert_eq!(lot_designators("Pakiet 8 poz. 6, Pakiet 8 poz. 7"), vec![g568_d("8", &["6"]), g568_d("8", &["7"])]);
+    }
+
+    /// Issue 568 unit 8 (the amendment's D): titles are read per language; G3 and G4 judge each language's names
+    /// alone. ADDED shapes, a CN printing 1-3, one CAN block:
+    /// - printed 2, EN `Lot 2` and DE `Los 3` (a mistranslation): EN agrees and no one language names two lots, so
+    ///   it keeps LOT-2 (the union {2, 3} would have been G3);
+    /// - printed 3, the same titles: DE agrees, it keeps LOT-3;
+    /// - printed 2, EN `Lot 2` and an unlabelled `Lot 3`: a value without a language is its own language, keeps;
+    /// - printed 2, EN `Lots 2 and 3`, or EN `Lot 2` beside EN `Lot 3`: one language names two lots, G3;
+    /// - printed 2, EN `Lot 3` and DE `Los 3`: no language names 2, it contradicts (alone, it refuses itself).
+    #[test]
+    fn titles_are_read_per_language() {
+        let cn = r208_cn(1, &["1", "2", "3"]);
+        let keys = |printed: &str, titles: &[(Option<&str>, &str)]| -> Vec<Option<String>> {
+            r208_keys(&r208_fold(&[cn.clone(), g568_titled_can(2, &[(printed, titles)])])[1], 2)
+        };
+        let translated: &[(Option<&str>, &str)] = &[(Some("EN"), "Lot 2"), (Some("DE"), "Los 3")];
+        assert_eq!(keys("2", translated), vec![on_lot(2)], "EN agrees");
+        assert_eq!(keys("3", translated), vec![on_lot(3)], "DE agrees");
+        assert_eq!(keys("2", &[(Some("EN"), "Lot 2"), (None, "Lot 3")]), vec![on_lot(2)], "no language is one");
+        assert_eq!(keys("2", &[(Some("EN"), "Lots 2 and 3")]), vec![None], "G3 in EN");
+        assert_eq!(keys("2", &[(Some("EN"), "Lot 2"), (Some("EN"), "Lot 3")]), vec![None], "G3: EN's values together");
+        assert_eq!(keys("2", &[(Some("EN"), "Lot 3"), (Some("DE"), "Los 3")]), vec![None], "G4: no language names 2");
+        let can = g568_titled_can(2, &[("2", translated)]);
+        let named = &b1_bound(&can.0, &can.1).award_text["RES-1"].named;
+        assert_eq!(named.len(), 2, "premise: two languages, {named:?}");
+        assert_eq!((named["EN"].clone(), named["DE"].clone()), (vec![g568_d("2", &[])], vec![g568_d("3", &[])]));
+    }
+
+    /// Issue 568 unit 7: no guard fires on a Tender whose inherited lots print fewer than two numbers (G1's
+    /// exemption: the one lot is the Tender's scope). 4485310: the CN 4410173's one lot prints `00`, titled
+    /// `lots no 1 à 195`; the CAN 12439862's 35 blocks print `00` under `Lots n° 11132-11193-…`, and all keep LOT-1.
+    /// 4514627: the CN 8349225's one lot prints 1; the CAN 12569795's RES-1 printed 1 is titled `lots no1, 2, 5, 6,
+    /// …` and keeps LOT-1 (its other 23 print numbers no lot prints). What keeps RES-1 there is the Dn filter, not
+    /// the exemption: kept to the numbers the one lot prints, its title names lot 1 alone, so neither G3 nor G4 can
+    /// fire. With a second lot printing 2 (ADDED), RES-1 names two printed lots and stays on the Tender (G3).
+    /// The exemption itself is what keeps a G6 block (or a G5 one where two lots print one number) on a one-lot
+    /// Tender: an award block printing `LOT_NUMBER` 1 and 2 (ADDED) keeps the one lot printing 1, and beside a
+    /// second lot printing 2 it stays on the Tender.
+    #[test]
+    fn the_text_guards_never_fire_on_a_one_lot_tender() {
+        for tender in [4485310, 4514627] {
+            let (guarded, unguarded) = g568_port_parity(tender);
+            assert_eq!(l570_blocks(guarded.last().expect("a chain")), l570_blocks(unguarded.last().expect("a chain")), "{tender}");
+        }
+        let (guarded, _) = g568_port_parity(4485310);
+        let blocks = l570_blocks(guarded.last().expect("a chain"));
+        assert_eq!(blocks.len(), 35);
+        assert!(blocks.iter().all(|(_, _, lot)| lot.as_deref() == Some("LOT-1")));
+        let (guarded, _) = g568_port_parity(4514627);
+        assert_eq!(g568_lot(guarded.last().expect("a chain"), 12569795, "RES-1"), b1_s("LOT-1"));
+
+        let (chain, _) = g568_cached(4514627);
+        let mut notices = g568_chain(chain);
+        notices[0].1.sections.push(store::Section { id: "LOT-2".into(), kind: "Lot".into(), parent: Some("PROCEDURE".into()) });
+        notices[0].1.values.push(b1_id("LOT-2", "TED-LOT_NUMBER", "2"));
+        notices[0].1.values.sort_by(|a, b| (&a.section_id, &a.field_id, a.ordinal).cmp(&(&b.section_id, &b.field_id, b.ordinal)));
+        let versions = r208_fold(&notices);
+        assert_eq!(g568_lot(&versions[1], 12569795, "RES-1"), None, "two printed lots: G3");
+        assert_eq!(g568_lot(&g568_fold_without_guards(&notices)[1], 12569795, "RES-1"), b1_s("LOT-1"), "premise");
+
+        // ADDED: one award block printing two numbers, the second as the store's ordinal 1.
+        let mut can = r208(2, "3", &[], &[vec![("TED-LOT_NUMBER", "1"), ("TED-LOT_NUMBER", "2")]], Vec::new());
+        can.1.values.iter_mut().filter(|v| v.field_id == "TED-LOT_NUMBER").skip(1).for_each(|v| v.ordinal = 1);
+        assert!(b1_bound(&can.0, &can.1).award_text["RES-1"].several_numbers, "premise: the block prints 1 and 2");
+        let one_lot = [r208_cn(1, &["1"]), can.clone()];
+        assert_eq!(r208_keys(&r208_fold(&one_lot)[1], 2), vec![on_lot(1)], "one lot: the exemption keeps the G6 block");
+        assert_eq!(r208_keys(&g568_fold_without_guards(&one_lot)[1], 2), vec![on_lot(1)], "as 568 as built");
+        let two_lots = [r208_cn(1, &["1", "2"]), can];
+        assert_eq!(r208_keys(&r208_fold(&two_lots)[1], 2), vec![None], "two lots: G6");
+        assert_eq!(r208_keys(&g568_fold_without_guards(&two_lots)[1], 2), vec![on_lot(1)], "premise: 568 as built");
+    }
+
+    /// Issue 568 unit 7: counts, quantities, years, packages, areas and programmes are no lot designators, and a
+    /// postfix `rész` names its lot. Every block of each chain is where 568 put it:
+    /// - 5693088 `Programa A1 … de 3 a 17 años`;
+    /// - 4667265 `Część 2- 80 miejsc.` (80 is seats; its CN 12540916's own lot titles `Część 1 – 50 miejsc` read 1
+    ///   since unit 8's tight-dash rule, no longer 1..50);
+    /// - 5476961 `с 4 обособени позиции: Обособена позиция № 1` (4 is a count);
+    /// - 6328307 `w latach 2019-2020`;
+    /// - 4846721 `Vergabepaket 2`;
+    /// - 8022925 `obszarze II`;
+    /// - 5106209 `IV. rész` (names lot 4, its printed number).
+    #[test]
+    fn counts_quantities_years_and_packages_are_not_lot_designators() {
+        for tender in [5693088, 4667265, 5476961, 6328307, 4846721, 8022925, 5106209] {
+            let (guarded, unguarded) = g568_port_parity(tender);
+            let blocks = l570_blocks(guarded.last().expect("a chain"));
+            assert_eq!(blocks, l570_blocks(unguarded.last().expect("a chain")), "{tender} unchanged");
+            assert!(blocks.iter().any(|(_, _, lot)| lot.is_some()), "premise: {tender} has matched blocks");
+        }
+        let heads = |text: &str| lot_designators(text).into_iter().map(|d| d.head).collect::<Vec<_>>();
+        assert!(heads("Programa A1 — Residencia mixta, de 3 a 17 años").is_empty());
+        assert_eq!(heads("Część 2- 80 miejsc."), vec!["2"]);
+        assert_eq!(heads("Część 1 – 50 miejsc"), vec!["1"]);
+        assert_eq!(heads("с 4 обособени позиции: Обособена позиция № 1 „Работни станции"), vec!["1"]);
+        assert!(heads("Wykonywanie usług z zakresu gospodarki leśnej w leśnictwie Neple w latach 2019-2020").is_empty());
+        assert!(heads("Werksinstand von Systemen, M113 Vergabepaket 2").is_empty());
+        assert!(heads("Utrzymanie zimowe dróg na obszarze II").is_empty());
+        assert_eq!(heads("Személykocsi fővizsga IV. rész"), vec!["4"]);
+    }
+
+    /// Issue 568 unit 7, "Text fields": the guards read the block's own `TED-CONTRACT_TITLE`, `TED-TITLE_CONTRACT`
+    /// and `TED-TITLE`, from values directly on the `RES-n` section. Not its Organization children, not
+    /// `TED-CONTRACT_NUMBER` (file and contract numbers: `lote 2`) and not `TED-ADDITIONAL_INFORMATION`. ADDED
+    /// shapes: a CN printing 1-3, and a CAN block printing 1 that carries `Lots 1 and 2` in each place in turn.
+    #[test]
+    fn the_guards_read_only_the_blocks_own_titles() {
+        let can = |field: &str, section: &str| -> (store::NoticeRef, Parsed) {
+            let sections = vec![
+                store::Section { id: "PROCEDURE".into(), kind: "Notice".into(), parent: None },
+                store::Section { id: "RES-1".into(), kind: "LotResult".into(), parent: Some("PROCEDURE".into()) },
+                store::Section { id: "ORG-1".into(), kind: ORGANIZATION_KIND.into(), parent: Some("RES-1".into()) },
+            ];
+            let mut values = vec![b1_id("RES-1", "TED-LOT_NUMBER", "1")];
+            values.push(if field == "TED-CONTRACT_NUMBER" {
+                b1_id(section, field, "lote 2")
+            } else {
+                text_value(section, field, 0, Some("EN"), "Lots 1 and 2")
+            });
+            values.sort_by(|a, b| (&a.section_id, &a.field_id, a.ordinal).cmp(&(&b.section_id, &b.field_id, b.ordinal)));
+            (b1_notice(2, "ted", "ted-export-r208"), Parsed { sections, values })
+        };
+        for (field, section) in [("TED-TITLE", "ORG-1"), ("TED-CONTRACT_NUMBER", "RES-1"), ("TED-ADDITIONAL_INFORMATION", "RES-1")] {
+            let versions = r208_fold(&[r208_cn(1, &["1", "2", "3"]), can(field, section)]);
+            assert_eq!(r208_keys(&versions[1], 2), vec![on_lot(1)], "{field} on {section} is not read");
+        }
+        for field in AWARD_TITLE_FIELDS {
+            let versions = r208_fold(&[r208_cn(1, &["1", "2", "3"]), can(*field, "RES-1")]);
+            assert_eq!(r208_keys(&versions[1], 2), vec![None], "{field} on the block is read (G3)");
+        }
+        // The evidence is kept only where the match can run: never for a notice with a lot section of its own.
+        let cn = r208_cn(1, &["1", "2"]);
+        assert!(b1_bound(&cn.0, &cn.1).award_text.is_empty());
+        let f03 = (
+            b1_notice(3, "ted", "ted-export-r209"),
+            b1_parsed(
+                &[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("RES-1", "LotResult")],
+                vec![b1_id("LOT-1", "TED-LOT_NO", "1"), b1_id("RES-1", "TED-LOT_NO", "1"), text_value("RES-1", "TED-TITLE", 0, None, "Lots 1 and 2")],
+            ),
+        );
+        assert!(b1_bound(&f03.0, &f03.1).award_text.is_empty(), "an award notice with its own lot section");
+    }
+
+    /// Issue 568 unit 7, as amended in unit 8: the reference reader's 77 SELFTEST cases (`u7/lot_designators.py`:
+    /// unit 7's 35, unchanged, the decision critic's 18 probes with their output after the fix, 13 edges of the
+    /// amended rules, round 2's two (`Lots 1 - 2 - 3` reads 1, a recall cost the amendment accepts, and Python's
+    /// `\s` takes a no-break space, so the port does too), and the build review's nine: each one-sided half of
+    /// the tight-dash rule with no quantity word after it, `N pozycji` a count only after a pakiet keyword, and
+    /// the input preconditions, ASCII digits and no normalisation), case for case. Where its regex engine
+    /// backtracks the port does the same (an empty Roman token ends a range, `nos` reads as the mark `no`), and
+    /// where it is case-sensitive the port is too (list separators, range words, Roman numerals, the `Los`
+    /// family). Then the port's own edges and the verifier's probes, each checked against the reference, and G5's
+    /// title key: the reference's 10 `TITLE_KEY_SELFTEST` cases (one leading designator is dropped only where a
+    /// separator follows it, so a bare `Pakiet 2` keeps its number), case for case.
+    #[test]
+    fn lot_designators_reads_lists_ranges_roman_and_compounds() {
+        fn one(heads: &[&str]) -> Vec<Designator> {
+            heads.iter().map(|h| g568_d(h, &[])).collect()
+        }
+        fn compound(head: &str, positions: &[&str]) -> Vec<Designator> {
+            vec![g568_d(head, positions)]
+        }
+        let selftest: Vec<(&str, Vec<Designator>)> = vec![
+            // --- unit 7's 35 cases (all unchanged by unit 8)
+            ("“Доставка …” - обособени позиции 5, 6, 15, 16", one(&["5", "6", "15", "16"])), // 8327340
+            ("обособена позиция 3, 8, 17", one(&["3", "8", "17"])),
+            ("обособена позиция 24", one(&["24"])),
+            ("с 4 обособени позиции: Обособена позиция № 1 „Работни станции", one(&["1"])), // 5476961: 4 is a count
+            ("lots 2 et 3", one(&["2", "3"])),
+            ("Pakiety nr 1-4", one(&["1", "2", "3", "4"])),
+            ("Lots 1 à 4", one(&["1", "2", "3", "4"])),
+            ("Lose 1, 4", one(&["1", "4"])),
+            ("partie 3, 8, 17", one(&["3", "8", "17"])),
+            ("Pakiet I, II, III, VI", one(&["1", "2", "3", "6"])), // 5020611
+            ("Pakiet IV", one(&["4"])),
+            ("Fourniture d'anti-infectieux: lots no1, 2, 5", one(&["1", "2", "5"])), // 4514627
+            ("Lots n° 11132-11193-11194 et 11280.", one(&["11132", "11193", "11194", "11280"])), // a dash chain is a list
+            ("Zadanie nr 10,12,13,14,16", one(&["10", "12", "13", "14", "16"])),
+            ("Lote 4: Bata TNT visitante y Lote 11: Gorro", one(&["4", "11"])),
+            ("Perceel 1 + Perceel 4 : Arbeidsongevallen", one(&["1", "4"])),
+            ("Pakiet 8 poz. 6", compound("8", &["6"])), // compound, head 8
+            ("Pakiet 42 poz.3", compound("42", &["3"])), // 4945774
+            ("Pakiet 1A", one(&["1a"])),
+            ("Lot 02.1 carrelage - groupes 1+2+3", one(&["2.1"])), // 5071935; groupe is no keyword
+            ("Lot 06 désamiantage - multi attributaire - groupe 1", one(&["6"])),
+            ("Zadanie 2 – Komputer przenośny", one(&["2"])), // 8364864
+            ("Személykocsi fővizsga IV. rész", one(&["4"])), // 5106209 (postfix)
+            ("Część 2- 80 miejsc.", one(&["2"])), // 4667265: 80 seats
+            ("Część 1 50 - miejsc.", one(&["1"])),
+            ("Programa A1 — Residencia mixta, de 3 a 17 años", one(&[])), // 5693088
+            ("Wykonywanie usług w leśnictwie Neple w latach 2019-2020", one(&[])), // 6328307
+            ("Werksinstand von Systemen, M113 Vergabepaket 2", one(&[])), // 4846721
+            ("Utrzymanie zimowe dróg na obszarze II", one(&[])), // 8022925
+            ("Opracowanie programu dla zadania »Budowa i przebudowa", one(&[])), // 5652687
+            ("2 Solo-Niederflubusse ca. 15 m", one(&[])), // 4968281 (residual)
+            ("3a Leki do uzytku zewnętrznego", one(&[])), // 5364153 (residual)
+            ("Del 1 Färdtjänst.", one(&[])), // bare del is no keyword
+            ("Procedura aperta per l'affidamento del 31.7.2008", one(&[])),
+            ("Lot n° 11093.", one(&["11093"])),
+            // --- unit 8: the decision critic's probes, output after the fix
+            ("Część 1 – 50 miejsc", one(&["1"])), // (a) 4667265's own CN 12540916 lot title; unit 7 read 1..50
+            ("Lot 1 - 5 ordinateurs portables", one(&["1"])), // (a) unit 7: 1..5
+            ("Lot 12 – 15 sites", one(&["12"])), // (a) unit 7: 12..15
+            ("Lot 3 - 2 véhicules", one(&["3"])), // (a) unit 7: [3, 2]
+            ("Pakiet 8 poz. 6 i 7", compound("8", &["6", "7"])), // (c) one compound, head 8; unit 7: [8, 6, 7]
+            ("Pakiet 8 poz. 6-7", compound("8", &["6", "7"])), // (c) unit 7: [8, 6, 7]
+            ("Pakiet 3 (poz. 1-12)", one(&["3"])), // (c) `poz.` after a pakiet clause is no keyword; unit 7: [3, 1..12]
+            // (c) 8286472: `pakiet 8 pozycji` is a count; unit 7: [8, 4]
+            ("Elementy urządzenia typu UPP-1 (pakiet 8 pozycji) w łącznej ilości 116 szt. - zadanie 4.", one(&["4"])),
+            ("Pakiet 16 zad.1", compound("16", &["1"])), // (c) 5416534's CAN; unit 7: [16, 1]
+            ("Suministro de los 2 vehículos", one(&[])), // (b) the Spanish article; unit 7: [2]
+            ("Los 3: Reinigung", one(&["3"])), // (b) the German keyword stays
+            ("Lotes 1 a 5", one(&["1", "5"])), // ACCEPTED: `a` stays a conjunction (Czech/Slovak "1 a 2")
+            ("Lot 2, 3 ans", one(&["2"])), // (d) a duration; unit 7: [2, 3]
+            ("Pakiet 5, 2 szt.", one(&["5"])), // (d) a quantity; unit 7: [5, 2]
+            ("Szkolenie dla grupy 20 osób", one(&[])), // (d) a group size; unit 7: [20]
+            ("Lot 2 (remplace le lot 5 infructueux)", one(&["2", "5"])), // ACCEPTED: prose naming another lot
+            ("LOT C", one(&["100"])), // ACCEPTED: a one-letter Roman numeral
+            ("Pakiet 8 poz. 6, Pakiet 8 poz. 7", vec![g568_d("8", &["6"]), g568_d("8", &["7"])]), // two compounds, ONE head
+            // --- unit 8: the rules' own edges
+            ("LOS 2", one(&["2"])),
+            ("Losnr. 4", one(&["4"])),
+            ("de los 4 ascensores del lote 2", one(&["2"])), // the critic's G3 shape: unit 7 read [4, 2]
+            ("Pakiet 1 - pozycja 2", one(&["1"])), // the position word after a pakiet clause; unit 7: [1, 2]
+            ("Pozycja nr 3 – Paracetamol 500 mg", one(&["3"])), // a position word with no clause before it is a keyword
+            ("Pakiet 8 pozycja 3", compound("8", &["3"])), // a position word followed by a number is a compound half
+            ("Część 2 - 80 miejsc", one(&["2"])), // unit 7 read 2..80
+            ("Lots 3 – 4", one(&["3"])), // a spaced dash ends the list even between two lots
+            ("Lots 3-4", one(&["3", "4"])),
+            ("LOTS 3 ET 2", one(&["3"])), // separators are case-sensitive (review finding 0, option A)
+            ("Lot vi, VII", one(&[])), // a lower-case Roman word is no number
+            ("zadanie 5 do 20 dni", one(&["5"])), // (d) a range word into a duration
+            ("Lot 10 sols", one(&["10"])), // 5071935: a lot number before a noun stays
+            // --- unit 8 round 2 (owner decision after the port + verify stages)
+            ("Lots 1 - 2 - 3", one(&["1"])), // ACCEPTED recall cost of (a): spaced dashes end the list
+            ("Lot 1\u{a0}–\u{a0}50 places", one(&["1"])), // no-break spaces are spaces (verifier's build note)
+            // --- unit 8 review: each half of the tight-dash rule (a) alone, with no quantity word to hide it, the
+            //     count rule (c) only after a pakiet keyword, and the input preconditions (ASCII digits; no NFC)
+            ("Lot 1- 5 ordinateurs", one(&["1"])), // (a) a space after the dash
+            ("Lot 1 -5 ordinateurs", one(&["1"])), // (a) a space before the dash
+            ("Lots 3- 4", one(&["3"])),
+            ("Lots 3 -4", one(&["3"])),
+            ("Pakiet nr 1- 12 000,00 PLN.", one(&["1"])), // a cached TED-CONTENTS value: an amount
+            ("Pakiet nr 2 -100,51;", one(&["2"])), // a cached TED-CONTENTS value
+            ("Zadanie 8 pozycji", one(&["8"])), // (c) `N pozycji` is a count only after a pakiet keyword
+            ("Lot \u{ff13}", one(&[])), // a fullwidth digit is no digit (ASCII 0-9 only)
+            ("Cze\u{328}s\u{301}c\u{301} 2", one(&[])), // decomposed (NFD) text is read as parsed
+        ];
+        assert_eq!(selftest.len(), 77);
+        for (text, want) in &selftest {
+            assert_eq!(&lot_designators(text), want, "{text:?}");
+        }
+        for (text, want) in [
+            ("Pakiet I-IV, ", one(&["1", "4"])),
+            ("Pakiet I-IV", one(&["1", "2", "3", "4"])),
+            ("lot , II", one(&["2"])),
+            ("Lote 4 bis 7", one(&["4", "5", "6", "7"])),
+            ("Lots nos 1, 2", one(&[])),
+            ("PAKIET 10 POZ. 1", compound("10", &["1"])),
+            ("Lots 1 and 2", one(&["1", "2"])),
+            ("Lot 3.B: Technical", one(&["3"])),
+            // A position keyword names no compound, and position clauses never close the text to the next one.
+            ("pozycja 3 poz. 4", one(&["3", "4"])),
+            ("Позиция 3 poz. 4", one(&["3", "4"])),
+            ("обособена позиция 3 poz. 4", compound("3", &["4"])),
+            // The reference's `FIRST_RE` / `NEXT_RE` are case-sensitive (only the keyword, its mark, a
+            // position and a postfix word are `IGNORECASE`): an upper-case conjunction or range word
+            // joins nothing, and a Roman numeral is upper-case only, so a lower-case one starts no list
+            // and continues none.
+            ("LOTS 3 ET 2", one(&["3"])),
+            ("CZĘŚĆ NR 1 I 2", one(&["1"])),
+            ("ОБОСОБЕНИ ПОЗИЦИИ 5, 6 И 7", one(&["5", "6"])),
+            ("PAKIETY 1 DO 4", one(&["1"])),
+            ("LOTS 1 À 4", one(&["1"])),
+            ("Lot vi, VII", one(&[])),
+            ("Lot mix, II", one(&[])),
+            ("Lot VI, vii, VIII", one(&["6"])),
+            // Unit 8 (b): the German family exactly as `Los Lose Losnr` or all upper-case.
+            ("LOSE 1, 4", one(&["1", "4"])),
+            ("LoS 2", one(&[])),
+            ("losnr 3", one(&[])),
+            ("los 3", one(&[])),
+            // Unit 8 (c): counts after a package, compounds after `zad.`.
+            ("pakiet 8 pozycji", one(&[])),
+            ("Pakiet 8 POZYCJI", one(&[])),
+            ("Pakiet 8 pozycje 3", compound("8", &["3"])),
+            ("Pakiet 16 zad. 3", compound("16", &["3"])),
+            ("Pakiet 1 poz. 8", compound("1", &["8"])),
+            // Unit 8 (d): only the list's last number, only after whitespace, any case.
+            ("Lots 1-2-3 szt.", one(&["1", "2"])),
+            ("Lot I, II lat", one(&["1"])),
+            ("Lot 4 1 szt", one(&["4"])),
+            ("Lot 5 DNI", one(&[])),
+            ("Lot 5dni", one(&["5"])),
+            ("Lots 5 ou 6 jours", one(&["5"])),
+            ("Pakiet 8 poz. 6-7 szt", compound("8", &["6"])),
+            // The verifier's probes and the amendment's known reader limits (each with zero matching texts in
+            // the corpus): a spaced dash ends a list between lot numbers too (a recall cost the amendment
+            // accepts), a position after a spaced dash is lost (R1 keeps that loss from contradicting), and
+            // the old false positives it leaves.
+            ("Części 1 – 3", one(&["1"])),
+            ("Pakiet I - II", one(&["1"])),
+            ("Lot 1 – 50 places", one(&["1"])),
+            ("Pakiet 16 - pozycja nr 2.", one(&["16"])),
+            ("Pakiet 16- pozycja nr 2.", one(&["16"])), // 5416534's CN LOT-17 description
+            ("Lote 3 - Los 2 contenedores", one(&["3", "2"])),
+            ("Pakiet 1, zad. 2", one(&["1", "2"])),
+            ("Lot 3 Personen-Aufzug", one(&[])),
+            ("Pakiet 3 poz. 2", compound("3", &["2"])),
+        ] {
+            assert_eq!(lot_designators(text), want, "{text:?}");
+        }
+        // G5's title key: the reference's 10 `TITLE_KEY_SELFTEST` cases (`u7/lot_designators.py` `title_key`,
+        // pinned in unit 8 round 2: the leading designator is dropped only where `. : ) - – —` follows it), case
+        // for case, then edges of the port.
+        let title_key_selftest = [
+            ("Pakiet 2", "pakiet 2"),                       // no separator after the designator: nothing is dropped
+            ("Lot 06 désamiantage", "lot 06 desamiantage"), // 5071935's block title: no separator, accents folded
+            ("Lot 06 DESAMIANTAGE", "lot 06 desamiantage"), // its CN lot title: the same key
+            ("5. Snagging", "snagging"),                    // 4854639's lot title: a bare number + '.' is dropped
+            ("Lot 1 : Dents", "dents"),
+            ("LOT 3 – Nettoyage", "nettoyage"),
+            ("Lot n° 4 - Voirie", "voirie"),
+            ("Pakiet nr 3. Leki", "leki"),
+            ("Part 2) Cleaning", "cleaning"),
+            ("", ""),
+        ];
+        assert_eq!(title_key_selftest.len(), 10);
+        for (title, key) in title_key_selftest {
+            assert_eq!(title_key(title), key, "{title:?}");
+        }
+        for (title, key) in [
+            ("lots 3: x", "x"),
+            ("xl: shirts", "shirts"),
+            ("LOT 06 Désamiantage - multi", "lot 06 desamiantage multi"),
+            ("Pakiet nr 1 - Leki", "leki"),
+            ("ΤΜΗΜΑ 2: Οδοί", "τμημα 2 οδοι"),
+            ("lot civil: works", "lot civil works"),
+            ("12345. foo", "12345 foo"),
+            ("Partie 4 – Électricité", "electricite"),
+            ("6. Repair painting", "repair painting"),
+            ("…", ""),
+            // The reference's fold is NFKD with combining characters dropped, after lower-casing the whole
+            // text (`title_key_nfkd`): what NFKD leaves whole stays (`ł`, `ß`, `ø`, `æ`, a word-final `ς`),
+            // and compatibility forms decompose (`²`, `ﬁ`, `™`, and `№` into a capital `No` the designator's
+            // `n°` does not read).
+            ("Dostawa materiałów", "dostawa materiałow"),
+            ("Straße und Grünanlagen", "straße und grunanlagen"),
+            ("Smørrebrød Æble", "smørrebrød æble"),
+            ("ΟΔΟΣ ΑΘΗΝΩΝ", "οδος αθηνων"),
+            ("ОБОСОБЕНА ПОЗИЦИЯ: Чайник", "обособена позиция чаиник"),
+            ("Pomieszczenie 20 m²", "pomieszczenie 20 m2"),
+            ("ﬁnition", "finition"),
+            ("Lot 3: Office™", "officeTM"),
+            ("Lot № 3: Leki", "lot No 3 leki"),
+        ] {
+            assert_eq!(title_key(title), key, "{title:?}");
+        }
+    }
+
+    /// Issue 568 unit 7: the bucketed fold (`BucketRow::snapshot`, through the postcard spill, then
+    /// `to_notice_state`) refuses exactly as the streaming fold: [`NoticeState::award_text`] rides the frame, and
+    /// on a chain each guard alone moves (8327340 G3, 5051007 G4, 4854639 G5, 5001424 G6) the two paths agree
+    /// ([`r208_fold`]) and differ from the fold without the guards. Every test above folds through both paths.
+    #[test]
+    fn the_unit7_guards_are_identical_on_the_bucketed_path() {
+        let (chain, _) = g568_cached(8327340);
+        let can = g568_notice(chain.iter().find(|n| n.id == 17821481).expect("the CAN"));
+        let state = b1_bound(&can.0, &can.1);
+        let evidence = state.award_text.clone();
+        assert_eq!(evidence.len(), 7, "premise: each of the CAN's seven blocks carries evidence");
+        let bytes = postcard::to_stdvec(&BucketRow::snapshot("g".into(), &can.0, state)).expect("serialize");
+        let row = postcard::from_bytes::<BucketRow>(&bytes).expect("deserialize");
+        assert_eq!(row.to_notice_state().award_text, evidence, "the evidence rides the frame");
+        assert!(row.round.as_ref().expect("a round").lot_results.iter().all(|r| r.lot_key.is_none()), "never on the round's keys");
+        for (tender, guard) in [(8327340, "G3"), (5051007, "G4"), (4854639, "G5"), (5001424, "G6")] {
+            let notices = g568_chain(g568_cached(tender).0);
+            let versions = r208_fold(&notices);
+            assert_ne!(versions, g568_fold_without_guards(&notices), "{tender}: {guard} moves a block on both paths");
+        }
     }
 
     // ---- Issue 514 unit 2: the GB register-spelling rewrite (decision §6) ----

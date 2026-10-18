@@ -1170,6 +1170,80 @@ Verify, in order:
 - (f) Status: R2.0.8 Tenders whose served `status` changed should be about none (533's `closed_by_notice` can flip
   in the projection where every result is a no-award, but 2010–2019 deadlines are past).
 
+**568 unit 7's refusal guards (built in unit 8 to the amended rule, 2026-10-18).** The read-back failed on 8327340:
+one R2.0.8 award block for several lots (`обособени позиции 5, 6, 15, 16`) prints one of them, and the rule above put
+the whole award on that lot. `match_inherited_lots` now runs four guards (`unit7_refusals`,
+`.scratch/tender-db/568-r208-lots/u7/decision-u7.md`, "The rule" as changed by its "Amendment (unit 8,
+2026-10-18)", which wins, R1 and R2 of its round 2 included) over the blocks the rule matched, on both fold paths.
+An R2.0.8 award whose own title names several lots, names another lot than both its printed number and the lot that
+number finds, or carries another lot's title, or that prints several lot numbers, stays on the Tender:
+- the evidence is the block's own `TED-CONTRACT_TITLE` / `TED-TITLE_CONTRACT` / `TED-TITLE` (every value, directly
+  on the `RES-n` section, never its Organization children, never `CONTRACT_NUMBER`), **read per language** (the
+  value's `lang`, `""` for none), and its own lot references, read by `read_legacy_results` (`AwardText`: the
+  designators `lot_designators` reads per language, the `title_key`s, and whether it prints several numbers), kept
+  per result key on `NoticeState.award_text`, which rides the bucket frame (`BucketRow.award_text`) and is never on
+  the round: fold input only, nothing new is stored;
+- N is the set of numbers the inherited `Lot`s print (normalised); **with fewer than two, no guard fires**; Dn is a
+  language's designators whose head is in N;
+- G4, block level: a matched block **contradicts** when some language names a lot in N and no language names its
+  printed number as a head or **shares a head** with the designators of its own lot's `title`/`description` (R1: a
+  compound counts by its head, so `Pakiet 16 zad.2` agrees with a lot described `Pakiet 16 - pozycja nr 2`). It
+  stays on the Tender. Contradictions are counted over every matched block first (a G3 or G6 block counts). **With
+  two or more** the notice numbers awards by a contract counter: every other matched block stays on the Tender too,
+  **except a title-confirmed one** (every language naming a lot in N names exactly its printed number, and only
+  plain designators: R2, a compound such as OOS 5416534 RES-16's `Pakiet 16 zad.2` printed 16 confirms nothing).
+  One contradicting block refuses only itself; a block that matched no lot never counts (5218711's 5/6/7). R1's
+  recorded cost (risk 4): a block naming another item of its lot's own pakiet (5267810's `Pakiet 8 poz. 1` printed
+  9 on LOT-9 `pakiet 8`) agrees at block level and is held only by its notice's other contradictions;
+- G6: the block prints two or more numbers (5001424's `LOT_NUMBER` 1-6); G3: one language names two or more
+  distinct heads in N (a compound counts by its head: `Pakiet 8 poz. 6, Pakiet 8 poz. 7` names 8); G5: none of its
+  title keys is its lot's, and one that is not the Tender's is exactly one other numbered lot's (4854639's
+  `Snagging` on LOT-4, 4975428 RES-2). The title key is the reference's exactly: lower-cased, NFKD with combining
+  characters dropped (`title_key_nfkd`, generated from Python's `unicodedata`: `ł`, `ß`, `ø` stay, `й` → `и`), one
+  leading designator dropped only where `. : ) - – —` follows it (`Pakiet 2` keeps `pakiet 2`);
+- the reader (`lot_designators`, amended): only a tight dash joins numbers (`Część 1 – 50 miejsc` names 1); `Los`
+  is a lot word only capitalised or upper-case (Spanish `de los 2`); a compound takes `zad.` too and a list
+  (`Pakiet 16 zad.1`, `Pakiet 8 poz. 6 i 7`: one designator each); `pakiet 8 pozycji` is a count; a position word
+  after another clause is none; a list's last number before a quantity word (`szt`, `ans`, `lat` …) is dropped;
+- a refused block keeps `lot_key` null and its `published_lot_no`, and is never re-keyed to the lot its title names;
+  frozen at the award's version like the rule above. 567's same-notice keys, eForms, FTS and 570's remap are
+  untouched (the guards run only where `match_inherited_lots` does: an award notice with no lot section).
+
+Measured (decision-u7, amendment with R1 + R2): in sample 11/13 multi-lot and 53/61 other-wrong blocks caught, 0
+false refusals in 1,762 (≤ 0.21 %), the 77 measured Tenders untouched; out of sample (`u8-oos/`, 50 Tenders) 100/100
+caught, 0 of 319 (≤ 1.15 %). The residual: 5 of 230 uniform Tenders keep a wrong block (2.2 %, 0.71–5.00 %), 2 of
+them 568's own (4854639 RES-9/10, 4968281 RES-1: 0.87 %, 0.11–3.1 %), 3 inherited (4861483 issue 364's weld,
+5364153 on its parent lot, 5267907 identical placeholder lots). The build equals the amended port (`g3_port.py`
+`apply_amended`, its defaults) on every block of every cached chain, full notices folded through both paths: 2,094
+in-sample + 432 out-of-sample blocks, of which the port matched 1,837 + 419 (64 + 100 refused) and 240 + 1 neither
+side matches, 0 divergences; the remaining 17 + 12 sit on award notices with their own lot sections (567's
+same-notice keys), which the guards never move. `lot_designators` and `title_key` equal the reference
+(`u7/lot_designators.py`) on all 53,428 distinct text values of those caches. **Refold: ONE refold together with
+570**, over `TED-LOT_NO` + `TED-LOT_NUMBER` (the 570 block's commands below; every block a guard can refuse sits
+on a notice carrying one of them). Baseline first (`drain/baseline-pre568u7-570.json`: the ≥ EUR 1 bn band and the
+16 path-V heads). Expect about 7 k Tenders touched (3–15 k), about 3.1 k fully back on the Tender (0.6–8.9 k),
+about 59 k blocks back to `lot: null`; 8327340-style lot sums shrink back (709,431.63 BGN off its LOT-5).
+
+Verify, after that refold (decision-u7 unit 11 as amended), beside 570's own items:
+- (a) D7 as above; (b) 8327340 serves `lot: null` on 17821481 RES-1/2/5/6/7 and 17830774 RES-1/2, and 17821481
+  RES-3 → LOT-24, RES-4 → LOT-32, 17840150 RES-1 → LOT-2;
+- (c) the salted 150's 57 refused blocks serve `null` (5051007 RES-4..19, 5267810 RES-2..32, 8364864 × 2,
+  5020611 × 4, 5001424 × 1, 4854639 RES-7/8, 4975428 RES-2), while 5051007 RES-1..3 keep LOT-1..3 and 5267810
+  RES-1 keeps LOT-1; its other 915 matched blocks unchanged except 570's named movers;
+- (d) the 77: 692 of 692 unchanged (570's port names any 570 mover);
+- (e) **the combined drain's fresh 30**, drawn before any id is read: salt `sha256("568u8-fresh30-"+id)` ascending
+  over the combined wet run's changed set (its `version: null` `tender changed` rows in the cursor window),
+  excluding the salted 150, the first read-back's fresh 30 (`readback/fresh30.json`), the 77, 8327340 and the out-of-sample 50
+  (`u8-oos/draw.json`); strata: **at least 10 outside 2012–2015, and at least 8 changed Tenders outside
+  `readback/population.json` that serve an R2.0.8 block on a lot** (the blocks 570's narrower G2 newly matches,
+  never sampled). **Bar:** (i) parity: every block's served lot equals the amended port's replay with 570's remap
+  composed in (`../570-lot-keys/remap_port.py` option B in `g3_port.replay`'s carry), 0 divergences; (ii) at most 2
+  of 30 Tenders carry a judged-wrong block the port also keeps, of any shape; (iii) a wrong block of a new shape is
+  recorded and filed, not a reopen: reopen only on a parity break or on 3 or more of 30. P(pass of (ii)) is 0.973 at
+  the pooled 2.2 % (0.812 at its 5.0 % upper bound; 0.950 at the in-sample 5/180). The G2 stratum, the out-of-era 10
+  and a same-pakiet offset notice without other contradictions (R1's risk 4) are what (ii) would detect;
+- (f) band / path V diff against the baseline: each mover read as 568-u7's (a lot sum shrinking back) or 570's.
+
 **Legacy lots joined by printed number across a chain (issue 570, 2026-10-18).** TED's legacy notices key their lot
 sections `LOT-k` by position in the notice, and the fold merged a Tender's lots, and put each notice's award blocks,
 by that key. Where two notices of one Tender list their lots differently (a CAN listing a subset, packages split
