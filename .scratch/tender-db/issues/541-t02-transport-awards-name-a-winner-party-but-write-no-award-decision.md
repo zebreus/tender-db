@@ -1,6 +1,6 @@
 # 541 — 2016 public-transport awards (T02) name their operator as a `winner` party but write no award decision
 
-Status: needs-triage — filed 2026-10-14 from issue 534's review round. Triage read 2026-10-16 (below): the T02 award pair sits in the PROCEDURE section, and `ECONOMIC_OPERATOR_NAME_ADDRESS` (970,980 carriers) is shared with the standard award forms, so it cannot size the cohort. Next: size on a T02-only field, then build behind a MOVE-form predicate.
+Status: ready-for-agent — SIZED 2026-10-18 (refold-fields 2618, `expect: 1` on `TED-COST_PARAMETERS` in notice_texts): **753** notices carry it (T01 prior-information + T02 award MOVE forms together), against 970,980 for the shared `TED-ECONOMIC_OPERATOR_NAME_ADDRESS`. So the T02 cohort is at most 753 notices, small enough for an exact-cohort drain. Next: unit 2 build behind a MOVE-form predicate (a PROCEDURE-section award pair on a notice that carries the MOVE fields), then refold-fields over `TED-COST_PARAMETERS` (notice_texts) — size known: 753.
 T02 cohort and read whether its section V carries enough to write a result.
 Kind: coverage (legacy results)
 Relates to:
@@ -38,6 +38,14 @@ A T02 award (R2.0.8 MOVE, Regulation 1370/2007 public-transport contracts) names
 - **Next.** Size on a T02-only field first: one in the MOVE forms' section II/VI, e.g. `TED-COST_PARAMETERS` in
   notice_texts (T01 + T02), or the notice's form-type field. Then the build reads the PROCEDURE-section award pair
   only on a MOVE-form notice: a predicate on the form, so the standard forms' contractor path is not touched.
+
+## Sizing (2026-10-18)
+
+- `refold-fields` 2618 (`{"profiles":["TED-COST_PARAMETERS"],"tables":["notice_texts"],"expect":1}`): aborted
+  with **753** carriers, nothing written; the paired `project` 2619 ran 0 notices. The notice_texts scan took 40 min
+  (16:22–17:02 box time), so a wet drain on the same field costs that scan again plus a 753-notice fold.
+- 753 is an upper bound on T02: T01 (prior information) also carries the cost parameters. The build's predicate
+  must still require the PROCEDURE-section award pair, and the drain can use the same field.
 
 ## Proposed units
 
