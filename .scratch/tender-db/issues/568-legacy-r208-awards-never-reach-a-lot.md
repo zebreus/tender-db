@@ -52,3 +52,15 @@ disables the match. Never the key ordinal, TED-ITEM, titles, corrigendum prose o
 (ADR-0017 R3 refold). Drain: `refold-fields` over `TED-LOT_NUMBER` (likely a FULL fallback, ~4.3 h), BEFORE 551's B3
 parity, with a band / path-V baseline first. Read-back bar: a fresh uniform 30 corrected Tenders (≥ 10 outside
 2012–2015), 30/30 with no wrong block.
+
+## Drain result and read-back pre-draw (2026-10-18 ~03:00Z)
+
+- Job 2593 stamped 537,878 Tenders (719,732 TED-LOT_NUMBER carriers); project 2594 (FULL fallback, ok, ~02:55Z):
+  537,878 written, compare 381,755 verified + 156,123 corrected = 537,878 (D7 complete; the decision expected
+  ~130–160 k corrected); 1,613,712 correction rows; `/v1/changes` cursor 956239230 → 957852942. Mid-drain spot check:
+  4748635 serves [LOT-1, LOT-2, LOT-3, LOT-5, LOT-6, LOT-7, LOT-8, LOT-9] (the issue's done line), 4748733 RES-k on
+  LOT-k, 5476747's three on none (G1).
+- **Fresh-30 pre-draw (fixed before any id is read):** population = every `entity=tender`, `op=changed`,
+  `version: null` row with cursor in (956239230, 957852942]; order by `sha256("568-fresh30-" + id)` ascending; walk the
+  order reading each Tender's head `published_at` year and take ids until 30 are held with at least 10 published
+  outside 2012–2015 (an id from 2012–2015 is skipped once 20 such are held). Bar: 30 of 30 with no wrong block.
