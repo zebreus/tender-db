@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; DEPLOYED 86f2745 2026-10-17 23:00Z — nothing served changes). NEXT: B3 parity — AFTER 567's refold (2590) and 568's drain (legacy award lot keys feed path W's sums); then B4, B5.
+Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; DEPLOYED 86f2745 2026-10-17 23:00Z — nothing served changes). **B3 PASSED 2026-10-18** (wf_643ad3a2-3ba, after 567/568/570 drained: Rust = remap-aware port on 5,307 rows, projection parity clean, v2 ⊆ v1; `551-lot-sum/b3/B3-result.md`). The drains moved the port's own outcomes: 18 NEW ships, 0 lost; the ≥ EUR 100 m band is now 20 (M2's 15 + 6569442, 6603588, 6679375, 7139761, 7542368). NEXT: an M2-bar read of the 18 new ships (band: 0 wrong of any class) BEFORE B4; then B4, B5 (port of record: `b3/rule_v2_b3.py`).
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -1006,3 +1006,41 @@ Known B3 name-level differences (decisions agree): `vouched_by` names the first 
 port groups by field; `lot_number_tokens` takes ASCII digits only; equal-rank lot titles tie to the first in Fact
 order. R10's "equals a single summed award" clause can never be the first refusal (R8 fires first); R5.9 is first only
 with a zero estimate.
+
+## B3 — port parity PASSED (2026-10-18, workflow wf_643ad3a2-3ba)
+
+Run after 567 (2590), 568 (2593/2594 + unit 8) and 570 drained (combined 2616/2617). Evidence: `551-lot-sum/b3/`
+(`B3-result.md`, `B3-result.json`, `results/B3-parity.json`, `results/B3-movers.json`, the harness sources under
+`harness/`). The harness was temporary: `crates/` is byte-identical to HEAD (verified twice, by the implementer and an
+independent re-run that reproduced every output byte for byte).
+
+| population | compared | agree | ships port / Rust | v1 fires port / Rust |
+|---|---|---|---|---|
+| labelled 279 | 279 | 279 | 30 / 30 | 276 / 276 |
+| out-of-sample 6 | 6 | 6 | 2 / 2 | 6 / 6 |
+| walked 277 | 277 | 277 | 41 / 41 | 273 / 273 |
+| records 4,745 | 4,745 | 4,745 | 0 / 0 | 6 / 6 |
+
+- 0 disagreements on ship or refuse, S, currency, n, the first refusing check, `vouched_by`. Every v2 fire is a v1
+  fire (also against the pre-drain v1).
+- Projection parity (B1's real `NoticeState::read` → `fold` on parsed contents of the 562 Tenders vs the port's
+  facts): `LotState.published_lot_no` 26,764/26,764, lot key sets 4,416/4,416, `LotResultState.lot_key` /
+  `published_lot_no` / `group` 6,699/6,699 each, `stated_totals` 1,737/1,737. Only `LotState.kind` differs on 122 DE1
+  rows (the fold's `normalise_de1` rename; not a B1 field).
+- **Port of record from now on: `b3/rule_v2_b3.py` (sha256 5400bc555f15…) and `b3/gen_b3.py` (2e9635bae0a4…)**,
+  written by `b3/make_port_copy.py` from `unit4b/rule_v2.py` (39be6d1e…): `pub_no` reads the lot section whose 570
+  remap target is the served key (`combined_port.remap_chain`, pinned); R10 at every size; FTS `is_legacy` ignores
+  `TED-VAL_TOTAL_TAX_BASIS`. Without the remap edit the port moves 20 decisions (6 of them Rust ships). B5's cohort
+  check uses these copies.
+- 7511890 (named in operations.md's 570 block, not in B3's populations), checked separately: port and Rust agree,
+  22980479 RES-1 on LOT-3 with number "3" (its own LOT-1 moved onto LOT-3), W/T' (not a v1 fire), S PLN 339,546.48,
+  n = 4. Add it to B5's id cohort.
+- Coverage limits: projection parity does not cover R1/R9's winners and bids (both sides read the served ones); the
+  4,745 records mostly test the v1 guards (0 ships, 6 v1 fires).
+- **The drains moved the port's own outcomes (both sides agree on the new state):** 18 new ships, 0 lost. Labelled:
+  5985466 and 6603588 (labelled double_count on their OLD sums: 124.8 m over 4 lots → EUR 96.0 m over 3; 117.2 m →
+  EUR 154.6 m), 6569442 (neutral; CHF 244.7 m), 6595330, 6679375, 7139761, 7542368 (labelled right; 7139761's S
+  changed). Walked: 5862601, 5888594, 6317191, 7153588, 7177672, 7298633, 7398935, 7475504, 7722197, 7789396, 8371658.
+  No longer v1 fires: 5571139, 5669744, 6852738, 6969157, 7372694, 7495109. **Band (≥ EUR 100 m) = 20**: M2's 15 plus
+  6569442, 6603588, 6679375, 7139761, 7542368 — B5's stop rule "a band set different from M2's" would trip, so these
+  are read under M2's bars BEFORE B4 (the 5 band heads: 0 wrong of any class; all 18 read, every ship with a skeptic).
