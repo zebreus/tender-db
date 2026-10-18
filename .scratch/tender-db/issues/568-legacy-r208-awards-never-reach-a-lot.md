@@ -1,11 +1,15 @@
 # 568 — legacy R2.0.8 contract award notices never attach their awards to a lot, even on a multi-lot Tender
 
-Status: ready-for-agent — DEPLOYED 86f2745 and DRAINED (2593/2594: 156,123 corrected, D7 complete). **Read-back FAILED
-its bar (29 / 30)** → the decision is REOPENED (2026-10-18, wf_48592647-c5a): 8327340 — one R2.0.8 award block per
-contract covering SEVERAL lots (title "обособени позиции 5, 6, 15, 16"), printing only one of them in LOT_NUMBER, now
-carries the whole multi-lot award on that one lot (7 blocks; 2.5x–26x the lot's CN value). Not rolled back (29/30 right,
-the 77 measured Tenders 692/692 as predicted). NEXT: unit 7 — measure the "one block, several lots" shape and decide a
-refusal guard (G3), build it, and drain it together with 570 in one refold over TED-LOT_NO + TED-LOT_NUMBER.
+Status: ready-for-agent — DEPLOYED 86f2745 and DRAINED (2593/2594: 156,123 corrected); read-back FAILED 29/30 (8327340,
+one block for several lots) → UNIT 7 DECIDED 2026-10-18 (wf_8ba1e1ec-eee, `568-r208-lots/u7/decision-u7.md`): BUILD
+G3–G6 on the cross-notice match (G3 title names ≥ 2 lots; G4 a title names another lot than its printed number → the
+notice matches none; G5 title = another lot's title; G6 ≥ 2 printed numbers; none on a Tender whose lots print < 2
+numbers; titles refuse, never key). Measured on the salted 150 + fresh 30 + the 77: catches 11/13 multi-lot and 53/61
+other-wrong blocks, false refusals 4/1,762 (0.23 %, ≤ 0.58 %), the 77 untouched. Value guards refused at every k.
+Deployed rule today: 12/180 uniform Tenders carry a wrong block (6.7 %, 3.5–11.4 %); after G3–G6: 5/180 (2.8 %,
+0.9–6.4 %), five recorded residual shapes. NEXT: unit 8 build → gate → deploy → ONE refold with 570 (TED-LOT_NO +
+TED-LOT_NUMBER) → read back (8327340's 7 on the Tender; the 150's 61 named; the 77 unchanged; fresh 30: 0
+guarded-shape wrongs, residual ≤ 2/30).
 Kind: completeness (legacy lot results: R2.0.8 awards served tender-scoped)
 Relates to:
 - 567 (same-notice ITEM/LOT_NO mapping in read_legacy_results);
