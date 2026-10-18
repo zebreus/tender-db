@@ -1,0 +1,1178 @@
+[
+{
+"tender_id": 5428540,
+"can_notice_id": 18505677,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "block title 'Accord-cadre ... pour les sites <lot title>' restates the printed lot's title"
+},
+{
+"tender_id": 5428540,
+"can_notice_id": 18505677,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "block title 'Accord-cadre ... pour les sites <lot title>' restates the printed lot's title"
+},
+{
+"tender_id": 5428540,
+"can_notice_id": 18505677,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "block title 'Accord-cadre ... pour les sites <lot title>' restates the printed lot's title"
+},
+{
+"tender_id": 5428540,
+"can_notice_id": 18505677,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "block title 'Accord-cadre ... pour les sites <lot title>' restates the printed lot's title"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-7",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-8",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-9",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-10",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-11",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-12",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5436905,
+"can_notice_id": 18487741,
+"result_key": "RES-13",
+"cls": "single_right",
+"why": "block title is the printed lot's description (town: Agen Est, Estillac, ... Villeneuve)"
+},
+{
+"tender_id": 5166891,
+"can_notice_id": 18066934,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "'II lotto ... 22 600 interviste' = LOT-2's description; estimate 423,000 = LOT-2's CN value"
+},
+{
+"tender_id": 5588843,
+"can_notice_id": 19014875,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'centre funéraire' = LOT-2's description (contract_no 1 is a per-CAN counter; LOT_NUMBER prints the lot)"
+},
+{
+"tender_id": 5588843,
+"can_notice_id": 19002225,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'bâtiment du Service des Énergies' = LOT-3's description"
+},
+{
+"tender_id": 4904608,
+"can_notice_id": 17248358,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "no block title, lot titles identical; estimates 500/1,400/1,400/21,000/900 scale with the lots' hours 2/6/6/108/4; every lot awarded, nothing contradicts"
+},
+{
+"tender_id": 4904608,
+"can_notice_id": 17248358,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "no block title, lot titles identical; estimates 500/1,400/1,400/21,000/900 scale with the lots' hours 2/6/6/108/4; every lot awarded, nothing contradicts"
+},
+{
+"tender_id": 4904608,
+"can_notice_id": 17248358,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "no block title, lot titles identical; estimates 500/1,400/1,400/21,000/900 scale with the lots' hours 2/6/6/108/4; every lot awarded, nothing contradicts"
+},
+{
+"tender_id": 4904608,
+"can_notice_id": 17248358,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "no block title, lot titles identical; estimates 500/1,400/1,400/21,000/900 scale with the lots' hours 2/6/6/108/4; every lot awarded, nothing contradicts"
+},
+{
+"tender_id": 4904608,
+"can_notice_id": 17248358,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "no block title, lot titles identical; estimates 500/1,400/1,400/21,000/900 scale with the lots' hours 2/6/6/108/4; every lot awarded, nothing contradicts"
+},
+{
+"tender_id": 5090226,
+"can_notice_id": 17813088,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'Lote k: Gerencia de Área ... Expediente 2.13/28520.01xx' = lot k's title and file number"
+},
+{
+"tender_id": 5090226,
+"can_notice_id": 17813088,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title 'Lote k: Gerencia de Área ... Expediente 2.13/28520.01xx' = lot k's title and file number"
+},
+{
+"tender_id": 5090226,
+"can_notice_id": 17813088,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title 'Lote k: Gerencia de Área ... Expediente 2.13/28520.01xx' = lot k's title and file number"
+},
+{
+"tender_id": 5090226,
+"can_notice_id": 17813088,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "title 'Lote k: Gerencia de Área ... Expediente 2.13/28520.01xx' = lot k's title and file number"
+},
+{
+"tender_id": 5090226,
+"can_notice_id": 17813088,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "title 'Lote k: Gerencia de Área ... Expediente 2.13/28520.01xx' = lot k's title and file number"
+},
+{
+"tender_id": 5090226,
+"can_notice_id": 17813088,
+"result_key": "RES-7",
+"cls": "single_right",
+"why": "title 'Lote k: Gerencia de Área ... Expediente 2.13/28520.01xx' = lot k's title and file number"
+},
+{
+"tender_id": 5370589,
+"can_notice_id": 18539788,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title ends '; Lote k'; estimate = lot k's CN value (117,016 / 151,525 / 17,459)"
+},
+{
+"tender_id": 5370589,
+"can_notice_id": 18539788,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title ends '; Lote k'; estimate = lot k's CN value (117,016 / 151,525 / 17,459)"
+},
+{
+"tender_id": 5370589,
+"can_notice_id": 18539788,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title ends '; Lote k'; estimate = lot k's CN value (117,016 / 151,525 / 17,459)"
+},
+{
+"tender_id": 5439807,
+"can_notice_id": 18435151,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title = lot k's title (Nove pnevmatike za vodilne/pogonsko os, Obnovljene pnevmatike)"
+},
+{
+"tender_id": 5439807,
+"can_notice_id": 18435151,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title = lot k's title (Nove pnevmatike za vodilne/pogonsko os, Obnovljene pnevmatike)"
+},
+{
+"tender_id": 5439807,
+"can_notice_id": 18435151,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title = lot k's title (Nove pnevmatike za vodilne/pogonsko os, Obnovljene pnevmatike)"
+},
+{
+"tender_id": 5361997,
+"can_notice_id": 18355776,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title = lot k's title (ELW / MTF)"
+},
+{
+"tender_id": 5361997,
+"can_notice_id": 18355776,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title = lot k's title (ELW / MTF)"
+},
+{
+"tender_id": 5622790,
+"can_notice_id": 18898038,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title = lot k's title (kindergarten name)"
+},
+{
+"tender_id": 5622790,
+"can_notice_id": 18898038,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title = lot k's title (kindergarten name)"
+},
+{
+"tender_id": 5384355,
+"can_notice_id": 18440686,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title = lot k's description (sutura / malla doble capa / plug)"
+},
+{
+"tender_id": 5384355,
+"can_notice_id": 18440686,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title = lot k's description (sutura / malla doble capa / plug)"
+},
+{
+"tender_id": 5384355,
+"can_notice_id": 18440686,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title = lot k's description (sutura / malla doble capa / plug)"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-7",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-8",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-9",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-10",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-11",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 5052386,
+"can_notice_id": 17704487,
+"result_key": "RES-12",
+"cls": "single_right",
+"why": "title 'k. SKUPINA: ...' = lot k's title"
+},
+{
+"tender_id": 4926754,
+"can_notice_id": 17361002,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title = lot k's title (sport); estimate = lot k's CN value"
+},
+{
+"tender_id": 4926754,
+"can_notice_id": 17361002,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title = lot k's title (sport); estimate = lot k's CN value"
+},
+{
+"tender_id": 4926754,
+"can_notice_id": 17361002,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title = lot k's title (sport); estimate = lot k's CN value"
+},
+{
+"tender_id": 4926754,
+"can_notice_id": 17361002,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title = lot k's title (sport); estimate = lot k's CN value"
+},
+{
+"tender_id": 4926754,
+"can_notice_id": 17361002,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "title = lot k's title (sport); estimate = lot k's CN value"
+},
+{
+"tender_id": 5645176,
+"can_notice_id": 18898041,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'Circoscrizioni ...' = lot k's title; printed '0k'"
+},
+{
+"tender_id": 5645176,
+"can_notice_id": 18898041,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title 'Circoscrizioni ...' = lot k's title; printed '0k'"
+},
+{
+"tender_id": 5645176,
+"can_notice_id": 18898041,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title 'Circoscrizioni ...' = lot k's title; printed '0k'"
+},
+{
+"tender_id": 5645176,
+"can_notice_id": 18898041,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title 'Circoscrizioni ...' = lot k's title; printed '0k'"
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title '... - zadanie k' and lot k's title; estimate = lot k's CN value. Right by coincidence: LOT_NUMBER is a contract counter (= CONTRACT_NO 01..17) that equals the lot until unawarded lot 9"
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title '... - zadanie k' and lot k's title; estimate = lot k's CN value. Right by coincidence: LOT_NUMBER is a contract counter (= CONTRACT_NO 01..17) that equals the lot until unawarded lot 9"
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title '... - zadanie k' and lot k's title; estimate = lot k's CN value. Right by coincidence: LOT_NUMBER is a contract counter (= CONTRACT_NO 01..17) that equals the lot until unawarded lot 9"
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title '... - zadanie k' and lot k's title; estimate = lot k's CN value. Right by coincidence: LOT_NUMBER is a contract counter (= CONTRACT_NO 01..17) that equals the lot until unawarded lot 9. re-read: right (zadanie 4 = LOT-4's title, estimate = LOT-4's CN value); the count phrase '(pakiet 8 pozycji)' (a package of 8 items, also in LOT-4's own CN title) reads as designator Pakiet 8."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "title '... - zadanie k' and lot k's title; estimate = lot k's CN value. Right by coincidence: LOT_NUMBER is a contract counter (= CONTRACT_NO 01..17) that equals the lot until unawarded lot 9. re-read: right (zadanie 5 = LOT-5's title, estimate = LOT-5's CN value); the count phrase '(pakiet 6 pozycji)' (a package of 6 items, also in LOT-5's own CN title) reads as designator Pakiet 6."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "title '... - zadanie k' and lot k's title; estimate = lot k's CN value. Right by coincidence: LOT_NUMBER is a contract counter (= CONTRACT_NO 01..17) that equals the lot until unawarded lot 9"
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-7",
+"cls": "single_right",
+"why": "title '... - zadanie k' and lot k's title; estimate = lot k's CN value. Right by coincidence: LOT_NUMBER is a contract counter (= CONTRACT_NO 01..17) that equals the lot until unawarded lot 9"
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-8",
+"cls": "single_right",
+"why": "title '... - zadanie k' and lot k's title; estimate = lot k's CN value. Right by coincidence: LOT_NUMBER is a contract counter (= CONTRACT_NO 01..17) that equals the lot until unawarded lot 9. re-read: right (zadanie 8 = LOT-8's title, estimate = LOT-8's CN value); the count phrase '(pakiet 3 pozycji)' (a package of 3 items, also in LOT-8's own CN title) reads as designator Pakiet 3."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-9",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 9 = CONTRACT_NO 09, but the title says 'zadanie 10', restates LOT-10's CN title and its estimate = LOT-10's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-10",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 10 = CONTRACT_NO 10, but the title says 'zadanie 11', restates LOT-11's CN title and its estimate = LOT-11's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-11",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 11 = CONTRACT_NO 11, but the title says 'zadanie 12', restates LOT-12's CN title and its estimate = LOT-12's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-12",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 12 = CONTRACT_NO 12, but the title says 'zadanie 13', restates LOT-13's CN title and its estimate = LOT-13's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-13",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 13 = CONTRACT_NO 13, but the title says 'zadanie 14', restates LOT-14's CN title and its estimate = LOT-14's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-14",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 14 = CONTRACT_NO 14, but the title says 'zadanie 15', restates LOT-15's CN title and its estimate = LOT-15's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-15",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 15 = CONTRACT_NO 15, but the title says 'zadanie 16', restates LOT-16's CN title and its estimate = LOT-16's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-16",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 16 = CONTRACT_NO 16, but the title says 'zadanie 17', restates LOT-17's CN title and its estimate = LOT-17's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 8286472,
+"can_notice_id": 16994904,
+"result_key": "RES-17",
+"cls": "wrong_other",
+"why": "re-read: contract counter. LOT_NUMBER 17 = CONTRACT_NO 17, but the title says 'zadanie 18', restates LOT-18's CN title and its estimate = LOT-18's CN value. Lot 9 (423,000) and lot 19 (366,642.54) are absent from the CAN's value list, so from RES-9 on every block sits one lot low."
+},
+{
+"tender_id": 5179195,
+"can_notice_id": 17931871,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "re-read: title = lot k's description; also the CAN estimates are exactly 1/4 of the CN lot values (50/200, 15/60, 12/48, 6/24 k EUR; the CN's 480,000 for lot 3 is a typo for 48,000, since its total 332,000 = 200+60+48+24)."
+},
+{
+"tender_id": 5179195,
+"can_notice_id": 17931871,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "re-read: title = lot k's description; also the CAN estimates are exactly 1/4 of the CN lot values (50/200, 15/60, 12/48, 6/24 k EUR; the CN's 480,000 for lot 3 is a typo for 48,000, since its total 332,000 = 200+60+48+24)."
+},
+{
+"tender_id": 5179195,
+"can_notice_id": 17931871,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "re-read: title = lot k's description; also the CAN estimates are exactly 1/4 of the CN lot values (50/200, 15/60, 12/48, 6/24 k EUR; the CN's 480,000 for lot 3 is a typo for 48,000, since its total 332,000 = 200+60+48+24)."
+},
+{
+"tender_id": 5179195,
+"can_notice_id": 17931871,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "re-read: title = lot k's description; also the CAN estimates are exactly 1/4 of the CN lot values (50/200, 15/60, 12/48, 6/24 k EUR; the CN's 480,000 for lot 3 is a typo for 48,000, since its total 332,000 = 200+60+48+24)."
+},
+{
+"tender_id": 4488740,
+"can_notice_id": 16841677,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title = lot k's description (RES-1 unsuccessful, winner 'infructueux', still lot 1)"
+},
+{
+"tender_id": 4488740,
+"can_notice_id": 16841677,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title = lot k's description (RES-1 unsuccessful, winner 'infructueux', still lot 1)"
+},
+{
+"tender_id": 4488740,
+"can_notice_id": 16841677,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title = lot k's description (RES-1 unsuccessful, winner 'infructueux', still lot 1)"
+},
+{
+"tender_id": 4488740,
+"can_notice_id": 16841677,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title = lot k's description (RES-1 unsuccessful, winner 'infructueux', still lot 1)"
+},
+{
+"tender_id": 4488740,
+"can_notice_id": 16841677,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "title = lot k's description (RES-1 unsuccessful, winner 'infructueux', still lot 1)"
+},
+{
+"tender_id": 5307503,
+"can_notice_id": 18158992,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'Infogérance des réseaux IP/divers' = lot k's description"
+},
+{
+"tender_id": 5307503,
+"can_notice_id": 18158992,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title 'Infogérance des réseaux IP/divers' = lot k's description"
+},
+{
+"tender_id": 4986126,
+"can_notice_id": 17523128,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'Pakiet nr k: ...' = lot k's title (lot 3 unawarded; LOT_NUMBER prints the lot, not a counter)"
+},
+{
+"tender_id": 4986126,
+"can_notice_id": 17523128,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title 'Pakiet nr k: ...' = lot k's title (lot 3 unawarded; LOT_NUMBER prints the lot, not a counter)"
+},
+{
+"tender_id": 4986126,
+"can_notice_id": 17523128,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title 'Pakiet nr k: ...' = lot k's title (lot 3 unawarded; LOT_NUMBER prints the lot, not a counter)"
+},
+{
+"tender_id": 4986126,
+"can_notice_id": 17523128,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title 'Pakiet nr k: ...' = lot k's title (lot 3 unawarded; LOT_NUMBER prints the lot, not a counter)"
+},
+{
+"tender_id": 4986126,
+"can_notice_id": 17523128,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "title 'Pakiet nr k: ...' = lot k's title (lot 3 unawarded; LOT_NUMBER prints the lot, not a counter)"
+},
+{
+"tender_id": 4986126,
+"can_notice_id": 17523128,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "title 'Pakiet nr k: ...' = lot k's title (lot 3 unawarded; LOT_NUMBER prints the lot, not a counter)"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-7",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-8",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-9",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-10",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 4607390,
+"can_notice_id": 12576242,
+"result_key": "RES-11",
+"cls": "single_right",
+"why": "title 'Del k Bränsle ...' agrees with printed k = CN 'Del k'; RES-1..3 are three fuel-type awards inside lot 2, each on lot 2; CONTRACT_NO is a counter but LOT_NUMBER prints the lot"
+},
+{
+"tender_id": 5156152,
+"can_notice_id": 17828009,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'konferencji Eko-Innowacje' = LOT-1's title"
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 20' = 450 PLN/yr, and this block's estimate / 2 (24-month contract) = 489.5 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 2' = 250 PLN/yr, and this block's estimate / 2 (24-month contract) = 250 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 18' = 800 PLN/yr, and this block's estimate / 2 (24-month contract) = 825 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 19' = 2,000 PLN/yr, and this block's estimate / 2 (24-month contract) = 2,200 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 3' = 1,200 PLN/yr, and this block's estimate / 2 (24-month contract) = 1,225 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 4' = 2,800 PLN/yr, and this block's estimate / 2 (24-month contract) = 2,812.5 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-7",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 5' = 600 PLN/yr, and this block's estimate / 2 (24-month contract) = 600 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-8",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 6' = 400 PLN/yr, and this block's estimate / 2 (24-month contract) = 437.6 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-9",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 7' = 800 PLN/yr, and this block's estimate / 2 (24-month contract) = 857.6 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-10",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 8' = 1,400 PLN/yr, and this block's estimate / 2 (24-month contract) = 1,419.6 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-11",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 9' = 600 PLN/yr, and this block's estimate / 2 (24-month contract) = 600 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-12",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 22' = 35,000 PLN/yr, and this block's estimate / 2 (24-month contract) = 37,241 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 8338322,
+"can_notice_id": 18040382,
+"result_key": "RES-13",
+"cls": "single_right",
+"why": "re-read: value agreement, not only numbering. The CN's per-task experience threshold 'dla zadania nr 14' = 300 PLN/yr, and this block's estimate / 2 (24-month contract) = 337.5 PLN/yr, just above it. All 13 blocks fit their printed task this way (18 vs 19, whose descriptions are identical, are told apart: 800 vs 2,000). Title 'opatrunki' is every lot's title; printed = CONTRACT_NO, non-sequential, not a counter."
+},
+{
+"tender_id": 5169032,
+"can_notice_id": 17944441,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title '5.000 ton' (printed 2) / '3.000 ton' (printed 3, 4) = the printed lot's title; values 100,000 / 60,000 / 44,460 fit the tonnages"
+},
+{
+"tender_id": 5169032,
+"can_notice_id": 17944441,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title '5.000 ton' (printed 2) / '3.000 ton' (printed 3, 4) = the printed lot's title; values 100,000 / 60,000 / 44,460 fit the tonnages"
+},
+{
+"tender_id": 5169032,
+"can_notice_id": 17944441,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title '5.000 ton' (printed 2) / '3.000 ton' (printed 3, 4) = the printed lot's title; values 100,000 / 60,000 / 44,460 fit the tonnages"
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 8' = LOT-8's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 15.39x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 7' = LOT-7's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 4.47x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 1' = LOT-1's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 197.13x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 2' = LOT-2's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 53.98x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 3' = LOT-3's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 44.84x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 14' = LOT-14's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 8.0x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-7",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 6' = LOT-6's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 47.14x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-8",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 12' = LOT-12's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 763.48x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-9",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 9' = LOT-9's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 57.33x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-10",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 10' = LOT-10's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 263.02x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5084145,
+"can_notice_id": 17708200,
+"result_key": "RES-11",
+"cls": "single_right",
+"why": "re-read: title 'Вариант 11' = LOT-11's CN title exactly; CONTRACT_NO is a counter 1..11, LOT_NUMBER prints the lot. Award/lot value = 57.06x (the group's range is 4.5x..763x, not 197x as the measurer wrote; total 69.9 M vs 2.0 M BGN estimated) and no permutation of lots fits the values, so it is a value anomaly, not a placement error (unit 7 judged 5284511's 'Grupa k' up to 237x right the same way)."
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-1",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-2",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-3",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-4",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-5",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-6",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-7",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-8",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-9",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-10",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-11",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-12",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-13",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-14",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-15",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-16",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-17",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-18",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-19",
+"cls": "single_right",
+"why": "re-read: title 'Pakiet nr 21 – Siatki do operacji przepuklin – medyczne' = LOT-21's CN title exactly and the award 2,700 fits LOT-21's 3,150. Its INITIAL_ESTIMATED 14,925 equals LOT-22's CN value (and RES-20's estimate): a copied estimate in the CAN, not a placement error."
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-20",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-21",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-22",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-23",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-24",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-25",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-26",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-27",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-28",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-29",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+},
+{
+"tender_id": 5251601,
+"can_notice_id": 18100646,
+"result_key": "RES-30",
+"cls": "single_right",
+"why": "title 'Pakiet nr k – ...' = lot k's title for printed k; estimates = lot k's CN value"
+}
+]
