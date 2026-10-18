@@ -1,0 +1,458 @@
+{
+ "fresh_reader": [
+  {
+   "tender_id": 5126920,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "CN 17704520 prints lots LOT-1..5 with LOT_NUMBER 1..5. CAN 17813898 (F03, no lot sections) prints LN 4,2,3,5,1 on RES-1..5, and the API serves LOT-4, LOT-2, LOT-3, LOT-5, LOT-1, which is exactly what the rule gives. Every CONTRACT_TITLE matches its lot word for word: RES-1 'deformacji kr\u0119gos\u0142upa' is LOT-4, RES-5 'z\u0142ama\u0144' is LOT-1, RES-4 'ma\u0142oinwazyjnymi' is LOT-5. CONTRACT_NUMBER 1..5 is sequential and was correctly not used. The CN prints no lot values, so there are no figures to compare."
+  },
+  {
+   "tender_id": 5669525,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "CN 18778953 (F05) prints lots 1..7 ('List n \u2014 ...'). CAN 18922358 (F06, no lot sections) prints LN 2,3,4 on RES-1..3, served as LOT-2, LOT-3, LOT-4, which matches the rule. Each TITLE_CONTRACT repeats the CN lot title exactly (Druke pump, butt welding machine, asphalt cutter). Lots 1, 5, 6 and 7 have no award, which fits."
+  },
+  {
+   "tender_id": 5441107,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "CN 18318703 has 2 lots (LN 1 Krak\u00f3w, LN 2 Kielce, by their descriptions). The CAN 18538527 has one block printing LN 2, served as LOT-2, which matches the rule. G1 does not apply to a single block. The contract title is the generic procedure title, so it does not contradict. The winner (Grzegorz G\u0142uch) is in Zg\u00f3rsko, Sitk\u00f3wka-Nowiny near Kielce, which supports lot 2. The CN prints no lot values."
+  },
+  {
+   "tender_id": 4790375,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "CN 17005501 has LN 1 (acquisition and installation of the 2 automates) and LN 2 (consumables). CAN 17169656 RES-1 prints LN 1 with title 'Acquisition, livraison, installation...' and EUR 283,624.44, served as LOT-1. RES-2 prints LN 2 with title 'Fourniture des consommables...' and no value, served as LOT-2. Both match the rule, and the titles are identical to the CN lot descriptions."
+  },
+  {
+   "tender_id": 4838915,
+   "verdict": "right",
+   "blocks_checked": 8,
+   "wrong_blocks": [],
+   "why": "CN 17105794 has 8 lots 'Pakiet nr I..VIII' with LOT_NUMBER 1..8. Corrigendum 17134609 only changes dates and the document fee; it has no lot sections and does not trigger G2. CAN 17236744 RES-1..8 print LN 1..8 with CONTRACT_TITLE 'Pakiet nr I..VIII', served as LOT-1..8, which matches the rule. The titles' roman numerals agree with each lot. The CN prints no lot values."
+  },
+  {
+   "tender_id": 5306292,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "CN 18056351 has 'Lotto 1..5' with LOT_NUMBER 1..5. CAN 18718193 RES-1..5 print LN 1..5, served as LOT-1..5, which matches the rule. The CONTRACT_TITLEs match the lot objects one to one: barcode wristbands, Zebra thermal, RFID, mother/child, and deceased identification."
+  },
+  {
+   "tender_id": 4740520,
+   "verdict": "right",
+   "blocks_checked": 7,
+   "wrong_blocks": [],
+   "why": "CN 16915745 has 'Pakiet nr 1..11' with LOT_NUMBER 1..11 and net values. Corrigenda 16927906 and 16953291 are prose only: deposit wording, pakiet 6 description, dates. No lot sections, so no G2. CAN 17030313 prints LN 1,2,3,6,7,8,11 with titles 'Pakiet nr n.', served as LOT-1, LOT-2, LOT-3, LOT-6, LOT-7, LOT-8, LOT-11, which matches the rule. Each block's estimate including VAT is exactly the CN lot value x1.08 (e.g. LOT-1 65,150 x1.08 = 70,362; LOT-11 13,325 x1.08 = 14,391)."
+  },
+  {
+   "tender_id": 4568665,
+   "verdict": "right",
+   "blocks_checked": 8,
+   "wrong_blocks": [],
+   "why": "CN 12357711 has 8 lots with LOT_NUMBER 1..8 and net values. CAN 12444093 RES-1..8 print LN 1..8, served as LOT-1..8, which matches the rule. Each CONTRACT_TITLE (e.g. '37 operat\u00f3w', '91 operat\u00f3w') equals its lot title. Each estimate including 23% VAT equals the CN lot value x1.23 (e.g. LOT-1 18,048.78 gives 22,200; LOT-8 9,512.20 gives 11,700). The post-award corrigendum 12445524 only restates part 4's value as including VAT."
+  },
+  {
+   "tender_id": 5733979,
+   "verdict": "right",
+   "blocks_checked": 6,
+   "wrong_blocks": [],
+   "why": "CN 18913021 has lots LN 1..6, titled 'Narada inwestycyjna ISW/IGK/IBP/IR/IWE/IOS'. Its description lists Parts I..VI by headcount and dates. Corrigendum 18886740 is prose with no lot sections, so no G2. It replaces 'Cz\u0119\u015b\u0107 nr n Nazwa: <dept>' with the Part n description. CAN 19003490 RES-k prints LN k with exactly the Part k title: RES-1 70 persons 15-16.9, RES-2 125 persons, RES-3 70 persons without accommodation 28-29.9, RES-4 75, RES-5 100, RES-6 120 persons 16-18.11. Served as LOT-1..6, which matches the rule. By number and by the corrected description, every block is on its own lot. Caveat on the figures: for LN 1..5 the CAN estimates (gross /1.23) are a permutation of the CN lot values. LN1 = 45,952 is CN LOT-3's value, LN2 = 115,320 is LOT-4's, LN3 = 64,579 is LOT-5's, LN4 = 49,234 is LOT-2's, LN5 = 65,646 is LOT-1's; only LN6 = 118,162 is LOT-6's own. The CAN figures fit their own awards and headcounts: the 125-person award 99,612 is 70% of its estimate, but 164% of CN LOT-2's value. So the CN's per-lot values look attached to the department names the corrigendum dropped. That is a source inconsistency in the lots' stale CN values, not a misplacement, and the rule never reads values."
+  },
+  {
+   "tender_id": 8356143,
+   "verdict": "right",
+   "blocks_checked": 6,
+   "wrong_blocks": [],
+   "why": "CN 18282942 has 6 lots: \u041f\u043b\u043e\u0432\u0434\u0438\u0432 I/II/III, \u041a\u0430\u0440\u043b\u043e\u0432\u043e-\u041f\u0430\u0437\u0430\u0440\u0434\u0436\u0438\u043a-\u041f\u0430\u043d\u0430\u0433\u044e\u0440\u0438\u0449\u0435, \u041a\u044a\u0440\u0434\u0436\u0430\u043b\u0438-\u0421\u043c\u043e\u043b\u044f\u043d, \u0425\u0430\u0441\u043a\u043e\u0432\u043e, with LOT_NUMBER 1..6 and values. CAN 18427173 RES-1..6 print LN 1..6 with the same CONTRACT_TITLEs, served as LOT-1..6, which matches the rule. Estimates equal the CN lot values exactly for lots 1, 2, 4, 5 and 6. LN3's estimate is 55,555 against CN 80,779.47, but no other lot has that figure, and title and number both say \u041f\u043b\u043e\u0432\u0434\u0438\u0432 \u0433\u0440\u0443\u043f\u0430 III. CONTRACT_NUMBERs \u0420\u0414-02-29-3xx are not lot numbers and were ignored."
+  },
+  {
+   "tender_id": 5057483,
+   "verdict": "right",
+   "blocks_checked": 12,
+   "wrong_blocks": [],
+   "why": "CN 17563405 (R2.0.8 F2) prints lots 1-12. CAN 17731870 (F3) has 12 blocks with LOT_NUMBER 1-12, and each lands on LOT-k by exact match. Every block's CONTRACT_TITLE repeats its CN lot's description word for word: the territory (Dunkerque, M\u00e9tropole Lille, Flandre Littoral, ..., Immobilier Sp\u00e9cialis\u00e9 Nord/Sud), the annual minimum (300k or 70k EUR) and the housing count (4,700 / 2,850 / 4,100 / ... / 630 / 280). No guard fires, and no block contradicts its lot."
+  },
+  {
+   "tender_id": 5991926,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "CN 19389812 (R2.0.8 F2, 2017) prints lots 1-3. CAN 19540810 (F3, no lot sections) has RES-1/2/3 with LOT_NUMBER 1/2/3, which land on LOT-1/2/3 by exact match. Titles agree: 'Odzie\u017c sportowa' = lot 1, 'Skarpety ochronne...' = lot 2, and 'Buty sportowe' (sports shoes, a synonym) = lot 3 'Obuwie sportowe'. RES-3 is the no-offer block with no winner and still sits on its lot correctly."
+  },
+  {
+   "tender_id": 4544195,
+   "verdict": "right",
+   "blocks_checked": 41,
+   "wrong_blocks": [],
+   "why": "CN 12314848 prints lots 1-44 (number only). CAN 12436827 has 41 blocks. RES-1 prints no LOT_NUMBER, so the rule leaves it on the Tender, and lot is null as the rule requires. RES-2..RES-41 print 2-21, 24-35 and 37-44 and land on exactly those LOT-k (RES-22 goes to LOT-24, and so on), skipping 22, 23 and 36, which have no award block. The figures confirm the placement: the CN's gross value per part (cz. I..XLIV) against each award gives ratios of 0.15-1.13, mostly 0.5-0.97. The large parts match tightly: part 38 252,612 vs 271,728, part 41 97,902 vs 135,177, part 43 69,660 vs 79,380, part 16 30,347 vs 31,173. No block contradicts its lot."
+  },
+  {
+   "tender_id": 5293166,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "CN 18031190 prints lot 1 'Potresne platforme' (1,500,000 HRK) and lot 2 'Prijenosni ure\u0111aj...' (447,000 HRK). The CAN prints the lots in reverse order: RES-1 has LOT_NUMBER 2 and RES-2 has LOT_NUMBER 1. They land on LOT-2 and LOT-1, not by position. Each block's title and initial estimate (447,000 and 1,500,000 HRK) equal its CN lot's title and VALUE exactly, and the contract numbers V-29/2014-II and -I agree."
+  },
+  {
+   "tender_id": 4856381,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "CN 17137260 prints lots 1-3, titled '1'/'2'/'3', each 'Trabajos geot\u00e9cnicos' with a 160,000 EUR budget per lot. The corrigendum 17179046 has no lot sections. CAN 17339873 (R2.0.8 F6) has RES-1/2/3 with LOT_NUMBER and ITEM 1/2/3, which land on LOT-1/2/3 by exact match. All three titles are identical, so only the number and the figures can be checked: the awards of 86,048, 97,600 and 92,800 EUR each sit under the 160k lot budget. Nothing contradicts the placement."
+  },
+  {
+   "tender_id": 4625137,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "CN 12461966 prints lot 1 'Num\u00e9risation des cartes \u00e0 fen\u00eatres et r\u00e9alisation de microfilms' and lot 2 'Num\u00e9risation des archives papier'. The corrigendum 12479183 only moves the deadline and has no lot sections. CAN 16999681 (F6): RES-1 has LOT_NUMBER 1 and the lot 1 title (winner IMSO) and lands on LOT-1. RES-2 has LOT_NUMBER 2 and the lot 2 title (winner Everial) and lands on LOT-2."
+  },
+  {
+   "tender_id": 4829872,
+   "verdict": "right",
+   "blocks_checked": 43,
+   "wrong_blocks": [],
+   "why": "CN 17086651 prints lots 1-45, each described by a drug name. The four corrigenda have no lot sections. CAN 17272842 has 43 blocks. 42 of them land on the lot of the same number (1, 3, 5-34, 36-45), and each CAN title equals its CN lot's description: Taromentin = 1, Fragmin = 3, Zoladex = 5, ..., Caelyx = 36, ..., Lyovac = 45. Lots 24-28 are all 'Leki.' on both sides. RES-43 prints LOT_NUMBER 47, which no lot section prints: pakiet 46-48 appear only in the corrigenda's TED-CONTENTS prose about wadium. So the rule finds no match and its lot is null, as required. This is the same 'added only in corrigendum prose' no_match class as 4840245."
+  },
+  {
+   "tender_id": 4803136,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "CN 17028068 prints lot 1 (blouses, tuniques, pantalons), lot 2 (linge plat et tapis) and lot 3 (T-shirts, gilets, blousons). CAN 17222373 (F3) has RES-1/2/3 with LOT_NUMBER 1/2/3, which land on LOT-1/2/3. Each CONTRACT_TITLE equals its CN lot's LOT_DESCRIPTION word for word. G2 does not apply: a later notice, 18836223 (a 2016 R2.0.9 F02 for a 2017-2021 contract, folded into the same Tender), republishes LOT-1 with no number. It comes after the award, so under rule 7 the earlier round stays frozen, and RES-1 correctly stays on LOT-1. Joining a re-tender four years later onto this Tender is outside 568."
+  },
+  {
+   "tender_id": 5427580,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "CN 18279050 prints lots 1-4 for Komenda Rejonowa Policji Warszawa II (+KSP) / III / IV / V. CAN 18309996 (F3) has RES-1/2/3 with LOT_NUMBER 1/2/3, which land on LOT-1/2/3. The titles agree exactly: Warszawa II i Wydzia\u0142\u00f3w KSP, Warszawa III and Warszawa IV. Lot 4 (Warszawa V) has no award block, as expected. G1 does not fire because the numbers differ."
+  },
+  {
+   "tender_id": 5026915,
+   "verdict": "right",
+   "blocks_checked": 4,
+   "wrong_blocks": [],
+   "why": "CN 17502624 prints lots 1-4: Girobroyage des accotements, Signalisation horizontale, Balayage des voiries..., and Curage des foss\u00e9s. CAN 17631708 (F3) has RES-1..4 with LOT_NUMBER 1..4, which land on LOT-1..4. Each CONTRACT_TITLE is identical to its CN lot's title."
+  },
+  {
+   "tender_id": 4846475,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "why": "CN 17118447 lots print LOT_NUMBER 1/2/3. CAN 17246335 (F03 R2.0.8, no lot sections) RES-1/2/3 print 1/2/3 and land on LOT-1/2/3 by exact match. Each CONTRACT_TITLE is word for word its lot's LOT_TITLE (photocopiers for schools / small-medium municipal / medium-large colour municipal). Winners are Sofeb, Sofeb and Ricoh. No guard applies.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 8327340,
+   "verdict": "wrong",
+   "blocks_checked": 10,
+   "why": "Every block is where the rule puts it: the CN 17694913 lots print 1..37, each block's LOT_NUMBER matches exactly, and no G1/G2 applies (replay agrees on 10/10). But 7 of the 10 blocks are single contracts for SEVERAL lots. Their CONTRACT_TITLE says '\u043e\u0431\u043e\u0441\u043e\u0431\u0435\u043d\u0438 \u043f\u043e\u0437\u0438\u0446\u0438\u0438 a, b, c' and LOT_NUMBER prints only one of those lots, so the whole multi-lot award and its value sit on one lot. The winner is right for that lot, but the figures say the award is not that lot's alone. 17821481 RES-1 is on LOT-5 with positions 5,6,15,16: 709,431.63 BGN awarded against LOT-5's CN VALUE of 189,067.00 (3.75x), roughly the 4-lot sum of 720,590.02. RES-2 is on LOT-28 with positions 28,31: 14,294.96 against 552.00 (26x). RES-5 is on LOT-3 with positions 3,8,17: 445,146.37 against 55,671.10 (8x); the 3-lot sum is 427,375.45. RES-6 is on LOT-21 with positions 21,22,23: 49,770.11 against 26,347.05; the sum is 56,821.78. RES-7 is on LOT-12 with 8 positions (12,18,20,25,26,27,29,30): 243,840.20 against 82,736.80; the sum is 259,602.44. 17830774 RES-1 is on LOT-34 with positions 33,34,35: 119,628.52 against 18,818.96. Its value EXACTLY equals the sum 33+34+35, and it prints the middle number, not the first. 17830774 RES-2 is on LOT-1 with positions 1,4,14,36: 186,058.74 against 74,213.08. Lots 4,6,8,14,15,16,17,18,20,22,23,25,26,27,29,30,31,33,35,36 are awarded by these titles but show no result. Three blocks are fine: RES-3 (title says position 24 only, 15,739.80 against 21,387.08), RES-4 (no positions named, LOT-32, 13,733.10 against 13,884.20) and 17840150 RES-1 (title says position 2 only). This shape (one block, several lots, one printed number) is not in decision.md's taxonomy. Its risk 3 covers several awards on one lot, not one award on several lots. Before 568 these blocks stayed on the Tender, scoped honestly. Now they inflate per-lot award sums (path W / 537 scale ratios of 2.5x to 26x).",
+   "wrong_blocks": [
+    "17821481 RES-1 -> LOT-5 (positions 5,6,15,16; 709,431.63 vs lot est 189,067.00)",
+    "17821481 RES-2 -> LOT-28 (positions 28,31; 14,294.96 vs 552.00)",
+    "17821481 RES-5 -> LOT-3 (positions 3,8,17; 445,146.37 vs 55,671.10)",
+    "17821481 RES-6 -> LOT-21 (positions 21,22,23; 49,770.11 vs 26,347.05)",
+    "17821481 RES-7 -> LOT-12 (positions 12,18,20,25,26,27,29,30; 243,840.20 vs 82,736.80)",
+    "17830774 RES-1 -> LOT-34 (positions 33,34,35; 119,628.52 = exact sum of the three lots, vs 18,818.96)",
+    "17830774 RES-2 -> LOT-1 (positions 1,4,14,36; 186,058.74 vs 74,213.08)"
+   ]
+  },
+  {
+   "tender_id": 8305165,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "why": "CN 17208888 prints LOT_NUMBER 1 (Mikroskopas) and 2 (Amnioskopas, Caesarean set...). The middle notice 17497538 is an additional-information notice with no lot sections: it says lot 1 'Mikroskopas' was not awarded, so it renumbers nothing and G2 is off. CAN 17625515 RES-1 prints 2 and goes on LOT-2. Its CONTRACT_TITLE repeats LOT-2's title, B. Braun is the winner, and the award is 537,468.69 LTL. Lot 1 has no award, which agrees with the middle notice.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 5495268,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "why": "CN 18425108 lots print 1/2/3 (Fahrgestell, Aufbau, Feuerwehrtechnische Beladung). CAN 18544982 blocks print 001/002/003, which match LOT-1/2/3 by the normalised form (leading zeros dropped). The titles agree: 'Fahrgetsell' (a typo) is MAN Truck, 'Aufbau' is Lentner at 184,170.35 EUR, and 'Feuerwehrtechnische Beladung' is Barth.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 8033171,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "why": "CN 18841213 (F17) lots print 1..5. CAN 19163171 (F18, no lot sections) RES-1..5 print 1..5 and land on LOT-1..5. Each CONTRACT_TITLE is identical to its LOT_TITLE: System Administration, Administration der Domino-Server, Entwicklung der Domino-Umgebung, Technische Beratung..., Service Beratung....",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 4867979,
+   "verdict": "right",
+   "blocks_checked": 9,
+   "why": "CN 17160271 lots print 1/2/3 with per-lot VALUEs of 5.7M, 10.9M and 5.4M EUR. CAN 17552746 is a framework multi-award: 3 winners per lot, with numbers 1,1,1,2,2,2,3,3,3. G1 does not fire because the numbers differ. RES-1..3 go to LOT-1, RES-4..6 to LOT-2 and RES-7..9 to LOT-3. Every block's CONTRACT_TITLE equals its lot's title, and its INITIAL_ESTIMATED value equals that lot's CN VALUE (5.7M / 10.9M / 5.4M).",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 4721870,
+   "verdict": "right",
+   "blocks_checked": 4,
+   "why": "CN 16883747 lots print 1..4. Their LOT_DESCRIPTIONs are Armoire \u00e0 pharmacie, Colonne d'approvisionnement et de stockage, Armoire de transfert and Armoire mobile. CAN 17089901 RES-1..4 print 1..4 with exactly those CONTRACT_TITLEs and land on LOT-1..4. Each block prints VALUE_COST 400,000 EUR; that is what the notice says, not a placement issue.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 4916820,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "why": "CN 17257304 lots print 1 (Rewizyjna bezcementowa proteza stawu biodrowego) and 2 (Bezcementowy trzpie\u0144...). CAN 17339046 RES-1 is titled 'pakiet nr 1 Rewizyjna...' and goes to LOT-1 (BSM, 327,460 PLN). RES-2 is titled 'pakiet nr 2 Bezcementowy trzpie\u0144...' and goes to LOT-2 (Comesa, 216,000 PLN). Both the Pakiet designators and the object agree.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 5604917,
+   "verdict": "right",
+   "blocks_checked": 6,
+   "why": "CN 18653738 lots print 1..4. CAN 18855359 prints 1,1,2,2,3,4, so G1 does not fire. RES-1/2 go to LOT-1 (Strategic Digital and Product Marketing), RES-3/4 to LOT-2 (International...), RES-5 to LOT-3 (Food and Drink, Strategic...) and RES-6 to LOT-4 (Food and Drink and Consumer Branding and Packaging). Every CONTRACT_TITLE matches its lot's LOT_TITLE.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 5834805,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "why": "CN 19102684 (F17) has a single lot, LOT-1, printing 1 (Werksinstandhaltung des Systems Amphibie M3). CAN 19318891 (F18) RES-1 prints 1 and goes to LOT-1 (title 'Amphbie M3', General Dynamics), which is consistent. RES-2 prints 2, which no lot prints, so the rule leaves it on the Tender. The API serves lot null, which is correct. G1 does not apply: the numbers differ, and the single-lot Tender is exempt anyway.",
+   "wrong_blocks": []
+  }
+ ],
+ "fresh_skeptic": [
+  {
+   "tender_id": 5126920,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "I re-fetched everything. CN 17704520 has LOT-1..5 with LOT_NUMBER 1..5 and no lot values. CAN 17813898 (F03, no lot sections) prints LN 4,2,3,5,1 on RES-1..5, served as LOT-4, LOT-2, LOT-3, LOT-5, LOT-1, which is what the rule gives. Every CONTRACT_TITLE repeats its lot's title. A second check the reader did not use also agrees: the CN's per-part deposits are exactly 1% of each block's net estimate (estimate incl. 8% VAT / 1.08). Cz\u0119\u015b\u0107 4's deposit of 6,089 matches RES-1 (LN4, 657,612/1.08 = 608,900). Cz\u0119\u015b\u0107 1's 4,493 matches RES-5 (LN1, 449,340). Cz\u0119\u015b\u0107 2's 4,828, Cz\u0119\u015b\u0107 3's 544 and Cz\u0119\u015b\u0107 5's 1,435 match RES-2, RES-3 and RES-4. CONTRACT_NUMBER 1..5 is sequential and correctly ignored. G1 and G2 do not apply."
+  },
+  {
+   "tender_id": 5669525,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "CN 18778953 (F05) has 7 lots, 'List 1..7', with LOT_NUMBER 1..7. CAN 18922358 (F06, no lot sections) prints LN 2,3,4 on RES-1..3, with CONTRACT_NO 1..3, which is correctly ignored. They are served as LOT-2, LOT-3, LOT-4. Each TITLE_CONTRACT is the CN lot title word for word: Druke pump, butt welding machine, asphalt cutter. No other notice is in the chain, so G2 does not apply, and the three numbers are distinct, so G1 does not either."
+  },
+  {
+   "tender_id": 5441107,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "wrong_blocks": [],
+   "why": "CN 18318703 has LN 1 (Cz\u0119\u015b\u0107 I, Krak\u00f3w, 12,726 km) and LN 2 (Cz\u0119\u015b\u0107 II, Kielce, 20,200 km). Both lot titles are the junk value 'Urz\u0105d Komisji Nadzoru Finansowego'. CAN 18538527 has one block, LN 2, whose title ends 'z uwzgl\u0119dnieniem prawa opcji dla Cz\u0119\u015bci II'. It is served as LOT-2. The title's 'Cz\u0119\u015bci II' and the winner's address (Zg\u00f3rsko, next to Kielce) both support lot 2. With a single block, G1 cannot apply."
+  },
+  {
+   "tender_id": 4790375,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "CN 17005501 prints LN 1 (acquisition and installation of the 2 automates) and LN 2 (consumables). It has no lot titles or values. CAN 17169656 prints RES-1 as LN 1, with the installation title and EUR 283,624.44, served as LOT-1. It prints RES-2 as LN 2, with the consumables title and no value, served as LOT-2. Both titles repeat the CN lot descriptions exactly. The served lots have empty titles because the CN prints only descriptions. That does not affect placement."
+  },
+  {
+   "tender_id": 4838915,
+   "verdict": "right",
+   "blocks_checked": 8,
+   "wrong_blocks": [],
+   "why": "CN 17105794 has 'Pakiet nr I..VIII' with LOT_NUMBER 1..8. Corrigendum 17134609 only changes the document fee and the dates. It has no lot sections, so G2 does not apply. CAN 17236744 prints LN 1..8 on RES-1..8 with titles 'Pakiet nr I..VIII', served as LOT-1..8. The CN's per-pakiet deposits are 2.3-2.9% of each block's estimate excl. VAT, consistent across all eight; for example, I 9,000 against 323,097 and VIII 6,000 against 238,500. That rules out a swap."
+  },
+  {
+   "tender_id": 5306292,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "wrong_blocks": [],
+   "why": "CN 18056351 has 'Lotto 1..5' with LOT_NUMBER 1..5. CAN 18718193 prints LN 1..5 on RES-1..5, served as LOT-1..5. The CONTRACT_TITLEs match the lot objects one to one: barcode wristbands, Zebra thermal, RFID, mother/child, deceased identification. Every placement agrees with the text."
+  },
+  {
+   "tender_id": 4740520,
+   "verdict": "right",
+   "blocks_checked": 7,
+   "wrong_blocks": [],
+   "why": "CN 16915745 has 'Pakiet nr 1..11' with LOT_NUMBER 1..11 and net values. Corrigendum 16927906 changes only the deposit wording. Corrigendum 16953291 re-describes pakiet 6 and moves dates, under the same 'Cz\u0119\u015b\u0107 nr: 6'. Neither has lot sections, so G2 does not apply. CAN 17030313 prints LN 1,2,3,6,7,8,11, served as LOT-1, LOT-2, LOT-3, LOT-6, LOT-7, LOT-8, LOT-11. Every estimate incl. 8% VAT divided by 1.08 equals that lot's CN value exactly, e.g. 70,362 gives 65,150; 21,898.94 gives 20,276.80; 3,772.08 gives 3,492.67; 14,391 gives 13,325."
+  },
+  {
+   "tender_id": 4568665,
+   "verdict": "right",
+   "blocks_checked": 8,
+   "wrong_blocks": [],
+   "why": "CN 12357711 has 8 lots with LOT_NUMBER 1..8 and net values. CAN 12444093 prints LN 1..8 on RES-1..8, served as LOT-1..8. Every estimate divided by 1.23 equals that lot's CN value: 22,200 gives 18,048.78; 54,600 gives 44,390.24; 1,500 gives 1,219.51; 11,700 gives 9,512.20. LN4 and LN6 share a title ('3 operaty szacunkowe') and an estimate (1,799.99), so their figures cannot tell them apart; the number is the only discriminator, and the rule uses it correctly. The post-award corrigendum 12445524 only restates Cz\u0119\u015b\u0107 nr 4's final value as incl. VAT, which confirms RES-4 is part 4. It postdates the award, so it cannot trigger G2."
+  },
+  {
+   "tender_id": 5733979,
+   "verdict": "right",
+   "blocks_checked": 6,
+   "wrong_blocks": [],
+   "why": "I agree with the reader's verdict and caveat. CN 18913021 has lots LN 1..6 titled 'Narada inwestycyjna ISW/IGK/IBP/IR/IWE/IOS', with values. Its own short description lists CZ\u0118\u015a\u0106 I..VI by headcount and dates. Corrigendum 18886740 is prose and has no lot sections, so G2 does not apply. It explicitly maps 'Cz\u0119\u015b\u0107 nr: n Nazwa: <dept>' to 'Cz\u0119\u015b\u0107 <n> zam\u00f3wienia: <headcount, dates>', position by position. CAN 19003490 prints LN k with exactly Part k's text on RES-k, served as LOT-k. So the number, the CN's own description, and the corrigendum's mapping all put RES-k on lot k. The only dissent is in the figures: the CAN's net estimates are a permutation of the CN lot values (LN1 = CN lot 3's 45,952, LN2 = lot 4's 115,320, LN3 = lot 5's 64,579, LN4 = lot 2's 49,234, LN5 = lot 1's 65,646; LN6 = its own 118,162). The CAN figures fit their own awards; LN2's award of 99,612 is 70% of its estimate. This is a source inconsistency in the CN's lot values, which the served lots carry as estimated_value, not a misplaced block. The rule reads neither values nor corrigendum prose. The served lot titles still show the department names the corrigendum dropped; that is cosmetic and outside 568."
+  },
+  {
+   "tender_id": 8356143,
+   "verdict": "right",
+   "blocks_checked": 6,
+   "wrong_blocks": [],
+   "why": "CN 18282942 has 6 lots (\u041f\u043b\u043e\u0432\u0434\u0438\u0432 I/II/III, \u041a\u0430\u0440\u043b\u043e\u0432\u043e-\u041f\u0430\u0437\u0430\u0440\u0434\u0436\u0438\u043a-\u041f\u0430\u043d\u0430\u0433\u044e\u0440\u0438\u0449\u0435, \u041a\u044a\u0440\u0434\u0436\u0430\u043b\u0438-\u0421\u043c\u043e\u043b\u044f\u043d, \u0425\u0430\u0441\u043a\u043e\u0432\u043e) with LOT_NUMBER 1..6. The CN's and the CAN's notice titles both enumerate '\u041e\u0431\u043e\u0441\u043e\u0431\u0435\u043d\u0430 \u043f\u043e\u0437\u0438\u0446\u0438\u044f 1..6' with these names in the same order. CAN 18427173 prints LN 1..6 on RES-1..6 with the matching CONTRACT_TITLEs, served as LOT-1..6. Estimates equal the CN values exactly for LN 1, 2, 4, 5 and 6. LN3's estimate of 55,555 against the CN's 80,779.47 matches no other lot, and its title and number both say \u0433\u0440\u0443\u043f\u0430 III. Both notices cite 2015/S 44-076318, which is not in the Tender's version chain, so it contributes no inherited lots. The CONTRACT_NUMBERs \u0420\u0414-02-29-3xx were correctly ignored."
+  },
+  {
+   "tender_id": 5057483,
+   "verdict": "right",
+   "blocks_checked": 12,
+   "wrong_blocks": [],
+   "why": "Agree, from a fresh fetch. CN 17563405 (F2) has sections LOT-1..12, and each prints LOT_NUMBER equal to its key. CAN 17731870 (F3) points REF_NOTICE at 2013/S 173-299327, which is that CN, and has 12 blocks with LOT_NUMBER 1-12. Each block is served on the same LOT-k. Every CONTRACT_TITLE repeats its lot's 4-line description: the territory, the 300k or 70k EUR minimum, the 300 or 70 hours, and the housing count (4700/4700/2850/4100/3100/4800/5100/4350/3100/3650/630/280). Two lots both say 4,700 logements, but lot 1 (Dunkerque) and lot 2 (M\u00e9tropole Lille) are told apart by territory. No guard applies, and nothing contradicts."
+  },
+  {
+   "tender_id": 5991926,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "Agree. CN 19389812 prints lots 1/2/3: Odzie\u017c sportowa, Skarpety ochronne..., and Obuwie sportowe. CAN 19540810 (REF_NOTICE 2017/S 154-320707, the CN) has RES-1/2/3 with LOT_NUMBER 1/2/3, served on LOT-1/2/3. The titles agree. 'Buty sportowe' and 'Obuwie sportowe' both mean sports shoes. RES-3 is a no-award block (no winner and no value) and correctly sits on lot 3."
+  },
+  {
+   "tender_id": 4544195,
+   "verdict": "right",
+   "blocks_checked": 41,
+   "wrong_blocks": [],
+   "why": "Agree. CN 12314848 has LOT-1..44, each printing LOT_NUMBER = k and nothing else. CAN 12436827 (REF_NOTICE 2011/S 98-160540, the CN) has 41 blocks. RES-1 prints no LOT_NUMBER (only a date, a value of 5,389.63 and a winner), so the rule leaves it null, as served. Its value does fit part I (6,940.08), but the rule does not match blocks with no number. RES-2..41 print 2-21, 24-35 and 37-44, and every one is served on the LOT whose section prints that number (0 mismatches by script). The CN's 'Warto\u015b\u0107 brutto' list for cz. I-XLIV gives award/estimate ratios of 0.15-1.13. The large parts fit tightly: part 38 252,612 vs 271,728, part 41 97,902 vs 135,177, part 43 69,660 vs 79,380, part 16 30,347 vs 31,173. The weakest are RES-22 (part 24, 0.153) and RES-2 (part 2, 0.188), but the neighbouring parts fit worse (part 22 2.6x, part 23 3.1x). Nothing contradicts."
+  },
+  {
+   "tender_id": 5293166,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Agree. The CAN lists the lots in reverse: RES-1 prints LOT_NUMBER 2 and is served on LOT-2, and RES-2 prints 1 and is served on LOT-1. So the placement follows the printed number, not the position. Each block's CONTRACT_TITLE and initial estimate equal its CN lot's title and VALUE_COST exactly: 447,000 HRK for 'Prijenosni ure\u0111aj...' and 1,500,000 HRK for 'Potresne platforme'. REF_NOTICE names the CN 2014/S 184-324397."
+  },
+  {
+   "tender_id": 4856381,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "Agree. CN 17137260 prints lots 1/2/3, titled '1'/'2'/'3', all 'Trabajos geot\u00e9cnicos', each with a 160,000 EUR budget ('para el Lote k'). Corrigendum 17179046 has no lot section: it only says the pliego was modified, and it renumbers nothing. CAN 17339873 (REF_NOTICE = the CN) has RES-1/2/3 with LOT_NUMBER 1/2/3, served on LOT-1/2/3. The lots are identical, so the placement can only be checked by number and budget: 86,048, 97,600 and 92,800 EUR are each under 160k. Nothing contradicts the placement, but text alone cannot confirm it."
+  },
+  {
+   "tender_id": 4625137,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "wrong_blocks": [],
+   "why": "Agree. CN 12461966 has lot 1 'Num\u00e9risation des cartes \u00e0 fen\u00eatres et r\u00e9alisation de microfilms' and lot 2 'Num\u00e9risation des archives papier'. Corrigendum 12479183 only moves IV.3.4's deadline from 14.10 to 27.10.2011 and has no lot section. CAN 16999681 (F6, REF_NOTICE = the CN): RES-1 prints LOT_NUMBER 1 with the lot-1 title (IMSO) and RES-2 prints 2 with the lot-2 title (Everial). They are served on LOT-1 and LOT-2."
+  },
+  {
+   "tender_id": 4829872,
+   "verdict": "right",
+   "blocks_checked": 43,
+   "wrong_blocks": [],
+   "why": "Agree. CN 17086651 prints LOT-1..45 (LOT_NUMBER = k), each with a drug name. The four corrigenda have no lot section. Their prose does split pakiet 26 (wadium 200->140) into a new pakiet 46, and pakiet 28 (2300->2240->1240) into new pakiets 47 and 48, but no section is republished, so G2 cannot fire and LOT-26/28 stay the same lots, only smaller. In CAN 17272842, 42 blocks are served on the lot printing their number, and a script check finds every CONTRACT_TITLE equal to that lot's description. The five 'Leki.' lots (24-28) can only be checked by figures. Against the corrigendum's per-pakiet insurance minimums (which track the estimates) they give 24 0.85, 25 0.79 and 26 0.60. Pakiet 27 gives only 0.07, but trying 25<->27 or 26<->27 as a swap does not fit better. Pakiet 28 gives 0.38, which fits once 47/48 are carved out. The same figures confirm blocks whose in-CAN estimates are typos (31: 276,966 vs 260k; 5: 8,165 vs 9k; 15: 12,960 vs 15k). RES-43 prints 47, 'LEKI', with estimate 2,963, which fits pakiet 47's 3,000. Pakiet 47 exists only in corrigendum prose, so it is correctly left null."
+  },
+  {
+   "tender_id": 4803136,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "Agree. CN 17028068 prints lots 1/2/3, and CAN 17222373 (REF_NOTICE 2012/S 133-222109) has RES-1/2/3 with LOT_NUMBER 1/2/3. Each CONTRACT_TITLE equals its lot's LOT_DESCRIPTION word for word: blouses/tuniques/pantalons, linge plat et tapis, and T-shirts/gilets/blousons. They are served on LOT-1/2/3. The 2016 F02 18836223 joins through NOTICE_NUMBER_OJ.PREV_KIND=THIS_PROCEDURE and republishes LOT-1 with only ITEM=1 and VAL_OBJECT, with no number. It is folded after the CAN, so it neither triggers G2 for this award nor re-keys the frozen round. The served LOT-1 still carries the 2012 title. Joining a re-tender onto this Tender is a weld question, outside 568."
+  },
+  {
+   "tender_id": 5427580,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "wrong_blocks": [],
+   "why": "Agree. CN 18279050 prints lots 1-4 for KRP Warszawa II (with the KSP Wydzia\u0142y), III, IV and V. CAN 18309996 (REF_NOTICE 2015/S 81-143865) has RES-1/2/3 with LOT_NUMBER 1/2/3, and their titles name Warszawa II i Wydzia\u0142\u00f3w KSP, III and IV. They are served on LOT-1/2/3. Lot 4 has no block. The numbers are distinct, so G1 does not apply."
+  },
+  {
+   "tender_id": 5026915,
+   "verdict": "right",
+   "blocks_checked": 4,
+   "wrong_blocks": [],
+   "why": "Agree. CN 17502624 prints lots 1-4: Girobroyage des accotements, Signalisation horizontale, Balayage des voiries..., and Curage des foss\u00e9s. CAN 17631708 (REF_NOTICE = the CN) has RES-1..4 with LOT_NUMBER 1..4, and each title is identical to its lot's title. They are served on LOT-1..4."
+  },
+  {
+   "tender_id": 4846475,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "why": "Re-read. CN 17118447 lots LOT-1/2/3 print LOT_NUMBER 1/2/3. CAN 17246335 has no lot sections; its RES-1/2/3 print 1/2/3 and the API serves them on LOT-1/2/3. Each CONTRACT_TITLE is word for word its lot's LOT_TITLE (schools / small-medium municipal / medium-large colour municipal). The figures agree too: the INITIAL_ESTIMATED values of 14,620, 9,452 and 53,921 EUR rank the same way as the CN annual caps of 50k, 45k and 195k. Winners are Sofeb, Sofeb and Ricoh. There is one lot-publishing notice, so G2 is off, and the numbers differ, so G1 is off.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 8327340,
+   "verdict": "wrong",
+   "blocks_checked": 10,
+   "why": "I confirm the reader's finding independently. All 10 blocks follow the rule: CN 17694913 LOT-k prints k for k = 1..37, every LOT_NUMBER matches exactly, the CANs have no lot sections, the numbers differ (no G1) and there is one lot-publishing notice (no G2). The fault is the shape, not the code: 7 blocks are single contracts for several lots, and each prints only one of those lots in LOT_NUMBER. 17821481 RES-1 says '\u043e\u0431\u043e\u0441\u043e\u0431\u0435\u043d\u0438 \u043f\u043e\u0437\u0438\u0446\u0438\u0438 5, 6, 15, 16' and is on LOT-5: 709,431.63 BGN against LOT-5's 189,067.00, close to the 4-lot sum of 720,590.02. RES-2 (28, 31) is on LOT-28: 14,294.96 against 552.00 (the 2-lot sum is 10,852.96). RES-5 (3, 8, 17) is on LOT-3: 445,146.37 against 55,671.10 (sum 427,375.45). RES-6 (21, 22, 23) is on LOT-21: 49,770.11 against 26,347.05 (sum 56,821.78). RES-7 (12, 18, 20, 25, 26, 27, 29, 30) is on LOT-12: 243,840.20 against 82,736.80 (sum 259,602.44). 17830774 RES-1 (33, 34, 35) prints the middle number, 34: 119,628.52, which is exactly the 3-lot sum. That shows LOT_NUMBER here is an arbitrary pick from the contract's lots. 17830774 RES-2 (1, 4, 14, 36) is on LOT-1: 186,058.74 against 74,213.08 (sum 127,185.18). Each winner is right for its printed lot. But the API now says that lot alone was awarded at the multi-lot value, and the text contradicts that. Before 568 these blocks stayed on the Tender, which was accurate. Three blocks are fine: RES-3 (position 24 only), RES-4 (no positions named; 13,733.10 against 13,884.20) and 17840150 RES-1 (position 2 only; 127,541.75 against 72,983.40, high but for one position). decision.md has no class for 'one block, several lots, one printed number', and step 9 bars the title evidence that exposes it. This is a gap in the rule, not a bug in the code.",
+   "wrong_blocks": [
+    "17821481 RES-1 -> LOT-5 (positions 5,6,15,16; 709,431.63 vs LOT-5 est 189,067.00; 4-lot sum 720,590.02)",
+    "17821481 RES-2 -> LOT-28 (positions 28,31; 14,294.96 vs 552.00; 2-lot sum 10,852.96)",
+    "17821481 RES-5 -> LOT-3 (positions 3,8,17; 445,146.37 vs 55,671.10; sum 427,375.45)",
+    "17821481 RES-6 -> LOT-21 (positions 21,22,23; 49,770.11 vs 26,347.05; sum 56,821.78)",
+    "17821481 RES-7 -> LOT-12 (positions 12,18,20,25,26,27,29,30; 243,840.20 vs 82,736.80; sum 259,602.44)",
+    "17830774 RES-1 -> LOT-34 (positions 33,34,35; 119,628.52 = exact 3-lot sum, vs 18,818.96; middle number printed)",
+    "17830774 RES-2 -> LOT-1 (positions 1,4,14,36; 186,058.74 vs 74,213.08; sum 127,185.18)"
+   ]
+  },
+  {
+   "tender_id": 8305165,
+   "verdict": "right",
+   "blocks_checked": 1,
+   "why": "CN 17208888 LOT-1 prints 1 (Mikroskopas) and LOT-2 prints 2 (Amnioskopas, Cezario pj\u016bvio rinkinys...). The middle notice 17497538 is a text-era notice with no lot sections, so it cannot renumber anything and G2 is off. Its text says 'pirkimo daliai Nr. 1 \"Mikroskopas\" - ... nebuvo paskirta sutartis' (no contract awarded for lot 1). CAN 17625515 RES-1 prints 2 and is on LOT-2. Its CONTRACT_TITLE repeats LOT-2's title; the winner is B. Braun Medical and the award is 537,468.69 LTL. Lot 1 has no result, which agrees with the middle notice.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 5495268,
+   "verdict": "right",
+   "blocks_checked": 3,
+   "why": "CN 18425108 prints 1 (Fahrgestell), 2 (Aufbau) and 3 (Feuerwehrtschnisehe Beladung). CAN 18544982 prints 001/002/003. No lot prints those exactly, so the normalised forms (leading zeros dropped) match LOT-1/2/3. The titles agree: 'Fahrgetsell' goes to MAN Truck & Bus (chassis), 'Aufbau' to Josef Lentner (184,170.35 EUR) and 'Feuerwehrtechnische Beladung' to Wilhelm Barth (equipment). Each number is matched by exactly one lot, and no guard applies.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 8033171,
+   "verdict": "right",
+   "blocks_checked": 5,
+   "why": "CN 18841213 (F17) lots print 1..5. CAN 19163171 (F18, no lot sections) RES-1..5 print 1..5 and are on LOT-1..5. Each CONTRACT_TITLE is identical to its LOT_TITLE (System Administration / Administration der Domino-Server / Entwicklung der Domino-Umgebung / Technische Beratung... / Service Beratung...). Winners are Datagroup, We4IT, Fraunhofer, IBM and IBM. No guard applies.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 4867979,
+   "verdict": "right",
+   "blocks_checked": 9,
+   "why": "CN 17160271 lots print 1/2/3, with VALUE_COST of 5.7M, 10.9M and 5.4M EUR. CAN 17552746 is a framework with 3 winners per lot, printing 1,1,1,2,2,2,3,3,3. The numbers are not all the same, so G1 does not fire. RES-1..3 go to LOT-1, RES-4..6 to LOT-2 and RES-7..9 to LOT-3. In every block the CONTRACT_TITLE (in all 24 languages) equals its lot's LOT_TITLE, and its INITIAL_ESTIMATED value equals that lot's CN value (5.7M / 10.9M / 5.4M).",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 4721870,
+   "verdict": "right",
+   "blocks_checked": 4,
+   "why": "CN 16883747 lots print 1..4. Their LOT_DESCRIPTIONs are Armoire \u00e0 pharmacie, Colonne d'approvisionnement et de stockage, Armoire de transfert and Armoire mobile. CAN 17089901 RES-1..4 print 1..4 with exactly those CONTRACT_TITLEs and are on LOT-1..4. Every block, and every notice-level TED-VALUE, prints 400,000 EUR. That figure is copied by the notice itself; it is not a placement error, and moving the blocks to lots does not change any sum.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 4916820,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "why": "CN 17257304 LOT-1 prints 1 (Rewizyjna bezcemetowa proteza stawu biodrowego, 24 months) and LOT-2 prints 2 (Bezcementowy trzpie\u0144, 18 months). CAN 17339046 RES-1 'pakiet nr 1 Rewizyjna...' (24 months) is on LOT-1 (BSM, 327,460 PLN). RES-2 'pakiet nr 2 Bezcementowy trzpie\u0144...' (18 months) is on LOT-2 (Comesa, 216,000 PLN). The designator, the object and the duration all agree.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 5604917,
+   "verdict": "right",
+   "blocks_checked": 6,
+   "why": "CN 18653738 lots print 1..4. CAN 18855359 prints 1,1,2,2,3,4, so the numbers are not all the same and G1 does not fire. RES-1/2 go to LOT-1 (Strategic Digital and Product Marketing), RES-3/4 to LOT-2 (International, ...), RES-5 to LOT-3 (Food and Drink, Strategic...) and RES-6 to LOT-4 (Food and Drink and Consumer Branding and Packaging). Every CONTRACT_TITLE matches its lot's LOT_TITLE.",
+   "wrong_blocks": []
+  },
+  {
+   "tender_id": 5834805,
+   "verdict": "right",
+   "blocks_checked": 2,
+   "why": "CN 19102684 (F17) has one lot, LOT-1, which prints 1 (Werksinstandhaltung des Systems Amphibie M3). CAN 19318891 (F18, which refers to the CN) RES-1 prints 1 and is on LOT-1 (General Dynamics). RES-2 prints 2, which no lot prints, so the rule leaves it on the Tender, and the API serves lot null. RES-2 has the same title ('Amphbie M3') and the same winner, so it may belong to the only lot. But the rule never uses titles, and leaving the block null is the honest result, not a missed match. G1 does not apply: the numbers differ and the Tender has one lot.",
+   "wrong_blocks": []
+  }
+ ],
+ "fresh_counts": {
+  "right": 29,
+  "wrong": 1
+ },
+ "head": {
+  "items": [
+   {
+    "tender_id": 5617904,
+    "verdict": "right",
+    "blocks_checked": 85,
+    "wrong_blocks": [],
+    "why": "The buyer's own corrigendum confirms the head. Version 3 of the tender is notice 18810459 (2016/S 108-192970, which references the award notice 2016/S 099-177443). Its TED-CONTENTS reads: 'Zamiast: II.2.1) Ca\u0142kowita ko\u0144cowa warto\u015b\u0107 zam\u00f3wienia: Warto\u015b\u0107: 6 351 557 614,20 PLN ... Powinno by\u0107: Warto\u015b\u0107: 63 515 576,14 PLN, \u0142\u0105cznie z VAT 8%'. In English: 'Instead of PLN 6,351,557,614.20, read PLN 63,515,576.14, including 8% VAT'. So the 6.35 bn was a x100 slip, and the head's new value of 6351557614 cents (PLN 63,515,576.14) matches the corrected figure to the cent. The figure is also consistent with the award notice. Notice 18771158 has 85 award blocks, and their TED-VALUE_COST values add up to exactly 6351557614 cents. That notice's procedure TED-VALUE is the slipped 635155761420. The contract notice 18696746 has 88 lots ('Pakiet nr 1..88') and no value fields, so no other total competes. All 85 blocks were checked against the head. Each block's LOT_NUMBER equals the contract-notice TED-LOT_NUMBER of the lot it sits on, and each awarded amount equals the block's VALUE_COST. This holds where the numbering shifts too, because pakiety 57, 63 and 81 have no award block: for example RES-57 prints 58 and sits on LOT-58 (Interferonum), RES-74 prints 76 and sits on LOT-76 (Trastuzumabum, PLN 9.08 M), and RES-85 prints 88 and sits on LOT-88 (Pembrolizumab). No number is printed twice. A total of PLN 63.5 M including VAT is plausible for one Gda\u0144sk oncology hospital's drug and contrast-media supply; PLN 6.35 bn is not. One cosmetic point: amounts[] still lists the raw result_value 635155761420, but value_derivation.refused marks it as refused. Saved reads are under /home/user/tender-db/.scratch/tender-db/568-r208-lots/readback/t5617904/ (tender.json, notice_*.json, check.txt)."
+   }
+  ]
+ },
+ "pass": false
+}

@@ -1,0 +1,97 @@
+CN lot fields sample ['TED-CPV_CODE', 'TED-LOT_DESCRIPTION', 'TED-LOT_NUMBER', 'TED-LOT_TITLE']
+LOT-1 (['1'], ['Pakiet nr 1'], [])
+LOT-10 (['10'], ['Pakiet nr 10'], [])
+LOT-11 (['11'], ['Pakiet nr 11'], [])
+LOT-12 (['12'], ['Pakiet nr 12'], [])
+LOT-13 (['13'], ['Pakiet nr 13'], [])
+CN proc TED-CONTRACT_COVERED_GPA.VALUE None None None
+CN proc TED-F02_DIV_INTO_LOT_YES.VALUE None None None
+RES-1   LOT_NUMBER=['1'] title=['Vinorelbina (1)'] cents=[99225000] -> head lot=LOT-1 CN num=['1'] CN title=['Pakiet nr 1'] head awarded=99225000
+RES-10  LOT_NUMBER=['10'] title=['Cisplatin'] cents=[7637760] -> head lot=LOT-10 CN num=['10'] CN title=['Pakiet nr 10'] head awarded=7637760
+RES-11  LOT_NUMBER=['11'] title=['Oxaliplatin'] cents=[5013965] -> head lot=LOT-11 CN num=['11'] CN title=['Pakiet nr 11'] head awarded=5013965
+RES-12  LOT_NUMBER=['12'] title=['Docetaxel'] cents=[7469280] -> head lot=LOT-12 CN num=['12'] CN title=['Pakiet nr 12'] head awarded=7469280
+RES-13  LOT_NUMBER=['13'] title=['Bleomycini sulfas'] cents=[4286520] -> head lot=LOT-13 CN num=['13'] CN title=['Pakiet nr 13'] head awarded=4286520
+RES-14  LOT_NUMBER=['14'] title=['Dacarbazinum'] cents=[6350400] -> head lot=LOT-14 CN num=['14'] CN title=['Pakiet nr 14'] head awarded=6350400
+RES-15  LOT_NUMBER=['15'] title=['Epirubicini hydrochloridum'] cents=[4577040] -> head lot=LOT-15 CN num=['15'] CN title=['Pakiet nr 15'] head awarded=4577040
+RES-16  LOT_NUMBER=['16'] title=['Doxorubicynum'] cents=[7661628] -> head lot=LOT-16 CN num=['16'] CN title=['Pakiet nr 16'] head awarded=7661628
+RES-17  LOT_NUMBER=['17'] title=['Doxorubicinum liposomanum'] cents=[21544380] -> head lot=LOT-17 CN num=['17'] CN title=['Pakiet nr 17'] head awarded=21544380
+RES-18  LOT_NUMBER=['18'] title=['Mitomycinum'] cents=[436752] -> head lot=LOT-18 CN num=['18'] CN title=['Pakiet nr 18'] head awarded=436752
+RES-19  LOT_NUMBER=['19'] title=['Mitoxantronum'] cents=[2546640] -> head lot=LOT-19 CN num=['19'] CN title=['Pakiet nr 19'] head awarded=2546640
+RES-2   LOT_NUMBER=['2'] title=['Vinorelbina (2)'] cents=[64159776] -> head lot=LOT-2 CN num=['2'] CN title=['Pakiet nr 2'] head awarded=64159776
+RES-20  LOT_NUMBER=['20'] title=['Cyclophosphamid'] cents=[9789574] -> head lot=LOT-20 CN num=['20'] CN title=['Pakiet nr 20'] head awarded=9789574
+RES-21  LOT_NUMBER=['21'] title=['Octreotide'] cents=[134171289] -> head lot=LOT-21 CN num=['21'] CN title=['Pakiet nr 21'] head awarded=134171289
+RES-22  LOT_NUMBER=['22'] title=['Pemetrexed'] cents=[57700188] -> head lot=LOT-22 CN num=['22'] CN title=['Pakiet nr 22'] head awarded=57700188
+RES-23  LOT_NUMBER=['23'] title=['Paclitaxel'] cents=[16485552] -> head lot=LOT-23 CN num=['23'] CN title=['Pakiet nr 23'] head awarded=16485552
+RES-24  LOT_NUMBER=['24'] title=['Lanreotidum'] cents=[140862839] -> head lot=LOT-24 CN num=['24'] CN title=['Pakiet nr 24'] head awarded=140862839
+RES-25  LOT_NUMBER=['25'] title=['Capecitabinum'] cents=[14820538] -> head lot=LOT-25 CN num=['25'] CN title=['Pakiet nr 25'] head awarded=14820538
+RES-26  LOT_NUMBER=['26'] title=['Gemcitabine'] cents=[7506000] -> head lot=LOT-26 CN num=['26'] CN title=['Pakiet nr 26'] head awarded=7506000
+RES-27  LOT_NUMBER=['27'] title=['Sunitinibum'] cents=[320645520] -> head lot=LOT-27 CN num=['27'] CN title=['Pakiet nr 27'] head awarded=320645520
+RES-28  LOT_NUMBER=['28'] title=['Etoposidum'] cents=[3742200] -> head lot=LOT-28 CN num=['28'] CN title=['Pakiet nr 28'] head awarded=3742200
+RES-29  LOT_NUMBER=['29'] title=['Methotrexatum'] cents=[1263633] -> head lot=LOT-29 CN num=['29'] CN title=['Pakiet nr 29'] head awarded=1263633
+RES-3   LOT_NUMBER=['3'] title=['Doxorubicini liposom. pegylatum'] cents=[36158400] -> head lot=LOT-3 CN num=['3'] CN title=['Pakiet nr 3'] head awarded=36158400
+RES-30  LOT_NUMBER=['30'] title=['Vincristini sulfas (1)'] cents=[1541830] -> head lot=LOT-30 CN num=['30'] CN title=['Pakiet nr 30'] head awarded=1541830
+RES-31  LOT_NUMBER=['31'] title=['Vinblastini sulfas (2)'] cents=[2169504] -> head lot=LOT-31 CN num=['31'] CN title=['Pakiet nr 31'] head awarded=2169504
+RES-32  LOT_NUMBER=['32'] title=['Imatinibum (1)'] cents=[424115514] -> head lot=LOT-32 CN num=['32'] CN title=['Pakiet nr 32'] head awarded=424115514
+RES-33  LOT_NUMBER=['33'] title=['Cinacalcetum'] cents=[8399916] -> head lot=LOT-33 CN num=['33'] CN title=['Pakiet nr 33'] head awarded=8399916
+RES-34  LOT_NUMBER=['34'] title=['Abirateroni acetal'] cents=[108167400] -> head lot=LOT-34 CN num=['34'] CN title=['Pakiet nr 34'] head awarded=108167400
+RES-35  LOT_NUMBER=['35'] title=['Bevacizumab'] cents=[243000000] -> head lot=LOT-35 CN num=['35'] CN title=['Pakiet nr 35'] head awarded=243000000
+RES-36  LOT_NUMBER=['36'] title=['Afatinib'] cents=[19401208] -> head lot=LOT-36 CN num=['36'] CN title=['Pakiet nr 36'] head awarded=19401208
+RES-37  LOT_NUMBER=['37'] title=['Anagrelidum'] cents=[21347550] -> head lot=LOT-37 CN num=['37'] CN title=['Pakiet nr 37'] head awarded=21347550
+RES-38  LOT_NUMBER=['38'] title=['Axitinibum'] cents=[117906732] -> head lot=LOT-38 CN num=['38'] CN title=['Pakiet nr 38'] head awarded=117906732
+RES-39  LOT_NUMBER=['39'] title=['Azacitidinum'] cents=[73413000] -> head lot=LOT-39 CN num=['39'] CN title=['Pakiet nr 39'] head awarded=73413000
+RES-4   LOT_NUMBER=['4'] title=['Bicalutamide'] cents=[610038] -> head lot=LOT-4 CN num=['4'] CN title=['Pakiet nr 4'] head awarded=610038
+RES-40  LOT_NUMBER=['40'] title=['Bexarotenum'] cents=[35964065] -> head lot=LOT-40 CN num=['40'] CN title=['Pakiet nr 40'] head awarded=35964065
+RES-41  LOT_NUMBER=['41'] title=['Bendamustinum hydrochloridum'] cents=[16934400] -> head lot=LOT-41 CN num=['41'] CN title=['Pakiet nr 41'] head awarded=16934400
+RES-42  LOT_NUMBER=['42'] title=['Bortezomibum'] cents=[4177764] -> head lot=LOT-42 CN num=['42'] CN title=['Pakiet nr 42'] head awarded=4177764
+RES-43  LOT_NUMBER=['43'] title=['Cetuximabum'] cents=[35673253] -> head lot=LOT-43 CN num=['43'] CN title=['Pakiet nr 43'] head awarded=35673253
+RES-44  LOT_NUMBER=['44'] title=['Chlorambucilum'] cents=[2475252] -> head lot=LOT-44 CN num=['44'] CN title=['Pakiet nr 44'] head awarded=2475252
+RES-45  LOT_NUMBER=['45'] title=['Dasatynibum'] cents=[403868598] -> head lot=LOT-45 CN num=['45'] CN title=['Pakiet nr 45'] head awarded=403868598
+RES-46  LOT_NUMBER=['46'] title=['Denosumabum'] cents=[6836400] -> head lot=LOT-46 CN num=['46'] CN title=['Pakiet nr 46'] head awarded=6836400
+RES-47  LOT_NUMBER=['47'] title=['Darbepoetinum alfa'] cents=[178605000] -> head lot=LOT-47 CN num=['47'] CN title=['Pakiet nr 47'] head awarded=178605000
+RES-48  LOT_NUMBER=['48'] title=['Epoetinum beta'] cents=[58823604] -> head lot=LOT-48 CN num=['48'] CN title=['Pakiet nr 48'] head awarded=58823604
+RES-49  LOT_NUMBER=['49'] title=['Erlotinib'] cents=[83156220] -> head lot=LOT-49 CN num=['49'] CN title=['Pakiet nr 49'] head awarded=83156220
+RES-5   LOT_NUMBER=['5'] title=['Calcii folinas'] cents=[20913984] -> head lot=LOT-5 CN num=['5'] CN title=['Pakiet nr 5'] head awarded=20913984
+RES-50  LOT_NUMBER=['50'] title=['Fludarabini phosphas (1)'] cents=[5322478] -> head lot=LOT-50 CN num=['50'] CN title=['Pakiet nr 50'] head awarded=5322478
+RES-51  LOT_NUMBER=['51'] title=['Fludarabini phosphas (2)'] cents=[13975459] -> head lot=LOT-51 CN num=['51'] CN title=['Pakiet nr 51'] head awarded=13975459
+RES-52  LOT_NUMBER=['52'] title=['Hydroxycarbamidum'] cents=[2034396] -> head lot=LOT-52 CN num=['52'] CN title=['Pakiet nr 52'] head awarded=2034396
+RES-53  LOT_NUMBER=['53'] title=['Everolimusum'] cents=[40889146] -> head lot=LOT-53 CN num=['53'] CN title=['Pakiet nr 53'] head awarded=40889146
+RES-54  LOT_NUMBER=['54'] title=['Dabrafenibum'] cents=[100160712] -> head lot=LOT-54 CN num=['54'] CN title=['Pakiet nr 54'] head awarded=100160712
+RES-55  LOT_NUMBER=['55'] title=['Gefitynibum'] cents=[34128000] -> head lot=LOT-55 CN num=['55'] CN title=['Pakiet nr 55'] head awarded=34128000
+RES-56  LOT_NUMBER=['56'] title=['Imatinibum (2)'] cents=[36573120] -> head lot=LOT-56 CN num=['56'] CN title=['Pakiet nr 56'] head awarded=36573120
+RES-57  LOT_NUMBER=['58'] title=['Interferonum alfa-2b'] cents=[12083472] -> head lot=LOT-58 CN num=['58'] CN title=['Pakiet nr 58'] head awarded=12083472
+RES-58  LOT_NUMBER=['59'] title=['Ipilimumabum'] cents=[406676214] -> head lot=LOT-59 CN num=['59'] CN title=['Pakiet nr 59'] head awarded=406676214
+RES-59  LOT_NUMBER=['60'] title=['Lapatynibum'] cents=[110303100] -> head lot=LOT-60 CN num=['60'] CN title=['Pakiet nr 60'] head awarded=110303100
+RES-6   LOT_NUMBER=['6'] title=['Fluorouracyl'] cents=[15814656] -> head lot=LOT-6 CN num=['6'] CN title=['Pakiet nr 6'] head awarded=15814656
+RES-60  LOT_NUMBER=['61'] title=['Letrozolum'] cents=[175392] -> head lot=LOT-61 CN num=['61'] CN title=['Pakiet nr 61'] head awarded=175392
+RES-61  LOT_NUMBER=['62'] title=['Lomustine'] cents=[570240] -> head lot=LOT-62 CN num=['62'] CN title=['Pakiet nr 62'] head awarded=570240
+RES-62  LOT_NUMBER=['64'] title=['Nilotynibum'] cents=[323517780] -> head lot=LOT-64 CN num=['64'] CN title=['Pakiet nr 64'] head awarded=323517780
+RES-63  LOT_NUMBER=['65'] title=['Ondansetronum'] cents=[1859760] -> head lot=LOT-65 CN num=['65'] CN title=['Pakiet nr 65'] head awarded=1859760
+RES-64  LOT_NUMBER=['66'] title=['Panitumumabum'] cents=[117936000] -> head lot=LOT-66 CN num=['66'] CN title=['Pakiet nr 66'] head awarded=117936000
+RES-65  LOT_NUMBER=['67'] title=['Pazopanibum'] cents=[46920028] -> head lot=LOT-67 CN num=['67'] CN title=['Pakiet nr 67'] head awarded=46920028
+RES-66  LOT_NUMBER=['68'] title=['Procarbazine'] cents=[1701000] -> head lot=LOT-68 CN num=['68'] CN title=['Pakiet nr 68'] head awarded=1701000
+RES-67  LOT_NUMBER=['69'] title=['Rituximabum'] cents=[249092550] -> head lot=LOT-69 CN num=['69'] CN title=['Pakiet nr 69'] head awarded=249092550
+RES-68  LOT_NUMBER=['70'] title=['Sorafenibum'] cents=[105987010] -> head lot=LOT-70 CN num=['70'] CN title=['Pakiet nr 70'] head awarded=105987010
+RES-69  LOT_NUMBER=['71'] title=['Thalidomidum'] cents=[3466800] -> head lot=LOT-71 CN num=['71'] CN title=['Pakiet nr 71'] head awarded=3466800
+RES-7   LOT_NUMBER=['7'] title=['Irinotecan'] cents=[18786600] -> head lot=LOT-7 CN num=['7'] CN title=['Pakiet nr 7'] head awarded=18786600
+RES-70  LOT_NUMBER=['72'] title=['Temozolomidum'] cents=[3302343] -> head lot=LOT-72 CN num=['72'] CN title=['Pakiet nr 72'] head awarded=3302343
+RES-71  LOT_NUMBER=['73'] title=['Topotecanum (1)'] cents=[1123200] -> head lot=LOT-73 CN num=['73'] CN title=['Pakiet nr 73'] head awarded=1123200
+RES-72  LOT_NUMBER=['74'] title=['Topotecanum (2)'] cents=[5229360] -> head lot=LOT-74 CN num=['74'] CN title=['Pakiet nr 74'] head awarded=5229360
+RES-73  LOT_NUMBER=['75'] title=['Trabectedinum'] cents=[105828066] -> head lot=LOT-75 CN num=['75'] CN title=['Pakiet nr 75'] head awarded=105828066
+RES-74  LOT_NUMBER=['76'] title=['Trastuzumabum'] cents=[908182908] -> head lot=LOT-76 CN num=['76'] CN title=['Pakiet nr 76'] head awarded=908182908
+RES-75  LOT_NUMBER=['77'] title=['Wemurafenib'] cents=[286848000] -> head lot=LOT-77 CN num=['77'] CN title=['Pakiet nr 77'] head awarded=286848000
+RES-76  LOT_NUMBER=['78'] title=['Niejonowy izoosmolarny, dożylny środek cieniujący o stężeniu 320 mg jodu/ml'] cents=[11534400] -> head lot=LOT-78 CN num=['78'] CN title=['Pakiet nr 78'] head awarded=11534400
+RES-77  LOT_NUMBER=['79'] title=['Niejonowy dożylny środek cieniujący o stężeniu 400 mg jodu/ml'] cents=[9828000] -> head lot=LOT-79 CN num=['79'] CN title=['Pakiet nr 79'] head awarded=9828000
+RES-78  LOT_NUMBER=['80'] title=['Niejonowy dożylny środek kontrastowy o stężeniu 350mg jodu/ml'] cents=[19440000] -> head lot=LOT-80 CN num=['80'] CN title=['Pakiet nr 80'] head awarded=19440000
+RES-79  LOT_NUMBER=['82'] title=['Niejonowy dożylny środek cieniujący o stężeniu 300 mg jodu/ 1ml'] cents=[12312000] -> head lot=LOT-82 CN num=['82'] CN title=['Pakiet nr 82'] head awarded=12312000
+RES-8   LOT_NUMBER=['8'] title=['Carboplatinum'] cents=[10333440] -> head lot=LOT-8 CN num=['8'] CN title=['Pakiet nr 8'] head awarded=10333440
+RES-80  LOT_NUMBER=['83'] title=['GADOBUTROL 604,72mg/ml'] cents=[22619520] -> head lot=LOT-83 CN num=['83'] CN title=['Pakiet nr 83'] head awarded=22619520
+RES-81  LOT_NUMBER=['84'] title=['GADOTERIDOL 279, 3mg/ml'] cents=[13651200] -> head lot=LOT-84 CN num=['84'] CN title=['Pakiet nr 84'] head awarded=13651200
+RES-82  LOT_NUMBER=['85'] title=['GADOPENTONIA DIMEGLUMINY 469 mg/ml'] cents=[8096760] -> head lot=LOT-85 CN num=['85'] CN title=['Pakiet nr 85'] head awarded=8096760
+RES-83  LOT_NUMBER=['86'] title=['BARIUM SULFATE 1mg/ml oraz AMIDOTRIZOIC ACID [37g jodu/100ml]'] cents=[1408590] -> head lot=LOT-86 CN num=['86'] CN title=['Pakiet nr 86'] head awarded=1408590
+RES-84  LOT_NUMBER=['87'] title=['Gemcitabinum'] cents=[9844848] -> head lot=LOT-87 CN num=['87'] CN title=['Pakiet nr 87'] head awarded=9844848
+RES-85  LOT_NUMBER=['88'] title=['Pembrolizumab'] cents=[328333824] -> head lot=LOT-88 CN num=['88'] CN title=['Pakiet nr 88'] head awarded=328333824
+RES-9   LOT_NUMBER=['9'] title=['Fulvestrant'] cents=[104111136] -> head lot=LOT-9 CN num=['9'] CN title=['Pakiet nr 9'] head awarded=104111136
+blocks 85 sum VALUE_COST 6351557614
+dup numbers []
+BAD 0
+
