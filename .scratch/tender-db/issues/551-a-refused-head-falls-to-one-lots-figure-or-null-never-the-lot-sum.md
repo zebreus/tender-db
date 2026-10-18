@@ -1089,3 +1089,9 @@ both agree (no third reader was needed).
   encoded the row so the harness read it as a procedure figure (an input-encoding gap in B3's fixtures). **The corpus
   drain is HELD**; fix in progress (a withheld tender-scope copy refuses path W, as the port does), then gate, deploy,
   re-drain the cohort, re-run parity, then the corpus drain.
+- **Fixed and re-checked (2026-10-18 21:44Z):** 5d3fc52 (a withheld tender-scope award copy refuses at W/T', as the
+  port does; gate 2,382 green) deployed; cohort re-drain 2624/2625: 562 written, 561 verified + 1 corrected (179732
+  back to its null head); **cohort parity 563/563, 73 ships each side** (`b5/cohort_parity_result2.json`).
+- **Corpus drain started:** refold-lot-sum 2626 (`expect` 251,526): 759,642 notices re-queued, 251,526 stamped
+  epoch-stale; project 2627 running. Stop window for the two drains' corrections together: 835–3,338 (cohort so far
+  74 + 1).
