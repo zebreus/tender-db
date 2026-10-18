@@ -1073,3 +1073,19 @@ both agree (no third reader was needed).
 - `b5/confirm_draw.py`: the confirmation read's draw. **Salt fixed now: `sha256("551-b5-confirm-" + id)` ascending**,
   over the corpus drain's changed set (cursor range recorded at run time), excluding the 279 labelled and 277 walked ids,
   the first 30 served lot-sum-awards; plus every band row outside the reference 20. Self-tests 17/17.
+
+## B5 — deployed, cohort drained, parity FOUND ONE DISAGREEMENT (2026-10-18 ~20:50Z)
+
+- B4 + B5 code gated (54b9068, 2,380 green) and deployed 4b6a4bd: **path W v2 is ON**.
+- Cohort-first drain (`refold-lot-sum` with the 563 `tender_ids`): dry 2620 → 562 of 563 (7511890 not reachable,
+  as B3 found); wet 2621 + project 2622: 562 written, 488 verified + 74 corrected.
+- Corpus dry 2623: **251,526** Tenders, 759,642 notices (not yet run wet).
+- Cohort parity (`b5/cohort_parity.py`, fresh reads; `b5/cohort_parity_result.json`): **562/563 agree, 1 disagree**:
+  **179732** is served EUR 173,099.00 `lot-sum-awards` (n = 4, vouched_by BT-161 46689383); the port refuses at v1
+  `W/T'`. Its head (notice 46693986) has a WITHHELD tender-scope `result_value` and its four lot awards are the -1
+  withheld marker; earlier rounds published the awards. Root cause: canonical.rs files a tender-scope `result_value`
+  as an award copy (`FigureScope::Lot(None)`), whose branch drops a Withheld judgement, so T' passes vacuously and G7
+  ("a withheld procedure figure — a lot sum would publish it") never sees it. B3 missed it because `gen_b3.py`
+  encoded the row so the harness read it as a procedure figure (an input-encoding gap in B3's fixtures). **The corpus
+  drain is HELD**; fix in progress (a withheld tender-scope copy refuses path W, as the port does), then gate, deploy,
+  re-drain the cohort, re-run parity, then the corpus drain.
