@@ -1,0 +1,338 @@
+{
+ "started_at": "2026-10-18T20:16:23Z",
+ "checks": [
+  {
+   "name": "run A: the changed set is exactly the in-range tender/changed/version-null ids, deduplicated",
+   "ok": true,
+   "population": {
+    "changed_ids": 123,
+    "ids_sha256": "ababe0e28762ca3c87818ef43bb7e0a4fa9f255c5ef52a701f8bf661f2bea3fd"
+   },
+   "range": {
+    "from": "5000",
+    "to": "5400",
+    "rule": "from < cursor <= to; entity tender, op changed, version null",
+    "events_in_range": 127,
+    "picked_events": 124,
+    "distinct_ids": 123,
+    "first_in_range": 5001,
+    "last_in_range": 5127,
+    "read_reaches": 5410,
+    "generations": [
+     "2"
+    ]
+   }
+  },
+  {
+   "name": "run A: the labelled / walked ids in the population are excluded unread",
+   "ok": true,
+   "excluded": {
+    "in_population": 3,
+    "by_reason": {
+     "walked-277": 1,
+     "labelled-279": 2
+    },
+    "ids": [
+     13292,
+     683951,
+     7001924
+    ]
+   }
+  },
+  {
+   "name": "run A: the recorded order is sha256(\"551-b5-confirm-\"+id) ascending (recomputed here)",
+   "ok": true,
+   "first5": [
+    9100052,
+    9100058,
+    9100102,
+    9100038,
+    9100095
+   ]
+  },
+  {
+   "name": "run A: held = the first 30 lot-sum-awards Tenders in that order, the 404 recorded",
+   "ok": true,
+   "held": [
+    9100052,
+    9100102,
+    9100095,
+    9100025,
+    9100057,
+    9100060,
+    9100092,
+    9100015
+   ],
+   "n404": [
+    {
+     "id": 9100005,
+     "order_pos": 58
+    }
+   ],
+   "walked": 80
+  },
+  {
+   "name": "run A: band rows outside the 20 listed (port EUR >= 100 m), server-only row split out, the missing reference head named, exit 4",
+   "ok": true,
+   "exit": 4,
+   "outside": [
+    [
+     9200001,
+     15000000000
+    ],
+    [
+     9100052,
+     15000000000
+    ]
+   ],
+   "server_only": [
+    [
+     9200002,
+     {
+      "cents": 9000000000,
+      "currency": "CHF"
+     },
+     9222256379,
+     0.9759
+    ]
+   ],
+   "missing": [
+    6679375
+   ]
+  },
+  {
+   "name": "run A: the draw holds a band row outside the 20, and the seek found it too",
+   "ok": true,
+   "held_band": [
+    9100052
+   ]
+  },
+  {
+   "name": "the pre-draw record (full order) is written before the first Tender read",
+   "ok": true,
+   "first": "tenders/9100052.json",
+   "predraw_existed": true,
+   "predraw_order_len": 120
+  },
+  {
+   "name": "a re-run with the same range reproduces the draw (the pre-draw check passes)",
+   "ok": true,
+   "exit": 4
+  },
+  {
+   "name": "a different population against the same pre-draw record is refused (exit 2)",
+   "ok": true,
+   "exit": 2,
+   "log": [
+    "REFUSED: /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/selftest_confirm/A/out.predraw.json exists and differs from this run's population / order: a new draw needs a NEW salt (edit SALT, record it in issue 551 first) or a new --out",
+    "GATE-EXIT=2"
+   ]
+  },
+  {
+   "name": "two ranges tiling 5000-5400 (at the fake feed's page boundary 5069) give the same population and draw",
+   "ok": true,
+   "exit": 4,
+   "ranges": [
+    [
+     "5000",
+     "5069",
+     69
+    ],
+    [
+     "5069",
+     "5400",
+     55
+    ]
+   ]
+  },
+  {
+   "name": "a TO beyond the feed head is refused (exit 2), never a truncated changed set",
+   "ok": true,
+   "exit": 2,
+   "log": [
+    "REFUSED: the feed reaches cursor 5410, short of TO 6000: the changed set would be truncated",
+    "GATE-EXIT=2"
+   ]
+  },
+  {
+   "name": "--n 1000: every lot-sum-awards Tender held (47 = 48 - the 404), the draw marked short",
+   "ok": true,
+   "exit": 4,
+   "held": 47
+  },
+  {
+   "name": "--n 1000 --no-band: exit 3 (short)",
+   "ok": true,
+   "exit": 3
+  },
+  {
+   "name": "a band of exactly the 20 (non-lot-sum-awards rows ignored) and 30 held: exit 0",
+   "ok": true,
+   "exit": 0,
+   "band_rows": 20
+  },
+  {
+   "name": "--band-only on the exact band: exit 0, no draw",
+   "ok": true,
+   "exit": 0
+  },
+  {
+   "name": "Reads: 200 cached and re-served offline, 404 remembered, a 500 refused, offline never GETs",
+   "ok": true,
+   "five_hundred": "/v1/tenders/3: HTTP 500 b'boom'",
+   "offline": "offline: tenders/4.json is not cached (/v1/tenders/4)"
+  },
+  {
+   "name": "port_eur reproduces the port's S_eur on B3's 73 ships; those >= EUR 100 m are exactly the reference 20",
+   "ok": true,
+   "ships": 73,
+   "mismatches": [],
+   "band_minus_ref": [],
+   "ref_minus_band": []
+  }
+ ],
+ "finished_at": "2026-10-18T20:16:28Z",
+ "passed": true,
+ "run_A": {
+  "exit": 4,
+  "salt": "551-b5-confirm-",
+  "ranges": [
+   {
+    "from": "5000",
+    "to": "5400",
+    "rule": "from < cursor <= to; entity tender, op changed, version null",
+    "events_in_range": 127,
+    "picked_events": 124,
+    "distinct_ids": 123,
+    "first_in_range": 5001,
+    "last_in_range": 5127,
+    "read_reaches": 5410,
+    "generations": [
+     "2"
+    ]
+   }
+  ],
+  "population": {
+   "changed_ids": 123,
+   "ids_sha256": "ababe0e28762ca3c87818ef43bb7e0a4fa9f255c5ef52a701f8bf661f2bea3fd"
+  },
+  "excluded": {
+   "in_population": 3,
+   "by_reason": {
+    "walked-277": 1,
+    "labelled-279": 2
+   },
+   "ids": [
+    13292,
+    683951,
+    7001924
+   ]
+  },
+  "held_ids": [
+   9100052,
+   9100102,
+   9100095,
+   9100025,
+   9100057,
+   9100060,
+   9100092,
+   9100015,
+   9100082,
+   9100040,
+   9100075,
+   9100017,
+   9100070,
+   9100067,
+   9100085,
+   9100050,
+   9100047,
+   9100087,
+   9100020,
+   9100027,
+   9100120,
+   9100117,
+   9100010,
+   9100042,
+   9100062,
+   9100112,
+   9100055,
+   9100007,
+   9100110,
+   9100002
+  ],
+  "not_found_404": [
+   {
+    "id": 9100005,
+    "order_pos": 58
+   }
+  ],
+  "walked": 80,
+  "band": {
+   "ref20_missing": [
+    6679375
+   ],
+   "outside_ref20_band": [
+    {
+     "id": 9200001,
+     "value": {
+      "cents": 15000000000,
+      "currency": "EUR"
+     },
+     "value_derivation": {
+      "method": "lot-sum-awards",
+      "summed": "awards",
+      "lots": 3
+     },
+     "published_at": "2024-05-02",
+     "source": "ted",
+     "version": 1,
+     "S_eur_port": 15000000000,
+     "rate": 1.0,
+     "band_port": true,
+     "in_ref20": false
+    },
+    {
+     "id": 9100052,
+     "value": {
+      "cents": 15000000000,
+      "currency": "EUR"
+     },
+     "value_derivation": {
+      "method": "lot-sum-awards",
+      "summed": "awards",
+      "lots": 3
+     },
+     "published_at": "2024-05-02",
+     "source": "ted",
+     "version": 1,
+     "S_eur_port": 15000000000,
+     "rate": 1.0,
+     "band_port": true,
+     "in_ref20": false
+    }
+   ],
+   "outside_ref20_server_only": [
+    {
+     "id": 9200002,
+     "value": {
+      "cents": 9000000000,
+      "currency": "CHF"
+     },
+     "value_derivation": {
+      "method": "lot-sum-awards",
+      "summed": "awards",
+      "lots": 3
+     },
+     "published_at": "2024-05-02",
+     "source": "ted",
+     "version": 1,
+     "S_eur_port": 9222256379,
+     "rate": 0.9759,
+     "band_port": false,
+     "in_ref20": false
+    }
+   ],
+   "exactly_ref20": false
+  }
+ }
+}

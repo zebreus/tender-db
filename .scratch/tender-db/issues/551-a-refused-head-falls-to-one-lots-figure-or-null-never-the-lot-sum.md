@@ -1062,3 +1062,14 @@ both agree (no third reader was needed).
   within 1 %: 6679375 would leave the band and B5's band stop rule would trip. **So no lot-key drain before B5's band
   seek**; if one lands, re-run the B3 port diff and read any band change. Follow-up idea (not filed): R10 accepting the
   sum of disjoint notice totals.
+
+## B5 tooling and pre-registered draw (2026-10-18, before any B5 read)
+
+- `551-lot-sum/b5/cohort_ids.json`: the cohort-first drain's 563 ids (279 labelled + 277 walked + the 6 px2 ids +
+  7511890; sha256 da47ec52…d648). `b5/cohort_parity.py fetch` then `compare` implements operations.md step 3 (a head
+  served lot-sum-awards counts as the port's ship when v1 reason is W or W/G0-served, no v2 refusals, served
+  cents/currency/lots = S/currency/n); exit non-zero on any ship/refuse, S, currency or n disagreement — and, stricter
+  than the runbook, on a served `vouched_by` naming a total the port does not count (B3 found 0). Self-tests 18/18.
+- `b5/confirm_draw.py`: the confirmation read's draw. **Salt fixed now: `sha256("551-b5-confirm-" + id)` ascending**,
+  over the corpus drain's changed set (cursor range recorded at run time), excluding the 279 labelled and 277 walked ids,
+  the first 30 served lot-sum-awards; plus every band row outside the reference 20. Self-tests 17/17.

@@ -1,0 +1,770 @@
+{
+ "started_at": "2026-10-18T20:14:28Z",
+ "checks": [
+  {
+   "name": "aside copies every B3 read with a manifest, a re-run only re-checks",
+   "ok": true,
+   "first": {
+    "status": "copied",
+    "files": 1125
+   },
+   "second": {
+    "status": "present",
+    "files": 1125,
+    "source_changed_since_aside": []
+   },
+   "source_files": 1125
+  },
+  {
+   "name": "a read is never written into B3's tender cache",
+   "ok": true
+  },
+  {
+   "name": "the port on B3's reads reproduces B3's outcomes on all 563 (api_port.jsonl.gz + 7511890)",
+   "ok": true,
+   "same": 563,
+   "ships": 73
+  },
+  {
+   "name": "v2_decision as it stands refuses every served ship with W/G0-served (why step 3 is served-aware)",
+   "ok": true,
+   "first_checks": {
+    "W/G0-served": 73
+   }
+  },
+  {
+   "name": "clean: 0 disagreements, exit 0, 73 served ships = 73 port ships, the planted name-level difference listed",
+   "ok": true,
+   "exit": 0,
+   "counts": {
+    "compared": 563,
+    "agree": 563,
+    "disagree": 0,
+    "served_ships": 73,
+    "port_ships": 73,
+    "both_ship": 73,
+    "both_refuse": 490,
+    "unread": 0,
+    "port_error": 0,
+    "name_level_vouched_by": 1
+   },
+   "kinds": {},
+   "name_level": [
+    {
+     "id": 481715,
+     "served": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 27264043,
+      "cents": 2254062100
+     },
+     "port": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 27264043,
+      "cents": 2254062100
+     },
+     "why": "B2's name-level difference: the served total is one the port also counts (facts()['vouches'])"
+    }
+   ],
+   "b3_agree": 563,
+   "by_population": {
+    "labelled": 30,
+    "walked": 41,
+    "px2": 2,
+    "extra": 0,
+    "other": 0
+   }
+  },
+  {
+   "name": "plant rust_refuses_a_port_ship: exit 1, exactly [37368 ship/refuse]",
+   "ok": true,
+   "exit": 1,
+   "got": [
+    [
+     37368,
+     [
+      "ship/refuse"
+     ]
+    ]
+   ],
+   "bar": "FAIL: see disagreements (operations.md step 3: stop, switch off by step 7)"
+  },
+  {
+   "name": "plant rust_ships_a_port_refusal: exit 1, exactly [13292 ship/refuse]",
+   "ok": true,
+   "exit": 1,
+   "got": [
+    [
+     13292,
+     [
+      "ship/refuse"
+     ]
+    ]
+   ],
+   "bar": "FAIL: see disagreements (operations.md step 3: stop, switch off by step 7)"
+  },
+  {
+   "name": "plant S_off_by_one_cent: exit 1, exactly [64640 S]",
+   "ok": true,
+   "exit": 1,
+   "got": [
+    [
+     64640,
+     [
+      "S"
+     ]
+    ]
+   ],
+   "bar": "FAIL: see disagreements (operations.md step 3: stop, switch off by step 7)"
+  },
+  {
+   "name": "plant currency: exit 1, exactly [90837 currency]",
+   "ok": true,
+   "exit": 1,
+   "got": [
+    [
+     90837,
+     [
+      "currency"
+     ]
+    ]
+   ],
+   "bar": "FAIL: see disagreements (operations.md step 3: stop, switch off by step 7)"
+  },
+  {
+   "name": "plant lots: exit 1, exactly [100472 n]",
+   "ok": true,
+   "exit": 1,
+   "got": [
+    [
+     100472,
+     [
+      "n"
+     ]
+    ]
+   ],
+   "bar": "FAIL: see disagreements (operations.md step 3: stop, switch off by step 7)"
+  },
+  {
+   "name": "plant vouched_by_not_counted_by_the_port: exit 1, exactly [131063 vouched_by]",
+   "ok": true,
+   "exit": 1,
+   "got": [
+    [
+     131063,
+     [
+      "vouched_by"
+     ]
+    ]
+   ],
+   "bar": "FAIL: see disagreements (operations.md step 3: stop, switch off by step 7)"
+  },
+  {
+   "name": "all six plants at once: exit 1, the six planted (id, kind) exactly",
+   "ok": true,
+   "exit": 1,
+   "got": [
+    [
+     13292,
+     [
+      "ship/refuse"
+     ]
+    ],
+    [
+     37368,
+     [
+      "ship/refuse"
+     ]
+    ],
+    [
+     64640,
+     [
+      "S"
+     ]
+    ],
+    [
+     90837,
+     [
+      "currency"
+     ]
+    ],
+    [
+     100472,
+     [
+      "n"
+     ]
+    ],
+    [
+     131063,
+     [
+      "vouched_by"
+     ]
+    ]
+   ],
+   "kinds": {
+    "ship/refuse": 2,
+    "S": 1,
+    "currency": 1,
+    "n": 1,
+    "vouched_by": 1
+   }
+  },
+  {
+   "name": "a ship/refuse move since B3 with no new notice: exit 1, exactly [13292 moved-since-B3]",
+   "ok": true,
+   "exit": 1,
+   "got": [
+    [
+     13292,
+     [
+      "moved-since-B3"
+     ]
+    ]
+   ]
+  },
+  {
+   "name": "a move with a notice the B3 read lacked is explained; without one it is not",
+   "ok": true,
+   "explained": "moved-explained",
+   "new": [
+    {
+     "notice_id": 99999999,
+     "published_at": "2026-10-19"
+    }
+   ],
+   "without": "moved-unexplained"
+  },
+  {
+   "name": "an id with no read: exit 2 (incomplete), listed as unread",
+   "ok": true,
+   "exit": 2,
+   "unread": [
+    1
+   ]
+  },
+  {
+   "name": "Http: 408 retried once (then 200 / then given up), a 500 not retried, every GET >= 1.5 s apart",
+   "ok": true,
+   "codes": [
+    200,
+    408,
+    500
+   ],
+   "calls": [
+    "/a",
+    "/a",
+    "/b",
+    "/b",
+    "/c"
+   ],
+   "gaps_s": [
+    1.5,
+    1.501,
+    1.501,
+    1.501
+   ]
+  },
+  {
+   "name": "every notice the simulated reads name is cached (fetch would GET 0 notices for them)",
+   "ok": true,
+   "needed": 4420,
+   "missing": 0
+  },
+  {
+   "name": "B3's raw tender cache is byte-identical after the selftest",
+   "ok": true,
+   "files": 1124
+  }
+ ],
+ "clean_summary": {
+  "counts": {
+   "compared": 563,
+   "agree": 563,
+   "disagree": 0,
+   "served_ships": 73,
+   "port_ships": 73,
+   "both_ship": 73,
+   "both_refuse": 490,
+   "unread": 0,
+   "port_error": 0,
+   "name_level_vouched_by": 1
+  },
+  "served_ships_by_population": {
+   "labelled": 30,
+   "walked": 41,
+   "px2": 2,
+   "extra": 0,
+   "other": 0
+  },
+  "disagreement_kinds": {},
+  "name_level_vouched_by": [
+   {
+    "id": 481715,
+    "served": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 27264043,
+     "cents": 2254062100
+    },
+    "port": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 27264043,
+     "cents": 2254062100
+    },
+    "why": "B2's name-level difference: the served total is one the port also counts (facts()['vouches'])"
+   }
+  ],
+  "b3_crosscheck": {
+   "agree": 563,
+   "moved_explained": [],
+   "moved_unexplained": [],
+   "no_b3_outcome": [],
+   "info_moved": []
+  },
+  "notes": {
+   "served_lot_sum_vouched": [],
+   "path_v_mismatch": [],
+   "refused_head_not_the_port_election": []
+  },
+  "bar": "PASS: 0 ship/refuse disagreements; S, currency and n equal on every ship",
+  "exit": 0
+ },
+ "plant_all_disagreements": [
+  {
+   "id": 13292,
+   "kinds": [
+    "ship/refuse"
+   ],
+   "served": {
+    "value": {
+     "cents": 414224392,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "lots": 2,
+     "vouched_by": null
+    }
+   },
+   "port": {
+    "ship": false,
+    "first": "R3",
+    "S": 414224392,
+    "currency": "EUR",
+    "n": 2,
+    "v1_reason": "W/G0-served",
+    "refusals": [
+     "R3",
+     "R6",
+     "R10"
+    ],
+    "vouched_by": null,
+    "vouches": [],
+    "S_eur": 414224392,
+    "rule": "served-ship: v1 W or W/G0-served, no R1-R10",
+    "internal": null
+   },
+   "b3_crosscheck": {
+    "kind": "agree",
+    "b3": {
+     "ship": false,
+     "first": "R3",
+     "S": 414224392,
+     "cur": "EUR",
+     "n": 2
+    },
+    "info_moved": []
+   }
+  },
+  {
+   "id": 37368,
+   "kinds": [
+    "ship/refuse"
+   ],
+   "served": {
+    "value": null,
+    "value_derivation": null
+   },
+   "port": {
+    "ship": true,
+    "first": null,
+    "S": 13500000,
+    "currency": "EUR",
+    "n": 3,
+    "v1_reason": "W",
+    "refusals": [],
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 25511131,
+     "cents": 13500000
+    },
+    "vouches": [
+     [
+      "BT-118-NoticeResult",
+      25511131,
+      13500000
+     ]
+    ],
+    "S_eur": 13500000,
+    "rule": "v2_decision",
+    "internal": null
+   },
+   "b3_crosscheck": {
+    "kind": "agree",
+    "b3": {
+     "ship": true,
+     "first": null,
+     "S": 13500000,
+     "cur": "EUR",
+     "n": 3
+    },
+    "info_moved": []
+   }
+  },
+  {
+   "id": 64640,
+   "kinds": [
+    "S"
+   ],
+   "served": {
+    "value": {
+     "cents": 1730570260921,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "lots": 8,
+     "vouched_by": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 24380565,
+      "cents": 1730570260920
+     }
+    }
+   },
+   "port": {
+    "ship": true,
+    "first": null,
+    "S": 1730570260920,
+    "currency": "HUF",
+    "n": 8,
+    "v1_reason": "W/G0-served",
+    "refusals": [],
+    "vouched_by": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 24380565,
+     "cents": 1730570260920
+    },
+    "vouches": [
+     [
+      "BT-1118-NoticeResult",
+      24380565,
+      1730570260920
+     ]
+    ],
+    "S_eur": 4224715624,
+    "rule": "served-ship: v1 W or W/G0-served, no R1-R10",
+    "internal": null
+   },
+   "b3_crosscheck": {
+    "kind": "agree",
+    "b3": {
+     "ship": true,
+     "first": null,
+     "S": 1730570260920,
+     "cur": "HUF",
+     "n": 8
+    },
+    "info_moved": []
+   }
+  },
+  {
+   "id": 90837,
+   "kinds": [
+    "currency"
+   ],
+   "served": {
+    "value": {
+     "cents": 265000000,
+     "currency": "CHF"
+    },
+    "value_derivation": {
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "lots": 3,
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25830921,
+      "cents": 265000000
+     }
+    }
+   },
+   "port": {
+    "ship": true,
+    "first": null,
+    "S": 265000000,
+    "currency": "EUR",
+    "n": 3,
+    "v1_reason": "W/G0-served",
+    "refusals": [],
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 25830921,
+     "cents": 265000000
+    },
+    "vouches": [
+     [
+      "BT-118-NoticeResult",
+      25830921,
+      265000000
+     ]
+    ],
+    "S_eur": 265000000,
+    "rule": "served-ship: v1 W or W/G0-served, no R1-R10",
+    "internal": null
+   },
+   "b3_crosscheck": {
+    "kind": "agree",
+    "b3": {
+     "ship": true,
+     "first": null,
+     "S": 265000000,
+     "cur": "EUR",
+     "n": 3
+    },
+    "info_moved": []
+   }
+  },
+  {
+   "id": 100472,
+   "kinds": [
+    "n"
+   ],
+   "served": {
+    "value": {
+     "cents": 63377700,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "lots": 3,
+     "vouched_by": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 24966553,
+      "cents": 63377700
+     }
+    }
+   },
+   "port": {
+    "ship": true,
+    "first": null,
+    "S": 63377700,
+    "currency": "EUR",
+    "n": 2,
+    "v1_reason": "W/G0-served",
+    "refusals": [],
+    "vouched_by": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 24966553,
+     "cents": 63377700
+    },
+    "vouches": [
+     [
+      "BT-1118-NoticeResult",
+      24966553,
+      63377700
+     ]
+    ],
+    "S_eur": 63377700,
+    "rule": "served-ship: v1 W or W/G0-served, no R1-R10",
+    "internal": null
+   },
+   "b3_crosscheck": {
+    "kind": "agree",
+    "b3": {
+     "ship": true,
+     "first": null,
+     "S": 63377700,
+     "cur": "EUR",
+     "n": 2
+    },
+    "info_moved": []
+   }
+  },
+  {
+   "id": 131063,
+   "kinds": [
+    "vouched_by"
+   ],
+   "served": {
+    "value": {
+     "cents": 470000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "lots": 3,
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 45883577,
+      "cents": 470000001
+     }
+    }
+   },
+   "port": {
+    "ship": true,
+    "first": null,
+    "S": 470000000,
+    "currency": "EUR",
+    "n": 3,
+    "v1_reason": "W/G0-served",
+    "refusals": [],
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 45883577,
+     "cents": 470000000
+    },
+    "vouches": [
+     [
+      "BT-118-NoticeResult",
+      45883577,
+      470000000
+     ]
+    ],
+    "S_eur": 470000000,
+    "rule": "served-ship: v1 W or W/G0-served, no R1-R10",
+    "internal": null
+   },
+   "b3_crosscheck": {
+    "kind": "agree",
+    "b3": {
+     "ship": true,
+     "first": null,
+     "S": 470000000,
+     "cur": "EUR",
+     "n": 3
+    },
+    "info_moved": []
+   }
+  }
+ ],
+ "finished_at": "2026-10-18T20:15:34Z",
+ "passed": true,
+ "simulated": {
+  "ships": [
+   37368,
+   64640,
+   90837,
+   100472,
+   131063,
+   161565,
+   202168,
+   307725,
+   316811,
+   481715,
+   493668,
+   585917,
+   590618,
+   655266,
+   661269,
+   672947,
+   674079,
+   683951,
+   707424,
+   726354,
+   775393,
+   881605,
+   941214,
+   1027821,
+   1042997,
+   1084063,
+   1102571,
+   1147190,
+   1148297,
+   5278856,
+   5618652,
+   5816379,
+   5842187,
+   5862601,
+   5888594,
+   5889767,
+   5944534,
+   5985466,
+   5995030,
+   6017838,
+   6057925,
+   6094289,
+   6195903,
+   6311845,
+   6317191,
+   6370901,
+   6483572,
+   6527544,
+   6535408,
+   6569442,
+   6595330,
+   6603588,
+   6679375,
+   6862672,
+   7001924,
+   7011414,
+   7139761,
+   7153588,
+   7177672,
+   7278290,
+   7298633,
+   7398935,
+   7399356,
+   7475504,
+   7542368,
+   7647263,
+   7721890,
+   7722197,
+   7789396,
+   7810318,
+   8371658,
+   8426318,
+   8451328
+  ],
+  "name_level_id": 481715,
+  "name_level_alt": [
+   "BT-118-NoticeResult",
+   27264043,
+   2254062100
+  ],
+  "plants": [
+   {
+    "tag": "rust_refuses_a_port_ship",
+    "id": 37368,
+    "kind": "ship/refuse"
+   },
+   {
+    "tag": "rust_ships_a_port_refusal",
+    "id": 13292,
+    "kind": "ship/refuse"
+   },
+   {
+    "tag": "S_off_by_one_cent",
+    "id": 64640,
+    "kind": "S"
+   },
+   {
+    "tag": "currency",
+    "id": 90837,
+    "kind": "currency"
+   },
+   {
+    "tag": "lots",
+    "id": 100472,
+    "kind": "n"
+   },
+   {
+    "tag": "vouched_by_not_counted_by_the_port",
+    "id": 131063,
+    "kind": "vouched_by"
+   }
+  ],
+  "flipped_b3": 13292
+ }
+}
