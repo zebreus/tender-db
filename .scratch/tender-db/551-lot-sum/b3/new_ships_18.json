@@ -1,0 +1,274 @@
+{
+ "items": [
+  {
+   "id": 5862601,
+   "population": "walk-fallback",
+   "S_cents": 168317519600,
+   "currency": "HUF",
+   "n": 19,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2a",
+    "S_cents": 117355972400,
+    "currency": "HUF",
+    "n": 19
+   }
+  },
+  {
+   "id": 5888594,
+   "population": "walk",
+   "S_cents": 9168377200,
+   "currency": "HUF",
+   "n": 2,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 9168377200,
+    "currency": "HUF",
+    "n": 2
+   }
+  },
+  {
+   "id": 5985466,
+   "population": "labelled-mid",
+   "S_cents": 9600338066,
+   "currency": "EUR",
+   "n": 3,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2a",
+    "S_cents": 12479415316,
+    "currency": "EUR",
+    "n": 4
+   }
+  },
+  {
+   "id": 6317191,
+   "population": "walk-fallback",
+   "S_cents": 6137815000,
+   "currency": "CHF",
+   "n": 6,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2a",
+    "S_cents": 5393532500,
+    "currency": "CHF",
+    "n": 6
+   }
+  },
+  {
+   "id": 6569442,
+   "population": "labelled-mid",
+   "S_cents": 24468101000,
+   "currency": "CHF",
+   "n": 29,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 18213999000,
+    "currency": "CHF",
+    "n": 21
+   }
+  },
+  {
+   "id": 6595330,
+   "population": "labelled-sample",
+   "S_cents": 229519500,
+   "currency": "EUR",
+   "n": 2,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 229519500,
+    "currency": "EUR",
+    "n": 2
+   }
+  },
+  {
+   "id": 6603588,
+   "population": "labelled-mid",
+   "S_cents": 15461134200,
+   "currency": "EUR",
+   "n": 7,
+   "vouched_by": "TED-VAL_ESTIMATED_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2a",
+    "S_cents": 11721909346,
+    "currency": "EUR",
+    "n": 7
+   }
+  },
+  {
+   "id": 6679375,
+   "population": "labelled-mid",
+   "S_cents": 23850000000,
+   "currency": "EUR",
+   "n": 3,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 23850000000,
+    "currency": "EUR",
+    "n": 3
+   }
+  },
+  {
+   "id": 7139761,
+   "population": "labelled-mid",
+   "S_cents": 16673192969,
+   "currency": "EUR",
+   "n": 13,
+   "vouched_by": "TED-VAL_ESTIMATED_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 10114798394,
+    "currency": "EUR",
+    "n": 11
+   }
+  },
+  {
+   "id": 7153588,
+   "population": "walk-fallback",
+   "S_cents": 1912800,
+   "currency": "EUR",
+   "n": 4,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 1912800,
+    "currency": "EUR",
+    "n": 4
+   }
+  },
+  {
+   "id": 7177672,
+   "population": "walk-fallback",
+   "S_cents": 31597999600,
+   "currency": "HUF",
+   "n": 4,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 31597999600,
+    "currency": "HUF",
+    "n": 4
+   }
+  },
+  {
+   "id": 7298633,
+   "population": "walk",
+   "S_cents": 358376975,
+   "currency": "PLN",
+   "n": 9,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 358317235,
+    "currency": "PLN",
+    "n": 8
+   }
+  },
+  {
+   "id": 7398935,
+   "population": "walk-fallback",
+   "S_cents": 1444600,
+   "currency": "EUR",
+   "n": 2,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 1802400,
+    "currency": "EUR",
+    "n": 2
+   }
+  },
+  {
+   "id": 7475504,
+   "population": "walk-fallback",
+   "S_cents": 3553169400,
+   "currency": "BGN",
+   "n": 4,
+   "vouched_by": "TED-VAL_ESTIMATED_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 2770221700,
+    "currency": "BGN",
+    "n": 3
+   }
+  },
+  {
+   "id": 7542368,
+   "population": "labelled-mid",
+   "S_cents": 17984074893,
+   "currency": "EUR",
+   "n": 3,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 17984074893,
+    "currency": "EUR",
+    "n": 3
+   }
+  },
+  {
+   "id": 7722197,
+   "population": "walk-fallback",
+   "S_cents": 17936000,
+   "currency": "EUR",
+   "n": 4,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 22597000,
+    "currency": "EUR",
+    "n": 4
+   }
+  },
+  {
+   "id": 7789396,
+   "population": "walk-fallback",
+   "S_cents": 2840060,
+   "currency": "BGN",
+   "n": 6,
+   "vouched_by": "TED-VAL_ESTIMATED_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 2239560,
+    "currency": "BGN",
+    "n": 5
+   }
+  },
+  {
+   "id": 8371658,
+   "population": "walk-fallback",
+   "S_cents": 1493612000,
+   "currency": "EUR",
+   "n": 4,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 1493612000,
+    "currency": "EUR",
+    "n": 4
+   }
+  }
+ ]
+}
