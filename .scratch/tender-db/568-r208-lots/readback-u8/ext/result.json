@@ -1,0 +1,736 @@
+{
+ "stage": "ext (568 O1: the 3-Tender G2 extension of the fresh 30)",
+ "date": "2026-10-18",
+ "disposition": "readback-u8/readback.md \"Open items and dispositions\" O1 (and O7: the G2 test replaced)",
+ "drain": {
+  "refold": 2616,
+  "project": 2617,
+  "finished": "2026-10-18T15:19:48Z"
+ },
+ "draw": {
+  "tool": "ext/draw_fresh30_g2fix.py (a copy of ../draw_fresh30.py; the original is unedited): corrected G2 test + resume",
+  "changed_file": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/fresh568/changes_pages.json",
+  "changed_sha256_of_pages": "8062ccd12fbeeea78a794b5ea9ce85126588066c882b9d0782261f3f73e6bd79",
+  "cursor_range": {
+   "from": "957854566",
+   "to": "958764334",
+   "rule": "from < cursor <= to",
+   "events_read": 46879,
+   "events_in_range": 46879,
+   "events_outside_range": 0,
+   "first_in_range": 957854567,
+   "last_in_range": 958764329,
+   "read_reaches": 958764334,
+   "generations": [
+    2
+   ]
+  },
+  "excluded": {
+   "n": 11,
+   "by_set": {
+    "f30": 1,
+    "oos50": 2,
+    "s150": 8
+   }
+  },
+  "candidates": 46868,
+  "resumed": {
+   "from": "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/draw.json",
+   "walk_rows_checked_equal": 771,
+   "kept_indices": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    61,
+    282,
+    366,
+    449,
+    770
+   ],
+   "kept_g2_indices": [
+    61,
+    282,
+    366,
+    449,
+    770
+   ],
+   "dropped_held_rows": [
+    {
+     "index": 98,
+     "id": 6324865,
+     "g2_original_tool": true
+    },
+    {
+     "index": 513,
+     "id": 6788159,
+     "g2_original_tool": true
+    },
+    {
+     "index": 745,
+     "id": 6869520,
+     "g2_original_tool": true
+    }
+   ],
+   "seed": {
+    "held": 27,
+    "out": 21,
+    "g2": 5
+   }
+  },
+  "corrected_g2_test": "outside readback/population.json AND a lot_result with a non-null lot from a notice whose /v1/notices?tender={id} profile is ted-export-r208 and whose /v1/notices/{id}/content holds no section of kind Lot / LotsGroup / Part",
+  "corrected_test_on_the_original_30_offline": {
+   "source": "fresh568 bar_cache (no GET); ext/g2_test_on_fresh568_30.json",
+   "true_g2": [
+    4888356,
+    5864590,
+    5362479,
+    4569314,
+    5351872
+   ],
+   "false_positives_of_the_old_tool": [
+    6324865,
+    6788159,
+    6869520
+   ],
+   "agrees_with_judge": true
+  },
+  "walk": {
+   "from_index": 771,
+   "to_index": 2134,
+   "rows": 1364,
+   "skipped_unread_population": 220,
+   "read": 1144,
+   "read_inside_population": 0,
+   "not_found_404": [],
+   "g2_outcomes_of_read_rows": {
+    "no lot-placed result from a ted-export-r208 notice": 1118,
+    "qualifies": 3,
+    "no lot-placed result": 23
+   },
+   "profile_listings_read": 1121,
+   "lot_placed_notices_missing_from_listing": 0,
+   "r208_lot_placed_notices_with_own_lot_sections": 0,
+   "old_signal_false_positives_skipped": [
+    [
+     986,
+     6193033
+    ],
+    [
+     987,
+     7073986
+    ],
+    [
+     1003,
+     6359007
+    ],
+    [
+     1186,
+     6995987
+    ],
+    [
+     1280,
+     6680171
+    ],
+    [
+     1401,
+     6938052
+    ],
+    [
+     1433,
+     6785522
+    ],
+    [
+     1528,
+     5855299
+    ],
+    [
+     1542,
+     6672897
+    ],
+    [
+     1602,
+     6348029
+    ],
+    [
+     1654,
+     6483735
+    ],
+    [
+     1780,
+     6985675
+    ],
+    [
+     1899,
+     6881569
+    ],
+    [
+     2027,
+     5764250
+    ],
+    [
+     2051,
+     6345982
+    ]
+   ],
+   "gets": 2268,
+   "fetch_errors": [],
+   "started": "2026-10-18T17:06:56Z",
+   "written": "2026-10-18T18:07:28Z"
+  },
+  "held_new": [
+   {
+    "index": 805,
+    "id": 5048894,
+    "year": 2015,
+    "out": false,
+    "g2": true
+   },
+   {
+    "index": 1891,
+    "id": 4836560,
+    "year": 2013,
+    "out": false,
+    "g2": true
+   },
+   {
+    "index": 2134,
+    "id": 5226033,
+    "year": 2015,
+    "out": false,
+    "g2": true
+   }
+  ],
+  "draw_30": [
+   {
+    "index": 0,
+    "id": 7757904,
+    "year": 2024,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 1,
+    "id": 7861809,
+    "year": 2024,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 2,
+    "id": 7712921,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 3,
+    "id": 7618275,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 4,
+    "id": 5834359,
+    "year": 2017,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 5,
+    "id": 7734908,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 6,
+    "id": 7470625,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 7,
+    "id": 7383539,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 8,
+    "id": 6144328,
+    "year": 2018,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 9,
+    "id": 5457789,
+    "year": 2015,
+    "out": false,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 10,
+    "id": 6538921,
+    "year": 2020,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 11,
+    "id": 7801839,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 12,
+    "id": 7211401,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 13,
+    "id": 8291946,
+    "year": 2012,
+    "out": false,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 14,
+    "id": 7611313,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 15,
+    "id": 8469615,
+    "year": 2022,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 16,
+    "id": 8497081,
+    "year": 2023,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 17,
+    "id": 7274146,
+    "year": 2022,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 18,
+    "id": 7162587,
+    "year": 2021,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 19,
+    "id": 6866398,
+    "year": 2021,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 20,
+    "id": 6365329,
+    "year": 2019,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 21,
+    "id": 8365595,
+    "year": 2016,
+    "out": true,
+    "g2": false,
+    "g2_original_tool": false
+   },
+   {
+    "index": 61,
+    "id": 4888356,
+    "year": 2015,
+    "out": false,
+    "g2": true,
+    "g2_original_tool": true
+   },
+   {
+    "index": 282,
+    "id": 5864590,
+    "year": 2017,
+    "out": true,
+    "g2": true,
+    "g2_original_tool": true
+   },
+   {
+    "index": 366,
+    "id": 5362479,
+    "year": 2015,
+    "out": false,
+    "g2": true,
+    "g2_original_tool": true
+   },
+   {
+    "index": 449,
+    "id": 4569314,
+    "year": 2012,
+    "out": false,
+    "g2": true,
+    "g2_original_tool": true
+   },
+   {
+    "index": 770,
+    "id": 5351872,
+    "year": 2015,
+    "out": false,
+    "g2": true,
+    "g2_original_tool": true
+   },
+   {
+    "index": 805,
+    "id": 5048894,
+    "year": 2015,
+    "out": false,
+    "g2": true
+   },
+   {
+    "index": 1891,
+    "id": 4836560,
+    "year": 2013,
+    "out": false,
+    "g2": true
+   },
+   {
+    "index": 2134,
+    "id": 5226033,
+    "year": 2015,
+    "out": false,
+    "g2": true
+   }
+  ],
+  "held": 30,
+  "out": 21,
+  "g2": 8,
+  "complete": true,
+  "raw": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/draw_ext.json",
+  "raw_cache": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/draw_cache"
+ },
+ "bar_i": {
+  "mode": "bar",
+  "drain": {
+   "job": "2617",
+   "finished": "2026-10-18T15:19:48+00:00"
+  },
+  "read_started": "2026-10-18T18:07:56+00:00",
+  "read_finished": "2026-10-18T18:13:17+00:00",
+  "cache": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/bar_cache",
+  "tenders": 30,
+  "read": 30,
+  "blocks": 417,
+  "parity_ok": 417,
+  "parity_breaks": 0,
+  "tenders_with_breaks": [],
+  "by_cause": {
+   "570": 276,
+   "unchanged": 135,
+   "568-u8": 6
+  },
+  "by_reason": {
+   "567 same-notice + 570 remap ->": 162,
+   "567 same-notice": 74,
+   "568 match": 170,
+   "568 refused G4": 1,
+   "568 refused G3": 4,
+   "567 same-notice: no lot": 3,
+   "568 refused G5": 3
+  },
+  "gets": 201,
+  "fetch_errors": [],
+  "incomplete": [],
+  "computed_not_served": [],
+  "served_outside_chain": [],
+  "non_legacy_mismatches": [],
+  "legacy_test_disagrees": [],
+  "profile_from_prefix": [],
+  "parity_verdict": "pass",
+  "pass_bar_i": true
+ },
+ "stability_27": {
+  "tenders": 27,
+  "tenders_with_served_diffs": [],
+  "tenders_with_version_change": [],
+  "against": "fresh568 bar read 2026-10-18T15:43-15:53Z (rb8/fresh568/bar_cache): served lot of every block and the Tender version"
+ },
+ "labels": {
+  "order": "labels_ext.py (3 new Tenders) written 18:15:31Z from view.py over the extension bar cache (pre-guard replay lot only), before join_ext.py first ran (18:15:39Z+); of the bar read only tenders/read/incomplete/fetch_errors/gets had been looked at. The 27 kept Tenders reuse fresh568 labels_fresh568.py (112 blocks, verifier-agreed 112/112). Disclosure: the draw walk necessarily read served lot_results; its printed G2 evidence gave per-Tender counts of lot-placed r208 results (24 / 19 / 22), which beside the views' 24 / 20 / 22 blocks implied that one 4836560 block was served null, not which one",
+  "extension3": {
+   "blocks_labelled": 66,
+   "by_label": {
+    "single_right": 66
+   },
+   "kept_by_label": {
+    "single_right": 65
+   },
+   "refused_by_label": {
+    "single_right": 1
+   },
+   "served_ne_port": [],
+   "tenders_with_wrong_kept": [],
+   "wrong_kept": [],
+   "wrong_caught": [],
+   "unclear": [],
+   "tenders_with_any_568_block": [
+    4836560,
+    5048894,
+    5226033
+   ],
+   "tenders_with_a_wrong_block_before_guards": []
+  },
+  "all30": {
+   "blocks_labelled": 178,
+   "by_label": {
+    "single_right": 172,
+    "multi_lot_contract": 4,
+    "wrong_other": 2
+   },
+   "kept_by_label": {
+    "single_right": 170
+   },
+   "refused_by_label": {
+    "single_right": 2,
+    "multi_lot_contract": 4,
+    "wrong_other": 2
+   },
+   "served_ne_port": [],
+   "tenders_with_wrong_kept": [],
+   "wrong_kept": [],
+   "unclear": [],
+   "tenders_with_any_568_block": [
+    4569314,
+    4836560,
+    4888356,
+    5048894,
+    5226033,
+    5351872,
+    5362479,
+    5457789,
+    5864590,
+    8291946,
+    8365595
+   ],
+   "tenders_with_a_wrong_block_before_guards": [
+    5864590,
+    8291946,
+    8365595
+   ]
+  },
+  "wrong_caught_all30": [
+   "8291946 17037930/RES-1 multi_lot_contract (568 refused G3 (tentative LOT-3))",
+   "8291946 17037930/RES-2 multi_lot_contract (568 refused G3 (tentative LOT-1))",
+   "8291946 17037930/RES-3 multi_lot_contract (568 refused G3 (tentative LOT-8))",
+   "8291946 17049093/RES-1 multi_lot_contract (568 refused G3 (tentative LOT-6))",
+   "8365595 18617609/RES-1 wrong_other (568 refused G5 (tentative LOT-1))",
+   "5864590 19369697/RES-3 wrong_other (568 refused G5 (tentative LOT-3))"
+  ],
+  "right_refused_all30": [
+   "5457789 18461129/RES-8 (568 refused G4 (tentative LOT-37); cause 568-u8)",
+   "4836560 17518149/RES-3 (568 refused G5 (tentative LOT-14); cause unchanged)"
+  ],
+  "unlabelled": []
+ },
+ "per_new_tender": {
+  "5048894": {
+   "walk_index": 805,
+   "published_year": 2015,
+   "out": false,
+   "g2_test": {
+    "qualifying_notice": 18258276,
+    "why": "18258276: ted-export-r208, no lot section of its own",
+    "lot_placed_by_profile": {
+     "ted-export-r208": 24
+    },
+    "r208_lot_placed_notices": [
+     18258276
+    ]
+   },
+   "old_signal_hits": 24,
+   "blocks_568_scope": 24,
+   "labels": {
+    "single_right": 24
+   },
+   "kept": 24,
+   "refused": [],
+   "served_eq_port": true,
+   "wrong_kept": [],
+   "g2_report_570": {
+    "exercises_570": true,
+    "null_to_lot_by_570": 24,
+    "of_which_base_was_g2_refusal": 24
+   },
+   "parity_blocks_served": "TENDER 5048894: 24 blocks, 0 parity break(s)"
+  },
+  "4836560": {
+   "walk_index": 1891,
+   "published_year": 2013,
+   "out": false,
+   "g2_test": {
+    "qualifying_notice": 17517331,
+    "why": "17517331: ted-export-r208, no lot section of its own",
+    "lot_placed_by_profile": {
+     "ted-export-r208": 19
+    },
+    "r208_lot_placed_notices": [
+     17517331,
+     17517659,
+     17518079,
+     17518149,
+     17657578
+    ]
+   },
+   "old_signal_hits": 2,
+   "blocks_568_scope": 20,
+   "labels": {
+    "single_right": 20
+   },
+   "kept": 19,
+   "refused": [
+    "17518149/RES-3 (568 refused G5 (tentative LOT-14); label single_right)"
+   ],
+   "served_eq_port": true,
+   "wrong_kept": [],
+   "g2_report_570": {
+    "exercises_570": true,
+    "null_to_lot_by_570": 19,
+    "of_which_base_was_g2_refusal": 19
+   },
+   "parity_blocks_served": "TENDER 4836560: 20 blocks, 0 parity break(s)"
+  },
+  "5226033": {
+   "walk_index": 2134,
+   "published_year": 2015,
+   "out": false,
+   "g2_test": {
+    "qualifying_notice": 18033024,
+    "why": "18033024: ted-export-r208, no lot section of its own",
+    "lot_placed_by_profile": {
+     "ted-export-r208": 22
+    },
+    "r208_lot_placed_notices": [
+     18033024,
+     18242004,
+     18527820,
+     18527875
+    ]
+   },
+   "old_signal_hits": 2,
+   "blocks_568_scope": 22,
+   "labels": {
+    "single_right": 22
+   },
+   "kept": 22,
+   "refused": [],
+   "served_eq_port": true,
+   "wrong_kept": [],
+   "g2_report_570": {
+    "exercises_570": true,
+    "null_to_lot_by_570": 22,
+    "of_which_base_was_g2_refusal": 22
+   },
+   "parity_blocks_served": "TENDER 5226033: 22 blocks, 0 parity break(s)"
+  }
+ },
+ "bar_ii": {
+  "tenders_with_wrong_kept": [],
+  "count": 0,
+  "limit": 2,
+  "pass": true
+ },
+ "bar_iii": {
+  "wrong_kept": [],
+  "new_kept_wrong_shapes": [],
+  "reopen": false
+ },
+ "recorded_shapes": [
+  {
+   "kind": "false refusal (information; not a bar criterion; a refusal is pre-568 behaviour)",
+   "block": "4836560 17518149/RES-3",
+   "guard": "G5",
+   "cause": "unchanged (base null by G2; null now by G5)",
+   "shape": "inherited carried-title collision: relaunch CN 17244355 ('Travaux Wallon lots 4,6,7 et 14') prints LOT_NUMBER 1..4 positionally, so its lot-14 section ('lot 14 : Equipements de cuisine') is carried onto key LOT-4 (title never superseded later), while the real LOT-14 has only the anchor's description, no title. The right lot-14 block 'Lot 14 : Equipements de cuisine' then shares no title key with LOT-14 and equals exactly one OTHER lot's title (LOT-4): G5 fires"
+  },
+  {
+   "kind": "kept block on a lot whose carried text is another lot's (labelled single_right, recorded caveat)",
+   "block": "4836560 17518149/RES-1 -> LOT-4",
+   "shape": "the same 17244355 carry defect: LOT-4 (the anchor's lot 4, 'étanchéité - zinguerie') now serves lot 14's title/description; the block 'Lot 04 : Etanchéité - zinguerie' (contract 13003, MJP Bardage) is on lot 4's only key by the procedure's numbering. Inherited (pre-570 the section id LOT-4 lands on LOT-4 too), 570's printed-number remap cannot see a positional relaunch. If a reviewer judged this block wrong_other, bar (ii) would read 1/30, still a pass, and (iii) would record it as an inherited kept shape"
+  },
+  {
+   "kind": "inherited weld (information)",
+   "tender": 5048894,
+   "shape": "anchor CN 17545429 is file CNWL/T025/CS (2013), the CAN's CN 18025780 file CNWL/T034 (2014): a re-tender in one Tender (issue 364's class); both name the same three lots and 570 maps the 2014 numbering (1 Hardware, 2 Special Seating) onto the 2013 keys, so all 24 blocks land right"
+  },
+  {
+   "kind": "party data (information, outside lot placement)",
+   "tender": 5226033,
+   "shape": "the INFRUCTUEUX blocks' winner is the word 'infructueux' parsed as an organization"
+  }
+ ],
+ "files": {
+  "summaries": "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext",
+  "raw": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext",
+  "views": [
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/view_5048894.txt",
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/view_4836560.txt",
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/view_5226033.txt"
+  ]
+ }
+}

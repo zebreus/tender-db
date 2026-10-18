@@ -1,0 +1,904 @@
+{
+ "5048894/18258276/RES-1": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "Invacare Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-10": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "The Helping Hand Company"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-11": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Invacare Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-12": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Sunrise Medical"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-13": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Sunrise Medical"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-14": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Consolor Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-15": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "James Leckey Design Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-16": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Specialised Orthotic Services Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-17": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Tendercare Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-18": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Bartram Associates Ltd."
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-19": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "Rehabilitation Manufacturing Services Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-2": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "Sunrise Medical"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-20": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Rehabilitation Manufacturing Services Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-21": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Rehabilitation Manufacturing Services Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-22": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Contour886 Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-23": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Delichon Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-24": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Karomed Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-3": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "Bartram Associates Ltd."
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-4": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "James Leckey Design Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-5": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "Tendercare Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-6": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "Pride Mobility Products Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-7": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Specialised Orthotic Services Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-8": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Delichon Ltd"
+  ],
+  "decision": "selec-w"
+ },
+ "5048894/18258276/RES-9": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Bes Decon (A Division Of Bes Rehab Ltd)"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17518079/RES-1": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Arnaud Demolition"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17518079/RES-2": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "Arnaud Demolition"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17518079/RES-3": {
+  "served": "LOT-5",
+  "expected": "LOT-5",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-5",
+  "guards_only": null,
+  "winners": [
+   "Inobat AB Diffusion"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17518079/RES-4": {
+  "served": "LOT-20",
+  "expected": "LOT-20",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-20",
+  "guards_only": null,
+  "winners": [
+   "Cegelec"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517659/RES-1": {
+  "served": "LOT-8",
+  "expected": "LOT-8",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-8",
+  "guards_only": null,
+  "winners": [
+   "Les menuisiers du Rhone"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517659/RES-2": {
+  "served": "LOT-10",
+  "expected": "LOT-10",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-10",
+  "guards_only": null,
+  "winners": [
+   "Meunier Intramuros"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517659/RES-3": {
+  "served": "LOT-11",
+  "expected": "LOT-11",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-11",
+  "guards_only": null,
+  "winners": [
+   "Al'flor"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517659/RES-4": {
+  "served": "LOT-12",
+  "expected": "LOT-12",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-12",
+  "guards_only": null,
+  "winners": [
+   "sols realisation"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517659/RES-5": {
+  "served": "LOT-13",
+  "expected": "LOT-13",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-13",
+  "guards_only": null,
+  "winners": [
+   "Otis"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517659/RES-6": {
+  "served": "LOT-18",
+  "expected": "LOT-18",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-18",
+  "guards_only": null,
+  "winners": [
+   "Alpes Services Nettoyage"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517659/RES-7": {
+  "served": "LOT-19",
+  "expected": "LOT-19",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-19",
+  "guards_only": null,
+  "winners": [
+   "Jean Lefebvre Sud Est"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517331/RES-1": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Aquadro Favier"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517331/RES-2": {
+  "served": "LOT-15",
+  "expected": "LOT-15",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-15",
+  "guards_only": null,
+  "winners": [
+   "Billon"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517331/RES-3": {
+  "served": "LOT-16",
+  "expected": "LOT-16",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-16",
+  "guards_only": null,
+  "winners": [
+   "Larue SARL"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17517331/RES-4": {
+  "served": "LOT-17",
+  "expected": "LOT-17",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-17",
+  "guards_only": null,
+  "winners": [
+   "SAS SCAE"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17518149/RES-1": {
+  "served": "LOT-4",
+  "expected": "LOT-4",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-4",
+  "guards_only": null,
+  "winners": [
+   "MJP Bardage"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17518149/RES-2": {
+  "served": "LOT-6",
+  "expected": "LOT-6",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-6",
+  "guards_only": null,
+  "winners": [
+   "Faure Regis & Fils"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17518149/RES-3": {
+  "served": null,
+  "expected": null,
+  "reason": "568 refused G5 (tentative LOT-14)",
+  "cause": "unchanged",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-14",
+  "guards_only": null,
+  "winners": [
+   "Martinon MSE"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17657578/RES-1": {
+  "served": "LOT-7",
+  "expected": "LOT-7",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-7",
+  "guards_only": null,
+  "winners": [
+   "Spalu"
+  ],
+  "decision": "selec-w"
+ },
+ "4836560/17657578/RES-2": {
+  "served": "LOT-9",
+  "expected": "LOT-9",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-9",
+  "guards_only": null,
+  "winners": [
+   "Perrotin"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18033024/RES-1": {
+  "served": "LOT-1",
+  "expected": "LOT-1",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-1",
+  "guards_only": null,
+  "winners": [
+   "Cofirhad - autodistribution charreton"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18033024/RES-10": {
+  "served": "LOT-10",
+  "expected": "LOT-10",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-10",
+  "guards_only": null,
+  "winners": [
+   "SOMI Ippolito"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18033024/RES-11": {
+  "served": "LOT-11",
+  "expected": "LOT-11",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-11",
+  "guards_only": null,
+  "winners": [
+   "SOMI Ippolito"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18033024/RES-12": {
+  "served": "LOT-12",
+  "expected": "LOT-12",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-12",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18033024/RES-13": {
+  "served": "LOT-13",
+  "expected": "LOT-13",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-13",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18033024/RES-2": {
+  "served": "LOT-2",
+  "expected": "LOT-2",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-2",
+  "guards_only": null,
+  "winners": [
+   "Iveco Provence"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18033024/RES-3": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18033024/RES-4": {
+  "served": "LOT-4",
+  "expected": "LOT-4",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-4",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18033024/RES-5": {
+  "served": "LOT-5",
+  "expected": "LOT-5",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-5",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18033024/RES-6": {
+  "served": "LOT-6",
+  "expected": "LOT-6",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-6",
+  "guards_only": null,
+  "winners": [
+   "Cofirhad - autodistribution charreton"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18033024/RES-7": {
+  "served": "LOT-7",
+  "expected": "LOT-7",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-7",
+  "guards_only": null,
+  "winners": [
+   "Cofirhad - autodistribution charreton"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18033024/RES-8": {
+  "served": "LOT-8",
+  "expected": "LOT-8",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-8",
+  "guards_only": null,
+  "winners": [
+   "Iveco Provence"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18033024/RES-9": {
+  "served": "LOT-9",
+  "expected": "LOT-9",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-9",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18242004/RES-1": {
+  "served": "LOT-3",
+  "expected": "LOT-3",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-3",
+  "guards_only": null,
+  "winners": [
+   "Allmakes France"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18242004/RES-2": {
+  "served": "LOT-4",
+  "expected": "LOT-4",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-4",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18242004/RES-3": {
+  "served": "LOT-5",
+  "expected": "LOT-5",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-5",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18242004/RES-4": {
+  "served": "LOT-9",
+  "expected": "LOT-9",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-9",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18242004/RES-5": {
+  "served": "LOT-12",
+  "expected": "LOT-12",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-12",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18242004/RES-6": {
+  "served": "LOT-13",
+  "expected": "LOT-13",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-13",
+  "guards_only": null,
+  "winners": [],
+  "decision": "clos-nw"
+ },
+ "5226033/18527820/RES-1": {
+  "served": "LOT-12",
+  "expected": "LOT-12",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-12",
+  "guards_only": null,
+  "winners": [
+   "Payant Paca"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18527875/RES-1": {
+  "served": "LOT-4",
+  "expected": "LOT-4",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-4",
+  "guards_only": null,
+  "winners": [
+   "Mercedes-Benz Côte d'Azur"
+  ],
+  "decision": "selec-w"
+ },
+ "5226033/18527875/RES-2": {
+  "served": "LOT-9",
+  "expected": "LOT-9",
+  "reason": "568 match (exact)",
+  "cause": "570",
+  "base_lot": null,
+  "base_reason": "568 none: g2",
+  "remap_only": "LOT-9",
+  "guards_only": null,
+  "winners": [
+   "Mercedes Benz Côte d'Azur"
+  ],
+  "decision": "selec-w"
+ }
+}

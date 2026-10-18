@@ -1,16 +1,14 @@
 # 568 — legacy R2.0.8 contract award notices never attach their awards to a lot, even on a multi-lot Tender
 
-Status: ready-for-agent — DEPLOYED 86f2745 and DRAINED (2593/2594: 156,123 corrected); read-back FAILED 29/30 (8327340,
-one block for several lots) → UNIT 7 DECIDED (wf_8ba1e1ec-eee) → UNIT 8 BUILT 2026-10-18 (wf_2f6dde5b-372 build + OOS 50 +
-decision critic; AMENDED by wf_f5c0b404-92e: G4 refuses a contradicting block, and only 2+ contradictions in one notice
-refuse its other blocks except title-confirmed ones (R2: plain designators naming exactly the printed number); R1 agreement
-with the lot's own text by head; G3 on distinct heads per language; reader fixes — `u7/decision-u7.md` "Amendment (unit
-8)"). Measured, pooled 230 uniform Tenders: right blocks refused 0/2,081; other-wrong caught 153/161, multi 11/13;
-Tenders with a wrong block 14/230 → 5/230 (2 of them 568's own). Rust fold = port on every cached block. GATED c5977da (1402 s, 2377 green), DEPLOYED fe64be6
-2026-10-18 10:06Z; COMBINED WET REFOLD with 570 RUNNING 2026-10-18 11:04Z (2616/2617, N 2,101,635, cursor before
-957854566; baseline `drain/baseline-pre568u8-570.json`). Was: NEXT: gate → deploy → ONE refold with 570 (TED-LOT_NO + TED-LOT_NUMBER; baseline `drain/take_baseline.py` first; finish before the
-10-20 morning, 560's D5 window) → read back with the amended bar (parity with the port incl. 570's remap; ≤ 2/30
-judged-wrong; fresh 30 from the combined run's changed set, salt "568u8-fresh30-").
+Status: done — 2026-10-18. 568's cross-notice R2.0.8 match (86f2745, drained 2593/2594) plus unit 8's refusal guards
+G3–G6 as amended (R1/R2, per-language, reader fixes; gated c5977da, deployed fe64be6), drained in one refold with 570
+(2616/2617: 46,879 corrected, D7 holds) and READ BACK (wf_f6e14299-ff8 + O1 wf_26ae3991-bdd,
+`568-r208-lots/readback-u8/readback.md`): 8327340's 7 multi-lot blocks on the Tender, RES-3/4 and 17840150 RES-1 kept;
+the s150's 57 refused blocks null, 1190/1190 = expected; the 77 692/692 unchanged; OOS 100/100 refused; band / path-V 0
+movers; fresh 30 (salt "568u8-fresh30-", 8 of 8 G2 after the 3-Tender extension): parity 417/417, 0/30 Tenders keep a
+judged-wrong block (6 wrong blocks, all refused by G3/G5). Recorded residual and shapes in `u7/decision-u7.md`
+(false refusals 2/2,253: 5457789 RES-8 G4 on a copied title, 4836560 17518149 RES-3 G5 on an inherited carried title;
+5602216 RES-128 unclear).
 Kind: completeness (legacy lot results: R2.0.8 awards served tender-scoped)
 Relates to:
 - 567 (same-notice ITEM/LOT_NO mapping in read_legacy_results);

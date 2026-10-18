@@ -8,19 +8,29 @@ There were four stages: sets, fresh568, fresh570 and band. Each had an adversari
 and files are in `readback_result.json`. I made no GETs: every judge check below is offline, over the stage and
 verifier caches and the decision texts.
 
+**Update, 19:35Z.** The O1 extension ran and was adversarially verified. 568's verdict is now final, **PASS**: see
+"O1 extension" below. The judge again made no GETs.
+
 ## Verdicts
 
-- **568: OPEN. Not failed, not yet passed.** Every item that was read passes:
+- **568: PASS (final, after O1).** Every item passes over the conformant 30:
   - (a) D7;
   - (b) 8327340;
   - (c) the s150's 57 refused blocks;
   - (d) the 77, 692/692;
   - OOS 50;
   - (f) the band;
-  - the amended bar: (i) parity 878/878, (ii) 0/30, and (iii) no trigger.
+  - the draw: 30 held, 21 outside 2012–2015 (at least 10 required), and **8 G2** (at least 8 required);
+  - the amended bar over the 30:
+    - (i) parity: 417/417 blocks, 0 breaks;
+    - (ii) 0 of 30 Tenders keep a judged-wrong block, against a limit of 2;
+    - (iii) no kept wrong block and no reopen trigger.
 
-  The bar's draw requires **at least 8 G2 Tenders**, and the draw holds 5. The cause is a defect in
-  `draw_fresh30.py`, not in the build. 568 closes on the pre-registered 3-Tender extension (O1 below).
+  At 16:58Z this verdict was OPEN, because the draw held only 5 G2 Tenders. The cause was a defect in
+  `draw_fresh30.py`, not in the build. The pre-registered 3-Tender extension (O1) closed the gap: 5048894, 4836560
+  and 5226033. They add 66 568-scope blocks, all labelled single_right; 65 are served on their lot and 1 is falsely
+  refused by G5. One label could be contested (4836560 17518149/RES-1). Judged wrong, it would make (ii) 1/30, still a
+  pass.
 - **570: PASS.** Items (a) to (g) all pass, and (e) is 30/30. The 6876932 question is settled by rule step 3's
   definition of a target, as set out under (e) below. Nothing reopens.
 
@@ -55,12 +65,159 @@ verifier caches and the decision texts.
 | (c) s150 | pass | 57 refused serve null; 5051007 RES-1..3 and 5267810 RES-1 kept; 1190/1190 = expected; 59 moves = 57 + two 570 movers on 8313642 |
 | (d) m77 | pass | 692/692 = expected and = the first read-back (judge check); 0 refusals |
 | OOS 50 | pass | 100 refused serve null; 432/432 = expected |
-| fresh 30: draw | pass | written 15:42:26Z, before the bar read; reproduced offline; 24 of 30 outside 2012–2015 |
-| fresh 30: ≥ 8 G2 | **open** | 5 of 8; see O1 |
-| bar (i) parity | pass | 878/878, 0 breaks; verifier recomputed offline and re-read live |
-| bar (ii) ≤ 2/30 kept-wrong | pass | 0/30. 6 wrong blocks, all refused (G3 ×4 on 8291946; G5 on 8365595 and 5864590). Tenders with a wrong block: 3/30 before the guards, 0/30 after |
-| bar (iii) | pass | no kept wrong block; no trigger |
+| fresh 30: draw | pass | written 15:42:26Z, before the bar read; reproduced offline. The conformant 30 (27 + O1's 3; draw_ext.json written 18:07:28Z, before its bar read) has 21 outside 2012–2015 |
+| fresh 30: ≥ 8 G2 | pass (after O1) | 8 of 8: the 5 true-G2 Tenders plus O1's 5048894, 4836560 and 5226033. It was 5 of 8 at 16:58Z |
+| bar (i) parity | pass | over the 30: 417/417 blocks (351 + 66), 0 breaks. The 27 were read at 15:43Z and re-read at 18:07Z, identical |
+| bar (ii) ≤ 2/30 kept-wrong | pass | over the 30: 0/30. 178 blocks labelled. 6 wrong blocks, all refused (G3 ×4 on 8291946; G5 on 8365595 and 5864590). Tenders with a wrong block: 3/30 before the guards, 0/30 after |
+| bar (iii) | pass | over the 30: no kept wrong block; no trigger |
 | (f) band / path-V | pass | 3,728 heads → 3,728; 0 movers; 17 path-V heads unchanged |
+
+## O1 extension (2026-10-18, judged 19:35Z)
+
+**Verdict: pass. 568 closes.** An extender ran the extension and an adversarial verifier tried to refute it. The
+verifier could not. I checked both offline, over their caches.
+
+### The draw
+
+- **Kept.** The 27 Tenders that stand: walk indices 0–21, plus 61, 282, 366, 449 and 770. The three false-G2 Tenders
+  (6324865, 6788159, 6869520) are dropped. Each kept id sits at the same index as in fresh568.
+- **The walk.** It used the same `568u8-fresh30-` salted order over the same changed set (957854566 < c ≤ 958764334).
+  - 46,879 events, minus the exclusions (s150 8, f30 1, oos50 2), leaves 46,868 candidates.
+  - It resumed at index 771 and stopped at index 2134, on the third hold. That is 1,364 rows.
+  - 220 population members were skipped unread. 1,144 Tenders were read, with 0 404s.
+- **The corrected G2 test.** A Tender qualifies if it is outside population.json and has a lot-placed result from a
+  notice that has no lot section of its own. That notice's profile must be `ted-export-r208` (from
+  `/v1/notices?tender=`), and "no lot section" is confirmed from its `/v1/notices/{id}/content`.
+  - The tool is a copy, `ext/draw_fresh30_g2fix.py`. `draw_fresh30.py` is unedited.
+  - Run offline over fresh568's cache, the test reproduces my 16:58Z split exactly: 5 G2 Tenders and 3 false ones.
+- **Held.**
+
+  | Tender | walk index | year | qualifying notice | R2.0.8 notices with a lot-placed result | 568 blocks |
+  |---|---|---|---|---|---|
+  | 5048894 | 805 | 2015 | 18258276 | 18258276 | 24 |
+  | 4836560 | 1891 | 2013 | 17517331 | 17517331, 17517659, 17518079, 17518149, 17657578 | 20 |
+  | 5226033 | 2134 | 2015 | 18033024 | 18033024, 18242004, 18527820, 18527875 | 22 |
+
+  Every notice in the 3 chains is `ted-export-r208` (R2.0.8.S02.E01), and every lot-placed notice has 0 lot sections.
+- **Checks on the walk.**
+  - The verifier re-walked it with its own code and fresh GETs, and matched the extender on 1,364 of 1,364 rows.
+  - Recall: across the 1,144 read Tenders, exactly 10 lot-placed notices are R2.0.8, and all 10 are in the 3 held.
+  - **Judge's check:** I re-derived the salted order offline from fresh568's changes pages. It reproduces fresh568's
+    rows 0–770 and the extension's rows 771–2134. Of the 1,144 read Tenders outside population.json, exactly 3 have
+    an R2.0.8 lot-placed notice, and they are the 3 held.
+- **The draw file.** `ext/draw_ext.json` holds 30 ids: 27 + 3, complete=true, with the cursor range recorded. The 30
+  hold 21 OUT and 8 G2. It was written at 18:07:28Z, before the bar read started at 18:07:56Z.
+
+### Parity (bar (i))
+
+- **The run.** `check_live.py --bar` read all 30 ids with a new empty cache, `--drain-job 2617 --drain-finished
+  2026-10-18T15:19:48+00:00`.
+  - It ran 18:07:56–18:13:17Z: 201 GETs, 0 fetch errors, 30 of 30 Tenders read, 0 incomplete.
+  - Result: **417/417 blocks at parity.** 0 breaks, 0 computed-not-served, 0 served-outside-chain, 0 non-legacy
+    mismatches, 0 legacy-test disagreements, 0 prefix fallbacks. `pass_bar_i=true`.
+- **Where the blocks are.** 351 are on the 27 kept Tenders and 66 on the 3 new ones (24 + 20 + 22).
+  - fresh568's 878 blocks included 527 on the three dropped Tenders: 6324865 45, 6788159 460, 6869520 22.
+    878 − 527 = 351.
+- **The verifier's fresh re-read** of the 3 new Tenders (18:25Z, check mode, committed tool): 66/66, and the Tender
+  JSONs are byte-identical to the bar cache.
+- **Stability of the 27.** Every served `lot_result` and every Tender version equals fresh568's 15:43–15:53Z read: 0
+  differences, 0 version changes. I recomputed this from the raw caches.
+- The changes feed still ends at 958764334 with more=false.
+
+### Labels
+
+Every 568 cross-notice block of the 3 new Tenders was labelled from the notices, by the unit-7 criteria.
+
+- **The extender** labelled from `view.py`, which shows only the pre-guard replay lot.
+- **The verifier** labelled from its own notice view, with no served lot and no guard.
+- **They agree on 66 of 66 blocks**, on both label and tentative lot. I read 4836560's and 5048894's notices myself
+  and concur.
+- **Disclosure, accepted.** The walk's G2 evidence counted 19 lot-placed R2.0.8 results on 4836560, against 20
+  blocks. That implied one block was served null, but not which. It cannot bias (ii): both independent labellings put
+  all 66 at single_right.
+
+| Tender | notice | printed → tentative lot | blocks (RES-) | label | served |
+|---|---|---|---|---|---|
+| 5048894 | 18258276 | 1 (Hardware) → LOT-2 | 1–6, 19 | single_right | LOT-2 |
+| 5048894 | 18258276 | 2 (Special Seating) → LOT-1 | 7, 8, 12, 14, 15, 17, 20, 22, 23 | single_right | LOT-1 |
+| 5048894 | 18258276 | 3 (Cushions) → LOT-3 | 9–11, 13, 16, 18, 21, 24 | single_right | LOT-3 |
+| 4836560 | 17517331 | 3, 15, 16, 17 → same | 1–4 | single_right | own lot |
+| 4836560 | 17517659 | 8, 10, 11, 12, 13, 18, 19 → same | 1–7 | single_right | own lot |
+| 4836560 | 17518079 | 1, 2, 5, 20 → same | 1–4 | single_right | own lot |
+| 4836560 | 17518149 | 4, 6 → same | 1, 2 | single_right | LOT-4, LOT-6 |
+| 4836560 | 17518149 | 14 → LOT-14 | 3 | single_right | **null (G5)** |
+| 4836560 | 17657578 | 7, 9 → same | 1, 2 | single_right | own lot |
+| 5226033 | 18033024 | 1–13 → same | 1–13 | single_right | own lot |
+| 5226033 | 18242004 | 3, 4, 5, 9, 12, 13 → same | 1–6 | single_right | own lot |
+| 5226033 | 18527820 | 12 → LOT-12 | 1 | single_right | LOT-12 |
+| 5226033 | 18527875 | 4, 9 → same | 1, 2 | single_right | LOT-4, LOT-9 |
+
+In 5048894, the anchor CN 17545429 prints Hardware as 1 on section LOT-2, and Special Seating as 2 on section
+LOT-1. The 2014 CN prints the same numbers, so blocks printed 1 belong on LOT-2. Per-block evidence is in
+`readback_result.json` → `O1.labels` and in `ext-verify/labels_verify.json`.
+
+**The contested label: 4836560 17518149/RES-1 → LOT-4. I rule it single_right.**
+- The block prints 4: "Lot 04 : Etanchéité - zinguerie", contract 13003, MJP Bardage.
+- The anchor CN 17101010's section LOT-4 prints 4, "Lot 04: étanchéité - zinguerie". LOT-4 is the only key lot 4
+  ever had, so the block sits on its own lot.
+- But LOT-4 serves lot 14's text. Relaunch CN 17244355 ("lots 4,6,7 et 14") prints LOT_NUMBER 1..4 by position. Its
+  section LOT-4, printed 4, is "lot 14 : Equipements de cuisine". That section lands on LOT-4 whether it is joined by
+  section id or by printed number, and no later notice re-titles LOT-4.
+- So this is a lot-text carry defect. The block did not cause it, and neither 568 nor 570 can see it: 570 does not
+  move that section. The unit-7 labels judge the block's lot identity, not the carried text.
+- **Sensitivity.** Labelled wrong_other, (ii) would read 1/30, still a pass, and (iii) would record an inherited
+  kept shape. The verdict does not depend on this ruling.
+
+### The bar over the 30
+
+| | the 27 (fresh568) | the 3 (O1) | the 30 |
+|---|---|---|---|
+| blocks at parity | 351/351 | 66/66 | **417/417, 0 breaks** |
+| 568 blocks labelled | 112 | 66 | 178 |
+| single_right / multi_lot_contract / wrong_other | 106 / 4 / 2 | 66 / 0 / 0 | 172 / 4 / 2 |
+| kept: right / wrong | 105 / 0 | 65 / 0 | **170 / 0** |
+| refused: right / wrong | 1 / 6 | 1 / 0 | 2 / 6 |
+| Tenders with a wrong block, before guards → after | 3 → 0 | 0 → 0 | **3 → 0 of 30** |
+
+- **(i)** 0 parity breaks. Pass.
+- **(ii)** 0 of 30 Tenders keep a judged-wrong block, against a limit of 2. Under the contested reading it is 1/30.
+  Pass.
+- **(iii)** No kept wrong block, so no new kept wrong shape. Neither reopen trigger fired (a break, or 3 or more of
+  30). Pass.
+- **The quota.** 8 G2 against at least 8; 21 OUT against at least 10.
+
+### The G2 stratum: what 570 newly matched
+
+All 3 new Tenders exercise 570 through a G2 refusal at base, so the stratum is **8 of 8**. It was 5 of 8.
+
+| Tender | blocks moved null → lot by 570 | labels | served |
+|---|---|---|---|
+| 5048894 | 24 | 24 single_right | 24 on their lot |
+| 4836560 | 19 | 19 single_right | 19 on their lot |
+| 5226033 | 22 | 22 single_right | 22 on their lot |
+
+- 65 blocks moved, and all 65 are right. No wrong block was newly matched.
+- A 66th block, 4836560 17518149/RES-3, is newly matched before the guards: tentative LOT-14, which is right. G5
+  refuses it, so it serves null. That is a false refusal with cause "unchanged" (null at base by G2, null now).
+- Across all 8 G2 Tenders: 114 blocks moved, all right. Two newly matched blocks were refused by G5: 5864590 RES-3,
+  which is wrong, rightly refused; and 4836560 RES-3, which is right, falsely refused.
+
+### Recorded, not a reopen
+
+1. **A G5 false-refusal shape** (for the 568 decision record). A positional relaunch CN carries the true lot's title
+   onto another lot's key. Here, lot 14's title sits on LOT-4, so the lot-14 award's title equals exactly one other
+   lot's title, and G5 refuses it.
+   - Exhibit: 4836560 17518149/RES-3.
+   - It is not a regression: the block was null before the drain.
+   - Pooled false refusals: 2 of 2,253 right blocks (0.09 %). That is the earlier 2,187 plus these 66.
+2. **An inherited lot-text carry defect** (an exhibit for the lot-carry class).
+   - The shape: a relaunch CN prints LOT_NUMBER 1..k by position for a subset of lots.
+   - 4836560's LOT-4 serves lot 14's title and description, and LOT-14 keeps only the anchor's description.
+   - The section id equals the printed number, so neither today's merge nor 570's remap can tell. No 568 or 570 fix.
+3. **Corrections to the extender's notes** (the verifier's, checked by me).
+   - 5048894 is a relaunch linked by the buyer's own references, not a weld of another procedure. 17923471
+     discontinues CN 2013/S 161-280705, and the T034 CN 18025780 cites it.
+   - 5226033's no-award blocks (clos-nw) serve no winners, and no party named "infructueux" is served.
 
 ## 570: items
 
@@ -91,7 +248,8 @@ LOT-11's.
 
 ## Open items and dispositions
 
-- **O1 (568): fix.** Run the G2 extension. This is the only thing between 568 and closing.
+- **O1 (568): fix. Done 2026-10-18.** The extension ran and was verified, and the bar over the 30 passes. 568 PASS;
+  see "O1 extension" above. The pre-registered instructions follow.
   - Keep the 27: walk indices 0–21, plus 61, 282, 366, 449 and 770.
   - Continue the same `568u8-fresh30-` walk from index 771, with the same exclusions, skipping members of
     population.json unread.
@@ -125,6 +283,9 @@ LOT-11's.
       lot-placed result from a notice that has no lot section of its own (`ted-export-r208`, confirmed from
       `/v1/notices?tender=`). No `ext/` copy of the tool had been written when this was recorded. A later draw uses
       O1's test, not the one-read signal.
+    - **O1 used it (19:35Z).** The test lives in `ext/draw_fresh30_g2fix.py`, a copy; `draw_fresh30.py` is unedited.
+      In the extension's walk, the old signal would have fired falsely on 15 skipped Tenders, the first 6193033 at
+      index 986.
     - `fresh570/check570.py` E2's anchor-title reference (`ref_title`, `use_anchor=True`) holds only where no
       K1-refused notice precedes the remapped one, because a refused notice re-keys the carry. After one, the
       carried-lot reference (`use_anchor=False`) is the valid one, as (e)'s reading of 6876932 used.
@@ -137,8 +298,14 @@ LOT-11's.
   - (b) CAN-only renumbering in a one-block CAN, where the title and value are another lot's: 8365595, G5.
   - (c) A CAN that repeats a printed number on another lot's award: 5864590 RES-3, G5. It is newly matched because 570
     narrows G2.
-- **568, kept wrong blocks:** none in the 30. None of the five recorded residual shapes was met.
-- **568, false refusal:** the copied-title-against-the-number shape (O2).
+- **568, kept wrong blocks:** none in the conformant 30, O1's 3 included. None of the five recorded residual shapes
+  was met.
+- **568, false refusals:**
+  - the copied-title-against-the-number shape (O2);
+  - O1: a positional relaunch CN carries the true lot's title onto another key, so G5 refuses the true lot's award
+    (4836560 17518149/RES-3; null before the drain too).
+- **Inherited, outside 568 and 570:** the positional-relaunch lot-text carry (4836560 LOT-4 serves lot 14's text).
+  It was met once, in O1.
 - **570:** the welded re-tender with interleaved numberings (O4, issue 364's class). Seen 0 times in 570's 211 chains;
   1 in the fresh 30.
 - **Band caveat:** none of the 45 corrected band Tenders is in the baseline's lot snapshots, so their block
@@ -147,8 +314,14 @@ LOT-11's.
 
 ## What to file
 
-1. 568: the O1 extension as the next unit (read-back completion), with `Blocked by:` none.
-2. 568 decision record: O2's false-refusal shape, and O3 as an unclear G5 refusal.
-3. 364: 6876932 as weld evidence (O4).
-4. 570 decision record: the identity caveat (O4) and the D3 wording (O5). 570 can be marked done on this read-back.
-5. 570 Unit 7 follow-on (567 single-section placement): 8371908 RES-1 as an exhibit (O6).
+1. 568: the O1 extension. **Done**: the read-back is complete and 568 passes, so 568 can be marked done on this
+   read-back.
+2. 568 decision record:
+   - O2's false-refusal shape;
+   - O3 as an unclear G5 refusal;
+   - O1's G5 false-refusal shape (4836560 17518149/RES-3), with pooled false refusals now 2 of 2,253 (0.09 %).
+3. Lot-carry follow-on: file 4836560 (relaunch CN 17244355, LOT-4 carrying lot 14's text) as an exhibit of a
+   positional relaunch numbering. Neither 568 nor 570 can fix it.
+4. 364: 6876932 as weld evidence (O4).
+5. 570 decision record: the identity caveat (O4) and the D3 wording (O5). 570 can be marked done on this read-back.
+6. 570 Unit 7 follow-on (567 single-section placement): 8371908 RES-1 as an exhibit (O6).

@@ -1,0 +1,163 @@
+TENDER 5048894 v4 key=ojs:2013-280705 title='Provision of Hardware and Special Seating Requirements to the Wheelchair Service.' published=2015-03-14
+  version seq 1: notice 17545429 pub 280705-2013 2013-08-21
+  version seq 2: notice 17923471 pub 216678-2014 2014-06-28
+  version seq 3: notice 18025780 pub 318987-2014 2014-09-20
+  version seq 4: notice 18258276 pub 090476-2015 2015-03-14
+LISTING: [(17545429, 'ted-export-r208', 'R2.0.8.S02.E01', '280705-2013'), (17923471, 'ted-export-r208', 'R2.0.8.S02.E01', '216678-2014'), (18025780, 'ted-export-r208', 'R2.0.8.S02.E01', '318987-2014'), (18258276, 'ted-export-r208', 'R2.0.8.S02.E01', '090476-2015')] more= False
+TENDER LOTS (carried state):
+  LOT-1 title='Special Seating' value=None
+       description[ENG]: Central and North West London NHS Foundation Trust seeks suppliers accustomed and experienced in the provision of bespoke special seating and rehabilitation systems for its Wheelchair Service.
+       title[ENG]: Special Seating
+  LOT-2 title='Hardware' value=None
+       description[ENG]: The provision of wheelchairs/ complete wheelchair systems inclusive of spare parts and associated accessories for its Wheelchair Service.
+       title[ENG]: Hardware
+  LOT-3 title='Cushions' value=None
+       description[ENG]: Central and North West London NHS Foundation Trust seeks suppliers proficient and experienced in the provision of cushions and special seating cushions for its Wheelchair Service.
+       title[ENG]: Cushions
+
+=== NOTICE 17545429 profile=ted-export-r208 R2.0.8.S02.E01 pub=280705-2013
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2013/S 161-280705
+   TED-FILE_REFERENCE_NUMBER: CNWL/T025/CS
+   TED-TITLE_CONTRACT: Provision of Hardware and Special Seating Requirements to the Wheelchair Service.
+   TED-ADDITIONAL_INFORMATION: It is a mandatory requirement that all tenderers must submit a compliant bid if there is a wish for a variant bid/tender to be considered. | (MT Ref:107237)
+   TED-VALUE: 2,000,000.00 GBP | 790,000.00 GBP | 810,000.00 GBP | 222,000.00 GBP | 225,000.00 GBP
+  LOT section LOT-1: number=['2'] title=Special Seating
+      desc: The Trust seeks suppliers accustomed and experienced in the provision of bespoke special seating and rehabilitation systems for its Wheelchair Service.
+      scope: Details to be provided in PQQ/ITT documentation.
+      TED-ADDITIONAL_INFORMATION_ABOUT_LOTS: Stated range incorporates the 12(twelve) month extension option available to the Trust.
+  LOT section LOT-2: number=['1'] title=Hardware
+      desc: The provision of wheelchairs/complete wheelchair systems inclusive of spare parts and associated accessories for its Wheelchair Service.
+      scope: Details to be provided in the PQQ/ITT documentation
+      TED-LOW_VALUE: 790,000.00 GBP
+      TED-HIGH_VALUE: 810,000.00 GBP
+      TED-ADDITIONAL_INFORMATION_ABOUT_LOTS: Stated range incorporates the 12(twelve) month extension option available to the Trust.
+  LOT section LOT-3: number=['3'] title=Cushions
+      desc: The Trust seeks suppliers proficient and experienced in the provision of cushions and special seating cushions for its Wheelchair Service.
+      scope: Details to be provided in PQQ/ITT documentation.
+      TED-LOW_VALUE: 222,000.00 GBP
+      TED-HIGH_VALUE: 225,000.00 GBP
+      TED-ADDITIONAL_INFORMATION_ABOUT_LOTS: Stated range incorporates the 12(twelve) month extension option available to the Trust.
+
+=== NOTICE 17923471 profile=ted-export-r208 R2.0.8.S02.E01 pub=216678-2014
+   TED-TD_DOCUMENT_TYPE: 2
+   TED-NO_DOC_OJS: 2014/S 122-216678
+   TED-REF_NOTICE.NO_DOC_OJS: 2013/S 161-280705
+
+=== NOTICE 18025780 profile=ted-export-r208 R2.0.8.S02.E01 pub=318987-2014
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2014/S 181-318987
+   TED-NOTICE_NUMBER_OJ: 2013/S 161-280705
+   TED-REF_NOTICE.NO_DOC_OJS: 2013/S 161-280705
+   TED-FILE_REFERENCE_NUMBER: CNWL/T034
+   TED-TITLE_CONTRACT: Provision of Hardware and Special Seating Requirements to the Wheelchair Service.
+   TED-ADDITIONAL_INFORMATION: To register interest and request documentation, please e-mail tenders.cnwl@nhs.net | (MT Ref:140649)
+   TED-VALUE: 2,000,000.00 GBP | 2,400,000.00 GBP | 2,600,000.00 GBP | 1,400,000.00 GBP | 1,600,000.00 GBP | 240,000.00 GBP | 260,000.00 GBP | 660,000.00 GBP | 680,000.00 GBP
+  LOT section LOT-1: number=['1'] title=Hardware
+      desc: The provision of wheelchairs/ complete wheelchair systems inclusive of spare parts and associated accessories for its Wheelchair Service.
+      scope: Details to be provided in the ITT documentation.
+      TED-LOW_VALUE: 1,400,000.00 GBP
+      TED-HIGH_VALUE: 1,600,000.00 GBP
+      TED-ADDITIONAL_INFORMATION_ABOUT_LOTS: Stated duration includes the 12 (twelve) month extension option available to the Trust.
+  LOT section LOT-2: number=['2'] title=Special Seating
+      desc: Central and North West London NHS Foundation Trust seeks suppliers accustomed and experienced in the provision of bespoke special seating and rehabilitation systems for its Wheelchair Service.
+      scope: Details to be provided in the ITT documentation.
+      TED-LOW_VALUE: 240,000.00 GBP
+      TED-HIGH_VALUE: 260,000.00 GBP
+      TED-ADDITIONAL_INFORMATION_ABOUT_LOTS: Stated duration includes the 12 (twelve) month extension option available to the Trust.
+  LOT section LOT-3: number=['3'] title=Cushions
+      desc: Central and North West London NHS Foundation Trust seeks suppliers proficient and experienced in the provision of cushions and special seating cushions for its Wheelchair Service.
+      scope: Details in the ITT documentation.
+      TED-LOW_VALUE: 660,000.00 GBP
+      TED-HIGH_VALUE: 680,000.00 GBP
+      TED-ADDITIONAL_INFORMATION_ABOUT_LOTS: Duration stated includes the 12 (twelve) month extension option available to the Trust.
+
+=== NOTICE 18258276 profile=ted-export-r208 R2.0.8.S02.E01 pub=090476-2015
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2015/S 052-090476
+   TED-NOTICE_NUMBER_OJ: 2014/S 181-318987
+   TED-REF_NOTICE.NO_DOC_OJS: 2014/S 181-318987
+   TED-FILE_REFERENCE_NUMBER: CNWL/T034
+   TED-TITLE_CONTRACT: Provision of Hardware and Special Seating Requirements to the Wheelchair Service.
+   TED-ADDITIONAL_INFORMATION: (MT Ref:150289).
+   TED-CONCLUSION_FRAMEWORK_AGREEMENT: 1
+   TED-VALUE: 2,500,000.00 GBP
+   TED-VALUE_COST: 2,500,000.00 GBP
+  BLOCK RES-1: LOT_NUMBER=['1'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[8]
+      title: Wheelchairs, Modifications and Construction and Buggies
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Invacare Ltd']
+  BLOCK RES-10: LOT_NUMBER=['3'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[9]
+      title: Cushions and Accessories
+      value=[] estimate=['2,500,000.00 GBP'] winners=['The Helping Hand Company']
+  BLOCK RES-11: LOT_NUMBER=['3'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[9]
+      title: Cushions and Accessories
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Invacare Ltd']
+  BLOCK RES-12: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs — Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Sunrise Medical']
+  BLOCK RES-13: LOT_NUMBER=['3'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[9]
+      title: Cushions and Accessories
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Sunrise Medical']
+  BLOCK RES-14: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs — Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Consolor Ltd']
+  BLOCK RES-15: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs — Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['James Leckey Design Ltd']
+  BLOCK RES-16: LOT_NUMBER=['3'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[9]
+      title: Cushions and Accessories
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Specialised Orthotic Services Ltd']
+  BLOCK RES-17: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs — Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Tendercare Ltd']
+  BLOCK RES-18: LOT_NUMBER=['3'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[9]
+      title: Cushions and Accessories
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Bartram Associates Ltd']
+  BLOCK RES-19: LOT_NUMBER=['1'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[8]
+      title: Wheelchairs, Modifications and Construction and Buggies
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Rehabilitation Manufacturing Services Ltd']
+  BLOCK RES-2: LOT_NUMBER=['1'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[8]
+      title: Wheelchairs, Modifications and Construction and Buggies
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Sunrise Medical']
+  BLOCK RES-20: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs - Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Rehabilitation Manufacturing Services Ltd']
+  BLOCK RES-21: LOT_NUMBER=['3'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[9]
+      title: Cushions and Accessories
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Rehabilitation Manufacturing Services Ltd']
+  BLOCK RES-22: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs — Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Contour886 Ltd']
+  BLOCK RES-23: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs — Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Delichon Ltd']
+  BLOCK RES-24: LOT_NUMBER=['3'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[9]
+      title: Cushions and Accessories
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Karomed Ltd']
+  BLOCK RES-3: LOT_NUMBER=['1'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[8]
+      title: Wheelchairs, Modifications and Construction and Buggies
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Bartram Associates Ltd']
+  BLOCK RES-4: LOT_NUMBER=['1'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[8]
+      title: Wheelchairs, Modifications and Construction and Buggies
+      value=[] estimate=['2,500,000.00 GBP'] winners=['James Leckey Design Ltd']
+  BLOCK RES-5: LOT_NUMBER=['1'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[8]
+      title: Wheelchairs, Modifications and Construction and Buggies
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Tendercare Ltd']
+  BLOCK RES-6: LOT_NUMBER=['1'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[8]
+      title: Wheelchairs, Modifications and Construction and Buggies
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Pride Mobility Products Ltd']
+  BLOCK RES-7: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs — Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Specialised Orthotic Services Ltd']
+  BLOCK RES-8: LOT_NUMBER=['2'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[10]
+      title: Wheelchairs — Special Seating
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Delichon Ltd']
+  BLOCK RES-9: LOT_NUMBER=['3'] CONTRACT_NUMBER=['CNWL/T034'] date=['2015-01-26'] offers=[9]
+      title: Cushions and Accessories
+      value=[] estimate=['2,500,000.00 GBP'] winners=['Bes Decon (A Division Of Bes Rehab Ltd)']
+
+SERVED BLOCK KEYS (no lot shown): [(18258276, 'RES-1', 'selec-w'), (18258276, 'RES-10', 'selec-w'), (18258276, 'RES-11', 'selec-w'), (18258276, 'RES-12', 'selec-w'), (18258276, 'RES-13', 'selec-w'), (18258276, 'RES-14', 'selec-w'), (18258276, 'RES-15', 'selec-w'), (18258276, 'RES-16', 'selec-w'), (18258276, 'RES-17', 'selec-w'), (18258276, 'RES-18', 'selec-w'), (18258276, 'RES-19', 'selec-w'), (18258276, 'RES-2', 'selec-w'), (18258276, 'RES-20', 'selec-w'), (18258276, 'RES-21', 'selec-w'), (18258276, 'RES-22', 'selec-w'), (18258276, 'RES-23', 'selec-w'), (18258276, 'RES-24', 'selec-w'), (18258276, 'RES-3', 'selec-w'), (18258276, 'RES-4', 'selec-w'), (18258276, 'RES-5', 'selec-w'), (18258276, 'RES-6', 'selec-w'), (18258276, 'RES-7', 'selec-w'), (18258276, 'RES-8', 'selec-w'), (18258276, 'RES-9', 'selec-w')]
+WINNER PARTIES: [('Invacare Ltd', None), ('Invacare Ltd', None), ('Sunrise Medical', None), ('Sunrise Medical', None), ('Sunrise Medical', None), ('James Leckey Design Ltd', None), ('James Leckey Design Ltd', None), ('The Helping Hand Company', None), ('Pride Mobility Products Ltd', None), ('Specialised Orthotic Services Ltd', None), ('Specialised Orthotic Services Ltd', None), ('Tendercare Ltd', None), ('Tendercare Ltd', None), ('Bartram Associates Ltd.', None), ('Bartram Associates Ltd.', None), ('Karomed Ltd', None), ('Consolor Ltd', None), ('Rehabilitation Manufacturing Services Ltd', None), ('Rehabilitation Manufacturing Services Ltd', None), ('Rehabilitation Manufacturing Services Ltd', None), ('Bes Decon (A Division Of Bes Rehab Ltd)', None), ('Contour886 Ltd', None), ('Delichon Ltd', None), ('Delichon Ltd', None)]

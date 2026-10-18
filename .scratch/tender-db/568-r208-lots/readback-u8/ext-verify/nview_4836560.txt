@@ -1,0 +1,310 @@
+TENDER 4836560 v13 key=ojs:2012-285863 title='F-Vaulx-en-Velin: Travaux de restructuration' published=2013-11-21
+  version seq 1: notice 17101010 pub 285863-2012 2012-09-08
+  version seq 2: notice 17107351 pub 292147-2012 2012-09-15
+  version seq 3: notice 17244355 pub 015227-2013 2013-01-17
+  version seq 4: notice 17247214 pub 016899-2013 2013-01-18
+  version seq 5: notice 17283745 pub 052738-2013 2013-02-16
+  version seq 6: notice 17284410 pub 054486-2013 2013-02-19
+  version seq 7: notice 17288398 pub 058433-2013 2013-02-21
+  version seq 8: notice 17474868 pub 210177-2013 2013-06-27
+  version seq 9: notice 17518079 pub 253037-2013 2013-07-30
+  version seq 10: notice 17517659 pub 253061-2013 2013-07-30
+  version seq 11: notice 17517331 pub 253084-2013 2013-07-30
+  version seq 12: notice 17518149 pub 253114-2013 2013-07-30
+  version seq 13: notice 17657578 pub 392858-2013 2013-11-21
+LISTING: [(17101010, 'ted-export-r208', 'R2.0.8.S02.E01', '285863-2012'), (17107351, 'ted-export-r208', 'R2.0.8.S02.E01', '292147-2012'), (17244355, 'ted-export-r208', 'R2.0.8.S02.E01', '015227-2013'), (17247214, 'ted-export-r208', 'R2.0.8.S02.E01', '016899-2013'), (17283745, 'ted-export-r208', 'R2.0.8.S02.E01', '052738-2013'), (17284410, 'ted-export-r208', 'R2.0.8.S02.E01', '054486-2013'), (17288398, 'ted-export-r208', 'R2.0.8.S02.E01', '058433-2013'), (17474868, 'ted-export-r208', 'R2.0.8.S02.E01', '210177-2013'), (17517331, 'ted-export-r208', 'R2.0.8.S02.E01', '253084-2013'), (17517659, 'ted-export-r208', 'R2.0.8.S02.E01', '253061-2013'), (17518079, 'ted-export-r208', 'R2.0.8.S02.E01', '253037-2013'), (17518149, 'ted-export-r208', 'R2.0.8.S02.E01', '253114-2013'), (17657578, 'ted-export-r208', 'R2.0.8.S02.E01', '392858-2013')] more= False
+TENDER LOTS (carried state):
+  LOT-1 title='lot 01 : Désamiantage' value=None
+       description[FRA]: Lot 01 : Désamiantage
+       title[FRA]: lot 01 : Désamiantage
+  LOT-10 title=None value=None
+       description[FRA]: Lot 10: plafonds suspendus.
+  LOT-11 title=None value=None
+       description[FRA]: Lot 11: carrelage - faïences.
+  LOT-12 title=None value=None
+       description[FRA]: Lot 12: sols minces.
+  LOT-13 title=None value=None
+       description[FRA]: Lot 13: ascenseur.
+  LOT-14 title=None value=None
+       description[FRA]: Lot 14: équipements de cuisine.
+  LOT-15 title='lot 15 : Chauffage - ventilation' value=None
+       description[FRA]: Lot 15 : Chauffage - ventilation
+       title[FRA]: lot 15 : Chauffage - ventilation
+  LOT-16 title='lot 16 : Plomberie Sanitaires' value=None
+       description[FRA]: Lot 16 : Plomberie Sanitaires
+       title[FRA]: lot 16 : Plomberie Sanitaires
+  LOT-17 title='lot 17 : Electricité' value=None
+       description[FRA]: Lot 17 : Electricité
+       title[FRA]: lot 17 : Electricité
+  LOT-18 title=None value=None
+       description[FRA]: Lot 18: nettoyage.
+  LOT-19 title=None value=None
+       description[FRA]: Lot 19: VRD - aménagements extérieurs.
+  LOT-2 title='lot 02 : Déconstruction' value=None
+       description[FRA]: Lot 02 : Déconstruction
+       title[FRA]: lot 02 : Déconstruction
+  LOT-20 title='lot 20 : Système de sécurité incendie' value=None
+       description[FRA]: Lot 20 : Système de sécurité incendie
+       title[FRA]: lot 20 : Système de sécurité incendie
+  LOT-3 title='lot 03 : Terrassement - gros Oeuvre' value=None
+       description[FRA]: Lot 03 : Terrassement - gros Oeuvre
+       title[FRA]: lot 03 : Terrassement - gros Oeuvre
+  LOT-4 title='lot 14 : Equipements de cuisine' value=None
+       description[FRA]: Lot 14 : Equipements de cuisine
+       title[FRA]: lot 14 : Equipements de cuisine
+  LOT-5 title='lot 05 : parement de façades' value=None
+       description[FRA]: Lot 05 : parement de façades
+       title[FRA]: lot 05 : parement de façades
+  LOT-6 title=None value=None
+       description[FRA]: Lot 06: menuiseries extérieures bois - occultations.
+  LOT-7 title=None value=None
+       description[FRA]: Lot 07: Serrurerie – métallerie.
+  LOT-8 title=None value=None
+       description[FRA]: Lot 08: menuiseries intérieures.
+  LOT-9 title='lot 09 : Isolation - plâtrerie - peintures' value=None
+       description[FRA]: Lot 09: Isolation – plâtrerie – peintures.
+       title[FRA]: lot 09 : Isolation - plâtrerie - peintures
+
+=== NOTICE 17101010 profile=ted-export-r208 R2.0.8.S02.E01 pub=285863-2012
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2012/S 173-285863
+   TED-ADDITIONAL_INFORMATION: Appel d'offres ouvert duree du marche: délai global d'exécution de l'ensemble des travaux: 32 mois. Délai d'exécution phase 1: 18.5 mois y compris période de préparation. Délai d'exécution phase 2: 6.5 mois y compris période de préparation Le démarrage des travaux est signifié par ordre de service. Date prévisionnelle du début des travaux: décembre 2012 prestations supplémentaires éventuelles: no1: garde-corps de sécurité des toitures terrasses - lot 4: étanchéité - zinguerie no2: brise soleil e…
+  LOT section LOT-1: number=['1'] title=
+      desc: Lot 01: désamiantage.
+  LOT section LOT-10: number=['10'] title=
+      desc: Lot 10: plafonds suspendus.
+  LOT section LOT-11: number=['11'] title=
+      desc: Lot 11: carrelage - faïences.
+  LOT section LOT-12: number=['12'] title=
+      desc: Lot 12: sols minces.
+  LOT section LOT-13: number=['13'] title=
+      desc: Lot 13: ascenseur.
+  LOT section LOT-14: number=['14'] title=
+      desc: Lot 14: équipements de cuisine.
+  LOT section LOT-15: number=['15'] title=
+      desc: Lot 15: chauffage - ventilation.
+  LOT section LOT-16: number=['16'] title=
+      desc: Lot 16: plomberie sanitaires.
+  LOT section LOT-17: number=['17'] title=
+      desc: Lot 17: électricité.
+  LOT section LOT-18: number=['18'] title=
+      desc: Lot 18: nettoyage.
+  LOT section LOT-19: number=['19'] title=
+      desc: Lot 19: VRD - aménagements extérieurs.
+  LOT section LOT-2: number=['2'] title=
+      desc: Lot 02: déconstruction.
+  LOT section LOT-20: number=['20'] title=
+      desc: Lot 20: système de sécurité incendie.
+  LOT section LOT-3: number=['3'] title=
+      desc: Lot 03: terrassement - gros oeuvre.
+  LOT section LOT-4: number=['4'] title=
+      desc: Lot 04: étanchéité - zinguerie.
+  LOT section LOT-5: number=['5'] title=
+      desc: Lot 05: parement de façades.
+  LOT section LOT-6: number=['6'] title=
+      desc: Lot 06: menuiseries extérieures bois - occultations.
+  LOT section LOT-7: number=['7'] title=
+      desc: Lot 07: serrurerie - métallerie.
+  LOT section LOT-8: number=['8'] title=
+      desc: Lot 08: menuiseries intérieures.
+  LOT section LOT-9: number=['9'] title=
+      desc: Lot 09: isolation - plâtrerie - peintures.
+
+=== NOTICE 17107351 profile=ted-export-r208 R2.0.8.S02.E01 pub=292147-2012
+   TED-TD_DOCUMENT_TYPE: 2
+   TED-NO_DOC_OJS: 2012/S 178-292147
+   TED-REF_NOTICE.NO_DOC_OJS: 2012/S 173-285863
+
+=== NOTICE 17244355 profile=ted-export-r208 R2.0.8.S02.E01 pub=015227-2013
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2013/S 012-015227
+   TED-NOTICE_NUMBER_OJ: 2012/S 178-292147
+   TED-REF_NOTICE.NO_DOC_OJS: 2012/S 178-292147
+   TED-FILE_REFERENCE_NUMBER: Travaux Wallon lots 4,6,7 et 14
+   TED-ADDITIONAL_INFORMATION: Appel d'offres suite à appel d'offres infructueux.durée du marché : Durée totale du marché : 32 moisle marché est conclu pour une durée de 32 mois à compter de sa notification. Délai d'exécution Phase 1 : 18,5 mois y compris période de préparation. Délai d'exécution Phase 2 : 6,5 mois y compris période de préparation Le démarrage de chaque phase de travaux fera l'objet d'un ordre de service. Prestations supplementaires eventuelles :Prestation supplémentaire no1 : Garde-Corps de sécurité des toit…
+  LOT section LOT-1: number=['1'] title=lot 04 : Etanchéité - zinguerie
+      desc: Lot 04 : Etanchéité - zinguerie
+  LOT section LOT-2: number=['2'] title=lot 06 : Menuiseries extérieures bois - occultations
+      desc: Lot 06 : Menuiseries extérieures bois - occultations
+  LOT section LOT-3: number=['3'] title=lot 07 : Serrurerie - métallerie
+      desc: Lot 07 : Serrurerie - métallerie
+  LOT section LOT-4: number=['4'] title=lot 14 : Equipements de cuisine
+      desc: Lot 14 : Equipements de cuisine
+
+=== NOTICE 17247214 profile=ted-export-r208 R2.0.8.S02.E01 pub=016899-2013
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2013/S 013-016899
+   TED-NOTICE_NUMBER_OJ: 2012/S 173-285863
+   TED-REF_NOTICE.NO_DOC_OJS: 2012/S 173-285863
+   TED-FILE_REFERENCE_NUMBER: Travaux WALLON Lots 1,2,5 et 20
+   TED-ADDITIONAL_INFORMATION: procédure adaptée avec négociation suite à appel d'offres infructueux.Négociation avec tous les candidats.4 lots : Lot 01 : DésamiantageLot 02 : DéconstructionLot 05 : parement de façadeslot 20 : Système de sécurité incendieles lots suivants font l'objet d'une consultation en Appel d'offres :Lot 04 : Etanchéité - zinguerieLot 06 : Menuiseries extérieures bois - occultationsLot 07 : Serrurerie - métallerie Lot 14 : Equipements de cuisine Les lots suivants sont en cours d'attribution : Lot 03 : Te…
+  LOT section LOT-1: number=['1'] title=lot 01 : Désamiantage
+      desc: Lot 01 : Désamiantage
+  LOT section LOT-2: number=['2'] title=lot 02 : Déconstruction
+      desc: Lot 02 : Déconstruction
+  LOT section LOT-3: number=['5'] title=lot 05 : parement de façades
+      desc: Lot 05 : parement de façades
+  LOT section LOT-4: number=['20'] title=lot 20 : Système de sécurité incendie
+      desc: Lot 20 : Système de sécurité incendie
+
+=== NOTICE 17283745 profile=ted-export-r208 R2.0.8.S02.E01 pub=052738-2013
+   TED-TD_DOCUMENT_TYPE: 2
+   TED-NO_DOC_OJS: 2013/S 034-052738
+   TED-REF_NOTICE.NO_DOC_OJS: 2013/S 13-016899
+
+=== NOTICE 17284410 profile=ted-export-r208 R2.0.8.S02.E01 pub=054486-2013
+   TED-TD_DOCUMENT_TYPE: 2
+   TED-NO_DOC_OJS: 2013/S 035-054486
+   TED-REF_NOTICE.NO_DOC_OJS: 2013/S 12-015227
+
+=== NOTICE 17288398 profile=ted-export-r208 R2.0.8.S02.E01 pub=058433-2013
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2013/S 037-058433
+   TED-NOTICE_NUMBER_OJ: 2012/S 178-292147
+   TED-REF_NOTICE.NO_DOC_OJS: 2012/S 178-292147
+   TED-FILE_REFERENCE_NUMBER: Travaux WALLON Lots 3,9,15,16,17
+   TED-ADDITIONAL_INFORMATION: Durée du marché : Durée totale de validité du marché : 32 mois le marché est conclu pour une durée de 32 mois à compter de sa notification.Délai d'exécution total : 26,5 mois , se décomposant ainsi :Délai d'exécution Phase 1 : 18,5 mois y compris période de préparation.Délai d'exécution Phase 2 : 6,5 mois y compris période de préparation Le démarrage de chaque phase de travaux fera l'objet d'un ordre de service.prestations supplémentaires éventuelles - la réponse aux PSE est obligatoire :- prest…
+  LOT section LOT-1: number=['3'] title=lot 03 : Terrassement - gros Oeuvre
+      desc: Lot 03 : Terrassement - gros Oeuvre
+  LOT section LOT-2: number=['9'] title=lot 09 : Isolation - plâtrerie - peintures
+      desc: Lot 09 : Isolation - plâtrerie - peintures
+  LOT section LOT-3: number=['15'] title=lot 15 : Chauffage - ventilation
+      desc: Lot 15 : Chauffage - ventilation
+  LOT section LOT-4: number=['16'] title=lot 16 : Plomberie Sanitaires
+      desc: Lot 16 : Plomberie Sanitaires
+  LOT section LOT-5: number=['17'] title=lot 17 : Electricité
+      desc: Lot 17 : Electricité
+
+=== NOTICE 17474868 profile=ted-export-r208 R2.0.8.S02.E01 pub=210177-2013
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2013/S 123-210177
+   TED-NOTICE_NUMBER_OJ: 2012/S 173-285863 | 2013/S 12-015227 | 2013/S 37-058433
+   TED-REF_NOTICE.NO_DOC_OJS: 2012/S 173-285863
+   TED-FILE_REFERENCE_NUMBER: Travaux WALLON Lots 7 & 9.
+   TED-ADDITIONAL_INFORMATION: Durée du marché: Durée totale de validité du marché: 32 moisle marché est conclu pour une durée de 32 mois à compter de sa notification. Délai d'exécution total: 25 mois, se décomposant ainsi: Délai d'exécution Phase 1: 18,5 mois y compris période de préparation. Délai d'exécution Phase 2: 6,5 mois y compris période de préparation Le démarrage de chaque phase de travaux fera l'objet d'un ordre de serviceprestations supplémentaires éventuelles – la réponse aux PSE est obligatoire: PSE nº 2: brise…
+  LOT section LOT-1: number=['7'] title=
+      desc: Lot 07: Serrurerie – métallerie.
+  LOT section LOT-2: number=['9'] title=
+      desc: Lot 09: Isolation – plâtrerie – peintures.
+
+=== NOTICE 17517331 profile=ted-export-r208 R2.0.8.S02.E01 pub=253084-2013
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2013/S 146-253084
+   TED-NOTICE_NUMBER_OJ: 2013/S 37-058433 | 2012/S 173-285863
+   TED-REF_NOTICE.NO_DOC_OJS: 2013/S 37-058433
+   TED-FILE_REFERENCE_NUMBER: Travaux WALLON Lots 3,9,15,16,17
+   TED-ADDITIONAL_INFORMATION: Appel d'offres suite à appel d'offres infructueux. Durée du marché : Durée totale de validité du marché : 32 mois. Le marché est conclu pour une durée de 32 mois à compter de sa notification. Délai d'exécution total : 26,5 mois, se décomposant ainsi : Délai d'exécution Phase 1 : 18.5 mois y compris période de préparation. Délai d'exécution Phase 2 : 6.5 mois y compris période de préparation Le lot 9 a été déclaré sans suite Date de signature des lots 3, 15 et 16 : 3.7.2013 Date de signature du l…
+   TED-VALUE: 2,148,154.26 EUR | 1,275,618.57 EUR | 461,670.78 EUR | 141,127.92 EUR | 269,736.99 EUR
+   TED-VALUE_COST: 2,148,154.26 EUR
+  BLOCK RES-1: LOT_NUMBER=['3'] CONTRACT_NUMBER=['13002'] date=['2013-07-09'] offers=[8]
+      title: Lot 03 : Terrassement - Gros Oeuvre
+      value=['1,275,618.57 EUR'] estimate=[] winners=['Aquadro Favier']
+  BLOCK RES-2: LOT_NUMBER=['15'] CONTRACT_NUMBER=['13013'] date=['2013-07-09'] offers=[10]
+      title: Lot 15 : Chauffage - ventilation
+      value=['461,670.78 EUR'] estimate=[] winners=['Billon']
+  BLOCK RES-3: LOT_NUMBER=['16'] CONTRACT_NUMBER=['13014'] date=['2013-07-09'] offers=[8]
+      title: Lot 16 : Plomberie Sanitaires
+      value=['141,127.92 EUR'] estimate=[] winners=['Larue SARL']
+  BLOCK RES-4: LOT_NUMBER=['17'] CONTRACT_NUMBER=['13015'] date=['2013-07-09'] offers=[10]
+      title: Lot 17 : Électricité
+      value=['269,736.99 EUR'] estimate=[] winners=['SAS SCAE']
+
+=== NOTICE 17517659 profile=ted-export-r208 R2.0.8.S02.E01 pub=253061-2013
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2013/S 146-253061
+   TED-NOTICE_NUMBER_OJ: 2012/S 173-285863
+   TED-REF_NOTICE.NO_DOC_OJS: 2012/S 173-285863
+   TED-ADDITIONAL_INFORMATION: Durée du marché : Durée totale du marché : 32 moisLe marché est conclu pour une durée de 32 mois à compter de sa notification.Délai d'exécution Phase 1 : 18.5 mois y compris période de préparation.Délai d'exécution Phase 2 : 6.5 mois y compris période de préparation Le démarrage des travaux est signifié par ordre de service.Date de signature des marchés :3.4.2013Les lots 1, 2, 4, 5, 6, 7 et 20 ont été déclaré infructeueuxLe lot 3, 9, 14, 15, 16, 17 ont été déclaré sans suiteLes pièces du marché …
+   TED-VALUE: 1,219,605.42 EUR | 357,146.38 EUR | 64,396.18 EUR | 190,000.00 EUR | 23,200.00 EUR | 10,317.05 EUR | 509,781.18 EUR
+   TED-VALUE_COST: 1,219,605.42 EUR
+  BLOCK RES-1: LOT_NUMBER=['8'] CONTRACT_NUMBER=['13006'] date=['2013-04-08'] offers=[6]
+      title: Lot 08 : Menuiseries intérieures
+      value=['357,146.38 EUR'] estimate=[] winners=['Les menuisiers du Rhone']
+  BLOCK RES-2: LOT_NUMBER=['10'] CONTRACT_NUMBER=['13008'] date=['2013-04-08'] offers=[18]
+      title: Lot 10 : Plafonds suspendus
+      value=['64,396.18 EUR'] estimate=[] winners=['Meunier intramuros']
+  BLOCK RES-3: LOT_NUMBER=['11'] CONTRACT_NUMBER=['13009'] date=['2013-04-08'] offers=[8]
+      title: Lot 11 : Carrelage - Faïences
+      value=['190,000.00 EUR'] estimate=[] winners=["Al'flor"]
+  BLOCK RES-4: LOT_NUMBER=['12'] CONTRACT_NUMBER=['13010'] date=['2013-04-08'] offers=[6]
+      title: Lot 12 : Sols minces
+      value=[] estimate=['64,764.63 EUR'] winners=['Sols realisation']
+  BLOCK RES-5: LOT_NUMBER=['13'] CONTRACT_NUMBER=['13011'] date=['2013-04-08'] offers=[6]
+      title: Lot 13 : Ascenseur
+      value=['23,200.00 EUR'] estimate=[] winners=['Otis']
+  BLOCK RES-6: LOT_NUMBER=['18'] CONTRACT_NUMBER=['13016'] date=[] offers=[2]
+      title: Lot 18 : Nettoyage
+      value=['10,317.05 EUR'] estimate=[] winners=['Alpes services nettoyage']
+  BLOCK RES-7: LOT_NUMBER=['19'] CONTRACT_NUMBER=['13017'] date=['2013-04-08'] offers=[7]
+      title: Lot 19 : VRD - Aménagements extérieurs
+      value=['509,781.18 EUR'] estimate=[] winners=['Jean Lefebvre Sud Est']
+
+=== NOTICE 17518079 profile=ted-export-r208 R2.0.8.S02.E01 pub=253037-2013
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2013/S 146-253037
+   TED-NOTICE_NUMBER_OJ: 2013/S 13-016899 | 2012/S 173-285863
+   TED-REF_NOTICE.NO_DOC_OJS: 2013/S 13-016899
+   TED-FILE_REFERENCE_NUMBER: Travaux WALLON Lots 1,2,5 et 20
+   TED-ADDITIONAL_INFORMATION: Procédure adaptée avec négociation suite à appel d'offres infructueux. Durée du marché : durée totale de validité du marché : 32 mois. Le marché est conclu pour une durée de 32 mois à compter de sa notification. Délai d'exécution total : 26,5 mois se décomposant comme suit : | - délai d'exécution phase 1 : 18,5 mois y compris période de préparation, | - délai d'exécution phase 2 : 6,5 mois y compris période de préparation. | Date de signature du lot 1 : le 16.5.2013. Date de signature des lots 2…
+   TED-VALUE: 702,184.28 EUR | 156,713.50 EUR | 134,000.00 EUR | 392,972.92 EUR | 18,497.96 EUR
+   TED-VALUE_COST: 702,184.28 EUR
+  BLOCK RES-1: LOT_NUMBER=['1'] CONTRACT_NUMBER=['13051'] date=['2013-05-27'] offers=[4]
+      title: Lot 01 : Désamiantage
+      value=['156,713.50 EUR'] estimate=[] winners=['Arnaud Demolition']
+  BLOCK RES-2: LOT_NUMBER=['2'] CONTRACT_NUMBER=['13052'] date=['2013-05-27'] offers=[6]
+      title: Lot 02 : Déconstruction
+      value=['134,000.00 EUR'] estimate=[] winners=['Arnaud Demolition']
+  BLOCK RES-3: LOT_NUMBER=['5'] CONTRACT_NUMBER=['13053'] date=['2013-07-05'] offers=[3]
+      title: Lot 05 : Parement de façades
+      value=['392,972.92 EUR'] estimate=[] winners=['Inobat AB Diffusion']
+  BLOCK RES-4: LOT_NUMBER=['20'] CONTRACT_NUMBER=['13054'] date=['2013-05-27'] offers=[6]
+      title: Lot 20 : Système de sécurité incendie
+      value=['18,497.96 EUR'] estimate=[] winners=['Cegelec']
+
+=== NOTICE 17518149 profile=ted-export-r208 R2.0.8.S02.E01 pub=253114-2013
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2013/S 146-253114
+   TED-NOTICE_NUMBER_OJ: 2013/S 12-015227 | 2012/S 173-285863
+   TED-REF_NOTICE.NO_DOC_OJS: 2013/S 12-015227
+   TED-FILE_REFERENCE_NUMBER: Travaux Wallon lots 4,6,7 et 14
+   TED-ADDITIONAL_INFORMATION: Appel d'offres suite à appel d'offres infructueux. Durée du marché : durée totale du marché : 32 mois. Le marché est conclu pour une durée de 32 mois à compter de sa notification. Délai d'exécution phase 1 : 18,5 mois y compris période de préparation. Délai d'exécution phase 2 : 6,5 mois y compris période de préparation. Le lot 7 a été déclaré sans suite. Lot 4 : Étanchéité zinguerie : la PSE n° 1 est retenue. Montant de l'offre de base : 413 271,45 EUR HT, montant de la PSE n° 1 : garde-corps d…
+   TED-VALUE: 856,075.58 EUR | 425,151.45 EUR | 401,281.00 EUR | 29,643.13 EUR
+   TED-VALUE_COST: 856,075.58 EUR
+  BLOCK RES-1: LOT_NUMBER=['4'] CONTRACT_NUMBER=['13003'] date=['2013-07-09'] offers=[2]
+      title: Lot 04 : Etanchéité - zinguerie
+      value=['425,151.45 EUR'] estimate=[] winners=['MJP Bardage']
+  BLOCK RES-2: LOT_NUMBER=['6'] CONTRACT_NUMBER=['13004'] date=['2013-07-09'] offers=[7]
+      title: Lot 06 : Menuiseries extérieures bois - occultations
+      value=['401,281.00 EUR'] estimate=[] winners=['Faure Regis & Fils']
+  BLOCK RES-3: LOT_NUMBER=['14'] CONTRACT_NUMBER=['13012'] date=['2013-07-09'] offers=[5]
+      title: Lot 14 : Equipements de cuisine
+      value=['29,643.13 EUR'] estimate=[] winners=['Martinon MSE']
+
+=== NOTICE 17657578 profile=ted-export-r208 R2.0.8.S02.E01 pub=392858-2013
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2013/S 226-392858
+   TED-NOTICE_NUMBER_OJ: 2013/S 123-210177 | 2013/S 37-058433 | 2013/S 12-015227
+   TED-REF_NOTICE.NO_DOC_OJS: 2013/S 123-210177
+   TED-FILE_REFERENCE_NUMBER: Travaux WALLON Lots 7 & 9
+   TED-ADDITIONAL_INFORMATION: Durée du marché : durée totale de validité du marché : 32 mois. | Le marché est conclu pour une durée de 32 mois à compter de sa notification. | Délai d'exécution total : 25 mois, se décomposant ainsi : | — délai d'exécution Phase 1 : 18,5 mois y compris période de préparation, | — délai d'exécution Phase 2 : 6,5 mois y compris période de préparation. | Date de signature des marchés : 12.11.2013. | Les pièces du marché sont consultables sur place, sur rendez-vous, du lundi au vendredi de 9:00 à …
+   TED-VALUE: 725,206.35 EUR | 434,385.15 EUR | 290,821.20 EUR
+   TED-VALUE_COST: 725,206.35 EUR
+  BLOCK RES-1: LOT_NUMBER=['7'] CONTRACT_NUMBER=['13005'] date=['2013-11-15'] offers=[6]
+      title: Lot 07 : serrurerie – métallerie
+      value=['434,385.15 EUR'] estimate=[] winners=['Spalu']
+  BLOCK RES-2: LOT_NUMBER=['9'] CONTRACT_NUMBER=['13007'] date=['2013-11-15'] offers=[9]
+      title: Lot 09 : isolation – plâtrerie – peintures
+      value=['290,821.20 EUR'] estimate=[] winners=['Perrotin']
+
+SERVED BLOCK KEYS (no lot shown): [(17518079, 'RES-1', 'selec-w'), (17518079, 'RES-2', 'selec-w'), (17518079, 'RES-3', 'selec-w'), (17518079, 'RES-4', 'selec-w'), (17517659, 'RES-1', 'selec-w'), (17517659, 'RES-2', 'selec-w'), (17517659, 'RES-3', 'selec-w'), (17517659, 'RES-4', 'selec-w'), (17517659, 'RES-5', 'selec-w'), (17517659, 'RES-6', 'selec-w'), (17517659, 'RES-7', 'selec-w'), (17517331, 'RES-1', 'selec-w'), (17517331, 'RES-2', 'selec-w'), (17517331, 'RES-3', 'selec-w'), (17517331, 'RES-4', 'selec-w'), (17518149, 'RES-1', 'selec-w'), (17518149, 'RES-2', 'selec-w'), (17518149, 'RES-3', 'selec-w'), (17657578, 'RES-1', 'selec-w'), (17657578, 'RES-2', 'selec-w')]
+WINNER PARTIES: [('Perrotin', None), ('Spalu', None)]

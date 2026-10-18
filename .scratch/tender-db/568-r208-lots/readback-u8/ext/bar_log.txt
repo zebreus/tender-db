@@ -1,0 +1,41 @@
+TENDER 7757904: 5 blocks, 0 parity break(s)
+TENDER 7861809: 11 blocks, 0 parity break(s)
+TENDER 7712921: 2 blocks, 0 parity break(s)
+TENDER 7618275: 28 blocks, 0 parity break(s)
+TENDER 5834359: 2 blocks, 0 parity break(s)
+TENDER 7734908: 2 blocks, 0 parity break(s)
+TENDER 7470625: 6 blocks, 0 parity break(s)
+TENDER 7383539: 6 blocks, 0 parity break(s)
+TENDER 6144328: 4 blocks, 0 parity break(s)
+TENDER 5457789: 57 blocks, 0 parity break(s)
+TENDER 6538921: 6 blocks, 0 parity break(s)
+TENDER 7801839: 88 blocks, 0 parity break(s)
+TENDER 7211401: 13 blocks, 0 parity break(s)
+TENDER 8291946: 4 blocks, 0 parity break(s)
+TENDER 7611313: 3 blocks, 0 parity break(s)
+TENDER 8469615: 14 blocks, 0 parity break(s)
+TENDER 8497081: 13 blocks, 0 parity break(s)
+TENDER 7274146: 10 blocks, 0 parity break(s)
+TENDER 7162587: 10 blocks, 0 parity break(s)
+TENDER 6866398: 8 blocks, 0 parity break(s)
+TENDER 6365329: 8 blocks, 0 parity break(s)
+TENDER 8365595: 1 blocks, 0 parity break(s)
+TENDER 4888356: 14 blocks, 0 parity break(s)
+TENDER 5864590: 3 blocks, 0 parity break(s)
+TENDER 5362479: 10 blocks, 0 parity break(s)
+TENDER 4569314: 10 blocks, 0 parity break(s)
+TENDER 5351872: 13 blocks, 0 parity break(s)
+TENDER 5048894: 24 blocks, 0 parity break(s)
+TENDER 4836560: 20 blocks, 0 parity break(s)
+TENDER 5226033: 22 blocks, 0 parity break(s)
+G2 TENDER 4888356: 14 block(s) base null -> lot by 570 (14 of them G2's refusal at base): ['18233071/RES-1 -> LOT-1', '18233071/RES-10 -> LOT-10', '18233071/RES-11 -> LOT-11', '18233071/RES-12 -> LOT-12', '18233071/RES-13 -> LOT-13']
+G2 TENDER 5864590: 2 block(s) base null -> lot by 570 (2 of them G2's refusal at base): ['19369697/RES-1 -> LOT-2', '19369697/RES-2 -> LOT-3']
+G2 TENDER 5362479: 10 block(s) base null -> lot by 570 (10 of them G2's refusal at base): ['18480991/RES-1 -> LOT-1', '18480991/RES-10 -> LOT-13', '18480991/RES-2 -> LOT-2', '18480991/RES-3 -> LOT-4', '18480991/RES-4 -> LOT-5']
+G2 TENDER 4569314: 10 block(s) base null -> lot by 570 (10 of them G2's refusal at base): ['12521740/RES-1 -> LOT-2', '12521740/RES-2 -> LOT-3', '12521740/RES-3 -> LOT-5', '12521740/RES-4 -> LOT-6', '12521740/RES-5 -> LOT-7']
+G2 TENDER 5351872: 13 block(s) base null -> lot by 570 (13 of them G2's refusal at base): ['18301104/RES-1 -> LOT-2', '18301104/RES-2 -> LOT-3', '18301104/RES-3 -> LOT-6', '18301104/RES-4 -> LOT-7', '18301104/RES-5 -> LOT-8']
+G2 TENDER 5048894: 24 block(s) base null -> lot by 570 (24 of them G2's refusal at base): ['18258276/RES-1 -> LOT-2', '18258276/RES-10 -> LOT-3', '18258276/RES-11 -> LOT-3', '18258276/RES-12 -> LOT-1', '18258276/RES-13 -> LOT-3']
+G2 TENDER 4836560: 19 block(s) base null -> lot by 570 (19 of them G2's refusal at base): ['17517331/RES-1 -> LOT-3', '17517331/RES-2 -> LOT-15', '17517331/RES-3 -> LOT-16', '17517331/RES-4 -> LOT-17', '17517659/RES-1 -> LOT-8']
+G2 TENDER 5226033: 22 block(s) base null -> lot by 570 (22 of them G2's refusal at base): ['18033024/RES-1 -> LOT-1', '18033024/RES-10 -> LOT-10', '18033024/RES-11 -> LOT-11', '18033024/RES-12 -> LOT-12', '18033024/RES-13 -> LOT-13']
+G2 STRATUM: 8 of 8 Tender(s) carry a block 570 moves from null to a lot
+{"mode": "bar", "drain": {"job": "2617", "finished": "2026-10-18T15:19:48+00:00"}, "read_started": "2026-10-18T18:07:56+00:00", "cache": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/bar_cache", "ids_from": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/draw_ext.json", "draw_cursor_range": {"from": "957854566", "to": "958764334", "rule": "from < cursor <= to", "events_read": 46879, "events_in_range": 46879, "events_outside_range": 0, "first_in_range": 957854567, "last_in_range": 958764329, "read_reaches": 958764334, "generations": [2]}, "reuse_notices": [], "tenders": 30, "read": 30, "blocks": 417, "parity_ok": 417, "tenders_with_breaks": [], "non_legacy_ok": 0, "non_legacy_mismatches": [], "served_outside_chain": [], "computed_not_served": [], "legacy_test_disagrees": [], "profile_from_prefix": [], "incomplete": [], "by_cause": {"570": 276, "unchanged": 135, "568-u8": 6}, "by_reason": {"567 same-notice + 570 remap ->": 162, "567 same-notice": 74, "568 match": 170, "568 refused G4": 1, "568 refused G3": 4, "567 same-notice: no lot": 3, "568 refused G5": 3}, "read_finished": "2026-10-18T18:13:17+00:00", "gets": 201, "fetch_errors": [], "parity_breaks": 0, "parity_verdict": "pass", "verdict_reasons": [], "pass_bar_i": true}
+{"breaks": []}

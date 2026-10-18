@@ -2,7 +2,7 @@
  "stage": "judge (combined read-back of 568 unit 8 + 570, refold-fields 2616 + project 2617)",
  "judged_at": "2026-10-18T16:58Z",
  "verdicts": {
-  "568": "OPEN: not failed, not yet passed. Every item read passes: (a), (b), (c), (d), (f), OOS, and bar (i) 878/878, (ii) 0/30, (iii) no trigger. The bar's draw quota of >= 8 G2 Tenders is unmet (5/8) because of a draw-tool defect. 568 closes on the pre-registered 3-Tender extension (O1).",
+  "568": "PASS (final, after O1). Every item passes over the conformant 30: (a), (b), (c), (d), (f), OOS 50, the draw (30 held, 21 OUT >= 10, 8 G2 >= 8, cursor range recorded), and the amended bar: (i) parity 417/417 blocks, 0 breaks; (ii) 0 of 30 Tenders keep a judged-wrong block (limit 2); (iii) no kept wrong block, no new kept wrong shape, no reopen trigger. The O1 extension (5048894, 4836560, 5226033) adds 66 568-scope blocks, all single_right, 65 served on their lot and 1 falsely refused by G5. Robust to the one contestable label (4836560 17518149/RES-1): judged wrong it would make (ii) 1/30, still a pass.",
   "570": "PASS. (a)-(g) all pass; (e) 30/30 once 6876932 is read against rule step 3's definition of target. No reopen."
  },
  "judge_own_checks": [
@@ -13,7 +13,14 @@
   "570 (e) target: rule step 3 and Error risk read directly; the verifier's attribution holds.",
   "570 (e) hold rule: fixed in the stage spec before reading, computed from the port; accepted.",
   "D3 wording: ADR-0017 rule L read; the build follows the ADR.",
-  "5602216 RES-128: CN 18674240 lots 171-175 and CAN 19023719 RES-127..129 read from cache."
+  "5602216 RES-128: CN 18674240 lots 171-175 and CAN 19023719 RES-127..129 read from cache.",
+  "O1 walk, offline: re-paged events from fresh568/changes_pages.json (46,879 in range, last page more=false at 958764334); exclusions via draw_fresh30.exclusions() hit s150 8, f30 1, oos50 2 -> 46,868 candidates; the salted order reproduces fresh568's walk 0-770 and ext's rows 771-2134 (1,364/1,364); the 220 population members were skipped unread; of 1,144 read non-population Tenders exactly 3 carry an r208 lot-placed notice, the 3 held.",
+  "O1 draw: the 27 kept are fresh568's walk indices 0-21, 61, 282, 366, 449, 770 (same ids at the same indices); the three false-G2 Tenders are absent; draw_ext.json (sha256 5d315eaf...) was written 18:07:28Z, before the bar read started 18:07:56Z; complete=true, 21 OUT, 8 G2.",
+  "O1 parity: from the raw ext bar_cache, 417 served blocks = 351 on the 27 + 66 on the 3; fresh568's 878 minus the 527 on the dropped Tenders (6324865 45, 6788159 460, 6869520 22) = 351. The 27 kept: 0 served-lot differences and 0 version changes against fresh568's bar_cache.",
+  "O1 bar (ii), from raw served lots: joined the 178 labels to the ext bar_cache lot_results, not to the join output: kept = 170 single_right; null = 2 single_right, 4 multi_lot_contract, 2 wrong_other; wrong kept = none.",
+  "O1 labels: extender and verifier agree on 66/66 (label and tentative lot); I read the notices for 4836560 (anchor 17101010, relaunch CNs 17244355 / 17247214 / 17288398, CAN 17518149) and 5048894 (17545429, 17923471, 18025780, 18258276) myself and concur.",
+  "O1 tools: check_live.py, combined_port.py and draw_fresh30.py hash as recorded in provenance (unedited); the corrected G2 test lives in ext/draw_fresh30_g2fix.py.",
+  "O1 corrections to the extender, checked: 5226033's clos-nw blocks serve no winners and no party is named 'infructueux' (extender note 4 wrong); 5048894 is a buyer-referenced relaunch (17923471 discontinues CN 2013/S 161-280705; T034 CN 18025780 cites it), not a weld of another procedure (extender note 3 overstated)."
  ],
  "items": [
   {
@@ -82,51 +89,62 @@
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/draw.json"
-   ]
+   ],
+   "o1": "The conformant 30 = 27 kept + 3 extension, 21 OUT (>= 10). draw_ext.json written 18:07:28Z, before the bar read at 18:07:56Z; cursor range recorded; complete=true."
   },
   {
    "issue": "568",
    "item": "fresh 30 draw: >= 8 G2 Tenders (outside population.json, serving an R2.0.8 block on a lot)",
-   "result": "open (fix: extension)",
+   "result": "pass (after O1)",
    "evidence": "Only 5 of the 8 Tenders the tool classed G2 qualify: 4888356, 5864590, 5362479, 4569314 and 5351872. The other three, 6324865, 6788159 and 6869520, are false positives of draw_fresh30.py's one-read signal (a Tender-scope winner row from another lot-less result). JUDGE checked the bar_cache listings: every notice in those chains is ted-export-r209 (35, 174 and 11 notices), and every lot-placed result is on an r209 notice. They have 0 blocks in 568 scope. So the quota as written is unmet, 5 of 8. The cause is a tooling defect, not a defect in the 568-u8 or 570 build, and I accept that attribution.\n\nJUDGE checked the walk accounting: the 22 non-G2 Tenders were all held at walk indices 0-21. After index 21 only a G2 can be held, so reclassifying the three as non-G2 only skips them and leaves the other 27 unchanged. The verifier's recall check holds on my recount. 615 read, non-population candidates after index 21 have a lot-placed result. The 290 the verifier listed hold 15,707 lot-placed results, all ted-export-r209. The other 322 have their lot-placed results only on notices >= 21,501,487, which is above the highest R2.0.8 notice id seen in any cache (21,409,453).\n\nThe conformant draw is therefore the 27 already judged plus the next 3 true-G2 Tenders after walk index 770, in the same salted order, under a corrected G2 test. Disposition: run that extension (see readback.md). The bar stays exactly as it is.",
    "files": [
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/draw.json",
-    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/draw_fresh30.py"
-   ]
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/draw_fresh30.py",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext/draw_ext.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/walk_result.json"
+   ],
+   "o1": "8 of 8. The 5 true-G2 Tenders kept, plus 5048894 (walk index 805), 4836560 (1891) and 5226033 (2134), the next 3 in the same salted walk that pass the corrected test (outside population.json; a lot-placed result from a ted-export-r208 notice with no lot section of its own). Re-derived by the verifier with its own code and fresh GETs (1,364/1,364 rows equal) and by the judge offline."
   },
   {
    "issue": "568",
    "item": "bar (i): parity, 0 divergences on the fresh 30 (combined_port: 570 remap + amended guards)",
-   "result": "pass",
+   "result": "pass (over the 30)",
    "evidence": "878/878 blocks at parity. There are 0 breaks, 0 computed-not-served, 0 served-outside-chain and 0 non-legacy mismatches. The verifier recomputed this offline and re-read live the 8 Tenders that carry 568-scope blocks: identical. This covers the conformant 27. The 3 extension Tenders are still to be read.",
    "files": [
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
-    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/bar_summary.json"
-   ]
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/bar_summary.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext/bar_summary.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/check3_summary.json"
+   ],
+   "o1": "check_live.py --bar over all 30 ids with a new empty cache (--drain-job 2617 --drain-finished 2026-10-18T15:19:48+00:00), 18:07:56-18:13:17Z, 201 GETs, 0 fetch errors: 417/417 blocks at parity (351 on the 27 + 66 on the 3), 0 breaks, 0 computed-not-served, 0 served-outside-chain, 0 non-legacy mismatches, 0 prefix fallbacks; pass_bar_i=true. The verifier re-read the 3 fresh (18:25Z, check mode): 66/66, Tender JSONs byte-identical. The 27: 0 served-lot and 0 version differences against the 15:43-15:53Z read."
   },
   {
    "issue": "568",
    "item": "bar (ii): <= 2 of 30 Tenders carry a judged-wrong block the port also keeps",
-   "result": "pass",
+   "result": "pass (over the 30)",
    "evidence": "0 of 30, and 0 of the conformant 27. 112 568-scope blocks were labelled: 106 single_right, 4 multi_lot_contract and 2 wrong_other. The verifier re-judged them independently and agrees on all 112. All 6 wrong blocks are refused and serve null: G3 x4 on 8291946, G5 on 8365595 18617609/RES-1 and G5 on 5864590 19369697/RES-3. Before the guards, 3 of 30 Tenders carried a wrong block; after, 0. With the extension (ii) can only fail if all 3 added Tenders carry a kept wrong block.",
    "files": [
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
-    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/labels_joined.json"
-   ]
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/labels_joined.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext/labels_joined_ext.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/labels_verify.json"
+   ],
+   "o1": "0 of 30 (limit 2). 178 568-scope blocks labelled: 172 single_right, 4 multi_lot_contract, 2 wrong_other. The 66 new blocks are all single_right (extender and verifier agree 66/66). Kept: 170 single_right. The 6 wrong blocks are all refused, unchanged from fresh568. Tenders with a wrong block before the guards: still 3/30; after: 0/30. Sensitivity: 4836560 17518149/RES-1 judged wrong would give 1/30, a pass."
   },
   {
    "issue": "568",
    "item": "bar (iii): new shapes recorded and filed; reopen only on a parity break or 3+/30",
-   "result": "pass",
+   "result": "pass (over the 30)",
    "evidence": "No wrong block is kept, so there is no new kept shape to file. No reopen trigger fired: 0 breaks and 0/30. The shapes caught are recorded in readback.md: a BG plural multi-lot block (G3), CAN-only renumbering in a one-block CAN (G5), and a CAN repeating a printed number (G5).",
    "files": [
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json"
-   ]
+   ],
+   "o1": "No kept wrong block, so no new kept wrong shape; 0 breaks and 0/30, so no reopen. Recorded: a new G5 false-refusal shape and an inherited lot-text carry defect, both from relaunch CN 17244355's positional numbering (4836560); see O1."
   },
   {
    "issue": "568",
@@ -137,7 +155,8 @@
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/bar_summary.json"
-   ]
+   ],
+   "o1": "8 of 8 G2 Tenders exercise 570. The 3 extension Tenders move 65 blocks from base null (G2's refusal) to a lot with cause 570: 5048894 24, 4836560 19, 5226033 22. All 65 single_right and served. A 66th newly matched block, 4836560 17518149/RES-3, is right but G5 refuses it (cause unchanged). Across the 8: 114 moved blocks, all right; 2 newly matched blocks refused by G5 (5864590 RES-3 wrong, rightly; 4836560 RES-3 right, falsely)."
   },
   {
    "issue": "568",
@@ -149,7 +168,8 @@
     "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/c570/cache_k10/notice_18674240.json",
     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/c570/cache_k10/notice_19023719.json"
-   ]
+   ],
+   "o1": "One more false refusal: 4836560 17518149/RES-3, printed 14, 'Lot 14 : Equipements de cuisine', tentative LOT-14 (right), refused by G5 because LOT-4 carries lot 14's title from relaunch CN 17244355's positional numbering. It was null at base (G2) and is null now, so it is not a regression. Pooled false refusals: 2 of 2,253 right blocks (0.09 %)."
   },
   {
    "issue": "568",
@@ -310,7 +330,8 @@
    "what": "Fresh-30 G2 quota 5/8 (draw_fresh30.py one-read signal false-fires on multi-CAN R2.0.9 chains: 6324865, 6788159, 6869520)",
    "disposition": "fix",
    "action": "Run the pre-registered extension and give it an adversarial verify. Keep the 27 (walk indices 0-21 plus 61, 282, 366, 449 and 770). Continue the same salted walk from index 771 with the same exclusions, skipping population.json members unread. Hold the next 3 Tenders that pass the corrected G2 test: outside population.json, with at least one lot-placed result whose notice has no lot section of its own (profile ted-export-r208, confirmed from /v1/notices?tender=). Read those 3 with check_live.py --bar and label every 568 cross-notice block from the notices before looking at guard outcomes. 568 passes if parity stays 0 breaks and kept-wrong Tenders total <= 2 of 30. It reopens on a break or on 3 or more.",
-   "blocks": "568 close"
+   "blocks": "nothing (568 closed)",
+   "status": "done 2026-10-18: extension run (5048894, 4836560, 5226033) and adversarially verified; bar over the 30 passes (417/417, 0/30, no trigger); 568 PASS. See top-level O1."
   },
   {
    "id": "O2",
@@ -358,7 +379,8 @@
    "what": "check570.py's E2 anchor-title reference goes stale after K1-refused notices. draw_fresh30.py's G2 signal precision claim (\"0 of 2,951\") fails on multi-CAN R2.0.9 chains.",
    "disposition": "fix (in the O1 extension) / record",
    "reason": "Both are read-back tooling in .scratch, not build defects. The O1 extension uses the profile-based G2 test. Record the check570 limit in readback.md.",
-   "blocks": "nothing"
+   "blocks": "nothing",
+   "status": "O1 used the corrected G2 test in ext/draw_fresh30_g2fix.py (a copy; draw_fresh30.py is unedited). Run offline over fresh568's cache it reproduces the judge's 5 G2 / 3 not-G2 split."
   }
  ],
  "provenance_sha256": {
@@ -375,7 +397,795 @@
   "draw_fresh30.py": "707ce43ed6e1d53ca83657da41db35e4686acbca3ba3e16d0413d218375592e1",
   "expected.json": "6f396ec05d89b15d7f9d26e750466a90b1f003c2f02e54e5ca43610e0d37093d",
   "../drain/baseline-pre568u8-570.json": "328fa4199b98c8e3f78431cb87f57dcd418ab3db104fe72064d3151e12ed76e6",
-  "../readback/measured77.json": "472be1c60fa8ede419233a8a234f861c0841f7127cc44c0252b1c1c3caec94cb"
+  "../readback/measured77.json": "472be1c60fa8ede419233a8a234f861c0841f7127cc44c0252b1c1c3caec94cb",
+  "ext/result.json": "c1982af42b3545b181bc9ace5e20ecf1a093695cd74a942f4a01b6481f4e4f11",
+  "ext/draw_ext.json": "5d315eafec7dad5748723bb7a8bd4d2ec71d038aacdb981899ba8018dd305b4d",
+  "ext/bar_summary.json": "2732b6b158558f393a78623e83af2f5a7faa3aea12a6f96339b09aa5053e10f2",
+  "ext/labels_joined_ext.json": "64bdd780609bca0f8b20c4f6a42301d982a0666b4145606f4685e9182cff12d1",
+  "ext/draw_fresh30_g2fix.py": "3a8f8091203457304d232033377f16f9dceb26d74f6b46154b4995587d15f7c6",
+  "ext-verify/verify.json": "3c8502dd5b13e13c034d66ed5d00d80e984305728f8c3d34c35bdc6a870185b9",
+  "ext-verify/labels_verify.json": "51f3fca2cf3da75dc8ac07124467f5867b0a2c4cd29db101522929b6e0ac54c9",
+  "ext-verify/walk_result.json": "cfd1cc421045ad1c94e13806ab3793f5da8cb3ed9dc71f8b4e5c0be1e788188f",
+  "ext-verify/check3_summary.json": "96fa0c94d0eba151510d30b57ff2762a12a967577aa61895b886f8c3c1f550d5",
+  "ext/labels_ext.py": "cf69a40e8e405e5a69aca6bb74514414a7e3e9adbe87bc3d1fd3a22c4b455608"
  },
- "reads": "The judge made 0 GETs. Every check is offline, over the stage and verifier caches and the repo decision texts."
+ "reads": "The judge made 0 GETs, at 16:58Z and again for O1 (19:35Z). Every check is offline, over the stage and verifier caches and the repo decision texts.",
+ "o1_judged_at": "2026-10-18T19:35Z",
+ "verdicts_superseded": {
+  "568 at 2026-10-18T16:58Z": "OPEN: not failed, not yet passed. Every item read passes: (a), (b), (c), (d), (f), OOS, and bar (i) 878/878, (ii) 0/30, (iii) no trigger. The bar's draw quota of >= 8 G2 Tenders is unmet (5/8) because of a draw-tool defect. 568 closes on the pre-registered 3-Tender extension (O1)."
+ },
+ "O1": {
+  "issue": "568",
+  "what": "Fresh-30 G2 extension: keep the 27, hold the next 3 true-G2 Tenders, read all 30 on the amended bar",
+  "judged_at": "2026-10-18T19:35Z",
+  "verdict": "pass",
+  "held3": [
+   {
+    "tender_id": 5048894,
+    "walk_index": 805,
+    "year": 2015,
+    "qualifying_notice": 18258276,
+    "r208_lot_placed_notices": [
+     18258276
+    ],
+    "blocks_568_scope": 24,
+    "kept": 24,
+    "refused": 0,
+    "g2_570": "24 blocks null -> lot by 570, all G2 refusals at base"
+   },
+   {
+    "tender_id": 4836560,
+    "walk_index": 1891,
+    "year": 2013,
+    "qualifying_notice": 17517331,
+    "r208_lot_placed_notices": [
+     17517331,
+     17517659,
+     17518079,
+     17518149,
+     17657578
+    ],
+    "blocks_568_scope": 20,
+    "kept": 19,
+    "refused": 1,
+    "g2_570": "19 blocks null -> lot by 570, all G2 refusals at base; 17518149/RES-3 newly matched pre-guard (LOT-14, right) but refused by G5, cause unchanged"
+   },
+   {
+    "tender_id": 5226033,
+    "walk_index": 2134,
+    "year": 2015,
+    "qualifying_notice": 18033024,
+    "r208_lot_placed_notices": [
+     18033024,
+     18242004,
+     18527820,
+     18527875
+    ],
+    "blocks_568_scope": 22,
+    "kept": 22,
+    "refused": 0,
+    "g2_570": "22 blocks null -> lot by 570, all G2 refusals at base"
+   }
+  ],
+  "walk": "Same 568u8-fresh30- salted order over the same changed set (957854566 < c <= 958764334, 46,879 events, 46,868 candidates after s150 8 / f30 1 / oos50 2), resumed at index 771 and stopped at 2134 on the 3rd hold: 1,364 rows, 220 population members skipped unread, 1,144 read, 0 404s, 2,268 GETs (17:06:56-18:07:28Z). Indices 0-770 equal fresh568's walk. The verifier re-walked with its own code and fresh GETs: 1,364/1,364 equal; recall: across the 1,144 read Tenders exactly 10 lot-placed notices are R2.0.8, all in the 3 held. The old one-read signal would have fired on 15 skipped Tenders (first 6193033, index 986).",
+  "draw": "30 ids = 27 kept (indices 0-21, 61, 282, 366, 449, 770) + 3; complete=true; 21 OUT; 8 G2; cursor range recorded; written 18:07:28Z, before the bar read.",
+  "parity": "check_live.py --bar over the 30 with a new empty cache, --drain-job 2617 --drain-finished 2026-10-18T15:19:48+00:00: 30/30 read, 417/417 blocks at parity, 0 breaks, 0 computed-not-served, 0 served-outside-chain, 0 non-legacy mismatches, 0 legacy disagreements, 0 prefix fallbacks, pass_bar_i=true. The 3 new: 24 + 20 + 22 = 66 blocks at parity; verifier fresh re-read 66/66. Stability of the 27: 0 served-lot differences and 0 version changes against fresh568's read.",
+  "labels_summary": {
+   "blind": "Extender labelled from view.py (pre-guard replay lot only) at 18:15:31Z; verifier labelled from its own notice view with no served lot and no guard. They agree 66/66. Disclosure accepted: the walk's G2 evidence counted 19 lot-placed results on 4836560 against 20 blocks, implying one null but not which; it cannot bias (ii), as all 66 are single_right on both independent labellings.",
+   "new3": {
+    "single_right": 66
+   },
+   "all30": {
+    "single_right": 172,
+    "multi_lot_contract": 4,
+    "wrong_other": 2,
+    "total": 178
+   },
+   "all30_kept": {
+    "single_right": 170
+   },
+   "all30_refused": {
+    "single_right": 2,
+    "multi_lot_contract": 4,
+    "wrong_other": 2
+   }
+  },
+  "labels": [
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-1",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-2",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-3",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-4",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-5",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-6",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-7",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-8",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-9",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-10",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-11",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-12",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-13",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-14",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-15",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-16",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-17",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-18",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-19",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-20",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-21",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-22",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-23",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5048894,
+    "notice_id": 18258276,
+    "key": "RES-24",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517331,
+    "key": "RES-1",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517331,
+    "key": "RES-2",
+    "printed": "15",
+    "label": "single_right",
+    "tentative_lot": "LOT-15",
+    "served_lot": "LOT-15",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517331,
+    "key": "RES-3",
+    "printed": "16",
+    "label": "single_right",
+    "tentative_lot": "LOT-16",
+    "served_lot": "LOT-16",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517331,
+    "key": "RES-4",
+    "printed": "17",
+    "label": "single_right",
+    "tentative_lot": "LOT-17",
+    "served_lot": "LOT-17",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517659,
+    "key": "RES-1",
+    "printed": "8",
+    "label": "single_right",
+    "tentative_lot": "LOT-8",
+    "served_lot": "LOT-8",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517659,
+    "key": "RES-2",
+    "printed": "10",
+    "label": "single_right",
+    "tentative_lot": "LOT-10",
+    "served_lot": "LOT-10",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517659,
+    "key": "RES-3",
+    "printed": "11",
+    "label": "single_right",
+    "tentative_lot": "LOT-11",
+    "served_lot": "LOT-11",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517659,
+    "key": "RES-4",
+    "printed": "12",
+    "label": "single_right",
+    "tentative_lot": "LOT-12",
+    "served_lot": "LOT-12",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517659,
+    "key": "RES-5",
+    "printed": "13",
+    "label": "single_right",
+    "tentative_lot": "LOT-13",
+    "served_lot": "LOT-13",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517659,
+    "key": "RES-6",
+    "printed": "18",
+    "label": "single_right",
+    "tentative_lot": "LOT-18",
+    "served_lot": "LOT-18",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17517659,
+    "key": "RES-7",
+    "printed": "19",
+    "label": "single_right",
+    "tentative_lot": "LOT-19",
+    "served_lot": "LOT-19",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17518079,
+    "key": "RES-1",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17518079,
+    "key": "RES-2",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17518079,
+    "key": "RES-3",
+    "printed": "5",
+    "label": "single_right",
+    "tentative_lot": "LOT-5",
+    "served_lot": "LOT-5",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17518079,
+    "key": "RES-4",
+    "printed": "20",
+    "label": "single_right",
+    "tentative_lot": "LOT-20",
+    "served_lot": "LOT-20",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17518149,
+    "key": "RES-1",
+    "printed": "4",
+    "label": "single_right",
+    "tentative_lot": "LOT-4",
+    "served_lot": "LOT-4",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17518149,
+    "key": "RES-2",
+    "printed": "6",
+    "label": "single_right",
+    "tentative_lot": "LOT-6",
+    "served_lot": "LOT-6",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17518149,
+    "key": "RES-3",
+    "printed": "14",
+    "label": "single_right",
+    "tentative_lot": "LOT-14",
+    "served_lot": null,
+    "guard": "G5"
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17657578,
+    "key": "RES-1",
+    "printed": "7",
+    "label": "single_right",
+    "tentative_lot": "LOT-7",
+    "served_lot": "LOT-7",
+    "guard": null
+   },
+   {
+    "tender_id": 4836560,
+    "notice_id": 17657578,
+    "key": "RES-2",
+    "printed": "9",
+    "label": "single_right",
+    "tentative_lot": "LOT-9",
+    "served_lot": "LOT-9",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-1",
+    "printed": "1",
+    "label": "single_right",
+    "tentative_lot": "LOT-1",
+    "served_lot": "LOT-1",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-2",
+    "printed": "2",
+    "label": "single_right",
+    "tentative_lot": "LOT-2",
+    "served_lot": "LOT-2",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-3",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-4",
+    "printed": "4",
+    "label": "single_right",
+    "tentative_lot": "LOT-4",
+    "served_lot": "LOT-4",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-5",
+    "printed": "5",
+    "label": "single_right",
+    "tentative_lot": "LOT-5",
+    "served_lot": "LOT-5",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-6",
+    "printed": "6",
+    "label": "single_right",
+    "tentative_lot": "LOT-6",
+    "served_lot": "LOT-6",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-7",
+    "printed": "7",
+    "label": "single_right",
+    "tentative_lot": "LOT-7",
+    "served_lot": "LOT-7",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-8",
+    "printed": "8",
+    "label": "single_right",
+    "tentative_lot": "LOT-8",
+    "served_lot": "LOT-8",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-9",
+    "printed": "9",
+    "label": "single_right",
+    "tentative_lot": "LOT-9",
+    "served_lot": "LOT-9",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-10",
+    "printed": "10",
+    "label": "single_right",
+    "tentative_lot": "LOT-10",
+    "served_lot": "LOT-10",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-11",
+    "printed": "11",
+    "label": "single_right",
+    "tentative_lot": "LOT-11",
+    "served_lot": "LOT-11",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-12",
+    "printed": "12",
+    "label": "single_right",
+    "tentative_lot": "LOT-12",
+    "served_lot": "LOT-12",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18033024,
+    "key": "RES-13",
+    "printed": "13",
+    "label": "single_right",
+    "tentative_lot": "LOT-13",
+    "served_lot": "LOT-13",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18242004,
+    "key": "RES-1",
+    "printed": "3",
+    "label": "single_right",
+    "tentative_lot": "LOT-3",
+    "served_lot": "LOT-3",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18242004,
+    "key": "RES-2",
+    "printed": "4",
+    "label": "single_right",
+    "tentative_lot": "LOT-4",
+    "served_lot": "LOT-4",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18242004,
+    "key": "RES-3",
+    "printed": "5",
+    "label": "single_right",
+    "tentative_lot": "LOT-5",
+    "served_lot": "LOT-5",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18242004,
+    "key": "RES-4",
+    "printed": "9",
+    "label": "single_right",
+    "tentative_lot": "LOT-9",
+    "served_lot": "LOT-9",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18242004,
+    "key": "RES-5",
+    "printed": "12",
+    "label": "single_right",
+    "tentative_lot": "LOT-12",
+    "served_lot": "LOT-12",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18242004,
+    "key": "RES-6",
+    "printed": "13",
+    "label": "single_right",
+    "tentative_lot": "LOT-13",
+    "served_lot": "LOT-13",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18527820,
+    "key": "RES-1",
+    "printed": "12",
+    "label": "single_right",
+    "tentative_lot": "LOT-12",
+    "served_lot": "LOT-12",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18527875,
+    "key": "RES-1",
+    "printed": "4",
+    "label": "single_right",
+    "tentative_lot": "LOT-4",
+    "served_lot": "LOT-4",
+    "guard": null
+   },
+   {
+    "tender_id": 5226033,
+    "notice_id": 18527875,
+    "key": "RES-2",
+    "printed": "9",
+    "label": "single_right",
+    "tentative_lot": "LOT-9",
+    "served_lot": "LOT-9",
+    "guard": null
+   }
+  ],
+  "contested_label": {
+   "block": "4836560 17518149/RES-1 -> LOT-4",
+   "ruling": "single_right",
+   "why": "Printed 4, 'Lot 04 : Etanchéité - zinguerie', contract 13003, MJP Bardage. Anchor CN 17101010 section LOT-4 prints 4, 'Lot 04: étanchéité - zinguerie'; LOT-4 is the only key lot 4 ever had, so the block sits on its own lot. LOT-4's served text is lot 14's because relaunch CN 17244355 ('lots 4,6,7 et 14') prints LOT_NUMBER 1..4 by position, and its section LOT-4 (printed 4, 'lot 14 : Equipements de cuisine') joins LOT-4 by section id and by printed number alike; no later notice re-titles LOT-4. That is a lot-text carry defect the block did not cause and that neither 568 nor 570 can see; 570 does not move that section. The unit-7 labels judge the block's lot identity.",
+   "sensitivity": "Judged wrong_other, (ii) = 1/30 (pass) and (iii) records an inherited kept shape; no reopen."
+  },
+  "bar": {
+   "i": "pass: 0 breaks over 417 blocks",
+   "ii": "pass: 0 of 30 Tenders keep a judged-wrong block (limit 2); 1/30 under the contested reading",
+   "iii": "pass: no kept wrong block, no new kept wrong shape; reopen triggers (break, or >= 3/30) not met",
+   "quota": "G2 8/8; OUT 21/10"
+  },
+  "g2_570_exercise": "All 3 new Tenders exercise 570 through a G2 refusal at base, so the stratum is 8 of 8. 65 blocks move null -> lot (24 + 19 + 22), all single_right and served on their lot; no wrong block was newly matched. 4836560 17518149/RES-3 is newly matched pre-guard (LOT-14, right) and refused by G5: a false refusal, cause unchanged.",
+  "recorded": [
+   "G5 false-refusal shape (568 decision record): a positional relaunch CN carries the true lot's title onto another lot's key (17244355: lot 14's title on LOT-4), so the true lot's award title equals exactly one other lot's title. 4836560 17518149/RES-3. Not a regression (null at base by G2). Pooled false refusals 2/2,253 (0.09 %).",
+   "Inherited lot-text carry defect (exhibit, lot-carry class): a relaunch CN printing LOT_NUMBER 1..k by position for a subset of lots. 4836560 LOT-4 serves lot 14's title and description; LOT-14 keeps only the anchor's description. Section id equals the printed number, so neither today's merge nor 570's remap can tell; no 568 or 570 fix.",
+   "Corrections to the extender (verifier's, checked by the judge): 5048894 is a buyer-referenced relaunch, not a weld; 5226033 serves no winner named 'infructueux'."
+  ],
+  "reopen": "none",
+  "files": [
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext/result.json",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext/draw_ext.json",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext/bar_summary.json",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext/labels_joined_ext.json",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext/draw_fresh30_g2fix.py",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/verify.json",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/labels_verify.json",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/walk_result.json",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/check3_summary.json",
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext/bar_cache",
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/ext-verify/cache3",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/nview_4836560.txt",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/nview_5048894.txt",
+   "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/ext-verify/nview_5226033.txt"
+  ]
+ }
 }

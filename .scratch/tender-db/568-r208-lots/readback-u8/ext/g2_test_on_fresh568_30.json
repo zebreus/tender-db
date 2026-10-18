@@ -1,0 +1,356 @@
+[
+ {
+  "index": 0,
+  "id": 7757904,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 5
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 1,
+  "id": 7861809,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 11
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 2,
+  "id": 7712921,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 2
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 3,
+  "id": 7618275,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 28
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 4,
+  "id": 5834359,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 2
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 5,
+  "id": 7734908,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 2
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 6,
+  "id": 7470625,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 6
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 7,
+  "id": 7383539,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 6
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 8,
+  "id": 6144328,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 4
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 9,
+  "id": 5457789,
+  "in_population": true,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "inside population.json",
+  "lot_placed_by_profile": null,
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 10,
+  "id": 6538921,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 6
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 11,
+  "id": 7801839,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 88
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 12,
+  "id": 7211401,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 13
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 13,
+  "id": 8291946,
+  "in_population": true,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "inside population.json",
+  "lot_placed_by_profile": null,
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 14,
+  "id": 7611313,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 3
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 15,
+  "id": 8469615,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 14
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 16,
+  "id": 8497081,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 13
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 17,
+  "id": 7274146,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 10
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 18,
+  "id": 7162587,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 10
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 19,
+  "id": 6866398,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 6
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 20,
+  "id": 6365329,
+  "in_population": false,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 7
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 21,
+  "id": 8365595,
+  "in_population": true,
+  "g2_original_tool": false,
+  "g2_corrected": false,
+  "why": "inside population.json",
+  "lot_placed_by_profile": null,
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 61,
+  "id": 4888356,
+  "in_population": false,
+  "g2_original_tool": true,
+  "g2_corrected": true,
+  "why": "18233071: ted-export-r208, no lot section of its own",
+  "lot_placed_by_profile": {
+   "ted-export-r208": 14
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 98,
+  "id": 6324865,
+  "in_population": false,
+  "g2_original_tool": true,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 44
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 282,
+  "id": 5864590,
+  "in_population": false,
+  "g2_original_tool": true,
+  "g2_corrected": true,
+  "why": "19369697: ted-export-r208, no lot section of its own",
+  "lot_placed_by_profile": {
+   "ted-export-r208": 2
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 366,
+  "id": 5362479,
+  "in_population": false,
+  "g2_original_tool": true,
+  "g2_corrected": true,
+  "why": "18480991: ted-export-r208, no lot section of its own",
+  "lot_placed_by_profile": {
+   "ted-export-r208": 10
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 449,
+  "id": 4569314,
+  "in_population": false,
+  "g2_original_tool": true,
+  "g2_corrected": true,
+  "why": "12521740: ted-export-r208, no lot section of its own",
+  "lot_placed_by_profile": {
+   "ted-export-r208": 10
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 513,
+  "id": 6788159,
+  "in_population": false,
+  "g2_original_tool": true,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 197
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 745,
+  "id": 6869520,
+  "in_population": false,
+  "g2_original_tool": true,
+  "g2_corrected": false,
+  "why": "no lot-placed result from a ted-export-r208 notice",
+  "lot_placed_by_profile": {
+   "ted-export-r209": 20
+  },
+  "r208_with_own_lots": null
+ },
+ {
+  "index": 770,
+  "id": 5351872,
+  "in_population": false,
+  "g2_original_tool": true,
+  "g2_corrected": true,
+  "why": "18301104: ted-export-r208, no lot section of its own",
+  "lot_placed_by_profile": {
+   "ted-export-r208": 13
+  },
+  "r208_with_own_lots": null
+ }
+]

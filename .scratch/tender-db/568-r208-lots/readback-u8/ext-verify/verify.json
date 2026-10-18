@@ -1,0 +1,879 @@
+{
+ "stage": "adversarial verify of the O1 extension (568 read-back, readback-u8/readback.md O1)",
+ "changed_set": {
+  "pages": 47,
+  "events_in_range": 46879,
+  "sha256": "8062ccd12fbeeea78a794b5ea9ce85126588066c882b9d0782261f3f73e6bd79",
+  "source": "re-paged fresh by the verifier, /v1/changes?entity=tender&since=957854566, to last_cursor 958764334, more=false"
+ },
+ "walk": {
+  "excluded_hit": {
+   "s150": 8,
+   "oos50": 2,
+   "f30": 1
+  },
+  "candidates": 46868,
+  "prefix_0_770_equals_fresh568_walk": true,
+  "seed": {
+   "held": 27,
+   "out": 21,
+   "g2": 5
+  },
+  "walked_from": 771,
+  "walked_to": 2134,
+  "acts": {
+   "skip": 1141,
+   "skip-unread-pop": 220,
+   "held": 3
+  },
+  "gets": 2268,
+  "stop": null,
+  "held_new": [
+   {
+    "index": 805,
+    "id": 5048894,
+    "year": 2015,
+    "qualifying_notice": 18258276,
+    "qualifying_placed": 24
+   },
+   {
+    "index": 1891,
+    "id": 4836560,
+    "year": 2013,
+    "qualifying_notice": 17517331,
+    "qualifying_placed": 4
+   },
+   {
+    "index": 2134,
+    "id": 5226033,
+    "year": 2015,
+    "qualifying_notice": 18033024,
+    "qualifying_placed": 13
+   }
+  ],
+  "held_30": [
+   7757904,
+   7861809,
+   7712921,
+   7618275,
+   5834359,
+   7734908,
+   7470625,
+   7383539,
+   6144328,
+   5457789,
+   6538921,
+   7801839,
+   7211401,
+   8291946,
+   7611313,
+   8469615,
+   8497081,
+   7274146,
+   7162587,
+   6866398,
+   6365329,
+   8365595,
+   4888356,
+   5864590,
+   5362479,
+   4569314,
+   5351872,
+   5048894,
+   4836560,
+   5226033
+  ],
+  "n_out": 21,
+  "n_g2": 8
+ },
+ "parity_3_fresh": {
+  "read_started": "2026-10-18T18:25:11+00:00",
+  "read_finished": "2026-10-18T18:25:56+00:00",
+  "tenders": 3,
+  "read": 3,
+  "blocks": 66,
+  "parity_ok": 66,
+  "parity_breaks": 0,
+  "computed_not_served": [],
+  "served_outside_chain": [],
+  "non_legacy_mismatches": [],
+  "legacy_test_disagrees": [],
+  "incomplete": [],
+  "by_cause": {
+   "570": 65,
+   "unchanged": 1
+  },
+  "by_reason": {
+   "568 match": 65,
+   "568 refused G5": 1
+  },
+  "gets": 29,
+  "fetch_errors": [],
+  "parity_verdict": "pass"
+ },
+ "g2_570_moves": {
+  "5048894": {
+   "n": 24,
+   "blocks": [
+    "18258276/RES-1 -> LOT-2",
+    "18258276/RES-10 -> LOT-3",
+    "18258276/RES-11 -> LOT-3",
+    "18258276/RES-12 -> LOT-1",
+    "18258276/RES-13 -> LOT-3",
+    "18258276/RES-14 -> LOT-1",
+    "18258276/RES-15 -> LOT-1",
+    "18258276/RES-16 -> LOT-3",
+    "18258276/RES-17 -> LOT-1",
+    "18258276/RES-18 -> LOT-3",
+    "18258276/RES-19 -> LOT-2",
+    "18258276/RES-2 -> LOT-2",
+    "18258276/RES-20 -> LOT-1",
+    "18258276/RES-21 -> LOT-3",
+    "18258276/RES-22 -> LOT-1",
+    "18258276/RES-23 -> LOT-1",
+    "18258276/RES-24 -> LOT-3",
+    "18258276/RES-3 -> LOT-2",
+    "18258276/RES-4 -> LOT-2",
+    "18258276/RES-5 -> LOT-2",
+    "18258276/RES-6 -> LOT-2",
+    "18258276/RES-7 -> LOT-1",
+    "18258276/RES-8 -> LOT-1",
+    "18258276/RES-9 -> LOT-3"
+   ]
+  },
+  "4836560": {
+   "n": 19,
+   "blocks": [
+    "17518079/RES-1 -> LOT-1",
+    "17518079/RES-2 -> LOT-2",
+    "17518079/RES-3 -> LOT-5",
+    "17518079/RES-4 -> LOT-20",
+    "17517659/RES-1 -> LOT-8",
+    "17517659/RES-2 -> LOT-10",
+    "17517659/RES-3 -> LOT-11",
+    "17517659/RES-4 -> LOT-12",
+    "17517659/RES-5 -> LOT-13",
+    "17517659/RES-6 -> LOT-18",
+    "17517659/RES-7 -> LOT-19",
+    "17517331/RES-1 -> LOT-3",
+    "17517331/RES-2 -> LOT-15",
+    "17517331/RES-3 -> LOT-16",
+    "17517331/RES-4 -> LOT-17",
+    "17518149/RES-1 -> LOT-4",
+    "17518149/RES-2 -> LOT-6",
+    "17657578/RES-1 -> LOT-7",
+    "17657578/RES-2 -> LOT-9"
+   ]
+  },
+  "5226033": {
+   "n": 22,
+   "blocks": [
+    "18033024/RES-1 -> LOT-1",
+    "18033024/RES-10 -> LOT-10",
+    "18033024/RES-11 -> LOT-11",
+    "18033024/RES-12 -> LOT-12",
+    "18033024/RES-13 -> LOT-13",
+    "18033024/RES-2 -> LOT-2",
+    "18033024/RES-3 -> LOT-3",
+    "18033024/RES-4 -> LOT-4",
+    "18033024/RES-5 -> LOT-5",
+    "18033024/RES-6 -> LOT-6",
+    "18033024/RES-7 -> LOT-7",
+    "18033024/RES-8 -> LOT-8",
+    "18033024/RES-9 -> LOT-9",
+    "18242004/RES-1 -> LOT-3",
+    "18242004/RES-2 -> LOT-4",
+    "18242004/RES-3 -> LOT-5",
+    "18242004/RES-4 -> LOT-9",
+    "18242004/RES-5 -> LOT-12",
+    "18242004/RES-6 -> LOT-13",
+    "18527820/RES-1 -> LOT-12",
+    "18527875/RES-1 -> LOT-4",
+    "18527875/RES-2 -> LOT-9"
+   ]
+  }
+ },
+ "labels": [
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517331,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract '13002', title 'Lot 03 : Terrassement - Gros Oeuvre'; = anchor CN 17101010 LOT-3 'Lot 03: terrassement - gros oeuvre.' -> LOT-3"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517331,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-15",
+   "preguard_lot": "LOT-15",
+   "guard": null,
+   "why": "printed 15, contract '13013', title 'Lot 15 : Chauffage - ventilation'; = anchor CN 17101010 LOT-15 'Lot 15: chauffage - ventilation.' -> LOT-15"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517331,
+   "result_key": "RES-3",
+   "label": "single_right",
+   "served_lot": "LOT-16",
+   "preguard_lot": "LOT-16",
+   "guard": null,
+   "why": "printed 16, contract '13014', title 'Lot 16 : Plomberie Sanitaires'; = anchor CN 17101010 LOT-16 'Lot 16: plomberie sanitaires.' -> LOT-16"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517331,
+   "result_key": "RES-4",
+   "label": "single_right",
+   "served_lot": "LOT-17",
+   "preguard_lot": "LOT-17",
+   "guard": null,
+   "why": "printed 17, contract '13015', title 'Lot 17 : Électricité'; = anchor CN 17101010 LOT-17 'Lot 17: électricité.' -> LOT-17"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517659,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-8",
+   "preguard_lot": "LOT-8",
+   "guard": null,
+   "why": "printed 8, contract '13006', title 'Lot 08 : Menuiseries intérieures'; = anchor CN 17101010 LOT-8 'Lot 08: menuiseries intérieures.' -> LOT-8"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517659,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-10",
+   "preguard_lot": "LOT-10",
+   "guard": null,
+   "why": "printed 10, contract '13008', title 'Lot 10 : Plafonds suspendus'; = anchor CN 17101010 LOT-10 'Lot 10: plafonds suspendus.' -> LOT-10"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517659,
+   "result_key": "RES-3",
+   "label": "single_right",
+   "served_lot": "LOT-11",
+   "preguard_lot": "LOT-11",
+   "guard": null,
+   "why": "printed 11, contract '13009', title 'Lot 11 : Carrelage - Faïences'; = anchor CN 17101010 LOT-11 'Lot 11: carrelage - faïences.' -> LOT-11"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517659,
+   "result_key": "RES-4",
+   "label": "single_right",
+   "served_lot": "LOT-12",
+   "preguard_lot": "LOT-12",
+   "guard": null,
+   "why": "printed 12, contract '13010', title 'Lot 12 : Sols minces'; = anchor CN 17101010 LOT-12 'Lot 12: sols minces.' -> LOT-12"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517659,
+   "result_key": "RES-5",
+   "label": "single_right",
+   "served_lot": "LOT-13",
+   "preguard_lot": "LOT-13",
+   "guard": null,
+   "why": "printed 13, contract '13011', title 'Lot 13 : Ascenseur'; = anchor CN 17101010 LOT-13 'Lot 13: ascenseur.' -> LOT-13"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517659,
+   "result_key": "RES-6",
+   "label": "single_right",
+   "served_lot": "LOT-18",
+   "preguard_lot": "LOT-18",
+   "guard": null,
+   "why": "printed 18, contract '13016', title 'Lot 18 : Nettoyage'; = anchor CN 17101010 LOT-18 'Lot 18: nettoyage.' -> LOT-18"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17517659,
+   "result_key": "RES-7",
+   "label": "single_right",
+   "served_lot": "LOT-19",
+   "preguard_lot": "LOT-19",
+   "guard": null,
+   "why": "printed 19, contract '13017', title 'Lot 19 : VRD - Aménagements extérieurs'; = anchor CN 17101010 LOT-19 'Lot 19: VRD - aménagements extérieurs.' -> LOT-19"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17518079,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 1, contract '13051', title 'Lot 01 : Désamiantage'; = anchor CN 17101010 LOT-1 'Lot 01: désamiantage.' -> LOT-1"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17518079,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 2, contract '13052', title 'Lot 02 : Déconstruction'; = anchor CN 17101010 LOT-2 'Lot 02: déconstruction.' -> LOT-2"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17518079,
+   "result_key": "RES-3",
+   "label": "single_right",
+   "served_lot": "LOT-5",
+   "preguard_lot": "LOT-5",
+   "guard": null,
+   "why": "printed 5, contract '13053', title 'Lot 05 : Parement de façades'; = anchor CN 17101010 LOT-5 'Lot 05: parement de façades.' -> LOT-5"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17518079,
+   "result_key": "RES-4",
+   "label": "single_right",
+   "served_lot": "LOT-20",
+   "preguard_lot": "LOT-20",
+   "guard": null,
+   "why": "printed 20, contract '13054', title 'Lot 20 : Système de sécurité incendie'; = anchor CN 17101010 LOT-20 'Lot 20: système de sécurité incendie.' -> LOT-20"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17518149,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-4",
+   "preguard_lot": "LOT-4",
+   "guard": null,
+   "why": "printed 4, contract '13003', title 'Lot 04 : Etanchéité - zinguerie'; = anchor CN 17101010 LOT-4 'Lot 04: étanchéité - zinguerie.' -> LOT-4; CAVEAT: relaunch CN 17244355 (the CAN's REF, 'lots 4,6,7 et 14') printed LOT_NUMBER 1..4 positionally, so its section printed 4 = lot 14 carried 'lot 14 : Equipements de cuisine' onto key LOT-4, the anchor's lot 4. The block is on lot 4's only key (right by identity); the key's served text is lot 14's (inherited carry defect, 570 error-risk class 'one printed number naming different lots', not caused by the block)"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17518149,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-6",
+   "preguard_lot": "LOT-6",
+   "guard": null,
+   "why": "printed 6, contract '13004', title 'Lot 06 : Menuiseries extérieures bois - occultations'; = anchor CN 17101010 LOT-6 'Lot 06: menuiseries extérieures bois - occultations.' -> LOT-6 (its REF CN 17244355 prints lot 6 under another number)"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17518149,
+   "result_key": "RES-3",
+   "label": "single_right",
+   "served_lot": null,
+   "preguard_lot": "LOT-14",
+   "guard": "G5",
+   "why": "printed 14, contract '13012', title 'Lot 14 : Equipements de cuisine'; = anchor CN 17101010 LOT-14 'Lot 14: équipements de cuisine.' -> LOT-14 (its REF CN 17244355 prints lot 14 under another number); right pre-guard (tentative LOT-14); G5 refuses it falsely because LOT-4 carries lot 14's title (above) while LOT-14 has only a description"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17657578,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-7",
+   "preguard_lot": "LOT-7",
+   "guard": null,
+   "why": "printed 7, contract '13005', title 'Lot 07 : serrurerie – métallerie'; = anchor CN 17101010 LOT-7 'Lot 07: serrurerie - métallerie.' -> LOT-7"
+  },
+  {
+   "tender_id": 4836560,
+   "notice_id": 17657578,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-9",
+   "preguard_lot": "LOT-9",
+   "guard": null,
+   "why": "printed 9, contract '13007', title 'Lot 09 : isolation – plâtrerie – peintures'; = anchor CN 17101010 LOT-9 'Lot 09: isolation - plâtrerie - peintures.' -> LOT-9"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 1, contract 'CNWL/T034', title 'Wheelchairs, Modifications and Construction and Buggies'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 1 'Hardware'; the anchor CN 17545429 prints that lot as 1 on section LOT-2 -> Tender key LOT-2. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 1, contract 'CNWL/T034', title 'Wheelchairs, Modifications and Construction and Buggies'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 1 'Hardware'; the anchor CN 17545429 prints that lot as 1 on section LOT-2 -> Tender key LOT-2. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-3",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 1, contract 'CNWL/T034', title 'Wheelchairs, Modifications and Construction and Buggies'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 1 'Hardware'; the anchor CN 17545429 prints that lot as 1 on section LOT-2 -> Tender key LOT-2. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-4",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 1, contract 'CNWL/T034', title 'Wheelchairs, Modifications and Construction and Buggies'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 1 'Hardware'; the anchor CN 17545429 prints that lot as 1 on section LOT-2 -> Tender key LOT-2. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-5",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 1, contract 'CNWL/T034', title 'Wheelchairs, Modifications and Construction and Buggies'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 1 'Hardware'; the anchor CN 17545429 prints that lot as 1 on section LOT-2 -> Tender key LOT-2. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-6",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 1, contract 'CNWL/T034', title 'Wheelchairs, Modifications and Construction and Buggies'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 1 'Hardware'; the anchor CN 17545429 prints that lot as 1 on section LOT-2 -> Tender key LOT-2. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-7",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs — Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-8",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs — Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-9",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'CNWL/T034', title 'Cushions and Accessories'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 3 'Cushions'; the anchor CN 17545429 prints that lot as 3 on section LOT-3 -> Tender key LOT-3. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-10",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'CNWL/T034', title 'Cushions and Accessories'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 3 'Cushions'; the anchor CN 17545429 prints that lot as 3 on section LOT-3 -> Tender key LOT-3. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-11",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'CNWL/T034', title 'Cushions and Accessories'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 3 'Cushions'; the anchor CN 17545429 prints that lot as 3 on section LOT-3 -> Tender key LOT-3. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-12",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs — Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-13",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'CNWL/T034', title 'Cushions and Accessories'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 3 'Cushions'; the anchor CN 17545429 prints that lot as 3 on section LOT-3 -> Tender key LOT-3. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-14",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs — Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-15",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs — Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-16",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'CNWL/T034', title 'Cushions and Accessories'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 3 'Cushions'; the anchor CN 17545429 prints that lot as 3 on section LOT-3 -> Tender key LOT-3. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-17",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs — Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-18",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'CNWL/T034', title 'Cushions and Accessories'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 3 'Cushions'; the anchor CN 17545429 prints that lot as 3 on section LOT-3 -> Tender key LOT-3. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-19",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 1, contract 'CNWL/T034', title 'Wheelchairs, Modifications and Construction and Buggies'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 1 'Hardware'; the anchor CN 17545429 prints that lot as 1 on section LOT-2 -> Tender key LOT-2. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-20",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs - Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-21",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'CNWL/T034', title 'Cushions and Accessories'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 3 'Cushions'; the anchor CN 17545429 prints that lot as 3 on section LOT-3 -> Tender key LOT-3. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-22",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs — Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-23",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 2, contract 'CNWL/T034', title 'Wheelchairs — Special Seating'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 2 'Special Seating'; the anchor CN 17545429 prints that lot as 2 on section LOT-1 -> Tender key LOT-1. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5048894,
+   "notice_id": 18258276,
+   "result_key": "RES-24",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'CNWL/T034', title 'Cushions and Accessories'; = CN 18025780 (its REF 2014/S 181-318987, file CNWL/T034) lot 3 'Cushions'; the anchor CN 17545429 prints that lot as 3 on section LOT-3 -> Tender key LOT-3. T034 relaunches T025 after 17923471 'awarding procedure discontinued' and cites it as prior publication: chained by the buyer's own reference"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-1",
+   "preguard_lot": "LOT-1",
+   "guard": null,
+   "why": "printed 1, contract '2014-318', title 'Véhicules de moins de 3,5 tonnes de marques Citroën'; = anchor CN 17900783 LOT-1 'Véhicules de moins de 3,5 tonnes de marques Citroën' -> LOT-1"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-2",
+   "preguard_lot": "LOT-2",
+   "guard": null,
+   "why": "printed 2, contract '2014-319', title 'Véhicules de moins de 3,5 tonnes de marque Iveco'; = anchor CN 17900783 LOT-2 'Véhicules de moins de 3,5 tonnes de marque Iveco' -> LOT-2"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-3",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract 'INFRUCTUEUX', title 'véhicules de moins de 3,5 tonnes de marque Land Rover'; = anchor CN 17900783 LOT-3 'Véhicules de moins de 3,5 tonnes de marque Land Rover' -> LOT-3; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-4",
+   "label": "single_right",
+   "served_lot": "LOT-4",
+   "preguard_lot": "LOT-4",
+   "guard": null,
+   "why": "printed 4, contract 'INFRUCTUEUX', title 'véhicules de moins de 3,5 tonnes de marque Mercedes'; = anchor CN 17900783 LOT-4 'Véhicules de moins de 3,5 tonnes de marque Mercedes' -> LOT-4; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-5",
+   "label": "single_right",
+   "served_lot": "LOT-5",
+   "preguard_lot": "LOT-5",
+   "guard": null,
+   "why": "printed 5, contract 'INFRUCTUEUX', title 'véhicules de moins de 3,5 tonnes de marque Nissan'; = anchor CN 17900783 LOT-5 'Véhicules de moins de 3,5 tonnes de marque Nissan' -> LOT-5; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-6",
+   "label": "single_right",
+   "served_lot": "LOT-6",
+   "preguard_lot": "LOT-6",
+   "guard": null,
+   "why": "printed 6, contract '2014-320', title 'véhicules de moins de 3,5 tonnes de marque Renault et Dacia'; = anchor CN 17900783 LOT-6 'Véhicules de moins de 3,5 tonnes de marque Renault et Dacia' -> LOT-6"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-7",
+   "label": "single_right",
+   "served_lot": "LOT-7",
+   "preguard_lot": "LOT-7",
+   "guard": null,
+   "why": "printed 7, contract '2014-321', title 'véhicules de moins de 3,5 tonnes de marque Peugeot'; = anchor CN 17900783 LOT-7 'Véhicules de moins de 3,5 tonnes de marque Peugeot' -> LOT-7"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-8",
+   "label": "single_right",
+   "served_lot": "LOT-8",
+   "preguard_lot": "LOT-8",
+   "guard": null,
+   "why": "printed 8, contract '2014-322', title 'véhicules de plus de 3,5 tonnes de marque Iveco'; = anchor CN 17900783 LOT-8 'Véhicules de plus de 3,5 tonnes de marque Iveco' -> LOT-8"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-9",
+   "label": "single_right",
+   "served_lot": "LOT-9",
+   "preguard_lot": "LOT-9",
+   "guard": null,
+   "why": "printed 9, contract 'INFRUCTUEUX', title 'véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog'; = anchor CN 17900783 LOT-9 'Véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog' -> LOT-9; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-10",
+   "label": "single_right",
+   "served_lot": "LOT-10",
+   "preguard_lot": "LOT-10",
+   "guard": null,
+   "why": "printed 10, contract '2014-323', title 'véhicules de plus de 3,5 tonnes de marque Renault'; = anchor CN 17900783 LOT-10 'Véhicules de plus de 3,5 tonnes de marque Renault' -> LOT-10"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-11",
+   "label": "single_right",
+   "served_lot": "LOT-11",
+   "preguard_lot": "LOT-11",
+   "guard": null,
+   "why": "printed 11, contract '2014-324', title 'véhicules de plus de 3,5 tonnes et engins de marque Thomas'; = anchor CN 17900783 LOT-11 'Véhicules de plus de 3,5 tonnes et engins de marque Thomas' -> LOT-11"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-12",
+   "label": "single_right",
+   "served_lot": "LOT-12",
+   "preguard_lot": "LOT-12",
+   "guard": null,
+   "why": "printed 12, contract 'INFRUCTUEUX', title 'matériels de travaux publics et voirie de marque Volvo'; = anchor CN 17900783 LOT-12 'Matériels de travaux publics et voirie de marque Volvo' -> LOT-12; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18033024,
+   "result_key": "RES-13",
+   "label": "single_right",
+   "served_lot": "LOT-13",
+   "preguard_lot": "LOT-13",
+   "guard": null,
+   "why": "printed 13, contract 'INFRUCTUEUX', title 'matériels de travaux publics et voirie de marque JCB'; = anchor CN 17900783 LOT-13 'Matériels de travaux publics et voirie de marque JCB' -> LOT-13; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18242004,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-3",
+   "preguard_lot": "LOT-3",
+   "guard": null,
+   "why": "printed 3, contract '2015/0027', title 'Véhicules de moins de 3,5 tonnes de marque Land Rover'; = anchor CN 17900783 LOT-3 'Véhicules de moins de 3,5 tonnes de marque Land Rover' -> LOT-3"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18242004,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-4",
+   "preguard_lot": "LOT-4",
+   "guard": null,
+   "why": "printed 4, contract 'Infructueux', title 'Véhicules de moins de 3,5 tonnes de marque Mercedes'; = anchor CN 17900783 LOT-4 'Véhicules de moins de 3,5 tonnes de marque Mercedes' -> LOT-4; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18242004,
+   "result_key": "RES-3",
+   "label": "single_right",
+   "served_lot": "LOT-5",
+   "preguard_lot": "LOT-5",
+   "guard": null,
+   "why": "printed 5, contract 'infructueux', title 'Véhicules de moins de 3,5 tonnes de marque Nissan'; = anchor CN 17900783 LOT-5 'Véhicules de moins de 3,5 tonnes de marque Nissan' -> LOT-5; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18242004,
+   "result_key": "RES-4",
+   "label": "single_right",
+   "served_lot": "LOT-9",
+   "preguard_lot": "LOT-9",
+   "guard": null,
+   "why": "printed 9, contract 'infructueux', title 'Véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog'; = anchor CN 17900783 LOT-9 'Véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog' -> LOT-9; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18242004,
+   "result_key": "RES-5",
+   "label": "single_right",
+   "served_lot": "LOT-12",
+   "preguard_lot": "LOT-12",
+   "guard": null,
+   "why": "printed 12, contract 'infructueux', title 'Matériels de travaux publics et voirie de marque Volvo'; = anchor CN 17900783 LOT-12 'Matériels de travaux publics et voirie de marque Volvo' -> LOT-12; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18242004,
+   "result_key": "RES-6",
+   "label": "single_right",
+   "served_lot": "LOT-13",
+   "preguard_lot": "LOT-13",
+   "guard": null,
+   "why": "printed 13, contract 'infructueux', title 'Matériels de travaux publics et voirie de marque JCB'; = anchor CN 17900783 LOT-13 'Matériels de travaux publics et voirie de marque JCB' -> LOT-13; a no-award (infructueux) block of that lot"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18527820,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-12",
+   "preguard_lot": "LOT-12",
+   "guard": null,
+   "why": "printed 12, contract '2015/0307', title 'Matériels de travaux publics et voirie de marque Volvo'; = anchor CN 17900783 LOT-12 'Matériels de travaux publics et voirie de marque Volvo' -> LOT-12"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18527875,
+   "result_key": "RES-1",
+   "label": "single_right",
+   "served_lot": "LOT-4",
+   "preguard_lot": "LOT-4",
+   "guard": null,
+   "why": "printed 4, contract '2015/0308', title 'Fourniture de pièces détachées pour les véhicules de moins de 3,5 tonnes de marque Mercedes'; = anchor CN 17900783 LOT-4 'Véhicules de moins de 3,5 tonnes de marque Mercedes' -> LOT-4"
+  },
+  {
+   "tender_id": 5226033,
+   "notice_id": 18527875,
+   "result_key": "RES-2",
+   "label": "single_right",
+   "served_lot": "LOT-9",
+   "preguard_lot": "LOT-9",
+   "guard": null,
+   "why": "printed 9, contract '2015/0309', title 'Fourniture de pièces détachées pour les véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog'; = anchor CN 17900783 LOT-9 'Véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog' -> LOT-9"
+  }
+ ],
+ "label_counts": {
+  "single_right": 66
+ },
+ "verdict": "pass",
+ "bar_over_30": {
+  "i_parity": "pass: the extender bar run 417/417 (0 breaks); verifier fresh re-read of the 3 at 18:25Z 66/66 (0 breaks); 27 kept: 351 blocks, 0 lot or version differences between the fresh568 and ext bar caches",
+  "ii_kept_wrong_tenders": 0,
+  "ii_limit": 2,
+  "iii": "no kept wrong block, no new kept wrong shape, no reopen trigger"
+ },
+ "refutation_attempts": [
+  "5048894: chain checked. 17923471 is \"The awarding procedure has been discontinued\" for CN 2013/S 161-280705 (T025). CN 18025780 (T034) cites that CN as prior publication. The CAN cites T034. This is a relaunch chained by the buyer's own references, with the same three lots; it is not a CAN of another procedure (contrast 4861483). Printed 1/2/3 = Hardware/Special Seating/Cushions in T034, which the anchor holds on sections LOT-2/LOT-1/LOT-3.",
+  "4836560 17518149/RES-1: right by identity. LOT-4 is the anchor's lot 4 and the only key lot 4 ever had. The CAN's REF CN 17244355 numbered lots 4/6/7/14 positionally as 1..4, so that CN's printed 4 carried lot 14's title and description onto LOT-4. The block is not the defect; the lot text is (inherited, 570 error-risk class). Under a consumer-view reading it would be an inherited kept wrong block: (ii) = 1/30, still a pass.",
+  "Contract counters: none. CONTRACT_NUMBER runs (13002.., 2014-318..324, CNWL/T034) never stand in for LOT_NUMBER, and every printed number agrees with its own title.",
+  "Multi-lot contracts: none. Each block names one lot; 17518149 RES-1 adds PSE no 1 of lot 4 only; 18527875 awards lots 4 and 9 as two contracts."
+ ],
+ "corrections_to_extender": [
+  "Note 4: the claim that infructueux was parsed as a winning organization does not hold for the served Tender. The 11 clos-nw blocks of 5226033 serve no winners, and no party named infructueux exists. The word appears only as an Organization OFFICIALNAME in the notice content.",
+  "Note 3: \"weld (issue 364's class)\" overstates it. 5048894 is a relaunch after a discontinued procedure, linked by the buyer's own prior-publication reference."
+ ],
+ "walk_recall": "Across the 1,144 read Tenders, exactly 10 lot-placed notices are R2.0.8, and all are in the 3 held (1 + 5 + 4). 29 read Tenders list an R2.0.8 notice but place no result from one (not G2 by the test). The verifier's own test, applied offline to the extender's draw_cache, agrees on 1,144/1,144 rows. The fresh walk equals draw_ext.json on 1,364/1,364 rows."
+}

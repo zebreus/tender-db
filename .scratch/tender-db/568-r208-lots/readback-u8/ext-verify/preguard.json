@@ -1,0 +1,398 @@
+{
+ "5048894/18258276/RES-1": {
+  "printed": "1",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "5048894/18258276/RES-10": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5048894/18258276/RES-11": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5048894/18258276/RES-12": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-13": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5048894/18258276/RES-14": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-15": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-16": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5048894/18258276/RES-17": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-18": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5048894/18258276/RES-19": {
+  "printed": "1",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "5048894/18258276/RES-2": {
+  "printed": "1",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "5048894/18258276/RES-20": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-21": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5048894/18258276/RES-22": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-23": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-24": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5048894/18258276/RES-3": {
+  "printed": "1",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "5048894/18258276/RES-4": {
+  "printed": "1",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "5048894/18258276/RES-5": {
+  "printed": "1",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "5048894/18258276/RES-6": {
+  "printed": "1",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "5048894/18258276/RES-7": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-8": {
+  "printed": "2",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5048894/18258276/RES-9": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "4836560/17517331/RES-1": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "4836560/17517331/RES-2": {
+  "printed": "15",
+  "preguard_lot": "LOT-15",
+  "verifier_right_lot": "LOT-15",
+  "agree": true
+ },
+ "4836560/17517331/RES-3": {
+  "printed": "16",
+  "preguard_lot": "LOT-16",
+  "verifier_right_lot": "LOT-16",
+  "agree": true
+ },
+ "4836560/17517331/RES-4": {
+  "printed": "17",
+  "preguard_lot": "LOT-17",
+  "verifier_right_lot": "LOT-17",
+  "agree": true
+ },
+ "4836560/17517659/RES-1": {
+  "printed": "8",
+  "preguard_lot": "LOT-8",
+  "verifier_right_lot": "LOT-8",
+  "agree": true
+ },
+ "4836560/17517659/RES-2": {
+  "printed": "10",
+  "preguard_lot": "LOT-10",
+  "verifier_right_lot": "LOT-10",
+  "agree": true
+ },
+ "4836560/17517659/RES-3": {
+  "printed": "11",
+  "preguard_lot": "LOT-11",
+  "verifier_right_lot": "LOT-11",
+  "agree": true
+ },
+ "4836560/17517659/RES-4": {
+  "printed": "12",
+  "preguard_lot": "LOT-12",
+  "verifier_right_lot": "LOT-12",
+  "agree": true
+ },
+ "4836560/17517659/RES-5": {
+  "printed": "13",
+  "preguard_lot": "LOT-13",
+  "verifier_right_lot": "LOT-13",
+  "agree": true
+ },
+ "4836560/17517659/RES-6": {
+  "printed": "18",
+  "preguard_lot": "LOT-18",
+  "verifier_right_lot": "LOT-18",
+  "agree": true
+ },
+ "4836560/17517659/RES-7": {
+  "printed": "19",
+  "preguard_lot": "LOT-19",
+  "verifier_right_lot": "LOT-19",
+  "agree": true
+ },
+ "4836560/17518079/RES-1": {
+  "printed": "1",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "4836560/17518079/RES-2": {
+  "printed": "2",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "4836560/17518079/RES-3": {
+  "printed": "5",
+  "preguard_lot": "LOT-5",
+  "verifier_right_lot": "LOT-5",
+  "agree": true
+ },
+ "4836560/17518079/RES-4": {
+  "printed": "20",
+  "preguard_lot": "LOT-20",
+  "verifier_right_lot": "LOT-20",
+  "agree": true
+ },
+ "4836560/17518149/RES-1": {
+  "printed": "4",
+  "preguard_lot": "LOT-4",
+  "verifier_right_lot": "LOT-4",
+  "agree": true
+ },
+ "4836560/17518149/RES-2": {
+  "printed": "6",
+  "preguard_lot": "LOT-6",
+  "verifier_right_lot": "LOT-6",
+  "agree": true
+ },
+ "4836560/17518149/RES-3": {
+  "printed": "14",
+  "preguard_lot": "LOT-14",
+  "verifier_right_lot": "LOT-14",
+  "agree": true
+ },
+ "4836560/17657578/RES-1": {
+  "printed": "7",
+  "preguard_lot": "LOT-7",
+  "verifier_right_lot": "LOT-7",
+  "agree": true
+ },
+ "4836560/17657578/RES-2": {
+  "printed": "9",
+  "preguard_lot": "LOT-9",
+  "verifier_right_lot": "LOT-9",
+  "agree": true
+ },
+ "5226033/18033024/RES-1": {
+  "printed": "1",
+  "preguard_lot": "LOT-1",
+  "verifier_right_lot": "LOT-1",
+  "agree": true
+ },
+ "5226033/18033024/RES-10": {
+  "printed": "10",
+  "preguard_lot": "LOT-10",
+  "verifier_right_lot": "LOT-10",
+  "agree": true
+ },
+ "5226033/18033024/RES-11": {
+  "printed": "11",
+  "preguard_lot": "LOT-11",
+  "verifier_right_lot": "LOT-11",
+  "agree": true
+ },
+ "5226033/18033024/RES-12": {
+  "printed": "12",
+  "preguard_lot": "LOT-12",
+  "verifier_right_lot": "LOT-12",
+  "agree": true
+ },
+ "5226033/18033024/RES-13": {
+  "printed": "13",
+  "preguard_lot": "LOT-13",
+  "verifier_right_lot": "LOT-13",
+  "agree": true
+ },
+ "5226033/18033024/RES-2": {
+  "printed": "2",
+  "preguard_lot": "LOT-2",
+  "verifier_right_lot": "LOT-2",
+  "agree": true
+ },
+ "5226033/18033024/RES-3": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5226033/18033024/RES-4": {
+  "printed": "4",
+  "preguard_lot": "LOT-4",
+  "verifier_right_lot": "LOT-4",
+  "agree": true
+ },
+ "5226033/18033024/RES-5": {
+  "printed": "5",
+  "preguard_lot": "LOT-5",
+  "verifier_right_lot": "LOT-5",
+  "agree": true
+ },
+ "5226033/18033024/RES-6": {
+  "printed": "6",
+  "preguard_lot": "LOT-6",
+  "verifier_right_lot": "LOT-6",
+  "agree": true
+ },
+ "5226033/18033024/RES-7": {
+  "printed": "7",
+  "preguard_lot": "LOT-7",
+  "verifier_right_lot": "LOT-7",
+  "agree": true
+ },
+ "5226033/18033024/RES-8": {
+  "printed": "8",
+  "preguard_lot": "LOT-8",
+  "verifier_right_lot": "LOT-8",
+  "agree": true
+ },
+ "5226033/18033024/RES-9": {
+  "printed": "9",
+  "preguard_lot": "LOT-9",
+  "verifier_right_lot": "LOT-9",
+  "agree": true
+ },
+ "5226033/18242004/RES-1": {
+  "printed": "3",
+  "preguard_lot": "LOT-3",
+  "verifier_right_lot": "LOT-3",
+  "agree": true
+ },
+ "5226033/18242004/RES-2": {
+  "printed": "4",
+  "preguard_lot": "LOT-4",
+  "verifier_right_lot": "LOT-4",
+  "agree": true
+ },
+ "5226033/18242004/RES-3": {
+  "printed": "5",
+  "preguard_lot": "LOT-5",
+  "verifier_right_lot": "LOT-5",
+  "agree": true
+ },
+ "5226033/18242004/RES-4": {
+  "printed": "9",
+  "preguard_lot": "LOT-9",
+  "verifier_right_lot": "LOT-9",
+  "agree": true
+ },
+ "5226033/18242004/RES-5": {
+  "printed": "12",
+  "preguard_lot": "LOT-12",
+  "verifier_right_lot": "LOT-12",
+  "agree": true
+ },
+ "5226033/18242004/RES-6": {
+  "printed": "13",
+  "preguard_lot": "LOT-13",
+  "verifier_right_lot": "LOT-13",
+  "agree": true
+ },
+ "5226033/18527820/RES-1": {
+  "printed": "12",
+  "preguard_lot": "LOT-12",
+  "verifier_right_lot": "LOT-12",
+  "agree": true
+ },
+ "5226033/18527875/RES-1": {
+  "printed": "4",
+  "preguard_lot": "LOT-4",
+  "verifier_right_lot": "LOT-4",
+  "agree": true
+ },
+ "5226033/18527875/RES-2": {
+  "printed": "9",
+  "preguard_lot": "LOT-9",
+  "verifier_right_lot": "LOT-9",
+  "agree": true
+ }
+}

@@ -1,0 +1,226 @@
+TENDER 5226033 v6 key=ojs:2014-193990 title="Fourniture de pièces détachées d'origine et d'accessoires pour les véhicules départementaux — lots 4 et 9." published=2015-10-13
+  version seq 1: notice 17900783 pub 193990-2014 2014-06-11
+  version seq 2: notice 18020916 pub 314123-2014 2014-09-17
+  version seq 3: notice 18033024 pub 326231-2014 2014-09-26
+  version seq 4: notice 18242004 pub 108413-2015 2015-03-28
+  version seq 5: notice 18527820 pub 359209-2015 2015-10-13
+  version seq 6: notice 18527875 pub 359264-2015 2015-10-13
+LISTING: [(17900783, 'ted-export-r208', 'R2.0.8.S02.E01', '193990-2014'), (18020916, 'ted-export-r208', 'R2.0.8.S02.E01', '314123-2014'), (18033024, 'ted-export-r208', 'R2.0.8.S02.E01', '326231-2014'), (18242004, 'ted-export-r208', 'R2.0.8.S02.E01', '108413-2015'), (18527820, 'ted-export-r208', 'R2.0.8.S02.E01', '359209-2015'), (18527875, 'ted-export-r208', 'R2.0.8.S02.E01', '359264-2015')] more= False
+TENDER LOTS (carried state):
+  LOT-1 title=None value=None
+       description[FRA]: Véhicules de moins de 3,5 tonnes de marques Citroën
+  LOT-10 title=None value=None
+       description[FRA]: Véhicules de plus de 3,5 tonnes de marque Renault
+  LOT-11 title=None value=None
+       description[FRA]: Véhicules de plus de 3,5 tonnes et engins de marque Thomas
+  LOT-12 title=None value=None
+       description[FRA]: Matériels de travaux publics et voirie de marque Volvo
+  LOT-13 title=None value=None
+       description[FRA]: Matériels de travaux publics et voirie de marque JCB
+  LOT-2 title=None value=None
+       description[FRA]: Véhicules de moins de 3,5 tonnes de marque Iveco
+  LOT-3 title=None value=None
+       description[FRA]: Véhicules de moins de 3,5 tonnes de marque Land Rover
+  LOT-4 title=None value=None
+       description[FRA]: Véhicules de moins de 3,5 tonnes de marque Mercedes
+  LOT-5 title=None value=None
+       description[FRA]: Véhicules de moins de 3,5 tonnes de marque Nissan
+  LOT-6 title=None value=None
+       description[FRA]: Véhicules de moins de 3,5 tonnes de marque Renault et Dacia
+  LOT-7 title=None value=None
+       description[FRA]: Véhicules de moins de 3,5 tonnes de marque Peugeot
+  LOT-8 title=None value=None
+       description[FRA]: Véhicules de plus de 3,5 tonnes de marque Iveco
+  LOT-9 title=None value=None
+       description[FRA]: Véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog
+
+=== NOTICE 17900783 profile=ted-export-r208 R2.0.8.S02.E01 pub=193990-2014
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2014/S 110-193990
+   TED-FILE_REFERENCE_NUMBER: 14S0109
+   TED-TITLE_CONTRACT: fourniture de pièces détachées d'origine et d'accessoires pour les véhicules départementaux
+   TED-ADDITIONAL_INFORMATION: Retrait du DCE jusqu'à la date limite de remise des offres fixée ci-dessus. | - retrait gratuit sur demande écrite ou sur place à l'adresse visée en tête de l'avis. Horaires d'accueil : 9:00-11:45 et 13:30-16:30 ; | -par téléchargement à l'adresse suivante : https://www.e-marches06.fr ; | Les candidatures et les offres peuvent être remises, sur support papier ou sur support physique électronique, sur place contre récépissé ou par lettre RAR, à l'adresse visée en tête de l'avis. | Elles peuvent ê…
+  LOT section LOT-1: number=['1'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marques Citroën
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 100 000 euro (H.T.).
+  LOT section LOT-10: number=['10'] title=
+      desc: Véhicules de plus de 3,5 tonnes de marque Renault
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 700 000 EUR HT.
+  LOT section LOT-11: number=['11'] title=
+      desc: Véhicules de plus de 3,5 tonnes et engins de marque Thomas
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 300 000 EUR HT.
+  LOT section LOT-12: number=['12'] title=
+      desc: Matériels de travaux publics et voirie de marque Volvo
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 250 000 EUR HT.
+  LOT section LOT-13: number=['13'] title=
+      desc: Matériels de travaux publics et voirie de marque JCB
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 200 000 EUR HT.
+  LOT section LOT-2: number=['2'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Iveco
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante montant maximum annuel : 15 000 euro (H.T.).
+  LOT section LOT-3: number=['3'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Land Rover
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 40 000 euro (H.T.).
+  LOT section LOT-4: number=['4'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Mercedes
+      scope: les prestations sont susceptibes de varier dans la limite supérieure suivante : montant maximum annuel 20 000 euro (H.T.).
+  LOT section LOT-5: number=['5'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Nissan
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 15 000 euro (H.T.).
+  LOT section LOT-6: number=['6'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Renault et Dacia
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 250 000 EUR HT.
+  LOT section LOT-7: number=['7'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Peugeot
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 30 000 EUR HT.
+  LOT section LOT-8: number=['8'] title=
+      desc: Véhicules de plus de 3,5 tonnes de marque Iveco
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 150 000 euro (H.T.).
+  LOT section LOT-9: number=['9'] title=
+      desc: Véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 500 000 EUR HT.
+
+=== NOTICE 18020916 profile=ted-export-r208 R2.0.8.S02.E01 pub=314123-2014
+   TED-TD_DOCUMENT_TYPE: 3
+   TED-FORM: 2
+   TED-NO_DOC_OJS: 2014/S 178-314123
+   TED-NOTICE_NUMBER_OJ: 2014/S 110-193990
+   TED-REF_NOTICE.NO_DOC_OJS: 2014/S 110-193990
+   TED-FILE_REFERENCE_NUMBER: 14S0191
+   TED-TITLE_CONTRACT: Fourniture de pièces détachées d'origine et d'accessoires pour les véhicules départementaux.
+   TED-ADDITIONAL_INFORMATION: Cette consultation constitue la relance d'un précédent appel d'offres ouvert pour lequel les lots 1, 2, 6, 7, 8, 10 et 11 ont été attribués et les lots 3, 4, 5, 9, 12 et 13 ont été déclarés infructueux. | Retrait du DCE jusqu'à la date limite de remise des offres fixée ci-dessus. | - retrait gratuit sur demande écrite ou sur place à l'adresse visée en tête de l'avis. Horaires d'accueil : 9h-11h45 et 13h30-16h30 ; | - par téléchargement à l'adresse suivante : https://www.e-marches06.fr ; | Les ca…
+  LOT section LOT-1: number=['3'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Land Rover
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 40 000 EUR HT.
+  LOT section LOT-2: number=['4'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Mercedes
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel 20 000 EUR HT.
+  LOT section LOT-3: number=['5'] title=
+      desc: Véhicules de moins de 3,5 tonnes de marque Nissan
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel :15 000 EUR HT.
+  LOT section LOT-4: number=['9'] title=
+      desc: Véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel : 500 000 EUR HT.
+  LOT section LOT-5: number=['12'] title=
+      desc: Matériels de travaux publics et voirie de marque Volvo
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel : 250 000 EUR HT.
+  LOT section LOT-6: number=['13'] title=
+      desc: Matériels de travaux publics et voirie de marque JCB
+      scope: les prestations sont susceptibles de varier dans la limite supérieure suivante : montant maximum annuel : 200 000 EUR HT.
+
+=== NOTICE 18033024 profile=ted-export-r208 R2.0.8.S02.E01 pub=326231-2014
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2014/S 185-326231
+   TED-NOTICE_NUMBER_OJ: 2014/S 110-193990
+   TED-REF_NOTICE.NO_DOC_OJS: 2014/S 110-193990
+   TED-FILE_REFERENCE_NUMBER: 14S0109
+   TED-TITLE_CONTRACT: fourniture de pièces détachées d'origine et d'accessoires pour les véhicules départementaux
+   TED-ADDITIONAL_INFORMATION: Les montants des DDED servant à la comparaison des offres sont : | Lot no1 : 3 924,70 euro (T.T.C.) | Lot no2 : 5 234,70 euro (T.T.C.) | Lot no6 : 5 089,63 euro (T.T.C.) | Lot no7 : 4 271,87 euro (T.T.C.) | Lot no8 : 6 737, 59 euro (T.T.C.) | Lot no10 : 9 336,07 euro (T.T.C.) | Lot no11 : 21 393,87 euro (T.T.C.) | Les lots 3 et 5 ont été déclarés infructueux pour absence d'offres. | Les lots 4, 9, 12 et 13 ont été déclarés infructueux pour absence d'offres régulières. | ces lots ont été relancés…
+   TED-CONCLUSION_FRAMEWORK_AGREEMENT: 1
+  BLOCK RES-1: LOT_NUMBER=['1'] CONTRACT_NUMBER=['2014-318'] date=['2014-09-15'] offers=[2]
+      title: Véhicules de moins de 3,5 tonnes de marques Citroën
+      value=[] estimate=['9,034.50 EUR'] winners=['Cofirhad - autodistribution charreton']
+  BLOCK RES-10: LOT_NUMBER=['10'] CONTRACT_NUMBER=['2014-323'] date=['2014-09-15'] offers=[1]
+      title: véhicules de plus de 3,5 tonnes de marque Renault
+      value=[] estimate=['16,974.60 EUR'] winners=['somi ippolito']
+  BLOCK RES-11: LOT_NUMBER=['11'] CONTRACT_NUMBER=['2014-324'] date=['2014-09-15'] offers=[1]
+      title: véhicules de plus de 3,5 tonnes et engins de marque Thomas
+      value=[] estimate=['21,209.70 EUR'] winners=['somi ippolito']
+  BLOCK RES-12: LOT_NUMBER=['12'] CONTRACT_NUMBER=['INFRUCTUEUX'] date=[] offers=[]
+      title: matériels de travaux publics et voirie de marque Volvo
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-13: LOT_NUMBER=['13'] CONTRACT_NUMBER=['INFRUCTUEUX'] date=[] offers=[]
+      title: matériels de travaux publics et voirie de marque JCB
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-2: LOT_NUMBER=['2'] CONTRACT_NUMBER=['2014-319'] date=['2014-09-13'] offers=[2]
+      title: Véhicules de moins de 3,5 tonnes de marque Iveco
+      value=[] estimate=['6,010.20 EUR'] winners=['iveco provence']
+  BLOCK RES-3: LOT_NUMBER=['3'] CONTRACT_NUMBER=['INFRUCTUEUX'] date=[] offers=[]
+      title: véhicules de moins de 3,5 tonnes de marque Land Rover
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-4: LOT_NUMBER=['4'] CONTRACT_NUMBER=['INFRUCTUEUX'] date=[] offers=[]
+      title: véhicules de moins de 3,5 tonnes de marque Mercedes
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-5: LOT_NUMBER=['5'] CONTRACT_NUMBER=['INFRUCTUEUX'] date=[] offers=[]
+      title: véhicules de moins de 3,5 tonnes de marque Nissan
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-6: LOT_NUMBER=['6'] CONTRACT_NUMBER=['2014-320'] date=['2014-09-15'] offers=[3]
+      title: véhicules de moins de 3,5 tonnes de marque Renault et Dacia
+      value=[] estimate=['10,909.80 EUR'] winners=['cofirhad - autodistribution charreton']
+  BLOCK RES-7: LOT_NUMBER=['7'] CONTRACT_NUMBER=['2014-321'] date=['2014-09-15'] offers=[2]
+      title: véhicules de moins de 3,5 tonnes de marque Peugeot
+      value=[] estimate=['8,356.20 EUR'] winners=['cofirhad - autodistribution charreton']
+  BLOCK RES-8: LOT_NUMBER=['8'] CONTRACT_NUMBER=['2014-322'] date=['2014-09-13'] offers=[1]
+      title: véhicules de plus de 3,5 tonnes de marque Iveco
+      value=[] estimate=['7,079.40 EUR'] winners=['iveco provence']
+  BLOCK RES-9: LOT_NUMBER=['9'] CONTRACT_NUMBER=['INFRUCTUEUX'] date=[] offers=[]
+      title: véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog
+      value=[] estimate=[] winners=['infructueux']
+
+=== NOTICE 18242004 profile=ted-export-r208 R2.0.8.S02.E01 pub=108413-2015
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2015/S 062-108413
+   TED-NOTICE_NUMBER_OJ: 2014/S 110-193990 | 2014/S 178-314123
+   TED-REF_NOTICE.NO_DOC_OJS: 2014/S 178-314123
+   TED-FILE_REFERENCE_NUMBER: 14S0191
+   TED-TITLE_CONTRACT: Fourniture de pièces détachées d'origine et d'accessoires pour les véhicules départementaux.
+   TED-ADDITIONAL_INFORMATION: Les lots 5, 12 et 13 ont été déclarés infructueux pour absence d'offres. | Les lots 4 et 9 ont été déclarés infructueux pour absence d'offres régulières. | Ces lots ont été relancés par ailleurs. | Le marché du lot 3 a été signé le 10.2.2015. | Références de l'avis initial paru au BOAMP | Parution no: 178 B, annonce no 229 du 17.9.2014. | Date d'envoi du présent avis au JOUE et au BOAMP: 24.3.2015.
+   TED-CONCLUSION_FRAMEWORK_AGREEMENT: 1
+   TED-VALUE: 9,292.00 EUR
+  BLOCK RES-1: LOT_NUMBER=['3'] CONTRACT_NUMBER=['2015/0027'] date=['2015-02-16'] offers=[2]
+      title: Véhicules de moins de 3,5 tonnes de marque Land Rover
+      value=['9,292.00 EUR'] estimate=['16,096.80 EUR'] winners=['Allmakes France']
+  BLOCK RES-2: LOT_NUMBER=['4'] CONTRACT_NUMBER=['Infructueux'] date=[] offers=[]
+      title: Véhicules de moins de 3,5 tonnes de marque Mercedes
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-3: LOT_NUMBER=['5'] CONTRACT_NUMBER=['infructueux'] date=[] offers=[]
+      title: Véhicules de moins de 3,5 tonnes de marque Nissan
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-4: LOT_NUMBER=['9'] CONTRACT_NUMBER=['infructueux'] date=[] offers=[]
+      title: Véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-5: LOT_NUMBER=['12'] CONTRACT_NUMBER=['infructueux'] date=[] offers=[]
+      title: Matériels de travaux publics et voirie de marque Volvo
+      value=[] estimate=[] winners=['infructueux']
+  BLOCK RES-6: LOT_NUMBER=['13'] CONTRACT_NUMBER=['infructueux'] date=[] offers=[]
+      title: Matériels de travaux publics et voirie de marque JCB
+      value=[] estimate=[] winners=['infructueux']
+
+=== NOTICE 18527820 profile=ted-export-r208 R2.0.8.S02.E01 pub=359209-2015
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2015/S 198-359209
+   TED-NOTICE_NUMBER_OJ: 2014/S 110-193990 | 2014/S 178-314123
+   TED-REF_NOTICE.NO_DOC_OJS: 2014/S 178-314123
+   TED-FILE_REFERENCE_NUMBER: 14S0191
+   TED-TITLE_CONTRACT: Fourniture de pièces détachées d'origine et d'accessoires pour les véhicules départementaux — lot 12 matériels de travaux publics et voirie de marque Volvo.
+   TED-ADDITIONAL_INFORMATION: La négociation a porté sur: | * les prix de la commande type et les taux de remises appliqués sur les familles d'articles indiqués à l'acte d'engagement, | * les délais de livraison. | Date de signature du marché: 30.7.2015. | Il s'agit d'un marché à bons de commande dont les prestations sont susceptibles de varier dans la limite supérieure suivante: 250 000 EUR HT. | Le montant du DDED retenu est de: 20 191,51 EUR TTC.
+   TED-CONCLUSION_FRAMEWORK_AGREEMENT: 1
+   TED-VALUE: 20,191.51 EUR
+  BLOCK RES-1: LOT_NUMBER=['12'] CONTRACT_NUMBER=['2015/0307'] date=['2015-08-24'] offers=[2]
+      title: Matériels de travaux publics et voirie de marque Volvo
+      value=['20,191.51 EUR'] estimate=['28,101.00 EUR'] winners=['Payant PACA']
+
+=== NOTICE 18527875 profile=ted-export-r208 R2.0.8.S02.E01 pub=359264-2015
+   TED-TD_DOCUMENT_TYPE: 7
+   TED-FORM: 3
+   TED-NO_DOC_OJS: 2015/S 198-359264
+   TED-NOTICE_NUMBER_OJ: 2014/S 110-193990 | 2014/S 178-314123
+   TED-REF_NOTICE.NO_DOC_OJS: 2014/S 178-314123
+   TED-FILE_REFERENCE_NUMBER: 14S0191
+   TED-TITLE_CONTRACT: Fourniture de pièces détachées d'origine et d'accessoires pour les véhicules départementaux — lots 4 et 9.
+   TED-ADDITIONAL_INFORMATION: La négociation a porté sur: | * les prix de la commande type, les taux de remises appliqués et les familles d'articles indiqués à l'acte d'engagement, | * les délais de livraison. | Date de signature des marchés: 30.7.2015. | Il s'agit de marchés à bons de commande, dont les prestations sont susceptibles de varier dans les limites supérieures suivantes: | * lot 4: 20 000 EUR HT, | * lot 9: 500 000 EUR HT. | Le montant du DDED retenu est de: | * lot 4: 9 939,81 EUR HT. | * lot 9: 38 122,87 EUR HT…
+   TED-CONCLUSION_FRAMEWORK_AGREEMENT: 1
+   TED-VALUE: 9,939.81 EUR | 38,122.87 EUR
+  BLOCK RES-1: LOT_NUMBER=['4'] CONTRACT_NUMBER=['2015/0308'] date=['2015-08-25'] offers=[1]
+      title: Fourniture de pièces détachées pour les véhicules de moins de 3,5 tonnes de marque Mercedes
+      value=['9,939.81 EUR'] estimate=['10,887.00 EUR'] winners=["Mercedes-Benz Côte d'Azur"]
+  BLOCK RES-2: LOT_NUMBER=['9'] CONTRACT_NUMBER=['2015/0309'] date=['2015-08-25'] offers=[1]
+      title: Fourniture de pièces détachées pour les véhicules de plus de 3,5 tonnes de marque Mercedes et Unimog
+      value=['38,122.87 EUR'] estimate=['56,509.80 EUR'] winners=["Mercedes Benz Côte d'Azur"]
+
+SERVED BLOCK KEYS (no lot shown): [(18033024, 'RES-1', 'selec-w'), (18033024, 'RES-10', 'selec-w'), (18033024, 'RES-11', 'selec-w'), (18033024, 'RES-12', 'clos-nw'), (18033024, 'RES-13', 'clos-nw'), (18033024, 'RES-2', 'selec-w'), (18033024, 'RES-3', 'clos-nw'), (18033024, 'RES-4', 'clos-nw'), (18033024, 'RES-5', 'clos-nw'), (18033024, 'RES-6', 'selec-w'), (18033024, 'RES-7', 'selec-w'), (18033024, 'RES-8', 'selec-w'), (18033024, 'RES-9', 'clos-nw'), (18242004, 'RES-1', 'selec-w'), (18242004, 'RES-2', 'clos-nw'), (18242004, 'RES-3', 'clos-nw'), (18242004, 'RES-4', 'clos-nw'), (18242004, 'RES-5', 'clos-nw'), (18242004, 'RES-6', 'clos-nw'), (18527820, 'RES-1', 'selec-w'), (18527875, 'RES-1', 'selec-w'), (18527875, 'RES-2', 'selec-w')]
+WINNER PARTIES: [("Mercedes-Benz Côte d'Azur", None), ("Mercedes Benz Côte d'Azur", None)]

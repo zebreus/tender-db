@@ -1,0 +1,18 @@
+extension3 {"blocks_labelled": 66, "by_label": {"single_right": 66}, "kept_by_label": {"single_right": 65}, "refused_by_label": {"single_right": 1}, "served_ne_port": [], "tenders_with_wrong_kept": [], "wrong_kept": [], "wrong_caught": [], "right_refused": 1, "unclear": [], "tenders_with_any_568_block": [4836560, 5048894, 5226033], "tenders_with_a_wrong_block_before_guards": []}
+kept27 {"blocks_labelled": 112, "by_label": {"single_right": 106, "multi_lot_contract": 4, "wrong_other": 2}, "kept_by_label": {"single_right": 105}, "refused_by_label": {"single_right": 1, "multi_lot_contract": 4, "wrong_other": 2}, "served_ne_port": [], "tenders_with_wrong_kept": [], "wrong_kept": [], "wrong_caught": 6, "right_refused": 1, "unclear": [], "tenders_with_any_568_block": [4569314, 4888356, 5351872, 5362479, 5457789, 5864590, 8291946, 8365595], "tenders_with_a_wrong_block_before_guards": [5864590, 8291946, 8365595]}
+all30 {"blocks_labelled": 178, "by_label": {"single_right": 172, "multi_lot_contract": 4, "wrong_other": 2}, "kept_by_label": {"single_right": 170}, "refused_by_label": {"single_right": 2, "multi_lot_contract": 4, "wrong_other": 2}, "served_ne_port": [], "tenders_with_wrong_kept": [], "wrong_kept": [], "wrong_caught": 6, "right_refused": 2, "unclear": [], "tenders_with_any_568_block": [4569314, 4836560, 4888356, 5048894, 5226033, 5351872, 5362479, 5457789, 5864590, 8291946, 8365595], "tenders_with_a_wrong_block_before_guards": [5864590, 8291946, 8365595]}
+unlabelled []
+stability27 {"tenders": 27, "tenders_with_served_diffs": [], "tenders_with_version_change": []}
+wrong_kept 0
+wrong_caught 6
+    8291946 17037930 RES-1 printed 3 multi_lot_contract tentative LOT-3 port None | 568 refused G3 (tentative LOT-3) | served None | cause 568-u8
+    8291946 17037930 RES-2 printed 1 multi_lot_contract tentative LOT-1 port None | 568 refused G3 (tentative LOT-1) | served None | cause 568-u8
+    8291946 17037930 RES-3 printed 8 multi_lot_contract tentative LOT-8 port None | 568 refused G3 (tentative LOT-8) | served None | cause 568-u8
+    8291946 17049093 RES-1 printed 6 multi_lot_contract tentative LOT-6 port None | 568 refused G3 (tentative LOT-6) | served None | cause 568-u8
+    8365595 18617609 RES-1 printed 1 wrong_other tentative LOT-1 port None | 568 refused G5 (tentative LOT-1) | served None | cause 568-u8
+    5864590 19369697 RES-3 printed 3 wrong_other tentative LOT-3 port None | 568 refused G5 (tentative LOT-3) | served None | cause unchanged
+right_refused 2
+    5457789 18461129 RES-8 printed 37 single_right tentative LOT-37 port None | 568 refused G4 (tentative LOT-37) | served None | cause 568-u8
+    4836560 17518149 RES-3 printed 14 single_right tentative LOT-14 port None | 568 refused G5 (tentative LOT-14) | served None | cause unchanged
+served_ne_port 0
+unclear 0
