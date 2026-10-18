@@ -26,7 +26,8 @@ uniformly drawn Tenders with a wrong block. A fresh 30 at "30/30, no wrong block
 Evidence:
 - `u7/measurement-u7.json`: per block, per candidate, with 95 % intervals.
 - `u7/g3_port.py`: the decided rule, replayed on `u7/u7-cache.jsonl.gz`, the cached tenders and every chain notice of
-  the three sets.
+  the three sets. Its labels are read from the skeptic tables, so extract `u7/raw-cache.tar.gz` into `u7/` first. The
+  extracted folders are gitignored locally through `.git/info/exclude`.
 - `u7/lot_designators.py`: the title reader, with 35 self-test cases.
 - The skeptic-final per-block tables: `u7/skeptic_u1..6/`.
 
