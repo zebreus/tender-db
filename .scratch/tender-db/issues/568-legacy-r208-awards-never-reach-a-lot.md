@@ -6,8 +6,9 @@ decision critic; AMENDED by wf_f5c0b404-92e: G4 refuses a contradicting block, a
 refuse its other blocks except title-confirmed ones (R2: plain designators naming exactly the printed number); R1 agreement
 with the lot's own text by head; G3 on distinct heads per language; reader fixes — `u7/decision-u7.md` "Amendment (unit
 8)"). Measured, pooled 230 uniform Tenders: right blocks refused 0/2,081; other-wrong caught 153/161, multi 11/13;
-Tenders with a wrong block 14/230 → 5/230 (2 of them 568's own). Rust fold = port on every cached block. NEXT: gate →
-deploy → ONE refold with 570 (TED-LOT_NO + TED-LOT_NUMBER; baseline `drain/take_baseline.py` first; finish before the
+Tenders with a wrong block 14/230 → 5/230 (2 of them 568's own). Rust fold = port on every cached block. GATED c5977da (1402 s, 2377 green), DEPLOYED fe64be6
+2026-10-18 10:06Z; COMBINED WET REFOLD with 570 RUNNING 2026-10-18 11:04Z (2616/2617, N 2,101,635, cursor before
+957854566; baseline `drain/baseline-pre568u8-570.json`). Was: NEXT: gate → deploy → ONE refold with 570 (TED-LOT_NO + TED-LOT_NUMBER; baseline `drain/take_baseline.py` first; finish before the
 10-20 morning, 560's D5 window) → read back with the amended bar (parity with the port incl. 570's remap; ≤ 2/30
 judged-wrong; fresh 30 from the combined run's changed set, salt "568u8-fresh30-").
 Kind: completeness (legacy lot results: R2.0.8 awards served tender-scoped)

@@ -5,7 +5,8 @@ Status: ready-for-agent — DECIDED 2026-10-18 (wf_0271cb46-6c5); BUILT 2026-10-
 port parity block for block on 11 cached chains; 568's two assertions re-specified as decided plus three more the rule
 necessarily changes (551's single-section F20 test, 568's ambiguity and bucketed tests — each kept its old intent with
 an added case); review found 4, all fixed, guard mutants caught). GATED cd26e41 (green 1363 s, on main). DEPLOYED 2026-10-18 04:50Z (rev 03bdf4d, health ok, queue idle).
-NOT YET DRAINED: NEXT drain `refold-fields` TED-LOT_NO + TED-LOT_NUMBER AFTER 568's read-back, before 551 B5 (B3 re-runs after).
+DRAINING 2026-10-18 11:04Z in ONE refold with 568 unit 8 (jobs 2616/2617, N 2,101,635, cursor before 957854566;
+read-back replay `568-r208-lots/readback-u8/combined_port.py`). Was: NEXT drain `refold-fields` TED-LOT_NO + TED-LOT_NUMBER AFTER 568's read-back, before 551 B5 (B3 re-runs after).
 Decision: `.scratch/tender-db/570-lot-keys/decision.md`.
 Kind: correctness (legacy lot identity: awards and lots merged across different lots)
 Relates to:
