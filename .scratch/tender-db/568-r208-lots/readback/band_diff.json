@@ -1,0 +1,37 @@
+{
+ "band_left": [
+  "5617904"
+ ],
+ "band_entered": [],
+ "band_changed": [],
+ "movers_not_corrected": [],
+ "path_v_changed": [],
+ "mover_before": {
+  "value": {
+   "cents": 635155761420,
+   "currency": "PLN"
+  },
+  "derivation": null,
+  "version": 3
+ },
+ "mover_now": {
+  "value": {
+   "cents": 6351557614,
+   "currency": "PLN"
+  },
+  "derivation": {
+   "exponent": 2,
+   "lots": 85,
+   "method": "lot-sum-vouched",
+   "refused": {
+    "field": "result_value",
+    "value": {
+     "cents": 635155761420,
+     "currency": "PLN"
+    }
+   },
+   "rule": "537",
+   "summed": "awards"
+  }
+ }
+}
