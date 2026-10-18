@@ -1,0 +1,706 @@
+{
+ "issue": 551,
+ "unit": "B3",
+ "date": "2026-10-18",
+ "verdict": "PASS",
+ "summary": "0 disagreements on ship/refuse, S, currency, n, first refusing check, vouched_by and derived on 5,307 rows; projection parity clean on every B1 field; every v2 fire is a v1 fire; crates/ byte-identical to HEAD; verifier re-run byte-identical.",
+ "head": "b16383ad3ce9fc2d548386d254974a08f3da1abd",
+ "pins": {
+  "crates/store/src/canonical.rs": "5c0aa239b128ffe4bae95468af886ccf3ad12e063beadfcb2b6c9b7cfc28bb5e",
+  "crates/ingest/src/project.rs": "eee59a98310eddb930de905c2af585106ea5b1483c9645385bda943e3a1f4968",
+  "unit4b/rule_v2.py": "39be6d1ebc0ed2828ce3dd2a10b4db33f98bdf83ec5c5a7bb2d5fe4401a305ce",
+  "570-lot-keys/remap_port.py": "abe2b78ae5a0506dd327a412f9753c77a8d2a448fba080d4d73c0aae083bd503",
+  "568-r208-lots/readback-u8/combined_port.py": "5363593c663c651bcbf125464ccfd24b96d45b56e1834086352f7d8903d7673c",
+  "b3/rule_v2_b3.py (port of record for B5)": "5400bc555f15ba09e852afe132009a900a2e5a3634e7546ff703fc9a8a89ade5",
+  "b3/gen_b3.py": "2e9635bae0a49b7924780d7829d549ec9edf5180a69c37d9b6062aa83cc6d9de",
+  "b3/harness/canonical_b3_harness.rs": "deff4f18c2c72769e0531ea7cc0b5dd0c9dee2f4479023520bca0173c41e0712",
+  "b3/harness/project_b3_harness.rs": "c833efd78c3c8b3f6c031f5a18cc6eea748c55099a4e0802f6a50d83bc2a0e43",
+  "b3/results/B3-parity.json": "38187799affdba4fad17c8f340ec6d99a532a54f9d4bde83f8aa3758c691f7f1",
+  "b3/results/B3-movers.json": "2c0fae93aa43eeca45d5ddd46845f6ae32076aa18aedf9a70e095634d9da2669",
+  "b3/results/api_rust.tsv": "005a4b5aa3f8ad09b78bdea1a3baba8a5b66ae0582a8cd3ae109e16ed84be090"
+ },
+ "reads": {
+  "tender_gets": 562,
+  "failures": 0,
+  "window_utc": [
+   "2026-10-18T17:09:53Z",
+   "2026-10-18T17:23:58Z"
+  ],
+  "after_job_2617_finished": "2026-10-18T15:21Z",
+  "version_notices": 4416,
+  "notices_missing_from_caches": 0,
+  "notices_fetched": 0
+ },
+ "decision_parity": {
+  "labelled-279": {
+   "compared": 279,
+   "agree": 279,
+   "port_ship": 30,
+   "rust_ship": 30,
+   "port_v1_fires": 276,
+   "rust_v1_fires": 276,
+   "disagree": 0,
+   "m1era_v1_fires": 279
+  },
+  "oos-6": {
+   "compared": 6,
+   "agree": 6,
+   "port_ship": 2,
+   "rust_ship": 2,
+   "port_v1_fires": 6,
+   "rust_v1_fires": 6,
+   "disagree": 0,
+   "m1era_v1_fires": 6
+  },
+  "walked-277": {
+   "compared": 277,
+   "agree": 277,
+   "port_ship": 41,
+   "rust_ship": 41,
+   "port_v1_fires": 273,
+   "rust_v1_fires": 273,
+   "disagree": 0,
+   "m1era_v1_fires": 276
+  },
+  "records-4745": {
+   "compared": 4745,
+   "agree": 4745,
+   "port_ship": 0,
+   "rust_ship": 0,
+   "port_v1_fires": 6,
+   "rust_v1_fires": 6,
+   "disagree": 0
+  },
+  "total": {
+   "compared": 5307,
+   "agree": 5307,
+   "disagree": 0,
+   "port_ship": 73,
+   "rust_ship": 73,
+   "port_v1_fires": 561,
+   "rust_v1_fires": 561
+  },
+  "fields_compared": [
+   "ship",
+   "first",
+   "S",
+   "currency",
+   "n",
+   "v1_fires",
+   "vouched_by (ships)",
+   "derived (ships)"
+  ],
+  "not_exported": [],
+  "disagreements": []
+ },
+ "invariant_v2_subset_v1": {
+  "holds": true,
+  "violations": 0,
+  "checks": [
+   "rust ship within port v1 fires",
+   "rust ship within pre-drain v1 fires",
+   "port ship within port v1 fires"
+  ],
+  "note": "rust-ship-within-rust-v1 is circular (harness derives v1 from first check); awards_lot_sum diff 3c81386..HEAD leaves v1 guard conditions unchanged (copy_suspect split into over_cap/refused only); R1-R10 run after G4."
+ },
+ "disagreement_list": [
+  {
+   "what": "decision fields",
+   "count": 0,
+   "disposition": "none needed"
+  },
+  {
+   "what": "Rust ships, port refused",
+   "count": 0,
+   "disposition": "none needed (would need an M2-bar read before B4)"
+  },
+  {
+   "what": "Rust refuses, port shipped",
+   "count": 0,
+   "disposition": "none needed"
+  },
+  {
+   "what": "known B2 name-level differences",
+   "count": 0,
+   "disposition": "did not occur"
+  },
+  {
+   "what": "projection LotState.kind",
+   "count": 122,
+   "tenders": [
+    49224,
+    255403,
+    448013,
+    521716,
+    677680,
+    680425,
+    750804,
+    806550,
+    822558,
+    866035,
+    866431,
+    911043,
+    912466,
+    936207,
+    985336,
+    989268,
+    1079142,
+    1094914
+   ],
+   "disposition": "input difference: normalise_de1 renames DE1 kind (Lot vs ProcurementProjectLot); not a B1 field; lot numbers agree; path W reads served kind; remap skips DE1 -> no decision effect"
+  },
+  {
+   "what": "projection first pass: FTS result rows",
+   "count_first_pass": 75,
+   "tenders": 15,
+   "count_final": 0,
+   "disposition": "fixed in input: export.py profile inference and combined_port.is_legacy no longer read TED-VAL_TOTAL_TAX_BASIS (written by fts/parse.rs on OCDS notices) as legacy TED"
+  }
+ ],
+ "projection_parity": {
+  "tenders": 562,
+  "rows": {
+   "LotState.published_lot_no (every version)": [
+    26764,
+    26764
+   ],
+   "LotState key sets per version": [
+    4416,
+    4416
+   ],
+   "head lot keys vs served lot_details": [
+    562,
+    562
+   ],
+   "LotResultState.lot_key": [
+    6699,
+    6699
+   ],
+   "LotResultState.published_lot_no": [
+    6699,
+    6699
+   ],
+   "LotResultState.group": [
+    6699,
+    6699
+   ],
+   "TenderVersion.stated_totals incl lots_awarded": [
+    1737,
+    1737
+   ],
+   "version chain vs served": [
+    562,
+    562
+   ]
+  },
+  "row_format": "[compared, agree]",
+  "only_difference": "LotState.kind x122 (see disagreement_list)",
+  "remap": {
+   "remapped_notices": 364,
+   "tenders_with_remapped_notice": 66,
+   "refused_silent_merge": 303,
+   "refused_injective": 1,
+   "tenders_any": 74,
+   "all_agree": true
+  }
+ },
+ "coverage_gaps": [
+  "winners and bids (R1, R9) not compared by projection parity; award cents match on 6,699 rows; synthetic org binding gives 58 rows extra winners; decision side reads served winners on both sides",
+  "records-4745 carry no B1 facts: 0 ships, 6 v1 fires all refused (R5.1 x5, R2d x1: 585917, 5995030, 6450467, 6450469, 6450473, 8426318) -> mainly v1 guard parity",
+  "7511890 (docs/operations.md 570 block) not in B3 populations; verifier ran it separately: port = Rust = W/T' (not a v1 fire), S PLN 339,546.48, n=4; 22980479 RES-1 on LOT-3 with lot no \"3\" from its own LOT-1 section; INV[22980479] = {LOT-3: LOT-1, LOT-4: LOT-2, LOT-6: LOT-3}"
+ ],
+ "finding_for_B4_B5": {
+  "new_ships_vs_pre_drain": [
+   5862601,
+   5888594,
+   5985466,
+   6317191,
+   6569442,
+   6595330,
+   6603588,
+   6679375,
+   7139761,
+   7153588,
+   7177672,
+   7298633,
+   7398935,
+   7475504,
+   7542368,
+   7722197,
+   7789396,
+   8371658
+  ],
+  "new_ships_count": 18,
+  "lost_ships": [],
+  "new_ships_from_remap": [
+   6569442,
+   7139761,
+   7153588,
+   7475504,
+   7722197,
+   7789396
+  ],
+  "new_ships_from_drain": [
+   5862601,
+   5888594,
+   5985466,
+   6317191,
+   6595330,
+   6603588,
+   6679375,
+   7177672,
+   7298633,
+   7398935,
+   7542368,
+   8371658
+  ],
+  "new_ship_rows": [
+   {
+    "id": 5862601,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2a",
+    "pre_drain_S": 117355972400,
+    "pre_drain_n": 19,
+    "S": 168317519600,
+    "cur": "HUF",
+    "n": 19,
+    "S_eur_cents": 509096605,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19576559,
+     "cents": 168317519600
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 5888594,
+    "population": "walk",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 9168377200,
+    "pre_drain_n": 2,
+    "S": 9168377200,
+    "cur": "HUF",
+    "n": 2,
+    "S_eur_cents": 28349084,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19383494,
+     "cents": 9168377200
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 5985466,
+    "population": "labelled-mid",
+    "pre_drain_first": "R2a",
+    "pre_drain_S": 12479415316,
+    "pre_drain_n": 4,
+    "S": 9600338066,
+    "cur": "EUR",
+    "n": 3,
+    "S_eur_cents": 9600338066,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19749944,
+     "cents": 9600338000
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 6317191,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2a",
+    "pre_drain_S": 5393532500,
+    "pre_drain_n": 6,
+    "S": 6137815000,
+    "cur": "CHF",
+    "n": 6,
+    "S_eur_cents": 5522597625,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20431961,
+     "cents": 6167807500
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 6569442,
+    "population": "labelled-mid",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 18213999000,
+    "pre_drain_n": 21,
+    "S": 24468101000,
+    "cur": "CHF",
+    "n": 29,
+    "S_eur_cents": 22247773231,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20743713,
+     "cents": 24468101000
+    },
+    "cause": "remap (port edit 1)"
+   },
+   {
+    "id": 6595330,
+    "population": "labelled-sample",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 229519500,
+    "pre_drain_n": 2,
+    "S": 229519500,
+    "cur": "EUR",
+    "n": 2,
+    "S_eur_cents": 229519500,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20747457,
+     "cents": 229519500
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 6603588,
+    "population": "labelled-mid",
+    "pre_drain_first": "R2a",
+    "pre_drain_S": 11721909346,
+    "pre_drain_n": 7,
+    "S": 15461134200,
+    "cur": "EUR",
+    "n": 7,
+    "S_eur_cents": 15461134200,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20628343,
+     "cents": 15461134200
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 6679375,
+    "population": "labelled-mid",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 23850000000,
+    "pre_drain_n": 3,
+    "S": 23850000000,
+    "cur": "EUR",
+    "n": 3,
+    "S_eur_cents": 23850000000,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20928012,
+     "cents": 23850000000
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 7139761,
+    "population": "labelled-mid",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 10114798394,
+    "pre_drain_n": 11,
+    "S": 16673192969,
+    "cur": "EUR",
+    "n": 13,
+    "S_eur_cents": 16673192969,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 21841642,
+     "cents": 16673192971
+    },
+    "cause": "remap (port edit 1)"
+   },
+   {
+    "id": 7153588,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 1912800,
+    "pre_drain_n": 4,
+    "S": 1912800,
+    "cur": "EUR",
+    "n": 4,
+    "S_eur_cents": 1912800,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22126132,
+     "cents": 1912800
+    },
+    "cause": "remap (port edit 1)"
+   },
+   {
+    "id": 7177672,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 31597999600,
+    "pre_drain_n": 4,
+    "S": 31597999600,
+    "cur": "HUF",
+    "n": 4,
+    "S_eur_cents": 78265176,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22174236,
+     "cents": 31597999600
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 7298633,
+    "population": "walk",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 358317235,
+    "pre_drain_n": 8,
+    "S": 358376975,
+    "cur": "PLN",
+    "n": 9,
+    "S_eur_cents": 78154394,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22385634,
+     "cents": 358317235
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 7398935,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 1802400,
+    "pre_drain_n": 2,
+    "S": 1444600,
+    "cur": "EUR",
+    "n": 2,
+    "S_eur_cents": 1444600,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22566107,
+     "cents": 1444600
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 7475504,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 2770221700,
+    "pre_drain_n": 3,
+    "S": 3553169400,
+    "cur": "BGN",
+    "n": 4,
+    "S_eur_cents": 1816734533,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 22586040,
+     "cents": 3553169400
+    },
+    "cause": "remap (port edit 1)"
+   },
+   {
+    "id": 7542368,
+    "population": "labelled-mid",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 17984074893,
+    "pre_drain_n": 3,
+    "S": 17984074893,
+    "cur": "EUR",
+    "n": 3,
+    "S_eur_cents": 17984074893,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 23357149,
+     "cents": 17984074893
+    },
+    "cause": "drain (567/568/570 served keys)"
+   },
+   {
+    "id": 7722197,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 22597000,
+    "pre_drain_n": 4,
+    "S": 17936000,
+    "cur": "EUR",
+    "n": 4,
+    "S_eur_cents": 17936000,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 23370588,
+     "cents": 17936000
+    },
+    "cause": "remap (port edit 1)"
+   },
+   {
+    "id": 7789396,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 2239560,
+    "pre_drain_n": 5,
+    "S": 2840060,
+    "cur": "BGN",
+    "n": 6,
+    "S_eur_cents": 1452122,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 23334253,
+     "cents": 2847600
+    },
+    "cause": "remap (port edit 1)"
+   },
+   {
+    "id": 8371658,
+    "population": "walk-fallback",
+    "pre_drain_first": "R2c",
+    "pre_drain_S": 1493612000,
+    "pre_drain_n": 4,
+    "S": 1493612000,
+    "cur": "EUR",
+    "n": 4,
+    "S_eur_cents": 1493612000,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20173160,
+     "cents": 1493612000
+    },
+    "cause": "drain (567/568/570 served keys)"
+   }
+  ],
+  "band_eur_100m": {
+   "count": 20,
+   "heads": [
+    683951,
+    707424,
+    726354,
+    1102571,
+    1147190,
+    1148297,
+    5278856,
+    5842187,
+    6017838,
+    6057925,
+    6195903,
+    6370901,
+    6569442,
+    6603588,
+    6679375,
+    7001924,
+    7011414,
+    7139761,
+    7542368,
+    8426318
+   ],
+   "M2_set": [
+    683951,
+    707424,
+    726354,
+    1102571,
+    1147190,
+    1148297,
+    5278856,
+    5842187,
+    6017838,
+    6057925,
+    6195903,
+    6370901,
+    7001924,
+    7011414,
+    8426318
+   ],
+   "added_vs_M2": [
+    6569442,
+    6603588,
+    6679375,
+    7139761,
+    7542368
+   ],
+   "removed_vs_M2": [],
+   "near_threshold_2pct_ships": [
+    5842187
+   ]
+  },
+  "labelled_wrong_now_shipping": {
+   "5985466": "double_count on old S EUR 124.79m n4; now EUR 96.00m n3 (below band)",
+   "6603588": "double_count on old S EUR 117.22m; now EUR 154.61m (in band)"
+  },
+  "no_longer_v1_fires": [
+   5571139,
+   5669744,
+   6852738,
+   6969157,
+   7372694,
+   7495109
+  ],
+  "B5_stop_rule_band_set_would_trip": true,
+  "required": "M2-bar (adversarial band, 0 wrong of any class) read of the 5 new band heads before B5 (and before B4 so operations.md cites the right band); preferably all 18 new ships under the reader protocol; record the result as B5 reference band set"
+ },
+ "harness": {
+  "record_copies": [
+   ".scratch/tender-db/551-lot-sum/b3/harness/canonical_b3_harness.rs",
+   ".scratch/tender-db/551-lot-sum/b3/harness/project_b3_harness.rs",
+   ".scratch/tender-db/551-lot-sum/b3/harness/run.sh"
+  ],
+  "ran_from": {
+   "canonical_b3_harness.rs": "crates/store/src/ (mod b3_harness in canonical.rs; test canonical::b3_harness::b3_parity)",
+   "project_b3_harness.rs": "crates/ingest/src/ (mod b3_harness in project.rs; test project::b3_harness::b3_projection)"
+  },
+  "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p model -p store -p ingest -p tender-db --features tender-db/server b3_harness -- --ignored",
+  "runs": [
+   {
+    "log": "scratchpad/b3/run1.log",
+    "gate_exit": 0
+   },
+   {
+    "log": "scratchpad/b3/run2.log",
+    "gate_exit": 0
+   },
+   {
+    "log": "b3/results/run3_api.log",
+    "gate_exit": 0
+   },
+   {
+    "log": "b3/results/run3_rec.log",
+    "gate_exit": 0
+   },
+   {
+    "log": "scratchpad/b3v/run_api.log",
+    "gate_exit": 0,
+    "by": "verifier"
+   },
+   {
+    "log": "scratchpad/b3v/run_rec.log",
+    "gate_exit": 0,
+    "by": "verifier"
+   },
+   {
+    "log": "scratchpad/b3v/run7511890/run.log",
+    "gate_exit": 0,
+    "by": "verifier"
+   }
+  ],
+  "removed": true,
+  "ops_check_sh_run": false,
+  "committed": false,
+  "verifier_byte_identical": [
+   "api_rust.tsv",
+   "rec_rust.tsv",
+   "proj_rust.jsonl",
+   "compare.json == B3-parity.json",
+   "five regenerated inputs",
+   "rule_v2_b3.py and gen_b3.py == make_port_copy.py output"
+  ]
+ },
+ "byte_identity_crates": {
+  "checked_at_head": "b16383a",
+  "git_status_short_crates": "",
+  "git_diff_stat_crates": "",
+  "git_diff_quiet_HEAD_crates_exit": 0,
+  "canonical.rs_equals_HEAD": true,
+  "project.rs_equals_HEAD": true,
+  "b3_files_under_crates": 0,
+  "LOT_SUM_AWARDS_PATH": false
+ },
+ "records_before_B4": [
+  "record b3/rule_v2_b3.py (5400bc55...) and b3/gen_b3.py (2e9635ba...) as the port of record in issue 551; B5 cohort check uses them, not unit4b/rule_v2.py; commit b3/ (untracked)",
+  "record 7511890 result in the issue and add it to B5 id cohort",
+  "note projection parity does not cover R1/R9 winners and bids; records-4745 mainly test v1 guard parity; optionally make compare.py exit non-zero on any decision disagreement",
+  "M2-bar read of the 5 new band heads (6569442, 6603588, 6679375, 7139761, 7542368), preferably all 18 new ships; record as B5 reference band set"
+ ],
+ "code_changes_required": []
+}

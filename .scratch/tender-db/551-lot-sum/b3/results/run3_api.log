@@ -1,0 +1,966 @@
+warning: unused import: `eforms`
+  --> crates/app/tests/api.rs:13:14
+   |
+13 | use ingest::{eforms, process, profile, project};
+   |              ^^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `tender-db` (test "api") generated 1 warning (run `cargo fix --test "api" -p tender-db` to apply 1 suggestion)
+   Compiling ingest v0.1.0 (/home/user/tender-db/crates/ingest)
+warning: unused variable: `path`
+   --> crates/ingest/tests/project.rs:552:24
+    |
+552 |     let (db, fetch_id, path) = scratch("withheld-stats").await;
+    |                        ^^^^ help: if this is intentional, prefix it with an underscore: `_path`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ingest` (test "project") generated 1 warning (run `cargo fix --test "project" -p ingest` to apply 1 suggestion)
+warning: variable does not need to be mutable
+    --> crates/ingest/tests/project_incremental.rs:1217:9
+     |
+1217 |     let mut cn = island("Legacy CN");
+     |         ----^^
+     |         |
+     |         help: remove this `mut`
+     |
+     = note: `#[warn(unused_mut)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ingest` (test "project_incremental") generated 1 warning (run `cargo fix --test "project_incremental" -p ingest` to apply 1 suggestion)
+warning: unused variable: `daily`
+   --> crates/ingest/tests/process.rs:315:9
+    |
+315 |     let daily = run(&db, &archive).await;
+    |         ^^^^^ help: if this is intentional, prefix it with an underscore: `_daily`
+    |
+    = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `ingest` (test "process") generated 1 warning (run `cargo fix --test "process" -p ingest` to apply 1 suggestion)
+warning: unused import: `Value`
+  --> crates/store/tests/turso_temp_db_leak.rs:40:26
+   |
+40 | use store::turso::{self, Value};
+   |                          ^^^^^
+   |
+   = note: `#[warn(unused_imports)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "turso_temp_db_leak") generated 1 warning (run `cargo fix --test "turso_temp_db_leak" -p store` to apply 1 suggestion)
+warning: unused variable: `db`
+  --> crates/store/tests/status_head_range.rs:75:9
+   |
+75 |     let db = store::Db::open(&path).await.expect("open");
+   |         ^^ help: if this is intentional, prefix it with an underscore: `_db`
+   |
+   = note: `#[warn(unused_variables)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "status_head_range") generated 1 warning (run `cargo fix --test "status_head_range" -p store` to apply 1 suggestion)
+warning: function `run` is never used
+   --> crates/store/tests/country_cluster_packet.rs:120:10
+    |
+120 | async fn run(db: &store::Db) -> store::CountryClusterReport {
+    |          ^^^
+    |
+    = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `store` (test "country_cluster_packet") generated 1 warning
+    Finished `test` profile [unoptimized] target(s) in 26.53s
+     Running unittests src/lib.rs (target/debug/deps/ingest-a0bb5cc3f6079573)
+
+running 1 test
+B3 PROJECTION HARNESS: 562 Tenders folded from /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/run/proj_in.jsonl -> /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/run/proj_rust.jsonl
+test project::b3_harness::b3_projection ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 655 filtered out; finished in 22.39s
+
+     Running unittests src/bin/data-quality.rs (target/debug/deps/data_quality-96c63c6e25332ec4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/fetch.rs (target/debug/deps/fetch-1e3eb4cf2e5e4ffd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/plan-probe.rs (target/debug/deps/plan_probe-9b3deae8c086c38f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/process.rs (target/debug/deps/process-6390b03d17010239)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/project.rs (target/debug/deps/project-321d98720ab9b8ec)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/bin/verify.rs (target/debug/deps/verify-3e45ce0035f38a5a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running tests/data_quality.rs (target/debug/deps/data_quality-6b18e854dacd3cf3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/doe.rs (target/debug/deps/doe-e2b7c541cc3bf00b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/eforms.rs (target/debug/deps/eforms-5cd89442d6e6ce2a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 56 filtered out; finished in 0.00s
+
+     Running tests/fetch.rs (target/debug/deps/fetch-b0fa1555f1c0e7c5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 44 filtered out; finished in 0.00s
+
+     Running tests/fts.rs (target/debug/deps/fts-218ca3d011e05b92)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/internal_ojs.rs (target/debug/deps/internal_ojs-0c41c72be38bf682)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/original_lang_eras.rs (target/debug/deps/original_lang_eras-d725ca9b08d1fc13)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/process.rs (target/debug/deps/process-b9cba53e29a2078b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 14 filtered out; finished in 0.00s
+
+     Running tests/project.rs (target/debug/deps/project-06e0f184427b1f11)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 113 filtered out; finished in 0.00s
+
+     Running tests/project_equivalence.rs (target/debug/deps/project_equivalence-17c6c075bc44893a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/project_fold_source.rs (target/debug/deps/project_fold_source-cec0dee1a3c1c6fc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/project_golden.rs (target/debug/deps/project_golden-b3317ac717b09634)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/project_incremental.rs (target/debug/deps/project_incremental-9c9e326c32c018c4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 51 filtered out; finished in 0.00s
+
+     Running tests/project_incremental_timing.rs (target/debug/deps/project_incremental_timing-4fbdfc4168c939bf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/project_memory.rs (target/debug/deps/project_memory-448fb3c8d18efc37)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/project_resume.rs (target/debug/deps/project_resume-17b554fda6b10505)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/r208.rs (target/debug/deps/r208-0426cbbfea75b95f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 15 filtered out; finished in 0.00s
+
+     Running tests/r209.rs (target/debug/deps/r209-fb05b6c4db070e29)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 19 filtered out; finished in 0.00s
+
+     Running tests/register_archive.rs (target/debug/deps/register_archive-aa6ca55fdb16b5b1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/text.rs (target/debug/deps/text-2a0c295e213bfd47)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 13 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/model-334dbc134392f2ef)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/store-30dc60d6702c686d)
+
+running 1 test
+B3 PARITY HARNESS: 562 Tenders evaluated from /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/run/api_in.tsv -> /tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/run/api_rust.tsv
+test canonical::b3_harness::b3_parity ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 269 filtered out; finished in 0.43s
+
+     Running tests/alter_add_column_cost.rs (target/debug/deps/alter_add_column_cost-ddb34fb4d8fdc882)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/altid_merge.rs (target/debug/deps/altid_merge-77a8129251b4740b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 81 filtered out; finished in 0.00s
+
+     Running tests/analyze_job.rs (target/debug/deps/analyze_job-2512ef70193d2a6d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/analyze_stats_pickup.rs (target/debug/deps/analyze_stats_pickup-760b729372169203)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/anchor_wall.rs (target/debug/deps/anchor_wall-c5a8a75a0176bd70)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/cache_size.rs (target/debug/deps/cache_size-c48c88fdfdb3f7b0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/case_reviews.rs (target/debug/deps/case_reviews-d23dab8af88abed4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/changes_kinds.rs (target/debug/deps/changes_kinds-d66cbc6313dc7a31)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/closed_by_notice.rs (target/debug/deps/closed_by_notice-6c1db7bb9c03bad0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/country_cluster_census.rs (target/debug/deps/country_cluster_census-492f1dd6db61f526)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/country_cluster_packet.rs (target/debug/deps/country_cluster_packet-f1c02cc924f54466)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/country_filter_probe.rs (target/debug/deps/country_filter_probe-03716e2e9ef4d2d9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/country_fold.rs (target/debug/deps/country_fold-8bb4c64d5ccfd284)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/country_typo_census.rs (target/debug/deps/country_typo_census-c93d355044f218ee)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/country_typo_repair.rs (target/debug/deps/country_typo_repair-fecf95c8c30802cf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/country_verdicts.rs (target/debug/deps/country_verdicts-c7411d9b09c7b09a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/currency_presence.rs (target/debug/deps/currency_presence-ad831544748b22d9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/currency_rates.rs (target/debug/deps/currency_rates-e200a9a0040f7ec3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/deadline_backfill.rs (target/debug/deps/deadline_backfill-8bb8771251f0abe9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/deferred_index_detection.rs (target/debug/deps/deferred_index_detection-a8b70baed0b480d6)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/duplicate_identity_census.rs (target/debug/deps/duplicate_identity_census-18679a9d9f4b8ff3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/e0_merge.rs (target/debug/deps/e0_merge-5f5ae803946c8cf0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/exists_shortcircuit_probe.rs (target/debug/deps/exists_shortcircuit_probe-cd63fb208817f655)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/fallback_band.rs (target/debug/deps/fallback_band-60300ed290cb6bac)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/fold_writer_golden.rs (target/debug/deps/fold_writer_golden-a189c63dfb05f95d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/fusion_census.rs (target/debug/deps/fusion_census-993e065a9f400c17)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/generic_statistic_census.rs (target/debug/deps/generic_statistic_census-5f3e5db9adbb7cf1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/generic_wall_census.rs (target/debug/deps/generic_wall_census-7ade3e03833ae412)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/ghost_census.rs (target/debug/deps/ghost_census-d8627422df38cd41)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/head_election_agreement.rs (target/debug/deps/head_election_agreement-c290a72e165c22c3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/head_pointer_equivalence.rs (target/debug/deps/head_pointer_equivalence-7b33c6a3afc8b1df)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/identifier_verdicts.rs (target/debug/deps/identifier_verdicts-5e2d0a7c38c1a4c7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/interrupt_probe.rs (target/debug/deps/interrupt_probe-b4ed4726d80a3cd8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/isolation_routing.rs (target/debug/deps/isolation_routing-2d4d3c8acafd1a58)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/label_move_corrections.rs (target/debug/deps/label_move_corrections-af28098ba8567f15)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/label_prefix_repair.rs (target/debug/deps/label_prefix_repair-cbee4fff5b916a44)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/lot_deadline_scope.rs (target/debug/deps/lot_deadline_scope-0ec0f4c6d97e23ea)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/lot_prod_profile_probe.rs (target/debug/deps/lot_prod_profile_probe-cec9c4e5bb66c48d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/lot_summary_cost.rs (target/debug/deps/lot_summary_cost-ab49858231dc21a7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/lot_summary_equivalence.rs (target/debug/deps/lot_summary_equivalence-04ac4e6fad6afadb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/lot_value_election.rs (target/debug/deps/lot_value_election-89199e3c0cdb1fbe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/lots_country_seed.rs (target/debug/deps/lots_country_seed-65453de58412458b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/lots_drive_probe.rs (target/debug/deps/lots_drive_probe-b05bd9fc80f6d97d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/lots_filter_fixture.rs (target/debug/deps/lots_filter_fixture-ca87b631b6411608)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/lots_open_head_seed.rs (target/debug/deps/lots_open_head_seed-c3d42e07af52578c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/mention_fk_probe.rs (target/debug/deps/mention_fk_probe-c739204492e93d39)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/mention_refresh.rs (target/debug/deps/mention_refresh-bdd63bf2a3c79bed)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/merged_org.rs (target/debug/deps/merged_org-6256448b13872f9f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/minted_country_repair.rs (target/debug/deps/minted_country_repair-dd1a2a3cfbe86e53)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/name_attribution_probe.rs (target/debug/deps/name_attribution_probe-aaa62a98d8cb93a4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/name_pollution_census.rs (target/debug/deps/name_pollution_census-56583b682a09ca9e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/name_prefix_probe.rs (target/debug/deps/name_prefix_probe-cb849c05e26348ae)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/nested_org_repair.rs (target/debug/deps/nested_org_repair-3e71bcf7624290c5)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/nhs_body.rs (target/debug/deps/nhs_body-6eee0e4f0c415208)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 84 filtered out; finished in 0.00s
+
+     Running tests/notice_instant_repair.rs (target/debug/deps/notice_instant_repair-54fd94769a528505)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/notice_quarantine.rs (target/debug/deps/notice_quarantine-0f0c74d9fc200f22)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/ordered_source_plan.rs (target/debug/deps/ordered_source_plan-9a96e2988a9a2a9f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_candidate_edges.rs (target/debug/deps/org_candidate_edges-18ef82a8e475d67e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/org_cursor_probe.rs (target/debug/deps/org_cursor_probe-edeb7101fd5fa324)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_head_drift.rs (target/debug/deps/org_head_drift-cb0a28b560f44aa8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 16 filtered out; finished in 0.00s
+
+     Running tests/org_index_bulk_load.rs (target/debug/deps/org_index_bulk_load-54a8413580acdbef)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/org_index_read_amplification.rs (target/debug/deps/org_index_read_amplification-270a12bbcd0be07b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_match_keys_build.rs (target/debug/deps/org_match_keys_build-719ba6e0e62cb499)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_merge_change_events.rs (target/debug/deps/org_merge_change_events-94886e43e84450e1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/org_merge_health.rs (target/debug/deps/org_merge_health-c4b5348ed2f672fe)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_name_backfill.rs (target/debug/deps/org_name_backfill-e2b98c35c62e080e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/org_name_search.rs (target/debug/deps/org_name_search-c5f459c55ee0b094)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/org_schema_migration.rs (target/debug/deps/org_schema_migration-d8ff1e5a1ea3b14e)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/original_lang_backfill.rs (target/debug/deps/original_lang_backfill-4efede26d6101dfc)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/original_lang_pick.rs (target/debug/deps/original_lang_pick-63305d6cac401e75)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/orphan_org_sweep.rs (target/debug/deps/orphan_org_sweep-df072ceb8915682a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/package_rates.rs (target/debug/deps/package_rates-dab4c783f55337b0)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/paginated_index_probe.rs (target/debug/deps/paginated_index_probe-5fbeff85fb2ca30c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/placeholder_dissolve.rs (target/debug/deps/placeholder_dissolve-0346d79b263192e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/plan_bulk_load.rs (target/debug/deps/plan_bulk_load-a64ebb08d4b58a00)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/provisional_echo_census.rs (target/debug/deps/provisional_echo_census-9408730f198cbb31)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/provisional_echo_fold.rs (target/debug/deps/provisional_echo_fold-2548cc7529c50f16)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/provisional_name_norm.rs (target/debug/deps/provisional_name_norm-92dd044a28e1e52a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/published_order.rs (target/debug/deps/published_order-eab156e8ec095988)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/quarantine_outcome_disjoint.rs (target/debug/deps/quarantine_outcome_disjoint-7fc4e0a3bd43c46f)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/r2_merge.rs (target/debug/deps/r2_merge-313c6255e2591733)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/r2_name_gate.rs (target/debug/deps/r2_name_gate-6a09f3330ee367a3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/r3_merge.rs (target/debug/deps/r3_merge-09ba864f85a6343a)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/refold_fields.rs (target/debug/deps/refold_fields-dc78cab37b07e016)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/refresh_org_names.rs (target/debug/deps/refresh_org_names-579475bce3d1fdf8)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 23 filtered out; finished in 0.00s
+
+     Running tests/registry_page.rs (target/debug/deps/registry_page-d325830d74756dc7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/rehoming.rs (target/debug/deps/rehoming-b08507f0f323b678)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/rehoming_packet.rs (target/debug/deps/rehoming_packet-b820b6948d703933)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.00s
+
+     Running tests/rekey.rs (target/debug/deps/rekey-b11888c3f613f4e1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/renormalise_repair.rs (target/debug/deps/renormalise_repair-96983faf2d61e485)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/reparse_fk.rs (target/debug/deps/reparse_fk-accd19cbdaac725b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/report_history.rs (target/debug/deps/report_history-d106fd278ccf16da)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 9 filtered out; finished in 0.00s
+
+     Running tests/requeue_plan_probe.rs (target/debug/deps/requeue_plan_probe-bcc47e9f60bbf0d1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/resolver_prevention.rs (target/debug/deps/resolver_prevention-d389fc51a4eb7a03)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 10 filtered out; finished in 0.00s
+
+     Running tests/reveal_cursor_probe.rs (target/debug/deps/reveal_cursor_probe-84fa829d77d834bf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/reveal_recheck.rs (target/debug/deps/reveal_recheck-abd8bf173f5bb1d7)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/satellite_column_migration.rs (target/debug/deps/satellite_column_migration-cff63ce865557cde)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/satellite_drops.rs (target/debug/deps/satellite_drops-b4d10e007d101c38)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 12 filtered out; finished in 0.00s
+
+     Running tests/satellite_orphans.rs (target/debug/deps/satellite_orphans-f46b819358b225e4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/scan_budget_probe.rs (target/debug/deps/scan_budget_probe-f648f2e01caf30ec)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/seeded_lots_page.rs (target/debug/deps/seeded_lots_page-6298cb77424103f9)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 6 filtered out; finished in 0.00s
+
+     Running tests/stage4_schema.rs (target/debug/deps/stage4_schema-3220b01d3e61a57b)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/status_head_range.rs (target/debug/deps/status_head_range-af810121a1029bbf)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/stripes_probe.rs (target/debug/deps/stripes_probe-b76c2816a75e7eec)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/tender_publication_lookup.rs (target/debug/deps/tender_publication_lookup-0726da44282024fa)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/tenders_shortcircuit.rs (target/debug/deps/tenders_shortcircuit-899e745be5c683cb)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/title_backfill.rs (target/debug/deps/title_backfill-242757abf8d72d90)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 2 filtered out; finished in 0.00s
+
+     Running tests/turso_temp_db_leak.rs (target/debug/deps/turso_temp_db_leak-b398912094a86136)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/value_move_change_rows.rs (target/debug/deps/value_move_change_rows-5aedb6dfce1686e1)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 8 filtered out; finished in 0.00s
+
+     Running tests/version_instant_repair.rs (target/debug/deps/version_instant_repair-6237fc433611299c)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 3 filtered out; finished in 0.00s
+
+     Running tests/view_pushdown_probe.rs (target/debug/deps/view_pushdown_probe-1d81ece1f3a35ca4)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 4 filtered out; finished in 0.00s
+
+     Running tests/withheld_fields_view.rs (target/debug/deps/withheld_fields_view-536e8faa28c2a7fd)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/tender_db-eccffe3a82a97ef3)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 262 filtered out; finished in 0.00s
+
+     Running unittests src/main.rs (target/debug/deps/tender_db-59c883676ccb9603)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 7 filtered out; finished in 0.00s
+
+     Running tests/accounts.rs (target/debug/deps/accounts-dedd1a7459e3a412)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+     Running tests/admin.rs (target/debug/deps/admin-5a133700ee52d394)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/api.rs (target/debug/deps/api-fdf8165e78b1a200)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 96 filtered out; finished in 0.00s
+
+     Running tests/plan_capture.rs (target/debug/deps/plan_capture-8c952f1c6d87e381)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 1 filtered out; finished in 0.00s
+
+     Running tests/sql.rs (target/debug/deps/sql-c5a349c514f35a79)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 20 filtered out; finished in 0.00s
+
+     Running tests/webhooks.rs (target/debug/deps/webhooks-fa68aae6d785523d)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 5 filtered out; finished in 0.00s
+
+GATE-EXIT=0
