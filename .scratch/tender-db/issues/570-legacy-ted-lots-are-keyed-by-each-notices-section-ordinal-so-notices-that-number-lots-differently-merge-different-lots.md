@@ -1,12 +1,13 @@
 # 570 — legacy TED lots are keyed by each notice's section ordinal, so notices that number their lots differently merge different lots under one key
 
-Status: ready-for-agent — DECIDED 2026-10-18 (wf_0271cb46-6c5); BUILT 2026-10-18 (unit 3, wf_1da4edb1-7be:
-`legacy_lot_remap` beside `match_inherited_lots`, K1–K4, `NoticeState.legacy` / `BucketRow.legacy`; 18 named tests incl.
-port parity block for block on 11 cached chains; 568's two assertions re-specified as decided plus three more the rule
-necessarily changes (551's single-section F20 test, 568's ambiguity and bucketed tests — each kept its old intent with
-an added case); review found 4, all fixed, guard mutants caught). GATED cd26e41 (green 1363 s, on main). DEPLOYED 2026-10-18 04:50Z (rev 03bdf4d, health ok, queue idle).
-DRAINING 2026-10-18 11:04Z in ONE refold with 568 unit 8 (jobs 2616/2617, N 2,101,635, cursor before 957854566;
-read-back replay `568-r208-lots/readback-u8/combined_port.py`). Was: NEXT drain `refold-fields` TED-LOT_NO + TED-LOT_NUMBER AFTER 568's read-back, before 551 B5 (B3 re-runs after).
+Status: done — 2026-10-18. Built (wf_1da4edb1-7be), gated cd26e41, deployed 03bdf4d, DRAINED in one refold with 568
+unit 8 (refold-fields 2616 + project 2617: 1,250,447 written = 1,203,568 verified + 46,879 corrected; D7 holds), READ BACK
+(wf_f6e14299-ff8, `568-r208-lots/readback-u8/readback.md`): (a)–(g) all pass — 8375276 serves LOT-1 "Lahve…" / LOT-2
+"Kojenecka voda" with all 124 LOT_NO-1 blocks on LOT-1 and 30 LOT_NO-2 on LOT-2 (147 moved, = port); the 8 + 5 changed
+Tenders 239/239 on their B lot, key sets unchanged; the other 196 equal the baseline; fresh 30 (salt "570-fresh30-")
+30/30; band / path-V 0 movers; 0 lot removed among 862,889 lot events. Recorded: the K1 re-keying caveat (6876932, a
+weld — evidence on 364), the D3 announcement wording, 8371908 as a unit-7 exhibit. Follow-on: unit 7 (567's
+single-section no-number placement) — NOT before 551 B5's band seek (551 read18 note 2).
 Decision: `.scratch/tender-db/570-lot-keys/decision.md`.
 Kind: correctness (legacy lot identity: awards and lots merged across different lots)
 Relates to:
