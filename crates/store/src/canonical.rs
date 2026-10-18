@@ -6941,8 +6941,9 @@ pub struct LotResultState {
     /// result's BT-13713 lot reference as published; FTS: the OCDS lot id (`relatedLots`).
     ///
     /// Kept beside the resolved key because the two can disagree: a single-section F20
-    /// modification block printing `LOT_NO 3` keys `LOT-1` when its one section prints 3, and
-    /// TED stores ordinal `LOT-k` keys. Path W's R2 reads the number from the award notice's own
+    /// modification block printing `LOT_NO 3` keys `LOT-1` when its one section prints 3 and the
+    /// chain carries no lot printing 3 that the section joins (issue 570's remap, when not
+    /// refused), and TED stores ordinal `LOT-k` keys. Path W's R2 reads the number from the award notice's own
     /// lot section first ([`LotState::published_lot_no`] of the version that notice caused) and
     /// from this field where the section prints none.
     ///

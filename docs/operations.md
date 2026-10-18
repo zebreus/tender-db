@@ -1116,7 +1116,10 @@ decision.md`, steps 1–9):
 - G1: two or more numbered blocks that all normalise to one number, on a Tender whose inherited lots print two or
   more numbers, match none (5476747's CAN 18543084 prints `1` on all three); a single-lot Tender is exempt;
 - G2: once a notice folded before the award republished an inherited lot under another normalised number, or
-  without one, no later award is matched (a lot that printed none and gains one is not renumbered);
+  without one, no later award is matched (a lot that printed none and gains one is not renumbered). Since issue
+  570 it compares at the key the remap below puts the section on, so a swap the remap joins by number renumbers
+  nothing; a lot kept at its position under a dropped or other number (an unnumbered section, a refused notice)
+  still does;
 - frozen: the key is set on the award's own version and carried as resolved; `published_lot_no` stays the
   block's; never the key's ordinal, `TED-ITEM`, a title, corrigendum prose, `CONTRACT_NUMBER` or the position.
 
@@ -1166,6 +1169,78 @@ Verify, in order:
   keys, each read as 568's.
 - (f) Status: R2.0.8 Tenders whose served `status` changed should be about none (533's `closed_by_notice` can flip
   in the projection where every result is a no-award, but 2010–2019 deadlines are past).
+
+**Legacy lots joined by printed number across a chain (issue 570, 2026-10-18).** TED's legacy notices key their lot
+sections `LOT-k` by position in the notice, and the fold merged a Tender's lots, and put each notice's award blocks,
+by that key. Where two notices of one Tender list their lots differently (a CAN listing a subset, packages split
+across two award notices, a swap), one key held two lots: 8375276's eight 2018–2020 award notices put 147 blocks
+on the other lot. `fold` (`crates/ingest/src/project.rs`, `legacy_lot_remap` beside `match_inherited_lots`, with
+568's `LegacyLotNumbers::inherited` / `lookup`) now maps each later legacy notice's lot sections onto the Tender's
+existing keys by printed number before the lot carry, on both fold paths (streaming and
+`BucketRow::to_notice_state`; `NoticeState.legacy` rides the bucket frame). The rule
+(`.scratch/tender-db/570-lot-keys/decision.md`, steps 1–9):
+- only a legacy notice (`is_legacy_profile`) with lot sections, folded after an earlier notice published some; the
+  first lot-publishing notice (the anchor) keys its lots by its own section ids, and no key is ever renamed or
+  invented (every key is a carried one or the section's own id);
+- a `Lot` section printing a non-blank number goes to the one carried `Lot` printing it (`published_lot_no`, the
+  latest section's `TED-LOT_NO`, else `TED-LOT_NUMBER`): exact trimmed first, `normalise_lot_number` only where no
+  lot prints it exactly; any other section (no number, no match, ambiguous, not a `Lot`) keeps its own key;
+- the section's facts, kind and number are carried at its target; its place country is read by its own key and
+  applied there; its round's `lot_results` and `bids` keys (567 resolved them to the notice's own sections) follow
+  it; `published_lot_no` is never touched;
+- K1: two sections landing on one key (a number printed twice, or a matched section landing on the key another
+  keeps) leave the whole notice on its own keys, as before 570; K2: so does a numbered section that matches nothing
+  where a carried lot printing another number sits (8433088's `1` against the CN's `1-4`, 6016286's `2.` against
+  `2`); K3: no notice is remapped once a non-legacy notice has published a lot section (eForms `LOT-0001` and TED
+  `LOT-1` stay apart, so 551's G8b input is unchanged); K4: nothing is remapped where no carried `Lot` prints a
+  number (7025760, 7465548);
+- 568's G2 reads the remapped carry (above); frozen: a notice's map reads only the notices folded before it.
+
+The parsed layer is right, so this is a refold (ADR-0017 R3, no epoch bump). Lot key strings and lot ids are
+unchanged on every replayed chain (0 minted or swept in 211, `port_result.json`); the content under some ids moves
+back to the identity their first notice gave them. The cohort is the `TED-LOT_NO` and `TED-LOT_NUMBER` carriers:
+every remapped section prints one, and so does every anchor lot it can match (`TED-LOT_NUMBER` adds only the R2.0.8
+chains with two lot-publishing notices, 0 of 71 in 568).
+
+```sh
+# size: aborts naming the carrier count, writes nothing
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_NO","TED-LOT_NUMBER"],"tables":["notice_ids"],"expect":1}'
+#   → error "refold-fields aborted: N notices carry [...], expected ~1 — check the field ids (nothing was written)"
+# wet, with that N; the handler queues its own `project` (do not queue a second)
+/root/aj.sh /admin/jobs '{"kind":"refold-fields","profiles":["TED-LOT_NO","TED-LOT_NUMBER"],"tables":["notice_ids"],"expect":N}'
+```
+
+- **Order**: after 568's drain is read back (2593/2594), in a queue gap clear of the 07:35 UTC daily chain and of a
+  running refold. **Before 551's B5 flip**: path W's R2 reads `LotState.published_lot_no` at the round notice's
+  version, and the port (`unit4b/gen_fixtures.py`, `rule_v2.py`'s `pub_no`) assumes a served key is the notice's
+  own section id, which a remapped notice breaks (7511890's 22980479 RES-1 serves on LOT-3, whose own LOT-3 prints
+  6): both apply `remap_port.remap`, a B3 run before this drain re-runs after it, and B5 waits for both.
+- **Baseline first**: before the wet run, snapshot the ≥ EUR 1 bn band, the path V heads and the 211 port Tenders
+  re-fetched after 568 (`drain/baseline-pre570.json`); read (c), (d) and (f) below against it.
+- **Size and cost**: about 2.1 M carriers (567's ≈ 1.4 M `TED-LOT_NO` plus 568's dry 2591, 719,732
+  `TED-LOT_NUMBER`), so the `project` falls back to FULL (issue 305's closure cap): about 4.3 h, like 2590.
+  Stoppable (issue 543); a stopped `project` is re-run, not read as done.
+- **Expected moves** (95 % intervals, 204 sampled multi-lot legacy CANs): 3.9 % (1.7–7.6 %) of multi-lot legacy CANs
+  change, about 22 k Tenders (9–42 k; the wet run's `corrected` replaces the estimate); 2.0 % of their served
+  results move. Each corrected Tender writes a `tender changed` plus a `lot changed` (`version: null`) per head lot,
+  ≈ 250 k rows (100–500 k). A ≥ EUR 1 bn head can ride along where a moved award changes a lot sum (path V, 537,
+  492); each must be a 570 move.
+
+Verify, in order:
+- (a) D7's completeness: the `project`'s `compare: X verified, Y corrected` summing to at least the wet run's
+  `stamped N`, and a bounded window read finds no `projection_epoch = 0` residue.
+- (b) The issue's Verify: 8375276 serves LOT-1 "Lahve a savičky" and LOT-2 "Kojenecká voda", every block whose
+  notice printed LOT_NO 1 on LOT-1 and every block printing 2 on LOT-2 (147 moved: 120 + 27).
+- (c) The 8 changed sample Tenders and the 5 changed exhibits of `.scratch/tender-db/570-lot-keys/port_result.json`:
+  every block on the port's B lot (32 + 207), lot key sets unchanged; 8433088, 6016286, 7465548, 7112657, 5939039,
+  5317587, 5540787, 6120045 and 7025760 equal the baseline.
+- (d) The other 196 sample Tenders equal the baseline (one GET per 1.5 s).
+- (e) A fresh uniform 30 corrected Tenders from the `project`'s `version: null` `tender changed` rows in its cursor
+  window, drawn before any id is read (`sha256("570-fresh30-" + id)`): each moved block on the key whose head number
+  equals its own, each moved section's title agreeing with its target (or untitled), no lot added or removed.
+  **Bar: 30 of 30**; one wrong reopens the decision.
+- (f) The band and path V diff against the baseline: every head that moved is a corrected Tender, read as 570's.
+- (g) `lot removed` rows in the window attributable to 570: expected 0.
 
 Job payloads (`crates/app/src/supervisor.rs`, `JobRequest`): `{kind:
 fetch|process|project|backfill|daily|reprocess|reindex|analyze|refold|refold-fields|

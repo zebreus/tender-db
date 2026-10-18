@@ -876,6 +876,10 @@ pub mod role_census;
 /// Issue 538 unit 3: the publisher's extra escapes, decoded in served titles and descriptions.
 pub mod escapes;
 
+/// Issue 570 unit 3: the cached legacy chains the lot-remap tests fold (test data only).
+#[cfg(test)]
+mod lot_keys_570;
+
 /// The value a canonical text fact serves. Issue 538: a `title` or `description` (lot ones
 /// included, every era) is decoded of the publisher's extra escapes
 /// ([`escapes::decode_publisher_escapes`]); every other text field is served as parsed, and so are
@@ -4364,6 +4368,11 @@ struct BucketRow {
     subtype: Option<String>,
     original_lang: Option<String>,
     is_correction: bool,
+    /// Issue 570: [`NoticeState::legacy`], which [`fold`]'s lot remap reads (same lifecycle note
+    /// as `group_members` below: postcard is not self-describing, so `serde(default)` changes
+    /// nothing for old bytes; the bucket directory never outlives one run).
+    #[serde(default)]
+    legacy: bool,
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
     /// Issue 532 review: [`NoticeState::place_country_tender`] and
@@ -4408,6 +4417,7 @@ impl BucketRow {
             subtype: state.subtype,
             original_lang: state.original_lang,
             is_correction: state.is_correction,
+            legacy: state.legacy,
             facts: state.facts,
             lots: state.lots,
             place_country_tender: state.place_country_tender,
@@ -4442,6 +4452,7 @@ impl BucketRow {
             group_members: self.group_members.clone(),
             logical_id: None,
             is_correction: self.is_correction,
+            legacy: self.legacy,
             facts: self.facts.clone(),
             lots: self.lots.clone(),
             place_country_tender: self.place_country_tender,
@@ -4473,6 +4484,11 @@ struct NoticeState {
     /// A change notice (it carries `efac:Changes` sections): what it publishes
     /// corrects an earlier notice rather than adding to the chain's results.
     is_correction: bool,
+    /// Issue 570: the notice is of a legacy TED profile ([`is_legacy_profile`]), so [`fold`]
+    /// may join its lot sections to the Tender lots an earlier notice printed under the same
+    /// number ([`legacy_lot_remap`]), and a non-legacy notice's lot sections stop that for the
+    /// rest of the chain (K3).
+    legacy: bool,
     /// Tender-scoped facts, and one bucket per lot the notice published.
     facts: BTreeSet<Fact>,
     lots: Vec<LotState>,
@@ -5784,6 +5800,7 @@ impl NoticeState {
             group_members: group_members(notice.id, parsed),
             logical_id,
             is_correction: parsed.sections.iter().any(|s| s.kind == "Change"),
+            legacy,
             facts,
             lots: lots.into_values().collect(),
             place_country_tender,
@@ -6684,8 +6701,14 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
     // Issue 568 G2: a notice folded so far republished an inherited lot under another number
     // (or without one), so a later award's printed number may name either numbering and no
     // cross-notice match is made ([`match_inherited_lots`]). Set in the lot carry below, never
-    // cleared.
+    // cleared. Issue 570 rule step 7: compared at the key a section lands on after the remap, so a
+    // renumbering the remap resolves (a swap) is none, while one it refuses (a dropped or blank
+    // number, a range, a format variant) still is.
     let mut lots_renumbered = false;
+    // Issue 570 K3: a non-legacy notice folded so far published a lot section, so no later notice's
+    // lot sections are remapped ([`legacy_lot_remap`]): eForms `LOT-0001` and TED `LOT-1` stay
+    // apart. Set below, never cleared.
+    let mut non_legacy_lots = false;
     for state in chain {
         let previous = versions.last();
         let mut facts = previous.map(|p| p.facts.clone()).unwrap_or_default();
@@ -6706,8 +6729,17 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
         }
 
         let mut lots: Vec<LotState> = previous.map(|p| p.lots.clone()).unwrap_or_default();
+        // Issue 570: a legacy notice's lot sections join the carried lots that print their numbers
+        // (rule steps 1-5), read from the lots carried so far only (step 8, frozen); `None` keeps
+        // every section on its own key, as before. The anchor (the first lot-publishing notice)
+        // meets no carried lot, so its keys are its own.
+        let remap = (state.legacy && !non_legacy_lots).then(|| legacy_lot_remap(&state.lots, &lots)).flatten();
+        non_legacy_lots |= !state.legacy && !state.lots.is_empty();
         for published in &state.lots {
-            match lots.iter_mut().find(|l| l.key == published.key) {
+            // Step 6: the section's state is carried under its target key, everything else as
+            // before; G2 below therefore compares at the target.
+            let key = remapped_lot_key(remap.as_deref(), &published.key);
+            match lots.iter_mut().find(|l| l.key == key) {
                 Some(carried) => {
                     carried.kind.clone_from(&published.kind);
                     lots_renumbered |=
@@ -6715,12 +6747,17 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
                     // Issue 551 unit 4b (B1): like the kind, the latest section's number, `None`
                     // included — the version a notice causes carries that notice's own.
                     carried.published_lot_no.clone_from(&published.published_lot_no);
+                    // Issue 570 step 6: read by the section's own key, applied to its target.
                     if state.place_country_lots.contains(&published.key) {
                         carried.facts.retain(|f| !is_place_country(f));
                     }
                     supersede(&mut carried.facts, &published.facts);
                 }
-                None => lots.push(published.clone()),
+                // Never a remapped key: a section that matched lands on a carried lot (step 9).
+                None => {
+                    debug_assert_eq!(key, published.key, "a remap target is a carried key");
+                    lots.push(published.clone());
+                }
             }
         }
         lots.sort_by(|a, b| a.key.cmp(&b.key));
@@ -6751,6 +6788,16 @@ fn fold(chain: &[&NoticeState]) -> Vec<TenderVersion> {
                 rounds.retain(|r| r.logical_notice_id != round.logical_notice_id);
             }
             let mut round = round.clone();
+            // Issue 570 step 6: issue 567 resolved the round's lot keys to the notice's own
+            // sections; they follow their sections to the Tender keys.
+            if let Some(remap) = remap.as_deref() {
+                for result in &mut round.lot_results {
+                    remap_lot_key(remap, &mut result.lot_key);
+                }
+                for bid in &mut round.bids {
+                    remap_lot_key(remap, &mut bid.lot_key);
+                }
+            }
             // Issue 568: an award notice with no lot section of its own resolves its legacy
             // blocks against the lots this version inherits, once, here: the round is carried
             // as resolved into every later version (frozen at the award's version), and
@@ -7539,6 +7586,88 @@ fn match_inherited_lots(round: &mut Round, inherited: &[LotState]) {
     }
     for (k, p) in numbered {
         round.lot_results[k].lot_key = numbers.lookup(&p).map(str::to_owned);
+    }
+}
+
+/// Issue 570: where a legacy notice's lot sections go among the lots a Tender carries
+/// (`.scratch/tender-db/570-lot-keys/decision.md`, rule steps 1-9): `(own key, target key)` for
+/// every section that moves, or `None` when the whole notice keeps its own keys, as before 570.
+/// [`fold`] calls it for a legacy notice (step 1, [`NoticeState::legacy`]) while no non-legacy
+/// notice of the chain has published a lot section (K3); `published` are the notice's lot
+/// sections, `carried` the lots the notices folded before it left (step 8: nothing later).
+///
+/// - The anchor (step 2): with nothing carried there is nothing to join, so the first
+///   lot-publishing notice keys its lots by its own section ids, and no key is ever renamed.
+/// - Targets (step 3): [`LegacyLotNumbers::inherited`] and its `lookup`, issue 568's semantics
+///   exactly: carried lots of kind `Lot` by their [`LotState::published_lot_no`] (the latest
+///   section's `TED-LOT_NO`, else `TED-LOT_NUMBER`); the exact trimmed number first, the
+///   [`normalise_lot_number`] form only where no carried lot prints it exactly; one lot or none.
+/// - Each section (step 4): a `Lot` section printing a non-blank number that names one carried lot
+///   goes to that lot's key. Every other section keeps its own key: no number, no match, ambiguous,
+///   or not of kind `Lot`. Never `TED-ITEM`, a title, `CONTRACT_NO` or a key's ordinal.
+/// - K4, something to match: no carried `Lot` prints a number (7025760's unnumbered CN), so nothing
+///   is remapped.
+/// - K1, injective: two sections of the notice would land on one key (a number printed twice, or
+///   a matched section landing on the key another section keeps).
+/// - K2, no silent merge: a numbered section that matched nothing keeps its own key only where no
+///   carried lot sits there, or the one there prints no number or the same one once normalised;
+///   otherwise it would merge a different number into that lot (8433088's `1` against the carried
+///   `1-4`, 6016286's `2.` against `2`).
+///
+/// A notice whose every section lands on its own key is `None` too: it changes nothing.
+fn legacy_lot_remap(published: &[LotState], carried: &[LotState]) -> Option<Vec<(String, String)>> {
+    if published.is_empty() || carried.is_empty() {
+        return None;
+    }
+    let numbers = LegacyLotNumbers::inherited(carried);
+    // K4.
+    if numbers.exact.is_empty() {
+        return None;
+    }
+    fn printed(lot: &LotState) -> Option<&str> {
+        lot.published_lot_no.as_deref().map(str::trim).filter(|p| !p.is_empty())
+    }
+    // (own key, target key, matched) per section.
+    let targets: Vec<(&str, &str, bool)> = published
+        .iter()
+        .map(|lot| {
+            let hit = if lot.kind == "Lot" { printed(lot).and_then(|p| numbers.lookup(p)) } else { None };
+            (lot.key.as_str(), hit.unwrap_or(lot.key.as_str()), hit.is_some())
+        })
+        .collect();
+    // K1.
+    if targets.iter().map(|&(_, target, _)| target).collect::<BTreeSet<&str>>().len() != targets.len() {
+        return None;
+    }
+    // K2.
+    for (lot, &(own, _, matched)) in published.iter().zip(&targets) {
+        let Some(number) = printed(lot).filter(|_| !matched) else { continue };
+        let Some(there) = carried.iter().find(|l| l.key == own).and_then(printed) else { continue };
+        if normalise_lot_number(there) != normalise_lot_number(number) {
+            return None;
+        }
+    }
+    let moved: Vec<(String, String)> = targets
+        .iter()
+        .filter(|(own, target, _)| own != target)
+        .map(|(own, target, _)| ((*own).to_owned(), (*target).to_owned()))
+        .collect();
+    (!moved.is_empty()).then_some(moved)
+}
+
+/// Issue 570: the Tender key a section of the notice being folded lands on under `remap`
+/// ([`legacy_lot_remap`]): its target, else its own key.
+fn remapped_lot_key<'a>(remap: Option<&'a [(String, String)]>, own: &'a str) -> &'a str {
+    remap.into_iter().flatten().find(|(from, _)| from == own).map_or(own, |(_, to)| to.as_str())
+}
+
+/// Issue 570 step 6: a result's or bid's lot key, which issue 567 resolved to a section of its own
+/// notice, follows that section to its Tender key. A key the remap does not move, and `None`, stay.
+fn remap_lot_key(remap: &[(String, String)], lot_key: &mut Option<String>) {
+    if let Some(key) = lot_key.as_mut()
+        && let Some((_, to)) = remap.iter().find(|(from, _)| from == key)
+    {
+        key.clone_from(to);
     }
 }
 
@@ -11496,6 +11625,8 @@ mod tests {
             subtype: Some("cn-standard".into()),
             original_lang: Some("DEU".into()),
             is_correction: true,
+            // Issue 570: the legacy flag rides the frame, or the bucketed fold would never remap.
+            legacy: true,
             facts,
             lots: vec![LotState { key: "LOT-1".into(), kind: "Lot".into(), facts: lot_facts, published_lot_no: Some("01".into()) }],
             // Issue 532 review: the place-country flags ride the frame too, or the
@@ -13234,6 +13365,7 @@ mod tests {
             original_lang: None,
             logical_id: None,
             is_correction: !corrections.is_empty(),
+            legacy: false,
             facts: facts.into_iter().collect(),
             lots,
             place_country_tender: false,
@@ -13313,6 +13445,7 @@ mod tests {
             original_lang: None,
             logical_id: None,
             is_correction: false,
+            legacy: false,
             facts: BTreeSet::new(),
             lots: Vec::new(),
             place_country_tender: false,
@@ -19038,10 +19171,12 @@ mod tests {
 
     /// Issue 551 unit 4b (B1), M1's note (3): a single-section F20 modification's award block printing
     /// `LOT_NO 3` keys the section it maps to — the notice's only lot, `LOT-1` — when that section
-    /// prints 3, and keeps its 3 beside the key; the tender's LOT-1 is then lot 1 in the CAN and lot
-    /// 3 in the F20, which is the re-keying R2 reads. Where the block's number names no section, it
-    /// stays unkeyed — exactly as stored today and as the port reads it off the API; B1 re-keys
-    /// nothing — and still keeps its 3. That is 6094289's shape (notices 21175651, 21176110 and
+    /// prints 3, and keeps its 3 beside the key. In a chain whose CAN prints 3 at LOT-3, issue 570
+    /// joins that section to LOT-3 and the award goes with it (re-specified on purpose: before 570 the
+    /// tender's LOT-1 was lot 1 in the CAN and lot 3 in the F20, the re-keying R2 read); only the
+    /// served `3.` variant is refused (K2) and still merges its section into LOT-1. Where the
+    /// block's number names no section, it stays unkeyed — exactly as stored today and as the port
+    /// reads it off the API; B1 re-keys nothing — and still keeps its 3. That is 6094289's shape (notices 21175651, 21176110 and
     /// 21182144, as `/v1/notices` serves them): no `TED-ITEM` anywhere, the one section printing
     /// `3.` / `5.` / `4.` and the block `3` / `5` / `4`; the exact lookup misses, and
     /// [`normalise_lot_number`] keeps the `.`, since it drops separators only after a `Lot` word.
@@ -19093,9 +19228,11 @@ mod tests {
         assert_eq!(b1_lots(&served.lots), vec![("LOT-1".to_owned(), b1_s("3."))], "the section's number as printed");
         assert!(served.stated_totals.is_empty(), "{:?}", served.stated_totals);
 
-        // In its chain: the CAN awards lots 1-3 under LOT-1..LOT-3; after the F20, LOT-1 holds the
-        // CAN's lot-1 award (printed 1) and the F20's lot-3 award (printed 3). Each version's LOT-1
-        // carries the number its own notice printed.
+        // In its chain: the CAN awards lots 1-3 under LOT-1..LOT-3. Issue 570 re-specifies this on
+        // purpose: the F20's one section prints 3, which the CAN's LOT-3 prints, so it joins LOT-3
+        // and its award goes with it ([`legacy_lot_remap`]); before 570 it merged into LOT-1, which
+        // then held the CAN's lot-1 award (printed 1) beside the F20's lot-3 award (printed 3), the
+        // re-keying R2(a) read. Each lot keeps the number its own notices print.
         let can = b1_parsed(
             &[
                 ("PROCEDURE", "Notice"),
@@ -19122,17 +19259,22 @@ mod tests {
         );
         let can = b1_bound(&b1_notice(19961452, "ted", "ted-export-r209"), &can);
         let versions = fold(&[&can, &numbered]);
-        let on_lot_1: Vec<(i64, Option<String>)> = versions[1]
-            .rounds
-            .iter()
-            .flat_map(|r| r.lot_results.iter().filter(|l| l.lot_key.as_deref() == Some("LOT-1")).map(|l| (r.notice_id, l.published_lot_no.clone())))
-            .collect();
-        assert_eq!(on_lot_1, vec![(19961452, b1_s("1")), (21175651, b1_s("3"))]);
+        let awards_on = |key: &str| -> Vec<(i64, Option<String>)> {
+            versions[1]
+                .rounds
+                .iter()
+                .flat_map(|r| {
+                    r.lot_results.iter().filter(|l| l.lot_key.as_deref() == Some(key)).map(|l| (r.notice_id, l.published_lot_no.clone()))
+                })
+                .collect()
+        };
+        assert_eq!(awards_on("LOT-1"), vec![(19961452, b1_s("1"))]);
+        assert_eq!(awards_on("LOT-3"), vec![(19961452, b1_s("3")), (21175651, b1_s("3"))]);
         assert_eq!(versions[0].lots[0].published_lot_no, b1_s("1"));
-        assert_eq!(versions[1].lots[0].published_lot_no, b1_s("3"));
+        assert_eq!(b1_lots(&versions[1].lots), b1_lots(&versions[0].lots), "LOT-1 prints 1, LOT-3 prints 3");
 
         // The served shape in the same chain: the F20's award sits on no lot, and its version's LOT-1
-        // prints `3.`.
+        // prints `3.` (issue 570's K2: `3.` matches no lot, and LOT-1, where it sits, prints 1).
         let versions = fold(&[&can, &served]);
         let f20: Vec<(Option<String>, Option<String>)> = versions[1]
             .rounds
@@ -19615,14 +19757,26 @@ mod tests {
         let versions = r208_fold(&[r208_cn(1, &["01", "Lot 1", "2"]), r208_can(2, &["1", "2"])]);
         assert_eq!(r208_keys(&versions[1], 2), vec![None, on_lot(3)], "`01` and `Lot 1` both normalise to 1");
         // Two lots printing one number in two notices are two lots too: a later notice adds
-        // LOT-3 printing 1 and republishes neither LOT-1 nor LOT-2.
-        let adds_lot_3 = (
-            b1_notice(3, "ted", "ted-export-r208"),
-            b1_parsed(&[("PROCEDURE", "Notice"), ("LOT-3", "Lot")], vec![b1_form("2"), b1_id("LOT-3", "TED-LOT_NUMBER", "1")]),
-        );
-        let versions = r208_fold(&[r208_cn(1, &["1", "2"]), adds_lot_3, r208_can(2, &["1", "2"])]);
+        // LOT-3 printing 1 beside its own LOT-1 printing 1 (issue 570's K1 keeps both sections on
+        // their own keys, since both would join LOT-1).
+        let adds_lot_3 = |id: i64, republishes_lot_1: bool| {
+            let mut sections = vec![("PROCEDURE", "Notice"), ("LOT-3", "Lot")];
+            let mut values = vec![b1_form("2"), b1_id("LOT-3", "TED-LOT_NUMBER", "1")];
+            if republishes_lot_1 {
+                sections.push(("LOT-1", "Lot"));
+                values.push(b1_id("LOT-1", "TED-LOT_NUMBER", "1"));
+            }
+            (b1_notice(id, "ted", "ted-export-r208"), b1_parsed(&sections, values))
+        };
+        let versions = r208_fold(&[r208_cn(1, &["1", "2"]), adds_lot_3(3, true), r208_can(2, &["1", "2"])]);
         assert_eq!(b1_lots(&versions[1].lots).len(), 3, "premise: three lots inherited");
         assert_eq!(r208_keys(&versions[2], 2), vec![None, on_lot(2)], "LOT-1 and LOT-3 both print 1");
+        // Issue 570, re-specified on purpose: a notice whose only section, LOT-3, prints the 1 that
+        // LOT-1 prints joins LOT-1 by number (its section is lot 1, not a third lot), so the
+        // Tender keeps two lots and the award printing 1 takes LOT-1.
+        let versions = r208_fold(&[r208_cn(1, &["1", "2"]), adds_lot_3(3, false), r208_can(2, &["1", "2"])]);
+        assert_eq!(b1_lots(&versions[1].lots), vec![("LOT-1".to_owned(), b1_s("1")), ("LOT-2".to_owned(), b1_s("2"))]);
+        assert_eq!(r208_keys(&versions[2], 2), vec![on_lot(1), on_lot(2)]);
         // Rule step 3: only lots of kind `Lot` count. A numbered Part (or LotsGroup) printing a
         // Lot's number makes it no ambiguity, and a number only a Part prints names nothing
         // (ADDED shape: an R2.0.8 chain carries no Part; this pins the kind filter).
@@ -19778,10 +19932,15 @@ mod tests {
 
     /// Issue 568 G2: once a notice folded before the award republishes an inherited lot under a
     /// different normalised number, or without one, no block of a later award notice is matched.
-    /// A CN prints 1/2; a later notice republishes LOT-1 as 2 and LOT-2 as 1, and the CAN's 1 and
-    /// 2 stay on the Tender. Counter-cases: a republish under the same normalised number (`01`
-    /// for `1`) and a lot that printed no number and gains one (a PIN's unnumbered lots, then the
-    /// CN's numbers) renumber nothing.
+    /// A CN prints 1/2; a later notice republishes LOT-1 without a number, or with a blank one,
+    /// and the CAN's 1 and 2 stay on the Tender. Counter-cases: a republish under the same
+    /// normalised number (`01` for `1`) and a lot that printed no number and gains one (a PIN's
+    /// unnumbered lots, then the CN's numbers) renumber nothing.
+    ///
+    /// Issue 570 re-specifies the swap on purpose: a later notice republishing LOT-1 as 2 and
+    /// LOT-2 as 1 joins each section to the lot printing its number ([`legacy_lot_remap`]), so
+    /// G2, read at the remapped keys, sees no renumbering, and the CAN's 1 and 2 take LOT-1 and
+    /// LOT-2. Before 570 the swap renumbered both lots and the CAN matched nothing.
     #[test]
     fn a_renumbered_inherited_lot_disables_the_cross_notice_match() {
         let republish = |id: i64, lots: &[Vec<(&str, &str)>]| r208(id, "2", lots, &[], Vec::new());
@@ -19789,7 +19948,7 @@ mod tests {
         assert_eq!(r208_keys(&control[1], 3), vec![on_lot(1), on_lot(2)], "premise: matched without the republish");
 
         let swapped = r208_fold(&[r208_cn(1, &["1", "2"]), r208_cn(2, &["2", "1"]), r208_can(3, &["1", "2"])]);
-        assert_eq!(r208_keys(&swapped[2], 3), vec![None, None]);
+        assert_eq!(r208_keys(&swapped[2], 3), vec![on_lot(1), on_lot(2)], "570: the swap is resolved by number");
 
         let dropped = r208_fold(&[r208_cn(1, &["1", "2"]), republish(2, &[vec![("TED-ITEM", "1")]]), r208_can(3, &["1", "2"])]);
         assert_eq!(dropped[1].lots[0].published_lot_no, None, "premise: LOT-1 republished with no number");
@@ -19812,7 +19971,9 @@ mod tests {
     /// (3 names no lot). A later notice adds LOT-3 printing 3 and a second CAN awards 3: that
     /// one takes LOT-3, while the first CAN's 3 stays on the Tender in every later version.
     /// Where the later notice also swaps LOT-1 and LOT-2, the first CAN keeps its LOT-1 and
-    /// LOT-2, and the second CAN, after the renumbering, matches nothing (G2).
+    /// LOT-2. Issue 570 re-specifies the second CAN on purpose: the swap is resolved by number
+    /// ([`legacy_lot_remap`]), so nothing is renumbered and its 1 and 3 take LOT-1 and LOT-3;
+    /// before 570 it matched nothing (G2).
     #[test]
     fn a_cross_notice_match_is_frozen_at_the_award_version() {
         let first = [on_lot(1), on_lot(2), None];
@@ -19837,7 +19998,7 @@ mod tests {
         for version in &versions[1..] {
             assert_eq!(r208_keys(version, 2), first, "a renumbering never re-keys an earlier round");
         }
-        assert_eq!(r208_keys(&versions[3], 4), vec![None, None]);
+        assert_eq!(r208_keys(&versions[3], 4), vec![on_lot(1), on_lot(3)], "570: the swap is resolved by number");
     }
 
     /// Issue 568: several awards of one lot all take it. 5218711: the CN 17886006 prints 1-4; its
@@ -19889,7 +20050,12 @@ mod tests {
     /// `to_notice_state()`) gives the same keys as the streaming fold, on a chain that exercises
     /// the exact and normalised matches, the frozen key, G1 and G2 in turn: 4748635's CN and CAN,
     /// a CAN printing `01`, a CAN printing one number on two blocks (G1), a republish swapping
-    /// LOT-1 and LOT-2 (G2), and a CAN after it. Every test above folds through both paths too.
+    /// LOT-1 and LOT-2 and a CAN after it, then a republish dropping LOT-1's number (G2) and a CAN
+    /// after that. Every test above folds through both paths too.
+    ///
+    /// Issue 570 re-specifies the CAN after the swap on purpose: the swap is resolved by number
+    /// ([`legacy_lot_remap`]), so it renumbers nothing and that CAN's 3 takes LOT-3. G2 is kept on
+    /// this path by the dropped number, a renumbering the remap does not resolve.
     #[test]
     fn the_cross_notice_match_is_identical_on_the_bucketed_path() {
         let chain = [
@@ -19899,17 +20065,731 @@ mod tests {
             r208_can(4, &["2", "2"]),
             r208_cn(5, &["2", "1"]),
             r208_can(6, &["3"]),
+            r208(7, "2", &[vec![("TED-ITEM", "1")]], &[], Vec::new()),
+            r208_can(8, &["3"]),
         ];
         let versions = r208_fold(&chain);
-        assert_eq!(r208_keys(&versions[5], 17187125), [1, 2, 3, 5, 6, 7, 8, 9].map(on_lot).to_vec());
-        assert_eq!(r208_keys(&versions[5], 3), vec![on_lot(1), on_lot(5)]);
-        assert_eq!(r208_keys(&versions[5], 4), vec![None, None], "G1");
-        assert_eq!(r208_keys(&versions[5], 6), vec![None], "G2");
+        assert_eq!(r208_keys(&versions[7], 17187125), [1, 2, 3, 5, 6, 7, 8, 9].map(on_lot).to_vec());
+        assert_eq!(r208_keys(&versions[7], 3), vec![on_lot(1), on_lot(5)]);
+        assert_eq!(r208_keys(&versions[7], 4), vec![None, None], "G1");
+        assert_eq!(r208_keys(&versions[7], 6), vec![on_lot(3)], "570: the swap is resolved by number");
+        assert_eq!(r208_keys(&versions[7], 8), vec![None], "G2: LOT-1 republished without its number");
         // The snapshot carries what the rule reads: the CN's printed numbers and the CAN's blocks.
         let row = BucketRow::snapshot("g".into(), &chain[0].0, b1_bound(&chain[0].0, &chain[0].1));
         assert_eq!(row.to_notice_state().lots.iter().map(|l| l.published_lot_no.clone()).collect::<Vec<_>>()[4], b1_s("6"));
         let row = BucketRow::snapshot("g".into(), &chain[1].0, b1_bound(&chain[1].0, &chain[1].1));
         assert!(row.to_notice_state().lots.is_empty(), "premise: the CAN publishes no lot section");
+    }
+
+    // ---- Issue 570: a legacy notice's lot sections join the lots an earlier notice printed ----
+
+    /// Issue 570: a cached notice ([`lot_keys_570`]) as the parse `NoticeState::read` takes: the
+    /// notice section, then its lot sections (kind `Lot`) and award blocks (`LotResult`) under it,
+    /// each carrying exactly its cached values (`TED-TITLE` as text, every other as an id), in the
+    /// store's order.
+    fn l570_notice(notice: &lot_keys_570::Notice) -> (store::NoticeRef, Parsed) {
+        let mut sections = vec![("PROCEDURE", "Notice")];
+        sections.extend(notice.lots.iter().map(|(id, _)| (*id, "Lot")));
+        sections.extend(notice.blocks.iter().map(|(id, _)| (*id, "LotResult")));
+        let mut values = Vec::new();
+        for (section, refs) in notice.lots.iter().chain(notice.blocks) {
+            let mut ordinal = 0;
+            for (field, value) in *refs {
+                let mut row =
+                    if *field == "TED-TITLE" { text_value(section, field, 0, None, value) } else { b1_id(section, field, value) };
+                row.ordinal = ordinal;
+                ordinal += 1;
+                values.push(row);
+            }
+        }
+        (b1_notice(notice.id, "ted", notice.profile), b1_parsed(&sections, values))
+    }
+
+    fn l570_chain(chain: &[lot_keys_570::Notice]) -> Vec<(store::NoticeRef, Parsed)> {
+        chain.iter().map(l570_notice).collect()
+    }
+
+    /// Issue 570: `chain` folded with the remap off: the same bound states with
+    /// [`NoticeState::legacy`] cleared, which only the remap reads, so this is the fold before 570.
+    fn l570_fold_without_remap(chain: &[(store::NoticeRef, Parsed)]) -> Vec<TenderVersion> {
+        let states: Vec<NoticeState> = chain.iter().map(|(n, p)| NoticeState { legacy: false, ..b1_bound(n, p) }).collect();
+        fold(&states.iter().collect::<Vec<_>>())
+    }
+
+    /// `(notice, block, lot)` for every award block of every round `version` carries, sorted.
+    fn l570_blocks(version: &TenderVersion) -> Vec<(i64, String, Option<String>)> {
+        let mut blocks: Vec<(i64, String, Option<String>)> = version
+            .rounds
+            .iter()
+            .flat_map(|r| r.lot_results.iter().map(move |l| (r.notice_id, l.key.clone(), l.lot_key.clone())))
+            .collect();
+        blocks.sort();
+        blocks
+    }
+
+    /// `notice`'s award blocks' lots in `version`, `(block, lot)` in block order.
+    fn l570_lots_of(version: &TenderVersion, notice: i64) -> Vec<(String, Option<String>)> {
+        l570_blocks(version).into_iter().filter(|(n, _, _)| *n == notice).map(|(_, block, lot)| (block, lot)).collect()
+    }
+
+    /// A lot's served title (its `title` text fact) in `version`.
+    fn l570_title(version: &TenderVersion, key: &str) -> Option<String> {
+        version.lots.iter().find(|l| l.key == key)?.facts.iter().find_map(|f| match f {
+            Fact::Text { field, value, .. } if field == "title" => Some(value.clone()),
+            _ => None,
+        })
+    }
+
+    /// `(key, printed number)` per lot of `version`.
+    fn l570_numbers(version: &TenderVersion) -> Vec<(&str, Option<&str>)> {
+        version.lots.iter().map(|l| (l.key.as_str(), l.published_lot_no.as_deref())).collect()
+    }
+
+    /// A cached chain ([`lot_keys_570`]) with `remap_port.py`'s outcomes for it.
+    struct L570Cached {
+        chain: &'static [lot_keys_570::Notice],
+        port_b: &'static [(i64, &'static str, Option<&'static str>)],
+        port_moved: &'static [(i64, &'static str, Option<&'static str>, Option<&'static str>)],
+        port_head: &'static [(&'static str, Option<&'static str>)],
+        outcomes: &'static [(i64, &'static str)],
+    }
+
+    /// The cached chain of `tender`, and its port outcomes.
+    fn l570_cached(tender: i64) -> L570Cached {
+        use lot_keys_570::*;
+        macro_rules! cached {
+            ($chain:ident, $b:ident, $moved:ident, $head:ident, $outcomes:ident) => {
+                L570Cached { chain: $chain, port_b: $b, port_moved: $moved, port_head: $head, outcomes: $outcomes }
+            };
+        }
+        match tender {
+            7274985 => cached!(CHAIN_7274985, PORT_B_7274985, PORT_MOVED_7274985, PORT_HEAD_B_7274985, PORT_OUTCOMES_7274985),
+            7511890 => cached!(CHAIN_7511890, PORT_B_7511890, PORT_MOVED_7511890, PORT_HEAD_B_7511890, PORT_OUTCOMES_7511890),
+            7697322 => cached!(CHAIN_7697322, PORT_B_7697322, PORT_MOVED_7697322, PORT_HEAD_B_7697322, PORT_OUTCOMES_7697322),
+            5787834 => cached!(CHAIN_5787834, PORT_B_5787834, PORT_MOVED_5787834, PORT_HEAD_B_5787834, PORT_OUTCOMES_5787834),
+            8433088 => cached!(CHAIN_8433088, PORT_B_8433088, PORT_MOVED_8433088, PORT_HEAD_B_8433088, PORT_OUTCOMES_8433088),
+            6016286 => cached!(CHAIN_6016286, PORT_B_6016286, PORT_MOVED_6016286, PORT_HEAD_B_6016286, PORT_OUTCOMES_6016286),
+            7006083 => cached!(CHAIN_7006083, PORT_B_7006083, PORT_MOVED_7006083, PORT_HEAD_B_7006083, PORT_OUTCOMES_7006083),
+            8375276 => cached!(CHAIN_8375276, PORT_B_8375276, PORT_MOVED_8375276, PORT_HEAD_B_8375276, PORT_OUTCOMES_8375276),
+            7112657 => cached!(CHAIN_7112657, PORT_B_7112657, PORT_MOVED_7112657, PORT_HEAD_B_7112657, PORT_OUTCOMES_7112657),
+            7465548 => cached!(CHAIN_7465548, PORT_B_7465548, PORT_MOVED_7465548, PORT_HEAD_B_7465548, PORT_OUTCOMES_7465548),
+            7025760 => cached!(CHAIN_7025760, PORT_B_7025760, PORT_MOVED_7025760, PORT_HEAD_B_7025760, PORT_OUTCOMES_7025760),
+            _ => panic!("no cached chain for {tender}"),
+        }
+    }
+
+    /// Issue 570 unit 3, port parity: `tender`'s cached chain folded through both paths
+    /// ([`r208_fold`]) puts every award block where `remap_port.py`'s option B does, block for
+    /// block; its head serves the port's lots and printed numbers; the fold with the remap off
+    /// puts each block B moves where the port's "today" does and every other block where B does,
+    /// on the same lot keys (no key minted or swept); and each lot-publishing notice is remapped
+    /// exactly where the port remaps it ([`legacy_lot_remap`], read on the lots the version before
+    /// it carries). Returns the versions.
+    fn l570_port_parity(tender: i64) -> Vec<TenderVersion> {
+        let cached = l570_cached(tender);
+        let notices = l570_chain(cached.chain);
+        let versions = r208_fold(&notices);
+        let head = versions.last().expect("a chain");
+        let port_b: Vec<(i64, String, Option<String>)> =
+            cached.port_b.iter().map(|(n, b, l)| (*n, (*b).to_owned(), l.map(str::to_owned))).collect();
+        assert_eq!(l570_blocks(head), port_b, "{tender}: every block on the port's B lot");
+        assert_eq!(l570_numbers(head), cached.port_head, "{tender}: the head's lots and numbers");
+
+        let today = l570_fold_without_remap(&notices);
+        let today_head = today.last().expect("a chain");
+        let keys = |v: &TenderVersion| v.lots.iter().map(|l| l.key.clone()).collect::<Vec<_>>();
+        assert_eq!(keys(head), keys(today_head), "{tender}: no key minted or swept");
+        let moved: HashMap<(i64, &str), (Option<&str>, Option<&str>)> =
+            cached.port_moved.iter().map(|(n, b, was, is)| ((*n, *b), (*was, *is))).collect();
+        let mut seen = 0;
+        let (b_blocks, today_blocks) = (l570_blocks(head), l570_blocks(today_head));
+        assert_eq!(b_blocks.len(), today_blocks.len(), "{tender}: the same blocks");
+        for ((notice, block, b_lot), (today_notice, today_block, today_lot)) in b_blocks.iter().zip(today_blocks) {
+            assert_eq!((*notice, block), (today_notice, &today_block), "{tender}: the same blocks");
+            match moved.get(&(*notice, block.as_str())) {
+                Some((was, is)) => {
+                    seen += 1;
+                    assert_eq!(today_lot.as_deref(), *was, "{tender}: {notice} {block} today");
+                    assert_eq!(b_lot.as_deref(), *is, "{tender}: {notice} {block} under B");
+                }
+                None => assert_eq!(&today_lot, b_lot, "{tender}: {notice} {block} does not move"),
+            }
+        }
+        assert_eq!(seen, cached.port_moved.len(), "{tender}: the port's moved blocks");
+
+        let states: Vec<NoticeState> = notices.iter().map(|(n, p)| b1_bound(n, p)).collect();
+        let remapped: Vec<(i64, bool)> = states
+            .iter()
+            .enumerate()
+            .filter(|(_, s)| !s.lots.is_empty())
+            .map(|(k, s)| {
+                let carried = k.checked_sub(1).map_or(&[][..], |p| versions[p].lots.as_slice());
+                (s.notice_id, legacy_lot_remap(&s.lots, carried).is_some())
+            })
+            .collect();
+        let want: Vec<(i64, bool)> = cached.outcomes.iter().map(|(n, how)| (*n, *how == "remapped")).collect();
+        assert_eq!(remapped, want, "{tender}: remapped exactly where the port remaps ({:?})", cached.outcomes);
+        versions
+    }
+
+    /// Issue 570 unit 3: the Rust fold reproduces `remap_port.py`'s keys block for block on every
+    /// cached chain: the decision's eight (7274985, 7511890, 7697322, 5787834, 8433088, 6016286,
+    /// 7006083 and 8375276 reduced to CN 18679338, 19786640 and 21337435) and the three unnumbered
+    /// ones (7112657, 7465548, 7025760).
+    #[test]
+    fn the_cached_chains_reproduce_the_port_block_for_block() {
+        for tender in [7274985, 7511890, 7697322, 5787834, 8433088, 6016286, 7006083, 8375276, 7112657, 7465548, 7025760] {
+            l570_port_parity(tender);
+        }
+    }
+
+    /// Issue 570, the judge's 7274985: the CN 22137062 prints lots S1-S4 on LOT-1..4; the CAN
+    /// 22223285 lists only S1, S2 and S4, by position, so its S4 section is its LOT-3. Before 570
+    /// its LOT-3 merged into the Tender's LOT-3: the S4 award (RES-3) served on lot S3 and S3's
+    /// title was replaced by S4's. Now the section joins LOT-4, the lot printing S4.
+    #[test]
+    fn a_later_notice_listing_a_subset_by_position_joins_the_lots_it_prints_7274985() {
+        const S3: &str = "Prace z zakresu rozdrabniania pozostałości roślinnych i przygotowania gleby na terenie leśnictw Leśna, Chudoba i Pruszków oraz transport słupów do grodzenia upraw do leśnictw Nadleśnictwa Olesno";
+        const S4: &str = "Prace z zakresu rozdrabniania pozostałości roślinnych i przygotowania gleby na terenie leśnictw Szumirad, Trzebiszyn, Radawka i Ligota Turawska";
+        let versions = l570_port_parity(7274985);
+        let head = &versions[1];
+        assert_eq!(l570_lots_of(head, 22223285)[2], ("RES-3".to_owned(), on_lot(4)), "the S4 award on LOT-4");
+        assert_eq!(l570_title(head, "LOT-3").as_deref(), Some(S3), "LOT-3 keeps S3's title");
+        assert_eq!(l570_title(head, "LOT-4").as_deref(), Some(S4));
+        assert_eq!(l570_numbers(head)[2..], [("LOT-3", Some("S3")), ("LOT-4", Some("S4"))]);
+
+        let today = l570_fold_without_remap(&l570_chain(lot_keys_570::CHAIN_7274985));
+        assert_eq!(l570_lots_of(&today[1], 22223285)[2], ("RES-3".to_owned(), on_lot(3)), "premise: before 570, on lot S3");
+        assert_eq!(l570_title(&today[1], "LOT-3").as_deref(), Some(S4), "premise: before 570, S3 served S4's title");
+    }
+
+    /// Issue 570, the judge's 7511890: the CN 22690061 prints Pakiet 1-6 on LOT-1..6; two award
+    /// notices each list three packages by position: 22907340 packages 1, 2 and 5, 22980479
+    /// packages 3, 4 and 6. Before 570 four of the six awards served on another package. Now each
+    /// award notice's sections join the lots printing their numbers: the awards serve LOT-1, 2, 5
+    /// and LOT-3, 4, 6, and the head's lot k is "Pakiet k" at every k.
+    #[test]
+    fn two_award_notices_with_disjoint_packages_join_their_own_lots_7511890() {
+        let versions = l570_port_parity(7511890);
+        let head = versions.last().expect("a head");
+        let lots = |notice| l570_lots_of(head, notice).into_iter().map(|(_, lot)| lot).collect::<Vec<_>>();
+        assert_eq!(lots(22907340), vec![on_lot(1), on_lot(2), on_lot(5)]);
+        assert_eq!(lots(22980479), vec![on_lot(3), on_lot(4), on_lot(6)]);
+        for k in 1..=6 {
+            let key = format!("LOT-{k}");
+            let title = l570_title(head, &key).expect("a titled lot");
+            assert!(title.starts_with(&format!("Pakiet {k}:")), "{key} is Pakiet {k}: {title}");
+        }
+        let today = l570_fold_without_remap(&l570_chain(lot_keys_570::CHAIN_7511890));
+        let title = l570_title(today.last().expect("a head"), "LOT-1").expect("a titled lot");
+        assert!(title.starts_with("Pakiet 3:"), "premise: before 570, LOT-1 served Pakiet 3: {title}");
+    }
+
+    /// Issue 570, the issue's own Verify: 8375276, reduced to three of its notices. The CN
+    /// 18679338 (R2.0.8) prints 1 and 2 on LOT-1 and LOT-2; the 2018 award notice 19786640 swaps
+    /// them (its LOT-1 prints 2, "Kojenecká voda"; its LOT-2 prints 1, "Lahve a savičky"); the
+    /// 2020 notice 21337435 prints them in order. Before 570 the swapped notice's 16 awards of lot
+    /// 1 served on LOT-2 and its 3 awards of lot 2 on LOT-1, and LOT-1's title flipped from
+    /// version to version. Now every block lands on the key whose head number is its own, and the
+    /// lots keep one identity from the swapped notice's version on.
+    #[test]
+    fn swapped_award_notices_follow_the_printed_number_8375276() {
+        let versions = l570_port_parity(8375276);
+        let head = versions.last().expect("a head");
+        let numbers: HashMap<&str, Option<&str>> = l570_numbers(head).into_iter().collect();
+        let mut printed_on: BTreeMap<(String, String), usize> = BTreeMap::new();
+        for round in &head.rounds {
+            for result in &round.lot_results {
+                let key = result.lot_key.as_deref().expect("every block on a lot");
+                let printed = result.published_lot_no.as_deref().expect("every block prints a number");
+                assert_eq!(
+                    numbers[key].and_then(normalise_lot_number),
+                    normalise_lot_number(printed),
+                    "{} {} prints {printed} and sits on {key}",
+                    round.notice_id,
+                    result.key
+                );
+                *printed_on.entry((key.to_owned(), printed.to_owned())).or_default() += 1;
+            }
+        }
+        let want: BTreeMap<(String, String), usize> =
+            [(("LOT-1".to_owned(), "1".to_owned()), 17), (("LOT-2".to_owned(), "2".to_owned()), 3)].into_iter().collect();
+        assert_eq!(printed_on, want, "16 + 1 blocks printing 1 on LOT-1, 3 printing 2 on LOT-2");
+        for version in &versions[1..] {
+            let at = version.caused_by_notice_id;
+            assert_eq!(l570_title(version, "LOT-1").as_deref(), Some("Lahve a savičky"), "LOT-1 at {at}");
+            assert_eq!(l570_title(version, "LOT-2").as_deref(), Some("Kojenecká voda"), "LOT-2 at {at}");
+        }
+
+        let today = l570_fold_without_remap(&l570_chain(lot_keys_570::CHAIN_8375276));
+        assert_eq!(l570_title(&today[1], "LOT-1").as_deref(), Some("Kojenecká voda"), "premise: before 570, LOT-1 flipped");
+        let on_lot_2 = l570_lots_of(&today[2], 19786640).iter().filter(|(_, lot)| *lot == on_lot(2)).count();
+        assert_eq!(on_lot_2, 16, "premise: before 570, the 16 awards of lot 1 served on LOT-2");
+    }
+
+    /// Issue 570, the judge's 7697322: the CN 23121547 prints 01-17 on LOT-1..17. The award
+    /// notice 23276289's one section prints 02 (terrassement) at its LOT-1; 23413021 omits lots
+    /// 02, 07 and 09, so its 14 sections print 01, 03-06, 08 and 10-17 by position. Before 570 the
+    /// 02 award served on lot 01, 23413021 renamed LOT-2..14, and numbers 13-17 then sat at two
+    /// keys each. Now 02 joins LOT-2, the 13 shifted sections join their CN keys, and no number
+    /// sits at two keys in any version.
+    #[test]
+    fn a_notice_omitting_lots_does_not_shift_the_rest_7697322() {
+        let versions = l570_port_parity(7697322);
+        assert_eq!(l570_lots_of(&versions[1], 23276289), vec![("RES-1".to_owned(), on_lot(2))], "02 on LOT-2");
+        let head = &versions[2];
+        let numbers: HashMap<&str, Option<&str>> = l570_numbers(head).into_iter().collect();
+        for (block, lot) in l570_lots_of(head, 23413021) {
+            let key = lot.expect("every block on a lot");
+            let printed = numbers[key.as_str()].and_then(normalise_lot_number).expect("a number");
+            assert_eq!(key, format!("LOT-{printed}"), "{block} on its CN key");
+        }
+        assert_eq!(l570_title(head, "LOT-2").as_deref(), Some("terrassement"));
+        assert_eq!(l570_title(head, "LOT-7").as_deref(), Some("etancheite"), "lot 07 back");
+        assert_eq!(l570_title(head, "LOT-9").as_deref(), Some("menuiseries Interieures Bois"), "lot 09 back");
+        let at_two_keys = |version: &TenderVersion| {
+            let mut seen = BTreeSet::new();
+            version.lots.iter().filter_map(|l| l.published_lot_no.as_deref().and_then(normalise_lot_number)).filter(|n| !seen.insert(n.clone())).collect::<Vec<_>>()
+        };
+        for version in &versions {
+            assert_eq!(at_two_keys(version), Vec::<String>::new(), "no number at two keys at {}", version.caused_by_notice_id);
+        }
+        let today = l570_fold_without_remap(&l570_chain(lot_keys_570::CHAIN_7697322));
+        assert!(!at_two_keys(&today[2]).is_empty(), "premise: before 570, numbers sat at two keys");
+    }
+
+    /// Issue 570, the judge's 5787834: the CN 19020649 prints 1-19 on LOT-1..19. The award notice
+    /// 19154619's one section prints 18 at its LOT-1; 19167246 prints 1-17 on LOT-1..17 and 19 at
+    /// its LOT-18. Before 570 lot 18's award served on lot 1 (and lot 1 took lot 18's title), and
+    /// lot 19's section renamed LOT-18. Now 18 joins LOT-18 and 19 joins LOT-19; the awards
+    /// printing a list (`15 и 19`) stay on the Tender, as 567 decided.
+    #[test]
+    fn a_one_section_award_joins_the_lot_it_numbers_5787834() {
+        let versions = l570_port_parity(5787834);
+        assert_eq!(l570_lots_of(&versions[1], 19154619), vec![("RES-1".to_owned(), on_lot(18))], "18 on LOT-18");
+        let head = &versions[2];
+        assert_eq!(
+            l570_title(head, "LOT-1").as_deref(),
+            Some("Комплекти отстеосинтезни средства за интрамедуларна фиксация на фрактури"),
+            "LOT-1 keeps lot 1's title"
+        );
+        assert_eq!(l570_title(head, "LOT-18").as_deref(), Some("Система за уникондилно ендопротезиране на колянна става"));
+        assert_eq!(l570_title(head, "LOT-19").as_deref(), Some("Компоненти за първично тотално колянно протезиране включващи:"), "19's section");
+        let numbers: HashMap<&str, Option<&str>> = l570_numbers(head).into_iter().collect();
+        assert_eq!((numbers["LOT-18"], numbers["LOT-19"]), (Some("18"), Some("19")));
+        assert_eq!(
+            l570_lots_of(head, 19167246).into_iter().map(|(_, lot)| lot).collect::<Vec<_>>(),
+            vec![on_lot(16), None, None, None, on_lot(14)]
+        );
+        let today = l570_fold_without_remap(&l570_chain(lot_keys_570::CHAIN_5787834));
+        assert_eq!(l570_lots_of(&today[1], 19154619), vec![("RES-1".to_owned(), on_lot(1))], "premise: before 570, on lot 1");
+    }
+
+    /// Issue 570, 7006083 (one of 567's fifteen): the CN 21534520 numbers its 14 lots out of
+    /// order (LOT-2 prints 14, LOT-14 prints 3, ...) and the CAN 21943329 numbers them the same
+    /// way. Every section's number names its own key, so the remap maps the notice to itself:
+    /// every version is identical to the fold with the remap off.
+    #[test]
+    fn a_consistent_permuted_chain_is_unchanged_7006083() {
+        let versions = l570_port_parity(7006083);
+        let chain = l570_chain(lot_keys_570::CHAIN_7006083);
+        assert_eq!(versions, l570_fold_without_remap(&chain), "identical with the remap off");
+        let (can, cn) = (b1_bound(&chain[1].0, &chain[1].1), b1_bound(&chain[0].0, &chain[0].1));
+        assert_eq!(legacy_lot_remap(&can.lots, &cn.lots), None, "a notice that agrees maps to itself");
+    }
+
+    /// An r2.0.9 notice of lot sections `lots` (`LOT-1`, … in order), each `(LOT_NO, title)`
+    /// (`-` prints no number), and award blocks printing `blocks`' numbers (`RES-1`, …).
+    fn l570_r209(id: i64, lots: &[(&str, &str)], blocks: &[&str]) -> (store::NoticeRef, Parsed) {
+        let lot_ids: Vec<String> = (1..=lots.len()).map(|k| format!("LOT-{k}")).collect();
+        let res_ids: Vec<String> = (1..=blocks.len()).map(|k| format!("RES-{k}")).collect();
+        let mut sections = vec![("PROCEDURE", "Notice")];
+        sections.extend(lot_ids.iter().map(|s| (s.as_str(), "Lot")));
+        sections.extend(res_ids.iter().map(|s| (s.as_str(), "LotResult")));
+        let mut values = Vec::new();
+        for (section, (number, title)) in lot_ids.iter().zip(lots) {
+            if *number != "-" {
+                values.push(b1_id(section, "TED-LOT_NO", number));
+            }
+            if !title.is_empty() {
+                values.push(text_value(section, "TED-TITLE", 0, None, title));
+            }
+        }
+        for (section, number) in res_ids.iter().zip(blocks) {
+            values.push(b1_id(section, "TED-LOT_NO", number));
+        }
+        (b1_notice(id, "ted", "ted-export-r209"), b1_parsed(&sections, values))
+    }
+
+    /// `numbers` as untitled r2.0.9 lot sections.
+    fn l570_untitled<'a>(numbers: &[&'a str]) -> Vec<(&'a str, &'static str)> {
+        numbers.iter().map(|n| (*n, "")).collect()
+    }
+
+    /// Issue 570 rule steps 2, 8 and 9: the first notice that publishes lot sections keys the lots
+    /// by its own section ids, and those keys, numbers and titles never move. A chain opens with a
+    /// notice of no lot section; the anchor prints 3, 1, 2 on LOT-1..3 (lots C, A, B); a later
+    /// notice prints 1-4 in order (A-D). Its sections join the anchor's lots by number and its
+    /// fourth, a number no lot prints on a free key, keeps its own id: every key of every version
+    /// is the anchor's or a section's own, no key is invented, and each anchor key prints its
+    /// anchor number under its anchor title throughout. Frozen (step 8): each version depends on
+    /// the notices up to its own only, here and on two cached chains.
+    #[test]
+    fn the_first_lot_publishing_notice_keys_the_lots_and_never_moves() {
+        let chain = vec![
+            (b1_notice(1, "ted", "ted-export-r209"), b1_parsed(&[("PROCEDURE", "Notice")], vec![b1_form("F01")])),
+            l570_r209(2, &[("3", "C"), ("1", "A"), ("2", "B")], &[]),
+            l570_r209(3, &[("1", "A"), ("2", "B"), ("3", "C"), ("4", "D")], &["1", "2", "3", "4"]),
+        ];
+        let versions = r208_fold(&chain);
+        assert!(versions[0].lots.is_empty(), "premise: the first notice publishes no lot");
+        let anchor = [("LOT-1", "3", "C"), ("LOT-2", "1", "A"), ("LOT-3", "2", "B")];
+        for version in &versions[1..] {
+            for (key, number, title) in anchor {
+                let lot = version.lots.iter().find(|l| l.key == key).expect("an anchor key");
+                assert_eq!(lot.published_lot_no.as_deref(), Some(number), "{key} at {}", version.caused_by_notice_id);
+                assert_eq!(l570_title(version, key).as_deref(), Some(title), "{key} at {}", version.caused_by_notice_id);
+            }
+        }
+        assert_eq!(l570_numbers(&versions[2]).last(), Some(&("LOT-4", Some("4"))), "the new number keeps its own id");
+        assert_eq!(
+            l570_lots_of(&versions[2], 3).into_iter().map(|(_, lot)| lot).collect::<Vec<_>>(),
+            vec![on_lot(2), on_lot(3), on_lot(1), on_lot(4)],
+            "each award on the lot printing its number"
+        );
+        let own: BTreeSet<String> =
+            chain.iter().flat_map(|(n, p)| b1_bound(n, p).lots.into_iter().map(|l| l.key)).collect();
+        for version in &versions {
+            for lot in &version.lots {
+                assert!(own.contains(&lot.key), "{} is a section's own id", lot.key);
+            }
+        }
+        // Step 8: a later notice never re-keys an earlier version.
+        for k in 1..=chain.len() {
+            assert_eq!(r208_fold(&chain[..k]), versions[..k], "version {k} depends on notices 1..={k} only");
+        }
+        for tender in [7697322, 8375276] {
+            let cached = l570_chain(l570_cached(tender).chain);
+            let versions = r208_fold(&cached);
+            for k in 1..=cached.len() {
+                assert_eq!(r208_fold(&cached[..k]), versions[..k], "{tender}: frozen at version {k}");
+            }
+        }
+    }
+
+    /// Issue 570 K1, injective: when two sections of a notice would land on one key, the whole
+    /// notice keeps its own keys, as before 570. A CN prints 1-3. Three later notices: one prints
+    /// 2 on two sections; one prints `2` and `02`, which name one lot (the exact, then the
+    /// normalised match); one prints 3 on LOT-1 while its LOT-3 prints no number, so the matched
+    /// section would land on the key the unnumbered one keeps.
+    #[test]
+    fn two_sections_naming_one_lot_keep_the_notice_on_its_own_keys() {
+        let cn = l570_r209(1, &l570_untitled(&["1", "2", "3"]), &[]);
+        for later in [
+            l570_r209(2, &l570_untitled(&["2", "2"]), &["2"]),
+            l570_r209(2, &l570_untitled(&["2", "02"]), &["2"]),
+            l570_r209(2, &l570_untitled(&["3", "2", "-"]), &["3"]),
+        ] {
+            let (cn_state, later_state) = (b1_bound(&cn.0, &cn.1), b1_bound(&later.0, &later.1));
+            assert_eq!(legacy_lot_remap(&later_state.lots, &cn_state.lots), None, "K1: {:?}", b1_lots(&later_state.lots));
+            let chain = [cn.clone(), later];
+            assert_eq!(r208_fold(&chain), l570_fold_without_remap(&chain), "the notice keeps its own keys");
+        }
+        // Control: the third notice with its LOT-3 numbered 1 rotates cleanly.
+        let rotated = l570_r209(2, &l570_untitled(&["3", "2", "1"]), &["3"]);
+        let chain = [cn.clone(), rotated];
+        let versions = r208_fold(&chain);
+        assert_eq!(l570_numbers(&versions[1]), vec![("LOT-1", Some("1")), ("LOT-2", Some("2")), ("LOT-3", Some("3"))]);
+        assert_eq!(l570_lots_of(&versions[1], 2), vec![("RES-1".to_owned(), on_lot(3))]);
+    }
+
+    /// Issue 570 K2, no silent merge: a numbered section that matches no carried lot keeps its own
+    /// key only where no lot sits there, or the one there prints no number or the same number
+    /// once normalised; otherwise the whole notice keeps its own keys. 8433088: the CN 20329681
+    /// has one lot printing the range `1-4`; the CAN 20739611 prints 1, `2-3` and 4, and its `1`
+    /// matches nothing at LOT-1, where `1-4` sits (a re-lotting; its awards are right today).
+    /// 6016286: the CAN 19824266 prints `2.`..`7.` against the CN's 2-7, a format variant
+    /// `normalise_lot_number` keeps apart (positions agree). Both are unchanged. A synthetic CAN
+    /// that swaps lots 1 and 2 and prints 7 where lot 3 sits is refused whole, while the same CAN
+    /// over an unnumbered lot 3, or over a lot 3 printing `3` beside a lot 4 printing `03`
+    /// (ambiguous, but the same number at its key), is remapped.
+    #[test]
+    fn a_number_no_lot_prints_at_an_occupied_key_keeps_the_notice_on_its_own_keys_8433088() {
+        for tender in [8433088, 6016286] {
+            let versions = l570_port_parity(tender);
+            assert_eq!(versions, l570_fold_without_remap(&l570_chain(l570_cached(tender).chain)), "{tender} unchanged");
+        }
+        let versions = l570_port_parity(8433088);
+        assert_eq!(l570_numbers(&versions[1]), vec![("LOT-1", Some("1")), ("LOT-2", Some("2-3")), ("LOT-3", Some("4"))]);
+
+        let swaps_and_prints_7 = l570_r209(2, &l570_untitled(&["2", "1", "7"]), &["1", "2"]);
+        let chain = [l570_r209(1, &l570_untitled(&["1", "2", "3"]), &[]), swaps_and_prints_7.clone()];
+        assert_eq!(r208_fold(&chain), l570_fold_without_remap(&chain), "K2: 7 would merge into lot 3");
+        let positional = vec![("RES-1".to_owned(), on_lot(2)), ("RES-2".to_owned(), on_lot(1))];
+        assert_eq!(l570_lots_of(&r208_fold(&chain)[1], 2), positional, "the whole notice keeps its positions");
+        let joined = vec![("RES-1".to_owned(), on_lot(1)), ("RES-2".to_owned(), on_lot(2))];
+        // Allowed: the lot at LOT-3 prints no number.
+        let versions = r208_fold(&[l570_r209(1, &l570_untitled(&["1", "2", "-"]), &[]), swaps_and_prints_7]);
+        assert_eq!(l570_lots_of(&versions[1], 2), joined, "over an unnumbered lot 3");
+        assert_eq!(l570_numbers(&versions[1]), vec![("LOT-1", Some("1")), ("LOT-2", Some("2")), ("LOT-3", Some("7"))]);
+        // Allowed: the same number once normalised. `003` names no lot (both `3` and `03` normalise
+        // to 3), and LOT-3, where it sits, prints 3.
+        let versions = r208_fold(&[
+            l570_r209(1, &l570_untitled(&["1", "2", "3", "03"]), &[]),
+            l570_r209(2, &l570_untitled(&["2", "1", "003"]), &["1", "2"]),
+        ]);
+        assert_eq!(l570_lots_of(&versions[1], 2), joined, "over a lot 3 printing 3");
+        assert_eq!(l570_numbers(&versions[1])[..3], [("LOT-1", Some("1")), ("LOT-2", Some("2")), ("LOT-3", Some("003"))]);
+    }
+
+    /// Issue 570 K2's free key: a CN prints 1-3; a CAN swaps 1 and 2 and adds LOT-4 printing 4,
+    /// which no lot prints. LOT-4 is free, so that section keeps its own id (a new lot, as before
+    /// 570) while the swap is joined by number; its award printing 4 takes LOT-4.
+    #[test]
+    fn a_new_number_on_a_free_key_keeps_its_own_key() {
+        let chain = [
+            l570_r209(1, &l570_untitled(&["1", "2", "3"]), &[]),
+            l570_r209(2, &l570_untitled(&["2", "1", "3", "4"]), &["1", "2", "3", "4"]),
+        ];
+        let versions = r208_fold(&chain);
+        assert_eq!(
+            l570_numbers(&versions[1]),
+            vec![("LOT-1", Some("1")), ("LOT-2", Some("2")), ("LOT-3", Some("3")), ("LOT-4", Some("4"))]
+        );
+        assert_eq!(
+            l570_lots_of(&versions[1], 2).into_iter().map(|(_, lot)| lot).collect::<Vec<_>>(),
+            vec![on_lot(1), on_lot(2), on_lot(3), on_lot(4)]
+        );
+        let (cn, can) = (b1_bound(&chain[0].0, &chain[0].1), b1_bound(&chain[1].0, &chain[1].1));
+        assert_eq!(
+            legacy_lot_remap(&can.lots, &cn.lots),
+            Some(vec![("LOT-1".to_owned(), "LOT-2".to_owned()), ("LOT-2".to_owned(), "LOT-1".to_owned())]),
+            "only the swap moves; LOT-4 keeps its own key"
+        );
+    }
+
+    /// Issue 570 rule step 4: a section that prints no number keeps its own key. 7112657: the CN
+    /// 21736179 prints 1-7; the 2021 republication 21853373 (NO_LOT_DIVISION) has one unnumbered
+    /// section at LOT-1, which stays there; the CAN 22462819 prints 1-7 again. Unchanged. In a
+    /// synthetic notice the unnumbered section stays while its numbered siblings are remapped.
+    #[test]
+    fn an_unnumbered_section_keeps_its_own_key_7112657() {
+        let versions = l570_port_parity(7112657);
+        let chain = l570_chain(lot_keys_570::CHAIN_7112657);
+        assert_eq!(versions, l570_fold_without_remap(&chain), "unchanged");
+        assert_eq!(versions[2].lots[0].published_lot_no, None, "21853373's unnumbered section stays on LOT-1");
+
+        let chain = [
+            l570_r209(1, &l570_untitled(&["1", "2", "3"]), &[]),
+            l570_r209(2, &l570_untitled(&["-", "3", "2"]), &["3", "2"]),
+        ];
+        let versions = r208_fold(&chain);
+        assert_eq!(l570_lots_of(&versions[1], 2), vec![("RES-1".to_owned(), on_lot(3)), ("RES-2".to_owned(), on_lot(2))]);
+        assert_eq!(l570_numbers(&versions[1]), vec![("LOT-1", None), ("LOT-2", Some("2")), ("LOT-3", Some("3"))]);
+    }
+
+    /// Issue 570 K4, something to match: where no carried lot of kind `Lot` prints a number,
+    /// nothing is remapped. 7465548: framework call-offs that each restart at an unnumbered LOT-1
+    /// before a CAN printing 1-4; 7025760: an unnumbered CN, then a CAN whose one section prints 2
+    /// (its award prints none and stays on the Tender, 567's rule). Both are unchanged.
+    #[test]
+    fn an_unnumbered_chain_is_not_remapped_7465548_7025760() {
+        for tender in [7465548, 7025760] {
+            let versions = l570_port_parity(tender);
+            assert_eq!(versions, l570_fold_without_remap(&l570_chain(l570_cached(tender).chain)), "{tender} unchanged");
+        }
+        let versions = l570_port_parity(7025760);
+        assert_eq!(l570_numbers(&versions[1]), vec![("LOT-1", Some("2"))], "the section stays on LOT-1");
+    }
+
+    /// Issue 570 K3, legacy chain only: a non-legacy notice is never remapped, and once one has
+    /// published a lot section no later notice is. A TED CN prints 1 and 2 on LOT-1 and LOT-2; an
+    /// eForms CAN's LOT-0001 (whose BT-137 normalises to 1) stays LOT-0001 with its award, so
+    /// issue 551's G8b pair (LOT-1 beside LOT-0001) is unchanged; a TED notice after it that swaps
+    /// lots 1 and 2 keeps its positions, while the same swap without the eForms notice is joined,
+    /// and so is the swap after an eForms notice that publishes no lot section: K3 reads a
+    /// non-legacy notice's lot sections, not the notice.
+    #[test]
+    fn a_non_legacy_notice_is_never_remapped() {
+        let cn = l570_r209(1, &l570_untitled(&["1", "2"]), &[]);
+        let eforms = (
+            b1_notice(2, "ted", "eforms:eforms-sdk-1.13"),
+            b1_parsed(
+                &[("PROCEDURE", "Notice"), ("LOT-0001", "Lot"), ("RES-0001", "LotResult")],
+                vec![b1_id("LOT-0001", "BT-137-Lot", "LOT-0001"), b1_id("RES-0001", "BT-13713-LotResult", "LOT-0001")],
+            ),
+        );
+        assert_eq!(normalise_lot_number("LOT-0001").as_deref(), Some("1"), "premise: it would match LOT-1");
+        let swap = l570_r209(3, &l570_untitled(&["2", "1"]), &["1"]);
+        let versions = r208_fold(&[cn.clone(), eforms.clone()]);
+        assert_eq!(l570_numbers(&versions[1]), vec![("LOT-0001", Some("LOT-0001")), ("LOT-1", Some("1")), ("LOT-2", Some("2"))]);
+        assert_eq!(l570_lots_of(&versions[1], 2), vec![("RES-0001".to_owned(), b1_s("LOT-0001"))]);
+        let swap_state = b1_bound(&swap.0, &swap.1);
+        assert!(legacy_lot_remap(&swap_state.lots, &versions[1].lots).is_some(), "premise: only K3 stops the join");
+        let chain = [cn.clone(), eforms, swap.clone()];
+        assert_eq!(r208_fold(&chain), l570_fold_without_remap(&chain), "no remap after a non-legacy notice's lots");
+        assert_eq!(l570_lots_of(&r208_fold(&chain)[2], 3), vec![("RES-1".to_owned(), on_lot(2))], "positional, as before 570");
+        let versions = r208_fold(&[cn.clone(), swap.clone()]);
+        assert_eq!(l570_lots_of(&versions[1], 3), vec![("RES-1".to_owned(), on_lot(1))], "control: joined by number");
+        let lotless = (b1_notice(2, "ted", "eforms:eforms-sdk-1.13"), b1_parsed(&[("PROCEDURE", "Notice")], vec![]));
+        let lotless_state = b1_bound(&lotless.0, &lotless.1);
+        assert!(!lotless_state.legacy && lotless_state.lots.is_empty(), "premise: a non-legacy notice with no lot section");
+        let versions = r208_fold(&[cn, lotless, swap]);
+        assert_eq!(l570_numbers(&versions[1]), vec![("LOT-1", Some("1")), ("LOT-2", Some("2"))]);
+        assert_eq!(l570_lots_of(&versions[2], 3), vec![("RES-1".to_owned(), on_lot(1))], "joined after a lot-less eForms notice");
+    }
+
+    /// Issue 570 rule step 6: a section's republished place country is read by the section's own
+    /// key and applied to the lot it joins. No legacy dialect publishes BT-5141 today, so the
+    /// flag is set on bound states: a CN's LOT-1 serves FR and its LOT-2 DE; a later notice swaps
+    /// the two lots, and its LOT-1 section (lot 2) republishes the country as AT, or as a code that
+    /// maps to nothing. LOT-2 serves AT, or nothing; LOT-1 keeps FR either way.
+    #[test]
+    fn place_country_follows_the_section_to_its_target() {
+        let place = |code: &str| Fact::Classification { field: PLACE_COUNTRY_FIELD.into(), scheme: "nuts".into(), code: code.into() };
+        let countries = |version: &TenderVersion, key: &str| -> Vec<String> {
+            let lot = version.lots.iter().find(|l| l.key == key).expect("a lot");
+            lot.facts.iter().filter(|f| is_place_country(f)).map(|f| match f { Fact::Classification { code, .. } => code.clone(), _ => unreachable!() }).collect()
+        };
+        let cn = l570_r209(1, &l570_untitled(&["1", "2"]), &[]);
+        let mut cn = b1_bound(&cn.0, &cn.1);
+        cn.lots[0].facts.insert(place("FR"));
+        cn.lots[1].facts.insert(place("DE"));
+        cn.place_country_lots = ["LOT-1".to_owned(), "LOT-2".to_owned()].into_iter().collect();
+        for (republished, want) in [(Some("AT"), vec!["AT".to_owned()]), (None, Vec::new())] {
+            let swap = l570_r209(2, &l570_untitled(&["2", "1"]), &[]);
+            let mut swap = b1_bound(&swap.0, &swap.1);
+            swap.lots[0].facts.extend(republished.map(place));
+            swap.place_country_lots = ["LOT-1".to_owned()].into_iter().collect();
+            let versions = fold(&[&cn, &swap]);
+            assert_eq!(countries(&versions[1], "LOT-2"), want, "the section's lot, {republished:?}");
+            assert_eq!(countries(&versions[1], "LOT-1"), vec!["FR".to_owned()], "the section's own key untouched");
+            let bucketed = [l570_through_bucket(&cn), l570_through_bucket(&swap)];
+            assert_eq!(fold(&bucketed.iter().collect::<Vec<_>>()), versions, "the bucket path folds the same");
+        }
+    }
+
+    /// `state` through the bucket spill: snapshotted as a [`BucketRow`] (`NoticeState` is not
+    /// `Clone`, so field by field, as `BucketRow::snapshot` takes them), framed through postcard,
+    /// and rebuilt with `to_notice_state`.
+    fn l570_through_bucket(state: &NoticeState) -> NoticeState {
+        let row = BucketRow {
+            group_key: "g".into(),
+            source: "ted".into(),
+            source_rank: 0,
+            notice_id: state.notice_id,
+            publication_id: state.publication_id.clone(),
+            published_at: state.published_at,
+            dispatched_at: state.dispatched_at,
+            subtype: state.subtype.clone(),
+            original_lang: state.original_lang.clone(),
+            is_correction: state.is_correction,
+            legacy: state.legacy,
+            facts: state.facts.clone(),
+            lots: state.lots.clone(),
+            place_country_tender: state.place_country_tender,
+            place_country_lots: state.place_country_lots.clone(),
+            value_corrections: state.value_corrections.clone(),
+            round: state.round.clone(),
+            group_members: state.group_members.clone(),
+            stated_totals: state.stated_totals.clone(),
+        };
+        let bytes = postcard::to_stdvec(&row).expect("serialize");
+        postcard::from_bytes::<BucketRow>(&bytes).expect("deserialize").to_notice_state()
+    }
+
+    /// Issue 570 rule step 7, with 568's two re-specified assertions: G2 reads the remapped carry.
+    /// An R2.0.8 CN prints 1 and 2; an R2.0.9 notice swaps them, which the remap joins by number,
+    /// so nothing is renumbered and the R2.0.8 CAN after it matches 1 and 2 (before 570 the swap
+    /// renumbered both lots and the CAN matched nothing). A refused notice (`1.` and `2.`, K2)
+    /// still renumbers, and the CAN after it matches nothing, as before.
+    #[test]
+    fn g2_reads_the_remapped_carry() {
+        let joined = l570_r209(2, &l570_untitled(&["2", "1"]), &[]);
+        let refused = l570_r209(2, &l570_untitled(&["1.", "2."]), &[]);
+        let chain = [r208_cn(1, &["1", "2"]), joined, r208_can(3, &["1", "2"])];
+        assert_eq!(r208_keys(&r208_fold(&chain)[2], 3), vec![on_lot(1), on_lot(2)], "a joined swap leaves the match on");
+        assert_eq!(r208_keys(&l570_fold_without_remap(&chain)[2], 3), vec![None, None], "premise: before 570, G2 fired");
+        let chain = [r208_cn(1, &["1", "2"]), refused, r208_can(3, &["1", "2"])];
+        assert_eq!(r208_keys(&r208_fold(&chain)[2], 3), vec![None, None], "a refused renumbering turns it off");
+    }
+
+    /// Issue 570 rule step 6: a remapped notice's stated total names the Tender keys its awards
+    /// moved to ([`lots_awarded`] reads the rounds after the remap). A CN prints 1-3; the CAN's one
+    /// section prints 3 at its LOT-1, with its award and a notice-level award total: the total
+    /// awards LOT-3, where before 570 it awarded LOT-1.
+    #[test]
+    fn stated_totals_name_the_remapped_keys() {
+        let cn = l570_r209(1, &l570_untitled(&["1", "2", "3"]), &[]);
+        let can = (
+            b1_notice(2, "ted", "ted-export-r209"),
+            b1_parsed(
+                &[("PROCEDURE", "Notice"), ("LOT-1", "Lot"), ("RES-1", "LotResult")],
+                vec![
+                    b1_form("F03"),
+                    b1_amount("PROCEDURE", "TED-VAL_TOTAL", 95_000_000, "EUR"),
+                    b1_id("LOT-1", "TED-LOT_NO", "3"),
+                    b1_id("RES-1", "TED-LOT_NO", "3"),
+                ],
+            ),
+        );
+        let chain = [cn, can];
+        let total = |versions: &[TenderVersion]| b1_totals(&versions[1]).into_iter().map(|t| t.5).collect::<Vec<_>>();
+        assert_eq!(total(&r208_fold(&chain)), vec![b1_keys(&["LOT-3"])]);
+        assert_eq!(total(&l570_fold_without_remap(&chain)), vec![b1_keys(&["LOT-1"])], "premise: before 570");
+    }
+
+    /// Issue 570: the bucketed fold (`BucketRow::snapshot`, through the postcard spill, then
+    /// `to_notice_state`) remaps exactly as the streaming fold: [`NoticeState::legacy`] rides the
+    /// frame (an r2.0.9 and an r2.0.8 notice keep it, an eForms one does not), and on 8375276 and
+    /// on one chain that is remapped, refused by K2 and by K1, republished without numbers, and
+    /// then stopped by an eForms notice's lots (K3), the two paths agree and differ from the fold
+    /// with the remap off. Each refused step puts an award where only its guard puts it (the remap
+    /// would move it), on the carry the step before leaves. Every test above folds through both
+    /// paths too ([`r208_fold`]).
+    #[test]
+    fn the_remap_is_identical_on_the_bucketed_path() {
+        for (notice, legacy) in [
+            (b1_notice(1, "ted", "ted-export-r209"), true),
+            (b1_notice(1, "ted", "ted-export-r208"), true),
+            (b1_notice(1, "ted", "eforms:eforms-sdk-1.13"), false),
+        ] {
+            let parsed = b1_parsed(&[("PROCEDURE", "Notice"), ("LOT-1", "Lot")], vec![b1_id("LOT-1", "TED-LOT_NO", "1")]);
+            let bytes = postcard::to_stdvec(&BucketRow::snapshot("g".into(), &notice, b1_bound(&notice, &parsed))).expect("serialize");
+            let row = postcard::from_bytes::<BucketRow>(&bytes).expect("deserialize");
+            assert_eq!(row.to_notice_state().legacy, legacy, "{}", notice.profile);
+        }
+        let chain = l570_chain(lot_keys_570::CHAIN_8375276);
+        assert_ne!(r208_fold(&chain), l570_fold_without_remap(&chain), "premise: the remap moves 8375276");
+        let chain = [
+            l570_r209(1, &l570_untitled(&["1", "2", "3"]), &[]),
+            l570_r209(2, &l570_untitled(&["3", "1", "2"]), &["1", "3"]),
+            l570_r209(3, &l570_untitled(&["2", "1", "7"]), &["1", "2"]),
+            l570_r209(4, &l570_untitled(&["1", "2", "2"]), &["1"]),
+            l570_r209(5, &l570_untitled(&["-", "-"]), &[]),
+            (
+                b1_notice(6, "ted", "eforms:eforms-sdk-1.13"),
+                b1_parsed(&[("PROCEDURE", "Notice"), ("LOT-0001", "Lot")], vec![b1_id("LOT-0001", "BT-137-Lot", "LOT-0001")]),
+            ),
+            l570_r209(7, &l570_untitled(&["2", "1"]), &["2"]),
+        ];
+        let versions = r208_fold(&chain);
+        assert_ne!(versions, l570_fold_without_remap(&chain), "premise: the remap moves this chain");
+        assert_eq!(l570_lots_of(&versions[1], 2), vec![("RES-1".to_owned(), on_lot(1)), ("RES-2".to_owned(), on_lot(3))], "remapped");
+        // K2: 7 matches nothing at LOT-3, which prints 3; the remap would join the swap (1, 2).
+        assert_eq!(l570_lots_of(&versions[2], 3), vec![("RES-1".to_owned(), on_lot(2)), ("RES-2".to_owned(), on_lot(1))], "K2: positional");
+        assert_eq!(l570_numbers(&versions[2]), vec![("LOT-1", Some("2")), ("LOT-2", Some("1")), ("LOT-3", Some("7"))]);
+        // K1: 2 and 2 name LOT-1 twice; the remap would put the award printing 1 on LOT-2.
+        assert_eq!(l570_lots_of(&versions[3], 4), vec![("RES-1".to_owned(), on_lot(1))], "K1: positional");
+        assert_eq!(l570_numbers(&versions[3]), vec![("LOT-1", Some("1")), ("LOT-2", Some("2")), ("LOT-3", Some("2"))]);
+        assert_eq!(l570_numbers(&versions[4]), vec![("LOT-1", None), ("LOT-2", None), ("LOT-3", Some("2"))], "unnumbered sections stay");
+        // K3: the remap would join 2 to LOT-3 and 1 to LOT-0001 (normalised 1).
+        assert_eq!(l570_lots_of(&versions[6], 7), vec![("RES-1".to_owned(), on_lot(1))], "K3: positional");
+        assert_eq!(
+            l570_numbers(&versions[6]),
+            vec![("LOT-0001", Some("LOT-0001")), ("LOT-1", Some("2")), ("LOT-2", Some("1")), ("LOT-3", Some("2"))],
+            "K3: LOT-0001 keeps its own number"
+        );
     }
 
     // ---- Issue 514 unit 2: the GB register-spelling rewrite (decision §6) ----

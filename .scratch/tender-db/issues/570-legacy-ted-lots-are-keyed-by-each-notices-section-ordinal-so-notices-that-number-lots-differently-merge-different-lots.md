@@ -1,12 +1,12 @@
 # 570 — legacy TED lots are keyed by each notice's section ordinal, so notices that number their lots differently merge different lots under one key
 
-Status: ready-for-agent — DECIDED 2026-10-18 (wf_0271cb46-6c5): BUILD option B (fold-time remap of a legacy notice's lot
-sections onto the Tender's existing keys by printed number; anchor = first lot-publishing notice; K1 injective, K2 no
-silent merge, K3 legacy chain only, K4 something to match). Measured (204 multi-lot legacy CANs 2016–23, skeptic-verified):
-maps disagree 6.4 % (3.4–10.6 %), harmful 3.4 % (1.4–6.9 %; 9 / 1,596 results, 22 lot facts); B changes 3.9 % (1.7–7.6 %),
-fixes 5 of 7 harmful Tenders, 7 of 9 results, 14 of 22 facts; 0 / 124 moved sections contradicted by title, 0 lot ids
-minted or swept in 211 chains; ≈ 22 k Tenders (9–42 k). NEXT: unit 3 build; drain after 568's read-back, before 551
-B5 (B3 re-runs after this drain; the port needs `remap_port.remap`). Decision: `.scratch/tender-db/570-lot-keys/decision.md`.
+Status: ready-for-agent — DECIDED 2026-10-18 (wf_0271cb46-6c5); BUILT 2026-10-18 (unit 3, wf_1da4edb1-7be:
+`legacy_lot_remap` beside `match_inherited_lots`, K1–K4, `NoticeState.legacy` / `BucketRow.legacy`; 18 named tests incl.
+port parity block for block on 11 cached chains; 568's two assertions re-specified as decided plus three more the rule
+necessarily changes (551's single-section F20 test, 568's ambiguity and bucketed tests — each kept its old intent with
+an added case); review found 4, all fixed, guard mutants caught). NEXT: gate, deploy in a queue gap (after the Sunday
+weeklies), drain `refold-fields` TED-LOT_NO + TED-LOT_NUMBER AFTER 568's read-back, before 551 B5 (B3 re-runs after).
+Decision: `.scratch/tender-db/570-lot-keys/decision.md`.
 Kind: correctness (legacy lot identity: awards and lots merged across different lots)
 Relates to:
 - 567 (same-notice mapping by printed LOT_NO; correct within a notice — this is the cross-notice keying it rests on);
