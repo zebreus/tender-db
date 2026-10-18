@@ -1,0 +1,437 @@
+{
+ "stage": "fresh568",
+ "date": "2026-10-18",
+ "rule": "u7/decision-u7.md \"Amendment (unit 8, 2026-10-18)\", \"The read-back bar\"",
+ "drain": {
+  "refold": 2616,
+  "project": 2617,
+  "finished": "2026-10-18T15:19:48Z",
+  "cursor_before": 957854566,
+  "cursor_after": 958764334
+ },
+ "changes": {
+  "query": "/v1/changes?entity=tender&since=<cursor>&limit=1000, paged from since=957854566 by last_cursor",
+  "pages": 47,
+  "generation": [
+   2
+  ],
+  "events": 46879,
+  "ops": "[('changed', None)]",
+  "first_cursor": "957854567",
+  "last_event_cursor": "958764329",
+  "last_page_last_cursor": "958764334",
+  "last_page_more": false,
+  "events_in_range_957854566_958764334": 46879,
+  "distinct_tender_ids": 46879,
+  "changed_at": [
+   "2026-10-18T11:13:16Z"
+  ],
+  "equals_drain_corrected_46879": true,
+  "raw_pages_dir": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/fresh568/changes",
+  "sha256_of_concatenated_pages": "8062ccd12fbeeea78a794b5ea9ce85126588066c882b9d0782261f3f73e6bd79"
+ },
+ "draw": {
+  "salt": "sha256(\"568u8-fresh30-\"+id) ascending",
+  "rule": "decision-u7.md \"Amendment (unit 8, 2026-10-18)\", \"The read-back bar\", \"The draw\"; 30 held, >= 10 OUT (published_at year outside 2012-2015), >= 8 G2 (outside readback/population.json and serving an R2.0.8 block on a lot, read from the Tender alone: a lot-placed result whose winners are filed at Tender scope only)",
+  "changed_file": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/fresh568/changes_pages.json",
+  "changed_tenders": 46879,
+  "version_filter": "op=changed, version=null (events input only)",
+  "cursor_range": {
+   "from": "957854566",
+   "to": "958764334",
+   "rule": "from < cursor <= to",
+   "events_read": 46879,
+   "events_in_range": 46879,
+   "events_outside_range": 0,
+   "first_in_range": 957854567,
+   "last_in_range": 958764329,
+   "read_reaches": 958764334,
+   "generations": [
+    2
+   ]
+  },
+  "excluded": {
+   "n": 11,
+   "by_set": {
+    "f30": 1,
+    "oos50": 2,
+    "s150": 8
+   }
+  },
+  "candidates": 46868,
+  "draw": [
+   {
+    "id": 7757904,
+    "year": 2024,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7861809,
+    "year": 2024,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7712921,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7618275,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 5834359,
+    "year": 2017,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7734908,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7470625,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7383539,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 6144328,
+    "year": 2018,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 5457789,
+    "year": 2015,
+    "out": false,
+    "g2": false
+   },
+   {
+    "id": 6538921,
+    "year": 2020,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7801839,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7211401,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 8291946,
+    "year": 2012,
+    "out": false,
+    "g2": false
+   },
+   {
+    "id": 7611313,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 8469615,
+    "year": 2022,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 8497081,
+    "year": 2023,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7274146,
+    "year": 2022,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 7162587,
+    "year": 2021,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 6866398,
+    "year": 2021,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 6365329,
+    "year": 2019,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 8365595,
+    "year": 2016,
+    "out": true,
+    "g2": false
+   },
+   {
+    "id": 4888356,
+    "year": 2015,
+    "out": false,
+    "g2": true
+   },
+   {
+    "id": 6324865,
+    "year": 2022,
+    "out": true,
+    "g2": true
+   },
+   {
+    "id": 5864590,
+    "year": 2017,
+    "out": true,
+    "g2": true
+   },
+   {
+    "id": 5362479,
+    "year": 2015,
+    "out": false,
+    "g2": true
+   },
+   {
+    "id": 4569314,
+    "year": 2012,
+    "out": false,
+    "g2": true
+   },
+   {
+    "id": 6788159,
+    "year": 2023,
+    "out": true,
+    "g2": true
+   },
+   {
+    "id": 6869520,
+    "year": 2024,
+    "out": true,
+    "g2": true
+   },
+   {
+    "id": 5351872,
+    "year": 2015,
+    "out": false,
+    "g2": true
+   }
+  ],
+  "held": 30,
+  "out": 24,
+  "g2": 8,
+  "complete": true,
+  "stopped": null,
+  "not_found_404": [],
+  "gets": 651,
+  "fetch_errors": []
+ },
+ "bar_i": {
+  "mode": "bar",
+  "read_started": "2026-10-18T15:43:01+00:00",
+  "read_finished": "2026-10-18T15:53:37+00:00",
+  "tenders": 30,
+  "read": 30,
+  "blocks": 878,
+  "parity_ok": 878,
+  "parity_breaks": 0,
+  "by_cause": {
+   "570": 228,
+   "unchanged": 644,
+   "568-u8": 6
+  },
+  "by_reason": {
+   "567 same-notice + 570 remap ->": 179,
+   "567 same-notice": 318,
+   "568 match": 105,
+   "568 refused G4": 1,
+   "568 refused G3": 4,
+   "567 same-notice: no lot": 269,
+   "568 refused G5": 2
+  },
+  "gets": 398,
+  "fetch_errors": [],
+  "parity_verdict": "pass",
+  "pass_bar_i": true,
+  "incomplete": [],
+  "computed_not_served": [],
+  "served_outside_chain": [],
+  "non_legacy_mismatches": [],
+  "legacy_test_disagrees": [],
+  "profile_from_prefix": []
+ },
+ "labels": {
+  "order": "labels_fresh568.py written from view.py (pre-guard replay lot, no guard, no served lot) before join.py joined the guard outcomes; only aggregate by_reason counts of bar_summary.json had been seen",
+  "blocks": 112,
+  "by_label": {
+   "single_right": 106,
+   "multi_lot_contract": 4,
+   "wrong_other": 2
+  },
+  "kept_by_label": {
+   "single_right": 105
+  },
+  "refused_by_label": {
+   "single_right": 1,
+   "multi_lot_contract": 4,
+   "wrong_other": 2
+  },
+  "tenders_with_568_blocks": [
+   4569314,
+   4888356,
+   5351872,
+   5362479,
+   5457789,
+   5864590,
+   8291946,
+   8365595
+  ],
+  "tenders_with_a_wrong_block_before_guards": [
+   5864590,
+   8291946,
+   8365595
+  ],
+  "served_ne_port": 0
+ },
+ "bar_ii": {
+  "tenders_with_wrong_kept": [],
+  "count": 0,
+  "limit": 2,
+  "pass": true
+ },
+ "bar_iii": {
+  "wrong_kept": [],
+  "new_shapes_kept": [],
+  "reopen": false,
+  "caught_wrong_shapes": [
+   {
+    "tender": 8291946,
+    "blocks": [
+     "17037930/RES-1",
+     "17037930/RES-2",
+     "17037930/RES-3",
+     "17049093/RES-1"
+    ],
+    "label": "multi_lot_contract",
+    "shape": "one CAN block per contract covering several lots, titled \"Доставка ... по обособени позиции № a, b, c ...\" and printing only the first lot number (unit-7 shape (1))",
+    "guard": "G3"
+   },
+   {
+    "tender": 8365595,
+    "blocks": [
+     "18617609/RES-1"
+    ],
+    "label": "wrong_other",
+    "shape": "CAN-only renumbering: a one-block CAN prints LOT_NUMBER 1 for lot 3 (title and value = LOT-3)",
+    "guard": "G5"
+   },
+   {
+    "tender": 5864590,
+    "blocks": [
+     "19369697/RES-3"
+    ],
+    "label": "wrong_other",
+    "shape": "CAN mis-numbering: prints 3 (already awarded by RES-2) for the lot titled as LOT-8",
+    "guard": "G5"
+   }
+  ]
+ },
+ "false_refusals": {
+  "count": 1,
+  "of_right": 106,
+  "blocks": [
+   {
+    "tender": 5457789,
+    "block": "18461129/RES-8",
+    "guard": "G4",
+    "shape": "copied block title: CONTRACT_TITLE \"Pakiet nr 34 ...\" (LOT-34 description) while LN 37, CONTRACT_NUMBER \"Pakiet nr 37\", INITIAL_ESTIMATED 9,975.00 PLN (= LOT-37 value to the cent) and winner Sanofi-Aventis (insulin; LOT-37 \"Preparat insuliny\") all name lot 37; one contradicting block, so block level only; cause 568-u8 (the pre-drain rule placed it on LOT-37; null now)"
+   }
+  ],
+  "note": "not a bar criterion; the decision measured 0 FR of 2,081 for FINAL_AMENDED; a refusal leaves the award on the Tender (the pre-568 reading)"
+ },
+ "g2_stratum": {
+  "check_live": {
+   "tenders": 8,
+   "read": 8,
+   "exercising_570": 5,
+   "exercising_570_via_g2_refusal": 5
+  },
+  "per_tender": {
+   "4888356": {
+    "exercises_570": true,
+    "null_to_lot_by_570": 14,
+    "via_g2_refusal": 14
+   },
+   "6324865": {
+    "exercises_570": false,
+    "null_to_lot_by_570": 0,
+    "via_g2_refusal": 0
+   },
+   "5864590": {
+    "exercises_570": true,
+    "null_to_lot_by_570": 2,
+    "via_g2_refusal": 2
+   },
+   "5362479": {
+    "exercises_570": true,
+    "null_to_lot_by_570": 10,
+    "via_g2_refusal": 10
+   },
+   "4569314": {
+    "exercises_570": true,
+    "null_to_lot_by_570": 10,
+    "via_g2_refusal": 10
+   },
+   "6788159": {
+    "exercises_570": false,
+    "null_to_lot_by_570": 0,
+    "via_g2_refusal": 0
+   },
+   "6869520": {
+    "exercises_570": false,
+    "null_to_lot_by_570": 0,
+    "via_g2_refusal": 0
+   },
+   "5351872": {
+    "exercises_570": true,
+    "null_to_lot_by_570": 13,
+    "via_g2_refusal": 13
+   }
+  },
+  "labels_on_570_moved_blocks": "all 49 blocks base null -> lot by 570 are single_right and served on their lot; 570 also newly matches 5864590 19369697/RES-3 (wrong_other), which G5 refuses (served null)",
+  "draw_signal_false_positives": {
+   "tenders": [
+    6324865,
+    6788159,
+    6869520
+   ],
+   "why": "their lot-placed results come from ted-export-r209 CANs with their OWN (unnumbered) lot section (567 same-notice placement, reason \"567 same-notice LOT-1\"), whose winner party rows are Tender-scoped: the draw one-read signal fires, but none serves an R2.0.8 block (0 blocks in 568 scope)"
+  },
+  "effective_g2_tenders": 5,
+  "decision_minimum": 8
+ }
+}

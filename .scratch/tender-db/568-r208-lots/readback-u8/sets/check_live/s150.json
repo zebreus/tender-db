@@ -1,0 +1,58 @@
+{
+ "mode": "check",
+ "drain": {
+  "job": null,
+  "finished": null
+ },
+ "read_started": "2026-10-18T15:25:31+00:00",
+ "cache": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/live",
+ "ids_from": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/ids/s150.json",
+ "draw_cursor_range": null,
+ "reuse_notices": [
+  "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+  "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/fresh"
+ ],
+ "tenders": 150,
+ "read": 150,
+ "blocks": 1190,
+ "parity_ok": 1190,
+ "breaks": [],
+ "tenders_with_breaks": [],
+ "non_legacy_ok": 0,
+ "non_legacy_mismatches": [],
+ "served_outside_chain": [],
+ "computed_not_served": [],
+ "legacy_test_disagrees": [],
+ "profile_from_prefix": [],
+ "incomplete": [],
+ "by_cause": {
+  "unchanged": 1131,
+  "568-u8": 57,
+  "570": 2
+ },
+ "by_reason": {
+  "568 match": 915,
+  "568 none: no_match": 188,
+  "568 refused G4": 28,
+  "568 none: no_number": 10,
+  "568 refused G4n+G3": 1,
+  "568 refused G4+G3": 2,
+  "568 none: ambiguous": 1,
+  "568 refused G5": 3,
+  "567 same-notice: no lot": 2,
+  "568 refused G4n": 16,
+  "568 refused G4+G5": 6,
+  "568 refused G6": 1,
+  "567 same-notice": 15,
+  "567 same-notice + 570 remap ->": 2
+ },
+ "g2_stratum": null,
+ "read_finished": "2026-10-18T15:33:30+00:00",
+ "gets": 300,
+ "fetch_errors": [],
+ "parity_breaks": 0,
+ "parity_verdict": "pass",
+ "verdict_reasons": [],
+ "pass_bar_i": false,
+ "pass_bar_i_note": "not a bar run (--bar not given): pass_bar_i is false by construction"
+}

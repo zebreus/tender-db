@@ -1,0 +1,999 @@
+{
+ "stage": "band",
+ "covers": "568 unit 8 read-back (f) and 570 read-back (f): band and path-V diff against drain/baseline-pre568u8-570.json",
+ "drain": {
+  "jobs": [
+   2616,
+   2617
+  ],
+  "finished_at": "2026-10-18T15:19:48Z",
+  "cursor_before": 957854566,
+  "cursor_after": 958764334,
+  "corrected": 46879
+ },
+ "reads": {
+  "api": "https://tenders.zebreus.click (public, GET only, >= 1.6 s between GET starts, 408 retried once: none occurred)",
+  "gets": 281,
+  "non_200": 0,
+  "changes_paged_utc": "16:01:40-16:02:58",
+  "band_paged_utc": "16:02:58-16:03:41",
+  "path_v_and_tenders_utc": "16:03:42-16:06:22",
+  "tail_check_utc": "2026-10-18T16:13:54Z",
+  "raw_dir": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band"
+ },
+ "changed_set": {
+  "query": "/v1/changes?entity=tender&since=<cursor>&limit=1000, paged from since=957854566 by last_cursor",
+  "pages": 47,
+  "generation": [
+   2
+  ],
+  "events_in_range": 46879,
+  "distinct_tender_ids": 46879,
+  "ops": [
+   [
+    "changed",
+    null
+   ]
+  ],
+  "changed_at": [
+   "2026-10-18T11:13:16Z"
+  ],
+  "first_cursor": 957854567,
+  "last_event_cursor": 958764329,
+  "last_page_last_cursor": "958764334",
+  "last_page_more": false,
+  "events_beyond_958764334": 0,
+  "equals_drain_corrected_46879": true,
+  "sha256_of_concatenated_pages": "8062ccd12fbeeea78a794b5ea9ce85126588066c882b9d0782261f3f73e6bd79",
+  "sha256_equals_fresh568_independent_paging": true,
+  "tail_after_cursor_after": {
+   "since": 958764334,
+   "events": 0,
+   "more": false,
+   "last_cursor": "958764334",
+   "meaning": "no tender changed after the drain up to 16:13:54Z, i.e. through every band / path-V / Tender read of this stage"
+  }
+ },
+ "band": {
+  "query": "/v1/tenders?min_value=100000000000&limit=1000, paged by next_cursor",
+  "baseline_n": 3728,
+  "now_n": 3728,
+  "pages": 19,
+  "dup_ids_across_pages": 0,
+  "entered": [],
+  "left": [],
+  "value_derivation_version_movers": [],
+  "baseline_derivations": "all 3,728 band heads have value_derivation null (published figures; no lot-sum head sits in the band)",
+  "band_ids_in_changed_set": 44,
+  "detail_read_equals_list_row": "44 of 44 (value, value_derivation, version)"
+ },
+ "path_v": {
+  "heads": 17,
+  "moved": [],
+  "in_changed_set": [
+   5943121
+  ],
+  "5943121": "corrected, value unmoved: 570 re-keyed 13 award blocks of CANs 19449682 / 19549394 onto the CN keys by printed number; the 10 award lots still sum to EUR 1,321,579.92 = the served value, and the refused result_value 132,157,992,000 cents is still exactly 10^3 x that sum (lot-sum-vouched, rule 537, lots 10)"
+ },
+ "movers": [],
+ "corrected_band_and_path_v_tenders": {
+  "n": 45,
+  "replay": "readback-u8/combined_port.py attribute() over each live /v1/tenders/{id} and its chain notice contents (cached; 153 fetched fresh), served lot vs expected lot per block",
+  "blocks": 2694,
+  "parity_breaks": 0,
+  "block_causes": {
+   "568-u8": 44,
+   "unchanged": 293,
+   "570": 2357
+  },
+  "by_attribution": {
+   "568-u8 refusal": 8,
+   "570 remap (blocks re-keyed)": 36,
+   "570 remap (section re-keyed, no block moved)": 1
+  },
+  "value_moves": 0,
+  "why_no_value_moved": "the 44 band heads elect a published figure (derivation null), which no lot key feeds; the one corrected path-V head moved only by 570 re-keys, which keep its award lot sum",
+  "tenders": [
+   {
+    "id": 4662012,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 160049746500,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 1,
+    "parity_breaks": 0,
+    "causes": {
+     "568-u8": 1
+    },
+    "remapped_notices": [],
+    "attribution": "568-u8 refusal"
+   },
+   {
+    "id": 4783373,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 2000000000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 9,
+    "parity_breaks": 0,
+    "causes": {
+     "568-u8": 7,
+     "unchanged": 2
+    },
+    "remapped_notices": [],
+    "attribution": "568-u8 refusal"
+   },
+   {
+    "id": 4790842,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 109194190000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 4,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 3,
+     "568-u8": 1
+    },
+    "remapped_notices": [],
+    "attribution": "568-u8 refusal"
+   },
+   {
+    "id": 4913776,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 127500000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 11,
+    "parity_breaks": 0,
+    "causes": {
+     "568-u8": 8,
+     "unchanged": 3
+    },
+    "remapped_notices": [],
+    "attribution": "568-u8 refusal"
+   },
+   {
+    "id": 5065516,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 133094629500,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 5,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 4,
+     "568-u8": 1
+    },
+    "remapped_notices": [],
+    "attribution": "568-u8 refusal"
+   },
+   {
+    "id": 5350578,
+    "set": "band",
+    "version": 7,
+    "value": {
+     "cents": 145500000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 16,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 14,
+     "570": 2
+    },
+    "remapped_notices": [
+     22901446,
+     22912607
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 5456819,
+    "set": "band",
+    "version": 5,
+    "value": {
+     "cents": 209476979700,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 14,
+    "parity_breaks": 0,
+    "causes": {
+     "568-u8": 10,
+     "unchanged": 4
+    },
+    "remapped_notices": [],
+    "attribution": "568-u8 refusal"
+   },
+   {
+    "id": 5727614,
+    "set": "band",
+    "version": 4,
+    "value": {
+     "cents": 125498931200,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 8,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 6,
+     "570": 2
+    },
+    "remapped_notices": [
+     20432286,
+     20432287
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 5833691,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 130000000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 6,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 5,
+     "570": 1
+    },
+    "remapped_notices": [
+     20579555
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 5943121,
+    "set": "path_v",
+    "version": 4,
+    "value": {
+     "cents": 132157992,
+     "currency": "EUR"
+    },
+    "derivation_method": "lot-sum-vouched",
+    "blocks": 21,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 8,
+     "570": 13
+    },
+    "remapped_notices": [
+     19449682,
+     19549394
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 5997919,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 295000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 2,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 1,
+     "570": 1
+    },
+    "remapped_notices": [
+     20685891
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6054105,
+    "set": "band",
+    "version": 5,
+    "value": {
+     "cents": 150000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 17,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 4,
+     "570": 13
+    },
+    "remapped_notices": [
+     19819085,
+     21776834
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6180685,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 141732283400,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 3,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 2,
+     "570": 1
+    },
+    "remapped_notices": [
+     21309586
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6283126,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 150944500000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 4,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 3,
+     "unchanged": 1
+    },
+    "remapped_notices": [
+     20140616,
+     20147105
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6355796,
+    "set": "band",
+    "version": 4,
+    "value": {
+     "cents": 8946920073271,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 4,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 1,
+     "570": 3
+    },
+    "remapped_notices": [
+     21736556,
+     22044471
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6367825,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 1106000000000,
+     "currency": "CHF"
+    },
+    "derivation_method": null,
+    "blocks": 51,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 1,
+     "570": 50
+    },
+    "remapped_notices": [
+     20409455
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6460289,
+    "set": "band",
+    "version": 5,
+    "value": {
+     "cents": 142520000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 10,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 10
+    },
+    "remapped_notices": [
+     23363088
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6477631,
+    "set": "band",
+    "version": 4,
+    "value": {
+     "cents": 170000000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 2,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 1,
+     "unchanged": 1
+    },
+    "remapped_notices": [
+     22328198
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6570441,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 269320000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 2,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 1,
+     "570": 1
+    },
+    "remapped_notices": [
+     22872154
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6572976,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 100000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 22,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 4,
+     "570": 18
+    },
+    "remapped_notices": [
+     20879876
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6682214,
+    "set": "band",
+    "version": 6,
+    "value": {
+     "cents": 101660000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 48,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 21,
+     "unchanged": 27
+    },
+    "remapped_notices": [
+     22743495
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6727754,
+    "set": "band",
+    "version": 10,
+    "value": {
+     "cents": 124227041946,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 8,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 6,
+     "unchanged": 2
+    },
+    "remapped_notices": [
+     21478913,
+     21481371,
+     21481420,
+     21515355,
+     21516616,
+     21519485
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6747461,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 100000000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 18,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 18
+    },
+    "remapped_notices": [
+     21494797
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6880997,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 120000000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 53,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 52,
+     "570": 1
+    },
+    "remapped_notices": [
+     22250775
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6936577,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 115304763400,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 18,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 16,
+     "570": 2
+    },
+    "remapped_notices": [
+     21842708
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 6978910,
+    "set": "band",
+    "version": 9,
+    "value": {
+     "cents": 2165800000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 2058,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 2,
+     "570": 2056
+    },
+    "remapped_notices": [
+     22093063,
+     22093124,
+     22093125,
+     22093126,
+     22093127,
+     22093128,
+     22093129
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 7028423,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 131393487700,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 3,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 2,
+     "570": 1
+    },
+    "remapped_notices": [
+     22659616
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 7167751,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 1150006274290,
+     "currency": "RON"
+    },
+    "derivation_method": null,
+    "blocks": 21,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 17,
+     "570": 4
+    },
+    "remapped_notices": [
+     22275308
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 7284378,
+    "set": "band",
+    "version": 4,
+    "value": {
+     "cents": 365359603200,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 15,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 1,
+     "unchanged": 14
+    },
+    "remapped_notices": [
+     22315467
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 7384663,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 468030000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 5,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 5
+    },
+    "remapped_notices": [
+     22918031
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 7489517,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 125000000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 19,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 16,
+     "unchanged": 3
+    },
+    "remapped_notices": [
+     23433237,
+     23630881
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8012879,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 408000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 19,
+    "parity_breaks": 0,
+    "causes": {
+     "568-u8": 8,
+     "unchanged": 11
+    },
+    "remapped_notices": [],
+    "attribution": "568-u8 refusal"
+   },
+   {
+    "id": 8356198,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 100600000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 18,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 18
+    },
+    "remapped_notices": [
+     18613373
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8371908,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 297000000000,
+     "currency": "EUR"
+    },
+    "derivation_method": null,
+    "blocks": 1,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 1
+    },
+    "remapped_notices": [
+     21510251
+    ],
+    "attribution": "570 remap (section re-keyed, no block moved)"
+   },
+   {
+    "id": 8374102,
+    "set": "band",
+    "version": 7,
+    "value": {
+     "cents": 91000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 22,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 16,
+     "570": 6
+    },
+    "remapped_notices": [
+     19259517,
+     19347056,
+     19762620
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8391421,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 96000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 13,
+    "parity_breaks": 0,
+    "causes": {
+     "568-u8": 8,
+     "unchanged": 5
+    },
+    "remapped_notices": [],
+    "attribution": "568-u8 refusal"
+   },
+   {
+    "id": 8422921,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 1000000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 22,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 5,
+     "570": 17
+    },
+    "remapped_notices": [
+     20403245
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8423121,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 100000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 11,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 4,
+     "unchanged": 7
+    },
+    "remapped_notices": [
+     20450119
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8424234,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 1140000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 4,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 2,
+     "570": 2
+    },
+    "remapped_notices": [
+     20292325
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8428104,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 150000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 5,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 2,
+     "unchanged": 3
+    },
+    "remapped_notices": [
+     20624823
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8428269,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 500000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 13,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 4,
+     "570": 9
+    },
+    "remapped_notices": [
+     20594329,
+     20763354
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8430955,
+    "set": "band",
+    "version": 3,
+    "value": {
+     "cents": 3000000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 38,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 30,
+     "570": 8
+    },
+    "remapped_notices": [
+     21790869
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8439324,
+    "set": "band",
+    "version": 4,
+    "value": {
+     "cents": 100000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 21,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 19,
+     "unchanged": 2
+    },
+    "remapped_notices": [
+     20868816,
+     22055934
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8440393,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 800000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 20,
+    "parity_breaks": 0,
+    "causes": {
+     "570": 20
+    },
+    "remapped_notices": [
+     20747166
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   },
+   {
+    "id": 8444799,
+    "set": "band",
+    "version": 2,
+    "value": {
+     "cents": 100000000000,
+     "currency": "GBP"
+    },
+    "derivation_method": null,
+    "blocks": 9,
+    "parity_breaks": 0,
+    "causes": {
+     "unchanged": 7,
+     "570": 2
+    },
+    "remapped_notices": [
+     20970561
+    ],
+    "attribution": "570 remap (blocks re-keyed)"
+   }
+  ]
+ },
+ "verdict": "pass"
+}

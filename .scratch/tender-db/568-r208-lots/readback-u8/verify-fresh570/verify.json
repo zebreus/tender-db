@@ -1,0 +1,30 @@
+{
+ "stage": "verify-fresh570 (adversarial verifier of fresh570: 570 read-back (e) and (g))",
+ "read_window_utc": "fresh GETs 2026-10-18 16:41-16:47Z (115 Tender/notice/profile GETs + 6 change pages, >= 1.6 s apart, 0 errors, 0 retries)",
+ "raw_reads": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify-fresh570/{cache,pages,verify_detail.json,verify_all30_stagecache.json}",
+ "re_read_fresh": {
+  "open_blocks": [6876932, 6298189],
+  "skipped_6": [8303066, 4472043, 5380658, 4714939, 4754741, 5648478],
+  "random_8_pass_tenders (random.Random('verify-fresh570-sample').sample)": [6539405, 7266964, 7215575, 6577960, 6901730, 5947040, 6517515, 6668638],
+  "fresh_equals_stage_read": "16/16 Tenders: lot_results, lot_details, versions, version and every chain notice content identical",
+  "change_pages": "tender p0000, p0046; lot p0000, p0181, p0316, p0862: events identical to the stage's saved pages; last pages more=false at 958764334"
+ },
+ "independent_tooling": "verify570.py: own lot-section parse + own 570 remap from decision.md steps 3-5, K1-K4 (moved sections agree with combined_port.remap_chain on 30/30 held + 6 skipped), own E1/E2/E3, E4 via check_live.check",
+ "items": {
+  "(e) population and draw": "pass: 47 pages recounted offline, 46,879 tender/changed/null in range, order sha b51a113b...94cb reproduced, first 36 = walk order; order 15:59:02Z < first read 15:59:12Z; the 6 skipped each have one lot-publishing notice (anchor) and the rest no lot sections (independent remap: untouched)",
+  "E1": "pass: 142/142 over all 30 (independent; served = section target, head number at served key = own printed number); fresh 47/47 in the 9 re-read touched Tenders",
+  "E2": "VERIFIER pass (was adjudicate): 182/182 agree with their target lot as decision.md step 3 defines it (the carried lot). 6876932: 34/34 equal in number and title to the carried lot they join; at v8 remap-on renumbers 0 keys vs 17 with the remap off, and remap-off would print 13 and 20 at two keys each. The anchor-title reference of check570.py is stale here: K1-refused notices 21923843/22231117/22219592 (positional merges, unchanged by 570 by design) re-keyed the carry at v4/v6/v7. 6298189 18/18 agree on reading (21804358: MAIN_SITE Zakamenne III, framework R/011-11/19-22/11/03 = 22327703's)",
+  "E3": "pass: key sets equal on/off at every version 30/30; served keys = head 30/30; served titles = remap-on 274/274; 105/105 where on/off differ",
+  "E4": "pass: 313 served blocks, 0 breaks / outside / computed-not-served; causes 142 x 570, 171 unchanged; profiles legacy and agree with prefix test",
+  "bar 30 of 30": "VERIFIER pass: 30/30",
+  "(g)": "pass: 863 pages recounted offline, 862,889 lot/changed/null, 0 removed, 0 added; handler has no op filter (crates/app/src/v1/mod.rs changes)",
+  "(g) cross-check": "pass: 270/274 lots one changed/null event; 6876932's LOT-1/19/22/23 unannounced = exactly the 4 keys identical on/off in every version (19 differ)"
+ },
+ "open_blocks": {
+  "6876932/22654705": "VERIFIER agree: remap correct; failing reference is the item's premise (anchor title), not the build",
+  "6876932/22958413": "VERIFIER agree: same",
+  "6298189/21804358": "confirmed agree"
+ },
+ "verdict": "pass",
+ "note_for_judge": "decision.md 'Identity and migration cost' says each moved id 'returns to the identity its first notice gave it'. That does not hold where K1-refused notices re-keyed the carry before a remapped notice (6876932, a yearly re-tender weld, issue 364's class). The remap follows the carried identity, as rule step 3 says. This is a wording caveat to record, not a wrong remap."
+}

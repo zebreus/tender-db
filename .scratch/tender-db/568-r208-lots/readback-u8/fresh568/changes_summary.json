@@ -1,0 +1,21 @@
+{
+ "query": "/v1/changes?entity=tender&since=<cursor>&limit=1000, paged from since=957854566 by last_cursor",
+ "pages": 47,
+ "generation": [
+  2
+ ],
+ "events": 46879,
+ "ops": "[('changed', None)]",
+ "first_cursor": "957854567",
+ "last_event_cursor": "958764329",
+ "last_page_last_cursor": "958764334",
+ "last_page_more": false,
+ "events_in_range_957854566_958764334": 46879,
+ "distinct_tender_ids": 46879,
+ "changed_at": [
+  "2026-10-18T11:13:16Z"
+ ],
+ "equals_drain_corrected_46879": true,
+ "raw_pages_dir": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/fresh568/changes",
+ "sha256_of_concatenated_pages": "8062ccd12fbeeea78a794b5ea9ce85126588066c882b9d0782261f3f73e6bd79"
+}

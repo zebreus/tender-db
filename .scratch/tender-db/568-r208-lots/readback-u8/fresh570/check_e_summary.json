@@ -1,0 +1,1751 @@
+{
+ "stage": "fresh570 (e)",
+ "walked": 36,
+ "held": 30,
+ "skipped_by_reason": {
+  "not touched": 6
+ },
+ "not_found_404": [],
+ "pass": 28,
+ "fail": [
+  6298189
+ ],
+ "adjudicate": [
+  6876932
+ ],
+ "moved_sections": 182,
+ "moved_blocks": 142,
+ "title_verdicts": {
+  "equal": 121,
+  "target": 19,
+  "target-untitled": 1,
+  "own": 23,
+  "segment": 17,
+  "untitled": 1
+ },
+ "gets_check": 0,
+ "fetch_errors": [],
+ "tenders": [
+  {
+   "id": 6577960,
+   "verdict": "pass",
+   "published_at": "2020-09-22",
+   "source": "ted",
+   "chain": 7,
+   "notice_remap": {
+    "20555203": "anchor",
+    "20858048": "identity",
+    "21253733": "remapped"
+   },
+   "moved_sections": {
+    "21253733": {
+     "LOT-1": "LOT-7"
+    }
+   },
+   "moved_blocks": [
+    "21253733/RES-1: LOT-1->LOT-7 (own 7, head 7)"
+   ],
+   "titles": [
+    "21253733/LOT-1->LOT-7: equal"
+   ],
+   "lot_keys": {
+    "served": 10,
+    "replay_on": 10,
+    "replay_off": 10,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 11,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 7338052,
+   "verdict": "pass",
+   "published_at": "2022-12-05",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "22282803": "anchor",
+    "22568946": "remapped",
+    "22851198": "remapped"
+   },
+   "moved_sections": {
+    "22568946": {
+     "LOT-2": "LOT-3",
+     "LOT-3": "LOT-4"
+    },
+    "22851198": {
+     "LOT-1": "LOT-2"
+    }
+   },
+   "moved_blocks": [
+    "22568946/RES-2: LOT-2->LOT-3 (own 3, head 3)",
+    "22568946/RES-3: LOT-3->LOT-4 (own 4, head 4)",
+    "22851198/RES-1: LOT-1->LOT-2 (own 2, head 2)"
+   ],
+   "titles": [
+    "22568946/LOT-2->LOT-3: equal",
+    "22568946/LOT-3->LOT-4: equal",
+    "22851198/LOT-1->LOT-2: target"
+   ],
+   "lot_keys": {
+    "served": 4,
+    "replay_on": 4,
+    "replay_off": 4,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 4,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6901730,
+   "verdict": "pass",
+   "published_at": "2021-08-30",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "21286886": "anchor",
+    "21895935": "refused:silent-merge",
+    "21894542": "remapped"
+   },
+   "moved_sections": {
+    "21894542": {
+     "LOT-1": "LOT-14"
+    }
+   },
+   "moved_blocks": [
+    "21894542/RES-1: LOT-1->LOT-14 (own 14, head 14)"
+   ],
+   "titles": [
+    "21894542/LOT-1->LOT-14: equal"
+   ],
+   "lot_keys": {
+    "served": 15,
+    "replay_on": 15,
+    "replay_off": 15,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 9,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 7387987,
+   "verdict": "pass",
+   "published_at": "2022-12-23",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "22386246": "anchor",
+    "22586496": "identity",
+    "22825991": "remapped"
+   },
+   "moved_sections": {
+    "22825991": {
+     "LOT-1": "LOT-7"
+    }
+   },
+   "moved_blocks": [
+    "22825991/RES-1: LOT-1->LOT-7 (own 7, head 7)"
+   ],
+   "titles": [
+    "22825991/LOT-1->LOT-7: equal"
+   ],
+   "lot_keys": {
+    "served": 7,
+    "replay_on": 7,
+    "replay_off": 7,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 8,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 8387415,
+   "verdict": "pass",
+   "published_at": "2017-01-04",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "18942248": "anchor",
+    "19039665": "remapped",
+    "19084191": "identity"
+   },
+   "moved_sections": {
+    "19039665": {
+     "LOT-1": "LOT-2"
+    }
+   },
+   "moved_blocks": [
+    "19039665/RES-1: LOT-1->LOT-2 (own 2, head 2)"
+   ],
+   "titles": [
+    "19039665/LOT-1->LOT-2: target-untitled"
+   ],
+   "lot_keys": {
+    "served": 2,
+    "replay_on": 2,
+    "replay_off": 2,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 2,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 7215575,
+   "verdict": "pass",
+   "published_at": "2023-01-18",
+   "source": "ted",
+   "chain": 6,
+   "notice_remap": {
+    "21998152": "anchor",
+    "22205432": "identity",
+    "22372600": "remapped",
+    "22547833": "remapped",
+    "22727419": "remapped",
+    "22888427": "remapped"
+   },
+   "moved_sections": {
+    "22372600": {
+     "LOT-1": "LOT-3"
+    },
+    "22547833": {
+     "LOT-1": "LOT-3"
+    },
+    "22727419": {
+     "LOT-1": "LOT-3"
+    },
+    "22888427": {
+     "LOT-1": "LOT-3"
+    }
+   },
+   "moved_blocks": [
+    "22372600/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "22547833/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "22727419/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "22888427/RES-1: LOT-1->LOT-3 (own 3, head 3)"
+   ],
+   "titles": [
+    "22372600/LOT-1->LOT-3: target",
+    "22547833/LOT-1->LOT-3: target",
+    "22727419/LOT-1->LOT-3: target",
+    "22888427/LOT-1->LOT-3: target"
+   ],
+   "lot_keys": {
+    "served": 5,
+    "replay_on": 5,
+    "replay_off": 5,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 5,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6456257,
+   "verdict": "pass",
+   "published_at": "2019-07-02",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "20333459": "anchor",
+    "20492652": "remapped",
+    "20497783": "remapped"
+   },
+   "moved_sections": {
+    "20492652": {
+     "LOT-1": "LOT-7",
+     "LOT-2": "LOT-8",
+     "LOT-3": "LOT-9",
+     "LOT-4": "LOT-12",
+     "LOT-5": "LOT-14"
+    },
+    "20497783": {
+     "LOT-7": "LOT-10",
+     "LOT-8": "LOT-11",
+     "LOT-9": "LOT-13"
+    }
+   },
+   "moved_blocks": [
+    "20492652/RES-1: LOT-1->LOT-7 (own 7, head 7)",
+    "20492652/RES-2: LOT-2->LOT-8 (own 8, head 8)",
+    "20492652/RES-3: LOT-3->LOT-9 (own 9, head 9)",
+    "20492652/RES-4: LOT-4->LOT-12 (own 12, head 12)",
+    "20492652/RES-5: LOT-5->LOT-14 (own 14, head 14)",
+    "20497783/RES-7: LOT-7->LOT-10 (own 10, head 10)",
+    "20497783/RES-8: LOT-8->LOT-11 (own 11, head 11)",
+    "20497783/RES-9: LOT-9->LOT-13 (own 13, head 13)"
+   ],
+   "titles": [
+    "20492652/LOT-1->LOT-7: equal",
+    "20492652/LOT-2->LOT-8: equal",
+    "20492652/LOT-3->LOT-9: equal",
+    "20492652/LOT-4->LOT-12: equal",
+    "20492652/LOT-5->LOT-14: equal",
+    "20497783/LOT-7->LOT-10: equal",
+    "20497783/LOT-8->LOT-11: equal",
+    "20497783/LOT-9->LOT-13: equal"
+   ],
+   "lot_keys": {
+    "served": 14,
+    "replay_on": 14,
+    "replay_off": 14,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 14,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 8381486,
+   "verdict": "pass",
+   "published_at": "2017-12-13",
+   "source": "ted",
+   "chain": 19,
+   "notice_remap": {
+    "18814426": "anchor",
+    "19035611": "identity",
+    "19050609": "identity",
+    "19368048": "remapped",
+    "19368049": "remapped",
+    "19368050": "identity",
+    "19368058": "remapped",
+    "19407546": "remapped",
+    "19407547": "identity",
+    "19407548": "remapped",
+    "19417170": "remapped",
+    "19440113": "remapped",
+    "19440213": "remapped",
+    "19490756": "remapped",
+    "19490759": "remapped",
+    "19479683": "remapped",
+    "19534734": "remapped",
+    "19564512": "remapped",
+    "19580885": "remapped"
+   },
+   "moved_sections": {
+    "19368048": {
+     "LOT-1": "LOT-4"
+    },
+    "19368049": {
+     "LOT-1": "LOT-9"
+    },
+    "19368058": {
+     "LOT-1": "LOT-2"
+    },
+    "19407546": {
+     "LOT-1": "LOT-9"
+    },
+    "19407548": {
+     "LOT-1": "LOT-3"
+    },
+    "19417170": {
+     "LOT-1": "LOT-2"
+    },
+    "19440113": {
+     "LOT-1": "LOT-6"
+    },
+    "19440213": {
+     "LOT-1": "LOT-3"
+    },
+    "19490756": {
+     "LOT-1": "LOT-10"
+    },
+    "19490759": {
+     "LOT-1": "LOT-8"
+    },
+    "19479683": {
+     "LOT-1": "LOT-5"
+    },
+    "19534734": {
+     "LOT-1": "LOT-7"
+    },
+    "19564512": {
+     "LOT-1": "LOT-8"
+    },
+    "19580885": {
+     "LOT-1": "LOT-5"
+    }
+   },
+   "moved_blocks": [
+    "19368048/RES-1: LOT-1->LOT-4 (own 4, head 4)",
+    "19368049/RES-1: LOT-1->LOT-9 (own 9, head 9)",
+    "19368058/RES-1: LOT-1->LOT-2 (own 2, head 2)",
+    "19407546/RES-1: LOT-1->LOT-9 (own 9, head 9)",
+    "19407548/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "19417170/RES-1: LOT-1->LOT-2 (own 2, head 2)",
+    "19440113/RES-1: LOT-1->LOT-6 (own 6, head 6)",
+    "19534734/RES-1: LOT-1->LOT-7 (own 7, head 7)",
+    "19564512/RES-1: LOT-1->LOT-8 (own 8, head 8)",
+    "19580885/RES-1: LOT-1->LOT-5 (own 5, head 5)"
+   ],
+   "titles": [
+    "19368048/LOT-1->LOT-4: equal",
+    "19368049/LOT-1->LOT-9: equal",
+    "19368058/LOT-1->LOT-2: equal",
+    "19407546/LOT-1->LOT-9: equal",
+    "19407548/LOT-1->LOT-3: equal",
+    "19417170/LOT-1->LOT-2: equal",
+    "19440113/LOT-1->LOT-6: equal",
+    "19440213/LOT-1->LOT-3: equal",
+    "19490756/LOT-1->LOT-10: equal",
+    "19490759/LOT-1->LOT-8: equal",
+    "19479683/LOT-1->LOT-5: equal",
+    "19534734/LOT-1->LOT-7: equal",
+    "19564512/LOT-1->LOT-8: equal",
+    "19580885/LOT-1->LOT-5: equal"
+   ],
+   "lot_keys": {
+    "served": 11,
+    "replay_on": 11,
+    "replay_off": 11,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 28,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6735471,
+   "verdict": "pass",
+   "published_at": "2021-03-26",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "20875081": "anchor",
+    "21616052": "remapped"
+   },
+   "moved_sections": {
+    "21616052": {
+     "LOT-3": "LOT-5"
+    }
+   },
+   "moved_blocks": [
+    "21616052/RES-3: LOT-3->LOT-5 (own 5, head 5)"
+   ],
+   "titles": [
+    "21616052/LOT-3->LOT-5: equal"
+   ],
+   "lot_keys": {
+    "served": 8,
+    "replay_on": 8,
+    "replay_off": 8,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 3,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6067370,
+   "verdict": "pass",
+   "published_at": "2018-04-28",
+   "source": "ted",
+   "chain": 4,
+   "notice_remap": {
+    "19554246": "anchor",
+    "19588626": "identity",
+    "19798423": "identity",
+    "19798424": "remapped"
+   },
+   "moved_sections": {
+    "19798424": {
+     "LOT-1": "LOT-2"
+    }
+   },
+   "moved_blocks": [
+    "19798424/RES-1: LOT-1->LOT-2 (own 2, head 2)"
+   ],
+   "titles": [
+    "19798424/LOT-1->LOT-2: equal"
+   ],
+   "lot_keys": {
+    "served": 5,
+    "replay_on": 5,
+    "replay_off": 5,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 12,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6876932,
+   "verdict": "adjudicate",
+   "published_at": "2023-09-06",
+   "source": "ted",
+   "chain": 10,
+   "notice_remap": {
+    "21255955": "anchor",
+    "21555996": "identity",
+    "21923794": "refused:injective",
+    "21923843": "refused:injective",
+    "22230490": "identity",
+    "22231117": "refused:injective",
+    "22219592": "refused:injective",
+    "22654705": "remapped",
+    "22958413": "remapped",
+    "23435716": "refused:injective"
+   },
+   "moved_sections": {
+    "22654705": {
+     "LOT-10": "LOT-11",
+     "LOT-11": "LOT-12",
+     "LOT-12": "LOT-14",
+     "LOT-13": "LOT-15",
+     "LOT-14": "LOT-21",
+     "LOT-15": "LOT-16",
+     "LOT-16": "LOT-17",
+     "LOT-17": "LOT-13",
+     "LOT-18": "LOT-20",
+     "LOT-2": "LOT-3",
+     "LOT-3": "LOT-4",
+     "LOT-4": "LOT-5",
+     "LOT-5": "LOT-6",
+     "LOT-6": "LOT-7",
+     "LOT-7": "LOT-8",
+     "LOT-8": "LOT-9",
+     "LOT-9": "LOT-10"
+    },
+    "22958413": {
+     "LOT-10": "LOT-11",
+     "LOT-11": "LOT-12",
+     "LOT-12": "LOT-14",
+     "LOT-13": "LOT-15",
+     "LOT-14": "LOT-21",
+     "LOT-15": "LOT-16",
+     "LOT-16": "LOT-17",
+     "LOT-17": "LOT-13",
+     "LOT-18": "LOT-20",
+     "LOT-2": "LOT-3",
+     "LOT-3": "LOT-4",
+     "LOT-4": "LOT-5",
+     "LOT-5": "LOT-6",
+     "LOT-6": "LOT-7",
+     "LOT-7": "LOT-8",
+     "LOT-8": "LOT-9",
+     "LOT-9": "LOT-10"
+    }
+   },
+   "moved_blocks": [],
+   "titles": [
+    "22654705/LOT-10->LOT-11: own",
+    "22654705/LOT-11->LOT-12: own",
+    "22654705/LOT-12->LOT-14: target",
+    "22654705/LOT-13->LOT-15: own",
+    "22654705/LOT-14->LOT-21: equal",
+    "22654705/LOT-15->LOT-16: equal",
+    "22654705/LOT-16->LOT-17: equal",
+    "22654705/LOT-17->LOT-13: target",
+    "22654705/LOT-18->LOT-20: target",
+    "22654705/LOT-2->LOT-3: own",
+    "22654705/LOT-3->LOT-4: own",
+    "22654705/LOT-4->LOT-5: own",
+    "22654705/LOT-5->LOT-6: own",
+    "22654705/LOT-6->LOT-7: own",
+    "22654705/LOT-7->LOT-8: own",
+    "22654705/LOT-8->LOT-9: own",
+    "22654705/LOT-9->LOT-10: own",
+    "22958413/LOT-10->LOT-11: own",
+    "22958413/LOT-11->LOT-12: own",
+    "22958413/LOT-12->LOT-14: target",
+    "22958413/LOT-13->LOT-15: own",
+    "22958413/LOT-14->LOT-21: equal",
+    "22958413/LOT-15->LOT-16: equal",
+    "22958413/LOT-16->LOT-17: equal",
+    "22958413/LOT-17->LOT-13: target",
+    "22958413/LOT-18->LOT-20: equal",
+    "22958413/LOT-2->LOT-3: own",
+    "22958413/LOT-3->LOT-4: own",
+    "22958413/LOT-4->LOT-5: own",
+    "22958413/LOT-5->LOT-6: own",
+    "22958413/LOT-6->LOT-7: own",
+    "22958413/LOT-7->LOT-8: own",
+    "22958413/LOT-8->LOT-9: own",
+    "22958413/LOT-9->LOT-10: own"
+   ],
+   "lot_keys": {
+    "served": 23,
+    "replay_on": 23,
+    "replay_off": 23,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 8,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": [
+    "E2 22654705/LOT-10->LOT-11: anchor-reference verdict own, carried-lot verdict target ('produits traiteur frais' vs anchor@target 'Nutrition et aides culinaires — circuit long', anchor@own 'Produits traiteur frais — circuit long'; carried@target 'produits traiteur frais - circuit traditionnel' [carry 22219592/LOT-11])",
+    "E2 22654705/LOT-11->LOT-12: anchor-reference verdict own, carried-lot verdict target ('nutrition et aides culinaires' vs anchor@target 'Aides à la boulangerie — pâtisserie — circuit long', anchor@own 'Nutrition et aides culinaires — circuit long'; carried@target 'nutrition et aides culinaires - circuit traditionnel' [carry 22219592/LOT-12])",
+    "E2 22654705/LOT-13->LOT-15: anchor-reference verdict own, carried-lot verdict target ('légumes et Fruits 1er 4éme et 5éme gamme - circuit court' vs anchor@target 'Viande fraîche de bœuf — veau — agneau — circuit court', anchor@own 'Produits laitiers — circuit court'; carried@target 'légumes et fruits 1 ère gamme 4 ème et 5 ème gamme circuit court' [carry 22219592/LOT-15])",
+    "E2 22654705/LOT-2->LOT-3: anchor-reference verdict own, carried-lot verdict target ('produits surgelés' vs anchor@target 'Produits laitiers et ovo-produits — circuit long', anchor@own 'Produits surgelés — circuit long'; carried@target 'produits surgelés - circuit traditionnel' [carry 22219592/LOT-3])",
+    "E2 22654705/LOT-3->LOT-4: anchor-reference verdict own, carried-lot verdict target ('produits laitiers et ovo produits' vs anchor@target 'Viande fraîche de bœuf — veau — agneau — circuit long', anchor@own 'Produits laitiers et ovo-produits — circuit long'; carried@target 'produits laitiers et ovo produits - circuit traditionnel' [carry 22219592/LOT-4])",
+    "E2 22654705/LOT-4->LOT-5: anchor-reference verdict own, carried-lot verdict target ('viande fraîche de boeuf - veau - agneau' vs anchor@target 'Viande fraîche de porc — salaisons — charcuterie — circuit long', anchor@own 'Viande fraîche de bœuf — veau — agneau — circuit long'; carried@target 'viande fraîche de boeuf - veau - agneau - circuit traditionnel' [carry 22219592/LOT-5])",
+    "E2 22654705/LOT-5->LOT-6: anchor-reference verdict own, carried-lot verdict target ('viande fraîche de porc - salaisons - charcuterie' vs anchor@target 'Volaille fraîche — circuit long', anchor@own 'Viande fraîche de porc — salaisons — charcuterie — circuit long'; carried@target 'viande fraîche de porc - salaisons - charcuterie - circuit traditionnel' [carry 22219592/LOT-6])",
+    "E2 22654705/LOT-6->LOT-7: anchor-reference verdict own, carried-lot verdict target ('volaille fraîche' vs anchor@target 'Viande cuite et élaborée — circuit long', anchor@own 'Volaille fraîche — circuit long'; carried@target 'volaille fraîche - circuit traditionnel' [carry 22219592/LOT-7])",
+    "E2 22654705/LOT-7->LOT-8: anchor-reference verdict own, carried-lot verdict target ('viande cuite et élaborée' vs anchor@target 'Légumes et fruits frais 1ère gamme — 4e et 5e gamme — circuit long', anchor@own 'Viande cuite et élaborée — circuit long'; carried@target 'viande cuite et élaborée - circuit traditionnel' [carry 22219592/LOT-8])",
+    "E2 22654705/LOT-8->LOT-9: anchor-reference verdict own, carried-lot verdict target ('légumes et fruits frais 1ère gamme - 4ème et 5ème gamme' vs anchor@target 'Produits de la mer — circuit long', anchor@own 'Légumes et fruits frais 1ère gamme — 4e et 5e gamme — circuit long'; carried@target 'légumes et fruits frais 1 ère gamme / 4 -ème et 5 -ème gamme - circuit traditionnel' [carry 22219592/LOT-9])",
+    "E2 22654705/LOT-9->LOT-10: anchor-reference verdict own, carried-lot verdict target ('produits de la mer' vs anchor@target 'Produits traiteur frais — circuit long', anchor@own 'Produits de la mer — circuit long'; carried@target 'produits de la mer - circuit traditionnel' [carry 22219592/LOT-10])",
+    "E2 22958413/LOT-10->LOT-11: anchor-reference verdict own, carried-lot verdict equal ('produits traiteur frais' vs anchor@target 'Nutrition et aides culinaires — circuit long', anchor@own 'Produits traiteur frais — circuit long'; carried@target 'produits traiteur frais' [carry 22654705/LOT-10])",
+    "E2 22958413/LOT-11->LOT-12: anchor-reference verdict own, carried-lot verdict equal ('nutrition et aides culinaires' vs anchor@target 'Aides à la boulangerie — pâtisserie — circuit long', anchor@own 'Nutrition et aides culinaires — circuit long'; carried@target 'nutrition et aides culinaires' [carry 22654705/LOT-11])",
+    "E2 22958413/LOT-13->LOT-15: anchor-reference verdict own, carried-lot verdict equal ('légumes et Fruits 1er 4éme et 5éme gamme - circuit court' vs anchor@target 'Viande fraîche de bœuf — veau — agneau — circuit court', anchor@own 'Produits laitiers — circuit court'; carried@target 'légumes et Fruits 1er 4éme et 5éme gamme - circuit court' [carry 22654705/LOT-13])",
+    "E2 22958413/LOT-2->LOT-3: anchor-reference verdict own, carried-lot verdict equal ('produits surgelés' vs anchor@target 'Produits laitiers et ovo-produits — circuit long', anchor@own 'Produits surgelés — circuit long'; carried@target 'produits surgelés' [carry 22654705/LOT-2])",
+    "E2 22958413/LOT-3->LOT-4: anchor-reference verdict own, carried-lot verdict equal ('produits laitiers et ovo produits' vs anchor@target 'Viande fraîche de bœuf — veau — agneau — circuit long', anchor@own 'Produits laitiers et ovo-produits — circuit long'; carried@target 'produits laitiers et ovo produits' [carry 22654705/LOT-3])",
+    "E2 22958413/LOT-4->LOT-5: anchor-reference verdict own, carried-lot verdict equal ('viande fraîche de boeuf - veau - agneau' vs anchor@target 'Viande fraîche de porc — salaisons — charcuterie — circuit long', anchor@own 'Viande fraîche de bœuf — veau — agneau — circuit long'; carried@target 'viande fraîche de boeuf - veau - agneau' [carry 22654705/LOT-4])",
+    "E2 22958413/LOT-5->LOT-6: anchor-reference verdict own, carried-lot verdict equal ('viande fraîche de porc - salaisons - charcuterie' vs anchor@target 'Volaille fraîche — circuit long', anchor@own 'Viande fraîche de porc — salaisons — charcuterie — circuit long'; carried@target 'viande fraîche de porc - salaisons - charcuterie' [carry 22654705/LOT-5])",
+    "E2 22958413/LOT-6->LOT-7: anchor-reference verdict own, carried-lot verdict equal ('volaille fraîche' vs anchor@target 'Viande cuite et élaborée — circuit long', anchor@own 'Volaille fraîche — circuit long'; carried@target 'volaille fraîche' [carry 22654705/LOT-6])",
+    "E2 22958413/LOT-7->LOT-8: anchor-reference verdict own, carried-lot verdict equal ('viande cuite et élaborée' vs anchor@target 'Légumes et fruits frais 1ère gamme — 4e et 5e gamme — circuit long', anchor@own 'Viande cuite et élaborée — circuit long'; carried@target 'viande cuite et élaborée' [carry 22654705/LOT-7])",
+    "E2 22958413/LOT-8->LOT-9: anchor-reference verdict own, carried-lot verdict equal ('légumes et fruits frais 1ère gamme - 4ème et 5ème gamme' vs anchor@target 'Produits de la mer — circuit long', anchor@own 'Légumes et fruits frais 1ère gamme — 4e et 5e gamme — circuit long'; carried@target 'légumes et fruits frais 1ère gamme - 4ème et 5ème gamme' [carry 22654705/LOT-8])",
+    "E2 22958413/LOT-9->LOT-10: anchor-reference verdict own, carried-lot verdict equal ('produits de la mer' vs anchor@target 'Produits traiteur frais — circuit long', anchor@own 'Produits de la mer — circuit long'; carried@target 'produits de la mer' [carry 22654705/LOT-9])"
+   ]
+  },
+  {
+   "id": 5947040,
+   "verdict": "pass",
+   "published_at": "2017-12-30",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "19318341": "anchor",
+    "19559843": "remapped",
+    "19611590": "identity"
+   },
+   "moved_sections": {
+    "19559843": {
+     "LOT-2": "LOT-3"
+    }
+   },
+   "moved_blocks": [
+    "19559843/RES-2: LOT-2->LOT-3 (own 3, head 3)"
+   ],
+   "titles": [
+    "19559843/LOT-2->LOT-3: equal"
+   ],
+   "lot_keys": {
+    "served": 3,
+    "replay_on": 3,
+    "replay_off": 3,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 3,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6344819,
+   "verdict": "pass",
+   "published_at": "2020-02-14",
+   "source": "ted",
+   "chain": 2,
+   "notice_remap": {
+    "20105617": "anchor",
+    "20868912": "remapped"
+   },
+   "moved_sections": {
+    "20868912": {
+     "LOT-1": "LOT-2",
+     "LOT-2": "LOT-1"
+    }
+   },
+   "moved_blocks": [
+    "20868912/RES-1: LOT-1->LOT-2 (own 1, head 1)",
+    "20868912/RES-2: LOT-2->LOT-1 (own 2, head 2)"
+   ],
+   "titles": [
+    "20868912/LOT-1->LOT-2: equal",
+    "20868912/LOT-2->LOT-1: equal"
+   ],
+   "lot_keys": {
+    "served": 2,
+    "replay_on": 2,
+    "replay_off": 2,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 2,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6517515,
+   "verdict": "pass",
+   "published_at": "2021-09-03",
+   "source": "ted",
+   "chain": 7,
+   "notice_remap": {
+    "20449062": "anchor",
+    "20722580": "identity",
+    "21832547": "identity",
+    "21939256": "remapped",
+    "21939304": "remapped"
+   },
+   "moved_sections": {
+    "21939256": {
+     "LOT-1": "LOT-5"
+    },
+    "21939304": {
+     "LOT-1": "LOT-5"
+    }
+   },
+   "moved_blocks": [
+    "21939256/RES-1: LOT-1->LOT-5 (own 4, head 4)",
+    "21939304/RES-1: LOT-1->LOT-5 (own 4, head 4)"
+   ],
+   "titles": [
+    "21939256/LOT-1->LOT-5: equal",
+    "21939304/LOT-1->LOT-5: equal"
+   ],
+   "lot_keys": {
+    "served": 5,
+    "replay_on": 5,
+    "replay_off": 5,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 12,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6864684,
+   "verdict": "pass",
+   "published_at": "2021-02-24",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "21202104": "anchor",
+    "21387409": "identity",
+    "21553639": "remapped"
+   },
+   "moved_sections": {
+    "21553639": {
+     "LOT-1": "LOT-3"
+    }
+   },
+   "moved_blocks": [
+    "21553639/RES-1: LOT-1->LOT-3 (own 3, head 3)"
+   ],
+   "titles": [
+    "21553639/LOT-1->LOT-3: equal"
+   ],
+   "lot_keys": {
+    "served": 5,
+    "replay_on": 5,
+    "replay_off": 5,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 6,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 7266964,
+   "verdict": "pass",
+   "published_at": "2022-04-15",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "22109259": "anchor",
+    "22276494": "remapped",
+    "22357155": "remapped"
+   },
+   "moved_sections": {
+    "22276494": {
+     "LOT-10": "LOT-11",
+     "LOT-11": "LOT-12",
+     "LOT-12": "LOT-13",
+     "LOT-13": "LOT-14",
+     "LOT-14": "LOT-15",
+     "LOT-15": "LOT-16",
+     "LOT-16": "LOT-17",
+     "LOT-17": "LOT-18",
+     "LOT-18": "LOT-19",
+     "LOT-19": "LOT-20",
+     "LOT-20": "LOT-21",
+     "LOT-6": "LOT-7",
+     "LOT-7": "LOT-8",
+     "LOT-8": "LOT-9",
+     "LOT-9": "LOT-10"
+    },
+    "22357155": {
+     "LOT-1": "LOT-6"
+    }
+   },
+   "moved_blocks": [
+    "22276494/RES-10: LOT-10->LOT-11 (own 11, head 11)",
+    "22276494/RES-11: LOT-11->LOT-12 (own 12, head 12)",
+    "22276494/RES-12: LOT-12->LOT-13 (own 13, head 13)",
+    "22276494/RES-13: LOT-13->LOT-14 (own 14, head 14)",
+    "22276494/RES-14: LOT-14->LOT-15 (own 15, head 15)",
+    "22276494/RES-15: LOT-15->LOT-16 (own 16, head 16)",
+    "22276494/RES-16: LOT-16->LOT-17 (own 17, head 17)",
+    "22276494/RES-17: LOT-17->LOT-18 (own 18, head 18)",
+    "22276494/RES-18: LOT-18->LOT-19 (own 19, head 19)",
+    "22276494/RES-19: LOT-19->LOT-20 (own 20, head 20)",
+    "22276494/RES-20: LOT-20->LOT-21 (own 21, head 21)",
+    "22276494/RES-6: LOT-6->LOT-7 (own 7, head 7)",
+    "22276494/RES-7: LOT-7->LOT-8 (own 8, head 8)",
+    "22276494/RES-8: LOT-8->LOT-9 (own 9, head 9)",
+    "22276494/RES-9: LOT-9->LOT-10 (own 10, head 10)",
+    "22357155/RES-1: LOT-1->LOT-6 (own 6, head 6)"
+   ],
+   "titles": [
+    "22276494/LOT-10->LOT-11: equal",
+    "22276494/LOT-11->LOT-12: equal",
+    "22276494/LOT-12->LOT-13: equal",
+    "22276494/LOT-13->LOT-14: equal",
+    "22276494/LOT-14->LOT-15: equal",
+    "22276494/LOT-15->LOT-16: equal",
+    "22276494/LOT-16->LOT-17: equal",
+    "22276494/LOT-17->LOT-18: equal",
+    "22276494/LOT-18->LOT-19: equal",
+    "22276494/LOT-19->LOT-20: equal",
+    "22276494/LOT-20->LOT-21: equal",
+    "22276494/LOT-6->LOT-7: equal",
+    "22276494/LOT-7->LOT-8: equal",
+    "22276494/LOT-8->LOT-9: equal",
+    "22276494/LOT-9->LOT-10: equal",
+    "22357155/LOT-1->LOT-6: equal"
+   ],
+   "lot_keys": {
+    "served": 21,
+    "replay_on": 21,
+    "replay_off": 21,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 21,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6298189,
+   "verdict": "fail",
+   "published_at": "2022-04-06",
+   "source": "ted",
+   "chain": 21,
+   "notice_remap": {
+    "19995564": "anchor",
+    "20176914": "identity",
+    "21804358": "remapped",
+    "22327694": "identity",
+    "22327695": "remapped",
+    "22327696": "remapped",
+    "22327697": "remapped",
+    "22327698": "remapped",
+    "22327699": "remapped",
+    "22327700": "remapped",
+    "22327701": "remapped",
+    "22327702": "remapped",
+    "22327703": "remapped",
+    "22327704": "remapped",
+    "22327705": "remapped",
+    "22327706": "remapped",
+    "22327709": "remapped",
+    "22327710": "remapped",
+    "22327711": "remapped",
+    "22327712": "remapped",
+    "22327731": "remapped"
+   },
+   "moved_sections": {
+    "21804358": {
+     "LOT-1": "LOT-11"
+    },
+    "22327695": {
+     "LOT-1": "LOT-2"
+    },
+    "22327696": {
+     "LOT-1": "LOT-3"
+    },
+    "22327697": {
+     "LOT-1": "LOT-4"
+    },
+    "22327698": {
+     "LOT-1": "LOT-5"
+    },
+    "22327699": {
+     "LOT-1": "LOT-7"
+    },
+    "22327700": {
+     "LOT-1": "LOT-6"
+    },
+    "22327701": {
+     "LOT-1": "LOT-8"
+    },
+    "22327702": {
+     "LOT-1": "LOT-9"
+    },
+    "22327703": {
+     "LOT-1": "LOT-11"
+    },
+    "22327704": {
+     "LOT-1": "LOT-10"
+    },
+    "22327705": {
+     "LOT-1": "LOT-12"
+    },
+    "22327706": {
+     "LOT-1": "LOT-14"
+    },
+    "22327709": {
+     "LOT-1": "LOT-15"
+    },
+    "22327710": {
+     "LOT-1": "LOT-16"
+    },
+    "22327711": {
+     "LOT-1": "LOT-17"
+    },
+    "22327712": {
+     "LOT-1": "LOT-18"
+    },
+    "22327731": {
+     "LOT-1": "LOT-13"
+    }
+   },
+   "moved_blocks": [
+    "21804358/RES-1: LOT-1->LOT-11 (own 11, head 11)",
+    "22327695/RES-1: LOT-1->LOT-2 (own 2, head 2)",
+    "22327696/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "22327697/RES-1: LOT-1->LOT-4 (own 4, head 4)",
+    "22327698/RES-1: LOT-1->LOT-5 (own 5, head 5)",
+    "22327699/RES-1: LOT-1->LOT-7 (own 7, head 7)",
+    "22327700/RES-1: LOT-1->LOT-6 (own 6, head 6)",
+    "22327701/RES-1: LOT-1->LOT-8 (own 8, head 8)",
+    "22327702/RES-1: LOT-1->LOT-9 (own 9, head 9)",
+    "22327703/RES-1: LOT-1->LOT-11 (own 11, head 11)",
+    "22327704/RES-1: LOT-1->LOT-10 (own 10, head 10)",
+    "22327705/RES-1: LOT-1->LOT-12 (own 12, head 12)",
+    "22327706/RES-1: LOT-1->LOT-14 (own 14, head 14)",
+    "22327709/RES-1: LOT-1->LOT-15 (own 15, head 15)",
+    "22327710/RES-1: LOT-1->LOT-16 (own 16, head 16)",
+    "22327711/RES-1: LOT-1->LOT-17 (own 17, head 17)",
+    "22327712/RES-1: LOT-1->LOT-18 (own 18, head 18)",
+    "22327731/RES-1: LOT-1->LOT-13 (own 13, head 13)"
+   ],
+   "titles": [
+    "21804358/LOT-1->LOT-11: own",
+    "22327695/LOT-1->LOT-2: segment",
+    "22327696/LOT-1->LOT-3: segment",
+    "22327697/LOT-1->LOT-4: segment",
+    "22327698/LOT-1->LOT-5: segment",
+    "22327699/LOT-1->LOT-7: segment",
+    "22327700/LOT-1->LOT-6: segment",
+    "22327701/LOT-1->LOT-8: segment",
+    "22327702/LOT-1->LOT-9: segment",
+    "22327703/LOT-1->LOT-11: segment",
+    "22327704/LOT-1->LOT-10: segment",
+    "22327705/LOT-1->LOT-12: segment",
+    "22327706/LOT-1->LOT-14: segment",
+    "22327709/LOT-1->LOT-15: segment",
+    "22327710/LOT-1->LOT-16: segment",
+    "22327711/LOT-1->LOT-17: segment",
+    "22327712/LOT-1->LOT-18: segment",
+    "22327731/LOT-1->LOT-13: segment"
+   ],
+   "lot_keys": {
+    "served": 18,
+    "replay_on": 18,
+    "replay_off": 18,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 37,
+   "prior_sets": [],
+   "fails": [
+    "E2 21804358/LOT-1->LOT-11: title closer to its own key under both references ('Lesnícke činnosti v ťažbovom procese na OZ Námestovo na roky 2019 - 2022' vs target 'LS Zákamenné III.' / carried 'LS Zákamenné III.', own 'LS Oravský Podzámok I.' / carried 'LS Oravský Podzámok I.')"
+   ],
+   "adjudicate": []
+  },
+  {
+   "id": 7233522,
+   "verdict": "pass",
+   "published_at": "2022-05-23",
+   "source": "ted",
+   "chain": 13,
+   "notice_remap": {
+    "22041597": "anchor",
+    "22336958": "remapped",
+    "22336960": "remapped",
+    "22336961": "remapped",
+    "22336962": "identity",
+    "22336963": "remapped",
+    "22336964": "remapped",
+    "22336965": "remapped",
+    "22336966": "remapped",
+    "22336968": "remapped",
+    "22336969": "remapped",
+    "22389995": "remapped",
+    "22390017": "remapped"
+   },
+   "moved_sections": {
+    "22336958": {
+     "LOT-1": "LOT-11"
+    },
+    "22336960": {
+     "LOT-1": "LOT-3"
+    },
+    "22336961": {
+     "LOT-1": "LOT-4"
+    },
+    "22336963": {
+     "LOT-1": "LOT-6"
+    },
+    "22336964": {
+     "LOT-1": "LOT-7"
+    },
+    "22336965": {
+     "LOT-1": "LOT-9"
+    },
+    "22336966": {
+     "LOT-1": "LOT-10"
+    },
+    "22336968": {
+     "LOT-1": "LOT-12"
+    },
+    "22336969": {
+     "LOT-1": "LOT-8"
+    },
+    "22389995": {
+     "LOT-1": "LOT-2"
+    },
+    "22390017": {
+     "LOT-1": "LOT-5"
+    }
+   },
+   "moved_blocks": [
+    "22336958/RES-1: LOT-1->LOT-11 (own 11, head 11)",
+    "22336960/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "22336961/RES-1: LOT-1->LOT-4 (own 4, head 4)",
+    "22336963/RES-1: LOT-1->LOT-6 (own 6, head 6)",
+    "22336964/RES-1: LOT-1->LOT-7 (own 7, head 7)",
+    "22336965/RES-1: LOT-1->LOT-9 (own 9, head 9)",
+    "22336966/RES-1: LOT-1->LOT-10 (own 10, head 10)",
+    "22336968/RES-1: LOT-1->LOT-12 (own 12, head 12)",
+    "22336969/RES-1: LOT-1->LOT-8 (own 8, head 8)",
+    "22389995/RES-1: LOT-1->LOT-2 (own 2, head 2)",
+    "22390017/RES-1: LOT-1->LOT-5 (own 5, head 5)"
+   ],
+   "titles": [
+    "22336958/LOT-1->LOT-11: equal",
+    "22336960/LOT-1->LOT-3: equal",
+    "22336961/LOT-1->LOT-4: equal",
+    "22336963/LOT-1->LOT-6: equal",
+    "22336964/LOT-1->LOT-7: equal",
+    "22336965/LOT-1->LOT-9: equal",
+    "22336966/LOT-1->LOT-10: equal",
+    "22336968/LOT-1->LOT-12: equal",
+    "22336969/LOT-1->LOT-8: equal",
+    "22389995/LOT-1->LOT-2: equal",
+    "22390017/LOT-1->LOT-5: equal"
+   ],
+   "lot_keys": {
+    "served": 12,
+    "replay_on": 12,
+    "replay_off": 12,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 12,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6668638,
+   "verdict": "pass",
+   "published_at": "2020-06-24",
+   "source": "ted",
+   "chain": 5,
+   "notice_remap": {
+    "20757056": "anchor",
+    "20816192": "identity",
+    "21116203": "remapped",
+    "21098698": "remapped",
+    "21106564": "remapped"
+   },
+   "moved_sections": {
+    "21116203": {
+     "LOT-1": "LOT-2"
+    },
+    "21098698": {
+     "LOT-1": "LOT-3"
+    },
+    "21106564": {
+     "LOT-1": "LOT-4"
+    }
+   },
+   "moved_blocks": [
+    "21098698/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "21106564/RES-1: LOT-1->LOT-4 (own 4, head 4)",
+    "21116203/RES-1: LOT-1->LOT-2 (own 2, head 2)"
+   ],
+   "titles": [
+    "21116203/LOT-1->LOT-2: equal",
+    "21098698/LOT-1->LOT-3: equal",
+    "21106564/LOT-1->LOT-4: equal"
+   ],
+   "lot_keys": {
+    "served": 5,
+    "replay_on": 5,
+    "replay_off": 5,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 8,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6100987,
+   "verdict": "pass",
+   "published_at": "2018-05-15",
+   "source": "ted",
+   "chain": 4,
+   "notice_remap": {
+    "19651455": "anchor",
+    "19780382": "remapped",
+    "19841524": "remapped"
+   },
+   "moved_sections": {
+    "19780382": {
+     "LOT-1": "LOT-6"
+    },
+    "19841524": {
+     "LOT-6": "LOT-7",
+     "LOT-7": "LOT-8",
+     "LOT-8": "LOT-9"
+    }
+   },
+   "moved_blocks": [
+    "19780382/RES-1: LOT-1->LOT-6 (own 6, head 6)",
+    "19841524/RES-6: LOT-6->LOT-7 (own 7, head 7)",
+    "19841524/RES-7: LOT-7->LOT-8 (own 8, head 8)",
+    "19841524/RES-8: LOT-8->LOT-9 (own 9, head 9)"
+   ],
+   "titles": [
+    "19780382/LOT-1->LOT-6: equal",
+    "19841524/LOT-6->LOT-7: equal",
+    "19841524/LOT-7->LOT-8: equal",
+    "19841524/LOT-8->LOT-9: equal"
+   ],
+   "lot_keys": {
+    "served": 9,
+    "replay_on": 9,
+    "replay_off": 9,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 9,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 5543395,
+   "verdict": "pass",
+   "published_at": "2016-10-14",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "18529987": "anchor",
+    "18777851": "identity",
+    "18974028": "remapped"
+   },
+   "moved_sections": {
+    "18974028": {
+     "LOT-1": "LOT-2"
+    }
+   },
+   "moved_blocks": [
+    "18974028/RES-1: LOT-1->LOT-2 (own 2, head 2)"
+   ],
+   "titles": [
+    "18974028/LOT-1->LOT-2: equal"
+   ],
+   "lot_keys": {
+    "served": 2,
+    "replay_on": 2,
+    "replay_off": 2,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 2,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6539405,
+   "verdict": "pass",
+   "published_at": "2021-01-15",
+   "source": "ted",
+   "chain": 3,
+   "notice_remap": {
+    "20489524": "anchor",
+    "20815443": "identity",
+    "21474445": "remapped"
+   },
+   "moved_sections": {
+    "21474445": {
+     "LOT-1": "LOT-2"
+    }
+   },
+   "moved_blocks": [
+    "21474445/RES-1: LOT-1->LOT-2 (own 2, head 2)"
+   ],
+   "titles": [
+    "21474445/LOT-1->LOT-2: equal"
+   ],
+   "lot_keys": {
+    "served": 2,
+    "replay_on": 2,
+    "replay_off": 2,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 3,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 7115279,
+   "verdict": "pass",
+   "published_at": "2021-12-06",
+   "source": "ted",
+   "chain": 4,
+   "notice_remap": {
+    "21752731": "anchor",
+    "21793335": "remapped",
+    "22019510": "remapped",
+    "22092934": "remapped"
+   },
+   "moved_sections": {
+    "21793335": {
+     "LOT-1": "LOT-6"
+    },
+    "22019510": {
+     "LOT-1": "LOT-3"
+    },
+    "22092934": {
+     "LOT-3": "LOT-4",
+     "LOT-4": "LOT-5"
+    }
+   },
+   "moved_blocks": [
+    "21793335/RES-1: LOT-1->LOT-6 (own 6, head 6)",
+    "22019510/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "22092934/RES-3: LOT-3->LOT-4 (own 4, head 4)",
+    "22092934/RES-4: LOT-4->LOT-5 (own 5, head 5)"
+   ],
+   "titles": [
+    "21793335/LOT-1->LOT-6: equal",
+    "22019510/LOT-1->LOT-3: equal",
+    "22092934/LOT-3->LOT-4: equal",
+    "22092934/LOT-4->LOT-5: equal"
+   ],
+   "lot_keys": {
+    "served": 6,
+    "replay_on": 6,
+    "replay_off": 6,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 6,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6972836,
+   "verdict": "pass",
+   "published_at": "2021-07-21",
+   "source": "ted",
+   "chain": 35,
+   "notice_remap": {
+    "21454045": "anchor",
+    "21768924": "remapped",
+    "21768925": "remapped",
+    "21768926": "remapped",
+    "21768932": "remapped",
+    "21768937": "remapped",
+    "21768938": "remapped",
+    "21768939": "remapped",
+    "21768943": "remapped",
+    "21768947": "remapped",
+    "21768949": "remapped",
+    "21768950": "remapped",
+    "21768951": "remapped",
+    "21768953": "remapped",
+    "21768955": "remapped",
+    "21768956": "remapped",
+    "21768957": "remapped",
+    "21768960": "remapped",
+    "21768961": "remapped",
+    "21768962": "remapped",
+    "21768964": "remapped",
+    "21768965": "remapped",
+    "21768966": "remapped",
+    "21768967": "remapped",
+    "21769130": "identity",
+    "21736870": "remapped",
+    "21736871": "remapped",
+    "21736881": "remapped",
+    "21736882": "remapped",
+    "21750597": "remapped",
+    "21750598": "remapped",
+    "21844717": "remapped",
+    "21844725": "remapped",
+    "21844734": "remapped"
+   },
+   "moved_sections": {
+    "21768924": {
+     "LOT-1": "LOT-2"
+    },
+    "21768925": {
+     "LOT-1": "LOT-4"
+    },
+    "21768926": {
+     "LOT-1": "LOT-3"
+    },
+    "21768932": {
+     "LOT-1": "LOT-5"
+    },
+    "21768937": {
+     "LOT-1": "LOT-6"
+    },
+    "21768938": {
+     "LOT-1": "LOT-7"
+    },
+    "21768939": {
+     "LOT-1": "LOT-8"
+    },
+    "21768943": {
+     "LOT-1": "LOT-9"
+    },
+    "21768947": {
+     "LOT-1": "LOT-10"
+    },
+    "21768949": {
+     "LOT-1": "LOT-13"
+    },
+    "21768950": {
+     "LOT-1": "LOT-11"
+    },
+    "21768951": {
+     "LOT-1": "LOT-12"
+    },
+    "21768953": {
+     "LOT-1": "LOT-18"
+    },
+    "21768955": {
+     "LOT-1": "LOT-15"
+    },
+    "21768956": {
+     "LOT-1": "LOT-19"
+    },
+    "21768957": {
+     "LOT-1": "LOT-17"
+    },
+    "21768960": {
+     "LOT-1": "LOT-21"
+    },
+    "21768961": {
+     "LOT-1": "LOT-22"
+    },
+    "21768962": {
+     "LOT-1": "LOT-20"
+    },
+    "21768964": {
+     "LOT-1": "LOT-29"
+    },
+    "21768965": {
+     "LOT-1": "LOT-26"
+    },
+    "21768966": {
+     "LOT-1": "LOT-24"
+    },
+    "21768967": {
+     "LOT-1": "LOT-25"
+    },
+    "21736870": {
+     "LOT-1": "LOT-30"
+    },
+    "21736871": {
+     "LOT-1": "LOT-31"
+    },
+    "21736881": {
+     "LOT-1": "LOT-32"
+    },
+    "21736882": {
+     "LOT-1": "LOT-33"
+    },
+    "21750597": {
+     "LOT-1": "LOT-14"
+    },
+    "21750598": {
+     "LOT-1": "LOT-23"
+    },
+    "21844717": {
+     "LOT-1": "LOT-16"
+    },
+    "21844725": {
+     "LOT-1": "LOT-28"
+    },
+    "21844734": {
+     "LOT-1": "LOT-27"
+    }
+   },
+   "moved_blocks": [
+    "21736870/RES-1: LOT-1->LOT-30 (own 30, head 30)",
+    "21736871/RES-1: LOT-1->LOT-31 (own 31, head 31)",
+    "21736881/RES-1: LOT-1->LOT-32 (own 32, head 32)",
+    "21736882/RES-1: LOT-1->LOT-33 (own 33, head 33)",
+    "21750597/RES-1: LOT-1->LOT-14 (own 14, head 14)",
+    "21750598/RES-1: LOT-1->LOT-23 (own 23, head 23)",
+    "21768924/RES-1: LOT-1->LOT-2 (own 2, head 2)",
+    "21768925/RES-1: LOT-1->LOT-4 (own 4, head 4)",
+    "21768926/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "21768932/RES-1: LOT-1->LOT-5 (own 5, head 5)",
+    "21768937/RES-1: LOT-1->LOT-6 (own 6, head 6)",
+    "21768938/RES-1: LOT-1->LOT-7 (own 7, head 7)",
+    "21768939/RES-1: LOT-1->LOT-8 (own 8, head 8)",
+    "21768943/RES-1: LOT-1->LOT-9 (own 9, head 9)",
+    "21768947/RES-1: LOT-1->LOT-10 (own 10, head 10)",
+    "21768949/RES-1: LOT-1->LOT-13 (own 13, head 13)",
+    "21768950/RES-1: LOT-1->LOT-11 (own 11, head 11)",
+    "21768951/RES-1: LOT-1->LOT-12 (own 12, head 12)",
+    "21768953/RES-1: LOT-1->LOT-18 (own 18, head 18)",
+    "21768955/RES-1: LOT-1->LOT-15 (own 15, head 15)",
+    "21768956/RES-1: LOT-1->LOT-19 (own 19, head 19)",
+    "21768957/RES-1: LOT-1->LOT-17 (own 17, head 17)",
+    "21768960/RES-1: LOT-1->LOT-21 (own 21, head 21)",
+    "21768961/RES-1: LOT-1->LOT-22 (own 22, head 22)",
+    "21768962/RES-1: LOT-1->LOT-20 (own 20, head 20)",
+    "21768964/RES-1: LOT-1->LOT-29 (own 29, head 29)",
+    "21768965/RES-1: LOT-1->LOT-26 (own 26, head 26)",
+    "21768966/RES-1: LOT-1->LOT-24 (own 24, head 24)",
+    "21768967/RES-1: LOT-1->LOT-25 (own 25, head 25)",
+    "21844717/RES-1: LOT-1->LOT-16 (own 16, head 16)",
+    "21844725/RES-1: LOT-1->LOT-28 (own 28, head 28)",
+    "21844734/RES-1: LOT-1->LOT-27 (own 27, head 27)"
+   ],
+   "titles": [
+    "21768924/LOT-1->LOT-2: equal",
+    "21768925/LOT-1->LOT-4: equal",
+    "21768926/LOT-1->LOT-3: equal",
+    "21768932/LOT-1->LOT-5: equal",
+    "21768937/LOT-1->LOT-6: target",
+    "21768938/LOT-1->LOT-7: equal",
+    "21768939/LOT-1->LOT-8: equal",
+    "21768943/LOT-1->LOT-9: equal",
+    "21768947/LOT-1->LOT-10: equal",
+    "21768949/LOT-1->LOT-13: equal",
+    "21768950/LOT-1->LOT-11: equal",
+    "21768951/LOT-1->LOT-12: equal",
+    "21768953/LOT-1->LOT-18: equal",
+    "21768955/LOT-1->LOT-15: equal",
+    "21768956/LOT-1->LOT-19: equal",
+    "21768957/LOT-1->LOT-17: equal",
+    "21768960/LOT-1->LOT-21: equal",
+    "21768961/LOT-1->LOT-22: equal",
+    "21768962/LOT-1->LOT-20: equal",
+    "21768964/LOT-1->LOT-29: equal",
+    "21768965/LOT-1->LOT-26: equal",
+    "21768966/LOT-1->LOT-24: equal",
+    "21768967/LOT-1->LOT-25: equal",
+    "21736870/LOT-1->LOT-30: equal",
+    "21736871/LOT-1->LOT-31: target",
+    "21736881/LOT-1->LOT-32: equal",
+    "21736882/LOT-1->LOT-33: equal",
+    "21750597/LOT-1->LOT-14: equal",
+    "21750598/LOT-1->LOT-23: equal",
+    "21844717/LOT-1->LOT-16: equal",
+    "21844725/LOT-1->LOT-28: equal",
+    "21844734/LOT-1->LOT-27: equal"
+   ],
+   "lot_keys": {
+    "served": 33,
+    "replay_on": 33,
+    "replay_off": 33,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 33,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6179888,
+   "verdict": "pass",
+   "published_at": "2020-12-18",
+   "source": "ted",
+   "chain": 11,
+   "notice_remap": {
+    "19800704": "anchor",
+    "20109049": "identity",
+    "21375964": "remapped",
+    "21375833": "remapped",
+    "21375369": "remapped",
+    "21381746": "remapped",
+    "21380065": "identity",
+    "21385595": "remapped",
+    "21387681": "remapped",
+    "21384603": "remapped",
+    "21433237": "remapped"
+   },
+   "moved_sections": {
+    "21375964": {
+     "LOT-1": "LOT-9"
+    },
+    "21375833": {
+     "LOT-1": "LOT-6"
+    },
+    "21375369": {
+     "LOT-1": "LOT-3"
+    },
+    "21381746": {
+     "LOT-1": "LOT-2"
+    },
+    "21385595": {
+     "LOT-1": "LOT-5"
+    },
+    "21387681": {
+     "LOT-1": "LOT-4"
+    },
+    "21384603": {
+     "LOT-1": "LOT-8"
+    },
+    "21433237": {
+     "LOT-1": "LOT-7"
+    }
+   },
+   "moved_blocks": [
+    "21375369/RES-1: LOT-1->LOT-3 (own 3, head 3)",
+    "21375833/RES-1: LOT-1->LOT-6 (own 6, head 6)",
+    "21375964/RES-1: LOT-1->LOT-9 (own 9, head 9)",
+    "21381746/RES-1: LOT-1->LOT-2 (own 2, head 2)",
+    "21384603/RES-1: LOT-1->LOT-8 (own 8, head 8)",
+    "21385595/RES-1: LOT-1->LOT-5 (own 5, head 5)",
+    "21387681/RES-1: LOT-1->LOT-4 (own 4, head 4)",
+    "21433237/RES-1: LOT-1->LOT-7 (own 7, head 7)"
+   ],
+   "titles": [
+    "21375964/LOT-1->LOT-9: target",
+    "21375833/LOT-1->LOT-6: target",
+    "21375369/LOT-1->LOT-3: equal",
+    "21381746/LOT-1->LOT-2: target",
+    "21385595/LOT-1->LOT-5: target",
+    "21387681/LOT-1->LOT-4: target",
+    "21384603/LOT-1->LOT-8: target",
+    "21433237/LOT-1->LOT-7: target"
+   ],
+   "lot_keys": {
+    "served": 9,
+    "replay_on": 9,
+    "replay_off": 9,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 18,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6694840,
+   "verdict": "pass",
+   "published_at": "2022-09-02",
+   "source": "ted",
+   "chain": 2,
+   "notice_remap": {
+    "20783817": "anchor",
+    "22614227": "remapped"
+   },
+   "moved_sections": {
+    "22614227": {
+     "LOT-1": "LOT-5"
+    }
+   },
+   "moved_blocks": [
+    "22614227/RES-1: LOT-1->LOT-5 (own 5, head 5)"
+   ],
+   "titles": [
+    "22614227/LOT-1->LOT-5: untitled"
+   ],
+   "lot_keys": {
+    "served": 5,
+    "replay_on": 5,
+    "replay_off": 5,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 6,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6256782,
+   "verdict": "pass",
+   "published_at": "2019-08-19",
+   "source": "ted",
+   "chain": 4,
+   "notice_remap": {
+    "19927967": "anchor",
+    "20231093": "remapped",
+    "20524453": "identity",
+    "20592782": "remapped"
+   },
+   "moved_sections": {
+    "20231093": {
+     "LOT-1": "LOT-6",
+     "LOT-2": "LOT-19"
+    },
+    "20592782": {
+     "LOT-1": "LOT-6",
+     "LOT-2": "LOT-19"
+    }
+   },
+   "moved_blocks": [
+    "20592782/RES-1: LOT-1->LOT-6 (own 6, head 6)",
+    "20592782/RES-2: LOT-2->LOT-19 (own 19, head 19)"
+   ],
+   "titles": [
+    "20231093/LOT-1->LOT-6: equal",
+    "20231093/LOT-2->LOT-19: equal",
+    "20592782/LOT-1->LOT-6: equal",
+    "20592782/LOT-2->LOT-19: equal"
+   ],
+   "lot_keys": {
+    "served": 19,
+    "replay_on": 19,
+    "replay_off": 19,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 21,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 5653419,
+   "verdict": "pass",
+   "published_at": "2016-10-21",
+   "source": "ted",
+   "chain": 2,
+   "notice_remap": {
+    "18749856": "anchor",
+    "18977440": "remapped"
+   },
+   "moved_sections": {
+    "18977440": {
+     "LOT-4": "LOT-6"
+    }
+   },
+   "moved_blocks": [
+    "18977440/RES-4: LOT-4->LOT-6 (own 16, head 16)"
+   ],
+   "titles": [
+    "18977440/LOT-4->LOT-6: equal"
+   ],
+   "lot_keys": {
+    "served": 8,
+    "replay_on": 8,
+    "replay_off": 8,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 4,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 7069646,
+   "verdict": "pass",
+   "published_at": "2021-08-11",
+   "source": "ted",
+   "chain": 4,
+   "notice_remap": {
+    "21663745": "anchor",
+    "21797606": "identity",
+    "21863284": "remapped",
+    "21867093": "remapped"
+   },
+   "moved_sections": {
+    "21863284": {
+     "LOT-1": "LOT-4"
+    },
+    "21867093": {
+     "LOT-1": "LOT-3"
+    }
+   },
+   "moved_blocks": [
+    "21863284/RES-1: LOT-1->LOT-4 (own 4, head 4)",
+    "21867093/RES-1: LOT-1->LOT-3 (own 3, head 3)"
+   ],
+   "titles": [
+    "21863284/LOT-1->LOT-4: equal",
+    "21867093/LOT-1->LOT-3: equal"
+   ],
+   "lot_keys": {
+    "served": 4,
+    "replay_on": 4,
+    "replay_off": 4,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 4,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  },
+  {
+   "id": 6641080,
+   "verdict": "pass",
+   "published_at": "2020-01-03",
+   "source": "ted",
+   "chain": 6,
+   "notice_remap": {
+    "20695412": "anchor",
+    "20805109": "remapped",
+    "20823006": "identity"
+   },
+   "moved_sections": {
+    "20805109": {
+     "LOT-1": "LOT-2"
+    }
+   },
+   "moved_blocks": [
+    "20805109/RES-1: LOT-1->LOT-2 (own 2, head 2)"
+   ],
+   "titles": [
+    "20805109/LOT-1->LOT-2: equal"
+   ],
+   "lot_keys": {
+    "served": 2,
+    "replay_on": 2,
+    "replay_off": 2,
+    "same_on_off_every_version": true
+   },
+   "served_blocks": 2,
+   "prior_sets": [],
+   "fails": [],
+   "adjudicate": []
+  }
+ ],
+ "title_verdicts_carried": {
+  "equal": 146,
+  "target": 16,
+  "target-untitled": 1,
+  "own": 1,
+  "segment": 17,
+  "untitled": 1
+ }
+}

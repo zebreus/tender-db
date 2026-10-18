@@ -1,0 +1,373 @@
+{
+ "window": {
+  "from": 957854566,
+  "to": 958764334,
+  "rule": "from < cursor <= to"
+ },
+ "lot_pages": {
+  "pages": 863,
+  "generation": [
+   2
+  ],
+  "reach": 958764334,
+  "events_read": 862889,
+  "events_in_window": 862889
+ },
+ "tender_pages": {
+  "pages": 47,
+  "generation": [
+   2
+  ],
+  "reach": 958764334,
+  "events_read": 46879,
+  "events_in_window": 46879
+ },
+ "lot_events_by_op_version": {
+  "changed/null": 862889
+ },
+ "removed": 0,
+ "added": 0,
+ "distinct_lot_ids": 862889,
+ "lot_ids_with_two_or_more_events": 0,
+ "adjacency_convention_on_held30": {
+  "lot_after_its_tender": 270,
+  "lot_before_its_tender": 0,
+  "other": 0
+ },
+ "held30_lot_events": [
+  {
+   "tender_id": 6577960,
+   "tender_events": [
+    958278373
+   ],
+   "served_lots": 10,
+   "lot_event_ops": {
+    "changed": 10
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 7338052,
+   "tender_events": [
+    958623511
+   ],
+   "served_lots": 4,
+   "lot_event_ops": {
+    "changed": 4
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6901730,
+   "tender_events": [
+    958418416
+   ],
+   "served_lots": 15,
+   "lot_event_ops": {
+    "changed": 15
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 7387987,
+   "tender_events": [
+    958643984
+   ],
+   "served_lots": 7,
+   "lot_event_ops": {
+    "changed": 7
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 8387415,
+   "tender_events": [
+    958050152
+   ],
+   "served_lots": 2,
+   "lot_event_ops": {
+    "changed": 2
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 7215575,
+   "tender_events": [
+    958564410
+   ],
+   "served_lots": 5,
+   "lot_event_ops": {
+    "changed": 5
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6456257,
+   "tender_events": [
+    958229247
+   ],
+   "served_lots": 14,
+   "lot_event_ops": {
+    "changed": 14
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 8381486,
+   "tender_events": [
+    958037022
+   ],
+   "served_lots": 11,
+   "lot_event_ops": {
+    "changed": 11
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6735471,
+   "tender_events": [
+    958352397
+   ],
+   "served_lots": 8,
+   "lot_event_ops": {
+    "changed": 8
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6067370,
+   "tender_events": [
+    958107592
+   ],
+   "served_lots": 5,
+   "lot_event_ops": {
+    "changed": 5
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6876932,
+   "tender_events": [
+    958410663
+   ],
+   "served_lots": 23,
+   "lot_event_ops": {
+    "no-event": 4,
+    "changed": 19
+   },
+   "all_changed_null": false
+  },
+  {
+   "tender_id": 5947040,
+   "tender_events": [
+    958084558
+   ],
+   "served_lots": 3,
+   "lot_event_ops": {
+    "changed": 3
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6344819,
+   "tender_events": [
+    958189501
+   ],
+   "served_lots": 2,
+   "lot_event_ops": {
+    "changed": 2
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6517515,
+   "tender_events": [
+    958254517
+   ],
+   "served_lots": 5,
+   "lot_event_ops": {
+    "changed": 5
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6864684,
+   "tender_events": [
+    958406480
+   ],
+   "served_lots": 5,
+   "lot_event_ops": {
+    "changed": 5
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 7266964,
+   "tender_events": [
+    958588880
+   ],
+   "served_lots": 21,
+   "lot_event_ops": {
+    "changed": 21
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6298189,
+   "tender_events": [
+    958170884
+   ],
+   "served_lots": 18,
+   "lot_event_ops": {
+    "changed": 18
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 7233522,
+   "tender_events": [
+    958572841
+   ],
+   "served_lots": 12,
+   "lot_event_ops": {
+    "changed": 12
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6668638,
+   "tender_events": [
+    958321584
+   ],
+   "served_lots": 5,
+   "lot_event_ops": {
+    "changed": 5
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6100987,
+   "tender_events": [
+    958114623
+   ],
+   "served_lots": 9,
+   "lot_event_ops": {
+    "changed": 9
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 5543395,
+   "tender_events": [
+    958011544
+   ],
+   "served_lots": 2,
+   "lot_event_ops": {
+    "changed": 2
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6539405,
+   "tender_events": [
+    958263774
+   ],
+   "served_lots": 2,
+   "lot_event_ops": {
+    "changed": 2
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 7115279,
+   "tender_events": [
+    958514194
+   ],
+   "served_lots": 6,
+   "lot_event_ops": {
+    "changed": 6
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6972836,
+   "tender_events": [
+    958444893
+   ],
+   "served_lots": 33,
+   "lot_event_ops": {
+    "changed": 33
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6179888,
+   "tender_events": [
+    958132203
+   ],
+   "served_lots": 9,
+   "lot_event_ops": {
+    "changed": 9
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6694840,
+   "tender_events": [
+    958333562
+   ],
+   "served_lots": 5,
+   "lot_event_ops": {
+    "changed": 5
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6256782,
+   "tender_events": [
+    958157791
+   ],
+   "served_lots": 19,
+   "lot_event_ops": {
+    "changed": 19
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 5653419,
+   "tender_events": [
+    958030915
+   ],
+   "served_lots": 8,
+   "lot_event_ops": {
+    "changed": 8
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 7069646,
+   "tender_events": [
+    958492358
+   ],
+   "served_lots": 4,
+   "lot_event_ops": {
+    "changed": 4
+   },
+   "all_changed_null": true
+  },
+  {
+   "tender_id": 6641080,
+   "tender_events": [
+    958308669
+   ],
+   "served_lots": 2,
+   "lot_event_ops": {
+    "changed": 2
+   },
+   "all_changed_null": true
+  }
+ ],
+ "removed_and_added_events": [],
+ "held30_note": "6876932: 19 of its 23 served lots carry a lot changed/null event; the 4 without (LOT-1, LOT-19, LOT-22, LOT-23) are exactly the keys whose rows are identical with the remap on and off in every version, and its head is unchanged (the last notice 23435716 is K1-refused and supersedes all 23 keys), so ADR-0017 D3 rule L takes only the lots whose own rows differ (crates/store/src/canonical.rs CompareTally: head_lots only when head_differs). The other 29 Tenders announce every head lot, contiguously after their tender event (270 + 4 = 274 served lots).",
+ "op_filter": "none on /v1/changes (crates/app/src/v1/mod.rs `changes`: since / limit / entity only), so every lot event of the window was paged"
+}

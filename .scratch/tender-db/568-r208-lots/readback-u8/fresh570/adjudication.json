@@ -1,0 +1,66 @@
+{
+ "what": "Manual reading of every moved section whose script title verdict was not equal/segment/target/untitled under BOTH references (check570.py E2), and of the 'target' verdicts not textually equal. Read from the cached chain contents (/v1/notices/{id}/content, read after the drain).",
+ "rows": [
+  {
+   "tender_id": 6298189,
+   "notice": 21804358,
+   "section": "LOT-1",
+   "target": "LOT-11",
+   "printed": "11",
+   "script": "own under both references (similarity artifact: the section title is the procedure title)",
+   "adjudicated": "agree",
+   "evidence": "TED-TITLE is the procedure title 'Lesnícke činnosti v ťažbovom procese na OZ Námestovo na roky 2019 - 2022' (no lot designation). The section's TED-MAIN_SITE reads 'Odštepný závod Námestovo - Lesná správa Zákamenné III', which is the anchor 19995564's LOT-11 title 'LS Zákamenné III.'; its RES-1 prints LOT_NO 11 and framework 'R/011-11/19-22/11/03'. The other 17 moved sections of this Tender name their target in a '; LS <name>' segment, equal to the anchor's title at the target (script verdict 'segment')."
+  },
+  {
+   "tender_id": 7338052,
+   "notice": 22851198,
+   "section": "LOT-1",
+   "target": "LOT-2",
+   "printed": "2",
+   "script": "target (0.289 vs 0.192)",
+   "adjudicated": "agree",
+   "evidence": "The title ends 'за об. п.„Доставка и монтаж на компютърна техника и оборудване\"', i.e. names lot 'computer equipment', the anchor 22282803's LOT-2 title."
+  },
+  {
+   "tender_id": 8387415,
+   "notice": 19039665,
+   "section": "LOT-1",
+   "target": "LOT-2",
+   "printed": "2",
+   "script": "target-untitled (the R2.0.8 CN 18942248 prints no titles)",
+   "adjudicated": "agree",
+   "evidence": "TED-SHORT_DESCR 'Předmětem plnění části 2 veřejné zakázky …' (part 2); the anchor's LOT-2 prints TED-LOT_NUMBER 2; the other CAN 19084191 places part 1 (LOT_NO 1) on LOT-1."
+  },
+  {
+   "tender_id": 6694840,
+   "notice": 22614227,
+   "section": "LOT-1",
+   "target": "LOT-5",
+   "printed": "5",
+   "script": "untitled",
+   "adjudicated": "agree",
+   "evidence": "TED-SHORT_DESCR 'risques statutaires du personnel' = the anchor 20783817's LOT-5 description 'Risques statutaires du personnel.'; its RES-1 carries CONTRACT_NO 2019-038 = the anchor's RES-5 on LOT-5."
+  },
+  {
+   "tender_id": 6864684,
+   "notice": 21553639,
+   "section": "LOT-1",
+   "target": "LOT-3",
+   "printed": "3",
+   "script": "tie in the first run (dash variant), equal after the word-key comparison",
+   "adjudicated": "agree",
+   "evidence": "'… Lipinki – etap IIA' = anchor LOT-3 '… Lipinki - etap IIA'; the description's technical-conditions number PSGKR.ZMSZ.763.718992.1.20 is the anchor LOT-3's."
+  },
+  {
+   "tender_id": 6876932,
+   "notices": [
+    22654705,
+    22958413
+   ],
+   "sections": 34,
+   "script": "anchor reference: 22 own / 5 target / 7 equal; carried-lot reference: 22 equal / 12 target, 0 own",
+   "adjudicated": "UNCLEAR (open block)",
+   "evidence": "The anchor CN 21255955 (2020) keys 18 lots with a numbering that skips 2 (LOT-2 prints 3 'Produits surgelés', LOT-3 prints 4 …). Later notices of the chain use two interleaved schemes: 21923843 / 22230490 / 22219592 insert 'boissons' as 2 (LOT-2 prints 2, LOT-3 prints 3 'produits surgelés' …); 21923794 / 22231117 / 22654705 / 22958413 / 23435716 keep the anchor's numbering on LOT-1..LOT-11 (LOT-2 prints 3) and the 2021 'circuit court' numbers from LOT-12 on. K1 refused 21923794, 21923843, 22231117, 22219592 and 23435716 (pre-570 positional merge), which re-keyed the CARRIED numbers to the boissons scheme by v7. 570 then remapped 22654705 (v8) and 22958413 (v9) by printed number onto the carried keys: e.g. 'produits surgelés' (3) LOT-2 -> LOT-3, where the carried lot (22219592's LOT-3) prints 3 'produits surgelés - circuit traditionnel' (agree), but where the ANCHOR's lot is 'Produits laitiers et ovo-produits' (disagree); the anchor's 'Produits surgelés' is at LOT-2, i.e. the section's own key. So the move agrees with the lot it joins and with 570's rule (targets = carried numbers; parity holds), and disagrees with the anchor reference the 570 measurement used for its 124/124 title evidence. Every notice prints surgelés = 3, so the printed number is consistent across the chain; the key identity is not. Impact: 0 award blocks moved (all 8 served results lot null, before and after); the served head equals the remap-off head (the last notice 23435716 is K1-refused, keeps its own keys and supersedes all 23 keys); only versions 8 and 9 carry different lot content. Per-key number changes across the 10 versions: 75 with the remap, 82 without. Shape: a weld of yearly re-tenders of one buyer (2020-2023) with two lot numbering schemes (issue 364's class), seen 0 times in 570's 211 replayed chains."
+  }
+ ]
+}

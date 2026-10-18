@@ -1,0 +1,121 @@
+{
+ "stage": "verify-sets",
+ "fresh_gets": {
+  "count": 23,
+  "status_200": 23,
+  "http_408": 0,
+  "window": "2026-10-18T16:18:01Z..16:18:36Z",
+  "gap_s": 1.6,
+  "raw_reads": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_sets/live"
+ },
+ "sample": {
+  "named": [
+   8327340,
+   5051007,
+   5267810,
+   8313642,
+   8375276,
+   5602216,
+   5416534,
+   8286472,
+   7511890,
+   8387180,
+   6016286
+  ],
+  "random_blocks": [
+   {
+    "set": "s150",
+    "tender": 8319667,
+    "notice": 17634071,
+    "key": "RES-7",
+    "expected": "LOT-8"
+   },
+   {
+    "set": "s150",
+    "tender": 5187863,
+    "notice": 18106472,
+    "key": "RES-138",
+    "expected": null
+   },
+   {
+    "set": "s150",
+    "tender": 4861483,
+    "notice": 17286230,
+    "key": "RES-3",
+    "expected": "LOT-3"
+   },
+   {
+    "set": "p570",
+    "tender": 7722628,
+    "notice": 23348115,
+    "key": "RES-1",
+    "expected": "LOT-1"
+   },
+   {
+    "set": "p570",
+    "tender": 6174432,
+    "notice": 19993222,
+    "key": "RES-1",
+    "expected": "LOT-1"
+   },
+   {
+    "set": "s150",
+    "tender": 5267810,
+    "notice": 18199880,
+    "key": "RES-13",
+    "expected": null
+   },
+   {
+    "set": "p570",
+    "tender": 5988423,
+    "notice": 19578630,
+    "key": "RES-4",
+    "expected": "LOT-4"
+   },
+   {
+    "set": "s150",
+    "tender": 5025430,
+    "notice": 17686130,
+    "key": "RES-1",
+    "expected": "LOT-1"
+   }
+  ],
+  "random_tender_per_set": [
+   6715768,
+   5026915,
+   4728789,
+   5370589,
+   6186953
+  ]
+ },
+ "fresh_vs_expected": {
+  "tenders": 23,
+  "blocks": 787,
+  "mismatches": 0
+ },
+ "fresh_vs_stage_saved_read": "lot_results and lot_details identical on 23/23; versions identical",
+ "saved_reads_independent_reanalysis": {
+  "tenders": 518,
+  "blocks": 4377,
+  "mismatches_vs_expected": 0,
+  "moved_vs_baseline": {
+   "x": 7,
+   "s150": 59,
+   "f30": 7,
+   "m77": 0,
+   "oos": 100,
+   "p570": 240
+  }
+ },
+ "checks": {
+  "8375276 printed (TED-LOT_NO or TED-LOT_NUMBER)": "124 x 1->LOT-1, 30 x 2->LOT-2, 1 no number->null; moved 120+27=147 == results_moved_by_B",
+  "13 changed 570 Tenders": "239/239 moved_by_B on B; key sets 13/13 equal baseline; moved-vs-baseline set == moved_by_B 13/13",
+  "9 named": "9/9 equal baseline (lots key/title/value, lot_results key/lot/notice_id/awarded)",
+  "196 other sample": "only 5602216/19023719 RES-128 LOT-173->null (expected 568 refused G5)"
+ },
+ "verdict": "pass",
+ "tools": [
+  "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_sets/tools/indep.py",
+  "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_sets/tools/fetch.py"
+ ]
+}

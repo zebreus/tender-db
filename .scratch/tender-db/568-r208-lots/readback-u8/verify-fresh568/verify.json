@@ -1,0 +1,45 @@
+{
+ "stage": "verify-fresh568",
+ "verifies": "readback-u8/fresh568/result.json",
+ "verdict": "adjudicate",
+ "reads": {
+  "live_gets": 298,
+  "tenders_reread_live": [
+   8291946,
+   8365595,
+   5864590,
+   5457789,
+   4888356,
+   5362479,
+   4569314,
+   5351872
+  ],
+  "notice_listings_for_recall_check": 290,
+  "raw_dir": "scratchpad/vfresh568 (live/, listings/)",
+  "gap_s": 1.6,
+  "http_408": 0
+ },
+ "items": {
+  "changes": "pass: 47 pages, 46,879 op=changed version=null events, all 957854566 < cursor <= 958764334, 46,879 distinct ids, generation 2, last page more=false at 958764334; changes_pages.json equals the 47 pages",
+  "draw": "pass: draw_fresh30.py --offline on draw_cache reproduces draw.json exactly (same 30, same 771-row walk, 0 GETs); draw.json 15:42:26Z < first bar read 15:43:02Z",
+  "g2_quota": "fail (tooling, not build): 5 of 8 G2-classed Tenders carry a 568-scope block; 6324865, 6788159, 6869520 have none (every award notice in their chains is an r209 F03 with its own lot sections). The one-read signal fires when the winner org has any Tender-scope winner row (from another lot-less result) and none on the result's lot. Recall check: 4,953 lot-placed results on notices < 21.5M across the 290 walked, read, non-population, non-G2 candidates are all ted-export-r209, so no true G2 Tender was skipped before walk index 770; a corrected draw = the same 27 + the next 3 true-G2 Tenders after index 770 in the same salted order",
+  "parity": "pass: offline recompute 878/878 vs combined_port.expected; live re-read of the 8 Tenders with 568 blocks: lot_results identical to bar_cache, versions unchanged, 112/112 served = port",
+  "labels": "pass: all 112 re-judged from the notices; agree 112/112 (106 single_right, 4 multi_lot_contract, 2 wrong_other); 5457789: 56/57 CAN estimates equal the printed lot's CN value to the cent (RES-11 partial value, text exact); 4888356/5362479/4569314/5351872/5864590 RES-1..2 block titles equal the printed lot's CN text",
+  "bar_ii": "pass: 0 of 30 (all 6 wrong blocks refused and served null live)",
+  "bar_iii": "pass: no kept wrong block, no parity break",
+  "false_refusal_info": "confirmed: 5457789 18461129/RES-8 right (LN 37, CONTRACT_NUMBER 'Pakiet nr 37', estimate 9,975.00 = LOT-37 to the cent vs LOT-34 2,082.96, winner Sanofi-Aventis for 'Preparat insuliny'); copied title 'Pakiet nr 34 Cloxacillin/Syntarpen' -> G4 block-level; served LOT-37 before, null now",
+  "g2_570_exercise": "pass: 49 null->lot by 570 in 5 Tenders, all single_right and served; 5864590 RES-3 newly matched pre-guard, G5-refused"
+ },
+ "open_blocks_confirmed": [
+  "8291946/17037930/RES-1",
+  "8291946/17037930/RES-2",
+  "8291946/17037930/RES-3",
+  "8291946/17049093/RES-1",
+  "8365595/18617609/RES-1",
+  "5864590/19369697/RES-3"
+ ],
+ "remedy_options": [
+  "extend: drop the 3 false G2, continue the salted walk past index 770 with a corrected G2 test (a lot-placed result on an award notice with no lot section of its own), hold the next 3, bar-mode read + label",
+  "accept 5 of 8 (stratum = 5 Tenders, 50 newly matched blocks: 49 right kept, 1 wrong caught)"
+ ]
+}

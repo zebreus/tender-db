@@ -1,0 +1,822 @@
+{
+ "rule": "walk570.py docstring",
+ "walked": 36,
+ "held": 30,
+ "complete": true,
+ "stopped": null,
+ "not_found_404": [],
+ "gets": 250,
+ "fetch_errors": [],
+ "held_ids": [
+  6577960,
+  7338052,
+  6901730,
+  7387987,
+  8387415,
+  7215575,
+  6456257,
+  8381486,
+  6735471,
+  6067370,
+  6876932,
+  5947040,
+  6344819,
+  6517515,
+  6864684,
+  7266964,
+  6298189,
+  7233522,
+  6668638,
+  6100987,
+  5543395,
+  6539405,
+  7115279,
+  6972836,
+  6179888,
+  6694840,
+  6256782,
+  5653419,
+  7069646,
+  6641080
+ ],
+ "walk": [
+  {
+   "pos": 1,
+   "id": 6577960,
+   "salt": "0000ce8467dac24b191ea25a29ef539c086e2258a060e8e26d5f212382dcf281",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 7,
+   "published_at": "2020-09-22",
+   "notice_remap": {
+    "20555203": "anchor",
+    "20858048": "identity",
+    "21253733": "remapped"
+   },
+   "moved_sections": {
+    "21253733": 1
+   }
+  },
+  {
+   "pos": 2,
+   "id": 7338052,
+   "salt": "0001a66d530bba395820e1dd669e3e0bc031f7c4ad7f8e9925b82fd567e7211e",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2022-12-05",
+   "notice_remap": {
+    "22282803": "anchor",
+    "22568946": "remapped",
+    "22851198": "remapped"
+   },
+   "moved_sections": {
+    "22568946": 2,
+    "22851198": 1
+   }
+  },
+  {
+   "pos": 3,
+   "id": 6901730,
+   "salt": "000208953ac19bbbf9e92e0ead3243649514fa87f521d448863411261ab6245c",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2021-08-30",
+   "notice_remap": {
+    "21286886": "anchor",
+    "21895935": "refused:silent-merge",
+    "21894542": "remapped"
+   },
+   "moved_sections": {
+    "21894542": 1
+   }
+  },
+  {
+   "pos": 4,
+   "id": 7387987,
+   "salt": "000402f28f8df80c72acf3c8bd480af380d771a9806301b940cab1a2c88469b8",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2022-12-23",
+   "notice_remap": {
+    "22386246": "anchor",
+    "22586496": "identity",
+    "22825991": "remapped"
+   },
+   "moved_sections": {
+    "22825991": 1
+   }
+  },
+  {
+   "pos": 5,
+   "id": 8387415,
+   "salt": "00051d7effdd41eca7c6b8cc0cdb1778c4ad850a1cb4275bea1c6f111e7fd633",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2017-01-04",
+   "notice_remap": {
+    "18942248": "anchor",
+    "19039665": "remapped",
+    "19084191": "identity"
+   },
+   "moved_sections": {
+    "19039665": 1
+   }
+  },
+  {
+   "pos": 6,
+   "id": 7215575,
+   "salt": "00055e7cacfd61b2400d0f30f080713d0101839164a6314cb7fda8fa9dc920ce",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 6,
+   "published_at": "2023-01-18",
+   "notice_remap": {
+    "21998152": "anchor",
+    "22205432": "identity",
+    "22372600": "remapped",
+    "22547833": "remapped",
+    "22727419": "remapped",
+    "22888427": "remapped"
+   },
+   "moved_sections": {
+    "22372600": 1,
+    "22547833": 1,
+    "22727419": 1,
+    "22888427": 1
+   }
+  },
+  {
+   "pos": 7,
+   "id": 6456257,
+   "salt": "000718606d7fac1c5e93f8b0f4719faba0ef2c877dd9df6ad9462024d848a39b",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2019-07-02",
+   "notice_remap": {
+    "20333459": "anchor",
+    "20492652": "remapped",
+    "20497783": "remapped"
+   },
+   "moved_sections": {
+    "20492652": 5,
+    "20497783": 3
+   }
+  },
+  {
+   "pos": 8,
+   "id": 8381486,
+   "salt": "000777588fbaf7c9ca96f32469ce9fab7ef3a68a7f7d619a95d9fb70d5414623",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 19,
+   "published_at": "2017-12-13",
+   "notice_remap": {
+    "18814426": "anchor",
+    "19035611": "identity",
+    "19050609": "identity",
+    "19368048": "remapped",
+    "19368049": "remapped",
+    "19368050": "identity",
+    "19368058": "remapped",
+    "19407546": "remapped",
+    "19407547": "identity",
+    "19407548": "remapped",
+    "19417170": "remapped",
+    "19440113": "remapped",
+    "19440213": "remapped",
+    "19490756": "remapped",
+    "19490759": "remapped",
+    "19479683": "remapped",
+    "19534734": "remapped",
+    "19564512": "remapped",
+    "19580885": "remapped"
+   },
+   "moved_sections": {
+    "19368048": 1,
+    "19368049": 1,
+    "19368058": 1,
+    "19407546": 1,
+    "19407548": 1,
+    "19417170": 1,
+    "19440113": 1,
+    "19440213": 1,
+    "19490756": 1,
+    "19490759": 1,
+    "19479683": 1,
+    "19534734": 1,
+    "19564512": 1,
+    "19580885": 1
+   }
+  },
+  {
+   "pos": 9,
+   "id": 8303066,
+   "salt": "0007995db9bf07403b0537f0654b07c21c136572a2a5a75a44bce1d5e8ed73e7",
+   "held": false,
+   "why": "not touched: no lot section moved by the remap",
+   "chain": 4,
+   "published_at": "2013-03-14",
+   "notice_remap": {
+    "17168374": "anchor"
+   },
+   "moved_sections": {}
+  },
+  {
+   "pos": 10,
+   "id": 4472043,
+   "salt": "0007a2b969e655b57fe4de6601c502f8290d908f8bfb397ea6f31f970bfc484a",
+   "held": false,
+   "why": "not touched: no lot section moved by the remap",
+   "chain": 2,
+   "published_at": "2011-04-29",
+   "notice_remap": {
+    "4385487": "anchor"
+   },
+   "moved_sections": {}
+  },
+  {
+   "pos": 11,
+   "id": 6735471,
+   "salt": "000801d7147c3bc805a43b346d31827541ae494b8b07c666a9e1f0defe1abd26",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2021-03-26",
+   "notice_remap": {
+    "20875081": "anchor",
+    "21616052": "remapped"
+   },
+   "moved_sections": {
+    "21616052": 1
+   }
+  },
+  {
+   "pos": 12,
+   "id": 6067370,
+   "salt": "000a620b325191248a4eca67b583553543d26b2dc6cf9d7d65f0ff01afa88a78",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 4,
+   "published_at": "2018-04-28",
+   "notice_remap": {
+    "19554246": "anchor",
+    "19588626": "identity",
+    "19798423": "identity",
+    "19798424": "remapped"
+   },
+   "moved_sections": {
+    "19798424": 1
+   }
+  },
+  {
+   "pos": 13,
+   "id": 6876932,
+   "salt": "000bcb4c042ebdcfad045e1fcb83309ce3dcfcfa742122e0994c67836c1021c3",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 10,
+   "published_at": "2023-09-06",
+   "notice_remap": {
+    "21255955": "anchor",
+    "21555996": "identity",
+    "21923794": "refused:injective",
+    "21923843": "refused:injective",
+    "22230490": "identity",
+    "22231117": "refused:injective",
+    "22219592": "refused:injective",
+    "22654705": "remapped",
+    "22958413": "remapped",
+    "23435716": "refused:injective"
+   },
+   "moved_sections": {
+    "22654705": 17,
+    "22958413": 17
+   }
+  },
+  {
+   "pos": 14,
+   "id": 5947040,
+   "salt": "000c46b026494fb020558ddd1a037b5ffba25c5f625823032a209ba5958f8340",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2017-12-30",
+   "notice_remap": {
+    "19318341": "anchor",
+    "19559843": "remapped",
+    "19611590": "identity"
+   },
+   "moved_sections": {
+    "19559843": 1
+   }
+  },
+  {
+   "pos": 15,
+   "id": 6344819,
+   "salt": "000dd69ad9919ea2a150d4f54cf64301493531ba7a24700be7fbdef769b1e85a",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 2,
+   "published_at": "2020-02-14",
+   "notice_remap": {
+    "20105617": "anchor",
+    "20868912": "remapped"
+   },
+   "moved_sections": {
+    "20868912": 2
+   }
+  },
+  {
+   "pos": 16,
+   "id": 6517515,
+   "salt": "000e9ad23780563f02a7045cd85ab1acdbc510995f7347fa3b083ba526a5aabf",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 7,
+   "published_at": "2021-09-03",
+   "notice_remap": {
+    "20449062": "anchor",
+    "20722580": "identity",
+    "21832547": "identity",
+    "21939256": "remapped",
+    "21939304": "remapped"
+   },
+   "moved_sections": {
+    "21939256": 1,
+    "21939304": 1
+   }
+  },
+  {
+   "pos": 17,
+   "id": 6864684,
+   "salt": "001047a63b5efd76b78b86a00232754a6bde40ad3c669cdabe501b4aef9d1d2e",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2021-02-24",
+   "notice_remap": {
+    "21202104": "anchor",
+    "21387409": "identity",
+    "21553639": "remapped"
+   },
+   "moved_sections": {
+    "21553639": 1
+   }
+  },
+  {
+   "pos": 18,
+   "id": 7266964,
+   "salt": "00118b1cd1aeb82c0207c270ab7ea4e502731e33fc40abda2358f2953b39818c",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2022-04-15",
+   "notice_remap": {
+    "22109259": "anchor",
+    "22276494": "remapped",
+    "22357155": "remapped"
+   },
+   "moved_sections": {
+    "22276494": 15,
+    "22357155": 1
+   }
+  },
+  {
+   "pos": 19,
+   "id": 6298189,
+   "salt": "0011af1c090e664af784d6614254e1fb84494480c9aeb97e8770709fc17a3231",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 21,
+   "published_at": "2022-04-06",
+   "notice_remap": {
+    "19995564": "anchor",
+    "20176914": "identity",
+    "21804358": "remapped",
+    "22327694": "identity",
+    "22327695": "remapped",
+    "22327696": "remapped",
+    "22327697": "remapped",
+    "22327698": "remapped",
+    "22327699": "remapped",
+    "22327700": "remapped",
+    "22327701": "remapped",
+    "22327702": "remapped",
+    "22327703": "remapped",
+    "22327704": "remapped",
+    "22327705": "remapped",
+    "22327706": "remapped",
+    "22327709": "remapped",
+    "22327710": "remapped",
+    "22327711": "remapped",
+    "22327712": "remapped",
+    "22327731": "remapped"
+   },
+   "moved_sections": {
+    "21804358": 1,
+    "22327695": 1,
+    "22327696": 1,
+    "22327697": 1,
+    "22327698": 1,
+    "22327699": 1,
+    "22327700": 1,
+    "22327701": 1,
+    "22327702": 1,
+    "22327703": 1,
+    "22327704": 1,
+    "22327705": 1,
+    "22327706": 1,
+    "22327709": 1,
+    "22327710": 1,
+    "22327711": 1,
+    "22327712": 1,
+    "22327731": 1
+   }
+  },
+  {
+   "pos": 20,
+   "id": 7233522,
+   "salt": "0013978ba15b1d85d1fed3fd6fc5747675c89c505cbf7a8da5de2ebeea3e5ced",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 13,
+   "published_at": "2022-05-23",
+   "notice_remap": {
+    "22041597": "anchor",
+    "22336958": "remapped",
+    "22336960": "remapped",
+    "22336961": "remapped",
+    "22336962": "identity",
+    "22336963": "remapped",
+    "22336964": "remapped",
+    "22336965": "remapped",
+    "22336966": "remapped",
+    "22336968": "remapped",
+    "22336969": "remapped",
+    "22389995": "remapped",
+    "22390017": "remapped"
+   },
+   "moved_sections": {
+    "22336958": 1,
+    "22336960": 1,
+    "22336961": 1,
+    "22336963": 1,
+    "22336964": 1,
+    "22336965": 1,
+    "22336966": 1,
+    "22336968": 1,
+    "22336969": 1,
+    "22389995": 1,
+    "22390017": 1
+   }
+  },
+  {
+   "pos": 21,
+   "id": 5380658,
+   "salt": "00152f550eae9d03b75f8162761a58de37c5a1f3bd7479fdc87be834b02f8771",
+   "held": false,
+   "why": "not touched: no lot section moved by the remap",
+   "chain": 2,
+   "published_at": "2015-10-09",
+   "notice_remap": {
+    "18208320": "anchor"
+   },
+   "moved_sections": {}
+  },
+  {
+   "pos": 22,
+   "id": 6668638,
+   "salt": "0017a0bb8463516a9883f9db3b4b0c915a6217721f861b77ca4f17d3425e73ab",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 5,
+   "published_at": "2020-06-24",
+   "notice_remap": {
+    "20757056": "anchor",
+    "20816192": "identity",
+    "21116203": "remapped",
+    "21098698": "remapped",
+    "21106564": "remapped"
+   },
+   "moved_sections": {
+    "21116203": 1,
+    "21098698": 1,
+    "21106564": 1
+   }
+  },
+  {
+   "pos": 23,
+   "id": 6100987,
+   "salt": "001a0bcff3bbb58cbdfc0eb33536300e5b7a1e71b8b5c0c6a4506881cad3771d",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 4,
+   "published_at": "2018-05-15",
+   "notice_remap": {
+    "19651455": "anchor",
+    "19780382": "remapped",
+    "19841524": "remapped"
+   },
+   "moved_sections": {
+    "19780382": 1,
+    "19841524": 3
+   }
+  },
+  {
+   "pos": 24,
+   "id": 4714939,
+   "salt": "001bf2c56fea3eed0c9114a1d8a79e0399e76de1f14dbc2abac9ef2dad5f7039",
+   "held": false,
+   "why": "not touched: no lot section moved by the remap",
+   "chain": 3,
+   "published_at": "2012-04-26",
+   "notice_remap": {
+    "16866704": "anchor"
+   },
+   "moved_sections": {}
+  },
+  {
+   "pos": 25,
+   "id": 5543395,
+   "salt": "001c4de452d9e5842f41f6f89c9a6a2585efb8ef82b67458e25ae2036293af0f",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2016-10-14",
+   "notice_remap": {
+    "18529987": "anchor",
+    "18777851": "identity",
+    "18974028": "remapped"
+   },
+   "moved_sections": {
+    "18974028": 1
+   }
+  },
+  {
+   "pos": 26,
+   "id": 6539405,
+   "salt": "001d3161db778309cde2a0cec385ac8cd24c9daddc7bd6e0c2972c0ba820b4a7",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 3,
+   "published_at": "2021-01-15",
+   "notice_remap": {
+    "20489524": "anchor",
+    "20815443": "identity",
+    "21474445": "remapped"
+   },
+   "moved_sections": {
+    "21474445": 1
+   }
+  },
+  {
+   "pos": 27,
+   "id": 4754741,
+   "salt": "001faef36e34fb88fe9db5715083295f435e7af78c6b5b1930f19b26cf24850f",
+   "held": false,
+   "why": "not touched: no lot section moved by the remap",
+   "chain": 2,
+   "published_at": "2012-07-05",
+   "notice_remap": {
+    "16940697": "anchor"
+   },
+   "moved_sections": {}
+  },
+  {
+   "pos": 28,
+   "id": 7115279,
+   "salt": "00213894391fb02f40f258bcf99023d9d3583bb25d8fda4cb10d7d98395ae50d",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 4,
+   "published_at": "2021-12-06",
+   "notice_remap": {
+    "21752731": "anchor",
+    "21793335": "remapped",
+    "22019510": "remapped",
+    "22092934": "remapped"
+   },
+   "moved_sections": {
+    "21793335": 1,
+    "22019510": 1,
+    "22092934": 2
+   }
+  },
+  {
+   "pos": 29,
+   "id": 6972836,
+   "salt": "00225456e9db0ec8ef331ebf9e6b6d59eae8c1c622f746c3070a926da61d7c3c",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 35,
+   "published_at": "2021-07-21",
+   "notice_remap": {
+    "21454045": "anchor",
+    "21768924": "remapped",
+    "21768925": "remapped",
+    "21768926": "remapped",
+    "21768932": "remapped",
+    "21768937": "remapped",
+    "21768938": "remapped",
+    "21768939": "remapped",
+    "21768943": "remapped",
+    "21768947": "remapped",
+    "21768949": "remapped",
+    "21768950": "remapped",
+    "21768951": "remapped",
+    "21768953": "remapped",
+    "21768955": "remapped",
+    "21768956": "remapped",
+    "21768957": "remapped",
+    "21768960": "remapped",
+    "21768961": "remapped",
+    "21768962": "remapped",
+    "21768964": "remapped",
+    "21768965": "remapped",
+    "21768966": "remapped",
+    "21768967": "remapped",
+    "21769130": "identity",
+    "21736870": "remapped",
+    "21736871": "remapped",
+    "21736881": "remapped",
+    "21736882": "remapped",
+    "21750597": "remapped",
+    "21750598": "remapped",
+    "21844717": "remapped",
+    "21844725": "remapped",
+    "21844734": "remapped"
+   },
+   "moved_sections": {
+    "21768924": 1,
+    "21768925": 1,
+    "21768926": 1,
+    "21768932": 1,
+    "21768937": 1,
+    "21768938": 1,
+    "21768939": 1,
+    "21768943": 1,
+    "21768947": 1,
+    "21768949": 1,
+    "21768950": 1,
+    "21768951": 1,
+    "21768953": 1,
+    "21768955": 1,
+    "21768956": 1,
+    "21768957": 1,
+    "21768960": 1,
+    "21768961": 1,
+    "21768962": 1,
+    "21768964": 1,
+    "21768965": 1,
+    "21768966": 1,
+    "21768967": 1,
+    "21736870": 1,
+    "21736871": 1,
+    "21736881": 1,
+    "21736882": 1,
+    "21750597": 1,
+    "21750598": 1,
+    "21844717": 1,
+    "21844725": 1,
+    "21844734": 1
+   }
+  },
+  {
+   "pos": 30,
+   "id": 5648478,
+   "salt": "0023f79a7085918a74057a9c30f2fc7b35a91e2681a1419843f6a9eb5d07a5bd",
+   "held": false,
+   "why": "not touched: no lot section moved by the remap",
+   "chain": 2,
+   "published_at": "2016-07-12",
+   "notice_remap": {
+    "18741676": "anchor"
+   },
+   "moved_sections": {}
+  },
+  {
+   "pos": 31,
+   "id": 6179888,
+   "salt": "0025b3800e27d2c77acf37d65ba75ba7602c23809e076ff4383e616541edbae7",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 11,
+   "published_at": "2020-12-18",
+   "notice_remap": {
+    "19800704": "anchor",
+    "20109049": "identity",
+    "21375964": "remapped",
+    "21375833": "remapped",
+    "21375369": "remapped",
+    "21381746": "remapped",
+    "21380065": "identity",
+    "21385595": "remapped",
+    "21387681": "remapped",
+    "21384603": "remapped",
+    "21433237": "remapped"
+   },
+   "moved_sections": {
+    "21375964": 1,
+    "21375833": 1,
+    "21375369": 1,
+    "21381746": 1,
+    "21385595": 1,
+    "21387681": 1,
+    "21384603": 1,
+    "21433237": 1
+   }
+  },
+  {
+   "pos": 32,
+   "id": 6694840,
+   "salt": "002822fbe990643717d5994af705aa600188bc961dd75e3e39ee258412982c62",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 2,
+   "published_at": "2022-09-02",
+   "notice_remap": {
+    "20783817": "anchor",
+    "22614227": "remapped"
+   },
+   "moved_sections": {
+    "22614227": 1
+   }
+  },
+  {
+   "pos": 33,
+   "id": 6256782,
+   "salt": "002883504c13bc81cd51b4a5c336312192d4a1a235536fbd586578bc278e4c12",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 4,
+   "published_at": "2019-08-19",
+   "notice_remap": {
+    "19927967": "anchor",
+    "20231093": "remapped",
+    "20524453": "identity",
+    "20592782": "remapped"
+   },
+   "moved_sections": {
+    "20231093": 2,
+    "20592782": 2
+   }
+  },
+  {
+   "pos": 34,
+   "id": 5653419,
+   "salt": "002a3a0845af1fc6a9539151ab9930989a351910ddf6e0125d047b2db3e18ba6",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 2,
+   "published_at": "2016-10-21",
+   "notice_remap": {
+    "18749856": "anchor",
+    "18977440": "remapped"
+   },
+   "moved_sections": {
+    "18977440": 1
+   }
+  },
+  {
+   "pos": 35,
+   "id": 7069646,
+   "salt": "002b6675113fd470bba5816da1003d1806a453c20c92ff839f2cce73aa032e66",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 4,
+   "published_at": "2021-08-11",
+   "notice_remap": {
+    "21663745": "anchor",
+    "21797606": "identity",
+    "21863284": "remapped",
+    "21867093": "remapped"
+   },
+   "moved_sections": {
+    "21863284": 1,
+    "21867093": 1
+   }
+  },
+  {
+   "pos": 36,
+   "id": 6641080,
+   "salt": "002c86455c5df53b6e8e13c133662937738de3875d98fc4e14d670b80140ff96",
+   "held": true,
+   "why": "held: a lot section remapped by 570",
+   "chain": 6,
+   "published_at": "2020-01-03",
+   "notice_remap": {
+    "20695412": "anchor",
+    "20805109": "remapped",
+    "20823006": "identity"
+   },
+   "moved_sections": {
+    "20805109": 1
+   }
+  }
+ ]
+}

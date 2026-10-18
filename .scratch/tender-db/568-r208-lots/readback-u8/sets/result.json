@@ -1,0 +1,440 @@
+{
+ "stage": "sets",
+ "verdict": "pass",
+ "items": [
+  {
+   "item": "568 (b) 8327340: 7 multi-lot blocks null; 17821481 RES-3 LOT-24, RES-4 LOT-32; 17840150 RES-1 LOT-2",
+   "result": "pass",
+   "evidence": "live v4: served {\"17821481/RES-1\": null, \"17821481/RES-2\": null, \"17821481/RES-3\": \"LOT-24\", \"17821481/RES-4\": \"LOT-32\", \"17821481/RES-5\": null, \"17821481/RES-6\": null, \"17821481/RES-7\": null, \"17830774/RES-1\": null, \"17830774/RES-2\": null, \"17840150/RES-1\": \"LOT-2\"}; mismatches []; extra blocks []; x: check_live read 1/1, 10 blocks, parity_ok 10, breaks 0, verdict pass [], gets 2, read 2026-10-18T15:25:14+00:00..2026-10-18T15:25:16+00:00"
+  },
+  {
+   "item": "568 (c) s150: 57 refused blocks null; 5051007 RES-1..3 / 5267810 RES-1 kept; 8313642 RES-14 LOT-15, RES-15 LOT-18; every other block equals expected",
+   "result": "pass",
+   "evidence": "refused list (measurement-u8 s150 guards8): 57 = {8364864: 2, 5020611: 4, 4854639: 2, 5051007: 16, 5267810: 31, 5001424: 1, 4975428: 1}; not null: []; kept/movers mismatches: []; s150 live vs expected.json: {'tenders_read': 150, 'blocks_served': 1190, 'equal_replay_on_live_chain': 1190, 'equal_expected_json': 1190, 'guard_refused_expected': 57}; s150: check_live read 150/150, 1190 blocks, parity_ok 1190, breaks 0, verdict pass [], gets 300, read 2026-10-18T15:25:31+00:00..2026-10-18T15:33:30+00:00"
+  },
+  {
+   "item": "568 (d) m77: 692 blocks equal expected, no guard refusal",
+   "result": "pass",
+   "evidence": "m77 live vs expected.json: {'tenders_read': 77, 'blocks_served': 692, 'equal_replay_on_live_chain': 692, 'equal_expected_json': 692, 'guard_refused_expected': 0}; m77: check_live read 77/77, 692 blocks, parity_ok 692, breaks 0, verdict pass [], gets 154, read 2026-10-18T15:35:02+00:00..2026-10-18T15:39:08+00:00"
+  },
+  {
+   "item": "OOS 50: 100 refused blocks null, all others equal expected",
+   "result": "pass",
+   "evidence": "refused (combined_run oos, '568 refused'): 100 = {8286472: 9, 5416534: 91}; not null: []; oos live vs expected.json: {'tenders_read': 50, 'blocks_served': 432, 'equal_replay_on_live_chain': 432, 'equal_expected_json': 432, 'guard_refused_expected': 100}; oos: check_live read 50/50, 432 blocks, parity_ok 432, breaks 0, verdict pass [], gets 100, read 2026-10-18T15:39:08+00:00..2026-10-18T15:41:47+00:00"
+  },
+  {
+   "item": "570 (b) 8375276: LOT-1 \"Lahve...\", LOT-2 \"Kojenecka voda\"; printed 1 on LOT-1, 2 on LOT-2; 147 moved (120 + 27)",
+   "result": "pass",
+   "evidence": "live v13 lots {\"LOT-1\": \"Lahve a savičky\", \"LOT-2\": \"Kojenecká voda\"}; 155 blocks by (printed, served): {'1->LOT-1': 124, '2->LOT-2': 30, 'None->None': 1}; moved vs baseline: {'LOT-1->LOT-2': 27, 'LOT-2->LOT-1': 120} = 147; moved set == port_result results_moved_by_B: True; problems []"
+  },
+  {
+   "item": "570 (c) 8 changed sample + 5 changed exhibits on B lots, lot key sets unchanged; 9 named Tenders equal the baseline",
+   "result": "pass",
+   "evidence": "changed sample [7274985, 7511890, 7697322, 5787834, 6980424, 5827131, 6633011, 7693726], changed exhibits [8375276, 8387180, 8480304, 7415397, 7025548]; results_moved_by_B on B: 239/239; lot key sets equal baseline for all 13: True; problems []; 9 equal-baseline (lots + lot_results): 9/9, differ {}; p570: check_live read 211/211, 1851 blocks, parity_ok 1851, breaks 0, verdict pass [], gets 422, read 2026-10-18T15:41:47+00:00..2026-10-18T15:53:01+00:00"
+  },
+  {
+   "item": "570 (d) the other 196 sample Tenders equal the baseline (lots, lot_results) except blocks expected.json moves",
+   "result": "pass",
+   "evidence": "196 Tenders; equal (allowing expected moves): 196; blocks moved as expected.json says: 1 (['5602216: 1']); differ: {}"
+  }
+ ],
+ "open_blocks": [],
+ "set_stats": {
+  "s150": {
+   "stats": {
+    "tenders_read": 150,
+    "blocks_served": 1190,
+    "equal_replay_on_live_chain": 1190,
+    "equal_expected_json": 1190,
+    "guard_refused_expected": 57
+   },
+   "check_live": {
+    "read_started": "2026-10-18T15:25:31+00:00",
+    "read_finished": "2026-10-18T15:33:30+00:00",
+    "tenders": 150,
+    "read": 150,
+    "blocks": 1190,
+    "parity_ok": 1190,
+    "parity_breaks": 0,
+    "non_legacy_ok": 0,
+    "non_legacy_mismatches": [],
+    "served_outside_chain": [],
+    "computed_not_served": [],
+    "legacy_test_disagrees": [],
+    "profile_from_prefix": [],
+    "incomplete": [],
+    "fetch_errors": [],
+    "gets": 300,
+    "by_cause": {
+     "unchanged": 1131,
+     "568-u8": 57,
+     "570": 2
+    },
+    "by_reason": {
+     "568 match": 915,
+     "568 none: no_match": 188,
+     "568 refused G4": 28,
+     "568 none: no_number": 10,
+     "568 refused G4n+G3": 1,
+     "568 refused G4+G3": 2,
+     "568 none: ambiguous": 1,
+     "568 refused G5": 3,
+     "567 same-notice: no lot": 2,
+     "568 refused G4n": 16,
+     "568 refused G4+G5": 6,
+     "568 refused G6": 1,
+     "567 same-notice": 15,
+     "567 same-notice + 570 remap ->": 2
+    },
+    "parity_verdict": "pass",
+    "verdict_reasons": [],
+    "breaks": []
+   }
+  },
+  "f30": {
+   "stats": {
+    "tenders_read": 30,
+    "blocks_served": 212,
+    "equal_replay_on_live_chain": 212,
+    "equal_expected_json": 212,
+    "guard_refused_expected": 7
+   },
+   "check_live": {
+    "read_started": "2026-10-18T15:33:30+00:00",
+    "read_finished": "2026-10-18T15:35:02+00:00",
+    "tenders": 30,
+    "read": 30,
+    "blocks": 212,
+    "parity_ok": 212,
+    "parity_breaks": 0,
+    "non_legacy_ok": 0,
+    "non_legacy_mismatches": [],
+    "served_outside_chain": [],
+    "computed_not_served": [],
+    "legacy_test_disagrees": [],
+    "profile_from_prefix": [],
+    "incomplete": [],
+    "fetch_errors": [],
+    "gets": 58,
+    "by_cause": {
+     "unchanged": 205,
+     "568-u8": 7
+    },
+    "by_reason": {
+     "568 match": 202,
+     "568 none: no_number": 1,
+     "568 none: no_match": 2,
+     "568 refused G3": 7
+    },
+    "parity_verdict": "pass",
+    "verdict_reasons": [],
+    "breaks": []
+   }
+  },
+  "m77": {
+   "stats": {
+    "tenders_read": 77,
+    "blocks_served": 692,
+    "equal_replay_on_live_chain": 692,
+    "equal_expected_json": 692,
+    "guard_refused_expected": 0
+   },
+   "check_live": {
+    "read_started": "2026-10-18T15:35:02+00:00",
+    "read_finished": "2026-10-18T15:39:08+00:00",
+    "tenders": 77,
+    "read": 77,
+    "blocks": 692,
+    "parity_ok": 692,
+    "parity_breaks": 0,
+    "non_legacy_ok": 0,
+    "non_legacy_mismatches": [],
+    "served_outside_chain": [],
+    "computed_not_served": [],
+    "legacy_test_disagrees": [],
+    "profile_from_prefix": [],
+    "incomplete": [],
+    "fetch_errors": [],
+    "gets": 154,
+    "by_cause": {
+     "unchanged": 692
+    },
+    "by_reason": {
+     "568 match": 656,
+     "568 none: no_match": 27,
+     "568 none: no_number": 6,
+     "568 none: g1": 3
+    },
+    "parity_verdict": "pass",
+    "verdict_reasons": [],
+    "breaks": []
+   }
+  },
+  "oos": {
+   "stats": {
+    "tenders_read": 50,
+    "blocks_served": 432,
+    "equal_replay_on_live_chain": 432,
+    "equal_expected_json": 432,
+    "guard_refused_expected": 100
+   },
+   "check_live": {
+    "read_started": "2026-10-18T15:39:08+00:00",
+    "read_finished": "2026-10-18T15:41:47+00:00",
+    "tenders": 50,
+    "read": 50,
+    "blocks": 432,
+    "parity_ok": 432,
+    "parity_breaks": 0,
+    "non_legacy_ok": 0,
+    "non_legacy_mismatches": [],
+    "served_outside_chain": [],
+    "computed_not_served": [],
+    "legacy_test_disagrees": [],
+    "profile_from_prefix": [],
+    "incomplete": [],
+    "fetch_errors": [],
+    "gets": 100,
+    "by_cause": {
+     "unchanged": 332,
+     "568-u8": 100
+    },
+    "by_reason": {
+     "568 match": 319,
+     "568 none: no_number": 1,
+     "567 same-notice": 12,
+     "568 refused G4": 87,
+     "568 refused G4n": 13
+    },
+    "parity_verdict": "pass",
+    "verdict_reasons": [],
+    "breaks": []
+   }
+  },
+  "p570": {
+   "stats": {
+    "tenders_read": 211,
+    "blocks_served": 1851,
+    "equal_replay_on_live_chain": 1851,
+    "equal_expected_json": 1851,
+    "guard_refused_expected": 1
+   },
+   "check_live": {
+    "read_started": "2026-10-18T15:41:47+00:00",
+    "read_finished": "2026-10-18T15:53:01+00:00",
+    "tenders": 211,
+    "read": 211,
+    "blocks": 1851,
+    "parity_ok": 1851,
+    "parity_breaks": 0,
+    "non_legacy_ok": 0,
+    "non_legacy_mismatches": [],
+    "served_outside_chain": [],
+    "computed_not_served": [],
+    "legacy_test_disagrees": [],
+    "profile_from_prefix": [],
+    "incomplete": [],
+    "fetch_errors": [],
+    "gets": 422,
+    "by_cause": {
+     "unchanged": 1611,
+     "570": 239,
+     "568-u8": 1
+    },
+    "by_reason": {
+     "568 match": 281,
+     "567 same-notice": 1163,
+     "567 same-notice + 570 remap ->": 239,
+     "568 none: no_match": 1,
+     "568 none: g1": 31,
+     "567 same-notice: no lot": 88,
+     "568 none: no_number": 47,
+     "568 refused G5": 1
+    },
+    "parity_verdict": "pass",
+    "verdict_reasons": [],
+    "breaks": []
+   }
+  },
+  "x": {
+   "stats": {
+    "tenders_read": 1,
+    "blocks_served": 10,
+    "equal_replay_on_live_chain": 10,
+    "equal_expected_json": 10,
+    "guard_refused_expected": 7
+   },
+   "check_live": {
+    "read_started": "2026-10-18T15:25:14+00:00",
+    "read_finished": "2026-10-18T15:25:16+00:00",
+    "tenders": 1,
+    "read": 1,
+    "blocks": 10,
+    "parity_ok": 10,
+    "parity_breaks": 0,
+    "non_legacy_ok": 0,
+    "non_legacy_mismatches": [],
+    "served_outside_chain": [],
+    "computed_not_served": [],
+    "legacy_test_disagrees": [],
+    "profile_from_prefix": [],
+    "incomplete": [],
+    "fetch_errors": [],
+    "gets": 2,
+    "by_cause": {
+     "568-u8": 7,
+     "unchanged": 3
+    },
+    "by_reason": {
+     "568 refused G3": 7,
+     "568 match": 3
+    },
+    "parity_verdict": "pass",
+    "verdict_reasons": [],
+    "breaks": []
+   }
+  }
+ },
+ "global_vs_baseline": {
+  "baseline_tenders_read": 512,
+  "moves_vs_baseline": {
+   "expected": 406
+  },
+  "unexpected_moves": [],
+  "tenders_whose_lots_differ_from_baseline": [
+   5787834,
+   5827131,
+   6633011,
+   6980424,
+   7025548,
+   7274985,
+   7511890,
+   7693726,
+   7697322,
+   8313642,
+   8387180,
+   8480304
+  ],
+  "lot_changes_detail": {
+   "5787834": {
+    "keys_unchanged": true,
+    "titles_changed": 2,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "5827131": {
+    "keys_unchanged": true,
+    "titles_changed": 1,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "6633011": {
+    "keys_unchanged": true,
+    "titles_changed": 5,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "6980424": {
+    "keys_unchanged": true,
+    "titles_changed": 7,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "7025548": {
+    "keys_unchanged": true,
+    "titles_changed": 10,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "7274985": {
+    "keys_unchanged": true,
+    "titles_changed": 1,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "7511890": {
+    "keys_unchanged": true,
+    "titles_changed": 3,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "7693726": {
+    "keys_unchanged": true,
+    "titles_changed": 6,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "7697322": {
+    "keys_unchanged": true,
+    "titles_changed": 13,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "8313642": {
+    "keys_unchanged": true,
+    "titles_changed": 2,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "8387180": {
+    "keys_unchanged": true,
+    "titles_changed": 27,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   },
+   "8480304": {
+    "keys_unchanged": true,
+    "titles_changed": 21,
+    "values_changed": 0,
+    "is_570_changed_tender": true
+   }
+  },
+  "note": "All 406 blocks whose served lot moved vs the pre-drain baseline are moves expected.json predicts (s150 59 = 57 568-u8 + 2 570, f30 7 (8327340), OOS 100, 570 set 240 = 239 570 + 1 568-u8 5602216/19023719/RES-128); 0 unexpected. Lots differ from the baseline only in 12 Tenders, all 570-remapped (11 of the 13 changed port Tenders + s150 8313642): lot titles only, key sets and values unchanged (titles follow the remapped sections; title agreement is the fresh570 stage)."
+ },
+ "inputs": {
+  "live_cache": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/live",
+  "expected": "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/expected.json",
+  "baseline": "/home/user/tender-db/.scratch/tender-db/568-r208-lots/drain/baseline-pre568u8-570.json"
+ },
+ "provenance": {
+  "drain": {
+   "jobs": [
+    2616,
+    2617
+   ],
+   "finished": "2026-10-18T15:19:48Z"
+  },
+  "read_window": [
+   "2026-10-18T15:25:14+00:00",
+   "2026-10-18T15:53:01+00:00"
+  ],
+  "gets_total": 1036,
+  "gets_note": "one /v1/tenders/{id} + one /v1/notices?tender={id} (profile listing) per Tender, gap 1.6 s; 0 notice-content GETs (all chain notices from the caches via --reuse-notices); 0 fetch errors, no 408",
+  "tenders_read": 518,
+  "sha256": {
+   "check_live.py": "cef1545b7da5ee2addc93bdc277dce01abb45696c546cb59fd6521f9638246b4",
+   "combined_port.py": "5363593c663c651bcbf125464ccfd24b96d45b56e1834086352f7d8903d7673c",
+   "expected.json": "6f396ec05d89b15d7f9d26e750466a90b1f003c2f02e54e5ca43610e0d37093d",
+   "baseline-pre568u8-570.json": "328fa4199b98c8e3f78431cb87f57dcd418ab3db104fe72064d3151e12ed76e6"
+  },
+  "raw_reads": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/live (not in the repo)",
+  "reuse_notices": {
+   "x/s150/f30/m77": [
+    "rb8/sets/u7notices (u7-cache.jsonl.gz notices)",
+    "rb8/fresh"
+   ],
+   "oos": [
+    "u8-oos/cache_o1",
+    "u8-oos/cache_o2",
+    "rb8/oos/*",
+    "+u7"
+   ],
+   "p570": [
+    "rb8/c570/*_skeptic/live",
+    "rb8/c570/cache_k1..12",
+    "rb8/c567",
+    "+u7"
+   ]
+  }
+ }
+}

@@ -1,0 +1,152 @@
+{
+ "stage": "fresh570",
+ "issue": "570 read-back (e) and (g), after the combined refold 2616 + project 2617 (finished 2026-10-18T15:19:48Z)",
+ "read_window_utc": {
+  "order_written": "2026-10-18T15:59:02.439742Z",
+  "first_read": "2026-10-18T15:59:12.455742Z",
+  "last_read": "2026-10-18T16:29Z"
+ },
+ "e": {
+  "population": 46879,
+  "cursor_range": {
+   "from": "957854566",
+   "to": "958764334",
+   "rule": "from < cursor <= to",
+   "events_read": 46879,
+   "events_in_range": 46879,
+   "events_outside_range": 0,
+   "first_in_range": 957854567,
+   "last_in_range": 958764329,
+   "read_reaches": 958764334,
+   "generations": [
+    2
+   ]
+  },
+  "events_by_kind": {
+   "tender/changed/null": 46879
+  },
+  "salt": "sha256(\"570-fresh30-\"+id) hex ascending",
+  "order_sha256": "b51a113b036546c859c7da3b91defe543c902adb73d4de904c204275b23494cb",
+  "walked": 36,
+  "held": 30,
+  "skipped_not_touched": [
+   8303066,
+   4472043,
+   5380658,
+   4714939,
+   4754741,
+   5648478
+  ],
+  "skipped_why": "chain of 2-4 notices with one lot-publishing notice (the anchor): no section for 570 to remap",
+  "not_found_404": [],
+  "gets_walk": 250,
+  "gets_profiles": 30,
+  "E1_moved_blocks": {
+   "n": 142,
+   "served_on_expected": 142,
+   "head_number_equals_own_printed": 142,
+   "cause": {
+    "570": 142
+   }
+  },
+  "E2_moved_sections": {
+   "n": 182,
+   "anchor_reference": {
+    "equal": 121,
+    "target": 19,
+    "target-untitled": 1,
+    "own": 23,
+    "segment": 17,
+    "untitled": 1
+   },
+   "carried_reference": {
+    "equal": 146,
+    "target": 16,
+    "target-untitled": 1,
+    "own": 1,
+    "segment": 17,
+    "untitled": 1
+   },
+   "after_reading": {
+    "agree": 148,
+    "tenders_all_agree": 29,
+    "unclear": {
+     "6876932": "34 sections: 34/34 agree with the carried lot they join, 22/34 disagree with the anchor title at the target key"
+    }
+   }
+  },
+  "E3_lots": {
+   "tenders_same_keys_on_off_every_version": 30,
+   "served_keys_equal_replay_head": 30,
+   "served_head_titles_equal_remap_on_carry": "274/274",
+   "lots_where_on_off_titles_differ_and_served_is_remap_on": "105/105",
+   "lots_added_or_removed_vs_remap_off": 0
+  },
+  "E4_parity": {
+   "served_blocks": 313,
+   "breaks": 0,
+   "computed_not_served": 0,
+   "served_outside_chain": 0,
+   "non_legacy_mismatch": 0,
+   "legacy_profile_vs_prefix_disagree": 0,
+   "profiles": [
+    "ted-export-r208",
+    "ted-export-r209"
+   ]
+  },
+  "per_tender_script_verdict": {
+   "pass": 28,
+   "fail": [
+    6298189
+   ],
+   "adjudicate": [
+    6876932
+   ]
+  },
+  "adjudicated": {
+   "6298189": "pass (21804358/LOT-1 prints 11, title is the procedure title; MAIN_SITE Lesná správa Zákamenné III = target LOT-11)",
+   "6876932": "UNCLEAR (open block): see adjudication.json"
+  },
+  "bar": "30 of 30",
+  "result": "29 of 30 clean + 1 unclear (6876932) -> adjudicate"
+ },
+ "g": {
+  "window": {
+   "from": 957854566,
+   "to": 958764334,
+   "rule": "from < cursor <= to"
+  },
+  "lot_pages": {
+   "pages": 863,
+   "generation": [
+    2
+   ],
+   "reach": 958764334,
+   "events_read": 862889,
+   "events_in_window": 862889
+  },
+  "lot_events_by_op_version": {
+   "changed/null": 862889
+  },
+  "removed": 0,
+  "added": 0,
+  "distinct_lot_ids": 862889,
+  "lot_ids_with_two_or_more_events": 0,
+  "op_filter": "none on /v1/changes (crates/app/src/v1/mod.rs `changes`: since / limit / entity only), so every lot event of the window was paged",
+  "held30_note": "6876932: 19 of its 23 served lots carry a lot changed/null event; the 4 without (LOT-1, LOT-19, LOT-22, LOT-23) are exactly the keys whose rows are identical with the remap on and off in every version, and its head is unchanged (the last notice 23435716 is K1-refused and supersedes all 23 keys), so ADR-0017 D3 rule L takes only the lots whose own rows differ (crates/store/src/canonical.rs CompareTally: head_lots only when head_differs). The other 29 Tenders announce every head lot, contiguously after their tender event (270 + 4 = 274 served lots)."
+ },
+ "g_result": "0 lot removed rows in the window (0 added); 0 attributable to 570 (expected 0) -> pass",
+ "files": [
+  "page_changes.py",
+  "walk570.py",
+  "check570.py",
+  "g570.py",
+  "order.json",
+  "walk.json",
+  "check_e_summary.json",
+  "adjudication.json",
+  "g_result.json",
+  "result.json"
+ ],
+ "raw_reads": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/fresh570/ (changes_tender/, changes_lot/, cache/, check_detail.json)"
+}

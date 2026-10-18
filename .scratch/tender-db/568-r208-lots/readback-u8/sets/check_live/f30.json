@@ -1,0 +1,47 @@
+{
+ "mode": "check",
+ "drain": {
+  "job": null,
+  "finished": null
+ },
+ "read_started": "2026-10-18T15:33:30+00:00",
+ "cache": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/live",
+ "ids_from": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/ids/f30.json",
+ "draw_cursor_range": null,
+ "reuse_notices": [
+  "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+  "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/fresh"
+ ],
+ "tenders": 30,
+ "read": 30,
+ "blocks": 212,
+ "parity_ok": 212,
+ "breaks": [],
+ "tenders_with_breaks": [],
+ "non_legacy_ok": 0,
+ "non_legacy_mismatches": [],
+ "served_outside_chain": [],
+ "computed_not_served": [],
+ "legacy_test_disagrees": [],
+ "profile_from_prefix": [],
+ "incomplete": [],
+ "by_cause": {
+  "unchanged": 205,
+  "568-u8": 7
+ },
+ "by_reason": {
+  "568 match": 202,
+  "568 none: no_number": 1,
+  "568 none: no_match": 2,
+  "568 refused G3": 7
+ },
+ "g2_stratum": null,
+ "read_finished": "2026-10-18T15:35:02+00:00",
+ "gets": 58,
+ "fetch_errors": [],
+ "parity_breaks": 0,
+ "parity_verdict": "pass",
+ "verdict_reasons": [],
+ "pass_bar_i": false,
+ "pass_bar_i_note": "not a bar run (--bar not given): pass_bar_i is false by construction"
+}

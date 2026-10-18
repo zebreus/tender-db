@@ -1,0 +1,21 @@
+{
+ "stage": "band (adversarial verify)",
+ "verdict": "pass",
+ "reads": {"gets": 123, "status": {"200": 123}, "first": "2026-10-18T16:34:32Z", "last": "2026-10-18T16:39:00Z",
+           "raw_dir": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band"},
+ "changed_set": {"pages": 47, "events_in_range": 46879, "distinct_ids": 46879, "op_version": "changed/null",
+                 "sha256": "8062ccd12fbeeea78a794b5ea9ce85126588066c882b9d0782261f3f73e6bd79",
+                 "pages_byte_identical_to_stage": "47/47", "tail_since_958764334_at_16:36:58Z": 0},
+ "band": {"now": 3728, "baseline": 3728, "entered": [], "left": [], "moved": [], "derivation_null": 3728,
+          "pages_byte_identical_to_stage": "19/19", "in_changed_set": 44, "detail_vs_list_mismatch": []},
+ "path_v": {"moved": [], "in_changed_set": [5943121],
+            "5943121": {"award_lot_sum_cents": 132157992, "refused_result_value_cents": 132157992000, "lots": 10, "version": 4}},
+ "sample_replay": {"tenders": [5943121, 8371908, 4783373, 8391421, 6978910, 6572976, 7384663, 6054105, 4662012],
+                   "fresh_tender_equals_stage_read": "9/9", "fresh_notices_equal_stage_fetch": "30/30",
+                   "blocks": 2147, "parity_breaks": 0, "causes_equal_stage": "9/9",
+                   "raw_checks": ["19549394 LOT-1..10 print 9,21,11,12,14..19 -> LOT-9.. (570 by printed number)",
+                                  "22918031 LOT-1..5 print 2..6 -> LOT-2..6",
+                                  "21510251 LOT-1 prints 3 -> LOT-3; LOT-3 serves the CAN title, LOT-1 the CN's",
+                                  "17448895 RES-1..7 print 2-3 distinct LOT_NUMBERs -> G6 refused (lot null); RES-8/9 print 1 -> LOT-1"]},
+ "observation_not_open": "8371908 RES-1 prints 'Lot No. 3 - Lot 1C ...' and serves lot null both before and after (567 same-notice norm does not read that text); pre-existing rule, not moved by 568-u8 or 570."
+}

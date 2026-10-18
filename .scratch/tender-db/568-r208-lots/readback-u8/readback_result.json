@@ -1,0 +1,381 @@
+{
+ "stage": "judge (combined read-back of 568 unit 8 + 570, refold-fields 2616 + project 2617)",
+ "judged_at": "2026-10-18T16:58Z",
+ "verdicts": {
+  "568": "OPEN: not failed, not yet passed. Every item read passes: (a), (b), (c), (d), (f), OOS, and bar (i) 878/878, (ii) 0/30, (iii) no trigger. The bar's draw quota of >= 8 G2 Tenders is unmet (5/8) because of a draw-tool defect. 568 closes on the pre-registered 3-Tender extension (O1).",
+  "570": "PASS. (a)-(g) all pass; (e) 30/30 once 6876932 is read against rule step 3's definition of target. No reopen."
+ },
+ "judge_own_checks": [
+  "m77: live equals readback/measured77.json (568's first read-back, before this drain) on 692/692 blocks, closing the 6 extra-strata Tenders that are missing from the baseline.",
+  "G2 false positives: all notices of 6324865/6788159/6869520 are ted-export-r209 (bar_cache listings).",
+  "Walk slot accounting: the 22 non-G2 Tenders are held at indices 0-21, so the conformant draw is 27 + 3.",
+  "Recall: 290 listed candidates hold 15,707 lot-placed results, all r209. The other 322 sit only on notices >= 21,501,487, above the highest R2.0.8 id seen (21,409,453).",
+  "570 (e) target: rule step 3 and Error risk read directly; the verifier's attribution holds.",
+  "570 (e) hold rule: fixed in the stage spec before reading, computed from the port; accepted.",
+  "D3 wording: ADR-0017 rule L read; the build follows the ADR.",
+  "5602216 RES-128: CN 18674240 lots 171-175 and CAN 19023719 RES-127..129 read from cache."
+ ],
+ "items": [
+  {
+   "issue": "568",
+   "item": "(a) D7: verified + corrected >= stamped N; no projection_epoch = 0",
+   "result": "pass",
+   "evidence": "Given by the workflow and not re-read: 1,250,447 written = 1,203,568 verified + 46,879 corrected; 0 epoch-0 residue in 7 bounded 100k-id windows. The changed set (/v1/changes?entity=tender, 957854566 < cursor <= 958764334) holds 46,879 events with 46,879 distinct ids, all op=changed and version=null. Three stages paged it separately and the verifiers re-paged it; the hashes agree (sha256 8062ccd1...).",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/band/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-band/verify.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "(b) 8327340: its 7 multi-lot blocks serve null; 17821481 RES-3 -> LOT-24, RES-4 -> LOT-32; 17840150 RES-1 -> LOT-2",
+   "result": "pass",
+   "evidence": "Read live at v4 at 15:25:14Z, after the drain finished at 15:19:48Z, and re-read fresh by the verifier at 16:18:33Z. The two reads are identical. 17821481 RES-1/2/5/6/7 and 17830774 RES-1/2 serve null (G3). The three named blocks serve LOT-24, LOT-32 and LOT-2. Against the baseline these 7 blocks moved and nothing else did.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-sets/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/check_live/x.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "(c) as amended: the s150's 57 refused blocks serve null; 5051007 RES-1..3 / 5267810 RES-1 keep LOT-1..3 / LOT-1; the other matched blocks are unchanged except 570's named movers",
+   "result": "pass",
+   "evidence": "All 57 serve null: 5051007 RES-4..19 (16), 5267810 RES-2..32 (31), 8364864 x2, 5020611 x4, 5001424 x1, 4854639 RES-7/8 and 4975428 RES-2. The kept blocks are as named. 1190/1190 blocks equal expected.json, and 59 move against the baseline: the 57 plus two 570 movers, 8313642/19187804 RES-14 -> LOT-15 and RES-15 -> LOT-18. Both the stage and the verifier found this, the verifier also with fresh GETs.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-sets/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/check_live/s150.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "(d) the 77: 692 of 692 unchanged, no guard refusal",
+   "result": "pass",
+   "evidence": "692/692 equal expected.json, with 0 refusal reasons and cause unchanged on all. The baseline holds only 71 of the 77, so the 6 extra-strata Tenders (4634188, 5154859, 5302290, 5312343, 5476747, 8288447) had no observed pre-drain state there. JUDGE: I diffed the sets stage's live reads against readback/measured77.json, which is 568's first read-back: 692 blocks served after drain 2593/2594 and before this drain. The result is 0 differences on 692/692 blocks across all 77 Tenders, so \"unchanged\" is now observed on both sides for the 6 as well. (u7-cache.jsonl.gz cannot serve as the before-read: its m77 reads predate 568's first drain, and 656 blocks show null there.)",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-sets/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/check_live/m77.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback/measured77.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "OOS 50: its 100 refused blocks serve null, all others equal expected",
+   "result": "pass",
+   "evidence": "All 100 serve null: 8286472/16994904 x9 and 5416534/18634900 x91. 432/432 blocks equal expected.json, and exactly 100 move against the baseline. The verifier re-read both Tenders fresh.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-sets/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/check_live/oos.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "fresh 30 draw: salt 568u8-fresh30-, from the combined changed set, exclusions, >= 10 outside 2012-2015, read after the drain, fixed before judging",
+   "result": "pass",
+   "evidence": "draw.json was written at 15:42:26Z, before the first bar read at 15:43:02Z. Its cursor_range is recorded (46,879 in range, 0 outside). Exclusions hit s150 8, f30 1 and oos50 2. 24 of the 30 are outside 2012-2015, or 21 without the three false-G2 Tenders. The verifier re-ran draw_fresh30.py offline and reproduced the same 30 from the same 771-row walk.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/draw.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "fresh 30 draw: >= 8 G2 Tenders (outside population.json, serving an R2.0.8 block on a lot)",
+   "result": "open (fix: extension)",
+   "evidence": "Only 5 of the 8 Tenders the tool classed G2 qualify: 4888356, 5864590, 5362479, 4569314 and 5351872. The other three, 6324865, 6788159 and 6869520, are false positives of draw_fresh30.py's one-read signal (a Tender-scope winner row from another lot-less result). JUDGE checked the bar_cache listings: every notice in those chains is ted-export-r209 (35, 174 and 11 notices), and every lot-placed result is on an r209 notice. They have 0 blocks in 568 scope. So the quota as written is unmet, 5 of 8. The cause is a tooling defect, not a defect in the 568-u8 or 570 build, and I accept that attribution.\n\nJUDGE checked the walk accounting: the 22 non-G2 Tenders were all held at walk indices 0-21. After index 21 only a G2 can be held, so reclassifying the three as non-G2 only skips them and leaves the other 27 unchanged. The verifier's recall check holds on my recount. 615 read, non-population candidates after index 21 have a lot-placed result. The 290 the verifier listed hold 15,707 lot-placed results, all ted-export-r209. The other 322 have their lot-placed results only on notices >= 21,501,487, which is above the highest R2.0.8 notice id seen in any cache (21,409,453).\n\nThe conformant draw is therefore the 27 already judged plus the next 3 true-G2 Tenders after walk index 770, in the same salted order, under a corrected G2 test. Disposition: run that extension (see readback.md). The bar stays exactly as it is.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/draw.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/draw_fresh30.py"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "bar (i): parity, 0 divergences on the fresh 30 (combined_port: 570 remap + amended guards)",
+   "result": "pass",
+   "evidence": "878/878 blocks at parity. There are 0 breaks, 0 computed-not-served, 0 served-outside-chain and 0 non-legacy mismatches. The verifier recomputed this offline and re-read live the 8 Tenders that carry 568-scope blocks: identical. This covers the conformant 27. The 3 extension Tenders are still to be read.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/bar_summary.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "bar (ii): <= 2 of 30 Tenders carry a judged-wrong block the port also keeps",
+   "result": "pass",
+   "evidence": "0 of 30, and 0 of the conformant 27. 112 568-scope blocks were labelled: 106 single_right, 4 multi_lot_contract and 2 wrong_other. The verifier re-judged them independently and agrees on all 112. All 6 wrong blocks are refused and serve null: G3 x4 on 8291946, G5 on 8365595 18617609/RES-1 and G5 on 5864590 19369697/RES-3. Before the guards, 3 of 30 Tenders carried a wrong block; after, 0. With the extension (ii) can only fail if all 3 added Tenders carry a kept wrong block.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/labels_joined.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "bar (iii): new shapes recorded and filed; reopen only on a parity break or 3+/30",
+   "result": "pass",
+   "evidence": "No wrong block is kept, so there is no new kept shape to file. No reopen trigger fired: 0 breaks and 0/30. The shapes caught are recorded in readback.md: a BG plural multi-lot block (G3), CAN-only renumbering in a one-block CAN (G5), and a CAN repeating a printed number (G5).",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "G2 stratum exercise (information)",
+   "result": "pass",
+   "evidence": "In the 5 true-G2 Tenders, 49 blocks move from base null (G2's own refusal) to a lot with cause 570. All 49 are single_right and served on their lot. One newly matched block, 5864590 19369697/RES-3, is wrong_other, and G5 refuses it.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/bar_summary.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "false refusals (information, not a bar criterion)",
+   "result": "info",
+   "evidence": "5457789 18461129/RES-8 was right on LOT-37 before the drain and now serves null. G4 refused it at block level over a copied CONTRACT_TITLE, \"Pakiet nr 34 Cloxacillin/Syntarpen\". Everything else names lot 37: LN 37, CONTRACT_NUMBER \"Pakiet nr 37\", and the estimate of 9,975.00 PLN, which is LOT-37's to the cent. This is a new false-refusal shape, 1 of 106 fresh right blocks; pooled 1/2,187 (0.05 %). JUDGE also read the one 568-u8 move in 570's 196, 5602216/19023719 RES-128 (printed 173, G5). The CN prints identical text for lots 172 and 173. The block's title \"rampa trójdrożna\" is CN LOT-174's, and the CAN's own 174 (\"rampa pięciodrożna\") matches no CN lot. Whether 173 was right cannot be decided from the notices, so I record it as unclear, not as a false refusal.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/c570/cache_k10/notice_18674240.json",
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/c570/cache_k10/notice_19023719.json"
+   ]
+  },
+  {
+   "issue": "568",
+   "item": "(f) band / path-V diff: every mover is 568-u8's or 570's",
+   "result": "pass",
+   "evidence": "The band holds 3,728 heads before and after: 0 entrants, 0 leavers, and 0 changes in value, derivation or version. 0 of 17 path-V heads moved. With 0 movers the attribution rule holds vacuously. The supporting replay of the 45 corrected band/path-V Tenders gives 2,694 blocks and 0 parity breaks. A tail read since 958764334 returned 0 events, from both the stage and the verifier. Caveat: none of the 45 is in the baseline's 512 lot snapshots, so their before-side block attributions come from the replay. The bar's own value/derivation/version diff is observed on both sides.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/band/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-band/verify.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(a) D7",
+   "result": "pass",
+   "evidence": "Same combined run as 568 (a).",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh568/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh568/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/band/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-band/verify.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(b) 8375276: LOT-1 \"Lahve...\", LOT-2 \"Kojenecka voda\"; LOT_NO 1 blocks on LOT-1, 2 on LOT-2 (147 moved: 120 + 27)",
+   "result": "pass",
+   "evidence": "v13 serves LOT-1 \"Lahve a savičky\" and LOT-2 \"Kojenecká voda\". Of its 155 blocks, 124 print 1 and serve LOT-1, and 30 print 2 and serve LOT-2. 20827122 RES-18 prints no number and serves null, as expected. 120 blocks moved LOT-2 -> LOT-1 and 27 moved LOT-1 -> LOT-2, which equals port_result results_moved_by_B. The verifier re-read it fresh at 16:18:35Z and parsed the printed numbers itself, counting TED-LOT_NUMBER on the R2.0.8 CAN 18911154.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-sets/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/check_live/p570.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(c) 8 changed sample Tenders + 5 changed exhibits on port_result's B lot, key sets unchanged; the 9 named Tenders equal the baseline",
+   "result": "pass",
+   "evidence": "239/239 results_moved_by_B serve their B lot (32 + 207). All 13 lot key sets equal the baseline, and in each the set of blocks moved against the baseline equals results_moved_by_B exactly. The 9 named Tenders (8433088, 6016286, 7465548, 7112657, 5939039, 5317587, 5540787, 6120045, 7025760) equal the baseline in lots and lot_results.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-sets/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/check_live/p570.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(d) the other 196 sample Tenders equal the baseline",
+   "result": "pass",
+   "evidence": "196/196 equal the baseline in lots (key, title, value) and lot_results, except one block: 5602216/19023719 RES-128, LOT-173 -> null. That move is 568-u8's (G5), as expected.json predicts, not 570's. 570 moved no block in the 196.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/sets/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-sets/verify.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(e) fresh uniform 30: population and draw fixed before any read",
+   "result": "pass",
+   "evidence": "The population is the 46,879 version-null tender events in the window, ordered by sha256(\"570-fresh30-\"+id). order.json was written at 15:59:02Z, before the first read at 15:59:12Z. The walk took 36 to hold 30. The 6 skipped have one lot-publishing notice each, so the remap cannot touch them, and their corrections are 568-u8's. JUDGE: the \"remap-touched\" hold rule was fixed in the stage spec before any read. It is computed from the port, not from served state, so it cannot favour a pass. It restricts the combined changed set to the Tenders 570 itself can correct, which is the uniform population the bar means in a 570-only drain.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh570/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/order.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/walk.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(e) E1: each moved block lands on the key whose head number equals its own",
+   "result": "pass",
+   "evidence": "142/142 in 29 Tenders. The verifier's own remap, written from the decision text, agrees with combined_port on all 30 held Tenders, and its fresh re-reads give 47/47.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh570/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/check_e_summary.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(e) E2: each moved section's title agrees with its target (or is untitled)",
+   "result": "pass",
+   "evidence": "All 182 moved sections agree with their target lot.\n\nThe question was what \"target\" means in the bar. Rule step 3 of decision.md defines Targets as \"the carried lots of kind Lot with a non-blank carried number\", and the bar's \"its target\" uses that defined term. Error risk defines a wrong remap as \"one printed number naming different lots in two notices of one procedure\". JUDGE checked the verifier's reading against both texts and adopts it. In 6876932, all 34 moved sections match the carried lot they join in number and title. \"Produits surgelés\" prints 3 in every notice of the chain and joins the carried lot that prints 3 \"produits surgelés\", so no number names two lots. The disagreement with the anchor's title comes from K1-refused notices: 21923843, 22231117 and 22219592 re-keyed the carry by today's positional merge at v4, v6 and v7, and rule step 5 leaves refused notices on today's fold by design. With the remap on, 0 keys are renumbered at v8; with it off, 17 are, and two numbers would each sit on two keys. Across all versions there are 75 per-key number changes with the remap against 82 without. No award moved, and the served head equals the remap-off head. check570.py's anchor-title reference is a proxy, valid only where no refused notice precedes the remapped one.\n\n6298189/21804358 also agrees: its TED-MAIN_SITE \"Lesná správa Zákamenné III\" and its framework number match anchor LOT-11.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh570/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/adjudication.json",
+    "/home/user/tender-db/.scratch/tender-db/570-lot-keys/decision.md"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(e) E3: no lot added or removed vs the remap-off replay",
+   "result": "pass",
+   "evidence": "The key sets with the remap on and off are equal at every version, 30/30. Served keys equal the remap-on head, 30/30. Served titles equal the remap-on titles at 274/274 lots, and at 105/105 where on and off differ.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh570/verify.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(e) E4: served lots/results equal combined_port",
+   "result": "pass",
+   "evidence": "313 served blocks: 0 breaks, 0 served outside the chain, 0 computed-not-served. The verifier re-read 16 Tenders fresh and they are byte-equal to the stage's reads.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh570/verify.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(e) bar 30 of 30 (one wrong reopens)",
+   "result": "pass",
+   "evidence": "30/30, with no wrong remap under the decision's own definition of target and of a wrong remap; see E2. Caveat to record, not a wrong remap: decision.md \"Identity and migration cost\" says each moved id \"returns to the identity its first notice gave it\". That does not hold in a welded chain (issue 364's class) where K1-refused notices re-keyed the carry before the remapped notice.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh570/verify.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(f) band and path-V diff: every head that moves is a corrected Tender read as 570's",
+   "result": "pass",
+   "evidence": "0 movers among 3,728 band heads and 17 path-V heads, so 568 (f) and 570 (f) are the same result. 5943121's 13 re-keyed award blocks keep its 10-lot sum of 132,157,992 cents, so its 10^3 vouching holds.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/band/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-band/verify.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(g) lot removed rows in the window attributable to 570: expected 0",
+   "result": "pass",
+   "evidence": "The lot feed holds 862,889 events in (957854566, 958764334], over 863 pages, generation 2, re-counted offline by the verifier and spot re-read fresh. All are changed with version null: 0 removed, 0 added. /v1/changes has no op filter.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh570/verify.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/g_result.json"
+   ]
+  },
+  {
+   "issue": "570",
+   "item": "(g) cross-check: held 30's lots in the lot feed",
+   "result": "pass",
+   "evidence": "270 of 274 lots have exactly one changed/null event. The 4 without one are 6876932's LOT-1/19/22/23, exactly the keys whose rows are identical with the remap on and off. That matches ADR-0017 D3 rule L: every head lot only when the head differs, plus every lot whose own rows differ. decision.md says D3 announces \"every lot of the head version\", which is looser wording than ADR-0017. The ADR governs, and the build follows it.",
+   "files": [
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/fresh570/result.json",
+    "/home/user/tender-db/.scratch/tender-db/568-r208-lots/readback-u8/verify-fresh570/verify.json",
+    "/home/user/tender-db/docs/adr/0017-a-re-derivation-compares-before-it-writes.md"
+   ]
+  }
+ ],
+ "open_items": [
+  {
+   "id": "O1",
+   "issue": "568",
+   "what": "Fresh-30 G2 quota 5/8 (draw_fresh30.py one-read signal false-fires on multi-CAN R2.0.9 chains: 6324865, 6788159, 6869520)",
+   "disposition": "fix",
+   "action": "Run the pre-registered extension and give it an adversarial verify. Keep the 27 (walk indices 0-21 plus 61, 282, 366, 449 and 770). Continue the same salted walk from index 771 with the same exclusions, skipping population.json members unread. Hold the next 3 Tenders that pass the corrected G2 test: outside population.json, with at least one lot-placed result whose notice has no lot section of its own (profile ted-export-r208, confirmed from /v1/notices?tender=). Read those 3 with check_live.py --bar and label every 568 cross-notice block from the notices before looking at guard outcomes. 568 passes if parity stays 0 breaks and kept-wrong Tenders total <= 2 of 30. It reopens on a break or on 3 or more.",
+   "blocks": "568 close"
+  },
+  {
+   "id": "O2",
+   "issue": "568",
+   "what": "False refusal 5457789 18461129/RES-8 (G4, block level): a copied CONTRACT_TITLE names pakiet 34, while LN, CONTRACT_NUMBER, the to-the-cent estimate and the winner name lot 37. It was right on LOT-37 before the drain and is null now.",
+   "disposition": "accept + record",
+   "reason": "A refusal is pre-568 behaviour, never a wrong lot (Risk 1). This is one instance, pooled FR 1/2,187 (0.05 %). Record the shape in decision-u7.md (Residual/Risks). Do not change G4 without a measured control: letting CONTRACT_NO confirm p would also restore counter notices.",
+   "blocks": "nothing"
+  },
+  {
+   "id": "O3",
+   "issue": "568",
+   "what": "5602216/19023719 RES-128 refused by G5 (LOT-173 -> null). The CN prints the same text for lots 172 and 173.",
+   "disposition": "accept",
+   "reason": "Rightness cannot be decided from the notices, and the refusal is the conservative pre-568 reading. Record it as an unclear G5 refusal. It is 568-u8's, not 570's (570 (d) unaffected).",
+   "blocks": "nothing"
+  },
+  {
+   "id": "O4",
+   "issue": "570",
+   "what": "6876932: welded yearly re-tenders (2020-2023) with two interleaved lot numberings. K1-refused positional merges re-keyed the carry before the remap, so the remap follows the carried numbers, not the anchor's keys.",
+   "disposition": "file (364) + record",
+   "reason": "It is correct under rule step 3, so no 570 fix. File the chain as evidence on issue 364. Record in 570's decision that \"returns to the identity its first notice gave it\" does not hold where refused notices re-keyed the carry first.",
+   "blocks": "nothing"
+  },
+  {
+   "id": "O5",
+   "issue": "570",
+   "what": "decision.md says D3 announces \"every lot of the head version\". As built (ADR-0017 D3 rule L), head lots are announced only when the head differs, plus lots whose own rows differ.",
+   "disposition": "record (wording)",
+   "reason": "ADR-0017 is the contract and the build matches it. Correct the sentence in 570's decision record. No code change.",
+   "blocks": "nothing"
+  },
+  {
+   "id": "O6",
+   "issue": "567/570 follow-on",
+   "what": "8371908 CAN 21510251 RES-1 (EUR 2.97 bn) prints \"Lot No. 3 - Lot 1C ...\" and serves lot null before and after the drain. The notice's only lot section (LOT_NO 3) is now remapped to LOT-3.",
+   "disposition": "file",
+   "reason": "This predates the drain: 567 same-notice normalisation does not read that text. It is an exhibit for 570 Unit 7, the 567 single-section no-number placement follow-on.",
+   "blocks": "nothing"
+  },
+  {
+   "id": "O7",
+   "issue": "tooling",
+   "what": "check570.py's E2 anchor-title reference goes stale after K1-refused notices. draw_fresh30.py's G2 signal precision claim (\"0 of 2,951\") fails on multi-CAN R2.0.9 chains.",
+   "disposition": "fix (in the O1 extension) / record",
+   "reason": "Both are read-back tooling in .scratch, not build defects. The O1 extension uses the profile-based G2 test. Record the check570 limit in readback.md.",
+   "blocks": "nothing"
+  }
+ ],
+ "provenance_sha256": {
+  "sets/result.json": "07cb8ce7799b42c2a8fb1f5b45f123e4631696040befb7c8e2ad9eb5ee92d2ba",
+  "verify-sets/verify.json": "531ae7bb85448873be73c58a7c0c505972a4d0e2237fc8b7be0fc7477f6abaff",
+  "fresh568/result.json": "56cdbbf613dd37da51d47fb3d1325111320ceaf37b52962055e5b419d4095e80",
+  "verify-fresh568/verify.json": "352ea6fc72ff3ef0a192783c393e78d330ca9cbdbc30477660498c812703a0ec",
+  "fresh570/result.json": "bfa1219e23998dadfdaec8fd3c8cc2b936ffe85a2499e18d05babc068e9c4aaf",
+  "verify-fresh570/verify.json": "f0e7bc118823299cd00146afae21306b4a7111a4e36b7b69b7f53e15b8df7246",
+  "band/result.json": "3be24473c6ac5f4e84ba91b5361d7076f5a033e5706cce4335660f84fb1e6826",
+  "verify-band/verify.json": "bddb11e5b464219c3c1ef1456c5e3598cadd9d76c53c43ebeebeb0300d6283af",
+  "combined_port.py": "5363593c663c651bcbf125464ccfd24b96d45b56e1834086352f7d8903d7673c",
+  "check_live.py": "cef1545b7da5ee2addc93bdc277dce01abb45696c546cb59fd6521f9638246b4",
+  "draw_fresh30.py": "707ce43ed6e1d53ca83657da41db35e4686acbca3ba3e16d0413d218375592e1",
+  "expected.json": "6f396ec05d89b15d7f9d26e750466a90b1f003c2f02e54e5ca43610e0d37093d",
+  "../drain/baseline-pre568u8-570.json": "328fa4199b98c8e3f78431cb87f57dcd418ab3db104fe72064d3151e12ed76e6",
+  "../readback/measured77.json": "472be1c60fa8ede419233a8a234f861c0841f7127cc44c0252b1c1c3caec94cb"
+ },
+ "reads": "The judge made 0 GETs. Every check is offline, over the stage and verifier caches and the repo decision texts."
+}
