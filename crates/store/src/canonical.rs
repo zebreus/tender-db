@@ -3802,7 +3802,9 @@ const LOT_SUM_AWARDS_PATH: bool = true;
 /// [`LOT_SUM_AWARDS_PATH`]: `false` from issue 551 unit 4a, when path W returned nothing, `true`
 /// again since unit 4b's B5) and only where path V does not fire. T': every
 /// procedure figure is absent or a sentinel (366/379); one refused, withheld, unconvertible
-/// or over the cap keeps the head. K: the head is an award copy or null, and the sum is
+/// or over the cap keeps the head, and so does a withheld tender-scope figure that 492's copy
+/// test reads as an award copy (B5, 179732: see [`lot_sum_decision`]). K: the head is an award
+/// copy or null, and the sum is
 /// [`LotSumKind::Awards`] in its currency (a null head: the currency with the most award
 /// lots), never an estimate or a framework maximum (3 of 20 such sums moved the wrong way).
 /// Guards: G0 n >= 2 and S above today's EUR figure; G5 S converts to more than EUR 0 (third
@@ -3857,6 +3859,16 @@ fn lot_sum_decision(
     // `Lot(None)`, G5'), says the buyer's scale is broken; path W keeps today's head.
     let mut copy_over_cap = false;
     let mut copy_refused = false;
+    // T' (issue 551 B5, 179732): a tender-scope figure the notice WITHHELD that 492's copy test
+    // reads as an award copy. Its stored number is the eForms SDK's -1 placeholder (cents -100),
+    // and a withheld results round's lot awards carry the same placeholder, so `is_head_award`
+    // matches placeholder to placeholder: the "copy" copies no figure. It is a withheld procedure
+    // total, which T' refuses ("one withheld keeps the head") and G7 states the reason for (a lot
+    // sum would publish the figure the buyer withheld). The port of record (`rule_v2_b3.py`, unit
+    // 3's `merge_rule.serve`) reads it as a procedure figure and refuses at `W/T'`; so does this.
+    // Path V never reads it: it needs a refused procedure figure and no admitted one, and a
+    // withheld figure is neither, wherever it is filed.
+    let mut copy_withheld = false;
     for f in &head.facts {
         let Fact::Amount { field, cents, currency, .. } = f else { continue };
         let scope = tender_scope_of(f, partners);
@@ -3865,6 +3877,7 @@ fn lot_sum_decision(
             FigureScope::Lot(None) => {
                 copy_over_cap |= judged == Judged::OverCap;
                 copy_refused |= matches!(judged, Judged::Refused(_));
+                copy_withheld |= judged == Judged::Withheld;
             }
             _ if judged == Judged::PartnerOnly => {}
             _ => procedure.push((field.as_str(), currency.as_str(), *cents, judged)),
@@ -3889,7 +3902,7 @@ fn lot_sum_decision(
     if !awards_path {
         return Err("W/off");
     }
-    if !procedure.iter().all(|p| p.3 == Judged::Sentinel) {
+    if copy_withheld || !procedure.iter().all(|p| p.3 == Judged::Sentinel) {
         return Err("W/T'");
     }
     if !today.is_none_or(|t| t.award_copy) {
@@ -4043,8 +4056,8 @@ fn awards_lot_sum(
     if sums.iter().any(|(c, s)| *c != currency && s.award_lots() > 0) {
         return Err("W/G6");
     }
-    // G7: a withheld procedure figure (a lot sum would publish it). T' already excludes one;
-    // stated for the reason.
+    // G7: a withheld procedure figure (a lot sum would publish it). T' already excludes one, and
+    // a withheld award copy (B5, [`lot_sum_decision`]); stated for the reason.
     if procedure.iter().any(|p| p.3 == Judged::Withheld) {
         return Err("W/G7");
     }
@@ -48258,6 +48271,92 @@ mod tests {
         let derived = value.derived.expect("8426318 is served");
         assert_eq!((derived.cents, derived.currency.as_str(), derived.lots), (300_000_000_000, "GBP", 7), "GBP 3,000,000,000.00");
         assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: "TED-HIGH".into(), notice_id: 20083570, cents: 300_000_000_000 } });
+    }
+
+    /// Tender 179732's head (issue 551 B5's one cohort-parity disagreement), with `facts` as its
+    /// tender-scope amounts: four typed Lots awarded EUR 35,788.00 / 36,075.00 / 58,381.00 /
+    /// 42,855.00, each to its one LotTender, in result notices 46689383 and 46690341 (each stating
+    /// a BT-161-NoticeResult of EUR 173,099.00), then the head round, notice 46693986, which
+    /// withholds every award and LotTender (the SDK's -1, stored as cents -100).
+    fn withheld_round_179732(facts: Vec<Fact>) -> TenderVersion {
+        use super::StatedTotalKind::Award;
+        const LOTS: [(&str, i64, i64); 4] = [
+            ("LOT-0001", 3_578_800, 30_970_871),
+            ("LOT-0002", 3_607_500, 30_970_870),
+            ("LOT-0003", 5_838_100, 22_716_089),
+            ("LOT-0004", 4_285_500, 15_620_327),
+        ];
+        let valued = |notice_id: i64| {
+            v2_round(
+                notice_id,
+                LOTS.iter().map(|&(lot, cents, winner)| v2_award(lot, cents, &[winner])).collect(),
+                LOTS.iter().map(|&(lot, cents, winner)| v2_bid(lot, cents, &[winner])).collect(),
+            )
+        };
+        let withheld = v2_round(
+            46_693_986,
+            LOTS.iter().map(|&(lot, _, winner)| v2_award(lot, -100, &[winner])).collect(),
+            LOTS.iter().map(|&(lot, _, winner)| super::BidState { quality: Some(super::QUALITY_WITHHELD.into()), ..v2_bid(lot, -100, &[winner]) }).collect(),
+        );
+        TenderVersion {
+            caused_by_notice_id: 46_693_986,
+            lots: LOTS.iter().map(|&(lot, _, _)| v2_lot(lot, Vec::new())).collect(),
+            rounds: vec![valued(46_689_383), valued(46_690_341), withheld],
+            stated_totals: vec![
+                v2_total(46_689_383, "BT-161-NoticeResult", Award, 17_309_900),
+                v2_total(46_690_341, "BT-161-NoticeResult", Award, 17_309_900),
+            ],
+            ..head(facts, Vec::new())
+        }
+    }
+
+    /// Issue 551 B5: a tender-scope figure the notice WITHHELD refuses path W at T', even where
+    /// 492's copy test reads it as an award copy. 179732's head round withholds its result value
+    /// and every lot award: the result value's stored -1 placeholder (cents -100) equals the
+    /// withheld awards' placeholder, so `tender_scope_of` filed it as `Lot(None)`, whose branch
+    /// tracked only G5 / G5', and the Withheld judgement was dropped; T' passed with no procedure
+    /// figure and production served EUR 173,099.00, the earlier rounds' awards summed, where the
+    /// port of record (`rule_v2_b3.py`) reads the withheld figure as a procedure figure and
+    /// refuses: `W/T'`. Refused, the head is what the election gives: null.
+    #[test]
+    fn a_withheld_tender_scope_award_copy_refuses_path_w() {
+        use super::{HeadValue, Judged, ScalePartners, awards_path_check, head_value, head_value_with_awards_path, judge_head_amount, tender_scope_of};
+        let rates = crate::rates::RatesLookup::default();
+        let withheld = Fact::Amount { field: "result_value".into(), cents: -100, currency: "EUR".into(), tax_basis: None, quality: Some(super::QUALITY_WITHHELD.into()) };
+        let v = withheld_round_179732(vec![withheld.clone()]);
+        let chain = std::slice::from_ref(&v);
+        // The cause: placeholder matches placeholder, so the withheld result value is filed as an
+        // award copy, and judged Withheld there.
+        let partners = ScalePartners::of_chain(chain);
+        assert!(partners.is_head_award("EUR", -100), "the withheld round's awards are the -100 placeholder");
+        assert_eq!(tender_scope_of(&withheld, &partners), FigureScope::Lot(None), "the withheld result value reads as an award copy");
+        let date = crate::rates::civil_date(v.published_at);
+        assert_eq!(judge_head_amount(&withheld, FigureScope::Lot(None), &partners, &rates, &date), Some(Judged::Withheld));
+        // Refused at the port's check, and the head stays the election's null, in production too.
+        assert_eq!(awards_path_check(chain, &rates).map(|d| d.cents), Err("W/T'"), "the port's first refusing check");
+        assert_eq!(head_value_with_awards_path(chain, &rates), HeadValue::default(), "the election's null head");
+        assert_eq!(head_value(chain, &rates), HeadValue::default(), "production serves the same");
+    }
+
+    /// The same shape WITHOUT the withheld result value ships (the cause pinned): EUR 173,099.00,
+    /// the four awards of 46690341 (the latest valued round; the head round's placeholders are no
+    /// figures), vouched by 46689383's BT-161. So does the same placeholder published UNMARKED:
+    /// it is judged a sentinel, which T' admits for a procedure figure and ignores for a copy, as
+    /// the port does (the API serves its -1.00, so the port files it as a copy too).
+    #[test]
+    fn the_withheld_round_shape_without_the_withheld_figure_ships() {
+        use super::{DerivationPath, VouchingTotal, awards_path_check, head_value};
+        let rates = crate::rates::RatesLookup::default();
+        let vouched = DerivationPath::Awards { vouched_by: VouchingTotal { field: "BT-161-NoticeResult".into(), notice_id: 46_689_383, cents: 17_309_900 } };
+        let unmarked = Fact::Amount { field: "result_value".into(), cents: -100, currency: "EUR".into(), tax_basis: None, quality: None };
+        for (facts, what) in [(Vec::new(), "no tender-scope figure"), (vec![unmarked], "the placeholder unmarked")] {
+            let v = withheld_round_179732(facts);
+            let chain = std::slice::from_ref(&v);
+            let derived = awards_path_check(chain, &rates).unwrap_or_else(|check| panic!("{what}: refused by {check}"));
+            assert_eq!((derived.cents, derived.currency.as_str(), derived.lots), (17_309_900, "EUR", 4), "{what}");
+            assert_eq!(derived.path, vouched, "{what}");
+            assert_eq!(head_value(chain, &rates).eur_cents, Some(17_309_900), "{what}: production serves the sum");
+        }
     }
 
     /// Issue 537: [`super::LotSums`] is the one definition of S, shared by the election and
