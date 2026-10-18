@@ -1947,7 +1947,10 @@ pub struct CarrierSweepStop {
 /// id (`Db::lot_sum_cohort_tender_ids`, ADR-0017 D6's route R3). `refold-value-band`'s cohort
 /// reaches neither path: since 537's drain every path-V head is below EUR 1 bn or null, and
 /// path W raises heads from below. Unit 4a's withdrawal of path W is the same cohort the other
-/// way: `refold-lot-sum` re-elects every drained path-W head back to the max election.
+/// way: `refold-lot-sum` re-elects every drained path-W head back to the max election. Unit 4b's
+/// B5 (path W v2 switched on) is the same cohort again, and a v2 fire is a v1 fire, so it stays
+/// inside it; B5 drains a named id cohort first (`refold-lot-sum`'s `tender_ids`), then the
+/// whole cohort.
 ///
 /// NOT bumped for issue 538's title and description decode either, although it changes
 /// `NoticeState::read` for every profile: ADR-0017 D6's route R3 covers it. Its cohort is
@@ -3376,10 +3379,11 @@ pub fn head_value(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) ->
 /// **Issue 551: the head may be a DERIVED lot sum.** The max election below serves one
 /// figure; when a scale rule refuses the procedure total, that is one lot's figure or null,
 /// never the total of the lots. Path V, tried after the max election, serves the sum of the
-/// head version's own lots instead ([`derive_lot_sum`]); every other head is the max election
-/// unchanged. (Path W, the awards sum, is withdrawn since unit 4a: [`LOT_SUM_AWARDS_PATH`]; unit
-/// 4b's redesign, v1's guards plus R1–R10 with a buyer-stated total vouching for every sum, is
-/// built behind that switch.) A derived head is returned with its [`DerivedValue`] (the fold
+/// head version's own lots instead ([`derive_lot_sum`]); path W, where path V does not fire, the
+/// sum of the head's latest lot awards under v1's guards and unit 4b's R1–R10, with a
+/// buyer-stated total vouching for every sum ([`LOT_SUM_AWARDS_PATH`]: withdrawn by unit 4a, on
+/// again since unit 4b's B5); every other head is the max election
+/// unchanged. A derived head is returned with its [`DerivedValue`] (the fold
 /// stores it on `tenders` beside the EUR column, never as an amount row), and its EUR is the
 /// sum converted by `rates` at the head's date, so value sorts and filters read it as they
 /// read any head.
@@ -3392,9 +3396,9 @@ pub fn head_value_eur_cents_with(
 }
 
 /// [`head_value_eur_cents_with`] with path W (`lot-sum-awards`) on or off: production passes
-/// [`LOT_SUM_AWARDS_PATH`] (off since issue 551 unit 4a); the path-W guard tests pass `true`
-/// (the test-only `head_value_with_awards_path`), so the path and its pins stay exercised for
-/// unit 4b.
+/// [`LOT_SUM_AWARDS_PATH`] (off from issue 551 unit 4a, on again since unit 4b's B5); the
+/// path-W guard tests pass `true` (the test-only `head_value_with_awards_path`), so the path and
+/// its pins are exercised whatever the switch says.
 fn head_value_on_paths(
     head: &TenderVersion,
     partners: &ScalePartners<'_>,
@@ -3411,11 +3415,25 @@ fn head_value_on_paths(
 
 /// Issue 551 unit 4a: [`head_value`] with path W switched ON whatever [`LOT_SUM_AWARDS_PATH`]
 /// says. Only the path-W tests read it: its guards (v1's and, since unit 4b's B2, v2's R1–R10) and
-/// its labelled pins. Production never serves what it returns for a path-W head.
+/// its labelled pins. Since unit 4b's B5 production switches path W on too, so it equals
+/// [`head_value`] (pinned in `path_w_is_on_so_its_vouched_pins_serve_their_sums`); it stays so the
+/// pins hold if the switch goes off again.
 #[cfg(test)]
 fn head_value_with_awards_path(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> HeadValue {
     match chain.last() {
         Some(head) => head_value_on_paths(head, &ScalePartners::of_chain(chain), rates, true),
+        None => HeadValue::default(),
+    }
+}
+
+/// Issue 551 unit 4b (B5): [`head_value`] with path W switched OFF whatever
+/// [`LOT_SUM_AWARDS_PATH`] says: what production would serve on B5's route back (the switch set
+/// `false` again, unit 4a's route). Pinned in `path_w_switched_off_keeps_the_max_election_and_path_v`,
+/// so that route stays tested while production runs with the switch on.
+#[cfg(test)]
+fn head_value_without_awards_path(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> HeadValue {
+    match chain.last() {
+        Some(head) => head_value_on_paths(head, &ScalePartners::of_chain(chain), rates, false),
         None => HeadValue::default(),
     }
 }
@@ -3620,7 +3638,7 @@ pub enum DerivationPath {
     /// since unit 4b (B2) v1's G0–G8b and v2's R1–R10 — and `vouched_by` the buyer-stated total
     /// that vouches for the sum (R10). Under the "vouched everywhere" fallback (issue 551, PASSED
     /// 2026-10-17) R10 applies at every size, so every awards sum has one; it is not optional.
-    /// Withdrawn since unit 4a ([`LOT_SUM_AWARDS_PATH`]): production derives none.
+    /// Withdrawn by unit 4a, served again since unit 4b's B5 ([`LOT_SUM_AWARDS_PATH`]).
     Awards { vouched_by: VouchingTotal },
 }
 
@@ -3658,9 +3676,10 @@ impl ScaleRule {
 
 /// Issue 551: `tenders.current_value_derivation` for a path-V head (a refusal vouched for S).
 pub const VALUE_DERIVATION_VOUCHED: &str = "lot-sum-vouched";
-/// Issue 551: `tenders.current_value_derivation` for a path-W head (an awards lot sum). Not
-/// written while path W is withdrawn ([`LOT_SUM_AWARDS_PATH`], unit 4a); a row folded before
-/// that keeps it until `refold-lot-sum` re-elects its head.
+/// Issue 551: `tenders.current_value_derivation` for a path-W head (an awards lot sum, vouched
+/// by a buyer-stated total since unit 4b). Written only while [`LOT_SUM_AWARDS_PATH`] is on
+/// (unit 4a withdrew it, unit 4b's B5 restored it); a row folded under another setting keeps
+/// what it was folded with until `refold-lot-sum` re-elects its head.
 pub const VALUE_DERIVATION_AWARDS: &str = "lot-sum-awards";
 
 impl DerivedValue {
@@ -3733,22 +3752,30 @@ const LOT_SUM_KIND_RATIO: i128 = 10;
 /// then FrameworkMaximum). The partner-only kinds (issue 506) are never served.
 const DERIVABLE_KINDS: [LotSumKind; 3] = [LotSumKind::Awards, LotSumKind::Estimate, LotSumKind::FrameworkMaximum];
 
-/// Issue 551 unit 4a (decided 2026-10-17): path W, the unvouched awards lot sum
-/// (`lot-sum-awards`, [`awards_lot_sum`]), is OFF in production. The post-drain bounded read
-/// (wf_dc85fa7e-c00; the issue's "post-drain bounded read — FAILED" section) found its sum wrong
-/// on 9 of a uniform 50 of its 15,352 drained changes (18 %) and on 96 of the 229 derived heads
-/// of EUR 100 m or more (42 %): framework ceilings or per-supplier maxima summed across lots that
-/// share one envelope, one lot under two keys or a re-issued award beside its original, a sum
-/// farther from the notice's stated total than the figure it replaced, a x10^k award summed. The
-/// guards G0–G8b do not separate those shapes. Fail closed: while this is `false`,
-/// [`derive_lot_sum`] never returns an awards sum, such a head keeps the max election (one
-/// figure, or null), and `refold-lot-sum` re-elects the drained path-W heads back. Path V
-/// (`lot-sum-vouched`) is unchanged. The path and its guards stay compiled and tested (the tests
-/// switch it on through the test-only `head_value_with_awards_path`), so unit 4b's redesign keeps their pins;
-/// unit 4b turns this back on only with a redesign that meets its bar. Unit 4b's B2 built that
-/// redesign behind this switch (v2: R1–R10 after G4, R10 at every size, [`awards_v2_check`]); it
-/// stays `false` until B5, after B3's port check and B4's served text.
-const LOT_SUM_AWARDS_PATH: bool = false;
+/// Issue 551: path W, the awards lot sum (`lot-sum-awards`, [`awards_lot_sum`]), in
+/// production. ON since unit 4b's B5 (path W v2 under the "vouched everywhere" fallback).
+///
+/// - **Unit 4a (2026-10-17) switched v1 off.** The post-drain bounded read (wf_dc85fa7e-c00; the
+///   issue's "post-drain bounded read — FAILED" section) found v1's sum wrong on 9 of a uniform 50
+///   of its 15,352 drained changes (18 %) and on 96 of the 229 derived heads of EUR 100 m or more
+///   (42 %): framework ceilings or per-supplier maxima summed across lots that share one
+///   envelope, one lot under two keys or a re-issued award beside its original, a sum farther
+///   from the notice's stated total than the figure it replaced, a x10^k award summed. The guards
+///   G0–G8b do not separate those shapes.
+/// - **Unit 4b redesigned it (v2):** v1's T', K and G0–G8b unchanged, then R1–R10
+///   ([`awards_v2_check`]), with R10 at every size: every awards sum needs a total the buyer
+///   stated within 1 % of it (`vouched_by` in the detail). Measured before it was built: the
+///   fallback's fresh uniform 30 read 29 right / 1 wrong and the EUR 100 m band 15/15 (M2, wf_03469a70-c1b);
+///   B3's port check agreed with `rule_v2_b3.py` on 5,307 rows; the 18 ships the 567/568/570
+///   drains added read 18/18 right, so the band B5 seeks is 20 heads.
+/// - **B5 flipped this to `true`** and drains through `refold-lot-sum` (an id cohort first, then
+///   the corpus; docs/operations.md). On failure, unit 4a's route again: set it `false`, gate,
+///   deploy, and `refold-lot-sum` re-elects the drained path-W heads to the max election.
+///
+/// Path V (`lot-sum-vouched`) never reads it. The test-only `head_value_with_awards_path`
+/// switches path W on whatever this says, so the guard tests and pins hold either way, and its
+/// twin `head_value_without_awards_path` switches it off, so the route back stays tested.
+const LOT_SUM_AWARDS_PATH: bool = true;
 
 /// Issue 551 (decided 2026-10-16, wf_3d72c491-993): the lot sum a head serves instead of the
 /// max election's figure, as `(EUR cents, derivation)`, or `None` to keep `today`.
@@ -3771,9 +3798,9 @@ const LOT_SUM_AWARDS_PATH: bool = false;
 /// F within 1 % of 10^j M (the lots would BE the slipped total). No repeat guard beyond V1:
 /// the buyer's own figure at exactly 10^k vouches for the sum (7427765: 6 x EUR 500 k).
 ///
-/// **Path W, the unvouched awards lot sum**, only where `awards_path` (production passes
-/// [`LOT_SUM_AWARDS_PATH`], `false` since issue 551 unit 4a: path W is withdrawn and returns
-/// nothing) and only where path V does not fire. T': every
+/// **Path W, the awards lot sum**, only where `awards_path` (production passes
+/// [`LOT_SUM_AWARDS_PATH`]: `false` from issue 551 unit 4a, when path W returned nothing, `true`
+/// again since unit 4b's B5) and only where path V does not fire. T': every
 /// procedure figure is absent or a sentinel (366/379); one refused, withheld, unconvertible
 /// or over the cap keeps the head. K: the head is an award copy or null, and the sum is
 /// [`LotSumKind::Awards`] in its currency (a null head: the currency with the most award
@@ -3814,7 +3841,8 @@ fn derive_lot_sum(
 /// S with no EUR value in (0, cap], `V1`, `V0`), and a head whose refused figures name no sum
 /// goes on to path W as the port's `serve` does, where T' refuses it (`W/T'`: a refused figure is
 /// no sentinel). Path V's decisions and stored detail are unchanged by unit 4b; only the names
-/// are. `W/off` is path W switched off ([`LOT_SUM_AWARDS_PATH`]).
+/// are. `W/off` is path W switched off (`awards_path` false; [`LOT_SUM_AWARDS_PATH`] is on since
+/// unit 4b's B5).
 fn lot_sum_decision(
     head: &TenderVersion,
     partners: &ScalePartners<'_>,
@@ -3845,7 +3873,8 @@ fn lot_sum_decision(
     // Path V needs a refused procedure figure and no admitted one; path W needs every
     // procedure figure to be a sentinel (T') and an award copy or nothing as today's head (K).
     // The two exclude each other, so a head reaching neither pays for no lot sums. Path W runs
-    // only where `awards_path` switches it on (off in production since unit 4a).
+    // only where `awards_path` switches it on (off in production from unit 4a, on again since
+    // unit 4b's B5).
     let vouched = procedure.iter().any(|p| matches!(p.3, Judged::Refused(_)))
         && !procedure.iter().any(|p| matches!(p.3, Judged::Admitted(_)));
     if vouched {
@@ -5854,6 +5883,10 @@ pub struct LotSumCohort {
 
 /// Issue 551: the tender-id window of the lot-sum cohort walk.
 pub const LOT_SUM_COHORT_WINDOW: i64 = 100_000;
+
+/// Issue 551 unit 4b (B5): the named ids [`Db::lot_sum_cohort_named_tender_ids`] reads per reader
+/// borrow (and per read of the stop flag).
+pub const LOT_SUM_NAMED_CHUNK: usize = 500;
 
 /// The smallest nine-digit repdigit (111,111,111): every [`sentinel_amount`] figure is at most
 /// 1, exactly 100, or at least this, so the lot-sum cohort's sentinel range is a superset of
@@ -16426,6 +16459,42 @@ impl Db {
                 eprintln!("[store] lot-sum cohort: {lo}/{max_id}, {} tender(s)", ids.len());
             }
             lo = hi;
+        }
+        Ok(LotSumCohort { ids, stopped_at: None, max_id })
+    }
+
+    /// Issue 551 unit 4b (B5): [`Db::lot_sum_cohort_tender_ids`] restricted to the NAMED Tenders —
+    /// those of `named` that [`lot_sum_cohort_sql`] admits, ascending and once each, so B5 can drain
+    /// an id cohort (the labelled heads, the walked ids, the px2 fires) before the corpus. The same
+    /// statement, each named id its own one-id window `[id, id + 1)`: a primary-key seek, then the
+    /// predicate's index seeks, no second copy of the rule. A named id that is no Tender, or whose
+    /// head the predicate does not admit, is simply not in the result (the caller reports the
+    /// difference). Read on the reader pool, one borrow per [`LOT_SUM_NAMED_CHUNK`] ids, with `stop`
+    /// read before every chunk; `stopped_at` is then the first named id not read, and `max_id` the
+    /// largest named id.
+    pub async fn lot_sum_cohort_named_tender_ids(
+        &self,
+        named: &[i64],
+        stop: &(dyn Fn() -> bool + Sync),
+    ) -> turso::Result<LotSumCohort> {
+        let mut named = named.to_vec();
+        named.sort_unstable();
+        named.dedup();
+        let max_id = named.last().copied().unwrap_or(0);
+        let sql = lot_sum_cohort_sql();
+        let mut ids = Vec::new();
+        for chunk in named.chunks(LOT_SUM_NAMED_CHUNK) {
+            if stop() {
+                return Ok(LotSumCohort { ids, stopped_at: Some(chunk[0]), max_id });
+            }
+            // One borrow per chunk, sequential, autocommit; `rows` drops before `conn`.
+            let conn = self.reader().await?;
+            for &id in chunk {
+                let mut rows = conn.query(&sql, (Value::Integer(id), Value::Integer(id.saturating_add(1)))).await?;
+                while let Some(row) = rows.next().await? {
+                    ids.push(int(&row, 0));
+                }
+            }
         }
         Ok(LotSumCohort { ids, stopped_at: None, max_id })
     }
@@ -46812,41 +46881,100 @@ mod tests {
         }
     }
 
-    /// Issue 551 unit 4a: path W is withdrawn after the post-drain read (18 % wrong on a uniform 50,
-    /// 42 % on heads of EUR 100 m or more), so the heads it summed keep the max election, unmarked:
-    /// the runbook's six path-W pins (the Lyon-Turin trio 6450467/69/73, 8426318, 585917, 5995030;
-    /// docs/operations.md's Verify after `refold-lot-sum`) and unit 2's four holdouts. 585917 serves
-    /// null again, 5995030 one lot's PLN 2,721.60, 8426318 its GBP 2 bn. Read on unit 3's stored
-    /// rows and on unit 4b's API rows with the B1 facts (`canonical_551_v2_fixtures.rs`). Unit 4b
-    /// (B2): with the switch on, path W v2 would serve only the three pins a buyer-stated total
-    /// vouches for (585917, 5995030, 8426318); the trio and the holdouts are refused by its guards.
+    /// Issue 551 unit 4b (B5): path W is switched on again ([`super::LOT_SUM_AWARDS_PATH`]), as v2
+    /// under the "vouched everywhere" fallback. Unit 4a had switched v1 off after the post-drain
+    /// read (18 % wrong on a uniform 50, 42 % on heads of EUR 100 m or more), and this test pinned
+    /// that every path-W pin kept the max election in production. Now: on unit 4b's API rows with
+    /// the B1 facts (`canonical_551_v2_fixtures.rs`) production serves the three pins a buyer-stated
+    /// total vouches for, marked `lot-sum-awards` (the runbook's B5 Verify: 585917 EUR 250,000.00,
+    /// 5995030 PLN 1,549,511.60, 8426318 GBP 3,000,000,000.00), and keeps the max election,
+    /// unmarked, for the Lyon-Turin trio 6450467/69/73 (no stated total: R10; EUR
+    /// 1,660,661,682.94), unit 2's holdouts 467176 and 294968 (R10) and 7256284 and 5977060 (R2d).
+    /// Unit 3's stored rows carry no B1 facts (no stated total, no winner), so production derives
+    /// none of the ten there: 585917 serves null on them, as before issue 551. Production and the
+    /// test-only switch agree on every row.
     #[test]
-    fn path_w_is_withdrawn_so_its_pins_keep_the_max_election() {
-        use super::{HeadValue, head_value, head_value_with_awards_path, max_election_eur_cents};
+    fn path_w_is_on_so_its_vouched_pins_serve_their_sums() {
+        use super::{DerivationPath, HeadValue, LotSumKind, VouchingTotal, head_value, head_value_with_awards_path, max_election_eur_cents};
         let pins = [6450467, 6450469, 6450473, 8426318, 585917, 5995030, 467176, 294968, 7256284, 5977060];
+        // Served on the API rows: (tender, S, currency, n, vouched_by (field, notice, cents)).
+        let served: [(i64, i64, &str, usize, (&str, i64, i64)); 3] = [
+            (585917, 25_000_000, "EUR", 2, ("BT-118-NoticeResult", 25416405, 25_000_000)),
+            (5995030, 154_951_160, "PLN", 35, ("TED-VAL_TOTAL", 19612533, 154_639_000)),
+            (8426318, 300_000_000_000, "GBP", 7, ("TED-HIGH", 20083570, 300_000_000_000)),
+        ];
+        let date = crate::rates::civil_date(super::lot_sum_551_v2_fixtures::PUBLISHED_AT);
         for id in pins {
             for (rows, (chain, rates)) in [
                 ("unit 3", { let fx = super::lot_sum_551_fixtures::fixture(id); (fx.versions(), fx.rates()) }),
                 ("unit 4b", { let fx = super::lot_sum_551_v2_fixtures::fixture(id); (fx.versions(), fx.rates()) }),
             ] {
+                let value = head_value(&chain, &rates);
+                assert_eq!(value, head_value_with_awards_path(&chain, &rates), "{id} ({rows}): production switches path W on");
+                assert_eq!(super::head_value_eur_cents(&chain, &rates), value.eur_cents, "{id} ({rows}): the EUR column the fold stores");
                 let today = max_election_eur_cents(&chain, &rates);
-                assert_eq!(head_value(&chain, &rates), HeadValue { eur_cents: today, derived: None }, "{id} ({rows}): the max election, no derivation");
-                assert_eq!(super::head_value_eur_cents(&chain, &rates), today, "{id} ({rows}): the EUR column the fold stores");
-            }
-            let fx = super::lot_sum_551_v2_fixtures::fixture(id);
-            let (chain, rates) = (fx.versions(), fx.rates());
-            let today = max_election_eur_cents(&chain, &rates);
-            let summed = head_value_with_awards_path(&chain, &rates);
-            if [585917, 5995030, 8426318].contains(&id) {
-                assert!(summed.derived.is_some() && today < summed.eur_cents, "{id}: only the switch keeps path W's sum off the head");
-            } else {
-                assert_eq!(summed, HeadValue { eur_cents: today, derived: None }, "{id}: path W v2 refuses it even switched on");
+                match served.iter().find(|s| s.0 == id) {
+                    Some(&(_, sum, currency, lots, (field, notice_id, cents))) if rows == "unit 4b" => {
+                        let derived = value.derived.clone().unwrap_or_else(|| panic!("{id}: production serves the vouched awards sum, got {value:?}"));
+                        assert_eq!(derived.derivation(), super::VALUE_DERIVATION_AWARDS, "{id}: marked lot-sum-awards");
+                        assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: field.into(), notice_id, cents } }, "{id}");
+                        assert_eq!((derived.kind, derived.cents, derived.currency.as_str(), derived.lots), (LotSumKind::Awards, sum, currency, lots), "{id}: S");
+                        assert_eq!(value.eur_cents, rates.eur_cents(sum, currency, &date), "{id}: the EUR column is S at the head's date");
+                        assert!(today < value.eur_cents, "{id}: the sum lifts the max election");
+                    }
+                    _ => assert_eq!(value, HeadValue { eur_cents: today, derived: None }, "{id} ({rows}): the max election, no derivation"),
+                }
             }
         }
         let fx = super::lot_sum_551_fixtures::fixture(585917);
-        assert_eq!(head_value(&fx.versions(), &fx.rates()), HeadValue::default(), "585917: null, as before issue 551");
+        assert_eq!(head_value(&fx.versions(), &fx.rates()), HeadValue::default(), "585917: null on unit 3's rows, which state no total");
         let fx = super::lot_sum_551_v2_fixtures::fixture(585917);
-        assert_eq!(head_value(&fx.versions(), &fx.rates()), HeadValue::default(), "585917: null on the API rows too");
+        assert_eq!(head_value(&fx.versions(), &fx.rates()).eur_cents, Some(25_000_000), "585917: null -> EUR 250,000.00 on the API rows");
+        for id in [6450467, 6450469, 6450473] {
+            let fx = super::lot_sum_551_v2_fixtures::fixture(id);
+            assert_eq!(head_value(&fx.versions(), &fx.rates()), HeadValue { eur_cents: Some(166_066_168_294), derived: None }, "{id}: the trio keeps EUR 1,660,661,682.94");
+        }
+    }
+
+    /// Issue 551 unit 4b (B5): the route back. If B5's confirmation fails, [`super::LOT_SUM_AWARDS_PATH`]
+    /// is set `false` again (unit 4a's route; docs/operations.md, B5's runbook step 7). With the
+    /// switch on in production nothing else reaches that branch, so it is pinned here through
+    /// the test-only `head_value_without_awards_path`: the three pins production serves vouched
+    /// (585917, 5995030, 8426318 on unit 4b's API rows) fall back to the max election, unmarked
+    /// (585917 to null), [`super::lot_sum_decision`] names `W/off`, and the 16 path-V pins serve
+    /// exactly what they serve with the switch on (path V never reads it).
+    #[test]
+    fn path_w_switched_off_keeps_the_max_election_and_path_v() {
+        use super::{
+            DerivationPath, HeadValue, ScalePartners, elect_head_figure, head_value, head_value_without_awards_path, lot_sum_decision,
+            max_election_eur_cents,
+        };
+        for id in [585917, 5995030, 8426318] {
+            let fx = super::lot_sum_551_v2_fixtures::fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            let on = head_value(&chain, &rates);
+            assert!(matches!(on.derived.as_ref().map(|d| &d.path), Some(DerivationPath::Awards { .. })), "{id}: served vouched with the switch on, got {on:?}");
+            let off = head_value_without_awards_path(&chain, &rates);
+            assert_eq!(off, HeadValue { eur_cents: max_election_eur_cents(&chain, &rates), derived: None }, "{id}: switched off, the max election, unmarked");
+            assert!(off.eur_cents < on.eur_cents, "{id}: the sum lifted it");
+            let head = chain.last().expect("a head");
+            let partners = ScalePartners::of_chain(&chain);
+            let date = crate::rates::civil_date(head.published_at);
+            let today = elect_head_figure(head, &partners, &rates, &date);
+            assert_eq!(lot_sum_decision(head, &partners, &rates, &date, today.as_ref(), false).err(), Some("W/off"), "{id}: the switch names itself");
+        }
+        let fx = super::lot_sum_551_v2_fixtures::fixture(585917);
+        assert_eq!(head_value_without_awards_path(&fx.versions(), &fx.rates()), HeadValue::default(), "585917: null again, switched off");
+        // The 16 path-V pins (`a_refused_total_serves_the_lot_sum_it_vouches_for`) on unit 3's rows.
+        for id in [251619, 369057, 380921, 392980, 425446, 706887, 1024214, 5779108, 5943121, 6342034, 6921980, 7044132, 7427765, 7829010, 8514592, 928196] {
+            let fx = super::lot_sum_551_fixtures::fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            let off = head_value_without_awards_path(&chain, &rates);
+            assert!(matches!(off.derived.as_ref().map(|d| &d.path), Some(DerivationPath::Vouched { .. })), "{id}: path V serves switched off, got {off:?}");
+            assert_eq!(off, head_value(&chain, &rates), "{id}: path V is unchanged by the switch");
+        }
+        let fx = super::lot_sum_551_fixtures::fixture(7427765);
+        assert_eq!(head_value_without_awards_path(&fx.versions(), &fx.rates()).eur_cents, Some(300_000_000), "7427765: EUR 3,000,000.00 either way");
     }
 
     /// Issue 551 unit 4b (B2): path W v2 on the labelled Tenders, rebuilt with the B1 facts from
@@ -46859,7 +46987,8 @@ mod tests {
     /// must-refuse: its LOT-1 notice prints only TED-ITEM, so R2(d)), the Lyon-Turin trio (R10: no
     /// stated total; they keep EUR 1,660,661,682.94), 7256284 and 5977060 (R2d), 8831876 (R1: its
     /// GBP 26 bn total sits on 8831875) and the former holdouts 467176 and 294968 (unvouched: R10).
-    /// Production (path W off) keeps every head's max election.
+    /// Production (path W on since unit 4b's B5) decides every head as the switch does: it serves
+    /// the six sums and keeps the 22 heads' max election.
     #[test]
     fn the_redesigned_awards_path_keeps_its_labelled_outcomes() {
         use super::lot_sum_551_v2_fixtures::{FIXTURES, PUBLISHED_AT, fixture};
@@ -46915,7 +47044,7 @@ mod tests {
                 format!("{{\"summed\":\"awards\",\"lots\":{lots},\"vouched_by\":{{\"field\":\"{field}\",\"notice_id\":{notice_id},\"cents\":{cents}}}}}"),
                 "{id}: the detail names the vouching total"
             );
-            assert_eq!(head_value(&chain, &rates), HeadValue { eur_cents: max_election_eur_cents(&chain, &rates), derived: None }, "{id}: production");
+            assert_eq!(head_value(&chain, &rates), value, "{id}: production serves it (B5)");
         }
         for (id, check) in refused {
             let fx = fixture(id);
@@ -46937,8 +47066,8 @@ mod tests {
     /// 450 k on 42 awards (G1'); 5316712 restates the framework on LOT-1 (G3); 6885102's sum is
     /// below its head (G0); 4925871 (sums insured), 8822313 (x1000 on every lot), 175096, 274271
     /// (230 placeholders), 4930240 (a 3x pseudo-lot) and 5625591 carry estimates or framework
-    /// maxima only, which path W never sums. Read in production (path W withdrawn, unit 4a) and with
-    /// path W switched on, so its guards keep these pins for unit 4b.
+    /// maxima only, which path W never sums. Read in production (path W on since unit 4b's B5) and
+    /// through the test-only switch, so its guards keep these pins whatever the switch says.
     #[test]
     fn the_rejected_shapes_keep_the_max_election() {
         use super::lot_sum_551_fixtures::fixture;
@@ -46946,7 +47075,7 @@ mod tests {
         for id in [8440393, 7487018, 5316712, 6885102, 4925871, 8822313, 175096, 274271, 4930240, 5625591] {
             let fx = fixture(id);
             let (chain, rates) = (fx.versions(), fx.rates());
-            for (path_w, value) in [("off", head_value(&chain, &rates)), ("on", head_value_with_awards_path(&chain, &rates))] {
+            for (path_w, value) in [("production", head_value(&chain, &rates)), ("switched on", head_value_with_awards_path(&chain, &rates))] {
                 assert_eq!(value.derived, None, "{id} (path W {path_w}): no derived head");
                 assert_eq!(value.eur_cents, max_election_eur_cents(&chain, &rates), "{id} (path W {path_w}): today's figure stands");
                 assert!(value.eur_cents.is_some(), "{id} (path W {path_w}): every one serves a figure today");
@@ -47124,9 +47253,9 @@ mod tests {
 
     /// Issue 551 path W's guards, each on the smallest shape that isolates it: three lots awarded
     /// EUR 1 m, 2 m and 3.3 m, today's head the EUR 3.3 m award's tender-scope copy. Path W is
-    /// withdrawn in production (unit 4a, [`super::LOT_SUM_AWARDS_PATH`]): the base shape is read
-    /// there once, and every guard below runs with the path switched on
-    /// ([`super::head_value_with_awards_path`]), so unit 4b keeps the pins. Unit 4b (B2): v2's R10
+    /// on in production since unit 4b's B5 ([`super::LOT_SUM_AWARDS_PATH`]; unit 4a had it off):
+    /// the base shape is read there once, and every guard below runs through the test-only switch
+    /// ([`super::head_value_with_awards_path`]), so the pins hold whatever the switch says. Unit 4b (B2): v2's R10
     /// needs a buyer-stated total at every size, so every shape states one equal to its awards sum
     /// (a BT-161-NoticeResult on its last round's notice) and every award names one winner; each
     /// refusal is pinned to the check that makes it ([`super::awards_path_check`]), so a v1 guard
@@ -47200,8 +47329,8 @@ mod tests {
         let base = version(vec![amt("result_value", 330_000_000)], lots3(), awards3());
         assert_eq!(
             super::head_value(std::slice::from_ref(&base), &rates),
-            super::HeadValue { eur_cents: Some(330_000_000), derived: None },
-            "unit 4a: production keeps the max election, the EUR 3.3 m copy"
+            one(&base),
+            "B5: production serves the awards sum too (unit 4a kept the EUR 3.3 m copy)"
         );
         assert_eq!(one(&base).eur_cents, Some(630_000_000), "the base serves the awards sum");
         assert_eq!(check(&base), Ok(630_000_000));
@@ -47410,8 +47539,9 @@ mod tests {
 
     // ---- Issue 551 unit 4b (B2): path W v2's refusal families R1–R10 (canonical.rs
     // `awards_v2_check`, ported from `unit4b/rule_v2.py`), each on the smallest shape that isolates
-    // it. Path W is withdrawn in production ([`super::LOT_SUM_AWARDS_PATH`]); these run with it
-    // switched on ([`super::head_value_with_awards_path`]), and [`super::awards_path_check`] names
+    // it. Path W is on in production since unit 4b's B5 ([`super::LOT_SUM_AWARDS_PATH`]); these run
+    // through the test-only switch ([`super::head_value_with_awards_path`]), so they hold whatever the
+    // switch says, and [`super::awards_path_check`] names
     // the check that refused, as unit B3's port check compares it.
 
     /// An EUR amount.

@@ -300,6 +300,25 @@ async fn admin_api_drives_ingestion_end_to_end() {
         "{counts}"
     );
 
+    // --- issue 551 unit 4b (B5): `tender_ids` scopes refold-lot-sum alone ----------
+    // The JSON field reaches the job (a dry run over the named Tenders, writing nothing), and
+    // every other kind refuses it at enqueue rather than run unscoped.
+    let scoped = h.enqueue(Some(SECRET), json!({"kind":"refold-lot-sum","tender_ids":[1, 2]})).await;
+    assert_eq!(scoped.status().as_u16(), 202, "refold-lot-sum takes tender_ids");
+    let state = h.drain(5).await;
+    let scoped_row = &state["recent"][0];
+    assert_eq!(scoped_row["outcome"], "ok", "{scoped_row}");
+    let counts = scoped_row["counts"].as_str().unwrap();
+    assert!(counts.contains("DRY RUN") && counts.contains("of 2 named"), "{counts}");
+    for kind in ["refold-value-band", "project"] {
+        let stray = h.enqueue(Some(SECRET), json!({"kind": kind, "tender_ids": [1]})).await;
+        assert_eq!(stray.status().as_u16(), 400, "{kind} refuses tender_ids");
+        let body: Value = stray.json().await.unwrap();
+        assert!(body["error"]["message"].as_str().unwrap().contains("refuses `tender_ids`"), "{body}");
+    }
+    let empty = h.enqueue(Some(SECRET), json!({"kind":"refold-lot-sum","tender_ids":[]})).await;
+    assert_eq!(empty.status().as_u16(), 400, "an empty list is refused, never read as the corpus");
+
     // --- DELETE an unknown queued job ⇒ 404 (and the route is gated) --------
     let unknown =
         h.http.delete(format!("{}/admin/jobs/999999", h.base)).header("x-admin-secret", SECRET);

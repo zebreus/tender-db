@@ -4,6 +4,42 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 551 B4/B5) — `lot-sum-awards` is served again, only where a total the buyer stated vouches for the sum
+
+Unit 4a (below) withdrew `lot-sum-awards`, the sum of a Tender's latest lot awards served where it publishes no
+procedure-level figure, after a read against the notices found it wrong on 18 % of a uniform sample and on 42 % of
+the Tenders it served at EUR 100 m or more. Unit 4b redesigned it and measured the redesign before any of it was
+served: on a fresh uniform 30 of its sums, 29 read right against their notices (1 wrong), and all 20 at EUR 100 m or
+more read right.
+- From the deploy on, `lot-sum-awards` is served again under its earlier guards plus ten refusal families (R1–R10):
+  the sum is refused, and the Tender keeps the value election's one figure (an award's Tender-level copy, or `null`),
+  when a lot was won by two or more separate tenders (a consortium on one tender, or a TED award to a group, is one);
+  when the awards' published lot numbers collide, list several lots, disagree across rounds, or are missing on awards
+  from two or more notices; when a notice's own total is below the lots it awards (or, with no such total anywhere,
+  the sum is over 10x the largest estimate); when an award is 10x its lot's estimate, 10x or a tenth of an earlier
+  award on the same lot, or 10x the next largest award; when an award reads as a closed lot, a unit rate, a ceiling
+  copied per supplier or the procedure total booked on one lot (fifteen shape checks, among them a sum below
+  1,000.00 in its own currency); when a lot is restated under a second key; when an award was resolved through
+  another lot's tender; and **R10**, when no total the buyer stated vouches for the sum.
+- **R10 applies at every size**: some notice of the Tender must state a total in the sum's currency within 1 % of
+  it, and that is not one lot's own award nor equal to any single summed award. Accepted: an award notice's total
+  (BT-161, BT-118, BT-1118, TED `VAL_TOTAL`), a procedure estimate (BT-27-Procedure, TED `VAL_ESTIMATED_TOTAL`) or
+  either end of a TED `VAL_RANGE_TOTAL`; never a modification's before/after value. BT-118 and BT-1118 are read for
+  this only: they are never an amount row and never elected (issue 506 stands).
+- `value_derivation` on a `lot-sum-awards` head gains **`vouched_by`** `{field, notice_id, cents}`: the stated total
+  that vouches (its field as published, e.g. `BT-118-NoticeResult`, `TED-VAL_TOTAL`, `TED-HIGH`; the notice that
+  stated it; its cents in `value`'s currency). `lot-sum-vouched`'s detail is unchanged, byte for byte. OpenAPI
+  declares `vouched_by`; `/v1/sql`'s `current_value_derivation_detail` note names it.
+- E.g. 585917 serves EUR 250,000.00 again (vouched by its BT-118-NoticeResult), 5995030 PLN 1,549,511.60 (its TED
+  `VAL_TOTAL` reads PLN 1,546,390.00, 0.2 % off) and 8426318 GBP 3,000,000,000.00 (its TED `VAL_RANGE_TOTAL` high
+  end). The Lyon-Turin Tenders 6450467, 6450469 and 6450473 state no total and keep EUR 1,660,661,682.94.
+- Tenders already stored are refolded after the deploy (`refold-lot-sum`: a named cohort first, then the whole
+  cohort): about 1,669 values are expected to move (the drain stops outside 835–3,338). Each move is announced like
+  any value correction: a `version: null` `changed` row (ADR-0017 D3). Until its refold a Tender serves the value
+  election's one figure.
+- A Tender with no convertible amount matches a value bound again when its lot awards are summed (`/docs`, the
+  filter table and the Amounts caveat; OpenAPI `min_value`).
+
 ## Unreleased (issue 568 unit 8) — an R2.0.8 award that names several lots, or another lot, stays on the Tender
 
 Issue 568 serves each R2.0.8 award on the lot its contract notice printed under the award's number. Its read-back
@@ -146,6 +182,7 @@ stated total than the figure it replaced, a ×10^k award slip. Its guards do not
   caveat).
 - OpenAPI keeps `lot-sum-awards` in the `value_derivation.method` enum, described as withdrawn and not currently
   served; a redesign is open (issue 551 unit 4b). `/v1/sql`'s `current_value_derivation` note says the same.
+- Superseded by issue 551 B4/B5 (above): the redesign is served, every sum vouched by a buyer-stated total.
 
 ## Unreleased (issue 562) — a Tender re-labelled `ted` (or re-kinded) reaches a `source` (or `kind`) subscription
 
@@ -216,7 +253,7 @@ the SUM of the current version's lots, in the lots' own currency:
   figure the election would serve without it. Pinned on unit 2's 15 adjudicated heads,
   e.g. 7427765 now serves EUR 3,000,000.00 (six awards of EUR 500,000.00) instead of EUR 500,000.00, 5943121
   EUR 1,321,579.92 instead of EUR 416,053.05, and 369057 EUR 62,378,736.29 instead of `null`.
-- **`lot-sum-awards`** (withdrawn by unit 4a, above): the Tender has no procedure-level figure at all (only
+- **`lot-sum-awards`** (withdrawn by unit 4a, above; served again since B4/B5, vouched by a buyer-stated total): the Tender has no procedure-level figure at all (only
   placeholders), its value was an award's copy or `null`, and each lot's latest award is added up, unless one figure repeats across the lots (a total
   printed on every award), one lot equals 1, 10, 100 or 1,000 times the others, an award is in another currency or
   names a lot the notice does not type, two awarded lots carry one lot number under two keys (a Tender re-keyed from

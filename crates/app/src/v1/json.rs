@@ -566,6 +566,19 @@ mod tests {
                 "refused": {"field": "result_value", "value": {"cents": 300_000_000_000_i64, "currency": "EUR"}},
             })
         );
+        // Issue 551 unit 4b (B4/B5): a path-W head's detail names the stated total that vouched for
+        // the sum, served as a nested `vouched_by` object.
+        let awards = "{\"summed\":\"awards\",\"lots\":2,\
+                      \"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":25416405,\"cents\":25000000}}";
+        assert_eq!(
+            value_derivation(Some("lot-sum-awards"), Some(awards)),
+            json!({
+                "method": "lot-sum-awards",
+                "summed": "awards",
+                "lots": 2,
+                "vouched_by": {"field": "BT-118-NoticeResult", "notice_id": 25_416_405, "cents": 25_000_000},
+            })
+        );
         assert_eq!(value_derivation(Some("lot-sum-awards"), Some("not json")), json!({"method": "lot-sum-awards"}));
         // A detail cannot overwrite the method.
         assert_eq!(value_derivation(Some("lot-sum-awards"), Some("{\"method\":\"x\"}")), json!({"method": "lot-sum-awards"}));

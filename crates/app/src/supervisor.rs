@@ -228,6 +228,12 @@ const DQ_WINDOW: i64 = 250_000;
 /// obeyed.
 const REFOLD_NOTICES_CAP: usize = 1_000;
 
+/// Most Tender ids `refold-lot-sum`'s `tender_ids` takes (issue 551 unit 4b, B5). B5 drains a
+/// named id cohort before the corpus — the 279 labelled heads, the walked ids, 7511890 and the
+/// px2 fires, 563 in all — so the cap is an order of magnitude above it and far below the
+/// corpus cohort (~194,000): a list longer than this is the corpus drain, which takes no list.
+const REFOLD_LOT_SUM_TENDER_IDS_CAP: usize = 5_000;
+
 #[derive(Clone, Serialize, Deserialize)]
 enum Spec {
     Fetch { source: String, package_kind: String, period: String, refetch: bool },
@@ -700,8 +706,18 @@ enum Spec {
     /// D6's route R3 by tender id; the fold compares and announces only what moved. `dry_run`
     /// (the default) walks the cohort and writes nothing; a wet run needs `expect`, the dry run's
     /// count, and aborts before any write when the cohort is off by more than a quarter. The wet
-    /// run queues `project` behind itself.
-    RefoldLotSum { dry_run: bool, expect: Option<u64> },
+    /// run queues `project` behind itself. Since unit 4b's B5 switched path W on again (v2, every
+    /// sum vouched by a buyer-stated total), it is also the way forward. B5: `tender_ids` restricts
+    /// the finder to those Tenders (`Db::lot_sum_cohort_named_tender_ids`: the same predicate, one
+    /// id at a time), so an id cohort drains, and is checked against the port, before the corpus;
+    /// dry and wet read as without it (`expect` is then the named cohort's dry count).
+    /// `#[serde(default)]` keeps pre-B5 job rows readable.
+    RefoldLotSum {
+        dry_run: bool,
+        expect: Option<u64>,
+        #[serde(default)]
+        tender_ids: Option<Vec<i64>>,
+    },
     /// Issue 533: stamp stale and re-queue the open head — every Tender whose stored
     /// `current_deadline` is after now (`Db::open_head_tender_ids`, about 42k on prod) — so the
     /// fold derives `current_closed_by_notice` for it and drops a DÖE award notice's own date
@@ -1300,6 +1316,11 @@ pub struct JobRequest {
     /// off. Refused on a dry plan and by `revert-org-name-refresh`, whatever its value; every other kind
     /// ignores it.
     pub exclude_stale_top: Option<bool>,
+    /// `refold-lot-sum` only (issue 551 unit 4b, B5): restrict the cohort finder to these Tenders, so
+    /// an id cohort drains before the corpus. 1 to [`REFOLD_LOT_SUM_TENDER_IDS_CAP`] ids, each
+    /// positive; a Tender the cohort predicate does not admit is reported, not re-queued. Every other
+    /// kind refuses it at enqueue (a list meant to scope a run must never be dropped silently).
+    pub tender_ids: Option<Vec<i64>>,
 }
 
 /// Issue 527 unit 1: the most phrases one `name-phrase-census` takes.
@@ -2505,6 +2526,14 @@ impl Supervisor {
     /// A backfill fans a period range out into individual fetch jobs plus a
     /// trailing process+project, so progress and cancellation stay per-package.
     pub async fn enqueue_request(&self, req: &JobRequest) -> Result<Vec<u64>, String> {
+        // Issue 551 unit 4b (B5): `tender_ids` scopes `refold-lot-sum` alone. Any other kind would
+        // ignore it under `serde(default)` and run unscoped, so it is refused here, before any arm.
+        if req.tender_ids.is_some() && req.kind != "refold-lot-sum" {
+            return Err(format!(
+                "{} refuses `tender_ids`: only refold-lot-sum takes a Tender id list (issue 551 unit 4b)",
+                req.kind
+            ));
+        }
         match req.kind.as_str() {
             "fetch" => {
                 let (source, package_kind, period) = self.fetch_parts(req)?;
@@ -3653,21 +3682,34 @@ impl Supervisor {
                 Ok(vec![self.push("refold-value-band", params, Spec::RefoldValueBand { dry_run }).await])
             }
             // Issue 551: the derived lot-sum cohort, dry by default like every census; a wet run
-            // is sized (`expect`, the dry run's count) and queues its `project`.
+            // is sized (`expect`, the dry run's count) and queues its `project`. Unit 4b's B5:
+            // `tender_ids` restricts the finder to those Tenders (bounded, each positive).
             "refold-lot-sum" => {
                 let dry_run = req.dry_run.unwrap_or(true);
+                let tender_ids = refold_lot_sum_tender_ids(req.tender_ids.as_deref())?;
+                // The ids' count and the first few go in the params line, so the job log records
+                // which cohort a run was scoped to.
+                let scope = tender_ids.as_deref().map(refold_lot_sum_scope).unwrap_or_default();
                 if dry_run {
                     return Ok(vec![
-                        self.push("refold-lot-sum", "refold-lot-sum dry-run".into(), Spec::RefoldLotSum { dry_run, expect: req.expect })
-                            .await,
+                        self.push(
+                            "refold-lot-sum",
+                            format!("refold-lot-sum dry-run{scope}"),
+                            Spec::RefoldLotSum { dry_run, expect: req.expect, tender_ids },
+                        )
+                        .await,
                     ]);
                 }
                 let Some(expect) = req.expect else {
                     return Err("refold-lot-sum dry_run:false needs \"expect\": the dry run's Tender count".into());
                 };
                 Ok(vec![
-                    self.push("refold-lot-sum", format!("refold-lot-sum expect={expect}"), Spec::RefoldLotSum { dry_run, expect: Some(expect) })
-                        .await,
+                    self.push(
+                        "refold-lot-sum",
+                        format!("refold-lot-sum expect={expect}{scope}"),
+                        Spec::RefoldLotSum { dry_run, expect: Some(expect), tender_ids },
+                    )
+                    .await,
                     self.push("project", "rebuild=false".into(), Spec::Project { rebuild: false, clear_changes: false })
                         .await,
                 ])
@@ -5365,6 +5407,39 @@ fn split_void_hits(
 struct PlaceholderPlan {
     summary: String,
     fields: serde_json::Map<String, serde_json::Value>,
+}
+
+/// Issue 551 unit 4b (B5): the most named ids a scoped `refold-lot-sum` summary lists as not in
+/// the cohort (it always counts them all).
+const REFOLD_LOT_SUM_UNADMITTED_SHOWN: usize = 20;
+
+/// Issue 551 unit 4b (B5): `refold-lot-sum`'s `tender_ids`, checked at enqueue — omitted is the
+/// corpus cohort; given, 1 to [`REFOLD_LOT_SUM_TENDER_IDS_CAP`] positive ids (duplicates are
+/// harmless: the finder reads each id once). An empty list is refused rather than read as "all":
+/// a list that scoped nothing must not become the corpus drain.
+fn refold_lot_sum_tender_ids(ids: Option<&[i64]>) -> Result<Option<Vec<i64>>, String> {
+    let Some(ids) = ids else { return Ok(None) };
+    if ids.is_empty() {
+        return Err("refold-lot-sum: `tender_ids` is empty — omit it for the whole cohort, or name the Tenders".into());
+    }
+    if ids.len() > REFOLD_LOT_SUM_TENDER_IDS_CAP {
+        return Err(format!(
+            "refold-lot-sum refuses {} tender_ids (cap {REFOLD_LOT_SUM_TENDER_IDS_CAP}): a list this long is the corpus \
+             cohort — omit `tender_ids` for it",
+            ids.len()
+        ));
+    }
+    if let Some(bad) = ids.iter().find(|&&id| id <= 0) {
+        return Err(format!("refold-lot-sum: tender id {bad} is not a Tender id (they are positive)"));
+    }
+    Ok(Some(ids.to_vec()))
+}
+
+/// Issue 551 unit 4b (B5): the params-line suffix of a scoped `refold-lot-sum` — the count and the
+/// first eight ids, so the job log records which cohort a run touched.
+fn refold_lot_sum_scope(ids: &[i64]) -> String {
+    let shown: Vec<String> = ids.iter().take(8).map(i64::to_string).collect();
+    format!(" tender_ids={} [{}{}]", ids.len(), shown.join(","), if ids.len() > shown.len() { ",…" } else { "" })
 }
 
 /// The hub Tender ids of a stored `procedure-key-census` report body (issue 482 unit 2).
@@ -8546,9 +8621,9 @@ impl Supervisor {
             .await,
             // Issue 551: the derived lot-sum cohort. Boxed (issue 467's rule): the walk, the size
             // gate and the re-queue live in their own fn's future, not `run_maintenance_spec`'s.
-            Spec::RefoldLotSum { dry_run, expect } => {
+            Spec::RefoldLotSum { dry_run, expect, tender_ids } => {
                 let stop = || self.cancelled(job.id);
-                Box::pin(self.run_refold_lot_sum(*dry_run, *expect, &stop)).await
+                Box::pin(self.run_refold_lot_sum(*dry_run, *expect, tender_ids.as_deref(), &stop)).await
             }
             // Issue 533: refold-value-band's shape over the open head. Boxed like it (issue 467's
             // rule), so the arm's locals do not grow `run_maintenance_spec`'s one future.
@@ -8601,20 +8676,62 @@ impl Supervisor {
     /// from ([`store::canonical::lot_sum_cohort_sql`]), then, wet, gate on `expect` and stamp
     /// and re-queue it. `stop` is the job's stop flag, read before every window of the walk and
     /// once more before the first write; past that the stamp and the re-queue run together (the
-    /// issue-179 pair).
+    /// issue-179 pair). Unit 4b's B5: with `tender_ids` the finder reads only those Tenders
+    /// ([`store::Db::lot_sum_cohort_named_tender_ids`], the stop flag read before every chunk), the
+    /// cohort is the named ids it admits, and the summary also counts and lists (the first
+    /// [`REFOLD_LOT_SUM_UNADMITTED_SHOWN`]) the named ids it does not; dry and wet are otherwise
+    /// unchanged, `expect` gating the named cohort's count.
     async fn run_refold_lot_sum(
         &self,
         dry_run: bool,
         expect: Option<u64>,
+        tender_ids: Option<&[i64]>,
         stop: &(dyn Fn() -> bool + Sync),
     ) -> Result<String, String> {
-        self.set_phase(
-            "finding",
-            None,
-            None,
-            "Tenders whose head could serve a derived lot sum: a tender-id walk of the head versions, read-only".into(),
-        );
-        let cohort = self.db.lot_sum_cohort_tender_ids(stop).await.map_err(|e| e.to_string())?;
+        let cohort = match tender_ids {
+            None => {
+                self.set_phase(
+                    "finding",
+                    None,
+                    None,
+                    "Tenders whose head could serve a derived lot sum: a tender-id walk of the head versions, read-only"
+                        .into(),
+                );
+                self.db.lot_sum_cohort_tender_ids(stop).await.map_err(|e| e.to_string())?
+            }
+            Some(named) => {
+                self.set_phase(
+                    "finding",
+                    None,
+                    Some(named.len() as u64),
+                    "the named Tenders whose head could serve a derived lot sum: one id at a time, read-only".into(),
+                );
+                self.db.lot_sum_cohort_named_tender_ids(named, stop).await.map_err(|e| e.to_string())?
+            }
+        };
+        // "N Tender(s)" for the corpus; "N of M named Tender(s) ... (K named not admitted: ...)" scoped.
+        let (scope, unadmitted) = match tender_ids {
+            None => (String::new(), String::new()),
+            Some(named) => {
+                let mut named: Vec<i64> = named.to_vec();
+                named.sort_unstable();
+                named.dedup();
+                let admitted: std::collections::BTreeSet<i64> = cohort.ids.iter().copied().collect();
+                let left: Vec<i64> = named.iter().copied().filter(|id| !admitted.contains(id)).collect();
+                let shown: Vec<String> = left.iter().take(REFOLD_LOT_SUM_UNADMITTED_SHOWN).map(i64::to_string).collect();
+                let unadmitted = if left.is_empty() {
+                    "; every named Tender is in the cohort".to_owned()
+                } else {
+                    format!(
+                        "; {} named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): {}{}",
+                        left.len(),
+                        shown.join(","),
+                        if left.len() > shown.len() { ",…" } else { "" }
+                    )
+                };
+                (format!(" of {} named", named.len()), unadmitted)
+            }
+        };
         if let Some(at) = cohort.stopped_at {
             return Ok(format!(
                 "refold-lot-sum (issue 551) STOPPED by cancel during the cohort walk, before tender id {at} of {}: \
@@ -8624,12 +8741,13 @@ impl Supervisor {
             ));
         }
         let found = cohort.ids.len() as u64;
+        let scoped = if tender_ids.is_some() { " with the same tender_ids" } else { "" };
         if dry_run {
             let (notices, _) = self.db.requeue_tender_notices(&cohort.ids, true).await.map_err(|e| e.to_string())?;
             return Ok(format!(
-                "refold-lot-sum (issue 551) DRY RUN — nothing written: {found} Tender(s) whose head could serve a \
-                 derived lot sum, {notices} notice(s); run it with \"dry_run\":false,\"expect\":{found} to stamp \
-                 and re-queue them (a `project` is queued behind the wet run)"
+                "refold-lot-sum (issue 551) DRY RUN — nothing written: {found}{scope} Tender(s) whose head could serve a \
+                 derived lot sum, {notices} notice(s){unadmitted}; run it with \"dry_run\":false,\"expect\":{found}{scoped} \
+                 to stamp and re-queue them (a `project` is queued behind the wet run)"
             ));
         }
         let Some(expect) = expect else {
@@ -8637,13 +8755,13 @@ impl Supervisor {
         };
         if found.abs_diff(expect) > expect / 4 {
             return Err(format!(
-                "refold-lot-sum aborted: {found} Tender(s) in the cohort, expected ~{expect} — re-run the dry run \
+                "refold-lot-sum aborted: {found}{scope} Tender(s) in the cohort, expected ~{expect} — re-run the dry run \
                  (nothing was written)"
             ));
         }
         if stop() {
             return Ok(format!(
-                "refold-lot-sum (issue 551) STOPPED by cancel after the cohort walk ({found} Tender(s)): nothing \
+                "refold-lot-sum (issue 551) STOPPED by cancel after the cohort walk ({found}{scope} Tender(s)): nothing \
                  was re-queued or stamped"
             ));
         }
@@ -8651,9 +8769,9 @@ impl Supervisor {
         let stamped = self.db.stamp_stale_for_tenders(&cohort.ids).await.map_err(|e| e.to_string())?;
         let (notices, requeued) = self.db.requeue_tender_notices(&cohort.ids, false).await.map_err(|e| e.to_string())?;
         Ok(format!(
-            "refold-lot-sum (issue 551): {found} Tender(s) whose head could serve a derived lot sum, {notices} \
-             notice(s); re-queued {requeued}, stamped {stamped} epoch-stale — the `project` queued behind this \
-             job applies them"
+            "refold-lot-sum (issue 551): {found}{scope} Tender(s) whose head could serve a derived lot sum, {notices} \
+             notice(s){unadmitted}; re-queued {requeued}, stamped {stamped} epoch-stale — the `project` queued behind \
+             this job applies them"
         ))
     }
 
@@ -26020,16 +26138,12 @@ mod tests {
         remove_db(&path);
     }
 
-    /// Issue 551: `refold-lot-sum` finds the Tenders whose head could serve a derived lot sum —
-    /// a tender-scope figure of EUR 1 bn or more at the head (path V's evidence), or two or more
-    /// awarded lots with no procedure figure outside the sentinels' range (path W's shape) — dry
-    /// by default; a wet run needs `expect`, aborts off it, and otherwise stamps and re-queues.
-    #[tokio::test]
-    async fn refold_lot_sum_requeues_the_tenders_a_derived_head_can_reach() {
-        let path = format!("/tmp/tender-db-sup-lot-sum-{}-{}.db", std::process::id(), store::now_unix());
-        remove_db(&path);
-        let db = Arc::new(store::Db::open(&path).await.unwrap());
-        let conn = store::turso::Builder::new_local(&path).build().await.unwrap().connect().unwrap();
+    /// Issue 551: the eight Tenders `refold-lot-sum`'s cohort tests read, one version each: the
+    /// cohort predicate admits 1, 2, 5 and 8 (see each insert), and every notice starts projected.
+    async fn lot_sum_cohort_db(path: &str) -> Arc<store::Db> {
+        remove_db(path);
+        let db = Arc::new(store::Db::open(path).await.unwrap());
+        let conn = store::turso::Builder::new_local(path).build().await.unwrap().connect().unwrap();
         conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
         for id in 1..=8 {
             for sql in [
@@ -26096,6 +26210,17 @@ mod tests {
         ] {
             conn.execute(&sql, ()).await.unwrap();
         }
+        db
+    }
+
+    /// Issue 551: `refold-lot-sum` finds the Tenders whose head could serve a derived lot sum —
+    /// a tender-scope figure of EUR 1 bn or more at the head (path V's evidence), or two or more
+    /// awarded lots with no procedure figure outside the sentinels' range (path W's shape) — dry
+    /// by default; a wet run needs `expect`, aborts off it, and otherwise stamps and re-queues.
+    #[tokio::test]
+    async fn refold_lot_sum_requeues_the_tenders_a_derived_head_can_reach() {
+        let path = format!("/tmp/tender-db-sup-lot-sum-{}-{}.db", std::process::id(), store::now_unix());
+        let db = lot_sum_cohort_db(&path).await;
         let never = || false;
         assert_eq!(db.lot_sum_cohort_tender_ids(&never).await.unwrap().ids, vec![1, 2, 5, 8]);
         let stopped = db.lot_sum_cohort_tender_ids(&|| true).await.unwrap();
@@ -26106,21 +26231,126 @@ mod tests {
             async move { db.scalar(&format!("SELECT projected FROM notices WHERE id = {id}")).await.unwrap() }
         };
 
-        let dry = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: true, expect: None })).await.expect("dry run");
+        let dry = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: true, expect: None, tender_ids: None })).await.expect("dry run");
         assert!(dry.contains("DRY RUN") && dry.contains("4 Tender(s)") && dry.contains("\"expect\":4"), "got: {dry}");
+        assert!(!dry.contains("named"), "the corpus cohort names nothing: {dry}");
         assert_eq!(projected(1).await, Some(store::turso::Value::Integer(1)), "a dry run writes nothing");
-        let unsized_run = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: None })).await;
+        let unsized_run = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: None, tender_ids: None })).await;
         assert!(unsized_run.is_err_and(|e| e.contains("expect")), "a wet run is sized");
-        let off = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: Some(40) })).await;
+        let off = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: Some(40), tender_ids: None })).await;
         assert!(off.is_err_and(|e| e.contains("aborted") && e.contains("nothing was written")));
         assert_eq!(projected(2).await, Some(store::turso::Value::Integer(1)), "an aborted run writes nothing");
 
-        let wet = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: Some(4) })).await.expect("wet run");
+        let wet = sup.run_spec(&job(Spec::RefoldLotSum { dry_run: false, expect: Some(4), tender_ids: None })).await.expect("wet run");
         assert!(wet.contains("re-queued 4, stamped 4"), "got: {wet}");
         for (id, want) in [(1, 0), (2, 0), (3, 1), (4, 1), (5, 0), (6, 1), (7, 1), (8, 0)] {
             assert_eq!(projected(id).await, Some(store::turso::Value::Integer(want)), "tender {id}");
         }
         remove_db(&path);
+    }
+
+    /// Issue 551 unit 4b (B5): `tender_ids` restricts `refold-lot-sum`'s finder to the named
+    /// Tenders — the same predicate, so a named Tender it does not admit (3: a real procedure
+    /// estimate beside its awards) or that does not exist (9) is counted and listed, never
+    /// re-queued — and dry and wet read as without it: the dry run writes nothing and names the
+    /// `expect` to pass, a wet run without `expect` or off it by more than a quarter writes
+    /// nothing, and a sized one stamps and re-queues exactly the admitted named Tenders (2 and 5;
+    /// 1 and 8, in the corpus cohort, are not named and stay projected).
+    #[tokio::test]
+    async fn refold_lot_sum_restricted_to_named_tenders_finds_and_requeues_only_those() {
+        let path = format!("/tmp/tender-db-sup-lot-sum-named-{}-{}.db", std::process::id(), store::now_unix());
+        let db = lot_sum_cohort_db(&path).await;
+        let never = || false;
+        let named = vec![5, 3, 9, 2, 5];
+        let cohort = db.lot_sum_cohort_named_tender_ids(&named, &never).await.unwrap();
+        assert_eq!((cohort.ids.clone(), cohort.stopped_at, cohort.max_id), (vec![2, 5], None, 9), "the admitted named ids, ascending, once each");
+        let stopped = db.lot_sum_cohort_named_tender_ids(&named, &|| true).await.unwrap();
+        assert_eq!((stopped.ids.len(), stopped.stopped_at), (0, Some(2)), "the stop flag is read before the first chunk");
+        // Past one chunk: every Tender named, each read once, the same cohort as the walk.
+        let many: Vec<i64> = (1..=(store::canonical::LOT_SUM_NAMED_CHUNK as i64 + 10)).collect();
+        assert_eq!(db.lot_sum_cohort_named_tender_ids(&many, &never).await.unwrap().ids, vec![1, 2, 5, 8]);
+
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let projected = |id: i64| {
+            let db = db.clone();
+            async move { db.scalar(&format!("SELECT projected FROM notices WHERE id = {id}")).await.unwrap() }
+        };
+        let spec = |dry_run: bool, expect: Option<u64>| Spec::RefoldLotSum { dry_run, expect, tender_ids: Some(named.clone()) };
+
+        let dry = sup.run_spec(&job(spec(true, None))).await.expect("dry run");
+        assert!(dry.contains("DRY RUN") && dry.contains("2 of 4 named Tender(s)"), "got: {dry}");
+        assert!(dry.contains("2 named Tender(s) not in the cohort") && dry.contains(": 3,9;"), "the unadmitted are listed: {dry}");
+        assert!(dry.contains("\"expect\":2 with the same tender_ids"), "got: {dry}");
+        for id in 1..=8 {
+            assert_eq!(projected(id).await, Some(store::turso::Value::Integer(1)), "a dry run writes nothing (tender {id})");
+        }
+        let unsized_run = sup.run_spec(&job(spec(false, None))).await;
+        assert!(unsized_run.is_err_and(|e| e.contains("expect")), "a scoped wet run is sized too");
+        // The corpus count is no named cohort's count: expect 4 is off 2 by more than a quarter.
+        for expect in [4, 40] {
+            let off = sup.run_spec(&job(spec(false, Some(expect)))).await;
+            assert!(off.is_err_and(|e| e.contains("aborted") && e.contains("2 of 4 named") && e.contains("nothing was written")), "expect {expect}");
+        }
+        for id in 1..=8 {
+            assert_eq!(projected(id).await, Some(store::turso::Value::Integer(1)), "an aborted run writes nothing (tender {id})");
+        }
+
+        let wet = sup.run_spec(&job(spec(false, Some(2)))).await.expect("wet run");
+        assert!(wet.contains("2 of 4 named Tender(s)") && wet.contains("re-queued 2, stamped 2"), "got: {wet}");
+        for (id, want) in [(1, 1), (2, 0), (3, 1), (4, 1), (5, 0), (6, 1), (7, 1), (8, 1)] {
+            assert_eq!(projected(id).await, Some(store::turso::Value::Integer(want)), "tender {id}");
+        }
+        remove_db(&path);
+    }
+
+    /// Issue 551 unit 4b (B5): the admin request's `tender_ids` reaches `refold-lot-sum` alone —
+    /// dry or wet, with the count and the first ids in the params line — bounded (1 to
+    /// [`REFOLD_LOT_SUM_TENDER_IDS_CAP`], each positive), and every other kind refuses it at
+    /// enqueue rather than run unscoped.
+    #[tokio::test]
+    async fn refold_lot_sum_takes_tender_ids_alone_and_bounds_them() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let ask = |dry_run: Option<bool>, expect: Option<u64>, tender_ids: Option<Vec<i64>>| JobRequest {
+            kind: "refold-lot-sum".into(),
+            dry_run,
+            expect,
+            tender_ids,
+            ..Default::default()
+        };
+        sup.enqueue_request(&ask(None, None, Some(vec![5, 2]))).await.expect("a scoped dry run");
+        sup.enqueue_request(&ask(Some(false), Some(2), Some(vec![5, 2]))).await.expect("a scoped wet run");
+        sup.enqueue_request(&ask(None, None, None)).await.expect("the corpus dry run");
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(
+                matches!(&queue[0].spec, Spec::RefoldLotSum { dry_run: true, expect: None, tender_ids: Some(ids) } if *ids == [5, 2]),
+                "dry unless asked, scoped"
+            );
+            assert_eq!(queue[0].params, "refold-lot-sum dry-run tender_ids=2 [5,2]");
+            assert!(matches!(&queue[1].spec, Spec::RefoldLotSum { dry_run: false, expect: Some(2), tender_ids: Some(ids) } if *ids == [5, 2]));
+            assert_eq!(queue[1].params, "refold-lot-sum expect=2 tender_ids=2 [5,2]");
+            assert!(matches!(queue[2].spec, Spec::Project { rebuild: false, .. }), "the wet run's paired fold");
+            assert!(matches!(queue[3].spec, Spec::RefoldLotSum { dry_run: true, expect: None, tender_ids: None }), "no list, the corpus");
+            assert_eq!(queue[3].params, "refold-lot-sum dry-run");
+        }
+        let err = sup.enqueue_request(&ask(Some(false), None, Some(vec![2]))).await.expect_err("a scoped wet run is sized");
+        assert!(err.contains("expect"), "{err}");
+        let err = sup.enqueue_request(&ask(None, None, Some(Vec::new()))).await.expect_err("empty");
+        assert!(err.contains("empty"), "an empty list is refused, never read as the corpus: {err}");
+        let over: Vec<i64> = (1..=(REFOLD_LOT_SUM_TENDER_IDS_CAP as i64 + 1)).collect();
+        let err = sup.enqueue_request(&ask(None, None, Some(over.clone()))).await.expect_err("capped");
+        assert!(err.contains("cap 5000"), "{err}");
+        sup.enqueue_request(&ask(None, None, Some(over[..REFOLD_LOT_SUM_TENDER_IDS_CAP].to_vec()))).await.expect("at the cap");
+        for bad in [0, -7] {
+            let err = sup.enqueue_request(&ask(None, None, Some(vec![2, bad]))).await.expect_err("not a Tender id");
+            assert!(err.contains(&format!("tender id {bad}")), "{err}");
+        }
+        for kind in ["refold-value-band", "refold-open-head", "project", "refold-notices", "rederive-eur"] {
+            let stray = JobRequest { kind: kind.into(), tender_ids: Some(vec![2]), ..Default::default() };
+            let err = sup.enqueue_request(&stray).await.expect_err("tender_ids is refold-lot-sum's only");
+            assert!(err.contains(kind) && err.contains("refuses `tender_ids`"), "{err}");
+        }
     }
 
     /// Issue 533: `refold-open-head` finds the open head — the Tenders whose stored head
