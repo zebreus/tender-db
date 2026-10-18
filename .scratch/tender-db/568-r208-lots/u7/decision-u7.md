@@ -846,3 +846,21 @@ After FINAL_AMENDED, 5 of 230 uniform Tenders carry a wrong block (2.2 %, 0.71�
 > 0/1,762; OOS 100/100, FR 0/319; pooled residual 5/230 Tenders (2.2 %, 0.71–5.0 %), 2/230 568-attributable.
 > NEXT: unit 8 build to the amended port → gate → deploy → ONE refold with 570 → read back on the new bar (parity
 > with 570's remap in the replay, 0 divergences; ≤ 2/30 wrong-kept; new shapes filed).
+
+### Read-back record (2026-10-18)
+
+From the combined unit-8 + 570 read-back (`readback-u8/readback.md`, O2 and O3; workflow wf_f6e14299-ff8). Neither
+changes the rule.
+
+- **A new false-refusal shape: a copied block title against the printed number (O2).** 5457789 CAN 18461129 RES-8.
+  - Its `TED-CONTRACT_TITLE`, "Pakiet nr 34 Cloxacillin/Syntarpen", names pakiet 34. Everything else names lot 37:
+    LN 37, `CONTRACT_NUMBER` "Pakiet nr 37", an estimate of 9,975.00 PLN equal to LOT-37's to the cent, and the
+    winner.
+  - G4 refuses it at block level. It served LOT-37 before the drain and serves `null` now.
+  - Pooled false refusals: **1 of 2,187 right blocks (0.05 %)**, the amendment's 2,081 plus the fresh 30's 106.
+  - A refusal is pre-568 behaviour, never a wrong lot (Risk 1). **No guard changes without a measured control.**
+    Letting `CONTRACT_NO` confirm p, for example, would also restore the counter notices G4 refuses.
+- **An unclear G5 refusal (O3).** 5602216 CAN 19023719 RES-128, printed 173, moved LOT-173 → `null` by G5. Its title
+  "rampa trójdrożna" is CN 18674240's LOT-174, but the CN prints identical text for lots 172 and 173, so whether
+  LOT-173 was right cannot be decided from the notices. Recorded as unclear, not as a false refusal. It is 568-u8's
+  move, not 570's.

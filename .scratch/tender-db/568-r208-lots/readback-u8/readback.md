@@ -120,6 +120,14 @@ LOT-11's.
   - draw_fresh30.py's G2 signal fails its precision claim ("0 of 2,951") on multi-CAN R2.0.9 chains: a Tender-scope
     winner from another result fires it. O1 replaces the signal.
   - check570.py's anchor-title reference goes stale after K1-refused notices. It is a proxy for the carried lot.
+  - **Recorded (2026-10-18).**
+    - draw_fresh30.py's G2 signal is superseded by the corrected test used in O1: outside population.json, with a
+      lot-placed result from a notice that has no lot section of its own (`ted-export-r208`, confirmed from
+      `/v1/notices?tender=`). No `ext/` copy of the tool had been written when this was recorded. A later draw uses
+      O1's test, not the one-read signal.
+    - `fresh570/check570.py` E2's anchor-title reference (`ref_title`, `use_anchor=True`) holds only where no
+      K1-refused notice precedes the remapped one, because a refused notice re-keys the carry. After one, the
+      carried-lot reference (`use_anchor=False`) is the valid one, as (e)'s reading of 6876932 used.
 
 ## Residual shapes recorded
 

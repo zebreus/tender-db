@@ -84,3 +84,10 @@ API reads of the measurement and skeptics: `raw-cache.tar.gz` (unit 3's tests ar
 extract it into this folder first). Interactions: 567 (B rests on its same-notice resolution), 568 (shared matcher; two
 568 test assertions are re-specified on purpose because a swap is now resolved), 551 (path W's R2 inputs change; the port
 must apply the remap; B5's flip waits for this drain and B3's re-run), 364 (two welded Tenders are recorded there).
+
+## Follow-on exhibit (2026-10-18, read-back O6)
+
+For decision.md Unit 7 (567's single-section no-number placement, beside 6120045 and 7025760): **8371908** CAN 21510251
+RES-1, a EUR 2.97 bn award, prints "Lot No. 3 - Lot 1C …", which 567's same-notice normalisation does not read, so it
+serves `lot: null` before and after the combined drain. The notice's only lot section, LOT_NO 3, is now remapped from
+its own LOT-1 to LOT-3. Read-back: `568-r208-lots/readback-u8/readback.md`.

@@ -203,9 +203,20 @@ among its 71.
   ids changes: titles, facts, results and lot-scoped winner parties. This happens at the versions caused by remapped
   notices and at the head. Each such id returns to the identity its first notice gave it. Today's fold renamed it at
   a later version (7697322's v3 renamed LOT-2..14; 6633011's v2 renamed LOT-3..6).
+  - **Caveat (read-back O4, 2026-10-18).** The return fails where K1-refused notices re-keyed the carry first. A
+    refused notice stays on today's positional merge (step 5), so a later section joins the carried lot that prints
+    its number, not the anchor's lot at that key. 6876932, yearly re-tenders by one buyer 2020–2023 with two
+    interleaved numberings, has K1-refused 21923843, 22231117 and 22219592 at v4, v6 and v7. Its 34 moved sections
+    each join the carried lot printing the same number and title, so no number names two lots, but not the anchor
+    CN's titles. No award moved, and the head equals the remap-off head. No 570 fix: the chain is a weld, filed on
+    364.
 - **Announced as corrections.** D3 writes one `tender changed` per corrected Tender, plus `lot changed`
-  (`version: null`) for every lot of the head version. That averages 10.5 head lots across the 8 changed Tenders, so
-  ≈ 250 k rows (100–500 k). Transition rows are not re-emitted (D4).
+  (`version: null`) for every lot of the head version only when something at the head differs, and for every lot
+  whose own rows differ at any seq. That is ADR-0017 D3 rule L, which is what is built (corrected 2026-10-18,
+  read-back O5; this sentence said "every lot of the head version"). The fresh 30 shows it: 270 of 274 lots had one
+  event, and the 4 without are 6876932's LOT-1/19/22/23, whose rows are the same with the remap on and off. The
+  estimate counted every head lot, 10.5 on average across the 8 changed Tenders, so its ≈ 250 k rows (100–500 k) is
+  high where the head does not differ. Transition rows are not re-emitted (D4).
 - **Subscriptions.** Subscriptions are filters, not lot ids, so nothing migrates. SSE on `/v1/lots` can see
   `added` / `removed` where a moved award changes `winner` or `min_value` membership (D4; issue 565's caveat).
   Mirrors re-read by id.
@@ -328,6 +339,10 @@ among its 71.
    - (g) **`lot removed` rows** in the window attributable to 570: expected 0.
 7. **Follow-on, not this build.** 567's single-section no-number placement (6120045, 7025760), measured and decided
    on its own.
+   - **Exhibit (read-back O6, 2026-10-18):** 8371908 CAN 21510251 RES-1, a EUR 2.97 bn award. The block prints "Lot
+     No. 3 - Lot 1C …", which 567's same-notice normalisation does not read, so it serves `lot: null` before the
+     drain and after. The notice's only lot section, LOT_NO 3, is now remapped from its own LOT-1 to LOT-3. Neither
+     568-u8 nor 570 moved the block.
 
 ## What the issue records
 

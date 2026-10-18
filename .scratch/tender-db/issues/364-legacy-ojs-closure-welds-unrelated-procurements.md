@@ -1016,3 +1016,12 @@ procurements, which the gauge lists and this issue never claimed. 4228069 (`ojs:
 versions before) is absent from the top 40 on both reports, consistent with the exhibit read on 09-13.
 Nothing remains open; the `A`/`M` (with-call-for-competition) sizing is a question for the r2.0.9 era
 if anyone needs the split, not a deliverable here.
+
+## Evidence (2026-10-18, 570 read-back)
+
+**6876932**: a weld of yearly re-tenders by one buyer, 2020–2023, with two interleaved lot numberings. Met in 570's
+fresh-30 read-back (`568-r208-lots/readback-u8/readback.md`, (e) and O4); 0 of 570's 211 replayed chains had the shape.
+Three of its notices (21923843, 22231117, 22219592, at v4, v6 and v7) were refused by 570's K1 and re-keyed the carry
+by position, so its lots no longer follow the anchor CN's titles. 570's remap joins each later section to the carried
+lot printing the same number and title ("Produits surgelés" prints 3 in every notice), and no award moved. Printed
+numbers cannot separate re-tenders welded into one Tender, so no 570 fix follows from it.
