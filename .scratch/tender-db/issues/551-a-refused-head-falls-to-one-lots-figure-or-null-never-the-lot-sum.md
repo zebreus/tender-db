@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; DEPLOYED 86f2745 2026-10-17 23:00Z — nothing served changes). **B3 PASSED 2026-10-18** (wf_643ad3a2-3ba, after 567/568/570 drained: Rust = remap-aware port on 5,307 rows, projection parity clean, v2 ⊆ v1; `551-lot-sum/b3/B3-result.md`). The drains moved the port's own outcomes: 18 NEW ships, 0 lost; the ≥ EUR 100 m band is now 20 (M2's 15 + 6569442, 6603588, 6679375, 7139761, 7542368). NEXT: an M2-bar read of the 18 new ships (band: 0 wrong of any class) BEFORE B4; then B4, B5 (port of record: `b3/rule_v2_b3.py`).
+Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; DEPLOYED 86f2745 2026-10-17 23:00Z — nothing served changes). **B3 PASSED 2026-10-18** (wf_643ad3a2-3ba, after 567/568/570 drained: Rust = remap-aware port on 5,307 rows, projection parity clean, v2 ⊆ v1; `551-lot-sum/b3/B3-result.md`). The drains moved the port's own outcomes: 18 NEW ships, 0 lost; the ≥ EUR 100 m band is now 20 (M2's 15 + 6569442, 6603588, 6679375, 7139761, 7542368). **The 18 READ 2026-10-18** (wf_24a65e6a-e63, reader + skeptic on every head): 18/18 right, band 5/5 right, 0 wrong → reference band set for B5 = **20**. NEXT: B4 (served text) + B5 (flip, cohort drain, corpus drain, confirm; stop window 835–3,338) — and **no lot-key drain may land before B5's band seek** (read18 note 2: 4 partial-sum heads, 6679375 a band head, would leave R10's vouch if their lot-null rows were keyed). Port of record: `b3/rule_v2_b3.py`.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -1044,3 +1044,21 @@ independent re-run that reproduced every output byte for byte).
   No longer v1 fires: 5571139, 5669744, 6852738, 6969157, 7372694, 7495109. **Band (≥ EUR 100 m) = 20**: M2's 15 plus
   6569442, 6603588, 6679375, 7139761, 7542368 — B5's stop rule "a band set different from M2's" would trip, so these
   are read under M2's bars BEFORE B4 (the 5 band heads: 0 wrong of any class; all 18 read, every ship with a skeptic).
+
+## The 18 post-drain new ships — read (2026-10-18, workflow wf_24a65e6a-e63)
+
+`551-lot-sum/b3/read18/read18.md` / `.json`. Reader and adversarial skeptic on every head; a head counts right only when
+both agree (no third reader was needed).
+- **18 of 18 right / ok**; 0 neutral, 0 wrong. Band bar (0 wrong of any class): the 5 new band heads 6569442,
+  6603588, 6679375, 7139761, 7542368 are 5/5 right → **PASS**. M2's 15 band heads did not move (B3-movers: same S), so
+  their 15/15 stand. **B5's reference band set is 20**: 683951, 707424, 726354, 1102571, 1147190, 1148297, 5278856,
+  5842187, 6017838, 6057925, 6195903, 6370901, 7001924, 7011414, 8426318 + the 5 above.
+- 5985466 and 6603588 (labelled double_count on their pre-drain sums) read right on the post-drain sums: the drains
+  removed the double count.
+- **Partial sums (right, but fragile):** 6679375 (band; leaves out lot 3's EUR 29.8 m in 20916402), 7153588, 7398935,
+  7722197 each leave out an award sitting on a lot-null row of a single-Lot-section notice whose LotResult prints no
+  LOT_NO; S equals one notice's VAL_TOTAL exactly, so R10 vouches. A later drain keying those rows (570 unit 7's
+  follow-on, 567's single-section no-number placement) would make S the full figure, which no stated total vouches
+  within 1 %: 6679375 would leave the band and B5's band stop rule would trip. **So no lot-key drain before B5's band
+  seek**; if one lands, re-run the B3 port diff and read any band change. Follow-up idea (not filed): R10 accepting the
+  sum of disjoint notice totals.

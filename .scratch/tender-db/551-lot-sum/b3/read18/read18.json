@@ -1,0 +1,1083 @@
+{
+ "summary": {
+  "read": "551 path W v2 -- M2-bar read of the 18 post-drain new ships (read18)",
+  "date": "2026-10-18",
+  "protocol": "reader + skeptic on every ship; right only when both agree (or a third reader decides)",
+  "counts": {
+   "right": 18
+  },
+  "band_heads": [
+   6569442,
+   6603588,
+   6679375,
+   7139761,
+   7542368
+  ],
+  "band_bar": "0 wrong of any class among the 5 new band heads (neutral allowed)",
+  "band_result": "PASS",
+  "band_right": 5,
+  "other13_wrong": 0,
+  "other13_wrong_classes": [],
+  "neutral_ids": [],
+  "undecided_ids": [],
+  "third_readers_used": 0,
+  "m2_band15_S_moved_by_drain": [],
+  "band_set_20": [
+   683951,
+   707424,
+   726354,
+   1102571,
+   1147190,
+   1148297,
+   5278856,
+   5842187,
+   6017838,
+   6057925,
+   6195903,
+   6370901,
+   6569442,
+   6603588,
+   6679375,
+   7001924,
+   7011414,
+   7139761,
+   7542368,
+   8426318
+  ],
+  "partial_sum_ids": [
+   6679375,
+   7153588,
+   7398935,
+   7722197
+  ],
+  "recommendation": "proceed to B4 with the band set of 20"
+ },
+ "heads": [
+  {
+   "id": 5862601,
+   "group": 1,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 168317519600,
+   "currency": "HUF",
+   "n": 19,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2a",
+    "S_cents": 117355972400,
+    "currency": "HUF",
+    "n": 19
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 168317519600,
+    "stated_source": "CAN 19576559 VAL_TOTAL",
+    "truth_cents": 168317519600,
+    "served_head_cents": 52600960600,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -68.75
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [
+    "20229342 (LOT_NO 5.)",
+    "20563776 (LOT_NO 6.)"
+   ],
+   "note": "Publication-number collision links 19599673 / 19715555 (Stockport Homes) to this tender; null awards, not summed.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 5862601,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "HUF 526,009,606.00 (lot 1's award alone, copied from 20669841 / CAN 19576559)",
+     "stated_total": "HUF 1,683,175,196.00 as VAL_TOTAL / VALUE PROCUREMENT_TOTAL in CAN 19576559; CN 19158470 VAL_ESTIMATED_TOTAL HUF 1,726,631,004.00",
+     "why": "S is HUF 1,683,175,196.00 and equals CAN 19576559's procedure VAL_TOTAL exactly. The CN estimate of HUF 1,726,631,004 is that total plus lot 17's estimate of HUF 43,455,808 (19158470); lot 17 is RES-17 PROCUREMENT_UNSUCCESSFUL and is correctly left out. The 19 summed keys, LOT-1..16 and LOT-18..20, match the printed LOT_NO 1..16 and 18..20 in 19576559. Each has its own title (meat, frozen, dairy, dry goods, then produce and bakery lots for each of 8 institutions), so they are distinct real lots. Latest award per key, by notice: LOT-1 20669841 HUF 526,009,606; LOT-2 20556023 146,686,873; LOT-4 20279830 284,966,360; LOT-7 20379773 19,684,980; LOT-13 20672363 16,394,134; the rest from 19576559. Each of these re-keyed modification awards prints the same LOT_NO as its key (1, 2, 4, 7, 13). Two modifications (20229342, LOT_NO 5; 20563776, LOT_NO 6) still carry no lot key, but their awards equal the CAN's lot 5 and lot 6 figures (9,417,870 and 42,736,953), so S is unchanged. The figures are additive: TED-FRAMEWORK=1, but each lot has one winner (consortium lots 1, 2 and 4 carry AWARDED_TO_GROUP), each lot has its own value, and the buyer's own total is their sum. There is no shared ceiling. No x10^k slip. The modifications' VAL_TOTAL_AFTER rises are ignored, as they should be. 19599673 (Stockport Homes / TLC) is linked by mistake through a publication-number collision; it has a null award and is not summed. Today's head is 31% of the stated total, while S equals it."
+    },
+    "skeptic": {
+     "id": 5862601,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "HUF 526,009,606.00, which is lot 1 alone (lot_results LOT-1 from 20669841, 19576559 and 20279497; amounts.result_value 52600960600).",
+     "stated_total": "CAN 19576559 VAL_TOTAL = VALUE (PROCUREMENT_TOTAL) HUF 1,683,175,196.00. CN 19158470 VAL_ESTIMATED_TOTAL HUF 1,726,631,004.00, which is that total plus lot 17's VAL_OBJECT of 43,455,808.",
+     "why": "I re-fetched every notice myself and could not refute the reader. S = HUF 1,683,175,196.00 equals CAN 19576559's procedure VAL_TOTAL, which is also its VALUE with type PROCUREMENT_TOTAL, to the forint. The 19 RES VAL_TOTALs for LOT_NO 1..16 and 18..20 add up to exactly that figure. RES-17 has NO_AWARDED_CONTRACT and PROCUREMENT_UNSUCCESSFUL, so lot 17 is rightly left out. CN 19158470's VAL_ESTIMATED_TOTAL of 1,726,631,004 is S plus lot 17's VAL_OBJECT of 43,455,808, exactly. Every awarded lot's CN VAL_OBJECT equals its CAN VAL_TOTAL.\n\nEach lot key matches the LOT_NO the notice prints, and each lot has its own title: meat, frozen food, dairy and dry goods, then produce (lots 5-12) and bakery (13-20) for each of 8 institutions. They are distinct real lots.\n\nRe-keyed modifications. Each prints its key's LOT_NO and an RES VAL_TOTAL equal to the CAN figure:\n- 20669841 and 20279497: LOT_NO 1, 526,009,606\n- 20556023 and 20280019: LOT_NO 2, 146,686,873\n- 20279830: LOT_NO 4, 284,966,360\n- 20379773: LOT_NO 7, 19,684,980\n- 20672363: LOT_NO 13, 16,394,134 (its Lot-section title is the procedure title, but its RES title is the lot 13 bakery lot \"Harmónia\")\n\nLOT-1 has three result rows and LOT-2 has three. S still equals the CAN sum, so taking the latest award per key counted no lot twice.\n\n20229342 and 20563776 print LOT_NO \"5.\" and \"6.\" in their Lot sections and carry no key. Their awards (9,417,870 and 42,736,953) equal CAN lots 5 and 6, and they are not added again.\n\nThe figures are additive. The CN has FRAMEWORK=1 and SINGLE_OPERATOR=1: each lot is its own single-operator framework, and each value is that lot's own ceiling. Lots 1, 2 and 4 went to consortia (AWARDED_TO_GROUP), and each has one VAL_TOTAL, not one per member. No ceiling is repeated across lots, and the buyer's own total is their sum.\n\nThere is no x10^k slip. The VAL_TOTAL_AFTER rises (lot 1 to 527,360,551, lot 2 to 148,881,229, lot 7 to 21,310,714, lot 13 to 17,958,926, lot 5 to 10,358,715, lot 6 to 46,631,667) would raise the total by only about 0.7%, and the rule ignores them. 19599673 and 19715555 (Stockport Homes) are linked through a publication-number collision; they carry no award value and are not summed.\n\nToday's head of 526,009,606 is lot 1 alone, 31% of the stated total. S equals the stated total."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 5888594,
+   "group": 1,
+   "band": false,
+   "population": "walk",
+   "S_cents": 9168377200,
+   "currency": "HUF",
+   "n": 2,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 9168377200,
+    "currency": "HUF",
+    "n": 2
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 9168377200,
+    "stated_source": "CAN 19383494 VAL_TOTAL",
+    "truth_cents": 9168377200,
+    "served_head_cents": 7942007900,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -13.38
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [
+    "20505389 (LOT_NO 2.)"
+   ],
+   "note": null,
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 5888594,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "HUF 79,420,079.00 (lot 1's award alone, 20495114 / CAN 19383494)",
+     "stated_total": "HUF 91,683,772.00 as VAL_TOTAL / VALUE PROCUREMENT_TOTAL in CAN 19383494 (CN 19214831 has no total)",
+     "why": "S is HUF 91,683,772.00 and equals CAN 19383494's procedure VAL_TOTAL exactly. That total is lot 1's 79,420,079 (Monostor-Erdo Bt., LOT_NO '1.', Del-borsodi area) plus lot 2's 12,263,693 (Janosik es Tarsai Kft., LOT_NO '2.', Del-hevesi area). They are distinct real lots, with different winners, titles and LOT_NOs, matching CN 19214831's lots 1 and 2. Latest award per key: LOT-1 from 20495114 (LOT_NO 1, HUF 79,420,079); LOT-2 from 19461701 (LOT_NO '2.' printed in its LOT-1 ordinal section, now correctly re-keyed to LOT-2, HUF 12,263,693). The later modification 20505389 (LOT_NO 2) is still stored with lot null, but its award is the same HUF 12,263,693, so S does not change. Each lot is a single-supplier framework (keretszerzodes) with its own value, so the figures are additive. No x10^k slip. The VAL_TOTAL_AFTER rises in the modifications (86,567,879 and 13,350,331) do not count. Today's head leaves out lot 2; S matches the buyer's total."
+    },
+    "skeptic": {
+     "id": 5888594,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "HUF 79,420,079.00 (the lot-1 award copy; value_derivation null; v6)",
+     "stated_total": "HUF 91,683,772.00 (CAN 19383494 PROCEDURE VAL_TOTAL = TED-VALUE, VALUE.TYPE PROCUREMENT_TOTAL)",
+     "why": "I tried to refute the reader and could not. I re-read all six notices myself and the verdict holds.\n(1) Stated total: CAN 19383494 PROCEDURE VAL_TOTAL is HUF 91,683,772 (TED-VALUE type PROCUREMENT_TOTAL). It equals its RES-1 (LOT_NO '1.', Monostor-Erdo Bt., Del-borsodi, VAL_TOTAL = VAL_ESTIMATED_TOTAL = 79,420,079) plus RES-2 (LOT_NO '2.', Janosik es Tarsai Kft., Del-hevesi, 12,263,693). CN 19214831 prints no value. It does print two lots, '1.' and '2.': lot 1 is 11,300 trees plus 13 ha clearing, 24 ha wood-pasture and 800 m of fence; lot 2 is 1,000 trees plus 1,600 seedlings. That scope ratio fits the 79M/12M split.\n(2) Lot keys after 567/568/570: LOT-1 is held by 19383494 RES-1, 19454460 (LOT_NO '1.', 79,420,079) and 20495114 (LOT_NO '1', 79,420,079, latest). LOT-2 is held by 19383494 RES-2 and 19461701, whose LOT_NO '2.' is printed in its LOT-1 ordinal section and is now correctly re-keyed LOT-2 (12,263,693, latest keyed). No notice is keyed to the wrong lot, and winners and titles agree within each key. S = 79,420,079 + 12,263,693 = 91,683,772, n = 2, so the lot-null row is not added. One residue: modification 20505389 is still stored lot null. Its Lot section prints LOT_NO '2.' and its LotResult prints '2', which is probably why it did not key. Its award VAL_TOTAL is the same 12,263,693, so keying it LOT-2 would not change S.\n(3) Additivity: each lot is its own single-supplier framework (szolgaltatasi keretszerzodes) with its own keretosszeg (framework amount), different supplier and different area. No ceiling is shared. The 2019 modifications themselves speak of the combined net value of the contracts concluded for the procedure's parts, which confirms the per-lot contracts add up. The VAL_TOTAL_AFTER increases (86,567,879 in 20495114 and 13,350,331 in 20505389) are post-award contract changes, not awards, and are rightly left out. A minor buyer-side discrepancy: 20505389 gives lot 2's original fee as 12,248,031, about 0.13% off 12,263,693. It is immaterial.\n(4) No x10^k slip: both figures agree across the CAN, the corrigenda and the modifications. No figure repeats across the lots (G1' does not apply).\n(5) Today's head of 79,420,079 leaves out lot 2 and is 12,263,693 (13.4%) below the buyer's stated total. S matches that total exactly."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 5985466,
+   "group": 1,
+   "band": false,
+   "population": "labelled-mid",
+   "S_cents": 9600338066,
+   "currency": "EUR",
+   "n": 3,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2a",
+    "S_cents": 12479415316,
+    "currency": "EUR",
+    "n": 4
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 9600338000,
+    "stated_source": "CAN 19749944 VAL_TOTAL",
+    "truth_cents": 9600338000,
+    "served_head_cents": 4348897245,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -54.7
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "Pre-drain n=4 sum (EUR 124.79 m) counted lot 4 twice (labelled double_count then); the drain removed it.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 5985466,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 43,488,972.45 (lot 2's award alone, modification 21816503)",
+     "stated_total": "EUR 96,003,380.00 as VAL_TOTAL / VALUE PROCUREMENT_TOTAL in CAN 19749944 (CN 19409413 has no value)",
+     "why": "S is EUR 96,003,380.66. That is the latest awards on LOT-2 (21816503, LOT_NO 2, EUR 43,488,972.45), LOT-3 (21829684, LOT_NO 3, 23,723,635.05) and LOT-4 (21831627, LOT_NO 4, 28,790,773.16). It is within EUR 0.66 of CAN 19749944's VAL_TOTAL of EUR 96,003,380.00, which is the sum of that CAN's lot awards (43,488,972 + 23,723,635 + 28,790,773). Lot 1 (Nord-Est) is PROCUREMENT_DISCONTINUED and is correctly left out. The three keys are distinct real lots (Sud, Ouest, Nord-Ouest du departement), each a separate design-build contract (18001, 18002, 18003). They match CN 19409413's and CAN 19749944's LOT_NO 2, 3 and 4. The 2021 modifications print the lot in an ordinal LOT-1 section, but the drains now key them to LOT-2, 3 and 4. The pre-drain n=4 sum of EUR 124.79m counted lot 4 twice; that is gone, and n=3 now. The COVID VAL_TOTAL_AFTER rises (44.51m, 24.36m, 30.43m) are ignored, as they should be. Not a framework, and no x10^k slip. Today's head is 45% of the stated total, while S matches it."
+    },
+    "skeptic": {
+     "id": 5985466,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 43,488,972.45 (lot 2 only, from 21816503)",
+     "stated_total": "EUR 96,003,380.00 (CAN 19749944 TED-VAL_TOTAL / TED-VALUE, PROCUREMENT_TOTAL)",
+     "why": "I re-read the notices and tried to refute the reader's \"right\". I couldn't. (1) Stated total: CAN 19749944 PROCEDURE has TED-VAL_TOTAL = TED-VALUE (PROCUREMENT_TOTAL) = EUR 96,003,380.00. Its lot results are RES-2 43,488,972, RES-3 23,723,635 and RES-4 28,790,773, which add to exactly 96,003,380. RES-1 (LOT_NO 1, Nord-Est) is PROCUREMENT_DISCONTINUED / NO_AWARDED_CONTRACT. CN 19409413 and corrigendum 19415310 carry no value or estimate; the corrigendum only moves dates. (2) Latest award per lot comes from the 2021 F20 modifications. 21816503: LOT_NO 2 in both the Lot and RES sections, Sud, contract 18001, 25,057 prises / 8 NRO, VAL_TOTAL 43,488,972.45. 21829684: LOT_NO 3, title lot no 3, contract 18002, 29,198 prises / 6 NRO, 23,723,635.05. 21831627: LOT_NO 4, Nord-Ouest, contract 18003, 29,682 prises / 8 NRO, 28,790,773.16. These are three distinct real contracts. They match the CN/CAN LOT_NO 2/3/4, and the API now keys them LOT-2/3/4. No second award row sits on any key: LOT-1 holds only the discontinued CAN row with awarded null. S = 43,488,972.45 + 23,723,635.05 + 28,790,773.16 = 96,003,380.66, which is EUR 0.66 off the stated total. The cents are the mods' unrounded versions of the CAN's whole-euro figures. I reproduced the pre-drain n=4 figure of 124,794,153.16 as CAN 43,488,972 + 23,723,635 + 28,790,773 plus a second 28,790,773.16 from 21831627. So lot 4 really was counted twice before the drain, and that is gone now. (3) No x10^k slip. The figures match across the CAN and the mods. The mods' VAL_TOTAL_BEFORE/AFTER figures (44.02m to 44.51m, 24.06m to 24.36m, 30.12m to 30.43m) are amendment values, not lot awards, and S correctly leaves them out. Even if the post-amendment truth (about 99.31m) were the target, S is far closer than today's head. Additivity: these are separate design-build works contracts with separate winner groups (Resonance/Sobeca/Somelec on lot 2, Axione/Bouygues on lots 3 and 4). There is no framework and no shared ceiling. The winner sets differ between the CAN and the mods, but the values and lot identities match, so the verdict holds. (4) Today's head of 43,488,972.45 is one lot, 45% of the stated total. S matches the buyer's total, so it is clearly better."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 6317191,
+   "group": 2,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 6137815000,
+   "currency": "CHF",
+   "n": 6,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2a",
+    "S_cents": 5393532500,
+    "currency": "CHF",
+    "n": 6
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 6167807500,
+    "stated_source": "F03 20431961 VAL_TOTAL (truth = after lot-3 re-award 20515863)",
+    "truth_cents": 6137815000,
+    "served_head_cents": 752105000,
+    "S_vs_stated_pct": -0.49,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -87.75
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "S is 0.49% under the stated total by exactly the lot-3 withdrawal and re-award (20515863); S is the current truth.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 6317191,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "CHF 7,521,050.00 (result_value: the lot-3 re-award notice 20515863 alone)",
+     "stated_total": "CHF 61,678,075.00 TED-VAL_TOTAL/VALUE in award notice 20431961 (2019/S 095-231052), the sum of the 6 original lot awards. The CN 20050642 (F02) states no value.",
+     "why": "Award notice 20431961 (F03) awards lots 1-6, each with ITEM equal to LOT_NO: 15,263,800 / 4,033,050 / 7,820,975 (Careum) / 10,022,500 / 15,258,500 / 9,279,250. Notice 20515863 (F03) prints LOT_NO 3 (on ITEM 1) and re-awards lot 3 to SRK Kanton Bern for 7,521,050. Its INFO_ADD says the lot-3 winner withdrew its bid and the second-ranked bidder gets the contract. The API now keys that result on LOT-3, matching the printed number. Before the drain it sat on LOT-1, which is where the old S of 53,935,325 came from (61,678,075 - 15,263,800 + 7,521,050). The 6 summed keys are now distinct real lots, each at its latest award: S = 61,678,075 - 7,820,975 + 7,521,050 = CHF 61,378,150.00. That is 0.49% under the stated total, a gap fully explained by the withdrawal, so S is the actual current total. No x10^k slip (lots run 4.0m to 15.3m, base plus options). Each lot has its own winner and value, so the figures add. Today's head is one lot (12% of the total). S is far closer."
+    },
+    "skeptic": {
+     "id": 6317191,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "CHF 7,521,050.00 (the TED-VAL_TOTAL of notice 20515863, which covers only the lot-3 re-award)",
+     "stated_total": "CHF 61,678,075.00 (TED-VAL_TOTAL / TED-VALUE PROCUREMENT_TOTAL in F03 20431961). Contract notice 20050642 (F02) gives no estimated total.",
+     "why": "I tried to refute the reader and could not. Contract notice 20050642 (F02) sets out six lots, each with ITEM equal to LOT_NO 1..6 and its own title: 1 Communication, 2 Soins, 3 Assistance aux personnes âgées, 4 Handicap, 5 Enfants, 6 Adolescents. It prints no estimated value. Award notice 20431961 (F03) has six RES sections, each with ITEM equal to LOT_NO and one contractor (NO_AWARDED_TO_GROUP=1). Its VAL_TOTAL figures are 15,263,800 (SRK Bern), 4,033,050 (SRK Bern), 7,820,975 (Careum), 10,022,500 (Agogis/ARPIH), 15,258,500 (Curaviva) and 9,279,250 (Curaviva). They add up exactly to the procedure VAL_TOTAL of 61,678,075. Notice 20515863 (F03) prints LOT_NO 3 against ITEM 1 in both its Lot section and RES-1. Its INFO_ADD says the winner of lot 3 «Assistance aux personnes âgées» withdrew and the second-ranked bidder gets the contract: base 2,700,450 plus options 4,820,600, which is 7,521,050, awarded to SRK Bern. NB_TENDERS_RECEIVED=2 there, which matches lot 3's 2 tenders in 20431961. The API now has 7 lot_results: LOT-1..6 from 20431961, plus LOT-3 from 20515863 (decided 2019-07-08, later than 2019-05-09). Each lot's latest award therefore uses the 6 distinct keys LOT-1..LOT-6, and lot 3 is counted once, at 7,521,050. The old LOT-1 mis-key, which gave 53.9m, is gone. My own sum: 15,263,800 + 4,033,050 + 7,521,050 + 10,022,500 + 15,258,500 + 9,279,250 = 61,378,150, which equals S_cents. That is 299,925 (0.49%) below the stated total, exactly the difference between the withdrawn Careum award and the replacement award. There is no x10^k slip: the INFO_ADD base-plus-options breakdowns (6,184,900 + 9,078,900 = 15,263,800 for lot 1, and 2,700,450 + 4,820,600 for lot 3) confirm the unit scale. The figures add because each lot has its own sole winner and its own price; there is no framework ceiling shared across lots. Today's head of 7.52m is one lot, 87.8% below the stated total. S is closer to the truth than the stated total itself."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 6569442,
+   "group": 2,
+   "band": true,
+   "population": "labelled-mid",
+   "S_cents": 24468101000,
+   "currency": "CHF",
+   "n": 29,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 18213999000,
+    "currency": "CHF",
+    "n": 21
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 24468101000,
+    "stated_source": "F03 20743713 VAL_TOTAL",
+    "truth_cents": 24468101000,
+    "served_head_cents": 1540000000,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -93.71
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "30 lot sections in string-sorted ITEM order; skeptic checked all 31 lot_results against printed LOT_NO: 0 mismatches.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": true
+   },
+   "reads": {
+    "first": {
+     "id": 6569442,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "CHF 15,400,000.00 (result_value: lot 4 alone, from single-lot notice 20743048)",
+     "stated_total": "CHF 244,681,010.00 TED-VAL_TOTAL/VALUE at notice level in award notice 20743713 (2019/S 225-552991). CN 20547915 and corrigendum 20624702 state no value.",
+     "why": "Award notice 20743713 lists its 30 lot sections in string-sorted order (ITEM 2 = LOT_NO 10, ITEM 12 = LOT_NO 2, and so on). The old ITEM keying collided 30 results onto 21 keys, giving the pre-drain S of CHF 182.1m over n=21 (the S3d shape, earlier labelled neutral). Today every lot_result key equals its RES row's printed LOT_NO: RES-25 to LOT-4 at 15,400,000, RES-2 to LOT-10 at 9,269,520, RES-10 to LOT-18 at 2,288,880, RES-29 to LOT-8 not awarded (NO_AWARDED_CONTRACT), and so on. The separate notice 20743048 prints LOT_NO 4 = 15,400,000, which independently confirms the LOT_NO mapping (under ITEM keying, ITEM 4 would be 1,402,500). The 29 awarded lots are distinct job profiles from the CN (lot 1 Servicemanager ... lot 26 Architekt, 40,272,000). Each lot carries one VAL_TOTAL shared by its winners, not a per-supplier figure and not a ceiling repeated across lots. Lot 4 is counted once at its latest award (20743048, same 15.4m). S = CHF 244,681,010.00, exactly the buyer's own total, so the figures are additive in the buyer's terms. No slip (lots run 823,350 to 40,272,000). Today's head is one lot, 6.3% of the total."
+    },
+    "skeptic": {
+     "id": 6569442,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "CHF 15,400,000.00 (result_value, the procedure VAL_TOTAL of the one-lot notice 20743048, i.e. lot 4 only, 6.3% of the buyer total)",
+     "stated_total": "CHF 244,681,010.00 (TED-VAL_TOTAL and TED-VALUE PROCUREMENT_TOTAL on award notice 20743713). The CN 20547915 states no value and corrigendum 20624702 changes dates only.",
+     "why": "I re-fetched /v1/tenders/6569442 and the content of 20547915 (CN), 20624702 (corrigendum), 20743713 (30-lot award) and 20743048 (lot-4 award), and tried to refute the verdict. I could not.\n\n(1) Stated total: 20743713 gives VAL_TOTAL CHF 244,681,010.00. The sum of its own 30 RES rows is exactly 24,468,101,000 cents, so the buyer's total equals the sum of its lot figures. 20743048 gives a procedure VAL_TOTAL of 15,400,000, but that notice covers lot 4 only, and today's head comes from it. No VAL_ESTIMATED_TOTAL or II.1.7 figure exists anywhere.\n\n(2) Re-keying: I checked all 31 served lot_results against their RES rows by key. Each served lot equals 'LOT-' plus the printed TED-LOT_NO, and each awarded figure equals that row's VAL_TOTAL, with 0 mismatches. Examples: RES-2 to LOT_NO 10 at 9,269,520; RES-12 to LOT_NO 2 at 5,441,120; RES-19 to LOT_NO 26 at 40,272,000 ('Architecte en TIC' in the CN); RES-29 to LOT_NO 8 marked NO_AWARDED_CONTRACT / PROCUREMENT_DISCONTINUED. The 20743713 Lot sections do print ITEM differently from LOT_NO (ITEM 2 = LOT_NO 10, ITEM 4 = LOT_NO 12), but the served keys follow LOT_NO, and 20743048 independently prints LOT_NO 4 = 15,400,000.\n\nThe 29 summed lots are distinct, each keyed once, and each is a different job profile in CN 20547915, all running 2020-01-01 to 2024-12-31. Lot 4 has two results: 20743713 RES-25 and 20743048 RES-1, both 15,400,000, with three of four winners shared (GHR replaces Kidston). S counts lot 4 once, at the latest award. Recomputed S = 24,468,101,000 cents with n = 29, which matches the item.\n\nShared envelopes: each RES row carries exactly one VAL_TOTAL for its winner group (AWARDED_TO_GROUP, 1 to 8 organisations). There is no per-supplier figure and no ceiling repeated across lots, since all 29 values differ. The buyer's own procedure total is their sum, so the figures add up in the buyer's terms. Even if 20743048 were an extra award rather than a correction, the truth would be at most 260.1m, and S would still be far closer than 15.4m.\n\n(3) Slip: none. Lots run from 823,350 (lot 15, one bidder) to 40,272,000 (lot 26, 8 winners), and S matches the printed total to the cent.\n\n(4) Today's head is 15.4m, one lot. S equals the stated total exactly, so it is clearly the best total for this procedure.\n\nFiles: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b3/read18/sk6569442/"
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 6595330,
+   "group": 2,
+   "band": false,
+   "population": "labelled-sample",
+   "S_cents": 229519500,
+   "currency": "EUR",
+   "n": 2,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 229519500,
+    "currency": "EUR",
+    "n": 2
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 229519500,
+    "stated_source": "F03/F06 20747457 VAL_TOTAL",
+    "truth_cents": 229519500,
+    "served_head_cents": 194040000,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -15.46
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "Post-modification total EUR 2,324,870 (21528648): S -1.3%, head -16.5%.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 6595330,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 1,940,400.00 (result_value: lot 1 alone)",
+     "stated_total": "EUR 2,295,195.00 TED-VAL_TOTAL/VALUE at notice level in award notice 20747457 (2019/S 226-555713). Later modification 21528648 states VAL_TOTAL_BEFORE 2,295,195 and VAL_TOTAL_AFTER 2,324,870, a modification kind the rule does not count. CN 20610426 states no value.",
+     "why": "Award notice 20732304 prints LOT_NO 1 (contract 4.1-21/19/35) at 1,940,400. Award notice 20747457 prints LOT_NO 2 on ITEM 1 (contract 4.1-21/19/37) at 354,795. The API keys them on LOT-1 and LOT-2, and its modification rows match too: 21229640 and 21528648 on LOT_NO 1 (1,940,400), and 21049685 with a LOT-1 section printing LOT_NO 2 now on LOT-2 (354,795). Two distinct lots, two distinct contracts, same winner (Wesico): S = 1,940,400 + 354,795 = EUR 2,295,195.00, exactly the stated procedure total. No slip. Even against the post-modification total of 2,324,870 (lot 1 raised to 1,970,075 by 21528648), S is 1.3% under while today's head is 16.5% under. S is the better total."
+    },
+    "skeptic": {
+     "id": 6595330,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 1,940,400.00 (lot 1's award alone, result_value lot-null; leaves out lot 2)",
+     "stated_total": "EUR 2,295,195.00 (TED VAL_TOTAL, award notice 20747457) at award; EUR 2,324,870.00 after the 21528648 modification (VAL_TOTAL_AFTER)",
+     "why": "I re-read all 7 notices fresh, saved under read18/sk6595330/raw, and could not refute the reader. (1) Stated totals: contract notice 20610426 (F05) and corrigendum 20667929 state no estimate. Award notice 20732304 (F06) has procedure VAL_TOTAL 1,940,400, but that notice awards only lot 1, so it is lot 1's own total and not a conflicting procedure total. The next award notice, 20747457, has procedure VAL_TOTAL 2,295,195.00. That equals S exactly and is not that notice's own award (354,795), so it can vouch under R10. The F20s agree: 21049685 and 21229640 print VAL_TOTAL_AFTER 2,295,195, and 21528648 prints BEFORE 2,295,195 and AFTER 2,324,870, a +29,675 rise on lot 1 to 1,970,075. (2) The lots are distinct, so nothing is double counted. Lot 1 is printed LOT_NO 1, contract 4.1-21/19/35 (Võrumõisa), 1,940,400, in 20732304 (concluded 2019-11-06), 21229640 and 21528648. Lot 2 is printed LOT_NO 2, contract 4.1-21/19/37 (Navi, titled 'osa 2'/'Osa 2'), 354,795. It appears in 20747457, whose RES-1 has ITEM 1 but LOT_NO 2, and in 21049685, whose Lot section is labelled LOT-1 but prints LOT_NO 2. The API keys them correctly: 20732304, 21229640 and 21528648 on LOT-1, and 20747457 and 21049685 on LOT-2. That covers all 5 lot_results rows, so no lot sits on two keys after the 567/568/570 re-keying. (3) No slip. The lots are separate works contracts, not a framework, so the figures add. The lot sizes match the reference requirements (6,000 m vs 1,500 m of pipe), and 1,940,400 + 354,795 = 2,295,195 to the cent. (4) Today's head of 1,940,400 is 15.5% under the award-time total and 16.5% under the post-modification total. S equals the award-time total and is 1.3% under the post-modification total. One caveat: S uses lot 1's at-conclusion award (RES VAL_TOTAL 1,940,400), not the modified 1,970,075. That is why it sits 1.3% under 2,324,870, and it is still far closer than today's head either way."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 6603588,
+   "group": 3,
+   "band": true,
+   "population": "labelled-mid",
+   "S_cents": 15461134200,
+   "currency": "EUR",
+   "n": 7,
+   "vouched_by": "TED-VAL_ESTIMATED_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2a",
+    "S_cents": 11721909346,
+    "currency": "EUR",
+    "n": 7
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 15461134200,
+    "stated_source": "CN 20628343 VAL_ESTIMATED_TOTAL = F03 21740303 VAL_TOTAL",
+    "truth_cents": 15461134200,
+    "served_head_cents": 3704699500,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -76.04
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "S is on the ceiling basis (CN VAL_OBJECT = F20 VAL_TOTAL = F03 procedure VAL_TOTAL). Skeptic corrected the reader: F03 21740303 discounted lot awards sum to 134,390,083.30 (not 117.2 m); pre-drain S was the LOT-1 mis-key. S +15% vs head -72% on the discounted basis. Labelled double_count on its pre-drain sum.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 6603588,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 37,046,995.00 (LOT-4's figure alone, from F20 22473940)",
+     "stated_total": "EUR 154,611,342.00: CN 20628343 VAL_ESTIMATED_TOTAL, and the same figure as F03 21740303 procedure VAL_TOTAL",
+     "why": "S = EUR 154,611,342.00, which equals the buyer's stated total to the cent: CN 20628343 VAL_ESTIMATED_TOTAL 15461134200 and F03 21740303 VAL_TOTAL 15461134200. The 7 summed lots are distinct real lots, and each lot's latest award comes from its own F20 modification notice. The notices' printed LOT_NO matches the re-keyed lot every time: 22473938 LOT_NO 1 = 33,469,142 (Conv. Rep. 28); 22473939 LOT_NO 2 = 22,341,441 (Rep. 31); 22473935 LOT_NO 3 = 15,635,314 (Rep. 32); 22473940 LOT_NO 4 = 37,046,995 (Rep. 29); 22473937 LOT_NO 5 = 23,036,764 (Rep. 30); 22570060 LOT_NO 6 = 9,867,872 (Rep. 34); 22473934 LOT_NO 7 = 13,213,814 (Rep. 33). Each F20 figure (VAL_TOTAL, also VAL_TOTAL_BEFORE) equals that lot's CN VAL_OBJECT. Every lot has its own single-supplier convenzione, so the lot ceilings are not shared across lots or suppliers and add up correctly. No x10^k slip. Caveat: F03 21740303 printed lower discounted lot awards that sum to 117,219,093.46 (the pre-drain S), and the F20s raise each lot through VAL_TOTAL_AFTER (for example LOT-1 39,888,470). Even so, the buyer's own procedure figure in both notices is 154.6M. Today's head is a single lot, about 24% of the total."
+    },
+    "skeptic": {
+     "id": 6603588,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 37,046,995.00 (3704699500 cents; this is LOT-4's figure alone, 24.0% of the stated total)",
+     "stated_total": "EUR 154,611,342.00: CN 20628343 VAL_ESTIMATED_TOTAL (and VALUE, type ESTIMATED_TOTAL) 15461134200; F03 21740303 procedure VAL_TOTAL (type PROCUREMENT_TOTAL) 15461134200",
+     "why": "I re-read all 9 notices and could not refute the verdict. (1) Stated total: CN 20628343 VAL_ESTIMATED_TOTAL is 15461134200, the sum of its 7 lot VAL_OBJECTs. F03 21740303 procedure VAL_TOTAL (PROCUREMENT_TOTAL) is also 15461134200. S = 15461134200 matches both to the cent. (2) Distinct lots: each lot's latest award is its own F20, and the re-keyed lot matches the printed LOT_NO, the CIG, the convenzione and the winner every time. 22473938 LOT_NO 1, CIG 801705396B, Rep. 28, Evolve, 33,469,142. 22473939 LOT_NO 2, 8017072919, Rep. 31, Coopservice, 22,341,441. 22473935 LOT_NO 3, 80170864A8, Rep. 32, Coopservice, 15,635,314. 22473940 LOT_NO 4, 80171021DD, Rep. 29, Evolve, 37,046,995. 22473937 LOT_NO 5, 80171086CF, Rep. 30, Evolve, 23,036,764. 22570060 LOT_NO 6, 8017115C94, Rep. 34, Dussmann, 9,867,872. 22473934 LOT_NO 7, 8017124404, Rep. 33, Coopservice, 13,213,814. In every F20, VAL_TOTAL equals VAL_TOTAL_BEFORE and equals that lot's CN VAL_OBJECT. That gives 7 CIGs, 7 convenzioni and 7 health bodies, none repeated, so no lot is counted twice. Additivity: each lot is its own single-operator convenzione (CN FRAMEWORK=1, SINGLE_OPERATOR=1), so no ceiling is shared across lots or suppliers. Notice 22473936, which falls inside the id range, is an unrelated Sogin/Telecom F20, is not attached to this tender and is not in the sum. (3) No x10^k slip: every figure matches the CN exactly. (4) Today's head is 37,046,995, LOT-4 alone, -76% from the stated total. Correction to the reader: the F03 discounted lot awards sum to 134,390,083.30, not 117,219,093.46. The pre-drain S of 117,219,093.46 was F03 lots 2-7 plus 9,867,872 (lot 6's F20, 22570060) keyed to LOT-1. That is exactly the mis-key the 567/568/570 re-keying fixed. Whichever truth you take, S is far closer than the head: 134.4M discounted awards (S +15% vs head -72%) or 184.0M after the F20 modifications (S -16% vs head -80%). Raw files are in /home/user/tender-db/.scratch/tender-db/551-lot-sum/b3/read18/sk6603588/."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 6679375,
+   "group": 3,
+   "band": true,
+   "population": "labelled-mid",
+   "S_cents": 23850000000,
+   "currency": "EUR",
+   "n": 3,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 23850000000,
+    "currency": "EUR",
+    "n": 3
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 23850000000,
+    "stated_source": "F03 20928012 VAL_TOTAL (lots 1,2,4); truth adds lot 3 from 20916402",
+    "truth_cents": 26830000000,
+    "served_head_cents": 2980000000,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": -11.11,
+    "head_vs_truth_pct": -88.89
+   },
+   "partial_sum": true,
+   "left_out_lot_null_awards": [
+    "20916402 (lot 3, EUR 29,800,000)"
+   ],
+   "lot_null_restating_rows": [],
+   "note": null,
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 6679375,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 29,800,000.00 (lot 3 alone, from F03 20916402)",
+     "stated_total": "EUR 238,500,000.00: F03 20928012 VAL_TOTAL, covering lots 1, 2 and 4. F03 20916402 VAL_TOTAL is EUR 29,800,000.00 for lot 3. The F02 CN 20760633 states no total.",
+     "why": "S = EUR 238,500,000, which equals F03 20928012 VAL_TOTAL 23850000000 exactly. The 3 summed lots are distinct real awards, and their keys match the notice's printed LOT_NO. In 20928012, RES-1 is LOT_NO 1 = 87,600,000 (Clean R). RES-2 is LOT_NO 2 = 54,100,000 (Clean R). RES-3 is LOT_NO 4 = 96,800,000 (Eco Baltia vide), and lot_results now correctly keys it LOT-4 even though its section is positionally LOT-3. Each lot's VAL_TOTAL equals its VAL_ESTIMATED_TOTAL. No slip and no shared ceiling. The sum is partial: lot 3's award (29,800,000; 20916402, CONTRACT_NO 3, Lot section LOT_NO 3) has no LOT_NO on its LotResult and stays lot=null, so it is left out of n. The whole procedure is therefore about 268,300,000. S is 11% under that figure, while today's head (29.8M, lot 3 only) is 89% under, so S is much closer to the truth and matches a buyer-stated total."
+    },
+    "skeptic": {
+     "id": 6679375,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 29,800,000 (value 2980000000 cents: the VAL_TOTAL of F03 20916402, which covers lot 3 only)",
+     "stated_total": "EUR 238,500,000. F03 20928012 states VAL_TOTAL and TED-VALUE PROCUREMENT_TOTAL of 23850000000 cents for lots 1, 2 and 4. F03 20916402 states VAL_TOTAL 2980000000 cents for lot 3. F02 20760633 states no estimate. Whole procedure is about EUR 268.3m.",
+     "why": "I re-read the notices myself and could not refute the reader's verdict.\n\n(1) Stated totals. The contract notice, F02 20760633, has 4 lots with LOT_NO 1-4, each 84 months, and gives no VAL_ESTIMATED_TOTAL. F03 20928012 states VAL_TOTAL = TED-VALUE (PROCUREMENT_TOTAL) = 23850000000 cents. F03 20916402 states VAL_TOTAL 2980000000 cents for lot 3 alone.\n\n(2) Lots. 20928012 RES-1 is LOT_NO 1 / CONTRACT_NO 1, worth 87.6m, won by Clean R. RES-2 is LOT_NO 2 / CONTRACT_NO 2, worth 54.1m, won by Clean R. RES-3 is ITEM 3 and sits in the positional section LOT-3, but its LOT_NO is 4 and its CONTRACT_NO is 4. It is worth 96.8m and was won by Eco Baltia vide, and its title (Ziemelu izpilddirekcija, Vidzemes/Ziemelu) matches F02 lot 4. lot_results keys these LOT-1, LOT-2 and LOT-4, which are distinct real lots, so nothing is keyed twice. 87.6 + 54.1 + 96.8 = 238.5m, exactly the stated total. Every lot's VAL_TOTAL equals its VAL_ESTIMATED_TOTAL. That is because bidders quoted per-m3 rates (INFO_ADD), so these are the buyer's per-contract figures for separate districts. No FRAMEWORK or DPS field appears in any notice. Each lot is one contract with one winner, so there is no shared ceiling and the figures add up.\n\nLot 3 in 20916402 is printed in section LOT-1 with LOT_NO 3, but its LotResult has CONTRACT_NO 3 and no LOT_NO. It is worth 29.8m, won by Lautus and Pilsetvides serviss, and stays lot=null. It is not keyed positionally onto LOT-1. If it were, LOT-1's latest award would be 29.8m and S would be 180.7m. So S = 238.5m confirms that no lot was collided or double counted.\n\n(3) Slip. None. The four lots run 29.8m to 96.8m, all the same order of magnitude, which is about EUR 38m a year for Riga-wide waste collection over 7 years.\n\n(4) Today's head is 29.8m, lot 3 only, 89% under the true total of about 268.3m. S is 11% under it and equals the buyer-stated total that vouches for it. S is farther than today's head only from 20916402's 29.8m, and that figure covers just lot 3, not the procedure. The only caveat is that S leaves lot 3 out, so it is a partial sum."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7139761,
+   "group": 3,
+   "band": true,
+   "population": "labelled-mid",
+   "S_cents": 16673192969,
+   "currency": "EUR",
+   "n": 13,
+   "vouched_by": "TED-VAL_ESTIMATED_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 10114798394,
+    "currency": "EUR",
+    "n": 11
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 16673192971,
+    "stated_source": "CN 21841642 VAL_ESTIMATED_TOTAL",
+    "truth_cents": 16673192971,
+    "served_head_cents": 3991722026,
+    "S_vs_stated_pct": -0.0,
+    "S_vs_truth_pct": -0.0,
+    "head_vs_truth_pct": -76.06
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "Multi-supplier acuerdo marco, but one ceiling per lot, never per supplier; buyer itself sums them (2 cents off).",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": true
+   },
+   "reads": {
+    "first": {
+     "id": 7139761,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 39,917,220.26 (lot 2 alone, from F03 22958250)",
+     "stated_total": "EUR 166,731,929.71: CN 21841642 VAL_ESTIMATED_TOTAL. It also equals F03 22419967 VAL_TOTAL 126,814,709.45 (12 lots) plus F03 22958250 VAL_TOTAL 39,917,220.26 (lot 2).",
+     "why": "S = EUR 166,731,929.69, which is CN 21841642 VAL_ESTIMATED_TOTAL 16673192971 less 0.02 EUR of per-lot rounding. All 13 lots are distinct, and the keys now match the printed lot numbers. In F03 22419967 the Lot sections are positional (LOT-2..LOT-12) but print LOT_NO 3..13, and lot_results maps RES-2 to LOT-3 through RES-12 to LOT-13 correctly. RES-1 is LOT_NO 1 = 65,363,311.48. Lot 2, whose award was suspended pending appeal, comes from F03 22958250 (LOT_NO 2) = 39,917,220.26. Every lot's award equals its CN VAL_OBJECT: L1 65,363,311.48; L2 39,917,220.26; L3 13,460,831.88; L4 9,508,165.80; L5 17,362,686.83; L6 164,320.00; L7 14,300,925.25; L8 1,469,593.46; L9 1,504,500.40; L10 1,517,915.00; L11 220,634.27; L12 1,086,270.55; L13 855,554.51. This is a multi-supplier acuerdo marco (6 to 30 firms per lot), but each lot's maximum value appears once per lot and is not repeated per supplier, and the buyer's own total is exactly the sum of the lot values. So the figures add up correctly. No slip. Today's head (39.9M) is lot 2 only, about 24% of the stated total."
+    },
+    "skeptic": {
+     "id": 7139761,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 39,917,220.26 (lot 2 only: the VAL_TOTAL of the latest notice, F03 22958250, version 4)",
+     "stated_total": "EUR 166,731,929.71 (CN 21841642 VAL_ESTIMATED_TOTAL 16673192971; also equals F03 22419967 VAL_TOTAL 12681470945 plus F03 22958250 VAL_TOTAL 3991722026)",
+     "why": "I re-read the notices myself and could not refute the reader. (1) Stated totals: CN 21841642 has VAL_ESTIMATED_TOTAL 16673192971. The F14 corrigendum 21850738 only moves dates and changes no value. F03 22419967 has a procedure VAL_TOTAL of 12681470945, covering the 12 lots other than lot 2. F03 22958250 has a VAL_TOTAL of 3991722026, which is lot 2 only. The two award totals add up to 16673192971, the CN figure to the cent. (2) Distinct lots: the sum of the 13 CN VAL_OBJECTs (LOT_NO 1..13) is 16673192969, which is S exactly and 2 cents under the stated total. In F03 22419967 the Lot sections are positional (LOT-2..LOT-12) but print LOT_NO 3..13, and the titles agree (for example positional LOT-2 is LOT_NO 3, Girona). Its LotResults RES-1..RES-12 print LOT_NO 1,3,4,...,13. The API's lot_results now map RES-1 to LOT-1, RES-2..RES-12 to LOT-3..LOT-13, and 22958250 RES-1 (LOT_NO 2) to LOT-2. That gives 13 distinct lot keys, each used once, and the lot_details titles match the printed lot numbers. 'RES-1' appears in both F03s, but the two entries point to different lots (LOT-1 and LOT-2) and both are counted once in S. Every lot's award equals its CN VAL_OBJECT, with the LotResult showing VAL_TOTAL = VAL_ESTIMATED_TOTAL: L1 65,363,311.48; L2 39,917,220.26; L3 13,460,831.88; L4 9,508,165.80; L5 17,362,686.83; L6 164,320.00; L7 14,300,925.25; L8 1,469,593.46; L9 1,504,500.40; L10 1,517,915.00; L11 220,634.27; L12 1,086,270.55; L13 855,554.51. (3) No x10^k slip: the small lots (L6 Madrid at 164,320; L11 at 220,634) are printed identically in the CN and the F03, and the sum matches the buyer's total. (4) Additivity: this is a multi-supplier acuerdo marco with up to 6 to 30 firms per lot (INFO_ADD), over 24 months extendable to 4 years. Each lot's ceiling is printed once per LotResult, not once per supplier, and the lots are separate geographic and penitentiary areas. The buyer itself adds them, both in the CN total and in F03 22419967's 12-lot VAL_TOTAL (2 cents off the lot sum). So no envelope is shared across lots and no figure is counted twice. S is on the same ceiling basis as the stated total and is 0.02 EUR from it. Today's head of 39.9M is lot 2 alone, about 24% of the total. S is the best total for this procedure."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7153588,
+   "group": 4,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 1912800,
+   "currency": "EUR",
+   "n": 4,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 1912800,
+    "currency": "EUR",
+    "n": 4
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 1912800,
+    "stated_source": "F03 22126132 VAL_TOTAL (lots 1,3,4,6); truth adds lots 5 and 2",
+    "truth_cents": 2264700,
+    "served_head_cents": 272000,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": -15.54,
+    "head_vs_truth_pct": -87.99
+   },
+   "partial_sum": true,
+   "left_out_lot_null_awards": [
+    "22109924 (lot 5, EUR 799.00)",
+    "22110418 (lot 2, EUR 2,720.00)"
+   ],
+   "lot_null_restating_rows": [],
+   "note": null,
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": true
+   },
+   "reads": {
+    "first": {
+     "id": 7153588,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "2,720.00 EUR (result_value from the last award notice 22110418, 2021/S 250-661557: lot 2 only)",
+     "stated_total": "19,128.00 EUR VAL_TOTAL in F03 22126132 (2021/S 246-650028, lots 1/3/4/6). Other awards: 799.00 EUR in 22109924 (lot 5) and 2,720.00 EUR in 22110418 (lot 2). The CN 21857105 (F02) states no value. All awards together: 22,647.00 EUR",
+     "why": "S = 1474 + 11477 + 4840 + 1337 = 19,128.00 EUR, the four LotResults of F03 22126132. Its printed LOT_NO 1/3/4/6 now match lot_results LOT-1/3/4/6 (section LOT-2 prints LOT_NO 3, LOT-3 prints 4, LOT-4 prints 6, all re-keyed correctly), so these are four distinct real lots with one winner each (HCT Automotive). S equals that notice's own VAL_TOTAL (19,128.00) and TED-VALUE. No slip: each lot's VAL_ESTIMATED_TOTAL equals its VAL_TOTAL. Lots 7 and 8 were unsuccessful (22034850). S is partial. Lot 5 (799.00, Sentios, 22109924) and lot 2 (2,720.00, ARI-KO, 22110418) still carry lot=null: their LotResult has no LOT_NO, and only each notice's single Lot section prints LOT_NO 5 or 2. So the procedure's real total is 22,647.00 EUR. Even so, S is off by 3,519 (about 16% low), while today's head of 2,720 (one lot) is off by 19,927 (88% low). S is clearly the better head. Side note: keying those two single-lot notices by their sole Lot's LOT_NO would make S the full 22,647."
+    },
+    "skeptic": {
+     "id": 7153588,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 2,720.00 (value; amounts estimated_value and result_value 2,720 lot=null, the VAL_TOTAL of the latest single-lot award 22110418)",
+     "stated_total": "EUR 19,128.00 = TED VAL_TOTAL and TED-VALUE of F03 22126132 (covers lots 1/3/4/6). The CN 21857105 states no VAL_ESTIMATED_TOTAL or II.1.7. Whole procedure = 19,128 + 799 (22109924 VAL_TOTAL, lot 5) + 2,720 (22110418 VAL_TOTAL, lot 2) = 22,647.00",
+     "why": "I re-read all five notices and could not refute the verdict. (1) Stated totals: the CN 21857105 (8 lots, LOT_NO 1-8, no VAL_ESTIMATED_TOTAL) prints no procedure figure. F03 22126132 prints procedure VAL_TOTAL = TED-VALUE = 19,128.00 EUR. The single-lot F03s print 799.00 (22109924) and 2,720.00 (22110418). (2) Lots: in 22126132, LotResults RES-1..4 print LOT_NO 1/3/4/6 with CONTRACT_NO 1/3/4/6. Its Lot sections LOT-1..4 print LOT_NO 1/3/4/6, titled Virzulu kompresors / Paceleji / Elektrohidraulisks... / Hidrosistemu. The served lot_results are now keyed LOT-1/3/4/6 (1,474 / 11,477 / 4,840 / 1,337). lot_details LOT-3/4/6 carry those same titles, which match CN LOT_NO 3/4/6. So the re-keying is correct and the four lots are distinct real awards, each to one winner (HCT Automotive, one national ID, no group). Nothing is keyed twice. Lot 5 (Sentios, 799) and lot 2 (ARI-KO, 2,720) stay lot=null and are NOT in S, so there is no double count. Lots 7/8 are closed with no award (22034850). There is no framework (supplies, one contract per lot), so the figures add up. (3) No slip: each lot's VAL_ESTIMATED_TOTAL equals its VAL_TOTAL, and the four sum exactly to the notice's 19,128.00. (4) Today's head is 2,720 (one lot's award). S = 19,128.00 equals the vouching VAL_TOTAL of 22126132 exactly (R10: it equals no single summed award and is not a single-lot notice's total). R3 does not fire (19,128 <= 1.01 x 19,128), R8 does not (11,477 / 4,840 = 2.4x), and R2(d) does not, since every summed award comes from one notice and has a LOT_NO. S is partial: 3,519 (15.5%) below the true 22,647, against the head's 19,927 (88%) shortfall. So S is clearly the better head. Raw reads are saved in /home/user/tender-db/.scratch/tender-db/551-lot-sum/b3/read18/sk7153588/."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7177672,
+   "group": 4,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 31597999600,
+   "currency": "HUF",
+   "n": 4,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 31597999600,
+    "currency": "HUF",
+    "n": 4
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 31597999600,
+    "stated_source": "F03 22174236 VAL_TOTAL",
+    "truth_cents": 31597999600,
+    "served_head_cents": 13557470000,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -57.09
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": null,
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 7177672,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "135,574,700.00 HUF (lot 5 Zöldáruk alone)",
+     "stated_total": "315,979,996.00 HUF VAL_TOTAL and TED-VALUE in F03 22174236 (2022/S 017-040415). The CN 21899966 (F02) and corrigendum 21979820 (F14) state no value",
+     "why": "S = 124,362,720 (lot 1) + 52,355,952 (lot 3) + 135,574,700 (lot 5) + 3,686,624 (lot 6) = 315,979,996 HUF, exactly the F03's VAL_TOTAL. The F03 prints LOT_NO 1..6 and the keys match. Lots 2 and 4 are NO_AWARDED_CONTRACT. The four summed lots are distinct, each with its own single supplier (Gulyás, BA-HA-MA'S, MORTAK FRUIT, Food Man 2020), so the values are additive. Lot 1 is called a keretszerződés (framework), but its ceiling belongs to that lot alone and is not shared, and the buyer itself summed the lots. No slip: VAL_ESTIMATED_TOTAL equals VAL_TOTAL for each lot. The later F20 modifications re-state the original lot awards in their LotResult (22500647 lot 5: 135,574,700; 22521375 lot 1: 124,362,720), so the latest award per lot is unchanged. Their DESCRIPTION_PROCUREMENT.VAL_TOTAL raises lot 5 to 144,658,205 and lot 1 to 136,795,000, which would make about 337.5M HUF after modification. That is still nearer S than today's head. Today's head of 135.6M HUF is one lot and 57% below the stated total; S matches it exactly."
+    },
+    "skeptic": {
+     "id": 7177672,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "135,574,700 HUF (lot 5 award only)",
+     "stated_total": "F03 22174236 VAL_TOTAL / VALUE.TYPE=PROCUREMENT_TOTAL = 315,979,996 HUF",
+     "why": "I tried to refute the reader and could not. I re-read the notices myself.\n\n(1) Stated totals. The F03 award notice 22174236 states VAL_TOTAL 315,979,996 HUF (VALUE.TYPE PROCUREMENT_TOTAL). The F02 contract notice 21899966 has no procedure VAL_ESTIMATED_TOTAL. Its lot texts give each lot its own net keretösszeg: L1 124,362,720; L2 29,907,098; L3 52,355,952; L4 168,159,206; L5 135,574,700; L6 3,686,624. All six add up to 514,046,300, but lots 2 and 4 were later discontinued (RES-2 and RES-4: NO_AWARDED_CONTRACT and PROCUREMENT_DISCONTINUED), so that figure does not contradict S. The F14 21979820 only moves deadlines and edits text.\n\n(2) Lots. The F03 prints LOT_NO and ITEM 1-6, and the server's keys LOT-1..6 / RES-1..6 match them. The awarded lots are:\n- RES-1 / lot 1: 124,362,720, Gulyás (11399531206)\n- RES-3 / lot 3: 52,355,952, BA-HA-MA'S (12245442213)\n- RES-5 / lot 5: 135,574,700, MORTAK (14492846242)\n- RES-6 / lot 6: 3,686,624, Food Man (13413165242)\n\nThese add up to exactly 315,979,996. There is a double-count trap here, and the re-keying handles it. Both F20 notices label their sections internally LOT-1/RES-1, but 22500647 prints LOT_NO 5 (Zöldáruk, MORTAK) and the server keys it LOT-5. 22521375 prints LOT_NO 1 (Húskészítmények, Gulyás) and is keyed LOT-1. Each therefore replaces its own lot and adds no fifth term, so n=4 holds. Both F20 LotResult VAL_TOTALs repeat the original awards (135,574,700 and 124,362,720), so the latest award per lot does not change S.\n\nThe sum is additive. Each lot is a separate single-supplier adásvételi keretszerződés whose ceiling covers only that lot. No ceiling is shared across lots or suppliers, and the buyer itself added the four lots in VAL_TOTAL.\n\n(3) No slip. In every LotResult, VAL_ESTIMATED_TOTAL equals VAL_TOTAL, and each matches the prose amounts (\"nettó 135 574 700,- Ft\"). The F20 MOD-1 VAL_TOTAL_BEFORE/AFTER figures (135,574,700 to 144,658,205; 124,362,720 to 136,795,000) are increases under 10% that the contracts themselves record, not scale errors. The total after those modifications is 337,495,781, which S is 6.4% below.\n\n(4) Today's head is 135,574,700, a single lot and 57% below the stated total. S equals the buyer's own total exactly, so S is clearly better."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7298633,
+   "group": 4,
+   "band": false,
+   "population": "walk",
+   "S_cents": 358376975,
+   "currency": "PLN",
+   "n": 9,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 358317235,
+    "currency": "PLN",
+    "n": 8
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 358317235,
+    "stated_source": "F03 22385634 VAL_TOTAL (8 lots); truth adds lot 4 from 22375511",
+    "truth_cents": 358376975,
+    "served_head_cents": 59740,
+    "S_vs_stated_pct": 0.02,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -99.98
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "Vouched by 22385634 VAL_TOTAL within R10 1% (S - T = 597.40 = lot 4). S equals the sum of both buyer totals.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 7298633,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "597.40 PLN (lot 4 BOSENTAN alone, from the last notice 22375511)",
+     "stated_total": "3,583,172.35 PLN VAL_TOTAL in F03 22385634 (2022/S 094-259261, 8 lots) + 597.40 PLN VAL_TOTAL in F03 22375511 (2022/S 103-288689, lot 4) = 3,583,769.75 PLN. The CN 22240068 (F02) states no value",
+     "why": "S = 3,583,769.75 PLN over n=9 lots: 1,155,000.00 + 362,411.20 + 142,036.70 + 181,800.00 + 288,737.80 + 6,274.65 + 1,444,444.80 + 2,467.20 (lots 1,2,3,5,6,7,8,10 in 22385634, summing exactly to its VAL_TOTAL 3,583,172.35) + 597.40 (lot 4 in 22375511). The re-keying checks out. In 22385634 the sections LOT-4..LOT-9 print LOT_NO 5,6,7,8,9,10 and map to keys LOT-5..LOT-10. The sole section of 22375511 prints LOT_NO 4 and maps to LOT-4. So the nine lots are distinct: 1,2,3,4,5,6,7,8,10. Lot 9 (SELEXIPAG) was unsuccessful. Each lot has one winner, so the values are additive. No x10^k slip is evident. Lot 4's 597.40 is small, but the buyer printed it as both VALUE and VAL_TOTAL, and it is 0.02% of S. The pre-drain S (3,583,172.35, n=8) lacked lot 4, so the drain added exactly the missing lot. S equals the sum of the two buyer-stated totals, while today's head is the 597.40 lot 4 figure."
+    },
+    "skeptic": {
+     "id": 7298633,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "597.40 PLN (value cents 59740, from the 22375511 procedure VAL_TOTAL, which covers lot 4 only)",
+     "stated_total": "The contract notice 22240068 (F02) has no VAL_ESTIMATED_TOTAL or any other value. Award notice 22385634 (F03) has VAL_TOTAL = VALUE = 3,583,172.35 PLN. Award notice 22375511 (F03) has VAL_TOTAL = VALUE = 597.40 PLN. Together they come to 3,583,769.75 PLN, which equals S.",
+     "why": "I re-read all three notices and found no refutation.\n\n(1) Stated totals: The contract notice 22240068 states no value at all, either per lot or for the procedure. It has 10 lots, LOT_NO 1 to 10. Award notice 22385634 states a procedure VAL_TOTAL of 3,583,172.35 PLN. Award notice 22375511 states 597.40 PLN. These are the only buyer-stated totals, and they cover disjoint lots.\n\n(2) Lots: In 22385634 the sections LOT-1..LOT-9 print LOT_NO 1,2,3,5,6,7,8,9,10, with titles from \"Zadanie nr 5 - BOSENTAN II\" through \"Zadanie nr 10 - SILDENAFIL\". Its results RES-1..RES-9 print LOT_NO 1,2,3,5,6,7,8,9,10, and the API keys them to LOT-1,2,3,5,6,7,8,9,10 in lot_results. So the re-keying matches the printed numbers.\n- RES-8 (LOT_NO 9, SELEXIPAG) is PROCUREMENT_UNSUCCESSFUL. It has no value and is correctly left out.\n- The lot values are 1,155,000.00 (Takeda), 362,411.20 (Sanofi), 142,036.70 (Sanofi), 181,800.00 (Lek, lot 5), 288,737.80 (Amgen), 6,274.65 (Farmacol), 1,444,444.80 (Komtur) and 2,467.20 (Urtica). They sum exactly to 358,317,235 cents, which is that notice's VAL_TOTAL.\n- 22375511 has one section. It prints LOT_NO 4, \"Zadanie nr 4 - BOSENTAN\", CONTRACT_NO 4, winner Asclepios S.A., 597.40. The API keys it LOT-4.\n- 22385634 contains no award for LOT_NO 4. Lot 4 (BOSENTAN, Asclepios) and lot 5 (BOSENTAN II, Lek) have different titles, contract numbers and winners, so lot 4 is not counted twice.\n- The nine summed lots are therefore distinct real lots: 1, 2, 3, 4, 5, 6, 7, 8 and 10.\n- Every result has one winner, NO_AWARDED_TO_GROUP and price-only award criteria (AC_PRICE). Neither notice shows any framework marker, so the figures are additive contract values, not shared ceilings.\n\n(3) Slips: I found no x10^k slip. Lot 4's 597.40 is small, but 22375511 prints it consistently as the lot VAL_TOTAL, the procedure VALUE and the procedure VAL_TOTAL. Other lots here are also small (6,274.65 and 2,467.20). Even if lot 4 were off by x100, S would move by under 1.7% and would still be far closer to the truth than today's head.\n\n(4) Today's head: 597.40 PLN. It comes from the latest version (seq 3, notice 22375511) and is lot 4 alone, about 0.02% of the procedure. S is the exact sum of both buyer-stated award totals across all awarded lots, so it is clearly the best total for this procedure."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7398935,
+   "group": 5,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 1444600,
+   "currency": "EUR",
+   "n": 2,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 1802400,
+    "currency": "EUR",
+    "n": 2
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 1444600,
+    "stated_source": "CAN 22566107 VAL_TOTAL (lots 1,3); truth adds lot 2 from 22603453",
+    "truth_cents": 2557900,
+    "served_head_cents": 1113300,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": -43.52,
+    "head_vs_truth_pct": -56.48
+   },
+   "partial_sum": true,
+   "left_out_lot_null_awards": [
+    "22603453 (lot 2, EUR 11,133.00)"
+   ],
+   "lot_null_restating_rows": [],
+   "note": null,
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 7398935,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 11,133.00 (result_value at lot None: CAN 22603453's lot-2 award copy)",
+     "stated_total": "No procedure-wide total. CN 22403681 prints no II.1.5 and no lot values. CAN 22566107 VAL_TOTAL = EUR 14,446.00 (lots 1+3). CAN 22603453 VAL_TOTAL = EUR 11,133.00 (lot 2). Three lots awarded in all: EUR 25,579.00.",
+     "why": "S = EUR 14,446.00 = LOT-1 7,555.00 + LOT-3 6,891.00. Both come from CAN 22566107 (RES-1 LOT_NO 1, VAL_TOTAL 7,555.00; RES-2 ITEM 2 but LOT_NO 3, VAL_TOTAL 6,891.00). After the re-key the keys match the printed LOT_NO, so these are two distinct real lots. S equals that CAN's own VAL_TOTAL of 14,446.00, which is the vouch. Lot 2 was awarded separately in CAN 22603453: 11,133.00 to UAB Atomeksim, CONTRACT_NO 2. Its Lot section says LOT_NO 2, but the award block has no LOT_NO, so the award stays at lot None and is not summed. Today's head is that lot-2 copy. Neither figure is the full EUR 25,579.00: S misses 11,133.00 (covers 56%), the head misses 14,446.00 (covers 44%). S is closer, and its lots are distinct real awards, so it is right under the rubric. It is still a partial lower bound (2 of 3 lots), so this is not a strong right. No x10^k slip: all three awards are EUR 7-11 k. One currency. No framework."
+    },
+    "skeptic": {
+     "id": 7398935,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 11,133.00 (result_value lot null, from CAN 22603453; value_derivation null)",
+     "stated_total": "CAN 22566107 VAL_TOTAL/VALUE PROCUREMENT_TOTAL EUR 14,446.00 (lots 1+3); CAN 22603453 VAL_TOTAL EUR 11,133.00 (lot 2 only); CN 22403681 and corrigendum 22437087 state no value or estimate; whole procedure = EUR 25,579.00",
+     "why": "I tried to refute the reader and could not. The chain has four notices: CN 22403681, corrigendum 22437087 (deadline change only) and two F03 award notices. The CN lists three lots (LOT_NO 1, 2, 3) and states no II.1.7 or estimated total. CAN 22566107 has two awards, both to SIA DOMA. RES-1 is LOT_NO 1 (\"Liecējs metāla loksnēm...giljotīna\"), VAL_TOTAL 7,555.00, CONTRACT_NO 1. RES-2 is ITEM 2 but LOT_NO 3 (\"MIG/MAG, TIG, MMA metināšanas iekārta\"), VAL_TOTAL 6,891.00, CONTRACT_NO 3. The notice's own VAL_TOTAL is 14,446.00, which equals 7,555 + 6,891 exactly. The served lot_results put RES-1 on LOT-1 and RES-2 on LOT-3. Those match the printed LOT_NO and the lot_details titles, so the re-key is correct and no lot carries two keys. CAN 22603453 has one award, RES-1, to UAB Atomeksim: ITEM 1, CONTRACT_NO 2, no LOT_NO in the award block, VAL_TOTAL 11,133.00. Its Lot section prints LOT_NO 2 and the lot-2 title, and its notice VAL_TOTAL is also 11,133. This is lot 2, a lot the first CAN never awarded. The INFO_ADD texts agree: CAN1 rejects Atomeksim only in part 1, and CAN2 rejects DKM Group in part 2. So CAN2 does not re-award or supersede any lot inside S, and the 5816379 shape (a later re-award overriding the vouch) does not apply here. The two CAN totals cover disjoint lots and add up: the true total is 14,446 + 11,133 = 25,579.00. S misses 11,133 and today's head misses 14,446, so S is closer. Its two lots are distinct real contract awards, and S equals a buyer-stated VAL_TOTAL. Nothing is a framework or ceiling (F03 contract awards with conclusion dates), so the figures are additive. All awards are EUR 7-11k with no estimate to compare against, so there is no x10^k slip, and everything is in EUR. Caveat: S is still a lower bound covering 2 of 3 lots, because the lot-2 award stays at lot None."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7475504,
+   "group": 5,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 3553169400,
+   "currency": "BGN",
+   "n": 4,
+   "vouched_by": "TED-VAL_ESTIMATED_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 2770221700,
+    "currency": "BGN",
+    "n": 3
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 3553169400,
+    "stated_source": "CN 22586040 VAL_ESTIMATED_TOTAL",
+    "truth_cents": 3553169400,
+    "served_head_cents": 1211413000,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -65.91
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [
+    "23595485 (LOT_NO 4)",
+    "23595634 (LOT_NO 2)",
+    "23592536 (LOT_NO 3)"
+   ],
+   "note": null,
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": true
+   },
+   "reads": {
+    "first": {
+     "id": 7475504,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "BGN 12,114,130.00 (estimated_value at lot None: lot 1's figure)",
+     "stated_total": "CN 22586040 VAL_ESTIMATED_TOTAL = BGN 35,531,694.00 (lot VAL_OBJECT 12,114,130 / 7,829,477 / 10,264,370 / 5,323,717). CAN 22774100 VAL_TOTAL = 23,417,564.00 (lots 2-4) plus CAN 22801276 VAL_TOTAL = 12,114,130.00 (lot 1): together 35,531,694.00.",
+     "why": "S = BGN 35,531,694.00, exactly the CN's VAL_ESTIMATED_TOTAL and exactly the sum of the two CAN VAL_TOTALs. The four lots are distinct real lots and the re-key now matches the printed LOT_NO: LOT-1 = lot 1 (OPU Burgas, 12,114,130.00, CAN 22801276 / F20 23207729, contract 66829); LOT-2 = lot 2 (Sliven, 7,829,477.00, CAN 22774100 RES-1 / F20 23173724, contract 65199); LOT-3 = lot 3 (Stara Zagora, 10,264,370.00, RES-2 / F20 23173849, contract 65204); LOT-4 = lot 4 (Yambol, 5,323,717.00, RES-3 / F20 23174767, contract 65208). Before the drain, S was BGN 27,702,217.00 over 3 keys; that mis-key is gone. Each lot is a separate contract for a separate regional road office, so the figures add (lots 3 and 4 have the same consortium but different contracts). No slip: every award equals its own lot's CN estimate. The later F20 notices raise each contract through VAL_TOTAL_AFTER (lot 3, for example, goes to 15,396,555.00 and then 23,094,832.50). Those raises are modifications, not the procedure's award total, and R10 rightly ignores them. Today's head is one lot's 12.1 m, about a third of the stated total. S is the best total."
+    },
+    "skeptic": {
+     "id": 7475504,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "BGN 12,114,130.00. This is one lot: lot 1's CN VAL_OBJECT and the VAL_TOTAL of CAN 22801276. value_derivation is null.",
+     "stated_total": "BGN 35,531,694.00 is the VAL_ESTIMATED_TOTAL of CN 22586040. The two CAN VAL_TOTALs add up to the same figure: 23,417,564.00 (CAN 22774100) + 12,114,130.00 (CAN 22801276).",
+     "why": "I re-read the notices myself and could not refute the reader. (1) Stated total: CN 22586040 gives VAL_ESTIMATED_TOTAL BGN 35,531,694.00, which equals S to the cent. Its lots carry printed LOT_NO 1 to 4: Burgas 12,114,130 / Sliven 7,829,477 / Stara Zagora 10,264,370 / Yambol 5,323,717. CAN 22774100 has VAL_TOTAL 23,417,564.00, which is exactly lots 2+3+4. CAN 22801276 has VAL_TOTAL 12,114,130.00 for lot 1. The two CAN totals add up to S. (2) Distinct lots and the re-key: each award section prints its own lot number (LOT_NO) and contract number. The server's lot keys match them. LOT-2 = CAN 22774100 RES-1, printed 2, contract 65199. LOT-3 = RES-2, printed 3, contract 65204. LOT-4 = RES-3, printed 4, contract 65208. LOT-1 = CAN 22801276 RES-1, printed 1, contract 66829. In CAN 22774100 the Lot sections LOT-1/2/3 print 2/3/4, so the server's keys came from the printed numbers, not from the section ids. The latest typed result per lot is an F20, and each repeats its own award unchanged: 23207729 (lot 1, 12,114,130), 23173724 (lot 2, 7,829,477), 23173849 (lot 3, 10,264,370), 23174767 (lot 4, 5,323,717). That gives 4 lots, 4 different contract numbers, nothing counted twice, and S = 3,553,169,400 cents. There is one leftover: three later F20s are still unkeyed (lot=null) on the server even though their LotResult prints LOT_NO. They are 23595485 (lot 4), 23595634 (lot 2) and 23592536 (lot 3). Each repeats the same award figure, so they cannot add to S or change it. (3) Additivity and slips: the CN has one contract per regional road office, the lot fields say no options and no renewal, and there is no framework field anywhere. Lots 3 and 4 went to the same consortium (Trace Group Hold) but under separate contracts, 65204 and 65208. No x10^k slip: each award equals its own lot's CN estimate exactly. The F20 VAL_TOTAL_AFTER figures are contract modifications that raise each lot by 1.5x and then by 1.5x again. Lot 3, for example, goes 10,264,370 to 15,396,555 to 23,094,832.50. They are not the procedure's award total. Even if you measured against the modified sum (about 70.86m), S is still much closer than today's head. (4) Today's head is 12,114,130, one lot and 34% of the stated total. S matches the stated total exactly, so S is the best total."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7542368,
+   "group": 5,
+   "band": true,
+   "population": "labelled-mid",
+   "S_cents": 17984074893,
+   "currency": "EUR",
+   "n": 3,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 17984074893,
+    "currency": "EUR",
+    "n": 3
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 17984074893,
+    "stated_source": "CAN 23357149 VAL_TOTAL",
+    "truth_cents": 17984074893,
+    "served_head_cents": 6795765922,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -62.21
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "CN 22769993 lot values are ~10x low; buyer fixed them in corrigendum 22756883 (found by the skeptic, missed by the reader). S carries none of the slip.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 7542368,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 67,957,659.22 (estimated_value at lot None: lot 1's figure)",
+     "stated_total": "CAN 23357149 II.1.7 VAL_TOTAL (VALUE.TYPE PROCUREMENT_TOTAL) = EUR 179,840,748.93. CN 22769993 has no procedure total; its II.2.6 lot values 6,795,765.22 / 6,568,620.11 / 4,619,688.60 are the CN's own digit-dropped (about /10) error, explained below.",
+     "why": "S = EUR 179,840,748.93 = LOT-1 67,957,659.22 + LOT-2 65,686,205.11 + LOT-3 46,196,884.60. This is exactly CAN 23357149's VAL_TOTAL. In that CAN, RES-1/2/3 carry LOT_NO 1/2/3 (COM Norte, Centro, Sul), and each block's VAL_ESTIMATED_TOTAL equals its award. F20 23499764 (LOT_NO 1) restates 67,957,659.22 and F20 23498545 (LOT_NO 2) restates 65,686,205.11, both unchanged (wording addenda only). So the keys match the printed lot numbers and the three lots are distinct. The winners differ: Mota-Engil/Somafel/Fergrupo on lots 1-2 and Sacyr Neopul/EIP on lot 3. CONTRACT_NO 10006647 is the procedure reference, and each lot has its own figure, so the lots add; this is not a framework. Possible slip, checked: the CN lot values are the CAN figures with the units digit dropped (67,957,659.22 becomes 6,795,765.22; 65,686,205.11 becomes 6,568,620.11; 46,196,884.60 becomes 4,619,688.60). The CAN therefore holds digits (9, 5, 4) that cannot be derived from the CN, so the CN is the corrupted family, not the CAN. A press report (Bolsamania, Dec 2023) gives Sacyr Neopul/EIP's Lot 3 Sul at about EUR 46 m over 3+2 years, which matches the CAN's 46,196,884.60 and not the CN's 4.6 m. Today's head is lot 1 alone. S equals the buyer's stated award total, so it is the best total. Note: R4/R5.9 cannot see the CN-vs-award 10x gap, because TED lot estimates are stored without a lot."
+    },
+    "skeptic": {
+     "id": 7542368,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 67,957,659.22 (lot 1 alone)",
+     "stated_total": "EUR 179,840,748.93 (CAN 23357149 VAL_TOTAL / VALUE PROCUREMENT_TOTAL; the corrected CN lot estimates add to the same figure)",
+     "why": "I could not refute it. (1) Stated total: CAN 23357149 (F03, 2023/S 156-498444, ref 10006647) gives VAL_TOTAL = VALUE (PROCUREMENT_TOTAL) = 179,840,748.93. S equals it to the cent: 67,957,659.22 + 65,686,205.11 + 46,196,884.60. (2) Distinct lots: in the CAN, RES-1/2/3 print LOT_NO 1/2/3 and titles Lote 1 COM Norte / Lote 2 COM Centro / Lote 3 COM Sul, with VAL_TOTAL 67,957,659.22 / 65,686,205.11 / 46,196,884.60. The F20s are wording addenda about the ACE (SOMEFER) and restate the same figures, with VAL_TOTAL_BEFORE equal to VAL_TOTAL_AFTER: 23499764 has LOT_NO 1 at 67,957,659.22, and 23498545 has LOT_NO 2 at 65,686,205.11. 23498545 uses section LOT-1/RES-1 internally but prints LOT_NO 2, and the API now keys it to LOT-2, so the re-keying is correct and no lot is counted twice. Lot 3 has a different winning group (Sacyr Neopul/EIP, decided 2023-08-01). Lots 1 and 2 went to the same group but are separate regions, each with its own figure. The CN (TY_TYPE_BID 1, open procedure) has no framework or shared ceiling, so the figures add. (3) Slip: the original CN 22769993 printed VAL_OBJECT 6,795,765.22 / 6,568,620.11 / 4,619,688.60, about 10x low. The buyer corrected this in F14 corrigendum 22756883 (2022/S 224-645767): CHG-1/2/3 change II.2.6 for lots 1/2/3 from '6 795 765.22' to '67,957,659.22', '6 568 620.11' to '65,686,205.11' and '4 619 688.60' to '46,196,884.60'. The reader reached the right conclusion by reasoning from the digits, but missed this corrigendum, which is the buyer's own explicit fix. The slip is confined to the superseded CN, and S contains none of it. The other corrigenda (22792760, 22810217, 22821497) only move deadlines. The reader's note that R4/R5.9 cannot see a 10x gap does not matter here: the tender's stored estimated_value amounts are already the corrected 67.96m / 65.69m / 46.20m, so the stored data has no gap. (4) Today's head is 67,957,659.22, which is lot 1 alone. S is the buyer-stated total, 2.6x the head and much closer to the truth."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7722197,
+   "group": 6,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 17936000,
+   "currency": "EUR",
+   "n": 4,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 22597000,
+    "currency": "EUR",
+    "n": 4
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 17936000,
+    "stated_source": "F03 23370588 VAL_TOTAL (lots 1,3,4,5); truth adds lot 2 from 23438408",
+    "truth_cents": 24337500,
+    "served_head_cents": 6401500,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": -26.3,
+    "head_vs_truth_pct": -73.7
+   },
+   "partial_sum": true,
+   "left_out_lot_null_awards": [
+    "23438408 (lot 2, EUR 64,015.00)"
+   ],
+   "lot_null_restating_rows": [],
+   "note": null,
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": true
+   },
+   "reads": {
+    "first": {
+     "id": 7722197,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 64,015.00 (lot 2 only, VAL_TOTAL of the later award notice 23438408)",
+     "stated_total": "EUR 179,360.00 (TED-VAL_TOTAL of award notice 23370588, which covers lots 1, 3, 4 and 5). Lot 2 is stated separately as EUR 64,015.00 (VAL_TOTAL of 23438408). Contract notice 23163170 (F02, 5 lots) gives no estimate. The whole procedure comes to EUR 243,375.00",
+     "why": "Contract notice 23163170 lists lots 1 to 5, all fuel-pellet supply. F03 notice 23370588 awards printed LOT_NO 1, 3, 4 and 5 to SIA Varpas 1: EUR 17,405 + 51,625 + 75,520 + 34,810, which equals its VAL_TOTAL of EUR 179,360.00. After the re-key the served keys LOT-1, LOT-3, LOT-4 and LOT-5 match the printed LOT_NO, so these are 4 distinct real lots and nothing is double counted. Before the drain, the ordinal keys let notice 23438408's ITEM 1 (really lot 2, EUR 64,015) overwrite LOT-1, giving EUR 225,970, which was wrong. F03 notice 23438408 awards lot 2 for EUR 64,015.00, but its award block has no LOT_NO, so that result stays lot:null and is not summed. S therefore leaves out lot 2: the true total is EUR 243,375.00. Even so, S equals a buyer-stated VAL_TOTAL exactly, has no x10^k slip and sums additive awards. It is off the true total by EUR 64,015, against EUR 179,360 for today's head, so it is clearly better than serving lot 2 alone."
+    },
+    "skeptic": {
+     "id": 7722197,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 64,015.00 (lot-null result_value from F03 23438408)",
+     "stated_total": "EUR 179,360.00 (F03 23370588 VAL_TOTAL, lots 1/3/4/5) and EUR 64,015.00 (F03 23438408 VAL_TOTAL, lot 2); the F02 contract notice states no total",
+     "why": "I re-read all three notices myself and the reader's verdict holds. I tried to refute it and could not.\n\n(1) Stated totals. F02 contract notice 23163170 lists lots 1 to 5 (LOT_NO 1..5, titles 'Kurinamo granulu piegade Nr.1..5', each 12 months). It gives no VAL_ESTIMATED_TOTAL and no lot values. F03 23370588 states PROCEDURE VAL_TOTAL / VALUE PROCUREMENT_TOTAL = EUR 179,360.00. F03 23438408 states VAL_TOTAL = EUR 64,015.00. No notice states a figure for all five lots, but the two award notices cover disjoint lots, so the true procedure total is EUR 243,375.00.\n\n(2) Lots. 23370588's lot sections are ordinal LOT-1..LOT-4, but their printed LOT_NO is 1, 3, 4, 5. Its results are:\n- RES-1: LOT_NO 1, title Nr.1, contract 1, EUR 17,405\n- RES-2: LOT_NO 3, Nr.3, contract 3, EUR 51,625\n- RES-3: LOT_NO 4, Nr.4, contract 4, EUR 75,520\n- RES-4: LOT_NO 5, Nr.5, contract 5, EUR 34,810\n\nThe served lot_results put these under LOT-1, LOT-3, LOT-4 and LOT-5, which matches the printed LOT_NO and the CN's lot_details LOT-1..5. So the re-key is correct: these are four distinct real lots, each keyed once, and they sum to exactly EUR 179,360. 23438408's RES-1 has no LOT_NO; its section LOT-1 prints LOT_NO 2, title Nr.2, contract 2, EUR 64,015. It is served with lot:null, so it is not summed and cannot collide with LOT-1. The pre-drain S of 225,970 equals 179,360 - 17,405 + 64,015, which confirms that the old ordinal key let lot 2 overwrite lot 1. That is fixed now.\n\n(3) No x10^k slip. The per-lot awards (17k-76k EUR of municipal pellet supply) are mutually consistent and add up to the stated total. Nothing is non-additive either: there is no framework or DPS flag, each lot has NO_OPTIONS, and each lot has its own contract number, all with the single supplier SIA 'Varpas 1'.\n\n(4) Today's head is EUR 64,015.00. That is lot 2 alone, the latest notice's single-lot award copy, which is exactly the shape path W replaces.\n\nS leaves out lot 2 because that result is unkeyed. Even so, S equals a buyer-stated multi-lot VAL_TOTAL exactly, which satisfies R10: S is not a single summed award, and the vouching notice covers four lots. Measured against the true total of 243,375, S is off by 64,015 and the head by 179,360, so S is clearly closer. The rubric's second clause is met: the summed lots are distinct real awards and S is closer to the truth than today's head.\n\nSaved locally under /home/user/tender-db/.scratch/tender-db/551-lot-sum/b3/read18/sk7722197/."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 7789396,
+   "group": 6,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 2840060,
+   "currency": "BGN",
+   "n": 6,
+   "vouched_by": "TED-VAL_ESTIMATED_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 2239560,
+    "currency": "BGN",
+    "n": 5
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 2847600,
+    "stated_source": "CN 23334253 VAL_ESTIMATED_TOTAL (truth = sum of the two F03 VAL_TOTALs)",
+    "truth_cents": 2840060,
+    "served_head_cents": 1132000,
+    "S_vs_stated_pct": -0.26,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -60.14
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "S = sum of the two F03 VAL_TOTALs, 99.73% of the CN estimate.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": true
+   },
+   "reads": {
+    "first": {
+     "id": 7789396,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "BGN 11,320.00 (lot 1 only, award notice 23640601, which also equals lot 1's contract-notice estimate)",
+     "stated_total": "BGN 28,476.00 (TED-VAL_ESTIMATED_TOTAL of contract notice 23334253, the sum of the 6 lot VAL_OBJECTs). Award totals are BGN 17,080.60 (VAL_TOTAL of 23608417, lots 2 to 6) and BGN 11,320.00 (VAL_TOTAL of 23640601, lot 1), together BGN 28,400.60",
+     "why": "Contract notice 23334253 has 6 lots, estimated at BGN 11,320 / 6,013 / 2,171 / 625 / 5,515 / 2,832, for an estimated total of BGN 28,476.00. F03 notice 23608417 awards printed LOT_NO 2 to 6 to RIDAKOM: BGN 6,005 + 2,171 + 622.60 + 5,515 + 2,767, which equals its VAL_TOTAL of BGN 17,080.60. F03 notice 23640601 awards LOT_NO 1 to Elta 90M for BGN 11,320.00. After the re-key, served keys LOT-1 to LOT-6 match the printed lot numbers, so the 6 lots are distinct. Before the drain, the ordinal keys made 23608417's ITEM 1 (really lot 2) collide with lot 1, giving n=5 and BGN 22,395.60. S = BGN 28,400.60 is exactly the sum of the two notices' VAL_TOTALs and 99.7% of the contract-notice estimate. Every award sits at or just under its own lot estimate, so there is no x10^k slip. Today's head covers only lot 1, about 40% of the procedure."
+    },
+    "skeptic": {
+     "id": 7789396,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "BGN 11,320.00 (procedure value, and the amounts estimated_value and result_value, all equal to lot 1 only)",
+     "stated_total": "BGN 28,476.00 (VAL_ESTIMATED_TOTAL, F02 contract notice 23334253). The awards add up to BGN 28,400.60: VAL_TOTAL 17,080.60 in 23608417 plus VAL_TOTAL 11,320.00 in 23640601.",
+     "why": "I re-read the notices myself and could not refute the verdict. (1) Contract notice 23334253 is an F02 open supplies procedure with LOT_DIVISION=1 and LOT_ALL=1. It has no framework fields. VAL_ESTIMATED_TOTAL is BGN 28,476.00. Its LOT_NO 1 to 6 carry VAL_OBJECT 11,320 / 6,013 / 2,171 / 625 / 5,515 / 2,832, and these add up to exactly 28,476. (2) F03 notice 23608417 is keyed internally by ordinal: sections LOT-1..LOT-5 and ITEM 1..5. Its printed LOT_NO are 2,3,4,5,6, with titles that match the CN lots 2 to 6. Its LotResults RES-1..RES-5 give VAL_TOTAL 6,005.00 / 2,171.00 / 622.60 / 5,515.00 / 2,767.00. Each has a per-lot VAL_ESTIMATED_TOTAL equal to that lot's CN estimate. All five go to RIDAKOM EOOD under separate contracts 119689/119690/119691/119695/119696. They add up to 17,080.60, which is the notice's procedure VAL_TOTAL. F03 notice 23640601 has printed LOT_NO 1 with VAL_TOTAL 11,320.00, to Elta 90M, contract 120020. The served lot_results are LOT-2..LOT-6 from 23608417 and LOT-1 from 23640601, so after the re-key they match the printed LOT_NO one to one. No lot appears twice, and every awarded lot is a different real lot with its own contract and supplier record. The pre-drain n=5 sum of 22,395.60 is exactly S minus 6,005. That is the old collision of 23608417's ITEM 1 (really lot 2) with lot 1, which the drain fixed. (3) There is no x10^k slip: every award is at or just under its own lot estimate (622.60 against 625, 2,767 against 2,832, 6,005 against 6,013). The awards are separate fixed supply contracts, not shared framework ceilings, so they can be added. The procedure has only 3 versions (CN plus the two F03s) and no later modification. (4) Today's head of BGN 11,320 covers lot 1 only, 39.8% of the stated estimate. S = BGN 28,400.60 is 99.73% of the 28,476 estimate and equals the sum of the two award notices' own VAL_TOTALs. S is the best total for this procedure."
+    },
+    "thirds": []
+   }
+  },
+  {
+   "id": 8371658,
+   "group": 6,
+   "band": false,
+   "population": "walk-fallback",
+   "S_cents": 1493612000,
+   "currency": "EUR",
+   "n": 4,
+   "vouched_by": "TED-VAL_TOTAL",
+   "pre_drain": {
+    "ship": false,
+    "first": "R2c",
+    "S_cents": 1493612000,
+    "currency": "EUR",
+    "n": 4
+   },
+   "final_verdict": "right",
+   "final_class": "ok",
+   "decided_by": "reader+skeptic agree",
+   "figures": {
+    "stated_cents": 1493612000,
+    "stated_source": "F03 20173160 VAL_TOTAL",
+    "truth_cents": 1493612000,
+    "served_head_cents": 526370500,
+    "S_vs_stated_pct": 0.0,
+    "S_vs_truth_pct": 0.0,
+    "head_vs_truth_pct": -64.76
+   },
+   "partial_sum": false,
+   "left_out_lot_null_awards": [],
+   "lot_null_restating_rows": [],
+   "note": "F20 VAL_TOTAL_AFTER total 14,756,734.19 is within 1.2% of S.",
+   "b3_mover": {
+    "drain_moved": true,
+    "remap_moved": false
+   },
+   "reads": {
+    "first": {
+     "id": 8371658,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 5,263,705.00 (lot 1 only)",
+     "stated_total": "EUR 14,936,120.00 (TED-VAL_TOTAL and VALUE of award notice 20173160, all 4 lots). Contract notice 18582802 (form 2) gives no estimate. The F20 modifications put the lots after change at a combined EUR 14,756,734.19",
+     "why": "Contract notice 18582802 is the Ljubljana energy-savings PPP concession, 'po sklopih 1-4'. F03 notice 20173160 awards printed LOT_NO 1 to 4 to the same Petrol + Resalta group (AWARDED_TO_GROUP, one tender per lot): EUR 5,263,705.00 + 3,939,724.57 + 3,589,544.91 + 2,143,145.52, which equals its procedure VAL_TOTAL of EUR 14,936,120.00 to the cent. Served keys LOT-1 to LOT-4 match the printed lot numbers. The F20 modifications 20157052 (lot 1), 20157054 (lot 2) and 20157053 (lot 3) restate the original lot awards, so the latest award per lot is unchanged and they add no second key. Their VAL_TOTAL_AFTER figures (5,769,448.59, 3,840,313.77 and 3,003,826.31) would bring the total to EUR 14,756,734.19, within 1.2% of S. Each lot is a separate concession contract, not a shared framework ceiling, so the figures add up, and there is no x10^k slip (each award equals its own lot estimate). S matches the buyer-stated total exactly, while today's head is lot 1 alone, about 35% of it."
+    },
+    "skeptic": {
+     "id": 8371658,
+     "verdict": "right",
+     "class": "ok",
+     "served_head": "EUR 5,263,705.00 (lot 1 only, from F03 20173160 RES-1)",
+     "stated_total": "EUR 14,936,120.00 (F03 20173160 PROCEDURE TED-VAL_TOTAL / TED-VALUE, type PROCUREMENT_TOTAL)",
+     "why": "I re-read the notices myself and could not refute the reader. Contract notice 18582802 (F02, ref 430-241/2015) is the Ljubljana energy-savings concession split into four lots, 'po sklopih 1-4'. It prints LOT_NUMBER 1-4, each with its own list of buildings, and gives no procedure estimate. The F03 award notice 20173160 has four separate LotResults, RES-1 to RES-4, with printed LOT_NO 1-4 and CONTRACT_NO 1-4, all concluded 2017-04-06 and all won by the Petrol + Resalta group (AWARDED_TO_GROUP). Their VAL_TOTAL figures are EUR 5,263,705.00, 3,939,724.57, 3,589,544.91 and 2,143,145.52, and each equals its own lot VAL_ESTIMATED_TOTAL. They add up to exactly EUR 14,936,120.00, the notice's own procedure TED-VAL_TOTAL (PROCUREMENT_TOTAL), which is S to the cent. Re-keying check: lot_details holds exactly LOT-1 to LOT-4. The seven lot_results rows map to four distinct lots. The F20 notices 20157052, 20157054 and 20157053 print LOT_NO 1, 2 and 3 and are served on LOT-1, LOT-2 and LOT-3. Each restates its lot's original VAL_TOTAL (5,263,705.00, 3,939,724.57 and 3,589,544.91), so the latest award per lot is unchanged, nothing is counted twice and no lot sits under two keys. The figures add because they are four numbered concession contracts with one tender each, not a shared framework ceiling. EUR 14.9M is plausible for renovating municipal buildings, and every award matches its own estimate, so there is no x10^k slip. If the F20 VAL_TOTAL_AFTER figures are used instead (5,769,448.59, 3,840,313.77, 3,003,826.31, with lot 4 unchanged), the total is 14,756,734.19, within 1.2% of S. Today's head of 5,263,705.00 is lot 1 alone, about 35% of the stated total, so S is clearly better."
+    },
+    "thirds": []
+   }
+  }
+ ]
+}
