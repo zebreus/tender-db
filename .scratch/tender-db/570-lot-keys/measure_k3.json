@@ -1,0 +1,691 @@
+[
+ {
+  "tender_id": 5526177,
+  "cls": "single_lot_notice",
+  "notices_with_lots": 1,
+  "lotpub": [
+   18468874
+  ],
+  "maps": "18468874: LOT-1..31=no 1..31",
+  "dis": [],
+  "results_total": 31,
+  "results_null": 31,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    18468874
+   ],
+   "LOT-10": [
+    18468874
+   ],
+   "LOT-11": [
+    18468874
+   ],
+   "LOT-12": [
+    18468874
+   ],
+   "LOT-13": [
+    18468874
+   ],
+   "LOT-14": [
+    18468874
+   ],
+   "LOT-15": [
+    18468874
+   ],
+   "LOT-16": [
+    18468874
+   ],
+   "LOT-17": [
+    18468874
+   ],
+   "LOT-18": [
+    18468874
+   ],
+   "LOT-19": [
+    18468874
+   ],
+   "LOT-2": [
+    18468874
+   ],
+   "LOT-20": [
+    18468874
+   ],
+   "LOT-21": [
+    18468874
+   ],
+   "LOT-22": [
+    18468874
+   ],
+   "LOT-23": [
+    18468874
+   ],
+   "LOT-24": [
+    18468874
+   ],
+   "LOT-25": [
+    18468874
+   ],
+   "LOT-26": [
+    18468874
+   ],
+   "LOT-27": [
+    18468874
+   ],
+   "LOT-28": [
+    18468874
+   ],
+   "LOT-29": [
+    18468874
+   ],
+   "LOT-3": [
+    18468874
+   ],
+   "LOT-30": [
+    18468874
+   ],
+   "LOT-31": [
+    18468874
+   ],
+   "LOT-4": [
+    18468874
+   ],
+   "LOT-5": [
+    18468874
+   ],
+   "LOT-6": [
+    18468874
+   ],
+   "LOT-7": [
+    18468874
+   ],
+   "LOT-8": [
+    18468874
+   ],
+   "LOT-9": [
+    18468874
+   ]
+  }
+ },
+ {
+  "tender_id": 5621155,
+  "cls": "single_lot_notice",
+  "notices_with_lots": 1,
+  "lotpub": [
+   18721284
+  ],
+  "maps": "18721284: LOT-1..8=no 1..8",
+  "dis": [],
+  "results_total": 8,
+  "results_null": 8,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    18721284
+   ],
+   "LOT-2": [
+    18721284
+   ],
+   "LOT-3": [
+    18721284
+   ],
+   "LOT-4": [
+    18721284
+   ],
+   "LOT-5": [
+    18721284
+   ],
+   "LOT-6": [
+    18721284
+   ],
+   "LOT-7": [
+    18721284
+   ],
+   "LOT-8": [
+    18721284
+   ]
+  }
+ },
+ {
+  "tender_id": 5775903,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   18959240,
+   19089711
+  ],
+  "maps": "18959240: LOT-1..3=no 1..3; 19089711: LOT-1..3=no 1..3",
+  "dis": [],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    18959240,
+    19089711
+   ],
+   "LOT-2": [
+    18959240,
+    19089711
+   ],
+   "LOT-3": [
+    18959240,
+    19089711
+   ]
+  }
+ },
+ {
+  "tender_id": 5974937,
+  "cls": "single_lot_notice",
+  "notices_with_lots": 1,
+  "lotpub": [
+   19346476
+  ],
+  "maps": "19346476: LOT-1..2=no 1..2",
+  "dis": [],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    19346476
+   ],
+   "LOT-2": [
+    19346476
+   ]
+  }
+ },
+ {
+  "tender_id": 6026257,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   19485275,
+   19657371
+  ],
+  "maps": "19485275: LOT-1..4=no 1..4; 19657371: LOT-1..4=no 1..4",
+  "dis": [],
+  "results_total": 4,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    19485275,
+    19657371
+   ],
+   "LOT-2": [
+    19485275,
+    19657371
+   ],
+   "LOT-3": [
+    19485275,
+    19657371
+   ],
+   "LOT-4": [
+    19485275,
+    19657371
+   ]
+  }
+ },
+ {
+  "tender_id": 6243140,
+  "cls": "single_lot_notice",
+  "notices_with_lots": 1,
+  "lotpub": [
+   19901228
+  ],
+  "maps": "19901228: LOT-1..4=no 1..4",
+  "dis": [],
+  "results_total": 4,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    19901228
+   ],
+   "LOT-2": [
+    19901228
+   ],
+   "LOT-3": [
+    19901228
+   ],
+   "LOT-4": [
+    19901228
+   ]
+  }
+ },
+ {
+  "tender_id": 6393358,
+  "cls": "single_lot_notice",
+  "notices_with_lots": 1,
+  "lotpub": [
+   20211834
+  ],
+  "maps": "20211834: LOT-1..10=no 1..10",
+  "dis": [],
+  "results_total": 10,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    20211834
+   ],
+   "LOT-10": [
+    20211834
+   ],
+   "LOT-2": [
+    20211834
+   ],
+   "LOT-3": [
+    20211834
+   ],
+   "LOT-4": [
+    20211834
+   ],
+   "LOT-5": [
+    20211834
+   ],
+   "LOT-6": [
+    20211834
+   ],
+   "LOT-7": [
+    20211834
+   ],
+   "LOT-8": [
+    20211834
+   ],
+   "LOT-9": [
+    20211834
+   ]
+  }
+ },
+ {
+  "tender_id": 6458976,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   20291826,
+   20506309
+  ],
+  "maps": "20291826: LOT-1..8=no 1..8; 20506309: LOT-1..8=no 1..8",
+  "dis": [],
+  "results_total": 8,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    20291826,
+    20506309
+   ],
+   "LOT-2": [
+    20291826,
+    20506309
+   ],
+   "LOT-3": [
+    20291826,
+    20506309
+   ],
+   "LOT-4": [
+    20291826,
+    20506309
+   ],
+   "LOT-5": [
+    20291826,
+    20506309
+   ],
+   "LOT-6": [
+    20291826,
+    20506309
+   ],
+   "LOT-7": [
+    20291826,
+    20506309
+   ],
+   "LOT-8": [
+    20291826,
+    20506309
+   ]
+  }
+ },
+ {
+  "tender_id": 6606044,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   20646046,
+   20792981
+  ],
+  "maps": "20646046: LOT-1..11=no 1..11; 20792981: LOT-1..11=no 1..11",
+  "dis": [],
+  "results_total": 11,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    20646046,
+    20792981
+   ],
+   "LOT-10": [
+    20646046,
+    20792981
+   ],
+   "LOT-11": [
+    20646046,
+    20792981
+   ],
+   "LOT-2": [
+    20646046,
+    20792981
+   ],
+   "LOT-3": [
+    20646046,
+    20792981
+   ],
+   "LOT-4": [
+    20646046,
+    20792981
+   ],
+   "LOT-5": [
+    20646046,
+    20792981
+   ],
+   "LOT-6": [
+    20646046,
+    20792981
+   ],
+   "LOT-7": [
+    20646046,
+    20792981
+   ],
+   "LOT-8": [
+    20646046,
+    20792981
+   ],
+   "LOT-9": [
+    20646046,
+    20792981
+   ]
+  }
+ },
+ {
+  "tender_id": 6688970,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   20775942,
+   21059660
+  ],
+  "maps": "20775942: LOT-1..2=no 1..2; 21059660: LOT-1..2=no 1..2",
+  "dis": [],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    20775942,
+    21059660
+   ],
+   "LOT-2": [
+    20775942,
+    21059660
+   ]
+  }
+ },
+ {
+  "tender_id": 6792500,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   21020291,
+   21317021
+  ],
+  "maps": "21020291: LOT-1..2=no 1..2; 21317021: LOT-1..2=no 1..2",
+  "dis": [],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    21020291,
+    21317021
+   ],
+   "LOT-2": [
+    21020291,
+    21317021
+   ]
+  }
+ },
+ {
+  "tender_id": 7016110,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   21556963,
+   21665906
+  ],
+  "maps": "21556963: LOT-1..5=no 1..5; 21665906: LOT-1..5=no 1..5",
+  "dis": [],
+  "results_total": 3,
+  "results_null": 2,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    21556963,
+    21665906
+   ],
+   "LOT-2": [
+    21556963,
+    21665906
+   ],
+   "LOT-3": [
+    21556963,
+    21665906
+   ],
+   "LOT-4": [
+    21556963,
+    21665906
+   ],
+   "LOT-5": [
+    21556963,
+    21665906
+   ]
+  }
+ },
+ {
+  "tender_id": 6891171,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   21237640,
+   21974313
+  ],
+  "maps": "21237640: LOT-1..5=no 1..5; 21974313: LOT-1..5=no 1..5",
+  "dis": [],
+  "results_total": 5,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    21237640,
+    21974313
+   ],
+   "LOT-2": [
+    21237640,
+    21974313
+   ],
+   "LOT-3": [
+    21237640,
+    21974313
+   ],
+   "LOT-4": [
+    21237640,
+    21974313
+   ],
+   "LOT-5": [
+    21237640,
+    21974313
+   ]
+  }
+ },
+ {
+  "tender_id": 7259677,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   22078456,
+   22273223
+  ],
+  "maps": "22078456: LOT-1..6=no 1..6; 22273223: LOT-1..6=no 1..6",
+  "dis": [],
+  "results_total": 6,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    22078456,
+    22273223
+   ],
+   "LOT-2": [
+    22078456,
+    22273223
+   ],
+   "LOT-3": [
+    22078456,
+    22273223
+   ],
+   "LOT-4": [
+    22078456,
+    22273223
+   ],
+   "LOT-5": [
+    22078456,
+    22273223
+   ],
+   "LOT-6": [
+    22078456,
+    22273223
+   ]
+  }
+ },
+ {
+  "tender_id": 7369941,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   22349626,
+   22628313
+  ],
+  "maps": "22349626: LOT-1..3=no 1..3; 22628313: LOT-1..3=no 1..3",
+  "dis": [],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    22349626,
+    22628313
+   ],
+   "LOT-2": [
+    22349626,
+    22628313
+   ],
+   "LOT-3": [
+    22349626,
+    22628313
+   ]
+  }
+ },
+ {
+  "tender_id": 8515809,
+  "cls": "single_lot_notice",
+  "notices_with_lots": 1,
+  "lotpub": [
+   22937129
+  ],
+  "maps": "22937129: LOT-1..3=no 1..3",
+  "dis": [],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    22937129
+   ],
+   "LOT-2": [
+    22937129
+   ],
+   "LOT-3": [
+    22937129
+   ]
+  }
+ },
+ {
+  "tender_id": 7553042,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "lotpub": [
+   22799932,
+   23362617
+  ],
+  "maps": "22799932: LOT-1..9=no 1..9; 23362617: LOT-1..9=no 1..9",
+  "dis": [],
+  "results_total": 9,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "served_lot_title_sources": {
+   "LOT-1": [
+    22799932,
+    23362617
+   ],
+   "LOT-2": [
+    22799932,
+    23362617
+   ],
+   "LOT-3": [
+    22799932,
+    23362617
+   ],
+   "LOT-4": [
+    22799932,
+    23362617
+   ],
+   "LOT-5": [
+    22799932,
+    23362617
+   ],
+   "LOT-6": [
+    22799932,
+    23362617
+   ],
+   "LOT-7": [
+    22799932,
+    23362617
+   ],
+   "LOT-8": [
+    22799932,
+    23362617
+   ],
+   "LOT-9": [
+    22799932,
+    23362617
+   ]
+  }
+ }
+]

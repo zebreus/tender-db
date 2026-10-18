@@ -1,0 +1,7610 @@
+[
+ {
+  "tender_id": 5579001,
+  "cls": "single_lot_notice",
+  "cls_auto": "single_lot_notice",
+  "n_notices_with_lot_sections": 1,
+  "results_total": 2,
+  "results_null": 2,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "18595654: LOT-1..2=1..2",
+  "maps": {
+   "18595654": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Secteur Nord meusien"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Secteur Sud meusien"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Secteur Nord meusien",
+    "title_from": [
+     18595654
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "18595654": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Secteur Sud meusien",
+    "title_from": [
+     18595654
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "18595654": [
+      "2"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 18738386,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Maintenance et mise en conformité des installations électriques",
+    "winners": [
+     "Lorrelec"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18738386,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Maintenance et mise en conformité électrique",
+    "winners": [
+     "Ertec"
+    ],
+    "verdict": "null"
+   }
+  ],
+  "lot_facts": {
+   "total": 6,
+   "ok": 6,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 5587976,
+  "cls": "single_lot_notice",
+  "cls_auto": "single_lot_notice",
+  "n_notices_with_lot_sections": 1,
+  "results_total": 3,
+  "results_null": 3,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "18619586: LOT-1..3=1..3",
+  "maps": {
+   "18619586": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Fire Risk Assessment"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Fire Advisors"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Fire Engineers"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Fire Risk Assessment",
+    "title_from": [
+     18619586
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "18619586": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Fire Advisors",
+    "title_from": [
+     18619586
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "18619586": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Fire Engineers",
+    "title_from": [
+     18619586
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "18619586": [
+      "3"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 18955068,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lot 1 — Fire Risk Assessments",
+    "winners": [
+     "Fire and Risk Management Support Services Limited"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18955068,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lot 2 — Fire Advisors",
+    "winners": [
+     "Fire and Risk Management Support Services Limited"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18955068,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lot 3 — Fire Engineers",
+    "winners": [
+     "Fire and Risk Management Support Services Limited"
+    ],
+    "verdict": "null"
+   }
+  ],
+  "lot_facts": {
+   "total": 15,
+   "ok": 15,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 5656281,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 2,
+  "results_total": 5,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "18753802: LOT-1..5=1..5; 19177614: LOT-1..5=1..5",
+  "maps": {
+   "18753802": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Perceel 1"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Perceel 2"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Perceel 3"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Perceel 4"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Perceel 5"
+    }
+   },
+   "19177614": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Perceel 1"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Perceel 2"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Perceel 3"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Perceel 4"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Perceel 5"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Perceel 1",
+    "title_from": [
+     18753802,
+     19177614
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "18753802": [
+      "1"
+     ],
+     "19177614": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Perceel 2",
+    "title_from": [
+     18753802,
+     19177614
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "18753802": [
+      "2"
+     ],
+     "19177614": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Perceel 3",
+    "title_from": [
+     18753802,
+     19177614
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "18753802": [
+      "3"
+     ],
+     "19177614": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Perceel 4",
+    "title_from": [
+     18753802,
+     19177614
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "18753802": [
+      "4"
+     ],
+     "19177614": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Perceel 5",
+    "title_from": [
+     18753802,
+     19177614
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "18753802": [
+      "5"
+     ],
+     "19177614": [
+      "5"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19177614,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Perceel 1",
+    "block_title": "Inzamelen en verwerken reststoffen",
+    "winners": [
+     "Renewi Nederland B.V."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19177614,
+    "key": "RES-2",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Perceel 5",
+    "block_title": "Inzamelen en verwerken reststoffen",
+    "winners": [
+     "Shanks Nederland BV"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19177614,
+    "key": "RES-3",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Perceel 4",
+    "block_title": "Inzamelen en verwerken reststoffen",
+    "winners": [
+     "Renewi Nederland B.V."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19177614,
+    "key": "RES-4",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Perceel 3",
+    "block_title": "Inzamelen en verwerken reststoffen",
+    "winners": [
+     "Renewi Nederland B.V."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19177614,
+    "key": "RES-5",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Perceel 2",
+    "block_title": "Inzamelen en verwerken reststoffen",
+    "winners": [
+     "Renewi Nederland B.V."
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 20,
+   "ok": 20,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 5956189,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 2,
+  "results_total": 5,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "19348661: LOT-1..5=1..5; 19469482: LOT-1..5=1..5",
+  "maps": {
+   "19348661": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Tische für Bildschirmarbeitsplätze (Schreibtisch) und Zubehör"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Sitz-Steh-Arbeitstische mit elektromotorischer Höhenanpassung und Zubehör"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Arbeitstische ohne Höhenverstellung"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Garderoben-, Akten-Garderobenschränke, Aktenschränke (Schiebetüren- und Querrollladenschränke), Aktenregale und Akten-Beistellregale und Zubehör"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Neumöblierung und Ersatzbeschaffungen für das Bezirksamt Hamburg-Mitte"
+    }
+   },
+   "19469482": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Tische für Bildschirmarbeitsplätze (Schreibtisch) und Zubehör"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Sitz-Steh-Arbeitstische mit elektromotorischer Höhenanpassung und Zubehör"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Arbeitstische ohne Höhenverstellung"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Garderoben-, Akten-Garderobenschränke, Aktenschränke (Schiebetüren- und Querrollladenschränke), Aktenregale und Akten-Beistellregale und Zubehör"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Neumöblierung und Ersatzbeschaffungen für das Bezirksamt Hamburg-Mitte"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Tische für Bildschirmarbeitsplätze (Schreibtisch) und Zubehör",
+    "title_from": [
+     19348661,
+     19469482
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "19348661": [
+      "1"
+     ],
+     "19469482": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Sitz-Steh-Arbeitstische mit elektromotorischer Höhenanpassung und Zubehör",
+    "title_from": [
+     19348661,
+     19469482
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "19348661": [
+      "2"
+     ],
+     "19469482": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Arbeitstische ohne Höhenverstellung",
+    "title_from": [
+     19348661,
+     19469482
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "19348661": [
+      "3"
+     ],
+     "19469482": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Garderoben-, Akten-Garderobenschränke, Aktenschränke (Schiebetüren- und Querrollladenschränke), Aktenregale und Akten-Beistellregale und Zubehör",
+    "title_from": [
+     19348661,
+     19469482
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "19348661": [
+      "4"
+     ],
+     "19469482": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Neumöblierung und Ersatzbeschaffungen für das Bezirksamt Hamburg-Mitte",
+    "title_from": [
+     19348661,
+     19469482
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "19348661": [
+      "5"
+     ],
+     "19469482": [
+      "5"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19469482,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Tische für Bildschirmarbeitsplätze (Schreibtisch) und Zubehör",
+    "block_title": "Tische für Bildschirmarbeitsplätze (Schreibtisch) und Zubehör",
+    "winners": [
+     "Henry Fölschow GmbH & Co. KG"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19469482,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Sitz-Steh-Arbeitstische mit elektromotorischer Höhenanpassung und Zubehör",
+    "block_title": "Sitz-Steh-Arbeitstische mit elektromotorischer Höhenanpassung und Zubehör",
+    "winners": [
+     "Henry Fölschow GmbH & Co. KG"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19469482,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Arbeitstische ohne Höhenverstellung",
+    "block_title": "Arbeitstische ohne Höhenverstellung",
+    "winners": [
+     "Henry Fölschow GmbH & Co. KG"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19469482,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Garderoben-, Akten-Garderobenschränke, Aktenschränke (Schiebetüren- und Querroll",
+    "block_title": "Garderoben-, Akten-Garderobenschränke, Aktenschränke (Schiebetüren- und Querroll",
+    "winners": [
+     "Henry Fölschow GmbH & Co. KG"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19469482,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Neumöblierung und Ersatzbeschaffungen für das Bezirksamt Hamburg-Mitte",
+    "block_title": "Neumöblierung und Ersatzbeschaffungen für das Bezirksamt Hamburg-Mitte",
+    "winners": [
+     "Henry Fölschow GmbH & Co. KG"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 38,
+   "ok": 38,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 6003542,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 2,
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "19429854: LOT-1..2=1..2; 19723092: LOT-1..2=1..2",
+  "maps": {
+   "19429854": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lieferung von ca. 14 Stück Fahrzeugen PKW Kombi </= 3,5 to zuläss. Gesamtgewicht"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Ausbau von ca. 14 Stück PKW Kombi zum Mannschaftstransportwagen Feuerwehr bzw. Mannschaftstransportwagen Straßenmeisterei"
+    }
+   },
+   "19723092": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lieferung von ca. 14 Stück Fahrzeugen PKW Kombi </= 3,5 to zuläss. Gesamtgewicht"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Ausbau von ca. 14 Stück PKW Kombi zum Mannschaftstransportwagen Feuerwehr bzw. Mannschaftstransportwagen Straßenmeisterei"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lieferung von ca. 14 Stück Fahrzeugen PKW Kombi </= 3,5 to zuläss. Gesamtgewicht",
+    "title_from": [
+     19429854,
+     19723092
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "19429854": [
+      "1"
+     ],
+     "19723092": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Ausbau von ca. 14 Stück PKW Kombi zum Mannschaftstransportwagen Feuerwehr bzw. Mannschaftstransportwagen Straßenmeisterei",
+    "title_from": [
+     19429854,
+     19723092
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "19429854": [
+      "2"
+     ],
+     "19723092": [
+      "2"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19723092,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Lieferung von ca. 14 Stück Fahrzeugen PKW Kombi </= 3,5 to zuläss. Gesamtgewicht",
+    "block_title": "Lieferung von ca. 14 Stück Fahrzeugen PKW Kombi </= 3,5 to zuläss. Gesamtgewicht",
+    "winners": [
+     "Daimler AG, MB Vertrieb Deutschland, Berlin"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19723092,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Ausbau von ca. 14 Stück PKW Kombi zum Mannschaftstransportwagen Feuerwehr bzw. M",
+    "block_title": "Ausbau von ca. 14 Stück PKW Kombi zum Mannschaftstransportwagen Feuerwehr bzw. M",
+    "winners": [
+     "Martin Schäfer GmbH"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 13,
+   "ok": 13,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 6290638,
+  "cls": "single_lot_notice",
+  "cls_auto": "single_lot_notice",
+  "n_notices_with_lot_sections": 1,
+  "results_total": 8,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "20004819: LOT-1..72=1..72",
+  "maps": {
+   "20004819": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Equip de sustitución sonda gastrostomia con balón 20CH"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Sonda alimentación enteral poliuretano con fiador radiopaca 12CH 110CM"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Sonda alimentación enteral poliuretano con fiador radiopaca 14CH 110CM"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Sonda alimentacion enteral silicona10CH"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Sonda alimentacion enteral silicona 12CH"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Sonda aspiración nasofaringea control DE SUCCION 8CH 40 CM"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "SONDA aspiración nasofaringea control DE SUCCION 10CH 40 CM"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Sonda aspiración nasofaringea control DE SUCCION 12CH 50 CM"
+    },
+    "LOT-9": {
+     "no": [
+      "9"
+     ],
+     "title": "Sonda aspiración nasofaringea control DE SUCCION 14CH 50 CM"
+    },
+    "LOT-10": {
+     "no": [
+      "10"
+     ],
+     "title": "Sonda aspiración nasofaringea control DE SUCCION 16CH 50 CM"
+    },
+    "LOT-11": {
+     "no": [
+      "11"
+     ],
+     "title": "Sonda rectal PVC una via 22CH 40CM"
+    },
+    "LOT-12": {
+     "no": [
+      "12"
+     ],
+     "title": "Sonda rectal PVC una via 30CH 40CM"
+    },
+    "LOT-13": {
+     "no": [
+      "13"
+     ],
+     "title": "Sonda ureteral punta recta cilindrica pliamida una via abierta 4CH 75CM"
+    },
+    "LOT-14": {
+     "no": [
+      "14"
+     ],
+     "title": "Sonda ureteral punta recta cilindrica pliamida una via abierta 5CH 75CM"
+    },
+    "LOT-15": {
+     "no": [
+      "15"
+     ],
+     "title": "Sonda ureteral punta recta cilindrica pliamida una via abierta 6CH 75CM"
+    },
+    "LOT-16": {
+     "no": [
+      "16"
+     ],
+     "title": "Sonda vesical silicona tres vias 16CH 40CM BALON 80ML"
+    },
+    "LOT-17": {
+     "no": [
+      "17"
+     ],
+     "title": "Sonda vesical couvelaire silicona tres vias 18CH 40CM BALON 50ML"
+    },
+    "LOT-18": {
+     "no": [
+      "18"
+     ],
+     "title": "Sonda vesical couvelaire silicona tres vias 20CH 40CM BALON 50ML"
+    },
+    "LOT-19": {
+     "no": [
+      "19"
+     ],
+     "title": "Sonda vesical couvelaire silicona tres vias 22CH 40CM BALON 50ML"
+    },
+    "LOT-20": {
+     "no": [
+      "20"
+     ],
+     "title": "Sonda vesical dufour goma rigida tres vias 18CH 40CM BALON 50ML"
+    },
+    "LOT-21": {
+     "no": [
+      "21"
+     ],
+     "title": "Sonda vesical dufour silicona tres vias 18CH 40CM BALON 30ML"
+    },
+    "LOT-22": {
+     "no": [
+      "22"
+     ],
+     "title": "Sonda vesical dufour silicona tres VIAS 20CH 40CM BALON 30ML"
+    },
+    "LOT-23": {
+     "no": [
+      "23"
+     ],
+     "title": "Sonda vesical dufour silicona tres via 22CH 40CM BALON 30ML"
+    },
+    "LOT-24": {
+     "no": [
+      "24"
+     ],
+     "title": "Sonda vesical foley silicona dos vias 6CH 30CM BALON 1,5ML"
+    },
+    "LOT-25": {
+     "no": [
+      "25"
+     ],
+     "title": "Sonda vesical foley silicona dos vias 8CH 30CM BALON 3ML"
+    },
+    "LOT-26": {
+     "no": [
+      "26"
+     ],
+     "title": "SSonda vesical foley silicona dos vias 10CH 30CM BALON 3 5ML"
+    },
+    "LOT-27": {
+     "no": [
+      "27"
+     ],
+     "title": "Sonda vesical foley silicona dos vias 12CH 40CM BALON 15ML"
+    },
+    "LOT-28": {
+     "no": [
+      "28"
+     ],
+     "title": "Sonda vesical foley silicona dos vias 14CH 40CM BALON 15ML"
+    },
+    "LOT-29": {
+     "no": [
+      "29"
+     ],
+     "title": "Sonda vesical foley silicona dos vias 16CH 40CM BALON 15ML"
+    },
+    "LOT-30": {
+     "no": [
+      "30"
+     ],
+     "title": "Sonda vesical foley silicona dos vias 18CH 40CM BALON 15ML"
+    },
+    "LOT-31": {
+     "no": [
+      "31"
+     ],
+     "title": "Sonda vesical foley silicona dos vias 20CH 40CM BALON 15ML"
+    },
+    "LOT-32": {
+     "no": [
+      "32"
+     ],
+     "title": "Sonda vesical foley silicona dos vias 22CH 40CM BALON 15ML"
+    },
+    "LOT-33": {
+     "no": [
+      "33"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 6CH 30CM"
+    },
+    "LOT-34": {
+     "no": [
+      "34"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 8CH 20CM"
+    },
+    "LOT-35": {
+     "no": [
+      "35"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 8CH 40CM"
+    },
+    "LOT-36": {
+     "no": [
+      "36"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 10CH 20CM"
+    },
+    "LOT-37": {
+     "no": [
+      "37"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 10CH 40CM"
+    },
+    "LOT-38": {
+     "no": [
+      "38"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 12CH 20CM"
+    },
+    "LOT-39": {
+     "no": [
+      "39"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 12CH 40CM"
+    },
+    "LOT-40": {
+     "no": [
+      "40"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 14CH 20CM"
+    },
+    "LOT-41": {
+     "no": [
+      "41"
+     ],
+     "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 14CH 40CM"
+    },
+    "LOT-42": {
+     "no": [
+      "42"
+     ],
+     "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 8CH 20CM"
+    },
+    "LOT-43": {
+     "no": [
+      "43"
+     ],
+     "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 8CH 40CM"
+    },
+    "LOT-44": {
+     "no": [
+      "44"
+     ],
+     "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 10CH 20CM"
+    },
+    "LOT-45": {
+     "no": [
+      "45"
+     ],
+     "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 10CH 40CM"
+    },
+    "LOT-46": {
+     "no": [
+      "46"
+     ],
+     "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 12CH 20CM"
+    },
+    "LOT-47": {
+     "no": [
+      "47"
+     ],
+     "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 12CH 40CM"
+    },
+    "LOT-48": {
+     "no": [
+      "48"
+     ],
+     "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 14CH 20CM"
+    },
+    "LOT-49": {
+     "no": [
+      "49"
+     ],
+     "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 14CH 40CM"
+    },
+    "LOT-50": {
+     "no": [
+      "50"
+     ],
+     "title": "Sonda vesical foley silicona tres vias 16 CH 40 CM BALON 30 ML"
+    },
+    "LOT-51": {
+     "no": [
+      "51"
+     ],
+     "title": "Sonda vesical foley silicona tres vias 18 CH 40 CM BALÓN 30 ML"
+    },
+    "LOT-52": {
+     "no": [
+      "52"
+     ],
+     "title": "Sonda vesical foley silicona tres vias 20 CH 40 CM BALÓN 30 ML"
+    },
+    "LOT-53": {
+     "no": [
+      "53"
+     ],
+     "title": "Sonda vesical foley silicona tres vias 22 CH 40 CM BALÓN 30 ML"
+    },
+    "LOT-54": {
+     "no": [
+      "54"
+     ],
+     "title": "Sonda vesical punta recta cilindrica silicona uan via AUTOLUBRICADA 12CH 40CM"
+    },
+    "LOT-55": {
+     "no": [
+      "55"
+     ],
+     "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 10CH 40CM"
+    },
+    "LOT-56": {
+     "no": [
+      "56"
+     ],
+     "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 12CH 40CM"
+    },
+    "LOT-57": {
+     "no": [
+      "57"
+     ],
+     "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 14CH 40CM"
+    },
+    "LOT-58": {
+     "no": [
+      "58"
+     ],
+     "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 10CH 40CM"
+    },
+    "LOT-59": {
+     "no": [
+      "59"
+     ],
+     "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 12CH 40CM"
+    },
+    "LOT-60": {
+     "no": [
+      "60"
+     ],
+     "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 14CH 40CM"
+    },
+    "LOT-61": {
+     "no": [
+      "61"
+     ],
+     "title": "Sonda vesical tiemann silicona dos vias 8CH 40CM BALON 15ML"
+    },
+    "LOT-62": {
+     "no": [
+      "62"
+     ],
+     "title": "Sonda vesical tiemann silicona dos vias 10CH 40CM BALON 15ML"
+    },
+    "LOT-63": {
+     "no": [
+      "63"
+     ],
+     "title": "Sonda vesical tiemann silicona dos vias 12CH 40CM BALON 10 15ML"
+    },
+    "LOT-64": {
+     "no": [
+      "64"
+     ],
+     "title": "Sonda vesical tiemann silicona dos vias 14CH 40CM BALON 10 15ML"
+    },
+    "LOT-65": {
+     "no": [
+      "65"
+     ],
+     "title": "Sonda vesical tiemann silicona dos vias 16CH 40CM BALON 15ML"
+    },
+    "LOT-66": {
+     "no": [
+      "66"
+     ],
+     "title": "Sonda vesical tiemann silicona dos vias 18CH 40CM BALON 15ML"
+    },
+    "LOT-67": {
+     "no": [
+      "67"
+     ],
+     "title": "Sonda recta cistomanometria poliuretano UNA VIA 10CH 100CM"
+    },
+    "LOT-68": {
+     "no": [
+      "68"
+     ],
+     "title": "Sonda uretral punta recta cilindrica cistomanometria PVC DOS VIAS 6CH 40CM"
+    },
+    "LOT-69": {
+     "no": [
+      "69"
+     ],
+     "title": "Sonda uretral punta recta cilindrica cistomanometria PVC DOS VIAS 8CH 40CM"
+    },
+    "LOT-70": {
+     "no": [
+      "70"
+     ],
+     "title": "Sonda uretral punta recta cilindrica cistomanometria PVC DOS VIAS 10CH 40CM"
+    },
+    "LOT-71": {
+     "no": [
+      "71"
+     ],
+     "title": "Sonda uretral punta recta cilindrica cistomanometria PVC DOS VIAS 6CH 47 CM"
+    },
+    "LOT-72": {
+     "no": [
+      "72"
+     ],
+     "title": "Sonda uretral mercier cistomanometria PVC DOS VIAS 7 CH 47 CM"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Equip de sustitución sonda gastrostomia con balón 20CH",
+    "title_from": [
+     20004819
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "1"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "Sonda aspiración nasofaringea control DE SUCCION 16CH 50 CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "10",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "10"
+     ]
+    }
+   },
+   "LOT-11": {
+    "title": "Sonda rectal PVC una via 22CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "11",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "11"
+     ]
+    }
+   },
+   "LOT-12": {
+    "title": "Sonda rectal PVC una via 30CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "12",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "12"
+     ]
+    }
+   },
+   "LOT-13": {
+    "title": "Sonda ureteral punta recta cilindrica pliamida una via abierta 4CH 75CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "13",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "13"
+     ]
+    }
+   },
+   "LOT-14": {
+    "title": "Sonda ureteral punta recta cilindrica pliamida una via abierta 5CH 75CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "14",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "14"
+     ]
+    }
+   },
+   "LOT-15": {
+    "title": "Sonda ureteral punta recta cilindrica pliamida una via abierta 6CH 75CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "15",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "15"
+     ]
+    }
+   },
+   "LOT-16": {
+    "title": "Sonda vesical silicona tres vias 16CH 40CM BALON 80ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "16",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "16"
+     ]
+    }
+   },
+   "LOT-17": {
+    "title": "Sonda vesical couvelaire silicona tres vias 18CH 40CM BALON 50ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "17",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "17"
+     ]
+    }
+   },
+   "LOT-18": {
+    "title": "Sonda vesical couvelaire silicona tres vias 20CH 40CM BALON 50ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "18",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "18"
+     ]
+    }
+   },
+   "LOT-19": {
+    "title": "Sonda vesical couvelaire silicona tres vias 22CH 40CM BALON 50ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "19",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "19"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Sonda alimentación enteral poliuretano con fiador radiopaca 12CH 110CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "2"
+     ]
+    }
+   },
+   "LOT-20": {
+    "title": "Sonda vesical dufour goma rigida tres vias 18CH 40CM BALON 50ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "20",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "20"
+     ]
+    }
+   },
+   "LOT-21": {
+    "title": "Sonda vesical dufour silicona tres vias 18CH 40CM BALON 30ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "21",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "21"
+     ]
+    }
+   },
+   "LOT-22": {
+    "title": "Sonda vesical dufour silicona tres VIAS 20CH 40CM BALON 30ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "22",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "22"
+     ]
+    }
+   },
+   "LOT-23": {
+    "title": "Sonda vesical dufour silicona tres via 22CH 40CM BALON 30ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "23",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "23"
+     ]
+    }
+   },
+   "LOT-24": {
+    "title": "Sonda vesical foley silicona dos vias 6CH 30CM BALON 1,5ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "24",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "24"
+     ]
+    }
+   },
+   "LOT-25": {
+    "title": "Sonda vesical foley silicona dos vias 8CH 30CM BALON 3ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "25",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "25"
+     ]
+    }
+   },
+   "LOT-26": {
+    "title": "SSonda vesical foley silicona dos vias 10CH 30CM BALON 3 5ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "26",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "26"
+     ]
+    }
+   },
+   "LOT-27": {
+    "title": "Sonda vesical foley silicona dos vias 12CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "27",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "27"
+     ]
+    }
+   },
+   "LOT-28": {
+    "title": "Sonda vesical foley silicona dos vias 14CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "28",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "28"
+     ]
+    }
+   },
+   "LOT-29": {
+    "title": "Sonda vesical foley silicona dos vias 16CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "29",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "29"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Sonda alimentación enteral poliuretano con fiador radiopaca 14CH 110CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "3"
+     ]
+    }
+   },
+   "LOT-30": {
+    "title": "Sonda vesical foley silicona dos vias 18CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "30",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "30"
+     ]
+    }
+   },
+   "LOT-31": {
+    "title": "Sonda vesical foley silicona dos vias 20CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "31",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "31"
+     ]
+    }
+   },
+   "LOT-32": {
+    "title": "Sonda vesical foley silicona dos vias 22CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "32",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "32"
+     ]
+    }
+   },
+   "LOT-33": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 6CH 30CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "33",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "33"
+     ]
+    }
+   },
+   "LOT-34": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 8CH 20CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "34",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "34"
+     ]
+    }
+   },
+   "LOT-35": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 8CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "35",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "35"
+     ]
+    }
+   },
+   "LOT-36": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 10CH 20CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "36",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "36"
+     ]
+    }
+   },
+   "LOT-37": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 10CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "37",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "37"
+     ]
+    }
+   },
+   "LOT-38": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 12CH 20CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "38",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "38"
+     ]
+    }
+   },
+   "LOT-39": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 12CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "39",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "39"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Sonda alimentacion enteral silicona10CH",
+    "title_from": [
+     20004819
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "4"
+     ]
+    }
+   },
+   "LOT-40": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 14CH 20CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "40",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "40"
+     ]
+    }
+   },
+   "LOT-41": {
+    "title": "Sonda vesical punta recta cilindrica poliuretano una via AUTOLUBRICADA 14CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "41",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "41"
+     ]
+    }
+   },
+   "LOT-42": {
+    "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 8CH 20CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "42",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "42"
+     ]
+    }
+   },
+   "LOT-43": {
+    "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 8CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "43",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "43"
+     ]
+    }
+   },
+   "LOT-44": {
+    "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 10CH 20CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "44",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "44"
+     ]
+    }
+   },
+   "LOT-45": {
+    "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 10CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "45",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "45"
+     ]
+    }
+   },
+   "LOT-46": {
+    "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 12CH 20CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "46",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "46"
+     ]
+    }
+   },
+   "LOT-47": {
+    "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 12CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "47",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "47"
+     ]
+    }
+   },
+   "LOT-48": {
+    "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 14CH 20CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "48",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "48"
+     ]
+    }
+   },
+   "LOT-49": {
+    "title": "Sonda vesical punta recta cilindrica PVC una via AUTOLUBRICADA 14CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "49",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "49"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Sonda alimentacion enteral silicona 12CH",
+    "title_from": [
+     20004819
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "5"
+     ]
+    }
+   },
+   "LOT-50": {
+    "title": "Sonda vesical foley silicona tres vias 16 CH 40 CM BALON 30 ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "50",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "50"
+     ]
+    }
+   },
+   "LOT-51": {
+    "title": "Sonda vesical foley silicona tres vias 18 CH 40 CM BALÓN 30 ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "51",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "51"
+     ]
+    }
+   },
+   "LOT-52": {
+    "title": "Sonda vesical foley silicona tres vias 20 CH 40 CM BALÓN 30 ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "52",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "52"
+     ]
+    }
+   },
+   "LOT-53": {
+    "title": "Sonda vesical foley silicona tres vias 22 CH 40 CM BALÓN 30 ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "53",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "53"
+     ]
+    }
+   },
+   "LOT-54": {
+    "title": "Sonda vesical punta recta cilindrica silicona uan via AUTOLUBRICADA 12CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "54",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "54"
+     ]
+    }
+   },
+   "LOT-55": {
+    "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 10CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "55",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "55"
+     ]
+    }
+   },
+   "LOT-56": {
+    "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 12CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "56",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "56"
+     ]
+    }
+   },
+   "LOT-57": {
+    "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 14CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "57",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "57"
+     ]
+    }
+   },
+   "LOT-58": {
+    "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 10CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "58",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "58"
+     ]
+    }
+   },
+   "LOT-59": {
+    "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 12CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "59",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "59"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Sonda aspiración nasofaringea control DE SUCCION 8CH 40 CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "6"
+     ]
+    }
+   },
+   "LOT-60": {
+    "title": "Sonda vesical tiemann poliuretano una via AUTOLUBRICADA 14CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "60",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "60"
+     ]
+    }
+   },
+   "LOT-61": {
+    "title": "Sonda vesical tiemann silicona dos vias 8CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "61",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "61"
+     ]
+    }
+   },
+   "LOT-62": {
+    "title": "Sonda vesical tiemann silicona dos vias 10CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "62",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "62"
+     ]
+    }
+   },
+   "LOT-63": {
+    "title": "Sonda vesical tiemann silicona dos vias 12CH 40CM BALON 10 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "63",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "63"
+     ]
+    }
+   },
+   "LOT-64": {
+    "title": "Sonda vesical tiemann silicona dos vias 14CH 40CM BALON 10 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "64",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "64"
+     ]
+    }
+   },
+   "LOT-65": {
+    "title": "Sonda vesical tiemann silicona dos vias 16CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "65",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "65"
+     ]
+    }
+   },
+   "LOT-66": {
+    "title": "Sonda vesical tiemann silicona dos vias 18CH 40CM BALON 15ML",
+    "title_from": [
+     20004819
+    ],
+    "number": "66",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "66"
+     ]
+    }
+   },
+   "LOT-67": {
+    "title": "Sonda recta cistomanometria poliuretano UNA VIA 10CH 100CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "67",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "67"
+     ]
+    }
+   },
+   "LOT-68": {
+    "title": "Sonda uretral punta recta cilindrica cistomanometria PVC DOS VIAS 6CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "68",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "68"
+     ]
+    }
+   },
+   "LOT-69": {
+    "title": "Sonda uretral punta recta cilindrica cistomanometria PVC DOS VIAS 8CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "69",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "69"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "SONDA aspiración nasofaringea control DE SUCCION 10CH 40 CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "7"
+     ]
+    }
+   },
+   "LOT-70": {
+    "title": "Sonda uretral punta recta cilindrica cistomanometria PVC DOS VIAS 10CH 40CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "70",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "70"
+     ]
+    }
+   },
+   "LOT-71": {
+    "title": "Sonda uretral punta recta cilindrica cistomanometria PVC DOS VIAS 6CH 47 CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "71",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "71"
+     ]
+    }
+   },
+   "LOT-72": {
+    "title": "Sonda uretral mercier cistomanometria PVC DOS VIAS 7 CH 47 CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "72",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "72"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Sonda aspiración nasofaringea control DE SUCCION 12CH 50 CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "8"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Sonda aspiración nasofaringea control DE SUCCION 14CH 50 CM",
+    "title_from": [
+     20004819
+    ],
+    "number": "9",
+    "key_numbers_by_notice": {
+     "20004819": [
+      "9"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20004819,
+    "key": "RES-1",
+    "printed": [
+     "01"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Equip de sustitución sonda gastrostomia con balón 20CH",
+    "block_title": "Equip de sustitución sonda gastrostomia con balón 20CH",
+    "winners": [
+     "IZASA HOSPITAL SLU"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20004819,
+    "key": "RES-2",
+    "printed": [
+     "06"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Sonda aspiración nasofaringea control DE SUCCION 8CH 40 CM",
+    "block_title": "Sonda aspiración nasofaringea control de succión 8CH 40 cm",
+    "winners": [
+     "IZASA HOSPITAL SLU"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20004819,
+    "key": "RES-3",
+    "printed": [
+     "07"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "SONDA aspiración nasofaringea control DE SUCCION 10CH 40 CM",
+    "block_title": "Sonda aspiración nasofaringea control de succión 10CH 40 cm",
+    "winners": [
+     "IZASA HOSPITAL SLU"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20004819,
+    "key": "RES-4",
+    "printed": [
+     "08"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Sonda aspiración nasofaringea control DE SUCCION 12CH 50 CM",
+    "block_title": "Sonda aspiración nasofaringea control de succión 12CH 50 cm",
+    "winners": [
+     "IZASA HOSPITAL SLU"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20004819,
+    "key": "RES-5",
+    "printed": [
+     "09"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-9",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-9"
+    ],
+    "tender_lot_number": "9",
+    "tender_lot_title": "Sonda aspiración nasofaringea control DE SUCCION 14CH 50 CM",
+    "block_title": "Sonda aspiración nasofaringea control de succión 14CH 50 cm",
+    "winners": [
+     "IZASA HOSPITAL SLU"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20004819,
+    "key": "RES-6",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-10",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "10",
+    "tender_lot_title": "Sonda aspiración nasofaringea control DE SUCCION 16CH 50 CM",
+    "block_title": "Sonda aspiración nasofaringea control de succión 16CH 50 cm",
+    "winners": [
+     "IZASA HOSPITAL SLU"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20004819,
+    "key": "RES-7",
+    "printed": [
+     "11"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-11",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-11"
+    ],
+    "tender_lot_number": "11",
+    "tender_lot_title": "Sonda rectal PVC una via 22CH 40CM",
+    "block_title": "Sonda rectal PVC una via 22CH 40 cm",
+    "winners": [
+     "IZASA HOSPITAL SLU"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20004819,
+    "key": "RES-8",
+    "printed": [
+     "12"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-12",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-12"
+    ],
+    "tender_lot_number": "12",
+    "tender_lot_title": "Sonda rectal PVC una via 30CH 40CM",
+    "block_title": "Sonda rectal PVC una via 30CH 40 cm",
+    "winners": [
+     "IZASA HOSPITAL SLU"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 288,
+   "ok": 288,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 6439745,
+  "cls": "single_lot_notice",
+  "cls_auto": "single_lot_notice",
+  "n_notices_with_lot_sections": 1,
+  "results_total": 10,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "20296603: LOT-1=1, LOT-2=2, LOT-3=4, LOT-4=3, LOT-5=5, LOT-6=6, LOT-7=7, LOT-8=8, LOT-9=9, LOT-10=10",
+  "maps": {
+   "20296603": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Fleurs annuelles"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Fleurs bisannuelles"
+    },
+    "LOT-3": {
+     "no": [
+      "4"
+     ],
+     "title": "Bulbes"
+    },
+    "LOT-4": {
+     "no": [
+      "3"
+     ],
+     "title": "Chrysanthèmes"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Plantes vertes et arbustes"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Semences de gazon"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Arbres"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Sapins de Noël"
+    },
+    "LOT-9": {
+     "no": [
+      "9"
+     ],
+     "title": "Paillage bois"
+    },
+    "LOT-10": {
+     "no": [
+      "10"
+     ],
+     "title": "Paillage minéral et consommables"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Fleurs annuelles",
+    "title_from": [
+     20296603
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "1"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "Paillage minéral et consommables",
+    "title_from": [
+     20296603
+    ],
+    "number": "10",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "10"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Fleurs bisannuelles",
+    "title_from": [
+     20296603
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Bulbes",
+    "title_from": [
+     20296603
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "4"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Chrysanthèmes",
+    "title_from": [
+     20296603
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "3"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Plantes vertes et arbustes",
+    "title_from": [
+     20296603
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Semences de gazon",
+    "title_from": [
+     20296603
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Arbres",
+    "title_from": [
+     20296603
+    ],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Sapins de Noël",
+    "title_from": [
+     20296603
+    ],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "8"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Paillage bois",
+    "title_from": [
+     20296603
+    ],
+    "number": "9",
+    "key_numbers_by_notice": {
+     "20296603": [
+      "9"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20296603,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Fleurs annuelles",
+    "block_title": "Fleurs annuelles",
+    "winners": [
+     "Ets Horticoles Maguy Sas"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-10",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "10",
+    "tender_lot_title": "Paillage minéral et consommables",
+    "block_title": "Paillage minéral et consommables",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Fleurs bisannuelles",
+    "block_title": "Fleurs bisannuelles",
+    "winners": [
+     "Ets Horticoles Maguy Sas"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-3",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Bulbes",
+    "block_title": "Bulbes",
+    "winners": [
+     "Brageirac Fleuri"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-4",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Chrysanthèmes",
+    "block_title": "Chrysanthèmes",
+    "winners": [
+     "Ets Horticoles Maguy Sas"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Plantes vertes et arbustes",
+    "block_title": "Plantes vertes et arbustes",
+    "winners": [
+     "Jardinerie Villaverde — SARL Jardinerie du Midi"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Semences de gazon",
+    "block_title": "Semences de gazon",
+    "winners": [
+     "Les Gazons de France"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Arbres",
+    "block_title": "Arbres",
+    "winners": [
+     "Pépinières Daniel Soupe SAS"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Sapins de Noël",
+    "block_title": "Sapins de Noël",
+    "winners": [
+     "Tridome Jardinerie M3b"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20296603,
+    "key": "RES-9",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-9"
+    ],
+    "tender_lot_number": "9",
+    "tender_lot_title": "Paillage bois",
+    "block_title": "Paillage bois",
+    "winners": [],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 40,
+   "ok": 40,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 6399916,
+  "cls": "consistent",
+  "cls_auto": "unnumbered",
+  "n_notices_with_lot_sections": 2,
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "20221669: LOT-1=19ac005-L1, LOT-2=19ac005-L2, LOT-3=19ac005-L3; 20648374: LOT-1=19ac005-L1, LOT-2=19ac005-L2, LOT-3=19ac005-L3",
+  "maps": {
+   "20221669": {
+    "LOT-1": {
+     "no": [
+      "19ac005-L1"
+     ],
+     "title": "Produits d'hygiène générale"
+    },
+    "LOT-2": {
+     "no": [
+      "19ac005-L2"
+     ],
+     "title": "Produits d'hygiène en restauration collective"
+    },
+    "LOT-3": {
+     "no": [
+      "19ac005-L3"
+     ],
+     "title": "Produits d'hygiène du linge"
+    }
+   },
+   "20648374": {
+    "LOT-1": {
+     "no": [
+      "19ac005-L1"
+     ],
+     "title": "Produits d'hygiène générale"
+    },
+    "LOT-2": {
+     "no": [
+      "19ac005-L2"
+     ],
+     "title": "Produits d'hygiène en restauration collective"
+    },
+    "LOT-3": {
+     "no": [
+      "19ac005-L3"
+     ],
+     "title": "Produits d'hygiène du linge"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Produits d'hygiène générale",
+    "title_from": [
+     20221669,
+     20648374
+    ],
+    "number": null,
+    "key_numbers_by_notice": {
+     "20221669": [
+      "19ac005-L1"
+     ],
+     "20648374": [
+      "19ac005-L1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Produits d'hygiène en restauration collective",
+    "title_from": [
+     20221669,
+     20648374
+    ],
+    "number": null,
+    "key_numbers_by_notice": {
+     "20221669": [
+      "19ac005-L2"
+     ],
+     "20648374": [
+      "19ac005-L2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Produits d'hygiène du linge",
+    "title_from": [
+     20221669,
+     20648374
+    ],
+    "number": null,
+    "key_numbers_by_notice": {
+     "20221669": [
+      "19ac005-L3"
+     ],
+     "20648374": [
+      "19ac005-L3"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20648374,
+    "key": "RES-1",
+    "printed": [
+     "19ac005-L1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": "Produits d'hygiène générale",
+    "block_title": "Produits d'hygiène générale",
+    "winners": [
+     "SAS blanc"
+    ],
+    "verdict": "ok(no-number; own LOT-1=None)"
+   },
+   {
+    "notice": 20648374,
+    "key": "RES-2",
+    "printed": [
+     "19ac005-L2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": "Produits d'hygiène en restauration collective",
+    "block_title": "Produits d'hygiène en restauration collective",
+    "winners": [
+     "SAS blanc"
+    ],
+    "verdict": "ok(no-number; own LOT-2=None)"
+   },
+   {
+    "notice": 20648374,
+    "key": "RES-3",
+    "printed": [
+     "19ac005-L3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": "Produits d'hygiène du linge",
+    "block_title": "Produits d'hygiène du linge",
+    "winners": [
+     "Igual"
+    ],
+    "verdict": "ok(no-number; own LOT-3=None)"
+   }
+  ],
+  "lot_facts": {
+   "total": 13,
+   "ok": 13,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 5317587,
+  "cls": "disagree_harmful",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 3,
+  "results_total": 15,
+  "results_null": 8,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 7,
+  "maps_compact": "18078339: LOT-1..8=1..8; 20689857: LOT-1..7=1..7; 20865073: LOT-1..7=1..7",
+  "maps": {
+   "18078339": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lente intraocular hidrófoba, monobloque, plegable, acrilica con filtro para luz azul"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Lente intraocular hidrofoba, monobloque,plegable,acrilica borde cuadrado"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Lente intraocular hidrofoba, plegable, 3 piezas, acrilica"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Lente intraocular hidrofoba, monobloque, plegable, acrilica, torica asferica"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Lente intraocular hidofoba, monobloque,plegable, acrilica forma plato"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Viscoelastico viscoadaptivo"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Viscoelastico cohesivo de densidad media"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Implante para glaucoma no absorbible"
+    }
+   },
+   "20689857": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lente acrílita hidrofóbica monobloque asférica, plegada, precargada con inyector a rosca, p/incisión precargada 2,2"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Lente acrílita hidrofóbica monobloque asférica, plegada, precargada con inyector contrapresión p/incisión precargada 2,2"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "LIO CP Plegable acrílica hidrófoba 3 piezas"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "LIO CP monofocal tórica asférica con hápticos C-loop"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Viscoelástico dispersivo"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Viscoelástico cohesivo de media y alta densidad"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Implante para el tratamiento de glaucoma"
+    }
+   },
+   "20865073": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector a rosca, p/incisión precargada 2,2"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector contrapresión"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Lente acrílica hidrófoba 3 piezas"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Lente acrílica hidrófoba monofocal tórica"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Viscoelástico dispersivo"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Viscoelástico cohesivo de media y alta densidad"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Implante para el tratamiento de glaucoma"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [
+   {
+    "key": "LOT-1",
+    "a": 18078339,
+    "a_no": [
+     "1"
+    ],
+    "a_title": [
+     "Lente intraocular hidrófoba, monobloque, plegable, acrilica con filtro para luz azul"
+    ],
+    "b": 20689857,
+    "b_no": [
+     "1"
+    ],
+    "b_title": [
+     "Lente acrílita hidrofóbica monobloque asférica, plegada, precargada con inyector a rosca, p/incisión precargada 2,2"
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "a": 18078339,
+    "a_no": [
+     "2"
+    ],
+    "a_title": [
+     "Lente intraocular hidrofoba, monobloque,plegable,acrilica borde cuadrado"
+    ],
+    "b": 20689857,
+    "b_no": [
+     "2"
+    ],
+    "b_title": [
+     "Lente acrílita hidrofóbica monobloque asférica, plegada, precargada con inyector contrapresión p/incisión precargada 2,2"
+    ]
+   },
+   {
+    "key": "LOT-3",
+    "a": 18078339,
+    "a_no": [
+     "3"
+    ],
+    "a_title": [
+     "Lente intraocular hidrofoba, plegable, 3 piezas, acrilica"
+    ],
+    "b": 20689857,
+    "b_no": [
+     "3"
+    ],
+    "b_title": [
+     "LIO CP Plegable acrílica hidrófoba 3 piezas"
+    ]
+   },
+   {
+    "key": "LOT-4",
+    "a": 18078339,
+    "a_no": [
+     "4"
+    ],
+    "a_title": [
+     "Lente intraocular hidrofoba, monobloque, plegable, acrilica, torica asferica"
+    ],
+    "b": 20689857,
+    "b_no": [
+     "4"
+    ],
+    "b_title": [
+     "LIO CP monofocal tórica asférica con hápticos C-loop"
+    ]
+   },
+   {
+    "key": "LOT-5",
+    "a": 18078339,
+    "a_no": [
+     "5"
+    ],
+    "a_title": [
+     "Lente intraocular hidofoba, monobloque,plegable, acrilica forma plato"
+    ],
+    "b": 20689857,
+    "b_no": [
+     "5"
+    ],
+    "b_title": [
+     "Viscoelástico dispersivo"
+    ]
+   },
+   {
+    "key": "LOT-6",
+    "a": 18078339,
+    "a_no": [
+     "6"
+    ],
+    "a_title": [
+     "Viscoelastico viscoadaptivo"
+    ],
+    "b": 20689857,
+    "b_no": [
+     "6"
+    ],
+    "b_title": [
+     "Viscoelástico cohesivo de media y alta densidad"
+    ]
+   },
+   {
+    "key": "LOT-7",
+    "a": 18078339,
+    "a_no": [
+     "7"
+    ],
+    "a_title": [
+     "Viscoelastico cohesivo de densidad media"
+    ],
+    "b": 20689857,
+    "b_no": [
+     "7"
+    ],
+    "b_title": [
+     "Implante para el tratamiento de glaucoma"
+    ]
+   },
+   {
+    "key": "LOT-1",
+    "a": 18078339,
+    "a_no": [
+     "1"
+    ],
+    "a_title": [
+     "Lente intraocular hidrófoba, monobloque, plegable, acrilica con filtro para luz azul"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "1"
+    ],
+    "b_title": [
+     "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector a rosca, p/incisión precargada 2,2"
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "a": 18078339,
+    "a_no": [
+     "2"
+    ],
+    "a_title": [
+     "Lente intraocular hidrofoba, monobloque,plegable,acrilica borde cuadrado"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "2"
+    ],
+    "b_title": [
+     "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector contrapresión"
+    ]
+   },
+   {
+    "key": "LOT-3",
+    "a": 18078339,
+    "a_no": [
+     "3"
+    ],
+    "a_title": [
+     "Lente intraocular hidrofoba, plegable, 3 piezas, acrilica"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "3"
+    ],
+    "b_title": [
+     "Lente acrílica hidrófoba 3 piezas"
+    ]
+   },
+   {
+    "key": "LOT-4",
+    "a": 18078339,
+    "a_no": [
+     "4"
+    ],
+    "a_title": [
+     "Lente intraocular hidrofoba, monobloque, plegable, acrilica, torica asferica"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "4"
+    ],
+    "b_title": [
+     "Lente acrílica hidrófoba monofocal tórica"
+    ]
+   },
+   {
+    "key": "LOT-5",
+    "a": 18078339,
+    "a_no": [
+     "5"
+    ],
+    "a_title": [
+     "Lente intraocular hidofoba, monobloque,plegable, acrilica forma plato"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "5"
+    ],
+    "b_title": [
+     "Viscoelástico dispersivo"
+    ]
+   },
+   {
+    "key": "LOT-6",
+    "a": 18078339,
+    "a_no": [
+     "6"
+    ],
+    "a_title": [
+     "Viscoelastico viscoadaptivo"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "6"
+    ],
+    "b_title": [
+     "Viscoelástico cohesivo de media y alta densidad"
+    ]
+   },
+   {
+    "key": "LOT-7",
+    "a": 18078339,
+    "a_no": [
+     "7"
+    ],
+    "a_title": [
+     "Viscoelastico cohesivo de densidad media"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "7"
+    ],
+    "b_title": [
+     "Implante para el tratamiento de glaucoma"
+    ]
+   },
+   {
+    "key": "LOT-1",
+    "a": 20689857,
+    "a_no": [
+     "1"
+    ],
+    "a_title": [
+     "Lente acrílita hidrofóbica monobloque asférica, plegada, precargada con inyector a rosca, p/incisión precargada 2,2"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "1"
+    ],
+    "b_title": [
+     "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector a rosca, p/incisión precargada 2,2"
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "a": 20689857,
+    "a_no": [
+     "2"
+    ],
+    "a_title": [
+     "Lente acrílita hidrofóbica monobloque asférica, plegada, precargada con inyector contrapresión p/incisión precargada 2,2"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "2"
+    ],
+    "b_title": [
+     "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector contrapresión"
+    ]
+   },
+   {
+    "key": "LOT-3",
+    "a": 20689857,
+    "a_no": [
+     "3"
+    ],
+    "a_title": [
+     "LIO CP Plegable acrílica hidrófoba 3 piezas"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "3"
+    ],
+    "b_title": [
+     "Lente acrílica hidrófoba 3 piezas"
+    ]
+   },
+   {
+    "key": "LOT-4",
+    "a": 20689857,
+    "a_no": [
+     "4"
+    ],
+    "a_title": [
+     "LIO CP monofocal tórica asférica con hápticos C-loop"
+    ],
+    "b": 20865073,
+    "b_no": [
+     "4"
+    ],
+    "b_title": [
+     "Lente acrílica hidrófoba monofocal tórica"
+    ]
+   }
+  ],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector a rosca, p/incisión precargada 2,2",
+    "title_from": [
+     20865073
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "18078339": [
+      "1"
+     ],
+     "20689857": [
+      "1"
+     ],
+     "20865073": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector contrapresión",
+    "title_from": [
+     20865073
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "18078339": [
+      "2"
+     ],
+     "20689857": [
+      "2"
+     ],
+     "20865073": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Lente acrílica hidrófoba 3 piezas",
+    "title_from": [
+     20865073
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "18078339": [
+      "3"
+     ],
+     "20689857": [
+      "3"
+     ],
+     "20865073": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Lente acrílica hidrófoba monofocal tórica",
+    "title_from": [
+     20865073
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "18078339": [
+      "4"
+     ],
+     "20689857": [
+      "4"
+     ],
+     "20865073": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Viscoelástico dispersivo",
+    "title_from": [
+     20689857,
+     20865073
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "18078339": [
+      "5"
+     ],
+     "20689857": [
+      "5"
+     ],
+     "20865073": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Viscoelástico cohesivo de media y alta densidad",
+    "title_from": [
+     20689857,
+     20865073
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "18078339": [
+      "6"
+     ],
+     "20689857": [
+      "6"
+     ],
+     "20865073": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Implante para el tratamiento de glaucoma",
+    "title_from": [
+     20689857,
+     20865073
+    ],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "18078339": [
+      "7"
+     ],
+     "20689857": [
+      "7"
+     ],
+     "20865073": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Implante para glaucoma no absorbible",
+    "title_from": [
+     18078339
+    ],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "18078339": [
+      "8"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 18292129,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lente intraocular hidrófoba, monobloque, plegable, acrilica con filtro para luz ",
+    "winners": [
+     "Alcon Cusi, S.A."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18292129,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lente intraocular hidrófoba, monobloque, plegable, acrilica borde cuadrado",
+    "winners": [
+     "Abbott Medical Optics Spain, S.L.U."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18292129,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lente intraocular hidrófoba, plegable, 3 piezas, acrilica",
+    "winners": [
+     "Abbott Medical Optics Spain, S.L.U."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18292129,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lente intraocular hidrófoba, monobloque, plegable, acrilica, torica asferica",
+    "winners": [
+     "Topcon España, S.A."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18292129,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lente intraocular hidófoba, monobloque, plegable, acrilica forma plato",
+    "winners": [
+     "Topcon España, S.A."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18292129,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Viscoelastico viscodaptativo",
+    "winners": [
+     "Alcon Cusi, S.A."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18292129,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Viscoelastico cohesivo de densidad media",
+    "winners": [
+     "Alcon Cusi, S.A."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18292129,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Implante para glaucoma no absorbible",
+    "winners": [
+     "Carl Zeiss Meditec Iberia, S.A."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 20865073,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector",
+    "block_title": "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector",
+    "winners": [
+     "JJ Surgical Vision Spain, S. L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20865073,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector",
+    "block_title": "Lente acrílica hidrofóbica monobloque asférica, plegada, precargada con inyector",
+    "winners": [
+     "Alcon Healthcare, S. A."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20865073,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Lente acrílica hidrófoba 3 piezas",
+    "block_title": "Lío CP plegable acrílica hidrófoba 3 piezas",
+    "winners": [
+     "JJ Surgical Vision Spain, S. L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20865073,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Lente acrílica hidrófoba monofocal tórica",
+    "block_title": "Lío CP monofocal tórica asférica con hápticos C-Loop",
+    "winners": [
+     "Bausch & Lomb, S.A."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20865073,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Viscoelástico dispersivo",
+    "block_title": "Viscoelástico dispersivo",
+    "winners": [
+     "Alcon Healthcare, S. A."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20865073,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Viscoelástico cohesivo de media y alta densidad",
+    "block_title": "Viscoelástico cohesivo de media y alta densidad",
+    "winners": [
+     "Carl Zeiss Meditec Iberia, S. A."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20865073,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Implante para el tratamiento de glaucoma",
+    "block_title": "Implante para el tratamiento de glaucoma",
+    "winners": [],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 38,
+   "ok": 38,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": [],
+   "title_mis_list": [
+    {
+     "label": "amount:estimated_value",
+     "lot": "LOT-1",
+     "value": "52590.0",
+     "from": [
+      18078339
+     ],
+     "from_titles": [
+      "Lente intraocular hidrófoba, monobloque, plegable, acrilica "
+     ],
+     "served_title": "Lente acrílica hidrofóbica monobloque asférica, plegada, pre"
+    },
+    {
+     "label": "amount:estimated_value",
+     "lot": "LOT-2",
+     "value": "127790.0",
+     "from": [
+      18078339
+     ],
+     "from_titles": [
+      "Lente intraocular hidrofoba, monobloque,plegable,acrilica bo"
+     ],
+     "served_title": "Lente acrílica hidrofóbica monobloque asférica, plegada, pre"
+    },
+    {
+     "label": "amount:estimated_value",
+     "lot": "LOT-3",
+     "value": "9830.0",
+     "from": [
+      18078339
+     ],
+     "from_titles": [
+      "Lente intraocular hidrofoba, plegable, 3 piezas, acrilica"
+     ],
+     "served_title": "Lente acrílica hidrófoba 3 piezas"
+    },
+    {
+     "label": "amount:estimated_value",
+     "lot": "LOT-4",
+     "value": "11600.0",
+     "from": [
+      18078339
+     ],
+     "from_titles": [
+      "Lente intraocular hidrofoba, monobloque, plegable, acrilica,"
+     ],
+     "served_title": "Lente acrílica hidrófoba monofocal tórica"
+    },
+    {
+     "label": "amount:estimated_value",
+     "lot": "LOT-5",
+     "value": "1968.0",
+     "from": [
+      18078339
+     ],
+     "from_titles": [
+      "Lente intraocular hidofoba, monobloque,plegable, acrilica fo"
+     ],
+     "served_title": "Viscoelástico dispersivo"
+    },
+    {
+     "label": "amount:estimated_value",
+     "lot": "LOT-6",
+     "value": "32000.0",
+     "from": [
+      18078339
+     ],
+     "from_titles": [
+      "Viscoelastico viscoadaptivo"
+     ],
+     "served_title": "Viscoelástico cohesivo de media y alta densidad"
+    },
+    {
+     "label": "amount:estimated_value",
+     "lot": "LOT-7",
+     "value": "24000.0",
+     "from": [
+      18078339
+     ],
+     "from_titles": [
+      "Viscoelastico cohesivo de densidad media"
+     ],
+     "served_title": "Implante para el tratamiento de glaucoma"
+    }
+   ]
+  }
+ },
+ {
+  "tender_id": 5540787,
+  "cls": "disagree_harmless",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 3,
+  "results_total": 5,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "18510240: LOT-1..2=1..2; 20842135: LOT-1..5=1..5; 21137920: LOT-1..5=1..5",
+  "maps": {
+   "18510240": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lot 1: transports en France métropolitaine, Martinique et Réunion; transports entre la France et les autres pays membres du Conseil de l'Europe; transports entre la France et les pays d'Amérique septentrionale"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Lot 2: transports entre la France et les destinations non comprises dans le lot 1"
+    }
+   },
+   "20842135": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Transports de documents ou de dispositifs médicaux de Saint-Denis-la-Plaine (93) vers la France métropolitaine/Martinique/Réunion et l'étranger"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Transports d'échantillons sanguins entre la France et les pays membres du Conseil de l'Europe"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Transports d'échantillons sanguins entre la France et les pays non membres du Conseil de l'Europe"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Transports de produits biologiques et des unités de sang placentaire entre la France et les pays membres du Conseil de l'Europe"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Transports de produits biologiques et des unités de sang placentaire entre la France et les pays non membres du Conseil de l'Europe"
+    }
+   },
+   "21137920": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Transports de documents ou de dispositifs médicaux de Saint-Denis-la- Plaine (93) vers la France métropolitaine/Martinique/Réunion et l'étranger"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Transports d'échantillons sanguins entre la France et les pays membres du Conseil de l'Europe"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Transports d'échantillons sanguins entre la France et les pays non membres du Conseil de l'Europe"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Transports de produits biologiques et des unités de sang placentaire entre la France et les pays membres du Conseil de l'Europe"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Transports de produits biologiques et des unités de sang placentaire entre la France et les pays non membres du Conseil de l'Europe"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [
+   {
+    "key": "LOT-1",
+    "a": 18510240,
+    "a_no": [
+     "1"
+    ],
+    "a_title": [
+     "Lot 1: transports en France métropolitaine, Martinique et Réunion; transports entre la France et les autres pays membres du Conseil de l'Europe; transports entre la France et les pays d'Amérique septentrionale"
+    ],
+    "b": 20842135,
+    "b_no": [
+     "1"
+    ],
+    "b_title": [
+     "Transports de documents ou de dispositifs médicaux de Saint-Denis-la-Plaine (93) vers la France métropolitaine/Martinique/Réunion et l'étranger"
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "a": 18510240,
+    "a_no": [
+     "2"
+    ],
+    "a_title": [
+     "Lot 2: transports entre la France et les destinations non comprises dans le lot 1"
+    ],
+    "b": 20842135,
+    "b_no": [
+     "2"
+    ],
+    "b_title": [
+     "Transports d'échantillons sanguins entre la France et les pays membres du Conseil de l'Europe"
+    ]
+   },
+   {
+    "key": "LOT-1",
+    "a": 18510240,
+    "a_no": [
+     "1"
+    ],
+    "a_title": [
+     "Lot 1: transports en France métropolitaine, Martinique et Réunion; transports entre la France et les autres pays membres du Conseil de l'Europe; transports entre la France et les pays d'Amérique septentrionale"
+    ],
+    "b": 21137920,
+    "b_no": [
+     "1"
+    ],
+    "b_title": [
+     "Transports de documents ou de dispositifs médicaux de Saint-Denis-la- Plaine (93) vers la France métropolitaine/Martinique/Réunion et l'étranger"
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "a": 18510240,
+    "a_no": [
+     "2"
+    ],
+    "a_title": [
+     "Lot 2: transports entre la France et les destinations non comprises dans le lot 1"
+    ],
+    "b": 21137920,
+    "b_no": [
+     "2"
+    ],
+    "b_title": [
+     "Transports d'échantillons sanguins entre la France et les pays membres du Conseil de l'Europe"
+    ]
+   }
+  ],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Transports de documents ou de dispositifs médicaux de Saint-Denis-la- Plaine (93) vers la France métropolitaine/Martinique/Réunion et l'étranger",
+    "title_from": [
+     20842135,
+     21137920
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "18510240": [
+      "1"
+     ],
+     "20842135": [
+      "1"
+     ],
+     "21137920": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Transports d'échantillons sanguins entre la France et les pays membres du Conseil de l'Europe",
+    "title_from": [
+     20842135,
+     21137920
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "18510240": [
+      "2"
+     ],
+     "20842135": [
+      "2"
+     ],
+     "21137920": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Transports d'échantillons sanguins entre la France et les pays non membres du Conseil de l'Europe",
+    "title_from": [
+     20842135,
+     21137920
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "20842135": [
+      "3"
+     ],
+     "21137920": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Transports de produits biologiques et des unités de sang placentaire entre la France et les pays membres du Conseil de l'Europe",
+    "title_from": [
+     20842135,
+     21137920
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "20842135": [
+      "4"
+     ],
+     "21137920": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Transports de produits biologiques et des unités de sang placentaire entre la France et les pays non membres du Conseil de l'Europe",
+    "title_from": [
+     20842135,
+     21137920
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "20842135": [
+      "5"
+     ],
+     "21137920": [
+      "5"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21137920,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Transports de documents ou de dispositifs médicaux de Saint-Denis-la- Plaine (93",
+    "block_title": "Transports de documents ou dispositifs médicaux de Saint-Denis-la-Plaine (93) ve",
+    "winners": [
+     "Exnet Paris"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21137920,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Transports d'échantillons sanguins entre la France et les pays membres du Consei",
+    "block_title": "Transports d'échantillons sanguins entre la France et les pays membres du Consei",
+    "winners": [
+     "Exnet"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21137920,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Transports d'échantillons sanguins entre la France et les pays non membres du Co",
+    "block_title": "Transports d'échantillons sanguins entre la France et les pays non membres du Co",
+    "winners": [
+     "Transporteo"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21137920,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Transports de produits biologiques et des unités de sang placentaire entre la Fr",
+    "block_title": "Transports de produits biologiques et des unités de sang placentaire entre la Fr",
+    "winners": [
+     "Transportéo"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21137920,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Transports de produits biologiques et des unités de sang placentaire entre la Fr",
+    "block_title": "Transports de produits biologiques et des unités de sang placentaire entre la Fr",
+    "winners": [
+     "Transporteo"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 30,
+   "ok": 30,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 8464093,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 2,
+  "results_total": 4,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "21291391: LOT-1..4=1..4; 21434539: LOT-1..4=1..4",
+  "maps": {
+   "21291391": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Two Electrically Cooled HPGe Detectors"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "One Electrically Cooled HPGe Detector"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "One Electrically Cooled HPGe Detector"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "A Complete Gamma Spectrometry System"
+    }
+   },
+   "21434539": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Two Electrically Cooled HPGe Detectors"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "One Electrically cooled HPGe Detector"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "One Electrically Cooled HPGe Detector"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "A Complete Gamma Spectrometry System"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Two Electrically Cooled HPGe Detectors",
+    "title_from": [
+     21291391,
+     21434539
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "21291391": [
+      "1"
+     ],
+     "21434539": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "One Electrically cooled HPGe Detector",
+    "title_from": [
+     21291391,
+     21434539
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "21291391": [
+      "2"
+     ],
+     "21434539": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "One Electrically Cooled HPGe Detector",
+    "title_from": [
+     21291391,
+     21434539
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "21291391": [
+      "3"
+     ],
+     "21434539": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "A Complete Gamma Spectrometry System",
+    "title_from": [
+     21291391,
+     21434539
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "21291391": [
+      "4"
+     ],
+     "21434539": [
+      "4"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21434539,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Two Electrically Cooled HPGe Detectors",
+    "block_title": "Two Electrically Cooled HPGe Detectors",
+    "winners": [
+     "Mirion Technologies (Canberra) GmbH"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21434539,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "One Electrically cooled HPGe Detector",
+    "block_title": "One Electrically Cooled HPGe Detector",
+    "winners": [
+     "Mirion Technologies (Canberra) GmbH"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21434539,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "One Electrically Cooled HPGe Detector",
+    "block_title": "One Electrically Cooled HPGe Detector",
+    "winners": [
+     "Mirion Technologies (Canberra) GmbH"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21434539,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "A Complete Gamma Spectrometry System",
+    "block_title": "A Complete Gamma Spectrometry System",
+    "winners": [
+     "Ametek GmbH"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 212,
+   "ok": 212,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 7103646,
+  "cls": "single_lot_notice",
+  "cls_auto": "single_lot_notice",
+  "n_notices_with_lot_sections": 1,
+  "results_total": 11,
+  "results_null": 9,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "21771193: LOT-1..15=1..15",
+  "maps": {
+   "21771193": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Лабораторна апаратура"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Лабораторна апаратура"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Апаратура за патоанатомия Leika"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Апаратура за анестезия"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Специализирана офталмологична апаратура"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Хемодиализна апаратура"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Ултразвуков апарат 2D- Clear Vue 650 Philips"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Друга медицинска апаратура"
+    },
+    "LOT-9": {
+     "no": [
+      "9"
+     ],
+     "title": "Друга медицинска апаратура"
+    },
+    "LOT-10": {
+     "no": [
+      "10"
+     ],
+     "title": "Друга медицинска апаратура"
+    },
+    "LOT-11": {
+     "no": [
+      "11"
+     ],
+     "title": "Ендоскопска апаратура"
+    },
+    "LOT-12": {
+     "no": [
+      "12"
+     ],
+     "title": "Апаратура за анестезия"
+    },
+    "LOT-13": {
+     "no": [
+      "13"
+     ],
+     "title": "Дихателна апаратура"
+    },
+    "LOT-14": {
+     "no": [
+      "14"
+     ],
+     "title": "Инжектор Medtron Accutron MR"
+    },
+    "LOT-15": {
+     "no": [
+      "15"
+     ],
+     "title": "Инжектор Empower CTA"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Лабораторна апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "1"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "Друга медицинска апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "10",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "10"
+     ]
+    }
+   },
+   "LOT-11": {
+    "title": "Ендоскопска апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "11",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "11"
+     ]
+    }
+   },
+   "LOT-12": {
+    "title": "Апаратура за анестезия",
+    "title_from": [
+     21771193
+    ],
+    "number": "12",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "12"
+     ]
+    }
+   },
+   "LOT-13": {
+    "title": "Дихателна апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "13",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "13"
+     ]
+    }
+   },
+   "LOT-14": {
+    "title": "Инжектор Medtron Accutron MR",
+    "title_from": [
+     21771193
+    ],
+    "number": "14",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "14"
+     ]
+    }
+   },
+   "LOT-15": {
+    "title": "Инжектор Empower CTA",
+    "title_from": [
+     21771193
+    ],
+    "number": "15",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "15"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Лабораторна апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Апаратура за патоанатомия Leika",
+    "title_from": [
+     21771193
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Апаратура за анестезия",
+    "title_from": [
+     21771193
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Специализирана офталмологична апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Хемодиализна апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Ултразвуков апарат 2D- Clear Vue 650 Philips",
+    "title_from": [
+     21771193
+    ],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Друга медицинска апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "8"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Друга медицинска апаратура",
+    "title_from": [
+     21771193
+    ],
+    "number": "9",
+    "key_numbers_by_notice": {
+     "21771193": [
+      "9"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21771193,
+    "key": "RES-1",
+    "printed": [
+     "1,1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Биохимичен анализатор Pentra",
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-10",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-14",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-14"
+    ],
+    "tender_lot_number": "14",
+    "tender_lot_title": "Инжектор Medtron Accutron MR",
+    "block_title": "Инжектор Medtron Accutron MR",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-11",
+    "printed": [
+     "15"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-15",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-15"
+    ],
+    "tender_lot_number": "15",
+    "tender_lot_title": "Инжектор Empower CTA",
+    "block_title": "Инжектор Empower CTA",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-2",
+    "printed": [
+     "2,1"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Биохимичен анализатор RA",
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-3",
+    "printed": [
+     "4,1"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Анестезиологично работно място — Нарк. а‐т CWM‐302 и мониторCareVue 60",
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-4",
+    "printed": [
+     "5 - 5,1; 5,2; 5,3; 5,4; 5,5; 5,6"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Специализирана офталмологична апаратура",
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-5",
+    "printed": [
+     "8 - 8,1; 8,2; 8,3"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Друга медицинска апаратура",
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-6",
+    "printed": [
+     "9,1"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Криостат вград. микротом Shandon",
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-7",
+    "printed": [
+     "10 - 10,1; 10,2"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Друга медицинска апаратура",
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-8",
+    "printed": [
+     "11 - 11,1; 11,2; 11,3"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Ендоскопска апаратура",
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 21771193,
+    "key": "RES-9",
+    "printed": [
+     "12,1"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Анестезиологичен аппарат ВАТО ЕX-35",
+    "winners": [],
+    "verdict": "null"
+   }
+  ],
+  "lot_facts": {
+   "total": 90,
+   "ok": 90,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 7122601,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 2,
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "21773109: LOT-1..2=1..2; 22094066: LOT-1..2=1..2",
+  "maps": {
+   "21773109": {
+    "LOT-1": {
+     "no": [
+      "01"
+     ],
+     "title": "Collecte et évacuation des matériaux déposés dans les colonnes de tri sélectif"
+    },
+    "LOT-2": {
+     "no": [
+      "02"
+     ],
+     "title": "Tri par matière, conditionnement et transit des matériaux collectés"
+    }
+   },
+   "22094066": {
+    "LOT-1": {
+     "no": [
+      "01"
+     ],
+     "title": "collecte et évacuation des matériaux déposés dans les colonnes de tri sélectif"
+    },
+    "LOT-2": {
+     "no": [
+      "02"
+     ],
+     "title": "tri par matière, conditionnement et transit des matériaux collectés"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "collecte et évacuation des matériaux déposés dans les colonnes de tri sélectif",
+    "title_from": [
+     21773109,
+     22094066
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "21773109": [
+      "01"
+     ],
+     "22094066": [
+      "01"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "tri par matière, conditionnement et transit des matériaux collectés",
+    "title_from": [
+     21773109,
+     22094066
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "21773109": [
+      "02"
+     ],
+     "22094066": [
+      "02"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 22094066,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "collecte et évacuation des matériaux déposés dans les colonnes de tri sélectif",
+    "block_title": "collecte et évacuation des matériaux déposés dans les colonnes de tri sélectif",
+    "winners": [
+     "Veolia propreté Normandie"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22094066,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "tri par matière, conditionnement et transit des matériaux collectés",
+    "block_title": "tri, conditionnement et transit des matériaux collectés",
+    "winners": [
+     "Ipodec Normandie SAS"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 8,
+   "ok": 8,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 7239498,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 5,
+  "results_total": 16,
+  "results_null": 7,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "22055771: LOT-1..21=1..21; 22320344: LOT-1..21=1..21; 22350216: LOT-1..21=1..21; 22415527: LOT-1..21=1..21; 22400159: LOT-1..21=1..21",
+  "maps": {
+   "22055771": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Priemonės rankų dezinfekcijai vienkartinėse talpose su vienkartine dozavimo sistema ir laikikliai"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Operacinio lauko antiseptikas bespalvis"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Aerozolis chirurginių instrumentų priežiūrai"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Indikatoriai cheminiai išoriniai gariniam sterilizatoriui (lipdukai pakuotėms)"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Indikatoriai cheminiai vidiniai  gariniam sterilizatoriui"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Konteineriai panaudotoms adatoms 5 l"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Sterilizuojamų paketų sutvirtinimo juosta"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Dezinfekcinės servetėlės UG davikliams"
+    },
+    "LOT-9": {
+     "no": [
+      "9"
+     ],
+     "title": "Etileno oksido dujos"
+    },
+    "LOT-10": {
+     "no": [
+      "10"
+     ],
+     "title": "Popierius etileno oksido dujų sterilizatoriaus spausdintuvui"
+    },
+    "LOT-11": {
+     "no": [
+      "11"
+     ],
+     "title": "Dezinfekcinė medžiaga instrumentų bei aparatūros plovimui ir dezinfekcijai aldehidų pagrindu (aukšto lygio)"
+    },
+    "LOT-12": {
+     "no": [
+      "12"
+     ],
+     "title": "Priemonė rankų antiseptikai propanolių pagrindu"
+    },
+    "LOT-13": {
+     "no": [
+      "13"
+     ],
+     "title": "Testai dezinfekuotų paviršių kontrolei"
+    },
+    "LOT-14": {
+     "no": [
+      "14"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 190±10 x 400±20 mm"
+    },
+    "LOT-15": {
+     "no": [
+      "15"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 300±10 x 480±30 mm"
+    },
+    "LOT-16": {
+     "no": [
+      "16"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 200±10 mm"
+    },
+    "LOT-17": {
+     "no": [
+      "17"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 160±10 mm"
+    },
+    "LOT-18": {
+     "no": [
+      "18"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 260±10 mm"
+    },
+    "LOT-19": {
+     "no": [
+      "19"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 140 ± 10 x 270± 10  mm"
+    },
+    "LOT-20": {
+     "no": [
+      "20"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 200±10 x 350±20 mm"
+    },
+    "LOT-21": {
+     "no": [
+      "21"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 250±10 x 400±20 mm"
+    }
+   },
+   "22320344": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Priemonės rankų dezinfekcijai vienkartinėse talpose su vienkartine dozavimo sistema ir laikikliai"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Operacinio lauko antiseptikas bespalvis"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Aerozolis chirurginių instrumentų priežiūrai"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Indikatoriai cheminiai išoriniai gariniam sterilizatoriui (lipdukai pakuotėms)"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Indikatoriai cheminiai vidiniai  gariniam sterilizatoriui"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Konteineriai panaudotoms adatoms 5 l"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Sterilizuojamų paketų sutvirtinimo juosta"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Dezinfekcinės servetėlės UG davikliams"
+    },
+    "LOT-9": {
+     "no": [
+      "9"
+     ],
+     "title": "Etileno oksido dujos"
+    },
+    "LOT-10": {
+     "no": [
+      "10"
+     ],
+     "title": "Popierius etileno oksido dujų sterilizatoriaus spausdintuvui"
+    },
+    "LOT-11": {
+     "no": [
+      "11"
+     ],
+     "title": "Dezinfekcinė medžiaga instrumentų bei aparatūros plovimui ir dezinfekcijai aldehidų pagrindu (aukšto lygio)"
+    },
+    "LOT-12": {
+     "no": [
+      "12"
+     ],
+     "title": "Priemonė rankų antiseptikai propanolių pagrindu"
+    },
+    "LOT-13": {
+     "no": [
+      "13"
+     ],
+     "title": "Testai dezinfekuotų paviršių kontrolei"
+    },
+    "LOT-14": {
+     "no": [
+      "14"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 190±10 x 400±20 mm"
+    },
+    "LOT-15": {
+     "no": [
+      "15"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 300±10 x 480±30 mm"
+    },
+    "LOT-16": {
+     "no": [
+      "16"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 200±10 mm"
+    },
+    "LOT-17": {
+     "no": [
+      "17"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 160±10 mm"
+    },
+    "LOT-18": {
+     "no": [
+      "18"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 260±10 mm"
+    },
+    "LOT-19": {
+     "no": [
+      "19"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 140 ± 10 x 270± 10  mm"
+    },
+    "LOT-20": {
+     "no": [
+      "20"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 200±10 x 350±20 mm"
+    },
+    "LOT-21": {
+     "no": [
+      "21"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 250±10 x 400±20 mm"
+    }
+   },
+   "22350216": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Priemonės rankų dezinfekcijai vienkartinėse talpose su vienkartine dozavimo sistema ir laikikliai"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Operacinio lauko antiseptikas bespalvis"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Aerozolis chirurginių instrumentų priežiūrai"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Indikatoriai cheminiai išoriniai gariniam sterilizatoriui (lipdukai pakuotėms)"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Indikatoriai cheminiai vidiniai  gariniam sterilizatoriui"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Konteineriai panaudotoms adatoms 5 l"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Sterilizuojamų paketų sutvirtinimo juosta"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Dezinfekcinės servetėlės UG davikliams"
+    },
+    "LOT-9": {
+     "no": [
+      "9"
+     ],
+     "title": "Etileno oksido dujos"
+    },
+    "LOT-10": {
+     "no": [
+      "10"
+     ],
+     "title": "Popierius etileno oksido dujų sterilizatoriaus spausdintuvui"
+    },
+    "LOT-11": {
+     "no": [
+      "11"
+     ],
+     "title": "Dezinfekcinė medžiaga instrumentų bei aparatūros plovimui ir dezinfekcijai aldehidų pagrindu (aukšto lygio)"
+    },
+    "LOT-12": {
+     "no": [
+      "12"
+     ],
+     "title": "Priemonė rankų antiseptikai propanolių pagrindu"
+    },
+    "LOT-13": {
+     "no": [
+      "13"
+     ],
+     "title": "Testai dezinfekuotų paviršių kontrolei"
+    },
+    "LOT-14": {
+     "no": [
+      "14"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 190±10 x 400±20 mm"
+    },
+    "LOT-15": {
+     "no": [
+      "15"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 300±10 x 480±30 mm"
+    },
+    "LOT-16": {
+     "no": [
+      "16"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 200±10 mm"
+    },
+    "LOT-17": {
+     "no": [
+      "17"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 160±10 mm"
+    },
+    "LOT-18": {
+     "no": [
+      "18"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 260±10 mm"
+    },
+    "LOT-19": {
+     "no": [
+      "19"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 140 ± 10 x 270± 10  mm"
+    },
+    "LOT-20": {
+     "no": [
+      "20"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 200±10 x 350±20 mm"
+    },
+    "LOT-21": {
+     "no": [
+      "21"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 250±10 x 400±20 mm"
+    }
+   },
+   "22415527": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Priemonės rankų dezinfekcijai vienkartinėse talpose su vienkartine dozavimo sistema ir laikikliai"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Operacinio lauko antiseptikas bespalvis"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Aerozolis chirurginių instrumentų priežiūrai"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Indikatoriai cheminiai išoriniai gariniam sterilizatoriui (lipdukai pakuotėms)"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Indikatoriai cheminiai vidiniai  gariniam sterilizatoriui"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Konteineriai panaudotoms adatoms 5 l"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Sterilizuojamų paketų sutvirtinimo juosta"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Dezinfekcinės servetėlės UG davikliams"
+    },
+    "LOT-9": {
+     "no": [
+      "9"
+     ],
+     "title": "Etileno oksido dujos"
+    },
+    "LOT-10": {
+     "no": [
+      "10"
+     ],
+     "title": "Popierius etileno oksido dujų sterilizatoriaus spausdintuvui"
+    },
+    "LOT-11": {
+     "no": [
+      "11"
+     ],
+     "title": "Dezinfekcinė medžiaga instrumentų bei aparatūros plovimui ir dezinfekcijai aldehidų pagrindu (aukšto lygio)"
+    },
+    "LOT-12": {
+     "no": [
+      "12"
+     ],
+     "title": "Priemonė rankų antiseptikai propanolių pagrindu"
+    },
+    "LOT-13": {
+     "no": [
+      "13"
+     ],
+     "title": "Testai dezinfekuotų paviršių kontrolei"
+    },
+    "LOT-14": {
+     "no": [
+      "14"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 190±10 x 400±20 mm"
+    },
+    "LOT-15": {
+     "no": [
+      "15"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 300±10 x 480±30 mm"
+    },
+    "LOT-16": {
+     "no": [
+      "16"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 200±10 mm"
+    },
+    "LOT-17": {
+     "no": [
+      "17"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 160±10 mm"
+    },
+    "LOT-18": {
+     "no": [
+      "18"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 260±10 mm"
+    },
+    "LOT-19": {
+     "no": [
+      "19"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 140 ± 10 x 270± 10  mm"
+    },
+    "LOT-20": {
+     "no": [
+      "20"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 200±10 x 350±20 mm"
+    },
+    "LOT-21": {
+     "no": [
+      "21"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 250±10 x 400±20 mm"
+    }
+   },
+   "22400159": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Priemonės rankų dezinfekcijai vienkartinėse talpose su vienkartine dozavimo sistema ir laikikliai"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Operacinio lauko antiseptikas bespalvis"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Aerozolis chirurginių instrumentų priežiūrai"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Indikatoriai cheminiai išoriniai gariniam sterilizatoriui (lipdukai pakuotėms)"
+    },
+    "LOT-5": {
+     "no": [
+      "5"
+     ],
+     "title": "Indikatoriai cheminiai vidiniai  gariniam sterilizatoriui"
+    },
+    "LOT-6": {
+     "no": [
+      "6"
+     ],
+     "title": "Konteineriai panaudotoms adatoms 5 l"
+    },
+    "LOT-7": {
+     "no": [
+      "7"
+     ],
+     "title": "Sterilizuojamų paketų sutvirtinimo juosta"
+    },
+    "LOT-8": {
+     "no": [
+      "8"
+     ],
+     "title": "Dezinfekcinės servetėlės UG davikliams"
+    },
+    "LOT-9": {
+     "no": [
+      "9"
+     ],
+     "title": "Etileno oksido dujos"
+    },
+    "LOT-10": {
+     "no": [
+      "10"
+     ],
+     "title": "Popierius etileno oksido dujų sterilizatoriaus spausdintuvui"
+    },
+    "LOT-11": {
+     "no": [
+      "11"
+     ],
+     "title": "Dezinfekcinė medžiaga instrumentų bei aparatūros plovimui ir dezinfekcijai aldehidų pagrindu (aukšto lygio)"
+    },
+    "LOT-12": {
+     "no": [
+      "12"
+     ],
+     "title": "Priemonė rankų antiseptikai propanolių pagrindu"
+    },
+    "LOT-13": {
+     "no": [
+      "13"
+     ],
+     "title": "Testai dezinfekuotų paviršių kontrolei"
+    },
+    "LOT-14": {
+     "no": [
+      "14"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 190±10 x 400±20 mm"
+    },
+    "LOT-15": {
+     "no": [
+      "15"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 300±10 x 480±30 mm"
+    },
+    "LOT-16": {
+     "no": [
+      "16"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 200±10 mm"
+    },
+    "LOT-17": {
+     "no": [
+      "17"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 160±10 mm"
+    },
+    "LOT-18": {
+     "no": [
+      "18"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 260±10 mm"
+    },
+    "LOT-19": {
+     "no": [
+      "19"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 140 ± 10 x 270± 10  mm"
+    },
+    "LOT-20": {
+     "no": [
+      "20"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 200±10 x 350±20 mm"
+    },
+    "LOT-21": {
+     "no": [
+      "21"
+     ],
+     "title": "Maišeliai instrumentų sterilizavimui garais 250±10 x 400±20 mm"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Priemonės rankų dezinfekcijai vienkartinėse talpose su vienkartine dozavimo sistema ir laikikliai",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "1"
+     ],
+     "22320344": [
+      "1"
+     ],
+     "22350216": [
+      "1"
+     ],
+     "22415527": [
+      "1"
+     ],
+     "22400159": [
+      "1"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "Popierius etileno oksido dujų sterilizatoriaus spausdintuvui",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "10",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "10"
+     ],
+     "22320344": [
+      "10"
+     ],
+     "22350216": [
+      "10"
+     ],
+     "22415527": [
+      "10"
+     ],
+     "22400159": [
+      "10"
+     ]
+    }
+   },
+   "LOT-11": {
+    "title": "Dezinfekcinė medžiaga instrumentų bei aparatūros plovimui ir dezinfekcijai aldehidų pagrindu (aukšto lygio)",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "11",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "11"
+     ],
+     "22320344": [
+      "11"
+     ],
+     "22350216": [
+      "11"
+     ],
+     "22415527": [
+      "11"
+     ],
+     "22400159": [
+      "11"
+     ]
+    }
+   },
+   "LOT-12": {
+    "title": "Priemonė rankų antiseptikai propanolių pagrindu",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "12",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "12"
+     ],
+     "22320344": [
+      "12"
+     ],
+     "22350216": [
+      "12"
+     ],
+     "22415527": [
+      "12"
+     ],
+     "22400159": [
+      "12"
+     ]
+    }
+   },
+   "LOT-13": {
+    "title": "Testai dezinfekuotų paviršių kontrolei",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "13",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "13"
+     ],
+     "22320344": [
+      "13"
+     ],
+     "22350216": [
+      "13"
+     ],
+     "22415527": [
+      "13"
+     ],
+     "22400159": [
+      "13"
+     ]
+    }
+   },
+   "LOT-14": {
+    "title": "Maišeliai instrumentų sterilizavimui garais 190±10 x 400±20 mm",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "14",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "14"
+     ],
+     "22320344": [
+      "14"
+     ],
+     "22350216": [
+      "14"
+     ],
+     "22415527": [
+      "14"
+     ],
+     "22400159": [
+      "14"
+     ]
+    }
+   },
+   "LOT-15": {
+    "title": "Maišeliai instrumentų sterilizavimui garais 300±10 x 480±30 mm",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "15",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "15"
+     ],
+     "22320344": [
+      "15"
+     ],
+     "22350216": [
+      "15"
+     ],
+     "22415527": [
+      "15"
+     ],
+     "22400159": [
+      "15"
+     ]
+    }
+   },
+   "LOT-16": {
+    "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 200±10 mm",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "16",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "16"
+     ],
+     "22320344": [
+      "16"
+     ],
+     "22350216": [
+      "16"
+     ],
+     "22415527": [
+      "16"
+     ],
+     "22400159": [
+      "16"
+     ]
+    }
+   },
+   "LOT-17": {
+    "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 160±10 mm",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "17",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "17"
+     ],
+     "22320344": [
+      "17"
+     ],
+     "22350216": [
+      "17"
+     ],
+     "22415527": [
+      "17"
+     ],
+     "22400159": [
+      "17"
+     ]
+    }
+   },
+   "LOT-18": {
+    "title": "Maišeliai instrumentų sterilizavimui garais 100±10 x 260±10 mm",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "18",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "18"
+     ],
+     "22320344": [
+      "18"
+     ],
+     "22350216": [
+      "18"
+     ],
+     "22415527": [
+      "18"
+     ],
+     "22400159": [
+      "18"
+     ]
+    }
+   },
+   "LOT-19": {
+    "title": "Maišeliai instrumentų sterilizavimui garais 140 ± 10 x 270± 10  mm",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "19",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "19"
+     ],
+     "22320344": [
+      "19"
+     ],
+     "22350216": [
+      "19"
+     ],
+     "22415527": [
+      "19"
+     ],
+     "22400159": [
+      "19"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Operacinio lauko antiseptikas bespalvis",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "2"
+     ],
+     "22320344": [
+      "2"
+     ],
+     "22350216": [
+      "2"
+     ],
+     "22415527": [
+      "2"
+     ],
+     "22400159": [
+      "2"
+     ]
+    }
+   },
+   "LOT-20": {
+    "title": "Maišeliai instrumentų sterilizavimui garais 200±10 x 350±20 mm",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "20",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "20"
+     ],
+     "22320344": [
+      "20"
+     ],
+     "22350216": [
+      "20"
+     ],
+     "22415527": [
+      "20"
+     ],
+     "22400159": [
+      "20"
+     ]
+    }
+   },
+   "LOT-21": {
+    "title": "Maišeliai instrumentų sterilizavimui garais 250±10 x 400±20 mm",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "21",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "21"
+     ],
+     "22320344": [
+      "21"
+     ],
+     "22350216": [
+      "21"
+     ],
+     "22415527": [
+      "21"
+     ],
+     "22400159": [
+      "21"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Aerozolis chirurginių instrumentų priežiūrai",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "3"
+     ],
+     "22320344": [
+      "3"
+     ],
+     "22350216": [
+      "3"
+     ],
+     "22415527": [
+      "3"
+     ],
+     "22400159": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Indikatoriai cheminiai išoriniai gariniam sterilizatoriui (lipdukai pakuotėms)",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "4"
+     ],
+     "22320344": [
+      "4"
+     ],
+     "22350216": [
+      "4"
+     ],
+     "22415527": [
+      "4"
+     ],
+     "22400159": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Indikatoriai cheminiai vidiniai  gariniam sterilizatoriui",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "5"
+     ],
+     "22320344": [
+      "5"
+     ],
+     "22350216": [
+      "5"
+     ],
+     "22415527": [
+      "5"
+     ],
+     "22400159": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Konteineriai panaudotoms adatoms 5 l",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "6"
+     ],
+     "22320344": [
+      "6"
+     ],
+     "22350216": [
+      "6"
+     ],
+     "22415527": [
+      "6"
+     ],
+     "22400159": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Sterilizuojamų paketų sutvirtinimo juosta",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "7"
+     ],
+     "22320344": [
+      "7"
+     ],
+     "22350216": [
+      "7"
+     ],
+     "22415527": [
+      "7"
+     ],
+     "22400159": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Dezinfekcinės servetėlės UG davikliams",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "8"
+     ],
+     "22320344": [
+      "8"
+     ],
+     "22350216": [
+      "8"
+     ],
+     "22415527": [
+      "8"
+     ],
+     "22400159": [
+      "8"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Etileno oksido dujos",
+    "title_from": [
+     22055771,
+     22320344,
+     22350216,
+     22415527,
+     22400159
+    ],
+    "number": "9",
+    "key_numbers_by_notice": {
+     "22055771": [
+      "9"
+     ],
+     "22320344": [
+      "9"
+     ],
+     "22350216": [
+      "9"
+     ],
+     "22415527": [
+      "9"
+     ],
+     "22400159": [
+      "9"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 22320344,
+    "key": "RES-1",
+    "printed": [
+     "9,10"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "UAB \"Nautega\""
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22320344,
+    "key": "RES-2",
+    "printed": [
+     "13"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-13",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-13"
+    ],
+    "tender_lot_number": "13",
+    "tender_lot_title": "Testai dezinfekuotų paviršių kontrolei",
+    "block_title": null,
+    "winners": [
+     "UAB \"ILSANTA\""
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22320344,
+    "key": "RES-3",
+    "printed": [
+     "14,19"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": null,
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [],
+    "verdict": "null"
+   },
+   {
+    "notice": 22350216,
+    "key": "RES-1",
+    "printed": [
+     "3,11"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "UAB PSD Group"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22350216,
+    "key": "RES-2",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Indikatoriai cheminiai vidiniai  gariniam sterilizatoriui",
+    "block_title": null,
+    "winners": [
+     "UAB „Kodeta“"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22350216,
+    "key": "RES-3",
+    "printed": [
+     "7,15,16,17,19,20,21"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "MB „JAMedica“"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22350216,
+    "key": "RES-4",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Operacinio lauko antiseptikas bespalvis",
+    "block_title": null,
+    "winners": [
+     "UAB „Goodpoint“"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22350216,
+    "key": "RES-5",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Konteineriai panaudotoms adatoms 5 l",
+    "block_title": null,
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22415527,
+    "key": "RES-1",
+    "printed": [
+     "3,11"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Dezinfekcinės medžiagos ir priemonės sterilizacijai",
+    "winners": [
+     "UAB PSD Group"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22415527,
+    "key": "RES-2",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Indikatoriai cheminiai vidiniai  gariniam sterilizatoriui",
+    "block_title": null,
+    "winners": [
+     "UAB „Kodeta“"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22415527,
+    "key": "RES-3",
+    "printed": [
+     "7,15,16,17,18,20,21"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "MB „JAMedica“"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22415527,
+    "key": "RES-4",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Operacinio lauko antiseptikas bespalvis",
+    "block_title": null,
+    "winners": [
+     "UAB „Goodpoint“"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22415527,
+    "key": "RES-5",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Konteineriai panaudotoms adatoms 5 l",
+    "block_title": null,
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22400159,
+    "key": "RES-1",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Indikatoriai cheminiai išoriniai gariniam sterilizatoriui (lipdukai pakuotėms)",
+    "block_title": null,
+    "winners": [
+     "Uždaroji akcinė bendrovė \"Skirgesa\""
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22400159,
+    "key": "RES-2",
+    "printed": [
+     "1,12"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "UAB „Goodpoint“"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22400159,
+    "key": "RES-3",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Dezinfekcinės servetėlės UG davikliams",
+    "block_title": null,
+    "winners": [
+     "UAB \"Vitrolab\""
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 93,
+   "ok": 93,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 7452392,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 2,
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "22516232: LOT-1..3=1..3; 22788190: LOT-1..3=1..3",
+  "maps": {
+   "22516232": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Część 1 – dostawa komputerów stacjonarnych wraz z oprogramowaniem – 32 szt."
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Część 2 – dostawa komputerów przenośnych wraz z oprogramowaniem – 241 szt."
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Część 3 – dostawa tabletów – 9 szt."
+    }
+   },
+   "22788190": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Część 1 – dostawa komputerów stacjonarnych wraz z oprogramowaniem – 32 szt."
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Część 2 – dostawa komputerów przenośnych wraz z oprogramowaniem – 241 szt."
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Część 3 – dostawa tabletów – 9 szt."
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Część 1 – dostawa komputerów stacjonarnych wraz z oprogramowaniem – 32 szt.",
+    "title_from": [
+     22516232,
+     22788190
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "22516232": [
+      "1"
+     ],
+     "22788190": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Część 2 – dostawa komputerów przenośnych wraz z oprogramowaniem – 241 szt.",
+    "title_from": [
+     22516232,
+     22788190
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "22516232": [
+      "2"
+     ],
+     "22788190": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Część 3 – dostawa tabletów – 9 szt.",
+    "title_from": [
+     22516232,
+     22788190
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "22516232": [
+      "3"
+     ],
+     "22788190": [
+      "3"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 22788190,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Część 1 – dostawa komputerów stacjonarnych wraz z oprogramowaniem – 32 szt.",
+    "block_title": "dostawa komputerów stacjonarnych wraz z oprogramowaniem – 32 szt.",
+    "winners": [
+     "NTT Technology Sp. z o.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22788190,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Część 2 – dostawa komputerów przenośnych wraz z oprogramowaniem – 241 szt.",
+    "block_title": "dostawa komputerów przenośnych wraz z oprogramowaniem – 241 szt.",
+    "winners": [
+     "NEXUSTELECOM   M. STĄSIEK & A. PURA SPÓŁKA JAWNA"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22788190,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Część 3 – dostawa tabletów – 9 szt.",
+    "block_title": "dostawa tabletów – 9 szt.",
+    "winners": [
+     "Barzycki Inwestycje Tomasz Barzycki"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 17,
+   "ok": 17,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 7647671,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 2,
+  "results_total": 4,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "22996819: LOT-1..4=1..4; 23125590: LOT-1..4=1..4",
+  "maps": {
+   "22996819": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Materiały ortopedyczne"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Materiały ortopedyczne"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Materiały ortopedyczne"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Materiały ortopedyczne"
+    }
+   },
+   "23125590": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Materiały ortopedyczne"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Materiały ortopedyczne"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Materiały ortopedyczne"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Materiały ortopedyczne"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Materiały ortopedyczne",
+    "title_from": [
+     22996819,
+     23125590
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "22996819": [
+      "1"
+     ],
+     "23125590": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Materiały ortopedyczne",
+    "title_from": [
+     22996819,
+     23125590
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "22996819": [
+      "2"
+     ],
+     "23125590": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Materiały ortopedyczne",
+    "title_from": [
+     22996819,
+     23125590
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "22996819": [
+      "3"
+     ],
+     "23125590": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Materiały ortopedyczne",
+    "title_from": [
+     22996819,
+     23125590
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "22996819": [
+      "4"
+     ],
+     "23125590": [
+      "4"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 23125590,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Materiały ortopedyczne",
+    "block_title": "Materiały ortopedyczne",
+    "winners": [
+     "„ChM” spółka z ograniczona odpowiedzialnością"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23125590,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Materiały ortopedyczne",
+    "block_title": "Materiały ortopedyczne",
+    "winners": [
+     "Johnson & Johnson Poland Sp. z o.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23125590,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Materiały ortopedyczne",
+    "block_title": "Materiały ortopedyczne",
+    "winners": [
+     "Massmedica SA"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23125590,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Materiały ortopedyczne",
+    "block_title": "Materiały ortopedyczne",
+    "winners": [],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 40,
+   "ok": 40,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ },
+ {
+  "tender_id": 7663609,
+  "cls": "consistent",
+  "cls_auto": "consistent",
+  "n_notices_with_lot_sections": 3,
+  "results_total": 6,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps_compact": "23030129: LOT-1..4=1..4; 23335476: LOT-1..4=1..4; 23484375: LOT-1..4=1..4",
+  "maps": {
+   "23030129": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lůžko elektricky polohovatelné"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Lůžko elektricky polohovatelné pro JIP s váhou"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Bariatrické lůžko"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Lůžko porodní"
+    }
+   },
+   "23335476": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lůžko elektricky polohovatelné"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Lůžko elektricky polohovatelné pro JIP s váhou"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Bariatrické lůžko"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Lůžko porodní"
+    }
+   },
+   "23484375": {
+    "LOT-1": {
+     "no": [
+      "1"
+     ],
+     "title": "Lůžko elektricky polohovatelné"
+    },
+    "LOT-2": {
+     "no": [
+      "2"
+     ],
+     "title": "Lůžko elektricky polohovatelné pro JIP s váhou"
+    },
+    "LOT-3": {
+     "no": [
+      "3"
+     ],
+     "title": "Bariatrické lůžko"
+    },
+    "LOT-4": {
+     "no": [
+      "4"
+     ],
+     "title": "Lůžko porodní"
+    }
+   }
+  },
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lůžko elektricky polohovatelné",
+    "title_from": [
+     23030129,
+     23335476,
+     23484375
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "23030129": [
+      "1"
+     ],
+     "23335476": [
+      "1"
+     ],
+     "23484375": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Lůžko elektricky polohovatelné pro JIP s váhou",
+    "title_from": [
+     23030129,
+     23335476,
+     23484375
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "23030129": [
+      "2"
+     ],
+     "23335476": [
+      "2"
+     ],
+     "23484375": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Bariatrické lůžko",
+    "title_from": [
+     23030129,
+     23335476,
+     23484375
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "23030129": [
+      "3"
+     ],
+     "23335476": [
+      "3"
+     ],
+     "23484375": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Lůžko porodní",
+    "title_from": [
+     23030129,
+     23335476,
+     23484375
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "23030129": [
+      "4"
+     ],
+     "23335476": [
+      "4"
+     ],
+     "23484375": [
+      "4"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 23335476,
+    "key": "RES-1",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Lůžko elektricky polohovatelné pro JIP s váhou",
+    "block_title": "Lůžko elektricky polohovatelné pro JIP s váhou",
+    "winners": [
+     "L I N E T spol. s r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23335476,
+    "key": "RES-2",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Bariatrické lůžko",
+    "block_title": "Bariatrické lůžko",
+    "winners": [
+     "Arjo Czech Republic s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23484375,
+    "key": "RES-1",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Lůžko elektricky polohovatelné pro JIP s váhou",
+    "block_title": "Lůžko elektricky polohovatelné pro JIP s váhou",
+    "winners": [
+     "L I N E T spol. s r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23484375,
+    "key": "RES-2",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Bariatrické lůžko",
+    "block_title": "Bariatrické lůžko",
+    "winners": [
+     "Arjo Czech Republic s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23484375,
+    "key": "RES-3",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Lůžko elektricky polohovatelné",
+    "block_title": "Lůžko elektricky polohovatelné",
+    "winners": [
+     "PROMA REHA, s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23484375,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Lůžko porodní",
+    "block_title": "Lůžko porodní",
+    "winners": [
+     "Dartin spol. s.r.o."
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "lot_facts": {
+   "total": 20,
+   "ok": 20,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous": 0,
+   "mis_list": [],
+   "unsourced_list": [],
+   "amb_list": []
+  }
+ }
+]

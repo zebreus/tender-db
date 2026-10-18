@@ -1,0 +1,6269 @@
+[
+ {
+  "tender_id": 5496077,
+  "versions": [
+   18448920,
+   18696907
+  ],
+  "lot_publishing_notices": [
+   18448920
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "18448920": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ]
+   }
+  },
+  "titles": {
+   "18448920": {
+    "LOT-1": "Bois",
+    "LOT-2": "Panneaux",
+    "LOT-3": "Plomberie",
+    "LOT-4": "PVC",
+    "LOT-5": "Sources lumineuses",
+    "LOT-6": "Peintures",
+    "LOT-7": "Fournitures connexes de peinture et de vitrerie",
+    "LOT-8": "Vitrerie"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Bois",
+    "title_from": [
+     18448920
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "18448920": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Panneaux",
+    "title_from": [
+     18448920
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "18448920": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Plomberie",
+    "title_from": [
+     18448920
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "18448920": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "PVC",
+    "title_from": [
+     18448920
+    ],
+    "number": "4",
+    "numbers_at_key_by_notice": {
+     "18448920": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Sources lumineuses",
+    "title_from": [
+     18448920
+    ],
+    "number": "5",
+    "numbers_at_key_by_notice": {
+     "18448920": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Peintures",
+    "title_from": [
+     18448920
+    ],
+    "number": "6",
+    "numbers_at_key_by_notice": {
+     "18448920": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Fournitures connexes de peinture et de vitrerie",
+    "title_from": [
+     18448920
+    ],
+    "number": "7",
+    "numbers_at_key_by_notice": {
+     "18448920": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Vitrerie",
+    "title_from": [
+     18448920
+    ],
+    "number": "8",
+    "numbers_at_key_by_notice": {
+     "18448920": [
+      "8"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 18696907,
+    "key": "RES-1",
+    "printed": [
+     "2"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Fourniture de panneaux",
+    "decision": "selec-w",
+    "winners": [
+     "DMP Dispano"
+    ],
+    "verdict": "unplaced"
+   },
+   {
+    "notice": 18696907,
+    "key": "RES-2",
+    "printed": [
+     "3"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Fourniture de matériel de plomberie",
+    "decision": "selec-w",
+    "winners": [
+     "Catrybayart"
+    ],
+    "verdict": "unplaced"
+   },
+   {
+    "notice": 18696907,
+    "key": "RES-3",
+    "printed": [
+     "4"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Fourniture de PVC",
+    "decision": "selec-w",
+    "winners": [
+     "Catrybayart"
+    ],
+    "verdict": "unplaced"
+   },
+   {
+    "notice": 18696907,
+    "key": "RES-4",
+    "printed": [
+     "5"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Fournitures d'appareils d'éclairage et lampes électriques",
+    "decision": "selec-w",
+    "winners": [
+     "CGED"
+    ],
+    "verdict": "unplaced"
+   },
+   {
+    "notice": 18696907,
+    "key": "RES-5",
+    "printed": [
+     "6"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Fournitures de peintures",
+    "decision": "selec-w",
+    "winners": [
+     "Theodore Maison de Peinture"
+    ],
+    "verdict": "unplaced"
+   },
+   {
+    "notice": 18696907,
+    "key": "RES-6",
+    "printed": [
+     "7"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Fournitures connexes de peinture et de vitrerie",
+    "decision": "selec-w",
+    "winners": [
+     "Couleurs de Tollens"
+    ],
+    "verdict": "unplaced"
+   },
+   {
+    "notice": 18696907,
+    "key": "RES-7",
+    "printed": [
+     "8"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Fourniture de vitrerie",
+    "decision": "selec-w",
+    "winners": [
+     "Dubrulle miroiteries"
+    ],
+    "verdict": "unplaced"
+   }
+  ],
+  "results_total": 7,
+  "results_unplaced": 7,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 32,
+   "ok": 32,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "single_lot_notice",
+  "can_notice_id": 18696907,
+  "profile": "ted-export-r208",
+  "year": "2016"
+ },
+ {
+  "tender_id": 5522286,
+  "versions": [
+   18492042,
+   18904371
+  ],
+  "lot_publishing_notices": [
+   18492042,
+   18904371
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "18492042": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "18904371": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "18492042": {
+    "LOT-1": "Provision and Implementation of CRM software as an On Premises solution.",
+    "LOT-2": "Provision and Implementation of CRM software as a SaaS/Cloud solution."
+   },
+   "18904371": {
+    "LOT-1": "Provision and Implementation of CRM software as an On Premises solution.",
+    "LOT-2": "Provision and Implementation of CRM software as a SaaS/Cloud solution."
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Provision and Implementation of CRM software as an On Premises solution.",
+    "title_from": [
+     18492042,
+     18904371
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "18492042": [
+      "1"
+     ],
+     "18904371": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Provision and Implementation of CRM software as a SaaS/Cloud solution.",
+    "title_from": [
+     18492042,
+     18904371
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "18492042": [
+      "2"
+     ],
+     "18904371": [
+      "2"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 18904371,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Provision and Implementation of CRM software as an On Premis",
+    "block_title": "Lot 1: Provision and Implementation of CRM software as an on",
+    "decision": "selec-w",
+    "winners": [
+     "Open Sky Data Systems",
+     "Fujitsu (Ireland) Limited",
+     "Version 1",
+     "IBM Ireland",
+     "Ergo Services Ltd",
+     "DSS",
+     "SugarCRM"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 18904371,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Provision and Implementation of CRM software as a SaaS/Cloud",
+    "block_title": "Lot 2: Provision and Implementation of CRM software as a Saa",
+    "decision": "selec-w",
+    "winners": [
+     "Version 1",
+     "IBM Ireland",
+     "Ergo Services Ltd",
+     "DSS",
+     "MASTEK SYSTEMS COMPANY LTD",
+     "SugarCRM",
+     "Sysco Software Solutions",
+     "CapricornVentis Ltd"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 16,
+   "ok": 16,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 18904371,
+  "profile": "ted-export-r209",
+  "year": "2016"
+ },
+ {
+  "tender_id": 5807821,
+  "versions": [
+   19039638,
+   19121055
+  ],
+  "lot_publishing_notices": [
+   19039638,
+   19121055
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19039638": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "19121055": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "19039638": {
+    "LOT-1": "Доставка на автомобилно гориво чрез карти за безналично плащане за нуждите на ТП „ДГС Самоков“",
+    "LOT-2": "Доставка на смазочни материали и автокозметика за нуждите на ТП „ДГС Самоков“"
+   },
+   "19121055": {
+    "LOT-1": "Доставка на автомобилно гориво чрез карти за безналично плащане за нуждите на ТП „ДГС Самоков“",
+    "LOT-2": "Доставка на смазочни материали и автокозметика за нуждите на ТП „ДГС Самоков“"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Доставка на автомобилно гориво чрез карти за безналично плащане за нуждите на ТП „ДГС Самоков“",
+    "title_from": [
+     19039638,
+     19121055
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "19039638": [
+      "1"
+     ],
+     "19121055": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Доставка на смазочни материали и автокозметика за нуждите на ТП „ДГС Самоков“",
+    "title_from": [
+     19039638,
+     19121055
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "19039638": [
+      "2"
+     ],
+     "19121055": [
+      "2"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 19121055,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Доставка на автомобилно гориво чрез карти за безналично плащ",
+    "block_title": "Доставка на автомобилно гориво чрез карти за безналично плащ",
+    "decision": "selec-w",
+    "winners": [
+     "„Бент Ойл“ АД"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19121055,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Доставка на смазочни материали и автокозметика за нуждите на",
+    "block_title": "Доставка на смазочни материали и автокозметика за нуждите на",
+    "decision": "selec-w",
+    "winners": [
+     "„Бент Ойл“ АД"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 13,
+   "ok": 13,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 19121055,
+  "profile": "ted-export-r209",
+  "year": "2017"
+ },
+ {
+  "tender_id": 5863721,
+  "versions": [
+   19160599,
+   19413721
+  ],
+  "lot_publishing_notices": [
+   19160599,
+   19413721
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19160599": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "19413721": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "19160599": {
+    "LOT-1": "Secteur Nord",
+    "LOT-2": "Secteur Sud"
+   },
+   "19413721": {
+    "LOT-1": "Marché no 2017/90 — secteur Nord",
+    "LOT-2": "Marché no 2017/91 — secteur Sud"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Marché no 2017/90 — secteur Nord",
+    "title_from": [
+     19413721
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "19160599": [
+      "1"
+     ],
+     "19413721": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Marché no 2017/91 — secteur Sud",
+    "title_from": [
+     19413721
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "19160599": [
+      "2"
+     ],
+     "19413721": [
+      "2"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 19413721,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Marché no 2017/90 — secteur Nord",
+    "block_title": "Fourniture et livraison de granulats pour enduits superficie",
+    "decision": "selec-w",
+    "winners": [
+     "Entreprise Granulats Bourgogne Auvergne"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19413721,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Marché no 2017/91 — secteur Sud",
+    "block_title": "Fourniture et livraison de granulats pour enduits superficie",
+    "decision": "selec-w",
+    "winners": [
+     "Entreprise Granulats Bourgogne Auvergne"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 19413721,
+  "profile": "ted-export-r209",
+  "year": "2017"
+ },
+ {
+  "tender_id": 6081184,
+  "versions": [
+   19584404,
+   19684553
+  ],
+  "lot_publishing_notices": [
+   19584404,
+   19684553
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19584404": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   },
+   "19684553": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   }
+  },
+  "titles": {
+   "19584404": {
+    "LOT-1": "Gadobutrolum",
+    "LOT-2": "Iopromidum",
+    "LOT-3": "Iodixanol",
+    "LOT-4": "Heksaminolevulinaat"
+   },
+   "19684553": {
+    "LOT-1": "Gadobutrolum",
+    "LOT-2": "Iopromidum",
+    "LOT-3": "Iodixanol",
+    "LOT-4": "Heksaminolevulinaat"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Gadobutrolum",
+    "title_from": [
+     19584404,
+     19684553
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "19584404": [
+      "1"
+     ],
+     "19684553": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Iopromidum",
+    "title_from": [
+     19584404,
+     19684553
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "19584404": [
+      "2"
+     ],
+     "19684553": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Iodixanol",
+    "title_from": [
+     19584404,
+     19684553
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "19584404": [
+      "3"
+     ],
+     "19684553": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Heksaminolevulinaat",
+    "title_from": [
+     19584404,
+     19684553
+    ],
+    "number": "4",
+    "numbers_at_key_by_notice": {
+     "19584404": [
+      "4"
+     ],
+     "19684553": [
+      "4"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 19684553,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Gadobutrolum",
+    "block_title": "MÜÜGILEPING nr 3-7/434",
+    "decision": "selec-w",
+    "winners": [
+     "MAGNUM MEDICAL OÜ"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19684553,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Iopromidum",
+    "block_title": "Müügileping nr 3-7/434",
+    "decision": "selec-w",
+    "winners": [
+     "MAGNUM MEDICAL OÜ"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19684553,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Iodixanol",
+    "block_title": "MÜÜGILEPING nr 3-7/435",
+    "decision": "selec-w",
+    "winners": [
+     "Tamro Eesti OÜ"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19684553,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Heksaminolevulinaat",
+    "block_title": "MÜÜGILEPING nr 3-7/434",
+    "decision": "selec-w",
+    "winners": [
+     "MAGNUM MEDICAL OÜ"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 4,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 20,
+   "ok": 20,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 19684553,
+  "profile": "ted-export-r209",
+  "year": "2018"
+ },
+ {
+  "tender_id": 6172563,
+  "versions": [
+   19784695,
+   19957634
+  ],
+  "lot_publishing_notices": [
+   19784695,
+   19957634
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19784695": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "19957634": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "19784695": {
+    "LOT-1": "Déplacements intramuros Lambersart",
+    "LOT-2": "Déplacements extramuros Lambersart"
+   },
+   "19957634": {
+    "LOT-1": "Déplacements intramuros Lambersart",
+    "LOT-2": "Déplacements extramuros Lambersart"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Déplacements intramuros Lambersart",
+    "title_from": [
+     19784695,
+     19957634
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "19784695": [
+      "1"
+     ],
+     "19957634": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Déplacements extramuros Lambersart",
+    "title_from": [
+     19784695,
+     19957634
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "19784695": [
+      "2"
+     ],
+     "19957634": [
+      "2"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 19957634,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Déplacements intramuros Lambersart",
+    "block_title": "Déplacements intramuros Lambersart",
+    "decision": "selec-w",
+    "winners": [
+     "Groupement Voyages Catteau — Mariot Gamelin — Littoral Nord Autocars"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19957634,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Déplacements extramuros Lambersart",
+    "block_title": "Déplacements extramuros Lambersart",
+    "decision": "selec-w",
+    "winners": [
+     "Groupement Voyages Catteau — Mariot Gamelin — Littoral Nord Autocars"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 19957634,
+  "profile": "ted-export-r209",
+  "year": "2018"
+ },
+ {
+  "tender_id": 6412768,
+  "versions": [
+   20241239
+  ],
+  "lot_publishing_notices": [
+   20241239
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "20241239": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "20241239": {
+    "LOT-1": "Droit de la commande publique",
+    "LOT-2": "Droit de la propriété intellectuelle",
+    "LOT-3": "Droit du travail"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Droit de la commande publique",
+    "title_from": [
+     20241239
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "20241239": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Droit de la propriété intellectuelle",
+    "title_from": [
+     20241239
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "20241239": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Droit du travail",
+    "title_from": [
+     20241239
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "20241239": [
+      "3"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 20241239,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Droit de la commande publique",
+    "block_title": "Droit de la commande publique",
+    "decision": "selec-w",
+    "winners": [
+     "Adamas affaires publiques"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20241239,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Droit de la propriété intellectuelle",
+    "block_title": "Droit de la propriété intellectuelle",
+    "decision": "selec-w",
+    "winners": [
+     "Ernst & Young"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20241239,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Droit du travail",
+    "block_title": "Droit du travail",
+    "decision": "selec-w",
+    "winners": [
+     "Fidere Avocats"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 15,
+   "ok": 15,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "single_lot_notice",
+  "can_notice_id": 20241239,
+  "profile": "ted-export-r209",
+  "year": "2019"
+ },
+ {
+  "tender_id": 6460622,
+  "versions": [
+   20301937,
+   20369302,
+   20556448
+  ],
+  "lot_publishing_notices": [
+   20301937,
+   20556448
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20301937": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ],
+    "LOT-18": [
+     "18"
+    ],
+    "LOT-19": [
+     "19"
+    ]
+   },
+   "20556448": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ],
+    "LOT-18": [
+     "18"
+    ],
+    "LOT-19": [
+     "19"
+    ]
+   }
+  },
+  "titles": {
+   "20301937": {
+    "LOT-1": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 3 przedmiotów ochrony na obszarze Natura 2000 Dolina Rurzycy PLH300017",
+    "LOT-2": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla dla 1 przedmiotu ochrony na obszarze Natura 2000 Dolina Rurzycy PLH300017",
+    "LOT-3": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 5 przedmiotów ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "LOT-4": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "LOT-5": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 8 przedmiotów ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "LOT-6": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001 – rośliny: 1831 elisma wodna Luronium natans",
+    "LOT-7": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 7 przedmiotów ochrony na obszarze Natura 2000 Dolina Iny koło Recza PLH320004",
+    "LOT-8": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 7 przedmiotów ochrony na obszarze Natura 2000 Dolina Płoni i Jezioro Miedwie PLH320006",
+    "LOT-9": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Dolina Płoni i Jezioro Miedwie PLH320006",
+    "LOT-10": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Pojezierze Myśliborskie PLH320014",
+    "LOT-11": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Pojezierze Myśliborskie PLH320014",
+    "LOT-12": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 10 przedmiotów ochrony na obszarze Natura 2000 Trzebiatowsko-Kołobrzeski Pas Nadmorski PLH320017",
+    "LOT-13": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 5 przedmiotów ochrony na obszarze Natura 2000 Trzebiatowsko-Kołobrzeski Pas Nadmorski PLH320017",
+    "LOT-14": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "LOT-15": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "LOT-16": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "LOT-17": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 3 przedmiotów ochrony na obszarze Natura 2000 Jeziora Czaplineckie PLH320039",
+    "LOT-18": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 10 przedmiotów ochrony na obszarze Natura 2000 Diabelskie Pustacie PLH320048",
+    "LOT-19": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Diabelskie Pustacie PLH320048"
+   },
+   "20556448": {
+    "LOT-1": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 3 przedmiotów ochrony na obszarze Natura 2000 Dolina Rurzycy PLH300017",
+    "LOT-2": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla dla 1 przedmiotu ochrony na obszarze Natura 2000 Dolina Rurzycy PLH300017",
+    "LOT-3": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 5 przedmiotów ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "LOT-4": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "LOT-5": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 8 przedmiotów ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "LOT-6": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001 – rośliny: 1831 elisma wodna Luronium natans",
+    "LOT-7": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 7 przedmiotów ochrony na obszarze Natura 2000 Dolina Iny koło Recza PLH320004",
+    "LOT-8": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 7 przedmiotów ochrony na obszarze Natura 2000 Dolina Płoni i Jezioro Miedwie PLH320006",
+    "LOT-9": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Dolina Płoni i Jezioro Miedwie PLH320006",
+    "LOT-10": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Pojezierze Myśliborskie PLH320014",
+    "LOT-11": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Pojezierze Myśliborskie PLH320014",
+    "LOT-12": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 10 przedmiotów ochrony na obszarze Natura 2000 Trzebiatowsko-Kołobrzeski Pas Nadmorski PLH320017",
+    "LOT-13": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 5 przedmiotów ochrony na obszarze Natura 2000 Trzebiatowsko-Kołobrzeski Pas Nadmorski PLH320017",
+    "LOT-14": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "LOT-15": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "LOT-16": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "LOT-17": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 3 przedmiotów ochrony na obszarze Natura 2000 Jeziora Czaplineckie PLH320039",
+    "LOT-18": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 10 przedmiotów ochrony na obszarze Natura2000 Diabelskie Pustacie PLH320048",
+    "LOT-19": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Diabelskie Pustacie PLH320048"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 3 przedmiotów ochrony na obszarze Natura 2000 Dolina Rurzycy PLH300017",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "1"
+     ],
+     "20556448": [
+      "1"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Pojezierze Myśliborskie PLH320014",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "10",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "10"
+     ],
+     "20556448": [
+      "10"
+     ]
+    }
+   },
+   "LOT-11": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Pojezierze Myśliborskie PLH320014",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "11",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "11"
+     ],
+     "20556448": [
+      "11"
+     ]
+    }
+   },
+   "LOT-12": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 10 przedmiotów ochrony na obszarze Natura 2000 Trzebiatowsko-Kołobrzeski Pas Nadmorski PLH320017",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "12",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "12"
+     ],
+     "20556448": [
+      "12"
+     ]
+    }
+   },
+   "LOT-13": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 5 przedmiotów ochrony na obszarze Natura 2000 Trzebiatowsko-Kołobrzeski Pas Nadmorski PLH320017",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "13",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "13"
+     ],
+     "20556448": [
+      "13"
+     ]
+    }
+   },
+   "LOT-14": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "14",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "14"
+     ],
+     "20556448": [
+      "14"
+     ]
+    }
+   },
+   "LOT-15": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "15",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "15"
+     ],
+     "20556448": [
+      "15"
+     ]
+    }
+   },
+   "LOT-16": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Wzgórza Bukowe PLH320020",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "16",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "16"
+     ],
+     "20556448": [
+      "16"
+     ]
+    }
+   },
+   "LOT-17": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 3 przedmiotów ochrony na obszarze Natura 2000 Jeziora Czaplineckie PLH320039",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "17",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "17"
+     ],
+     "20556448": [
+      "17"
+     ]
+    }
+   },
+   "LOT-18": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 10 przedmiotów ochrony na obszarze Natura2000 Diabelskie Pustacie PLH320048",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "18",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "18"
+     ],
+     "20556448": [
+      "18"
+     ]
+    }
+   },
+   "LOT-19": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Diabelskie Pustacie PLH320048",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "19",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "19"
+     ],
+     "20556448": [
+      "19"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla dla 1 przedmiotu ochrony na obszarze Natura 2000 Dolina Rurzycy PLH300017",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "2"
+     ],
+     "20556448": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 5 przedmiotów ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "3"
+     ],
+     "20556448": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "4",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "4"
+     ],
+     "20556448": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 8 przedmiotów ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "5",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "5"
+     ],
+     "20556448": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 1 przedmiotu ochrony na obszarze Natura 2000 Bobolickie Jeziora Lobeliowe PLH320001 – rośliny: 1831 elisma wodna Luronium natans",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "6",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "6"
+     ],
+     "20556448": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 7 przedmiotów ochrony na obszarze Natura 2000 Dolina Iny koło Recza PLH320004",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "7",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "7"
+     ],
+     "20556448": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 7 przedmiotów ochrony na obszarze Natura 2000 Dolina Płoni i Jezioro Miedwie PLH320006",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "8",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "8"
+     ],
+     "20556448": [
+      "8"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dla 2 przedmiotów ochrony na obszarze Natura 2000 Dolina Płoni i Jezioro Miedwie PLH320006",
+    "title_from": [
+     20301937,
+     20556448
+    ],
+    "number": "9",
+    "numbers_at_key_by_notice": {
+     "20301937": [
+      "9"
+     ],
+     "20556448": [
+      "9"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 20556448,
+    "key": "RES-1",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-9",
+    "own_section": [
+     "LOT-9"
+    ],
+    "tender_lot_number": "9",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Lonicera Krzysztof Ziarnek"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-10",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Paludella Pracownia Przyrodnicza Katarzyna Kiaszewicz"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-11",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Paludella Pracownia Przyrodnicza Katarzyna Kiaszewicz"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-12",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "12"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Paludella Pracownia Przyrodnicza Katarzyna Kiaszewicz"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-13",
+    "printed": [
+     "18"
+    ],
+    "item": [
+     "13"
+    ],
+    "served_lot": "LOT-18",
+    "own_section": [
+     "LOT-18"
+    ],
+    "tender_lot_number": "18",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Paludella Pracownia Przyrodnicza Katarzyna Kiaszewicz"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-14",
+    "printed": [
+     "11"
+    ],
+    "item": [
+     "14"
+    ],
+    "served_lot": "LOT-11",
+    "own_section": [
+     "LOT-11"
+    ],
+    "tender_lot_number": "11",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-15",
+    "printed": [
+     "12"
+    ],
+    "item": [
+     "15"
+    ],
+    "served_lot": "LOT-12",
+    "own_section": [
+     "LOT-12"
+    ],
+    "tender_lot_number": "12",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-16",
+    "printed": [
+     "13"
+    ],
+    "item": [
+     "16"
+    ],
+    "served_lot": "LOT-13",
+    "own_section": [
+     "LOT-13"
+    ],
+    "tender_lot_number": "13",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-17",
+    "printed": [
+     "15"
+    ],
+    "item": [
+     "17"
+    ],
+    "served_lot": "LOT-15",
+    "own_section": [
+     "LOT-15"
+    ],
+    "tender_lot_number": "15",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-18",
+    "printed": [
+     "16"
+    ],
+    "item": [
+     "18"
+    ],
+    "served_lot": "LOT-16",
+    "own_section": [
+     "LOT-16"
+    ],
+    "tender_lot_number": "16",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-19",
+    "printed": [
+     "19"
+    ],
+    "item": [
+     "19"
+    ],
+    "served_lot": "LOT-19",
+    "own_section": [
+     "LOT-19"
+    ],
+    "tender_lot_number": "19",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-2",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-8",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Klub Przyrodników"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-3",
+    "printed": [
+     "17"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-17",
+    "own_section": [
+     "LOT-17"
+    ],
+    "tender_lot_number": "17",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Gobio - Usługi Przyrodnicze Michał Mięsikowski"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-4",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-10",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "10",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Maria Urbańska"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-5",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-14",
+    "own_section": [
+     "LOT-14"
+    ],
+    "tender_lot_number": "14",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Maria Urbańska"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-6",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Paludella Pracownia Przyrodnicza Katarzyna Kiaszewicz"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-7",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Paludella Pracownia Przyrodnicza Katarzyna Kiaszewicz"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-8",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Paludella Pracownia Przyrodnicza Katarzyna Kiaszewicz"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20556448,
+    "key": "RES-9",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "block_title": "Wykonanie ekspertyz na potrzeby uzupełniania stanu wiedzy dl",
+    "decision": "selec-w",
+    "winners": [
+     "Paludella Pracownia Przyrodnicza Katarzyna Kiaszewicz"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 19,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 114,
+   "ok": 114,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 20556448,
+  "profile": "ted-export-r209",
+  "year": "2019"
+ },
+ {
+  "tender_id": 6565774,
+  "versions": [
+   20544692,
+   20852084
+  ],
+  "lot_publishing_notices": [
+   20544692,
+   20852084
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20544692": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "5"
+    ],
+    "LOT-3": [
+     "5.2"
+    ],
+    "LOT-4": [
+     "6"
+    ],
+    "LOT-5": [
+     "7"
+    ],
+    "LOT-6": [
+     "7.2"
+    ],
+    "LOT-7": [
+     "8"
+    ],
+    "LOT-8": [
+     "9"
+    ],
+    "LOT-9": [
+     "10"
+    ],
+    "LOT-10": [
+     "10.2"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "14"
+    ],
+    "LOT-14": [
+     "15"
+    ],
+    "LOT-15": [
+     "16"
+    ]
+   },
+   "20852084": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "5"
+    ],
+    "LOT-3": [
+     "5.2"
+    ],
+    "LOT-4": [
+     "6"
+    ],
+    "LOT-5": [
+     "7"
+    ],
+    "LOT-6": [
+     "7.2"
+    ],
+    "LOT-7": [
+     "8"
+    ],
+    "LOT-8": [
+     "9"
+    ],
+    "LOT-9": [
+     "10"
+    ],
+    "LOT-10": [
+     "10.2"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "14"
+    ],
+    "LOT-14": [
+     "15"
+    ],
+    "LOT-15": [
+     "16"
+    ]
+   }
+  },
+  "titles": {
+   "20544692": {
+    "LOT-1": "VRD",
+    "LOT-2": "Menuiseries extérieures",
+    "LOT-3": "Menuiseries intérieures",
+    "LOT-4": "Serrurerie",
+    "LOT-5": "Isolation/Plâtrerie",
+    "LOT-6": "Isolation projetée",
+    "LOT-7": "Électricité",
+    "LOT-8": "Plomberie",
+    "LOT-9": "Chauffage",
+    "LOT-10": "VMC",
+    "LOT-11": "Revêtement de sol/peinture",
+    "LOT-12": "ITE",
+    "LOT-13": "Désamiantage",
+    "LOT-14": "Étanchéité terrasse",
+    "LOT-15": "Interphonie"
+   },
+   "20852084": {
+    "LOT-1": "VRD",
+    "LOT-2": "Menuiseries extérieures",
+    "LOT-3": "Menuiseries intérieures",
+    "LOT-4": "Serrurerie",
+    "LOT-5": "Isolation/plâtrerie",
+    "LOT-6": "Isolation projetée",
+    "LOT-7": "Électricité",
+    "LOT-8": "Plomberie",
+    "LOT-9": "Chauffage",
+    "LOT-10": "VMC",
+    "LOT-11": "Revêtement de sol/peinture",
+    "LOT-12": "ITE",
+    "LOT-13": "Désamiantage",
+    "LOT-14": "Étanchéité terrasse",
+    "LOT-15": "Interphonie"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "VRD",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "1"
+     ],
+     "20852084": [
+      "1"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "VMC",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "10.2",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "10.2"
+     ],
+     "20852084": [
+      "10.2"
+     ]
+    }
+   },
+   "LOT-11": {
+    "title": "Revêtement de sol/peinture",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "11",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "11"
+     ],
+     "20852084": [
+      "11"
+     ]
+    }
+   },
+   "LOT-12": {
+    "title": "ITE",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "12",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "12"
+     ],
+     "20852084": [
+      "12"
+     ]
+    }
+   },
+   "LOT-13": {
+    "title": "Désamiantage",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "14",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "14"
+     ],
+     "20852084": [
+      "14"
+     ]
+    }
+   },
+   "LOT-14": {
+    "title": "Étanchéité terrasse",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "15",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "15"
+     ],
+     "20852084": [
+      "15"
+     ]
+    }
+   },
+   "LOT-15": {
+    "title": "Interphonie",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "16",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "16"
+     ],
+     "20852084": [
+      "16"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Menuiseries extérieures",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "5",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "5"
+     ],
+     "20852084": [
+      "5"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Menuiseries intérieures",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "5.2",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "5.2"
+     ],
+     "20852084": [
+      "5.2"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Serrurerie",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "6",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "6"
+     ],
+     "20852084": [
+      "6"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Isolation/plâtrerie",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "7",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "7"
+     ],
+     "20852084": [
+      "7"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Isolation projetée",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "7.2",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "7.2"
+     ],
+     "20852084": [
+      "7.2"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Électricité",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "8",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "8"
+     ],
+     "20852084": [
+      "8"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Plomberie",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "9",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "9"
+     ],
+     "20852084": [
+      "9"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Chauffage",
+    "title_from": [
+     20544692,
+     20852084
+    ],
+    "number": "10",
+    "numbers_at_key_by_notice": {
+     "20544692": [
+      "10"
+     ],
+     "20852084": [
+      "10"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 20852084,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "VRD",
+    "block_title": "VRD",
+    "decision": "selec-w",
+    "winners": [
+     "SAS Sailleau Construction Rénovation"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-10",
+    "printed": [
+     "10.2"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "10.2",
+    "tender_lot_title": "VMC",
+    "block_title": "VMC",
+    "decision": "selec-w",
+    "winners": [
+     "Avipur Centre"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-11",
+    "printed": [
+     "11"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-11",
+    "own_section": [
+     "LOT-11"
+    ],
+    "tender_lot_number": "11",
+    "tender_lot_title": "Revêtement de sol/peinture",
+    "block_title": "Revêtement de sol/peinture",
+    "decision": "selec-w",
+    "winners": [
+     "Asseline"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-12",
+    "printed": [
+     "12"
+    ],
+    "item": [
+     "12"
+    ],
+    "served_lot": "LOT-12",
+    "own_section": [
+     "LOT-12"
+    ],
+    "tender_lot_number": "12",
+    "tender_lot_title": "ITE",
+    "block_title": "ITE",
+    "decision": "selec-w",
+    "winners": [
+     "gimonet"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-13",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "13"
+    ],
+    "served_lot": "LOT-13",
+    "own_section": [
+     "LOT-13"
+    ],
+    "tender_lot_number": "14",
+    "tender_lot_title": "Désamiantage",
+    "block_title": "Désamiantage",
+    "decision": "selec-w",
+    "winners": [
+     "Remove"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-14",
+    "printed": [
+     "15"
+    ],
+    "item": [
+     "14"
+    ],
+    "served_lot": "LOT-14",
+    "own_section": [
+     "LOT-14"
+    ],
+    "tender_lot_number": "15",
+    "tender_lot_title": "Étanchéité terrasse",
+    "block_title": "Étanchéité terrasse",
+    "decision": "selec-w",
+    "winners": [
+     "SMAC"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-15",
+    "printed": [
+     "16"
+    ],
+    "item": [
+     "15"
+    ],
+    "served_lot": "LOT-15",
+    "own_section": [
+     "LOT-15"
+    ],
+    "tender_lot_number": "16",
+    "tender_lot_title": "Interphonie",
+    "block_title": "Interphonie",
+    "decision": "selec-w",
+    "winners": [
+     "CIDE ELEC"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-2",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Menuiseries extérieures",
+    "block_title": "Menuiseries extérieures",
+    "decision": "selec-w",
+    "winners": [
+     "MPP NORBA Centre"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-3",
+    "printed": [
+     "5.2"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "5.2",
+    "tender_lot_title": "Menuiseries intérieures",
+    "block_title": "Menuiseries intérieures",
+    "decision": "selec-w",
+    "winners": [
+     "MPP NORBA Centre"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-4",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Serrurerie",
+    "block_title": "Serrurerie",
+    "decision": "selec-w",
+    "winners": [
+     "Bernardi"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-5",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Isolation/plâtrerie",
+    "block_title": "Isolation/plâtrerie",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-6",
+    "printed": [
+     "7.2"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "7.2",
+    "tender_lot_title": "Isolation projetée",
+    "block_title": "Isolation projetée",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-7",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Électricité",
+    "block_title": "Électricité",
+    "decision": "selec-w",
+    "winners": [
+     "DSH"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-8",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "9",
+    "tender_lot_title": "Plomberie",
+    "block_title": "Plomberie",
+    "decision": "selec-w",
+    "winners": [
+     "Lepage"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20852084,
+    "key": "RES-9",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "own_section": [
+     "LOT-9"
+    ],
+    "tender_lot_number": "10",
+    "tender_lot_title": "Chauffage",
+    "block_title": "Chauffage",
+    "decision": "selec-w",
+    "winners": [
+     "Gallier"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 15,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 75,
+   "ok": 75,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 20852084,
+  "profile": "ted-export-r209",
+  "year": "2020"
+ },
+ {
+  "tender_id": 6397695,
+  "versions": [
+   20237212,
+   20265311,
+   20282627,
+   21072522
+  ],
+  "lot_publishing_notices": [
+   20237212,
+   21072522
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20237212": {
+    "LOT-1": [
+     "11"
+    ],
+    "LOT-2": [
+     "18"
+    ],
+    "LOT-3": [
+     "19"
+    ],
+    "LOT-4": [
+     "8"
+    ],
+    "LOT-5": [
+     "9"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "4"
+    ],
+    "LOT-8": [
+     "12"
+    ],
+    "LOT-9": [
+     "10"
+    ],
+    "LOT-10": [
+     "16"
+    ],
+    "LOT-11": [
+     "1"
+    ],
+    "LOT-12": [
+     "15"
+    ],
+    "LOT-13": [
+     "17"
+    ],
+    "LOT-14": [
+     "3"
+    ],
+    "LOT-15": [
+     "7"
+    ],
+    "LOT-16": [
+     "13"
+    ],
+    "LOT-17": [
+     "5"
+    ],
+    "LOT-18": [
+     "14"
+    ],
+    "LOT-19": [
+     "2"
+    ]
+   },
+   "21072522": {
+    "LOT-1": [
+     "11"
+    ],
+    "LOT-2": [
+     "18"
+    ],
+    "LOT-3": [
+     "19"
+    ],
+    "LOT-4": [
+     "8"
+    ],
+    "LOT-5": [
+     "9"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "4"
+    ],
+    "LOT-8": [
+     "12"
+    ],
+    "LOT-9": [
+     "10"
+    ],
+    "LOT-10": [
+     "16"
+    ],
+    "LOT-11": [
+     "1"
+    ],
+    "LOT-12": [
+     "15"
+    ],
+    "LOT-13": [
+     "17"
+    ],
+    "LOT-14": [
+     "3"
+    ],
+    "LOT-15": [
+     "7"
+    ],
+    "LOT-16": [
+     "13"
+    ],
+    "LOT-17": [
+     "5"
+    ],
+    "LOT-18": [
+     "14"
+    ],
+    "LOT-19": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "20237212": {
+    "LOT-1": "Lot 11 Imnuologie — teste prin aglutinare",
+    "LOT-2": "Lot 18 Reactivi de laborator",
+    "LOT-3": "Lot 19 Consumabile laborator",
+    "LOT-4": "Lot 8 AIA 360",
+    "LOT-5": "Lot 9 DIRUI H 100",
+    "LOT-6": "Lot 6 Caretium",
+    "LOT-7": "Lot 4 BC 3000 plus",
+    "LOT-8": "Lot 12 Imunologie — teste prin hemaglutinare",
+    "LOT-9": "Lot 10 RAC 050",
+    "LOT-10": "Lot 16 Bacteriologie metodă manuală — Medii de cultură și discuri de antibiogramă",
+    "LOT-11": "Lot 1 Pachet A 25 Biosystems",
+    "LOT-12": "Lt 15 Test Babeș Papanicolau",
+    "LOT-13": "Lot 17 Teste de indentificare și teste rapide",
+    "LOT-14": "Lot 3 Mythic 22 AL",
+    "LOT-15": "Lot 7 i-Chroma",
+    "LOT-16": "Lot 13 Imnuologie — teste prin imunocromatografie",
+    "LOT-17": "Lot 5 Saio",
+    "LOT-18": "Lot 14 Vitek",
+    "LOT-19": "Lot 2 Pachet BA 400 Biosystems"
+   },
+   "21072522": {
+    "LOT-1": "Lot 11 – Imnuologie – teste prin aglutinare",
+    "LOT-2": "Lot 18 – Reactivi de laborator",
+    "LOT-3": "Lot 19 – Consumabile laborator",
+    "LOT-4": "Lot 8 – AIA 360",
+    "LOT-5": "Lot 9 – DIRUI H 100",
+    "LOT-6": "Lot 6 – Caretium",
+    "LOT-7": "Lot 4 – BC 3000 plus",
+    "LOT-8": "Lot 12 – Imnuologie – teste prin hemaglutinare",
+    "LOT-9": "Lot 10 – RAC 050",
+    "LOT-10": "Lot 16 – Bacteriologie metoda manuală – medii de cultură și discuri de antibiogramă",
+    "LOT-11": "Lot 1 – Pachet A 25 Biosystems",
+    "LOT-12": "Lt 15 – Test Babeș Papanicolau",
+    "LOT-13": "Lot 17 – Teste de indentificare și teste rapide",
+    "LOT-14": "Lot 3 – Mythic 22 AL",
+    "LOT-15": "Lot 7 – i-Chroma",
+    "LOT-16": "Lot 13 – Imnuologie – teste prin imunocromatografie",
+    "LOT-17": "Lot 5 – SAIO",
+    "LOT-18": "Lot 14 – Vitek",
+    "LOT-19": "Lot 2 — Pachet BA 400 Biosystems"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lot 11 – Imnuologie – teste prin aglutinare",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "11",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "11"
+     ],
+     "21072522": [
+      "11"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "Lot 16 – Bacteriologie metoda manuală – medii de cultură și discuri de antibiogramă",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "16",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "16"
+     ],
+     "21072522": [
+      "16"
+     ]
+    }
+   },
+   "LOT-11": {
+    "title": "Lot 1 – Pachet A 25 Biosystems",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "1"
+     ],
+     "21072522": [
+      "1"
+     ]
+    }
+   },
+   "LOT-12": {
+    "title": "Lt 15 – Test Babeș Papanicolau",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "15",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "15"
+     ],
+     "21072522": [
+      "15"
+     ]
+    }
+   },
+   "LOT-13": {
+    "title": "Lot 17 – Teste de indentificare și teste rapide",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "17",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "17"
+     ],
+     "21072522": [
+      "17"
+     ]
+    }
+   },
+   "LOT-14": {
+    "title": "Lot 3 – Mythic 22 AL",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "3"
+     ],
+     "21072522": [
+      "3"
+     ]
+    }
+   },
+   "LOT-15": {
+    "title": "Lot 7 – i-Chroma",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "7",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "7"
+     ],
+     "21072522": [
+      "7"
+     ]
+    }
+   },
+   "LOT-16": {
+    "title": "Lot 13 – Imnuologie – teste prin imunocromatografie",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "13",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "13"
+     ],
+     "21072522": [
+      "13"
+     ]
+    }
+   },
+   "LOT-17": {
+    "title": "Lot 5 – SAIO",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "5",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "5"
+     ],
+     "21072522": [
+      "5"
+     ]
+    }
+   },
+   "LOT-18": {
+    "title": "Lot 14 – Vitek",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "14",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "14"
+     ],
+     "21072522": [
+      "14"
+     ]
+    }
+   },
+   "LOT-19": {
+    "title": "Lot 2 — Pachet BA 400 Biosystems",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "2"
+     ],
+     "21072522": [
+      "2"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Lot 18 – Reactivi de laborator",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "18",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "18"
+     ],
+     "21072522": [
+      "18"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Lot 19 – Consumabile laborator",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "19",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "19"
+     ],
+     "21072522": [
+      "19"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Lot 8 – AIA 360",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "8",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "8"
+     ],
+     "21072522": [
+      "8"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Lot 9 – DIRUI H 100",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "9",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "9"
+     ],
+     "21072522": [
+      "9"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Lot 6 – Caretium",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "6",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "6"
+     ],
+     "21072522": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Lot 4 – BC 3000 plus",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "4",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "4"
+     ],
+     "21072522": [
+      "4"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Lot 12 – Imnuologie – teste prin hemaglutinare",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "12",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "12"
+     ],
+     "21072522": [
+      "12"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Lot 10 – RAC 050",
+    "title_from": [
+     20237212,
+     21072522
+    ],
+    "number": "10",
+    "numbers_at_key_by_notice": {
+     "20237212": [
+      "10"
+     ],
+     "21072522": [
+      "10"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 21072522,
+    "key": "RES-1",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "9",
+    "tender_lot_title": "Lot 9 – DIRUI H 100",
+    "block_title": "",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-10",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Lot 4 – BC 3000 plus",
+    "block_title": "Lot 4 – BC 3000 plus",
+    "decision": "selec-w",
+    "winners": [
+     "Nitech Medical S.R.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-11",
+    "printed": [
+     "15"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-12",
+    "own_section": [
+     "LOT-12"
+    ],
+    "tender_lot_number": "15",
+    "tender_lot_title": "Lt 15 – Test Babeș Papanicolau",
+    "block_title": "Lt 15 – Test Babeș Papanicolau",
+    "decision": "selec-w",
+    "winners": [
+     "Tody Laboratories Int"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-12",
+    "printed": [
+     "16"
+    ],
+    "item": [
+     "12"
+    ],
+    "served_lot": "LOT-10",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "16",
+    "tender_lot_title": "Lot 16 – Bacteriologie metoda manuală – medii de cultură și ",
+    "block_title": "Lot 16 Bacteriologie metoda manuala - Medii de cultura si di",
+    "decision": "selec-w",
+    "winners": [
+     "Biomaxima Clinical S.R.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-13",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "13"
+    ],
+    "served_lot": "LOT-15",
+    "own_section": [
+     "LOT-15"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Lot 7 – i-Chroma",
+    "block_title": "Lot 7 – i-Chroma",
+    "decision": "selec-w",
+    "winners": [
+     "AVENA MEDICA S.R.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-14",
+    "printed": [
+     "13"
+    ],
+    "item": [
+     "14"
+    ],
+    "served_lot": "LOT-16",
+    "own_section": [
+     "LOT-16"
+    ],
+    "tender_lot_number": "13",
+    "tender_lot_title": "Lot 13 – Imnuologie – teste prin imunocromatografie",
+    "block_title": "Lot 13 – Imnuologie – teste prin imunocromatografie",
+    "decision": "selec-w",
+    "winners": [
+     "A&A PRO DIAGNOSTIC"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-15",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "15"
+    ],
+    "served_lot": "LOT-18",
+    "own_section": [
+     "LOT-18"
+    ],
+    "tender_lot_number": "14",
+    "tender_lot_title": "Lot 14 – Vitek",
+    "block_title": "Lot 14 – Vitek",
+    "decision": "selec-w",
+    "winners": [
+     "MEDICLIM S.R.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-2",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-11",
+    "own_section": [
+     "LOT-11"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Lot 1 – Pachet A 25 Biosystems",
+    "block_title": "",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-3",
+    "printed": [
+     "17"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-13",
+    "own_section": [
+     "LOT-13"
+    ],
+    "tender_lot_number": "17",
+    "tender_lot_title": "Lot 17 – Teste de indentificare și teste rapide",
+    "block_title": "",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-4",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-19",
+    "own_section": [
+     "LOT-19"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Lot 2 — Pachet BA 400 Biosystems",
+    "block_title": "",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-5",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-14",
+    "own_section": [
+     "LOT-14"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Lot 3 – Mythic 22 AL",
+    "block_title": "Lot 3 — Mythic 22 AL",
+    "decision": "selec-w",
+    "winners": [
+     "BIOSYSTEMS DIAGNOSTIC S.R.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-6",
+    "printed": [
+     "18"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "18",
+    "tender_lot_title": "Lot 18 – Reactivi de laborator",
+    "block_title": "Lot 18 – Reactivi de laborator",
+    "decision": "selec-w",
+    "winners": [
+     "TUNIC PROD"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-7",
+    "printed": [
+     "19"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "19",
+    "tender_lot_title": "Lot 19 – Consumabile laborator",
+    "block_title": "Lot 19 — Consumabile laborator",
+    "decision": "selec-w",
+    "winners": [
+     "NOVA FIT 2000"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Lot 8 – AIA 360",
+    "block_title": "Lot 8 – AIA 360",
+    "decision": "selec-w",
+    "winners": [
+     "CLINI-LAB"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21072522,
+    "key": "RES-9",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Lot 6 – Caretium",
+    "block_title": "Lot 6 – Caretium",
+    "decision": "selec-w",
+    "winners": [
+     "BIVARIA GRUP S.R.L."
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 15,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 95,
+   "ok": 95,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 21072522,
+  "profile": "ted-export-r209",
+  "year": "2020"
+ },
+ {
+  "tender_id": 6882585,
+  "versions": [
+   21230688,
+   21377311
+  ],
+  "lot_publishing_notices": [
+   21230688,
+   21377311
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21230688": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   },
+   "21377311": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   }
+  },
+  "titles": {
+   "21230688": {
+    "LOT-1": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Rawicz",
+    "LOT-2": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Międzychód",
+    "LOT-3": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Krotoszyn",
+    "LOT-4": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Grodzisk Wlkp."
+   },
+   "21377311": {
+    "LOT-1": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Rawicz",
+    "LOT-2": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Międzychód",
+    "LOT-3": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Krotoszyn",
+    "LOT-4": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Grodzisk Wlkp."
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Rawicz",
+    "title_from": [
+     21230688,
+     21377311
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "21230688": [
+      "1"
+     ],
+     "21377311": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Międzychód",
+    "title_from": [
+     21230688,
+     21377311
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "21230688": [
+      "2"
+     ],
+     "21377311": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Krotoszyn",
+    "title_from": [
+     21230688,
+     21377311
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "21230688": [
+      "3"
+     ],
+     "21377311": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP Grodzisk Wlkp.",
+    "title_from": [
+     21230688,
+     21377311
+    ],
+    "number": "4",
+    "numbers_at_key_by_notice": {
+     "21230688": [
+      "4"
+     ],
+     "21377311": [
+      "4"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 21377311,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP",
+    "block_title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21377311,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP",
+    "block_title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP",
+    "decision": "selec-w",
+    "winners": [
+     "AUTO PAUL Firma Usługowo-Handlowa Stanisław Paul"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21377311,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP",
+    "block_title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP",
+    "decision": "selec-w",
+    "winners": [
+     "Ryszard Kostka Auto Serwis"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21377311,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP",
+    "block_title": "Naprawy i obsługa techniczna pojazdów użytkowanych przez KPP",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 4,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 20,
+   "ok": 20,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 21377311,
+  "profile": "ted-export-r209",
+  "year": "2020"
+ },
+ {
+  "tender_id": 6951826,
+  "versions": [
+   21396732,
+   21694829
+  ],
+  "lot_publishing_notices": [
+   21396732,
+   21694829
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21396732": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "21694829": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "21396732": {
+    "LOT-1": "Lot 1: prestations d'accueil physique hors évènementiel et évènementiel",
+    "LOT-2": "Lot 2: prestations d'accueil téléphonique"
+   },
+   "21694829": {
+    "LOT-1": "Lot 1: prestations d'accueil physique hors événementiel et événementiel",
+    "LOT-2": "Lot 2: prestations d'accueil téléphonique"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lot 1: prestations d'accueil physique hors événementiel et événementiel",
+    "title_from": [
+     21396732,
+     21694829
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "21396732": [
+      "1"
+     ],
+     "21694829": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Lot 2: prestations d'accueil téléphonique",
+    "title_from": [
+     21396732,
+     21694829
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "21396732": [
+      "2"
+     ],
+     "21694829": [
+      "2"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 21694829,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Lot 1: prestations d'accueil physique hors événementiel et é",
+    "block_title": "Lot 1: prestations régulières ou occasionnelles d'accueil ph",
+    "decision": "selec-w",
+    "winners": [
+     "Événement ETIC accueil"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21694829,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Lot 2: prestations d'accueil téléphonique",
+    "block_title": "Lot 2: prestations d'accueil téléphonique",
+    "decision": "selec-w",
+    "winners": [
+     "SASU Weetel"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 21694829,
+  "profile": "ted-export-r209",
+  "year": "2021"
+ },
+ {
+  "tender_id": 7103211,
+  "versions": [
+   21770227,
+   22027387
+  ],
+  "lot_publishing_notices": [
+   21770227,
+   22027387
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21770227": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "22027387": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "21770227": {
+    "LOT-1": "Fahrgestell für ein TLF 3000 St",
+    "LOT-2": "Aufbau für ein TLF 3000 St",
+    "LOT-3": "Beladung für ein TLF 3000 St"
+   },
+   "22027387": {
+    "LOT-1": "Fahrgestell für ein TLF 3000 St",
+    "LOT-2": "Aufbau für ein TLF 3000 St",
+    "LOT-3": "Beladung für ein TLF 3000 St"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Fahrgestell für ein TLF 3000 St",
+    "title_from": [
+     21770227,
+     22027387
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "21770227": [
+      "1"
+     ],
+     "22027387": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Aufbau für ein TLF 3000 St",
+    "title_from": [
+     21770227,
+     22027387
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "21770227": [
+      "2"
+     ],
+     "22027387": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Beladung für ein TLF 3000 St",
+    "title_from": [
+     21770227,
+     22027387
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "21770227": [
+      "3"
+     ],
+     "22027387": [
+      "3"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 22027387,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Fahrgestell für ein TLF 3000 St",
+    "block_title": "Fahrgestell für ein TLF 3000 St",
+    "decision": "selec-w",
+    "winners": [
+     "MAN Truck & Bus Deutschland GmbH - Region Süd – Verkauf Nürnberg"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22027387,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Aufbau für ein TLF 3000 St",
+    "block_title": "Aufbau für ein TLF 3000 St",
+    "decision": "selec-w",
+    "winners": [
+     "Rosenbauer Deutschland GmbH"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22027387,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Beladung für ein TLF 3000 St",
+    "block_title": "Beladung für ein TLF 3000 St",
+    "decision": "selec-w",
+    "winners": [
+     "Wolfgang Jahn GmbH"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 25,
+   "ok": 25,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 22027387,
+  "profile": "ted-export-r209",
+  "year": "2021"
+ },
+ {
+  "tender_id": 8496575,
+  "versions": [
+   22353706
+  ],
+  "lot_publishing_notices": [
+   22353706
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "22353706": {
+    "LOT-1": [
+     "2022-4241-1"
+    ],
+    "LOT-2": [
+     "2022-4241-2"
+    ]
+   }
+  },
+  "titles": {
+   "22353706": {
+    "LOT-1": "Ressourcepersonudbud - 2 x Projekteringsleder, Sikring - Banedanmark, Anlæg, Sikringsprojektering & Validering",
+    "LOT-2": "Ressourcepersonudbud - 2 x Projekteringsleder, Sikring - Banedanmark, Anlæg, Sikringsprojektering & Validering"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Ressourcepersonudbud - 2 x Projekteringsleder, Sikring - Banedanmark, Anlæg, Sikringsprojektering & Validering",
+    "title_from": [
+     22353706
+    ],
+    "number": "2022.4241.1",
+    "numbers_at_key_by_notice": {
+     "22353706": [
+      "2022-4241-1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Ressourcepersonudbud - 2 x Projekteringsleder, Sikring - Banedanmark, Anlæg, Sikringsprojektering & Validering",
+    "title_from": [
+     22353706
+    ],
+    "number": "2022.4241.2",
+    "numbers_at_key_by_notice": {
+     "22353706": [
+      "2022-4241-2"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 22353706,
+    "key": "RES-1",
+    "printed": [
+     "2022-4241-2"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2022.4241.2",
+    "tender_lot_title": "Ressourcepersonudbud - 2 x Projekteringsleder, Sikring - Ban",
+    "block_title": "Ressourcepersonudbud - 2 x Projekteringsleder, Sikring - Ban",
+    "decision": "selec-w",
+    "winners": [
+     "PBS BaneTek"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22353706,
+    "key": "RES-2",
+    "printed": [
+     "2022-4241-1"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "2022.4241.1",
+    "tender_lot_title": "Ressourcepersonudbud - 2 x Projekteringsleder, Sikring - Ban",
+    "block_title": "Ressourcepersonudbud - 2 x Projekteringsleder, Sikring - Ban",
+    "decision": "selec-w",
+    "winners": [
+     "semk consulting APS"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 23,
+   "ok": 23,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "single_lot_notice",
+  "can_notice_id": 22353706,
+  "profile": "ted-export-r209",
+  "year": "2022"
+ },
+ {
+  "tender_id": 7385913,
+  "versions": [
+   22411199,
+   22680227
+  ],
+  "lot_publishing_notices": [
+   22411199,
+   22680227
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "22411199": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ]
+   },
+   "22680227": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ]
+   }
+  },
+  "titles": {
+   "22411199": {
+    "LOT-1": "pays de Saint-Malo",
+    "LOT-2": "pays de Fougères",
+    "LOT-3": "pays de Rennes et Brocéliande",
+    "LOT-4": "pays de vitré",
+    "LOT-5": "pays de Vallons et de Redon"
+   },
+   "22680227": {
+    "LOT-1": "pays de Saint-Malo",
+    "LOT-2": "pays de Fougères",
+    "LOT-3": "pays de Rennes et Brocéliande",
+    "LOT-4": "pays de vitré",
+    "LOT-5": "pays de Vallons et de Redon"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "pays de Saint-Malo",
+    "title_from": [
+     22411199,
+     22680227
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "22411199": [
+      "1"
+     ],
+     "22680227": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "pays de Fougères",
+    "title_from": [
+     22411199,
+     22680227
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "22411199": [
+      "2"
+     ],
+     "22680227": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "pays de Rennes et Brocéliande",
+    "title_from": [
+     22411199,
+     22680227
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "22411199": [
+      "3"
+     ],
+     "22680227": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "pays de vitré",
+    "title_from": [
+     22411199,
+     22680227
+    ],
+    "number": "4",
+    "numbers_at_key_by_notice": {
+     "22411199": [
+      "4"
+     ],
+     "22680227": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "pays de Vallons et de Redon",
+    "title_from": [
+     22411199,
+     22680227
+    ],
+    "number": "5",
+    "numbers_at_key_by_notice": {
+     "22411199": [
+      "5"
+     ],
+     "22680227": [
+      "5"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 22680227,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "pays de Saint-Malo",
+    "block_title": "pays de Saint-Malo",
+    "decision": "selec-w",
+    "winners": [
+     "SCIC ENR Pays de Rance"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22680227,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "pays de Fougères",
+    "block_title": "pays de Fougères",
+    "decision": "selec-w",
+    "winners": [
+     "réseau éducation environnement"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22680227,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "pays de Rennes et Brocéliande",
+    "block_title": "pays de Rennes et Brocéliande",
+    "decision": "selec-w",
+    "winners": [
+     "La feuille d'Érable",
+     "l'Espace des sciences",
+     "les petits debrouillards"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22680227,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "pays de vitré",
+    "block_title": "pays de Vitré",
+    "decision": "selec-w",
+    "winners": [
+     "elan Créateur",
+     "l'Énergie des fées"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22680227,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "pays de Vallons et de Redon",
+    "block_title": "pays des Vallons de Vilaine et de Redon",
+    "decision": "selec-w",
+    "winners": [
+     "elan Créateur",
+     "espace des sciences"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 5,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 30,
+   "ok": 30,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 22680227,
+  "profile": "ted-export-r209",
+  "year": "2022"
+ },
+ {
+  "tender_id": 7077834,
+  "versions": [
+   21718788,
+   22991693,
+   23038012
+  ],
+  "lot_publishing_notices": [
+   21718788,
+   22991693,
+   23038012
+  ],
+  "n_notices_with_lot_sections": 3,
+  "maps": {
+   "21718788": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ]
+   },
+   "22991693": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ]
+   },
+   "23038012": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ]
+   }
+  },
+  "titles": {
+   "21718788": {
+    "LOT-1": "Sistema de implante de cadera con doble cúpula y vástago autobloqueante cementado para fracturas subcapitales de cadera en el paciente anciano",
+    "LOT-2": "Sistema de implante de cadera cementada ambos componentes con vástago con minicollar para tratamiento de artrosis de cadera en el anciano con mala calidad ósea",
+    "LOT-3": "Sistema de implante de cadera no cementada ambos componentes para tratamiento de artrosis de cadera en pacientes jóvenes. Cabeza metálica vástago de implante cementado para utilización en pacientes de edad con hueso de calidad aceptable para recibir un acetábulo tipo «press-fit» (prótesis híbrida)",
+    "LOT-4": "Sistema de implante de cadera no cementado ambos componentes para tratamiento de artrosis de cadera en pacientes jóvenes con buena calidad ósea. Vástago reducido ahorrador de hueso. Componentes opcionales para utilizar en intervenciones poco habituales, que variarán el precio límite del implante. Cabeza metálica",
+    "LOT-5": "Sistema de implante de cadera no cementado para cirugías complejas o de recambio protésico. Componentes opcionales para utilizar en intervenciones poco habituales, que variarán el precio límite del implante. Vástago femoral cementado para tratamiento de revisiones femorales de cadera y fracturas periprotésicas",
+    "LOT-6": "Implante acetabular cementado que permite su uso en diferentes procedimientos y convertir la artroplastia en sistema de doble movilidad con mayor estabilidad",
+    "LOT-7": "Varios anillos de refuerzo y reconstrucción, metálicos, para utilización en cirugía protésica con defectos óseos acetabulares (incluye anillos y cotillos). Tornillos",
+    "LOT-8": "Sistema modular de cuello femoral (incluye adaptadores y cabezas)"
+   },
+   "22991693": {
+    "LOT-1": "Sistema de implante de cadera con doble cúpula y vástago autobloqueante cementado para fracturas subcapitales de cadera en el paciente anciano.",
+    "LOT-2": "Sistema de implante de cadera cementada ambos componentes con vástago con minicollar para tratamiento de artrosis de cadera en el anciano con mala calidad ósea",
+    "LOT-3": "Sistema de implante de cadera no cementada ambos componentes para tratamiento de artrosis de cadera en pacientes jóvenes.Cabeza MetálicaVástago de implante cementado para utilización en pacientes de edad con hueso de calidad aceptable para recibir un acetábulo tipo \"press-fit\" (prótesis híbrida)",
+    "LOT-4": "Sistema de implante de cadera no cementado ambos componentes para tratamiento de artrosis de cadera en pacientes jóvenes con buena calidad ósea. Vástago reducido ahorrador de hueso.Componentes opcionales para utilizar en intervenciones poco habituales, que variarán el precio límite del implante.Cabeza metálica.",
+    "LOT-5": "Sistema de implante de cadera no cementado para cirugías complejas o de recambio protésico.Componentes opcionales para utilizar en intervenciones poco habituales, que variarán el precio límite del implante.Vástago femoral cementado para tratamiento de revisiones femorales de cadera y fracturas periprotésicas.",
+    "LOT-6": "Implante acetabular cementado que permite su uso en diferentes procedimientos y convertir la artroplastia en sistema de doble movilidad con mayor estabilidad",
+    "LOT-7": "VARIOSAnillos de refuerzo y reconstrucción, metálicos, para utilización en cirugía protésica con defectos óseos acetabulares (incluye anillos y cotillos)Tornillos",
+    "LOT-8": "Sistema modular de cuello femoral(incluye adaptadores y cabezas)"
+   },
+   "23038012": {
+    "LOT-1": "Sistema de implante de cadera con doble cúpula y vástago autobloqueante cementado para fracturas subcapitales de cadera en el paciente anciano.",
+    "LOT-2": "Sistema de implante de cadera cementada ambos componentes con vástago con minicollar para tratamiento de artrosis de cadera en el anciano con mala calidad ósea",
+    "LOT-3": "Sistema de implante de cadera no cementada ambos componentes para tratamiento de artrosis de cadera en pacientes jóvenes.Cabeza MetálicaVástago de implante cementado para utilización en pacientes de edad con hueso de calidad aceptable para recibir un acetábulo tipo \"press-fit\" (prótesis híbrida)",
+    "LOT-4": "Sistema de implante de cadera no cementado ambos componentes para tratamiento de artrosis de cadera en pacientes jóvenes con buena calidad ósea. Vástago reducido ahorrador de hueso.Componentes opcionales para utilizar en intervenciones poco habituales, que variarán el precio límite del implante.Cabeza metálica.",
+    "LOT-5": "Sistema de implante de cadera no cementado para cirugías complejas o de recambio protésico.Componentes opcionales para utilizar en intervenciones poco habituales, que variarán el precio límite del implante.Vástago femoral cementado para tratamiento de revisiones femorales de cadera y fracturas periprotésicas.",
+    "LOT-6": "Implante acetabular cementado que permite su uso en diferentes procedimientos y convertir la artroplastia en sistema de doble movilidad con mayor estabilidad",
+    "LOT-7": "VARIOSAnillos de refuerzo y reconstrucción, metálicos, para utilización en cirugía protésica con defectos óseos acetabulares (incluye anillos y cotillos)Tornillos",
+    "LOT-8": "Sistema modular de cuello femoral(incluye adaptadores y cabezas)"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Sistema de implante de cadera con doble cúpula y vástago autobloqueante cementado para fracturas subcapitales de cadera en el paciente anciano.",
+    "title_from": [
+     21718788,
+     22991693,
+     23038012
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "21718788": [
+      "1"
+     ],
+     "22991693": [
+      "1"
+     ],
+     "23038012": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Sistema de implante de cadera cementada ambos componentes con vástago con minicollar para tratamiento de artrosis de cadera en el anciano con mala calidad ósea",
+    "title_from": [
+     21718788,
+     22991693,
+     23038012
+    ],
+    "number": "2",
+    "numbers_at_key_by_notice": {
+     "21718788": [
+      "2"
+     ],
+     "22991693": [
+      "2"
+     ],
+     "23038012": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Sistema de implante de cadera no cementada ambos componentes para tratamiento de artrosis de cadera en pacientes jóvenes.Cabeza MetálicaVástago de implante cementado para utilización en pacientes de edad con hueso de calidad aceptable para recibir un acetábulo tipo \"press-fit\" (prótesis híbrida)",
+    "title_from": [
+     21718788,
+     22991693,
+     23038012
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "21718788": [
+      "3"
+     ],
+     "22991693": [
+      "3"
+     ],
+     "23038012": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Sistema de implante de cadera no cementado ambos componentes para tratamiento de artrosis de cadera en pacientes jóvenes con buena calidad ósea. Vástago reducido ahorrador de hueso.Componentes opcionales para utilizar en intervenciones poco habituales, que variarán el precio límite del implante.Cabeza metálica.",
+    "title_from": [
+     21718788,
+     22991693,
+     23038012
+    ],
+    "number": "4",
+    "numbers_at_key_by_notice": {
+     "21718788": [
+      "4"
+     ],
+     "22991693": [
+      "4"
+     ],
+     "23038012": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Sistema de implante de cadera no cementado para cirugías complejas o de recambio protésico.Componentes opcionales para utilizar en intervenciones poco habituales, que variarán el precio límite del implante.Vástago femoral cementado para tratamiento de revisiones femorales de cadera y fracturas periprotésicas.",
+    "title_from": [
+     21718788,
+     22991693,
+     23038012
+    ],
+    "number": "5",
+    "numbers_at_key_by_notice": {
+     "21718788": [
+      "5"
+     ],
+     "22991693": [
+      "5"
+     ],
+     "23038012": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Implante acetabular cementado que permite su uso en diferentes procedimientos y convertir la artroplastia en sistema de doble movilidad con mayor estabilidad",
+    "title_from": [
+     21718788,
+     22991693,
+     23038012
+    ],
+    "number": "6",
+    "numbers_at_key_by_notice": {
+     "21718788": [
+      "6"
+     ],
+     "22991693": [
+      "6"
+     ],
+     "23038012": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "VARIOSAnillos de refuerzo y reconstrucción, metálicos, para utilización en cirugía protésica con defectos óseos acetabulares (incluye anillos y cotillos)Tornillos",
+    "title_from": [
+     21718788,
+     22991693,
+     23038012
+    ],
+    "number": "7",
+    "numbers_at_key_by_notice": {
+     "21718788": [
+      "7"
+     ],
+     "22991693": [
+      "7"
+     ],
+     "23038012": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Sistema modular de cuello femoral(incluye adaptadores y cabezas)",
+    "title_from": [
+     21718788,
+     22991693,
+     23038012
+    ],
+    "number": "8",
+    "numbers_at_key_by_notice": {
+     "21718788": [
+      "8"
+     ],
+     "22991693": [
+      "8"
+     ],
+     "23038012": [
+      "8"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {},
+  "printed_lots_not_on_tender": [],
+  "results": [
+   {
+    "notice": 22991693,
+    "key": "RES-1",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "VARIOSAnillos de refuerzo y reconstrucción, metálicos, para ",
+    "block_title": "VARIOSAnillos de refuerzo y reconstrucción, metálicos, para ",
+    "decision": "clos-nw",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23038012,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Sistema de implante de cadera con doble cúpula y vástago aut",
+    "block_title": "Sistema de implante de cadera con doble cúpula y vástago aut",
+    "decision": "selec-w",
+    "winners": [
+     "PROTECTRAUMA, S.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23038012,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Sistema de implante de cadera cementada ambos componentes co",
+    "block_title": "Sistema de implante de cadera cementada ambos componentes co",
+    "decision": "selec-w",
+    "winners": [
+     "Zimmer Biomet Spain, S.L.U."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23038012,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Sistema de implante de cadera no cementada ambos componentes",
+    "block_title": "Sistema de implante de cadera no cementada ambos componentes",
+    "decision": "selec-w",
+    "winners": [
+     "Coray Medical, S.L.N.E."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23038012,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Sistema de implante de cadera no cementado ambos componentes",
+    "block_title": "Sistema de implante de cadera no cementado ambos componentes",
+    "decision": "selec-w",
+    "winners": [
+     "Miotech GM SL"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23038012,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Sistema de implante de cadera no cementado para cirugías com",
+    "block_title": "Sistema de implante de cadera no cementado para cirugías com",
+    "decision": "selec-w",
+    "winners": [
+     "MBA Incorporado, S.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23038012,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Implante acetabular cementado que permite su uso en diferent",
+    "block_title": "Implante acetabular cementado que permite su uso en diferent",
+    "decision": "selec-w",
+    "winners": [
+     "Zimmer Biomet Spain, S.L.U."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23038012,
+    "key": "RES-7",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-8",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Sistema modular de cuello femoral(incluye adaptadores y cabe",
+    "block_title": "Sistema modular de cuello femoral(incluye adaptadores y cabe",
+    "decision": "selec-w",
+    "winners": [
+     "MBA Incorporado, S.L."
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 8,
+  "results_unplaced": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 40,
+   "ok": 40,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "consistent",
+  "can_notice_id": 23038012,
+  "profile": "ted-export-r209",
+  "year": "2023"
+ },
+ {
+  "tender_id": 7697322,
+  "versions": [
+   23121547,
+   23276289,
+   23413021
+  ],
+  "lot_publishing_notices": [
+   23121547,
+   23276289,
+   23413021
+  ],
+  "n_notices_with_lot_sections": 3,
+  "maps": {
+   "23121547": {
+    "LOT-1": [
+     "01"
+    ],
+    "LOT-2": [
+     "02"
+    ],
+    "LOT-3": [
+     "03"
+    ],
+    "LOT-4": [
+     "04"
+    ],
+    "LOT-5": [
+     "05"
+    ],
+    "LOT-6": [
+     "06"
+    ],
+    "LOT-7": [
+     "07"
+    ],
+    "LOT-8": [
+     "08"
+    ],
+    "LOT-9": [
+     "09"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ]
+   },
+   "23276289": {
+    "LOT-1": [
+     "02"
+    ]
+   },
+   "23413021": {
+    "LOT-1": [
+     "01"
+    ],
+    "LOT-2": [
+     "03"
+    ],
+    "LOT-3": [
+     "04"
+    ],
+    "LOT-4": [
+     "05"
+    ],
+    "LOT-5": [
+     "06"
+    ],
+    "LOT-6": [
+     "08"
+    ],
+    "LOT-7": [
+     "10"
+    ],
+    "LOT-8": [
+     "11"
+    ],
+    "LOT-9": [
+     "12"
+    ],
+    "LOT-10": [
+     "13"
+    ],
+    "LOT-11": [
+     "14"
+    ],
+    "LOT-12": [
+     "15"
+    ],
+    "LOT-13": [
+     "16"
+    ],
+    "LOT-14": [
+     "17"
+    ]
+   }
+  },
+  "titles": {
+   "23121547": {
+    "LOT-1": "v.r.d",
+    "LOT-2": "terrassement",
+    "LOT-3": "renforcement De Sol",
+    "LOT-4": "gros Oeuvre - maconnerie",
+    "LOT-5": "charpente - couverture - zinguerie - couverture Zinc",
+    "LOT-6": "charpente Metallique - bardage - couverture",
+    "LOT-7": "etancheite",
+    "LOT-8": "menuiseries Exterieures Pvc Et Aluminium",
+    "LOT-9": "menuiseries Interieures Bois",
+    "LOT-10": "platrerie - peinture - faux Plafonds",
+    "LOT-11": "plomberie - sanitaires - chauffage",
+    "LOT-12": "electricite - courants Faibles - television",
+    "LOT-13": "facades",
+    "LOT-14": "serrurerie - metallerie",
+    "LOT-15": "portes Sectionnables",
+    "LOT-16": "carrelage - faiences - chapes",
+    "LOT-17": "espaces Verts - clotures"
+   },
+   "23276289": {
+    "LOT-1": "terrassement"
+   },
+   "23413021": {
+    "LOT-1": "v.r.d",
+    "LOT-2": "renforcement De Sol",
+    "LOT-3": "gros Oeuvre - maconnerie",
+    "LOT-4": "charpente - couverture - zinguerie - couverture Zinc",
+    "LOT-5": "charpente Metallique - bardage - couverture",
+    "LOT-6": "menuiseries Exterieures Pvc Et Aluminium",
+    "LOT-7": "platrerie - peinture - faux Plafonds",
+    "LOT-8": "plomberie - sanitaires - chauffage",
+    "LOT-9": "electricite - courants Faibles - television",
+    "LOT-10": "facades",
+    "LOT-11": "serrurerie - metallerie",
+    "LOT-12": "portes Sectionnables",
+    "LOT-13": "carrelage - faiences - chapes",
+    "LOT-14": "espaces Verts - clotures"
+   }
+  },
+  "unnumbered": {},
+  "disagreements": [
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-1",
+    "a": 23121547,
+    "a_no": [
+     "01"
+    ],
+    "a_title": "v.r.d",
+    "b": 23276289,
+    "b_no": [
+     "02"
+    ],
+    "b_title": "terrassement",
+    "title_sim": 0.13
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "2",
+    "a": 23121547,
+    "a_key": "LOT-2",
+    "b": 23276289,
+    "b_key": "LOT-1"
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-2",
+    "a": 23121547,
+    "a_no": [
+     "02"
+    ],
+    "a_title": "terrassement",
+    "b": 23413021,
+    "b_no": [
+     "03"
+    ],
+    "b_title": "renforcement De Sol",
+    "title_sim": 0.48
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-3",
+    "a": 23121547,
+    "a_no": [
+     "03"
+    ],
+    "a_title": "renforcement De Sol",
+    "b": 23413021,
+    "b_no": [
+     "04"
+    ],
+    "b_title": "gros Oeuvre - maconnerie",
+    "title_sim": 0.27
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-4",
+    "a": 23121547,
+    "a_no": [
+     "04"
+    ],
+    "a_title": "gros Oeuvre - maconnerie",
+    "b": 23413021,
+    "b_no": [
+     "05"
+    ],
+    "b_title": "charpente - couverture - zinguerie - couverture Zinc",
+    "title_sim": 0.35
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-5",
+    "a": 23121547,
+    "a_no": [
+     "05"
+    ],
+    "a_title": "charpente - couverture - zinguerie - couverture Zinc",
+    "b": 23413021,
+    "b_no": [
+     "06"
+    ],
+    "b_title": "charpente Metallique - bardage - couverture",
+    "title_sim": 0.49
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-6",
+    "a": 23121547,
+    "a_no": [
+     "06"
+    ],
+    "a_title": "charpente Metallique - bardage - couverture",
+    "b": 23413021,
+    "b_no": [
+     "08"
+    ],
+    "b_title": "menuiseries Exterieures Pvc Et Aluminium",
+    "title_sim": 0.28
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-7",
+    "a": 23121547,
+    "a_no": [
+     "07"
+    ],
+    "a_title": "etancheite",
+    "b": 23413021,
+    "b_no": [
+     "10"
+    ],
+    "b_title": "platrerie - peinture - faux Plafonds",
+    "title_sim": 0.26
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-8",
+    "a": 23121547,
+    "a_no": [
+     "08"
+    ],
+    "a_title": "menuiseries Exterieures Pvc Et Aluminium",
+    "b": 23413021,
+    "b_no": [
+     "11"
+    ],
+    "b_title": "plomberie - sanitaires - chauffage",
+    "title_sim": 0.41
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-9",
+    "a": 23121547,
+    "a_no": [
+     "09"
+    ],
+    "a_title": "menuiseries Interieures Bois",
+    "b": 23413021,
+    "b_no": [
+     "12"
+    ],
+    "b_title": "electricite - courants Faibles - television",
+    "title_sim": 0.19
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-10",
+    "a": 23121547,
+    "a_no": [
+     "10"
+    ],
+    "a_title": "platrerie - peinture - faux Plafonds",
+    "b": 23413021,
+    "b_no": [
+     "13"
+    ],
+    "b_title": "facades",
+    "title_sim": 0.28
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-11",
+    "a": 23121547,
+    "a_no": [
+     "11"
+    ],
+    "a_title": "plomberie - sanitaires - chauffage",
+    "b": 23413021,
+    "b_no": [
+     "14"
+    ],
+    "b_title": "serrurerie - metallerie",
+    "title_sim": 0.33
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-12",
+    "a": 23121547,
+    "a_no": [
+     "12"
+    ],
+    "a_title": "electricite - courants Faibles - television",
+    "b": 23413021,
+    "b_no": [
+     "15"
+    ],
+    "b_title": "portes Sectionnables",
+    "title_sim": 0.4
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-13",
+    "a": 23121547,
+    "a_no": [
+     "13"
+    ],
+    "a_title": "facades",
+    "b": 23413021,
+    "b_no": [
+     "16"
+    ],
+    "b_title": "carrelage - faiences - chapes",
+    "title_sim": 0.33
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-14",
+    "a": 23121547,
+    "a_no": [
+     "14"
+    ],
+    "a_title": "serrurerie - metallerie",
+    "b": 23413021,
+    "b_no": [
+     "17"
+    ],
+    "b_title": "espaces Verts - clotures",
+    "title_sim": 0.3
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "10",
+    "a": 23121547,
+    "a_key": "LOT-10",
+    "b": 23413021,
+    "b_key": "LOT-7"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "11",
+    "a": 23121547,
+    "a_key": "LOT-11",
+    "b": 23413021,
+    "b_key": "LOT-8"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "12",
+    "a": 23121547,
+    "a_key": "LOT-12",
+    "b": 23413021,
+    "b_key": "LOT-9"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "13",
+    "a": 23121547,
+    "a_key": "LOT-13",
+    "b": 23413021,
+    "b_key": "LOT-10"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "14",
+    "a": 23121547,
+    "a_key": "LOT-14",
+    "b": 23413021,
+    "b_key": "LOT-11"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "15",
+    "a": 23121547,
+    "a_key": "LOT-15",
+    "b": 23413021,
+    "b_key": "LOT-12"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "16",
+    "a": 23121547,
+    "a_key": "LOT-16",
+    "b": 23413021,
+    "b_key": "LOT-13"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "17",
+    "a": 23121547,
+    "a_key": "LOT-17",
+    "b": 23413021,
+    "b_key": "LOT-14"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "3",
+    "a": 23121547,
+    "a_key": "LOT-3",
+    "b": 23413021,
+    "b_key": "LOT-2"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "4",
+    "a": 23121547,
+    "a_key": "LOT-4",
+    "b": 23413021,
+    "b_key": "LOT-3"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "5",
+    "a": 23121547,
+    "a_key": "LOT-5",
+    "b": 23413021,
+    "b_key": "LOT-4"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "6",
+    "a": 23121547,
+    "a_key": "LOT-6",
+    "b": 23413021,
+    "b_key": "LOT-5"
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "8",
+    "a": 23121547,
+    "a_key": "LOT-8",
+    "b": 23413021,
+    "b_key": "LOT-6"
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-1",
+    "a": 23276289,
+    "a_no": [
+     "02"
+    ],
+    "a_title": "terrassement",
+    "b": 23413021,
+    "b_no": [
+     "01"
+    ],
+    "b_title": "v.r.d",
+    "title_sim": 0.13
+   }
+  ],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "v.r.d",
+    "title_from": [
+     23121547,
+     23413021
+    ],
+    "number": "1",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "01"
+     ],
+     "23276289": [
+      "02"
+     ],
+     "23413021": [
+      "01"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "facades",
+    "title_from": [
+     23413021
+    ],
+    "number": "13",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "10"
+     ],
+     "23413021": [
+      "13"
+     ]
+    }
+   },
+   "LOT-11": {
+    "title": "serrurerie - metallerie",
+    "title_from": [
+     23413021
+    ],
+    "number": "14",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "11"
+     ],
+     "23413021": [
+      "14"
+     ]
+    }
+   },
+   "LOT-12": {
+    "title": "portes Sectionnables",
+    "title_from": [
+     23413021
+    ],
+    "number": "15",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "12"
+     ],
+     "23413021": [
+      "15"
+     ]
+    }
+   },
+   "LOT-13": {
+    "title": "carrelage - faiences - chapes",
+    "title_from": [
+     23413021
+    ],
+    "number": "16",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "13"
+     ],
+     "23413021": [
+      "16"
+     ]
+    }
+   },
+   "LOT-14": {
+    "title": "espaces Verts - clotures",
+    "title_from": [
+     23413021
+    ],
+    "number": "17",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "14"
+     ],
+     "23413021": [
+      "17"
+     ]
+    }
+   },
+   "LOT-15": {
+    "title": "portes Sectionnables",
+    "title_from": [
+     23121547
+    ],
+    "number": "15",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "15"
+     ]
+    }
+   },
+   "LOT-16": {
+    "title": "carrelage - faiences - chapes",
+    "title_from": [
+     23121547
+    ],
+    "number": "16",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "16"
+     ]
+    }
+   },
+   "LOT-17": {
+    "title": "espaces Verts - clotures",
+    "title_from": [
+     23121547
+    ],
+    "number": "17",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "17"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "renforcement De Sol",
+    "title_from": [
+     23413021
+    ],
+    "number": "3",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "02"
+     ],
+     "23413021": [
+      "03"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "gros Oeuvre - maconnerie",
+    "title_from": [
+     23413021
+    ],
+    "number": "4",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "03"
+     ],
+     "23413021": [
+      "04"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "charpente - couverture - zinguerie - couverture Zinc",
+    "title_from": [
+     23413021
+    ],
+    "number": "5",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "04"
+     ],
+     "23413021": [
+      "05"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "charpente Metallique - bardage - couverture",
+    "title_from": [
+     23413021
+    ],
+    "number": "6",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "05"
+     ],
+     "23413021": [
+      "06"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "menuiseries Exterieures Pvc Et Aluminium",
+    "title_from": [
+     23413021
+    ],
+    "number": "8",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "06"
+     ],
+     "23413021": [
+      "08"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "platrerie - peinture - faux Plafonds",
+    "title_from": [
+     23413021
+    ],
+    "number": "10",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "07"
+     ],
+     "23413021": [
+      "10"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "plomberie - sanitaires - chauffage",
+    "title_from": [
+     23413021
+    ],
+    "number": "11",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "08"
+     ],
+     "23413021": [
+      "11"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "electricite - courants Faibles - television",
+    "title_from": [
+     23413021
+    ],
+    "number": "12",
+    "numbers_at_key_by_notice": {
+     "23121547": [
+      "09"
+     ],
+     "23413021": [
+      "12"
+     ]
+    }
+   }
+  },
+  "duplicate_tender_lots": {
+   "15": [
+    "LOT-12",
+    "LOT-15"
+   ],
+   "16": [
+    "LOT-13",
+    "LOT-16"
+   ],
+   "17": [
+    "LOT-14",
+    "LOT-17"
+   ]
+  },
+  "printed_lots_not_on_tender": [
+   "2",
+   "7",
+   "9"
+  ],
+  "results": [
+   {
+    "notice": 23276289,
+    "key": "RES-1",
+    "printed": [
+     "02"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "v.r.d",
+    "block_title": "terrassement",
+    "decision": "selec-w",
+    "winners": [
+     "Mounard TP"
+    ],
+    "verdict": "MISATTRIBUTED"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-1",
+    "printed": [
+     "01"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "v.r.d",
+    "block_title": "v.r.d",
+    "decision": "selec-w",
+    "winners": [
+     "Moutot Genie Civil"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-10",
+    "printed": [
+     "13"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "13",
+    "tender_lot_title": "facades",
+    "block_title": "facades",
+    "decision": "selec-w",
+    "winners": [
+     "ordek Facades"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-11",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-11",
+    "own_section": [
+     "LOT-11"
+    ],
+    "tender_lot_number": "14",
+    "tender_lot_title": "serrurerie - metallerie",
+    "block_title": "serrurerie - metallerie",
+    "decision": "selec-w",
+    "winners": [
+     "Maurin"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-12",
+    "printed": [
+     "15"
+    ],
+    "item": [
+     "12"
+    ],
+    "served_lot": "LOT-12",
+    "own_section": [
+     "LOT-12"
+    ],
+    "tender_lot_number": "15",
+    "tender_lot_title": "portes Sectionnables",
+    "block_title": "portes Sectionnables",
+    "decision": "selec-w",
+    "winners": [
+     "MG FERMETURES"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-13",
+    "printed": [
+     "16"
+    ],
+    "item": [
+     "13"
+    ],
+    "served_lot": "LOT-13",
+    "own_section": [
+     "LOT-13"
+    ],
+    "tender_lot_number": "16",
+    "tender_lot_title": "carrelage - faiences - chapes",
+    "block_title": "carrelage - faiences - chapes",
+    "decision": "selec-w",
+    "winners": [
+     "Les as des carreaux"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-14",
+    "printed": [
+     "17"
+    ],
+    "item": [
+     "14"
+    ],
+    "served_lot": "LOT-14",
+    "own_section": [
+     "LOT-14"
+    ],
+    "tender_lot_number": "17",
+    "tender_lot_title": "espaces Verts - clotures",
+    "block_title": "espaces Verts - clotures",
+    "decision": "selec-w",
+    "winners": [
+     "ENTREPRISE GENEVRAY"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-2",
+    "printed": [
+     "03"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "renforcement De Sol",
+    "block_title": "renforcement De Sol",
+    "decision": "selec-w",
+    "winners": [
+     "keller fondations speciales"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-3",
+    "printed": [
+     "04"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "gros Oeuvre - maconnerie",
+    "block_title": "gros Oeuvre - maconnerie",
+    "decision": "selec-w",
+    "winners": [
+     "cnb Batiment"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-4",
+    "printed": [
+     "05"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "charpente - couverture - zinguerie - couverture Zinc",
+    "block_title": "charpente - couverture - zinguerie - couverture Zinc",
+    "decision": "selec-w",
+    "winners": [
+     "Andre Vaganay"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-5",
+    "printed": [
+     "06"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "charpente Metallique - bardage - couverture",
+    "block_title": "charpente Metallique - bardage - couverture",
+    "decision": "selec-w",
+    "winners": [
+     "sarl Concept Metal Services"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-6",
+    "printed": [
+     "08"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "menuiseries Exterieures Pvc Et Aluminium",
+    "block_title": "menuiseries Exterieures Pvc Et Aluminium",
+    "decision": "selec-w",
+    "winners": [
+     "Delorme Battandier"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-7",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "10",
+    "tender_lot_title": "platrerie - peinture - faux Plafonds",
+    "block_title": "platrerie - peinture - faux Plafonds",
+    "decision": "selec-w",
+    "winners": [
+     "sas Edp"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-8",
+    "printed": [
+     "11"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "11",
+    "tender_lot_title": "plomberie - sanitaires - chauffage",
+    "block_title": "plomberie - sanitaires - chauffage",
+    "decision": "selec-w",
+    "winners": [
+     "egcm Minodier"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23413021,
+    "key": "RES-9",
+    "printed": [
+     "12"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "own_section": [
+     "LOT-9"
+    ],
+    "tender_lot_number": "12",
+    "tender_lot_title": "electricite - courants Faibles - television",
+    "block_title": "electricite - courants Faibles - television",
+    "decision": "selec-w",
+    "winners": [
+     "etablissement Beaux"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 15,
+  "results_unplaced": 0,
+  "results_misattributed": 1,
+  "lot_facts": {
+   "total": 85,
+   "ok": 85,
+   "misattributed": 0,
+   "unsourced": 0,
+   "ambiguous_identity": 0,
+   "examples": []
+  },
+  "cls": "disagree_harmful",
+  "can_notice_id": 23413021,
+  "profile": "ted-export-r209",
+  "year": "2023"
+ }
+]

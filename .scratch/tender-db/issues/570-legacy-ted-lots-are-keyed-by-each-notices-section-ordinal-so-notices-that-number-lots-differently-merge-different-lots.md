@@ -1,9 +1,12 @@
 # 570 — legacy TED lots are keyed by each notice's section ordinal, so notices that number their lots differently merge different lots under one key
 
-Status: needs-triage — filed 2026-10-17 from issue 567's read-back (workflow wf_8e33e7af-3be: readers and skeptics
-flagged it independently on 5 of 45 tenders). Next: measure the reach (multi-notice legacy TED Tenders whose notices
-print different LOT_NO → section-ordinal maps, and how many award blocks / lots sit under a key whose Tender title is
-another lot's), then decide whether legacy lots may be keyed by their printed number across a chain.
+Status: ready-for-agent — DECIDED 2026-10-18 (wf_0271cb46-6c5): BUILD option B (fold-time remap of a legacy notice's lot
+sections onto the Tender's existing keys by printed number; anchor = first lot-publishing notice; K1 injective, K2 no
+silent merge, K3 legacy chain only, K4 something to match). Measured (204 multi-lot legacy CANs 2016–23, skeptic-verified):
+maps disagree 6.4 % (3.4–10.6 %), harmful 3.4 % (1.4–6.9 %; 9 / 1,596 results, 22 lot facts); B changes 3.9 % (1.7–7.6 %),
+fixes 5 of 7 harmful Tenders, 7 of 9 results, 14 of 22 facts; 0 / 124 moved sections contradicted by title, 0 lot ids
+minted or swept in 211 chains; ≈ 22 k Tenders (9–42 k). NEXT: unit 3 build; drain after 568's read-back, before 551
+B5 (B3 re-runs after this drain; the port needs `remap_port.remap`). Decision: `.scratch/tender-db/570-lot-keys/decision.md`.
 Kind: correctness (legacy lot identity: awards and lots merged across different lots)
 Relates to:
 - 567 (same-notice mapping by printed LOT_NO; correct within a notice — this is the cross-notice keying it rests on);
@@ -59,3 +62,24 @@ facts sit under a key whose Tender lot (title / printed number) is another lot. 
 number (normalised) across the chain, with guards for unnumbered sections and duplicate numbers — an identity change
 for lot keys (ADR-0017 implications: lot ids, change rows, subscriptions) — or a cross-notice remap at fold time, or
 refuse and record.
+
+## Unit 1 — measured and decided (2026-10-18, workflow wf_0271cb46-6c5)
+
+Sample: issue 567's part-1/2 draws (one multi-lot legacy CAN per random OJ S day, 2016–2023): 204 Tenders (182 R2.0.9,
+22 R2.0.8); every version notice read; measurer + adversarial skeptic per group of 17; judge with a port replay
+(`remap_port.py`, `port_result.json`: today's rule equals production on all 1,316 placed blocks).
+
+| class | Tenders | misattributed results | lot facts on another lot |
+|---|---|---|---|
+| single_lot_notice | 47 | 0 | 0 |
+| consistent | 143 | 0 | 0 |
+| disagree_harmless | 6 | 0 | 0 |
+| disagree_harmful | 7 | 9 | 22 |
+| unnumbered | 1 | 0 | 0 |
+
+Decision (full rule, tests, drain and read-back: `decision.md`): **BUILD B** — not A (re-keying by printed number would
+change keys in 13 % of Tenders and mint/sweep ids in 5 %, 19 of 27 for no gain), not C (leaves the measured harm). Raw
+API reads of the measurement and skeptics: `raw-cache.tar.gz` (unit 3's tests are built from these parsed values —
+extract it into this folder first). Interactions: 567 (B rests on its same-notice resolution), 568 (shared matcher; two
+568 test assertions are re-specified on purpose because a swap is now resolved), 551 (path W's R2 inputs change; the port
+must apply the remap; B5's flip waits for this drain and B3's re-run), 364 (two welded Tenders are recorded there).

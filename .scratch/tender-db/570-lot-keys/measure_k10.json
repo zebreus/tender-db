@@ -1,0 +1,172 @@
+[
+ {
+  "tender_id": 5565077,
+  "cls": "single_lot_notice",
+  "notices_with_lots": 1,
+  "results_total": 8,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "18604627: LOT-k=LOT_NO k for k=1..14 (LOT_NUMBER); 18576255 no sections; CAN 18788182 (R2.0.8) 8 LotResult blocks, no lot sections",
+  "why": "Only the R2.0.8 CN 18604627 publishes lot sections (14, LOT-k = LOT_NUMBER k, e.g. LOT-1 'Bata quirurgica totalmente impermeable', LOT-14 'Cepillo quirurgico con gluconato de clorhexidina'); 18576255 is a bare Notice; the R2.0.8 CAN 18788182 has only 8 LotResult blocks (no LOT_NUMBER, number only in CONTRACT_TITLE e.g. RES-1 'Lote 6: Bata N/esteril...', RES-3 'Lote 4 ... y Lote 11'). No second lot map, so nothing can disagree. All 8 served lot_results have lot=null (568 not yet visible on this tender); 56 lot facts all sourced from 18604627 at the same key."
+ },
+ {
+  "tender_id": 5602216,
+  "cls": "single_lot_notice",
+  "notices_with_lots": 1,
+  "results_total": 139,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "18674240: LOT-k=LOT_NO k for k=1..280 (LOT_NUMBER); CAN 19023719 (R2.0.8) 139 LotResult blocks printing LOT_NUMBER, no lot sections",
+  "why": "Only the R2.0.8 CN 18674240 publishes lot sections (280, LOT-k = LOT_NUMBER k, no duplicates; LOT-1 'Aparat do przetaczania krwi...'). CAN 19023719 has 139 LotResult blocks that print LOT_NUMBER (RES-1=121, RES-10=144, RES-100=177) but no lot sections, so a cross-notice key disagreement is impossible; because the CN's key equals its printed number, a 568-style match by number would land correctly. All 139 served lot_results are lot=null today; 2827 lot facts all sourced from 18674240."
+ },
+ {
+  "tender_id": 5827131,
+  "cls": "disagree_harmful",
+  "notices_with_lots": 2,
+  "results_total": 2,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 1,
+  "maps": "CN 19103274: LOT-1=1 'editoriale', LOT-2=2 'evenementielle et partenariale', LOT-3=3 'digitale'; CAN 19259840: LOT-1=1 'editoriale', LOT-2=LOT_NO 3 (ITEM 2) 'digitale'",
+  "why": "Maps disagree on LOT-2: CN 19103274 LOT-2 = LOT_NO 2 'Conseil en technique de communication evenementielle et partenariale', CAN 19259840 LOT-2 = LOT_NO 3 (ITEM 2) '...communication digitale'; number 3 sits at CN LOT-3 and CAN LOT-2. Served lots: LOT-1 'editoriale' (both), LOT-2 '...digitale' (CAN title+description), LOT-3 '...digitale' (CN). Lot 2 'evenementielle' has vanished from the served lots and lot 3 is served twice. Results: RES-1 (LOT_NO 1) on LOT-1 ok; RES-2 (LOT_NO 3, perfeo Territoire) on LOT-2, whose served title is 'digitale', so 0 misattributed by Tender title, but it is the key the CN gives lot 2, and the CN's own lot 3 (Tender LOT-3) shows no award (under a chain/CN-key view it is 1 of 2). Lot facts: 1 of 20 sits on another lot: dates duration_end 2017-12-31 on LOT-2 is sourced only from CN LOT-2 (lot 2; the CAN section has no DATE_END). Its value equals lot 3's own CN DATE_END (2017-12-31), so the served value happens to be right. CPV 79416200 / NUTS FR824 are the same on every lot."
+ },
+ {
+  "tender_id": 5936713,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 2,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "19299095 and CAN 19520606: LOT-1=1 'Produits verriers et accessoires', LOT-2=2 'Menuiseries PVC et aluminium'",
+  "why": "Both lot-publishing notices (CN 19299095, CAN 19520606) print LOT-1=LOT_NO 1 'Produits verriers et accessoires', LOT-2=LOT_NO 2 'Menuiseries PVC et aluminium' (ITEM = number). 2 served results (CAN RES-1/RES-2) on the matching lots; 8 lot facts ok."
+ },
+ {
+  "tender_id": 6003591,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 11,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "19429452 and CAN 19764277: LOT-k=LOT_NO k for k=1..11; 19491333/19510590 are Change-only corrigenda",
+  "why": "CN 19429452 and CAN 19764277 both key LOT-1..11 = LOT_NO 1..11 with identical titles (LOT-1 'Olympus AU-400 klinikai kemiai automatahoz ISE...', LOT-11 'Zart vervételi rendszer'); corrigenda 19491333/19510590 carry only Change sections. 11 served results all on the lot their CAN block prints; 49 lot facts ok."
+ },
+ {
+  "tender_id": 6228293,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 3,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "CN 19876886: LOT-1=1 'libretti postali', LOT-2=2 'vaglia con lettera BancoPosta...', LOT-3=3 'vaglia da sportello...'; CAN 20064779: LOT-1..3 = LOT_NO 1..3 all titled 'libretti postali'",
+  "why": "Numbers agree at every key (CN 19876886 and CAN 20064779: LOT-k = LOT_NO k = ITEM k). Titles differ at LOT-2/LOT-3 only because the CAN's lot sections copy lot 1's title and description into all three ('Accordo quadro per la fornitura e consegna libretti postali per Poste Italiane'); its own award blocks keep the real titles (RES-2 LOT_NO 2 'vaglia con lettera BancoPosta e vidimati TWO UP', RES-3 LOT_NO 3 'vaglia da sportello e assegni vidimati'). That is a buyer copy-paste, not a section-ordinal shift. The served LOT-2/LOT-3 titles show the CAN's copied title, but the 3 results sit on the lot their block prints; 12 lot facts ok."
+ },
+ {
+  "tender_id": 6391289,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 6,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "20240006 and CAN 20383793: LOT-k=LOT_NO k for k=1..6",
+  "why": "CN 20240006 and CAN 20383793 both key LOT-1..6 = LOT_NO 1..6 with identical titles (LOT-1 'Cambridge Journals Online...', LOT-6 'Science Journals...'). 6 results ok; 24 lot facts ok."
+ },
+ {
+  "tender_id": 6544744,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 2,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "20500553 and CAN 20678918: LOT-1=1 'kredyt 6 900 000 PLN', LOT-2=2 'kredyt 2 000 000 PLN'",
+  "why": "CN 20500553 and CAN 20678918 both print LOT-1=LOT_NO 1 ('Udzielenie i obsluga kredytu dlugoterminowego w kwocie 6 900 000,00 PLN...') and LOT-2=LOT_NO 2 ('...2 000 000,00 PLN...'). 2 results ok; 48 lot facts ok."
+ },
+ {
+  "tender_id": 6633011,
+  "cls": "disagree_harmless",
+  "notices_with_lots": 2,
+  "results_total": 6,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "CN 20668864: LOT-k=LOT_NO k, k=1..9; CAN 20957186: LOT-1=1, LOT-2=2, LOT-3=4, LOT-4=5, LOT-5=6, LOT-6=8 (ITEM 1..6)",
+  "why": "Maps disagree at 4 keys: CN 20668864 has 9 lots at LOT-k = LOT_NO k; CAN 20957186 lists only the 6 awarded lots by position: LOT-3=LOT_NO 4 'Aparat EEG nevrofiidbek' (CN LOT-3 = 3 'Aparat za audio-vizualna stimulatsiya i elektrosan'), LOT-4=5 'Kravno-gazov analizator' (CN LOT-4 = 4 EEG), LOT-5=6 'UV-VIS spektrofotometri' (CN LOT-5 = 5 blood gas), LOT-6=8 'Robotizirana sistema' (CN LOT-6 = 6 UV-VIS). Served LOT-3..6 carry the CAN's titles and descriptions (lots 4, 5, 6, 8); LOT-7/8/9 carry the CN's lots 7/8/9. So lot 3 has vanished from the served lots and lot 8 is served twice (LOT-6 with its award, LOT-8 without one). All 6 results (RES-2 LOT_NO 4 on LOT-3, RES-3 6 on LOT-5, RES-4 5 on LOT-4, RES-6 8 on LOT-6, RES-1/RES-5 on LOT-1/LOT-2) sit on a Tender lot with the block's own title: 0 misattributed by Tender title. Under the CN's keys, 4 of them sit on the CN's lots 3/5/4/6. Of 173 lot facts, 0 are misattributed: the facts on LOT-3..6 come from the CAN sections, or have the same value in both (CPV 33100000, NUTS BG421, a boilerplate line). 1 fact is unsourced ('[...]', which normalises to empty)."
+ },
+ {
+  "tender_id": 6715921,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 77,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "20895294 and CAN 21213475: LOT-k = LOT_NO '0k'/'k' for k=1..20; 20882554/20937148 Change-only",
+  "why": "CN 20895294 and CAN 21213475 both key LOT-1..20 = LOT_NO '01'..'20' (ITEM 1..20). The only title differences are case and accents ('Menuiseries bois exterieur et interieur' vs 'Menuiseries Bois Exterieures Et Interieures' at LOT-9, and similar at LOT-11). 77 result blocks all on the lot they print; 140 lot facts ok."
+ },
+ {
+  "tender_id": 6939722,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 17,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "21370536 and CAN 21521456: LOT-k=LOT_NO k for k=1..17; 21435599/21439469/21430862 Change-only",
+  "why": "CN 21370536 and CAN 21521456 both key LOT-1..17 = LOT_NO 1..17; the only title difference is a typo fix at LOT-8 ('centralmego' vs 'centralnego wklucia i cewnikowania'). 17 results ok; 68 lot facts ok."
+ },
+ {
+  "tender_id": 6986534,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 5,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "21484157 and CAN 21826184: LOT-k=LOT_NO k for k=1..5",
+  "why": "CN 21484157 and CAN 21826184 both key LOT-1..5 = LOT_NO 1..5 with the same titles (LOT-1 'Missions plongeurs pour le Port de...', LOT-4 'Interim plongeurs pour les ports...'). 5 results ok; 20 lot facts ok."
+ },
+ {
+  "tender_id": 7149945,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 6,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "21848238 and CAN 22151155: LOT-k=LOT_NO k for k=1..6",
+  "why": "CN 21848238 and CAN 22151155 both key LOT-1..6 = LOT_NO 1..6 (LOT-1 'assurance des dommages aux biens...', LOT-6 'assurance informatique cyber-attaques'). 6 results ok; 36 lot facts ok."
+ },
+ {
+  "tender_id": 7338227,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 2,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "22283475 and CAN 22454892: LOT-1=1 'Mieterzentrum 01 und 05', LOT-2=2 'Mieterzentrum 02, 03 und 04'",
+  "why": "CN 22283475 and CAN 22454892 agree: LOT-1=LOT_NO 1 'Mieterzentrum 01 und 05', LOT-2=LOT_NO 2 'Mieterzentrum 02, 03 und 04'. 2 results ok; 12 lot facts ok."
+ },
+ {
+  "tender_id": 7497865,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 2,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "22652207 and CAN 22817524: LOT-1=1, LOT-2=2, both titled 'Sperrmuellsammelfahrzeug'",
+  "why": "CN 22652207 and CAN 22817524 agree by number (LOT-1=1, LOT-2=2). Both lots carry the same title 'Sperrmuellsammelfahrzeug' in both notices, so titles cannot tell the lots apart, but the numbers agree. 2 results ok; 8 lot facts ok."
+ },
+ {
+  "tender_id": 7635745,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 2,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "22973645 and CAN 23192043: LOT-1=1, LOT-2=2, both titled 'Kraftfahrzeuge'",
+  "why": "CN 22973645 and CAN 23192043 agree by number (LOT-1=1, LOT-2=2); both lots are titled 'Kraftfahrzeuge' in both notices, so only the numbers tell them apart, and they agree. 2 results ok; 12 lot facts ok."
+ },
+ {
+  "tender_id": 7812497,
+  "cls": "consistent",
+  "notices_with_lots": 2,
+  "results_total": 3,
+  "results_misattributed": 0,
+  "lot_facts_misattributed": 0,
+  "maps": "23354326 and CAN 23566174: LOT-1=1 'viande crue : Boeuf', LOT-2=2 (no title), LOT-3=3 (no title)",
+  "why": "CN 23354326 and CAN 23566174 agree by number: LOT-1=1 'viande crue : Boeuf', LOT-2=2 and LOT-3=3, both untitled in both notices (the served LOT-2/LOT-3 titles are empty). 3 results ok; 10 lot facts ok."
+ }
+]

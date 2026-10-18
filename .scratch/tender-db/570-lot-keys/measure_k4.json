@@ -1,0 +1,3354 @@
+[
+ {
+  "tender_id": 5476527,
+  "can_notice_id": 18660440,
+  "versions": [
+   18396618,
+   18660440
+  ],
+  "lot_publishing_notices": [
+   18396618
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "18396618": {
+    "LOT-1": [
+     "01"
+    ],
+    "LOT-2": [
+     "03"
+    ]
+   }
+  },
+  "titles": {
+   "18396618": {
+    "LOT-1": "Gros-Oeuvre",
+    "LOT-2": "Menuiseries extérieures et façades aluminium"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Gros-Oeuvre",
+    "title_from": [
+     18396618
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Menuiseries extérieures et façades aluminium",
+    "title_from": [
+     18396618
+    ],
+    "number": "3"
+   }
+  },
+  "results": [
+   {
+    "notice": 18660440,
+    "key": "RES-1",
+    "printed": [
+     "01"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Les prestations a réaliser concernent environ: 180 mètres ca",
+    "verdict": "null"
+   },
+   {
+    "notice": 18660440,
+    "key": "RES-2",
+    "printed": [
+     "03"
+    ],
+    "item": [],
+    "served_lot": null,
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Les prestations à réaliser concerne environ 1 300 mètres car",
+    "verdict": "null"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 2,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 11,
+   "ok": 11,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "single_lot_notice"
+ },
+ {
+  "tender_id": 5588262,
+  "can_notice_id": 18915096,
+  "versions": [
+   18634456,
+   18915096
+  ],
+  "lot_publishing_notices": [
+   18634456,
+   18915096
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "18634456": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "18915096": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "18634456": {
+    "LOT-1": "Terrassement voirie réseaux",
+    "LOT-2": "Signalisation verticale et horizontale",
+    "LOT-3": "Clôtures, portails et portillons"
+   },
+   "18915096": {
+    "LOT-1": "Terrassement — voirie — réseaux",
+    "LOT-2": "Signalisation verticale et horizontale",
+    "LOT-3": "Clôtures, portails et portillons"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Terrassement — voirie — réseaux",
+    "title_from": [
+     18634456,
+     18915096
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Signalisation verticale et horizontale",
+    "title_from": [
+     18634456,
+     18915096
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "Clôtures, portails et portillons",
+    "title_from": [
+     18634456,
+     18915096
+    ],
+    "number": "3"
+   }
+  },
+  "results": [
+   {
+    "notice": 18915096,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Terrassement — voirie — réseaux",
+    "block_title": "Terrassement — voirie — réseaux. L'accord-cadre est conclu s",
+    "verdict": "ok"
+   },
+   {
+    "notice": 18915096,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Signalisation verticale et horizontale",
+    "block_title": "Signalisation verticale et horizontale",
+    "verdict": "ok"
+   },
+   {
+    "notice": 18915096,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Clôtures, portails et portillons",
+    "block_title": "Clôtures, portails et portillons",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 18,
+   "ok": 18,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 5674082,
+  "can_notice_id": 19138003,
+  "versions": [
+   18779563,
+   19138003
+  ],
+  "lot_publishing_notices": [
+   18779563,
+   19138003
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "18779563": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ]
+   },
+   "19138003": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ]
+   }
+  },
+  "titles": {
+   "18779563": {
+    "LOT-1": "Lot 1: terrassement/VRD (chaufferie et réseau de chaleur)",
+    "LOT-2": "Lot 2: gros œuvre/bardage/peinture et second œuvre des locaux sociaux",
+    "LOT-3": "Lot 3: couverture/étanchéité",
+    "LOT-4": "Lot 4: serrurerie/menuiserie",
+    "LOT-5": "Lot 5: chaudières biomasse/condenseur et traitements des fumées",
+    "LOT-6": "Lot 6: fumisterie/silencieux",
+    "LOT-7": "Lot 7: chaudières gaz, brûleurs, condenseurs et environnement",
+    "LOT-8": "Lot 8: contrôle en continu des rejets",
+    "LOT-9": "Lot 9: électricité bâtiment et process, automatisme et supervision",
+    "LOT-10": "Lot 10: fourniture et pose hydraulique du réseau de chaleur",
+    "LOT-11": "Lot 11: sous-station"
+   },
+   "19138003": {
+    "LOT-1": "Lot 1: terrassement / VRD (chaufferie et réseau de chaleur)",
+    "LOT-2": "Lot 2: gros-œuvre / bardage / peinture et second-œuvre des locaux sociaux",
+    "LOT-3": "Lot 3: couverture / étanchéité",
+    "LOT-4": "Lot 4: serrurerie / menuiserie",
+    "LOT-5": "Lot 5: chaudières biomasse / condenseur et traitements des fumées",
+    "LOT-6": "Lot 6: fumisterie / silencieux",
+    "LOT-7": "Lot 7: chaudières gaz / brûleurs / condenseurs et environnement",
+    "LOT-8": "Lot 8: contrôle en continu des rejets",
+    "LOT-9": "Lot 9: Électricité bâtiment et process, automatisme et supervision",
+    "LOT-10": "Lot 10: fourniture et pose hydraulique du réseau de chaleur",
+    "LOT-11": "Lot 11: sous-station"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lot 1: terrassement / VRD (chaufferie et réseau de chaleur)",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "1"
+   },
+   "LOT-10": {
+    "title": "Lot 10: fourniture et pose hydraulique du réseau de chaleur",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "10"
+   },
+   "LOT-11": {
+    "title": "Lot 11: sous-station",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "11"
+   },
+   "LOT-2": {
+    "title": "Lot 2: gros-œuvre / bardage / peinture et second-œuvre des locaux sociaux",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "Lot 3: couverture / étanchéité",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "3"
+   },
+   "LOT-4": {
+    "title": "Lot 4: serrurerie / menuiserie",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "4"
+   },
+   "LOT-5": {
+    "title": "Lot 5: chaudières biomasse / condenseur et traitements des fumées",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "5"
+   },
+   "LOT-6": {
+    "title": "Lot 6: fumisterie / silencieux",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "6"
+   },
+   "LOT-7": {
+    "title": "Lot 7: chaudières gaz / brûleurs / condenseurs et environnement",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "7"
+   },
+   "LOT-8": {
+    "title": "Lot 8: contrôle en continu des rejets",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "8"
+   },
+   "LOT-9": {
+    "title": "Lot 9: Électricité bâtiment et process, automatisme et supervision",
+    "title_from": [
+     18779563,
+     19138003
+    ],
+    "number": "9"
+   }
+  },
+  "results": [
+   {
+    "notice": 19138003,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Lot 1: terrassement / VRD (chaufferie et réseau de chaleur)",
+    "block_title": "Terrassement / VRD",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-10",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "10",
+    "tender_lot_title": "Lot 10: fourniture et pose hydraulique du réseau de chaleur",
+    "block_title": "Fourniture et pose hydraulique du réseau de chaleur",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-11",
+    "printed": [
+     "11"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-11",
+    "own_section": [
+     "LOT-11"
+    ],
+    "tender_lot_number": "11",
+    "tender_lot_title": "Lot 11: sous-station",
+    "block_title": "Sous-station",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Lot 2: gros-œuvre / bardage / peinture et second-œuvre des l",
+    "block_title": "Gros-œuvre / bardage / peinture et second-œuvre des locaux s",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Lot 3: couverture / étanchéité",
+    "block_title": "Couverture — étanchéité",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Lot 4: serrurerie / menuiserie",
+    "block_title": "Serrurerie — menuiserie",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Lot 5: chaudières biomasse / condenseur et traitements des f",
+    "block_title": "Chaudière biomasse — condenseur et traitements des fumées",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Lot 6: fumisterie / silencieux",
+    "block_title": "Fumisterie / silencieux",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Lot 7: chaudières gaz / brûleurs / condenseurs et environnem",
+    "block_title": "Chaudière gaz / bruleurs / condenseurs et environnement",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Lot 8: contrôle en continu des rejets",
+    "block_title": "Contrôle en continu des rejets",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19138003,
+    "key": "RES-9",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "own_section": [
+     "LOT-9"
+    ],
+    "tender_lot_number": "9",
+    "tender_lot_title": "Lot 9: Électricité bâtiment et process, automatisme et super",
+    "block_title": "Électricité bâtiment et process / automatisme / supervision",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 11,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 65,
+   "ok": 65,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 5984445,
+  "can_notice_id": 19411290,
+  "versions": [
+   19411290
+  ],
+  "lot_publishing_notices": [
+   19411290
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "19411290": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "7"
+    ],
+    "LOT-7": [
+     "8"
+    ],
+    "LOT-8": [
+     "9"
+    ],
+    "LOT-9": [
+     "10"
+    ],
+    "LOT-10": [
+     "11"
+    ],
+    "LOT-11": [
+     "12"
+    ],
+    "LOT-12": [
+     "13"
+    ],
+    "LOT-13": [
+     "14"
+    ]
+   }
+  },
+  "titles": {
+   "19411290": {
+    "LOT-1": "Démolitions — gros-œuvre — échafaudage",
+    "LOT-2": "Charpente bois — couverture tuiles et bacs — étanchéité",
+    "LOT-3": "Isolation Thermique Extérieure — peintures extérieures",
+    "LOT-4": "Menuiseries extérieures PVC",
+    "LOT-5": "Menuiseries extérieures aluminium — serrurerie",
+    "LOT-6": "Plâtrerie — cloisonnement — isolation thermique intérieure",
+    "LOT-7": "Carrelage — faïence",
+    "LOT-8": "Peintures — tentures",
+    "LOT-9": "Revêtements de sols souples",
+    "LOT-10": "Plomberie — sanitaire — chauffage central gaz — vmc",
+    "LOT-11": "Électricité courants forts et faibles",
+    "LOT-12": "Ascenseur",
+    "LOT-13": "VRD — aménagements extérieurs"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Démolitions — gros-œuvre — échafaudage",
+    "title_from": [
+     19411290
+    ],
+    "number": "1"
+   },
+   "LOT-10": {
+    "title": "Plomberie — sanitaire — chauffage central gaz — vmc",
+    "title_from": [
+     19411290
+    ],
+    "number": "11"
+   },
+   "LOT-11": {
+    "title": "Électricité courants forts et faibles",
+    "title_from": [
+     19411290
+    ],
+    "number": "12"
+   },
+   "LOT-12": {
+    "title": "Ascenseur",
+    "title_from": [
+     19411290
+    ],
+    "number": "13"
+   },
+   "LOT-13": {
+    "title": "VRD — aménagements extérieurs",
+    "title_from": [
+     19411290
+    ],
+    "number": "14"
+   },
+   "LOT-2": {
+    "title": "Charpente bois — couverture tuiles et bacs — étanchéité",
+    "title_from": [
+     19411290
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "Isolation Thermique Extérieure — peintures extérieures",
+    "title_from": [
+     19411290
+    ],
+    "number": "3"
+   },
+   "LOT-4": {
+    "title": "Menuiseries extérieures PVC",
+    "title_from": [
+     19411290
+    ],
+    "number": "4"
+   },
+   "LOT-5": {
+    "title": "Menuiseries extérieures aluminium — serrurerie",
+    "title_from": [
+     19411290
+    ],
+    "number": "5"
+   },
+   "LOT-6": {
+    "title": "Plâtrerie — cloisonnement — isolation thermique intérieure",
+    "title_from": [
+     19411290
+    ],
+    "number": "7"
+   },
+   "LOT-7": {
+    "title": "Carrelage — faïence",
+    "title_from": [
+     19411290
+    ],
+    "number": "8"
+   },
+   "LOT-8": {
+    "title": "Peintures — tentures",
+    "title_from": [
+     19411290
+    ],
+    "number": "9"
+   },
+   "LOT-9": {
+    "title": "Revêtements de sols souples",
+    "title_from": [
+     19411290
+    ],
+    "number": "10"
+   }
+  },
+  "results": [
+   {
+    "notice": 19411290,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Démolitions — gros-œuvre — échafaudage",
+    "block_title": "Démolitions — gros-œuvre — échafaudage",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-10",
+    "printed": [
+     "11"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "11",
+    "tender_lot_title": "Plomberie — sanitaire — chauffage central gaz — vmc",
+    "block_title": "Plomberie — sanitaire — chauffage central gaz — vmc",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-11",
+    "printed": [
+     "12"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-11",
+    "own_section": [
+     "LOT-11"
+    ],
+    "tender_lot_number": "12",
+    "tender_lot_title": "Électricité courants forts et faibles",
+    "block_title": "Électricité courants forts et faibles",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-12",
+    "printed": [
+     "13"
+    ],
+    "item": [
+     "12"
+    ],
+    "served_lot": "LOT-12",
+    "own_section": [
+     "LOT-12"
+    ],
+    "tender_lot_number": "13",
+    "tender_lot_title": "Ascenseur",
+    "block_title": "Ascenseur",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-13",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "13"
+    ],
+    "served_lot": "LOT-13",
+    "own_section": [
+     "LOT-13"
+    ],
+    "tender_lot_number": "14",
+    "tender_lot_title": "VRD — aménagements extérieurs",
+    "block_title": "VRD — aménagements extérieurs",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Charpente bois — couverture tuiles et bacs — étanchéité",
+    "block_title": "Charpente bois — couverture tuiles et bacs — étanchéité",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Isolation Thermique Extérieure — peintures extérieures",
+    "block_title": "Charpente bois — couverture tuiles et bacs — étanchéité",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Menuiseries extérieures PVC",
+    "block_title": "Menuiseries extérieures PVC",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Menuiseries extérieures aluminium — serrurerie",
+    "block_title": "Menuiseries extérieures aluminium — serrurerie",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-6",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Plâtrerie — cloisonnement — isolation thermique intérieure",
+    "block_title": "Plâtrerie — cloisonnement — isolation thermique intérieure",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-7",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Carrelage — faïence",
+    "block_title": "Carrelage — faïence",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-8",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "9",
+    "tender_lot_title": "Peintures — tentures",
+    "block_title": "Peintures — tentures",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19411290,
+    "key": "RES-9",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "own_section": [
+     "LOT-9"
+    ],
+    "tender_lot_number": "10",
+    "tender_lot_title": "Revêtements de sols souples",
+    "block_title": "Revêtements de sols souples",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 13,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 65,
+   "ok": 65,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "single_lot_notice"
+ },
+ {
+  "tender_id": 5897292,
+  "can_notice_id": 19645087,
+  "versions": [
+   19219898,
+   19470764,
+   19645087
+  ],
+  "lot_publishing_notices": [
+   19219898,
+   19470764,
+   19645087
+  ],
+  "n_notices_with_lot_sections": 3,
+  "maps": {
+   "19219898": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ]
+   },
+   "19470764": {
+    "LOT-1": [
+     "1"
+    ]
+   },
+   "19645087": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ]
+   }
+  },
+  "titles": {
+   "19219898": {
+    "LOT-1": "Cytostatikum s obsahem účinné látky aflibercept",
+    "LOT-2": "Cytostatikum s obsahem účinné látky erlotinib",
+    "LOT-3": "Cytostatikum s obsahem účinné látky karboplatina",
+    "LOT-4": "Cytostatikum s obsahem účinné látky pazopanib",
+    "LOT-5": "Cytostatikum s obsahem účinné látky pemetrexed 33652100",
+    "LOT-6": "Cytostatikum s obsahem účinné látky vinorelbin"
+   },
+   "19470764": {
+    "LOT-1": "Cytostatikum s obsahem účinné látky aflibercept."
+   },
+   "19645087": {
+    "LOT-1": "Cytostatikum s obsahem účinné látky aflibercept",
+    "LOT-2": "Cytostatikum s obsahem účinné látky erlotinib",
+    "LOT-3": "Cytostatikum s obsahem účinné látky karboplatina",
+    "LOT-4": "Cytostatikum s obsahem účinné látky pazopanib",
+    "LOT-5": "Cytostatikum s obsahem účinné látky pemetrexed",
+    "LOT-6": "Cytostatikum s obsahem účinné látky vinorelbin"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Cytostatikum s obsahem účinné látky aflibercept",
+    "title_from": [
+     19219898,
+     19470764,
+     19645087
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Cytostatikum s obsahem účinné látky erlotinib",
+    "title_from": [
+     19219898,
+     19645087
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "Cytostatikum s obsahem účinné látky karboplatina",
+    "title_from": [
+     19219898,
+     19645087
+    ],
+    "number": "3"
+   },
+   "LOT-4": {
+    "title": "Cytostatikum s obsahem účinné látky pazopanib",
+    "title_from": [
+     19219898,
+     19645087
+    ],
+    "number": "4"
+   },
+   "LOT-5": {
+    "title": "Cytostatikum s obsahem účinné látky pemetrexed",
+    "title_from": [
+     19645087
+    ],
+    "number": "5"
+   },
+   "LOT-6": {
+    "title": "Cytostatikum s obsahem účinné látky vinorelbin",
+    "title_from": [
+     19219898,
+     19645087
+    ],
+    "number": "6"
+   }
+  },
+  "results": [
+   {
+    "notice": 19470764,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Cytostatikum s obsahem účinné látky aflibercept",
+    "block_title": null,
+    "verdict": "ok"
+   },
+   {
+    "notice": 19645087,
+    "key": "RES-1",
+    "printed": [],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Cytostatikum s obsahem účinné látky aflibercept",
+    "block_title": "Cytostatika 2017",
+    "verdict": "ok(no-number; own L=1)"
+   },
+   {
+    "notice": 19645087,
+    "key": "RES-2",
+    "printed": [],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Cytostatikum s obsahem účinné látky erlotinib",
+    "block_title": "Cytostatika 2017",
+    "verdict": "ok(no-number; own L=2)"
+   },
+   {
+    "notice": 19645087,
+    "key": "RES-3",
+    "printed": [],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Cytostatikum s obsahem účinné látky karboplatina",
+    "block_title": "Cytostatika 2017",
+    "verdict": "ok(no-number; own L=3)"
+   },
+   {
+    "notice": 19645087,
+    "key": "RES-4",
+    "printed": [],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Cytostatikum s obsahem účinné látky pazopanib",
+    "block_title": "Cytostatika 2017",
+    "verdict": "ok(no-number; own L=4)"
+   },
+   {
+    "notice": 19645087,
+    "key": "RES-5",
+    "printed": [],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Cytostatikum s obsahem účinné látky pemetrexed",
+    "block_title": "Cytostatika 2017",
+    "verdict": "ok(no-number; own L=5)"
+   },
+   {
+    "notice": 19645087,
+    "key": "RES-6",
+    "printed": [],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Cytostatikum s obsahem účinné látky vinorelbin",
+    "block_title": "Cytostatika 2017",
+    "verdict": "ok(no-number; own L=6)"
+   }
+  ],
+  "results_total": 7,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 30,
+   "ok": 30,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 6186953,
+  "can_notice_id": 19930991,
+  "versions": [
+   19768540,
+   19813176,
+   19810334,
+   19930991
+  ],
+  "lot_publishing_notices": [
+   19768540,
+   19930991
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19768540": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "19930991": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "19768540": {
+    "LOT-1": "Dobava potrošnega materiala za tiskanje za naprave blagovnih znamk Lexmark",
+    "LOT-2": "Dobava potrošnega materiala za tiskanje za naprave ostalih blagovnih znamk"
+   },
+   "19930991": {
+    "LOT-1": "Dobava potrošnega materiala za tiskanje za naprave blagovne znamke Lexmark",
+    "LOT-2": "Dobava potrošnega materiala za tiskanje za naprave ostalih blagovnih znamk"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Dobava potrošnega materiala za tiskanje za naprave blagovne znamke Lexmark",
+    "title_from": [
+     19930991
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Dobava potrošnega materiala za tiskanje za naprave ostalih blagovnih znamk",
+    "title_from": [
+     19768540,
+     19930991
+    ],
+    "number": "2"
+   }
+  },
+  "results": [
+   {
+    "notice": 19930991,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Dobava potrošnega materiala za tiskanje za naprave blagovne ",
+    "block_title": "Dobava potrošnega materiala za tiskanje za naprave blagovne ",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19930991,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Dobava potrošnega materiala za tiskanje za naprave ostalih b",
+    "block_title": "Dobava potrošnega materiala za tiskanje za naprave ostalih b",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 6250059,
+  "can_notice_id": 20232182,
+  "versions": [
+   19913955,
+   20232182
+  ],
+  "lot_publishing_notices": [
+   19913955,
+   20232182
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19913955": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "20232182": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "19913955": {
+    "LOT-1": "Secteur Val de Loire",
+    "LOT-2": "Secteur Perche — Vendômois",
+    "LOT-3": "Secteur Sologne – Val de Cher"
+   },
+   "20232182": {
+    "LOT-1": "Secteur Val de Loire",
+    "LOT-2": "Secteur Perche — Vendômois",
+    "LOT-3": "Secteur Sologne – Val de Cher"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Secteur Val de Loire",
+    "title_from": [
+     19913955,
+     20232182
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Secteur Perche — Vendômois",
+    "title_from": [
+     19913955,
+     20232182
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "Secteur Sologne – Val de Cher",
+    "title_from": [
+     19913955,
+     20232182
+    ],
+    "number": "3"
+   }
+  },
+  "results": [
+   {
+    "notice": 20232182,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Secteur Val de Loire",
+    "block_title": "Secteur Val de Loire",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20232182,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Secteur Perche — Vendômois",
+    "block_title": "Secteur Perche — Vendômois",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20232182,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Secteur Sologne – Val de Cher",
+    "block_title": "Secteur Sologne – Val de Cher",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 21,
+   "ok": 21,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 6432702,
+  "can_notice_id": 20527561,
+  "versions": [
+   20281738,
+   20527561
+  ],
+  "lot_publishing_notices": [
+   20281738,
+   20527561
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20281738": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ]
+   },
+   "20527561": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ]
+   }
+  },
+  "titles": {
+   "20281738": {
+    "LOT-1": "Pakiet 1",
+    "LOT-2": "Pakiet 2",
+    "LOT-3": "Pakiet 3",
+    "LOT-4": "Pakiet 4",
+    "LOT-5": "Pakiet 5"
+   },
+   "20527561": {
+    "LOT-1": "Pakiet 1",
+    "LOT-2": "Pakiet 2",
+    "LOT-3": "Pakiet 3",
+    "LOT-4": "Pakiet 4",
+    "LOT-5": "Pakiet 5"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Pakiet 1",
+    "title_from": [
+     20281738,
+     20527561
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Pakiet 2",
+    "title_from": [
+     20281738,
+     20527561
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "Pakiet 3",
+    "title_from": [
+     20281738,
+     20527561
+    ],
+    "number": "3"
+   },
+   "LOT-4": {
+    "title": "Pakiet 4",
+    "title_from": [
+     20281738,
+     20527561
+    ],
+    "number": "4"
+   },
+   "LOT-5": {
+    "title": "Pakiet 5",
+    "title_from": [
+     20281738,
+     20527561
+    ],
+    "number": "5"
+   }
+  },
+  "results": [
+   {
+    "notice": 20527561,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Pakiet 1",
+    "block_title": "Pakiet 1",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20527561,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Pakiet 2",
+    "block_title": "Pakiet 2",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20527561,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Pakiet 3",
+    "block_title": "Pakiet 3",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20527561,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Pakiet 4",
+    "block_title": "Pakiet 4",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20527561,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Pakiet 5",
+    "block_title": "Pakiet 5",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 5,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 25,
+   "ok": 25,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 6429112,
+  "can_notice_id": 20805235,
+  "versions": [
+   20275724,
+   20282010,
+   20805235
+  ],
+  "lot_publishing_notices": [
+   20275724,
+   20805235
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20275724": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "20805235": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "20275724": {
+    "LOT-1": "Location et installation de tentes et structures 5 x 5 m — 10 x 5 m — 15 x 5 m",
+    "LOT-2": "Location et installation de tentes et structures de 7 x 4 m",
+    "LOT-3": "Location et installation de tentes et structures de 8 x 5 m"
+   },
+   "20805235": {
+    "LOT-1": "Location et installation de tentes et structures 5x5m-10x5m-15x5m",
+    "LOT-2": "Location et installation de tentes et structures de 7x4m",
+    "LOT-3": "Location et installation de tentes et structures de 8x5m"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Location et installation de tentes et structures 5x5m-10x5m-15x5m",
+    "title_from": [
+     20275724,
+     20805235
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Location et installation de tentes et structures de 7x4m",
+    "title_from": [
+     20275724,
+     20805235
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "Location et installation de tentes et structures de 8x5m",
+    "title_from": [
+     20275724,
+     20805235
+    ],
+    "number": "3"
+   }
+  },
+  "results": [
+   {
+    "notice": 20805235,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Location et installation de tentes et structures 5x5m-10x5m-",
+    "block_title": "Location et installation de tentes et structures 5x5m-10x5m-",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20805235,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Location et installation de tentes et structures de 7x4m",
+    "block_title": "Location et installation de tentes et structures de 7x4m",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20805235,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Location et installation de tentes et structures de 8x5m",
+    "block_title": "Location et installation de tentes et structures de 8x5m",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 15,
+   "ok": 15,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 6802604,
+  "can_notice_id": 21080700,
+  "versions": [
+   21080700
+  ],
+  "lot_publishing_notices": [
+   21080700
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "21080700": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "21080700": {
+    "LOT-1": "Achat de masques pour le personnel — masques jetables",
+    "LOT-2": "Achat de masques en tissu pour les habitants de la métropole"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Achat de masques pour le personnel — masques jetables",
+    "title_from": [
+     21080700
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Achat de masques en tissu pour les habitants de la métropole",
+    "title_from": [
+     21080700
+    ],
+    "number": "2"
+   }
+  },
+  "results": [
+   {
+    "notice": 21080700,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Achat de masques pour le personnel — masques jetables",
+    "block_title": "Achat de masques pour le personnel — masques jetables",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21080700,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Achat de masques en tissu pour les habitants de la métropole",
+    "block_title": "Achat de masques en tissu pour les habitants de la métropole",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "single_lot_notice"
+ },
+ {
+  "tender_id": 6773668,
+  "can_notice_id": 21338576,
+  "versions": [
+   20971867,
+   21338576
+  ],
+  "lot_publishing_notices": [
+   20971867,
+   21338576
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20971867": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ]
+   },
+   "21338576": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ]
+   }
+  },
+  "titles": {
+   "20971867": {
+    "LOT-1": "ul. Spychalskiego 23 / Wierzbięcice 32",
+    "LOT-2": "ul. Graniczna 3 / Strusia 7",
+    "LOT-3": "ul. Kolejowa 43",
+    "LOT-4": "ul. Składowa 11 i 12",
+    "LOT-5": "ul. Towarowa 43",
+    "LOT-6": "ul. Gnieźnieńska 1, 12, 13",
+    "LOT-7": "ul. Rynek Łazarski 5"
+   },
+   "21338576": {
+    "LOT-1": "ul. Spychalskiego 23 / Wierzbięcice 32",
+    "LOT-2": "ul. Graniczna 3 / Strusia 7",
+    "LOT-3": "ul. Kolejowa 43",
+    "LOT-4": "ul. Składowa 11 i 12",
+    "LOT-5": "ul. Towarowa 43",
+    "LOT-6": "ul. Gnieźnieńska 1, 12, 13",
+    "LOT-7": "ul. Rynek Łazarski 5"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "ul. Spychalskiego 23 / Wierzbięcice 32",
+    "title_from": [
+     20971867,
+     21338576
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "ul. Graniczna 3 / Strusia 7",
+    "title_from": [
+     20971867,
+     21338576
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "ul. Kolejowa 43",
+    "title_from": [
+     20971867,
+     21338576
+    ],
+    "number": "3"
+   },
+   "LOT-4": {
+    "title": "ul. Składowa 11 i 12",
+    "title_from": [
+     20971867,
+     21338576
+    ],
+    "number": "4"
+   },
+   "LOT-5": {
+    "title": "ul. Towarowa 43",
+    "title_from": [
+     20971867,
+     21338576
+    ],
+    "number": "5"
+   },
+   "LOT-6": {
+    "title": "ul. Gnieźnieńska 1, 12, 13",
+    "title_from": [
+     20971867,
+     21338576
+    ],
+    "number": "6"
+   },
+   "LOT-7": {
+    "title": "ul. Rynek Łazarski 5",
+    "title_from": [
+     20971867,
+     21338576
+    ],
+    "number": "7"
+   }
+  },
+  "results": [
+   {
+    "notice": 21338576,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "ul. Spychalskiego 23 / Wierzbięcice 32",
+    "block_title": "ul. Rynek Łazarski 5",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21338576,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "ul. Graniczna 3 / Strusia 7",
+    "block_title": "ul. Graniczna 3 / Strusia 7",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21338576,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "ul. Kolejowa 43",
+    "block_title": "ul. Kolejowa 43",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21338576,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "ul. Składowa 11 i 12",
+    "block_title": "ul. Składowa 11 i 12",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21338576,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "ul. Towarowa 43",
+    "block_title": "ul. Towarowa 43",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21338576,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "ul. Gnieźnieńska 1, 12, 13",
+    "block_title": "ul. Gnieźnieńska 1, 12, 13",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21338576,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "ul. Rynek Łazarski 5",
+    "block_title": "ul. Rynek Łazarski 5",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 7,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 119,
+   "ok": 119,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 6934075,
+  "can_notice_id": 21728468,
+  "versions": [
+   21360366,
+   21447297,
+   21411161,
+   21728468
+  ],
+  "lot_publishing_notices": [
+   21360366,
+   21728468
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21360366": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "21728468": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "21360366": {
+    "LOT-1": "Zadanie nr 1",
+    "LOT-2": "Zadanie nr 2"
+   },
+   "21728468": {
+    "LOT-1": "Zadanie nr 1",
+    "LOT-2": "Zadanie nr 2"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Zadanie nr 1",
+    "title_from": [
+     21360366,
+     21728468
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Zadanie nr 2",
+    "title_from": [
+     21360366,
+     21728468
+    ],
+    "number": "2"
+   }
+  },
+  "results": [
+   {
+    "notice": 21728468,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Zadanie nr 1",
+    "block_title": "Zadanie nr 1",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21728468,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Zadanie nr 2",
+    "block_title": "Zadanie nr 2",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 16,
+   "ok": 16,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 7138312,
+  "can_notice_id": 21976715,
+  "versions": [
+   21846113,
+   21976715
+  ],
+  "lot_publishing_notices": [
+   21846113,
+   21976715
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21846113": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "21976715": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "21846113": {
+    "LOT-1": "Mietvertrag zur Lieferung und Installation von 6 Druck- und Multifunktionssystemen sowie Software und Full-Service",
+    "LOT-2": "Mietvertrag zur Lieferung und Installation von 34 Druck- und Multifunktionssystemen inklusive Software und Full-Service"
+   },
+   "21976715": {
+    "LOT-1": "Mietvertrag zur Lieferung und Installation von 6 Druck- und Multifunktionssystemen sowie Software und Full-Service",
+    "LOT-2": "Mietvertrag zur Lieferung und Installation von 34 Druck- und Multifunktionssystemen inklusive Software und Full-Service"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Mietvertrag zur Lieferung und Installation von 6 Druck- und Multifunktionssystemen sowie Software und Full-Service",
+    "title_from": [
+     21846113,
+     21976715
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Mietvertrag zur Lieferung und Installation von 34 Druck- und Multifunktionssystemen inklusive Software und Full-Service",
+    "title_from": [
+     21846113,
+     21976715
+    ],
+    "number": "2"
+   }
+  },
+  "results": [
+   {
+    "notice": 21976715,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Mietvertrag zur Lieferung und Installation von 6 Druck- und ",
+    "block_title": "Mietvertrag zur Lieferung und Installation von 6 Druck- und ",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21976715,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Mietvertrag zur Lieferung und Installation von 34 Druck- und",
+    "block_title": "Mietvertrag zur Lieferung und Installation von 34 Druck- und",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 12,
+   "ok": 12,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 7111026,
+  "can_notice_id": 22274063,
+  "versions": [
+   21769709,
+   22274063
+  ],
+  "lot_publishing_notices": [
+   21769709,
+   22274063
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21769709": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   },
+   "22274063": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   }
+  },
+  "titles": {
+   "21769709": {
+    "LOT-1": "Strategy, Editorial, Media, Press, and Publications",
+    "LOT-2": "Digital Communications",
+    "LOT-3": "Events",
+    "LOT-4": "Web-services"
+   },
+   "22274063": {
+    "LOT-1": "Strategy, Editorial, Media, Press, and Publications",
+    "LOT-2": "Digital Communications",
+    "LOT-3": "Events",
+    "LOT-4": "Web-services"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Strategy, Editorial, Media, Press, and Publications",
+    "title_from": [
+     21769709,
+     22274063
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Digital Communications",
+    "title_from": [
+     21769709,
+     22274063
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "Events",
+    "title_from": [
+     21769709,
+     22274063
+    ],
+    "number": "3"
+   },
+   "LOT-4": {
+    "title": "Web-services",
+    "title_from": [
+     21769709,
+     22274063
+    ],
+    "number": "4"
+   }
+  },
+  "results": [
+   {
+    "notice": 22274063,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Strategy, Editorial, Media, Press, and Publications",
+    "block_title": "Strategy, Editorial, Media, Press, and Publications",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-10",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Web-services",
+    "block_title": "Web Services",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-11",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Web-services",
+    "block_title": "Web- Services",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-2",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Strategy, Editorial, Media, Press, and Publications",
+    "block_title": "Strategy, Editorial, Media, Press, and Publications",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-3",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Strategy, Editorial, Media, Press, and Publications",
+    "block_title": "Strategy, Editorial, Media, Press, and Publications",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-4",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Digital Communications",
+    "block_title": "Digital Communications",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-5",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Digital Communications",
+    "block_title": "Digital Communications",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-6",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Events",
+    "block_title": "Events",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-7",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Events",
+    "block_title": "Events",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-8",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Events",
+    "block_title": "Events",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22274063,
+    "key": "RES-9",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Web-services",
+    "block_title": "Web Services",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 11,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 207,
+   "ok": 207,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 8506083,
+  "can_notice_id": 22662552,
+  "versions": [
+   22662552
+  ],
+  "lot_publishing_notices": [
+   22662552
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "22662552": {
+    "LOT-1": [
+     "2021-21162-1"
+    ],
+    "LOT-2": [
+     "2021-21162-2"
+    ],
+    "LOT-3": [
+     "2021-21162-3"
+    ]
+   }
+  },
+  "titles": {
+   "22662552": {
+    "LOT-1": "Delkontrakt 1 – Byggeleder til baneprojekter (Broer, dæmning, jord & afvan-ding), 37 timer pr. uge",
+    "LOT-2": "Delkontrakt 2 – Byggeleder til sporprojekter (Spor, dæmning, jord & afvanding), 37 timer pr. uge.",
+    "LOT-3": "Delkontrakt 3 – Byggeleder assistent (Spor, broer, dæmning, jord & afvan-ding, kørestrøm & stærkstrøm) til baneprojekter, 37 timer pr. uge."
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Delkontrakt 1 – Byggeleder til baneprojekter (Broer, dæmning, jord & afvan-ding), 37 timer pr. uge",
+    "title_from": [
+     22662552
+    ],
+    "number": "2021211621"
+   },
+   "LOT-2": {
+    "title": "Delkontrakt 2 – Byggeleder til sporprojekter (Spor, dæmning, jord & afvanding), 37 timer pr. uge.",
+    "title_from": [
+     22662552
+    ],
+    "number": "2021211622"
+   },
+   "LOT-3": {
+    "title": "Delkontrakt 3 – Byggeleder assistent (Spor, broer, dæmning, jord & afvan-ding, kørestrøm & stærkstrøm) til baneprojekter, 37 timer pr. uge.",
+    "title_from": [
+     22662552
+    ],
+    "number": "2021211623"
+   }
+  },
+  "results": [
+   {
+    "notice": 22662552,
+    "key": "RES-1",
+    "printed": [
+     "2021-21162-1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "2021211621",
+    "tender_lot_title": "Delkontrakt 1 – Byggeleder til baneprojekter (Broer, dæmning",
+    "block_title": "Udbud af delkontrakt 1 – Byggeleder til baneprojekter (Broer",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22662552,
+    "key": "RES-2",
+    "printed": [
+     "2021-21162-2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2021211622",
+    "tender_lot_title": "Delkontrakt 2 – Byggeleder til sporprojekter (Spor, dæmning,",
+    "block_title": "Udbud af Delkontrakt 2 – Byggeleder til sporprojekter (Spor,",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22662552,
+    "key": "RES-3",
+    "printed": [
+     "2021-21162-3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "2021211623",
+    "tender_lot_title": "Delkontrakt 3 – Byggeleder assistent (Spor, broer, dæmning, ",
+    "block_title": "Udbud af Delkontrakt 3 – Byggeleder assistent (Spor, broer, ",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 40,
+   "ok": 40,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "single_lot_notice"
+ },
+ {
+  "tender_id": 7590694,
+  "can_notice_id": 23000792,
+  "versions": [
+   22819782,
+   23000792
+  ],
+  "lot_publishing_notices": [
+   22819782,
+   23000792
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "22819782": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4a"
+    ],
+    "LOT-5": [
+     "4b"
+    ],
+    "LOT-6": [
+     "5"
+    ],
+    "LOT-7": [
+     "6"
+    ]
+   },
+   "23000792": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4a"
+    ],
+    "LOT-5": [
+     "4b"
+    ],
+    "LOT-6": [
+     "5"
+    ],
+    "LOT-7": [
+     "6"
+    ]
+   }
+  },
+  "titles": {
+   "22819782": {
+    "LOT-1": "plomberie - faïence",
+    "LOT-2": "electricité",
+    "LOT-3": "menuiseries",
+    "LOT-4": "revêtement de sols - peinture - plâtrerie",
+    "LOT-5": "revêtement de sols - peinture - plâtrerie",
+    "LOT-6": "maçonnerie - plâtrerie - travaux extérieurs",
+    "LOT-7": "nettoyage - évacuation - décontamination"
+   },
+   "23000792": {
+    "LOT-1": "plomberie - faïence",
+    "LOT-2": "electricité",
+    "LOT-3": "menuiseries",
+    "LOT-4": "revêtement de sols - peinture - plâtrerie",
+    "LOT-5": "revêtement de sols - peinture - plâtrerie",
+    "LOT-6": "maçonnerie - plâtrerie - travaux extérieurs",
+    "LOT-7": "nettoyage - évacuation - décontamination"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "plomberie - faïence",
+    "title_from": [
+     22819782,
+     23000792
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "electricité",
+    "title_from": [
+     22819782,
+     23000792
+    ],
+    "number": "2"
+   },
+   "LOT-3": {
+    "title": "menuiseries",
+    "title_from": [
+     22819782,
+     23000792
+    ],
+    "number": "3"
+   },
+   "LOT-4": {
+    "title": "revêtement de sols - peinture - plâtrerie",
+    "title_from": [
+     22819782,
+     23000792
+    ],
+    "number": "4a"
+   },
+   "LOT-5": {
+    "title": "revêtement de sols - peinture - plâtrerie",
+    "title_from": [
+     22819782,
+     23000792
+    ],
+    "number": "4b"
+   },
+   "LOT-6": {
+    "title": "maçonnerie - plâtrerie - travaux extérieurs",
+    "title_from": [
+     22819782,
+     23000792
+    ],
+    "number": "5"
+   },
+   "LOT-7": {
+    "title": "nettoyage - évacuation - décontamination",
+    "title_from": [
+     22819782,
+     23000792
+    ],
+    "number": "6"
+   }
+  },
+  "results": [
+   {
+    "notice": 23000792,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "plomberie - faïence",
+    "block_title": "plomberie Faïence",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23000792,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "electricité",
+    "block_title": "electricité - interphonie - tV",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23000792,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "menuiseries",
+    "block_title": "menuiseries intérieures - extérieures - serrurerie - vitreri",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23000792,
+    "key": "RES-4",
+    "printed": [
+     "4a"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4a",
+    "tender_lot_title": "revêtement de sols - peinture - plâtrerie",
+    "block_title": "revêtement de sols - peinture - plâtrerie",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23000792,
+    "key": "RES-5",
+    "printed": [
+     "4b"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "4b",
+    "tender_lot_title": "revêtement de sols - peinture - plâtrerie",
+    "block_title": "revêtement de sols - peinture - plâtrerie",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23000792,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-7",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "nettoyage - évacuation - décontamination",
+    "block_title": "nettoyage - évacuation - décontamination",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23000792,
+    "key": "RES-7",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-6",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "maçonnerie - plâtrerie - travaux extérieurs",
+    "block_title": "maçonnerie - plâtrerie - travaux extérieurs",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 7,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 48,
+   "ok": 48,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ },
+ {
+  "tender_id": 7722628,
+  "can_notice_id": 23348115,
+  "versions": [
+   23163103,
+   23348115
+  ],
+  "lot_publishing_notices": [
+   23163103,
+   23348115
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "23163103": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "23348115": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "23163103": {
+    "LOT-1": "Unterhaltsreinigung FA Neumarkt i.d. Opf.",
+    "LOT-2": "Glasreinigung FA Neumarkt i.d. OPf."
+   },
+   "23348115": {
+    "LOT-1": "Unterhaltsreinigung FA Neumarkt i.d. Opf.",
+    "LOT-2": "Glasreinigung FA Neumarkt i.d. OPf."
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Unterhaltsreinigung FA Neumarkt i.d. Opf.",
+    "title_from": [
+     23163103,
+     23348115
+    ],
+    "number": "1"
+   },
+   "LOT-2": {
+    "title": "Glasreinigung FA Neumarkt i.d. OPf.",
+    "title_from": [
+     23163103,
+     23348115
+    ],
+    "number": "2"
+   }
+  },
+  "results": [
+   {
+    "notice": 23348115,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Unterhaltsreinigung FA Neumarkt i.d. Opf.",
+    "block_title": "Unterhaltsreinigung FA Neumarkt i.d. Opf.",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23348115,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Glasreinigung FA Neumarkt i.d. OPf.",
+    "block_title": "Glasreinigung FA Neumarkt i.d. OPf.",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_mentions_on_misattributed_results": 0,
+  "lot_facts": {
+   "total": 18,
+   "ok": 18,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls": "consistent"
+ }
+]

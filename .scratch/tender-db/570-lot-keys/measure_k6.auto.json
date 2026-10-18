@@ -1,0 +1,5370 @@
+[
+ {
+  "tender_id": 5529451,
+  "can_notice_id": 18722526,
+  "versions": [
+   18519979,
+   18722526
+  ],
+  "lot_publishing_notices": [
+   18519979
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "18519979": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "18519979": {
+    "LOT-1": "Santé au travail",
+    "LOT-2": "Hygiène et sécurité des biens et des personnes"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Santé au travail",
+    "title_from": [
+     18519979
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "18519979": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Hygiène et sécurité des biens et des personnes",
+    "title_from": [
+     18519979
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "18519979": [
+      "2"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 18722526,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lot 1: santé au travail: marché à bons de commande multi attributaires",
+    "verdict": "null"
+   },
+   {
+    "notice": 18722526,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Lot 2: hygiènes et sécurité des biens et des personnes: marché à bons ",
+    "verdict": "null"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 2,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 8,
+   "ok": 8,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "single_lot_notice"
+ },
+ {
+  "tender_id": 5740924,
+  "can_notice_id": 18919726,
+  "versions": [
+   18919726
+  ],
+  "lot_publishing_notices": [
+   18919726
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "18919726": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "18919726": {
+    "LOT-1": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i. V. m. § 45 Abs. 1 Satz 1 Drittes Buch Sozialgesetzbuch (SGB III)",
+    "LOT-2": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i. V. m. § 45 Abs. 1 Satz 1 Drittes Buch Sozialgesetzbuch (SGB III)",
+    "LOT-3": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i. V. m. § 45 Abs. 1 Satz 1 Drittes Buch Sozialgesetzbuch (SGB III)"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i. V. m. § 45 Abs. 1 Satz 1 Drittes Buch Sozialgesetzbuch (SGB III)",
+    "title_from": [
+     18919726
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "18919726": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i. V. m. § 45 Abs. 1 Satz 1 Drittes Buch Sozialgesetzbuch (SGB III)",
+    "title_from": [
+     18919726
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "18919726": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i. V. m. § 45 Abs. 1 Satz 1 Drittes Buch Sozialgesetzbuch (SGB III)",
+    "title_from": [
+     18919726
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "18919726": [
+      "3"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 18919726,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i.",
+    "block_title": "REZ NRW 45AC JC ME-aktiv",
+    "verdict": "ok"
+   },
+   {
+    "notice": 18919726,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i.",
+    "block_title": "REZ NRW 45AC JC ME-aktiv",
+    "verdict": "ok"
+   },
+   {
+    "notice": 18919726,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Aktivcenter nach § 16 Abs. 1 Zweites Buch Sozialgesetzbuch (SGB II) i.",
+    "block_title": "REZ NRW 45AC JC ME-aktiv",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 15,
+   "ok": 15,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "single_lot_notice"
+ },
+ {
+  "tender_id": 5787834,
+  "can_notice_id": 19167246,
+  "versions": [
+   19020649,
+   19154619,
+   19167246
+  ],
+  "lot_publishing_notices": [
+   19020649,
+   19154619,
+   19167246
+  ],
+  "n_notices_with_lot_sections": 3,
+  "maps": {
+   "19020649": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ],
+    "LOT-18": [
+     "18"
+    ],
+    "LOT-19": [
+     "19"
+    ]
+   },
+   "19154619": {
+    "LOT-1": [
+     "18"
+    ]
+   },
+   "19167246": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ],
+    "LOT-18": [
+     "19"
+    ]
+   }
+  },
+  "titles": {
+   "19020649": {
+    "LOT-1": "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фрактури",
+    "LOT-2": "Комплекти от Заключващи плаки със заключващи винтове",
+    "LOT-3": "Комплекти от Конвенционална остеосинтеза и консумативи за артроскопски интервенции",
+    "LOT-4": "Тотална безциментна ендопротеза за тазобедрена става",
+    "LOT-5": "Тотална циментна ендопротеза за тазобедрена става",
+    "LOT-6": "Система за еднополюсно тазобедрено ендопротезиране, съставена от биполярна бедрена глава и циментно бедрено стебло",
+    "LOT-7": "Тотална хибридна система за тазобедрено ендопротезиране, съставена от циментна ацетабуларна компонента и безциментно бедрено стебло",
+    "LOT-8": "Тотална хибридна система за тазобедрено ендопротезиране, съставена от безциментна ацетабуларна компонента и циментно бедрено стебло",
+    "LOT-9": "Тотална първична безциментна ендопротеза за тазобедрена става с керамични компоненти",
+    "LOT-10": "Тотална първична безциментна ендопротеза за тазобедрена става с 36 мм керамична глава върху полиетиленов инлей",
+    "LOT-11": "Тотална първична безциментна ендопротеза за тазобедрена става с 36 мм метална глава върху полиетиленов инлей",
+    "LOT-12": "Тотална първична безциментна ендопротеза за тазобедрена става с керамична глава върху титаниева капсула с керамично покритие",
+    "LOT-13": "Тотална първична безциментна ендопротеза за тазобедрена става с 32 мм керамична глава върху полиетиленов инлей",
+    "LOT-14": "Компоненти за тазобедрено ендопротезиране",
+    "LOT-15": "Компоненти за първично и ревизионно тотално тазобедрено ендопротезиране, включващи циментно и безциментно закрепване",
+    "LOT-16": "Ендопротези",
+    "LOT-17": "Системи за тотално, първично ендопротезиране на колянна става",
+    "LOT-18": "Система за уникондилно ендопротезиране на колянна става",
+    "LOT-19": "Компоненти за първично тотално колянно протезиране включващи"
+   },
+   "19154619": {
+    "LOT-1": "Система за уникондилно ендопротезиране на колянна става"
+   },
+   "19167246": {
+    "LOT-1": "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фрактури",
+    "LOT-2": "Комплекти от Заключващи плаки със заключващи винтове",
+    "LOT-3": "Комплекти от Конвенционална остеосинтеза и консумативи за артроскопски интервенции",
+    "LOT-4": "Тотална безциментна ендопротеза за тазобедрена става",
+    "LOT-5": "\"Тотална циментна ендопротеза за тазобедрена става",
+    "LOT-6": "Система за еднополюсно тазобедрено ендопротезиране, съставена от биполярна бедрена глава и циментно бедрено стебло",
+    "LOT-7": "Тотална хибридна система за тазобедрено ендопротезиране, съставена от циментна ацетабуларна компонента и безциментно бедрено стебло",
+    "LOT-8": "Тотална хибридна система за тазобедрено ендопротезиране, съставена от безциментна ацетабуларна компонента и циментно бедрено стебло",
+    "LOT-9": "Тотална първична безциментна ендопротеза за тазобедрена става с керамични компоненти",
+    "LOT-10": "Тотална първична безциментна ендопротеза за тазобедрена става с 36 мм керамична глава върху полиетиленов инлей",
+    "LOT-11": "Тотална първична безциментна ендопротеза за тазобедрена става с 36 мм метална глава върху полиетиленов инлей",
+    "LOT-12": "Тотална първична безциментна ендопротеза за тазобедрена става с керамична глава върху титаниева капсула с керамично покритие",
+    "LOT-13": "Тотална първична безциментна ендопротеза за тазобедрена става с 32 мм керамична глава върху полиетиленов инлей",
+    "LOT-14": "Компоненти за тазобедрено ендопротезиране",
+    "LOT-15": "Компоненти за първично и ревизионно тотално тазобедрено ендопротезиране, включващи циментно и безциментно закрепване",
+    "LOT-16": "Ендопротези",
+    "LOT-17": "Системи за тотално, първично ендопротезиране на колянна става",
+    "LOT-18": "Компоненти за първично тотално колянно протезиране включващи:"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-1",
+    "19020649": [
+     "1"
+    ],
+    "19154619": [
+     "18"
+    ],
+    "titles": {
+     "19020649": [
+      "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фрактури"
+     ],
+     "19154619": [
+      "Система за уникондилно ендопротезиране на колянна става"
+     ]
+    }
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "18",
+    "19020649": "LOT-18",
+    "19154619": "LOT-1"
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-18",
+    "19020649": [
+     "18"
+    ],
+    "19167246": [
+     "19"
+    ],
+    "titles": {
+     "19020649": [
+      "Система за уникондилно ендопротезиране на колянна става"
+     ],
+     "19167246": [
+      "Компоненти за първично тотално колянно протезиране включващи:"
+     ]
+    }
+   },
+   {
+    "type": "same-number-different-key",
+    "number": "19",
+    "19020649": "LOT-19",
+    "19167246": "LOT-18"
+   },
+   {
+    "type": "same-key-different-number",
+    "key": "LOT-1",
+    "19154619": [
+     "18"
+    ],
+    "19167246": [
+     "1"
+    ],
+    "titles": {
+     "19154619": [
+      "Система за уникондилно ендопротезиране на колянна става"
+     ],
+     "19167246": [
+      "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фрактури"
+     ]
+    }
+   }
+  ],
+  "title_differences_same_key": [
+   {
+    "key": "LOT-1",
+    "19020649": [
+     [
+      "1"
+     ],
+     [
+      "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фрактури"
+     ]
+    ],
+    "19154619": [
+     [
+      "18"
+     ],
+     [
+      "Система за уникондилно ендопротезиране на колянна става"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-18",
+    "19020649": [
+     [
+      "18"
+     ],
+     [
+      "Система за уникондилно ендопротезиране на колянна става"
+     ]
+    ],
+    "19167246": [
+     [
+      "19"
+     ],
+     [
+      "Компоненти за първично тотално колянно протезиране включващи:"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-1",
+    "19154619": [
+     [
+      "18"
+     ],
+     [
+      "Система за уникондилно ендопротезиране на колянна става"
+     ]
+    ],
+    "19167246": [
+     [
+      "1"
+     ],
+     [
+      "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фрактури"
+     ]
+    ]
+   }
+  ],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фрактури",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "1"
+     ],
+     "19154619": [
+      "18"
+     ],
+     "19167246": [
+      "1"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "Тотална първична безциментна ендопротеза за тазобедрена става с 36 мм керамична глава върху полиетиленов инлей",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "10",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "10"
+     ],
+     "19167246": [
+      "10"
+     ]
+    }
+   },
+   "LOT-11": {
+    "title": "Тотална първична безциментна ендопротеза за тазобедрена става с 36 мм метална глава върху полиетиленов инлей",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "11",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "11"
+     ],
+     "19167246": [
+      "11"
+     ]
+    }
+   },
+   "LOT-12": {
+    "title": "Тотална първична безциментна ендопротеза за тазобедрена става с керамична глава върху титаниева капсула с керамично покритие",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "12",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "12"
+     ],
+     "19167246": [
+      "12"
+     ]
+    }
+   },
+   "LOT-13": {
+    "title": "Тотална първична безциментна ендопротеза за тазобедрена става с 32 мм керамична глава върху полиетиленов инлей",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "13",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "13"
+     ],
+     "19167246": [
+      "13"
+     ]
+    }
+   },
+   "LOT-14": {
+    "title": "Компоненти за тазобедрено ендопротезиране",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "14",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "14"
+     ],
+     "19167246": [
+      "14"
+     ]
+    }
+   },
+   "LOT-15": {
+    "title": "Компоненти за първично и ревизионно тотално тазобедрено ендопротезиране, включващи циментно и безциментно закрепване",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "15",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "15"
+     ],
+     "19167246": [
+      "15"
+     ]
+    }
+   },
+   "LOT-16": {
+    "title": "Ендопротези",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "16",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "16"
+     ],
+     "19167246": [
+      "16"
+     ]
+    }
+   },
+   "LOT-17": {
+    "title": "Системи за тотално, първично ендопротезиране на колянна става",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "17",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "17"
+     ],
+     "19167246": [
+      "17"
+     ]
+    }
+   },
+   "LOT-18": {
+    "title": "Компоненти за първично тотално колянно протезиране включващи:",
+    "title_from": [
+     19167246
+    ],
+    "number": "19",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "18"
+     ],
+     "19167246": [
+      "19"
+     ]
+    }
+   },
+   "LOT-19": {
+    "title": "Компоненти за първично тотално колянно протезиране включващи",
+    "title_from": [
+     19020649
+    ],
+    "number": "19",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "19"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Комплекти от Заключващи плаки със заключващи винтове",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "2"
+     ],
+     "19167246": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Комплекти от Конвенционална остеосинтеза и консумативи за артроскопски интервенции",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "3"
+     ],
+     "19167246": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Тотална безциментна ендопротеза за тазобедрена става",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "4"
+     ],
+     "19167246": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "\"Тотална циментна ендопротеза за тазобедрена става",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "5"
+     ],
+     "19167246": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Система за еднополюсно тазобедрено ендопротезиране, съставена от биполярна бедрена глава и циментно бедрено стебло",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "6"
+     ],
+     "19167246": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Тотална хибридна система за тазобедрено ендопротезиране, съставена от циментна ацетабуларна компонента и безциментно бедрено стебло",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "7"
+     ],
+     "19167246": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Тотална хибридна система за тазобедрено ендопротезиране, съставена от безциментна ацетабуларна компонента и циментно бедрено стебло",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "8"
+     ],
+     "19167246": [
+      "8"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Тотална първична безциментна ендопротеза за тазобедрена става с керамични компоненти",
+    "title_from": [
+     19020649,
+     19167246
+    ],
+    "number": "9",
+    "key_numbers_by_notice": {
+     "19020649": [
+      "9"
+     ],
+     "19167246": [
+      "9"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19154619,
+    "key": "RES-1",
+    "printed": [
+     "18"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фракту",
+    "block_title": "Система за уникондилно ендопротезиране на колянна става",
+    "verdict": "MISATTRIBUTED"
+   },
+   {
+    "notice": 19167246,
+    "key": "RES-1",
+    "printed": [
+     "16"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-16",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-16"
+    ],
+    "tender_lot_number": "16",
+    "tender_lot_title": "Ендопротези",
+    "block_title": "Доставка на ортопедични изделия за нуждите на „МБАЛ „Св. Иван Рилски“ ",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19167246,
+    "key": "RES-2",
+    "printed": [
+     "15 и 19"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Доставка на ортопедични изделия за нуждите на „МБАЛ „Св. Иван Рилски“ ",
+    "verdict": "null"
+   },
+   {
+    "notice": 19167246,
+    "key": "RES-3",
+    "printed": [
+     "1, 2 и 3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Доставка на ортопедични изделия за нуждите на „МБАЛ „Св. Иван Рилски“ ",
+    "verdict": "null"
+   },
+   {
+    "notice": 19167246,
+    "key": "RES-4",
+    "printed": [
+     "4, 5, 6, 7, 8, 9, 10, 11, 12, 13 и 17"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Доставка на ортопедични изделия за нуждите на „МБАЛ „Св. Иван Рилски“ ",
+    "verdict": "null"
+   },
+   {
+    "notice": 19167246,
+    "key": "RES-5",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-14",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-14"
+    ],
+    "tender_lot_number": "14",
+    "tender_lot_title": "Компоненти за тазобедрено ендопротезиране",
+    "block_title": "Доставка на ортопедични изделия за нуждите на „МБАЛ „Св. Иван Рилски“ ",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 6,
+  "results_null": 3,
+  "results_misattributed": 1,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 95,
+   "ok": 95,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": [
+    {
+     "KEY-SPLIT": "cpv:main",
+     "lot": "LOT-1",
+     "value": "33140000",
+     "from": [
+      19020649,
+      19154619,
+      19167246
+     ],
+     "from_numbers": [
+      "1",
+      "18"
+     ],
+     "key_numbers": [
+      "1",
+      "18"
+     ]
+    },
+    {
+     "KEY-SPLIT": "nuts:place",
+     "lot": "LOT-1",
+     "value": "BG324",
+     "from": [
+      19020649,
+      19154619,
+      19167246
+     ],
+     "from_numbers": [
+      "1",
+      "18"
+     ],
+     "key_numbers": [
+      "1",
+      "18"
+     ]
+    },
+    {
+     "KEY-SPLIT": "cpv:main",
+     "lot": "LOT-18",
+     "value": "33140000",
+     "from": [
+      19020649,
+      19167246
+     ],
+     "from_numbers": [
+      "18",
+      "19"
+     ],
+     "key_numbers": [
+      "18",
+      "19"
+     ]
+    },
+    {
+     "KEY-SPLIT": "nuts:place",
+     "lot": "LOT-18",
+     "value": "BG324",
+     "from": [
+      19020649,
+      19167246
+     ],
+     "from_numbers": [
+      "18",
+      "19"
+     ],
+     "key_numbers": [
+      "18",
+      "19"
+     ]
+    },
+    {
+     "KEY-SPLIT": "text:description",
+     "lot": "LOT-1",
+     "value": "„Доставка на ортопедични изделия за нуждите на „МБАЛ „Св. Иван Рилски“",
+     "from": [
+      19020649,
+      19154619,
+      19167246
+     ],
+     "from_numbers": [
+      "1",
+      "18"
+     ],
+     "key_numbers": [
+      "1",
+      "18"
+     ]
+    },
+    {
+     "KEY-SPLIT": "text:title",
+     "lot": "LOT-1",
+     "value": "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фракту",
+     "from": [
+      19020649,
+      19167246
+     ],
+     "from_numbers": [
+      "1"
+     ],
+     "key_numbers": [
+      "1",
+      "18"
+     ]
+    },
+    {
+     "KEY-SPLIT": "text:description",
+     "lot": "LOT-18",
+     "value": "„Доставка на ортопедични изделия за нуждите на „МБАЛ „Св. Иван Рилски“",
+     "from": [
+      19020649,
+      19167246
+     ],
+     "from_numbers": [
+      "18",
+      "19"
+     ],
+     "key_numbers": [
+      "18",
+      "19"
+     ]
+    },
+    {
+     "KEY-SPLIT": "text:title",
+     "lot": "LOT-18",
+     "value": "Компоненти за първично тотално колянно протезиране включващи:",
+     "from": [
+      19167246
+     ],
+     "from_numbers": [
+      "19"
+     ],
+     "key_numbers": [
+      "18",
+      "19"
+     ]
+    },
+    {
+     "KEY-SPLIT": "lot_details:title",
+     "lot": "LOT-1",
+     "value": "Комплекти отстеосинтезни средства за интрамедуларна фиксация на фракту",
+     "from": [
+      19020649,
+      19167246
+     ],
+     "from_numbers": [
+      "1"
+     ],
+     "key_numbers": [
+      "1",
+      "18"
+     ]
+    },
+    {
+     "KEY-SPLIT": "lot_details:title",
+     "lot": "LOT-18",
+     "value": "Компоненти за първично тотално колянно протезиране включващи:",
+     "from": [
+      19167246
+     ],
+     "from_numbers": [
+      "19"
+     ],
+     "key_numbers": [
+      "18",
+      "19"
+     ]
+    }
+   ]
+  },
+  "cls_auto": "disagree_harmful"
+ },
+ {
+  "tender_id": 6016695,
+  "can_notice_id": 19455222,
+  "versions": [
+   19455222
+  ],
+  "lot_publishing_notices": [
+   19455222
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "19455222": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ]
+   }
+  },
+  "titles": {
+   "19455222": {
+    "LOT-1": null,
+    "LOT-2": null,
+    "LOT-3": null,
+    "LOT-4": null,
+    "LOT-5": null,
+    "LOT-6": null,
+    "LOT-7": null,
+    "LOT-8": null
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": null,
+    "title_from": [],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "19455222": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": null,
+    "title_from": [],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "19455222": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": null,
+    "title_from": [],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "19455222": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": null,
+    "title_from": [],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "19455222": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": null,
+    "title_from": [],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "19455222": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": null,
+    "title_from": [],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "19455222": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": null,
+    "title_from": [],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "19455222": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": null,
+    "title_from": [],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "19455222": [
+      "8"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19455222,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "",
+    "block_title": "Lot no 1: collecte — stockage — rechargement du papier",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19455222,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "",
+    "block_title": "Lot no 2: collecte -stockage — rechargement du verre",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19455222,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "",
+    "block_title": "Lot no 3: évacuation du carton, de la ferraille et du plastique",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19455222,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "",
+    "block_title": "Lot no 4: collecte et traitement des déchets des ménages spéciaux",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19455222,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "",
+    "block_title": "Lot no 5: évacuation et valorisation du bois",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19455222,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "",
+    "block_title": "Lot no 6: broyage — valorisation des déchets verts",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19455222,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "",
+    "block_title": "Lot no 7: évacuation et traitement du tout venant",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19455222,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "",
+    "block_title": "Lot no 8: évacuation et traitement des gravats",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 8,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 24,
+   "ok": 24,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "single_lot_notice"
+ },
+ {
+  "tender_id": 5937259,
+  "can_notice_id": 19687419,
+  "versions": [
+   19299412,
+   19333356,
+   19687419
+  ],
+  "lot_publishing_notices": [
+   19299412,
+   19687419
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19299412": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "19687419": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "19299412": {
+    "LOT-1": "Neubau Berufsfeuerwache Hohenschönhausen",
+    "LOT-2": "Neubau Rettungswache und Freiwillige Feuerwehr Altglienicke"
+   },
+   "19687419": {
+    "LOT-1": "Neubau Berufsfeuerwache Hohenschönhausen",
+    "LOT-2": "Neubau Rettungswache und Freiwillige Feuerwehr Altglienicke"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Neubau Berufsfeuerwache Hohenschönhausen",
+    "title_from": [
+     19299412,
+     19687419
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "19299412": [
+      "1"
+     ],
+     "19687419": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Neubau Rettungswache und Freiwillige Feuerwehr Altglienicke",
+    "title_from": [
+     19299412,
+     19687419
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "19299412": [
+      "2"
+     ],
+     "19687419": [
+      "2"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19687419,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Neubau Berufsfeuerwache Hohenschönhausen",
+    "block_title": "Neubau Berufsfeuerwache Hohenschönhausen",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19687419,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Neubau Rettungswache und Freiwillige Feuerwehr Altglienicke",
+    "block_title": "Neubau Rettungswache und Freiwillige Feuerwehr Altglienicke",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 47,
+   "ok": 47,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6174432,
+  "can_notice_id": 19993222,
+  "versions": [
+   19757291,
+   19993222
+  ],
+  "lot_publishing_notices": [
+   19757291,
+   19993222
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19757291": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ]
+   },
+   "19993222": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ]
+   }
+  },
+  "titles": {
+   "19757291": {
+    "LOT-1": "Хляб и хлебни изделия",
+    "LOT-2": "Консервирани и преработени плодове и зеленчуци",
+    "LOT-3": "Месо, риба и месни продукти",
+    "LOT-4": "Мляко и млечни продукти",
+    "LOT-5": "Плодове и зелечнуци",
+    "LOT-6": "Други хранителни продукти"
+   },
+   "19993222": {
+    "LOT-1": "Хляб и хлебни изделия",
+    "LOT-2": "Консервирани и преработени плодове и зеленчуци",
+    "LOT-3": "Месо, риба и месни продукти",
+    "LOT-4": "Мляко и млечни продукти",
+    "LOT-5": "Плодове и зелечнуци",
+    "LOT-6": "Други хранителни продукти"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Хляб и хлебни изделия",
+    "title_from": [
+     19757291,
+     19993222
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "19757291": [
+      "1"
+     ],
+     "19993222": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Консервирани и преработени плодове и зеленчуци",
+    "title_from": [
+     19757291,
+     19993222
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "19757291": [
+      "2"
+     ],
+     "19993222": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Месо, риба и месни продукти",
+    "title_from": [
+     19757291,
+     19993222
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "19757291": [
+      "3"
+     ],
+     "19993222": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Мляко и млечни продукти",
+    "title_from": [
+     19757291,
+     19993222
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "19757291": [
+      "4"
+     ],
+     "19993222": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Плодове и зелечнуци",
+    "title_from": [
+     19757291,
+     19993222
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "19757291": [
+      "5"
+     ],
+     "19993222": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Други хранителни продукти",
+    "title_from": [
+     19757291,
+     19993222
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "19757291": [
+      "6"
+     ],
+     "19993222": [
+      "6"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19993222,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Хляб и хлебни изделия",
+    "block_title": ",,Хляб и хлебни изделия“",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19993222,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Консервирани и преработени плодове и зеленчуци",
+    "block_title": "„Консервирани и преработени плодове и зеленчуци“",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19993222,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Месо, риба и месни продукти",
+    "block_title": "„Месо, риба и месни продукти“",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19993222,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Мляко и млечни продукти",
+    "block_title": "„Мляко и млечни продукти“",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19993222,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Плодове и зелечнуци",
+    "block_title": "„Плодове и зеленчуци“",
+    "verdict": "ok"
+   },
+   {
+    "notice": 19993222,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Други хранителни продукти",
+    "block_title": "„Други хранителни продукти“",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 6,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 38,
+   "ok": 38,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6430411,
+  "can_notice_id": 20276083,
+  "versions": [
+   20276083
+  ],
+  "lot_publishing_notices": [
+   20276083
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "20276083": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "3"
+    ],
+    "LOT-3": [
+     "4"
+    ],
+    "LOT-4": [
+     "5"
+    ],
+    "LOT-5": [
+     "6"
+    ],
+    "LOT-6": [
+     "9"
+    ]
+   }
+  },
+  "titles": {
+   "20276083": {
+    "LOT-1": "Общи медицински изделия",
+    "LOT-2": "Медицински изделия за отделение по клинична патология",
+    "LOT-3": "Медицински изделия за отделение по образна диагностика",
+    "LOT-4": "Медицински изделия за клинична лаборатория",
+    "LOT-5": "Медицински изделия за отделение по онкологична хирургия",
+    "LOT-6": "Биоцидни препарати за дезинфекция"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Общи медицински изделия",
+    "title_from": [
+     20276083
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "20276083": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Медицински изделия за отделение по клинична патология",
+    "title_from": [
+     20276083
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "20276083": [
+      "3"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Медицински изделия за отделение по образна диагностика",
+    "title_from": [
+     20276083
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "20276083": [
+      "4"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Медицински изделия за клинична лаборатория",
+    "title_from": [
+     20276083
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "20276083": [
+      "5"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Медицински изделия за отделение по онкологична хирургия",
+    "title_from": [
+     20276083
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "20276083": [
+      "6"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Биоцидни препарати за дезинфекция",
+    "title_from": [
+     20276083
+    ],
+    "number": "9",
+    "key_numbers_by_notice": {
+     "20276083": [
+      "9"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20276083,
+    "key": "RES-1",
+    "printed": [
+     "1,3,9"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": null,
+    "tender_lot_title": null,
+    "block_title": "Доставка на мед.изделия и биоц. преп. за дезинф. по ОП 1, Н.73, 92, 93",
+    "verdict": "null"
+   },
+   {
+    "notice": 20276083,
+    "key": "RES-2",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Медицински изделия за клинична лаборатория",
+    "block_title": "Доставка на медицински изделия по обособена позиция № 5, номенклатури ",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20276083,
+    "key": "RES-3",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Общи медицински изделия",
+    "block_title": "Доставка на медицински изделия по обособена позиция № 1, номенклатури ",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20276083,
+    "key": "RES-4",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Медицински изделия за клинична лаборатория",
+    "block_title": "Доставка на медицински изделия по обособена позиция № 5, номенклатури ",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20276083,
+    "key": "RES-5",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Медицински изделия за отделение по образна диагностика",
+    "block_title": "Доставка на медицински изделия по обособена позиция № 4, номенклатури ",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 5,
+  "results_null": 1,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 30,
+   "ok": 30,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "single_lot_notice"
+ },
+ {
+  "tender_id": 6581378,
+  "can_notice_id": 20577015,
+  "versions": [
+   20577015
+  ],
+  "lot_publishing_notices": [
+   20577015
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "20577015": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   }
+  },
+  "titles": {
+   "20577015": {
+    "LOT-1": "Formation à l'accompagnement des demandeurs d'emplois présentant des conduites addictives",
+    "LOT-2": "Formation à l'accompagnement des demandeurs d'emplois en situation de handicap psychique",
+    "LOT-3": "Formation à la prise en compte des stéréotypes dans l'accompagnement en orientation des demandeurs d'emplois",
+    "LOT-4": "Formation à l'entretien d'explicitation à destination des psychologues du travail dans le cadre de l'accompagnement des demandeurs d'emploi"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Formation à l'accompagnement des demandeurs d'emplois présentant des conduites addictives",
+    "title_from": [
+     20577015
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "20577015": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Formation à l'accompagnement des demandeurs d'emplois en situation de handicap psychique",
+    "title_from": [
+     20577015
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "20577015": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Formation à la prise en compte des stéréotypes dans l'accompagnement en orientation des demandeurs d'emplois",
+    "title_from": [
+     20577015
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "20577015": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Formation à l'entretien d'explicitation à destination des psychologues du travail dans le cadre de l'accompagnement des demandeurs d'emploi",
+    "title_from": [
+     20577015
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "20577015": [
+      "4"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20577015,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Formation à l'accompagnement des demandeurs d'emplois présentant des c",
+    "block_title": "Formation à l'accompagnement des demandeurs d'emplois présentant des c",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20577015,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Formation à l'accompagnement des demandeurs d'emplois en situation de ",
+    "block_title": "Formation à l'accompagnement des demandeurs d'emplois en situation de ",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20577015,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Formation à la prise en compte des stéréotypes dans l'accompagnement e",
+    "block_title": "Formation à la prise en compte des stéréotypes dans l'accompagnement e",
+    "verdict": "ok"
+   },
+   {
+    "notice": 20577015,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Formation à l'entretien d'explicitation à destination des psychologues",
+    "block_title": "Formation à l'entretien d'explicitation à destination des psychologues",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 4,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 20,
+   "ok": 20,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "single_lot_notice"
+ },
+ {
+  "tender_id": 8449282,
+  "can_notice_id": 20822492,
+  "versions": [
+   20822492
+  ],
+  "lot_publishing_notices": [
+   20822492
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "20822492": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "20822492": {
+    "LOT-1": "Lote 1",
+    "LOT-2": "Lote 2"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lote 1",
+    "title_from": [
+     20822492
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "20822492": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Lote 2",
+    "title_from": [
+     20822492
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "20822492": [
+      "2"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20822492,
+    "key": "RES-1",
+    "printed": [],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Lote 1",
+    "block_title": "Proyectos de cartografía",
+    "verdict": "ok(no-number; own LOT-1=1)"
+   },
+   {
+    "notice": 20822492,
+    "key": "RES-2",
+    "printed": [],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Lote 2",
+    "block_title": "Proyectos de cartografía",
+    "verdict": "ok(no-number; own LOT-2=2)"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "single_lot_notice"
+ },
+ {
+  "tender_id": 6684838,
+  "can_notice_id": 21106357,
+  "versions": [
+   20770762,
+   21106357
+  ],
+  "lot_publishing_notices": [
+   20770762,
+   21106357
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20770762": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "21106357": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "20770762": {
+    "LOT-1": "Téléphonie fixe/abonnement et acheminement du trafic entrant et sortant des accès",
+    "LOT-2": "Téléphonie mobile, usage voix et data",
+    "LOT-3": "Interconnexion des sites et accès internet principal"
+   },
+   "21106357": {
+    "LOT-1": "Téléphonie fixe/abonnement et acheminement du trafic entrant et sortant des accès",
+    "LOT-2": "Téléphonie mobile, usage voix et data",
+    "LOT-3": "Interconnexion des sites et accès internet principal"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Téléphonie fixe/abonnement et acheminement du trafic entrant et sortant des accès",
+    "title_from": [
+     20770762,
+     21106357
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "20770762": [
+      "1"
+     ],
+     "21106357": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Téléphonie mobile, usage voix et data",
+    "title_from": [
+     20770762,
+     21106357
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "20770762": [
+      "2"
+     ],
+     "21106357": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Interconnexion des sites et accès internet principal",
+    "title_from": [
+     20770762,
+     21106357
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "20770762": [
+      "3"
+     ],
+     "21106357": [
+      "3"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21106357,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Téléphonie fixe/abonnement et acheminement du trafic entrant et sortan",
+    "block_title": "Téléphonie fixe/abonnement et acheminement du trafic entrant et sortan",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21106357,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Téléphonie mobile, usage voix et data",
+    "block_title": "Téléphonie mobile, usage voix et data",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21106357,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Interconnexion des sites et accès internet principal",
+    "block_title": "Interconnexion des sites et accès internet principal",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 21,
+   "ok": 21,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6853217,
+  "can_notice_id": 21414166,
+  "versions": [
+   21176686,
+   21414166
+  ],
+  "lot_publishing_notices": [
+   21176686,
+   21414166
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21176686": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ]
+   },
+   "21414166": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ]
+   }
+  },
+  "titles": {
+   "21176686": {
+    "LOT-1": "Część 1: dostawa laptopa dla Wydziału Anglistyki",
+    "LOT-2": "Część 2: dostawa laptopa dla Wydziału Nauk Politycznych i Dziennikarstwa",
+    "LOT-3": "Część 3: dostawa laptopa dla Wydziału Biologii Instytut Biologii Eksperymentalnej, Zakład Genetyki",
+    "LOT-4": "Część 4: dostawa laptopa dla Centrum Zaawansowanych Technologii",
+    "LOT-5": "Część 5: dostawa zestawu komputerowego dla Wydziału Nauk o Sztuce, Biuro Obsługi Wydziału"
+   },
+   "21414166": {
+    "LOT-1": "Dostawa laptopa dla Wydziału Anglistyki – szczegółowy opis zawarty został w Załączniku A do SIWZ",
+    "LOT-2": "Dostawa laptopa dla Wydziału Nauk Politycznych i Dziennikarstwa – szczegółowy opis zawarty został w Załączniku B do SIWZ",
+    "LOT-3": "Dostawa laptopa dla Wydziału Nauk Geograficznych i Geologicznych",
+    "LOT-4": "Dostawa laptopa dla Centrum Zaawansowanych Technologii",
+    "LOT-5": "Dostawa zestawu komputerowego dla Wydziału Nauk o Sztuce, Biuro Obsługi Wydziału"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [
+   {
+    "key": "LOT-1",
+    "21176686": [
+     [
+      "1"
+     ],
+     [
+      "Część 1: dostawa laptopa dla Wydziału Anglistyki"
+     ]
+    ],
+    "21414166": [
+     [
+      "1"
+     ],
+     [
+      "Dostawa laptopa dla Wydziału Anglistyki – szczegółowy opis zawarty został w Załączniku A do SIWZ"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "21176686": [
+     [
+      "2"
+     ],
+     [
+      "Część 2: dostawa laptopa dla Wydziału Nauk Politycznych i Dziennikarstwa"
+     ]
+    ],
+    "21414166": [
+     [
+      "2"
+     ],
+     [
+      "Dostawa laptopa dla Wydziału Nauk Politycznych i Dziennikarstwa – szczegółowy opis zawarty został w Załączniku B do SIWZ"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-3",
+    "21176686": [
+     [
+      "3"
+     ],
+     [
+      "Część 3: dostawa laptopa dla Wydziału Biologii Instytut Biologii Eksperymentalnej, Zakład Genetyki"
+     ]
+    ],
+    "21414166": [
+     [
+      "3"
+     ],
+     [
+      "Dostawa laptopa dla Wydziału Nauk Geograficznych i Geologicznych"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-4",
+    "21176686": [
+     [
+      "4"
+     ],
+     [
+      "Część 4: dostawa laptopa dla Centrum Zaawansowanych Technologii"
+     ]
+    ],
+    "21414166": [
+     [
+      "4"
+     ],
+     [
+      "Dostawa laptopa dla Centrum Zaawansowanych Technologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-5",
+    "21176686": [
+     [
+      "5"
+     ],
+     [
+      "Część 5: dostawa zestawu komputerowego dla Wydziału Nauk o Sztuce, Biuro Obsługi Wydziału"
+     ]
+    ],
+    "21414166": [
+     [
+      "5"
+     ],
+     [
+      "Dostawa zestawu komputerowego dla Wydziału Nauk o Sztuce, Biuro Obsługi Wydziału"
+     ]
+    ]
+   }
+  ],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Dostawa laptopa dla Wydziału Anglistyki – szczegółowy opis zawarty został w Załączniku A do SIWZ",
+    "title_from": [
+     21414166
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "21176686": [
+      "1"
+     ],
+     "21414166": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Dostawa laptopa dla Wydziału Nauk Politycznych i Dziennikarstwa – szczegółowy opis zawarty został w Załączniku B do SIWZ",
+    "title_from": [
+     21414166
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "21176686": [
+      "2"
+     ],
+     "21414166": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Dostawa laptopa dla Wydziału Nauk Geograficznych i Geologicznych",
+    "title_from": [
+     21414166
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "21176686": [
+      "3"
+     ],
+     "21414166": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Dostawa laptopa dla Centrum Zaawansowanych Technologii",
+    "title_from": [
+     21414166
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "21176686": [
+      "4"
+     ],
+     "21414166": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Dostawa zestawu komputerowego dla Wydziału Nauk o Sztuce, Biuro Obsługi Wydziału",
+    "title_from": [
+     21414166
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "21176686": [
+      "5"
+     ],
+     "21414166": [
+      "5"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21414166,
+    "key": "RES-1",
+    "printed": [],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Dostawa laptopa dla Wydziału Anglistyki – szczegółowy opis zawarty zos",
+    "block_title": "Dostawa laptopa dla Wydziału Anglistyki",
+    "verdict": "ok(no-number; own LOT-1=1)"
+   },
+   {
+    "notice": 21414166,
+    "key": "RES-2",
+    "printed": [],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Dostawa laptopa dla Wydziału Nauk Politycznych i Dziennikarstwa – szcz",
+    "block_title": "Dostawa laptopa dla Wydziału Nauk Politycznych i Dziennikarstwa",
+    "verdict": "ok(no-number; own LOT-2=2)"
+   },
+   {
+    "notice": 21414166,
+    "key": "RES-3",
+    "printed": [],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Dostawa laptopa dla Wydziału Nauk Geograficznych i Geologicznych",
+    "block_title": "Dostawa laptopa dla Wydziału Nauk Geograficznych i Geologicznych",
+    "verdict": "ok(no-number; own LOT-3=3)"
+   },
+   {
+    "notice": 21414166,
+    "key": "RES-4",
+    "printed": [],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Dostawa laptopa dla Centrum Zaawansowanych Technologii",
+    "block_title": "Dostawa laptopa dla Centrum Zaawansowanych Technologii",
+    "verdict": "ok(no-number; own LOT-4=4)"
+   },
+   {
+    "notice": 21414166,
+    "key": "RES-5",
+    "printed": [],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Dostawa zestawu komputerowego dla Wydziału Nauk o Sztuce, Biuro Obsług",
+    "block_title": "Dostawa zestawu komputerowego dla Wydziału Nauk o Sztuce, Biuro Obsług",
+    "verdict": "ok(no-number; own LOT-5=5)"
+   }
+  ],
+  "results_total": 5,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 25,
+   "ok": 25,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7005973,
+  "can_notice_id": 21715163,
+  "versions": [
+   21535979,
+   21715163
+  ],
+  "lot_publishing_notices": [
+   21535979,
+   21715163
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21535979": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ]
+   },
+   "21715163": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ]
+   }
+  },
+  "titles": {
+   "21535979": {
+    "LOT-1": "Produits béton préfabriqués",
+    "LOT-2": "PVC Assainissement réseau",
+    "LOT-3": "Fonte de voirie",
+    "LOT-4": "Produits de négoce",
+    "LOT-5": "Béton prêt à l'emploi"
+   },
+   "21715163": {
+    "LOT-1": "Produits béton préfabriqués",
+    "LOT-2": "PVC Assainissement réseau",
+    "LOT-3": "Fonte de voirie",
+    "LOT-4": "Produits de négoce",
+    "LOT-5": "Béton prêt à l'emploi"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Produits béton préfabriqués",
+    "title_from": [
+     21535979,
+     21715163
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "21535979": [
+      "1"
+     ],
+     "21715163": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "PVC Assainissement réseau",
+    "title_from": [
+     21535979,
+     21715163
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "21535979": [
+      "2"
+     ],
+     "21715163": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Fonte de voirie",
+    "title_from": [
+     21535979,
+     21715163
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "21535979": [
+      "3"
+     ],
+     "21715163": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Produits de négoce",
+    "title_from": [
+     21535979,
+     21715163
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "21535979": [
+      "4"
+     ],
+     "21715163": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Béton prêt à l'emploi",
+    "title_from": [
+     21535979,
+     21715163
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "21535979": [
+      "5"
+     ],
+     "21715163": [
+      "5"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21715163,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Produits béton préfabriqués",
+    "block_title": "Produits béton préfabriqués",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21715163,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "PVC Assainissement réseau",
+    "block_title": "Produits PVC assainissement et réseaux",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21715163,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Fonte de voirie",
+    "block_title": "Fonte de voirie",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21715163,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Produits de négoce",
+    "block_title": "Produits de négoce",
+    "verdict": "ok"
+   },
+   {
+    "notice": 21715163,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Béton prêt à l'emploi",
+    "block_title": "Béton prêt à l'emploi",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 5,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 25,
+   "ok": 25,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7098097,
+  "can_notice_id": 22033348,
+  "versions": [
+   21777436,
+   21731452,
+   21775453,
+   21846097,
+   21820392,
+   22033348
+  ],
+  "lot_publishing_notices": [
+   21777436,
+   21846097,
+   21820392,
+   22033348
+  ],
+  "n_notices_with_lot_sections": 4,
+  "maps": {
+   "21777436": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ]
+   },
+   "21846097": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ]
+   },
+   "21820392": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ]
+   },
+   "22033348": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ]
+   }
+  },
+  "titles": {
+   "21777436": {
+    "LOT-1": "Cytostatyki",
+    "LOT-2": "Cytostatyki",
+    "LOT-3": "Cytostatyki",
+    "LOT-4": "Lek wspomagający w onkologii",
+    "LOT-5": "Leki, odżywki, leki wspomagające w onkologii",
+    "LOT-6": "Leki",
+    "LOT-7": "Testy diagnostyczne",
+    "LOT-8": "Leki",
+    "LOT-9": "Płyny infuzyjne",
+    "LOT-10": "Lek wspomagający w onkologii"
+   },
+   "21846097": {
+    "LOT-1": "Zadanie I – Cytostatyki",
+    "LOT-2": "Zadanie II – Cytostatyki",
+    "LOT-3": "Zadanie III – Cytostatyki",
+    "LOT-4": "Zadanie IV – Lek wspomagający w onkologii",
+    "LOT-5": "Zadanie V – Leki, odżywki, leki wspomagające w onkologii",
+    "LOT-6": "Zadanie VI – Leki",
+    "LOT-7": "Zadanie VII – Testy diagnostyczne",
+    "LOT-8": "Zadanie VIII – Leki",
+    "LOT-9": "Zadanie IX – Płyny infuzyjne",
+    "LOT-10": "Zadanie X – Lek wspomagający w onkologii"
+   },
+   "21820392": {
+    "LOT-1": "Cytostatyki",
+    "LOT-2": "Cytostatyki",
+    "LOT-3": "Cytostatyki",
+    "LOT-4": "Lek wspomagający w onkologii",
+    "LOT-5": "Leki, odżywki, leki wspomagające w onkologii",
+    "LOT-6": "Leki",
+    "LOT-7": "Testy diagnostyczne",
+    "LOT-8": "Leki",
+    "LOT-9": "Płyny infuzyjne",
+    "LOT-10": "Lek wspomagający w onkologii"
+   },
+   "22033348": {
+    "LOT-1": "Zadanie I – Cytostatyki",
+    "LOT-2": "Zadanie II - Cytostatyki",
+    "LOT-3": "Zadanie III - Cytostatyki",
+    "LOT-4": "Zadanie IV - Lek wspomagający w onkologii",
+    "LOT-5": "Zadanie V-Leki, odżywki, leki wspomagające w onkologii",
+    "LOT-6": "Zadanie VI - Leki",
+    "LOT-7": "Zadanie VII - Testy diagnostyczne",
+    "LOT-8": "Zadanie VIII - Leki",
+    "LOT-9": "Zadanie IX - Płyny infuzyjne",
+    "LOT-10": "Zadanie X - Lek wspomagający w onkologii"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [
+   {
+    "key": "LOT-1",
+    "21777436": [
+     [
+      "1"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "21846097": [
+     [
+      "1"
+     ],
+     [
+      "Zadanie I – Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "21777436": [
+     [
+      "2"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "21846097": [
+     [
+      "2"
+     ],
+     [
+      "Zadanie II – Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-3",
+    "21777436": [
+     [
+      "3"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "21846097": [
+     [
+      "3"
+     ],
+     [
+      "Zadanie III – Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-4",
+    "21777436": [
+     [
+      "4"
+     ],
+     [
+      "Lek wspomagający w onkologii"
+     ]
+    ],
+    "21846097": [
+     [
+      "4"
+     ],
+     [
+      "Zadanie IV – Lek wspomagający w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-5",
+    "21777436": [
+     [
+      "5"
+     ],
+     [
+      "Leki, odżywki, leki wspomagające w onkologii"
+     ]
+    ],
+    "21846097": [
+     [
+      "5"
+     ],
+     [
+      "Zadanie V – Leki, odżywki, leki wspomagające w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-6",
+    "21777436": [
+     [
+      "6"
+     ],
+     [
+      "Leki"
+     ]
+    ],
+    "21846097": [
+     [
+      "6"
+     ],
+     [
+      "Zadanie VI – Leki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-7",
+    "21777436": [
+     [
+      "7"
+     ],
+     [
+      "Testy diagnostyczne"
+     ]
+    ],
+    "21846097": [
+     [
+      "7"
+     ],
+     [
+      "Zadanie VII – Testy diagnostyczne"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-8",
+    "21777436": [
+     [
+      "8"
+     ],
+     [
+      "Leki"
+     ]
+    ],
+    "21846097": [
+     [
+      "8"
+     ],
+     [
+      "Zadanie VIII – Leki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-9",
+    "21777436": [
+     [
+      "9"
+     ],
+     [
+      "Płyny infuzyjne"
+     ]
+    ],
+    "21846097": [
+     [
+      "9"
+     ],
+     [
+      "Zadanie IX – Płyny infuzyjne"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-10",
+    "21777436": [
+     [
+      "10"
+     ],
+     [
+      "Lek wspomagający w onkologii"
+     ]
+    ],
+    "21846097": [
+     [
+      "10"
+     ],
+     [
+      "Zadanie X – Lek wspomagający w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-1",
+    "21777436": [
+     [
+      "1"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "22033348": [
+     [
+      "1"
+     ],
+     [
+      "Zadanie I – Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "21777436": [
+     [
+      "2"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "22033348": [
+     [
+      "2"
+     ],
+     [
+      "Zadanie II - Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-3",
+    "21777436": [
+     [
+      "3"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "22033348": [
+     [
+      "3"
+     ],
+     [
+      "Zadanie III - Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-4",
+    "21777436": [
+     [
+      "4"
+     ],
+     [
+      "Lek wspomagający w onkologii"
+     ]
+    ],
+    "22033348": [
+     [
+      "4"
+     ],
+     [
+      "Zadanie IV - Lek wspomagający w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-5",
+    "21777436": [
+     [
+      "5"
+     ],
+     [
+      "Leki, odżywki, leki wspomagające w onkologii"
+     ]
+    ],
+    "22033348": [
+     [
+      "5"
+     ],
+     [
+      "Zadanie V-Leki, odżywki, leki wspomagające w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-6",
+    "21777436": [
+     [
+      "6"
+     ],
+     [
+      "Leki"
+     ]
+    ],
+    "22033348": [
+     [
+      "6"
+     ],
+     [
+      "Zadanie VI - Leki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-7",
+    "21777436": [
+     [
+      "7"
+     ],
+     [
+      "Testy diagnostyczne"
+     ]
+    ],
+    "22033348": [
+     [
+      "7"
+     ],
+     [
+      "Zadanie VII - Testy diagnostyczne"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-8",
+    "21777436": [
+     [
+      "8"
+     ],
+     [
+      "Leki"
+     ]
+    ],
+    "22033348": [
+     [
+      "8"
+     ],
+     [
+      "Zadanie VIII - Leki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-9",
+    "21777436": [
+     [
+      "9"
+     ],
+     [
+      "Płyny infuzyjne"
+     ]
+    ],
+    "22033348": [
+     [
+      "9"
+     ],
+     [
+      "Zadanie IX - Płyny infuzyjne"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-10",
+    "21777436": [
+     [
+      "10"
+     ],
+     [
+      "Lek wspomagający w onkologii"
+     ]
+    ],
+    "22033348": [
+     [
+      "10"
+     ],
+     [
+      "Zadanie X - Lek wspomagający w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-1",
+    "21846097": [
+     [
+      "1"
+     ],
+     [
+      "Zadanie I – Cytostatyki"
+     ]
+    ],
+    "21820392": [
+     [
+      "1"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "21846097": [
+     [
+      "2"
+     ],
+     [
+      "Zadanie II – Cytostatyki"
+     ]
+    ],
+    "21820392": [
+     [
+      "2"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-3",
+    "21846097": [
+     [
+      "3"
+     ],
+     [
+      "Zadanie III – Cytostatyki"
+     ]
+    ],
+    "21820392": [
+     [
+      "3"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-4",
+    "21846097": [
+     [
+      "4"
+     ],
+     [
+      "Zadanie IV – Lek wspomagający w onkologii"
+     ]
+    ],
+    "21820392": [
+     [
+      "4"
+     ],
+     [
+      "Lek wspomagający w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-5",
+    "21846097": [
+     [
+      "5"
+     ],
+     [
+      "Zadanie V – Leki, odżywki, leki wspomagające w onkologii"
+     ]
+    ],
+    "21820392": [
+     [
+      "5"
+     ],
+     [
+      "Leki, odżywki, leki wspomagające w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-6",
+    "21846097": [
+     [
+      "6"
+     ],
+     [
+      "Zadanie VI – Leki"
+     ]
+    ],
+    "21820392": [
+     [
+      "6"
+     ],
+     [
+      "Leki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-7",
+    "21846097": [
+     [
+      "7"
+     ],
+     [
+      "Zadanie VII – Testy diagnostyczne"
+     ]
+    ],
+    "21820392": [
+     [
+      "7"
+     ],
+     [
+      "Testy diagnostyczne"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-8",
+    "21846097": [
+     [
+      "8"
+     ],
+     [
+      "Zadanie VIII – Leki"
+     ]
+    ],
+    "21820392": [
+     [
+      "8"
+     ],
+     [
+      "Leki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-9",
+    "21846097": [
+     [
+      "9"
+     ],
+     [
+      "Zadanie IX – Płyny infuzyjne"
+     ]
+    ],
+    "21820392": [
+     [
+      "9"
+     ],
+     [
+      "Płyny infuzyjne"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-10",
+    "21846097": [
+     [
+      "10"
+     ],
+     [
+      "Zadanie X – Lek wspomagający w onkologii"
+     ]
+    ],
+    "21820392": [
+     [
+      "10"
+     ],
+     [
+      "Lek wspomagający w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-1",
+    "21820392": [
+     [
+      "1"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "22033348": [
+     [
+      "1"
+     ],
+     [
+      "Zadanie I – Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-2",
+    "21820392": [
+     [
+      "2"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "22033348": [
+     [
+      "2"
+     ],
+     [
+      "Zadanie II - Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-3",
+    "21820392": [
+     [
+      "3"
+     ],
+     [
+      "Cytostatyki"
+     ]
+    ],
+    "22033348": [
+     [
+      "3"
+     ],
+     [
+      "Zadanie III - Cytostatyki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-4",
+    "21820392": [
+     [
+      "4"
+     ],
+     [
+      "Lek wspomagający w onkologii"
+     ]
+    ],
+    "22033348": [
+     [
+      "4"
+     ],
+     [
+      "Zadanie IV - Lek wspomagający w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-5",
+    "21820392": [
+     [
+      "5"
+     ],
+     [
+      "Leki, odżywki, leki wspomagające w onkologii"
+     ]
+    ],
+    "22033348": [
+     [
+      "5"
+     ],
+     [
+      "Zadanie V-Leki, odżywki, leki wspomagające w onkologii"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-6",
+    "21820392": [
+     [
+      "6"
+     ],
+     [
+      "Leki"
+     ]
+    ],
+    "22033348": [
+     [
+      "6"
+     ],
+     [
+      "Zadanie VI - Leki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-7",
+    "21820392": [
+     [
+      "7"
+     ],
+     [
+      "Testy diagnostyczne"
+     ]
+    ],
+    "22033348": [
+     [
+      "7"
+     ],
+     [
+      "Zadanie VII - Testy diagnostyczne"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-8",
+    "21820392": [
+     [
+      "8"
+     ],
+     [
+      "Leki"
+     ]
+    ],
+    "22033348": [
+     [
+      "8"
+     ],
+     [
+      "Zadanie VIII - Leki"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-9",
+    "21820392": [
+     [
+      "9"
+     ],
+     [
+      "Płyny infuzyjne"
+     ]
+    ],
+    "22033348": [
+     [
+      "9"
+     ],
+     [
+      "Zadanie IX - Płyny infuzyjne"
+     ]
+    ]
+   },
+   {
+    "key": "LOT-10",
+    "21820392": [
+     [
+      "10"
+     ],
+     [
+      "Lek wspomagający w onkologii"
+     ]
+    ],
+    "22033348": [
+     [
+      "10"
+     ],
+     [
+      "Zadanie X - Lek wspomagający w onkologii"
+     ]
+    ]
+   }
+  ],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Zadanie I – Cytostatyki",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "1"
+     ],
+     "21846097": [
+      "1"
+     ],
+     "21820392": [
+      "1"
+     ],
+     "22033348": [
+      "1"
+     ]
+    }
+   },
+   "LOT-10": {
+    "title": "Zadanie X - Lek wspomagający w onkologii",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "10",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "10"
+     ],
+     "21846097": [
+      "10"
+     ],
+     "21820392": [
+      "10"
+     ],
+     "22033348": [
+      "10"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Zadanie II - Cytostatyki",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "2"
+     ],
+     "21846097": [
+      "2"
+     ],
+     "21820392": [
+      "2"
+     ],
+     "22033348": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Zadanie III - Cytostatyki",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "3"
+     ],
+     "21846097": [
+      "3"
+     ],
+     "21820392": [
+      "3"
+     ],
+     "22033348": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Zadanie IV - Lek wspomagający w onkologii",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "4"
+     ],
+     "21846097": [
+      "4"
+     ],
+     "21820392": [
+      "4"
+     ],
+     "22033348": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Zadanie V-Leki, odżywki, leki wspomagające w onkologii",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "5"
+     ],
+     "21846097": [
+      "5"
+     ],
+     "21820392": [
+      "5"
+     ],
+     "22033348": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Zadanie VI - Leki",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "6"
+     ],
+     "21846097": [
+      "6"
+     ],
+     "21820392": [
+      "6"
+     ],
+     "22033348": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Zadanie VII - Testy diagnostyczne",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "7"
+     ],
+     "21846097": [
+      "7"
+     ],
+     "21820392": [
+      "7"
+     ],
+     "22033348": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Zadanie VIII - Leki",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "8"
+     ],
+     "21846097": [
+      "8"
+     ],
+     "21820392": [
+      "8"
+     ],
+     "22033348": [
+      "8"
+     ]
+    }
+   },
+   "LOT-9": {
+    "title": "Zadanie IX - Płyny infuzyjne",
+    "title_from": [
+     21846097,
+     22033348
+    ],
+    "number": "9",
+    "key_numbers_by_notice": {
+     "21777436": [
+      "9"
+     ],
+     "21846097": [
+      "9"
+     ],
+     "21820392": [
+      "9"
+     ],
+     "22033348": [
+      "9"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21820392,
+    "key": "RES-1",
+    "printed": [],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "clos-nw",
+    "own_section": [],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Zadanie I – Cytostatyki",
+    "block_title": null,
+    "verdict": "ok(no-number; own LOT-1=1)"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Zadanie I – Cytostatyki",
+    "block_title": "Zadanie I - Cytostatyki",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-10",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-10"
+    ],
+    "tender_lot_number": "10",
+    "tender_lot_title": "Zadanie X - Lek wspomagający w onkologii",
+    "block_title": "Zadanie X Lek wspomagający w onkologii",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Zadanie II - Cytostatyki",
+    "block_title": "Zadanie II-Cytostatyki",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Zadanie III - Cytostatyki",
+    "block_title": "Zadanie III-Cytostatyki",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Zadanie IV - Lek wspomagający w onkologii",
+    "block_title": "Zadanie IV-Lek wspomagający w onkologii",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Zadanie V-Leki, odżywki, leki wspomagające w onkologii",
+    "block_title": "Zadanie V-Leki, odżywki, leki wspomagające w onkologii",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Zadanie VI - Leki",
+    "block_title": "Zadanie VI -Leki",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Zadanie VII - Testy diagnostyczne",
+    "block_title": "Zadanie VII- Testy diagnostyczne",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Zadanie VIII - Leki",
+    "block_title": "Zadanie VIII- Leki",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22033348,
+    "key": "RES-9",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-9"
+    ],
+    "tender_lot_number": "9",
+    "tender_lot_title": "Zadanie IX - Płyny infuzyjne",
+    "block_title": "Zadanie IX Płyny infuzyjne",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 11,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 59,
+   "ok": 59,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6994978,
+  "can_notice_id": 22329066,
+  "versions": [
+   21508801,
+   22329066
+  ],
+  "lot_publishing_notices": [
+   21508801,
+   22329066
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21508801": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ]
+   },
+   "22329066": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ]
+   }
+  },
+  "titles": {
+   "21508801": {
+    "LOT-1": "Φέτα Π.Ο.Π..",
+    "LOT-2": "Τυρί ημίσκληρο.",
+    "LOT-3": "Κεφαλοτύρι.",
+    "LOT-4": "Τυρί τύπου γκούντα.",
+    "LOT-5": "Τυρί τύπου ένταμ.",
+    "LOT-6": "Παρμεζάνα.",
+    "LOT-7": "Κασέρι Π.Ο.Π..",
+    "LOT-8": "Γραβιέρα."
+   },
+   "22329066": {
+    "LOT-1": "Φέτα Π.Ο.Π",
+    "LOT-2": "Τυρί Ημίσκληρο",
+    "LOT-3": "Κεφαλοτύρι",
+    "LOT-4": "Τυρί Τύπου Γκούντα",
+    "LOT-5": "Τυρί Τύπου Ένταμ",
+    "LOT-6": "Παρμεζάνα",
+    "LOT-7": "Κασέρι Π.Ο.Π.",
+    "LOT-8": "Γραβιέρα"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Φέτα Π.Ο.Π",
+    "title_from": [
+     21508801,
+     22329066
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "21508801": [
+      "1"
+     ],
+     "22329066": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Τυρί Ημίσκληρο",
+    "title_from": [
+     21508801,
+     22329066
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "21508801": [
+      "2"
+     ],
+     "22329066": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Κεφαλοτύρι",
+    "title_from": [
+     21508801,
+     22329066
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "21508801": [
+      "3"
+     ],
+     "22329066": [
+      "3"
+     ]
+    }
+   },
+   "LOT-4": {
+    "title": "Τυρί Τύπου Γκούντα",
+    "title_from": [
+     21508801,
+     22329066
+    ],
+    "number": "4",
+    "key_numbers_by_notice": {
+     "21508801": [
+      "4"
+     ],
+     "22329066": [
+      "4"
+     ]
+    }
+   },
+   "LOT-5": {
+    "title": "Τυρί Τύπου Ένταμ",
+    "title_from": [
+     21508801,
+     22329066
+    ],
+    "number": "5",
+    "key_numbers_by_notice": {
+     "21508801": [
+      "5"
+     ],
+     "22329066": [
+      "5"
+     ]
+    }
+   },
+   "LOT-6": {
+    "title": "Παρμεζάνα",
+    "title_from": [
+     21508801,
+     22329066
+    ],
+    "number": "6",
+    "key_numbers_by_notice": {
+     "21508801": [
+      "6"
+     ],
+     "22329066": [
+      "6"
+     ]
+    }
+   },
+   "LOT-7": {
+    "title": "Κασέρι Π.Ο.Π.",
+    "title_from": [
+     21508801,
+     22329066
+    ],
+    "number": "7",
+    "key_numbers_by_notice": {
+     "21508801": [
+      "7"
+     ],
+     "22329066": [
+      "7"
+     ]
+    }
+   },
+   "LOT-8": {
+    "title": "Γραβιέρα",
+    "title_from": [
+     21508801,
+     22329066
+    ],
+    "number": "8",
+    "key_numbers_by_notice": {
+     "21508801": [
+      "8"
+     ],
+     "22329066": [
+      "8"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 22329066,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Φέτα Π.Ο.Π",
+    "block_title": "Φέτα Π.Ο.Π",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22329066,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Τυρί Ημίσκληρο",
+    "block_title": "Τυρί Ημίσκληρο",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22329066,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Κεφαλοτύρι",
+    "block_title": "Κεφαλοτύρι",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22329066,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-4"
+    ],
+    "tender_lot_number": "4",
+    "tender_lot_title": "Τυρί Τύπου Γκούντα",
+    "block_title": "Τυρί Τύπου Γκούντα",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22329066,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-5"
+    ],
+    "tender_lot_number": "5",
+    "tender_lot_title": "Τυρί Τύπου Ένταμ",
+    "block_title": "Τυρί Τύπου Ένταμ",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22329066,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-6"
+    ],
+    "tender_lot_number": "6",
+    "tender_lot_title": "Παρμεζάνα",
+    "block_title": "Παρμεζάνα",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22329066,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-7"
+    ],
+    "tender_lot_number": "7",
+    "tender_lot_title": "Κασέρι Π.Ο.Π.",
+    "block_title": "Κασέρι Π.Ο.Π.",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22329066,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-8"
+    ],
+    "tender_lot_number": "8",
+    "tender_lot_title": "Γραβιέρα",
+    "block_title": "Γραβιέρα",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 8,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 40,
+   "ok": 40,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7495648,
+  "can_notice_id": 22732333,
+  "versions": [
+   22658106,
+   22732333
+  ],
+  "lot_publishing_notices": [
+   22658106,
+   22732333
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "22658106": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "22732333": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "22658106": {
+    "LOT-1": "Kilometerleasing für 11 E-Fahrzeuge der Kompaktklasse und Mittelklasse",
+    "LOT-2": "Kilometerleasing für 1 Nutzfahrzeug (Werkstattauto)"
+   },
+   "22732333": {
+    "LOT-1": "Kilometerleasing für 11 E-Fahrzeuge der Kompaktklasse und Mittelklasse",
+    "LOT-2": "Kilometerleasing für 1 Nutzfahrzeug (Werkstattauto)"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Kilometerleasing für 11 E-Fahrzeuge der Kompaktklasse und Mittelklasse",
+    "title_from": [
+     22658106,
+     22732333
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "22658106": [
+      "1"
+     ],
+     "22732333": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Kilometerleasing für 1 Nutzfahrzeug (Werkstattauto)",
+    "title_from": [
+     22658106,
+     22732333
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "22658106": [
+      "2"
+     ],
+     "22732333": [
+      "2"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 22732333,
+    "key": "RES-1",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Kilometerleasing für 1 Nutzfahrzeug (Werkstattauto)",
+    "block_title": "Kilometerleasing für 1 Nutzfahrzeug (Werkstattauto)",
+    "verdict": "ok"
+   },
+   {
+    "notice": 22732333,
+    "key": "RES-2",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "clos-nw",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Kilometerleasing für 11 E-Fahrzeuge der Kompaktklasse und Mittelklasse",
+    "block_title": "Kilometerleasing für 11 E-Fahrzeuge der Kompaktklasse und Mittelklasse",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 14,
+   "ok": 14,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7596364,
+  "can_notice_id": 23049879,
+  "versions": [
+   22903832,
+   23049879
+  ],
+  "lot_publishing_notices": [
+   22903832,
+   23049879
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "22903832": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "23049879": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "22903832": {
+    "LOT-1": "Zemiakové výrobky",
+    "LOT-2": "Nealkoholické nápoje"
+   },
+   "23049879": {
+    "LOT-1": "Zemiakové výrobky",
+    "LOT-2": "Nealkoholické nápoje"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Zemiakové výrobky",
+    "title_from": [
+     22903832,
+     23049879
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "22903832": [
+      "1"
+     ],
+     "23049879": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Nealkoholické nápoje",
+    "title_from": [
+     22903832,
+     23049879
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "22903832": [
+      "2"
+     ],
+     "23049879": [
+      "2"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 23049879,
+    "key": "RES-1",
+    "printed": [],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Zemiakové výrobky",
+    "block_title": "Zemiakové výrobky",
+    "verdict": "ok(no-number; own LOT-1=1)"
+   },
+   {
+    "notice": 23049879,
+    "key": "RES-2",
+    "printed": [],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Nealkoholické nápoje",
+    "block_title": "Nealkoholické nápoje",
+    "verdict": "ok(no-number; own LOT-2=2)"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7721489,
+  "can_notice_id": 23455315,
+  "versions": [
+   23187160,
+   23455315
+  ],
+  "lot_publishing_notices": [
+   23187160,
+   23455315
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "23187160": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "23455315": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "23187160": {
+    "LOT-1": "Lote 1: Uniformidad.",
+    "LOT-2": "Lote 2. Equipos de protección individual (EPIS) y equipos de protección colectiva (EPCS)",
+    "LOT-3": "Lote 3. Señalética"
+   },
+   "23455315": {
+    "LOT-1": "Lote 1: Uniformidad.",
+    "LOT-2": "Lote 2. Equipos de protección individual (EPIS) y equipos de protección colectiva (EPCS)",
+    "LOT-3": "Lote 3. Señalética"
+   }
+  },
+  "unnumbered_notices": [],
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lote 1: Uniformidad.",
+    "title_from": [
+     23187160,
+     23455315
+    ],
+    "number": "1",
+    "key_numbers_by_notice": {
+     "23187160": [
+      "1"
+     ],
+     "23455315": [
+      "1"
+     ]
+    }
+   },
+   "LOT-2": {
+    "title": "Lote 2. Equipos de protección individual (EPIS) y equipos de protección colectiva (EPCS)",
+    "title_from": [
+     23187160,
+     23455315
+    ],
+    "number": "2",
+    "key_numbers_by_notice": {
+     "23187160": [
+      "2"
+     ],
+     "23455315": [
+      "2"
+     ]
+    }
+   },
+   "LOT-3": {
+    "title": "Lote 3. Señalética",
+    "title_from": [
+     23187160,
+     23455315
+    ],
+    "number": "3",
+    "key_numbers_by_notice": {
+     "23187160": [
+      "3"
+     ],
+     "23455315": [
+      "3"
+     ]
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 23455315,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-1"
+    ],
+    "tender_lot_number": "1",
+    "tender_lot_title": "Lote 1: Uniformidad.",
+    "block_title": "Lote 1: Uniformidad.",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23455315,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-2"
+    ],
+    "tender_lot_number": "2",
+    "tender_lot_title": "Lote 2. Equipos de protección individual (EPIS) y equipos de protecció",
+    "block_title": "Lote 2. Equipos de protección individual (EPIS) y equipos de protecció",
+    "verdict": "ok"
+   },
+   {
+    "notice": 23455315,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_section": [
+     "LOT-3"
+    ],
+    "tender_lot_number": "3",
+    "tender_lot_title": "Lote 3. Señalética",
+    "block_title": "Lote 3. Señalética",
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "winner_parties_on_misattributed_lots": [],
+  "lot_facts": {
+   "total": 27,
+   "ok": 27,
+   "misattributed": 0,
+   "unsourced": 0,
+   "examples": []
+  },
+  "cls_auto": "consistent"
+ }
+]

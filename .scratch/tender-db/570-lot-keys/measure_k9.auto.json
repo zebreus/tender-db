@@ -1,0 +1,7534 @@
+[
+ {
+  "tender_id": 5582046,
+  "can_notice_id": 18799115,
+  "versions": [
+   18580759,
+   18799115
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "18580759": {
+    "form": [
+     "2"
+    ],
+    "pub": "2015-12-26"
+   },
+   "18799115": {
+    "form": [
+     "3"
+    ],
+    "pub": "2016-05-18"
+   }
+  },
+  "lot_publishing_notices": [
+   18580759
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "18580759": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   }
+  },
+  "titles": {
+   "18580759": {
+    "LOT-1": "Preungesheim 1",
+    "LOT-2": "Preungesheim 2",
+    "LOT-3": "Preungesheim 3",
+    "LOT-4": "Preungesheim 4"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Preungesheim 1",
+    "title_from": [
+     18580759
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "18580759": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "18580759": "Preungesheim 1"
+    }
+   },
+   "LOT-2": {
+    "title": "Preungesheim 2",
+    "title_from": [
+     18580759
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "18580759": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "18580759": "Preungesheim 2"
+    }
+   },
+   "LOT-3": {
+    "title": "Preungesheim 3",
+    "title_from": [
+     18580759
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "18580759": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "18580759": "Preungesheim 3"
+    }
+   },
+   "LOT-4": {
+    "title": "Preungesheim 4",
+    "title_from": [
+     18580759
+    ],
+    "number": "4",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "18580759": [
+      "4"
+     ]
+    },
+    "key_titles_by_notice": {
+     "18580759": "Preungesheim 4"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 18799115,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Preungesheim 1",
+    "winners": [
+     "kanalprofi GmbH"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18799115,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Preungesheim 2",
+    "winners": [
+     "kanalprofi GmbH"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18799115,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Preungesheim 3",
+    "winners": [
+     "kanalprofi GmbH"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18799115,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Preungesheim 4",
+    "winners": [
+     "B-F Sonderabfall GmbH & Co. KG"
+    ],
+    "verdict": "null"
+   }
+  ],
+  "results_total": 4,
+  "results_null": 4,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 16,
+   "ok": 16,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 0,
+  "cls_auto": "single_lot_notice"
+ },
+ {
+  "tender_id": 5697502,
+  "can_notice_id": 18982479,
+  "versions": [
+   18837166,
+   18982479
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "18837166": {
+    "form": [
+     "2"
+    ],
+    "pub": "2016-06-29"
+   },
+   "18982479": {
+    "form": [
+     "3"
+    ],
+    "pub": "2016-10-11"
+   }
+  },
+  "lot_publishing_notices": [
+   18837166
+  ],
+  "n_notices_with_lot_sections": 1,
+  "maps": {
+   "18837166": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "18837166": {
+    "LOT-1": "Fahrgestell",
+    "LOT-2": "Feuerwehrtechnischer Aufbau",
+    "LOT-3": "Feuerwehrtechnische Beladung"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Fahrgestell",
+    "title_from": [
+     18837166
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "18837166": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "18837166": "Fahrgestell"
+    }
+   },
+   "LOT-2": {
+    "title": "Feuerwehrtechnischer Aufbau",
+    "title_from": [
+     18837166
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "18837166": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "18837166": "Feuerwehrtechnischer Aufbau"
+    }
+   },
+   "LOT-3": {
+    "title": "Feuerwehrtechnische Beladung",
+    "title_from": [
+     18837166
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "18837166": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "18837166": "Feuerwehrtechnische Beladung"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 18982479,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Fahrgestell",
+    "winners": [
+     "Fa. Daimler AG"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18982479,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Feuerwehrtechnischer Aufbau",
+    "winners": [
+     "Fa. Hensel"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 18982479,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Feuerwehrtechnische Beladung",
+    "winners": [
+     "Fa. Ziegler"
+    ],
+    "verdict": "null"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 3,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 12,
+   "ok": 12,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 0,
+  "cls_auto": "single_lot_notice"
+ },
+ {
+  "tender_id": 5847165,
+  "can_notice_id": 19213219,
+  "versions": [
+   19154942,
+   19213219
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "19154942": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2017-02-07"
+   },
+   "19213219": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2017-04-25"
+   }
+  },
+  "lot_publishing_notices": [
+   19154942,
+   19213219
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19154942": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "19213219": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "19154942": {
+    "LOT-1": "„Следгаранционно сервизно и техническо обслужване на МПС, профилактика, диагностика и ремонт на МПС, стопанисвани от ТП „ДГС Добринище”",
+    "LOT-2": "„Доставка на резервни части и консумативи за МПС, стопанисвани от ТП „ДГС Добринище”"
+   },
+   "19213219": {
+    "LOT-1": "Следгаранционно сервизно и техническо обслужване на МПС, профилактика, диагностика и ремонт на МПС, стопанисвани от ТП „ДГС Добринище“",
+    "LOT-2": "Доставка на резервни части и консумативи за МПС, стопанисвани от ТП „ДГС Добринище“"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Следгаранционно сервизно и техническо обслужване на МПС, профилактика, диагностика и ремонт на МПС, стопанисвани от ТП „ДГС Добринище“",
+    "title_from": [
+     19154942,
+     19213219
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19154942": [
+      "1"
+     ],
+     "19213219": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19154942": "„Следгаранционно сервизно и техническо обслужване на МПС, профилактика, диагностика и ремонт на МПС, стопанисвани от ТП „ДГС Добринище”",
+     "19213219": "Следгаранционно сервизно и техническо обслужване на МПС, профилактика, диагностика и ремонт на МПС, стопанисвани от ТП „ДГС Добринище“"
+    }
+   },
+   "LOT-2": {
+    "title": "Доставка на резервни части и консумативи за МПС, стопанисвани от ТП „ДГС Добринище“",
+    "title_from": [
+     19154942,
+     19213219
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19154942": [
+      "2"
+     ],
+     "19213219": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19154942": "„Доставка на резервни части и консумативи за МПС, стопанисвани от ТП „ДГС Добринище”",
+     "19213219": "Доставка на резервни части и консумативи за МПС, стопанисвани от ТП „ДГС Добринище“"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19213219,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Следгаранционно сервизно и техническо обслужване на МПС, профилактика, диагности",
+    "block_title": "Следгаранционно сервизно и техническо обслужване на МПС, профилактика, диагности",
+    "winners": [
+     "„НИКПИ“ ЕООД"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19213219,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Доставка на резервни части и консумативи за МПС, стопанисвани от ТП „ДГС Добрини",
+    "block_title": "Доставка на резервни части и консумативи за МПС, стопанисвани от ТП „ДГС Добрини",
+    "winners": [
+     "„НИКПИ“ ЕООД"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 26,
+   "ok": 26,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 2,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 5939039,
+  "can_notice_id": 19505376,
+  "versions": [
+   19304106,
+   19370991,
+   19373707,
+   19362104,
+   19505376
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "19304106": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2017-06-09"
+   },
+   "19370991": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2017-07-05"
+   },
+   "19373707": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2017-07-07"
+   },
+   "19362104": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2017-07-11"
+   },
+   "19505376": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2017-10-31"
+   }
+  },
+  "lot_publishing_notices": [
+   19304106,
+   19505376
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19304106": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "19505376": {
+    "LOT-1": []
+   }
+  },
+  "titles": {
+   "19304106": {
+    "LOT-1": "Laborgeräte",
+    "LOT-2": "Laborgeräte",
+    "LOT-3": "Laborgeräte"
+   },
+   "19505376": {
+    "LOT-1": null
+   }
+  },
+  "unnumbered_sections": {
+   "19505376": [
+    "LOT-1"
+   ]
+  },
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Laborgeräte",
+    "title_from": [
+     19304106
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19304106": [
+      "1"
+     ],
+     "19505376": []
+    },
+    "key_titles_by_notice": {
+     "19304106": "Laborgeräte",
+     "19505376": null
+    }
+   },
+   "LOT-2": {
+    "title": "Laborgeräte",
+    "title_from": [
+     19304106
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19304106": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19304106": "Laborgeräte"
+    }
+   },
+   "LOT-3": {
+    "title": "Laborgeräte",
+    "title_from": [
+     19304106
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19304106": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19304106": "Laborgeräte"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19505376,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Laborgeräte",
+    "block_title": "Laborgeräte",
+    "winners": [
+     "LMS Consult GmbH & Co. KG"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 19505376,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Laborgeräte",
+    "winners": [
+     "Technologie Transfer Marburg in die Dritte Welt e."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 19505376,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Laborgeräte",
+    "winners": [
+     "Technologie Transfer Marburg in die Dritte Welt e."
+    ],
+    "verdict": "null"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 2,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 21,
+   "ok": 19,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 2,
+   "mis": [],
+   "unsourced_ex": [],
+   "unjudged_unnumbered_ex": [
+    {
+     "label": "cls:nuts:place",
+     "lot": "LOT-1",
+     "value": "DE712",
+     "from": [
+      [
+       19505376,
+       "LOT-1",
+       [],
+       null
+      ]
+     ]
+    },
+    {
+     "label": "text:description",
+     "lot": "LOT-1",
+     "value": "Diverse Laborgeräte zur Lieferung an vier Endverwendungsorte",
+     "from": [
+      [
+       19505376,
+       "LOT-1",
+       [],
+       null
+      ]
+     ]
+    }
+   ]
+  },
+  "result_derived_lot_facts": 1,
+  "cls_auto": "unnumbered"
+ },
+ {
+  "tender_id": 6082428,
+  "can_notice_id": 19757497,
+  "versions": [
+   19588854,
+   19757497
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "19588854": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2017-12-16"
+   },
+   "19757497": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2018-04-11"
+   }
+  },
+  "lot_publishing_notices": [
+   19588854,
+   19757497
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19588854": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "19757497": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "19588854": {
+    "LOT-1": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 1 (Załącznik B1).",
+    "LOT-2": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 2.",
+    "LOT-3": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 3."
+   },
+   "19757497": {
+    "LOT-1": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 1 (Załącznik B1).",
+    "LOT-2": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 2.",
+    "LOT-3": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 3."
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 1 (Załącznik B1).",
+    "title_from": [
+     19588854,
+     19757497
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19588854": [
+      "1"
+     ],
+     "19757497": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19588854": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 1 (Załącznik B1).",
+     "19757497": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 1 (Załącznik B1)."
+    }
+   },
+   "LOT-2": {
+    "title": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 2.",
+    "title_from": [
+     19588854,
+     19757497
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19588854": [
+      "2"
+     ],
+     "19757497": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19588854": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 2.",
+     "19757497": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 2."
+    }
+   },
+   "LOT-3": {
+    "title": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 3.",
+    "title_from": [
+     19588854,
+     19757497
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19588854": [
+      "3"
+     ],
+     "19757497": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19588854": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 3.",
+     "19757497": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu komputerowego i oprogramowania dla Politechniki Poznańskiej z podziałem na części: Pakiet nr 3."
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 19757497,
+    "key": "RES-1",
+    "printed": [
+     "Pakiet nr 1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu ",
+    "winners": [
+     "Kombit Plus Sp. z o.o. Sp. k."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 19757497,
+    "key": "RES-2",
+    "printed": [
+     "Pakiet nr 2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu ",
+    "winners": [
+     "VOL System Sp. z o.o."
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 19757497,
+    "key": "RES-3",
+    "printed": [
+     "Pakiet nr 3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-3"
+    ],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": "Przedmiotem zamówienia jest dostawa fabrycznie nowego specjalistycznego sprzętu ",
+    "winners": [
+     "VOL System Sp. z o.o."
+    ],
+    "verdict": "null"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 3,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 38,
+   "ok": 38,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 0,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6171104,
+  "can_notice_id": 20060746,
+  "versions": [
+   19772862,
+   20060746
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "19772862": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2018-04-06"
+   },
+   "20060746": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2018-10-06"
+   }
+  },
+  "lot_publishing_notices": [
+   19772862,
+   20060746
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "19772862": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   },
+   "20060746": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ]
+   }
+  },
+  "titles": {
+   "19772862": {
+    "LOT-1": "Secteur NORD",
+    "LOT-2": "Secteur centre",
+    "LOT-3": "Secteur sud"
+   },
+   "20060746": {
+    "LOT-1": "Secteur Nord",
+    "LOT-2": "Secteur Centre",
+    "LOT-3": "Secteur SUD"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Secteur Nord",
+    "title_from": [
+     19772862,
+     20060746
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19772862": [
+      "1"
+     ],
+     "20060746": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19772862": "Secteur NORD",
+     "20060746": "Secteur Nord"
+    }
+   },
+   "LOT-2": {
+    "title": "Secteur Centre",
+    "title_from": [
+     19772862,
+     20060746
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19772862": [
+      "2"
+     ],
+     "20060746": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19772862": "Secteur centre",
+     "20060746": "Secteur Centre"
+    }
+   },
+   "LOT-3": {
+    "title": "Secteur SUD",
+    "title_from": [
+     19772862,
+     20060746
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "19772862": [
+      "3"
+     ],
+     "20060746": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "19772862": "Secteur sud",
+     "20060746": "Secteur SUD"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20060746,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Secteur Nord",
+    "block_title": "Secteur Nord",
+    "winners": [
+     "Colas Martinique SAS"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20060746,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Secteur Centre",
+    "block_title": "Secteur centre",
+    "winners": [
+     "Colas Martinique SAS"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20060746,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-3"
+    ],
+    "tender_lot_identity_number": "3",
+    "tender_lot_title": "Secteur SUD",
+    "block_title": "Secteur SUD",
+    "winners": [
+     "Colas Martinique SAS"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 3,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 15,
+   "ok": 15,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 3,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6395046,
+  "can_notice_id": 20356321,
+  "versions": [
+   20208728,
+   20356321
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "20208728": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2019-01-10"
+   },
+   "20356321": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2019-04-09"
+   }
+  },
+  "lot_publishing_notices": [
+   20208728,
+   20356321
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20208728": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "20356321": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "20208728": {
+    "LOT-1": "Gardiennage",
+    "LOT-2": "Enlèvement, transport et traitement"
+   },
+   "20356321": {
+    "LOT-1": "Gardiennage",
+    "LOT-2": "Enlèvement, transport et traitement"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Gardiennage",
+    "title_from": [
+     20208728,
+     20356321
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20208728": [
+      "1"
+     ],
+     "20356321": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20208728": "Gardiennage",
+     "20356321": "Gardiennage"
+    }
+   },
+   "LOT-2": {
+    "title": "Enlèvement, transport et traitement",
+    "title_from": [
+     20208728,
+     20356321
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20208728": [
+      "2"
+     ],
+     "20356321": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20208728": "Enlèvement, transport et traitement",
+     "20356321": "Enlèvement, transport et traitement"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20356321,
+    "key": "RES-1",
+    "printed": [
+     "01"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Gardiennage",
+    "block_title": "Gardiennage",
+    "winners": [
+     "Trialp"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20356321,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Enlèvement, transport et traitement",
+    "block_title": "Enlèvement, transport et traitement",
+    "winners": [
+     "Marcelpoil SAS",
+     "Brior'd'ures SARL"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 14,
+   "ok": 14,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 3,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6439142,
+  "can_notice_id": 20675983,
+  "versions": [
+   20295647,
+   20332227,
+   20675983
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "20295647": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2019-03-05"
+   },
+   "20332227": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2019-03-22"
+   },
+   "20675983": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2019-10-09"
+   }
+  },
+  "lot_publishing_notices": [
+   20295647,
+   20675983
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20295647": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ],
+    "LOT-18": [
+     "18"
+    ],
+    "LOT-19": [
+     "19"
+    ],
+    "LOT-20": [
+     "20"
+    ],
+    "LOT-21": [
+     "21"
+    ],
+    "LOT-22": [
+     "22"
+    ]
+   },
+   "20675983": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ],
+    "LOT-18": [
+     "18"
+    ],
+    "LOT-19": [
+     "19"
+    ],
+    "LOT-20": [
+     "20"
+    ],
+    "LOT-21": [
+     "21"
+    ],
+    "LOT-22": [
+     "22"
+    ]
+   }
+  },
+  "titles": {
+   "20295647": {
+    "LOT-1": "Translation from Bulgarian into Polish",
+    "LOT-2": "Translation from Czech into Polish",
+    "LOT-3": "Translation from Danish into Polish",
+    "LOT-4": "Translation from German into Polish",
+    "LOT-5": "Translation from Greek into Polish",
+    "LOT-6": "Translation from English into Polish",
+    "LOT-7": "Translation from Spanish into Polish",
+    "LOT-8": "Translation from Estonian into Polish",
+    "LOT-9": "Translation from Finnish into Polish",
+    "LOT-10": "Translation from French into Polish",
+    "LOT-11": "Translation from Croatian into Polish",
+    "LOT-12": "Translation from Hungarian into Polish",
+    "LOT-13": "Translation from Italian into Polish",
+    "LOT-14": "Translation from Lithuanian into Polish",
+    "LOT-15": "Translation from Latvian into Polish",
+    "LOT-16": "Translation from Maltese into Polish",
+    "LOT-17": "Translation from Dutch into Polish",
+    "LOT-18": "Translation from Portuguese into Polish",
+    "LOT-19": "Translation from Romanian into Polish",
+    "LOT-20": "Translation from Slovak into Polish",
+    "LOT-21": "Translation from Slovenian into Polish",
+    "LOT-22": "Translation from Swedish into Polish"
+   },
+   "20675983": {
+    "LOT-1": "Translation from Bulgarian into Polish",
+    "LOT-2": "Translation from Czech into Polish",
+    "LOT-3": "Translation from Danish into Polish",
+    "LOT-4": "Translation from German into Polish",
+    "LOT-5": "Translation from Greek into Polish",
+    "LOT-6": "Translation from English into Polish",
+    "LOT-7": "Translation from Spanish into Polish",
+    "LOT-8": "Translation from Estonian into Polish",
+    "LOT-9": "Translation from Finnish into Polish",
+    "LOT-10": "Translation from French into Polish",
+    "LOT-11": "Translation from Croatian into Polish",
+    "LOT-12": "Translation from Hungarian into Polish",
+    "LOT-13": "Translation from Italian into Polish",
+    "LOT-14": "Translation from Lithuanian into Polish",
+    "LOT-15": "Translation from Latvian into Polish",
+    "LOT-16": "Translation from Maltese into Polish",
+    "LOT-17": "Translation from Dutch into Polish",
+    "LOT-18": "Translation from Portuguese into Polish",
+    "LOT-19": "Translation from Romanian into Polish",
+    "LOT-20": "Translation from Slovak into Polish",
+    "LOT-21": "Translation from Slovenian into Polish",
+    "LOT-22": "Translation from Swedish into Polish"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Translation from Bulgarian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "1"
+     ],
+     "20675983": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Bulgarian into Polish",
+     "20675983": "Translation from Bulgarian into Polish"
+    }
+   },
+   "LOT-10": {
+    "title": "Translation from French into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "10",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "10"
+     ],
+     "20675983": [
+      "10"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from French into Polish",
+     "20675983": "Translation from French into Polish"
+    }
+   },
+   "LOT-11": {
+    "title": "Translation from Croatian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "11",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "11"
+     ],
+     "20675983": [
+      "11"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Croatian into Polish",
+     "20675983": "Translation from Croatian into Polish"
+    }
+   },
+   "LOT-12": {
+    "title": "Translation from Hungarian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "12",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "12"
+     ],
+     "20675983": [
+      "12"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Hungarian into Polish",
+     "20675983": "Translation from Hungarian into Polish"
+    }
+   },
+   "LOT-13": {
+    "title": "Translation from Italian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "13",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "13"
+     ],
+     "20675983": [
+      "13"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Italian into Polish",
+     "20675983": "Translation from Italian into Polish"
+    }
+   },
+   "LOT-14": {
+    "title": "Translation from Lithuanian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "14",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "14"
+     ],
+     "20675983": [
+      "14"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Lithuanian into Polish",
+     "20675983": "Translation from Lithuanian into Polish"
+    }
+   },
+   "LOT-15": {
+    "title": "Translation from Latvian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "15",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "15"
+     ],
+     "20675983": [
+      "15"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Latvian into Polish",
+     "20675983": "Translation from Latvian into Polish"
+    }
+   },
+   "LOT-16": {
+    "title": "Translation from Maltese into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "16",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "16"
+     ],
+     "20675983": [
+      "16"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Maltese into Polish",
+     "20675983": "Translation from Maltese into Polish"
+    }
+   },
+   "LOT-17": {
+    "title": "Translation from Dutch into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "17",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "17"
+     ],
+     "20675983": [
+      "17"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Dutch into Polish",
+     "20675983": "Translation from Dutch into Polish"
+    }
+   },
+   "LOT-18": {
+    "title": "Translation from Portuguese into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "18",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "18"
+     ],
+     "20675983": [
+      "18"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Portuguese into Polish",
+     "20675983": "Translation from Portuguese into Polish"
+    }
+   },
+   "LOT-19": {
+    "title": "Translation from Romanian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "19",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "19"
+     ],
+     "20675983": [
+      "19"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Romanian into Polish",
+     "20675983": "Translation from Romanian into Polish"
+    }
+   },
+   "LOT-2": {
+    "title": "Translation from Czech into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "2"
+     ],
+     "20675983": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Czech into Polish",
+     "20675983": "Translation from Czech into Polish"
+    }
+   },
+   "LOT-20": {
+    "title": "Translation from Slovak into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "20",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "20"
+     ],
+     "20675983": [
+      "20"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Slovak into Polish",
+     "20675983": "Translation from Slovak into Polish"
+    }
+   },
+   "LOT-21": {
+    "title": "Translation from Slovenian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "21",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "21"
+     ],
+     "20675983": [
+      "21"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Slovenian into Polish",
+     "20675983": "Translation from Slovenian into Polish"
+    }
+   },
+   "LOT-22": {
+    "title": "Translation from Swedish into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "22",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "22"
+     ],
+     "20675983": [
+      "22"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Swedish into Polish",
+     "20675983": "Translation from Swedish into Polish"
+    }
+   },
+   "LOT-3": {
+    "title": "Translation from Danish into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "3"
+     ],
+     "20675983": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Danish into Polish",
+     "20675983": "Translation from Danish into Polish"
+    }
+   },
+   "LOT-4": {
+    "title": "Translation from German into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "4",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "4"
+     ],
+     "20675983": [
+      "4"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from German into Polish",
+     "20675983": "Translation from German into Polish"
+    }
+   },
+   "LOT-5": {
+    "title": "Translation from Greek into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "5",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "5"
+     ],
+     "20675983": [
+      "5"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Greek into Polish",
+     "20675983": "Translation from Greek into Polish"
+    }
+   },
+   "LOT-6": {
+    "title": "Translation from English into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "6",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "6"
+     ],
+     "20675983": [
+      "6"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from English into Polish",
+     "20675983": "Translation from English into Polish"
+    }
+   },
+   "LOT-7": {
+    "title": "Translation from Spanish into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "7",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "7"
+     ],
+     "20675983": [
+      "7"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Spanish into Polish",
+     "20675983": "Translation from Spanish into Polish"
+    }
+   },
+   "LOT-8": {
+    "title": "Translation from Estonian into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "8",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "8"
+     ],
+     "20675983": [
+      "8"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Estonian into Polish",
+     "20675983": "Translation from Estonian into Polish"
+    }
+   },
+   "LOT-9": {
+    "title": "Translation from Finnish into Polish",
+    "title_from": [
+     20295647,
+     20675983
+    ],
+    "number": "9",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20295647": [
+      "9"
+     ],
+     "20675983": [
+      "9"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20295647": "Translation from Finnish into Polish",
+     "20675983": "Translation from Finnish into Polish"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20675983,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Translation from Bulgarian into Polish",
+    "block_title": "Translation from Bulgarian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-10",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-10"
+    ],
+    "tender_lot_identity_number": "10",
+    "tender_lot_title": "Translation from French into Polish",
+    "block_title": "Translation from French into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-11",
+    "printed": [
+     "11"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-11",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-11"
+    ],
+    "tender_lot_identity_number": "11",
+    "tender_lot_title": "Translation from Croatian into Polish",
+    "block_title": "Translation from Croatian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-12",
+    "printed": [
+     "12"
+    ],
+    "item": [
+     "12"
+    ],
+    "served_lot": "LOT-12",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-12"
+    ],
+    "tender_lot_identity_number": "12",
+    "tender_lot_title": "Translation from Hungarian into Polish",
+    "block_title": "Translation from Hungarian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-13",
+    "printed": [
+     "13"
+    ],
+    "item": [
+     "13"
+    ],
+    "served_lot": "LOT-13",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-13"
+    ],
+    "tender_lot_identity_number": "13",
+    "tender_lot_title": "Translation from Italian into Polish",
+    "block_title": "Translation from Italian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-14",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "14"
+    ],
+    "served_lot": "LOT-14",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-14"
+    ],
+    "tender_lot_identity_number": "14",
+    "tender_lot_title": "Translation from Lithuanian into Polish",
+    "block_title": "Translation from Lithuanian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-15",
+    "printed": [
+     "15"
+    ],
+    "item": [
+     "15"
+    ],
+    "served_lot": "LOT-15",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-15"
+    ],
+    "tender_lot_identity_number": "15",
+    "tender_lot_title": "Translation from Latvian into Polish",
+    "block_title": "Translation from Latvian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-16",
+    "printed": [
+     "16"
+    ],
+    "item": [
+     "16"
+    ],
+    "served_lot": "LOT-16",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-16"
+    ],
+    "tender_lot_identity_number": "16",
+    "tender_lot_title": "Translation from Maltese into Polish",
+    "block_title": "Translation from Maltese into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-17",
+    "printed": [
+     "17"
+    ],
+    "item": [
+     "17"
+    ],
+    "served_lot": "LOT-17",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-17"
+    ],
+    "tender_lot_identity_number": "17",
+    "tender_lot_title": "Translation from Dutch into Polish",
+    "block_title": "Translation from Dutch into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-18",
+    "printed": [
+     "18"
+    ],
+    "item": [
+     "18"
+    ],
+    "served_lot": "LOT-18",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-18"
+    ],
+    "tender_lot_identity_number": "18",
+    "tender_lot_title": "Translation from Portuguese into Polish",
+    "block_title": "Translation from Portuguese into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-19",
+    "printed": [
+     "19"
+    ],
+    "item": [
+     "19"
+    ],
+    "served_lot": "LOT-19",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-19"
+    ],
+    "tender_lot_identity_number": "19",
+    "tender_lot_title": "Translation from Romanian into Polish",
+    "block_title": "Translation from Romanian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Translation from Czech into Polish",
+    "block_title": "Translation from Czech into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-20",
+    "printed": [
+     "20"
+    ],
+    "item": [
+     "20"
+    ],
+    "served_lot": "LOT-20",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-20"
+    ],
+    "tender_lot_identity_number": "20",
+    "tender_lot_title": "Translation from Slovak into Polish",
+    "block_title": "Translation from Slovak into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-21",
+    "printed": [
+     "21"
+    ],
+    "item": [
+     "21"
+    ],
+    "served_lot": "LOT-21",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-21"
+    ],
+    "tender_lot_identity_number": "21",
+    "tender_lot_title": "Translation from Slovenian into Polish",
+    "block_title": "Translation from Slovenian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-22",
+    "printed": [
+     "22"
+    ],
+    "item": [
+     "22"
+    ],
+    "served_lot": "LOT-22",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-22"
+    ],
+    "tender_lot_identity_number": "22",
+    "tender_lot_title": "Translation from Swedish into Polish",
+    "block_title": "Translation from Swedish into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-3"
+    ],
+    "tender_lot_identity_number": "3",
+    "tender_lot_title": "Translation from Danish into Polish",
+    "block_title": "Translation from Danish into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-4"
+    ],
+    "tender_lot_identity_number": "4",
+    "tender_lot_title": "Translation from German into Polish",
+    "block_title": "Translation from German into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-5"
+    ],
+    "tender_lot_identity_number": "5",
+    "tender_lot_title": "Translation from Greek into Polish",
+    "block_title": "Translation from Greek into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-6"
+    ],
+    "tender_lot_identity_number": "6",
+    "tender_lot_title": "Translation from English into Polish",
+    "block_title": "Translation from English into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-7"
+    ],
+    "tender_lot_identity_number": "7",
+    "tender_lot_title": "Translation from Spanish into Polish",
+    "block_title": "Translation from Spanish into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-8"
+    ],
+    "tender_lot_identity_number": "8",
+    "tender_lot_title": "Translation from Estonian into Polish",
+    "block_title": "Translation from Estonian into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20675983,
+    "key": "RES-9",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-9"
+    ],
+    "tender_lot_identity_number": "9",
+    "tender_lot_title": "Translation from Finnish into Polish",
+    "block_title": "Translation from Finnish into Polish",
+    "winners": [
+     "Skrivanek s.r.o."
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 22,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 1122,
+   "ok": 1122,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 22,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6683210,
+  "can_notice_id": 20935863,
+  "versions": [
+   20808738,
+   20780248,
+   20935863
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "20808738": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2019-12-17"
+   },
+   "20780248": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2019-12-20"
+   },
+   "20935863": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2020-03-09"
+   }
+  },
+  "lot_publishing_notices": [
+   20808738,
+   20935863
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20808738": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "20935863": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "20808738": {
+    "LOT-1": "Téléphonie fixe des bâtiments des services du département",
+    "LOT-2": "Téléphonie fixe des collèges"
+   },
+   "20935863": {
+    "LOT-1": "Téléphonie fixe des bâtiments des services du département",
+    "LOT-2": "Téléphonie fixe des collèges"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Téléphonie fixe des bâtiments des services du département",
+    "title_from": [
+     20808738,
+     20935863
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20808738": [
+      "1"
+     ],
+     "20935863": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20808738": "Téléphonie fixe des bâtiments des services du département",
+     "20935863": "Téléphonie fixe des bâtiments des services du département"
+    }
+   },
+   "LOT-2": {
+    "title": "Téléphonie fixe des collèges",
+    "title_from": [
+     20808738,
+     20935863
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20808738": [
+      "2"
+     ],
+     "20935863": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20808738": "Téléphonie fixe des collèges",
+     "20935863": "Téléphonie fixe des collèges"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 20935863,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Téléphonie fixe des bâtiments des services du département",
+    "block_title": "Téléphonie fixe des bâtiments des services du département",
+    "winners": [
+     "SFR business"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 20935863,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Téléphonie fixe des collèges",
+    "block_title": "Téléphonie fixe des collèges",
+    "winners": [
+     "SFR business"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 28,
+   "ok": 28,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 2,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6565589,
+  "can_notice_id": 21200405,
+  "versions": [
+   20541888,
+   21200405
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "20541888": {
+    "form": [
+     "F05"
+    ],
+    "pub": "2019-07-25"
+   },
+   "21200405": {
+    "form": [
+     "F06"
+    ],
+    "pub": "2020-08-17"
+   }
+  },
+  "lot_publishing_notices": [
+   20541888,
+   21200405
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "20541888": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ]
+   },
+   "21200405": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ]
+   }
+  },
+  "titles": {
+   "20541888": {
+    "LOT-1": "Polizza Responsabilità Civile verso terzi e prestatori d’opera — CIG 798247853B",
+    "LOT-2": "Polizza RC tecnici, commissari gara, legali — CIG 7982484A2D",
+    "LOT-3": "Polizza Patrocinio legale — CIG 7982491FF2",
+    "LOT-4": "Polizza infortuni dirigenti — CIG 79824985BC",
+    "LOT-5": "Polizza vita dirigenti — CIG 7982505B81",
+    "LOT-6": "Polizza RC inquinamento graduale — CIG 798251756A",
+    "LOT-7": "Polizza All risks — primary — CIG 79825207E3",
+    "LOT-8": "Polizza All risks — I rischio — CIG 7982527DA8",
+    "LOT-9": "Polizza R.C. amm. contabile/amministratori, sindaci, dirigenti e procuratori — D&O — CIG 79825310F9",
+    "LOT-10": "Polizza Assicurazioni Cyber — CIG 79825375EB"
+   },
+   "21200405": {
+    "LOT-1": "Lotto n. 1: polizza responsabilità civile verso terzi e prestatori d’opera — CIG: 798247853B",
+    "LOT-2": "Lotto n. 2: polizza RC tecnici, commissari gara, legali — CIG: 7982484A2D",
+    "LOT-3": "Lotto n. 3: polizza patrocinio legale — CIG: 7982491FF2",
+    "LOT-4": "Lotto n. 4: polizza infortuni dirigenti — CIG: 79824985BC",
+    "LOT-5": "Lotto n. 5: polizza vita dirigenti — CIG: 7982505B81",
+    "LOT-6": "Lotto n. 6: polizza RC inquinamento graduale — CIG: 798251756A",
+    "LOT-7": "Lotto n. 7: polizza all risks — primary — CIG: 79825207E3",
+    "LOT-8": "Lotto n. 8: polizza all risks — I rischio — CIG: 7982527DA8",
+    "LOT-9": "Lotto n. 9: polizza RC amm. contabile/amministratori, sindaci, dirigenti e procuratori — D&O — CIG: 79825310F9",
+    "LOT-10": "Lotto n. 10: polizza assicurazioni cyber — CIG: 79825375EB"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lotto n. 1: polizza responsabilità civile verso terzi e prestatori d’opera — CIG: 798247853B",
+    "title_from": [
+     21200405
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "1"
+     ],
+     "21200405": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza Responsabilità Civile verso terzi e prestatori d’opera — CIG 798247853B",
+     "21200405": "Lotto n. 1: polizza responsabilità civile verso terzi e prestatori d’opera — CIG: 798247853B"
+    }
+   },
+   "LOT-10": {
+    "title": "Lotto n. 10: polizza assicurazioni cyber — CIG: 79825375EB",
+    "title_from": [
+     21200405
+    ],
+    "number": "10",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "10"
+     ],
+     "21200405": [
+      "10"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza Assicurazioni Cyber — CIG 79825375EB",
+     "21200405": "Lotto n. 10: polizza assicurazioni cyber — CIG: 79825375EB"
+    }
+   },
+   "LOT-2": {
+    "title": "Lotto n. 2: polizza RC tecnici, commissari gara, legali — CIG: 7982484A2D",
+    "title_from": [
+     21200405
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "2"
+     ],
+     "21200405": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza RC tecnici, commissari gara, legali — CIG 7982484A2D",
+     "21200405": "Lotto n. 2: polizza RC tecnici, commissari gara, legali — CIG: 7982484A2D"
+    }
+   },
+   "LOT-3": {
+    "title": "Lotto n. 3: polizza patrocinio legale — CIG: 7982491FF2",
+    "title_from": [
+     21200405
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "3"
+     ],
+     "21200405": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza Patrocinio legale — CIG 7982491FF2",
+     "21200405": "Lotto n. 3: polizza patrocinio legale — CIG: 7982491FF2"
+    }
+   },
+   "LOT-4": {
+    "title": "Lotto n. 4: polizza infortuni dirigenti — CIG: 79824985BC",
+    "title_from": [
+     21200405
+    ],
+    "number": "4",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "4"
+     ],
+     "21200405": [
+      "4"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza infortuni dirigenti — CIG 79824985BC",
+     "21200405": "Lotto n. 4: polizza infortuni dirigenti — CIG: 79824985BC"
+    }
+   },
+   "LOT-5": {
+    "title": "Lotto n. 5: polizza vita dirigenti — CIG: 7982505B81",
+    "title_from": [
+     21200405
+    ],
+    "number": "5",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "5"
+     ],
+     "21200405": [
+      "5"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza vita dirigenti — CIG 7982505B81",
+     "21200405": "Lotto n. 5: polizza vita dirigenti — CIG: 7982505B81"
+    }
+   },
+   "LOT-6": {
+    "title": "Lotto n. 6: polizza RC inquinamento graduale — CIG: 798251756A",
+    "title_from": [
+     21200405
+    ],
+    "number": "6",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "6"
+     ],
+     "21200405": [
+      "6"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza RC inquinamento graduale — CIG 798251756A",
+     "21200405": "Lotto n. 6: polizza RC inquinamento graduale — CIG: 798251756A"
+    }
+   },
+   "LOT-7": {
+    "title": "Lotto n. 7: polizza all risks — primary — CIG: 79825207E3",
+    "title_from": [
+     21200405
+    ],
+    "number": "7",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "7"
+     ],
+     "21200405": [
+      "7"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza All risks — primary — CIG 79825207E3",
+     "21200405": "Lotto n. 7: polizza all risks — primary — CIG: 79825207E3"
+    }
+   },
+   "LOT-8": {
+    "title": "Lotto n. 8: polizza all risks — I rischio — CIG: 7982527DA8",
+    "title_from": [
+     21200405
+    ],
+    "number": "8",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "8"
+     ],
+     "21200405": [
+      "8"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza All risks — I rischio — CIG 7982527DA8",
+     "21200405": "Lotto n. 8: polizza all risks — I rischio — CIG: 7982527DA8"
+    }
+   },
+   "LOT-9": {
+    "title": "Lotto n. 9: polizza RC amm. contabile/amministratori, sindaci, dirigenti e procuratori — D&O — CIG: 79825310F9",
+    "title_from": [
+     21200405
+    ],
+    "number": "9",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "20541888": [
+      "9"
+     ],
+     "21200405": [
+      "9"
+     ]
+    },
+    "key_titles_by_notice": {
+     "20541888": "Polizza R.C. amm. contabile/amministratori, sindaci, dirigenti e procuratori — D&O — CIG 79825310F9",
+     "21200405": "Lotto n. 9: polizza RC amm. contabile/amministratori, sindaci, dirigenti e procuratori — D&O — CIG: 79825310F9"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21200405,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "clos-nw",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Lotto n. 1: polizza responsabilità civile verso terzi e prestatori d’opera — CIG",
+    "block_title": "Lotto n. 1: polizza responsabilità civile verso terzi e prestatori d’opera — CIG",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-10",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-10"
+    ],
+    "tender_lot_identity_number": "10",
+    "tender_lot_title": "Lotto n. 10: polizza assicurazioni cyber — CIG: 79825375EB",
+    "block_title": "Lotto n. 10: polizza assicurazioni cyber — CIG: 79825375EB",
+    "winners": [
+     "AIG Europe SA rappresentanza generale per l'Italia"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Lotto n. 2: polizza RC tecnici, commissari gara, legali — CIG: 7982484A2D",
+    "block_title": "Lotto n. 2: polizza RC tecnici, commissari gara, legali — CIG: 7982484A2D",
+    "winners": [
+     "Lloyd’s Insurance Company SA"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "clos-nw",
+    "own_notice_section_for_printed": [
+     "LOT-3"
+    ],
+    "tender_lot_identity_number": "3",
+    "tender_lot_title": "Lotto n. 3: polizza patrocinio legale — CIG: 7982491FF2",
+    "block_title": "Lotto n. 3: polizza patrocinio legale — CIG: 7982491FF2",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-4"
+    ],
+    "tender_lot_identity_number": "4",
+    "tender_lot_title": "Lotto n. 4: polizza infortuni dirigenti — CIG: 79824985BC",
+    "block_title": "Lotto n. 4: polizza infortuni dirigenti — CIG: 79824985BC",
+    "winners": [
+     "Groupama assicurazioni SpA"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-5"
+    ],
+    "tender_lot_identity_number": "5",
+    "tender_lot_title": "Lotto n. 5: polizza vita dirigenti — CIG: 7982505B81",
+    "block_title": "Lotto n. 5: polizza vita dirigenti — CIG: 7982505B81",
+    "winners": [
+     "Generali Italia SpA"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-6"
+    ],
+    "tender_lot_identity_number": "6",
+    "tender_lot_title": "Lotto n. 6: polizza RC inquinamento graduale — CIG: 798251756A",
+    "block_title": "Lotto n. 6: polizza RC inquinamento graduale — CIG: 798251756A",
+    "winners": [
+     "Chubb European SE Rappresentante per l’Italia SE"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-7"
+    ],
+    "tender_lot_identity_number": "7",
+    "tender_lot_title": "Lotto n. 7: polizza all risks — primary — CIG: 79825207E3",
+    "block_title": "Lotto n. 7: polizza all risks — primary — CIG: 79825207E3",
+    "winners": [
+     "Generali Italia SpA"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-8"
+    ],
+    "tender_lot_identity_number": "8",
+    "tender_lot_title": "Lotto n. 8: polizza all risks — I rischio — CIG: 7982527DA8",
+    "block_title": "Lotto n. 8: polizza all risks — I rischio — CIG: 7982527DA8",
+    "winners": [
+     "Generali Italia SpA"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21200405,
+    "key": "RES-9",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "decision": "clos-nw",
+    "own_notice_section_for_printed": [
+     "LOT-9"
+    ],
+    "tender_lot_identity_number": "9",
+    "tender_lot_title": "Lotto n. 9: polizza RC amm. contabile/amministratori, sindaci, dirigenti e procu",
+    "block_title": "Lotto n. 9: polizza RC amm. contabile/amministratori, sindaci, dirigenti e procu",
+    "winners": [],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 10,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 50,
+   "ok": 50,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 7,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 6860418,
+  "can_notice_id": 21493436,
+  "versions": [
+   21193818,
+   21222247,
+   21493436
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "21193818": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2020-08-12"
+   },
+   "21222247": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2020-08-31"
+   },
+   "21493436": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2021-01-25"
+   }
+  },
+  "lot_publishing_notices": [
+   21193818,
+   21493436
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21193818": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "21493436": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "21193818": {
+    "LOT-1": "Lote 1: kits genotipaje 11 Hla, genotipaje 8 Qpcr y tipaje Loci Hla",
+    "LOT-2": "Lote 2: kits secuenciación genes y exomas. Kits reactivos secuenciación alta y baja capacidad"
+   },
+   "21493436": {
+    "LOT-1": "Lote 1: kits genotipaje 11 Hla, genotipaje 8 Qpcr y tipaje Loci Hla",
+    "LOT-2": "Lote 2: kits secuenciación genes y exomas; kits reactivos secuenciación alta y baja capacidad"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Lote 1: kits genotipaje 11 Hla, genotipaje 8 Qpcr y tipaje Loci Hla",
+    "title_from": [
+     21193818,
+     21493436
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21193818": [
+      "1"
+     ],
+     "21493436": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21193818": "Lote 1: kits genotipaje 11 Hla, genotipaje 8 Qpcr y tipaje Loci Hla",
+     "21493436": "Lote 1: kits genotipaje 11 Hla, genotipaje 8 Qpcr y tipaje Loci Hla"
+    }
+   },
+   "LOT-2": {
+    "title": "Lote 2: kits secuenciación genes y exomas; kits reactivos secuenciación alta y baja capacidad",
+    "title_from": [
+     21193818,
+     21493436
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21193818": [
+      "2"
+     ],
+     "21493436": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21193818": "Lote 2: kits secuenciación genes y exomas. Kits reactivos secuenciación alta y baja capacidad",
+     "21493436": "Lote 2: kits secuenciación genes y exomas; kits reactivos secuenciación alta y baja capacidad"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21493436,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Lote 1: kits genotipaje 11 Hla, genotipaje 8 Qpcr y tipaje Loci Hla",
+    "block_title": "Lote 1: kits genotipaje 11 Hla, genotipaje 8 Qpcr y tipaje Loci Hla",
+    "winners": [
+     "Diagnóstica Longwood, S. L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21493436,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Lote 2: kits secuenciación genes y exomas; kits reactivos secuenciación alta y b",
+    "block_title": "Lote 2: kits secuenciación genes y exomas; kits reactivos secuenciación alta y b",
+    "winners": [
+     "Diagnóstica Longwood, S. L."
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 2,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7028780,
+  "can_notice_id": 21805579,
+  "versions": [
+   21608901,
+   21805579
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "21608901": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2021-03-15"
+   },
+   "21805579": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2021-07-02"
+   }
+  },
+  "lot_publishing_notices": [
+   21608901,
+   21805579
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21608901": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ]
+   },
+   "21805579": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ]
+   }
+  },
+  "titles": {
+   "21608901": {
+    "LOT-1": "Fauchage des accotements des voies secteurs Oisemont",
+    "LOT-2": "Fauchage des accotements des voies secteurs Hornoy-le-Bourg",
+    "LOT-3": "Fauchage des accotements des voies secteurs Poix-de-Picardie",
+    "LOT-4": "Fauchage des accotements des voies secteurs Molliens-Dreuil",
+    "LOT-5": "Fauchage des accotements des voies secteurs Conty",
+    "LOT-6": "Débroussaillage des accotement des voies du secteur de Oisemont",
+    "LOT-7": "Débroussaillage des accotement des voies du secteur de Hornoy-le-Bourg",
+    "LOT-8": "Débroussaillage des accotement des voies du secteur de Poix-de-Picardie",
+    "LOT-9": "Débroussaillage des accotement des voies du secteur de Molliens-Dreuil",
+    "LOT-10": "Fauchage et débroussaillage des accotements et zones d'accompagnement de la voie verte"
+   },
+   "21805579": {
+    "LOT-1": "Fauchage des accotements des voies secteurs Oisemont",
+    "LOT-2": "Fauchage des accotements des voies secteurs Hornoy-le-Bourg",
+    "LOT-3": "Fauchage des accotements des voies secteurs Poix-de-Picardie",
+    "LOT-4": "Fauchage des accotements des voies secteurs Molliens-Dreuil",
+    "LOT-5": "Fauchage des accotements des voies secteurs Conty",
+    "LOT-6": "Débroussaillage des accotement des voies du secteur de Oisemont",
+    "LOT-7": "Débroussaillage des accotement des voies du secteur de Hornoy-le-Bourg",
+    "LOT-8": "Débroussaillage des accotement des voies du secteur de Poix-de-Picardie",
+    "LOT-9": "Débroussaillage des accotement des voies du secteur de Molliens-Dreuil",
+    "LOT-10": "Fauchage et débroussaillage des accotements et zones d'accompagnement de la Voie Verte"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Fauchage des accotements des voies secteurs Oisemont",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "1"
+     ],
+     "21805579": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Fauchage des accotements des voies secteurs Oisemont",
+     "21805579": "Fauchage des accotements des voies secteurs Oisemont"
+    }
+   },
+   "LOT-10": {
+    "title": "Fauchage et débroussaillage des accotements et zones d'accompagnement de la Voie Verte",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "10",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "10"
+     ],
+     "21805579": [
+      "10"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Fauchage et débroussaillage des accotements et zones d'accompagnement de la voie verte",
+     "21805579": "Fauchage et débroussaillage des accotements et zones d'accompagnement de la Voie Verte"
+    }
+   },
+   "LOT-2": {
+    "title": "Fauchage des accotements des voies secteurs Hornoy-le-Bourg",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "2"
+     ],
+     "21805579": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Fauchage des accotements des voies secteurs Hornoy-le-Bourg",
+     "21805579": "Fauchage des accotements des voies secteurs Hornoy-le-Bourg"
+    }
+   },
+   "LOT-3": {
+    "title": "Fauchage des accotements des voies secteurs Poix-de-Picardie",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "3"
+     ],
+     "21805579": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Fauchage des accotements des voies secteurs Poix-de-Picardie",
+     "21805579": "Fauchage des accotements des voies secteurs Poix-de-Picardie"
+    }
+   },
+   "LOT-4": {
+    "title": "Fauchage des accotements des voies secteurs Molliens-Dreuil",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "4",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "4"
+     ],
+     "21805579": [
+      "4"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Fauchage des accotements des voies secteurs Molliens-Dreuil",
+     "21805579": "Fauchage des accotements des voies secteurs Molliens-Dreuil"
+    }
+   },
+   "LOT-5": {
+    "title": "Fauchage des accotements des voies secteurs Conty",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "5",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "5"
+     ],
+     "21805579": [
+      "5"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Fauchage des accotements des voies secteurs Conty",
+     "21805579": "Fauchage des accotements des voies secteurs Conty"
+    }
+   },
+   "LOT-6": {
+    "title": "Débroussaillage des accotement des voies du secteur de Oisemont",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "6",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "6"
+     ],
+     "21805579": [
+      "6"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Débroussaillage des accotement des voies du secteur de Oisemont",
+     "21805579": "Débroussaillage des accotement des voies du secteur de Oisemont"
+    }
+   },
+   "LOT-7": {
+    "title": "Débroussaillage des accotement des voies du secteur de Hornoy-le-Bourg",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "7",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "7"
+     ],
+     "21805579": [
+      "7"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Débroussaillage des accotement des voies du secteur de Hornoy-le-Bourg",
+     "21805579": "Débroussaillage des accotement des voies du secteur de Hornoy-le-Bourg"
+    }
+   },
+   "LOT-8": {
+    "title": "Débroussaillage des accotement des voies du secteur de Poix-de-Picardie",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "8",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "8"
+     ],
+     "21805579": [
+      "8"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Débroussaillage des accotement des voies du secteur de Poix-de-Picardie",
+     "21805579": "Débroussaillage des accotement des voies du secteur de Poix-de-Picardie"
+    }
+   },
+   "LOT-9": {
+    "title": "Débroussaillage des accotement des voies du secteur de Molliens-Dreuil",
+    "title_from": [
+     21608901,
+     21805579
+    ],
+    "number": "9",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21608901": [
+      "9"
+     ],
+     "21805579": [
+      "9"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21608901": "Débroussaillage des accotement des voies du secteur de Molliens-Dreuil",
+     "21805579": "Débroussaillage des accotement des voies du secteur de Molliens-Dreuil"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 21805579,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Fauchage des accotements des voies secteurs Oisemont",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [
+     "sarl terspective"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-10",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "decision": "clos-nw",
+    "own_notice_section_for_printed": [
+     "LOT-10"
+    ],
+    "tender_lot_identity_number": "10",
+    "tender_lot_title": "Fauchage et débroussaillage des accotements et zones d'accompagnement de la Voie",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Fauchage des accotements des voies secteurs Hornoy-le-Bourg",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [
+     "sarl terspective"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-3"
+    ],
+    "tender_lot_identity_number": "3",
+    "tender_lot_title": "Fauchage des accotements des voies secteurs Poix-de-Picardie",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [
+     "SARL Tespective"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-4"
+    ],
+    "tender_lot_identity_number": "4",
+    "tender_lot_title": "Fauchage des accotements des voies secteurs Molliens-Dreuil",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [
+     "sarl terspective"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-5"
+    ],
+    "tender_lot_identity_number": "5",
+    "tender_lot_title": "Fauchage des accotements des voies secteurs Conty",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [
+     "sarl terspective"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-6"
+    ],
+    "tender_lot_identity_number": "6",
+    "tender_lot_title": "Débroussaillage des accotement des voies du secteur de Oisemont",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [
+     "SARL Morgand"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-7"
+    ],
+    "tender_lot_identity_number": "7",
+    "tender_lot_title": "Débroussaillage des accotement des voies du secteur de Hornoy-le-Bourg",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [
+     "ETA Pruvot"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "clos-nw",
+    "own_notice_section_for_printed": [
+     "LOT-8"
+    ],
+    "tender_lot_identity_number": "8",
+    "tender_lot_title": "Débroussaillage des accotement des voies du secteur de Poix-de-Picardie",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 21805579,
+    "key": "RES-9",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "decision": "clos-nw",
+    "own_notice_section_for_printed": [
+     "LOT-9"
+    ],
+    "tender_lot_identity_number": "9",
+    "tender_lot_title": "Débroussaillage des accotement des voies du secteur de Molliens-Dreuil",
+    "block_title": "Entretien et fauchage des accotements de voiries et zones d'accompagnement",
+    "winners": [],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 10,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 50,
+   "ok": 50,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 7,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7116944,
+  "can_notice_id": 22148159,
+  "versions": [
+   21756528,
+   21847724,
+   22148159
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "21756528": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2021-06-22"
+   },
+   "21847724": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2021-07-19"
+   },
+   "22148159": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2022-01-11"
+   }
+  },
+  "lot_publishing_notices": [
+   21756528,
+   22148159
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "21756528": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ]
+   },
+   "22148159": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ]
+   }
+  },
+  "titles": {
+   "21756528": {
+    "LOT-1": "ARK- Architect Services",
+    "LOT-2": "LARK- Landscape Architect",
+    "LOT-3": "IARK - Interior Architect",
+    "LOT-4": "RIB - Consulting Civil Engineer",
+    "LOT-5": "RIBr - Consulting Fire Engineer",
+    "LOT-6": "RIAku - Consulting Acoustics Engineer",
+    "LOT-7": "RIV - Consulting HVAC and Sanitation Engineer",
+    "LOT-8": "RIE - Consulting Electrical Engineer",
+    "LOT-9": "RIM - Consulting Environmental Engineer",
+    "LOT-10": "Project and Engineering Design Management",
+    "LOT-11": "Construction Management",
+    "LOT-12": "Project planning group.",
+    "LOT-13": "SHA Administration"
+   },
+   "22148159": {
+    "LOT-1": "ARK- Architect Services",
+    "LOT-2": "LARK- Landscape Architect",
+    "LOT-3": "IARK - Interior Architect",
+    "LOT-4": "RIB - Consulting Civil Engineer",
+    "LOT-5": "RIBr -\tConsulting Fire Engineer",
+    "LOT-6": "RIAku - Consulting Acoustics Engineer",
+    "LOT-7": "RIV -\tConsulting HVAC and Sanitation Engineer",
+    "LOT-8": "RIE - Consulting Electrical Engineer",
+    "LOT-9": "RIM - Consulting Environmental Engineer",
+    "LOT-10": "Project and Engineering Design Management",
+    "LOT-11": "Construction Management",
+    "LOT-12": "Project planning group.",
+    "LOT-13": "SHA Administration"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "ARK- Architect Services",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "1"
+     ],
+     "22148159": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "ARK- Architect Services",
+     "22148159": "ARK- Architect Services"
+    }
+   },
+   "LOT-10": {
+    "title": "Project and Engineering Design Management",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "10",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "10"
+     ],
+     "22148159": [
+      "10"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "Project and Engineering Design Management",
+     "22148159": "Project and Engineering Design Management"
+    }
+   },
+   "LOT-11": {
+    "title": "Construction Management",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "11",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "11"
+     ],
+     "22148159": [
+      "11"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "Construction Management",
+     "22148159": "Construction Management"
+    }
+   },
+   "LOT-12": {
+    "title": "Project planning group.",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "12",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "12"
+     ],
+     "22148159": [
+      "12"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "Project planning group.",
+     "22148159": "Project planning group."
+    }
+   },
+   "LOT-13": {
+    "title": "SHA Administration",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "13",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "13"
+     ],
+     "22148159": [
+      "13"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "SHA Administration",
+     "22148159": "SHA Administration"
+    }
+   },
+   "LOT-2": {
+    "title": "LARK- Landscape Architect",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "2"
+     ],
+     "22148159": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "LARK- Landscape Architect",
+     "22148159": "LARK- Landscape Architect"
+    }
+   },
+   "LOT-3": {
+    "title": "IARK - Interior Architect",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "3"
+     ],
+     "22148159": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "IARK - Interior Architect",
+     "22148159": "IARK - Interior Architect"
+    }
+   },
+   "LOT-4": {
+    "title": "RIB - Consulting Civil Engineer",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "4",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "4"
+     ],
+     "22148159": [
+      "4"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "RIB - Consulting Civil Engineer",
+     "22148159": "RIB - Consulting Civil Engineer"
+    }
+   },
+   "LOT-5": {
+    "title": "RIBr -\tConsulting Fire Engineer",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "5",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "5"
+     ],
+     "22148159": [
+      "5"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "RIBr - Consulting Fire Engineer",
+     "22148159": "RIBr -\tConsulting Fire Engineer"
+    }
+   },
+   "LOT-6": {
+    "title": "RIAku - Consulting Acoustics Engineer",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "6",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "6"
+     ],
+     "22148159": [
+      "6"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "RIAku - Consulting Acoustics Engineer",
+     "22148159": "RIAku - Consulting Acoustics Engineer"
+    }
+   },
+   "LOT-7": {
+    "title": "RIV -\tConsulting HVAC and Sanitation Engineer",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "7",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "7"
+     ],
+     "22148159": [
+      "7"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "RIV - Consulting HVAC and Sanitation Engineer",
+     "22148159": "RIV -\tConsulting HVAC and Sanitation Engineer"
+    }
+   },
+   "LOT-8": {
+    "title": "RIE - Consulting Electrical Engineer",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "8",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "8"
+     ],
+     "22148159": [
+      "8"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "RIE - Consulting Electrical Engineer",
+     "22148159": "RIE - Consulting Electrical Engineer"
+    }
+   },
+   "LOT-9": {
+    "title": "RIM - Consulting Environmental Engineer",
+    "title_from": [
+     21756528,
+     22148159
+    ],
+    "number": "9",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21756528": [
+      "9"
+     ],
+     "22148159": [
+      "9"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21756528": "RIM - Consulting Environmental Engineer",
+     "22148159": "RIM - Consulting Environmental Engineer"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 22148159,
+    "key": "RES-1",
+    "printed": [
+     "IARK"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Fra Innersida"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-10",
+    "printed": [
+     "ARK"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Plot Arkitekter AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-11",
+    "printed": [
+     "PGR"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Slyngstad Aamlid Arkitekter AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-12",
+    "printed": [
+     "IARK"
+    ],
+    "item": [
+     "12"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Cadi As"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-13",
+    "printed": [
+     "IARK"
+    ],
+    "item": [
+     "13"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Plot Arkitekter AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-14",
+    "printed": [
+     "ARK"
+    ],
+    "item": [
+     "14"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Streken AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-15",
+    "printed": [
+     "RIB, PPL"
+    ],
+    "item": [
+     "15"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Dimensjon AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-16",
+    "printed": [
+     "PPL, BL, SHA"
+    ],
+    "item": [
+     "16"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Advansia AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-17",
+    "printed": [
+     "PGR"
+    ],
+    "item": [
+     "17"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Streken AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-18",
+    "printed": [
+     "IARK, PGR"
+    ],
+    "item": [
+     "18"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Per Knudsen Arkitektkontor AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-19",
+    "printed": [
+     "RIV"
+    ],
+    "item": [
+     "19"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Riksheim Consulting AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-2",
+    "printed": [
+     "ARK, LARK, IARK, RIB, RIBr, RIAKu, RIV, RIE, RIM, PPL, BL, PGR, SHA"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Norconsult AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-20",
+    "printed": [
+     "PPL, BL, SHA"
+    ],
+    "item": [
+     "20"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Novaform Bergen AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-21",
+    "printed": [
+     "ARK, LARK, IARK, RIB, RIV, RIE og PGR"
+    ],
+    "item": [
+     "21"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Asplan Viak AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-22",
+    "printed": [
+     "ARK, LARK, IARK, RIB, RIBr, RIAKu, RIV, RIE, RIM, PPL, BL, PGR, SHA"
+    ],
+    "item": [
+     "22"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "HR Prosjekt AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-23",
+    "printed": [
+     "ARK, IARK, RIB, PPL, BL og PGR"
+    ],
+    "item": [
+     "23"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "ART arkitekter og ingeniører AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-3",
+    "printed": [
+     "RIE"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Kvalsund Ingeniører AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-4",
+    "printed": [
+     "RIBr"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Firesafe as"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-5",
+    "printed": [
+     "ARK"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Slyngstad Aamlid Arkitekter AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-6",
+    "printed": [
+     "ARK, LARK, RIB, PPL, BL, PGR, SHA"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "NORDPLAN AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-7",
+    "printed": [
+     "PPL, BL, SHA"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "XPRO AS"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-8",
+    "printed": [
+     "RIB"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Tømmerdal Consult"
+    ],
+    "verdict": "null"
+   },
+   {
+    "notice": 22148159,
+    "key": "RES-9",
+    "printed": [
+     "RIB, RIBr, RIAKu, RIM, BL, PGR"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": null,
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [],
+    "tender_lot_identity_number": null,
+    "tender_lot_title": null,
+    "block_title": null,
+    "winners": [
+     "Multiconsult Norge AS"
+    ],
+    "verdict": "null"
+   }
+  ],
+  "results_total": 23,
+  "results_null": 23,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 149,
+   "ok": 149,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 0,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7112657,
+  "can_notice_id": 22462819,
+  "versions": [
+   21736179,
+   21809387,
+   21853373,
+   22462819
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "21736179": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2021-06-18"
+   },
+   "21809387": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2021-07-02"
+   },
+   "21853373": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2021-08-04"
+   },
+   "22462819": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2022-06-13"
+   }
+  },
+  "lot_publishing_notices": [
+   21736179,
+   21853373,
+   22462819
+  ],
+  "n_notices_with_lot_sections": 3,
+  "maps": {
+   "21736179": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ]
+   },
+   "21853373": {
+    "LOT-1": []
+   },
+   "22462819": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ]
+   }
+  },
+  "titles": {
+   "21736179": {
+    "LOT-1": "Servicios de soporte mantenimiento correctivo, evolutivo, adaptativo, evolutivo y perfectivo de las aplicaciones de procedimientos del Igape AXEP",
+    "LOT-2": "Servicios mantenimiento correctivo, evolutivo, adaptativo y perfectivo del sistema de gestión económico-financiera (SXEF)",
+    "LOT-3": "Servicios de implantación de un BPMS y desarrollo de aplicaciones",
+    "LOT-4": "Servicios de ingeniería de organización y modelado de procesos",
+    "LOT-5": "Servicios de implantación de sistemas de automatización avanzada e inteligencia artificial",
+    "LOT-6": "Oficina de sistemas",
+    "LOT-7": "Observatorio tecnológico y gestión del cambio"
+   },
+   "21853373": {
+    "LOT-1": null
+   },
+   "22462819": {
+    "LOT-1": "Servicios de soporte mantenimiento correctivo, evolutivo, adaptativo, evolutivo y perfectivo de las aplicaciones de procedimientos del Igape AXEP.",
+    "LOT-2": "Servicios mantenimiento correctivo, evolutivo, adaptativo y perfectivo del sistema de gestión económico-financiera (SXEF)",
+    "LOT-3": "Servicios de implantación de un BPMS y desa-rrollo de aplicaciones",
+    "LOT-4": "Servicios de ingeniería de organización y modelado de procesos",
+    "LOT-5": "Servicios de Implantación de sistemas de automatización avanzada e inteligencia artificial",
+    "LOT-6": "Oficina de Sistemas",
+    "LOT-7": "Observatorio tecnológico y gestión del cambio"
+   }
+  },
+  "unnumbered_sections": {
+   "21853373": [
+    "LOT-1"
+   ]
+  },
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Servicios de soporte mantenimiento correctivo, evolutivo, adaptativo, evolutivo y perfectivo de las aplicaciones de procedimientos del Igape AXEP.",
+    "title_from": [
+     21736179,
+     22462819
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21736179": [
+      "1"
+     ],
+     "21853373": [],
+     "22462819": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21736179": "Servicios de soporte mantenimiento correctivo, evolutivo, adaptativo, evolutivo y perfectivo de las aplicaciones de procedimientos del Igape AXEP",
+     "21853373": null,
+     "22462819": "Servicios de soporte mantenimiento correctivo, evolutivo, adaptativo, evolutivo y perfectivo de las aplicaciones de procedimientos del Igape AXEP."
+    }
+   },
+   "LOT-2": {
+    "title": "Servicios mantenimiento correctivo, evolutivo, adaptativo y perfectivo del sistema de gestión económico-financiera (SXEF)",
+    "title_from": [
+     21736179,
+     22462819
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21736179": [
+      "2"
+     ],
+     "22462819": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21736179": "Servicios mantenimiento correctivo, evolutivo, adaptativo y perfectivo del sistema de gestión económico-financiera (SXEF)",
+     "22462819": "Servicios mantenimiento correctivo, evolutivo, adaptativo y perfectivo del sistema de gestión económico-financiera (SXEF)"
+    }
+   },
+   "LOT-3": {
+    "title": "Servicios de implantación de un BPMS y desa-rrollo de aplicaciones",
+    "title_from": [
+     21736179,
+     22462819
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21736179": [
+      "3"
+     ],
+     "22462819": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21736179": "Servicios de implantación de un BPMS y desarrollo de aplicaciones",
+     "22462819": "Servicios de implantación de un BPMS y desa-rrollo de aplicaciones"
+    }
+   },
+   "LOT-4": {
+    "title": "Servicios de ingeniería de organización y modelado de procesos",
+    "title_from": [
+     21736179,
+     22462819
+    ],
+    "number": "4",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21736179": [
+      "4"
+     ],
+     "22462819": [
+      "4"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21736179": "Servicios de ingeniería de organización y modelado de procesos",
+     "22462819": "Servicios de ingeniería de organización y modelado de procesos"
+    }
+   },
+   "LOT-5": {
+    "title": "Servicios de Implantación de sistemas de automatización avanzada e inteligencia artificial",
+    "title_from": [
+     21736179,
+     22462819
+    ],
+    "number": "5",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21736179": [
+      "5"
+     ],
+     "22462819": [
+      "5"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21736179": "Servicios de implantación de sistemas de automatización avanzada e inteligencia artificial",
+     "22462819": "Servicios de Implantación de sistemas de automatización avanzada e inteligencia artificial"
+    }
+   },
+   "LOT-6": {
+    "title": "Oficina de Sistemas",
+    "title_from": [
+     21736179,
+     22462819
+    ],
+    "number": "6",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21736179": [
+      "6"
+     ],
+     "22462819": [
+      "6"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21736179": "Oficina de sistemas",
+     "22462819": "Oficina de Sistemas"
+    }
+   },
+   "LOT-7": {
+    "title": "Observatorio tecnológico y gestión del cambio",
+    "title_from": [
+     21736179,
+     22462819
+    ],
+    "number": "7",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "21736179": [
+      "7"
+     ],
+     "22462819": [
+      "7"
+     ]
+    },
+    "key_titles_by_notice": {
+     "21736179": "Observatorio tecnológico y gestión del cambio",
+     "22462819": "Observatorio tecnológico y gestión del cambio"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 22462819,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Servicios de soporte mantenimiento correctivo, evolutivo, adaptativo, evolutivo ",
+    "block_title": "Servicios de soporte mantenimiento correctivo, evolutivo, adaptativo, evolutivo ",
+    "winners": [
+     "Altia Consultores, S.A."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22462819,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Servicios mantenimiento correctivo, evolutivo, adaptativo y perfectivo del siste",
+    "block_title": "Servicios mantenimiento correctivo, evolutivo, adaptativo y perfectivo del siste",
+    "winners": [
+     "Nática, Sistemas de Información, S.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22462819,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-3"
+    ],
+    "tender_lot_identity_number": "3",
+    "tender_lot_title": "Servicios de implantación de un BPMS y desa-rrollo de aplicaciones",
+    "block_title": "Servicios de implantación de un BPMS y desarrollo de aplicaciones",
+    "winners": [
+     "Atos Spain, S.A."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22462819,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-4"
+    ],
+    "tender_lot_identity_number": "4",
+    "tender_lot_title": "Servicios de ingeniería de organización y modelado de procesos",
+    "block_title": "Servicios de ingeniería de organización y mode-lado de procesos",
+    "winners": [
+     "IMATIA INNOVATION, S.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22462819,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-5"
+    ],
+    "tender_lot_identity_number": "5",
+    "tender_lot_title": "Servicios de Implantación de sistemas de automatización avanzada e inteligencia ",
+    "block_title": "Servicios de Implantación de sistemas de automatización avanzada e inteligencia ",
+    "winners": [
+     "SDG Consulting España S.A."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22462819,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-6"
+    ],
+    "tender_lot_identity_number": "6",
+    "tender_lot_title": "Oficina de Sistemas",
+    "block_title": "Oficina de Sistemas",
+    "winners": [
+     "Aldaba Servicios Profesionales, S.L."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22462819,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-7"
+    ],
+    "tender_lot_identity_number": "7",
+    "tender_lot_title": "Observatorio tecnológico y gestión del cambio",
+    "block_title": "Observatorio tecnológico y gestión del cambio",
+    "winners": [
+     "IZERTIS, S.A."
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 7,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 35,
+   "ok": 35,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 7,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7366473,
+  "can_notice_id": 22862381,
+  "versions": [
+   22352448,
+   22415586,
+   22862381
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "22352448": {
+    "form": [
+     "F02"
+    ],
+    "pub": "2022-04-20"
+   },
+   "22415586": {
+    "form": [
+     "F14"
+    ],
+    "pub": "2022-05-04"
+   },
+   "22862381": {
+    "form": [
+     "F03"
+    ],
+    "pub": "2022-12-12"
+   }
+  },
+  "lot_publishing_notices": [
+   22352448,
+   22862381
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "22352448": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ],
+    "LOT-18": [
+     "18"
+    ],
+    "LOT-19": [
+     "19"
+    ],
+    "LOT-20": [
+     "20"
+    ],
+    "LOT-21": [
+     "21"
+    ],
+    "LOT-22": [
+     "22"
+    ],
+    "LOT-23": [
+     "23"
+    ],
+    "LOT-24": [
+     "24"
+    ],
+    "LOT-25": [
+     "25"
+    ],
+    "LOT-26": [
+     "26"
+    ],
+    "LOT-27": [
+     "27"
+    ],
+    "LOT-28": [
+     "28"
+    ],
+    "LOT-29": [
+     "29"
+    ],
+    "LOT-30": [
+     "30"
+    ]
+   },
+   "22862381": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ],
+    "LOT-5": [
+     "5"
+    ],
+    "LOT-6": [
+     "6"
+    ],
+    "LOT-7": [
+     "7"
+    ],
+    "LOT-8": [
+     "8"
+    ],
+    "LOT-9": [
+     "9"
+    ],
+    "LOT-10": [
+     "10"
+    ],
+    "LOT-11": [
+     "11"
+    ],
+    "LOT-12": [
+     "12"
+    ],
+    "LOT-13": [
+     "13"
+    ],
+    "LOT-14": [
+     "14"
+    ],
+    "LOT-15": [
+     "15"
+    ],
+    "LOT-16": [
+     "16"
+    ],
+    "LOT-17": [
+     "17"
+    ],
+    "LOT-18": [
+     "18"
+    ],
+    "LOT-19": [
+     "19"
+    ],
+    "LOT-20": [
+     "20"
+    ],
+    "LOT-21": [
+     "21"
+    ],
+    "LOT-22": [
+     "22"
+    ],
+    "LOT-23": [
+     "23"
+    ],
+    "LOT-24": [
+     "24"
+    ],
+    "LOT-25": [
+     "25"
+    ],
+    "LOT-26": [
+     "26"
+    ],
+    "LOT-27": [
+     "27"
+    ],
+    "LOT-28": [
+     "28"
+    ],
+    "LOT-29": [
+     "29"
+    ],
+    "LOT-30": [
+     "30"
+    ]
+   }
+  },
+  "titles": {
+   "22352448": {
+    "LOT-1": "Pakiet 1",
+    "LOT-2": "Pakiet 2",
+    "LOT-3": "Pakiet 3",
+    "LOT-4": "Pakiet 4",
+    "LOT-5": "Pakiet 5",
+    "LOT-6": "Pakiet 6",
+    "LOT-7": "Pakiet 7",
+    "LOT-8": "Pakiet 8",
+    "LOT-9": "Pakiet 9",
+    "LOT-10": "Pakiet 10",
+    "LOT-11": "Pakiet 11",
+    "LOT-12": "Pakiet 12",
+    "LOT-13": "Pakiet 13",
+    "LOT-14": "Pakiet 14",
+    "LOT-15": "Pakiet 15",
+    "LOT-16": "Pakiet 16",
+    "LOT-17": "Pakiet 17",
+    "LOT-18": "Pakiet 18",
+    "LOT-19": "Pakiet 19",
+    "LOT-20": "Pakiet 20",
+    "LOT-21": "Pakiet 21",
+    "LOT-22": "Pakiet 22",
+    "LOT-23": "Pakiet 23",
+    "LOT-24": "Pakiet 24",
+    "LOT-25": "Pakiet 25",
+    "LOT-26": "Pakiet 26",
+    "LOT-27": "Pakiet 27",
+    "LOT-28": "Pakiet 28",
+    "LOT-29": "Pakiet 29",
+    "LOT-30": "Pakiet 30"
+   },
+   "22862381": {
+    "LOT-1": "Pakiet 1",
+    "LOT-2": "Pakiet 2",
+    "LOT-3": "Pakiet 3",
+    "LOT-4": "Pakiet 4",
+    "LOT-5": "Pakiet 5",
+    "LOT-6": "Pakiet 6",
+    "LOT-7": "Pakiet 7",
+    "LOT-8": "Pakiet 8",
+    "LOT-9": "Pakiet 9",
+    "LOT-10": "Pakiet 10",
+    "LOT-11": "Pakiet 11",
+    "LOT-12": "Pakiet 12",
+    "LOT-13": "Pakiet 13",
+    "LOT-14": "Pakiet 14",
+    "LOT-15": "Pakiet 15",
+    "LOT-16": "Pakiet 16",
+    "LOT-17": "Pakiet 17",
+    "LOT-18": "Pakiet 18",
+    "LOT-19": "Pakiet 19",
+    "LOT-20": "Pakiet 20",
+    "LOT-21": "Pakiet 21",
+    "LOT-22": "Pakiet 22",
+    "LOT-23": "Pakiet 23",
+    "LOT-24": "Pakiet 24",
+    "LOT-25": "Pakiet 25",
+    "LOT-26": "Pakiet 26",
+    "LOT-27": "Pakiet 27",
+    "LOT-28": "Pakiet 28",
+    "LOT-29": "Pakiet 29",
+    "LOT-30": "Pakiet 30"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Pakiet 1",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "1"
+     ],
+     "22862381": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 1",
+     "22862381": "Pakiet 1"
+    }
+   },
+   "LOT-10": {
+    "title": "Pakiet 10",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "10",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "10"
+     ],
+     "22862381": [
+      "10"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 10",
+     "22862381": "Pakiet 10"
+    }
+   },
+   "LOT-11": {
+    "title": "Pakiet 11",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "11",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "11"
+     ],
+     "22862381": [
+      "11"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 11",
+     "22862381": "Pakiet 11"
+    }
+   },
+   "LOT-12": {
+    "title": "Pakiet 12",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "12",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "12"
+     ],
+     "22862381": [
+      "12"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 12",
+     "22862381": "Pakiet 12"
+    }
+   },
+   "LOT-13": {
+    "title": "Pakiet 13",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "13",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "13"
+     ],
+     "22862381": [
+      "13"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 13",
+     "22862381": "Pakiet 13"
+    }
+   },
+   "LOT-14": {
+    "title": "Pakiet 14",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "14",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "14"
+     ],
+     "22862381": [
+      "14"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 14",
+     "22862381": "Pakiet 14"
+    }
+   },
+   "LOT-15": {
+    "title": "Pakiet 15",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "15",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "15"
+     ],
+     "22862381": [
+      "15"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 15",
+     "22862381": "Pakiet 15"
+    }
+   },
+   "LOT-16": {
+    "title": "Pakiet 16",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "16",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "16"
+     ],
+     "22862381": [
+      "16"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 16",
+     "22862381": "Pakiet 16"
+    }
+   },
+   "LOT-17": {
+    "title": "Pakiet 17",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "17",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "17"
+     ],
+     "22862381": [
+      "17"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 17",
+     "22862381": "Pakiet 17"
+    }
+   },
+   "LOT-18": {
+    "title": "Pakiet 18",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "18",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "18"
+     ],
+     "22862381": [
+      "18"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 18",
+     "22862381": "Pakiet 18"
+    }
+   },
+   "LOT-19": {
+    "title": "Pakiet 19",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "19",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "19"
+     ],
+     "22862381": [
+      "19"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 19",
+     "22862381": "Pakiet 19"
+    }
+   },
+   "LOT-2": {
+    "title": "Pakiet 2",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "2"
+     ],
+     "22862381": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 2",
+     "22862381": "Pakiet 2"
+    }
+   },
+   "LOT-20": {
+    "title": "Pakiet 20",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "20",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "20"
+     ],
+     "22862381": [
+      "20"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 20",
+     "22862381": "Pakiet 20"
+    }
+   },
+   "LOT-21": {
+    "title": "Pakiet 21",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "21",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "21"
+     ],
+     "22862381": [
+      "21"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 21",
+     "22862381": "Pakiet 21"
+    }
+   },
+   "LOT-22": {
+    "title": "Pakiet 22",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "22",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "22"
+     ],
+     "22862381": [
+      "22"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 22",
+     "22862381": "Pakiet 22"
+    }
+   },
+   "LOT-23": {
+    "title": "Pakiet 23",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "23",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "23"
+     ],
+     "22862381": [
+      "23"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 23",
+     "22862381": "Pakiet 23"
+    }
+   },
+   "LOT-24": {
+    "title": "Pakiet 24",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "24",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "24"
+     ],
+     "22862381": [
+      "24"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 24",
+     "22862381": "Pakiet 24"
+    }
+   },
+   "LOT-25": {
+    "title": "Pakiet 25",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "25",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "25"
+     ],
+     "22862381": [
+      "25"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 25",
+     "22862381": "Pakiet 25"
+    }
+   },
+   "LOT-26": {
+    "title": "Pakiet 26",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "26",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "26"
+     ],
+     "22862381": [
+      "26"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 26",
+     "22862381": "Pakiet 26"
+    }
+   },
+   "LOT-27": {
+    "title": "Pakiet 27",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "27",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "27"
+     ],
+     "22862381": [
+      "27"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 27",
+     "22862381": "Pakiet 27"
+    }
+   },
+   "LOT-28": {
+    "title": "Pakiet 28",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "28",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "28"
+     ],
+     "22862381": [
+      "28"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 28",
+     "22862381": "Pakiet 28"
+    }
+   },
+   "LOT-29": {
+    "title": "Pakiet 29",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "29",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "29"
+     ],
+     "22862381": [
+      "29"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 29",
+     "22862381": "Pakiet 29"
+    }
+   },
+   "LOT-3": {
+    "title": "Pakiet 3",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "3"
+     ],
+     "22862381": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 3",
+     "22862381": "Pakiet 3"
+    }
+   },
+   "LOT-30": {
+    "title": "Pakiet 30",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "30",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "30"
+     ],
+     "22862381": [
+      "30"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 30",
+     "22862381": "Pakiet 30"
+    }
+   },
+   "LOT-4": {
+    "title": "Pakiet 4",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "4",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "4"
+     ],
+     "22862381": [
+      "4"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 4",
+     "22862381": "Pakiet 4"
+    }
+   },
+   "LOT-5": {
+    "title": "Pakiet 5",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "5",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "5"
+     ],
+     "22862381": [
+      "5"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 5",
+     "22862381": "Pakiet 5"
+    }
+   },
+   "LOT-6": {
+    "title": "Pakiet 6",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "6",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "6"
+     ],
+     "22862381": [
+      "6"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 6",
+     "22862381": "Pakiet 6"
+    }
+   },
+   "LOT-7": {
+    "title": "Pakiet 7",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "7",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "7"
+     ],
+     "22862381": [
+      "7"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 7",
+     "22862381": "Pakiet 7"
+    }
+   },
+   "LOT-8": {
+    "title": "Pakiet 8",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "8",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "8"
+     ],
+     "22862381": [
+      "8"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 8",
+     "22862381": "Pakiet 8"
+    }
+   },
+   "LOT-9": {
+    "title": "Pakiet 9",
+    "title_from": [
+     22352448,
+     22862381
+    ],
+    "number": "9",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22352448": [
+      "9"
+     ],
+     "22862381": [
+      "9"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22352448": "Pakiet 9",
+     "22862381": "Pakiet 9"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 22862381,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Pakiet 1",
+    "block_title": "Pakiet 1",
+    "winners": [
+     "Zarys International Group Sp. z o.o. SP.K"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-10",
+    "printed": [
+     "10"
+    ],
+    "item": [
+     "10"
+    ],
+    "served_lot": "LOT-10",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-10"
+    ],
+    "tender_lot_identity_number": "10",
+    "tender_lot_title": "Pakiet 10",
+    "block_title": "Pakiet 10",
+    "winners": [
+     "Paul Hartmann Polska Spółka z ograniczona odpowied"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-11",
+    "printed": [
+     "11"
+    ],
+    "item": [
+     "11"
+    ],
+    "served_lot": "LOT-11",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-11"
+    ],
+    "tender_lot_identity_number": "11",
+    "tender_lot_title": "Pakiet 11",
+    "block_title": "Pakiet 11",
+    "winners": [
+     "Molnlycke Health Care Polska Spółka z ograniczona "
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-12",
+    "printed": [
+     "12"
+    ],
+    "item": [
+     "12"
+    ],
+    "served_lot": "LOT-12",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-12"
+    ],
+    "tender_lot_identity_number": "12",
+    "tender_lot_title": "Pakiet 12",
+    "block_title": "Pakiet 12",
+    "winners": [
+     "Molnlycke Health Care Polska Spółka z ograniczoną "
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-13",
+    "printed": [
+     "13"
+    ],
+    "item": [
+     "13"
+    ],
+    "served_lot": "LOT-13",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-13"
+    ],
+    "tender_lot_identity_number": "13",
+    "tender_lot_title": "Pakiet 13",
+    "block_title": "Pakiet 13",
+    "winners": [
+     "Molnlycke Health Care Polska Spółka z ograniczona "
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-14",
+    "printed": [
+     "14"
+    ],
+    "item": [
+     "14"
+    ],
+    "served_lot": "LOT-14",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-14"
+    ],
+    "tender_lot_identity_number": "14",
+    "tender_lot_title": "Pakiet 14",
+    "block_title": "Pakiet 14",
+    "winners": [
+     "Molnlycke Health Care Polska Spółka z ograniczona "
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-15",
+    "printed": [
+     "15"
+    ],
+    "item": [
+     "15"
+    ],
+    "served_lot": "LOT-15",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-15"
+    ],
+    "tender_lot_identity_number": "15",
+    "tender_lot_title": "Pakiet 15",
+    "block_title": "Pakiet 15",
+    "winners": [
+     "Skamex Spółka z ogranioczona odpowiedzialnością"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-16",
+    "printed": [
+     "16"
+    ],
+    "item": [
+     "16"
+    ],
+    "served_lot": "LOT-16",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-16"
+    ],
+    "tender_lot_identity_number": "16",
+    "tender_lot_title": "Pakiet 16",
+    "block_title": "Pakiet 16",
+    "winners": [
+     "Przedsiębiorstwo Handlowo - Usługowe ANMAR Spółka "
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-17",
+    "printed": [
+     "17"
+    ],
+    "item": [
+     "17"
+    ],
+    "served_lot": "LOT-17",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-17"
+    ],
+    "tender_lot_identity_number": "17",
+    "tender_lot_title": "Pakiet 17",
+    "block_title": "Pakiet 17",
+    "winners": [
+     "Torunskie Zakłady Materiałow Opatrunkowych SA"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-18",
+    "printed": [
+     "18"
+    ],
+    "item": [
+     "18"
+    ],
+    "served_lot": "LOT-18",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-18"
+    ],
+    "tender_lot_identity_number": "18",
+    "tender_lot_title": "Pakiet 18",
+    "block_title": "Pakiet 18",
+    "winners": [
+     "Zarys International Group Sp. z o.o. SP.K"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-19",
+    "printed": [
+     "19"
+    ],
+    "item": [
+     "19"
+    ],
+    "served_lot": "LOT-19",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-19"
+    ],
+    "tender_lot_identity_number": "19",
+    "tender_lot_title": "Pakiet 19",
+    "block_title": "Pakiet 19",
+    "winners": [
+     "Paul Hartmann Polska Spółka z ograniczona odpowied"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Pakiet 2",
+    "block_title": "Pakiet 2",
+    "winners": [
+     "Zarys International Group Sp. z o.o. SP.K"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-20",
+    "printed": [
+     "20"
+    ],
+    "item": [
+     "20"
+    ],
+    "served_lot": "LOT-20",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-20"
+    ],
+    "tender_lot_identity_number": "20",
+    "tender_lot_title": "Pakiet 20",
+    "block_title": "Pakiet 20",
+    "winners": [
+     "Paul Hartmann Polska Spółka z ograniczona odpowied"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-21",
+    "printed": [
+     "21"
+    ],
+    "item": [
+     "21"
+    ],
+    "served_lot": "LOT-21",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-21"
+    ],
+    "tender_lot_identity_number": "21",
+    "tender_lot_title": "Pakiet 21",
+    "block_title": "Pakiet 21",
+    "winners": [
+     "Paul Hartmann Polska Spółka z ograniczona odpowied"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-22",
+    "printed": [
+     "22"
+    ],
+    "item": [
+     "22"
+    ],
+    "served_lot": "LOT-22",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-22"
+    ],
+    "tender_lot_identity_number": "22",
+    "tender_lot_title": "Pakiet 22",
+    "block_title": "Pakiet 22",
+    "winners": [
+     "Molnlycke Health Care Polska Sp. z o.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-23",
+    "printed": [
+     "23"
+    ],
+    "item": [
+     "23"
+    ],
+    "served_lot": "LOT-23",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-23"
+    ],
+    "tender_lot_identity_number": "23",
+    "tender_lot_title": "Pakiet 23",
+    "block_title": "Pakiet 23",
+    "winners": [
+     "Molnlycke Health Care Polska Sp. z o.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-24",
+    "printed": [
+     "24"
+    ],
+    "item": [
+     "24"
+    ],
+    "served_lot": "LOT-24",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-24"
+    ],
+    "tender_lot_identity_number": "24",
+    "tender_lot_title": "Pakiet 24",
+    "block_title": "Pakiet 24",
+    "winners": [
+     "SKAMEX Spółka z ograniczoną odpowiedzialnością"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-25",
+    "printed": [
+     "25"
+    ],
+    "item": [
+     "25"
+    ],
+    "served_lot": "LOT-25",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-25"
+    ],
+    "tender_lot_identity_number": "25",
+    "tender_lot_title": "Pakiet 25",
+    "block_title": "Pakiet 25",
+    "winners": [
+     "Skamex Spółka z ograniczona odpowiedzialnoscia"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-26",
+    "printed": [
+     "26"
+    ],
+    "item": [
+     "26"
+    ],
+    "served_lot": "LOT-26",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-26"
+    ],
+    "tender_lot_identity_number": "26",
+    "tender_lot_title": "Pakiet 26",
+    "block_title": "Pakiet 26",
+    "winners": [
+     "Skamex Spółka z ograniczona odpowiedzialnościa"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-27",
+    "printed": [
+     "27"
+    ],
+    "item": [
+     "27"
+    ],
+    "served_lot": "LOT-27",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-27"
+    ],
+    "tender_lot_identity_number": "27",
+    "tender_lot_title": "Pakiet 27",
+    "block_title": "Pakiet 27",
+    "winners": [
+     "SKAMEX Spółka z ograniczona odpowiedzialnością"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-28",
+    "printed": [
+     "28"
+    ],
+    "item": [
+     "28"
+    ],
+    "served_lot": "LOT-28",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-28"
+    ],
+    "tender_lot_identity_number": "28",
+    "tender_lot_title": "Pakiet 28",
+    "block_title": "Pakiet 28",
+    "winners": [
+     "Skamex Spółka z ograniczona odpowiedzianościa"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-29",
+    "printed": [
+     "29"
+    ],
+    "item": [
+     "29"
+    ],
+    "served_lot": "LOT-29",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-29"
+    ],
+    "tender_lot_identity_number": "29",
+    "tender_lot_title": "Pakiet 29",
+    "block_title": "Pakiet 29",
+    "winners": [
+     "Firma Produkcyjno Usługowo Handlowa Mieczysław Kru"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "clos-nw",
+    "own_notice_section_for_printed": [
+     "LOT-3"
+    ],
+    "tender_lot_identity_number": "3",
+    "tender_lot_title": "Pakiet 3",
+    "block_title": "Pakiet 3",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-30",
+    "printed": [
+     "30"
+    ],
+    "item": [
+     "30"
+    ],
+    "served_lot": "LOT-30",
+    "decision": "clos-nw",
+    "own_notice_section_for_printed": [
+     "LOT-30"
+    ],
+    "tender_lot_identity_number": "30",
+    "tender_lot_title": "Pakiet 30",
+    "block_title": "Pakiet 30",
+    "winners": [],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-4"
+    ],
+    "tender_lot_identity_number": "4",
+    "tender_lot_title": "Pakiet 4",
+    "block_title": "Pakiet 4",
+    "winners": [
+     "Zarys International Group Sp. z o.o. SP.K"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-5",
+    "printed": [
+     "5"
+    ],
+    "item": [
+     "5"
+    ],
+    "served_lot": "LOT-5",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-5"
+    ],
+    "tender_lot_identity_number": "5",
+    "tender_lot_title": "Pakiet 5",
+    "block_title": "Pakiet 5",
+    "winners": [
+     "Zarys International Group Sp. z o.o. SP.K"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-6",
+    "printed": [
+     "6"
+    ],
+    "item": [
+     "6"
+    ],
+    "served_lot": "LOT-6",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-6"
+    ],
+    "tender_lot_identity_number": "6",
+    "tender_lot_title": "Pakiet 6",
+    "block_title": "Pakiet 6",
+    "winners": [
+     "Zarys International Group Sp. z o.o. SP.K"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-7",
+    "printed": [
+     "7"
+    ],
+    "item": [
+     "7"
+    ],
+    "served_lot": "LOT-7",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-7"
+    ],
+    "tender_lot_identity_number": "7",
+    "tender_lot_title": "Pakiet 7",
+    "block_title": "Pakiet 7",
+    "winners": [
+     "J.Chodacki, A.Misztal MEDICA Spółka jawna"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-8",
+    "printed": [
+     "8"
+    ],
+    "item": [
+     "8"
+    ],
+    "served_lot": "LOT-8",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-8"
+    ],
+    "tender_lot_identity_number": "8",
+    "tender_lot_title": "Pakiet 8",
+    "block_title": "Pakiet 8",
+    "winners": [
+     "COMEF Spółka z ograniczona odpowiedzialnością Spół"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 22862381,
+    "key": "RES-9",
+    "printed": [
+     "9"
+    ],
+    "item": [
+     "9"
+    ],
+    "served_lot": "LOT-9",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-9"
+    ],
+    "tender_lot_identity_number": "9",
+    "tender_lot_title": "Pakiet 9",
+    "block_title": "Pakiet 9",
+    "winners": [
+     "Batist Medical Polska sp. zo.o."
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 30,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 151,
+   "ok": 151,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 28,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7525259,
+  "can_notice_id": 23183197,
+  "versions": [
+   22711543,
+   23183197
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "22711543": {
+    "form": [
+     "F05"
+    ],
+    "pub": "2022-10-17"
+   },
+   "23183197": {
+    "form": [
+     "F06"
+    ],
+    "pub": "2023-05-11"
+   }
+  },
+  "lot_publishing_notices": [
+   22711543,
+   23183197
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "22711543": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   },
+   "23183197": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ],
+    "LOT-3": [
+     "3"
+    ],
+    "LOT-4": [
+     "4"
+    ]
+   }
+  },
+  "titles": {
+   "22711543": {
+    "LOT-1": "Silniki powierzchniowe ogólnego przeznaczenia",
+    "LOT-2": "Silniki dołowe ogólnego przeznaczenia",
+    "LOT-3": "Silniki dołowe specjalistycznego przeznaczenia",
+    "LOT-4": "Silniki powierzchniowe specjalistycznego przeznaczenia"
+   },
+   "23183197": {
+    "LOT-1": "Silniki powierzchniowe ogólnego przeznaczenia",
+    "LOT-2": "Silniki dołowe ogólnego przeznaczenia",
+    "LOT-3": "Silniki dołowe specjalistycznego przeznaczenia",
+    "LOT-4": "Silniki powierzchniowe specjalistycznego przeznaczenia"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "Silniki powierzchniowe ogólnego przeznaczenia",
+    "title_from": [
+     22711543,
+     23183197
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22711543": [
+      "1"
+     ],
+     "23183197": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22711543": "Silniki powierzchniowe ogólnego przeznaczenia",
+     "23183197": "Silniki powierzchniowe ogólnego przeznaczenia"
+    }
+   },
+   "LOT-2": {
+    "title": "Silniki dołowe ogólnego przeznaczenia",
+    "title_from": [
+     22711543,
+     23183197
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22711543": [
+      "2"
+     ],
+     "23183197": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22711543": "Silniki dołowe ogólnego przeznaczenia",
+     "23183197": "Silniki dołowe ogólnego przeznaczenia"
+    }
+   },
+   "LOT-3": {
+    "title": "Silniki dołowe specjalistycznego przeznaczenia",
+    "title_from": [
+     22711543,
+     23183197
+    ],
+    "number": "3",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22711543": [
+      "3"
+     ],
+     "23183197": [
+      "3"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22711543": "Silniki dołowe specjalistycznego przeznaczenia",
+     "23183197": "Silniki dołowe specjalistycznego przeznaczenia"
+    }
+   },
+   "LOT-4": {
+    "title": "Silniki powierzchniowe specjalistycznego przeznaczenia",
+    "title_from": [
+     22711543,
+     23183197
+    ],
+    "number": "4",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "22711543": [
+      "4"
+     ],
+     "23183197": [
+      "4"
+     ]
+    },
+    "key_titles_by_notice": {
+     "22711543": "Silniki powierzchniowe specjalistycznego przeznaczenia",
+     "23183197": "Silniki powierzchniowe specjalistycznego przeznaczenia"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 23183197,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "Silniki powierzchniowe ogólnego przeznaczenia",
+    "block_title": "Silniki powierzchniowe ogólnego przeznaczenia",
+    "winners": [
+     "Petek i Wspólnicy Sp. z o.o. Sp. k."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23183197,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "Silniki dołowe ogólnego przeznaczenia",
+    "block_title": "Silniki dołowe ogólnego przeznaczenia",
+    "winners": [
+     "Enzo Group Sp. z o.o."
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23183197,
+    "key": "RES-3",
+    "printed": [
+     "3"
+    ],
+    "item": [
+     "3"
+    ],
+    "served_lot": "LOT-3",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-3"
+    ],
+    "tender_lot_identity_number": "3",
+    "tender_lot_title": "Silniki dołowe specjalistycznego przeznaczenia",
+    "block_title": "Silniki dołowe specjalistycznego przeznaczenia",
+    "winners": [
+     "Dąbrowska Fabryka Maszyn Elektronicznych Damel S.A"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23183197,
+    "key": "RES-4",
+    "printed": [
+     "4"
+    ],
+    "item": [
+     "4"
+    ],
+    "served_lot": "LOT-4",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-4"
+    ],
+    "tender_lot_identity_number": "4",
+    "tender_lot_title": "Silniki powierzchniowe specjalistycznego przeznaczenia",
+    "block_title": "Silniki powierzchniowe specjalistycznego przeznaczenia",
+    "winners": [
+     "Biuro Zaopatrzenia Technicznego BEZET Jacek Szumni"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 4,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 20,
+   "ok": 20,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 4,
+  "cls_auto": "consistent"
+ },
+ {
+  "tender_id": 7805827,
+  "can_notice_id": 23548507,
+  "versions": [
+   23363064,
+   23548507
+  ],
+  "missing_notices": [],
+  "notice_meta": {
+   "23363064": {
+    "form": [
+     "F05"
+    ],
+    "pub": "2023-08-02"
+   },
+   "23548507": {
+    "form": [
+     "F06"
+    ],
+    "pub": "2023-11-17"
+   }
+  },
+  "lot_publishing_notices": [
+   23363064,
+   23548507
+  ],
+  "n_notices_with_lot_sections": 2,
+  "maps": {
+   "23363064": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   },
+   "23548507": {
+    "LOT-1": [
+     "1"
+    ],
+    "LOT-2": [
+     "2"
+    ]
+   }
+  },
+  "titles": {
+   "23363064": {
+    "LOT-1": "dla Ruchu Bielszowice",
+    "LOT-2": "dla Ruchu Halemba"
+   },
+   "23548507": {
+    "LOT-1": "dla Ruchu Bielszowice",
+    "LOT-2": "dla Ruchu Halemba"
+   }
+  },
+  "unnumbered_sections": {},
+  "duplicate_numbers": {},
+  "disagreements": [],
+  "title_differences_same_key": [],
+  "tender_lots": {
+   "LOT-1": {
+    "title": "dla Ruchu Bielszowice",
+    "title_from": [
+     23363064,
+     23548507
+    ],
+    "number": "1",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "23363064": [
+      "1"
+     ],
+     "23548507": [
+      "1"
+     ]
+    },
+    "key_titles_by_notice": {
+     "23363064": "dla Ruchu Bielszowice",
+     "23548507": "dla Ruchu Bielszowice"
+    }
+   },
+   "LOT-2": {
+    "title": "dla Ruchu Halemba",
+    "title_from": [
+     23363064,
+     23548507
+    ],
+    "number": "2",
+    "numbers_if_ambiguous": null,
+    "how": "title",
+    "key_numbers_by_notice": {
+     "23363064": [
+      "2"
+     ],
+     "23548507": [
+      "2"
+     ]
+    },
+    "key_titles_by_notice": {
+     "23363064": "dla Ruchu Halemba",
+     "23548507": "dla Ruchu Halemba"
+    }
+   }
+  },
+  "results": [
+   {
+    "notice": 23548507,
+    "key": "RES-1",
+    "printed": [
+     "1"
+    ],
+    "item": [
+     "1"
+    ],
+    "served_lot": "LOT-1",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-1"
+    ],
+    "tender_lot_identity_number": "1",
+    "tender_lot_title": "dla Ruchu Bielszowice",
+    "block_title": "dla Ruchu Bielszowice",
+    "winners": [
+     "Fundacja „Unia Bracka”"
+    ],
+    "verdict": "ok"
+   },
+   {
+    "notice": 23548507,
+    "key": "RES-2",
+    "printed": [
+     "2"
+    ],
+    "item": [
+     "2"
+    ],
+    "served_lot": "LOT-2",
+    "decision": "selec-w",
+    "own_notice_section_for_printed": [
+     "LOT-2"
+    ],
+    "tender_lot_identity_number": "2",
+    "tender_lot_title": "dla Ruchu Halemba",
+    "block_title": "dla Ruchu Halemba",
+    "winners": [
+     "Fundacja „Unia Bracka”"
+    ],
+    "verdict": "ok"
+   }
+  ],
+  "results_total": 2,
+  "results_null": 0,
+  "results_misattributed": 0,
+  "lot_facts": {
+   "total": 10,
+   "ok": 10,
+   "misattributed": 0,
+   "unsourced": 0,
+   "unjudged": 0,
+   "mis": [],
+   "unsourced_ex": []
+  },
+  "result_derived_lot_facts": 2,
+  "cls_auto": "consistent"
+ }
+]
