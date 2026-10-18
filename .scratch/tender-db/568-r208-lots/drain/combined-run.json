@@ -1,1 +1,28 @@
-{"wet_jobs":[2616,2617],"enqueued_at":"2026-10-18T11:04Z","cursor_before":"957854566","expect":2101635,"rev":"fe64be668363a22b82ecd4682cdc546c368b652a"}
+{
+ "wet_jobs": [
+  2616,
+  2617
+ ],
+ "enqueued_at": "2026-10-18T11:04Z",
+ "cursor_before": "957854566",
+ "expect": 2101635,
+ "rev": "fe64be668363a22b82ecd4682cdc546c368b652a",
+ "finished_at": "2026-10-18T15:19:48Z",
+ "cursor_after": "958764334",
+ "refold_fields_2616": "2101635 carriers of 2 field id(s): re-queued 2101635 notices, stamped 1250447 tenders epoch-stale",
+ "project_2617": "14935382 notices -> 8798750 tenders; 1250447 tenders written, 7548303 verified unchanged; compare: 1203568 verified, 46879 corrected; 909768 correction rows; 1105.5 s write phase",
+ "D7": {
+  "verified_plus_corrected": 1250447,
+  "stamped": 1250447,
+  "holds": true,
+  "epoch0_windows": {
+   "4400001-4500000": 0,
+   "5000001-5100000": 0,
+   "5300001-5400000": 0,
+   "5800001-5900000": 0,
+   "6300001-6400000": 0,
+   "7000001-7100000": 0,
+   "8300001-8400000": 0
+  }
+ }
+}
