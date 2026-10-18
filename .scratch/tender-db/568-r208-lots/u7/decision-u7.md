@@ -361,3 +361,488 @@ The status line of issue 568 should read:
 recorded exceptions stay `lot: null` by design: those of the 568 decision, and also an award whose own title names
 several lots, names a lot other than n, or is another lot's title, or which prints several numbers. **Residual,
 recorded:** the five shapes in the table above.
+
+## Amendment (unit 8, 2026-10-18)
+
+**The owner adopted the decision critic's findings** (`u8-oos/critic-and-review.json`, workflow wf_2f6dde5b-372).
+**Round 2, the same day:** the port and an independent verifier agreed block for block, and the owner then adopted
+refinements **R1** and **R2** and the amender's **quantity-word reader rule**. This section describes that final rule,
+FINAL_AMENDED. The round-1 rule, without R1 and R2, is kept as the measured row FINAL_AMENDED_R0.
+
+This section changes "The rule", "Designators" and the read-back bar above. Where they disagree, this section wins. The
+guards stay, the drain plan stays (one refold with 570), and titles still refuse, never key.
+
+Evidence:
+- `u7/g3_port.py` replays three rules side by side on the same replay:
+  - FINAL, as decided, with the frozen unit-7 reader `u7/lot_designators_u7.py`;
+  - FINAL_AMENDED, R1 + R2 included (`apply_amended()`'s defaults);
+  - FINAL_AMENDED_R0, the round-1 rule (`agree='designator', confirm='heads'`), plus R0 + R1 alone and R0 + R2 alone
+    as attribution rows.
+- Every old candidate row and the old summary are byte-identical to `measurement-u7.json`: 1,837 of 1,837 blocks,
+  `amended.parity_with_measurement_u7`.
+- `u7/measurement-u8.json`: the in-sample result. `measurement-u7.json` is not rewritten.
+- `u8-oos/amended_oos.py` → `u8-oos/amended_oos.json`: the OOS 50 with the skeptic-final labels. FINAL replayed there
+  equals the skeptic runs' `guards_fired` on all 419 blocks (`consistency_problems: []`).
+- `u7/lot_designators.py`: the amended reader, with 77 SELFTEST cases (35 unchanged, 42 new) and 10 `title_key`
+  cases (`TITLE_KEY_SELFTEST`). `title_key` moved there from `g3_port.py` byte for byte.
+- The round-1 independent verification (`scratchpad/u8v/`) rebuilt the guards from the rule text alone. Every outcome
+  matched, R1, R2 and R1 + R2 included.
+- Round-2 extras in `scratchpad/u8a/`:
+  - `r2_exposure.py` → `r2_exposure.json`: per-notice contradiction counts, and the blocks held only by the notice
+    level;
+  - `r2_synthetic.py`: the synthetic test chains below.
+
+### What changed and why
+
+1. **G4 is block-level, and goes notice-level only on 2 or more contradicting blocks. Title-confirmed blocks are
+   kept.** (Critic finding 0.)
+   - The notice level bought only 5267810 RES-7 ("Pakiet 1A") and RES-8 (a bare "Pakiet").
+   - It refused every right block of a counter notice, and each of those titles names exactly its own printed
+     number: 4 in-sample (5051007 RES-1..3, 5267810 RES-1) and 22 OOS (8286472 RES-1..8, 5416534 RES-1..14).
+   - So FINAL's OOS false-refusal rate was 22 of 319 (6.9 %, 4.4–10.3 %), against the 4/1,762 the decision stated.
+     The block-level interval treated clustered blocks as independent.
+2. **The reader** (critic findings 1 and 4). Each change fixes a false-positive path that was observed or probed:
+   - 4667265's own CN titles, "Część 1 – 50 miejsc", read as lots 1..50.
+   - OOS 8286472's "(pakiet 8 pozycji) … - zadanie 4" read as [8, 4], so G3 hit 3 right blocks.
+   - OOS 5416534's "Pakiet 16 zad.1" read as two lots.
+   - The Spanish article: "de los 4 ascensores del lote 2" read as [4, 2].
+   - Round 2 adopted the quantity-word rule (d), for three probes that (a)–(c) left harmful.
+3. **G3 counts heads** (finding 3). "Pakiet 8 poz. 6, Pakiet 8 poz. 7" printed 8 names one lot.
+4. **Titles are read per language** (finding 5). G3/G4 took the union of every language while G5 accepted one
+   agreeing language. A single mistranslated language could create a multi-lot read or a contradiction.
+5. **The text-field spec is clarified** (finding 6), so port parity cannot fail for reasons outside the guards.
+6. **A new read-back bar** (findings 2 and 7). The old bar's "any new shape reopens" clause put P(pass) back at about
+   0.5–0.65, and its population could not draw the blocks that 570's narrower G2 newly matches.
+7. **A /docs caveat sentence** (finding 8).
+8. **R1 and R2 (round 2).**
+   - **R1:** G4 agreement compares heads. Under the round-1 rule, a correctly numbered CAN block "Pakiet 16 zad.2"
+     against its CN lot "Pakiet 16 - pozycja nr 2" (read (16)) contradicted, and the notice level spread. That is
+     5416534's counterfactual, where R0 refuses 90 of 105 right blocks.
+   - **R2:** only a non-compound designator title-confirms. R0 kept OOS 5416534 RES-16 "Pakiet 16 zad.2" on LOT-16,
+     because the compound's head 16 equals the printed counter. That was the one wrong block the amendment newly kept.
+9. **The G5 title key is pinned** (the verifier's divergence): the leading designator is dropped only when a
+   separator follows it. Both readings fit the old text, so the port's reading becomes the spec, with test cases.
+
+### The rule, as amended (unit 8 builds this)
+
+Unchanged:
+- Scope (only blocks the 568 rule would match).
+- N, and the |N| < 2 exemption.
+- p and the tentative l.
+- G6.
+- G5's rule.
+- Freezing at the award version.
+- Never re-keying. A refused block keeps `lot_key None` and its `published_lot_no`, and is never re-keyed by its
+  title.
+
+Changed:
+- **D. Per language.** Each block title value carries its language: the parsed value's `lang`, or the bucket `""`
+  for a value without one.
+  - Dn[lang] is the union over that language's values (every ordinal) of the designators whose head is in N.
+  - The lot side is not split by language. Dlot is every designator of l's own `title` / `description` facts (not
+    filtered by N), and heads(Dlot) is the set of their heads.
+- **A. G4.**
+  - **Contradicts (R1).** A matched block contradicts when some language has a non-empty Dn[lang], and no language
+    agrees. A language agrees when its Dn[lang] has p as a head, or shares a **head** with Dlot. A compound counts by
+    its head, as in C.
+  - A contradicting block is refused, always (block level).
+  - **Notice level:** only when 2 or more matched blocks of the notice contradict. Then every other matched block of
+    the notice is refused too, except a **title-confirmed** block.
+  - **Title-confirmed (R2).** Some language has a non-empty Dn[lang]. For every language with a non-empty Dn[lang],
+    every designator is **non-compound** (a head with no positions) and the set of heads is exactly {p}.
+  - Order: contradictions are counted over all matched blocks first, before G6, G3 and G5 run per block. A G3 block
+    that contradicts still counts.
+- **C. G3.** In some single language, the heads of Dn[lang] hold 2 or more distinct values. A compound counts by its
+  head.
+- **G5's title key, pinned.** This is NFKD with combining marks removed and the text lower-cased. One leading
+  designator is dropped, but **only when one of `. : ) - – —` follows it** (after optional spaces). The designator is
+  an optional `lot lots los lote lotto pakiet czesc zadanie part partie perceel cast` plus an optional `no / nr / n° /
+  nº`, then 1–4 characters of `0-9ivxlc`. After that, runs of non-word characters collapse to one space, and the
+  result is trimmed. `lot_designators.title_key` is the reference, and its `TITLE_KEY_SELFTEST` cases include:
+  - "Pakiet 2" → "pakiet 2" (no separator, nothing dropped);
+  - "Lot 06 désamiantage" → "lot 06 desamiantage";
+  - "5. Snagging" → "snagging";
+  - "Lot 1 : Dents" → "dents".
+- G6, G5 and the |N| < 2 exemption run exactly as in "The rule". G5 still accepts any one language agreeing with l,
+  and still excludes Tender title keys.
+
+### Designators, as amended (`u7/lot_designators.py`)
+
+- **(a) Only a tight dash joins numbers.** A tight dash has no space on either side, and covers both a list and a
+  two-number range. A dash with a space on either side ends the list:
+  - "Część 1 – 50 miejsc" → [1];
+  - "Lot 1 - 5 ordinateurs" → [1];
+  - "Część 2- 80 miejsc." → [2].
+  - **Accepted recall cost, pinned:** "Lots 1 - 2 - 3" → [1]. In the corpus (53k texts), a spaced dash after a lot
+    word is almost always an amount ("dla części nr 1 – 2 500,00 zł"). The real multi-lot shapes sit in notice-level
+    fields, which the guards don't read.
+  - `\s` includes U+00A0: "Lot 1 – 50 places" written with no-break spaces reads [1], as with plain spaces (pinned).
+    The dash set is `-–—`. U+2010, U+2011 and U+2212 are not dashes, as in unit 7.
+- **(b) `Los / Lose / Losnr` are keywords only when capitalised or all upper-case** (`Los Lose Losnr LOS LOSE LOSNR`).
+  Lower-case `los` is the Spanish article: "de los 2 vehículos" → [].
+- **(c) Compounds and position words.**
+  - A compound's second half comes after `poz. / pozycja / pozice / položka / item / position`, and now also after
+    `zad. / zadanie`.
+  - The second half takes a list or a range, and stays ONE designator under the first half's head:
+    - "Pakiet 8 poz. 6 i 7" → (8, 6, 7);
+    - "Pakiet 16 zad.1" → (16, 1).
+  - `pakiet N pozycji|pozycje|pozycja`, with no number after the word, is a count: "(pakiet 8 pozycji)" → [].
+  - A position word (`poz pozycja pozycje pozycji pozycjy pozice položka položky позиция позиции`) is a lot keyword
+    only when no lot / part / pakiet / zadanie clause has named a number before it in the same title value:
+    - "Pakiet 3 (poz. 1-12)" → [3];
+    - "Pozycja nr 3 – …" → [3].
+    - The Bulgarian keyword `обособена позиция` is unaffected.
+- **(d) A quantity word ends the list** (adopted in round 2).
+  - A list's last number followed by a quantity or duration word is a count, and is dropped. The word list is
+    `COUNT_WORDS`: `szt sztuk osób osoby miejsc lat dni kpl ans années mois jours years months days units pcs
+    años meses días anni mesi Jahre Monate Stück Stk Personen let roky ks kusů години месеца броя бр` …
+  - Examples:
+    - "Lot 2, 3 ans" → [2];
+    - "Pakiet 5, 2 szt." → [5];
+    - "Szkolenie dla grupy 20 osób" → [].
+  - **Removing a number usually withholds a refusal, but it can add one.** The verifier's synthetic case: blocks
+    "Lot 2, 3 ans" printed 3 and "Lot 5, 4 ans" printed 4 turn from G3 refusals into two contradictions. Two
+    contradictions fire the notice level, which refuses a third, untitled block that the unit-7 reader keeps. Rules
+    (a)–(c) can do the same. Nothing like this occurs in the data.
+  - Across the 8,792 distinct cached texts (in-sample + OOS: block titles, lot titles and descriptions, notice
+    descriptions), it moves only three notice-level descriptions and no block or lot title.
+- **Representation.** A designator is a head followed by its positions (`('8', '6', '7')`), not `(head, one
+  position)`. The Rust `Designator { head, position: Option }` becomes `{ head, positions: Vec }`. R2's
+  "non-compound" means `positions` is empty.
+- **Case.** Keywords, marks, compound words and postfix words match case-insensitively, except `Los` in (b). List
+  separators, conjunctions, range words and Roman numerals are case-sensitive. This follows the reference, as unit
+  8's review fixed (option A).
+- **Input** (unit 8's build review). This replaces "after NFC" under Matching above.
+  - The text is read as parsed, not normalised. The reader expects NFC; every one of the 348,446 cached values is NFC.
+    A decomposed title reads as its decomposed letters, in the reference and in Rust alike: NFD "Część 2" → [].
+  - A digit is ASCII `0-9` only (`[0-9]`, not `\d`). Any other decimal digit, fullwidth or Arabic-Indic, is a letter:
+    "Lot ３" → []. Both cases are pinned in SELFTEST. The reference used to normalise and to take Unicode `\d`, while
+    Rust did neither. That disagreed on such titles, but no cached text has one. Re-running `g3_port.py` and
+    `amended_oos.py` on the pinned reference gives byte-identical `measurement-u8.json` and `amended_oos.json`.
+  - **Remaining class, recorded and not fixed.** The reference's letter is Python's `\w` minus `[0-9_]`, and its
+    space is `\s`. Rust's are `char::is_alphanumeric` minus ASCII digits, and `char::is_whitespace`. On Unicode
+    14's assigned code points, they still disagree on 1,442 letters: the `Other_Alphabetic` combining marks (895 Mn
+    and 417 Mc, such as U+0345 and the Indic vowel signs) and the enclosed letters (130 So: the circled U+24B6–U+24E9,
+    and the squared and negative ones in U+1F130–U+1F189). They also disagree on four spaces, U+001C–U+001F, which
+    XML 1.0 cannot carry. Rust counts these marks and enclosed letters as letters, so it can block a word boundary
+    the reference allows ("ⒶLot 3": Rust reads [], the reference [3]). Aligning the two would take a generated
+    Unicode table on the Rust side. None of the 53,428 distinct texts in the two caches contains any of these
+    characters.
+- **What the reader change moves.** Of the 8,792 distinct cached texts, 96 read differently (list in
+  `scratchpad/u8a/corpus_diff.txt`). By itself it moves **no outcome** of the decided rule: candidate row U8a, the
+  decided FINAL on the amended reader, gives 11/13, 53/61 and 4 FR, identical to FINAL.
+- **Known reader limits, recorded, not fixed.** These come from the verifier's 70 probes, and each has zero matching
+  texts in the corpus.
+  - Recall only:
+    - lower-case German "los 3" → [];
+    - "Lot 3 Personen-Aufzug" → [] (rule d);
+    - "Pakiet 16 - pozycja nr 2." → (16): the position after a spaced dash is lost. R1 is what keeps that loss from
+      contradicting.
+  - Old false positives that stay:
+    - capitalised Spanish "SUMINISTRO DE LOS 2 VEHÍCULOS" → [2], and "Lote 3 - Los 2 contenedores" → [3, 2];
+    - "Pakiet 1, zad. 2" and "Pakiet nr 3, zadanie 2" → two lots, because a compound forms only with at most one
+      character before its second half;
+    - "Pozycja 15, zadanie 2" → [15, 2];
+    - "Lot 1–50 places" → 1..50.
+
+**SELFTEST: none of the 35 unit-7 cases changes (old → new: none).** 42 cases are new:
+- 31 from round 1.
+- 2 from round 2: "Lots 1 - 2 - 3" → [1], and the no-break-space case.
+- 9 from the build review:
+  - each one-sided half of (a) alone, with no quantity word to hide it: "Lot 1- 5 ordinateurs" → [1], "Lot 1 -5
+    ordinateurs" → [1], "Lots 3- 4" → [3], "Lots 3 -4" → [3], and two cached amounts, "Pakiet nr 1- 12 000,00 PLN."
+    → [1] and "Pakiet nr 2 -100,51;" → [2];
+  - the count of (c) only after a pakiet keyword: "Zadanie 8 pozycji" → [8];
+  - the two input preconditions above: "Lot ３" → [], and NFD "Część 2" → []. The critic's 18 probes, with their output after the fix:
+
+| probe | unit 7 | amended | how |
+|---|---|---|---|
+| Część 1 – 50 miejsc | 1..50 | [1] | fixed (a) |
+| Lot 1 - 5 ordinateurs portables | 1..5 | [1] | fixed (a) |
+| Lot 12 – 15 sites | 12..15 | [12] | fixed (a) |
+| Lot 3 - 2 véhicules | [3, 2] | [3] | fixed (a) |
+| Pakiet 8 poz. 6 i 7 | [8, 6, 7] | [(8, 6, 7)] | fixed (c), head 8 |
+| Pakiet 8 poz. 6-7 | [8, 6, 7] | [(8, 6, 7)] | fixed (c) |
+| Pakiet 3 (poz. 1-12) | [3, 1..12] | [3] | fixed (c) |
+| Elementy … (pakiet 8 pozycji) … - zadanie 4. | [8, 4] | [4] | fixed (c), a count |
+| Pakiet 16 zad.1 | [16, 1] | [(16, 1)] | fixed (c), head 16 |
+| Suministro de los 2 vehículos | [2] | [] | fixed (b) |
+| Los 3: Reinigung | [3] | [3] | kept (b) |
+| Lotes 1 a 5 | [1, 5] | [1, 5] | **accepted, guards' structure** |
+| Lot 2, 3 ans | [2, 3] | [2] | fixed (d) |
+| Pakiet 5, 2 szt. | [5, 2] | [5] | fixed (d) |
+| Szkolenie dla grupy 20 osób | [20] | [] | fixed (d) |
+| Lot 2 (remplace le lot 5 infructueux) | [2, 5] | [2, 5] | **accepted, guards' structure + N filter** |
+| LOT C | [100] | [100] | **accepted, N filter** |
+| Pakiet 8 poz. 6, Pakiet 8 poz. 7 | [(8,6), (8,7)] | same | correct; C makes G3 count one head |
+
+Why the three accepted readings are harmless:
+- **"Lotes 1 a 5"**: `a` stays a conjunction, because it is the Czech/Slovak "and" ("Část 1 a 2"). Read either way,
+  the title names two or more lots, so a block carrying it is a multi-lot award. G3 (both heads in N) or G4 (p not
+  a head) refusing it is a right refusal. The reading can cost recall (p ∈ {1, 5} with the other not in N), never a
+  false refusal.
+- **"Lot 2 (remplace le lot 5 infructueux)"**:
+  - The N filter keeps 5 only when the contract notice's own lots print 5. Then the title names two of the Tender's
+    own lots.
+  - G3 refuses that one block, and nothing spreads: p = 2 is a head, so the block never contradicts and cannot fire
+    the notice level.
+  - The refusal leaves the award on the Tender, the pre-568 reading. For an award that says it replaces lot 5's
+    scope, that is the conservative reading.
+  - A parenthesis rule was measured and rejected: it removes real designators ("… (Los 1) und … (Los 2)" in the OOS
+    descriptions).
+- **"LOT C"**: the N filter keeps 100 only on a Tender with a lot printing 100. Lettered lots normalise to `c`, not
+  100. One designator can never fire G3.
+
+### Text fields (clarified)
+
+- **Lot side:** the matched lot's `title` / `description` facts as the fold carries them at the award version. That
+  means every `TEXTS` field (`TED-LOT_TITLE`, r209 `TED-TITLE`, `TED-LOT_DESCRIPTION`, `TED-SHORT_DESCR`,
+  `TED-SHORT_CONTRACT_DESCRIPTION`, `TED-SHORT_DESCRIPTION_CONTRACT`, a lot-scoped `TED-TITLE_CONTRACT` /
+  `TED-CONTRACT_TITLE` / `TED-NEW_VALUE.TEXT` …):
+  - scoped to its nearest enclosing lot section;
+  - superseded per field across the chain;
+  - decoded of publisher escapes (`served_text`).
+- **Tender side:** the version's Tender-scope `title` facts, including the OJ-heading fallback.
+- **Block side:** the block's own `TED-CONTRACT_TITLE` / `TED-TITLE_CONTRACT` values on the `RES-n` section, decoded
+  as served, each with its language.
+- **`TED-TITLE` (R2.0.9 `AWARD_CONTRACT/TITLE`) is out of scope for R2.0.8 awards.** In the cache it appears only on
+  CANs with their own lot sections, which the guards never read. Reading it is harmless and untested.
+- **The port now reads the same table and decode** (`FOLD_TEXTS`, `notice_text_facts`, `decode_publisher_escapes` in
+  `g3_port.py`).
+- **Measured effect:**
+  - 4 matched blocks' lot texts differ from the unit-7 port's: set dedup, and one `&Amp;` decode on 5417602.
+  - 0 block titles change by decoding.
+  - 0 Tender titles differ.
+  - 0 outcomes change: row U8b = FINAL_AMENDED on all 1,837 in-sample and 419 OOS blocks.
+
+### Amended numbers
+
+The multi-lot and other-wrong columns count caught blocks. False refusals (FR) are right blocks refused, with
+Clopper–Pearson 95 % intervals. The last column counts Tenders carrying a wrong block before the guards → after them.
+FINAL_AMENDED includes R1 + R2. R0 is the round-1 rule.
+
+| set | rule | multi caught | other wrong caught | FR (95 %) | Tenders with a wrong block |
+|---|---|---|---|---|---|
+| s150 | FINAL | 4/6 | 53/61 | 4/904 (0.12–1.13 %) | 11/150 → 5/150 |
+| s150 | **FINAL_AMENDED** (= R0) | 4/6 | 53/61 | **0/904 (0–0.41 %)** | 11/150 → 5/150 |
+| f30 | all three | 7/7 | – | 0/202 (0–1.81 %) | 1/30 → 0/30 |
+| m77 | all three | – | – | 0/656 (0–0.56 %) | 0/77 → 0/77 |
+| OOS 50 | FINAL | – | 100/100 | 22/319 (4.37–10.26 %) | 2/50 → 0/50 |
+| OOS 50 | R0 (round 1) | – | 99/100 | 0/319 (0–1.15 %) | 2/50 → 1/50 (5416534) |
+| OOS 50 | **FINAL_AMENDED** | – | **100/100** | **0/319 (0–1.15 %)** | 2/50 → **0/50** |
+| in-sample | FINAL → AMENDED | 11/13 → 11/13 | 53/61 → 53/61 | 4/1,762 → **0/1,762 (0–0.21 %)** | uniform 12/180 → 5/180 → 5/180 |
+| pooled | **FINAL_AMENDED** | 11/13 | **153/161** | **0/2,081 (0–0.18 %)** | uniform 14/230 → **5/230 (2.2 %, 0.71–5.00 %)** |
+
+- **Attribution:**
+  - In-sample, R0, R0 + R1 alone, R0 + R2 alone and FINAL_AMENDED give the same outcome on every one of the 1,837
+    blocks. Only the guard that fires moves (below).
+  - OOS, R2 alone catches 5416534 RES-16, and R1 alone changes no outcome.
+- **What fires (FINAL_AMENDED):**
+  - in-sample: G4 36, G4-notice 17, G3 10, G5 9, G6 1. R0 had G4 50 and G4-notice 3.
+  - OOS: G4 87, G4-notice 13. R0 had G4 99. The 32 G3 refusals FINAL made OOS were all on counter-notice blocks G4
+    already refuses, or were the "(pakiet N pozycji)" false positive.
+- **The notice level still earns its keep, and now carries more.**
+  - It catches 5267810 RES-7 "Pakiet 1A" and RES-8 "Pakiet", and fires on 5020611 RES-1 beside G3.
+  - Under R1 it also holds 14 wrong blocks of 5267810 and 12 of 5416534, and under R2 5416534 RES-16 (see "R1 and
+    R2").
+  - Every G4 notice measured has 2 to 78 contradicting blocks: 8364864 2, 5020611 3, 8286472 9, 5051007 16, 5267810
+    15 and 5416534 78. Under R0, 5267810 had 29 and 5416534 90. The threshold of 2 changes no catch.
+- **5218711 no longer depends on N's size.** A single contradicting block now refuses only itself. With 2 or more,
+  the notice's "Lot k" blocks are title-confirmed and kept.
+- **Expected effect on the 156,123 corrected:**
+  - touched: still 7 of 150, about 7.3 k (3.0–14.6 k);
+  - fully reverted: 3 of 150 (5001424, 5020611, 8364864), about 3.1 k (0.6–8.9 k);
+  - blocks back to `lot: null`: about 59 k (was 63 k);
+  - right blocks refused by coincidence: 0 measured (was about 4 k in-sample, and about 20 k once the OOS was
+    pooled).
+
+### Changed outcomes, FINAL → FINAL_AMENDED (every block)
+
+| block | label | FINAL → AMENDED | why |
+|---|---|---|---|
+| 5051007 / 17689000 RES-1, 2, 3 ("Pakiet nr 1/2/3") | right | null → LOT-1, 2, 3 | G4 notice (16 contradicting blocks); title-confirmed: Dn = {(p)}, non-compound |
+| 5267810 / 18199880 RES-1 ("PAKIET 1") | right | null → LOT-1 | G4 notice (15 contradicting); title-confirmed |
+| OOS 8286472 / 16994904 RES-1..8 ("… zadanie k") | right | null → LOT-1..8 | G4 notice (9 contradicting); title-confirmed. RES-4/5/8 also lose G3, because "(pakiet 8/6/3 pozycji)" is now a count |
+| OOS 5416534 / 18634900 RES-1..14 ("Pakiet k") | right | null → LOT-1..14 | G4 notice (78 contradicting); title-confirmed |
+
+No other block of the 2,256 moves, in-sample or OOS. 26 right blocks are restored, and no wrong block is newly kept.
+
+**OOS 5416534 RES-16 ("Pakiet 16 zad.2") stays `null`.** FINAL refused it by G3 ([16, 2]) and the notice level.
+FINAL_AMENDED refuses it by the notice level alone: its compound (16, 2) does not title-confirm (R2). Its lot is LOT-17;
+LOT-16 is "Pakiet 16 - pozycja nr 1". Under R0 it moved null → LOT-16, wrong.
+
+**Against the round-1 rule (R0 → FINAL_AMENDED):**
+
+| block | R0 → AMENDED | why |
+|---|---|---|
+| OOS 5416534 / 18634900 RES-16 (wrong) | LOT-16 → null (G4-notice) | R2: a compound does not title-confirm |
+| 5267810 / 18199880 RES-9..12, 15..18, 25..30 ("Pakiet 8 poz. k", 14, wrong) | null → null; G4 → G4-notice | R1: head 8 is shared with the matched lot's "pakiet 8". The CN lists pakiet 8's items as lots 8..30, and each block names another item of pakiet 8 |
+| OOS 5416534 / 18634900 RES-17..20, 95..102 ("Pakiet 16 zad.3..6", "Pakiet 88 zad.6..13", 12, wrong) | null → null; G4 → G4-notice | R1, the same shape |
+
+### Residual, re-stated: 568-attributable vs inherited
+
+After FINAL_AMENDED, 5 of 230 uniform Tenders carry a wrong block (2.2 %, 0.71–5.00 %):
+- 5 of 180 in-sample, the same five as FINAL;
+- 0 of 50 OOS.
+
+| case | blocks | attributable to | why not guarded |
+|---|---|---|---|
+| 4854639 RES-9/10 "Painting" on LOT-5 "5. Snagging" (its lot is "6. Repair painting"): CAN-only renumbering, title paraphrased | 2 | **568** | **Corrected text:** plain containment ("painting" ⊂ "repair painting") refuses 11 right blocks: 4854639 RES-1..6 "Cranes / Lifts / High Voltage", 8367203 RES-6, 5625827 RES-1, 8281034 RES-1, 4975428 RES-4, 8313642 RES-1. Each of those shares a content token with its own lot's title. With that condition (the block's content tokens are a subset of exactly one other numbered lot's title and share no token with the matched lot's title; critic's G5b, `scratchpad/u8/critic/g5sub.py`), it catches RES-7..10 with 0 false refusals on 1,762 + 319. **Not built:** it is fit on this one Tender and has no OOS hit. Adopt it only if a fresh draw shows a hit with 0 false refusals. |
+| 4968281 RES-1 "2 Solo-Niederflubusse ca. 15 m", LN 1 = CONTRACT_NO 1 = ITEM 1; its lot is 2 | 1 | **568** | A counter guard (`LN = CONTRACT_NO`, 1..n < \|N\|) refuses 16 right blocks (0.9 %). |
+| 4861483 CAN 17286230, another procedure's CAN (file 40132230 vs 40132200) | 4 | inherited: issue 364's weld | It was on the wrong Tender before 568. |
+| 5364153 RES-4 "3a Leki …" on LOT-3 | 1 | inherited: the parent lot | Its title is LOT-3's title once "3a" is stripped. Lot 3a exists only in corrigendum prose. |
+| 5267907 RES-1/2: the CN's two lots are identical "Produits frais et surgelés / 47 lots" placeholders | 2 | inherited: identical placeholders | No text or value tells them apart. Only winners move; no value moves. |
+
+**568-attributable: 2 of 230 Tenders (0.87 %, 0.11–3.1 %), 3 blocks: 4854639 and 4968281.** The other three Tenders
+(1.3 %) are wrong for reasons 568 inherits. 5416534 RES-16, which R0 added, is caught.
+
+### R1 and R2 (adopted in round 2)
+
+| variant | in-sample | OOS | 5416534 counterfactual (CAN re-keyed to the CN's own numbering, 105 blocks) |
+|---|---|---|---|
+| FINAL (decided) | 11/13, 53/61, FR 4 | 100/100, FR 22 | 22 refused (G3) |
+| R0 (round 1) | 11/13, 53/61, FR 0 | 99/100, FR 0 | 90 refused (G4 21, notice 69) |
+| R0 + R1 alone | same | 99/100, FR 0 | 0 refused |
+| R0 + R2 alone | same | 100/100, FR 0 | 91 refused |
+| **FINAL_AMENDED = R1 + R2** | 11/13, 53/61, **FR 0** | **100/100, FR 0** | **0 refused** |
+
+- **R1** follows C's own convention, that a compound counts by its head.
+  - It keeps the verifier's synthetic case: a lot titled "Pakiet 8 poz. 6 i 7" with a right block "Pakiet 8 poz. 6"
+    printed on it. R0 refused that block (G4).
+  - It keeps the counterfactual's 90 blocks.
+- **R2** stops a position inside a pakiet from confirming the pakiet's lot. That position is exactly 5416534 RES-16.
+- **The cost of R1, measured: more wrong blocks rest on the notice level alone.**
+  - A block naming another item of the same pakiet now agrees with its lot at block level. Examples are 5267810's
+    "Pakiet 8 poz. 1" printed 9 on LOT-9, which is the CN's pakiet 8 item 2, and 5416534's "Pakiet 16 zad.3" on
+    LOT-17.
+  - Wrong blocks refused only by the notice level: in-sample 2 → 16, OOS 0 → 13 (`scratchpad/u8a/r2_exposure.json`).
+    All of them sit in two notices with 15 and 78 other contradicting blocks, so no outcome moves.
+  - A notice made only of such same-pakiet offsets, with fewer than 2 other contradicting blocks, would keep them. No
+    such notice is measured.
+  - A lot-side reader that kept "Pakiet 16 - pozycja nr 2" as (16, 2) would let R1 compare positions. It is not
+    measured, and not part of this rule.
+
+### The read-back bar (replaces Units 11 (e))
+
+- **(i) Parity.** On every block of the fresh 30, the served lot equals the amended port's replay lot: 0
+  divergences, deterministic.
+  - **The parity replay must include 570's remap** (`../570-lot-keys/remap_port.py` option B, composed into
+    `g3_port.replay`'s carry) before the read-back. Without it, every block that 570's narrower G2 newly matches
+    diverges by construction.
+- **(ii) At most 2 of 30 Tenders carry a judged-wrong block that the port also keeps, of any shape.**
+- **(iii) A wrong block of a new shape is recorded and filed, not a reopen.** Reopen only on a parity break, or on
+  3 or more of 30.
+- **The draw.**
+  - Salt `sha256("568u8-fresh30-"+id)`, ascending.
+  - From the **combined wet run's changed set** (its cursor range).
+  - Excluding the s150, the f30, the m77, 8327340 and the OOS 50 (`u8-oos/draw.json`).
+  - At least 10 outside 2012–2015.
+  - At least 8 from changed Tenders outside `readback/population.json` that serve an R2.0.8 block on a lot. These are
+    the blocks newly matched because 570 narrows G2, a stratum no sample has measured.
+  - Read after the drain.
+- **P(pass) at the FINAL_AMENDED residual.** (i) is deterministic given a correct build. For (ii):
+
+  | residual rate | P(pass) |
+  |---|---|
+  | in-sample 5/180 (2.8 %) | 0.950 |
+  | its 95 % upper bound, 6.4 % | 0.702 |
+  | **pooled 5/230 (2.2 %)** | **0.973** |
+  | its 95 % upper bound, 5.0 % | 0.812 |
+
+  - The 8-Tender G2 stratum and the out-of-era 10 are unmeasured. A residual rate there unlike the sample's is what
+    (ii) would detect. So would a same-pakiet offset notice without other contradictions (the R1 cost above).
+  - "30 of 30" would pass with P = 0.52 at the pooled rate.
+
+### Build deltas (Units 8, amended)
+
+- **Reader.**
+  - `lot_designators` and the SELFTEST port take the 77 cases.
+  - `title_key` takes the 10 `TITLE_KEY_SELFTEST` cases, the bare-designator ones included.
+  - Representation: `Designator { head, positions: Vec }`.
+- **Evidence by language.**
+  - `AwardText.named` becomes per language: `BTreeMap<lang, Vec<Designator>>`, with `""` for a value with no
+    language.
+  - `unit7_refusals` computes Dn per language and G3 on heads, as above.
+  - It computes `contradicts` by heads (R1): p is a head, or a head is shared with heads(Dlot).
+  - It computes `title_confirmed` as non-compound with heads = {p} (R2).
+  - It counts the contradicting matched blocks before refusing. A contradicting block is refused. The rest of the
+    notice is refused only on a count of 2 or more, sparing title-confirmed blocks.
+- **Tests that change.**
+  - `a_notice_numbered_by_a_contract_counter_matches_none_5051007`: RES-1..3 keep LOT-1..3, and the other 16 give
+    `None`. Rename it.
+  - The 5267810 half of the 4945774 test: RES-1 keeps LOT-1, the other 31 give `None`. RES-7 "Pakiet 1A" and RES-8
+    "Pakiet" give `None` through the notice level, and so (R1) do RES-9..12, 15..18 and 25..30, "Pakiet 8 poz. k".
+  - Any 5416534 case taken from the round-1 port: RES-16 is now `None` (it was LOT-16). RES-1..14 keep LOT-1..14.
+    Regenerate those expectations from `g3_port.py`. `apply_amended()`'s defaults are FINAL_AMENDED, so a generator
+    that calls it picks up R1 + R2.
+  - **`a_contradicting_block_g3_also_refuses_still_refuses_the_notice`** (unit 8 review), under the amendment:
+    - Its chain (CN 1–3; RES-1 printed 1 "Lots 2 and 3", RES-2 printed 2 untitled) now gives `[None, LOT-2]`: one
+      contradiction refuses only itself.
+    - **Replacement chain, which re-pins the order with two contradictions.** CN 1–4; RES-1 printed 1 "Lots 2 and 3"
+      (G3, and it contradicts); RES-2 printed 2 "Lot 4" (contradicts); RES-3 printed 3 untitled. That gives
+      `[None, None, None]` (RES-3 by the notice level).
+    - The mutant that counts contradictions after G3/G6 gives `[None, None, LOT-3]`.
+    - Checked through the port, under R0 and FINAL_AMENDED alike (`scratchpad/u8a/r2_synthetic.py`).
+- **Tests that are new.** Each was checked through the port (`r2_synthetic.py`).
+  - A single contradicting block beside agreeing ones refuses only itself. CN 1–3; "Lot 1" printed 1, "Lot 3"
+    printed 2, untitled printed 3 → `[LOT-1, None, LOT-3]`.
+  - **A fired notice spares only a title-confirmed, non-compound block (R2).**
+    - CN 1–5: "Lot 3" printed 1 and "Lot 4" printed 2 contradict.
+    - "Lot 3" printed 3 keeps LOT-3.
+    - Untitled printed 4 → `None`.
+    - "Pakiet 5 zad.2" printed 5 → `None` (R0 kept LOT-5).
+  - **The 5416534 RES-16 shape (R2).**
+    - CN printed 14 "Pakiet 14", 15 "Pakiet 15", 16 "Pakiet 16 - pozycja nr 1", 17 "Pakiet 16 - pozycja nr 2", 18
+      "Pakiet 17", 19 "Pakiet 18".
+    - The CAN: "Pakiet 14" printed 14, "Pakiet 16 zad.2" printed 16, "Pakiet 18" printed 17, "Pakiet 19" printed
+      18.
+    - Result: `[LOT-14, None, None, None]`. R0 gave LOT-16 for the second block.
+  - **A compound agrees with its lot by head (R1).**
+    - CN printed 16 "Pakiet 16 - pozycja nr 1", 17 "Pakiet 16 - pozycja nr 2", 18 "Pakiet 17".
+    - The CAN: "Pakiet 16 zad.2" printed 17, "Pakiet 16 zad.1" printed 16, "Pakiet 17" printed 18.
+    - Result: `[LOT-17, LOT-16, LOT-18]`. R0 refused the first by G4.
+    - Also: a lot printed 3 titled "Pakiet 8 poz. 6 i 7", beside a lot printing 8, with the block "Pakiet 8 poz. 6"
+      printed 3 → LOT-3.
+  - "Pakiet 8 poz. 6, Pakiet 8 poz. 7" printed 8 keeps (G3 by heads).
+  - A translated block. EN "Lot 2", DE "Los 3" (a typo), printed 2, keeps: EN agrees. "Lots 2 and 3" in one
+    language is G3, while "Lot 2" in EN beside "Los 3" in DE is not.
+- **Port parity.** `python3 -I u7/g3_port.py` gives:
+  - FINAL: 11/13, 53/61, 4 FR (unchanged);
+  - FINAL_AMENDED: 11/13, 53/61, 0 FR, with the 77's 656 blocks unchanged;
+  - `u8-oos/amended_oos.py` FINAL_AMENDED: 100/100, 0/319, with the counterfactual refusing 0 of 105.
+- **Read-back (c)** becomes the s150's **57** refused blocks. This is unchanged by R1 and R2:
+  - 5051007 RES-4..19 (16), 5267810 RES-2..32 (31);
+  - 8364864 × 2, 5020611 × 4, 5001424 × 1;
+  - 4854639 RES-7/8, 4975428 RES-2.
+
+  5051007 RES-1..3 and 5267810 RES-1 keep LOT-1..3 / LOT-1.
+- **/docs.** Add, after the caveat sentence of Units 8: "An r2.0.8 award's lot is inferred from the number it prints
+  against the contract notice's lots; a small recorded residual (about 2 % of such Tenders) keeps a block on another
+  lot." Pin both sentences with `assert_says`.
+
+### Risks, amended
+
+1. **Keyword false positives.** The false-refusal rate is in-sample, where the reader was tuned, plus the OOS 50.
+   - In-sample it is 0/1,762, at most 0.21 %. OOS it is 0/319, at most 1.15 %.
+   - Before the amendment the OOS surfaced two false-positive shapes in two Tenders, "(pakiet N pozycji)" and "zad."
+     as a second lot. Both are fixed.
+   - A single false positive now refuses at most its own block. The notice level needs two contradicting blocks, and
+     spares title-confirmed ones.
+2. **Language gaps.** Unchanged. The per-language rule is untested on real translated titles: 13 matched blocks
+   carry 2 or more languages, and no two languages of one block name different Dn.
+3. **Coincidental rights.** These are now kept when title-confirmed: 26 restored across in-sample and OOS. R2
+   closes the shape R0 opened, a compound whose head coincides with a counter.
+4. **Same-pakiet offsets rest on the notice level (R1).** 26 wrong blocks lost their block-level G4 and are held only
+   because their notices have 15 and 78 other contradictions. Read-back (ii) is what would see a notice without them.
+5. **The residual.** 5/230 (2.2 %), of which 2/230 (0.87 %) is 568-attributable, in the shapes above. 4861483 is
+   364's. 5267907 moves winners only. 5364153 sits on its parent lot.
+
+**Status line (amended):**
+
+> Status: ready-for-agent — UNIT 8 AMENDED 2026-10-18 (critic wf_2f6dde5b-372 adopted; round 2 adopted R1 + R2 and the
+> quantity-word rule): G4 block-level, notice-level only on ≥ 2 contradicting blocks; agreement by head (R1);
+> title-confirmed = non-compound with heads {p} (R2); G3 on heads; titles per language; reader fixes (tight dash, `Los`
+> case, compounds incl. `zad.`, counts, quantity words); G5 title key pinned. In-sample 11/13 multi, 53/61 other, FR
+> 0/1,762; OOS 100/100, FR 0/319; pooled residual 5/230 Tenders (2.2 %, 0.71–5.0 %), 2/230 568-attributable.
+> NEXT: unit 8 build to the amended port → gate → deploy → ONE refold with 570 → read back on the new bar (parity
+> with 570's remap in the replay, 0 divergences; ≤ 2/30 wrong-kept; new shapes filed).

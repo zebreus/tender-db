@@ -1,0 +1,1533 @@
+{
+ "issue": 568,
+ "unit": "8 (amended rule on the OOS 50)",
+ "driver": "amended_oos.py (python3 -I -B; imports ../u7/g3_port.py: replay -> apply_final / apply_amended)",
+ "labels": "skeptic-final: o1_final.json / o2_final.json `cls`",
+ "consistency_problems": [],
+ "per_group": {
+  "o1": {
+   "FINAL": {
+    "matched_blocks": 168,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 9,
+     "n": 9
+    },
+    "false_refusals": {
+     "k": 8,
+     "n": 159,
+     "ci95": [
+      0.022,
+      0.0967
+     ],
+     "ids": [
+      "8286472/16994904/RES-1",
+      "8286472/16994904/RES-2",
+      "8286472/16994904/RES-3",
+      "8286472/16994904/RES-4",
+      "8286472/16994904/RES-5",
+      "8286472/16994904/RES-6",
+      "8286472/16994904/RES-7",
+      "8286472/16994904/RES-8"
+     ]
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      8286472
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 17,
+    "refused_by_guard": {
+     "G4": 17,
+     "G3": 10
+    },
+    "tenders_touched": [
+     8286472
+    ]
+   },
+   "FINAL_AMENDED": {
+    "matched_blocks": 168,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 9,
+     "n": 9
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 159,
+     "ci95": [
+      0.0,
+      0.0229
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      8286472
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 9,
+    "refused_by_guard": {
+     "G4": 9
+    },
+    "tenders_touched": [
+     8286472
+    ]
+   },
+   "FINAL_AMENDED_on_port_text_sides": {
+    "matched_blocks": 168,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 9,
+     "n": 9
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 159,
+     "ci95": [
+      0.0,
+      0.0229
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      8286472
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 9,
+    "refused_by_guard": {
+     "G4": 9
+    },
+    "tenders_touched": [
+     8286472
+    ]
+   },
+   "FINAL_AMENDED_R0": {
+    "matched_blocks": 168,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 9,
+     "n": 9
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 159,
+     "ci95": [
+      0.0,
+      0.0229
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      8286472
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 9,
+    "refused_by_guard": {
+     "G4": 9
+    },
+    "tenders_touched": [
+     8286472
+    ]
+   },
+   "R0_plus_R1_only": {
+    "matched_blocks": 168,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 9,
+     "n": 9
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 159,
+     "ci95": [
+      0.0,
+      0.0229
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      8286472
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 9,
+    "refused_by_guard": {
+     "G4": 9
+    },
+    "tenders_touched": [
+     8286472
+    ]
+   },
+   "R0_plus_R2_only": {
+    "matched_blocks": 168,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 9,
+     "n": 9
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 159,
+     "ci95": [
+      0.0,
+      0.0229
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      8286472
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 9,
+    "refused_by_guard": {
+     "G4": 9
+    },
+    "tenders_touched": [
+     8286472
+    ]
+   }
+  },
+  "o2": {
+   "FINAL": {
+    "matched_blocks": 251,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 91,
+     "n": 91
+    },
+    "false_refusals": {
+     "k": 14,
+     "n": 160,
+     "ci95": [
+      0.0487,
+      0.1425
+     ],
+     "ids": [
+      "5416534/18634900/RES-1",
+      "5416534/18634900/RES-2",
+      "5416534/18634900/RES-3",
+      "5416534/18634900/RES-4",
+      "5416534/18634900/RES-5",
+      "5416534/18634900/RES-6",
+      "5416534/18634900/RES-7",
+      "5416534/18634900/RES-8",
+      "5416534/18634900/RES-9",
+      "5416534/18634900/RES-10",
+      "5416534/18634900/RES-11",
+      "5416534/18634900/RES-12",
+      "5416534/18634900/RES-13",
+      "5416534/18634900/RES-14"
+     ]
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      5416534
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 105,
+    "refused_by_guard": {
+     "G4": 105,
+     "G3": 22
+    },
+    "tenders_touched": [
+     5416534
+    ]
+   },
+   "FINAL_AMENDED": {
+    "matched_blocks": 251,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 91,
+     "n": 91
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 160,
+     "ci95": [
+      0.0,
+      0.0228
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      5416534
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 91,
+    "refused_by_guard": {
+     "G4": 78,
+     "G4n": 13
+    },
+    "tenders_touched": [
+     5416534
+    ]
+   },
+   "FINAL_AMENDED_on_port_text_sides": {
+    "matched_blocks": 251,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 91,
+     "n": 91
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 160,
+     "ci95": [
+      0.0,
+      0.0228
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      5416534
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 91,
+    "refused_by_guard": {
+     "G4": 78,
+     "G4n": 13
+    },
+    "tenders_touched": [
+     5416534
+    ]
+   },
+   "FINAL_AMENDED_R0": {
+    "matched_blocks": 251,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 90,
+     "n": 91
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 160,
+     "ci95": [
+      0.0,
+      0.0228
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      5416534
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      5416534
+     ]
+    },
+    "residual_wrong_blocks": [
+     "5416534/18634900/RES-16 (wrong_other)"
+    ],
+    "blocks_refused": 90,
+    "refused_by_guard": {
+     "G4": 90
+    },
+    "tenders_touched": [
+     5416534
+    ]
+   },
+   "R0_plus_R1_only": {
+    "matched_blocks": 251,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 90,
+     "n": 91
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 160,
+     "ci95": [
+      0.0,
+      0.0228
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      5416534
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      5416534
+     ]
+    },
+    "residual_wrong_blocks": [
+     "5416534/18634900/RES-16 (wrong_other)"
+    ],
+    "blocks_refused": 90,
+    "refused_by_guard": {
+     "G4": 78,
+     "G4n": 12
+    },
+    "tenders_touched": [
+     5416534
+    ]
+   },
+   "R0_plus_R2_only": {
+    "matched_blocks": 251,
+    "multi_caught": {
+     "k": 0,
+     "n": 0
+    },
+    "other_wrong_caught": {
+     "k": 91,
+     "n": 91
+    },
+    "false_refusals": {
+     "k": 0,
+     "n": 160,
+     "ci95": [
+      0.0,
+      0.0228
+     ],
+     "ids": []
+    },
+    "tenders_with_a_wrong_block_before": {
+     "k": 1,
+     "n": 25,
+     "ci95": [
+      0.001,
+      0.2035
+     ],
+     "ids": [
+      5416534
+     ]
+    },
+    "tenders_with_a_wrong_block_after": {
+     "k": 0,
+     "n": 25,
+     "ci95": [
+      0.0,
+      0.1372
+     ],
+     "ids": []
+    },
+    "residual_wrong_blocks": [],
+    "blocks_refused": 91,
+    "refused_by_guard": {
+     "G4": 90,
+     "G4n": 1
+    },
+    "tenders_touched": [
+     5416534
+    ]
+   }
+  }
+ },
+ "combined": {
+  "FINAL": {
+   "matched_blocks": 419,
+   "multi_caught": {
+    "k": 0,
+    "n": 0
+   },
+   "other_wrong_caught": {
+    "k": 100,
+    "n": 100
+   },
+   "false_refusals": {
+    "k": 22,
+    "n": 319,
+    "ci95": [
+     0.0437,
+     0.1026
+    ],
+    "ids": [
+     "8286472/16994904/RES-1",
+     "8286472/16994904/RES-2",
+     "8286472/16994904/RES-3",
+     "8286472/16994904/RES-4",
+     "8286472/16994904/RES-5",
+     "8286472/16994904/RES-6",
+     "8286472/16994904/RES-7",
+     "8286472/16994904/RES-8",
+     "5416534/18634900/RES-1",
+     "5416534/18634900/RES-2",
+     "5416534/18634900/RES-3",
+     "5416534/18634900/RES-4",
+     "5416534/18634900/RES-5",
+     "5416534/18634900/RES-6",
+     "5416534/18634900/RES-7",
+     "5416534/18634900/RES-8",
+     "5416534/18634900/RES-9",
+     "5416534/18634900/RES-10",
+     "5416534/18634900/RES-11",
+     "5416534/18634900/RES-12",
+     "5416534/18634900/RES-13",
+     "5416534/18634900/RES-14"
+    ]
+   },
+   "tenders_with_a_wrong_block_before": {
+    "k": 2,
+    "n": 50,
+    "ci95": [
+     0.0049,
+     0.1371
+    ],
+    "ids": [
+     8286472,
+     5416534
+    ]
+   },
+   "tenders_with_a_wrong_block_after": {
+    "k": 0,
+    "n": 50,
+    "ci95": [
+     0.0,
+     0.0711
+    ],
+    "ids": []
+   },
+   "residual_wrong_blocks": [],
+   "blocks_refused": 122,
+   "refused_by_guard": {
+    "G4": 122,
+    "G3": 32
+   },
+   "tenders_touched": [
+    8286472,
+    5416534
+   ]
+  },
+  "FINAL_AMENDED": {
+   "matched_blocks": 419,
+   "multi_caught": {
+    "k": 0,
+    "n": 0
+   },
+   "other_wrong_caught": {
+    "k": 100,
+    "n": 100
+   },
+   "false_refusals": {
+    "k": 0,
+    "n": 319,
+    "ci95": [
+     0.0,
+     0.0115
+    ],
+    "ids": []
+   },
+   "tenders_with_a_wrong_block_before": {
+    "k": 2,
+    "n": 50,
+    "ci95": [
+     0.0049,
+     0.1371
+    ],
+    "ids": [
+     8286472,
+     5416534
+    ]
+   },
+   "tenders_with_a_wrong_block_after": {
+    "k": 0,
+    "n": 50,
+    "ci95": [
+     0.0,
+     0.0711
+    ],
+    "ids": []
+   },
+   "residual_wrong_blocks": [],
+   "blocks_refused": 100,
+   "refused_by_guard": {
+    "G4": 87,
+    "G4n": 13
+   },
+   "tenders_touched": [
+    8286472,
+    5416534
+   ]
+  },
+  "FINAL_AMENDED_on_port_text_sides": {
+   "matched_blocks": 419,
+   "multi_caught": {
+    "k": 0,
+    "n": 0
+   },
+   "other_wrong_caught": {
+    "k": 100,
+    "n": 100
+   },
+   "false_refusals": {
+    "k": 0,
+    "n": 319,
+    "ci95": [
+     0.0,
+     0.0115
+    ],
+    "ids": []
+   },
+   "tenders_with_a_wrong_block_before": {
+    "k": 2,
+    "n": 50,
+    "ci95": [
+     0.0049,
+     0.1371
+    ],
+    "ids": [
+     8286472,
+     5416534
+    ]
+   },
+   "tenders_with_a_wrong_block_after": {
+    "k": 0,
+    "n": 50,
+    "ci95": [
+     0.0,
+     0.0711
+    ],
+    "ids": []
+   },
+   "residual_wrong_blocks": [],
+   "blocks_refused": 100,
+   "refused_by_guard": {
+    "G4": 87,
+    "G4n": 13
+   },
+   "tenders_touched": [
+    8286472,
+    5416534
+   ]
+  },
+  "FINAL_AMENDED_R0": {
+   "matched_blocks": 419,
+   "multi_caught": {
+    "k": 0,
+    "n": 0
+   },
+   "other_wrong_caught": {
+    "k": 99,
+    "n": 100
+   },
+   "false_refusals": {
+    "k": 0,
+    "n": 319,
+    "ci95": [
+     0.0,
+     0.0115
+    ],
+    "ids": []
+   },
+   "tenders_with_a_wrong_block_before": {
+    "k": 2,
+    "n": 50,
+    "ci95": [
+     0.0049,
+     0.1371
+    ],
+    "ids": [
+     8286472,
+     5416534
+    ]
+   },
+   "tenders_with_a_wrong_block_after": {
+    "k": 1,
+    "n": 50,
+    "ci95": [
+     0.0005,
+     0.1065
+    ],
+    "ids": [
+     5416534
+    ]
+   },
+   "residual_wrong_blocks": [
+    "5416534/18634900/RES-16 (wrong_other)"
+   ],
+   "blocks_refused": 99,
+   "refused_by_guard": {
+    "G4": 99
+   },
+   "tenders_touched": [
+    8286472,
+    5416534
+   ]
+  },
+  "R0_plus_R1_only": {
+   "matched_blocks": 419,
+   "multi_caught": {
+    "k": 0,
+    "n": 0
+   },
+   "other_wrong_caught": {
+    "k": 99,
+    "n": 100
+   },
+   "false_refusals": {
+    "k": 0,
+    "n": 319,
+    "ci95": [
+     0.0,
+     0.0115
+    ],
+    "ids": []
+   },
+   "tenders_with_a_wrong_block_before": {
+    "k": 2,
+    "n": 50,
+    "ci95": [
+     0.0049,
+     0.1371
+    ],
+    "ids": [
+     8286472,
+     5416534
+    ]
+   },
+   "tenders_with_a_wrong_block_after": {
+    "k": 1,
+    "n": 50,
+    "ci95": [
+     0.0005,
+     0.1065
+    ],
+    "ids": [
+     5416534
+    ]
+   },
+   "residual_wrong_blocks": [
+    "5416534/18634900/RES-16 (wrong_other)"
+   ],
+   "blocks_refused": 99,
+   "refused_by_guard": {
+    "G4": 87,
+    "G4n": 12
+   },
+   "tenders_touched": [
+    8286472,
+    5416534
+   ]
+  },
+  "R0_plus_R2_only": {
+   "matched_blocks": 419,
+   "multi_caught": {
+    "k": 0,
+    "n": 0
+   },
+   "other_wrong_caught": {
+    "k": 100,
+    "n": 100
+   },
+   "false_refusals": {
+    "k": 0,
+    "n": 319,
+    "ci95": [
+     0.0,
+     0.0115
+    ],
+    "ids": []
+   },
+   "tenders_with_a_wrong_block_before": {
+    "k": 2,
+    "n": 50,
+    "ci95": [
+     0.0049,
+     0.1371
+    ],
+    "ids": [
+     8286472,
+     5416534
+    ]
+   },
+   "tenders_with_a_wrong_block_after": {
+    "k": 0,
+    "n": 50,
+    "ci95": [
+     0.0,
+     0.0711
+    ],
+    "ids": []
+   },
+   "residual_wrong_blocks": [],
+   "blocks_refused": 100,
+   "refused_by_guard": {
+    "G4": 99,
+    "G4n": 1
+   },
+   "tenders_touched": [
+    8286472,
+    5416534
+   ]
+  }
+ },
+ "changed_outcomes": [
+  {
+   "block": "oos-o1:8286472/16994904/RES-1",
+   "label": "right",
+   "printed": "1",
+   "lot_u7": null,
+   "lot_u8": "LOT-1",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (9 contradicting blocks) but the block is title-confirmed: Dn heads = {1} in every language naming a lot ({'PL': [('1',)]})",
+   "title": "Łącznik 016 produkcji MIDAS w ilości 460 sztuk - zadanie 1."
+  },
+  {
+   "block": "oos-o1:8286472/16994904/RES-2",
+   "label": "right",
+   "printed": "2",
+   "lot_u7": null,
+   "lot_u8": "LOT-2",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (9 contradicting blocks) but the block is title-confirmed: Dn heads = {2} in every language naming a lot ({'PL': [('2',)]})",
+   "title": "Łączniki rynien 3000kN wg rys. nr PAT-073/2011 produkcji M-PROFIL w ilości 300 szt. - zadanie 2."
+  },
+  {
+   "block": "oos-o1:8286472/16994904/RES-3",
+   "label": "right",
+   "printed": "3",
+   "lot_u7": null,
+   "lot_u8": "LOT-3",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (9 contradicting blocks) but the block is title-confirmed: Dn heads = {3} in every language naming a lot ({'PL': [('3',)]})",
+   "title": "Zgrzebło kompletne DKB 34x126 wg rys. nr 682442 do przenośnika zgrzebłowego typu GH PF 4/1032 w ilości 500 kpl. - zadanie 3."
+  },
+  {
+   "block": "oos-o1:8286472/16994904/RES-4",
+   "label": "right",
+   "printed": "4",
+   "lot_u7": null,
+   "lot_u8": "LOT-4",
+   "guards_u7": [
+    "G4",
+    "G3"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (9 contradicting blocks) but the block is title-confirmed: Dn heads = {4} in every language naming a lot ({'PL': [('4',)]}); G3: unit-7 Df [('4',), ('8',)] -> amended Dn {'PL': [('4',)]} (heads per language)",
+   "title": "Elementy urządzenia typu UPP-1 (pakiet 8 pozycji) w łącznej ilości 116 szt. - zadanie 4."
+  },
+  {
+   "block": "oos-o1:8286472/16994904/RES-5",
+   "label": "right",
+   "printed": "5",
+   "lot_u7": null,
+   "lot_u8": "LOT-5",
+   "guards_u7": [
+    "G4",
+    "G3"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (9 contradicting blocks) but the block is title-confirmed: Dn heads = {5} in every language naming a lot ({'PL': [('5',)]}); G3: unit-7 Df [('5',), ('6',)] -> amended Dn {'PL': [('5',)]} (heads per language)",
+   "title": "Wyrzutniki łańcucha i płyt wyrzutnikowych oraz pokryw i opraw do przenośnika zgrzebłowego typu Rybnik-80 (Grot 750) produkcji MIDAS (pakiet 6 pozycji) w łącznej"
+  },
+  {
+   "block": "oos-o1:8286472/16994904/RES-6",
+   "label": "right",
+   "printed": "6",
+   "lot_u7": null,
+   "lot_u8": "LOT-6",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (9 contradicting blocks) but the block is title-confirmed: Dn heads = {6} in every language naming a lot ({'PL': [('6',)]})",
+   "title": "Elementy do przenośnika zgrzebłowego typu Rybnik-80 (Grot 750) oraz Rybnik 750 (pakiet 33 pozycje) w łącznej ilości 804 szt. i 2 kpl. - zadanie 6."
+  },
+  {
+   "block": "oos-o1:8286472/16994904/RES-7",
+   "label": "right",
+   "printed": "7",
+   "lot_u7": null,
+   "lot_u8": "LOT-7",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (9 contradicting blocks) but the block is title-confirmed: Dn heads = {7} in every language naming a lot ({'PL': [('7',)]})",
+   "title": "Bębny, gwiazda i wały do przenośników zgrzebłowych typu Rybnik (pakiet 7 pozycji) w łącznej ilości 19 szt. - zadanie 7."
+  },
+  {
+   "block": "oos-o1:8286472/16994904/RES-8",
+   "label": "right",
+   "printed": "8",
+   "lot_u7": null,
+   "lot_u8": "LOT-8",
+   "guards_u7": [
+    "G4",
+    "G3"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (9 contradicting blocks) but the block is title-confirmed: Dn heads = {8} in every language naming a lot ({'PL': [('8',)]}); G3: unit-7 Df [('3',), ('8',)] -> amended Dn {'PL': [('8',)]} (heads per language)",
+   "title": "Łączniki rynien do przenośników zgrzebłowych (pakiet 3 pozycji) w łącznej ilości 1 376 szt. - zadanie 8."
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-1",
+   "label": "right",
+   "printed": "1",
+   "lot_u7": null,
+   "lot_u8": "LOT-1",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {1} in every language naming a lot ({'PL': [('1',)]})",
+   "title": "Pakiet 1"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-2",
+   "label": "right",
+   "printed": "2",
+   "lot_u7": null,
+   "lot_u8": "LOT-2",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {2} in every language naming a lot ({'PL': [('2',)]})",
+   "title": "Pakiet 2"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-3",
+   "label": "right",
+   "printed": "3",
+   "lot_u7": null,
+   "lot_u8": "LOT-3",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {3} in every language naming a lot ({'PL': [('3',)]})",
+   "title": "Pakiet 3"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-4",
+   "label": "right",
+   "printed": "4",
+   "lot_u7": null,
+   "lot_u8": "LOT-4",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {4} in every language naming a lot ({'PL': [('4',)]})",
+   "title": "Pakiet 4"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-5",
+   "label": "right",
+   "printed": "5",
+   "lot_u7": null,
+   "lot_u8": "LOT-5",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {5} in every language naming a lot ({'PL': [('5',)]})",
+   "title": "Pakiet 5"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-6",
+   "label": "right",
+   "printed": "6",
+   "lot_u7": null,
+   "lot_u8": "LOT-6",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {6} in every language naming a lot ({'PL': [('6',)]})",
+   "title": "Pakiet 6"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-7",
+   "label": "right",
+   "printed": "7",
+   "lot_u7": null,
+   "lot_u8": "LOT-7",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {7} in every language naming a lot ({'PL': [('7',)]})",
+   "title": "Pakiet 7"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-8",
+   "label": "right",
+   "printed": "8",
+   "lot_u7": null,
+   "lot_u8": "LOT-8",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {8} in every language naming a lot ({'PL': [('8',)]})",
+   "title": "Pakiet 8"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-9",
+   "label": "right",
+   "printed": "9",
+   "lot_u7": null,
+   "lot_u8": "LOT-9",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {9} in every language naming a lot ({'PL': [('9',)]})",
+   "title": "Pakiet 9"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-10",
+   "label": "right",
+   "printed": "10",
+   "lot_u7": null,
+   "lot_u8": "LOT-10",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {10} in every language naming a lot ({'PL': [('10',)]})",
+   "title": "Pakiet 10"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-11",
+   "label": "right",
+   "printed": "11",
+   "lot_u7": null,
+   "lot_u8": "LOT-11",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {11} in every language naming a lot ({'PL': [('11',)]})",
+   "title": "Pakiet 11"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-12",
+   "label": "right",
+   "printed": "12",
+   "lot_u7": null,
+   "lot_u8": "LOT-12",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {12} in every language naming a lot ({'PL': [('12',)]})",
+   "title": "Pakiet 12"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-13",
+   "label": "right",
+   "printed": "13",
+   "lot_u7": null,
+   "lot_u8": "LOT-13",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {13} in every language naming a lot ({'PL': [('13',)]})",
+   "title": "Pakiet 13"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-14",
+   "label": "right",
+   "printed": "14",
+   "lot_u7": null,
+   "lot_u8": "LOT-14",
+   "guards_u7": [
+    "G4"
+   ],
+   "guards_u8": [],
+   "why": "G4 notice fired (78 contradicting blocks) but the block is title-confirmed: Dn heads = {14} in every language naming a lot ({'PL': [('14',)]})",
+   "title": "Pakiet 14"
+  }
+ ],
+ "changed_vs_FINAL_AMENDED_R0": [
+  {
+   "block": "oos-o2:5416534/18634900/RES-16",
+   "label": "wrong_other",
+   "printed": "16",
+   "lot_u8r0": "LOT-16",
+   "lot_u8": null,
+   "guards_u8r0": [],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: the notice's contradicting blocks 90 -> 78; R2: Dn {'PL': [('16', '2')]} holds a compound, so it no longer title-confirms; guards [] -> ['G4n']",
+   "title": "Pakiet 16 zad.2"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-17",
+   "label": "wrong_other",
+   "printed": "17",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('16', '3')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 16 zad. 3"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-18",
+   "label": "wrong_other",
+   "printed": "18",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('16', '4')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 16 zad. 4"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-19",
+   "label": "wrong_other",
+   "printed": "19",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('16', '5')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 16 zad.5"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-20",
+   "label": "wrong_other",
+   "printed": "20",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('16', '6')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 16 zad.6"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-95",
+   "label": "wrong_other",
+   "printed": "95",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('88', '6')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 88 zad.6"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-96",
+   "label": "wrong_other",
+   "printed": "96",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('88', '7')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 88 zad.7"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-97",
+   "label": "wrong_other",
+   "printed": "97",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('88', '8')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 88 zad.8"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-98",
+   "label": "wrong_other",
+   "printed": "98",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('88', '9')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 88 zad.9"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-99",
+   "label": "wrong_other",
+   "printed": "99",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('88', '10')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 88 zad.10"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-100",
+   "label": "wrong_other",
+   "printed": "100",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('88', '11')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 88 zad.11"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-101",
+   "label": "wrong_other",
+   "printed": "101",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('88', '12')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 88 zad.12"
+  },
+  {
+   "block": "oos-o2:5416534/18634900/RES-102",
+   "label": "wrong_other",
+   "printed": "102",
+   "lot_u8r0": null,
+   "lot_u8": null,
+   "guards_u8r0": [
+    "G4"
+   ],
+   "guards_u8": [
+    "G4n"
+   ],
+   "why": "R1: Dn {'PL': [('88', '13')]} shares a head with the matched lot's own text, so it no longer contradicts; R1: the notice's contradicting blocks 90 -> 78; guards ['G4'] -> ['G4n']",
+   "title": "Pakiet 88 zad.13"
+  }
+ ],
+ "fold_vs_port_text_sides_differ": [],
+ "blocks_with_titles_in_2+_languages": 1,
+ "blocks_whose_languages_name_different_Dn": [],
+ "counterfactual_5416534": {
+  "what": "CAN 18634900 with every block re-keyed to the CN lot its own title names and that lot's number printed",
+  "blocks": 105,
+  "unmapped": [],
+  "FINAL_refused": 22,
+  "FINAL_guards": {
+   "G3": 22
+  },
+  "FINAL_AMENDED_refused": 0,
+  "FINAL_AMENDED_guards": {},
+  "FINAL_AMENDED_refusals": [],
+  "variants_refused": {
+   "FINAL_AMENDED_R0": 90,
+   "R0_plus_R1_only": 0,
+   "R0_plus_R2_only": 91
+  },
+  "variants_guards": {
+   "FINAL_AMENDED_R0": {
+    "G4": 21,
+    "G4n": 69
+   },
+   "R0_plus_R1_only": {},
+   "R0_plus_R2_only": {
+    "G4n": 70,
+    "G4": 21
+   }
+  }
+ },
+ "pooled_with_in_sample": {
+  "uniform_tenders_with_a_wrong_block_after_FINAL_AMENDED": {
+   "in_sample": [
+    5,
+    180
+   ],
+   "oos": [
+    0,
+    50
+   ],
+   "k": 5,
+   "n": 230,
+   "ci95": [
+    0.0071,
+    0.05
+   ]
+  },
+  "fresh30_bar_ii_P(pass)": {
+   "point": {
+    "p_tender": 0.0217,
+    "P(<=2 of 30)": 0.973,
+    "P(0 of 30)": 0.517
+   },
+   "ci95_low": {
+    "p_tender": 0.0071,
+    "P(<=2 of 30)": 0.999,
+    "P(0 of 30)": 0.808
+   },
+   "ci95_high": {
+    "p_tender": 0.05,
+    "P(<=2 of 30)": 0.812,
+    "P(0 of 30)": 0.215
+   }
+  },
+  "false_refusals_FINAL_AMENDED": {
+   "in_sample": [
+    0,
+    1762
+   ],
+   "oos": [
+    0,
+    319
+   ],
+   "k": 0,
+   "n": 2081,
+   "ci95": [
+    0.0,
+    0.0018
+   ]
+  }
+ }
+}
