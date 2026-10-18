@@ -64,7 +64,8 @@ def main():
         tenders[str(i)] = {
             'version': t.get('version'),
             'value': t.get('value'),
-            'lots': [{'key': l.get('key'), 'title': l.get('title')} for l in t.get('lots') or []],
+            'lots': [{'key': l.get('lot_key'), 'title': l.get('title'), 'value': l.get('value')}
+                     for l in t.get('lot_details') or []],
             'lot_results': [{'key': r.get('key'), 'lot': r.get('lot'), 'notice_id': r.get('notice_id'),
                              'awarded': r.get('awarded')} for r in t.get('lot_results') or []],
         }
