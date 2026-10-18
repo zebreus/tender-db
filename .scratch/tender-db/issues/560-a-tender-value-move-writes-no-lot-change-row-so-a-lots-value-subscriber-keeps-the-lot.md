@@ -1,6 +1,6 @@
 # 560 — a version that moves only the Tender's value writes no lot change row, so a `/v1/lots` value-bound subscriber keeps a lot its bound now excludes
 
-Status: ready-for-agent — U-b + U-c BUILT, reviewed (wf_250ada72-32e, 10 findings fixed), GATED (900efeb, 1441 s) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 562 and 551 unit 4a. NEXT: U-d — after the next daily fold (2026-10-18 ~07:40 UTC), the coverage read crediting D5's seq-less rows against the ~257-lot pre-deploy baseline (decision's amendment); then close.
+Status: ready-for-agent — U-b + U-c BUILT, reviewed (wf_250ada72-32e, 10 findings fixed), GATED (900efeb, 1441 s) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 562 and 551 unit 4a. NEXT: U-d — the coverage read crediting D5's seq-less rows against the ~257-lot pre-deploy baseline (decision's amendment), on the first WEEKDAY publication day folded entirely after the deploy whose D5 morning (the next morning's rederive) has no refold or drain running: 2026-10-18's daily fold carried Saturday's near-empty package, so the earliest is Monday 10-19's TED package (D5 morning 10-20 or 10-21). The combined 568/570 refold must not overlap that morning. Then close.
 over a real SSE socket). Next: decide between emitting lot `changed` rows on a Tender head-value move (533's closure-flip
 shape) and documenting the gap as permanent; measure the extra rows first.
 Kind: correctness (SSE `added`/`removed` on `/v1/lots`)
