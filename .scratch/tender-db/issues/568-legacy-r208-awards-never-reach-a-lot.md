@@ -1,15 +1,15 @@
 # 568 — legacy R2.0.8 contract award notices never attach their awards to a lot, even on a multi-lot Tender
 
 Status: ready-for-agent — DEPLOYED 86f2745 and DRAINED (2593/2594: 156,123 corrected); read-back FAILED 29/30 (8327340,
-one block for several lots) → UNIT 7 DECIDED 2026-10-18 (wf_8ba1e1ec-eee, `568-r208-lots/u7/decision-u7.md`): BUILD
-G3–G6 on the cross-notice match (G3 title names ≥ 2 lots; G4 a title names another lot than its printed number → the
-notice matches none; G5 title = another lot's title; G6 ≥ 2 printed numbers; none on a Tender whose lots print < 2
-numbers; titles refuse, never key). Measured on the salted 150 + fresh 30 + the 77: catches 11/13 multi-lot and 53/61
-other-wrong blocks, false refusals 4/1,762 (0.23 %, ≤ 0.58 %), the 77 untouched. Value guards refused at every k.
-Deployed rule today: 12/180 uniform Tenders carry a wrong block (6.7 %, 3.5–11.4 %); after G3–G6: 5/180 (2.8 %,
-0.9–6.4 %), five recorded residual shapes. NEXT: unit 8 build → gate → deploy → ONE refold with 570 (TED-LOT_NO +
-TED-LOT_NUMBER) → read back (8327340's 7 on the Tender; the 150's 61 named; the 77 unchanged; fresh 30: 0
-guarded-shape wrongs, residual ≤ 2/30).
+one block for several lots) → UNIT 7 DECIDED (wf_8ba1e1ec-eee) → UNIT 8 BUILT 2026-10-18 (wf_2f6dde5b-372 build + OOS 50 +
+decision critic; AMENDED by wf_f5c0b404-92e: G4 refuses a contradicting block, and only 2+ contradictions in one notice
+refuse its other blocks except title-confirmed ones (R2: plain designators naming exactly the printed number); R1 agreement
+with the lot's own text by head; G3 on distinct heads per language; reader fixes — `u7/decision-u7.md` "Amendment (unit
+8)"). Measured, pooled 230 uniform Tenders: right blocks refused 0/2,081; other-wrong caught 153/161, multi 11/13;
+Tenders with a wrong block 14/230 → 5/230 (2 of them 568's own). Rust fold = port on every cached block. NEXT: gate →
+deploy → ONE refold with 570 (TED-LOT_NO + TED-LOT_NUMBER; baseline `drain/take_baseline.py` first; finish before the
+10-20 morning, 560's D5 window) → read back with the amended bar (parity with the port incl. 570's remap; ≤ 2/30
+judged-wrong; fresh 30 from the combined run's changed set, salt "568u8-fresh30-").
 Kind: completeness (legacy lot results: R2.0.8 awards served tender-scoped)
 Relates to:
 - 567 (same-notice ITEM/LOT_NO mapping in read_legacy_results);
