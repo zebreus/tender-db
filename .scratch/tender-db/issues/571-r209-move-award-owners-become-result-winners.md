@@ -1,6 +1,6 @@
 # 571 — an R2.0.9 T02 award's operator owners (`ADDRESS_PARTY`) become `lot_results` winners
 
-Status: ready-for-agent — filed 2026-10-19 from issue 541 unit 2's review (wf_a8f42aac-9fa, scope lens, confirmed by an
+Status: ready-for-agent — **unit 1 SIZED 2026-10-19**: `refold-fields` 2633 (`TED-ADDRESS_PARTY` in notice_ids, `expect: 1`, 04:49–04:57Z) aborted with **67** carriers, nothing written. Unit 2 (the guard + a 67-notice drain) in progress. Was: ready-for-agent — filed 2026-10-19 from issue 541 unit 2's review (wf_a8f42aac-9fa, scope lens, confirmed by an
 adversarial verifier; pre-existing, not introduced by 541). Prevalence unknown: no fixture or census has shown an R2.0.9
 T02 with owners yet. Next: size it (unit 1), then the guard (unit 2).
 Kind: correctness (legacy results: a non-winner bound as a winner)
@@ -38,3 +38,10 @@ never reaches the results reader).
    owner rather than a winner) from the wildcard winner arm; test with an R2.0.9-shaped `RES-1` carrying
    `ADDRESS_CONTRACTOR` and `ADDRESS_PARTY` (only the contractor is a winner). Drain the unit-1 cohort with the same
    `refold-fields` job run wet.
+
+## Unit 1 — sized (2026-10-19)
+
+`refold-fields` 2633 `{"profiles":["TED-ADDRESS_PARTY"],"tables":["notice_ids"],"expect":1}`: **67 notices** carry
+the field (the sweep took ~8 min; project 2634 ran 0 notices). `ADDRESS_PARTY` is a MOVE-only element in R2.0.9, so these
+are the R2.0.9 T02 awards that name owners. No bounded way to list them without the field index; the drain's corrections
+(unit 2) name them.
