@@ -1,0 +1,845 @@
+[
+ {
+  "label": "Arches HA",
+  "agent": 30953692,
+  "printed": [
+   "ARCHES HOUSING LIMITED"
+  ],
+  "norms": [
+   "arches housing limited",
+   "arches housing"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Believe Housing",
+  "agent": 30953692,
+  "printed": [
+   "BELIEVE HOUSING LIMITED"
+  ],
+  "norms": [
+   "believe housing limited",
+   "believe housing"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Blackpool Coastal Housing",
+  "agent": 30953692,
+  "printed": [
+   "BLACKPOOL COASTAL HOUSING LIMITED"
+  ],
+  "norms": [
+   "blackpool coastal housing limited",
+   "blackpool coastal housing"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Bernicia",
+  "agent": 30953692,
+  "printed": [
+   "Bernicia Group"
+  ],
+  "norms": [
+   "bernicia group",
+   "bernicia group limited",
+   "bernicia homes",
+   "bernicia"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Birmingham CC",
+  "agent": 30953692,
+  "printed": [
+   "Birmingham City Council"
+  ],
+  "norms": [
+   "birmingham city council"
+  ],
+  "ids": [
+   30914707
+  ]
+ },
+ {
+  "label": "Bristol CC",
+  "agent": 30953692,
+  "printed": [
+   "Bristol City Council"
+  ],
+  "norms": [
+   "bristol city council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Carmarthenshire CC",
+  "agent": 30953692,
+  "printed": [
+   "Carmarthenshire County Council"
+  ],
+  "norms": [
+   "carmarthenshire county council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "City of Lincoln",
+  "agent": 30953692,
+  "printed": [
+   "City of Lincoln Council"
+  ],
+  "norms": [
+   "city of lincoln council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "City of York",
+  "agent": 30953692,
+  "printed": [
+   "City of York Council"
+  ],
+  "norms": [
+   "city of york council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Darlington BC",
+  "agent": 30953692,
+  "printed": [
+   "Darlington Borough Council"
+  ],
+  "norms": [
+   "darlington borough council"
+  ],
+  "ids": [
+   30914393
+  ]
+ },
+ {
+  "label": "East Riding",
+  "agent": 30953692,
+  "printed": [
+   "East Riding of Yorkshire Council"
+  ],
+  "norms": [
+   "east riding of yorkshire council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "East Suffolk",
+  "agent": 30953692,
+  "printed": [
+   "East Suffolk Council"
+  ],
+  "norms": [
+   "east suffolk council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Gateshead",
+  "agent": 30953692,
+  "printed": [
+   "Gateshead Borough Council"
+  ],
+  "norms": [
+   "gateshead borough council",
+   "gateshead council",
+   "gateshead metropolitan borough council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Housing 21",
+  "agent": 30953692,
+  "printed": [
+   "HOUSING 21"
+  ],
+  "norms": [
+   "housing 21"
+  ],
+  "ids": []
+ },
+ {
+  "label": "High Peak BC",
+  "agent": 30953692,
+  "printed": [
+   "High Peak Borough Council"
+  ],
+  "norms": [
+   "high peak borough council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Islington & Shoreditch HA",
+  "agent": 30953692,
+  "printed": [
+   "ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED"
+  ],
+  "norms": [
+   "islington & shoreditch housing association limited",
+   "islington and shoreditch housing association limited",
+   "islington & shoreditch housing association"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Karbon Homes",
+  "agent": 30953692,
+  "printed": [
+   "Karbon Homes (54North Homes)"
+  ],
+  "norms": [
+   "karbon homes"
+  ],
+  "ids": [
+   30915057,
+   30913799,
+   31599199,
+   31619955
+  ]
+ },
+ {
+  "label": "LIVIN Housing",
+  "agent": 30953692,
+  "printed": [
+   "LIVIN HOUSING LIMITED"
+  ],
+  "norms": [
+   "livin housing limited",
+   "livin housing"
+  ],
+  "ids": []
+ },
+ {
+  "label": "L&Q",
+  "agent": 30953692,
+  "printed": [
+   "LONDON & QUADRANT HOUSING TRUST"
+  ],
+  "norms": [
+   "london & quadrant housing trust",
+   "london & quadrant housing trust limited",
+   "london and quadrant housing trust"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Lancaster CC",
+  "agent": 30953692,
+  "printed": [
+   "Lancaster City Council"
+  ],
+  "norms": [
+   "lancaster city council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Leeds CC",
+  "agent": 30953692,
+  "printed": [
+   "Leeds City Council"
+  ],
+  "norms": [
+   "leeds city council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Newham",
+  "agent": 30953692,
+  "printed": [
+   "London Borough of Newham"
+  ],
+  "norms": [
+   "london borough of newham",
+   "newham council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Bury",
+  "agent": 30953692,
+  "printed": [
+   "Metropolitan borough of Bury"
+  ],
+  "norms": [
+   "metropolitan borough of bury",
+   "bury metropolitan borough council",
+   "bury council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Moat Homes",
+  "agent": 30953692,
+  "printed": [
+   "Moat Homes Limited"
+  ],
+  "norms": [
+   "moat homes limited",
+   "moat homes"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Newark & Sherwood",
+  "agent": 30953692,
+  "printed": [
+   "Newark And Sherwood District Council"
+  ],
+  "norms": [
+   "newark and sherwood district council",
+   "newark & sherwood district council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Newcastle CC",
+  "agent": 30953692,
+  "printed": [
+   "Newcastle City Council"
+  ],
+  "norms": [
+   "newcastle city council",
+   "newcastle upon tyne city council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "North Northamptonshire",
+  "agent": 30953692,
+  "printed": [
+   "North Northamptonshire Council"
+  ],
+  "norms": [
+   "north northamptonshire council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "North Tyneside",
+  "agent": 30953692,
+  "printed": [
+   "North Tyneside Borough Council"
+  ],
+  "norms": [
+   "north tyneside borough council",
+   "north tyneside council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "One Manchester",
+  "agent": 30953692,
+  "printed": [
+   "ONE MANCHESTER LIMITED"
+  ],
+  "norms": [
+   "one manchester limited",
+   "one manchester"
+  ],
+  "ids": []
+ },
+ {
+  "label": "One Vision Housing",
+  "agent": 30953692,
+  "printed": [
+   "ONE VISION HOUSING LIMITED"
+  ],
+  "norms": [
+   "one vision housing limited",
+   "one vision housing"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Onward Homes",
+  "agent": 30953692,
+  "printed": [
+   "ONWARD HOMES LIMITED"
+  ],
+  "norms": [
+   "onward homes limited",
+   "onward homes"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Orbit Group",
+  "agent": 30953692,
+  "printed": [
+   "ORBIT GROUP LIMITED"
+  ],
+  "norms": [
+   "orbit group limited",
+   "orbit group"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Ongo Homes",
+  "agent": 30953692,
+  "printed": [
+   "Ongo Homes Limited"
+  ],
+  "norms": [
+   "ongo homes limited",
+   "ongo homes"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Powys CC",
+  "agent": 30953692,
+  "printed": [
+   "Powys County Council"
+  ],
+  "norms": [
+   "powys county council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Rochdale",
+  "agent": 30953692,
+  "printed": [
+   "Rochdale Borough Council"
+  ],
+  "norms": [
+   "rochdale borough council",
+   "rochdale metropolitan borough council"
+  ],
+  "ids": [
+   30916230
+  ]
+ },
+ {
+  "label": "RBKC",
+  "agent": 30953692,
+  "printed": [
+   "Royal Borough of Kensington and Chelsea"
+  ],
+  "norms": [
+   "royal borough of kensington and chelsea"
+  ],
+  "ids": []
+ },
+ {
+  "label": "St Leger Homes",
+  "agent": 30953692,
+  "printed": [
+   "ST LEGER HOMES OF DONCASTER LIMITED"
+  ],
+  "norms": [
+   "st leger homes of doncaster limited",
+   "st leger homes of doncaster"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Sandwell MBC",
+  "agent": 30953692,
+  "printed": [
+   "Sandwell Metropolitan Borough Council"
+  ],
+  "norms": [
+   "sandwell metropolitan borough council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Solihull CH",
+  "agent": 30953692,
+  "printed": [
+   "Solihull Community Housing Limited"
+  ],
+  "norms": [
+   "solihull community housing limited"
+  ],
+  "ids": [
+   5539040
+  ]
+ },
+ {
+  "label": "South Derbyshire DC",
+  "agent": 30953692,
+  "printed": [
+   "South Derbyshire District Council"
+  ],
+  "norms": [
+   "south derbyshire district council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "South Lakes Housing",
+  "agent": 30953692,
+  "printed": [
+   "South Lakes Housing"
+  ],
+  "norms": [
+   "south lakes housing",
+   "south lakes housing limited"
+  ],
+  "ids": []
+ },
+ {
+  "label": "South Tyneside",
+  "agent": 30953692,
+  "printed": [
+   "South Tyneside Borough Council"
+  ],
+  "norms": [
+   "south tyneside borough council",
+   "south tyneside council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Stockton-on-Tees",
+  "agent": 30953692,
+  "printed": [
+   "Stockton on Tees Borough Council"
+  ],
+  "norms": [
+   "stockton on tees borough council",
+   "stockton-on-tees borough council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Stoke-on-Trent",
+  "agent": 30953692,
+  "printed": [
+   "Stoke on Trent City Council"
+  ],
+  "norms": [
+   "stoke on trent city council",
+   "stoke-on-trent city council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Guinness Partnership",
+  "agent": 30953692,
+  "printed": [
+   "THE GUINNESS PARTNERSHIP LIMITED"
+  ],
+  "norms": [
+   "the guinness partnership limited",
+   "the guinness partnership"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Tamworth BC",
+  "agent": 30953692,
+  "printed": [
+   "Tamworth Borough Council"
+  ],
+  "norms": [
+   "tamworth borough council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Kirklees",
+  "agent": 30953692,
+  "printed": [
+   "The Council of the Borough of Kirklees"
+  ],
+  "norms": [
+   "the council of the borough of kirklees",
+   "kirklees council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Pioneer Housing",
+  "agent": 30953692,
+  "printed": [
+   "The Pioneer Housing and Community Group Limited"
+  ],
+  "norms": [
+   "the pioneer housing and community group limited",
+   "pioneer housing and community group limited"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Thurrock",
+  "agent": 30953692,
+  "printed": [
+   "Thurrock Council"
+  ],
+  "norms": [
+   "thurrock council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Warwick DC",
+  "agent": 30953692,
+  "printed": [
+   "Warwick District Council"
+  ],
+  "norms": [
+   "warwick district council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Wigan",
+  "agent": 30953692,
+  "printed": [
+   "Wigan Council"
+  ],
+  "norms": [
+   "wigan council",
+   "wigan metropolitan borough council"
+  ],
+  "ids": []
+ },
+ {
+  "label": "ABUHB",
+  "agent": 30913738,
+  "printed": [
+   "Aneurin Bevan University Bevan Health Board"
+  ],
+  "norms": [
+   "aneurin bevan university health board"
+  ],
+  "ids": [
+   30919377,
+   30914825
+  ]
+ },
+ {
+  "label": "Betsi Cadwaladr UHB",
+  "agent": 30913738,
+  "printed": [
+   "Betsi Cadwaladr University Health Board"
+  ],
+  "norms": [
+   "betsi cadwaladr university health board"
+  ],
+  "ids": [
+   30929723
+  ]
+ },
+ {
+  "label": "Cardiff and Vale UHB",
+  "agent": 30913738,
+  "printed": [
+   "Cardiff and Vale University Health Board",
+   "Cardiff and Vale University Health Board\t",
+   "Cardiff & Vale University Health Board"
+  ],
+  "norms": [
+   "cardiff and vale university health board"
+  ],
+  "ids": [
+   30926924
+  ]
+ },
+ {
+  "label": "HEIW",
+  "agent": 30913738,
+  "printed": [
+   "Health Education and Improvement Wales (HEIW)"
+  ],
+  "norms": [
+   "health education and improvement wales (heiw)",
+   "health education and improvement wales"
+  ],
+  "ids": [
+   30917293,
+   31539418
+  ]
+ },
+ {
+  "label": "Hywel Dda UHB",
+  "agent": 30913738,
+  "printed": [
+   "Hywel Dda University Health Board",
+   "Hywel Dda University Health Board ",
+   "Hywel Dda University Health Board  "
+  ],
+  "norms": [
+   "hywel dda university health board"
+  ],
+  "ids": [
+   30926960,
+   31544733
+  ]
+ },
+ {
+  "label": "NWJCC",
+  "agent": 30913738,
+  "printed": [
+   "NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morgannwg University Health Board "
+  ],
+  "norms": [
+   "nhs wales joint commissioning committee",
+   "nhs wales joint commissioning committee (nwjcc)"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Public Health Wales",
+  "agent": 30913738,
+  "printed": [
+   "Public Health Wales NHS Trust"
+  ],
+  "norms": [
+   "public health wales nhs trust",
+   "public health wales"
+  ],
+  "ids": [
+   30928312
+  ]
+ },
+ {
+  "label": "Rutland CC",
+  "agent": 30913798,
+  "printed": [
+   "Rutland County Council"
+  ],
+  "norms": [
+   "rutland county council"
+  ],
+  "ids": [
+   30915335
+  ]
+ },
+ {
+  "label": "NCL ICB",
+  "agent": 30916628,
+  "printed": [
+   "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD"
+  ],
+  "norms": [
+   "nhs north central london integrated care board",
+   "nhs north central london icb",
+   "north central london integrated care board"
+  ],
+  "ids": []
+ },
+ {
+  "label": "CORE Education Trust",
+  "agent": 30930308,
+  "printed": [
+   "CORE Education Trust"
+  ],
+  "norms": [
+   "core education trust"
+  ],
+  "ids": []
+ },
+ {
+  "label": "William Farr School",
+  "agent": 30930308,
+  "printed": [
+   "William Farr C of E Comprehensive School"
+  ],
+  "norms": [
+   "william farr c of e comprehensive school",
+   "william farr school",
+   "william farr church of england comprehensive school"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Howard PT",
+  "agent": 30968739,
+  "printed": [
+   "The Howard Partnership Trust"
+  ],
+  "norms": [
+   "the howard partnership trust"
+  ],
+  "ids": [
+   30917637
+  ]
+ },
+ {
+  "label": "Keys Academy Trust",
+  "agent": 30968739,
+  "printed": [
+   "The Keys Academy Trust"
+  ],
+  "norms": [
+   "the keys academy trust",
+   "keys academy trust"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Remarkable Autism",
+  "agent": 30914820,
+  "printed": [
+   "Remarkable Autism"
+  ],
+  "norms": [
+   "remarkable autism"
+  ],
+  "ids": []
+ },
+ {
+  "label": "English Rural HA",
+  "agent": 30913722,
+  "printed": [
+   "English Rural Housing Association"
+  ],
+  "norms": [
+   "english rural housing association"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Hull Churches HA",
+  "agent": 30913722,
+  "printed": [
+   "Hull Churches Housing Association"
+  ],
+  "norms": [
+   "hull churches housing association",
+   "hull churches housing association limited"
+  ],
+  "ids": []
+ },
+ {
+  "label": "Newlon HT",
+  "agent": 30913722,
+  "printed": [
+   "Newlon Housing Trust"
+  ],
+  "norms": [
+   "newlon housing trust",
+   "newlon housing trust limited"
+  ],
+  "ids": []
+ },
+ {
+  "label": "YMCA Saint Pauls",
+  "agent": 30913722,
+  "printed": [
+   "YMCA Saint Pauls Group"
+  ],
+  "norms": [
+   "ymca saint pauls group",
+   "ymca st pauls group"
+  ],
+  "ids": [
+   15069937
+  ]
+ }
+]

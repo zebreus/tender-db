@@ -1,0 +1,36 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (545 u2b copy: prod schema + prod org indexes)
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(5, 2, 0, 'SEARCH o USING INDEX organizations_name_norm_id (name_norm=?)')
+(371, 2, 0, 'CORRELATED SCALAR SUBQUERY 1')
+(376, 371, 0, 'USE TEMP B-TREE FOR count(DISTINCT)')
+(380, 371, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?)')
+(388, 371, 0, 'SEARCH t USING INTEGER PRIMARY KEY (rowid=?)')
+(408, 1, 0, 'UNION ALL')
+(410, 408, 0, 'SEARCH o USING INTEGER PRIMARY KEY (rowid=?)')
+(489, 408, 0, 'CORRELATED SCALAR SUBQUERY 3')
+(494, 489, 0, 'USE TEMP B-TREE FOR count(DISTINCT)')
+(498, 489, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?)')
+(506, 489, 0, 'SEARCH t USING INTEGER PRIMARY KEY (rowid=?)')
+(525, 1, 0, 'UNION ALL')
+(527, 525, 0, 'SEARCH o USING INTEGER PRIMARY KEY (rowid=?)')
+(549, 525, 0, 'CORRELATED SCALAR SUBQUERY 5')
+(554, 549, 0, 'SEARCH m USING COVERING INDEX organization_mentions_org (organization_id=?)')
+-- turso plan-probe (rc=0)
+PLAN	q9a_principal_orgs	COMPOUND QUERY
+PLAN	q9a_principal_orgs	  LEFT-MOST SUBQUERY
+PLAN	q9a_principal_orgs	    SEARCH o USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q9a_principal_orgs	    CORRELATED SCALAR SUBQUERY 1
+PLAN	q9a_principal_orgs	      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	q9a_principal_orgs	      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q9a_principal_orgs	      USE HASH TABLE FOR count(DISTINCT)
+PLAN	q9a_principal_orgs	  UNION ALL
+PLAN	q9a_principal_orgs	    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q9a_principal_orgs	    CORRELATED SCALAR SUBQUERY 2
+PLAN	q9a_principal_orgs	      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	q9a_principal_orgs	      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q9a_principal_orgs	      USE HASH TABLE FOR count(DISTINCT)
+PLAN	q9a_principal_orgs	  UNION ALL
+PLAN	q9a_principal_orgs	    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q9a_principal_orgs	    CORRELATED SCALAR SUBQUERY 3
+PLAN	q9a_principal_orgs	      SEARCH m USING INDEX organization_mentions_org (organization_id=?)

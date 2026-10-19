@@ -1,0 +1,766 @@
+{
+ "dated": "2026-10-19",
+ "source": "572-triage/decision.md rule 4 (critic amendments B1, S4)",
+ "list_a_reviewed_names_on_agent_accounts": {
+  "agent_orgs": {
+   "30953692": "NHC",
+   "30913738": "NWSSP",
+   "30913798": "Welland",
+   "30913722": "Gibbs Laidler",
+   "30930308": "Invictus",
+   "30968739": "Ginger",
+   "30914820": "RPJ3",
+   "30916628": "NHS London Commercial Hub"
+  },
+  "agent_name_patterns": {
+   "NHC": "northern housing consortium|\\bnhc\\b",
+   "NWSSP": "shared services? partnership|nwssp|partneriaeth cydwasanaethau",
+   "STAR": "\\bstar procurement\\b|\\bstar shared\\b",
+   "ARDAL": "\\bardal\\b",
+   "WELLAND": "\\bwelland\\b",
+   "TMT": "\\btmt\\b",
+   "PALS": "procurement (and|&) logistics|\\bpals\\b|business services organisation",
+   "NHSLCH": "commercial hub",
+   "PAGABO": "pagabo",
+   "SCAPE": "\\bscape\\b",
+   "INVICTUS": "invictus",
+   "GINGER": "ginger",
+   "RPJ3": "rpj3",
+   "GIBBS": "gibbs\\s*laidler",
+   "GLEEDS": "gleeds"
+  },
+  "principal_keys": [
+   {
+    "org": 30913722,
+    "agent": "GIBBS",
+    "name_norm": "english rural housing association",
+    "printed": "English Rural Housing Association",
+    "mentions": 3,
+    "first_notice": 46757368
+   },
+   {
+    "org": 30913722,
+    "agent": "GIBBS",
+    "name_norm": "hull churches housing association",
+    "printed": "Hull Churches Housing Association",
+    "mentions": 2,
+    "first_notice": 46755465
+   },
+   {
+    "org": 30913722,
+    "agent": "GIBBS",
+    "name_norm": "newlon housing trust",
+    "printed": "Newlon Housing Trust",
+    "mentions": 1,
+    "first_notice": 47205050
+   },
+   {
+    "org": 30913722,
+    "agent": "GIBBS",
+    "name_norm": "ymca saint pauls group",
+    "printed": "YMCA Saint Pauls Group",
+    "mentions": 2,
+    "first_notice": 46775006
+   },
+   {
+    "org": 30913738,
+    "agent": "NWSSP",
+    "name_norm": "aneurin bevan university bevan health board",
+    "printed": "Aneurin Bevan University Bevan Health Board",
+    "mentions": 1,
+    "first_notice": 46819472
+   },
+   {
+    "org": 30913738,
+    "agent": "NWSSP",
+    "name_norm": "betsi cadwaladr university health board",
+    "printed": "Betsi Cadwaladr University Health Board",
+    "mentions": 2,
+    "first_notice": 46773193
+   },
+   {
+    "org": 30913738,
+    "agent": "NWSSP",
+    "name_norm": "cardiff & vale university health board",
+    "printed": "Cardiff & Vale University Health Board",
+    "mentions": 1,
+    "first_notice": 46873054
+   },
+   {
+    "org": 30913738,
+    "agent": "NWSSP",
+    "name_norm": "cardiff and vale university health board",
+    "printed": "Cardiff and Vale University Health Board",
+    "mentions": 9,
+    "first_notice": 46731877
+   },
+   {
+    "org": 30913738,
+    "agent": "NWSSP",
+    "name_norm": "health education and improvement wales (heiw)",
+    "printed": "Health Education and Improvement Wales (HEIW)",
+    "mentions": 6,
+    "first_notice": 46787268
+   },
+   {
+    "org": 30913738,
+    "agent": "NWSSP",
+    "name_norm": "hywel dda university health board",
+    "printed": "Hywel Dda University Health Board ",
+    "mentions": 11,
+    "first_notice": 46744066
+   },
+   {
+    "org": 30913738,
+    "agent": "NWSSP",
+    "name_norm": "nhs wales joint commissioning committee (nwjcc) hosted by cwm taf morgannwg university health board",
+    "printed": "NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morgannwg University Health Board ",
+    "mentions": 1,
+    "first_notice": 46132639
+   },
+   {
+    "org": 30913738,
+    "agent": "NWSSP",
+    "name_norm": "public health wales nhs trust",
+    "printed": "Public Health Wales NHS Trust",
+    "mentions": 9,
+    "first_notice": 30807073
+   },
+   {
+    "org": 30913798,
+    "agent": "WELLAND",
+    "name_norm": "rutland county council",
+    "printed": "Rutland County Council",
+    "mentions": 1,
+    "first_notice": 46845134
+   },
+   {
+    "org": 30914820,
+    "agent": "RPJ3",
+    "name_norm": "remarkable autism",
+    "printed": "Remarkable Autism",
+    "mentions": 1,
+    "first_notice": 46869370
+   },
+   {
+    "org": 30916628,
+    "agent": "NHSLCH",
+    "name_norm": "nhs north central london integrated care board",
+    "printed": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD",
+    "mentions": 1,
+    "first_notice": 47271894
+   },
+   {
+    "org": 30930308,
+    "agent": "INVICTUS",
+    "name_norm": "core education trust",
+    "printed": "CORE Education Trust",
+    "mentions": 1,
+    "first_notice": 46888222
+   },
+   {
+    "org": 30930308,
+    "agent": "INVICTUS",
+    "name_norm": "william farr c of e comprehensive school",
+    "printed": "William Farr C of E Comprehensive School",
+    "mentions": 1,
+    "first_notice": 46879845
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "arches housing limited",
+    "printed": "ARCHES HOUSING LIMITED",
+    "mentions": 1,
+    "first_notice": 47159393
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "believe housing limited",
+    "printed": "BELIEVE HOUSING LIMITED",
+    "mentions": 1,
+    "first_notice": 46848740
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "bernicia group",
+    "printed": "Bernicia Group",
+    "mentions": 1,
+    "first_notice": 47366075
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "birmingham city council",
+    "printed": "Birmingham City Council",
+    "mentions": 2,
+    "first_notice": 46793765
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "blackpool coastal housing limited",
+    "printed": "BLACKPOOL COASTAL HOUSING LIMITED",
+    "mentions": 1,
+    "first_notice": 46829517
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "bristol city council",
+    "printed": "Bristol City Council",
+    "mentions": 2,
+    "first_notice": 46840987
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "carmarthenshire county council",
+    "printed": "Carmarthenshire County Council",
+    "mentions": 2,
+    "first_notice": 46849921
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "city of lincoln council",
+    "printed": "City of Lincoln Council",
+    "mentions": 2,
+    "first_notice": 46841342
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "city of york council",
+    "printed": "City of York Council",
+    "mentions": 2,
+    "first_notice": 46820519
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "darlington borough council",
+    "printed": "Darlington Borough Council",
+    "mentions": 5,
+    "first_notice": 46789522
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "east riding of yorkshire council",
+    "printed": "East Riding of Yorkshire Council",
+    "mentions": 2,
+    "first_notice": 46809388
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "east suffolk council",
+    "printed": "East Suffolk Council",
+    "mentions": 3,
+    "first_notice": 46796013
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "gateshead borough council",
+    "printed": "Gateshead Borough Council",
+    "mentions": 1,
+    "first_notice": 46793788
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "high peak borough council",
+    "printed": "High Peak Borough Council",
+    "mentions": 2,
+    "first_notice": 46834849
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "housing 21",
+    "printed": "HOUSING 21",
+    "mentions": 1,
+    "first_notice": 46843775
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "islington & shoreditch housing association limited",
+    "printed": "ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED",
+    "mentions": 1,
+    "first_notice": 46823485
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "karbon homes (54north homes)",
+    "printed": "Karbon Homes (54North Homes)",
+    "mentions": 1,
+    "first_notice": 46794092
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "lancaster city council",
+    "printed": "Lancaster City Council",
+    "mentions": 2,
+    "first_notice": 46806840
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "leeds city council",
+    "printed": "Leeds City Council",
+    "mentions": 2,
+    "first_notice": 46819799
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "livin housing limited",
+    "printed": "LIVIN HOUSING LIMITED",
+    "mentions": 2,
+    "first_notice": 46790691
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "london & quadrant housing trust",
+    "printed": "LONDON & QUADRANT HOUSING TRUST",
+    "mentions": 1,
+    "first_notice": 46831455
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "london borough of newham",
+    "printed": "London Borough of Newham",
+    "mentions": 2,
+    "first_notice": 46814470
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "metropolitan borough of bury",
+    "printed": "Metropolitan borough of Bury",
+    "mentions": 2,
+    "first_notice": 46825974
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "moat homes limited",
+    "printed": "Moat Homes Limited",
+    "mentions": 1,
+    "first_notice": 46823501
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "newark and sherwood district council",
+    "printed": "Newark And Sherwood District Council",
+    "mentions": 2,
+    "first_notice": 46794436
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "newcastle city council",
+    "printed": "Newcastle City Council",
+    "mentions": 3,
+    "first_notice": 46789542
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "north northamptonshire council",
+    "printed": "North Northamptonshire Council",
+    "mentions": 3,
+    "first_notice": 46790550
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "north tyneside borough council",
+    "printed": "North Tyneside Borough Council",
+    "mentions": 2,
+    "first_notice": 46790515
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "one manchester limited",
+    "printed": "ONE MANCHESTER LIMITED",
+    "mentions": 1,
+    "first_notice": 47159646
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "one vision housing limited",
+    "printed": "ONE VISION HOUSING LIMITED",
+    "mentions": 1,
+    "first_notice": 46381429
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "ongo homes limited",
+    "printed": "Ongo Homes Limited",
+    "mentions": 1,
+    "first_notice": 46848785
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "onward homes limited",
+    "printed": "ONWARD HOMES LIMITED",
+    "mentions": 1,
+    "first_notice": 46844733
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "orbit group limited",
+    "printed": "ORBIT GROUP LIMITED",
+    "mentions": 1,
+    "first_notice": 47159495
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "powys county council",
+    "printed": "Powys County Council",
+    "mentions": 2,
+    "first_notice": 46800777
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "rochdale borough council",
+    "printed": "Rochdale Borough Council",
+    "mentions": 4,
+    "first_notice": 46857373
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "royal borough of kensington and chelsea",
+    "printed": "Royal Borough of Kensington and Chelsea",
+    "mentions": 2,
+    "first_notice": 46830406
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "sandwell metropolitan borough council",
+    "printed": "Sandwell Metropolitan Borough Council",
+    "mentions": 2,
+    "first_notice": 46792477
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "solihull community housing limited",
+    "printed": "Solihull Community Housing Limited",
+    "mentions": 5,
+    "first_notice": 46132719
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "south derbyshire district council",
+    "printed": "South Derbyshire District Council",
+    "mentions": 2,
+    "first_notice": 47392453
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "south lakes housing",
+    "printed": "South Lakes Housing",
+    "mentions": 1,
+    "first_notice": 46809696
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "south tyneside borough council",
+    "printed": "South Tyneside Borough Council",
+    "mentions": 2,
+    "first_notice": 46792688
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "st leger homes of doncaster limited",
+    "printed": "ST LEGER HOMES OF DONCASTER LIMITED",
+    "mentions": 1,
+    "first_notice": 46702998
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "stockton on tees borough council",
+    "printed": "Stockton on Tees Borough Council",
+    "mentions": 4,
+    "first_notice": 46842011
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "stoke on trent city council",
+    "printed": "Stoke on Trent City Council",
+    "mentions": 2,
+    "first_notice": 46697881
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "tamworth borough council",
+    "printed": "Tamworth Borough Council",
+    "mentions": 2,
+    "first_notice": 46857614
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "the council of the borough of kirklees",
+    "printed": "The Council of the Borough of Kirklees",
+    "mentions": 2,
+    "first_notice": 46793832
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "the guinness partnership limited",
+    "printed": "THE GUINNESS PARTNERSHIP LIMITED",
+    "mentions": 1,
+    "first_notice": 46818155
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "the pioneer housing and community group limited",
+    "printed": "The Pioneer Housing and Community Group Limited",
+    "mentions": 1,
+    "first_notice": 46832659
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "thurrock council",
+    "printed": "Thurrock Council",
+    "mentions": 2,
+    "first_notice": 46790512
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "warwick district council",
+    "printed": "Warwick District Council",
+    "mentions": 2,
+    "first_notice": 46812990
+   },
+   {
+    "org": 30953692,
+    "agent": "NHC",
+    "name_norm": "wigan council",
+    "printed": "Wigan Council",
+    "mentions": 2,
+    "first_notice": 46793950
+   },
+   {
+    "org": 30968739,
+    "agent": "GINGER",
+    "name_norm": "the howard partnership trust",
+    "printed": "The Howard Partnership Trust",
+    "mentions": 1,
+    "first_notice": 46737636
+   },
+   {
+    "org": 30968739,
+    "agent": "GINGER",
+    "name_norm": "the keys academy trust",
+    "printed": "The Keys Academy Trust",
+    "mentions": 1,
+    "first_notice": 46785018
+   }
+  ],
+  "non_principal_names": [
+   {
+    "org": 30953692,
+    "name_norm": "stairlifts and lifting equipment framework 2026",
+    "printed": "Stairlifts and Lifting Equipment Framework 2026",
+    "kind": "not an organization name"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "nhs wales shared services and partnership",
+    "printed": "NHS Wales Shared Services and Partnership",
+    "kind": "agent's own variant"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "nhs wales shared services partership",
+    "printed": "NHS Wales Shared Services Partership",
+    "kind": "agent's own variant"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "nhs wales shared services",
+    "printed": "NHS Wales Shared Services",
+    "kind": "agent's own variant"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "nhs wales shared services (hosted by velindre university nhs trust)",
+    "printed": "NHS Wales Shared Services (Hosted by Velindre University NHS Trust)",
+    "kind": "agent's own variant"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "nhs wales shared services procurement partnership",
+    "printed": "NHS Wales Shared Services Procurement Partnership",
+    "kind": "agent's own variant"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "nhs wales",
+    "printed": "NHS Wales",
+    "kind": "agent's own variant"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "nhs",
+    "printed": "NHS",
+    "kind": "not an organization name"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "velindre university nhs trust",
+    "printed": "Velindre University NHS Trust",
+    "kind": "host trust (Velindre): own procurements, P@A-shaped, destination unsettled (3 of 3 read)"
+   },
+   {
+    "org": 30913738,
+    "name_norm": "welsh blood service (velindre university nhs trust)",
+    "printed": "Welsh Blood Service (Velindre University NHS Trust)",
+    "kind": "host trust (Velindre): own procurements, P@A-shaped, destination unsettled (3 of 3 read)"
+   }
+  ]
+ },
+ "list_b_proven_a_at_p_pairs": [
+  {
+   "agent": "NWSSP",
+   "holder_org": 30919377,
+   "holder": "Aneurin Bevan UHB",
+   "proof_notice": 46816840,
+   "read": "E4: FTS procuringEntity \"acting on behalf of Aneurin Bevan University Health Board\""
+  },
+  {
+   "agent": "NWSSP",
+   "holder_org": 30926792,
+   "holder": "Cwm Taf Morgannwg UHB",
+   "proof_notice": 46784422,
+   "read": "BT-24 \"Cwm Taf Morgannwg University Health Board (CTMUHB) has awarded ...\""
+  },
+  {
+   "agent": "NWSSP",
+   "holder_org": 30926924,
+   "holder": "Cardiff and Vale UHB",
+   "proof_notice": 46742484,
+   "read": "BT-24 \"Cardiff and Vale University Health Board, acting on behalf of the All Wales Genomics Service ...\""
+  },
+  {
+   "agent": "NWSSP",
+   "holder_org": 30929723,
+   "holder": "Betsi Cadwaladr UHB",
+   "proof_notice": 46697948,
+   "read": "BT-24 \"Betsi Cadwaladr University Health Board is seeking ...\""
+  },
+  {
+   "agent": "TMT",
+   "holder_org": 30916821,
+   "holder": "Maidstone BC",
+   "proof_notice": 46750905,
+   "read": "E10: BT-24 \"Maidstone Borough Council (MBC) is looking to appoint ...\""
+  },
+  {
+   "agent": "TMT",
+   "holder_org": 30967593,
+   "holder": "Tunbridge Wells BC",
+   "proof_notice": 46789370,
+   "read": "BT-24 \"Tunbridge Wells Borough Council is looking to have the large Pond ... relined\""
+  },
+  {
+   "agent": "GLEEDS",
+   "holder_org": 30914436,
+   "holder": "College of Policing",
+   "proof_notice": 46693105,
+   "read": "E11: CoP printed as buyer in its own section; Gleeds is procuringEntity \"Specification preparation/ evaluation\""
+  },
+  {
+   "agent": "SCAPE",
+   "holder_org": 30974616,
+   "holder": "Arc Property Services Partnership",
+   "proof_notice": 46806701,
+   "read": "BT-24 \"SCAPE, on behalf of Arc Partnership (the Client) ...\""
+  },
+  {
+   "agent": "GIBBS",
+   "holder_org": 15069937,
+   "holder": "YMCA Saint Pauls Group (outside the slices)",
+   "proof_notice": 46801228,
+   "read": "BT-21 \"... as required by YMCA Saint Pauls Group\""
+  },
+  {
+   "agent": "STAR",
+   "holder_org": 30917275,
+   "holder": "Trafford Council (HOST)",
+   "proof_notice": 46817944,
+   "read": "E6: Rochdale is buyer; Star (Trafford PPON) is procuringEntity \"Managing the Tender\""
+  },
+  {
+   "agent": "ARDAL",
+   "holder_org": 30913763,
+   "holder": "Cardiff Council (HOST)",
+   "proof_notice": 46765017,
+   "read": "E7: WLGA is buyer; Ardal (Cardiff PPON) is procuringEntity \"the procurement service run by Cardiff Council\""
+  }
+ ],
+ "not_frozen_reviewed_as_usual": [
+  {
+   "agent": "NWSSP",
+   "holder_org": 30928312,
+   "holder": "Public Health Wales",
+   "notice": 46823552,
+   "why": "BT-24 names \"NHS Wales Performance and Improvement\", not Public Health Wales: not proven"
+  },
+  {
+   "agent": "PALS",
+   "holder_org": 30917832,
+   "holder": "Northern HSC Trust",
+   "notice": 46762943,
+   "why": "BT-24 \"Patient information for consent leaflets\": names no body, not proven"
+  },
+  {
+   "agent": "NWSSP",
+   "holder_org": 30913750,
+   "holder": "Swansea University",
+   "notice": 46768416,
+   "why": "a Swansea Bay UHB contract: F-shaped, to 545"
+  },
+  {
+   "agent": "PAGABO",
+   "holder_org": 31546270,
+   "holder": "CNTW NHS FT",
+   "notice": 46844727,
+   "why": "buying for The Education Alliance: F-shaped, to 545"
+  }
+ ]
+}

@@ -1,0 +1,1698 @@
+[
+ {
+  "principal": "Arches HA",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31627889,
+    "GBCOHIP21451R",
+    1
+   ]
+  ],
+  "dominant": [
+   31627889,
+   "GBCOHIP21451R",
+   1
+  ],
+  "split": false,
+  "share": 1.0,
+  "share_of_total": 0.5
+ },
+ {
+  "principal": "Believe Housing",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30916128,
+    "GBCOHRS008076",
+    26
+   ]
+  ],
+  "dominant": [
+   30916128,
+   "GBCOHRS008076",
+   26
+  ],
+  "split": false,
+  "share": 0.0385,
+  "share_of_total": 0.037
+ },
+ {
+  "principal": "Blackpool Coastal Housing",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914833,
+    "GBCOH05868852",
+    10
+   ]
+  ],
+  "dominant": [
+   30914833,
+   "GBCOH05868852",
+   10
+  ],
+  "split": false,
+  "share": 0.1,
+  "share_of_total": 0.0909
+ },
+ {
+  "principal": "Bernicia",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30916015,
+    "GBMPR7711",
+    23
+   ],
+   [
+    9111896,
+    "19086R",
+    0
+   ]
+  ],
+  "dominant": [
+   30916015,
+   "GBMPR7711",
+   23
+  ],
+  "split": false,
+  "share": 0.0435,
+  "share_of_total": 0.0417
+ },
+ {
+  "principal": "Birmingham CC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914707,
+    "GBPPONPCJJ4826QMLZ",
+    198
+   ]
+  ],
+  "dominant": [
+   30914707,
+   "GBPPONPCJJ4826QMLZ",
+   198
+  ],
+  "split": false,
+  "share": 0.0051,
+  "share_of_total": 0.005
+ },
+ {
+  "principal": "Bristol CC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914059,
+    "GBPPONPWXH3837PDTD",
+    1030
+   ]
+  ],
+  "dominant": [
+   30914059,
+   "GBPPONPWXH3837PDTD",
+   1030
+  ],
+  "split": false,
+  "share": 0.001,
+  "share_of_total": 0.001
+ },
+ {
+  "principal": "Carmarthenshire CC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915408,
+    "GBPPONPTVL7854TMRZ",
+    115
+   ]
+  ],
+  "dominant": [
+   30915408,
+   "GBPPONPTVL7854TMRZ",
+   115
+  ],
+  "split": false,
+  "share": 0.0087,
+  "share_of_total": 0.0086
+ },
+ {
+  "principal": "City of Lincoln",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [],
+  "dominant": null,
+  "split": false,
+  "share": null
+ },
+ {
+  "principal": "City of York",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915221,
+    "GBPPONPQVW9426LDJV",
+    127
+   ]
+  ],
+  "dominant": [
+   30915221,
+   "GBPPONPQVW9426LDJV",
+   127
+  ],
+  "split": false,
+  "share": 0.0079,
+  "share_of_total": 0.0078
+ },
+ {
+  "principal": "Darlington BC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 2,
+  "routed_absent": 2,
+  "identified_rows": [
+   [
+    30914393,
+    "GBPPONPCRZ3744WXXZ",
+    172
+   ]
+  ],
+  "dominant": [
+   30914393,
+   "GBPPONPCRZ3744WXXZ",
+   172
+  ],
+  "split": false,
+  "share": 0.0116,
+  "share_of_total": 0.0115
+ },
+ {
+  "principal": "East Riding",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913656,
+    "GBPPONPZQH9124TMLN",
+    308
+   ],
+   [
+    31546118,
+    "GBCOH647471123",
+    1
+   ],
+   [
+    31558733,
+    "GBCOHPZQH9124TMLN",
+    1
+   ],
+   [
+    31600324,
+    "GBNHS214",
+    0
+   ]
+  ],
+  "dominant": [
+   30913656,
+   "GBPPONPZQH9124TMLN",
+   308
+  ],
+  "split": true,
+  "share": 0.0032,
+  "share_of_total": 0.0032
+ },
+ {
+  "principal": "East Suffolk",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913855,
+    "GBPPONPLPP1174BHLX",
+    129
+   ]
+  ],
+  "dominant": [
+   30913855,
+   "GBPPONPLPP1174BHLX",
+   129
+  ],
+  "split": false,
+  "share": 0.0078,
+  "share_of_total": 0.0077
+ },
+ {
+  "principal": "Gateshead",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30919654,
+    "GBUKPRN10002639",
+    59
+   ],
+   [
+    30916319,
+    "GBPPONPPGY1151NJQN",
+    53
+   ],
+   [
+    31570671,
+    "GBPPONPPPD6566XHMN",
+    1
+   ],
+   [
+    14487706,
+    "10002639",
+    0
+   ]
+  ],
+  "dominant": [
+   30919654,
+   "GBUKPRN10002639",
+   59
+  ],
+  "split": true,
+  "share": 0.0169,
+  "share_of_total": 0.0167
+ },
+ {
+  "principal": "Housing 21",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914773,
+    "GBCOHIP16791R",
+    189
+   ],
+   [
+    30913606,
+    "GBPPONPGTG9145PMNM",
+    28
+   ],
+   [
+    31593664,
+    "GBCOHHOUSING21",
+    2
+   ],
+   [
+    31561374,
+    "GBCOHOCDSH6VHTK04E2AF",
+    1
+   ]
+  ],
+  "dominant": [
+   30914773,
+   "GBCOHIP16791R",
+   189
+  ],
+  "split": true,
+  "share": 0.0053,
+  "share_of_total": 0.0053
+ },
+ {
+  "principal": "High Peak BC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31535957,
+    "GBPPONPYMP3236ZYPV",
+    40
+   ]
+  ],
+  "dominant": [
+   31535957,
+   "GBPPONPYMP3236ZYPV",
+   40
+  ],
+  "split": false,
+  "share": 0.025,
+  "share_of_total": 0.0244
+ },
+ {
+  "principal": "Islington & Shoreditch HA",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31562112,
+    "GBCOHIP11614R",
+    3
+   ],
+   [
+    31967639,
+    "GBMPR11614R",
+    1
+   ]
+  ],
+  "dominant": [
+   31562112,
+   "GBCOHIP11614R",
+   3
+  ],
+  "split": true,
+  "share": 0.3333,
+  "share_of_total": 0.25
+ },
+ {
+  "principal": "Karbon Homes",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915057,
+    "GBPPONPCDL6326LXPW",
+    34
+   ],
+   [
+    30913799,
+    "GBCHCRS007529",
+    26
+   ],
+   [
+    31599199,
+    "GBCHCPCDL6326LXPW",
+    1
+   ],
+   [
+    31619955,
+    "GBMPRRS007529",
+    0
+   ]
+  ],
+  "dominant": [
+   30915057,
+   "GBPPONPCDL6326LXPW",
+   34
+  ],
+  "split": true,
+  "share": 0.0294,
+  "share_of_total": 0.0286
+ },
+ {
+  "principal": "LIVIN Housing",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31563376,
+    "GBCOHIP030568",
+    1
+   ]
+  ],
+  "dominant": [
+   31563376,
+   "GBCOHIP030568",
+   1
+  ],
+  "split": false,
+  "share": 1.0,
+  "share_of_total": 0.5
+ },
+ {
+  "principal": "L&Q",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914545,
+    "GBCOHIP030441",
+    72
+   ],
+   [
+    9913024,
+    "30441R",
+    33
+   ],
+   [
+    31603695,
+    "GBMPR30441R",
+    10
+   ],
+   [
+    9199649,
+    "HOMESANDCOMMUNITIESAGENCYL4517REGISTEREDSOCIETY30441REXEMPTCHARITY",
+    3
+   ],
+   [
+    31610352,
+    "GBCOHLQ00440",
+    1
+   ]
+  ],
+  "dominant": [
+   30914545,
+   "GBCOHIP030441",
+   72
+  ],
+  "split": true,
+  "share": 0.0139,
+  "share_of_total": 0.0137
+ },
+ {
+  "principal": "Lancaster CC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913555,
+    "GBPPONPTQG8236WVNZ",
+    90
+   ]
+  ],
+  "dominant": [
+   30913555,
+   "GBPPONPTQG8236WVNZ",
+   90
+  ],
+  "split": false,
+  "share": 0.0111,
+  "share_of_total": 0.011
+ },
+ {
+  "principal": "Leeds CC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913568,
+    "GBPPONPJYG6658PPMY",
+    405
+   ],
+   [
+    1993566,
+    "INFORMATIONADVICEANDGUIDANCEPOST16NEETANDSENDSERVICES",
+    1
+   ],
+   [
+    2551814,
+    "LCC27288",
+    1
+   ],
+   [
+    4904556,
+    "YORE9F7N76",
+    1
+   ],
+   [
+    7293297,
+    "9TKLGSPMC2",
+    1
+   ],
+   [
+    7776126,
+    "A6SCQ4EWCB",
+    1
+   ],
+   [
+    8818324,
+    "DN212968",
+    1
+   ],
+   [
+    3428135,
+    "YORE95QEW4",
+    0
+   ],
+   [
+    7293301,
+    "9ZCFUS7FUP",
+    0
+   ]
+  ],
+  "dominant": [
+   30913568,
+   "GBPPONPJYG6658PPMY",
+   405
+  ],
+  "split": true,
+  "share": 0.0025,
+  "share_of_total": 0.0025
+ },
+ {
+  "principal": "Newham",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915792,
+    "GBPPONPYBN4422TNXJ",
+    80
+   ]
+  ],
+  "dominant": [
+   30915792,
+   "GBPPONPYBN4422TNXJ",
+   80
+  ],
+  "split": false,
+  "share": 0.0125,
+  "share_of_total": 0.0123
+ },
+ {
+  "principal": "Bury",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913686,
+    "GBPPONPVVT2483WWMH",
+    32
+   ]
+  ],
+  "dominant": [
+   30913686,
+   "GBPPONPVVT2483WWMH",
+   32
+  ],
+  "split": false,
+  "share": 0.0312,
+  "share_of_total": 0.0303
+ },
+ {
+  "principal": "Moat Homes",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915776,
+    "GBCHC17434R",
+    28
+   ],
+   [
+    31535979,
+    "GBPPONPNCG6417GJNY",
+    6
+   ],
+   [
+    30916903,
+    "GBCOH17434R",
+    2
+   ]
+  ],
+  "dominant": [
+   30915776,
+   "GBCHC17434R",
+   28
+  ],
+  "split": true,
+  "share": 0.0357,
+  "share_of_total": 0.0345
+ },
+ {
+  "principal": "Newark & Sherwood",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913951,
+    "GBPPONPPXR3259QCMJ",
+    78
+   ]
+  ],
+  "dominant": [
+   30913951,
+   "GBPPONPPXR3259QCMJ",
+   78
+  ],
+  "split": false,
+  "share": 0.0128,
+  "share_of_total": 0.0127
+ },
+ {
+  "principal": "Newcastle CC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913906,
+    "GBPPONPBHM6848TWYG",
+    283
+   ],
+   [
+    31606264,
+    "GBCOH02814202",
+    1
+   ],
+   [
+    31648962,
+    "GBCOH4869035",
+    1
+   ],
+   [
+    14263689,
+    "LOCALAUTHORITYGB178208251",
+    0
+   ]
+  ],
+  "dominant": [
+   30913906,
+   "GBPPONPBHM6848TWYG",
+   283
+  ],
+  "split": true,
+  "share": 0.0035,
+  "share_of_total": 0.0035
+ },
+ {
+  "principal": "North Northamptonshire",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915224,
+    "GBPPONPQCM5634HGCN",
+    323
+   ],
+   [
+    31551387,
+    "GBNHSZ9D4Z",
+    1
+   ],
+   [
+    31589230,
+    "GBCOH07335699",
+    1
+   ]
+  ],
+  "dominant": [
+   30915224,
+   "GBPPONPQCM5634HGCN",
+   323
+  ],
+  "split": true,
+  "share": 0.0031,
+  "share_of_total": 0.0031
+ },
+ {
+  "principal": "North Tyneside",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914669,
+    "GBPPONPYBQ4733WWLW",
+    86
+   ]
+  ],
+  "dominant": [
+   30914669,
+   "GBPPONPYBQ4733WWLW",
+   86
+  ],
+  "split": false,
+  "share": 0.0116,
+  "share_of_total": 0.0115
+ },
+ {
+  "principal": "One Manchester",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30974568,
+    "GBPPONPYPR8435MYLW",
+    2
+   ],
+   [
+    31647189,
+    "GBCOHRS007018",
+    1
+   ]
+  ],
+  "dominant": [
+   30974568,
+   "GBPPONPYPR8435MYLW",
+   2
+  ],
+  "split": true,
+  "share": 0.5,
+  "share_of_total": 0.3333
+ },
+ {
+  "principal": "One Vision Housing",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915037,
+    "GBCOHRS007072",
+    1
+   ]
+  ],
+  "dominant": [
+   30915037,
+   "GBCOHRS007072",
+   1
+  ],
+  "split": false,
+  "share": 1.0,
+  "share_of_total": 0.5
+ },
+ {
+  "principal": "Onward Homes",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31580709,
+    "GBCOHIP17186R",
+    1
+   ]
+  ],
+  "dominant": [
+   31580709,
+   "GBCOHIP17186R",
+   1
+  ],
+  "split": false,
+  "share": 1.0,
+  "share_of_total": 0.5
+ },
+ {
+  "principal": "Orbit Group",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914511,
+    "GBCOHIP28503R",
+    104
+   ],
+   [
+    19206618,
+    "28503R",
+    1
+   ]
+  ],
+  "dominant": [
+   30914511,
+   "GBCOHIP28503R",
+   104
+  ],
+  "split": true,
+  "share": 0.0096,
+  "share_of_total": 0.0095
+ },
+ {
+  "principal": "Ongo Homes",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30917080,
+    "GBMPRRS007639",
+    23
+   ],
+   [
+    31580320,
+    "GBPPONPDHV4431PHTR",
+    3
+   ],
+   [
+    19781969,
+    "RS007639",
+    1
+   ]
+  ],
+  "dominant": [
+   30917080,
+   "GBMPRRS007639",
+   23
+  ],
+  "split": true,
+  "share": 0.0435,
+  "share_of_total": 0.0417
+ },
+ {
+  "principal": "Powys CC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914331,
+    "GBPPONPQBT5413HMDT",
+    61
+   ]
+  ],
+  "dominant": [
+   30914331,
+   "GBPPONPQBT5413HMDT",
+   61
+  ],
+  "split": false,
+  "share": 0.0164,
+  "share_of_total": 0.0161
+ },
+ {
+  "principal": "Rochdale",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 2,
+  "routed_absent": 2,
+  "identified_rows": [
+   [
+    30916230,
+    "GBPPONPXXD6682MDRX",
+    85
+   ]
+  ],
+  "dominant": [
+   30916230,
+   "GBPPONPXXD6682MDRX",
+   85
+  ],
+  "split": false,
+  "share": 0.0235,
+  "share_of_total": 0.023
+ },
+ {
+  "principal": "RBKC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [],
+  "dominant": null,
+  "split": false,
+  "share": null
+ },
+ {
+  "principal": "St Leger Homes",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    11016028,
+    "05564649",
+    15
+   ]
+  ],
+  "dominant": [
+   11016028,
+   "05564649",
+   15
+  ],
+  "split": false,
+  "share": 0.0667,
+  "share_of_total": 0.0625
+ },
+ {
+  "principal": "Sandwell MBC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913975,
+    "GBPPONPJHD8764YRJJ",
+    127
+   ]
+  ],
+  "dominant": [
+   30913975,
+   "GBPPONPJHD8764YRJJ",
+   127
+  ],
+  "split": false,
+  "share": 0.0079,
+  "share_of_total": 0.0078
+ },
+ {
+  "principal": "Solihull CH",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 5,
+  "routed_absent": 5,
+  "identified_rows": [
+   [
+    5539040,
+    "04462630",
+    6
+   ]
+  ],
+  "dominant": [
+   5539040,
+   "04462630",
+   6
+  ],
+  "split": false,
+  "share": 0.8333,
+  "share_of_total": 0.4545
+ },
+ {
+  "principal": "South Derbyshire DC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30917005,
+    "GBPPONPGHH1324DTXT",
+    29
+   ]
+  ],
+  "dominant": [
+   30917005,
+   "GBPPONPGHH1324DTXT",
+   29
+  ],
+  "split": false,
+  "share": 0.0345,
+  "share_of_total": 0.0333
+ },
+ {
+  "principal": "South Lakes Housing",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31545078,
+    "GBMPR31419R",
+    4
+   ],
+   [
+    12303868,
+    "31419R",
+    0
+   ]
+  ],
+  "dominant": [
+   31545078,
+   "GBMPR31419R",
+   4
+  ],
+  "split": false,
+  "share": 0.25,
+  "share_of_total": 0.2
+ },
+ {
+  "principal": "South Tyneside",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914379,
+    "GBPPONPYPB8737VBHG",
+    89
+   ],
+   [
+    31633598,
+    "GBCOH212905751",
+    1
+   ]
+  ],
+  "dominant": [
+   30914379,
+   "GBPPONPYPB8737VBHG",
+   89
+  ],
+  "split": true,
+  "share": 0.0112,
+  "share_of_total": 0.0111
+ },
+ {
+  "principal": "Stockton-on-Tees",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 2,
+  "routed_absent": 2,
+  "identified_rows": [
+   [
+    30914660,
+    "GBPPONPCVQ6435GNMW",
+    121
+   ]
+  ],
+  "dominant": [
+   30914660,
+   "GBPPONPCVQ6435GNMW",
+   121
+  ],
+  "split": false,
+  "share": 0.0165,
+  "share_of_total": 0.0163
+ },
+ {
+  "principal": "Stoke-on-Trent",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914383,
+    "GBPPONPDQZ1442RZTZ",
+    149
+   ]
+  ],
+  "dominant": [
+   30914383,
+   "GBPPONPDQZ1442RZTZ",
+   149
+  ],
+  "split": false,
+  "share": 0.0067,
+  "share_of_total": 0.0067
+ },
+ {
+  "principal": "Guinness Partnership",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914401,
+    "GBCOHIP031693",
+    135
+   ]
+  ],
+  "dominant": [
+   30914401,
+   "GBCOHIP031693",
+   135
+  ],
+  "split": false,
+  "share": 0.0074,
+  "share_of_total": 0.0074
+ },
+ {
+  "principal": "Tamworth BC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915422,
+    "GBPPONPTDD5754QXLV",
+    16
+   ],
+   [
+    31540888,
+    "GBCOH232612457",
+    3
+   ]
+  ],
+  "dominant": [
+   30915422,
+   "GBPPONPTDD5754QXLV",
+   16
+  ],
+  "split": true,
+  "share": 0.0625,
+  "share_of_total": 0.0588
+ },
+ {
+  "principal": "Kirklees",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30913645,
+    "GBPPONPXHZ9111QHMJ",
+    112
+   ]
+  ],
+  "dominant": [
+   30913645,
+   "GBPPONPXHZ9111QHMJ",
+   112
+  ],
+  "split": false,
+  "share": 0.0089,
+  "share_of_total": 0.0088
+ },
+ {
+  "principal": "Pioneer Housing",
+  "kind": "housing",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30976322,
+    "GBPPONPHRZ1724NBZD",
+    9
+   ],
+   [
+    31576262,
+    "GBMPR28414R",
+    3
+   ]
+  ],
+  "dominant": [
+   30976322,
+   "GBPPONPHRZ1724NBZD",
+   9
+  ],
+  "split": true,
+  "share": 0.1111,
+  "share_of_total": 0.1
+ },
+ {
+  "principal": "Thurrock",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914484,
+    "GBPPONPMHW1723WDCD",
+    91
+   ]
+  ],
+  "dominant": [
+   30914484,
+   "GBPPONPMHW1723WDCD",
+   91
+  ],
+  "split": false,
+  "share": 0.011,
+  "share_of_total": 0.0109
+ },
+ {
+  "principal": "Warwick DC",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31538763,
+    "GBPPONPTRT4122VWQG",
+    8
+   ]
+  ],
+  "dominant": [
+   31538763,
+   "GBPPONPTRT4122VWQG",
+   8
+  ],
+  "split": false,
+  "share": 0.125,
+  "share_of_total": 0.1111
+ },
+ {
+  "principal": "Wigan",
+  "kind": "council",
+  "agent": 30953692,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30914370,
+    "GBPPONPCGG6481TZPW",
+    81
+   ],
+   [
+    9389871,
+    "WIGN001",
+    5
+   ],
+   [
+    10674824,
+    "WIGN001DN29052181923228",
+    1
+   ],
+   [
+    10702165,
+    "WIGN00LDN30096465977125",
+    1
+   ],
+   [
+    12512900,
+    "GB007WIGN001",
+    1
+   ],
+   [
+    7619505,
+    "2015160746",
+    0
+   ]
+  ],
+  "dominant": [
+   30914370,
+   "GBPPONPCGG6481TZPW",
+   81
+  ],
+  "split": true,
+  "share": 0.0123,
+  "share_of_total": 0.0122
+ },
+ {
+  "principal": "ABUHB",
+  "kind": "health",
+  "agent": 30913738,
+  "routed": 1,
+  "routed_absent": 0,
+  "identified_rows": [
+   [
+    30914825,
+    "GBNHS7A6",
+    38
+   ],
+   [
+    30919377,
+    "GBPPONPVLN4733WJBQ",
+    27
+   ]
+  ],
+  "dominant": [
+   30914825,
+   "GBNHS7A6",
+   38
+  ],
+  "split": true,
+  "share": 0.0,
+  "share_of_total": 0.0
+ },
+ {
+  "principal": "Betsi Cadwaladr UHB",
+  "kind": "health",
+  "agent": 30913738,
+  "routed": 2,
+  "routed_absent": 2,
+  "identified_rows": [
+   [
+    30929723,
+    "GBPPONPHBY3981QBMR",
+    42
+   ]
+  ],
+  "dominant": [
+   30929723,
+   "GBPPONPHBY3981QBMR",
+   42
+  ],
+  "split": false,
+  "share": 0.0476,
+  "share_of_total": 0.0455
+ },
+ {
+  "principal": "Cardiff and Vale UHB",
+  "kind": "health",
+  "agent": 30913738,
+  "routed": 6,
+  "routed_absent": 6,
+  "identified_rows": [
+   [
+    30926924,
+    "GBPPONPPPR7969BTJG",
+    76
+   ],
+   [
+    31548631,
+    "GBNHS7A4",
+    15
+   ]
+  ],
+  "dominant": [
+   30926924,
+   "GBPPONPPPR7969BTJG",
+   76
+  ],
+  "split": true,
+  "share": 0.0789,
+  "share_of_total": 0.0732
+ },
+ {
+  "principal": "HEIW",
+  "kind": "health",
+  "agent": 30913738,
+  "routed": 3,
+  "routed_absent": 3,
+  "identified_rows": [
+   [
+    30917293,
+    "GBPPONPRNH7564JLCQ",
+    31
+   ],
+   [
+    31539418,
+    "GBNHST1530",
+    8
+   ]
+  ],
+  "dominant": [
+   30917293,
+   "GBPPONPRNH7564JLCQ",
+   31
+  ],
+  "split": true,
+  "share": 0.0968,
+  "share_of_total": 0.0882
+ },
+ {
+  "principal": "Hywel Dda UHB",
+  "kind": "health",
+  "agent": 30913738,
+  "routed": 7,
+  "routed_absent": 7,
+  "identified_rows": [
+   [
+    30926960,
+    "GBPPONPNPY2728GCWW",
+    27
+   ],
+   [
+    31544733,
+    "GBNHS7A2",
+    13
+   ]
+  ],
+  "dominant": [
+   30926960,
+   "GBPPONPNPY2728GCWW",
+   27
+  ],
+  "split": true,
+  "share": 0.2593,
+  "share_of_total": 0.2059
+ },
+ {
+  "principal": "NWJCC",
+  "kind": "health",
+  "agent": 30913738,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [],
+  "dominant": null,
+  "split": false,
+  "share": null
+ },
+ {
+  "principal": "Public Health Wales",
+  "kind": "health",
+  "agent": 30913738,
+  "routed": 5,
+  "routed_absent": 5,
+  "identified_rows": [
+   [
+    30928312,
+    "GBPPONPBXD6758YMPY",
+    23
+   ]
+  ],
+  "dominant": [
+   30928312,
+   "GBPPONPBXD6758YMPY",
+   23
+  ],
+  "split": false,
+  "share": 0.2174,
+  "share_of_total": 0.1786
+ },
+ {
+  "principal": "Rutland CC",
+  "kind": "council",
+  "agent": 30913798,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30915335,
+    "GBPPONPMQJ3429NZWQ",
+    76
+   ]
+  ],
+  "dominant": [
+   30915335,
+   "GBPPONPMQJ3429NZWQ",
+   76
+  ],
+  "split": false,
+  "share": 0.0132,
+  "share_of_total": 0.013
+ },
+ {
+  "principal": "NCL ICB",
+  "kind": "health",
+  "agent": 30916628,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30916245,
+    "GBPPONPWBN7811DGVX",
+    370
+   ]
+  ],
+  "dominant": [
+   30916245,
+   "GBPPONPWBN7811DGVX",
+   370
+  ],
+  "split": false,
+  "share": 0.0027,
+  "share_of_total": 0.0027
+ },
+ {
+  "principal": "CORE Education Trust",
+  "kind": "school/trust",
+  "agent": 30930308,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31547652,
+    "GBPPONPPQT4737ZZYX",
+    4
+   ]
+  ],
+  "dominant": [
+   31547652,
+   "GBPPONPPQT4737ZZYX",
+   4
+  ],
+  "split": false,
+  "share": 0.25,
+  "share_of_total": 0.2
+ },
+ {
+  "principal": "William Farr School",
+  "kind": "school/trust",
+  "agent": 30930308,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [],
+  "dominant": null,
+  "split": false,
+  "share": null
+ },
+ {
+  "principal": "Howard PT",
+  "kind": "school/trust",
+  "agent": 30968739,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    30917637,
+    "GBCOH07597068",
+    4
+   ]
+  ],
+  "dominant": [
+   30917637,
+   "GBCOH07597068",
+   4
+  ],
+  "split": false,
+  "share": 0.25,
+  "share_of_total": 0.2
+ },
+ {
+  "principal": "Keys Academy Trust",
+  "kind": "school/trust",
+  "agent": 30968739,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31569587,
+    "GBPPONPNZV5838VDGV",
+    1
+   ]
+  ],
+  "dominant": [
+   31569587,
+   "GBPPONPNZV5838VDGV",
+   1
+  ],
+  "split": false,
+  "share": 1.0,
+  "share_of_total": 0.5
+ },
+ {
+  "principal": "Remarkable Autism",
+  "kind": "school/trust",
+  "agent": 30914820,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [],
+  "dominant": null,
+  "split": false,
+  "share": null
+ },
+ {
+  "principal": "English Rural HA",
+  "kind": "housing",
+  "agent": 30913722,
+  "routed": 2,
+  "routed_absent": 2,
+  "identified_rows": [],
+  "dominant": null,
+  "split": false,
+  "share": null
+ },
+ {
+  "principal": "Hull Churches HA",
+  "kind": "housing",
+  "agent": 30913722,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [],
+  "dominant": null,
+  "split": false,
+  "share": null
+ },
+ {
+  "principal": "Newlon HT",
+  "kind": "housing",
+  "agent": 30913722,
+  "routed": 1,
+  "routed_absent": 1,
+  "identified_rows": [
+   [
+    31764011,
+    "GBCOHIP18449R",
+    1
+   ]
+  ],
+  "dominant": [
+   31764011,
+   "GBCOHIP18449R",
+   1
+  ],
+  "split": false,
+  "share": 1.0,
+  "share_of_total": 0.5
+ },
+ {
+  "principal": "YMCA Saint Pauls",
+  "kind": "housing",
+  "agent": 30913722,
+  "routed": 1,
+  "routed_absent": 0,
+  "identified_rows": [
+   [
+    15069937,
+    "02971930",
+    5
+   ],
+   [
+    31600305,
+    "GBCOH2971930",
+    0
+   ]
+  ],
+  "dominant": [
+   15069937,
+   "02971930",
+   5
+  ],
+  "split": false,
+  "share": 0.0,
+  "share_of_total": 0.0
+ }
+]

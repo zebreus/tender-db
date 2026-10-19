@@ -1,0 +1,4 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (545 u2b copy: prod schema + prod org indexes)
+(2, 0, 0, 'SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)')
+-- turso plan-probe (rc=0)
+PLAN	q10_class_dates	SEARCH notices USING INTEGER PRIMARY KEY (rowid=?)

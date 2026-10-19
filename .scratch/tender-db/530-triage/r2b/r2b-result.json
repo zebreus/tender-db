@@ -1,0 +1,1544 @@
+{
+ "issue": 530,
+ "step": "R2b: fresh R2 random re-read (decision A5 / R2 F3) on Build 1b dry plan job 2660",
+ "date": "2026-10-19",
+ "plan_report": ".scratch/tender-db/530-triage/guid_twin_plan_2660.json",
+ "build": "Build 1b, deployed 8e9222c",
+ "salt": 530003,
+ "excluded_r2_reads": 60,
+ "excluded_r2_reads_planned_here": 59,
+ "pass": true,
+ "bar": "fresh random 60: 0 W and N <= 3 (A5, R2 F3)",
+ "tally": {
+  "r2_random": {
+   "picks": 60,
+   "R": 60,
+   "N": 0,
+   "W": 0,
+   "R_conditional_on_mint": [
+    32
+   ],
+   "pass": true
+  },
+  "by_stratum": {
+   "buyer": {
+    "picks": 25,
+    "R": 25,
+    "N": 0,
+    "W": 0,
+    "planned_rows": 2731,
+    "bound95": 0.1129,
+    "bound95_rows": 308,
+    "independent_picks": 20,
+    "bound95_independent": 0.1391,
+    "bound95_independent_rows": 380
+   },
+   "review_or_info": {
+    "picks": 25,
+    "R": 25,
+    "N": 0,
+    "W": 0,
+    "planned_rows": 8063,
+    "bound95": 0.1129,
+    "bound95_rows": 910,
+    "independent_picks": 13,
+    "bound95_independent": 0.2058,
+    "bound95_independent_rows": 1659
+   },
+   "other_or_tenderer": {
+    "picks": 10,
+    "R": 10,
+    "N": 0,
+    "W": 0,
+    "planned_rows": 201,
+    "bound95": 0.2589,
+    "bound95_rows": 52,
+    "independent_picks": 10,
+    "bound95_independent": 0.2589,
+    "bound95_independent_rows": 52
+   }
+  }
+ },
+ "bound95_one_sided": {
+  "formula": "0 of n: 1 - 0.05^(1/n)",
+  "all_60": 0.0487,
+  "all_60_rows_of_planned": 535,
+  "planned_rows": 10995,
+  "independence": {
+   "finding": "h(o,530003) = h(o XOR 1, 530002) because 530002 XOR 530003 = 1, so the salt-530003 order is the salt-530002 order on XOR-1 neighbours; twin sections are minted at consecutive ids, so the fresh draw pulls in R2 picks' twin partners",
+   "xor1_partner_is_r2_pick": 23,
+   "same_group_same_target": [
+    0,
+    1,
+    2,
+    3,
+    18,
+    25,
+    27,
+    28,
+    29,
+    33,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    49
+   ],
+   "same_notice_other_group_or_other_notice": [
+    7,
+    26,
+    31,
+    44,
+    45,
+    46
+   ],
+   "independent_picks": 43,
+   "bound95_independent": 0.0673,
+   "bound95_independent_rows": 740
+  },
+  "pooled_indicative": {
+   "distinct_folds": 102,
+   "r2_picks_still_planned": 59,
+   "r2b_independent": 43,
+   "bound95": 0.0289,
+   "bound95_rows": 318,
+   "note": "union of two hash-ordered draws, not one simple random sample; not the bar"
+  }
+ },
+ "flagged_lists": {
+  "r2_top_targets": {
+   "count": 30,
+   "unread_by_r2": 0,
+   "note": "same 30 targets as plan 2659, index for index"
+  },
+  "r2_city_flagged": {
+   "count": 36,
+   "unread_by_r2": 0,
+   "dropped_since_2659": {
+    "3353580": "W1, unsafe name",
+    "6622773": "W2, unsafe name",
+    "5180467": "Leinemann Partner, groups now bound by the role guard",
+    "20316475": "GSI, R2 random row 23761350 now refused by the role guard",
+    "1206438": "IKK classic, bound by the role guard"
+   }
+  },
+  "r2_office_two_words": {
+   "count": 7,
+   "unread_by_r2": 0,
+   "dropped_since_2659": {
+    "3353580": "W1"
+   }
+  },
+  "r2_incoherent": {
+   "count": 0,
+   "note": "roles.incoherent_count 0, tripwire_role_mix 0, role_ref_disagree 0; the role guard runs at the wide scope (any buyer-side role beside Lot-ReviewOrg), so R2's extra read of the 70 AddInfo/SProvider+ReviewOrg groups is not needed"
+  },
+  "w_targets_gone": {
+   "3353580": "no planned row (0 occurrences in the 2660 report)",
+   "6622773": "no planned row",
+   "22752175-77": "not in planned_row_ids; listed as not-planned controls and in guard_samples.role_mix"
+  },
+  "unsafe_list_rows": {
+   "rows": 21,
+   "mentions": 42,
+   "names": {
+    "vergabekammer nrw": "16 rows",
+    "geschäftsstelle der vergabekammer": "5 rows"
+   },
+   "planned": 0
+  }
+ },
+ "w_findings": [],
+ "fixes": {
+  "required": "none: 0 W in the fresh 60, so no new unsafe name, no guard change, and no further fresh 60",
+  "method_note": "for any later fresh draw, use a salt whose XOR with every salt already read is >= 256, or skip picks that share a notice with a row already read; with 530003 the bound counts 43 independent picks, not 60"
+ },
+ "caveats_R": {
+  "conditional_on_mint": [
+   {
+    "index": 32,
+    "org_id": 22828976,
+    "key": "stadt boizenburg/elbe - der bürgermeister - c/o ksm kommunalservice mecklenburg aör - zentrale vergabestelle",
+    "planned_rows": 16,
+    "planned_mentions": 32,
+    "planned_cities": [
+     "schwerin"
+    ]
+   }
+  ],
+  "target_mentions_not_read_name_plus_city_screen": [
+   {
+    "index": 37,
+    "target": 1168880
+   },
+   {
+    "index": 46,
+    "target": 2399618
+   },
+   {
+    "index": 57,
+    "target": 10392760
+   },
+   {
+    "index": 58,
+    "target": 1592402
+   }
+  ],
+  "target_by_name_screen_and_sibling_notice": [
+   19560123,
+   14436538,
+   14467750,
+   2463330,
+   17573857,
+   2439295,
+   23021560,
+   1176684,
+   12774348
+  ],
+  "city_flagged_targets_in_sample": {
+   "7615": "flag b is the postcode 50667 in the city field (items 30, 34, 42, 43)",
+   "30899495": "one unlocated Geilenkirchen mention, not this row (item 16)",
+   "8808564": "the Düsseldorf office of one legal entity (items 56, 59)"
+  }
+ },
+ "missing_targets": {
+  "plan_wide": {
+   "keys": 52,
+   "rows": 312,
+   "mentions": 636,
+   "note": "unchanged from 2659; Build 2 mints one identifier-NULL row per key (decided)"
+  },
+  "in_sample": [
+   32
+  ]
+ },
+ "plan_delta_vs_2659": {
+  "rows": [
+   11103,
+   10995
+  ],
+  "mentions": [
+   22324,
+   22056
+  ],
+  "removed_rows": 108,
+  "removed_by_unsafe_names": 21,
+  "removed_other_role_guard": 87,
+  "2660_subset_of_2659": true
+ },
+ "gets": {
+  "logged": 240,
+  "notice_content": 129,
+  "organizations": 111,
+  "status_200": 240,
+  "status_408": 0,
+  "retries": 0,
+  "min_gap_s": 2.049,
+  "window": "2026-10-19T20:44:00.830Z..21:01:49.439Z",
+  "by_reader": {
+   "rand2b": 66,
+   "rand1": 66,
+   "rand3": 59,
+   "rand4": 49
+  },
+  "bodies": 240,
+  "log": ".scratch/tender-db/530-triage/r2b/api_requests.log",
+  "tally_gets": 0,
+  "not_used": [
+   "/v1/sql",
+   "ssh",
+   "POST",
+   "git",
+   "cargo"
+  ]
+ },
+ "reads": [
+  "r2b/read_rand1.md",
+  "r2b/read_rand2.md",
+  "r2b/read_rand3.md",
+  "r2b/read_rand4.md"
+ ],
+ "next": "R2 passes: Build 2 may ship as decided (KEEP file, gate wired, wet path, recurrence arm A1, mint of the 52 missing keys); R3 after the wet run",
+ "items": [
+  {
+   "index": 0,
+   "reader": "rand1",
+   "org_id": 22959818,
+   "name": "Kolpingstadt Kerpen",
+   "stratum": "buyer",
+   "target": 2383569,
+   "missing_target": false,
+   "notice_ids": [
+    24522973,
+    26543360
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22959819,
+    "r2_pick_name": "Kolpingstadt Kerpen",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Kolpingstadt Kerpen → 2383569 (97). The group is ORG-0001 Buyer + ORG-0002 AddInfo, both at Abtl. 20.4 Zentrale Vergabestelle, Jahnplatz 1, Kerpen, in both copies (TED 24522973 / DÖE 26543360). VK Rheinland is the ReviewOrg under its own name. The target has identifier NULL, its city screen is clean, and R2 already scored it R twice. One town."
+  },
+  {
+   "index": 1,
+   "reader": "rand1",
+   "org_id": 22879584,
+   "name": "Verwaltungs-Berufsgenossenschaft (VBG) - Hauptverwaltung Hamburg",
+   "stratum": "buyer",
+   "target": 10749091,
+   "missing_target": false,
+   "notice_ids": [
+    24421187,
+    26539887
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22879585,
+    "r2_pick_name": "Verwaltungs-Berufsgenossenschaft (VBG) - Hauptverwaltung Hamburg",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "VBG Hauptverwaltung Hamburg → 10749091 (88). Buyer + AddInfo, both at Massaquoipassage 1, 22305 Hamburg, vergabestelle@vbg.de (TED 24421187 / DÖE 26539887). Review/Mediator is 'Vergabekammern des Bundes' under its own name. R2 scored the AddInfo twin row 22879585 of this same notice R. The target's city screen is clean. One head office."
+  },
+  {
+   "index": 2,
+   "reader": "rand1",
+   "org_id": 22886294,
+   "name": "Bundesstadt Bonn - Referat Vergabedienste",
+   "stratum": "buyer",
+   "target": 15234277,
+   "missing_target": false,
+   "notice_ids": [
+    24429562,
+    26526605
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22886295,
+    "r2_pick_name": "Bundesstadt Bonn - Referat Vergabedienste",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Bundesstadt Bonn - Referat Vergabedienste → 15234277 (376, top_targets[2]). Buyer + AddInfo, both at Bertha-von-Suttner-Platz 2-4, Bonn (TED 24429562 / DÖE 26526605). The target's listed mentions 23528496, 23526725 and 23525740 print the same name, address, e-mail and phone. One procurement office."
+  },
+  {
+   "index": 3,
+   "reader": "rand1",
+   "org_id": 22770770,
+   "name": "Brandenburgischer Landesbetrieb für Liegenschaften und Bauen (BLB) - Zentrale Vergabestelle",
+   "stratum": "buyer",
+   "target": 14256311,
+   "missing_target": false,
+   "notice_ids": [
+    24277826,
+    26488243
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22770771,
+    "r2_pick_name": "Brandenburgischer Landesbetrieb für Liegenschaften und Bauen (BLB) - Zentrale Vergabestelle",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "BLB Brandenburg - Zentrale Vergabestelle → 14256311 (371, top_targets[18]). Buyer + AddInfo, both at An der Wache 2, Zossen (TED 24277826 / DÖE 26488243). The Vergabeprüfstelle (Potsdam) and VK Bund are other names. The target's mentions 23509393 and 23496637 print the identical name, address and contact point. One office of one Landesbetrieb."
+  },
+  {
+   "index": 4,
+   "reader": "rand1",
+   "org_id": 22956859,
+   "name": "Landkreis Göttingen",
+   "stratum": "buyer",
+   "target": 2294259,
+   "missing_target": false,
+   "notice_ids": [
+    24519603,
+    26561846
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Landkreis Göttingen → 2294259 (216). Buyer + AddInfo, both at Reinhäuser Landstraße 4, Göttingen (TED 24519603 / DÖE 26561846). Sibling planned notice 24263362 shows the same office under fresh GUIDs. The target is the 234 fallback row that the R1 controls name. The VAT row 22183653 is excluded by 300 §10, a known split and not this fold's error. One district."
+  },
+  {
+   "index": 5,
+   "reader": "rand1",
+   "org_id": 22929057,
+   "name": "Rheinland-Pfälzische Technische Universität Kaiserslautern-Landau",
+   "stratum": "buyer",
+   "target": 20509663,
+   "missing_target": false,
+   "notice_ids": [
+    24484865,
+    26559479
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "RPTU Kaiserslautern-Landau → 20509663 (33). Buyer + AddInfo, both Abt. 2.3 Vergabe, Gottlieb-Daimler-Str. 47, Kaiserslautern (TED 24484865 / DÖE 26559479). VK Rheinland-Pfalz holds the review roles under its own name. Sibling 24331610 shows two more fresh GUIDs for the same office. The target is not city-flagged. One university."
+  },
+  {
+   "index": 6,
+   "reader": "rand1",
+   "org_id": 22917694,
+   "name": "Stadt Münster",
+   "stratum": "buyer",
+   "target": 2251109,
+   "missing_target": false,
+   "notice_ids": [
+    24470558,
+    26549296
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Stadt Münster → 2251109 (192, top_targets[4], city {munster}). ORG-0001 is Buyer+AddInfo and ORG-0003 is ReviewInfo, all at Klemensstraße 10, Münster (TED 24470558 / DÖE 26549296). Co-buyer Stadt Hamm and VK Westfalen (ReviewOrg) are separate names. The target's newest mentions (CIVITAS/CORE 26723175/26723160/26595371) are the same city office. One city."
+  },
+  {
+   "index": 7,
+   "reader": "rand1",
+   "org_id": 22830289,
+   "name": "Handwerkskammer Ostmecklenburg-Vorpommern",
+   "stratum": "buyer",
+   "target": 17956113,
+   "missing_target": false,
+   "notice_ids": [
+    24357988,
+    26515375
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22830288,
+    "r2_pick_name": "Stadt Münster",
+    "same_notice": false,
+    "same_target": false,
+    "kind": "other_notice"
+   },
+   "why": "HWK Ostmecklenburg-Vorpommern → 17956113 (8). Buyer + AddInfo, both at Schwaaner Landstraße 8, Rostock (TED 24357988 / DÖE 26515375). The MV Vergabekammern (ReviewOrg) are a separate name. Sibling 24275668, from the same project, mints three more GUIDs for the chamber. The target is not city-flagged. One chamber."
+  },
+  {
+   "index": 8,
+   "reader": "rand1",
+   "org_id": 22819953,
+   "name": "Universität Stuttgart",
+   "stratum": "buyer",
+   "target": 1262231,
+   "missing_target": false,
+   "notice_ids": [
+    24344812,
+    26508487
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Universität Stuttgart → 1262231 (420, top_targets[15], city {stuttgart}). The group is Buyer (Keplerstr. 7) + AddInfo + TenderReceipt (Breitscheidstr. 2 C), all with the same procurement e-mail in 70174 Stuttgart (TED 24344812 / DÖE 26508487). The target's mentions 4062571 and 4043479 are UNIVERSITÄT STUTTGART, Stuttgart. One university."
+  },
+  {
+   "index": 9,
+   "reader": "rand1",
+   "org_id": 22952705,
+   "name": "Bau- und Liegenschaftsbetrieb NRW Aachen",
+   "stratum": "buyer",
+   "target": 2443792,
+   "missing_target": false,
+   "notice_ids": [
+    24514128,
+    26545617
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "BLB NRW Aachen → 2443792 (573, top_targets[17]). Buyer + AddInfo, both at Mies-van-der-Rohe-Str. 10, Aachen (TED 24514128 / DÖE 26545617). VK Rheinland is the ReviewOrg. The target's mentions 3439214 and 3484606 are BLB NRW Aachen, Aachen. One branch of one Landesbetrieb."
+  },
+  {
+   "index": 10,
+   "reader": "rand1",
+   "org_id": 22769455,
+   "name": "Landkreis Havelland - Der Landrat -",
+   "stratum": "buyer",
+   "target": 7114335,
+   "missing_target": false,
+   "notice_ids": [
+    24276020,
+    26489832
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Landkreis Havelland - Der Landrat - → 7114335 (30). The group is Buyer + AddInfo + TenderReceipt, all Dezernat I Zentrale Vergabestelle, Platz der Freiheit 1, Rathenow (TED 24276020 / DÖE 26489832). VK Brandenburg is the ReviewOrg. The target is not city-flagged. One district."
+  },
+  {
+   "index": 11,
+   "reader": "rand1",
+   "org_id": 22818997,
+   "name": "SBO Servicebetriebe Oberhausen - Eigenbetrieb der Stadt Oberhausen",
+   "stratum": "buyer",
+   "target": 17012302,
+   "missing_target": false,
+   "notice_ids": [
+    24343674,
+    26498127
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "SBO Servicebetriebe Oberhausen → 17012302 (80). Buyer + AddInfo, both at Bahnhofstraße 66, Oberhausen (TED 24343674 / DÖE 26498127). VK Rheinland is the ReviewOrg. Sibling 24331367 shows the same pair under fresh GUIDs. The target's city screen is clean. One Eigenbetrieb."
+  },
+  {
+   "index": 12,
+   "reader": "rand1",
+   "org_id": 22899365,
+   "name": "Stadtverwaltung Cottbus",
+   "stratum": "buyer",
+   "target": 1514797,
+   "missing_target": false,
+   "notice_ids": [
+    24446287,
+    26520395
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Stadtverwaltung Cottbus → 1514797 (626). The group is Buyer + AddInfo + ReviewInfo, all Zentrales Vergabemanagement, Neumarkt 5, Cottbus (TED 24446287 / DÖE 26520395). VK Brandenburg (ReviewOrg) and Vergabemarktplatz Brandenburg are other names. Sibling 24279422 repeats the triple. The target is not city-flagged. One city administration."
+  },
+  {
+   "index": 13,
+   "reader": "rand1",
+   "org_id": 22910304,
+   "name": "Bau- und Liegenschaftsbetrieb NRW Zentrale",
+   "stratum": "buyer",
+   "target": 7195752,
+   "missing_target": false,
+   "notice_ids": [
+    24461122,
+    26532756
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "BLB NRW Zentrale → 7195752 (1,101, top_targets[7]). Buyer + AddInfo, both Servicecenter Zentraler Einkauf, Mercedesstr. 12, Düsseldorf (TED 24461122 / DÖE 26532756); the headquarters buys here for the Münster branch. The target's mentions 3920878, 3733750 and 3731071 are BLB NRW Zentrale, Düsseldorf. One headquarters."
+  },
+  {
+   "index": 14,
+   "reader": "rand1",
+   "org_id": 22957742,
+   "name": "Stadt Remscheid, Fachdienst Recht und Vergabe, Abteilung Zentrale Vergabestelle",
+   "stratum": "buyer",
+   "target": 16921787,
+   "missing_target": false,
+   "notice_ids": [
+    24520618,
+    26543501
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Stadt Remscheid … Zentrale Vergabestelle → 16921787 (805). ORG-0001 is Buyer+AddInfo and ORG-0002 is ReviewInfo, both at Theodor-Heuss-Platz 1, Remscheid (TED 24520618 / DÖE 26543501). VK Rheinland is ReviewOrg and Mediator. The target's city screen is clean, and R2 scored a sibling row R. One city procurement office."
+  },
+  {
+   "index": 15,
+   "reader": "rand2",
+   "org_id": 22772664,
+   "name": "Universität Stuttgart",
+   "stratum": "buyer",
+   "target": 1262231,
+   "missing_target": false,
+   "notice_ids": [
+    24280399,
+    26488038
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Universität Stuttgart: ORG-0001 Buyer + ORG-0002 AddInfo, same e-mail and phone, both in Stuttgart (Keplerstr. 7 / Breitscheidstr. 2 C). Target 1262231 (420 mentions) is a top-30 target, city set {stuttgart}; R2 read it R. A7 clean."
+  },
+  {
+   "index": 16,
+   "reader": "rand2",
+   "org_id": 23001478,
+   "name": "Stadt Aachen - Zentrale Vergabestelle FB60/300",
+   "stratum": "buyer",
+   "target": 30899495,
+   "missing_target": false,
+   "notice_ids": [
+    24578735,
+    26567917
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Stadt Aachen ZVS FB60/300 printed on Buyer, AddInfo, ReviewInfo and TenderReceipt at Lagerhausstr. 20 Aachen; the ReviewOrg is VK Rheinland under another name. Target 30899495 (64) has city set {aachen}. Its city flag is one unlocated Geilenkirchen mention, not this row (both copies print Aachen). Read R before in top1 item 9."
+  },
+  {
+   "index": 17,
+   "reader": "rand2",
+   "org_id": 22834338,
+   "name": "Ministerium für Umwelt, Naturschutz und Verkehr des Landes NRW",
+   "stratum": "buyer",
+   "target": 19560123,
+   "missing_target": false,
+   "notice_ids": [
+    24363047,
+    26497080
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "MUNV NRW printed on Buyer, AddInfo, ReviewInfo and TenderReceipt at Emilie-Preyer-Platz 1 Düsseldorf; the ReviewOrg is VK Rheinland. Target 19560123 (13) is not city-flagged. The full ministry title can only be one body."
+  },
+  {
+   "index": 18,
+   "reader": "rand2",
+   "org_id": 22859790,
+   "name": "IHP GmbH - Leibniz-Institut für innovative Mikroelektronik",
+   "stratum": "buyer",
+   "target": 1648483,
+   "missing_target": false,
+   "notice_ids": [
+    24396035,
+    26499552
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22859791,
+    "r2_pick_name": "IHP GmbH - Leibniz-Institut für innovative Mikroelektronik",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "IHP GmbH Frankfurt (Oder) printed on Buyer, SProvider, AddInfo and TenderReceipt: same address and e-mail, all buyer-side roles, no ReviewOrg. Target 1648483 (149, same name_norm with a case difference) is not flagged. The SProvider partner row 22859791 read R in R2; the sibling notice is the same institute."
+  },
+  {
+   "index": 19,
+   "reader": "rand2",
+   "org_id": 22819228,
+   "name": "HIL Heeresinstandsetzungslogistik GmbH",
+   "stratum": "buyer",
+   "target": 1405749,
+   "missing_target": false,
+   "notice_ids": [
+    24343957,
+    26508432
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "HIL GmbH Bonn printed on Buyer, AddInfo and TenderReceipt at Josef-Wirmer-Str. 2-8; the ReviewOrg is the Bundeskartellamt VK Bund. Target 1405749 (2,076) is a top-30 target, {bonn}/{bonn}; R2 read it R."
+  },
+  {
+   "index": 20,
+   "reader": "rand2",
+   "org_id": 22852201,
+   "name": "Oberfinanzdirektion Karlsruhe - LZfD",
+   "stratum": "buyer",
+   "target": 14436538,
+   "missing_target": false,
+   "notice_ids": [
+    24385854,
+    26504494
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "OFD Karlsruhe - LZfD printed on Buyer, AddInfo, ReviewInfo and TenderReceipt at Moltkestr. 80; the ReviewOrg is RP Karlsruhe. ReviewInfo is not ReviewOrg, so A7 is clean. Target 14436538 (186) is not flagged; sibling 24255887 shows the same office with another contact person."
+  },
+  {
+   "index": 21,
+   "reader": "rand2",
+   "org_id": 22846983,
+   "name": "Stadt Marl - Amt für Klimaschutz und Nachhaltigkeit - Zentrale Vergabestelle",
+   "stratum": "buyer",
+   "target": 14467750,
+   "missing_target": false,
+   "notice_ids": [
+    24378890,
+    26500702
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Stadt Marl ZVS printed on Buyer, AddInfo and TenderReceipt at Carl-Duisberg-Str. 165; VK Westfalen is its own group. Target 14467750 (159) is not flagged; sibling 24341478 shows the same office."
+  },
+  {
+   "index": 22,
+   "reader": "rand2",
+   "org_id": 22860702,
+   "name": "Polizeipräsidium Düsseldorf",
+   "stratum": "buyer",
+   "target": 2463330,
+   "missing_target": false,
+   "notice_ids": [
+    24397311,
+    26524064
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Polizeipräsidium Düsseldorf printed on Buyer, AddInfo and TenderReceipt at Jürgensplatz 5-7; VK Rheinland is its own group. Target 2463330 (30) is not flagged; sibling 24332740 is the same procedure's earlier notice. Only one police HQ has that name."
+  },
+  {
+   "index": 23,
+   "reader": "rand2",
+   "org_id": 22771735,
+   "name": "Landratsamt Ostalbkreis - Zentrale Vergabestelle",
+   "stratum": "buyer",
+   "target": 17573857,
+   "missing_target": false,
+   "notice_ids": [
+    24279165,
+    26488059
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Landratsamt Ostalbkreis ZVS printed on Buyer, AddInfo and TenderReceipt at Stuttgarter Str. 41 Aalen; the ReviewOrg is VK BW. Target 17573857 (84) is not flagged; sibling 24311385 is the same."
+  },
+  {
+   "index": 24,
+   "reader": "rand2",
+   "org_id": 22850671,
+   "name": "Stadt Gütersloh",
+   "stratum": "buyer",
+   "target": 2439295,
+   "missing_target": false,
+   "notice_ids": [
+    24383886,
+    26507028
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Stadt Gütersloh: Buyer + AddInfo at Berliner Str. 70 with the ZVS e-mail; VK Westfalen has another name. Target 2439295 (1,539) is not flagged; sibling 24334190 is the same pair. There is one Gütersloh."
+  },
+  {
+   "index": 25,
+   "reader": "rand2",
+   "org_id": 22834379,
+   "name": "Geschäftsstelle der Vergabekammern beim Ministerium für Wirtschaft, Infrastruktur, Tourismus und Arbeit Mecklenburg-Vorpommern",
+   "stratum": "review_or_info",
+   "target": 23021560,
+   "missing_target": false,
+   "notice_ids": [
+    24363093,
+    26496969
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22834378,
+    "r2_pick_name": "Geschäftsstelle der Vergabekammern beim Ministerium für Wirtschaft, Infrastruktur, Tourismus und Arbeit Mecklenburg-Vorpommern",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "The MV Geschäftsstelle der Vergabekammern (long key that F1 says not to list) is printed on ReviewInfo, ReviewOrg and Mediator (this row) at Johannes-Stelling-Str. 14 Schwerin. All roles are review-side. Target 23021560 (3) is not flagged; sibling 24254583 is the same; the ReviewOrg partner 22834378 read R in R2."
+  },
+  {
+   "index": 26,
+   "reader": "rand2",
+   "org_id": 22957397,
+   "name": "Aufsichts- und Dienstleistungsdirektion",
+   "stratum": "review_or_info",
+   "target": 1176684,
+   "missing_target": false,
+   "notice_ids": [
+    24520244,
+    26562011
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22957396,
+    "r2_pick_name": "Zentrale Beschaffungsstelle des Landes Rheinland-Pfalz (ZBL) im Landesbetrieb Mobilität Rheinland-Pfalz",
+    "same_notice": true,
+    "same_target": false,
+    "kind": "same_notice_other_group"
+   },
+   "why": "ADD Trier: ReviewInfo (this row) + Mediator, Willy-Brandt-Platz 3, poststelle@add.rlp.de; the ReviewOrg is VK RLP Mainz under another name. Target 1176684 (652) is not flagged. The name is unique to one RLP authority, and cached notice 24274974 prints the same ADD."
+  },
+  {
+   "index": 27,
+   "reader": "rand2",
+   "org_id": 22975387,
+   "name": "Vergabekammer Rheinland · c/o Bezirksregierung Köln",
+   "stratum": "review_or_info",
+   "target": 12774348,
+   "missing_target": false,
+   "notice_ids": [
+    24542995,
+    26565531
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22975386,
+    "r2_pick_name": "Vergabekammer Rheinland · c/o Bezirksregierung Köln",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Vergabekammer Rheinland · c/o Bezirksregierung Köln: ReviewInfo + ReviewOrg (this row) at Zeughausstr. 2-10 Köln. Target 12774348 (495) is not flagged. The name pins the Köln chamber and is not the NRW umbrella; the partner 22975386 read R in R2."
+  },
+  {
+   "index": 28,
+   "reader": "rand2",
+   "org_id": 22965731,
+   "name": "Vergabekammer Niedersachsen beim Nds. Ministerium für Wirtschaft, Arbeit und Verkehr",
+   "stratum": "review_or_info",
+   "target": 1166553,
+   "missing_target": false,
+   "notice_ids": [
+    24530701,
+    26551471
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22965730,
+    "r2_pick_name": "Vergabekammer Niedersachsen beim Nds. Ministerium für Wirtschaft, Arbeit und Verkehr",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "VK Niedersachsen printed on ReviewInfo, ReviewOrg and Mediator (this row) at Auf der Hude 2 Lüneburg. Target 1166553 (13,668) is a top-30 target, {luneburg}/{luneburg}; R2 read it R and the partner 22965730 R. Lower Saxony has one chamber."
+  },
+  {
+   "index": 29,
+   "reader": "rand2",
+   "org_id": 22868221,
+   "name": "Vergabekammer Westfalen bei der Bezirksregierung Münster",
+   "stratum": "review_or_info",
+   "target": 6136373,
+   "missing_target": false,
+   "notice_ids": [
+    24406486,
+    26525811
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22868220,
+    "r2_pick_name": "Vergabekammer Westfalen bei der Bezirksregierung Münster",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "VK Westfalen bei der BezReg Münster printed on ReviewInfo, ReviewOrg (this row) and Mediator at Albrecht-Thaer-Str. 9. Target 6136373 (15,723) is a top-30 target, {munster}/{munster}; R2 read it R. It is not the unsafe 3353580 or 6622773, neither of which appears in 2660."
+  },
+  {
+   "index": 30,
+   "reader": "rand3",
+   "org_id": 23096532,
+   "name": "Vergabekammer Rheinland",
+   "stratum": "review_or_info",
+   "target": 7615,
+   "missing_target": false,
+   "notice_ids": [
+    24719405,
+    26615115
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Notice 24719405/26615115 (Kreis Mettmann): row is ORG-0003 Lot-ReviewOrg, twinned with ORG-0002 ReviewInfo. Both print Zeughausstr. 2-10 Köln and VKRheinland@bezreg-koeln. Target 7615 (29,617 mentions) is the one Köln chamber: flag b is only the postcode 50667 in the city field. Its newest mention, 47382952, is the same chamber."
+  },
+  {
+   "index": 31,
+   "reader": "rand3",
+   "org_id": 22858437,
+   "name": "Hamburg Messe und Congress GmbH",
+   "stratum": "review_or_info",
+   "target": 1401506,
+   "missing_target": false,
+   "notice_ids": [
+    24394386,
+    26499275
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22858436,
+    "r2_pick_name": "Vergabekammer bei der Finanzbehörde der Freien und Hansestadt Hamburg",
+    "same_notice": true,
+    "same_target": false,
+    "kind": "same_notice_other_group"
+   },
+   "why": "Notice 24394386/26499275: row is ORG-0005 TenderReceipt, twinned with Buyer and AddInfo, all at Messeplatz 1 Hamburg. The review chamber is a separate group. Target 1401506 (211 mentions) is one company and is on no screen list."
+  },
+  {
+   "index": 32,
+   "reader": "rand3",
+   "org_id": 22828976,
+   "name": "Stadt Boizenburg/Elbe - Der Bürgermeister - c/o KSM Kommunalservice Mecklenburg AöR - Zentrale Vergabestelle",
+   "stratum": "review_or_info",
+   "target": null,
+   "missing_target": true,
+   "notice_ids": [
+    24356527,
+    26514927
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": true,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Missing target, minted. Notice 24356527/26514927: AddInfo and TenderReceipt both print 'Stadt Boizenburg/Elbe ... c/o KSM' at KSM's Schwerin address. The key covers 16 rows / 32 mentions, planned city {schwerin} only, flag c not set. The name names one town acting through KSM, so the minted row would be one body. The buyer's own name and KSM's own name are other keys."
+  },
+  {
+   "index": 33,
+   "reader": "rand3",
+   "org_id": 22824043,
+   "name": "Bau- und Liegenschaftsbetrieb NRW Bielefeld",
+   "stratum": "review_or_info",
+   "target": 1203308,
+   "missing_target": false,
+   "notice_ids": [
+    24349929,
+    26509277
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22824042,
+    "r2_pick_name": "Bau- und Liegenschaftsbetrieb NRW Bielefeld",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Notice 24349929/26509277: row is ORG-0002 AddInfo, twinned with Buyer and TenderReceipt, all at August-Bebel-Str. 91 Bielefeld. BLB Zentrale and VK Westfalen have other names. Same notice as R2's sibling row 22824042 (R). Target 1203308 (796 mentions) is one BLB branch."
+  },
+  {
+   "index": 34,
+   "reader": "rand3",
+   "org_id": 23037085,
+   "name": "Vergabekammer Rheinland",
+   "stratum": "review_or_info",
+   "target": 7615,
+   "missing_target": false,
+   "notice_ids": [
+    24630886,
+    26614407
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Notice 24630886/26614407 (Bonn, bonnorange): row is ORG-0002 ReviewInfo, twinned with ORG-0003 ReviewOrg. Both print Zeughausstr. 2-10 Köln and vergabekammer@bezreg-koeln. Target 7615 is the same body as in item 30."
+  },
+  {
+   "index": 35,
+   "reader": "rand3",
+   "org_id": 22833833,
+   "name": "Universitätsklinikum Köln AöR",
+   "stratum": "review_or_info",
+   "target": 1281557,
+   "missing_target": false,
+   "notice_ids": [
+    24362430,
+    26513238
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Notice 24362430/26513238: row is ORG-0004 TenderReceipt, twinned with Buyer and AddInfo, all at Kerpener Str. 62 Köln. The ReviewOrg is a differently named VK Rheinland section, so there is no A7 mix. Target 1281557 (655 mentions) carries no screen flag, and R2 read it R."
+  },
+  {
+   "index": 36,
+   "reader": "rand3",
+   "org_id": 22852079,
+   "name": "Bau- und Liegenschaftsbetrieb NRW Düsseldorf",
+   "stratum": "review_or_info",
+   "target": 1173255,
+   "missing_target": false,
+   "notice_ids": [
+    24385695,
+    26506999
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Notice 24385695/26506999: row is ORG-0005 TenderReceipt, twinned with Buyer and AddInfo, all at Eduard-Schulte-Str. 1 Düsseldorf. BLB Justiziariat and VK Rheinland c/o are other names. The sibling planned notice 24334379 has the same layout. Target 1173255 (755 mentions) carries no screen flag and is one branch."
+  },
+  {
+   "index": 37,
+   "reader": "rand3",
+   "org_id": 22926566,
+   "name": "Landesverwaltungsamt Sachsen-Anhalt",
+   "stratum": "review_or_info",
+   "target": 1168880,
+   "missing_target": false,
+   "notice_ids": [
+    24481606,
+    26560445
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Notice 24481606/26560445 (Stadt Sangerhausen): row is ORG-0004 Mediator, twinned with ORG-0003 ReviewOrg. Both give LVwA's seat, Ernst-Kamieth-Str. 2 Halle, and vergabekammer@lvwa. The group has no buyer-side role, and the LVwA is one authority that hosts the chambers. Target 1168880 (3,749 mentions) carries no screen flag. Caveat: I read none of the target's own mentions."
+  },
+  {
+   "index": 38,
+   "reader": "rand3",
+   "org_id": 23001168,
+   "name": "Vergabekammer des Landes Hessen bei dem Regierungspräsidium Darmstadt",
+   "stratum": "review_or_info",
+   "target": 1175826,
+   "missing_target": false,
+   "notice_ids": [
+    24578315,
+    26567631
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 23001169,
+    "r2_pick_name": "Vergabekammer des Landes Hessen bei dem Regierungspräsidium Darmstadt",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Notice 24578315/26567631 (LK Gießen): the chamber is printed as ReviewInfo (this row), ReviewOrg and Mediator, all at Wilhelminenstr. 1-3 Darmstadt. Same notice as R2's row 23001169 (R). Target 1175826 is top target 20 with city {darmstadt}, equal to the planned city. It is the one Hessian chamber."
+  },
+  {
+   "index": 39,
+   "reader": "rand3",
+   "org_id": 22842359,
+   "name": "Norddeutscher Rundfunk",
+   "stratum": "review_or_info",
+   "target": 1202351,
+   "missing_target": false,
+   "notice_ids": [
+    24373729,
+    26515848
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22842358,
+    "r2_pick_name": "Norddeutscher Rundfunk",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Notice 24373729/26515848: row is ORG-0002 AddInfo, twinned with Buyer, both at Rothenbaumchaussee 132-134 Hamburg and e-vergaben@ndr.de. Same notice as R2's row 22842358 (R). Target 1202351 (540 mentions) carries no flag and is one broadcaster."
+  },
+  {
+   "index": 40,
+   "reader": "rand3",
+   "org_id": 22816859,
+   "name": "Stadt Kyritz",
+   "stratum": "review_or_info",
+   "target": 7175314,
+   "missing_target": false,
+   "notice_ids": [
+    24340998,
+    26498110
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22816858,
+    "r2_pick_name": "Stadt Kyritz",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Notice 24340998/26498110: row is ORG-0002 AddInfo, twinned with Buyer, both at Marktplatz 1 Kyritz and vergabe@kyritz.de. Same notice as R2's row 22816858 (R). Target 7175314 (137 mentions) carries no flag and is one town."
+  },
+  {
+   "index": 41,
+   "reader": "rand3",
+   "org_id": 22840799,
+   "name": "Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+   "stratum": "review_or_info",
+   "target": 1166261,
+   "missing_target": false,
+   "notice_ids": [
+    24371427,
+    26503163
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22840798,
+    "r2_pick_name": "Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Notice 24371427/26503163 (RPTU): the chamber is printed as ReviewInfo, ReviewOrg and Mediator (this row), all at Stiftsstr. 9 Mainz. Same notice as R2's row 22840798 (R). Target 1166261 is top target 12 with city {mainz}, equal to the planned city. It is the one chamber of Rheinland-Pfalz."
+  },
+  {
+   "index": 42,
+   "reader": "rand3",
+   "org_id": 22897539,
+   "name": "Vergabekammer Rheinland",
+   "stratum": "review_or_info",
+   "target": 7615,
+   "missing_target": false,
+   "notice_ids": [
+    24443775,
+    26520669
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22897538,
+    "r2_pick_name": "Vergabekammer Rheinland",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Notice 24443775/26520669 (Bonn WCCB): row is ORG-0004 ReviewOrg, twinned with ReviewInfo, at the Köln Zeughausstr. address. R2 read this notice for target 7615 (R). Target 7615 is the same body as in item 30."
+  },
+  {
+   "index": 43,
+   "reader": "rand3",
+   "org_id": 22966356,
+   "name": "Vergabekammer Rheinland",
+   "stratum": "review_or_info",
+   "target": 7615,
+   "missing_target": false,
+   "notice_ids": [
+    24531553,
+    26551363
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22966357,
+    "r2_pick_name": "Vergabekammer Rheinland",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "Notice 24531553/26551363 (Bonn Malerarbeiten): row is ORG-0003 ReviewInfo, twinned with ReviewOrg, at the same Köln address and e-mail. R2 read this notice for target 7615 (R). Target 7615 is the same body as in item 30."
+  },
+  {
+   "index": 44,
+   "reader": "rand3",
+   "org_id": 22914740,
+   "name": "Zentraldienst der Polizei des Landes Brandenburg",
+   "stratum": "review_or_info",
+   "target": 1168328,
+   "missing_target": false,
+   "notice_ids": [
+    24466923,
+    26541433
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22914741,
+    "r2_pick_name": "Vergabekammer des Landes Brandenburg",
+    "same_notice": true,
+    "same_target": false,
+    "kind": "same_notice_other_group"
+   },
+   "why": "Notice 24466923/26541433: the ZDPol is printed as Buyer, SProvider, AddInfo and ReviewInfo (this row), all at Am Baruther Tor 20 Zossen. ReviewInfo is not the ReviewOrg mix that A7 binds, and the ReviewOrg is VK Brandenburg under another name. Target 1168328 is top target 5 with city {zossen}, and R2 read it R."
+  },
+  {
+   "index": 45,
+   "reader": "rand4",
+   "org_id": 22846853,
+   "name": "Rheinland-Pfälzische Technische Universität Kaiserslautern-Landau",
+   "stratum": "review_or_info",
+   "target": 20509663,
+   "missing_target": false,
+   "notice_ids": [
+    24378715,
+    26510744
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22846852,
+    "r2_pick_name": "Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+    "same_notice": true,
+    "same_target": false,
+    "kind": "same_notice_other_group"
+   },
+   "why": "RPTU Kaiserslautern-Landau Lot-TenderReceipt (ORG-0006), twin of Buyer and AddInfo in 24378715/26510744, all at Gottlieb-Daimler-Str. 47, Kaiserslautern, zv-vergabeteam1@rptu.de. The chamber is in its own group. Target 20509663 has the same name, identifier NULL, 33 mentions, not city-flagged (sibling 24331610 read by rand1). One university."
+  },
+  {
+   "index": 46,
+   "reader": "rand4",
+   "org_id": 22898598,
+   "name": "Kreisstadt Unna - Zentrale Vergabestelle",
+   "stratum": "review_or_info",
+   "target": 2399618,
+   "missing_target": false,
+   "notice_ids": [
+    24445281,
+    26520551
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22898599,
+    "r2_pick_name": "Vergabekammer Westfalen, Bezirksregierung Münster",
+    "same_notice": true,
+    "same_target": false,
+    "kind": "same_notice_other_group"
+   },
+   "why": "Kreisstadt Unna Zentrale Vergabestelle Lot-AddInfo, twin of the Buyer in 24445281/26520551, Rathausplatz 1, Unna, vergabestelle@stadt-unna.de. VK Westfalen is under its own name. Target 2399618 has the same name, identifier NULL, 27 mentions, not flagged; it rests on name plus city screen. One municipal office."
+  },
+  {
+   "index": 47,
+   "reader": "rand4",
+   "org_id": 22825834,
+   "name": "Medizinische Hochschule Hannover",
+   "stratum": "review_or_info",
+   "target": 1167697,
+   "missing_target": false,
+   "notice_ids": [
+    24352086,
+    26505008
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "MHH Lot-ReviewInfo printing the buyer's own Carl-Neuberg-Str. 1 address (twins Buyer, AddInfo, TenderReceipt) in 24352086/26505008. The co-buyer MHH Service GmbH and the ReviewOrg VK Niedersachsen are under their own names. Target 1167697 (480 mentions, top-30, R2 top2 item 26 R). One medical school."
+  },
+  {
+   "index": 48,
+   "reader": "rand4",
+   "org_id": 22858540,
+   "name": "Stadtverwaltung Kaiserslautern - Stabstelle IV.1 Zentrale Vergabestelle",
+   "stratum": "review_or_info",
+   "target": 16342601,
+   "missing_target": false,
+   "notice_ids": [
+    24394508,
+    26499656
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Stadtverwaltung Kaiserslautern Stabstelle IV.1 Lot-AddInfo, twins Buyer, ReviewInfo, TenderReceipt, Willy-Brandt-Platz 1, vergabestelle@kaiserslautern.de (24394508/26499656). The ReviewOrg is VK RLP under its own name. Target 16342601 (404 mentions, not flagged). Sibling 24337483 shows the same office under 4 other fresh GUIDs."
+  },
+  {
+   "index": 49,
+   "reader": "rand4",
+   "org_id": 22838237,
+   "name": "Wasserverband Eifel-Rur - Zentrale Vergabestelle -",
+   "stratum": "review_or_info",
+   "target": 20038121,
+   "missing_target": false,
+   "notice_ids": [
+    24367908,
+    26494828
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": {
+    "r2_pick": 22838236,
+    "r2_pick_name": "Wasserverband Eifel-Rur - Zentrale Vergabestelle -",
+    "same_notice": true,
+    "same_target": true,
+    "kind": "same_group_same_target"
+   },
+   "why": "WVER Zentrale Vergabestelle Lot-AddInfo in 24367908/26494828. The same group's Buyer section is R2's row 22838236 (rand1 item 5, R) with the same target 20038121 (72 mentions, city düren clean). All sections at Eisenbahnstr. 5, Düren, ZentraleVergabe@wver.de."
+  },
+  {
+   "index": 50,
+   "reader": "rand4",
+   "org_id": 23096323,
+   "name": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+   "stratum": "other",
+   "target": 8100,
+   "missing_target": false,
+   "notice_ids": [
+    24719114,
+    26615206
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "SPSG acts as its own Procedure-SProvider (twins Buyer, AddInfo, TenderReceipt) in 24719114/26615206, Allee nach Sanssouci 6, Potsdam, vergabestelle@spsg.de. Target 8100 (721 mentions, top-30 #1, city {potsdam}, R2 top1 item 1 R). A foundation with a unique name."
+  },
+  {
+   "index": 51,
+   "reader": "rand4",
+   "org_id": 22856874,
+   "name": "Zentraldienst der Polizei des Landes Brandenburg",
+   "stratum": "other",
+   "target": 1168328,
+   "missing_target": false,
+   "notice_ids": [
+    24392283,
+    26494954
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "ZDPol buys for itself: the SProvider row and its twins Buyer, AddInfo, ReviewInfo and TenderReceipt are all at Am Baruther Tor 20, Zossen (24392283/26494954). VK Brandenburg is under its own name. Target 1168328 (2,154 mentions, top-30 #5, {zossen}, R2 top1 item 5 R). One Land authority."
+  },
+  {
+   "index": 52,
+   "reader": "rand4",
+   "org_id": 22825576,
+   "name": "Stadt Bielefeld - Amt für Organisation, IT und Zentrale Leistungen",
+   "stratum": "other",
+   "target": 13304619,
+   "missing_target": false,
+   "notice_ids": [
+    24351728,
+    26504968
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Stadt Bielefeld Amt für Organisation, IT und Zentrale Leistungen as SProvider, twins Buyer, AddInfo, TenderReceipt, Werner-Bock-Str. 38 (24351728/26504968). VK Westfalen is under its own name. Target 13304619 (401 mentions, not flagged). Sibling 24335826 shows the same office under 3 other fresh GUIDs."
+  },
+  {
+   "index": 53,
+   "reader": "rand4",
+   "org_id": 22934649,
+   "name": "Stadtwerke Schwerin GmbH (SWS)",
+   "stratum": "other",
+   "target": 4791242,
+   "missing_target": false,
+   "notice_ids": [
+    24491770,
+    26547701
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "SWS as SProvider for Stadt Plau am See (the buyer has a distinct name and is outside the group). The twin is AddInfo, both at PSF 160205 Schwerin, submission@swsn.de (24491770/26547701). Target 4791242 (335 mentions, not flagged; R2 rand4 items 56/58 R via siblings). One GmbH."
+  },
+  {
+   "index": 54,
+   "reader": "rand4",
+   "org_id": 22825013,
+   "name": "Zentraldienst der Polizei des Landes Brandenburg",
+   "stratum": "other",
+   "target": 1168328,
+   "missing_target": false,
+   "notice_ids": [
+    24351117,
+    26504953
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "ZDPol as SProvider for Liebenwalde (the buyer has a distinct name). Twins AddInfo, ReviewInfo, TenderReceipt are all at Am Baruther Tor 20, Zossen (24351117/26504953). VK Brandenburg is under its own name. Same target 1168328 as item 51."
+  },
+  {
+   "index": 55,
+   "reader": "rand4",
+   "org_id": 23113381,
+   "name": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+   "stratum": "other",
+   "target": 8100,
+   "missing_target": false,
+   "notice_ids": [
+    24744260,
+    26621630
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "SPSG as its own SProvider (twins Buyer, AddInfo, TenderReceipt) in 24744260/26621630, same Potsdam address and e-mail. VK Brandenburg is under its own name. Same target 8100 as item 50."
+  },
+  {
+   "index": 56,
+   "reader": "rand4",
+   "org_id": 22942475,
+   "name": "Deloitte GmbH Wirtschaftsprüfungsgesellschaft",
+   "stratum": "tenderer_winner",
+   "target": 8808564,
+   "missing_target": false,
+   "notice_ids": [
+    24501447,
+    26544642
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Deloitte GmbH WPG, Tenderer and MainCont of TPA-0003 (LOT-0005 result), Düsseldorf office, ausschreibungen@deloitte.de, in d-NRW award 24501447/26544642. The twin is ORG-0018, the same firm as SubCont at München 81669. Deloitte Consulting GmbH has a separate name and key and is outside the group. Target 8808564 (99 mentions, city-flagged: Düsseldorf absent from {münchen}; R2 city3 item 31 R, same e-mail). One legal entity."
+  },
+  {
+   "index": 57,
+   "reader": "rand4",
+   "org_id": 22807887,
+   "name": "Götz-Gebäudemanagement RMG GmbH",
+   "stratum": "tenderer_winner",
+   "target": 10392760,
+   "missing_target": false,
+   "notice_ids": [
+    24330354,
+    26493556
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Götz-Gebäudemanagement RMG GmbH as SubCont under Spelters (LOT-0004), Justus-von-Liebig-Str. 24-26, Dietzenbach. The twin ORG-0006 is the same firm and address as Tenderer (lots 2 and 6) in TU Darmstadt award 24330354/26493556. Target 10392760 (84 mentions, not flagged; name plus screen). One GmbH; sister companies have other names."
+  },
+  {
+   "index": 58,
+   "reader": "rand4",
+   "org_id": 23070360,
+   "name": "Landesbetrieb Information und Technik NRW",
+   "stratum": "other",
+   "target": 1592402,
+   "missing_target": false,
+   "notice_ids": [
+    24680705,
+    26624027
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "IT.NRW as SProvider, twins Buyer+AddInfo and ReviewInfo (the buyer's own address), Mauerstr. 51 Düsseldorf, ausschreibung@it.nrw.de (24680705/26624027). VK Rheinland is under its own name. Target 1592402 (251 mentions, not flagged; name plus screen). One Landesbetrieb."
+  },
+  {
+   "index": 59,
+   "reader": "rand4",
+   "org_id": 22942480,
+   "name": "Deloitte GmbH  Wirtschaftsprüfungsgesellschaft",
+   "stratum": "tenderer_winner",
+   "target": 8808564,
+   "missing_target": false,
+   "notice_ids": [
+    24501447,
+    26544642
+   ],
+   "planned": "whole",
+   "mentions": 2,
+   "verdict": "R",
+   "conditional_on_mint": false,
+   "xor1_partner_in_r2_sample": null,
+   "why": "Second section of item 56's group: Deloitte GmbH  WPG (the double space folds to the same key) as SubCont in TPA-0004 under Deloitte Consulting, at 81669 München, the target's seat and city. It names the firm itself, not another Deloitte company. Same target 8808564: one legal entity, per-notice GUID."
+  }
+ ]
+}
