@@ -1,0 +1,1 @@
+SELECT notice_id, section_id, ordinal, value FROM notice_ids WHERE notice_id BETWEEN 17780000 AND 17800000 AND field_id = 'TED-CA_CE_CONCESSIONAIRE_PROFILE' AND (ordinal > 0 OR section_id <> 'PROCEDURE') LIMIT 60

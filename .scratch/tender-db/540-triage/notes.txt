@@ -1,0 +1,27 @@
+Issue 540 triage, 2026-10-19. Read-only. /v1/sql requests used: 11 of 12 (r01..r11). Public GETs: 10 (g*.json), each >= 2 s apart.
+Plans: plans.txt (python sqlite3 EXPLAIN QUERY PLAN on the v551/plan.db schema copy; every query a PK/covering-index range seek).
+
+Where a corrected block would land (code read):
+- r209/rules.rs: ADDR_CORR and MODIFIED_ADDRESS are Rule::Group (no section of their own); CA_CE_CONCESSIONAIRE_PROFILE is Rule::Org.
+- r209/parse.rs Rule::Org: opens ORG-n and emits the pointer TED-CA_CE_CONCESSIONAIRE_PROFILE into the ENCLOSING section
+  (PROCEDURE, or a CHG-n if ADDR_CORR sat inside ADD/DELETE/REPLACE). The buyer's own block is PROCEDURE ordinal 0, so a
+  corrected block would be a second pointer: PROCEDURE ordinal >= 1 or a non-PROCEDURE section. role_name -> legacy_role -> "buyer";
+  buyer_side_mentions then counts it as a buyer for 369/481/482 keys. So the schema reading in the issue is right IF the shape arrives.
+
+Measured:
+- r01 ADDR_CORR.STATUS code rows (ADDR_CORR has a captured STATUS attr), notices 17,780,000-17,800,000 (2014 r208): 0.
+- r02/r03/r10 CA_CE pointer outside PROCEDURE/ordinal 0: 17.78M-17.80M 0; 17.80M-17.90M (2014) 0; 16.90M-17.00M (2012) 0.
+- r11 2015 window 18,300,001-18,400,000, CA_CE by position: ONE row, PROCEDURE/0 = 83,197 notices (positive control: the predicate
+  finds the buyer block; nothing else exists).
+- r04/r05: TED-FORM mix in 17,786,000-17,789,000 (2,447 forms): 1,2,3,5,6,7,9,12,13,15,16,17,18,T01 -- no '14'.
+- r07: 142 of 601 r208 notices in 17,786,000-17,786,600 carry no TED-FORM. g04 = 17786082 (079289-2014): TD_DOCUMENT_TYPE 2,
+  HEADING 014EA, body CONTENTS/STI_DOC/BLK_BTX prose ("Anstatt: ... muss es heissen: IV.3.4 ..."), ZERO Organization sections.
+  i.e. an R2.0.8-era corrigendum arrives as OTH_NOT prose, never as the eSender ADDITIONAL_INFORMATION_CORRIGENDUM form.
+  Matches issue 10's daily censuses (F03/F02/OTH_NOT/F15..., no F14) and its scope line "OTH_NOT prose corrigenda".
+- r06/r08/r09: Change sections (ADD/DELETE/REPLACE land there): 0 in 17.70M-17.90M; first Change id in 13.0M-20.5M is 18,579,247
+  = r209 456425-2015 (2015-12-26, g_n18579247). With 385's 0 in 4.4M-13M, the r208 band (2011 at 12.30M .. 2015-12 at 18.58M)
+  holds no structured corrigendum block at all.
+- Era anchors (public): 12,304,080 = 150000-2011 (r208 profile, R2.0.7.S03); 16,956,407 = 150000-2012; 17,786,793 = 080000-2014;
+  18,363,603 = 200000-2015.
+
+Residual: late r208-schema files ingested at high ids (issue 10: 157 in the 2019-01-02 daily, no F14 among them) are not swept here.

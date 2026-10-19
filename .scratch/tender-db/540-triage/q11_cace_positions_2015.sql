@@ -1,0 +1,1 @@
+SELECT section_id, ordinal, count(*) AS n, min(notice_id) AS lo, max(notice_id) AS hi FROM notice_ids WHERE notice_id BETWEEN 18300001 AND 18400000 AND field_id = 'TED-CA_CE_CONCESSIONAIRE_PROFILE' GROUP BY +section_id, +ordinal LIMIT 50

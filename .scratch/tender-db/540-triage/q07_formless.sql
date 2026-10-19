@@ -1,0 +1,1 @@
+SELECT n.id, n.profile, n.publication_id, n.parse_state FROM notices n WHERE n.id BETWEEN 17786000 AND 17786600 AND NOT EXISTS (SELECT 1 FROM notice_codes c WHERE c.notice_id = n.id AND c.section_id = 'PROCEDURE' AND c.field_id = 'TED-FORM') LIMIT 200

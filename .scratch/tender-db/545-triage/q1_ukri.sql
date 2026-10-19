@@ -1,0 +1,1 @@
+SELECT name, scheme, raw_identifier, count(*) AS n, min(notice_id) AS first_notice, max(notice_id) AS last_notice FROM organization_mentions WHERE organization_id = 30913706 GROUP BY name, scheme, raw_identifier

@@ -1,0 +1,22 @@
+1	jeol	Jeol (U.K.) Limited
+2	pensions policy institute	Pensions Policy Institute
+3	centre for economics and business research	CEBR (held 2x on IFS)
+4	sheffield health and social care	Sheffield Health and Social Care NHS FT
+5	derek lewis	Derek Lewis Ltd
+6	newport city homes	Newport City Homes
+7	co-op academies trust	Co-op Academies Trust
+8	equal education partners	Equal Education Partners
+9	portsmouth hospitals	Portsmouth Hospitals University NHS Trust
+10	qci	QCI (UK) LIMITED
+11	watkins coaches	WATKINS COACHES LTD
+12	healthcare 21	Healthcare 21 NI
+13	hartlepool development corporation	Hartlepool Development Corporation
+14	health innovation network	Health Innovation Network
+15	northumbria police	Northumbria Police
+16	science & technology facilities council	STFC (&)
+17	science and technology facilities council	STFC (and)
+18	shared resource service	Shared Resource Service(s)
+19	cambrian construction	Cambrian Construction Equipment Ltd
+20	aurobindo	Aurobindo
+21	orbit homes	Orbit Homes
+22	british geological survey	BGS (held 3x on UKRI)

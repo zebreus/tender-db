@@ -1,0 +1,1 @@
+[(6, 0, 0, 'SEARCH organizations USING COVERING INDEX organizations_identifier_id (identifier>? AND identifier<?)'), (11, 0, 0, 'USE TEMP B-TREE FOR GROUP BY')]

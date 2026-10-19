@@ -1,0 +1,3 @@
+(9, 0, 0, 'SEARCH o USING INDEX organizations_identifier_id (identifier>? AND identifier<?)')
+(15, 0, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(20, 0, 0, 'USE TEMP B-TREE FOR GROUP BY')

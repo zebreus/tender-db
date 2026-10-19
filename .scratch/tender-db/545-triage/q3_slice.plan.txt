@@ -1,0 +1,4 @@
+-- EXPLAIN QUERY PLAN (python sqlite3 3.45.1 on plan.db copy + prod indexes organizations_identifier_id, organizations_name_norm_id)
+(9, 0, 0, 'SEARCH o USING INDEX organizations_identifier_id (identifier>? AND identifier<?)')
+(15, 0, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(20, 0, 0, 'USE TEMP B-TREE FOR GROUP BY')
