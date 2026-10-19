@@ -1,0 +1,1419 @@
+{
+ "rows": [
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "CONFIRM",
+   "org_id": 30914265,
+   "printed": "Abbott Medical UK Limited",
+   "notice_id": 46791071,
+   "section_id": "ORG-GB-PPON-PBVJ-9475-ZCMD",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 11546762,
+   "target_name": "Abbott Medical UK Limited",
+   "tenders": [
+    8637230
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "CONFIRM",
+   "org_id": 30914406,
+   "printed": "Thomas Silvey",
+   "notice_id": 46842097,
+   "section_id": "ORG-GB-PPON-PBZB-4962-TVLR",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31560264,
+   "target_name": "THOMAS SILVEY,LIMITED",
+   "tenders": [
+    8668647
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "CONFIRM",
+   "org_id": 31560765,
+   "printed": "TIAA LTD",
+   "notice_id": 46818192,
+   "section_id": "ORG-GB-PPON-PHGQ-9419-WJLV",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 11853802,
+   "target_name": "TIAA Limited",
+   "tenders": [
+    8596135
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "CONFIRM",
+   "org_id": 30916588,
+   "printed": "NLA MEDIA ACCESS LIMITED",
+   "notice_id": 46834269,
+   "section_id": "ORG-GB-PPON-PLBJ-4721-TQQJ",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30915240,
+   "target_name": "NLA media access Ltd",
+   "tenders": [
+    8664618
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "CONFIRM",
+   "org_id": 30929662,
+   "printed": "PPL/PRS",
+   "notice_id": 46763175,
+   "section_id": "ORG-GB-PPON-PLGY6381WWWR",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31546963,
+   "target_name": "PPL PRS ltd",
+   "tenders": [
+    8620561
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "CONFIRM",
+   "org_id": 30914046,
+   "printed": "FIRE SERVICE COLLEGE LIMITED",
+   "notice_id": 46811712,
+   "section_id": "ORG-GB-PPON-PLTC-5358-LTWZ",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 11314818,
+   "target_name": "Fire Service College Ltd",
+   "tenders": [
+    8651794
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "CONFIRM",
+   "org_id": 30913583,
+   "printed": "Red Kite Veterinary Consultants Ltd",
+   "notice_id": 46868149,
+   "section_id": "ORG-GB-PPON-PNBD-3289-CDGX",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31578178,
+   "target_name": "RED KITE VETERINARY CONSULTANTS LIMITED",
+   "tenders": [
+    8595247
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "PARK",
+   "org_id": 31549426,
+   "printed": "CAMBRIDGE UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+   "notice_id": 46815909,
+   "section_id": "ORG-GB-PPON-PPCP-8863-HDGN",
+   "action": "keep",
+   "confidence": "high",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8654110
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 1,
+   "row_verdict": "PARK",
+   "org_id": 31549426,
+   "printed": "Cambridge University Hospitals NHS Foundation Trust",
+   "notice_id": 46796632,
+   "section_id": "ORG-GB-PPON-PPCP-8863-HDGN",
+   "action": "keep",
+   "confidence": "high",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8643351
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CONFIRM",
+   "org_id": 31549426,
+   "printed": "Hologic Ltd",
+   "notice_id": 46877124,
+   "section_id": "ORG-GB-PPON-PPCP-8863-HDGN",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30914006,
+   "target_name": "HOLOGIC LTD.",
+   "tenders": [
+    8690126
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CONFIRM",
+   "org_id": 31549426,
+   "printed": "Hologic Ltd",
+   "notice_id": 46882065,
+   "section_id": "ORG-GB-PPON-PPCP-8863-HDGN",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30914006,
+   "target_name": "HOLOGIC LTD.",
+   "tenders": [
+    8690126
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CONFIRM",
+   "org_id": 31538012,
+   "printed": "Renishaw Neuro Solutions Limited",
+   "notice_id": 46795678,
+   "section_id": "ORG-GB-PPON-PPYL-1513-MZZL",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31552561,
+   "target_name": "Renishaw Neuro Solutions Limited",
+   "tenders": [
+    8642804
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CONFIRM",
+   "org_id": 31538012,
+   "printed": "Renishaw Neuro Solutions Limited",
+   "notice_id": 46819442,
+   "section_id": "ORG-GB-PPON-PPYL-1513-MZZL",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31552561,
+   "target_name": "Renishaw Neuro Solutions Limited",
+   "tenders": [
+    8642804
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CONFIRM",
+   "org_id": 30913740,
+   "printed": "Xiel",
+   "notice_id": 46835667,
+   "section_id": "ORG-GB-PPON-PQBY-8547-GYGP",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30974378,
+   "target_name": "XIEL LTD",
+   "tenders": [
+    8665378
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CHANGE-DESTINATION",
+   "org_id": 30916247,
+   "printed": "Tech Against Terrorism",
+   "notice_id": 47157838,
+   "section_id": "ORG-GB-PPON-PQQZ-1663-NWMN",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30973170,
+   "target_name": "Online Harms Foundation TA/ Tech Against Terrorism",
+   "tenders": [
+    8582476
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CONFIRM",
+   "org_id": 31571667,
+   "printed": "ERMC Ltd",
+   "notice_id": 46819437,
+   "section_id": "ORG-GB-PPON-PRBY-9272-TQGX",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 18928807,
+   "target_name": "ERMC Limited",
+   "tenders": [
+    8656068
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CONFIRM",
+   "org_id": 30926693,
+   "printed": "Vohkus",
+   "notice_id": 46771116,
+   "section_id": "ORG-GB-PPON-PXLD-1125-PGBY",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31551980,
+   "target_name": "VOHKUS LIMITED",
+   "tenders": [
+    8639596
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "CONFIRM",
+   "org_id": 30913561,
+   "printed": "Bolton NHS Foundation Trust",
+   "notice_id": 47366319,
+   "section_id": "ORG-GB-PPON-PXQG-2592-VYYY",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30917930,
+   "target_name": "Bolton NHS Foundation Trust",
+   "tenders": [
+    8829421
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "PARK",
+   "org_id": 31551518,
+   "printed": "Gama Healthcare Ltd",
+   "notice_id": 46842943,
+   "section_id": "ORG-GB-PPON-PYMW-5475-ZMBP",
+   "action": "keep",
+   "confidence": "medium",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8669104
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 2,
+   "row_verdict": "PARK",
+   "org_id": 30913648,
+   "printed": "Virgin Media Limited",
+   "notice_id": 47157734,
+   "section_id": "ORG-GB-PPON-PYVZ-4215-PGYM",
+   "action": "keep",
+   "confidence": "medium",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8806962
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "CONFIRM",
+   "org_id": 30926847,
+   "printed": "Compendium Regeneration Limited",
+   "notice_id": 46853619,
+   "section_id": "ORG-GB-PPON-PZLB-9446-RVML",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 1307252,
+   "target_name": "Compendium Regeneration Limited",
+   "tenders": [
+    8675109
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "CONFIRM",
+   "org_id": 30926847,
+   "printed": "RSS International Ltd",
+   "notice_id": 46709309,
+   "section_id": "ORG-GB-PPON-PZLB-9446-RVML",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30929573,
+   "target_name": "RSS INTERNATIONAL LTD",
+   "tenders": [
+    8588313
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "CONFIRM",
+   "org_id": 30926847,
+   "printed": "The Law Society",
+   "notice_id": 46855540,
+   "section_id": "ORG-GB-PPON-PZLB-9446-RVML",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 14894295,
+   "target_name": "The Law Society",
+   "tenders": [
+    8676092
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "CONFIRM",
+   "org_id": 30915227,
+   "printed": "SWANSEA BAY UNIVERSITY HEALTH BOARD",
+   "notice_id": 46784746,
+   "section_id": "ORG-GB-PPON-PZZV-3765-WXZQ",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30916810,
+   "target_name": "Swansea Bay University Health Board",
+   "tenders": [
+    8633322
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "CONFIRM",
+   "org_id": 30913706,
+   "printed": "Jeol (U.K.) Limited",
+   "notice_id": 46834978,
+   "section_id": "ORG-GB-PPON-PDQJ-7126-JDHG",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 12991212,
+   "target_name": "JEOL (U.K.) Limited",
+   "tenders": [
+    8664993
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "PARK",
+   "org_id": 31549890,
+   "printed": "Pensions Policy Institute",
+   "notice_id": 46807946,
+   "section_id": "ORG-GB-PPON-PCLN-8377-ZPPT",
+   "action": "keep",
+   "confidence": "medium",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8649688
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "CONFIRM",
+   "org_id": 30914626,
+   "printed": "Equal Education Partners ",
+   "notice_id": 47293389,
+   "section_id": "ORG-GB-PPON-PDNG-5431-HGYV",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30928130,
+   "target_name": "Equal Education Partners Limited",
+   "tenders": [
+    8655904
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "CONFIRM",
+   "org_id": 30913629,
+   "printed": "Portsmouth Hospitals University NHS Trust",
+   "notice_id": 46832653,
+   "section_id": "ORG-GB-PPON-PDPT-3135-BWWY",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30971975,
+   "target_name": "Portsmouth Hospitals University NHS Trust",
+   "tenders": [
+    8663730
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 3,
+   "row_verdict": "PARK",
+   "org_id": 30916371,
+   "printed": "WATKINS COACHES LTD",
+   "notice_id": 46755521,
+   "section_id": "ORG-GB-PPON-PDXZ-9391-VHZQ",
+   "action": "keep",
+   "confidence": "high",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8615917
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30913753,
+   "printed": "WAVEMAKER LIMITED t/a WPP 650",
+   "notice_id": 46697985,
+   "section_id": "ORG-GB-PPON-PDNN-2773-HVYN",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31555041,
+   "target_name": "WAVEMAKER LIMITED",
+   "tenders": [
+    8582477
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30913753,
+   "printed": "WAVEMAKER LIMITED t/a WPP 650",
+   "notice_id": 47158784,
+   "section_id": "ORG-GB-PPON-PDNN-2773-HVYN",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31555041,
+   "target_name": "WAVEMAKER LIMITED",
+   "tenders": [
+    8582477
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30915848,
+   "printed": "Pullman Rail Ltd",
+   "notice_id": 46734421,
+   "section_id": "ORG-GB-PPON-PPHD-4211-XYXJ",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31575835,
+   "target_name": "Pullman Rail Ltd",
+   "tenders": [
+    8603276
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30915848,
+   "printed": "Pullman Rail Ltd",
+   "notice_id": 46734752,
+   "section_id": "ORG-GB-PPON-PPHD-4211-XYXJ",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31575835,
+   "target_name": "Pullman Rail Ltd",
+   "tenders": [
+    8603276
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30915848,
+   "printed": "Pullman Rail Ltd",
+   "notice_id": 46739172,
+   "section_id": "ORG-GB-PPON-PPHD-4211-XYXJ",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31575835,
+   "target_name": "Pullman Rail Ltd",
+   "tenders": [
+    8603276
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30926961,
+   "printed": "HOSPITAL INNOVATIONS LIMITED",
+   "notice_id": 46830621,
+   "section_id": "ORG-GB-PPON-PQDY-1678-DHXN",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30974714,
+   "target_name": "Hospital Innovations Limited",
+   "tenders": [
+    8662629
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30926961,
+   "printed": "HOSPITAL INNOVATIONS LIMITED",
+   "notice_id": 46840995,
+   "section_id": "ORG-GB-PPON-PQDY-1678-DHXN",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30974714,
+   "target_name": "Hospital Innovations Limited",
+   "tenders": [
+    8662629
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30926961,
+   "printed": "HOSPITAL INNOVATIONS LIMITED",
+   "notice_id": 46847682,
+   "section_id": "ORG-GB-PPON-PQDY-1678-DHXN",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30974714,
+   "target_name": "Hospital Innovations Limited",
+   "tenders": [
+    8662629
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "PARK",
+   "org_id": 31537076,
+   "printed": "Monthind Clean Ltd",
+   "notice_id": 46819477,
+   "section_id": "ORG-GB-PPON-PDHL-3945-QCTM",
+   "action": "keep",
+   "confidence": "high",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8629739
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 31580163,
+   "printed": "Generator Power Ltd",
+   "notice_id": 46982353,
+   "section_id": "ORG-GB-COH-02366923",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31550198,
+   "target_name": "GENERATOR POWER LIMITED",
+   "tenders": [
+    8768492
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30914453,
+   "printed": "Ballicom Limited",
+   "notice_id": 46871836,
+   "section_id": "ORG-GB-COH-02436537#2",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30917190,
+   "target_name": "BALLICOM LIMITED",
+   "tenders": [],
+   "roles": []
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 31535435,
+   "printed": "Big Life",
+   "notice_id": 46806034,
+   "section_id": "ORG-GB-PPON-PJNQ-4269-GYNV",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31570142,
+   "target_name": "Big Life",
+   "tenders": [
+    8648639
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM/REFUTED",
+   "org_id": 31552420,
+   "printed": "Jeremy Benn Associates Limited",
+   "notice_id": 46772495,
+   "section_id": "ORG-GB-COH-02917907",
+   "action": "keep",
+   "confidence": "medium",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8625862
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30916544,
+   "printed": "TSI Instruments Ltd",
+   "notice_id": 46792203,
+   "section_id": "ORG-GB-PPON-PYDB-8862-JBYM",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31581156,
+   "target_name": "TSI INSTRUMENTS LTD",
+   "tenders": [
+    8637891
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30916544,
+   "printed": "TSI Instruments Ltd",
+   "notice_id": 46792211,
+   "section_id": "ORG-GB-PPON-PYDB-8862-JBYM",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31581156,
+   "target_name": "TSI INSTRUMENTS LTD",
+   "tenders": [
+    8637891
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 4,
+   "row_verdict": "CONFIRM",
+   "org_id": 30916544,
+   "printed": "TSI Instruments Ltd",
+   "notice_id": 46796560,
+   "section_id": "ORG-GB-PPON-PYDB-8862-JBYM",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31581156,
+   "target_name": "TSI INSTRUMENTS LTD",
+   "tenders": [
+    8637891
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 30915240,
+   "printed": "Prosci UK Limited",
+   "notice_id": 46768774,
+   "section_id": "ORG-GB-PPON-PLMM-3896-RGZM",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31575934,
+   "target_name": "Prosci Uk Ltd",
+   "tenders": [
+    8623803
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 31568872,
+   "printed": "DDM Health Ltd",
+   "notice_id": 46890437,
+   "section_id": "ORG-GB-COH-04100611",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30953794,
+   "target_name": "DDM Health Limited",
+   "tenders": [
+    8700852
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 30926702,
+   "printed": "Diabetes UK",
+   "notice_id": 46786666,
+   "section_id": "ORG-GB-COH-04358614",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31562654,
+   "target_name": "Diabetes UK",
+   "tenders": [
+    8634494
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 31545104,
+   "printed": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+   "notice_id": 46792286,
+   "section_id": "ORG-GB-COH-04546648",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30917202,
+   "target_name": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+   "tenders": [
+    8637949
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 31545104,
+   "printed": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+   "notice_id": 46796698,
+   "section_id": "ORG-GB-COH-04546648",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30917202,
+   "target_name": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+   "tenders": [
+    8643380
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 31545104,
+   "printed": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+   "notice_id": 46796727,
+   "section_id": "ORG-GB-COH-04546648",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30917202,
+   "target_name": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+   "tenders": [
+    8643395
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 31545104,
+   "printed": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+   "notice_id": 47297256,
+   "section_id": "ORG-GB-COH-04546648",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30917202,
+   "target_name": "LINCOLNSHIRE HOUSING PARTNERSHIP LIMITED",
+   "tenders": [
+    8643395
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 31551788,
+   "printed": "LAND USE CONSULTANTS LIMITED",
+   "notice_id": 46762813,
+   "section_id": "ORG-GB-COH-04693096",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 15715155,
+   "target_name": "Land Use Consultants Ltd",
+   "tenders": [
+    8620339
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 31540233,
+   "printed": "TPS Fruit & Veg Ltd",
+   "notice_id": 46961181,
+   "section_id": "ORG-GB-COH-08987402",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 21727460,
+   "target_name": "TPS Fruit & Veg Ltd",
+   "tenders": [
+    8740716
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 30930397,
+   "printed": "Don Whitley Scientific",
+   "notice_id": 46870983,
+   "section_id": "ORG-GB-COH-09021526",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 13064119,
+   "target_name": "Don Whitley Scientific Ltd",
+   "tenders": [
+    8687936
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "PARK",
+   "org_id": 31568585,
+   "printed": "University of Northumbria at Newcastle",
+   "notice_id": 46960679,
+   "section_id": "ORG-GB-COH-10167191",
+   "action": "keep",
+   "confidence": "high",
+   "target_org_id": null,
+   "target_name": null,
+   "tenders": [
+    8747330
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 5,
+   "row_verdict": "CONFIRM",
+   "org_id": 31549084,
+   "printed": "Action Deafness",
+   "notice_id": 46874082,
+   "section_id": "ORG-GB-COH-11618190",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31540259,
+   "target_name": "ACTION DEAFNESS",
+   "tenders": [
+    8683366
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 6,
+   "row_verdict": "CONFIRM",
+   "org_id": 30915302,
+   "printed": "Eastern Counties Scaffodling Services",
+   "notice_id": 46810761,
+   "section_id": "ORG-GB-PPON-PWTD-8252-JQTZ",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31573542,
+   "target_name": "Eastern Counties Scaffodling Services",
+   "tenders": [
+    8651250
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 6,
+   "row_verdict": "CONFIRM",
+   "org_id": 31597395,
+   "printed": "Crown Paints Ltd",
+   "notice_id": 46951039,
+   "section_id": "ORG-GB-COH-436135",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 10890039,
+   "target_name": "Crown Paints Ltd",
+   "tenders": [
+    8735507
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 6,
+   "row_verdict": "CONFIRM",
+   "org_id": 31632003,
+   "printed": "Thomas Bow Limited",
+   "notice_id": 46980862,
+   "section_id": "ORG-GB-COH-703317#2",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 14183429,
+   "target_name": "Thomas Bow Ltd",
+   "tenders": [
+    8715367
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 6,
+   "row_verdict": "CONFIRM",
+   "org_id": 31582801,
+   "printed": "Dell Corporation",
+   "notice_id": 46844315,
+   "section_id": "ORG-GB-COH-OC403062",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31535972,
+   "target_name": "DELL CORPORATION LIMITED",
+   "tenders": [
+    8669742
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 6,
+   "row_verdict": "CONFIRM",
+   "org_id": 31548301,
+   "printed": "West Yorkshire Combined Authority",
+   "notice_id": 46794970,
+   "section_id": "ORG-GB-COH-OC451571",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30913749,
+   "target_name": "West Yorkshire Combined Authority",
+   "tenders": [
+    8642384
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 6,
+   "row_verdict": "CONFIRM",
+   "org_id": 30914001,
+   "printed": "University of Liverpool",
+   "notice_id": 46839286,
+   "section_id": "ORG-GB-PPON-PHVT-4343-HWYR",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30953698,
+   "target_name": "UNIVERSITY OF LIVERPOOL",
+   "tenders": [
+    8667254
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 6,
+   "row_verdict": "CONFIRM",
+   "org_id": 30914001,
+   "printed": "University of Liverpool",
+   "notice_id": 46843620,
+   "section_id": "ORG-GB-PPON-PHVT-4343-HWYR",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30953698,
+   "target_name": "UNIVERSITY OF LIVERPOOL",
+   "tenders": [
+    8667254
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "batch",
+   "batch": 6,
+   "row_verdict": "CONFIRM",
+   "org_id": 30913587,
+   "printed": "Royal College of Psychiatrists",
+   "notice_id": 46798192,
+   "section_id": "ORG-GB-COH-RC000672",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31561689,
+   "target_name": "ROYAL COLLEGE OF PSYCHIATRISTS (THE)",
+   "tenders": [
+    8644216
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 30913851,
+   "printed": "London Borough of Hounslow",
+   "notice_id": 46381132,
+   "section_id": "ORG-GB-PPON-PVLQ-8225-QVHT",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30918222,
+   "target_name": "London Borough of Hounslow",
+   "tenders": [
+    8639243
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 30913851,
+   "printed": "London Borough of Hounslow",
+   "notice_id": 46381196,
+   "section_id": "ORG-GB-PPON-PVLQ-8225-QVHT",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30918222,
+   "target_name": "London Borough of Hounslow",
+   "tenders": [
+    8639243
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 30913851,
+   "printed": "London Borough of Hounslow",
+   "notice_id": 46825561,
+   "section_id": "ORG-GB-PPON-PVLQ-8225-QVHT",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30918222,
+   "target_name": "London Borough of Hounslow",
+   "tenders": [
+    8639243
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 31560408,
+   "printed": "Wyre Forest District Council",
+   "notice_id": 46826419,
+   "section_id": "ORG-GB-PPON-PTQY-8812-XHLH",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31550990,
+   "target_name": "Wyre Forest District Council",
+   "tenders": [
+    8660381
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 31560408,
+   "printed": "Wyre Forest District Council",
+   "notice_id": 46826428,
+   "section_id": "ORG-GB-PPON-PTQY-8812-XHLH",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 31550990,
+   "target_name": "Wyre Forest District Council",
+   "tenders": [
+    8660381
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 30975996,
+   "printed": "Kingston Upon Hull City Council",
+   "notice_id": 46760078,
+   "section_id": "ORG-GB-COH-02007321",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 30914698,
+   "target_name": "Hull City Council",
+   "tenders": [
+    8639942
+   ],
+   "roles": [
+    "OPT-300-Procedure-Buyer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 31537611,
+   "printed": "Accenture (UK) Ltd",
+   "notice_id": 46768534,
+   "section_id": "ORG-GB-COH-01317137",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 15715826,
+   "target_name": "Accenture UK Ltd",
+   "tenders": [
+    8623644
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 31537611,
+   "printed": "Accenture (UK) Ltd",
+   "notice_id": 46788047,
+   "section_id": "ORG-GB-COH-01317137",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 15715826,
+   "target_name": "Accenture UK Ltd",
+   "tenders": [
+    8595979
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  },
+  {
+   "src": "addition",
+   "batch": "guard",
+   "row_verdict": "GUARD-ADD",
+   "org_id": 31537611,
+   "printed": "Accenture (UK) Ltd",
+   "notice_id": 47286834,
+   "section_id": "ORG-GB-COH-01317137",
+   "action": "rehome",
+   "confidence": "high",
+   "target_org_id": 15715826,
+   "target_name": "Accenture UK Ltd",
+   "tenders": [
+    8595979
+   ],
+   "roles": [
+    "OPT-300-Tenderer"
+   ]
+  }
+ ],
+ "excluded_additions": [
+  {
+   "org_id": 31560408,
+   "notice_id": 46842882,
+   "section_id": "ORG-GB-PPON-PTQY-8812-XHLH",
+   "action": "keep",
+   "confidence": "medium",
+   "tenders": [
+    8677275
+   ],
+   "why": "Not read: different tender 8677275; the G2 class needs a notice read to lift the park."
+  }
+ ]
+}
