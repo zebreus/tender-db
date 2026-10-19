@@ -1,0 +1,1605 @@
+{
+ "what": "issue 551 B6 U5: the fresh pre-flip read (decision point 7) and the B-band re-read (point 8), tallied",
+ "date": "2026-10-19",
+ "P": {
+  "file": "b6/u2/P.json",
+  "guard_set": "v2+both",
+  "n": 3467,
+  "ids_sha256": "a2619fd9e380d3d5672b3417d807e504b3a85965b8e5ea319425564e3cd21872"
+ },
+ "order": {
+  "salt": "551-b6-fresh-",
+  "rule": "sha256('551-b6-fresh-' + decimal id) hex digest ascending (ties by id; none)",
+  "eligible_n": 3335,
+  "excluded_from_P_n": 132,
+  "ordered_ids_sha256": "e099007f613c4cb3d49071923e4256df1140329715eb8a60c3e519fe07b0ef1a"
+ },
+ "rule_point_7": "30 from P minus every read id: 0 wrong -> GO; exactly 1 wrong -> the next 30 in the same order must have 0 wrong -> GO, else KEEP OFF; >= 2 wrong -> KEEP OFF and re-decide",
+ "round_a": {
+  "ids": [
+   77882,
+   6471017,
+   285956,
+   7021235,
+   7429588,
+   7763513,
+   5733,
+   6570707,
+   6660753,
+   5663715,
+   6826783,
+   6611306,
+   8488091,
+   118880,
+   805752,
+   6530219,
+   8441074,
+   712964,
+   7872311,
+   6580960,
+   64472,
+   7442464,
+   5861802,
+   7085538,
+   23846,
+   8524598,
+   6757752,
+   6960026,
+   844584,
+   6763031
+  ],
+  "n": 30,
+  "right": 30,
+  "neutral": 0,
+  "wrong": 0,
+  "by_class": {
+   "right/ok": 30
+  },
+  "verdicts": [
+   {
+    "rank": 1,
+    "id": 77882,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 452100000,
+    "currency": "EUR",
+    "S_eur_cents": 452100000,
+    "n": 9,
+    "vouched_by": {
+     "cents": 452100000,
+     "field": "BT-118-NoticeResult",
+     "notice_id": 25504477
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      25504477,
+      9000000
+     ],
+     [
+      "LOT-0002",
+      25504477,
+      9500000
+     ],
+     [
+      "LOT-0003",
+      25504477,
+      25000000
+     ],
+     [
+      "LOT-0004",
+      25504477,
+      250000000
+     ],
+     [
+      "LOT-0005",
+      25504477,
+      10000000
+     ],
+     [
+      "LOT-0006",
+      25504477,
+      20000000
+     ],
+     [
+      "LOT-0007",
+      25504477,
+      48000000
+     ],
+     [
+      "LOT-0008",
+      25504477,
+      78000000
+     ],
+     [
+      "LOT-0009",
+      25504477,
+      2600000
+     ]
+    ],
+    "live_head": null,
+    "live_head_pct_of_S": null,
+    "reader_file": "b6/u5/read_a_1.md",
+    "why": "eForms CAN 25504477 (the only notice). 9 distinct lots, one award and one contract each. S EUR 4,521,000.00 equals the notice's BT-118 to the cent (S/T 0.00 %). The head without W is null (BT-709/BT-118 are never elected), so S replaces no figure. Note for the skeptic, no verdict impact: lots 7-9 are '(recettes)' resale lots; the buyer's BT-118 includes them, and no rubric class applies."
+   },
+   {
+    "rank": 2,
+    "id": 6471017,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 107848500,
+    "currency": "EUR",
+    "S_eur_cents": 107848500,
+    "n": 2,
+    "vouched_by": {
+     "cents": 107848500,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20349868
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21256163,
+      68910800
+     ],
+     [
+      "LOT-2",
+      21256163,
+      38937700
+     ]
+    ],
+    "live_head": {
+     "cents": 68910800,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 63.9,
+    "reader_file": "b6/u5/read_a_1.md",
+    "why": "Two territorial lots (distinct CIGs), each a single-operator framework awarded once at its base amount in F06 21256163 (689,108 + 389,377). S EUR 1,078,485 equals CN F05 20349868's VAL_ESTIMATED_TOTAL exactly; the estimate vouch comes from a 2-section CN with both lots in S. The sum of per-lot ceilings is not not_additive (read18 note 5). The head without W is lot 1 alone (63.9 %)."
+   },
+   {
+    "rank": 3,
+    "id": 285956,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 447772939,
+    "currency": "EUR",
+    "S_eur_cents": 447772939,
+    "n": 7,
+    "vouched_by": {
+     "cents": 447772939,
+     "field": "BT-118-NoticeResult",
+     "notice_id": 25517196
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      25517196,
+      229760190
+     ],
+     [
+      "LOT-0002",
+      25517196,
+      8268400
+     ],
+     [
+      "LOT-0003",
+      25517196,
+      25379439
+     ],
+     [
+      "LOT-0004",
+      25517196,
+      38961285
+     ],
+     [
+      "LOT-0005",
+      25517196,
+      98569765
+     ],
+     [
+      "LOT-0006",
+      25517196,
+      25030460
+     ],
+     [
+      "LOT-0007",
+      25517196,
+      21803400
+     ]
+    ],
+    "live_head": null,
+    "live_head_pct_of_S": null,
+    "reader_file": "b6/u5/read_a_1.md",
+    "why": "eForms CAN 25517196, 7 trades with 7 winners and 7 contracts. The BT-720 values sum exactly to BT-118 EUR 4,477,729.39. The BT-709 copies the whole total onto every lot (7x would be EUR 31.3 m), but S does not sum it, so there is no double count. The head without W is null."
+   },
+   {
+    "rank": 4,
+    "id": 7021235,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 11944447500,
+    "currency": "HUF",
+    "S_eur_cents": 31947276,
+    "n": 2,
+    "vouched_by": {
+     "cents": 11944447500,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21978620
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21978620,
+      5813625000
+     ],
+     [
+      "LOT-2",
+      22266151,
+      6130822500
+     ]
+    ],
+    "live_head": {
+     "cents": 6130822500,
+     "currency": "HUF"
+    },
+    "live_head_pct_of_S": 51.3,
+    "reader_file": "b6/u5/read_a_1.md",
+    "why": "F03 21978620 awards lot 1 HUF 58,136,250 and lot 2 HUF 61,308,225, with procedure VAL_TOTAL HUF 119,444,475 = S exactly. F20 22266151 swaps in equivalent products on lot 2 with VAL_TOTAL_BEFORE = AFTER 61,308,225, so S takes lot 2 once and there is no pre/post mix. Both sides are net without options. The head without W is lot 2 alone (51.3 %)."
+   },
+   {
+    "rank": 5,
+    "id": 7429588,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 26607895,
+    "currency": "EUR",
+    "S_eur_cents": 26607895,
+    "n": 2,
+    "vouched_by": {
+     "cents": 26607895,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22628724
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      22628724,
+      19128095
+     ],
+     [
+      "LOT-3",
+      22628724,
+      7479800
+     ]
+    ],
+    "live_head": {
+     "cents": 7318824,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 27.5,
+    "reader_file": "b6/u5/read_a_1.md",
+    "why": "Partial sum, the read18 7398935 shape. F03 22628724 awards lot 1 191,280.95 and lot 3 74,798.00 (lot 2 unsuccessful), with VAL_TOTAL 266,078.95 = S exactly. Lot 2's re-award (22628772, EUR 73,188.24) sits on a lot-null row and is not summed. S is 78.4 % of the full EUR 339,267.19 against the head's 21.6 %. It is not a double count. Fragile against a single-section placement drain (R10 would refuse), and it is not on the partial-sum pin list."
+   },
+   {
+    "rank": 6,
+    "id": 7763513,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 20000000,
+    "currency": "BGN",
+    "S_eur_cents": 10225994,
+    "n": 2,
+    "vouched_by": {
+     "cents": 20000000,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 23214436
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      23601088,
+      17000000
+     ],
+     [
+      "LOT-2",
+      23701706,
+      3000000
+     ]
+    ],
+    "live_head": {
+     "cents": 3000000,
+     "currency": "BGN"
+    },
+    "live_head_pct_of_S": 15.0,
+    "reader_file": "b6/u5/read_a_2.md",
+    "why": "BGN 200,000 = 170,000 + 30,000. The two lots are different products with different contractors and contracts. Each lot's award equals its own estimate: the contracts run until the forecast value is reached, so each figure is that lot's own ceiling and no envelope is shared. S equals CN 23214436's VAL_ESTIMATED_TOTAL; the CN has 2 Lot sections and both are summed, so no estimate-twin flag. The head without W is lot 2 alone (15 %)."
+   },
+   {
+    "rank": 7,
+    "id": 5733,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 78583716,
+    "currency": "PLN",
+    "S_eur_cents": 18482458,
+    "n": 21,
+    "vouched_by": {
+     "cents": 78583716,
+     "field": "BT-161-NoticeResult",
+     "notice_id": 24561226
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      24561226,
+      4353588
+     ],
+     [
+      "LOT-0002",
+      24561226,
+      1055970
+     ],
+     [
+      "LOT-0003",
+      24561226,
+      14074465
+     ],
+     [
+      "LOT-0004",
+      24561226,
+      454572
+     ],
+     [
+      "LOT-0005",
+      24561226,
+      1593630
+     ],
+     [
+      "LOT-0006",
+      24561226,
+      2714256
+     ],
+     [
+      "LOT-0007",
+      24561226,
+      3025292
+     ],
+     [
+      "LOT-0008",
+      24561226,
+      2007450
+     ],
+     [
+      "LOT-0009",
+      24561226,
+      2251642
+     ],
+     [
+      "LOT-0010",
+      24561226,
+      3211337
+     ],
+     [
+      "LOT-0011",
+      24561226,
+      1116288
+     ],
+     [
+      "LOT-0012",
+      24561226,
+      478656
+     ],
+     [
+      "LOT-0013",
+      24561226,
+      2681651
+     ],
+     [
+      "LOT-0014",
+      24561226,
+      112320
+     ],
+     [
+      "LOT-0015",
+      24561226,
+      1481220
+     ],
+     [
+      "LOT-0016",
+      24561226,
+      852390
+     ],
+     [
+      "LOT-0017",
+      24561226,
+      569884
+     ],
+     [
+      "LOT-0018",
+      24758276,
+      22207180
+     ],
+     [
+      "LOT-0019",
+      24561226,
+      9636581
+     ],
+     [
+      "LOT-0020",
+      24561226,
+      4517964
+     ],
+     [
+      "LOT-0021",
+      24561226,
+      187380
+     ]
+    ],
+    "live_head": {
+     "cents": 22207180,
+     "currency": "PLN"
+    },
+    "live_head_pct_of_S": 28.3,
+    "reader_file": "b6/u5/read_a_2.md",
+    "why": "21 distinct packages, each awarded once. The first CAN, 24561226, holds 20 lots summing to PLN 563,765.36, but its BT-161 of 785,837.16 already includes lot 18. Lot 18 (222,071.80, contract signed 2025-01-20 before that CAN was dispatched) was published later in CAN 24758276, whose BT-161 covers only its own lot. So the vouch is genuine and was not superseded. The two diaper lots serve different units, with separate contracts and values. The head without W is lot 18 alone (28 %)."
+   },
+   {
+    "rank": 8,
+    "id": 6570707,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 45999532800,
+    "currency": "HUF",
+    "S_eur_cents": 113936375,
+    "n": 2,
+    "vouched_by": {
+     "cents": 45999532800,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20595292
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      22484360,
+      36575260800
+     ],
+     [
+      "LOT-2",
+      22521344,
+      9424272000
+     ]
+    ],
+    "live_head": {
+     "cents": 36575260800,
+     "currency": "HUF"
+    },
+    "live_head_pct_of_S": 79.5,
+    "reader_file": "b6/u5/read_a_2.md",
+    "why": "Two single-supplier framework lots (denim jackets and trousers; denim shorts), each with its own ceiling, summed at the original awards. HUF 459,995,328 equals CAN 20808119's procedure VAL_TOTAL and CN 20595292's estimate total. The 2022 F20 value increases are modification kinds and are not used, so pre- and post-modification values are not mixed. The CN's lot-1 VAL_OBJECT has a digit transposition, with no effect. The head without W is lot 1 alone (79.5 %)."
+   },
+   {
+    "rank": 9,
+    "id": 6660753,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 138173916400,
+    "currency": "HUF",
+    "S_eur_cents": 348985721,
+    "n": 20,
+    "vouched_by": {
+     "cents": 138173916400,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21475284
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-10",
+      21475284,
+      10450234100
+     ],
+     [
+      "LOT-11",
+      21475284,
+      1041042100
+     ],
+     [
+      "LOT-12",
+      21475284,
+      5956939000
+     ],
+     [
+      "LOT-14",
+      21475284,
+      4466112100
+     ],
+     [
+      "LOT-15",
+      21475284,
+      4006188900
+     ],
+     [
+      "LOT-16",
+      21475284,
+      630175000
+     ],
+     [
+      "LOT-17",
+      21475284,
+      3864991200
+     ],
+     [
+      "LOT-18",
+      21475284,
+      6982729600
+     ],
+     [
+      "LOT-19",
+      21475284,
+      3179948100
+     ],
+     [
+      "LOT-20",
+      21475284,
+      1502098200
+     ],
+     [
+      "LOT-22",
+      21475284,
+      15146444700
+     ],
+     [
+      "LOT-23",
+      21475284,
+      8399028300
+     ],
+     [
+      "LOT-24",
+      21475284,
+      3083912600
+     ],
+     [
+      "LOT-25",
+      21475284,
+      389660900
+     ],
+     [
+      "LOT-26",
+      21475284,
+      8105857000
+     ],
+     [
+      "LOT-4",
+      22510683,
+      7476606400
+     ],
+     [
+      "LOT-5",
+      22984840,
+      6281763000
+     ],
+     [
+      "LOT-6",
+      22975660,
+      19995078300
+     ],
+     [
+      "LOT-7",
+      23029439,
+      6513233900
+     ],
+     [
+      "LOT-9",
+      21475284,
+      20701873000
+     ]
+    ],
+    "live_head": {
+     "cents": 6513233900,
+     "currency": "HUF"
+    },
+    "live_head_pct_of_S": 4.7,
+    "reader_file": "b6/u5/read_a_2.md",
+    "why": "Construction works in 20 different towns, awarded by CAN 21475284 (6 more lots were discontinued and carry no value). HUF 1,381,739,164 equals that CAN's procedure VAL_TOTAL exactly (recomputed). Lots 4–7 come from F20 restatements of the original awards; the value increases on lots 4 and 7 are excluded. The head without W is lot 7 alone (4.7 %)."
+   },
+   {
+    "rank": 10,
+    "id": 5663715,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 1030000000,
+    "currency": "EUR",
+    "S_eur_cents": 1030000000,
+    "n": 3,
+    "vouched_by": {
+     "cents": 1030000000,
+     "field": "TED-HIGH",
+     "notice_id": 19055486
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      19055486,
+      450000000
+     ],
+     [
+      "LOT-2",
+      19055486,
+      400000000
+     ],
+     [
+      "LOT-3",
+      19055486,
+      180000000
+     ]
+    ],
+    "live_head": {
+     "cents": 450000000,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 43.7,
+    "reader_file": "b6/u5/read_a_2.md",
+    "why": "Ville de Paris: three separate single-operator frameworks, three contractors. Each lot's award (4.5m / 4.0m / 1.8m) is that lot's 48-month maximum. S of EUR 10.3m equals CAN 19055486's stated procedure maximum (TED-HIGH; LOW 3.5m is the sum of the lot minima). The maxima belong to different lots, so they add up. S sits on the stated range's top, so it is not farther than the head. The head is lot 1 alone (43.7 %)."
+   },
+   {
+    "rank": 11,
+    "id": 6826783,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 47657300000,
+    "currency": "HUF",
+    "S_eur_cents": 129306761,
+    "n": 3,
+    "vouched_by": {
+     "cents": 47657300000,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21404947
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21404947,
+      12005300000
+     ],
+     [
+      "LOT-2",
+      21404947,
+      8244500000
+     ],
+     [
+      "LOT-3",
+      22064682,
+      27407500000
+     ]
+    ],
+    "live_head": {
+     "cents": 27407500000,
+     "currency": "HUF"
+    },
+    "live_head_pct_of_S": 57.5,
+    "reader_file": "b6/u5/read_a_3.md",
+    "why": "Three regional sludge lots, each a single-operator framework, and S = F06 21404947 procedure VAL_TOTAL HUF 476,573,000 to the forint. LOT-3 is taken once, from the F20 restating the 274,075,000 award; that F20 raises lot 3 to 301,481,938 (VAL_TOTAL_AFTER). Head = lot 3 alone (57.5 % of S). Against the post-modification total 503,979,938, S is -5.4 % and the head -45.6 %."
+   },
+   {
+    "rank": 12,
+    "id": 6611306,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 726796013,
+    "currency": "EUR",
+    "S_eur_cents": 726796013,
+    "n": 7,
+    "vouched_by": {
+     "cents": 726796000,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21302219
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21302219,
+      36522082
+     ],
+     [
+      "LOT-2",
+      21302219,
+      320970000
+     ],
+     [
+      "LOT-3",
+      23552871,
+      102266409
+     ],
+     [
+      "LOT-4",
+      21302219,
+      107283500
+     ],
+     [
+      "LOT-5",
+      21302219,
+      139223422
+     ],
+     [
+      "LOT-6",
+      21302219,
+      2989000
+     ],
+     [
+      "LOT-7",
+      21302219,
+      17541600
+     ]
+    ],
+    "live_head": {
+     "cents": 102266409,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 14.1,
+    "reader_file": "b6/u5/read_a_3.md",
+    "why": "Seven macro-lots, seven winners. S = 7,267,960.13 matches the CAN's VAL_TOTAL 7,267,960.00 (the CAN drops 13 cents). LOT-3 is taken once, from F20 avenant 3, at its original 1,022,664.09; the avenant raises lot 3 to 1,435,222.03 (VAL_TOTAL_AFTER). Head = lot 3 alone (14.1 %). Against the post-modification total, S is -5.4 % and the head -86.7 %."
+   },
+   {
+    "rank": 13,
+    "id": 8488091,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 16467675,
+    "currency": "EUR",
+    "S_eur_cents": 16467675,
+    "n": 3,
+    "vouched_by": {
+     "cents": 16467675,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 22059514
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      22272896,
+      6320575
+     ],
+     [
+      "LOT-2",
+      22344730,
+      2627100
+     ],
+     [
+      "LOT-3",
+      22277915,
+      7520000
+     ]
+    ],
+    "live_head": {
+     "cents": 2627100,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 16.0,
+    "reader_file": "b6/u5/read_a_3.md",
+    "why": "Three furniture lots awarded by three separate CANs (two winners). S = CN 22059514 VAL_ESTIMATED_TOTAL 164,676.75 to the cent. The vouch is estimate kind from a three-section CN whose lots are all summed, so the estimate-twin flag does not apply. Each award equals its lot budget (noted for the skeptic, same shape as read_a_2's 7763513). Head = lot 2 alone (16.0 %)."
+   },
+   {
+    "rank": 14,
+    "id": 118880,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 29038300,
+    "currency": "EUR",
+    "S_eur_cents": 29038300,
+    "n": 3,
+    "vouched_by": {
+     "cents": 29038300,
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 24501593
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      24501593,
+      16673600
+     ],
+     [
+      "LOT-0003",
+      24501593,
+      11381100
+     ],
+     [
+      "LOT-0004",
+      24501593,
+      983600
+     ]
+    ],
+    "live_head": null,
+    "live_head_pct_of_S": null,
+    "reader_file": "b6/u5/read_a_3.md",
+    "why": "Roznava insurance in 3 parts (keys LOT-0001/0003/0004; no LOT-0002 section exists), each with one winner and its own contract. S = CAN BT-1118 EUR 290,383 = sum of BT-660 = sum of BT-720. Live head is null, so S cannot be farther."
+   },
+   {
+    "rank": 15,
+    "id": 805752,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 1506050000000,
+    "currency": "HUF",
+    "S_eur_cents": 3629473431,
+    "n": 4,
+    "vouched_by": {
+     "cents": 1506050000000,
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 24457168
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      24457168,
+      700000000000
+     ],
+     [
+      "LOT-0002",
+      24457168,
+      313500000000
+     ],
+     [
+      "LOT-0003",
+      24457168,
+      431800000000
+     ],
+     [
+      "LOT-0004",
+      24457168,
+      60750000000
+     ]
+    ],
+    "live_head": null,
+    "live_head_pct_of_S": null,
+    "reader_file": "b6/u5/read_a_3.md",
+    "why": "NEAK buys four distinct factor VIII / VWF products, each under a single-operator framework (Kbt. 105(1)(a)) with its own contract. Values are net for the full framework quantity. S = CAN BT-1118 HUF 15,060,500,000 to the forint (read18 note 5). Live head is null."
+   },
+   {
+    "rank": 16,
+    "id": 6530219,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 46433278700,
+    "currency": "HUF",
+    "S_eur_cents": 131323261,
+    "n": 5,
+    "vouched_by": {
+     "cents": 46433278700,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20765679
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21027842,
+      6448510900
+     ],
+     [
+      "LOT-2",
+      20816834,
+      24886760900
+     ],
+     [
+      "LOT-3",
+      20765679,
+      8799956900
+     ],
+     [
+      "LOT-4",
+      20765679,
+      708800000
+     ],
+     [
+      "LOT-5",
+      20765679,
+      5589250000
+     ]
+    ],
+    "live_head": {
+     "cents": 6448510900,
+     "currency": "HUF"
+    },
+    "live_head_pct_of_S": 13.9,
+    "reader_file": "b6/u5/read_a_4.md",
+    "why": "Magyar Posta insurance 2019. F03 20765679 awards 5 distinct insurance lines (5 contracts, 4 insurers). Procedure VAL_TOTAL HUF 464,332,787 equals S exactly. Two single-lot F20s restate lots 1 and 2 at their award values, so there is no pre/post-modification mix. The head without W is lot 1 alone (13.9 % of S). Note for the skeptic: every lot figure, the buyer's total and the head are all annual premiums, so the basis is the same throughout."
+   },
+   {
+    "rank": 17,
+    "id": 8441074,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 2568940000,
+    "currency": "EUR",
+    "S_eur_cents": 2568940000,
+    "n": 3,
+    "vouched_by": {
+     "cents": 2568940000,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20567519
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21409607,
+      1262140000
+     ],
+     [
+      "LOT-2",
+      22175851,
+      508200000
+     ],
+     [
+      "LOT-3",
+      21409607,
+      798600000
+     ]
+    ],
+    "live_head": {
+     "cents": 508200000,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 19.8,
+    "reader_file": "b6/u5/read_a_4.md",
+    "why": "GSA/EUSPA security monitoring: 3 cascade framework lots, at most 2 contractors per lot. S counts each lot's ceiling once (12,621,400 + 5,082,000 + 7,986,000), not once per contractor, which would be 51.4 m (S1a not taken). S equals CN 20567519's VAL_ESTIMATED_TOTAL of EUR 25,689,400 and also the buyer's award totals added (20,607,400 for lots 1+3 + 5,082,000 for lot 2). Estimate vouch from a 3-section CN whose lots are all in S. The head is lot 2 alone (19.8 %)."
+   },
+   {
+    "rank": 18,
+    "id": 712964,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 114012000,
+    "currency": "EUR",
+    "S_eur_cents": 114012000,
+    "n": 5,
+    "vouched_by": {
+     "cents": 114012000,
+     "field": "BT-118-NoticeResult",
+     "notice_id": 24751505
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      24751505,
+      15616000
+     ],
+     [
+      "LOT-0002",
+      24751505,
+      22633600
+     ],
+     [
+      "LOT-0003",
+      24751505,
+      29987200
+     ],
+     [
+      "LOT-0004",
+      24751505,
+      24451200
+     ],
+     [
+      "LOT-0005",
+      24751505,
+      21324000
+     ]
+    ],
+    "live_head": null,
+    "live_head_pct_of_S": null,
+    "reader_file": "b6/u5/read_a_4.md",
+    "why": "Port of Antwerp-Bruges grazing: eForms CAN 24751505 (subtype 30), 5 geographic clusters, one winner and one contract each. Per lot BT-720 = BT-709. BT-118 EUR 1,140,120 equals S exactly. The head without W is null (BT-709/BT-118 are never elected), so S replaces no figure and cannot be farther."
+   },
+   {
+    "rank": 19,
+    "id": 7872311,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 33765120,
+    "currency": "PLN",
+    "S_eur_cents": 7774607,
+    "n": 2,
+    "vouched_by": {
+     "cents": 33765120,
+     "field": "TED-HIGH",
+     "notice_id": 23660402
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      23660402,
+      29484000
+     ],
+     [
+      "LOT-2",
+      23660402,
+      4281120
+     ]
+    ],
+    "live_head": {
+     "cents": 29484000,
+     "currency": "PLN"
+    },
+    "live_head_pct_of_S": 87.3,
+    "reader_file": "b6/u5/read_a_4.md",
+    "why": "COBORU fertiliser: F03 23660402 awards 2 distinct product lots (2 contracts, 1 tender each). The procedure VALUE_RANGE LOW = HIGH = PLN 337,651.20 equals S. The Range vouch is from a notice naming both summed keys, so G-cover keeps it. Prices are plausible, so no slip. The head is lot 1 (87.3 % of S)."
+   },
+   {
+    "rank": 20,
+    "id": 6580960,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 11653000,
+    "currency": "EUR",
+    "S_eur_cents": 11653000,
+    "n": 3,
+    "vouched_by": {
+     "cents": 11653000,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20835362
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      20835362,
+      998000
+     ],
+     [
+      "LOT-3",
+      20835362,
+      3750000
+     ],
+     [
+      "LOT-4",
+      20835362,
+      6905000
+     ]
+    ],
+    "live_head": {
+     "cents": 998000,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 8.6,
+    "reader_file": "b6/u5/read_a_4.md",
+    "why": "Le Havre AMO for the Harfleur recycling centre: F03 20835362 awards lots 1, 3 and 4. Lot 2 is PROCUREMENT_UNSUCCESSFUL and never awarded, so this is not a partial sum. Procedure VAL_TOTAL EUR 116,530 equals S exactly, and lot 4's optional tranche is included on both sides. The 2022 F20 restates lot 1 at 9,980 on a lot-null row that S does not sum. The head is lot 1 (8.6 % of S)."
+   },
+   {
+    "rank": 21,
+    "id": 64472,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 33440049,
+    "currency": "EUR",
+    "S_eur_cents": 33440049,
+    "n": 3,
+    "vouched_by": {
+     "cents": 33255300,
+     "field": "BT-118-NoticeResult",
+     "notice_id": 24822363
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      24822363,
+      20515467
+     ],
+     [
+      "LOT-0002",
+      24822363,
+      1963551
+     ],
+     [
+      "LOT-0003",
+      24822363,
+      10961031
+     ]
+    ],
+    "live_head": null,
+    "live_head_pct_of_S": null,
+    "reader_file": "b6/u5/read_a_5.md",
+    "why": "eForms CAN 24822363 awards 3 distinct product lots (bread, viennoiserie, pastry), each to one winner with its own contract (fa-wo-rc). S = EUR 334,400.49 = sum of the BT-720 winning tenders, +0.56% from the BT-118 EUR 332,553.00 (= sum of the per-lot BT-709 maxima, the G-filtered vouch from a notice naming all 3 keys). The live head is null, so S cannot be farther; read18 note 5 applies. Skeptic note: the values may be annual (the lot text says inventories are for 1 year)."
+   },
+   {
+    "rank": 22,
+    "id": 7442464,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 444242869,
+    "currency": "EUR",
+    "S_eur_cents": 444242869,
+    "n": 7,
+    "vouched_by": {
+     "cents": 444242869,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22708527
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      22708527,
+      47396730
+     ],
+     [
+      "LOT-2",
+      22708527,
+      332113843
+     ],
+     [
+      "LOT-3",
+      22708527,
+      7202520
+     ],
+     [
+      "LOT-4",
+      22708527,
+      14704076
+     ],
+     [
+      "LOT-5",
+      22708527,
+      28631500
+     ],
+     [
+      "LOT-6",
+      22708527,
+      10156500
+     ],
+     [
+      "LOT-7",
+      22708527,
+      4037700
+     ]
+    ],
+    "live_head": {
+     "cents": 47396730,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 10.7,
+    "reader_file": "b6/u5/read_a_5.md",
+    "why": "F06 22708527 awards 7 distinct LOT_NO 1-7 work packages (3 contractors, none a group). S = EUR 4,442,428.69 = the procedure VAL_TOTAL to the cent, and also VAL_TOTAL_BEFORE in all seven F20s. The F20 increases (lots 1, 2, 3) are modification kinds, excluded under the 7380025 convention; their LotResults restate the original awards on lot-null rows. The head is lot 1 only (EUR 473,967.30, 10.7% of S)."
+   },
+   {
+    "rank": 23,
+    "id": 5861802,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 34200000,
+    "currency": "BGN",
+    "S_eur_cents": 17486451,
+    "n": 2,
+    "vouched_by": {
+     "cents": 34200000,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 19145047
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21027845,
+      21800000
+     ],
+     [
+      "LOT-2",
+      21027846,
+      12400000
+     ]
+    ],
+    "live_head": {
+     "cents": 21800000,
+     "currency": "BGN"
+    },
+    "live_head_pct_of_S": 63.7,
+    "reader_file": "b6/u5/read_a_5.md",
+    "why": "Two distinct lots (general fleet; Soviet- and Russian-made vehicles), contracts 39 and 40 with one operator each. S = BGN 342,000 = CN VAL_ESTIMATED_TOTAL (the vouch, a 2-section CN with both lots in S) = F03 VAL_TOTAL. The F20s only extend the term (BEFORE = AFTER) and restate each lot at its award. The per-lot net financial ceilings are additive (read18 note 5). The head is lot 1 only (BGN 218,000, 63.7%)."
+   },
+   {
+    "rank": 24,
+    "id": 7085538,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 163093045600,
+    "currency": "HUF",
+    "S_eur_cents": 439177740,
+    "n": 5,
+    "vouched_by": {
+     "cents": 163093045600,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22173860
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      23103681,
+      48840015000
+     ],
+     [
+      "LOT-2",
+      23197701,
+      35142847700
+     ],
+     [
+      "LOT-3",
+      23106548,
+      47069744300
+     ],
+     [
+      "LOT-5",
+      23195436,
+      14286119200
+     ],
+     [
+      "LOT-6",
+      23029966,
+      17754319400
+     ]
+    ],
+    "live_head": {
+     "cents": 35142847700,
+     "currency": "HUF"
+    },
+    "live_head_pct_of_S": 21.5,
+    "reader_file": "b6/u5/read_a_5.md",
+    "why": "F03 22173860 awards 5 of 6 building lots (lot 4 Posta unsuccessful, only invalid tenders; lot 3 a joint-tender consortium, one award). S = HUF 1,630,930,456 = the procedure VAL_TOTAL to the forint. The summed F20 rows restate the original awards; the lot 1 and lot 5 increases are modification values and are excluded. The head is lot 2 only (21.5%). Counting the modifications, S would be 95% of the post-modification total against 20.5% for the head."
+   },
+   {
+    "rank": 25,
+    "id": 23846,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 106983000,
+    "currency": "EUR",
+    "S_eur_cents": 106983000,
+    "n": 3,
+    "vouched_by": {
+     "cents": 106983000,
+     "field": "BT-118-NoticeResult",
+     "notice_id": 24991969
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      24991969,
+      83305500
+     ],
+     [
+      "LOT-0002",
+      24991969,
+      11238900
+     ],
+     [
+      "LOT-0003",
+      24991969,
+      12438600
+     ]
+    ],
+    "live_head": null,
+    "live_head_pct_of_S": null,
+    "reader_file": "b6/u5/read_a_5.md",
+    "why": "eForms CAN 24991969 awards 3 distinct territorial cleaning lots (Strasbourg; 67/68 outside Strasbourg; 57), one winner and one contract each (fa-wo-rc, BT-720 = BT-709). S = EUR 1,069,830.00 = BT-118 exactly, vouched by the notice naming all 3 keys. The live head is null (BT-709 is partner-only and BT-118 is never elected), so S cannot be farther; read18 note 5 applies."
+   },
+   {
+    "rank": 26,
+    "id": 8524598,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 584996870,
+    "currency": "EUR",
+    "S_eur_cents": 584996870,
+    "n": 3,
+    "vouched_by": {
+     "cents": 584996870,
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 23230099
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      23558847,
+      178772486
+     ],
+     [
+      "LOT-2",
+      23558847,
+      133422546
+     ],
+     [
+      "LOT-3",
+      23558847,
+      272801838
+     ]
+    ],
+    "live_head": {
+     "cents": 272801838,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 46.6,
+    "reader_file": "b6/u5/read_a_6.md",
+    "why": "Renfe Viajeros diesel supply, 3 regional lots (Madrid+Andalucía / North / Mediterranean). CN F05 23230099 gives lot VAL_OBJECTs 1,787,724.86 / 1,334,225.46 / 2,728,018.38 and VAL_ESTIMATED_TOTAL EUR 5,849,968.70. F06 23558847 awards each lot once (Pentagas; UTE Esergui-Disteser x2; contracts 4500075098/097/095) at VAL_TOTAL = estimate. S = 5,849,968.70 equals the buyer's procedure estimate to the cent. The vouch is estimate kind from a 3-section CN whose lots are all in S. Per-lot single-supplier maxima, so read18 note 5 applies. Head = lot 3 (46.6% of S). Note: the F04 PIN 23185304 (same ref 2023-00675, same lots) stated EUR 21,555,456 and is stored as a separate tender, 7711779. It is a forecast. The CN and CAN agree on 5.85 m, and S would still be nearer than the head even if 21.6 m were the true value."
+   },
+   {
+    "rank": 27,
+    "id": 6757752,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 265700000,
+    "currency": "BGN",
+    "S_eur_cents": 135852337,
+    "n": 4,
+    "vouched_by": {
+     "cents": 265700000,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21360130
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      23241877,
+      155000000
+     ],
+     [
+      "LOT-2",
+      21360130,
+      71500000
+     ],
+     [
+      "LOT-3",
+      21360130,
+      10700000
+     ],
+     [
+      "LOT-4",
+      21360130,
+      28500000
+     ]
+    ],
+    "live_head": {
+     "cents": 155000000,
+     "currency": "BGN"
+    },
+    "live_head_pct_of_S": 58.3,
+    "reader_file": "b6/u5/read_a_6.md",
+    "why": "Elektrorazpredelenie Sever, LV cable fittings, 4 lots. CN 20963427 gives lot VAL_OBJECTs BGN 1,550,000 / 715,000 / 107,000 / 285,000. F06 21360130 awards LOT_NO 1-4 (contracts 59-1..59-4; VAK-02 lots 1-2, Tilkom lots 3-4) at VAL_TOTAL = estimate, with procedure VAL_TOTAL BGN 2,657,000 = S. The 2023 F20 23241877 changes lot 1's unit prices with value unchanged (BEFORE = AFTER 1,550,000), and S takes lot 1 once at that value. Distinct lots, one supplier each, no double count, no pre/post mix. Head = lot 1 (58.3% of S)."
+   },
+   {
+    "rank": 28,
+    "id": 6960026,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 90750000,
+    "currency": "PLN",
+    "S_eur_cents": 19519067,
+    "n": 2,
+    "vouched_by": {
+     "cents": 90750000,
+     "field": "TED-HIGH",
+     "notice_id": 21615726
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21615726,
+      76900000
+     ],
+     [
+      "LOT-2",
+      21615726,
+      13850000
+     ]
+    ],
+    "live_head": {
+     "cents": 76900000,
+     "currency": "PLN"
+    },
+    "live_head_pct_of_S": 84.7,
+    "reader_file": "b6/u5/read_a_6.md",
+    "why": "CM Zelazna, ultrasound scanners, 2 lots (1 scanner / 2 scanners). F03 21615726 awards LOT_NO 1 PLN 769,000 and LOT_NO 2 PLN 138,500 to Intimex, 1 tender each. The procedure VAL_RANGE_TOTAL is LOW = HIGH = PLN 907,500 (PROCUREMENT_TOTAL), equal to S. The range vouch names both summed keys, so G-cover keeps it. I checked the 11x unit-price gap for a x10 slip on lot 2: the buyer's own total uses 138,500 (a x10 lot 2 would make it 2,154,000), and no CN figure contradicts either lot. Head = lot 1 (84.7% of S)."
+   },
+   {
+    "rank": 29,
+    "id": 844584,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 202300000,
+    "currency": "EUR",
+    "S_eur_cents": 202300000,
+    "n": 3,
+    "vouched_by": {
+     "cents": 202300000,
+     "field": "BT-118-NoticeResult",
+     "notice_id": 24887461
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-0001",
+      24887461,
+      95900000
+     ],
+     [
+      "LOT-0002",
+      24887461,
+      36400000
+     ],
+     [
+      "LOT-0003",
+      24887461,
+      70000000
+     ]
+    ],
+    "live_head": null,
+    "live_head_pct_of_S": null,
+    "reader_file": "b6/u5/read_a_6.md",
+    "why": "Tarn Habitat, single-supplier frameworks (fa-wo-rc, mono-attributaire) for 3 trades. CAN 24887461 awards LOT-0001 SIDER 959,000, LOT-0002 RICHARDSON 364,000 and LOT-0003 FOUSSIER 700,000 (BT-720, separate contracts 2025a0010-01/02/03). BT-118 = EUR 2,023,000 = S. Each result also carries a copied BT-709 of 2,023,000 (285956 shape). S sums BT-720, not the copy, so there is no double count. Per-lot maxima sum to the buyer's own total (read18 note 5). Head is null, so S cannot be farther."
+   },
+   {
+    "rank": 30,
+    "id": 6763031,
+    "verdict": "right",
+    "class": "ok",
+    "S_cents": 216020000,
+    "currency": "EUR",
+    "S_eur_cents": 216020000,
+    "n": 2,
+    "vouched_by": {
+     "cents": 216020000,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20974563
+    },
+    "flags": [],
+    "summed": [
+     [
+      "LOT-1",
+      21005314,
+      57620000
+     ],
+     [
+      "LOT-2",
+      21012872,
+      158400000
+     ]
+    ],
+    "live_head": {
+     "cents": 57620000,
+     "currency": "EUR"
+    },
+    "live_head_pct_of_S": 26.7,
+    "reader_file": "b6/u5/read_a_6.md",
+    "why": "RTK for Terviseamet, COVID-19 services, 2 lots. F21 20974563 awards LOT_NO 1 (sampling) to Medicum at EUR 576,200 and LOT_NO 2 (lab testing) to Synlab at EUR 1,584,000, with procedure VAL_TOTAL EUR 2,160,200 = S. The results print LOT_NO 2 then 1, and the store keys them correctly. Two F20s (21012872 lot 2 +tests, 21005314 lot 1 +team) restate each lot's original award in their LotResults and give VAL_TOTAL_BEFORE 2,160,200 / AFTER 2,425,760. AFTER is a modification kind and is not summed, so there is no pre/post mix. This is not the 5816379 shape, since there is no re-award. S is -10.9% vs the post-modification total and the head (lot 1, 26.7% of S) is -76.2%. Precedent: 7380025 and the M2-fallback modification caveat."
+   }
+  ]
+ },
+ "round_b": {
+  "required": false,
+  "n": 0,
+  "ids": [],
+  "note": "not required: round a has 0 wrong"
+ },
+ "decision_point_7": "GO",
+ "band_point_8": {
+  "rule": "re-read any of the 29 band heads (B_P) whose predicted S, n or vouched_by changed vs its last read, and every band row from L_changed or the delta (0 wrong of any class)",
+  "B_P_n": 29,
+  "B_P": [
+   683951,
+   707424,
+   726354,
+   1102571,
+   1147190,
+   1148297,
+   5278856,
+   5769515,
+   5842187,
+   6017838,
+   6057925,
+   6195903,
+   6370901,
+   6435162,
+   6548237,
+   6569442,
+   6603588,
+   6679375,
+   6718092,
+   7001924,
+   7011414,
+   7139761,
+   7167278,
+   7196993,
+   7461921,
+   7542368,
+   8407303,
+   8426318,
+   8460630
+  ],
+  "B_P_last_read": {
+   "right/None": 15,
+   "right/ok": 14
+  },
+  "changed_vs_last_read": [],
+  "changed_recomputed": [],
+  "band_rows_in_l_changed": [],
+  "P_in_l_changed": [],
+  "delta": "none yet: the delta (salt 551-b6-delta-) is the new fires after the drain; it does not exist pre-flip",
+  "reread_set": [],
+  "required": false,
+  "reread_n": 0,
+  "wrong": 0,
+  "result": "PASS",
+  "result_note": "no band head changed predicted S, currency, n or vouched_by against its last read, none is in L_changed, and the delta does not exist pre-flip: the re-read set is empty, 0 re-reads, 0 wrong (holds vacuously; the 29 heads keep their recorded verdicts)",
+  "within_2pct_of_eur100m": [
+   899272,
+   5842187
+  ],
+  "within_2pct_outside_B_P": [
+   899272
+  ],
+  "D4_note": "899272 (HUF, S_eur_cents 9895169538) sits inside 2 % of EUR 100 m but below it and outside B_P; under point 8 D4 a drain-time difference from B_P on it is stop-and-explain, not a switch-off"
+ },
+ "go": true,
+ "request_log_audit": {
+  "requests": 134,
+  "methods": {
+   "GET": 134
+  },
+  "status": {
+   "200": 134
+  },
+  "by_reader": {
+   "read_a_1": 15,
+   "read_a_2": 26,
+   "read_a_3": 19,
+   "read_a_4": 21,
+   "read_a_5": 32,
+   "read_a_6": 21
+  },
+  "first": "2026-10-19T15:47:02.318000Z",
+  "last": "2026-10-19T16:09:40.560000Z",
+  "min_gap_s": 2.02,
+  "gaps_under_2s": 0,
+  "http_408": 0,
+  "repeated_paths": [],
+  "tender_heads_fetched": 31,
+  "round_a_heads_missing": [],
+  "bodies_files": 134
+ },
+ "inputs_sha256": {
+  "b6/u5/order.json": "3033ec316ae4b5c674eb9c5a1125488c71a7b6d558509ce6cfffa4538cc3b3b0",
+  "b6/u5/band_set.json": "09f218a65625a51e0dd3570b7dc76023a4e0e15b5dfc7c313a9295f2b3f61465",
+  "b6/u5/excluded_sources.json": "4766508be24ad6b93debc61ecb5edaffb2ec74ad7c020f30d1065da7b198d710",
+  "b6/u5/build_order.py": "3c0e60a1af5c5062a3d6817cf3abdccde285875decec8d475458956e0f08a0b1",
+  "b6/u2/P.json": "5f8b7f7ce50b07d9a474539d0aa7a162a6a1933e638ec9914218c22727f4f75b",
+  "b6/u2/decisions.jsonl.gz": "0add92e36c70ca76b81049e9faf678e91305e790d1fd914ff4952a0f1d0749cb",
+  "b6/u5/api_requests.log": "da8b54727446721fff67e587f1dc6db967f5750e55facf53e5bb06edfd84384b",
+  "b6/u5/read_a_1.md": "abd50a48c07391b3a9467dd8b1a9242a7351ce5e480dc1a7d9ccd380bf890c08",
+  "b6/u5/read_a_2.md": "edae87054c8c39b983fab38a7669876bb4db576ba7832c9be938167fa9e9b421",
+  "b6/u5/read_a_3.md": "b4019d52b626a05cf0cca8063e3ff36955965ca288cb6c1442e3806e1d92812e",
+  "b6/u5/read_a_4.md": "eb036aee9c7413c76dc51326cd73b9452afe1dbc16700c0965b81bf14e58caa0",
+  "b6/u5/read_a_5.md": "4646febc77b93e07561e2bb2928974dd0cf45096e57d07ea2e58590ae376b7e3",
+  "b6/u5/read_a_6.md": "8381f2a36e35ece6db61973e27fb568441de1d3255ce43a5174ecaca6a2d1873"
+ },
+ "checks_failed": []
+}

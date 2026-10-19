@@ -1365,3 +1365,28 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   the gap rule would still adopt G-cover (3/13), giving P = v2+cover (3,489). The adoption rule is monotone and was fixed before
   the reads (decision point 3); the cost it accepts is ~27 right ships refused per 30 for the 3 wrongs it stops.
 - Next: U5, the fresh pre-flip read of 30 from P minus every read id (salt `551-b6-fresh-`), then the B-band re-read (point 8).
+
+## B6 U5 — fresh pre-flip read: GO (2026-10-19, wf_3e938530-8df; `551-lot-sum/b6/u5/u5-result.md`)
+
+- Read order: P (v2+both, 3,467, ids_sha256 a2619fd9…) minus the 132 P ids carrying any recorded 551 verdict (530 read ids over
+  12 sources, `u5/excluded_sources.json`), ordered by `sha256('551-b6-fresh-'+id)` (`u5/order.json`, `build_order.py` asserts the
+  P hash and source counts).
+- **Round a: 30 right, 0 neutral, 0 wrong → GO** (round b not needed). Live heads (path W off): 7 null, 23 one lot's figure at
+  4.7–87.3 % of S. Weak shapes flagged without verdict effect: 7429588 a partial sum not on the pin list (fragile under a future
+  single-section placement drain), 6826783 / 6611306 / 7085538 / 6763031 / 7442464 summed at pre-modification values, 5663715
+  vouched by Range HIGH, 64472 +0.56 % over its BT-118.
+- **B-band (point 8): PASS, re-read set empty** — none of the 29 B_P heads changed S, currency, n or vouched_by against its last
+  (right) read, none is in L_changed, no delta before the flip. D4 watch: 899272 (≈ EUR 98.95 m, outside B_P, unread) within 2 %
+  of EUR 100 m — a drain-time difference on it is stop-and-explain.
+- 134 public GETs, all 200, min gap 2.02 s.
+
+## Zero-drift probe re-run on rev 0787596 (2026-10-19 ~16:35Z)
+
+- After the 548 (c09165d), 539 (9ce8649) and 530 (b81d9ce) deploys: `refold-lot-sum` tender_ids = the 3,502 (identical id set to
+  2647/2648), dry 2656 → wet 2657 (re-queued 15,537, stamped 3,502) → project 2658: **3,502 verified, 0 corrected, 0 correction
+  rows, cursor unchanged (958848784)**. The deployed code's fixed point still holds for the whole set; the flip's D1/D2 will
+  measure path W alone (539's DÖE re-date: 0 rows on this cohort, as its review measured).
+- Remaining before U6: the flip commit (LOT_SUM_AWARDS_PATH = true, guards true, CHANGELOG/operations notes per point 13) built
+  and gated but held off main until the gap; rates refreshed (A5) and their sha256 recorded; L_changed re-fixed at U6 with the
+  2630-excluded reading; the gap = 10-21 after the 07:35Z chain (10-20 only if 560 records U-d PASS and closed on the 10-20
+  morning and 562 unit 5 has its cursor ranges).
