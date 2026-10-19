@@ -352,3 +352,5 @@ Files are in /home/user/tender-db/.scratch/tender-db/545-triage/u2b/: notes.md, 
 - **Left for later:** Wyre Forest 46842882 (tender 8677275) is the same misbind, read by the second skeptic; a follow-up cohort can
   take it with any U2c finds. West Mercia Police/PCC as co-buyer on both WFDC tenders and the provisional WFDC name split (1299537,
   2456347 vs 31550990) are not 545 cases. Hull has ≥ 5 rows (provisional 1290903, 818 mentions); same entity, merge debt.
+- **Ledger audit (2026-10-19 11:5xZ, hourly AUDIT):** `/v1/changes?since=958848408&entity=tender` (one page, 95 tender events)
+  carries a change for all 47 corrected tenders (`touched_tenders_final.json`), each `version: null` (ADR-0017 D3).
