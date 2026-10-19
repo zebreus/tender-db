@@ -1289,4 +1289,13 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   real store instead: **6465510 is in drain stage 1 and must not fire (D1, tolerance 0)**, and the U3 harness compares Rust
   with the port on fixtures built from the served rows of all 3,502. If stage 1 shows a divergence, the switch-off route
   applies.
+- **U3 gated and deployed (2026-10-19):** f41c809 + bcc501a (the second reads `clos-nw` through `DECISION_NO_AWARD` in the new
+  fixtures: the first gate's issue-533 tripwire caught three literals). Gate green 1,427 s at bcc501a; deployed 07:39Z after
+  the daily chain (rev bcc501a, path W off). Code-drift ledger: 9529345 → bcc501a adds 21b2537 (571, drained) and the U3
+  guards (inert while W is off).
+- **Zero-drift probe (amendment C2) PASSED:** `refold-lot-sum` tender_ids = the 3,502, dry 2647 / wet 2648 (stamped 3,502,
+  15,537 notices) / project 2649: **3,502 verified, 0 corrected**, 0 correction rows, cursor unchanged (958848408). The store
+  is at the deployed code's fixed point for the whole set, so the drain's D1/D2 will measure path W and nothing else.
+- Today's daily chain (07:35Z: ted 4,029 / doe 601 / fts 14 notices, project 2645: 4,070 written, 102 relabelled, rederive
+  0 changed) ran before the probe; its folded Tenders join L_changed by the change-row range 958810037 → 958848408.
 
