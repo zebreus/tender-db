@@ -214,8 +214,10 @@ fn family(name: &str) -> Option<&'static str> {
 }
 
 /// Stand-in for `crosswalk::head_change_hold`: a family on both sides of ONE table that differs, or a
-/// consortium mark dropped. A pair read from the two tables (`gmbh` -> `ltd`) is not held.
-fn hold(old: &str, new: &str, _kind: Option<&str>, _identifier: Option<&str>) -> Option<&'static str> {
+/// consortium mark dropped. A pair read from the two tables (`gmbh` -> `ltd`) is not held. It holds at
+/// any H (`head_votes`): rule v13's releases (the family guards at H ≤ 1, a consortium name cut to a
+/// member's own words) are crosswalk's and are pinned there; these tests pin the planner around them.
+fn hold(old: &str, new: &str, _kind: Option<&str>, _identifier: Option<&str>, _head_votes: u64) -> Option<&'static str> {
     if let (Some(a), Some(b)) = (continental(old), continental(new))
         && a != b
     {
@@ -359,7 +361,8 @@ async fn corpus(conn: &turso::Connection) {
     .await;
     // 16 — the same stray under a TIED top: neither rule fires. Bar.
     org(conn, 16, "DE", Some("DE16"), "Stray Body", &[("Main Body", 3), ("Second Body", 3), ("Stray Body", 1)]).await;
-    // 17 — plc -> Ltd: R1 elects it, the bind guard holds it.
+    // 17 — plc -> Ltd: R1 elects it, the bind guard holds it (the stand-in's; the real guard releases
+    // this H = 1 head since rule v13, crosswalk's `the_v13_listing_rows_release_and_hold_as_decided`).
     org(conn, 17, "GB", Some("GB00000017"), "Foo Holdings plc", &[("Bar Services Ltd", 5), ("Foo Holdings plc", 1)]).await;
     // 18 — one mention: below the population.
     org(conn, 18, "DE", Some("DE18"), "Einzel GmbH", &[("Einzel GmbH", 1)]).await;
@@ -374,7 +377,9 @@ async fn corpus(conn: &turso::Connection) {
     org(conn, 22, "BG", Some("000000022"), "Obshtina Varna", &[("ОБЩИНА ВАРНА", 3)]).await;
     eng(conn, 22, "Municipality of Varna").await;
     // 23 — R1 from a continental form to a GB one: two families, but read from different tables, so
-    // the hold lets it through and the plan counts it `x->y`.
+    // the hold lets it through and the plan counts it `x->y`. The H-blind stand-in still holds 17's
+    // same-table swap at H = 1, so here only the two tables pass 23; the real guard (rule v13) would
+    // release it at H = 1 on either reading, and plans a same-table stray swap as `x->y` too.
     org(conn, 23, "GB", Some("GB00000023"), "Foo Trading GmbH", &[("Bar Services Ltd", 5), ("Foo Trading GmbH", 1)])
         .await;
     // 24 — 15075247's shape: R2 would serve the initialism of the head's first words. Held.
@@ -458,7 +463,7 @@ async fn the_plan_elects_each_shape_as_the_decision_reads_it() {
     assert_eq!(r.family_moves.len(), 3);
     assert_eq!(r.family_moves["none->none"], 5);
     assert_eq!(r.family_moves["none->x"], 1, "15 gains Ltd");
-    assert_eq!(r.family_moves["x->y"], 1, "23: GmbH -> Ltd, two tables, so not held");
+    assert_eq!(r.family_moves["x->y"], 1, "23: GmbH -> Ltd, two tables, so not held (by the H-blind stand-in)");
     assert_eq!(r.d4_eng.len(), 4);
     assert_eq!(
         (r.d4_eng["equal"], r.d4_eng["agrees"], r.d4_eng["differs"], r.d4_eng["absent"]),
@@ -578,11 +583,13 @@ async fn the_canaries_are_reported_whatever_their_verdict_and_paging_changes_not
 /// the draw at `[8, 7]`, outside both, which keeps the test's point under the salt. Rule v10's epoch
 /// drew `[8, 3]` from the eight, so the listing is capped at 2 (`[1, 2]`), outside it again; rule v11's
 /// draws `[3, 8]`, still outside it. Rule v12's salt gives id 1 a small hash (it draws `[1, 4]` from ids
-/// 1–8, inside the listing), so the eight are ids 2–9: the listing is `[2, 3]` and the draw `[9, 4]`.
+/// 1–8, inside the listing), so its eight were ids 2–9: the listing `[2, 3]` and the draw `[9, 4]`. Rule
+/// v13's salt draws `[6, 3]` from ids 2–9 (3 inside that listing) and from ids 1–8 alike, so the eight
+/// are ids 1–8 again: the listing is `[1, 2]` and the draw `[6, 3]`, outside it and not in id order.
 #[tokio::test]
 async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
     let (db, conn) = open("ron-uniform").await;
-    for id in 2..=9i64 {
+    for id in 1..=8i64 {
         org(&conn, id, "DE", Some(format!("DE{id}").as_str()), "-", &[(format!("Firma {id}").as_str(), 2)]).await;
     }
     let r = db
@@ -591,13 +598,13 @@ async fn the_samples_are_hash_chosen_and_the_listing_is_capped() {
         .unwrap();
     assert_eq!(r.by_rule["R0n"], count(8, 16), "a blank head, R0n");
     let hash = |id: i64| (((id as u64) ^ store::ORG_NAME_REFRESH_SAMPLE_SALT).wrapping_mul(2_654_435_761) & 0xFFFF_FFFF, id);
-    let mut expected: Vec<i64> = (2..=9).collect();
+    let mut expected: Vec<i64> = (1..=8).collect();
     expected.sort_by_key(|&id| hash(id));
     expected.truncate(2);
-    assert_eq!(expected, vec![9, 4]);
-    assert_eq!(ids(&r.samples["change:R0n"]), expected, "smallest hash first, not 2 and 3 in id order");
+    assert_eq!(expected, vec![6, 3]);
+    assert_eq!(ids(&r.samples["change:R0n"]), expected, "smallest hash first, not 1 and 2 in id order");
     assert_eq!(r.samples_per_reason, 2);
-    assert_eq!(ids(&r.planned), vec![2, 3]);
+    assert_eq!(ids(&r.planned), vec![1, 2]);
     assert!(
         ids(&r.samples["change:R0n"]).iter().all(|id| !ids(&r.planned).contains(id)),
         "drawn from the whole class, not from the capped listing"
@@ -1318,7 +1325,7 @@ async fn the_planner_dates_its_candidates_and_holds_a_rename() {
     let (db, conn) = open("ron-dated").await;
     dated_corpus(&conn).await;
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v12");
+    assert_eq!(r.epoch, "524u2-v13");
     assert_eq!(r.by_hold.get("undated"), None, "a finished plan holds nothing undated");
     assert_eq!(r.by_hold.get("head_current"), None, "every head printed 3+ years before the plan");
     assert_eq!(r.by_hold["recent"], count(1, 11), "40, the rename");
@@ -1446,7 +1453,7 @@ async fn the_planner_counts_the_serve_holds_and_the_withheld_releases() {
         dated_org(&conn, id, head, &mentions).await;
     }
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v12");
+    assert_eq!(r.epoch, "524u2-v13");
     assert_eq!(r.by_hold["residue"], count(2, 12), "50 and 51 stay held under their v8 reason");
     assert_eq!(r.by_hold[store::HEAD_HOLD_ORGAN], count(1, 6), "53");
     assert_eq!(ids(&r.held), vec![50, 51, 53]);
@@ -1495,7 +1502,7 @@ async fn the_planner_holds_a_current_head_and_stores_its_as_of() {
     let before = crate_now();
     let r = plan(&db, 2_000, None, &[]).await;
     let after = crate_now();
-    assert_eq!(r.epoch, "524u2-v12");
+    assert_eq!(r.epoch, "524u2-v13");
     assert!(before <= r.as_of && r.as_of <= after, "as_of is the planner's start: {before} <= {} <= {after}", r.as_of);
     assert_eq!(r.as_of_date, store::rates::civil_date(r.as_of));
     assert_eq!(r.by_hold[store::HEAD_HOLD_CURRENT], count(1, 7), "60");
@@ -1600,7 +1607,7 @@ async fn the_planner_holds_a_stale_top_with_a_rival_and_the_wet_run_can_exclude_
         dated_org(&conn, id, head, &mentions).await;
     }
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v12");
+    assert_eq!(r.epoch, "524u2-v13");
     assert_eq!(r.by_hold[store::HEAD_HOLD_TOP_STALE], count(1, 8), "80");
     assert_eq!(r.by_hold.len(), 1);
     assert_eq!(ids(&r.held), vec![80]);
@@ -1663,7 +1670,7 @@ async fn the_planner_plans_a_wrap_collapse_and_the_written_head_holds() {
         dated_org(&conn, id, head, &mentions).await;
     }
     let r = plan(&db, 2_000, None, &[]).await;
-    assert_eq!(r.epoch, "524u2-v12");
+    assert_eq!(r.epoch, "524u2-v13");
     assert_eq!(ids(&r.planned), vec![90, 92]);
     let (collapse, released) = (&r.planned[0], &r.planned[1]);
     assert_eq!(

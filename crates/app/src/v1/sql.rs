@@ -1317,7 +1317,10 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     a unique top cluster holds at least 3 votes and at least 25%; or when the head is empty or not a \
     name (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script that \
     name is written in. Even then it stays when the change would swap one legal-form family for another \
-    (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS name check the old head passed, or, on \
+    (`AG` to `Sàrl`) while the head's own cluster holds at least 2 votes, drop a consortium mark unless \
+    the new name keeps a word besides its legal forms and every such word is a word of the head, fail \
+    the NHS ODS name check \
+    the old head passed, or, on \
     the 25% arm only, serve an initialism of the head; when the identifier is a placeholder \
     (`KEINEANGABE`, `UNBEKANNT` or `NICHTVORHANDEN` with any digits, or all zeros); when no spelling of \
     the winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on the 55% arm, \

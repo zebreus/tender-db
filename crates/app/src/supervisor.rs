@@ -23126,7 +23126,7 @@ mod tests {
         assert!(plan["planned"][0]["top_newest"].is_null(), "{}", plan["planned"][0]);
         let msg = sup.run_spec(&wet_stale(5, &["R2"], &[], true)).await.expect("stale top and R2 filtered");
         for needle in [
-            "refresh-org-names WET (issue 524 unit 2b, rule 524u2-v12, job 5): 0 of the plan's 2 planned change(s) in scope.",
+            "refresh-org-names WET (issue 524 unit 2b, rule 524u2-v13, job 5): 0 of the plan's 2 planned change(s) in scope.",
             "Filters (rule v9, v11): exclude_rules=R2 exclude_stale_top=true — 2 planned change(s) in scope dropped before the pre-pass (1 by rule, 0 by junk release, 1 by stale top).",
             "RENAMED 0 head(s)",
         ] {
@@ -23777,16 +23777,26 @@ mod tests {
         // Mojibake is unfit: the clean spelling is served whatever the votes.
         let napoli = [("UniversitÃ\u{a0}degli Studi di Napoli", 9), ("Università degli Studi di Napoli", 1), ("Ateneo Sud", 1)];
         assert_eq!(elect_head(&napoli, &org("Ateneo Sud"), &fns).new_name(), Some("Università degli Studi di Napoli"));
-        // The family hold reads the folded names: AG -> Sàrl is a family swap.
-        let swiss = [("Acme Sàrl", 5), ("Acme Schweiz AG", 1)];
+        // The family hold reads the folded names: AG -> Sàrl is a family swap. Rule v13 (issue 548 U2):
+        // it holds only while the head's own cluster holds 2+ votes (dated, so that H does not hold
+        // `undated` first); a stray head (H = 1) changes.
+        let undated: [store::DatedVote<'_>; 0] = [];
+        let dated = |head| store::HeadElectOrg { dated: Some(&undated), ..org(head) };
+        let swiss = [("Acme Sàrl", 5), ("Acme Schweiz AG", 2)];
         assert_eq!(
-            elect_head(&swiss, &org("Acme Schweiz AG"), &fns),
+            elect_head(&swiss, &dated("Acme Schweiz AG"), &fns),
             HeadVerdict::Hold { reason: "family", rule: HeadRule::R1, new: Some("Acme Sàrl".into()) }
         );
-        // Unit 2a.3: …and joins a dotted form's letters first: AG -> S.à r.l. is one too.
-        let dotted = [("Acme S.à r.l.", 5), ("Acme Schweiz AG", 1)];
+        let stray = [("Acme Sàrl", 5), ("Acme Schweiz AG", 1)];
         assert_eq!(
-            elect_head(&dotted, &org("Acme Schweiz AG"), &fns),
+            elect_head(&stray, &org("Acme Schweiz AG"), &fns),
+            HeadVerdict::Change { rule: HeadRule::R1, new: "Acme Sàrl".into() },
+            "rule v13: a stray head's family swap is released"
+        );
+        // Unit 2a.3: …and joins a dotted form's letters first: AG -> S.à r.l. is one too.
+        let dotted = [("Acme S.à r.l.", 5), ("Acme Schweiz AG", 2)];
+        assert_eq!(
+            elect_head(&dotted, &dated("Acme Schweiz AG"), &fns),
             HeadVerdict::Hold { reason: "family", rule: HeadRule::R1, new: Some("Acme S.à r.l.".into()) }
         );
         // Unit 2a.3: an accented winner keeps its place against a one-mention typo twin (1526605).

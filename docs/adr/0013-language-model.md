@@ -314,6 +314,28 @@ Decided:
    `exclude_rules: ["R2", "R0w"]` and keeps `exclude_released: ["unfit"]` until a dated re-judge of the
    guard-passed releases and every R0w change passes. Accepted limit: an R0w head is fit, so once its
    `head_current` lapses, v10's majority may again replace it (issue 548's over-blocking work).
+
+   **The family guards release a stray head, and the consortium guard a group's name cut to its own
+   words (rule `524u2-v13`, issue 548 `## U1b + U2`, decided 2026-10-19 in `548-triage/u2/decision.md`).**
+   Unit 1 read the held listing of v12 plan 2569 (2026-10-16, 11,652 holds). The bind guards are now asked
+   with H, the votes of the head's own cluster. `family` and `gb_family` hold only at H ≥ 2: of the
+   changes a wet run would ship, family's at H ≤ 1 read 22 of 22 right and all 4 of its wrongs had
+   H ≥ 2; gb_family read 7 of 7 right, 5 of them at H ≤ 1 (a stray print of a subsidiary or sibling name
+   on the register entity's own number, 10213161). Releasing gb_family whole was not adopted: its
+   H ≥ 2 evidence is two rows, and one predicate for both guards bounds what the weekly upkeep ships
+   unread. `consortium_removed` is released when the new name's words, its legal forms dropped, are a
+   non-empty subset of the head's words: lower case, Latin-folded (`fold_diacritics`), split on every
+   non-letter-or-digit, runs of single letters joined (`S.A.` → `sa`); the legal forms are
+   `family_token`'s keys and `R2_LEGAL_FORM_TOKENS`, dropped from the new name only. Its salted 30 read
+   29 right, 1 neutral, 0 wrong; `CONSORTIUM DES PEINTURES ET REVETEMENTS` → `SARL CPR` (the firm's own
+   name, then an initialism) stays held, as does a new name of legal forms alone. Not adopted: top_stale's
+   direct supersede test T1 (its dated 30 read 2 wrong), counting votes per notice (it stopped no
+   recorded wrong on the release sets), releasing `head_current` (3 wrong of 30). Every other hold, and
+   every wet filter (`exclude_rules: ["R2", "R0w"]`, `exclude_released: ["unfit"]`), stands.
+   Expected on that plan: `by_hold` gb_family −7, family −36, consortium_removed −179, head_current
+   +64, top_stale +23 (holds 11,652 → 11,517); R1 changes up to +106. Accepted limit: 34 of the 56
+   subset-matched heads now held `head_current` lapse out of it within a year and would then ship
+   unread; they are to be re-read before they do.
 4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
    spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
    guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of
@@ -350,8 +372,10 @@ Decided:
 6. **Held for review.** A change is held when it would:
    - swap one legal-form family for another (`legal_form_family` or `gb_legal_family`, read on the
      diacritic-folded names, and on them with dotted single letters joined, set on both sides and
-     different: `Acme Schweiz AG` → `Acme Sàrl` or `Acme S.à r.l.`);
-   - drop a consortium mark;
+     different: `Acme Schweiz AG` → `Acme Sàrl` or `Acme S.à r.l.`) — since rule `v13` only while the
+     head's own cluster holds 2 or more votes;
+   - drop a consortium mark — since rule `v13` unless the new name's words, legal forms aside, are a
+     non-empty subset of the head's (`Groupement Guintoli/EHTP/…` → `Guintoli`);
    - fail the NHS ODS name check the old head passed;
    - by (c) only, replace the head with an initialism of it: a token of 3 to 5 upper-case letters, no
      legal form or designation (`SRL`, `GMBH`, `SCOP`, `SPL`, `PPH`, …), that is the initials of a run

@@ -449,8 +449,9 @@ legal form. The head changes only when a cluster other than its own holds at lea
 votes and at least twice the head's; or when the head's own cluster holds at most 1 vote and a unique top cluster
 holds at least 3 votes and at least 25%; or when the head is empty or not a name (a placeholder, a blank, a
 void-lot phrase) and some mention's name votes, whatever script that name is written in. Even then it stays when
-the change would swap one legal-form family for another (`AG` to `Sàrl`), drop a consortium mark, fail the NHS ODS
-name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when the identifier is a
+the change would swap one legal-form family for another (`AG` to `Sàrl`) while the head's own cluster holds at least
+2 votes, drop a consortium mark unless the new name keeps a word besides its legal forms and every such word is a
+word of the head, fail the NHS ODS name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when the identifier is a
 placeholder (`KEINEANGABE`, `UNBEKANNT` or `NICHTVORHANDEN` with any digits, or all zeros); when no spelling of the
 winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on
 the 55% arm, while the organization's newest procedures still use the current head (a rename: the head names at
@@ -511,6 +512,18 @@ would let a later run release it to the winning name after all). A head held thi
 (after a legal form, or before an address, a branch, a person or a member list) keeps its line break for now. The
 name on one line has the same matching key as the head it replaces, so the holds that protected the head keep
 protecting it on later runs. Rename runs leave both changes out until a dated review of them passes.
+
+Rule v13 (2026-10-19, issue 548) lifts two checks where a review of the changes they held found them blocking
+right changes. The legal-form check no longer holds a change whose current head is a stray, printed (in any casing,
+accents or legal form) by at most one of the organization's mentions: all 27 such changes a rename run would have
+applied read right (often a single old print of a subsidiary or sibling name served on the register entity's own
+number, `Southern Gas Network PLC` to `Scotia Gas Networks Ltd`), while every wrong change it held had a head
+printed two or more times, and those stay held. The consortium check no
+longer holds a change that cuts a group's name down to words the group's name already prints, legal forms aside
+(`Groupement Guintoli/EHTP/GTS/…` to `Guintoli`, `X (mandataire)` to `X`); a review of 30 such changes read 29 right,
+1 neutral and none wrong. A change that brings in a word the head does not print still waits (`CONSORTIUM DES
+PEINTURES ET REVETEMENTS` to `SARL CPR`, where `Consortium` is the firm's own name), and so does a new name made of
+legal forms alone. Every other hold above is unchanged.
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new

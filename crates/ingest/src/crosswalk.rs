@@ -940,32 +940,44 @@ pub fn consortium_name(name: &str) -> bool {
 /// and the Stage-4 N3 key builder (`n3_key`) — one table, so the veto and
 /// the edge keys can never disagree about what a form token means.
 fn family_token(t: &str) -> Option<&'static str> {
-    match t {
-        "gmbh" | "mbh" => Some("gmbh"),
-        "ag" => Some("ag"),
-        "sarl" | "eurl" => Some("sarl"),
-        "sas" | "sasu" => Some("sas"),
-        // Oy/Ab/Oyj/Abp are language and listing variants of ONE
-        // Nordic legal form (aktiebolag/osakeyhtiö) — "X Oy" and
-        // "X Ab" name the same company class, so they share one family
-        // and never veto each other.
-        "oy" | "oyj" | "ab" | "abp" | "uab" => Some("aktiebolag"),
-        "aps" => Some("aps"),
-        "bv" => Some("bv"),
-        "nv" => Some("nv"),
-        "kft" => Some("kft"),
-        "zrt" | "nyrt" => Some("zrt"),
-        "spa" => Some("spa"),
-        "srl" => Some("srl"),
-        "sia" => Some("sia"),
-        // The undotted single-token spellings of the dotted forms ("Alfa
-        // sro", "Beta spzoo") — the joined-stream probe caught these for
-        // the veto; the shared table catches them for both consumers.
-        "sro" => Some("sro"),
-        "spzoo" => Some("spzoo"),
-        _ => None,
-    }
+    FAMILY_TOKENS.iter().find(|&&(key, _)| key == t).map(|&(_, family)| family)
 }
+
+/// [`family_token`]'s table, `(token, family)`: a table rather than a `match` so its keys can be read
+/// whole — issue 548 U2's consortium release reads them as legal forms
+/// ([`head_consortium_legal_form`]), and its test pins this key set to the decision's list exactly.
+const FAMILY_TOKENS: [(&str, &str); 23] = [
+    ("gmbh", "gmbh"),
+    ("mbh", "gmbh"),
+    ("ag", "ag"),
+    ("sarl", "sarl"),
+    ("eurl", "sarl"),
+    ("sas", "sas"),
+    ("sasu", "sas"),
+    // Oy/Ab/Oyj/Abp are language and listing variants of ONE
+    // Nordic legal form (aktiebolag/osakeyhtiö) — "X Oy" and
+    // "X Ab" name the same company class, so they share one family
+    // and never veto each other.
+    ("oy", "aktiebolag"),
+    ("oyj", "aktiebolag"),
+    ("ab", "aktiebolag"),
+    ("abp", "aktiebolag"),
+    ("uab", "aktiebolag"),
+    ("aps", "aps"),
+    ("bv", "bv"),
+    ("nv", "nv"),
+    ("kft", "kft"),
+    ("zrt", "zrt"),
+    ("nyrt", "zrt"),
+    ("spa", "spa"),
+    ("srl", "srl"),
+    ("sia", "sia"),
+    // The undotted single-token spellings of the dotted forms ("Alfa
+    // sro", "Beta spzoo") — the joined-stream probe caught these for
+    // the veto; the shared table catches them for both consumers.
+    ("sro", "sro"),
+    ("spzoo", "spzoo"),
+];
 
 /// The dotted multi-token forms as they appear in a `match_norm` token
 /// stream ("s.r.o." → `s r o`, "spol. s r.o." → `spol s r o`,
@@ -1669,10 +1681,14 @@ fn mojibake(name: &str) -> bool {
 /// resolver's and merge planners' name gates — the altid bar's consortium veto and GB head-vs-head
 /// form check, the anchor's owner consortium veto, `legal_form_family` and N2 corroboration — so a
 /// change that would flip one of them is listed, not applied. The first that holds answers:
-/// - `family`: [`legal_form_family`] names a family on both sides, and they differ;
+/// - `family`: [`legal_form_family`] names a family on both sides, and they differ — since rule `v13`
+///   (issue 548 U2) only when the head's own cluster holds `head_votes` ≥
+///   [`store::HEAD_FAMILY_HOLD_MIN_VOTES`] (2): a stray head (H ≤ 1) is released;
 /// - `gb_family`: [`gb_legal_family`] names a family on both sides, and they differ (`… plc` →
-///   `… Ltd`);
-/// - `consortium_removed`: `old` is a [`consortium_name`] and `new` is not;
+///   `… Ltd`) — since rule `v13` likewise only at H ≥ 2;
+/// - `consortium_removed`: `old` is a [`consortium_name`] and `new` is not — since rule `v13` unless
+///   [`head_consortium_subset`] passes (the new name, its legal forms dropped, is a member's own words
+///   of the head);
 /// - `nhs_check`: the org's identifier is a GB-NHS code (`national` `GBNHS<code>`,
 ///   [`crate::nhs_ods::nhs_tail`]) and `new` fails [`crate::nhs_ods::check`] where `old` was
 ///   admitted (a `Tie` is no pass, as in `child_check`);
@@ -1685,28 +1701,42 @@ fn mojibake(name: &str) -> bool {
 ///
 /// A family gained or lost (`None` → `spzoo`, sample 760's address tail cut to `Getinge Polska Sp.
 /// z o.o.`) is allowed; the dry plan counts those moves.
+///
+/// `head_votes` is H, the votes of the head's own cluster as store's election counts them
+/// (`store::HeadElection::head_votes`, the plan entry's `head`; issue 548's `u1/filter.py` filters on
+/// that field). Rule `v13` (issue 548 `## U1b + U2`, `548-triage/u2/decision.md`): unit 1 read the
+/// shippable family changes at H ≤ 1 22 of 22 right and every wrong one at H ≥ 2, and gb_family's 7 of
+/// 7 right (10213161 and 11628199 at H = 1); one predicate releases both family guards at H ≤ 1, D3's
+/// narrow form, so 13448374 (H = 7) and 9087207 (H = 2) stay held. A released row still meets every
+/// later guard (15783942 meets `consortium_removed` next) and then store's holds.
 pub fn head_change_hold(
     old: &str,
     new: &str,
     identifier_kind: Option<&str>,
     identifier: Option<&str>,
+    head_votes: u64,
 ) -> Option<&'static str> {
     // Issue 524 unit 2a.2/2a.3: the families are read as `folded_family` reads them — on the folded
     // name, then with its single-letter runs joined — because the vote key folds and joins: `Sàrl`,
     // `S.à r.l.`, `S.à.r.l.` and `S.p.A.` are one name with `SARL` / `SPA` there, and
     // `legal_form_family` alone sees only `SARL`, so an AG -> Sàrl change passed unheld.
     // `legal_form_family` itself, and the merge vetoes, are unchanged.
-    if let (Some(a), Some(b)) = (folded_family(old, legal_form_family), folded_family(new, legal_form_family))
+    // Issue 548 U2 (rule v13): both family guards hold only when the head's cluster holds 2+ votes.
+    let families_guarded = head_votes >= store::HEAD_FAMILY_HOLD_MIN_VOTES;
+    if families_guarded
+        && let (Some(a), Some(b)) = (folded_family(old, legal_form_family), folded_family(new, legal_form_family))
         && a != b
     {
         return Some("family");
     }
-    if let (Some(a), Some(b)) = (folded_family(old, gb_legal_family), folded_family(new, gb_legal_family))
+    if families_guarded
+        && let (Some(a), Some(b)) = (folded_family(old, gb_legal_family), folded_family(new, gb_legal_family))
         && a != b
     {
         return Some("gb_family");
     }
-    if consortium_name(old) && !consortium_name(new) {
+    // Issue 548 U2 (rule v13): a consortium name cut down to a member's own words is released.
+    if consortium_name(old) && !consortium_name(new) && !head_consortium_subset(old, new) {
         return Some("consortium_removed");
     }
     if identifier_kind == Some("national")
@@ -1874,27 +1904,74 @@ pub fn head_family(name: &str) -> Option<&'static str> {
 /// letters no family table knows (`Acme S.à r.l.` → `acme s a r l`).
 fn folded_family(name: &str, read: fn(&str) -> Option<&'static str>) -> Option<&'static str> {
     let folded = fold_diacritics(name);
-    read(&folded).or_else(|| {
-        let mut words: Vec<String> = Vec::new();
-        let mut run = String::new();
-        for word in folded.split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()) {
-            let mut chars = word.chars();
-            if let (Some(c), None) = (chars.next(), chars.next())
-                && c.is_alphabetic()
-            {
-                run.push(c);
-                continue;
-            }
-            if !run.is_empty() {
-                words.push(std::mem::take(&mut run));
-            }
-            words.push(word.to_owned());
+    read(&folded).or_else(|| read(&single_letter_runs_joined(&folded).join(" ")))
+}
+
+/// [`folded_family`]'s second read, and (issue 548 U2, rule `v13`) [`head_subset_words`]: `folded`
+/// split on every character that is not a letter or digit (`_` too), empties dropped, each RUN of
+/// one-letter words joined into one word (`s a r l` → `sarl`, `a s` → `as`); a one-digit word is not
+/// joined. The join [`altid_name_key`] makes for the vote key.
+fn single_letter_runs_joined(folded: &str) -> Vec<String> {
+    let mut words: Vec<String> = Vec::new();
+    let mut run = String::new();
+    for word in folded.split(|c: char| !c.is_alphanumeric()).filter(|w| !w.is_empty()) {
+        let mut chars = word.chars();
+        if let (Some(c), None) = (chars.next(), chars.next())
+            && c.is_alphabetic()
+        {
+            run.push(c);
+            continue;
         }
         if !run.is_empty() {
-            words.push(run);
+            words.push(std::mem::take(&mut run));
         }
-        read(&words.join(" "))
-    })
+        words.push(word.to_owned());
+    }
+    if !run.is_empty() {
+        words.push(run);
+    }
+    words
+}
+
+// ---- Issue 548 U2 (issue 524 rule v13): the consortium release (`548-triage/u2/decision.md`).
+
+/// Issue 548 U2 (issue 524 rule `v13`): a name's WORDS as [`head_consortium_subset`] reads them —
+/// lower-cased and Latin-folded by [`fold_diacritics`] (`ł` → `l`, `ø` → `o`, `đ`/`ð` → `d`, `ß` → `ss`,
+/// `æ` → `ae`, `œ` → `oe`, `ı` → `i`, `þ` → `th`), split on every character that is not a letter or
+/// digit (`_` too), each run of single letters joined as [`folded_family`] joins it (`S.A.` → `sa`,
+/// `A/S` → `as`, `S. L. U.` → `slu`). U1c's `subset.py` `tokens()`, on this crate's fold instead of
+/// Python's NFKD (over the 2026-10-16 listing's consortium rows the two differ on one `º`, which moves
+/// no match).
+pub fn head_subset_words(name: &str) -> Vec<String> {
+    single_letter_runs_joined(&fold_diacritics(name))
+}
+
+/// Issue 548 U2 (issue 524 rule `v13`): whether a word of [`head_subset_words`] is a LEGAL FORM the
+/// consortium release drops from the new name — a [`family_token`] key or one of
+/// [`R2_LEGAL_FORM_TOKENS`], the two tables the head election already reads as legal forms
+/// ([`head_r2_hold`] reads exactly these). U2 chose them over the wider [`HEAD_FORM_WORDS`] and over
+/// U1c's sensitivity extras (`sau`, `co`, `lda`, `sprl`, `bvba`, `cvba`). No list of its own: the
+/// decision's 61 words (U1c's `subset.py`, copied from these tables) are pinned against both tables
+/// exactly in the tests ([`FAMILY_TOKENS`]' keys and [`R2_LEGAL_FORM_TOKENS`] word for word), so a word
+/// added to either table, or a table forked, fails there.
+pub fn head_consortium_legal_form(word: &str) -> bool {
+    family_token(word).is_some() || R2_LEGAL_FORM_TOKENS.contains(&word)
+}
+
+/// Issue 548 U2 (issue 524 rule `v13`): the consortium RELEASE — whether a change from the consortium
+/// name `old` to `new` cuts the head down to words the head already prints: `new`'s words
+/// ([`head_subset_words`]) less its legal forms ([`head_consortium_legal_form`]; dropped from the NEW
+/// name only, the head may carry any) are NON-EMPTY and every one of them is a word of `old`.
+/// [`head_change_hold`] holds `consortium_removed` only when this fails. `Groupement Guintoli/EHTP/GTS/…`
+/// → `Guintoli` (8217358, the member's own name on its SIREN) and `Consortium consisting of Kontron
+/// Transportation Austria AG and …` → `Kontron Transportation GmbH` (15783942) pass; `CONSORTIUM DES
+/// PEINTURES ET REVETEMENTS` → `SARL CPR` (18287356: `consortium` is the firm's own name, and `cpr` is no
+/// word of the head) and a new name of legal forms alone (`S.A.R.L.`) do not. U1c's test: 179 of the
+/// 2026-10-16 listing's 246 `consortium_removed` rows, its salted 30 read 29 right, 1 neutral, 0 wrong.
+pub fn head_consortium_subset(old: &str, new: &str) -> bool {
+    let head: std::collections::HashSet<String> = head_subset_words(old).into_iter().collect();
+    let mut kept = head_subset_words(new).into_iter().filter(|word| !head_consortium_legal_form(word)).peekable();
+    kept.peek().is_some() && kept.all(|word| head.contains(&word))
 }
 
 /// Issue 552 (issue 524 rule `v12`): the legal forms a LINE may end in that [`family_token`] does not
@@ -2634,17 +2711,17 @@ mod head_vote {
     /// folds into `SARL` is a family the hold sees.
     #[test]
     fn a_family_swap_spelled_with_a_diacritic_is_held() {
-        assert_eq!(head_change_hold("Acme Schweiz AG", "Acme Sàrl", None, Some("CHE123")), Some("family"));
+        assert_eq!(head_change_hold("Acme Schweiz AG", "Acme Sàrl", None, Some("CHE123"), 2), Some("family"));
         assert_eq!(head_family("Acme Sàrl"), Some("sarl"));
         assert_eq!(head_family("Acme Schweiz AG"), Some("ag"));
-        assert_eq!(head_change_hold("Acme SARL", "Acme Sàrl", None, Some("FR1")), None, "the same family");
+        assert_eq!(head_change_hold("Acme SARL", "Acme Sàrl", None, Some("FR1"), 2), None, "the same family");
         // Unit 2a.3: the dotted forms fold into single letters; the second read joins them.
-        assert_eq!(head_change_hold("Acme Schweiz AG", "Acme S.à r.l.", None, Some("CHE123")), Some("family"));
-        assert_eq!(head_change_hold("Acme SRL", "Società Acme S.p.A.", None, Some("IT1")), Some("family"), "srl vs spa");
+        assert_eq!(head_change_hold("Acme Schweiz AG", "Acme S.à r.l.", None, Some("CHE123"), 2), Some("family"));
+        assert_eq!(head_change_hold("Acme SRL", "Società Acme S.p.A.", None, Some("IT1"), 2), Some("family"), "srl vs spa");
         assert_eq!(head_family("Acme S.à r.l."), Some("sarl"));
         assert_eq!(head_family("Acme S.à.r.l."), Some("sarl"));
         assert_eq!(head_family("Società Acme S.p.A."), Some("spa"));
-        assert_eq!(head_change_hold("Acme SARL", "Acme S.à r.l.", None, Some("FR1")), None, "still the same family");
+        assert_eq!(head_change_hold("Acme SARL", "Acme S.à r.l.", None, Some("FR1"), 2), None, "still the same family");
     }
 
     #[test]
@@ -2731,27 +2808,27 @@ mod head_vote {
     #[test]
     fn a_change_that_moves_a_bind_input_is_held() {
         // plc -> Ltd: a GB form swap, the altid arm's head-vs-head veto.
-        assert_eq!(head_change_hold("Acme Holdings plc", "Acme Services Ltd", None, Some("GB1")), Some("gb_family"));
-        assert_eq!(head_change_hold("Siemens AG", "Siemens GmbH", None, Some("DE1")), Some("family"));
+        assert_eq!(head_change_hold("Acme Holdings plc", "Acme Services Ltd", None, Some("GB1"), 2), Some("gb_family"));
+        assert_eq!(head_change_hold("Siemens AG", "Siemens GmbH", None, Some("DE1"), 2), Some("family"));
         // Sample 760: an address-tailed head gains `spzoo` — allowed, and counted by the plan.
         let old = "Getinge Polska ul. Ostrobramska 101 04-041 Warszawa NIP 5272468405";
         let new = "Getinge Polska Sp. z o.o.";
-        assert_eq!(head_change_hold(old, new, Some("national"), Some("PL5272468405")), None);
+        assert_eq!(head_change_hold(old, new, Some("national"), Some("PL5272468405"), 2), None);
         assert_eq!((head_family(old), head_family(new)), (None, Some("spzoo")));
-        assert_eq!(head_change_hold("Arkil Ltd", "Arkil", None, Some("GB2")), None, "a form dropped is no swap");
+        assert_eq!(head_change_hold("Arkil Ltd", "Arkil", None, Some("GB2"), 2), None, "a form dropped is no swap");
         assert_eq!(
-            head_change_hold("Groupement Colas / Barthelemy", "Colas Centre Ouest", None, Some("FR1")),
+            head_change_hold("Groupement Colas / Barthelemy", "Colas Centre Ouest", None, Some("FR1"), 2),
             Some("consortium_removed")
         );
         // GB-NHS: the old head passes the ODS name check, the new one fails it.
         let trust = "Oxford University Hospitals NHS Foundation Trust";
         assert_eq!(
-            head_change_hold(trust, "University of Oxford", Some("national"), Some("GBNHSRTH")),
+            head_change_hold(trust, "University of Oxford", Some("national"), Some("GBNHSRTH"), 2),
             Some("nhs_check")
         );
-        assert_eq!(head_change_hold(trust, "Oxford University Hospitals", Some("national"), Some("GBNHSRTH")), None);
-        assert_eq!(head_change_hold(trust, "University of Oxford", Some("vat"), Some("GBNHSRTH")), None, "not an ODS code");
-        assert_eq!(head_change_hold("University of Oxford", trust, Some("national"), Some("GBNHSRTH")), None);
+        assert_eq!(head_change_hold(trust, "Oxford University Hospitals", Some("national"), Some("GBNHSRTH"), 2), None);
+        assert_eq!(head_change_hold(trust, "University of Oxford", Some("vat"), Some("GBNHSRTH"), 2), None, "not an ODS code");
+        assert_eq!(head_change_hold("University of Oxford", trust, Some("national"), Some("GBNHSRTH"), 2), None);
         assert_eq!(head_family("Acme Holdings plc"), Some("plc"));
         assert_eq!(head_family("Ministerstvo financí"), None);
     }
@@ -2776,12 +2853,369 @@ mod placeholder_id {
         assert_eq!(HEAD_PLACEHOLDER_ID_WORDS, ["keineangabe", "unbekannt", "nichtvorhanden"]);
         // 22831984: `Kapitel 2` → `AOK PLUS …` on `KEINEANGABE7`, held whatever the kind.
         let aok = "AOK PLUS - Die Gesundheitskasse für Sachsen und Thüringen";
-        assert_eq!(head_change_hold("Kapitel 2", aok, Some("national"), Some("KEINEANGABE7")), Some(store::HEAD_HOLD_PLACEHOLDER_ID));
-        assert_eq!(head_change_hold("Kapitel 2", aok, None, Some("KEINEANGABE")), Some(store::HEAD_HOLD_PLACEHOLDER_ID));
-        assert_eq!(head_change_hold("Kapitel 2", aok, None, Some("GBNHSQK1")), None);
-        assert_eq!(head_change_hold("Kapitel 2", aok, None, None), None, "no identifier, no placeholder");
+        assert_eq!(head_change_hold("Kapitel 2", aok, Some("national"), Some("KEINEANGABE7"), 2), Some(store::HEAD_HOLD_PLACEHOLDER_ID));
+        assert_eq!(head_change_hold("Kapitel 2", aok, None, Some("KEINEANGABE"), 2), Some(store::HEAD_HOLD_PLACEHOLDER_ID));
+        assert_eq!(head_change_hold("Kapitel 2", aok, None, Some("GBNHSQK1"), 2), None);
+        assert_eq!(head_change_hold("Kapitel 2", aok, None, None, 2), None, "no identifier, no placeholder");
         // Last of the guards: an older guard keeps its reason on a placeholder identifier.
-        assert_eq!(head_change_hold("Acme Holdings plc", "Acme Services Ltd", None, Some("0000")), Some("gb_family"));
+        assert_eq!(head_change_hold("Acme Holdings plc", "Acme Services Ltd", None, Some("0000"), 2), Some("gb_family"));
+        // Rule v13: at H ≤ 1 the family guard is released, and the later guard answers.
+        assert_eq!(
+            head_change_hold("Acme Holdings plc", "Acme Services Ltd", None, Some("0000"), 1),
+            Some(store::HEAD_HOLD_PLACEHOLDER_ID)
+        );
+    }
+}
+
+/// Issue 548 U2 (issue 524 rule `v13`): the family guards' H ≤ 1 release and the consortium release, on
+/// the rows of v12 plan 2569's (2026-10-16) held listing the decision names
+/// (`.scratch/tender-db/548-triage/org-name-refresh-plan-2026-10-16.json.gz`: `old_name`, `new_name`,
+/// `identifier`, `head`, and the top 5 `spellings`).
+#[cfg(test)]
+mod consortium_release {
+    use super::{
+        FAMILY_TOKENS, HEAD_FORM_WORDS, HEAD_TAIL_FORMS, R2_LEGAL_FORM_TOKENS, consortium_name, family_token,
+        head_change_hold,
+        head_consortium_legal_form, head_consortium_subset, head_r2_hold, head_serve_hold, head_spelling_unfit,
+        head_subset_words, head_tail_family, head_twin_key, head_vote_key,
+    };
+
+    /// U1c's `subset.py` `FAMILY_TOKEN_KEYS` and `R2_LEGAL_FORM_TOKENS`, verbatim: the decision's
+    /// LEGAL_FORMS, copied from this file's two tables on 2026-10-19. Test-only, to pin the tables to
+    /// the decision (`the_legal_forms_are_the_two_tables_the_decision_read`); the rule reads the tables.
+    const U1C_FAMILY_TOKEN_KEYS: [&str; 23] = [
+        "gmbh", "mbh", "ag", "sarl", "eurl", "sas", "sasu", "oy", "oyj", "ab", "abp", "uab", "aps", "bv", "nv", "kft",
+        "zrt", "nyrt", "spa", "srl", "sia", "sro", "spzoo",
+    ];
+    const U1C_R2_LEGAL_FORM_TOKENS: [&str; 38] = [
+        "sa", "srl", "spa", "sas", "sarl", "ag", "bv", "nv", "ab", "as", "oy", "kg", "gmbh", "ltd", "plc", "llp", "inc",
+        "sl", "slu", "sca", "scs", "scg", "spl", "snc", "scop", "sci", "selarl", "selas", "eurl", "sasu", "pph", "fuh",
+        "phu", "zoz", "spzoz", "spz", "ett", "grsk",
+    ];
+
+    /// The guard on the decision's rows, `(old, new, identifier, H)` as listed. gb_family: 10213161 and
+    /// 11628199 (H = 1) are released, 13448374 (H = 7) and 9087207 (H = 2) still held. family: 3728305
+    /// (H = 24) still held. consortium_removed: 8217358 released (Guintoli, a subset of the head's
+    /// words), 18287356 still held (CPR: `cpr` is no word of the head). 15783942 (H = 1) leaves BOTH
+    /// family and consortium_removed: family is released at H = 1, and the guard it meets next passes
+    /// the subset test. Each released row is held at H = 2 by the guard that released it, so the
+    /// release, not some other read, is what lets it through. 18874640 (`S.A.`), 10629424 and 22667236
+    /// (`é` on either side) are released only through the words' single-letter join or fold.
+    #[test]
+    fn the_v13_listing_rows_release_and_hold_as_decided() {
+        let hold = |old: &str, new: &str, id: &str, h: u64| head_change_hold(old, new, Some("national"), Some(id), h);
+        // gb_family, H ≤ 1: released.
+        let (sgn_old, sgn_new) = ("Southern Gas Network PLC", "Scotia Gas Networks Ltd");
+        assert_eq!(hold(sgn_old, sgn_new, "04958135", 1), None, "10213161");
+        assert_eq!(hold(sgn_old, sgn_new, "04958135", 2), Some("gb_family"), "10213161 at H = 2");
+        assert_eq!(hold(sgn_old, sgn_new, "04958135", 0), None, "H = 0 is a stray too");
+        let (capita_old, capita_new) = ("Capita Business Services Limited", "Capita PLC");
+        assert_eq!(hold(capita_old, capita_new, "02081330", 1), None, "11628199");
+        assert_eq!(hold(capita_old, capita_new, "02081330", 2), Some("gb_family"), "11628199 at H = 2");
+        // gb_family, H ≥ 2: still held.
+        assert_eq!(hold("Breyer Group Public Ltd Company", "Breyer Group PLC", "00782931", 7), Some("gb_family"), "13448374");
+        let morgan = "Morgan Sindall Construction and Infrastructure Ltd";
+        assert_eq!(hold("Morgan Sindall plc", morgan, "04273754", 2), Some("gb_family"), "9087207");
+        // family, H ≥ 2: still held (a language-annotation tail on the new name, one of unit 1's wrongs).
+        let unomed = "UNOMED spol. s r. o. UNOMED GmbH. - v jazyku nemeckom UNOMED Ltd. - v jazyku anglickom";
+        assert_eq!(hold("Unomed, spol. s r.o.", unomed, "00612791", 24), Some("family"), "3728305");
+        // consortium_removed: the subset release.
+        let guintoli = "Groupement Guintoli/EHTP/GTS/La Nouvelle Sirolaise de Construction/DFC Battage";
+        assert!(consortium_name(guintoli) && head_consortium_subset(guintoli, "Guintoli"));
+        assert_eq!(hold(guintoli, "Guintoli", "44775408600018", 1), None, "8217358");
+        assert_eq!(hold(guintoli, "Guintoli", "44775408600018", 5), None, "the subset release reads no H");
+        let cpr = "CONSORTIUM DES PEINTURES ET REVETEMENTS";
+        assert!(!head_consortium_subset(cpr, "SARL CPR"), "`sarl` is a legal form, `cpr` no word of the head");
+        assert_eq!(hold(cpr, "SARL CPR", "43772004800051", 1), Some("consortium_removed"), "18287356");
+        // 15783942, the cross-guard: family (AG → GmbH) at H = 1 is released, and consortium_removed,
+        // asked next, passes the subset test (`gmbh` dropped; `kontron`, `transportation` are the head's).
+        let kontron = "Consortium consisting of Kontron Transportation Austria AG and Kontron Transportation Sp. z o. o.";
+        let kontron_new = "Kontron Transportation GmbH";
+        assert_eq!(hold(kontron, kontron_new, "FN223804Z", 2), Some("family"), "15783942 at H = 2");
+        assert!(consortium_name(kontron) && !consortium_name(kontron_new) && head_consortium_subset(kontron, kontron_new));
+        assert_eq!(hold(kontron, kontron_new, "FN223804Z", 1), None, "15783942 leaves both guards");
+        // A new name of legal forms only is no member's name: still held, at any H.
+        assert!(!head_consortium_subset("Groupement Martin / Durand", "S.A.R.L."));
+        assert_eq!(hold("Groupement Martin / Durand", "S.A.R.L.", "FR1", 1), Some("consortium_removed"));
+        assert_eq!(hold("Groupement Martin SARL / Durand", "SARL", "FR1", 1), Some("consortium_removed"));
+        // v12's own exhibit stays held: `centre` and `ouest` are no words of the head.
+        assert_eq!(hold("Groupement Colas / Barthelemy", "Colas Centre Ouest", "FR1", 1), Some("consortium_removed"));
+        // Released rows that only the tokenizer's join or fold releases (U1c's `matched_full`; a
+        // tokenizer without the join, or without the fold, holds them).
+        // 18874640, the single-letter join on the new side: `S.A.` is `sa`, a legal form, dropped.
+        // Unjoined, `s` and `a` are no legal forms and no words of the head.
+        let curea = "Groupement CuREA – Chef de file CGI Luxembourg SA";
+        assert!(!head_consortium_legal_form("s") && !head_consortium_legal_form("a"));
+        assert!(head_consortium_subset(curea, "CGI Luxembourg S.A."), "18874640");
+        assert_eq!(hold(curea, "CGI Luxembourg S.A.", "LU21747447", 1), None, "18874640");
+        // 10629424, the fold on the head's side: the head prints `Sitétudes`, the new name `Sitetudes`.
+        let sitetudes = "Groupement Sitétudes / Citec / Traverses";
+        assert!(head_consortium_subset(sitetudes, "Sitetudes"), "10629424");
+        assert_eq!(hold(sitetudes, "Sitetudes", "44763334800092", 1), None, "10629424");
+        // 22667236, the fold on the new side: the head prints `GEOFIT`, the new name `Géofit`.
+        let geofit = "GROUPEMENT GEOFIT (Mandataire) - SINTEGRA (cotraitant)";
+        assert!(head_consortium_subset(geofit, "Géofit"), "22667236");
+        assert_eq!(hold(geofit, "Géofit", "34217401800370", 1), None, "22667236");
+        // nhs_check reads no H: neither name has a family or a consortium mark, so nothing is released,
+        // and the ODS check answers at H = 1 as at H = 2 (a release followed by a later guard is pinned
+        // in `mod placeholder_id`: plc -> Ltd on `0000` at H = 1 reads `placeholder_id`).
+        let trust = "Oxford University Hospitals NHS Foundation Trust";
+        for h in [1, 2] {
+            let nhs = head_change_hold(trust, "University of Oxford", Some("national"), Some("GBNHSRTH"), h);
+            assert_eq!(nhs, Some("nhs_check"), "H = {h}");
+        }
+    }
+
+    /// The words: [`fold_diacritics`](super::fold_diacritics) (lower case, the Latin fold: `ł ø đ ß æ œ ı þ
+    /// ð` as this crate folds them), split on every non-letter-or-digit (`_` too), runs of single letters
+    /// joined (`S.A.` → `sa`, `A/S` → `as`, `S. L. U.` → `slu`), a single digit kept apart.
+    #[test]
+    fn the_subset_words_fold_split_and_join_single_letters() {
+        let words = |name: &str| head_subset_words(name);
+        assert_eq!(words("Acme S.A."), ["acme", "sa"]);
+        assert_eq!(words("Acme A/S"), ["acme", "as"]);
+        assert_eq!(words("Dotación y Equipamiento, S. L. U."), ["dotacion", "y", "equipamiento", "slu"]);
+        assert_eq!(words("Ges. m. b. H."), ["ges", "mbh"]);
+        assert_eq!(words("Łódź_Spółka"), ["lodz", "spolka"]);
+        assert_eq!(words("Straße Ørsted Đuro Æble Œuvre Kırşehir Þór Sæðr"), [
+            "strasse", "orsted", "duro", "aeble", "oeuvre", "kirsehir", "thor", "saedr"
+        ]);
+        assert_eq!(words("Lot 2 A B"), ["lot", "2", "ab"], "a digit is not joined to a letter run");
+        assert_eq!(words("  --  "), Vec::<String>::new());
+    }
+
+    /// The decision's LEGAL_FORMS are this file's two tables and nothing else: U1c's verbatim copy agrees
+    /// with [`R2_LEGAL_FORM_TOKENS`] word for word, with [`FAMILY_TOKENS`]' keys exactly (whatever their
+    /// length), and with [`head_consortium_legal_form`] — which the wider lists (U1c's sensitivity
+    /// extras, [`HEAD_FORM_WORDS`], [`HEAD_TAIL_FORMS`]) and every a-z word of up to four letters do not
+    /// widen. The table's families are pinned too: turning [`family_token`]'s `match` into
+    /// [`FAMILY_TOKENS`] moved no veto and no N3 key.
+    #[test]
+    fn the_legal_forms_are_the_two_tables_the_decision_read() {
+        assert_eq!(R2_LEGAL_FORM_TOKENS, U1C_R2_LEGAL_FORM_TOKENS.as_slice(), "R2's table moved: re-decide 548 U2's list");
+        let mut got: Vec<&str> = FAMILY_TOKENS.iter().map(|&(key, _)| key).collect();
+        got.sort_unstable();
+        got.dedup();
+        let mut want = U1C_FAMILY_TOKEN_KEYS.to_vec();
+        want.sort_unstable();
+        assert_eq!(got, want, "family_token's keys moved: re-decide 548 U2's list");
+        assert_eq!(FAMILY_TOKENS.len(), want.len(), "a family_token key listed twice");
+        let families = [
+            ("gmbh", "gmbh"), ("mbh", "gmbh"), ("ag", "ag"), ("sarl", "sarl"), ("eurl", "sarl"), ("sas", "sas"),
+            ("sasu", "sas"), ("oy", "aktiebolag"), ("oyj", "aktiebolag"), ("ab", "aktiebolag"),
+            ("abp", "aktiebolag"), ("uab", "aktiebolag"), ("aps", "aps"), ("bv", "bv"), ("nv", "nv"),
+            ("kft", "kft"), ("zrt", "zrt"), ("nyrt", "zrt"), ("spa", "spa"), ("srl", "srl"), ("sia", "sia"),
+            ("sro", "sro"), ("spzoo", "spzoo"),
+        ];
+        for (key, family) in families {
+            assert_eq!(family_token(key), Some(family), "{key}: the veto's and N3's family moved");
+        }
+        let letters: Vec<char> = ('a'..='z').collect();
+        let mut short: Vec<String> = letters.iter().map(|c| c.to_string()).collect();
+        for _ in 1..4 {
+            let longer: Vec<String> = short
+                .iter()
+                .filter(|w| w.len() == short.last().map_or(0, String::len))
+                .flat_map(|w| letters.iter().map(move |c| format!("{w}{c}")))
+                .collect();
+            short.extend(longer);
+        }
+        for word in U1C_FAMILY_TOKEN_KEYS.iter().chain(U1C_R2_LEGAL_FORM_TOKENS.iter()) {
+            assert!(head_consortium_legal_form(word), "{word}");
+        }
+        let decided = |w: &str| U1C_FAMILY_TOKEN_KEYS.contains(&w) || U1C_R2_LEGAL_FORM_TOKENS.contains(&w);
+        for word in ["sau", "co", "lda", "sprl", "bvba", "cvba"].iter().chain(HEAD_FORM_WORDS).chain(HEAD_TAIL_FORMS) {
+            assert_eq!(head_consortium_legal_form(word), decided(word), "{word}");
+        }
+        for word in short.iter().map(String::as_str) {
+            assert_eq!(head_consortium_legal_form(word), decided(word), "{word}");
+        }
+    }
+
+    /// `head_change_hold` and store's election together, with the REAL ingest functions (the
+    /// supervisor's `head_elect_fns`), on the decision's rows: the votes are the listed top 5 spellings
+    /// (8217358's other 20 votes padded to its V, T, H and cluster count), dated by cluster on the
+    /// listing's own `head_newest`, `top_newest` and `rival_newest`, at the plan's `as_of`. Store counts
+    /// the listing's V, T, H and clusters, and the rows land where U2's `u3_predict.py` puts them:
+    /// 10213161, 11628199 and 8217358 change; 13448374 holds gb_family and 18287356 consortium_removed;
+    /// 15783942 passes both guards and holds `top_stale` (its top last printed 2024-12-16).
+    #[test]
+    fn the_v13_listing_rows_elect_through_store() {
+        use store::{DatedVote, HeadElectFns, HeadElectOrg, HeadRule, HeadVerdict, elect_head_counted};
+        fn class(name: &str) -> Option<&'static str> {
+            use crate::partyname::NotAName;
+            crate::partyname::not_a_name(name).map(|class| match class {
+                NotAName::VoidLot => "void_lot",
+                NotAName::Placeholder => "placeholder",
+                NotAName::Blank => "blank",
+                NotAName::AwardSummary => store::HEAD_DRIFT_AWARD_SUMMARY,
+            })
+        }
+        let fns = HeadElectFns {
+            vote_key: head_vote_key,
+            not_a_name: class,
+            unfit: head_spelling_unfit,
+            hold: head_change_hold,
+            r2_hold: head_r2_hold,
+            twin_key: head_twin_key,
+            serve_hold: head_serve_hold,
+            family: head_tail_family,
+        };
+        /// `YYYY-MM-DD` at 00:00 UTC in unix seconds (days from civil).
+        fn on(date: &str) -> i64 {
+            let num = |range: std::ops::Range<usize>| date[range].parse::<i64>().expect("YYYY-MM-DD");
+            let (m, d) = (num(5..7), num(8..10));
+            let y = num(0..4) - i64::from(m <= 2);
+            let era = y.div_euclid(400);
+            let yoe = y - era * 400;
+            let doy = (153 * (if m > 2 { m - 3 } else { m + 9 }) + 2) / 5 + d - 1;
+            (era * 146_097 + yoe * 365 + yoe / 4 - yoe / 100 + doy - 719_468) * 86_400
+        }
+        assert_eq!(on("2017-08-11"), 1_502_409_600);
+        const AS_OF: i64 = 1_792_191_671; // the 2026-10-16 plan's `as_of`
+        struct Row {
+            org: i64,
+            head: &'static str,
+            id: &'static str,
+            votes: &'static [(&'static str, u64)],
+            dates: [Option<&'static str>; 3], // head_newest, top_newest, rival_newest
+            counted: (u64, u64, u64, u64),    // V, T, H, clusters, as listed
+        }
+        let rows = [
+            Row {
+                org: 10213161,
+                head: "Southern Gas Network PLC",
+                id: "04958135",
+                votes: &[
+                    ("SCOTIA GAS NETWORKS LIMITED", 47),
+                    ("Scotia Gas Networks Ltd", 1),
+                    ("Scotia Gas Networks Plc", 1),
+                    ("Scotland Gas Networks (SGN)", 1),
+                    ("Southern Gas Network PLC", 1),
+                ],
+                dates: [Some("2017-08-11"), Some("2026-10-02"), Some("2023-03-20")],
+                counted: (51, 49, 1, 3),
+            },
+            Row {
+                org: 11628199,
+                head: "Capita Business Services Limited",
+                id: "02081330",
+                votes: &[("Capita PLC", 2), ("Capita Business Services Limited", 1), ("Capita Plc", 1)],
+                dates: [Some("2018-06-15"), Some("2026-09-16"), None],
+                counted: (4, 3, 1, 2),
+            },
+            Row {
+                org: 13448374,
+                head: "Breyer Group Public Ltd Company",
+                id: "00782931",
+                votes: &[
+                    ("Breyer Group PLC", 8),
+                    ("Breyer Group plc", 7),
+                    ("Breyer Group Plc", 6),
+                    ("Breyer Group Public Limited Company", 6),
+                    ("Breyer Group Plc.", 1),
+                    ("Breyer Group Public Ltd Company", 1),
+                ],
+                dates: [Some("2021-05-28"), Some("2025-03-21"), None],
+                counted: (29, 22, 7, 2),
+            },
+            Row {
+                org: 8217358,
+                head: "Groupement Guintoli/EHTP/GTS/La Nouvelle Sirolaise de Construction/DFC Battage",
+                id: "44775408600018",
+                votes: &[
+                    ("GUINTOLI", 15),
+                    ("GUINTOLI SAS", 12),
+                    ("Guintoli", 8),
+                    ("Guintoli SAS", 7),
+                    ("GROUPEMENT GUINTOLI (mandataire) / GARELLI TP et RAZEL BEC SAS (co-traitants)", 2),
+                    ("Groupement Guintoli/EHTP/GTS/La Nouvelle Sirolaise de Construction/DFC Battage", 1),
+                    // Padding (not listed): the top cluster's last 3, the second cluster's 5, 11 strays.
+                    ("GUINTOLI S.A.S.", 3),
+                    ("Razel-Bec", 5),
+                    ("EHTP", 1),
+                    ("GTS Terrassement", 1),
+                    ("La Nouvelle Sirolaise de Construction", 1),
+                    ("DFC Battage", 1),
+                    ("Garelli TP", 1),
+                    ("Colas Midi-Méditerranée", 1),
+                    ("Eiffage Génie Civil", 1),
+                    ("Vinci Construction", 1),
+                    ("NGE Fondations", 1),
+                    ("Spie Batignolles Sud-Est", 1),
+                    ("Fayat TP", 1),
+                ],
+                dates: [Some("2016-05-31"), Some("2026-07-30"), Some("2026-04-14")],
+                counted: (64, 45, 1, 15),
+            },
+            Row {
+                org: 18287356,
+                head: "CONSORTIUM DES PEINTURES ET REVETEMENTS",
+                id: "43772004800051",
+                votes: &[("SARL CPR", 2), ("CONSORTIUM DES PEINTURES ET REVETEMENTS", 1), ("CPR", 1)],
+                dates: [Some("2021-12-24"), Some("2026-03-04"), None],
+                counted: (4, 3, 1, 2),
+            },
+            Row {
+                org: 15783942,
+                head: "Consortium consisting of Kontron Transportation Austria AG and Kontron Transportation Sp. z o. o.",
+                id: "FN223804Z",
+                votes: &[
+                    ("Kontron Transportation GmbH", 3),
+                    ("Consortium consisting of Kontron Transportation Austria AG and Kontron Transportation Sp. z o. o.", 1),
+                    ("Kontron Transportation Austria AG", 1),
+                ],
+                dates: [Some("2020-09-15"), Some("2024-12-16"), Some("2021-02-01")],
+                counted: (5, 3, 1, 3),
+            },
+        ];
+        let change = |new: &str| HeadVerdict::Change { rule: HeadRule::R1, new: new.into() };
+        let held = |reason: &'static str, new: &str| HeadVerdict::Hold { reason, rule: HeadRule::R1, new: Some(new.into()) };
+        let want = [
+            change("Scotia Gas Networks Ltd"),
+            change("Capita PLC"),
+            held("gb_family", "Breyer Group PLC"),
+            change("Guintoli"),
+            held("consortium_removed", "SARL CPR"),
+            held(store::HEAD_HOLD_TOP_STALE, "Kontron Transportation GmbH"),
+        ];
+        for (row, want) in rows.iter().zip(want) {
+            let top_key = {
+                let mut by_key: std::collections::BTreeMap<String, u64> = std::collections::BTreeMap::new();
+                for &(spelling, n) in row.votes {
+                    *by_key.entry(head_vote_key(spelling)).or_default() += n;
+                }
+                by_key.into_iter().max_by_key(|(_, n)| *n).map(|(key, _)| key).expect("votes")
+            };
+            let head_key = head_vote_key(row.head);
+            let mut dated: Vec<DatedVote<'static>> = Vec::new();
+            for &(spelling, n) in row.votes {
+                let key = head_vote_key(spelling);
+                let date = if key == head_key {
+                    row.dates[0]
+                } else if key == top_key {
+                    row.dates[1]
+                } else {
+                    row.dates[2]
+                };
+                let at = on(date.expect("a dated cluster"));
+                for _ in 0..n {
+                    let tender = dated.len() as i64 + 1;
+                    dated.push(DatedVote { spelling, tender, at });
+                }
+            }
+            let org = HeadElectOrg {
+                head: row.head,
+                identifier_kind: Some("national"),
+                identifier: Some(row.id),
+                bind_defect: false,
+                dated: Some(&dated),
+                as_of: AS_OF,
+            };
+            let e = elect_head_counted(row.votes, &org, &fns);
+            assert_eq!((e.voting, e.top, e.head_votes, e.clusters), row.counted, "{}: the listing's V, T, H, clusters", row.org);
+            assert_eq!(e.verdict, want, "{}", row.org);
+        }
     }
 }
 

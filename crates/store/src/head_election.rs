@@ -77,7 +77,18 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// the junk exemption would not release, changes to itself with its whitespace collapsed, rule
 /// [`HeadRule::R0w`] (no recency, residue, `head_current`, `top_stale` or serve hold asked; the bind
 /// guards are), whose vote key is the head's, so it stays in its own cluster and under its hold. [`HeadElectFns::family`] joins the injected functions for the wrap test.
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v12";
+/// `v13` (issue 548 `## U1b + U2`, `548-triage/u2/decision.md`, after unit 1 and U1c read the held
+/// listing of v12 plan 2569 (2026-10-16)): the bind guards ([`HeadElectFns::hold`]) are asked with H, the
+/// head cluster's votes ([`HeadElection::head_votes`], the plan entry's `head`, the quantity issue 548's
+/// `u1/filter.py` filters on). `family` and `gb_family` hold only at H ≥
+/// [`HEAD_FAMILY_HOLD_MIN_VOTES`] — a stray head (H ≤ 1) is released, where unit 1 read the shippable
+/// changes right (family 22 of 22, gb_family 5 of 5), and every wrong family change had H ≥ 2 —;
+/// `consortium_removed` is released when the new name's words, its legal forms dropped, are a
+/// non-empty subset of the head's (`crosswalk::head_consortium_subset`, U1c's `subset.py`: salted 30,
+/// 29 right, 1 neutral, 0 wrong).
+/// Every other hold is v12's: the serve holds, `head_current`, `top_stale`, `nhs_check`,
+/// `placeholder_id`, R2's initialism hold; wet runs still exclude R2 and R0w.
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v13";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -171,6 +182,16 @@ pub const HEAD_HOLD_SEAT_DROPPED: &str = "seat_dropped";
 /// any trailing digits, any letter case, or all ASCII zeros: no identity votes behind it (22831984
 /// `KEINEANGABE7`, served `Kapitel 2` → an AOK). Asked before R2's initialism hold and the serve holds.
 pub const HEAD_HOLD_PLACEHOLDER_ID: &str = "placeholder_id";
+
+/// Issue 548 U2 (rule `v13`): the fewest votes the head's own cluster must hold (H,
+/// [`HeadElection::head_votes`]) for the legal-form family guards (`crosswalk::head_change_hold`'s
+/// `family` and `gb_family`) to hold a change. At H ≤ 1 the head is a stray print — unit 1 read family's
+/// 22 shippable H ≤ 1 changes right (all 4 of its wrongs had H ≥ 2) and gb_family's 5 (7 of 7 at any H;
+/// 10213161 `Southern Gas Network PLC` → `Scotia Gas Networks Ltd` on the register entity's own CH
+/// number) — so the guards no longer fire there; at H ≥ 2 they hold as before (13448374 H = 7, 9087207
+/// H = 2, 3728305 H = 24). One predicate for both guards (D3's narrow form, not gb_family whole: its
+/// H ≥ 2 evidence is two rows).
+pub const HEAD_FAMILY_HOLD_MIN_VOTES: u64 = 2;
 
 /// Issue 524 rule `v11`: the hold reason when an R1 change, still a change after the serve holds and
 /// [`HEAD_HOLD_CURRENT`], has a RIVAL — a voting cluster other than the elected one and the head's
@@ -528,10 +549,12 @@ pub struct HeadElectFns {
     pub not_a_name: fn(&str) -> Option<&'static str>,
     /// `(candidate, head)`: why `candidate` may not be served in place of `head`, or `None` when fit.
     pub unfit: fn(&str, &str) -> Option<&'static str>,
-    /// `(old, new, identifier_kind, identifier)`: why a change is held for review, or `None` — the bind
-    /// guards (`family`, `gb_family`, `consortium_removed`, `nhs_check` and, since rule `v11`,
-    /// [`HEAD_HOLD_PLACEHOLDER_ID`]), asked of every rule's change.
-    pub hold: fn(&str, &str, Option<&str>, Option<&str>) -> Option<&'static str>,
+    /// `(old, new, identifier_kind, identifier, head_votes)`: why a change is held for review, or `None`
+    /// — the bind guards (`family`, `gb_family`, `consortium_removed`, `nhs_check` and, since rule `v11`,
+    /// [`HEAD_HOLD_PLACEHOLDER_ID`]), asked of every rule's change. Rule `v13` (issue 548 U2) passes H,
+    /// the head cluster's votes ([`HeadElection::head_votes`]): the family guards hold only at H ≥
+    /// [`HEAD_FAMILY_HOLD_MIN_VOTES`].
+    pub hold: fn(&str, &str, Option<&str>, Option<&str>, u64) -> Option<&'static str>,
     /// Issue 524 unit 2a.1, `(old, new)`: why an R2 change is held as a shorthand of the head it would
     /// replace (since unit 2a.2, an initialism of a run of its words), or `None`. Asked of R2 changes
     /// only, after [`HeadElectFns::hold`]: R1's majority is not second-guessed.
@@ -708,7 +731,8 @@ struct Cluster<'a> {
 /// `sociálnych` 717 on 1526605, `Zakłąd` over `Zakład`). A cluster is wider than twins — its vote
 /// key also drops a trading-as clause, a parenthetical, a legal form, `the` and `&` — so `Acme Ltd t/a
 /// Café Rouge` (1) never beats `Acme Ltd` (20) on its accent (the 2a.1 review). No fit spelling is a
-/// HOLD ([`HEAD_HOLD_NO_FIT`]); a change the bind guards ([`HeadElectFns::hold`]) name, or an R2 change
+/// HOLD ([`HEAD_HOLD_NO_FIT`]); a change the bind guards ([`HeadElectFns::hold`], asked since rule `v13`
+/// with H, so the family guards hold only at H ≥ [`HEAD_FAMILY_HOLD_MIN_VOTES`]) name, or an R2 change
 /// [`HeadElectFns::r2_hold`] reads as an initialism of the head, is a HOLD with the spelling it would
 /// serve.
 pub fn elect_head(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &HeadElectFns) -> HeadVerdict {
@@ -772,7 +796,8 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
         // The belt (rule v6's review): a display equal to the head is no change; the head keeps.
         Some(new) if new == org.head => HeadVerdict::Keep(HeadKeep::S1),
         Some(new) => {
-            let held = (fns.hold)(org.head, &new, org.identifier_kind, org.identifier)
+            // Rule v13: the bind guards read H (the family guards release a stray head).
+            let held = (fns.hold)(org.head, &new, org.identifier_kind, org.identifier, head_votes)
                 .or_else(|| if rule == HeadRule::R2 { (fns.r2_hold)(org.head, &new) } else { None })
                 // Rule v9: the serve holds, for R1 and R2 only — R0's defective head always changes.
                 .or_else(|| match rule {
@@ -852,7 +877,7 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
                     if let Junk::Withheld(why) = held {
                         read.release_withheld = Some(why);
                         // Rule v12: a lines-withheld head whose every break is a wrap: R0w.
-                        if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], fns) {
+                        if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], head_votes, fns) {
                             return counted(verdict, reading);
                         }
                     }
@@ -873,7 +898,7 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
             held => {
                 if let Junk::Withheld(why) = held {
                     read.release_withheld = Some(why);
-                    if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], fns) {
+                    if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], head_votes, fns) {
                         return counted(verdict, reading);
                     }
                 }
@@ -896,7 +921,7 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
             held => {
                 if let Junk::Withheld(why) = held {
                     read.release_withheld = Some(why);
-                    if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], fns) {
+                    if let Some(verdict) = wrap_collapse(why, org, &head_key, tied[0], head_votes, fns) {
                         return counted(verdict, reading);
                     }
                 }
@@ -990,12 +1015,14 @@ enum Junk {
 /// against `Szkoła Podstawowa w Tychach`) would be released `digits` at the next plan and change R1 to
 /// the very spelling the lines guard withheld, so its `lines` hold stands instead (the unit 3 review).
 /// Then a change to the collapsed head, rule [`HeadRule::R0w`], or a hold with it when a bind guard
-/// ([`HeadElectFns::hold`]) names a reason, as for R0n. No other hold is asked.
+/// ([`HeadElectFns::hold`], asked with the head cluster's `head_votes` since rule `v13`) names a reason,
+/// as for R0n. No other hold is asked.
 fn wrap_collapse(
     why: &'static str,
     org: &HeadElectOrg<'_>,
     head_key: &str,
     elected_key: &str,
+    head_votes: u64,
     fns: &HeadElectFns,
 ) -> Option<HeadVerdict> {
     if why != HEAD_WITHHELD_LINES || !head_wraps(org.head, fns) {
@@ -1006,7 +1033,7 @@ fn wrap_collapse(
     if matches!(recent_release(&collapsed, head_key, elected_key, fns), Junk::Released(_)) {
         return None;
     }
-    Some(match (fns.hold)(org.head, &collapsed, org.identifier_kind, org.identifier) {
+    Some(match (fns.hold)(org.head, &collapsed, org.identifier_kind, org.identifier, head_votes) {
         Some(reason) => HeadVerdict::Hold { reason, rule: HeadRule::R0w, new: Some(collapsed) },
         None => HeadVerdict::Change { rule: HeadRule::R0w, new: collapsed },
     })
@@ -1377,8 +1404,10 @@ pub struct OrgNameRefreshPlan {
     /// The planned changes by legal-form family move ([`OrgNameRefreshArgs::family`] of the old and the
     /// new head): `none->none`, `none->x` (a family gained), `x->none` (one lost), `x->x` (the same
     /// family), `x->y` (two different families). The hold fn holds an `x->y` it reads within ONE table
-    /// (`legal_form_family` or `gb_legal_family`); a pair read from different tables (`sarl` -> `ltd`) is
-    /// not held, so it is counted here for the reviewer.
+    /// (`legal_form_family` or `gb_legal_family`) only when the head's cluster holds H ≥
+    /// [`HEAD_FAMILY_HOLD_MIN_VOTES`] (rule `v13`, issue 548 U2). A stray head's same-table swap (H ≤ 1,
+    /// `plc` -> `ltd`) and a pair read from different tables (`sarl` -> `ltd`) are not held, so both are
+    /// counted here for the reviewer.
     pub family_moves: BTreeMap<&'static str, u64>,
     /// The D4 keeps' ENG satellites (see [`HeadRefreshEntry::eng`]): whether TED's ENG rendering is the
     /// head the guard keeps (issue 524's open risk 3).
@@ -1438,8 +1467,8 @@ pub struct OrgNameRefreshPlan {
 pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 500;
 
 /// Issue 524 rule `v9`: the uniform samples' salt — the low 32 bits of FNV-1a 64 of
-/// [`HEAD_ELECTION_EPOCH`] (`524u2-v12`: 2,780,007,269; v11's `524u2-v11` was 2,780,005,964, v10's
-/// `524u2-v10` 2,780,006,399 and v9's `524u2-v9` 460,574,797). The
+/// [`HEAD_ELECTION_EPOCH`] (`524u2-v13`: 2,780,006,834; v12's `524u2-v12` was 2,780,007,269, v11's
+/// `524u2-v11` 2,780,005,964, v10's `524u2-v10` 2,780,006,399 and v9's `524u2-v9` 460,574,797). The
 /// protocol's dated re-judge reads "fresh" samples, and an unsalted hash makes every plan's class
 /// sample the same first ids: plan 2526's panel read the next 30 of each list ahead. Salted, each epoch draws anew, and a plan's samples stay
 /// reproducible from its epoch.
@@ -2886,7 +2915,10 @@ mod tests {
         class(candidate).map(|_| "non_name")
     }
 
-    fn hold(old: &str, new: &str, _kind: Option<&str>, _identifier: Option<&str>) -> Option<&'static str> {
+    /// Stand-in for `crosswalk::head_change_hold`: a `plc` → `ltd` swap holds `gb_family` at any H (the
+    /// rule v13 H ≤ 1 release is crosswalk's, pinned there; the tests here pin where store asks it, and
+    /// `the_bind_guards_are_asked_with_the_heads_own_votes` pins the H store passes).
+    fn hold(old: &str, new: &str, _kind: Option<&str>, _identifier: Option<&str>, _head_votes: u64) -> Option<&'static str> {
         let form = |name: &str| name.to_lowercase().split_whitespace().last().map(str::to_owned);
         match (form(old).as_deref(), form(new).as_deref()) {
             (Some("plc"), Some("ltd")) => Some("gb_family"),
@@ -3122,6 +3154,49 @@ mod tests {
         );
     }
 
+    /// Rule v13 (issue 548 U2): the bind guards are asked with H, the votes of the HEAD'S CLUSTER
+    /// (`head_votes`, the plan entry's `head` that issue 548's `u1/filter.py` reads) — not V, not T, not
+    /// the head spelling's own count — on every path that asks them: R1, R2, R0 and the R0w wrap
+    /// collapse. A guard that answers with the H it was given shows which. It also pins the H ≤ 1
+    /// threshold constant `crosswalk::head_change_hold` reads.
+    #[test]
+    fn the_bind_guards_are_asked_with_the_heads_own_votes() {
+        fn by_h(_: &str, _: &str, _: Option<&str>, _: Option<&str>, head_votes: u64) -> Option<&'static str> {
+            Some(["h0", "h1", "h2", "h3"].get(head_votes as usize).copied().unwrap_or("h4+"))
+        }
+        let fns = HeadElectFns { hold: by_h, ..FNS };
+        let fresh = [DatedVote { spelling: "Main", tender: 1, at: LATE_PLAN - DAY }];
+        let dated = |head| HeadElectOrg { dated: Some(&fresh), ..org(head) };
+        let asked = |votes: &[(&str, u64)], org: &HeadElectOrg<'_>| {
+            let e = elect_head_counted(votes, org, &fns);
+            (e.verdict.reason(), e.verdict.rule(), e.head_votes)
+        };
+        // R1 at H = 0 (no mention keys as the head) and H = 1.
+        assert_eq!(asked(&[("Main", 5)], &org("Head")), ("h0", Some(HeadRule::R1), 0));
+        assert_eq!(asked(&[("Main", 5), ("Head", 1)], &org("Head")), ("h1", Some(HeadRule::R1), 1));
+        // R1 at H = 2 from two spellings of the head's cluster, neither the head byte for byte (its own
+        // spelling has 0 mentions): H is the cluster's votes. Dated, so the window does not hold `undated`.
+        let cluster = [("Main", 5), ("Head Ltd", 1), ("HEAD", 1)];
+        assert_eq!(asked(&cluster, &dated("Head")), ("h2", Some(HeadRule::R1), 2));
+        // R2 (H ≤ 1): the guard answers before the initialism hold.
+        let stray = [("Main", 3), ("A", 2), ("B", 2), ("C", 2), ("D", 2), ("Head", 1)];
+        assert_eq!(asked(&stray, &org("Head")), ("h1", Some(HeadRule::R2), 1));
+        // R0n: a non-name head votes for nothing, so H = 0.
+        assert_eq!(asked(&[("Kalmar kommun", 4)], &org("s.o.")), ("h0", Some(HeadRule::R0n), 0));
+        // R0w: the wrap collapse asks the guards with the raw head's cluster (3 votes).
+        let (head, elected) = ("Vergabekammer Rheinland\nbei dem Ministerium Wirtschaft", "Vergabekammer Ministerium Wirtschaft");
+        let rows = [items(elected, 1, 1, 8), items(head, 101, 100, 3)].concat();
+        let e = elect_head_counted(&votes_of(&rows), &HeadElectOrg { dated: Some(&rows), ..org(head) }, &fns);
+        assert_eq!((e.verdict.reason(), e.verdict.rule(), e.head_votes), ("h3", Some(HeadRule::R0w), 3));
+
+        // The threshold `crosswalk::head_change_hold`'s family guards read. The release itself is
+        // crosswalk's, pinned there with the real guard: `consortium_release::
+        // the_v13_listing_rows_release_and_hold_as_decided` (the guard alone) and
+        // `consortium_release::the_v13_listing_rows_elect_through_store` (through this election, with the
+        // supervisor's real fns).
+        assert_eq!(super::HEAD_FAMILY_HOLD_MIN_VOTES, 2, "the decision's H ≤ 1 release");
+    }
+
     /// An `award_summary` head is a name beside a non-name phrase: it votes, and it is NOT R0's
     /// defective head — tied for the top it is sticky, and under a cluster of two it stays (R0 would
     /// have replaced it with any top cluster).
@@ -3280,25 +3355,30 @@ mod tests {
 
     /// Rule v9 changed these values on purpose: the key is Knuth's hash of the id XOR the epoch's salt
     /// (FNV-1a 64 of the epoch, low 32 bits), so the dated re-judge's "fresh" samples are not the last
-    /// plan's predictable next 30. Rule v12's epoch `524u2-v12` draws anew (salt 2,780,007,269); v11's
-    /// `524u2-v11` salt was 2,780,005,964, its first three keys 3,424,993,341, 1,784,461,806 and
+    /// plan's predictable next 30. Rule v13's epoch `524u2-v13` draws anew (salt 2,780,006,834); v12's
+    /// `524u2-v12` salt was 2,780,007,269, its first three keys 411,149,348, 4,079,489,335 and
+    /// 2,678,308,192; v11's `524u2-v11` salt was 2,780,005,964, its first three keys 3,424,993,341, 1,784,461,806 and
     /// 1,397,184,889; v10's `524u2-v10` was 2,780,006,399 (keys 1,744,442,526, 3,384,974,061 and
     /// 4,011,601,370); v9's `524u2-v9` was 460,574,797 (keys 1,624,961,164, 998,333,855 and
     /// 3,892,120,008). Unsalted (v2–v8) they read 2,654,435,761, 1,013,904,226 and 387,276,917.
     #[test]
     fn the_sample_key_is_knuths_hash_of_the_salted_id_mod_two_to_the_32() {
-        assert_eq!(super::HEAD_ELECTION_EPOCH, "524u2-v12");
-        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_007_269);
-        assert_eq!(super::epoch_salt("524u2-v12"), 2_780_007_269);
+        assert_eq!(super::HEAD_ELECTION_EPOCH, "524u2-v13");
+        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_006_834);
+        assert_eq!(super::epoch_salt("524u2-v13"), 2_780_006_834);
+        assert_eq!(super::epoch_salt("524u2-v12"), 2_780_007_269, "v12's salt, as plan 2569 (2026-10-16) drew it");
         assert_eq!(super::epoch_salt("524u2-v11"), 2_780_005_964, "v11's salt, as plans 2562 and 2566 drew it");
         assert_eq!(super::epoch_salt("524u2-v10"), 2_780_006_399, "v10's salt, as plan 2543 drew it");
         assert_eq!(super::epoch_salt("524u2-v9"), 460_574_797, "v9's salt, as plan 2527 drew it");
-        assert_ne!(super::epoch_salt("524u2-v11"), super::ORG_NAME_REFRESH_SAMPLE_SALT, "each epoch its own draw");
-        assert_eq!(sample_key(1), (411_149_348, 1));
-        assert_eq!(sample_key(2), (4_079_489_335, 2));
-        assert_eq!(sample_key(5), (2_678_308_192, 5));
-        assert_eq!(sample_key(31_558_903), (514_407_922, 31_558_903));
-        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_007_269) * 2_654_435_761) % (1 << 32));
+        let salts = ["524u2-v9", "524u2-v10", "524u2-v11", "524u2-v12", "524u2-v13"].map(super::epoch_salt);
+        for (at, salt) in salts.iter().enumerate() {
+            assert!(!salts[..at].contains(salt), "each epoch its own draw: {salts:?}");
+        }
+        assert_eq!(sample_key(1), (2_091_700_163, 1));
+        assert_eq!(sample_key(2), (2_718_327_472, 2));
+        assert_eq!(sample_key(5), (4_119_508_615, 5));
+        assert_eq!(sample_key(31_558_903), (419_840_437, 31_558_903));
+        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_006_834) * 2_654_435_761) % (1 << 32));
     }
 
     // ---- Rule v7: the R1 recency hold (the recency decision's tests 1-12).
@@ -4386,7 +4466,7 @@ mod tests {
         let (head, elected) = ("Vergabekammer Rheinland\nbei dem Ministerium Wirtschaft", "Vergabekammer Ministerium Wirtschaft");
         let collapsed = "Vergabekammer Rheinland bei dem Ministerium Wirtschaft";
         let placeholder = HeadElectFns {
-            hold: |_, _, _, identifier| (identifier == Some("KEINEANGABE")).then_some(super::HEAD_HOLD_PLACEHOLDER_ID),
+            hold: |_, _, _, identifier, _| (identifier == Some("KEINEANGABE")).then_some(super::HEAD_HOLD_PLACEHOLDER_ID),
             ..FNS
         };
         // The window's hold (asked before `serve`, so no bind guard has answered yet).

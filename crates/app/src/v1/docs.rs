@@ -327,7 +327,9 @@ at least twice the head's; or when the head's own cluster holds at most 1 vote a
 top cluster holds at least 3 votes and at least 25%; or when the head is empty or not a name
 (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script
 that name is written in. Even then it stays when the change would swap one legal-form family
-for another (<code>AG</code> to <code>Sàrl</code>), drop a consortium mark, fail the NHS ODS
+for another (<code>AG</code> to <code>Sàrl</code>) while the head's own cluster holds at least
+2 votes, drop a consortium mark unless the new name keeps a word besides its legal forms and
+every such word is a word of the head, fail the NHS ODS
 name check the old head passed, or, on the 25% arm only, serve an initialism of the head;
 when the identifier is a placeholder (<code>KEINEANGABE</code>, <code>UNBEKANNT</code> or
 <code>NICHTVORHANDEN</code> with any digits, or all zeros);
@@ -1859,6 +1861,31 @@ mod tests {
                     "the line before ends in an unspaced hyphen or a joining word such as und, of or z",
                     "does not end in a legal form, a comma, a semicolon or a colon",
                     "the name on one line does not itself carry such a standalone number",
+                ],
+            );
+        }
+    }
+
+    /// Issue 548 U2 (issue 524 rule v13): the served head-name rule says on all three surfaces that the
+    /// legal-form check holds only a head its own cluster votes for twice or more, and that the
+    /// consortium check lets a group's name be cut to words it already prints (the CHANGELOG repeats
+    /// it, unserved).
+    #[test]
+    fn the_docs_say_when_the_legal_form_and_consortium_checks_hold() {
+        let start = PAGE.find("<h2 id=\"detail\">").expect("/docs has a Tender-detail section");
+        let docs = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows the detail")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["schemas"]["Organization"]["properties"]["name"]["description"]
+            .as_str()
+            .expect("Organization.name is described");
+        let schema = crate::v1::sql::served_schema_notes();
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi), ("/v1/sql/schema", schema.as_str())] {
+            assert_says(
+                &format!("{surface}'s head-name rule"),
+                text,
+                &[
+                    "swap one legal-form family for another (ag to sàrl) while the head's own cluster holds at least 2 votes",
+                    "drop a consortium mark unless the new name keeps a word besides its legal forms and every such word is a word of the head",
                 ],
             );
         }
