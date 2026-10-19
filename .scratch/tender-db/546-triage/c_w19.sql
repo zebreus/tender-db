@@ -1,0 +1,1 @@
+SELECT notice_id, section_id, field_id, value, is_ref FROM notice_ids WHERE notice_id BETWEEN 20297001 AND 20298464 AND +value LIKE 'ORG-%' ORDER BY notice_id, section_id, field_id, ordinal LIMIT 10000

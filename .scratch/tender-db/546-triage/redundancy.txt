@@ -1,0 +1,4 @@
+Are ORG-section TED-NUTS codes restated by the coded CA_CE_NUTS / TENDERER_NUTS? (per notice, code-set level)
+w19 {('org_buyer', 'covered'): 1420, ('org_other', 'covered-by-cace|tend'): 99, ('org_winner', 'covered'): 522}
+w17 {('org_buyer', 'covered'): 1168, ('org_other', 'covered-by-cace|tend'): 124, ('org_winner', 'covered'): 562}
+w22 ORG TED-NUTS within CA_CE|TENDERER (no role read): {'covered': 1592}

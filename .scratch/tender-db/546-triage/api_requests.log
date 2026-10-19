@@ -2,3 +2,4 @@
 2026-10-19T08:13:02Z GET /v1/tenders?publication_id=300000-2017 bytes=721
 2026-10-19T08:13:05Z GET /v1/tenders?publication_id=300000-2022 bytes=668
 2026-10-19T08:13:16Z GET /v1/tenders/5907565 bytes=6033
+2026-10-19T08:13:19Z GET /v1/tenders/7406490 bytes=12801

@@ -1,0 +1,1 @@
+SELECT notice_id, field_id, code FROM notice_codes WHERE notice_id BETWEEN 19395615 AND 19395636 AND +field_id IN ('TED-FORM', 'TED-TD_DOCUMENT_TYPE') ORDER BY notice_id, section_id, field_id, ordinal LIMIT 200

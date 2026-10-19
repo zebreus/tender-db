@@ -1,0 +1,241 @@
+{
+ "w19": {
+  "capped": true,
+  "id_lo": 20297001,
+  "id_hi": 20298464,
+  "notices_in_range": 1464,
+  "notices_with_mapped_place": 1439,
+  "no_mapped_place": 25,
+  "classes": {
+   "both-harmless": 939,
+   "both-adds": 468,
+   "address-only": 13,
+   "perf-only": 19
+  },
+  "adds_by_shortest_new_prefix": {
+   "len3": 308,
+   "len5": 72,
+   "len4": 73,
+   "country(2)": 15
+  },
+  "adds_contributed_by": {
+   "other-addr": 27,
+   "buyer": 328,
+   "winner": 188
+  },
+  "row_kinds": {
+   "perf": 4531,
+   "buyer": 3072,
+   "other-addr": 109,
+   "winner": 2135
+  },
+  "unmapped_nuts_rows": {
+   "MOD TED-DESCRIPTION_PROCUREMENT.NUTS": 60,
+   "ORG TED-DESCRIPTION_PROCUREMENT.NUTS": 91
+  },
+  "mean_codes_added": 1.3547008547008548,
+  "examples": {
+   "adds-L3": [
+    20297002,
+    20297006,
+    20297027,
+    20297047,
+    20297064,
+    20297065
+   ],
+   "adds-L5": [
+    20297032,
+    20297062,
+    20297067,
+    20297075,
+    20297132,
+    20297133
+   ],
+   "adds-L4": [
+    20297089,
+    20297125,
+    20297145,
+    20297148,
+    20297168,
+    20297199
+   ],
+   "adds-L2": [
+    20297187,
+    20297303,
+    20297341,
+    20297342,
+    20297343,
+    20297346
+   ],
+   "address-only": [
+    20297583,
+    20297584,
+    20297585,
+    20297586,
+    20297587,
+    20297588
+   ]
+  }
+ },
+ "w17": {
+  "capped": true,
+  "id_lo": 19394601,
+  "id_hi": 19395768,
+  "notices_in_range": 1168,
+  "notices_with_mapped_place": 1168,
+  "no_mapped_place": 0,
+  "classes": {
+   "both-adds": 376,
+   "both-harmless": 775,
+   "address-only": 17
+  },
+  "adds_by_shortest_new_prefix": {
+   "len3": 227,
+   "len5": 66,
+   "len4": 73,
+   "country(2)": 10
+  },
+  "adds_contributed_by": {
+   "buyer": 188,
+   "winner": 238,
+   "other-addr": 32
+  },
+  "row_kinds": {
+   "perf": 4332,
+   "buyer": 2416,
+   "other-addr": 171,
+   "winner": 3054
+  },
+  "unmapped_nuts_rows": {
+   "MOD TED-DESCRIPTION_PROCUREMENT.NUTS": 11,
+   "ORG TED-DESCRIPTION_PROCUREMENT.NUTS": 12
+  },
+  "mean_codes_added": 1.502659574468085,
+  "examples": {
+   "adds-L3": [
+    19394601,
+    19394606,
+    19394609,
+    19394612,
+    19394623,
+    19394625
+   ],
+   "adds-L5": [
+    19394610,
+    19394630,
+    19394643,
+    19394659,
+    19394668,
+    19394685
+   ],
+   "adds-L4": [
+    19394614,
+    19394636,
+    19394644,
+    19394764,
+    19394774,
+    19394780
+   ],
+   "adds-L2": [
+    19394692,
+    19394717,
+    19394722,
+    19394765,
+    19394783,
+    19394797
+   ],
+   "address-only": [
+    19394896,
+    19395618,
+    19395619,
+    19395620,
+    19395622,
+    19395623
+   ]
+  }
+ },
+ "w22": {
+  "capped": true,
+  "id_lo": 22470601,
+  "id_hi": 22472192,
+  "notices_in_range": 1592,
+  "notices_with_mapped_place": 1592,
+  "no_mapped_place": 0,
+  "classes": {
+   "both-harmless": 1216,
+   "both-adds": 376
+  },
+  "adds_by_shortest_new_prefix": {
+   "len3": 167,
+   "len5": 109,
+   "len4": 89,
+   "country(2)": 11
+  },
+  "adds_contributed_by": {
+   "org(no-role-read)": 376,
+   "buyer": 274,
+   "winner": 125
+  },
+  "row_kinds": {
+   "perf": 5716,
+   "org(no-role-read)": 2321,
+   "buyer": 1641,
+   "winner": 300
+  },
+  "unmapped_nuts_rows": {},
+  "mean_codes_added": 1.196808510638298,
+  "examples": {
+   "adds-L3": [
+    22470603,
+    22470612,
+    22470657,
+    22470663,
+    22470675,
+    22470711
+   ],
+   "adds-L5": [
+    22470611,
+    22470650,
+    22470712,
+    22470759,
+    22470765,
+    22470804
+   ],
+   "adds-L4": [
+    22470632,
+    22470633,
+    22470649,
+    22470652,
+    22470668,
+    22470670
+   ],
+   "adds-L2": [
+    22470967,
+    22471294,
+    22471645,
+    22471732,
+    22471847,
+    22471849
+   ]
+  }
+ },
+ "w13": {
+  "capped": false,
+  "id_lo": 17300001,
+  "id_hi": 17305000,
+  "notices_in_range": 5000,
+  "notices_with_mapped_place": 3680,
+  "no_mapped_place": 1320,
+  "classes": {
+   "perf-only": 3680
+  },
+  "adds_by_shortest_new_prefix": {},
+  "adds_contributed_by": {},
+  "row_kinds": {
+   "perf": 7460
+  },
+  "unmapped_nuts_rows": {},
+  "mean_codes_added": 0,
+  "examples": {}
+ }
+}

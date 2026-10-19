@@ -1,0 +1,27 @@
+ 14802754 neutral  top_newest 2025-02-21 rival_newest 2023-08-25 -> released (top not superseded)
+  9213677 harmful  top_newest 2024-07-25 rival_newest 2018-03-16 -> released (top not superseded)
+ 13897322 harmful  top_newest 2024-01-16 rival_newest 2022-04-05 -> released (top not superseded)
+  9938875 harmful  top_newest 2025-08-19 rival_newest 2026-08-12 -> still held (rival fresher than top)
+ 17499099 neutral  top_newest 2024-10-24 rival_newest 2022-03-07 -> released (top not superseded)
+  6160661 harmful  top_newest 2025-02-26 rival_newest 2026-05-21 -> still held (rival fresher than top)
+  9561846 neutral  top_newest 2025-07-18 rival_newest 2017-04-06 -> released (top not superseded)
+  7301922 right    top_newest 2025-03-04 rival_newest 2026-09-10 -> still held (rival fresher than top)
+  9534339 neutral  top_newest 2018-05-31 rival_newest 2018-05-31 -> released (top not superseded)
+ 10878449 harmful  top_newest 2023-05-26 rival_newest 2020-01-24 -> released (top not superseded)
+ 15896262 neutral  top_newest 2025-04-30 rival_newest 2026-06-01 -> still held (rival fresher than top)
+ 15346526 harmful  top_newest 2024-05-02 rival_newest 2026-07-10 -> still held (rival fresher than top)
+  7940094 harmful  top_newest 2021-10-26 rival_newest 2018-02-28 -> released (top not superseded)
+ 10075795 neutral  top_newest 2024-12-09 rival_newest 2026-09-04 -> still held (rival fresher than top)
+ 15082073 harmful  top_newest 2023-12-19 rival_newest 2026-09-04 -> still held (rival fresher than top)
+ 10368351 neutral  top_newest 2022-11-22 rival_newest 2019-06-14 -> released (top not superseded)
+  5638950 right    top_newest 2024-11-29 rival_newest 2015-10-31 -> released (top not superseded)
+  8386914 neutral  top_newest 2025-02-13 rival_newest 2017-11-10 -> released (top not superseded)
+ 10071871 harmful  top_newest 2021-10-22 rival_newest 2021-04-23 -> released (top not superseded)
+  8291325 right    top_newest 2023-11-24 rival_newest 2024-09-06 -> still held (rival fresher than top)
+
+('released (top not superseded)', 'harmful') 5
+('released (top not superseded)', 'neutral') 6
+('released (top not superseded)', 'right') 1
+('still held (rival fresher than top)', 'harmful') 4
+('still held (rival fresher than top)', 'neutral') 2
+('still held (rival fresher than top)', 'right') 2

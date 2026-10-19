@@ -1,0 +1,1 @@
+SELECT notice_id, section_id, field_id, code FROM notice_classifications WHERE notice_id BETWEEN 20297001 AND 20299000 AND +scheme = 'nuts' AND +field_id LIKE 'TED-%' ORDER BY notice_id, section_id, field_id, ordinal LIMIT 10000

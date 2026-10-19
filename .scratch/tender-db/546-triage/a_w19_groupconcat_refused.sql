@@ -1,0 +1,1 @@
+SELECT notice_id, group_concat(section_id || '|' || field_id || '|' || code, ' ') AS r FROM notice_classifications WHERE notice_id BETWEEN 20294001 AND 20302000 AND +scheme = 'nuts' AND +field_id LIKE 'TED-%' GROUP BY notice_id LIMIT 10000

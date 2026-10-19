@@ -1,0 +1,1 @@
+[(5, 0, 0, 'SEARCH notice_codes USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=?)')]

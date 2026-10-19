@@ -1,0 +1,13 @@
+Adversarial check of the 546 triage, 2026-10-19. Read-only. /v1/sql: 1 request (v_addronly_forms, plan in
+plans_verify.txt: notice_codes PK seek notice_id=?). No public GETs. No 408.
+- analyse.py re-run on the saved outputs reproduces analysis.json exactly (equal JSON). Capped windows (a_w17/19/22
+  hit LIMIT 10000) drop the last id, and the b_ denominators end at that id. c_ reads are not capped.
+- Code claims checked: CLASSIFICATIONS project.rs:352-366, has_destination :9362, read arm :5547, supersede :6965,
+  drop_place_country_beside_nuts :6945; read.rs:1288 / 2627 / 2788 are scheme-only. Fixtures f02-000245-2019
+  (perf MT00, CA_CE MT, ORG NUTS MT) and f03-000988-2019 exist.
+- Address-only forms (v_addronly_forms): W19's 13 are all F12. W17's 17 are 14 F12/F13 plus THREE F14 corrigenda
+  (19394896, 19395635, 19395679), not one.
+- W19's 43 r208 notices (ids 20298227-20298368, 2019) are 18 perf-only and 25 with no NUTS row. None has an
+  address row, so late r208 is sampled once, at n=43, and shows no address NUTS.
+- The W19 percentages use 1,439 (notices with a mapped place, r208 included). The table column says 1,464. For r209
+  only: adds 468/1,421 = 32.9%, country 15/1,421 = 1.1%.

@@ -1,0 +1,10 @@
+Adversarial check of the 540 triage, 2026-10-19. Read-only. /v1/sql: 2 requests (c01, c02), no 408, no retry. Plans: c01_plan.txt (python sqlite3 on v551/plan.db).
+
+c01 (Change sections in 1-13M by profile, CROSS JOIN notices, s.kind seek + PK): all 2,315 are eForms
+  (sdk-0.1 1,052 @471,996-564,743; 1.0 61; 1.12 174; 1.13 771 from id 11; 1.14 257). So r08-r09 = 2,315 holds no r208 notice. Confirms the low end.
+c02 (ted-export-r208 notices with id > 18,579,247, notices_profile covering seek): 557,040 notices, ids 18,579,251-27,161,439.
+  => r208-profile notices are INTERLEAVED with r209 above 18,579,247, not confined below it. The proposal's "r208 band runs 12.30M to
+     18,579,247" and "R2.0.8 is a closed era from 2015-12-05" are wrong for the corpus; the residual is 557,040 notices, not issue 10's 157.
+  r09 (Change in 13M-20.5M: 353,912 on 149,924 notices, lowest 18,579,247) only shows the LOWEST is r209; it does not show that none of
+  the 149,924 is r208. Nothing measured the 557,040 for Change sections, TED-FORM 14, or a CA_CE pointer outside PROCEDURE/0.
+  Issue 534 itself reads r208 T02 rows on 2016 tenders, consistent with this.

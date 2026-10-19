@@ -80,3 +80,13 @@ The measurement unit is built as part of issue 524 unit 1's `org-head-drift` dry
 Roles are `not_measured`: a per-mention role needs a join on the party rows, so it is left for a follow-up if the
 counts warrant it. Read the report after 524's first dry run, then decide designs 1 and 2 (524 owns the head
 election).
+
+## Cross-reference: issue 545 (2026-10-19)
+
+Issue 545's triage (`.scratch/tender-db/545-triage/`) measured the same class from the GB-identifier side (about 1 in 10–14
+GB strays names a different organization; corpus roughly 200–300 mentions on GBPPON/GBCOH-keyed orgs) and **decided
+against a resolver rule ("design 1" here) in favour of reviewed rehoming through issue 317's machinery**, with guards
+(park shared-section collisions such as Bedford/Comensura, a destination tiebreak, sister/group bodies parked). This issue's
+design 1 is therefore rejected by that decision; 456's exhibit (Schneider Electric on Sellafield's PPON, tender 8751605)
+joins 545's reviewed cohort rather than getting a rule of its own. Work it under 545.
+

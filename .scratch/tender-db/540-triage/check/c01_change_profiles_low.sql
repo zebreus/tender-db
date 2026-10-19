@@ -1,0 +1,1 @@
+SELECT n.profile, count(*) AS sections, min(s.notice_id) AS lo, max(s.notice_id) AS hi FROM notice_sections s CROSS JOIN notices n ON n.id = s.notice_id WHERE s.kind = 'Change' AND s.notice_id >= 1 AND s.notice_id <= 13000000 GROUP BY +n.profile LIMIT 20
