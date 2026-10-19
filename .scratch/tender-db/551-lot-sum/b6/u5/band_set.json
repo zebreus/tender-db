@@ -1,0 +1,1153 @@
+{
+ "what": "issue 551 B6 U5 (decision point 8): the B-band re-read set",
+ "rule": "re-read any of the 29 band heads (B_P) whose predicted S, n or vouched_by changed vs its last read, and every band row from L_changed or the delta (0 wrong of any class)",
+ "B_P": [
+  683951,
+  707424,
+  726354,
+  1102571,
+  1147190,
+  1148297,
+  5278856,
+  5769515,
+  5842187,
+  6017838,
+  6057925,
+  6195903,
+  6370901,
+  6435162,
+  6548237,
+  6569442,
+  6603588,
+  6679375,
+  6718092,
+  7001924,
+  7011414,
+  7139761,
+  7167278,
+  7196993,
+  7461921,
+  7542368,
+  8407303,
+  8426318,
+  8460630
+ ],
+ "P_band_eur100m_recomputed": [
+  683951,
+  707424,
+  726354,
+  1102571,
+  1147190,
+  1148297,
+  5278856,
+  5769515,
+  5842187,
+  6017838,
+  6057925,
+  6195903,
+  6370901,
+  6435162,
+  6548237,
+  6569442,
+  6603588,
+  6679375,
+  6718092,
+  7001924,
+  7011414,
+  7139761,
+  7167278,
+  7196993,
+  7461921,
+  7542368,
+  8407303,
+  8426318,
+  8460630
+ ],
+ "within_2pct_of_eur100m": [
+  899272,
+  5842187
+ ],
+ "within_2pct_recomputed_from_P": [
+  899272,
+  5842187
+ ],
+ "within_2pct_in_B_P": [
+  5842187
+ ],
+ "within_2pct_outside_B_P": [
+  899272
+ ],
+ "compare": "strict equality of (S, currency, n) and vouched_by {field, notice_id, cents}: P (v2+both) vs the figures the head's last recorded read judged",
+ "rows": [
+  {
+   "id": 683951,
+   "predicted_v2_both": {
+    "S": 80755260600,
+    "currency": "EUR",
+    "n": 149,
+    "vouched_by": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 24772240,
+     "cents": 80755260600
+    },
+    "S_eur_cents": 80755260600
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 80755260600,
+    "currency": "EUR",
+    "n": 149,
+    "vouched_by": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 24772240,
+     "cents": 80755260600
+    },
+    "b3_port_2026_10_18": {
+     "S": 80755260600,
+     "currency": "EUR",
+     "n": 149,
+     "vouched_by": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 24772240,
+      "cents": 80755260600
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 707424,
+   "predicted_v2_both": {
+    "S": 4768655800000,
+    "currency": "HUF",
+    "n": 3,
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 47360663,
+     "cents": 4768655800000
+    },
+    "S_eur_cents": 13125944949
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 4768655800000,
+    "currency": "HUF",
+    "n": 3,
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 47360663,
+     "cents": 4768655800000
+    },
+    "b3_port_2026_10_18": {
+     "S": 4768655800000,
+     "currency": "HUF",
+     "n": 3,
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 47360663,
+      "cents": 4768655800000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 726354,
+   "predicted_v2_both": {
+    "S": 10628707472,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 26858945,
+     "cents": 10628707473
+    },
+    "S_eur_cents": 10628707472
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 10628707472,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 26858945,
+     "cents": 10628707473
+    },
+    "b3_port_2026_10_18": {
+     "S": 10628707472,
+     "currency": "EUR",
+     "n": 3,
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 26858945,
+      "cents": 10628707473
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 1102571,
+   "predicted_v2_both": {
+    "S": 22500000000,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 25848303,
+     "cents": 22500000000
+    },
+    "S_eur_cents": 22500000000
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 22500000000,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 25848303,
+     "cents": 22500000000
+    },
+    "b3_port_2026_10_18": {
+     "S": 22500000000,
+     "currency": "EUR",
+     "n": 2,
+     "vouched_by": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 25848303,
+      "cents": 22500000000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 1147190,
+   "predicted_v2_both": {
+    "S": 19928795100,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 25033715,
+     "cents": 19928795100
+    },
+    "S_eur_cents": 19928795100
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 19928795100,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "BT-1118-NoticeResult",
+     "notice_id": 25033715,
+     "cents": 19928795100
+    },
+    "b3_port_2026_10_18": {
+     "S": 19928795100,
+     "currency": "EUR",
+     "n": 2,
+     "vouched_by": {
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 25033715,
+      "cents": 19928795100
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 1148297,
+   "predicted_v2_both": {
+    "S": 8382710294340,
+    "currency": "HUF",
+    "n": 10,
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 25724682,
+     "cents": 8382710294340
+    },
+    "S_eur_cents": 23125993970
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 8382710294340,
+    "currency": "HUF",
+    "n": 10,
+    "vouched_by": {
+     "field": "BT-118-NoticeResult",
+     "notice_id": 25724682,
+     "cents": 8382710294340
+    },
+    "b3_port_2026_10_18": {
+     "S": 8382710294340,
+     "currency": "HUF",
+     "n": 10,
+     "vouched_by": {
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25724682,
+      "cents": 8382710294340
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 5278856,
+   "predicted_v2_both": {
+    "S": 54800000000,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19045609,
+     "cents": 54800000000
+    },
+    "S_eur_cents": 54800000000
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 54800000000,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19045609,
+     "cents": 54800000000
+    },
+    "b3_port_2026_10_18": {
+     "S": 54800000000,
+     "currency": "EUR",
+     "n": 2,
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19045609,
+      "cents": 54800000000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 5769515,
+   "predicted_v2_both": {
+    "S": 13167459000,
+    "currency": "EUR",
+    "n": 4,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 18974369,
+     "cents": 13167459000
+    },
+    "S_eur_cents": 13167459000
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 13167459000,
+    "currency": "EUR",
+    "n": 4,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 18974369,
+     "cents": 13167459000
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 5842187,
+   "predicted_v2_both": {
+    "S": 10103142060,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19548423,
+     "cents": 10103142060
+    },
+    "S_eur_cents": 10103142060
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 10103142060,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19548423,
+     "cents": 10103142060
+    },
+    "b3_port_2026_10_18": {
+     "S": 10103142060,
+     "currency": "EUR",
+     "n": 3,
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19548423,
+      "cents": 10103142060
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": true
+  },
+  {
+   "id": 6017838,
+   "predicted_v2_both": {
+    "S": 9365800000,
+    "currency": "GBP",
+    "n": 6,
+    "vouched_by": {
+     "field": "TED-HIGH",
+     "notice_id": 19744792,
+     "cents": 9337800000
+    },
+    "S_eur_cents": 10564918218
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 9365800000,
+    "currency": "GBP",
+    "n": 6,
+    "vouched_by": {
+     "field": "TED-HIGH",
+     "notice_id": 19744792,
+     "cents": 9337800000
+    },
+    "b3_port_2026_10_18": {
+     "S": 9365800000,
+     "currency": "GBP",
+     "n": 6,
+     "vouched_by": {
+      "field": "TED-HIGH",
+      "notice_id": 19744792,
+      "cents": 9337800000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6057925,
+   "predicted_v2_both": {
+    "S": 23000000000,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 19536156,
+     "cents": 23000000000
+    },
+    "S_eur_cents": 23000000000
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 23000000000,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 19536156,
+     "cents": 23000000000
+    },
+    "b3_port_2026_10_18": {
+     "S": 23000000000,
+     "currency": "EUR",
+     "n": 3,
+     "vouched_by": {
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 19536156,
+      "cents": 23000000000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6195903,
+   "predicted_v2_both": {
+    "S": 13329022000,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20027347,
+     "cents": 13329022000
+    },
+    "S_eur_cents": 13329022000
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 13329022000,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20027347,
+     "cents": 13329022000
+    },
+    "b3_port_2026_10_18": {
+     "S": 13329022000,
+     "currency": "EUR",
+     "n": 2,
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20027347,
+      "cents": 13329022000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6370901,
+   "predicted_v2_both": {
+    "S": 11361119600000,
+    "currency": "HUF",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20317379,
+     "cents": 11361119600000
+    },
+    "S_eur_cents": 31790026303
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 11361119600000,
+    "currency": "HUF",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20317379,
+     "cents": 11361119600000
+    },
+    "b3_port_2026_10_18": {
+     "S": 11361119600000,
+     "currency": "HUF",
+     "n": 2,
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20317379,
+      "cents": 11361119600000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6435162,
+   "predicted_v2_both": {
+    "S": 10866649300,
+    "currency": "EUR",
+    "n": 5,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20680957,
+     "cents": 10866649300
+    },
+    "S_eur_cents": 10866649300
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 10866649300,
+    "currency": "EUR",
+    "n": 5,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20680957,
+     "cents": 10866649300
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6548237,
+   "predicted_v2_both": {
+    "S": 8250000000000,
+    "currency": "HUF",
+    "n": 15,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20508422,
+     "cents": 8250000000000
+    },
+    "S_eur_cents": 22031725685
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 8250000000000,
+    "currency": "HUF",
+    "n": 15,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20508422,
+     "cents": 8250000000000
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6569442,
+   "predicted_v2_both": {
+    "S": 24468101000,
+    "currency": "CHF",
+    "n": 29,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20743713,
+     "cents": 24468101000
+    },
+    "S_eur_cents": 22247773231
+   },
+   "last_read": {
+    "read": "B3 read18 (2026-10-18, wf_24a65e6a-e63)",
+    "basis": "b3/read18/read18.json heads[] + b3/results/api_port.jsonl.gz (the port output it read)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 24468101000,
+    "currency": "CHF",
+    "n": 29,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20743713,
+     "cents": 24468101000
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6603588,
+   "predicted_v2_both": {
+    "S": 15461134200,
+    "currency": "EUR",
+    "n": 7,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20628343,
+     "cents": 15461134200
+    },
+    "S_eur_cents": 15461134200
+   },
+   "last_read": {
+    "read": "B3 read18 (2026-10-18, wf_24a65e6a-e63)",
+    "basis": "b3/read18/read18.json heads[] + b3/results/api_port.jsonl.gz (the port output it read)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 15461134200,
+    "currency": "EUR",
+    "n": 7,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20628343,
+     "cents": 15461134200
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6679375,
+   "predicted_v2_both": {
+    "S": 23850000000,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20928012,
+     "cents": 23850000000
+    },
+    "S_eur_cents": 23850000000
+   },
+   "last_read": {
+    "read": "B3 read18 (2026-10-18, wf_24a65e6a-e63)",
+    "basis": "b3/read18/read18.json heads[] + b3/results/api_port.jsonl.gz (the port output it read)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 23850000000,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 20928012,
+     "cents": 23850000000
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 6718092,
+   "predicted_v2_both": {
+    "S": 99000000000,
+    "currency": "EUR",
+    "n": 4,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20884376,
+     "cents": 99000000000
+    },
+    "S_eur_cents": 99000000000
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 99000000000,
+    "currency": "EUR",
+    "n": 4,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 20884376,
+     "cents": 99000000000
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 7001924,
+   "predicted_v2_both": {
+    "S": 42400000000,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 21525333,
+     "cents": 42400000000
+    },
+    "S_eur_cents": 42400000000
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 42400000000,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 21525333,
+     "cents": 42400000000
+    },
+    "b3_port_2026_10_18": {
+     "S": 42400000000,
+     "currency": "EUR",
+     "n": 3,
+     "vouched_by": {
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 21525333,
+      "cents": 42400000000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 7011414,
+   "predicted_v2_both": {
+    "S": 114477426000,
+    "currency": "PLN",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21543078,
+     "cents": 114477426000
+    },
+    "S_eur_cents": 25021294370
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 114477426000,
+    "currency": "PLN",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21543078,
+     "cents": 114477426000
+    },
+    "b3_port_2026_10_18": {
+     "S": 114477426000,
+     "currency": "PLN",
+     "n": 2,
+     "vouched_by": {
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21543078,
+      "cents": 114477426000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 7139761,
+   "predicted_v2_both": {
+    "S": 16673192969,
+    "currency": "EUR",
+    "n": 13,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 21841642,
+     "cents": 16673192971
+    },
+    "S_eur_cents": 16673192969
+   },
+   "last_read": {
+    "read": "B3 read18 (2026-10-18, wf_24a65e6a-e63)",
+    "basis": "b3/read18/read18.json heads[] + b3/results/api_port.jsonl.gz (the port output it read)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 16673192969,
+    "currency": "EUR",
+    "n": 13,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 21841642,
+     "cents": 16673192971
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 7167278,
+   "predicted_v2_both": {
+    "S": 34499889144400,
+    "currency": "HUF",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22108220,
+     "cents": 34499889144400
+    },
+    "S_eur_cents": 86617848718
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 34499889144400,
+    "currency": "HUF",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22108220,
+     "cents": 34499889144400
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 7196993,
+   "predicted_v2_both": {
+    "S": 4341088788600,
+    "currency": "HUF",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22331647,
+     "cents": 4341088788600
+    },
+    "S_eur_cents": 11637371763
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 4341088788600,
+    "currency": "HUF",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 22331647,
+     "cents": 4341088788600
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 7461921,
+   "predicted_v2_both": {
+    "S": 12261000000,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 22581643,
+     "cents": 12261000000
+    },
+    "S_eur_cents": 12261000000
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 12261000000,
+    "currency": "EUR",
+    "n": 2,
+    "vouched_by": {
+     "field": "TED-VAL_ESTIMATED_TOTAL",
+     "notice_id": 22581643,
+     "cents": 12261000000
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 7542368,
+   "predicted_v2_both": {
+    "S": 17984074893,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 23357149,
+     "cents": 17984074893
+    },
+    "S_eur_cents": 17984074893
+   },
+   "last_read": {
+    "read": "B3 read18 (2026-10-18, wf_24a65e6a-e63)",
+    "basis": "b3/read18/read18.json heads[] + b3/results/api_port.jsonl.gz (the port output it read)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 17984074893,
+    "currency": "EUR",
+    "n": 3,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 23357149,
+     "cents": 17984074893
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 8407303,
+   "predicted_v2_both": {
+    "S": 113425196700,
+    "currency": "EUR",
+    "n": 4,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19931200,
+     "cents": 113425196700
+    },
+    "S_eur_cents": 113425196700
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 113425196700,
+    "currency": "EUR",
+    "n": 4,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19931200,
+     "cents": 113425196700
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 8426318,
+   "predicted_v2_both": {
+    "S": 300000000000,
+    "currency": "GBP",
+    "n": 7,
+    "vouched_by": {
+     "field": "TED-HIGH",
+     "notice_id": 20083570,
+     "cents": 300000000000
+    },
+    "S_eur_cents": 338294993234
+   },
+   "last_read": {
+    "read": "unit 4b M2 band re-read (2026-10-17, wf_88da8542-c46)",
+    "basis": "unit4b/M1-port-check.json (the v2 port output M2 read)",
+    "verdict": "right",
+    "class": null,
+    "S": 300000000000,
+    "currency": "GBP",
+    "n": 7,
+    "vouched_by": {
+     "field": "TED-HIGH",
+     "notice_id": 20083570,
+     "cents": 300000000000
+    },
+    "b3_port_2026_10_18": {
+     "S": 300000000000,
+     "currency": "GBP",
+     "n": 7,
+     "vouched_by": {
+      "field": "TED-HIGH",
+      "notice_id": 20083570,
+      "cents": 300000000000
+     }
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  },
+  {
+   "id": 8460630,
+   "predicted_v2_both": {
+    "S": 40456874162,
+    "currency": "EUR",
+    "n": 21,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21675186,
+     "cents": 40456874162
+    },
+    "S_eur_cents": 40456874162
+   },
+   "last_read": {
+    "read": "B5 investigation read, band9 (2026-10-19, wf_eecbe1b7-bc7)",
+    "basis": "b5/investigate/read/read.json heads[] (served snapshot, read_items.json)",
+    "verdict": "right",
+    "class": "ok",
+    "S": 40456874162,
+    "currency": "EUR",
+    "n": 21,
+    "vouched_by": {
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 21675186,
+     "cents": 40456874162
+    }
+   },
+   "changed": [],
+   "reread": false,
+   "within_2pct_of_eur100m": false
+  }
+ ],
+ "changed_ids": [],
+ "l_changed": {
+  "sets": {
+   "b6/l_changed_545_ids.json": 47,
+   "b6/l_changed_571_ids.json": 66,
+   "b6/u2/l_changed_provisional.json:criterion_a_ids": 0,
+   "b6/u2/l_changed_provisional.json:criterion_b_ids": 0,
+   "b6/u2/l_changed_provisional.json:ids_of_3502_with_any_non2630_row_up_to_head": 0,
+   "b6/u2/l_changed_provisional.json:in_3502": 0,
+   "b6/u2/l_changed_provisional.json:l_changed_provisional": 239,
+   "b6/u2/l_changed_provisional.json:set_541_2632": 126,
+   "b6/u2/l_changed_provisional.json:set_545": 47,
+   "b6/u2/l_changed_provisional.json:set_571": 66
+  },
+  "ids_found": 239,
+  "band_rows_in_l_changed": [],
+  "P_in_l_changed": [],
+  "u2_record": "provisional L_changed ∩ 3,502 = 0 (2630-excluded reading, binding for U6); 541/571 carriers 0, 545's 48 none"
+ },
+ "delta": "none yet: the delta (salt 551-b6-delta-) is the new fires after the drain; it does not exist pre-flip",
+ "band_reread_set": []
+}

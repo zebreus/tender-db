@@ -340,3 +340,5 @@ offset. A date-only result stays date-only (367/418 rendering). No other source 
   - **551.** No deploy hold: the B6 cohort carries 54 Tenders with 104 DÖE versions and the rule changes 0 of them
     (measured on the B6 U2 layer). If 539 deploys before the B6 flip, list it in B6's code-drift ledger (point 5) and
     re-run the zero-drift probe (refold-lot-sum on the 3,502; expect 0 corrected) before U6.
+- **Served-docs audit (2026-10-19 15:5xZ, hourly AUDIT):** `/docs` on rev 0787596 serves the 539 Dates caveat ("raised to the day of
+  the notice's IssueDate when that is later (issue 539)") and the pre-drain caveat ("Until the issue-539 drain re-dates …").
