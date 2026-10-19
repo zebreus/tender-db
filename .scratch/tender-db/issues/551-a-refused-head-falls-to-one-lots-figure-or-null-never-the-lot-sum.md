@@ -1346,3 +1346,22 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
 - The end-to-end test stays the recorded deviation; D1 on 6465510 in drain stage 1 remains its guard.
 - Next: U4's adoption reads (running, wf_e231858e-cd0) fix the guard set and P; then U5's fresh read of 30 from P.
 
+
+## B6 U4 — guard adoption read (2026-10-19, wf_e231858e-cd0; tally `551-lot-sum/b6/u4/u4-result.md` / `.json`)
+
+| guard | read set | right | neutral | wrong | non-right share | bar | decision |
+|---|---|---|---|---|---|---|---|
+| G-single | R_single, first 30 by `sha256('551-b6-gcost-'+id)` | 27 | 0 | 3 | 10.0 % | ≥ 3 of 30 | **ADOPT** |
+| G-cover | R_excess {7202436} | 0 | 0 | 1 | 100 % | ≥ 1 of 1 | **ADOPT** |
+| G-cover, gap case (record only, not triggered) | all 13 refusals | 9 | 0 | 4 | 30.8 % | — | (would adopt) |
+
+- Non-rights, each upheld by a reader + skeptic pair: 6465510 (recorded B5 verdict), 6582856 and 7179291 (`skeptic_2.md`,
+  `skeptic_4.md`), all wrong/other in the 6465510 shape (a single-lot notice's own award vouching a sum it is not part of);
+  7202436 (`skeptic_5.md`). Priors kept: 6595330 right (b3/read18), 6465510 wrong. 7600895 (a G-cover overlap id outside the 30)
+  read right, recorded separately.
+- **P = v2+both, 3,467 ships** (`b6/u2/P.json`, ids_sha256 a2619fd9e380d3d5…): v2's 3,502 minus R_single's 34 and 7202436.
+  The flip sets `R10_G_SINGLE = true`, `R10_G_COVER = true` (both already true in code since f41c809; inert while W is off).
+- Sensitivity, recorded: G-single sits exactly on its bar — overturning one of its three non-rights would reject it (2/30), and
+  the gap rule would still adopt G-cover (3/13), giving P = v2+cover (3,489). The adoption rule is monotone and was fixed before
+  the reads (decision point 3); the cost it accepts is ~27 right ships refused per 30 for the 3 wrongs it stops.
+- Next: U5, the fresh pre-flip read of 30 from P minus every read id (salt `551-b6-fresh-`), then the B-band re-read (point 8).
