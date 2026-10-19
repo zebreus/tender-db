@@ -48659,7 +48659,7 @@ mod tests {
         // beside 20747457's LOT-2 gives it two LotResults, while S's awards still come from
         // one-result rounds (21528648, 21049685), so every guard ships it, vouched by 20747457.
         let mut two = v.clone();
-        two.rounds[1].lot_results.push(b6_result("RES-2", None, None, "clos-nw", &[], None));
+        two.rounds[1].lot_results.push(b6_result("RES-2", None, None, super::DECISION_NO_AWARD, &[], None));
         assert_eq!((super::round_results(&two, 20_747_457), super::round_results(&two, 21_528_648), super::round_results(&two, 21_049_685)), (2, 1, 1));
         for guards in R10Guards::ALL {
             let derived = awards_path_check_guards(std::slice::from_ref(&two), &rates, guards).unwrap_or_else(|check| panic!("{guards:?}: refused by {check}"));
@@ -48678,7 +48678,7 @@ mod tests {
         use super::StatedTotalKind::Award;
         use super::{DerivationPath, R10Guards, VouchingTotal, awards_path_check_guards};
         let rates = crate::rates::RatesLookup::default();
-        let closed = |key: &str, lot: &str| b6_result(key, Some(lot), None, "clos-nw", &[], Some(lot.trim_start_matches("LOT-")));
+        let closed = |key: &str, lot: &str| b6_result(key, Some(lot), None, super::DECISION_NO_AWARD, &[], Some(lot.trim_start_matches("LOT-")));
         let v = TenderVersion {
             caused_by_notice_id: 23_444_244,
             lots: (1..=9).map(|i| v2_lot(&format!("LOT-{i}"), Vec::new())).collect(),
@@ -48695,7 +48695,7 @@ mod tests {
                     Vec::new(),
                 ),
                 v2_round(23_429_800, vec![b6_result("RES-1", None, Some(322_940), "selec-w", &[11_565_823], None)], Vec::new()),
-                v2_round(23_444_244, vec![b6_result("RES-1", None, None, "clos-nw", &[], None)], Vec::new()),
+                v2_round(23_444_244, vec![b6_result("RES-1", None, None, super::DECISION_NO_AWARD, &[], None)], Vec::new()),
             ],
             stated_totals: vec![
                 v2_total(23_354_748, "TED-VAL_TOTAL", Award, 92_000),
