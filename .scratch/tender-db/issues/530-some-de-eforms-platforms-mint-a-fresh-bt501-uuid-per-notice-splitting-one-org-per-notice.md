@@ -1,6 +1,6 @@
 # 530 — some DE eForms platforms mint a fresh BT-501 UUID per notice, splitting one org into a row per notice (buyers, review chambers, winners)
 
-Status: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, the in-app census that sizes the single-use GUID class by platform.
+Status: ready-for-agent — unit 1 MEASURED 2026-10-19: census job `guid-census` (built b81d9ce, gate green 1,466 s, deployed 0787596) ran as queue job 2655 in 12 s (`.scratch/tender-db/530-triage/guid_census_2655.json`). 81,323 v4-GUID org rows (510,037 mentions): 74,023 (91.0%) span ONE distinct tender; within-notice twin reaches 11,258 single-use rows (15.2%; notice-scoped 18,415, 24.9%); the cross-notice (name_norm, country) signal reaches 55,783 (75.4%) but would also reach 11 STABLE rows under 41 names; either signal 80.4% (14,530 single-use reached by neither). Stable population (254/255/8378 + 100+ mentions): 345 rows, 96.2% multi-tender. DE 42,040 + CH 27,837 + FR 3,597 single-use; platforms doe+ted dashed-lower 40,388, ted dashed-lower 28,285. NEXT: unit 2 decide (a)/(b)/(d)/(c) on these numbers. Was: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, the in-app census that sizes the single-use GUID class by platform.
 Kind: data quality (organization identity, DE): identifier admission, split side
 Relates to:
 - 312 (RESOLVED 2026-08-30): measured the v4-GUID class for false merges (about 0) and for linking on a 306-row
@@ -167,3 +167,27 @@ Constraints for any choice:
   not move them: 522 unit 1 found a recorded mention is kept while it publishes the same raw identifier
   (`RecordedMention::publishes`, issue 434).
 - Then run the Verify above.
+
+
+## Unit 1 — measured (2026-10-19, queue job 2655)
+
+- Job: `{"kind":"guid-census","dry_run":true}` on rev 0787596 (default stable_mentions 100, samples 30); 3,198 windows to org id
+  31,970,152; 301,045 32/36-char candidates, 81,323 `idgate::uuid_v4` rows, 10,548 nibble-only values left out. Report and
+  summary: `530-triage/guid_census_2655.json`, `job_2655_summary.txt`.
+- (1) **91.0%** of GUID rows (74,023 / 81,323) span one distinct tender; 7,300 span several.
+- (2) Within-notice twin (one notice, one name_norm, ≥ 2 GUID rows): 23,474 notices, 25,438 groups, 11,437 rows, reaching
+  11,258 single-use (15.2%) and 70 stable; notice-scoped (every GUID row of a twin notice): 19,697 rows, 18,415 single-use (24.9%),
+  114 stable.
+- (3) Cross-notice ((name_norm, country) already on an earlier GUID row with ≤ 2 mentions): 57,353 rows under 4,481 names, 55,783
+  single-use (75.4%). Either signal 56,280 (76.0%), neither 17,743; with the twin notice-scoped, either 59,493 (80.4%), neither
+  14,530.
+- (4) Cross names that also hold a stable row: 41 of 4,481; 7,658 rows under them (7,051 single-use); **11 stable rows reached**
+  (a rule on this signal would have refused them at mint time).
+- (5) 312's basis re-taken: all rows 59.0% multi-notice but 9.0% multi-tender (the TED/DÖE twin copies made 312's "93% span
+  more than one notice" read as reuse); stable (345 rows, 311,552 mentions) 100% / 96.2%; the rest 58.8% / 8.6%.
+- Breakdowns: DE 42,040 / 47,436 single-use, CH 27,837 / 29,625, FR 3,597 / 3,606, AT 126 / 176. Roles (single-use/rows): buyer
+  30,567 / 31,182, tenderer_winner 13,230 / 18,131, review_or_info 27,005 / 28,789, other 3,221 / 3,221 (27,337 mixed). Platforms:
+  doe+ted dashed-lower 40,388 / 45,839, ted dashed-lower 28,285 / 30,106, ted other 3,511, doe dashed-lower 1,834.
+- Canaries: 254 (24,219 mentions, 4,463 tenders), 255 (73,039; 9,342), 8378 (3,382; 120) stable; Göttingen 22759261/62/65 single-use
+  (twin, twin+cross, twin-notice+cross); Südbayern 30971684/734/757 and Bremen 30532145/147 single-use, cross only (no twin), as the
+  issue predicted.

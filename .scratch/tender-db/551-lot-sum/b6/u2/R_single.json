@@ -1,0 +1,2105 @@
+{
+ "entries": [
+  {
+   "S": 3529888888800,
+   "S_eur_cents": 8919942609,
+   "currency": "HUF",
+   "first": "R10",
+   "id": 402503,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 3529888888800,
+     "content_lot_results": 1,
+     "field": "BT-161-NoticeResult",
+     "form": null,
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-0002"
+     ],
+     "notice_id": 24416505,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-0001",
+     24982264,
+     2997888888800
+    ],
+    [
+     "LOT-0002",
+     24416505,
+     532000000000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 3529888888800,
+    "field": "BT-161-NoticeResult",
+    "notice_id": 24416505
+   },
+   "v2_vouches": [
+    [
+     "BT-161-NoticeResult",
+     24416505,
+     3529888888800
+    ]
+   ],
+   "year": "2025"
+  },
+  {
+   "S": 51361537100,
+   "S_eur_cents": 133344247,
+   "currency": "HUF",
+   "first": "R10",
+   "id": 472292,
+   "n": 4,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 51361537100,
+     "content_lot_results": 1,
+     "field": "BT-161-NoticeResult",
+     "form": null,
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-0003"
+     ],
+     "notice_id": 23758321,
+     "round_results": 1
+    },
+    {
+     "cents": 51361537100,
+     "content_lot_results": 1,
+     "field": "BT-161-NoticeResult",
+     "form": null,
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-0004"
+     ],
+     "notice_id": 23795731,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-0001",
+     23951676,
+     38974136300
+    ],
+    [
+     "LOT-0002",
+     23730496,
+     2595727200
+    ],
+    [
+     "LOT-0003",
+     23758321,
+     7299764500
+    ],
+    [
+     "LOT-0004",
+     23795731,
+     2491909100
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 51361537100,
+    "field": "BT-161-NoticeResult",
+    "notice_id": 23758321
+   },
+   "v2_vouches": [
+    [
+     "BT-161-NoticeResult",
+     23758321,
+     51361537100
+    ],
+    [
+     "BT-161-NoticeResult",
+     23795731,
+     51361537100
+    ]
+   ],
+   "year": "2024"
+  },
+  {
+   "S": 138000000,
+   "S_eur_cents": 138000000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 5581720,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 138000000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 18983294,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     19107853,
+     18000000
+    ],
+    [
+     "LOT-2",
+     18983294,
+     120000000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 138000000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 18983294
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     18983294,
+     138000000
+    ]
+   ],
+   "year": "2017"
+  },
+  {
+   "S": 450000000,
+   "S_eur_cents": 450000000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 5663701,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 450000000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 18933186,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     18933186,
+     300000000
+    ],
+    [
+     "LOT-2",
+     18998687,
+     150000000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 450000000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 18933186
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     18933186,
+     450000000
+    ]
+   ],
+   "year": "2016"
+  },
+  {
+   "S": 12022244,
+   "S_eur_cents": 12022244,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 5884304,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 12022244,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 19344705,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     19740228,
+     7825088
+    ],
+    [
+     "LOT-2",
+     19344705,
+     4197156
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 12022244,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 19344705
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     19344705,
+     12022244
+    ]
+   ],
+   "year": "2018"
+  },
+  {
+   "S": 3820000,
+   "S_eur_cents": 890215,
+   "currency": "PLN",
+   "first": "R10",
+   "id": 6003114,
+   "n": 3,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 3820000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F15",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 19427538,
+     "round_results": 1
+    },
+    {
+     "cents": 3820000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 19437670,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     19982269,
+     1140000
+    ],
+    [
+     "LOT-2",
+     19973462,
+     1280000
+    ],
+    [
+     "LOT-3",
+     19973463,
+     1400000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 3820000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 19427538
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     19427538,
+     3820000
+    ],
+    [
+     "TED-VAL_TOTAL",
+     19437670,
+     3820000
+    ]
+   ],
+   "year": "2018"
+  },
+  {
+   "S": 6849720,
+   "S_eur_cents": 6849720,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6234738,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 6849720,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 20033615,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     20033617,
+     2493000
+    ],
+    [
+     "LOT-2",
+     20033615,
+     4356720
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 6849720,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20033615
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     20033615,
+     6849720
+    ]
+   ],
+   "year": "2018"
+  },
+  {
+   "S": 18073600,
+   "S_eur_cents": 18073600,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6342738,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 18073600,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F21",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 20223375,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     20909307,
+     5995520
+    ],
+    [
+     "LOT-2",
+     20909303,
+     12078080
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 18073600,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20223375
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     20223375,
+     18073600
+    ]
+   ],
+   "year": "2020"
+  },
+  {
+   "S": 28537952,
+   "S_eur_cents": 28537952,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6356382,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 28537953,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 20317908,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23402733,
+     20333542
+    ],
+    [
+     "LOT-2",
+     23402794,
+     8204410
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 28537953,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20317908
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     20317908,
+     28537953
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 28000000,
+   "S_eur_cents": 28000000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6403567,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 28000000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 20520516,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     20520516,
+     14200000
+    ],
+    [
+     "LOT-2",
+     20520354,
+     13800000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 28000000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20520516
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     20520516,
+     28000000
+    ]
+   ],
+   "year": "2019"
+  },
+  {
+   "S": 16202092,
+   "S_eur_cents": 16202092,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6465510,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 16129032,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 20772908,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-2",
+     21020093,
+     9168050
+    ],
+    [
+     "LOT-6",
+     21044287,
+     7034042
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 16129032,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20772908
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     20772908,
+     16129032
+    ]
+   ],
+   "year": "2020"
+  },
+  {
+   "S": 416040,
+   "S_eur_cents": 416040,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6582856,
+   "n": 7,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 420000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 20932731,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     20989144,
+     94500
+    ],
+    [
+     "LOT-3",
+     20722713,
+     32040
+    ],
+    [
+     "LOT-4",
+     20781489,
+     38800
+    ],
+    [
+     "LOT-5",
+     20738475,
+     128000
+    ],
+    [
+     "LOT-7",
+     20722713,
+     77400
+    ],
+    [
+     "LOT-8",
+     20738475,
+     11500
+    ],
+    [
+     "LOT-9",
+     20781489,
+     33800
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 420000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20932731
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     20932731,
+     420000
+    ]
+   ],
+   "year": "2020"
+  },
+  {
+   "S": 229519500,
+   "S_eur_cents": 229519500,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6595330,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 229519500,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F06",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 20747457,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     21528648,
+     194040000
+    ],
+    [
+     "LOT-2",
+     21049685,
+     35479500
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 229519500,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20747457
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     20747457,
+     229519500
+    ]
+   ],
+   "year": "2021"
+  },
+  {
+   "S": 4656910569,
+   "S_eur_cents": 1053599676,
+   "currency": "PLN",
+   "first": "R10",
+   "id": 6784258,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 4656910569,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F06",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 21353722,
+     "round_results": 1
+    },
+    {
+     "cents": 4656910569,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F06",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 21366937,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23284790,
+     2347967480
+    ],
+    [
+     "LOT-2",
+     21353722,
+     2308943089
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 4656910569,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21353722
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     21353722,
+     4656910569
+    ],
+    [
+     "TED-VAL_TOTAL",
+     21366937,
+     4656910569
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 67740000,
+   "S_eur_cents": 67740000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6815094,
+   "n": 4,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 67740000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F21",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 21285538,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     21812830,
+     21318000
+    ],
+    [
+     "LOT-2",
+     22251256,
+     19140000
+    ],
+    [
+     "LOT-3",
+     21571535,
+     17490000
+    ],
+    [
+     "LOT-4",
+     21786612,
+     9792000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 67740000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21285538
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     21285538,
+     67740000
+    ]
+   ],
+   "year": "2022"
+  },
+  {
+   "S": 9299600,
+   "S_eur_cents": 9299600,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6838776,
+   "n": 5,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 9299600,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F21",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-6"
+     ],
+     "notice_id": 21254549,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     21233822,
+     784200
+    ],
+    [
+     "LOT-2",
+     21233822,
+     695400
+    ],
+    [
+     "LOT-3",
+     21233822,
+     2945000
+    ],
+    [
+     "LOT-5",
+     21818271,
+     4050000
+    ],
+    [
+     "LOT-6",
+     21254549,
+     825000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 9299600,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21254549
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     21254549,
+     9299600
+    ]
+   ],
+   "year": "2021"
+  },
+  {
+   "S": 1982261000,
+   "S_eur_cents": 444622614,
+   "currency": "PLN",
+   "first": "R10",
+   "id": 6852228,
+   "n": 6,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 1982261000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F06",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-6"
+     ],
+     "notice_id": 21600409,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     22470437,
+     369830000
+    ],
+    [
+     "LOT-2",
+     23320304,
+     599900000
+    ],
+    [
+     "LOT-3",
+     21584710,
+     53148000
+    ],
+    [
+     "LOT-4",
+     22470439,
+     73550000
+    ],
+    [
+     "LOT-5",
+     23318309,
+     331233000
+    ],
+    [
+     "LOT-6",
+     23067905,
+     554600000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 1982261000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21600409
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     21600409,
+     1982261000
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 8873200,
+   "S_eur_cents": 8873200,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 6937514,
+   "n": 4,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 8873200,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F21",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-4"
+     ],
+     "notice_id": 21530641,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     21465935,
+     1175200
+    ],
+    [
+     "LOT-2",
+     21536830,
+     2520000
+    ],
+    [
+     "LOT-3",
+     21947679,
+     3408000
+    ],
+    [
+     "LOT-4",
+     21530641,
+     1770000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 8873200,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21530641
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     21530641,
+     8873200
+    ]
+   ],
+   "year": "2021"
+  },
+  {
+   "S": 16316000,
+   "S_eur_cents": 16316000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7014656,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 16316000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F21",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 21635083,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     21635083,
+     8748000
+    ],
+    [
+     "LOT-2",
+     22164062,
+     7568000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 16316000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21635083
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     21635083,
+     16316000
+    ]
+   ],
+   "year": "2022"
+  },
+  {
+   "S": 100000000,
+   "S_eur_cents": 100000000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7102361,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 100000000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 22048453,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     22066668,
+     45000000
+    ],
+    [
+     "LOT-2",
+     22048453,
+     55000000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 100000000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22048453
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22048453,
+     100000000
+    ]
+   ],
+   "year": "2021"
+  },
+  {
+   "S": 420440000,
+   "S_eur_cents": 420440000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7163120,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 420440000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22136632,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     22182794,
+     190920000
+    ],
+    [
+     "LOT-2",
+     22281094,
+     229520000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 420440000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22136632
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22136632,
+     420440000
+    ]
+   ],
+   "year": "2022"
+  },
+  {
+   "S": 89880496,
+   "S_eur_cents": 89880496,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7166738,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 89880496,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22450615,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23664577,
+     26880496
+    ],
+    [
+     "LOT-2",
+     23664044,
+     63000000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 89880496,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22450615
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22450615,
+     89880496
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 8334990,
+   "S_eur_cents": 8334990,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7179291,
+   "n": 3,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 8314673,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22780357,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     22364146,
+     2637200
+    ],
+    [
+     "LOT-2",
+     22364146,
+     2807790
+    ],
+    [
+     "LOT-3",
+     22315443,
+     2890000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 8314673,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22780357
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22780357,
+     8314673
+    ]
+   ],
+   "year": "2022"
+  },
+  {
+   "S": 9762606820,
+   "S_eur_cents": 1295720595,
+   "currency": "HRK",
+   "first": "R10",
+   "id": 7348648,
+   "n": 17,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 9762606820,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-7"
+     ],
+     "notice_id": 22886555,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     22609100,
+     591300000
+    ],
+    [
+     "LOT-14",
+     22609100,
+     664300000
+    ],
+    [
+     "LOT-17",
+     22609100,
+     303972000
+    ],
+    [
+     "LOT-23",
+     22609100,
+     140160000
+    ],
+    [
+     "LOT-27",
+     22609100,
+     1057770000
+    ],
+    [
+     "LOT-28",
+     22609100,
+     186880000
+    ],
+    [
+     "LOT-29",
+     22609100,
+     340326000
+    ],
+    [
+     "LOT-3",
+     22609100,
+     629625000
+    ],
+    [
+     "LOT-30",
+     22609100,
+     264187000
+    ],
+    [
+     "LOT-31",
+     22609100,
+     793327500
+    ],
+    [
+     "LOT-32",
+     22609100,
+     549033000
+    ],
+    [
+     "LOT-33",
+     22609100,
+     226105820
+    ],
+    [
+     "LOT-34",
+     22609100,
+     2248400000
+    ],
+    [
+     "LOT-35",
+     23005980,
+     970900000
+    ],
+    [
+     "LOT-6",
+     22609100,
+     316491500
+    ],
+    [
+     "LOT-7",
+     22886555,
+     204400000
+    ],
+    [
+     "LOT-8",
+     22609100,
+     275429000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 9762606820,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22886555
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22886555,
+     9762606820
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 53115549,
+   "S_eur_cents": 53115549,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7354861,
+   "n": 3,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 53115549,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 22499826,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23045541,
+     13187656
+    ],
+    [
+     "LOT-2",
+     22806682,
+     30287514
+    ],
+    [
+     "LOT-3",
+     22815038,
+     9640379
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 53115549,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22499826
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22499826,
+     53115549
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 278437310,
+   "S_eur_cents": 278437310,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7380025,
+   "n": 3,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 278437310,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22369006,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23081023,
+     77120400
+    ],
+    [
+     "LOT-2",
+     23081641,
+     31130190
+    ],
+    [
+     "LOT-3",
+     23081236,
+     170186720
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 278437310,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22369006
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22369006,
+     278437310
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 369296550,
+   "S_eur_cents": 369296550,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7394272,
+   "n": 5,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 369296550,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22388431,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23168277,
+     20118750
+    ],
+    [
+     "LOT-2",
+     23169697,
+     89250000
+    ],
+    [
+     "LOT-3",
+     23168435,
+     25355700
+    ],
+    [
+     "LOT-4",
+     23168097,
+     228826500
+    ],
+    [
+     "LOT-5",
+     23168536,
+     5745600
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 369296550,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22388431
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22388431,
+     369296550
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 117686500,
+   "S_eur_cents": 117686500,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7423850,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 117686500,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22432073,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23566768,
+     57825000
+    ],
+    [
+     "LOT-2",
+     23257062,
+     59861500
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 117686500,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22432073
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22432073,
+     117686500
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 2204602700,
+   "S_eur_cents": 2204602700,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7600895,
+   "n": 3,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 2204602700,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22875211,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23600770,
+     1338772550
+    ],
+    [
+     "LOT-2",
+     23600177,
+     26330400
+    ],
+    [
+     "LOT-3",
+     23597734,
+     839499750
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 2204602700,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22875211
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22875211,
+     2204602700
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 381610000,
+   "S_eur_cents": 381610000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7605188,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 381610000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22923984,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23596947,
+     336810000
+    ],
+    [
+     "LOT-2",
+     23597536,
+     44800000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 381610000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22923984
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22923984,
+     381610000
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 5275000000,
+   "S_eur_cents": 5275000000,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7608791,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 5275000000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 23061269,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23061269,
+     4615000000
+    ],
+    [
+     "LOT-2",
+     23063124,
+     660000000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 5275000000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 23061269
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     23061269,
+     5275000000
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 566731310,
+   "S_eur_cents": 566731310,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7651470,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 566731310,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 23006164,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23740527,
+     286086310
+    ],
+    [
+     "LOT-2",
+     23438905,
+     280645000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 566731310,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 23006164
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     23006164,
+     566731310
+    ]
+   ],
+   "year": "2024"
+  },
+  {
+   "S": 18210653,
+   "S_eur_cents": 18210653,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7675062,
+   "n": 3,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 18210653,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-2"
+     ],
+     "notice_id": 23312560,
+     "round_results": 1
+    },
+    {
+     "cents": 18210653,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-3"
+     ],
+     "notice_id": 23314405,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23316732,
+     6895925
+    ],
+    [
+     "LOT-2",
+     23312560,
+     8330839
+    ],
+    [
+     "LOT-3",
+     23314405,
+     2983889
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 18210653,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 23312560
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     23312560,
+     18210653
+    ],
+    [
+     "TED-VAL_TOTAL",
+     23314405,
+     18210653
+    ]
+   ],
+   "year": "2023"
+  },
+  {
+   "S": 4150000,
+   "S_eur_cents": 955781,
+   "currency": "PLN",
+   "first": "R10",
+   "id": 7785319,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 4150000,
+     "content_lot_results": 1,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": false,
+     "g_single": true,
+     "kind": "award",
+     "names_summed_keys": [
+      "LOT-1"
+     ],
+     "notice_id": 23564346,
+     "round_results": 1
+    }
+   ],
+   "summed": [
+    [
+     "LOT-1",
+     23564346,
+     700000
+    ],
+    [
+     "LOT-2",
+     23613614,
+     3450000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 4150000,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 23564346
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     23564346,
+     4150000
+    ]
+   ],
+   "year": "2023"
+  }
+ ],
+ "ids": [
+  402503,
+  472292,
+  5581720,
+  5663701,
+  5884304,
+  6003114,
+  6234738,
+  6342738,
+  6356382,
+  6403567,
+  6465510,
+  6582856,
+  6595330,
+  6784258,
+  6815094,
+  6838776,
+  6852228,
+  6937514,
+  7014656,
+  7102361,
+  7163120,
+  7166738,
+  7179291,
+  7348648,
+  7354861,
+  7380025,
+  7394272,
+  7423850,
+  7600895,
+  7605188,
+  7608791,
+  7651470,
+  7675062,
+  7785319
+ ],
+ "ids_sha256": "65224f5239d68b4ed1fec108b2b03024cc4a24ee436a1fa03ec4b50d44b4aa5d",
+ "n": 34,
+ "shape_mix": {
+  "eur_band": {
+   "<100k": 4,
+   "<100m": 5,
+   "<10k": 3,
+   "<10m": 12,
+   "<1m": 10
+  },
+  "removed_field": {
+   "BT-161-NoticeResult": 3,
+   "TED-VAL_TOTAL": 35
+  },
+  "removed_kind": {
+   "award": 38
+  },
+  "v2_vouched_by_field": {
+   "BT-161-NoticeResult": 2,
+   "TED-VAL_TOTAL": 32
+  },
+  "year": {
+   "2016": 1,
+   "2017": 1,
+   "2018": 3,
+   "2019": 1,
+   "2020": 3,
+   "2021": 4,
+   "2022": 4,
+   "2023": 14,
+   "2024": 2,
+   "2025": 1
+  }
+ },
+ "what": "v2 ships G-single refuses (v2 ships minus v2+single ships)"
+}

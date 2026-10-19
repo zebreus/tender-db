@@ -1,0 +1,15 @@
+{
+ "compared_ids_sha256": "85d373a4385c9940ad72279e86730d5d684ea6ece30b1adb6f8201645c753e4d",
+ "disagreement_kinds": {},
+ "disagreements": {},
+ "n_agree": 3502,
+ "n_compared": 3502,
+ "n_disagree": 0,
+ "n_exempt": 0,
+ "n_ids": 3502,
+ "n_vouched_by_member_not_first": 0,
+ "port_errors": {},
+ "unread": [],
+ "vouched_by_member_not_first": [],
+ "what": "issue 551 B6 U2: port v2 (guards=frozenset()) vs served_lsa_rows.json on every id of the 3,502 outside the provisional L_changed (ship/refuse, S, currency, n; vouched_by by membership)"
+}
