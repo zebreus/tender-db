@@ -1,0 +1,2081 @@
+{
+ "what": "issue 551 B5 step 6: confirmation draw + band rows outside the reference 20 (docs/operations.md \"Path W v2\")",
+ "started_at": "2026-10-19T02:40:34Z",
+ "salt": "551-b5-confirm-",
+ "order_rule": "sha256(\"551-b5-confirm-\" + decimal id) hex digest ascending, ties by id",
+ "ranges": [
+  {
+   "from": "958764958",
+   "to": "958787061",
+   "rule": "from < cursor <= to; entity tender, op changed, version null",
+   "events_in_range": 3429,
+   "picked_events": 3429,
+   "distinct_ids": 3429,
+   "first_in_range": 958764959,
+   "last_in_range": 958787056,
+   "read_reaches": 958787061,
+   "generations": [
+    "2"
+   ]
+  }
+ ],
+ "cache": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/confirm",
+ "offline": false,
+ "reference_band_20": [
+  683951,
+  707424,
+  726354,
+  1102571,
+  1147190,
+  1148297,
+  5278856,
+  5842187,
+  6017838,
+  6057925,
+  6195903,
+  6370901,
+  6569442,
+  6603588,
+  6679375,
+  7001924,
+  7011414,
+  7139761,
+  7542368,
+  8426318
+ ],
+ "pre_draw_file": "confirm/confirm_result.predraw.json",
+ "pre_draw_sha256": "d8b7d352c0ef4a71de4626fd205cea50cc7840e18693c7b9a234677a3d96c30c",
+ "population": {
+  "changed_ids": 3429,
+  "ids_sha256": "ce3c325577e7138e81c048eaa0baee43c7ffce4187e00a8629eb51b36d72e6aa"
+ },
+ "excluded": {
+  "in_population": 0,
+  "by_reason": {},
+  "ids": []
+ },
+ "eligible": 3429,
+ "draw": {
+  "n_hold": 30,
+  "held_count": 30,
+  "walked": 30,
+  "not_found_404": [],
+  "skipped_not_lot_sum_awards": 0,
+  "skipped_by_method": {},
+  "exhausted_before_n": false,
+  "lot_sum_awards_share_of_walked": 1.0,
+  "held_ids": [
+   7456417,
+   609878,
+   6779279,
+   6465510,
+   6811355,
+   7319895,
+   5948260,
+   482122,
+   193717,
+   6420294,
+   766623,
+   6979655,
+   7561428,
+   6850557,
+   6850401,
+   7157983,
+   305060,
+   5936963,
+   6647432,
+   7620308,
+   7749755,
+   7036030,
+   7214560,
+   42392,
+   7698260,
+   7402471,
+   5883834,
+   6658447,
+   7046008,
+   6817321
+  ],
+  "held": [
+   {
+    "id": 7456417,
+    "value": {
+     "cents": 72933700,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 5,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 72933700,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22933392
+     }
+    },
+    "published_at": "2023-04-07",
+    "source": "ted",
+    "version": 5,
+    "S_eur_port": 72933700,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 0,
+    "salted": "000c1f0fc03d6fe573f78ba9f8d6ca434ee54438cdc040f20c75e84e3065f6aa"
+   },
+   {
+    "id": 609878,
+    "value": {
+     "cents": 2190131496,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 2190131496,
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25659799
+     }
+    },
+    "published_at": "2026-03-11",
+    "source": "ted",
+    "version": 1,
+    "S_eur_port": 2190131496,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 1,
+    "salted": "00172bfc8bd4b980b8ffc87c12d7655adbacc9698424010119ba3fd3ac9268c8"
+   },
+   {
+    "id": 6779279,
+    "value": {
+     "cents": 1036100,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 1036100,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21253579
+     }
+    },
+    "published_at": "2020-10-02",
+    "source": "ted",
+    "version": 6,
+    "S_eur_port": 1036100,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 2,
+    "salted": "0053ae66dc02a0084f6b936f0efa7bb5a082858526a3671ab028f24c8fea289b"
+   },
+   {
+    "id": 6465510,
+    "value": {
+     "cents": 16202092,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 16129032,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20772908
+     }
+    },
+    "published_at": "2020-05-20",
+    "source": "ted",
+    "version": 23,
+    "S_eur_port": 16202092,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 3,
+    "salted": "006ae8226b5f0cbf399535b1c75b29cb0074e8db91b5e277719c2128629d86d0"
+   },
+   {
+    "id": 6811355,
+    "value": {
+     "cents": 476351246,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 476351246,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21225827
+     }
+    },
+    "published_at": "2021-03-22",
+    "source": "ted",
+    "version": 8,
+    "S_eur_port": 476351246,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 4,
+    "salted": "00764b975fafc3d357a50d19f0e7d317080984bff22450c31f72fe2c8a92a386"
+   },
+   {
+    "id": 7319895,
+    "value": {
+     "cents": 581695821,
+     "currency": "PLN"
+    },
+    "value_derivation": {
+     "lots": 40,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 577899821,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22580039
+     }
+    },
+    "published_at": "2022-09-14",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 123337324,
+    "rate": 4.7163,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 5,
+    "salted": "0079ef57418fff58edd686e49ffd502d8b5ec6ce0fc99a748b80e08bfd60354c"
+   },
+   {
+    "id": 5948260,
+    "value": {
+     "cents": 113388071,
+     "currency": "GBP"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 113388071,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19682959
+     }
+    },
+    "published_at": "2020-07-29",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 125450098,
+    "rate": 0.90385,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 6,
+    "salted": "007acdb5d7626b384a733ac3a6c3e92487a2957c4d30d21dfecd3ed2a53f9c93"
+   },
+   {
+    "id": 482122,
+    "value": {
+     "cents": 64000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 64000000,
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 24521069
+     }
+    },
+    "published_at": "2025-01-08",
+    "source": "ted",
+    "version": 1,
+    "S_eur_port": 64000000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 7,
+    "salted": "00874a7bb3ff1c4306788cdc22f42a2df4a8bbdfea681a313e8250b73ba5e63d"
+   },
+   {
+    "id": 193717,
+    "value": {
+     "cents": 39200000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 39200000,
+      "field": "BT-118-NoticeResult",
+      "notice_id": 24264397
+     }
+    },
+    "published_at": "2024-10-29",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 39200000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 8,
+    "salted": "00aadf4a7a1e5b83ac7c72a345d009f5d5bf415a63ae1a76687b62e770d9a00e"
+   },
+   {
+    "id": 6420294,
+    "value": {
+     "cents": 3205300000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 3205300000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20784598
+     }
+    },
+    "published_at": "2021-03-19",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 3205300000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 9,
+    "salted": "00b98b93fd3125852f90b04e39ede3fb96581444e94778b4f2241594f0322388"
+   },
+   {
+    "id": 766623,
+    "value": {
+     "cents": 3704884136,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 3704884136,
+      "field": "BT-118-NoticeResult",
+      "notice_id": 27863637
+     }
+    },
+    "published_at": "2026-08-12",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 3704884136,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 10,
+    "salted": "00c43d4608e2f3b474fc31081b6c3384b4a5b8e91fc3aab3d0e1043865eea22f"
+   },
+   {
+    "id": 6979655,
+    "value": {
+     "cents": 7166391400,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 7166391400,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21639328
+     }
+    },
+    "published_at": "2023-02-28",
+    "source": "ted",
+    "version": 7,
+    "S_eur_port": 18974771,
+    "rate": 377.68,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 11,
+    "salted": "00cae076636e9badfa3e5417f28752283a9df9a88df85b72ae7ba338cc3be307"
+   },
+   {
+    "id": 7561428,
+    "value": {
+     "cents": 214603908,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 212862508,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 23116675
+     }
+    },
+    "published_at": "2023-07-28",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 214603908,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 12,
+    "salted": "00d891f9ec934dd64cb59a1cb82441cc987c13137581bc0899fcaff7a9df1067"
+   },
+   {
+    "id": 6850557,
+    "value": {
+     "cents": 32815456000,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 32815456000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21539204
+     }
+    },
+    "published_at": "2022-04-04",
+    "source": "ted",
+    "version": 6,
+    "S_eur_port": 88894639,
+    "rate": 369.15,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 13,
+    "salted": "00dbf17ad5e3a0ccb4308eabdb643cdd7061df28d6d6ec90b0fe2f88f6bab3ce"
+   },
+   {
+    "id": 6850401,
+    "value": {
+     "cents": 118290600,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 118290600,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21613977
+     }
+    },
+    "published_at": "2021-03-25",
+    "source": "ted",
+    "version": 7,
+    "S_eur_port": 118290600,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 14,
+    "salted": "00ed12b52312f21658ae3def44f46d52e7cf89b49ee687ee262523fcb73c8984"
+   },
+   {
+    "id": 7157983,
+    "value": {
+     "cents": 54400000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 54400000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22119193
+     }
+    },
+    "published_at": "2023-09-25",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 54400000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 15,
+    "salted": "00efbfb867f98bfd92361cc291512562cca71985af67f78fdc7901b9d04b1e02"
+   },
+   {
+    "id": 305060,
+    "value": {
+     "cents": 29752000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 29752000,
+      "field": "BT-118-NoticeResult",
+      "notice_id": 23859386
+     }
+    },
+    "published_at": "2024-04-12",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 29752000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 16,
+    "salted": "00efe4954b8b25386fd849efd15ed9c860a045ee997ed16d6ae4a84efb390448"
+   },
+   {
+    "id": 5936963,
+    "value": {
+     "cents": 19651000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 19651000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19299125
+     }
+    },
+    "published_at": "2020-08-07",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 19651000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 17,
+    "salted": "01072f82c9e8168479ea16616e82627546e5a6b26bf321d288721f8d25edeb4f"
+   },
+   {
+    "id": 6647432,
+    "value": {
+     "cents": 47911400000,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 47911400000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21086519
+     }
+    },
+    "published_at": "2022-10-25",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 115811941,
+    "rate": 413.7,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 18,
+    "salted": "01205dbb56d568dea4fa68ce09998f32bf64caeafc9b1a7e13334e7d19d84901"
+   },
+   {
+    "id": 7620308,
+    "value": {
+     "cents": 7000000,
+     "currency": "BGN"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 7000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 22957072
+     }
+    },
+    "published_at": "2023-04-24",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 3579098,
+    "rate": 1.9558,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 19,
+    "salted": "012d9f7a04d03052b8cfd65f377c875245aaeb03b5e01d28b64e9abd7926e4de"
+   },
+   {
+    "id": 7749755,
+    "value": {
+     "cents": 412460,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 412460,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 23353167
+     }
+    },
+    "published_at": "2023-09-27",
+    "source": "ted",
+    "version": 6,
+    "S_eur_port": 412460,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 20,
+    "salted": "0149d188ece37e4bed7369af4aa2fdb02f85287b97a4a81c9db27caa63432013"
+   },
+   {
+    "id": 7036030,
+    "value": {
+     "cents": 32389336,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 32389336,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 21590983
+     }
+    },
+    "published_at": "2021-07-09",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 32389336,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 21,
+    "salted": "0160feb7bfc10a63816b3270488093b524520fdbe2eb5e4c14eab59f8bd2a02c"
+   },
+   {
+    "id": 7214560,
+    "value": {
+     "cents": 237800000,
+     "currency": "PLN"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 238773600,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22183927
+     }
+    },
+    "published_at": "2022-11-09",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 50584982,
+    "rate": 4.701,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 22,
+    "salted": "016d9cee7842795cce9457dd1f5b5888e2c0c4f9ee22faae6e18b21972291269"
+   },
+   {
+    "id": 42392,
+    "value": {
+     "cents": 32194970,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 8,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 32194970,
+      "field": "BT-118-NoticeResult",
+      "notice_id": 24611909
+     }
+    },
+    "published_at": "2025-03-24",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 32194970,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 23,
+    "salted": "01775905409ccaa98484a78e968f1e2f718e67b505063c6df6207a85e1a37a04"
+   },
+   {
+    "id": 7698260,
+    "value": {
+     "cents": 53360000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 53360000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 23343875
+     }
+    },
+    "published_at": "2023-08-14",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 53360000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 24,
+    "salted": "01842d5c7ec1e6c309369240be7fa5f453501628af8be813354a3839227c8ad2"
+   },
+   {
+    "id": 7402471,
+    "value": {
+     "cents": 67790000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 67790000,
+      "field": "TED-LOW",
+      "notice_id": 22597758
+     }
+    },
+    "published_at": "2022-08-12",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 67790000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 25,
+    "salted": "0195d6c0df8cd10fa8bcd4b0e30d7d35dd414ca917936aac903b0d8500a275de"
+   },
+   {
+    "id": 5883834,
+    "value": {
+     "cents": 253900000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 253900000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 19198403
+     }
+    },
+    "published_at": "2020-04-29",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 253900000,
+    "rate": 1.0,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 26,
+    "salted": "01a96b7e28dbf0a332d194b48343816fb9753da637de839e05da4c70136b1d51"
+   },
+   {
+    "id": 6658447,
+    "value": {
+     "cents": 1250000,
+     "currency": "BGN"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 1250000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 20735584
+     }
+    },
+    "published_at": "2021-11-16",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 639125,
+    "rate": 1.9558,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 27,
+    "salted": "01e298ade00f9db618c377ee1b6a10a4acc96882c740f70f01941ec1fb5f60c9"
+   },
+   {
+    "id": 7046008,
+    "value": {
+     "cents": 52150000000,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 6,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 52150000000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21840821
+     }
+    },
+    "published_at": "2023-01-16",
+    "source": "ted",
+    "version": 12,
+    "S_eur_port": 130708306,
+    "rate": 398.98,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 28,
+    "salted": "01e924795a835c51ad3ccea276ae25543cf0127750e1dfc4336ddb756cf4ef81"
+   },
+   {
+    "id": 6817321,
+    "value": {
+     "cents": 40000000000,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 40000000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 21089390
+     }
+    },
+    "published_at": "2021-09-21",
+    "source": "ted",
+    "version": 6,
+    "S_eur_port": 112793616,
+    "rate": 354.63,
+    "band_port": false,
+    "in_ref20": false,
+    "order_pos": 29,
+    "salted": "01ed37e60463bd1910d7042b7b4d83d411a51fe3a1b419d45eab071942fe3cc5"
+   }
+  ],
+  "skipped": [],
+  "held_band_rows_outside_ref20": []
+ },
+ "band": {
+  "query": "/v1/tenders?min_value=10000000000&limit=1000, paged by next_cursor; kept: value_derivation.method == lot-sum-awards",
+  "read_at": "2026-10-19T02:43:05Z",
+  "pages": 40,
+  "page_log": [
+   {
+    "cursor": null,
+    "items": 1000,
+    "more": true,
+    "next_cursor": "139130"
+   },
+   {
+    "cursor": "139130",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "274207"
+   },
+   {
+    "cursor": "274207",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "406754"
+   },
+   {
+    "cursor": "406754",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "539292"
+   },
+   {
+    "cursor": "539292",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "685551"
+   },
+   {
+    "cursor": "685551",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "824382"
+   },
+   {
+    "cursor": "824382",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "957156"
+   },
+   {
+    "cursor": "957156",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "1092223"
+   },
+   {
+    "cursor": "1092223",
+    "items": 913,
+    "more": true,
+    "next_cursor": "1592223"
+   },
+   {
+    "cursor": "1592223",
+    "items": 22,
+    "more": true,
+    "next_cursor": "2092223"
+   },
+   {
+    "cursor": "2092223",
+    "items": 40,
+    "more": true,
+    "next_cursor": "2592223"
+   },
+   {
+    "cursor": "2592223",
+    "items": 85,
+    "more": true,
+    "next_cursor": "3092223"
+   },
+   {
+    "cursor": "3092223",
+    "items": 428,
+    "more": true,
+    "next_cursor": "3592223"
+   },
+   {
+    "cursor": "3592223",
+    "items": 684,
+    "more": true,
+    "next_cursor": "4092223"
+   },
+   {
+    "cursor": "4092223",
+    "items": 832,
+    "more": true,
+    "next_cursor": "4592223"
+   },
+   {
+    "cursor": "4592223",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "5024241"
+   },
+   {
+    "cursor": "5024241",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "5482660"
+   },
+   {
+    "cursor": "5482660",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "5756179"
+   },
+   {
+    "cursor": "5756179",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "5967022"
+   },
+   {
+    "cursor": "5967022",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "6160959"
+   },
+   {
+    "cursor": "6160959",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "6353120"
+   },
+   {
+    "cursor": "6353120",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "6525659"
+   },
+   {
+    "cursor": "6525659",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "6698857"
+   },
+   {
+    "cursor": "6698857",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "6861496"
+   },
+   {
+    "cursor": "6861496",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "7011250"
+   },
+   {
+    "cursor": "7011250",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "7234174"
+   },
+   {
+    "cursor": "7234174",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "7421532"
+   },
+   {
+    "cursor": "7421532",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "7596352"
+   },
+   {
+    "cursor": "7596352",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "7775917"
+   },
+   {
+    "cursor": "7775917",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "7931251"
+   },
+   {
+    "cursor": "7931251",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8247626"
+   },
+   {
+    "cursor": "8247626",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8407820"
+   },
+   {
+    "cursor": "8407820",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8466625"
+   },
+   {
+    "cursor": "8466625",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8580496"
+   },
+   {
+    "cursor": "8580496",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8639413"
+   },
+   {
+    "cursor": "8639413",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8693438"
+   },
+   {
+    "cursor": "8693438",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8728946"
+   },
+   {
+    "cursor": "8728946",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8771463"
+   },
+   {
+    "cursor": "8771463",
+    "items": 1000,
+    "more": true,
+    "next_cursor": "8825221"
+   },
+   {
+    "cursor": "8825221",
+    "items": 139,
+    "more": false,
+    "next_cursor": null
+   }
+  ],
+  "items_seen": 35143,
+  "lot_sum_awards_rows": 29,
+  "duplicate_ids": [],
+  "ref20_found": [
+   683951,
+   707424,
+   726354,
+   1102571,
+   1147190,
+   1148297,
+   5278856,
+   5842187,
+   6017838,
+   6057925,
+   6195903,
+   6370901,
+   6569442,
+   6603588,
+   6679375,
+   7001924,
+   7011414,
+   7139761,
+   7542368,
+   8426318
+  ],
+  "ref20_missing": [],
+  "outside_ref20_band": [
+   {
+    "id": 5769515,
+    "value": {
+     "cents": 13167459000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 13167459000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 18974369
+     }
+    },
+    "published_at": "2023-03-07",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 13167459000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 6435162,
+    "value": {
+     "cents": 10866649300,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 5,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 10866649300,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20680957
+     }
+    },
+    "published_at": "2023-02-23",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 10866649300,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 6548237,
+    "value": {
+     "cents": 8250000000000,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 15,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 8250000000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 20508422
+     }
+    },
+    "published_at": "2022-04-26",
+    "source": "ted",
+    "version": 7,
+    "S_eur_port": 22031725685,
+    "rate": 374.46,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 6718092,
+    "value": {
+     "cents": 99000000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 99000000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 20884376
+     }
+    },
+    "published_at": "2021-08-09",
+    "source": "ted",
+    "version": 7,
+    "S_eur_port": 99000000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 7167278,
+    "value": {
+     "cents": 34499889144400,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 34499889144400,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22108220
+     }
+    },
+    "published_at": "2022-07-22",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 86617848718,
+    "rate": 398.3,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 7196993,
+    "value": {
+     "cents": 4341088788600,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 4341088788600,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22331647
+     }
+    },
+    "published_at": "2023-07-17",
+    "source": "ted",
+    "version": 6,
+    "S_eur_port": 11637371763,
+    "rate": 373.03,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 7461921,
+    "value": {
+     "cents": 12261000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 12261000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 22581643
+     }
+    },
+    "published_at": "2023-10-02",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 12261000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 8407303,
+    "value": {
+     "cents": 113425196700,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 113425196700,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19931200
+     }
+    },
+    "published_at": "2022-03-15",
+    "source": "ted",
+    "version": 13,
+    "S_eur_port": 113425196700,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 8460630,
+    "value": {
+     "cents": 40456874162,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 21,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 40456874162,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21675186
+     }
+    },
+    "published_at": "2021-09-06",
+    "source": "ted",
+    "version": 24,
+    "S_eur_port": 40456874162,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   }
+  ],
+  "outside_ref20_server_only": [],
+  "ref20_port_below_100m": [],
+  "rows": [
+   {
+    "id": 683951,
+    "value": {
+     "cents": 80755260600,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 149,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 80755260600,
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 24772240
+     }
+    },
+    "published_at": "2025-05-16",
+    "source": "ted",
+    "version": 1,
+    "S_eur_port": 80755260600,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 707424,
+    "value": {
+     "cents": 4768655800000,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 4768655800000,
+      "field": "BT-118-NoticeResult",
+      "notice_id": 47360663
+     }
+    },
+    "published_at": "2026-10-14",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 13125944949,
+    "rate": 363.3,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 726354,
+    "value": {
+     "cents": 10628707472,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 10628707473,
+      "field": "BT-118-NoticeResult",
+      "notice_id": 26858945
+     }
+    },
+    "published_at": "2026-01-26",
+    "source": "ted",
+    "version": 6,
+    "S_eur_port": 10628707472,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 1102571,
+    "value": {
+     "cents": 22500000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 22500000000,
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 25848303
+     }
+    },
+    "published_at": "2026-06-30",
+    "source": "ted",
+    "version": 1,
+    "S_eur_port": 22500000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 1147190,
+    "value": {
+     "cents": 19928795100,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 19928795100,
+      "field": "BT-1118-NoticeResult",
+      "notice_id": 25033715
+     }
+    },
+    "published_at": "2025-09-30",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 19928795100,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 1148297,
+    "value": {
+     "cents": 8382710294340,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 10,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 8382710294340,
+      "field": "BT-118-NoticeResult",
+      "notice_id": 25724682
+     }
+    },
+    "published_at": "2026-04-20",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 23125993970,
+    "rate": 362.48,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 5278856,
+    "value": {
+     "cents": 54800000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 54800000000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19045609
+     }
+    },
+    "published_at": "2017-08-12",
+    "source": "ted",
+    "version": 13,
+    "S_eur_port": 54800000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 5769515,
+    "value": {
+     "cents": 13167459000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 13167459000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 18974369
+     }
+    },
+    "published_at": "2023-03-07",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 13167459000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 5842187,
+    "value": {
+     "cents": 10103142060,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 10103142060,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19548423
+     }
+    },
+    "published_at": "2019-12-27",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 10103142060,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 6017838,
+    "value": {
+     "cents": 9365800000,
+     "currency": "GBP"
+    },
+    "value_derivation": {
+     "lots": 6,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 9337800000,
+      "field": "TED-HIGH",
+      "notice_id": 19744792
+     }
+    },
+    "published_at": "2018-03-13",
+    "source": "ted",
+    "version": 2,
+    "S_eur_port": 10564918218,
+    "rate": 0.8865,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 6057925,
+    "value": {
+     "cents": 23000000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 23000000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 19536156
+     }
+    },
+    "published_at": "2022-08-22",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 23000000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 6195903,
+    "value": {
+     "cents": 13329022000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 13329022000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20027347
+     }
+    },
+    "published_at": "2021-01-15",
+    "source": "ted",
+    "version": 5,
+    "S_eur_port": 13329022000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 6370901,
+    "value": {
+     "cents": 11361119600000,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 11361119600000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20317379
+     }
+    },
+    "published_at": "2021-01-20",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 31790026303,
+    "rate": 357.38,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 6435162,
+    "value": {
+     "cents": 10866649300,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 5,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 10866649300,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20680957
+     }
+    },
+    "published_at": "2023-02-23",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 10866649300,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 6548237,
+    "value": {
+     "cents": 8250000000000,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 15,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 8250000000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 20508422
+     }
+    },
+    "published_at": "2022-04-26",
+    "source": "ted",
+    "version": 7,
+    "S_eur_port": 22031725685,
+    "rate": 374.46,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 6569442,
+    "value": {
+     "cents": 24468101000,
+     "currency": "CHF"
+    },
+    "value_derivation": {
+     "lots": 29,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 24468101000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20743713
+     }
+    },
+    "published_at": "2019-11-21",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 22247773231,
+    "rate": 1.0998,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 6603588,
+    "value": {
+     "cents": 15461134200,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 7,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 15461134200,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 20628343
+     }
+    },
+    "published_at": "2022-08-10",
+    "source": "ted",
+    "version": 9,
+    "S_eur_port": 15461134200,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 6679375,
+    "value": {
+     "cents": 23850000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 23850000000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 20928012
+     }
+    },
+    "published_at": "2020-03-11",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 23850000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 6718092,
+    "value": {
+     "cents": 99000000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 99000000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 20884376
+     }
+    },
+    "published_at": "2021-08-09",
+    "source": "ted",
+    "version": 7,
+    "S_eur_port": 99000000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 7001924,
+    "value": {
+     "cents": 42400000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 42400000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 21525333
+     }
+    },
+    "published_at": "2022-09-16",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 42400000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 7011414,
+    "value": {
+     "cents": 114477426000,
+     "currency": "PLN"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 114477426000,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21543078
+     }
+    },
+    "published_at": "2021-03-10",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 25021294370,
+    "rate": 4.5752,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 7139761,
+    "value": {
+     "cents": 16673192969,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 13,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 16673192971,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 21841642
+     }
+    },
+    "published_at": "2023-02-07",
+    "source": "ted",
+    "version": 4,
+    "S_eur_port": 16673192969,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 7167278,
+    "value": {
+     "cents": 34499889144400,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 34499889144400,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22108220
+     }
+    },
+    "published_at": "2022-07-22",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 86617848718,
+    "rate": 398.3,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 7196993,
+    "value": {
+     "cents": 4341088788600,
+     "currency": "HUF"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 4341088788600,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 22331647
+     }
+    },
+    "published_at": "2023-07-17",
+    "source": "ted",
+    "version": 6,
+    "S_eur_port": 11637371763,
+    "rate": 373.03,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 7461921,
+    "value": {
+     "cents": 12261000000,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 2,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 12261000000,
+      "field": "TED-VAL_ESTIMATED_TOTAL",
+      "notice_id": 22581643
+     }
+    },
+    "published_at": "2023-10-02",
+    "source": "ted",
+    "version": 3,
+    "S_eur_port": 12261000000,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 7542368,
+    "value": {
+     "cents": 17984074893,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 3,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 17984074893,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 23357149
+     }
+    },
+    "published_at": "2023-10-24",
+    "source": "ted",
+    "version": 8,
+    "S_eur_port": 17984074893,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 8407303,
+    "value": {
+     "cents": 113425196700,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 4,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 113425196700,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 19931200
+     }
+    },
+    "published_at": "2022-03-15",
+    "source": "ted",
+    "version": 13,
+    "S_eur_port": 113425196700,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   },
+   {
+    "id": 8426318,
+    "value": {
+     "cents": 300000000000,
+     "currency": "GBP"
+    },
+    "value_derivation": {
+     "lots": 7,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 300000000000,
+      "field": "TED-HIGH",
+      "notice_id": 20083570
+     }
+    },
+    "published_at": "2018-10-26",
+    "source": "ted",
+    "version": 1,
+    "S_eur_port": 338294993234,
+    "rate": 0.8868,
+    "band_port": true,
+    "in_ref20": true
+   },
+   {
+    "id": 8460630,
+    "value": {
+     "cents": 40456874162,
+     "currency": "EUR"
+    },
+    "value_derivation": {
+     "lots": 21,
+     "method": "lot-sum-awards",
+     "summed": "awards",
+     "vouched_by": {
+      "cents": 40456874162,
+      "field": "TED-VAL_TOTAL",
+      "notice_id": 21675186
+     }
+    },
+    "published_at": "2021-09-06",
+    "source": "ted",
+    "version": 24,
+    "S_eur_port": 40456874162,
+    "rate": 1.0,
+    "band_port": true,
+    "in_ref20": false
+   }
+  ],
+  "exactly_ref20": false,
+  "held_band_rows_missing_from_seek": []
+ },
+ "gets": 74,
+ "exit": 4,
+ "status": "BAND DIFFERS: rows outside the reference 20 (stop and read, operations.md steps 4-6) or one of the 20 missing (switch off, step 7)",
+ "finished_at": "2026-10-19T02:43:05Z"
+}

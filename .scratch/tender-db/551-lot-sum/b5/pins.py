@@ -56,7 +56,7 @@ def check(base, now):
 
     for i, (c, cur, rule) in PATH_V.items():
         d = now[str(i)]['derivation'] or {}
-        if val(i) != (c, cur) or d.get('method') != 'lot-sum-vouched' or d.get('rule') != rule:
+        if val(i) != (c, cur) or d.get('method') != 'lot-sum-vouched' or str(d.get('rule')) != str(rule):
             bad.append((i, 'path-V pin', now[str(i)]))
     for i, (c, cur) in PATH_W.items():
         d = now[str(i)]['derivation'] or {}

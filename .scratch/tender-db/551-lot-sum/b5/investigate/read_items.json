@@ -1,0 +1,861 @@
+{
+ "salt_outside": "551-b5-outside-",
+ "outside_population": 1154,
+ "note": "served state snapshot (bounded /v1/sql PK reads 2026-10-19 ~02:45Z) before the switch-off; S/currency/n/vouched_by as served lot-sum-awards",
+ "items": [
+  {
+   "id": 7456417,
+   "tag": "confirm30",
+   "S_cents": 72933700,
+   "currency": "EUR",
+   "eur_cents": 72933700,
+   "n": 5,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22933392,
+    "cents": 72933700
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 609878,
+   "tag": "confirm30",
+   "S_cents": 2190131496,
+   "currency": "EUR",
+   "eur_cents": 2190131496,
+   "n": 4,
+   "vouched_by": {
+    "field": "BT-118-NoticeResult",
+    "notice_id": 25659799,
+    "cents": 2190131496
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 6779279,
+   "tag": "confirm30",
+   "S_cents": 1036100,
+   "currency": "EUR",
+   "eur_cents": 1036100,
+   "n": 4,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21253579,
+    "cents": 1036100
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 6465510,
+   "tag": "confirm30",
+   "S_cents": 16202092,
+   "currency": "EUR",
+   "eur_cents": 16202092,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20772908,
+    "cents": 16129032
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6811355,
+   "tag": "confirm30",
+   "S_cents": 476351246,
+   "currency": "EUR",
+   "eur_cents": 476351246,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21225827,
+    "cents": 476351246
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 7319895,
+   "tag": "confirm30",
+   "S_cents": 581695821,
+   "currency": "PLN",
+   "eur_cents": 123337324,
+   "n": 40,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22580039,
+    "cents": 577899821
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 5948260,
+   "tag": "confirm30",
+   "S_cents": 113388071,
+   "currency": "GBP",
+   "eur_cents": 125450098,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 19682959,
+    "cents": 113388071
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 482122,
+   "tag": "confirm30",
+   "S_cents": 64000000,
+   "currency": "EUR",
+   "eur_cents": 64000000,
+   "n": 2,
+   "vouched_by": {
+    "field": "BT-1118-NoticeResult",
+    "notice_id": 24521069,
+    "cents": 64000000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 193717,
+   "tag": "confirm30",
+   "S_cents": 39200000,
+   "currency": "EUR",
+   "eur_cents": 39200000,
+   "n": 3,
+   "vouched_by": {
+    "field": "BT-118-NoticeResult",
+    "notice_id": 24264397,
+    "cents": 39200000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 6420294,
+   "tag": "confirm30",
+   "S_cents": 3205300000,
+   "currency": "EUR",
+   "eur_cents": 3205300000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20784598,
+    "cents": 3205300000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 766623,
+   "tag": "confirm30",
+   "S_cents": 3704884136,
+   "currency": "EUR",
+   "eur_cents": 3704884136,
+   "n": 2,
+   "vouched_by": {
+    "field": "BT-118-NoticeResult",
+    "notice_id": 27863637,
+    "cents": 3704884136
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 6979655,
+   "tag": "confirm30",
+   "S_cents": 7166391400,
+   "currency": "HUF",
+   "eur_cents": 18974771,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21639328,
+    "cents": 7166391400
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7561428,
+   "tag": "confirm30",
+   "S_cents": 214603908,
+   "currency": "EUR",
+   "eur_cents": 214603908,
+   "n": 4,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 23116675,
+    "cents": 212862508
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 6850557,
+   "tag": "confirm30",
+   "S_cents": 32815456000,
+   "currency": "HUF",
+   "eur_cents": 88894639,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21539204,
+    "cents": 32815456000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 6850401,
+   "tag": "confirm30",
+   "S_cents": 118290600,
+   "currency": "EUR",
+   "eur_cents": 118290600,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21613977,
+    "cents": 118290600
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 7157983,
+   "tag": "confirm30",
+   "S_cents": 54400000,
+   "currency": "EUR",
+   "eur_cents": 54400000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22119193,
+    "cents": 54400000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 305060,
+   "tag": "confirm30",
+   "S_cents": 29752000,
+   "currency": "EUR",
+   "eur_cents": 29752000,
+   "n": 2,
+   "vouched_by": {
+    "field": "BT-118-NoticeResult",
+    "notice_id": 23859386,
+    "cents": 29752000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 5936963,
+   "tag": "confirm30",
+   "S_cents": 19651000,
+   "currency": "EUR",
+   "eur_cents": 19651000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 19299125,
+    "cents": 19651000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 6647432,
+   "tag": "confirm30",
+   "S_cents": 47911400000,
+   "currency": "HUF",
+   "eur_cents": 115811941,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21086519,
+    "cents": 47911400000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 7620308,
+   "tag": "confirm30",
+   "S_cents": 7000000,
+   "currency": "BGN",
+   "eur_cents": 3579098,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 22957072,
+    "cents": 7000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7749755,
+   "tag": "confirm30",
+   "S_cents": 412460,
+   "currency": "EUR",
+   "eur_cents": 412460,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 23353167,
+    "cents": 412460
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 7036030,
+   "tag": "confirm30",
+   "S_cents": 32389336,
+   "currency": "EUR",
+   "eur_cents": 32389336,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 21590983,
+    "cents": 32389336
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 7214560,
+   "tag": "confirm30",
+   "S_cents": 237800000,
+   "currency": "PLN",
+   "eur_cents": 50584982,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22183927,
+    "cents": 238773600
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 42392,
+   "tag": "confirm30",
+   "S_cents": 32194970,
+   "currency": "EUR",
+   "eur_cents": 32194970,
+   "n": 8,
+   "vouched_by": {
+    "field": "BT-118-NoticeResult",
+    "notice_id": 24611909,
+    "cents": 32194970
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 7698260,
+   "tag": "confirm30",
+   "S_cents": 53360000,
+   "currency": "EUR",
+   "eur_cents": 53360000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 23343875,
+    "cents": 53360000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 7402471,
+   "tag": "confirm30",
+   "S_cents": 67790000,
+   "currency": "EUR",
+   "eur_cents": 67790000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-LOW",
+    "notice_id": 22597758,
+    "cents": 67790000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 5883834,
+   "tag": "confirm30",
+   "S_cents": 253900000,
+   "currency": "EUR",
+   "eur_cents": 253900000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 19198403,
+    "cents": 253900000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 6658447,
+   "tag": "confirm30",
+   "S_cents": 1250000,
+   "currency": "BGN",
+   "eur_cents": 639125,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 20735584,
+    "cents": 1250000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7046008,
+   "tag": "confirm30",
+   "S_cents": 52150000000,
+   "currency": "HUF",
+   "eur_cents": 130708306,
+   "n": 6,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21840821,
+    "cents": 52150000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6817321,
+   "tag": "confirm30",
+   "S_cents": 40000000000,
+   "currency": "HUF",
+   "eur_cents": 112793616,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 21089390,
+    "cents": 40000000000
+   },
+   "in_2575_population": true
+  },
+  {
+   "id": 5769515,
+   "tag": "band9",
+   "S_cents": 13167459000,
+   "currency": "EUR",
+   "eur_cents": 13167459000,
+   "n": 4,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 18974369,
+    "cents": 13167459000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6435162,
+   "tag": "band9",
+   "S_cents": 10866649300,
+   "currency": "EUR",
+   "eur_cents": 10866649300,
+   "n": 5,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20680957,
+    "cents": 10866649300
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6548237,
+   "tag": "band9",
+   "S_cents": 8250000000000,
+   "currency": "HUF",
+   "eur_cents": 22031725685,
+   "n": 15,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 20508422,
+    "cents": 8250000000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6718092,
+   "tag": "band9",
+   "S_cents": 99000000000,
+   "currency": "EUR",
+   "eur_cents": 99000000000,
+   "n": 4,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 20884376,
+    "cents": 99000000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7167278,
+   "tag": "band9",
+   "S_cents": 34499889144400,
+   "currency": "HUF",
+   "eur_cents": 86617848718,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22108220,
+    "cents": 34499889144400
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7196993,
+   "tag": "band9",
+   "S_cents": 4341088788600,
+   "currency": "HUF",
+   "eur_cents": 11637371763,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22331647,
+    "cents": 4341088788600
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7461921,
+   "tag": "band9",
+   "S_cents": 12261000000,
+   "currency": "EUR",
+   "eur_cents": 12261000000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 22581643,
+    "cents": 12261000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 8407303,
+   "tag": "band9",
+   "S_cents": 113425196700,
+   "currency": "EUR",
+   "eur_cents": 113425196700,
+   "n": 4,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 19931200,
+    "cents": 113425196700
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 8460630,
+   "tag": "band9",
+   "S_cents": 40456874162,
+   "currency": "EUR",
+   "eur_cents": 40456874162,
+   "n": 21,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21675186,
+    "cents": 40456874162
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 5795986,
+   "tag": "outside22",
+   "S_cents": 5022160000,
+   "currency": "EUR",
+   "eur_cents": 5022160000,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 19000574,
+    "cents": 5000000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6736263,
+   "tag": "outside22",
+   "S_cents": 34613177,
+   "currency": "GBP",
+   "eur_cents": 40621504,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20876879,
+    "cents": 34500000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6034467,
+   "tag": "outside22",
+   "S_cents": 26157500,
+   "currency": "BGN",
+   "eur_cents": 13374323,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 19501229,
+    "cents": 26157500
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7007140,
+   "tag": "outside22",
+   "S_cents": 14552659000,
+   "currency": "HUF",
+   "eur_cents": 37769683,
+   "n": 19,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22746439,
+    "cents": 14552659000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7259365,
+   "tag": "outside22",
+   "S_cents": 9000000000,
+   "currency": "HUF",
+   "eur_cents": 23267839,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22266703,
+    "cents": 9000000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6029648,
+   "tag": "outside22",
+   "S_cents": 162200000,
+   "currency": "EUR",
+   "eur_cents": 162200000,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 19478189,
+    "cents": 162200000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7256152,
+   "tag": "outside22",
+   "S_cents": 146868334,
+   "currency": "EUR",
+   "eur_cents": 146868334,
+   "n": 9,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22083308,
+    "cents": 146868300
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7407838,
+   "tag": "outside22",
+   "S_cents": 49015400,
+   "currency": "BGN",
+   "eur_cents": 25061560,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 22458240,
+    "cents": 49015400
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6908248,
+   "tag": "outside22",
+   "S_cents": 102000000,
+   "currency": "EUR",
+   "eur_cents": 102000000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 21299997,
+    "cents": 102000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6748628,
+   "tag": "outside22",
+   "S_cents": 100457821400,
+   "currency": "HUF",
+   "eur_cents": 262669163,
+   "n": 22,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21438723,
+    "cents": 100457821400
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7210026,
+   "tag": "outside22",
+   "S_cents": 6921492000,
+   "currency": "HUF",
+   "eur_cents": 17770198,
+   "n": 5,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22480294,
+    "cents": 6921492000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7266931,
+   "tag": "outside22",
+   "S_cents": 9346572000,
+   "currency": "HUF",
+   "eur_cents": 25005543,
+   "n": 11,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22315515,
+    "cents": 9346572000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7128709,
+   "tag": "outside22",
+   "S_cents": 12510000000,
+   "currency": "HUF",
+   "eur_cents": 31514510,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22151972,
+    "cents": 12510000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7143232,
+   "tag": "outside22",
+   "S_cents": 40000000,
+   "currency": "BGN",
+   "eur_cents": 20451989,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 21821950,
+    "cents": 40000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 5689244,
+   "tag": "outside22",
+   "S_cents": 45181779,
+   "currency": "BGN",
+   "eur_cents": 23101431,
+   "n": 8,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 18951101,
+    "cents": 45181779
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6969482,
+   "tag": "outside22",
+   "S_cents": 35000000,
+   "currency": "EUR",
+   "eur_cents": 35000000,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21768241,
+    "cents": 35000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 8479463,
+   "tag": "outside22",
+   "S_cents": 62006415,
+   "currency": "EUR",
+   "eur_cents": 62006415,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21920282,
+    "cents": 62006415
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6260726,
+   "tag": "outside22",
+   "S_cents": 28504020800,
+   "currency": "HUF",
+   "eur_cents": 79393964,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 20624483,
+    "cents": 28504020800
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6937980,
+   "tag": "outside22",
+   "S_cents": 326000000,
+   "currency": "EUR",
+   "eur_cents": 326000000,
+   "n": 3,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 21517498,
+    "cents": 326000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6993571,
+   "tag": "outside22",
+   "S_cents": 59140000,
+   "currency": "BGN",
+   "eur_cents": 30238266,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 21506205,
+    "cents": 59140000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 7190148,
+   "tag": "outside22",
+   "S_cents": 7970000000,
+   "currency": "HUF",
+   "eur_cents": 21045127,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22090031,
+    "cents": 7970000000
+   },
+   "in_2575_population": false
+  },
+  {
+   "id": 6267826,
+   "tag": "outside22",
+   "S_cents": 11666667,
+   "currency": "BGN",
+   "eur_cents": 5965164,
+   "n": 2,
+   "vouched_by": {
+    "field": "TED-VAL_ESTIMATED_TOTAL",
+    "notice_id": 19970041,
+    "cents": 11666667
+   },
+   "in_2575_population": false
+  }
+ ]
+}

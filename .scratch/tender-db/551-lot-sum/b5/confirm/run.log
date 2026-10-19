@@ -1,0 +1,5 @@
+draw: held 30/30 walked 30 (404 0) of eligible 3429; salt '551-b5-confirm-'; ranges [('958764958', '958787061')]
+band: 29 lot-sum-awards rows; ref20 found 20, missing []; outside the 20 (port >= EUR 100 m) [5769515, 6435162, 6548237, 6718092, 7167278, 7196993, 7461921, 8407303, 8460630]; server-only []
+BAND DIFFERS: rows outside the reference 20 (stop and read, operations.md steps 4-6) or one of the 20 missing (switch off, step 7) -> confirm/confirm_result.json
+GATE-EXIT=4
+DRAW-EXIT=4

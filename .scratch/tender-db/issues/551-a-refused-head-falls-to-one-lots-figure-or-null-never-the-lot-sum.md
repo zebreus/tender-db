@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; DEPLOYED 86f2745 2026-10-17 23:00Z — nothing served changes). **B3 PASSED 2026-10-18** (wf_643ad3a2-3ba, after 567/568/570 drained: Rust = remap-aware port on 5,307 rows, projection parity clean, v2 ⊆ v1; `551-lot-sum/b3/B3-result.md`). The drains moved the port's own outcomes: 18 NEW ships, 0 lost; the ≥ EUR 100 m band is now 20 (M2's 15 + 6569442, 6603588, 6679375, 7139761, 7542368). **The 18 READ 2026-10-18** (wf_24a65e6a-e63, reader + skeptic on every head): 18/18 right, band 5/5 right, 0 wrong → reference band set for B5 = **20**. NEXT: B4 (served text) + B5 (flip, cohort drain, corpus drain, confirm; stop window 835–3,338) — and **no lot-key drain may land before B5's band seek** (read18 note 2: 4 partial-sum heads, 6679375 a band head, would leave R10's vouch if their lot-null rows were keyed). Port of record: `b3/rule_v2_b3.py`.
+Status: ready-for-agent — **B5 STOP RULE TRIPPED 2026-10-19 02:35Z**: corpus drain project 2627 corrected 3,429 (+ the cohort drains' 75 = 3,504; window 835–3,338), every correction a `lot-sum-awards` fire; the band holds the 20 plus 9 new heads. Per runbook step 7: path W switched OFF again (code wf_91677ed3-a17 → gate → deploy → `refold-lot-sum` by tender_ids over the 3,502 served heads), then the investigation (pre-registered confirm read of 30 + the 9 band rows, plus 30 from the never-measured population). Pins 31/31 as expected. Was: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; DEPLOYED 86f2745 2026-10-17 23:00Z — nothing served changes). **B3 PASSED 2026-10-18** (wf_643ad3a2-3ba, after 567/568/570 drained: Rust = remap-aware port on 5,307 rows, projection parity clean, v2 ⊆ v1; `551-lot-sum/b3/B3-result.md`). The drains moved the port's own outcomes: 18 NEW ships, 0 lost; the ≥ EUR 100 m band is now 20 (M2's 15 + 6569442, 6603588, 6679375, 7139761, 7542368). **The 18 READ 2026-10-18** (wf_24a65e6a-e63, reader + skeptic on every head): 18/18 right, band 5/5 right, 0 wrong → reference band set for B5 = **20**. NEXT: B4 (served text) + B5 (flip, cohort drain, corpus drain, confirm; stop window 835–3,338) — and **no lot-key drain may land before B5's band seek** (read18 note 2: 4 partial-sum heads, 6679375 a band head, would leave R10's vouch if their lot-null rows were keyed). Port of record: `b3/rule_v2_b3.py`.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -1099,3 +1099,44 @@ both agree (no third reader was needed).
   `--range 958764958 <cursor after 2627>` — 958764958 is `/health`'s cursor read right after 2626/2627 were enqueued
   (and still the cursor at 23:47Z, the project in its plan phase). The cohort drains' range is left out: its ids are
   the excluded 279 + 277 bar 7 (the 6 px2 ids and 7511890).
+
+## B5 — corpus drain: STOP RULE TRIPPED (2026-10-19 02:35Z)
+
+- **Counts.** refold-lot-sum 2626 stamped 251,526 (= dry 2623); project 2627 (21:47Z → 02:35Z, 4 h 48 m: the plan phase
+  walked all 14,935,382 notices) **248,097 verified + 3,429 corrected = 251,526** (D7 complete). With the cohort drains'
+  74 + 1: **3,504 > 3,338**, so the pre-registered stop rule trips (the corpus drain alone, 3,429, is above it too).
+- **What the corrections are.** `/v1/changes` 958764958 → 958787061: 3,429 `tender changed` events, 3,429 distinct ids.
+  Bounded `/v1/sql` PK reads of all 3,503 corrected ids (corpus + cohort): **3,502 serve `lot-sum-awards`**, 1 null
+  (179732, reverted by 2625). So every correction is a path-W v2 fire, and the excess is fires, not other corrections.
+  Shape: all `source` ted; years 2016–2026 (2023: 727, 2022: 593, 2026: 507, 2025: 466); vouched by TED-VAL_TOTAL 1,633,
+  BT-118 876, TED-VAL_ESTIMATED_TOTAL 604, BT-1118 210, TED-HIGH 79, TED-LOW 53, BT-161 47; S equal to its vouching total
+  exactly on 3,118 of 3,502; EUR bands <10k 29, <100k 316, <1m 1,716, <10m 1,122, <100m 290, <1bn 27, ≥1bn 2; currencies
+  EUR 2,116, HUF 677, BGN 385, PLN 247.
+- **Why 2.1×, first decomposition.** The 1,669 projection was M1's walk rate (30 vouched ships of 276 walked) on project
+  2575's 15,352 v1 fires. (1) **Inside that population** (`/v1/changes` 955146761 → 955254530: 15,300 distinct corrected
+  ids) v2 fires **2,348**. The rate moved before B5: after the 567/568/570 lot-key drains the port ships **41** of the 277
+  walked (B3; operations.md step 2's "41 walked"), not 30, and 15,300 × 41/277 ≈ 2,265 ≈ 2,348. The projection and the
+  window were never re-based on B3's post-drain rate. (2) **Outside it**: **1,154 fires** on Tenders that were not 2575 v1
+  fires (the cohort grew 194,404 → 251,526 with the lot-key drains and new notices). That population was never sampled
+  by M1/M2; only the confirmation read reaches it.
+- **Pins (step 5)**: 31/31 as expected (`b5/confirm/pins_post2627.json`; the first check reported the 16 path-V pins off
+  only because the served `rule` is the string "537" — pins.py fixed, re-evaluated offline on the same reads).
+- **Band (step 5)**: the 20 all present; **9 rows outside the 20** (each a stop-and-read): 8407303 EUR 1,134,251,967,
+  6718092 EUR 990,000,000, 7167278 HUF 344,998,891,444 (≈ EUR 866 m), 8460630 EUR 404,568,742, 6548237 HUF 82.5 bn
+  (≈ EUR 220 m), 5769515 EUR 131,674,590, 7461921 EUR 122,610,000, 7196993 HUF 43.4 bn (≈ EUR 116 m), 6435162
+  EUR 108,666,493.
+- **Confirmation draw (step 6, pre-registered salt `551-b5-confirm-`)** on the corpus changed set (958764958 →
+  958787061; 3,429 eligible, 0 excluded): held 30 of the first 30 walked (`b5/confirm/confirm_result.json`, predraw sha256
+  d8b7d352…): 7456417, 609878, 6779279, 6465510, 6811355, 7319895, 5948260, 482122, 193717, 6420294, 766623, 6979655,
+  7561428, 6850557, 6850401, 7157983, 305060, 5936963, 6647432, 7620308, 7749755, 7036030, … (8 of the 30 outside the 2575
+  population).
+- **Decision: switch off (step 7), as pre-registered**, then investigate. Route: `LOT_SUM_AWARDS_PATH = false`, gate,
+  deploy, and `refold-lot-sum` with `tender_ids` = the 3,502 served `lot-sum-awards` heads (under the 5,000 cap) instead
+  of the corpus walk: every served `lot-sum-awards` head was written by 2622/2625/2627 (path W was off from 4a's deploy
+  until B5's, and no other fold ran since B5's deploy), and each of those changes is a correction in the feed, so the id
+  list is complete; the corpus route would plan 14.9 M notices again (~5 h) into the 07:35Z daily chain. Verified after
+  by the band seek (no `lot-sum-awards` row) and a PK read of the 3,502.
+- **Investigation evidence, snapshotted before the switch-off** (`b5/investigate/`): `served_lsa_rows.json` (the 3,503
+  PK rows), `corpus_changes.json`, `p2575_ids.json`, `read_items.json` (61 items: the 30 drawn, the 9 band rows, and 22
+  more from the 1,146 outside-population fires not drawn, salt `551-b5-outside-`, so 30 outside reads with the drawn 8),
+  `served/*.json` (each item's served Tender).
