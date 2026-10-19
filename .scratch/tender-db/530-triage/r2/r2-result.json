@@ -1,0 +1,2422 @@
+{
+ "issue": 530,
+ "step": "R2 (fallback precision) on dry plan job 2659",
+ "date": "2026-10-19",
+ "plan_report": ".scratch/tender-db/530-triage/guid_twin_plan_2659.json",
+ "salt": 530002,
+ "pass": false,
+ "tally": {
+  "r2_random": {
+   "picks": 60,
+   "R": 60,
+   "N": 0,
+   "W": 0,
+   "bar": "0 W and N <= 3 (A5)",
+   "pass": true
+  },
+  "r2_top_targets": {
+   "picks": 30,
+   "R": 30,
+   "N": 0,
+   "W": 0,
+   "bar": "0 W (A5)",
+   "pass": true
+  },
+  "r2_city_flagged": {
+   "picks": 41,
+   "R": 39,
+   "N": 0,
+   "W": 2,
+   "bar": "0 W (A6)",
+   "pass": false
+  },
+  "r2_incoherent": {
+   "picks": 30,
+   "R": 28,
+   "N": 0,
+   "W": 2,
+   "bar": "0 W (A7)",
+   "pass": false
+  },
+  "r2_office_two_words": {
+   "picks": 8,
+   "R": 7,
+   "N": 0,
+   "W": 1,
+   "bar": "0 W",
+   "pass": false
+  }
+ },
+ "distinct": {
+  "picks": 169,
+  "distinct_picks": 162,
+  "duplicates": 7,
+  "w_findings": 3,
+  "w_distinct_picks": 4,
+  "w_scores": 5
+ },
+ "random_bound_95": {
+  "all_60": 0.0487,
+  "rows_of_11103": 541,
+  "buyer_25": 0.1129,
+  "review_or_info_25": 0.1129,
+  "other_tenderer_10": 0.2589
+ },
+ "w_findings": [
+  {
+   "id": "W1",
+   "amendment": "A6",
+   "target": 3353580,
+   "name": "Vergabekammer NRW",
+   "picks": [
+    "r2_city_flagged[9]",
+    "r2_office_two_words[5]"
+   ],
+   "planned_rows": 16,
+   "planned_mentions": 32,
+   "why": "umbrella: target already holds VK Rheinland (46376226, 46082162: Zeughausstr. 2-10 Koeln) and VK Westfalen (44543854: Albrecht-Thaer-Str. 9 Muenster); the 32 planned mentions (24313214, 24330412) are Muenster and would extend the mix",
+   "fix": "add 'vergabekammer nrw' to GUID_TWIN_UNSAFE_NAMES (exact folded name)"
+  },
+  {
+   "id": "W2",
+   "amendment": "A6",
+   "target": 6622773,
+   "name": "Geschäftsstelle der Vergabekammer",
+   "picks": [
+    "r2_city_flagged[15]"
+   ],
+   "planned_rows": 5,
+   "planned_mentions": 10,
+   "why": "function name shared by chambers: target is the Thuringian chamber (99423 Weimar; 23604678, 26223383, 23464988); planned rows are VK Westfalen printing it as BT-500/BT-502 (24336021, 24375779)",
+   "fix": "add 'geschäftsstelle der vergabekammer' to GUID_TWIN_UNSAFE_NAMES; add 'geschäftsstelle' to GUID_TWIN_OFFICE_NOUNS (read list)"
+  },
+  {
+   "id": "W3",
+   "amendment": "A7",
+   "target": 7861,
+   "name": "AOK - Die Gesundheitskasse für Niedersachsen",
+   "picks": [
+    "r2_incoherent[8] 24253392",
+    "r2_incoherent[12] 26483158"
+   ],
+   "org_ids": [
+    22752175,
+    22752176,
+    22752177
+   ],
+   "planned_rows": 3,
+   "planned_mentions": 6,
+   "wrong_rows": [
+    22752177
+   ],
+   "wrong_mentions": 2,
+   "why": "ORG-0003 Lot-ReviewOrg has the AOK name, street and e-mail but the VK Bund phone +49 22894990 and NUTS DEA22 (19 of 21 saved sections with that phone are VK Bund); a review body entered under the buyer name",
+   "fix": "role-coherence guard in guid_twin_refusals (A7)"
+  }
+ ],
+ "fixes": {
+  "F1_unsafe_names": {
+   "required": [
+    "vergabekammer nrw",
+    "geschäftsstelle der vergabekammer"
+   ],
+   "precautionary_no_effect_today": [
+    "vergabekammer nordrhein-westfalen",
+    "vergabekammer bayern",
+    "geschäftsstelle der vergabekammern"
+   ],
+   "not_a_pattern": "a Vergabekammer <Land> pattern would refuse right single-chamber folds (Niedersachsen 1222120 +94, BW 2175136 +48, Brandenburg +272, Schleswig-Holstein 9190 +4)",
+   "where": "compiled GUID_TWIN_UNSAFE_NAMES in crates/ingest/src/project/guid_twin.rs (A3(iii) refuses a wet run with extra_unsafe_names); extra_unsafe_names only for a pre-deploy dry check",
+   "office_nouns": "add 'geschäftsstelle' to GUID_TWIN_OFFICE_NOUNS",
+   "r0": [
+    "Vergabekammer NRW twin binds",
+    "Geschäftsstelle der Vergabekammer twin binds",
+    "Vergabekammer Westfalen / Niedersachsen and the MV Geschäftsstelle key still refuse"
+   ],
+   "target_exclusion": "not used: the gate is DB-free and sees names only; the name entry excludes 3353580 and 6622773 in stock and gate alike"
+  },
+  "F2_role_guard": {
+   "rule": "a twin group mixing a buyer-side role with Lot-ReviewOrg binds (and a tenderer/winner role with a non-winner role, 0 today); computed from the notice OPT-300/OPT-301 (DE1 party refs) by the one guid_twin_refusals fn used by gate and planner",
+   "recommended": "A7 as written (whole group binds); buyer-side = Procedure-Buyer, Lot-AddInfo, Lot-TenderReceipt, Procedure-SProvider",
+   "scope_counts_notice_copy_groups": {
+    "with_procedure_buyer": 30,
+    "addinfo_revieworg_only": 66,
+    "sprovider_revieworg": 4,
+    "total": 100
+   },
+   "cost_procedure_buyer_scope": {
+    "rows": 37,
+    "mentions": 78
+   },
+   "if_narrow_scope_kept": "the re-read must also read the 70 other ReviewOrg-mixed groups (top 30 + 15 at the re-read salt)",
+   "alternative": "refuse a ReviewOrg-mixed group only when phone (BT-503), NUTS (BT-507), postcode (BT-512) and city (BT-513) agree within the notice (DE1 equivalents); binds only AOK today, keeps 34 rows / 72 mentions; needs 4 contact fields in TwinView for both formats; not recommended for Build 2",
+   "r0": [
+    "AOK-shaped fixture binds",
+    "Buyer+AddInfo+TenderReceipt twin without ReviewOrg still refuses",
+    "planner/gate parity on both"
+   ]
+  },
+  "F3_build": "ship F1+F2 as Build 1b (projection-neutral, gate unwired): ops/check.sh, deploy; Build 2 unchanged otherwise"
+ },
+ "rerun": {
+  "required": true,
+  "basis": "decision R2 \"on any W: add that name to GUID_TWIN_UNSAFE_NAMES, re-run R1, read a fresh random sample at salt 530003\"; A5 sizes it at 60; W1/W2 are that case",
+  "r1": {
+   "bars": "all R1 bars as before",
+   "expect": [
+    "guard.unsafe_list holds the W1/W2 groups (21 rows, 42 mentions)",
+    "role guard counts the ReviewOrg-mixed groups; r2_incoherent holds no refused group",
+    "3353580 and 6622773 not targets; 22752175/76/77 not planned"
+   ],
+   "expected_planned_procedure_buyer_scope": {
+    "rows": 11045,
+    "mentions": 22204
+   }
+  },
+  "r2": {
+   "random": 60,
+   "salt": 530003,
+   "strata": {
+    "buyer": 25,
+    "review_or_info": 25,
+    "other_or_tenderer": 10
+   },
+   "exclude": "the 60 rows already read (take the next in salted order)",
+   "bar": "0 W and N <= 3",
+   "also": "read every pick in the re-run top-30 / city-flagged / incoherent / office lists not already read; 0 W"
+  }
+ },
+ "missing_targets": {
+  "rows": 312,
+  "mentions": 636,
+  "keys": 52,
+  "recommendation": "mint: let the 234 path mint one provisional identifier-NULL row per missing (org_name_norm, register_jurisdiction(country)) key during the dissolve re-resolve; do not keep the rows",
+  "why": [
+   "gate/stock parity: the DB-free gate refuses these values in every twin notice and mints the 234 row on a rebuild or new twin; keeping the GUID rows diverges (A2)",
+   "keeping consistently would need the values in KEEP_530, tying KEEP to DB state at freeze (rejected for bound-key exemption)",
+   "all 4 missing-key picks read R conditional on the mint (rand1[14], rand2[17], rand2[24], city3[34])",
+   "a minted row starts with only planned mentions (no A6 mix possible); flag c fires on 1 of 52 keys (]init[ DCP LDA, R)",
+   "312 rows consolidate into 52; cost 52 added + 312 removed (404, no redirect)"
+  ],
+  "checks": [
+   "one mint per key (windows by target key)",
+   "R3: new identifier-NULL rows = wet re-plan missing keys (52 at job 2659), each country = register_jurisdiction with mentions = planned",
+   "no two identifier-NULL rows share a key afterwards",
+   "manifest records the minted row as target; A1 recurrence arm takes it as input"
+  ]
+ },
+ "gets": {
+  "logged": 558,
+  "notice_content": 331,
+  "organizations": 227,
+  "status_200": 558,
+  "status_408": 0,
+  "retries": 0,
+  "min_gap_s": 2.0,
+  "window": "2026-10-19T17:27:03Z..18:26:53Z",
+  "log": ".scratch/tender-db/530-triage/r2/api_requests.log",
+  "tally_gets": 0
+ },
+ "follow_up_outside_r2": "234 rows 3353580 (and possibly 6622773) already mix chambers via identifier-less mentions (shape of 1431661); F1 stops 530 from extending them but does not repair them",
+ "items": {
+  "r2_random": [
+   {
+    "index": 0,
+    "key": 22824042,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Bielefeld",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 1203308
+   },
+   {
+    "index": 1,
+    "key": 22842358,
+    "name": "Norddeutscher Rundfunk",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 1202351
+   },
+   {
+    "index": 2,
+    "key": 22816858,
+    "name": "Stadt Kyritz",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 7175314
+   },
+   {
+    "index": 3,
+    "key": 22891825,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Dortmund",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 8119131
+   },
+   {
+    "index": 4,
+    "key": 22832955,
+    "name": "Wasserverband Eifel-Rur - Zentrale Vergabestelle -",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 20038121
+   },
+   {
+    "index": 5,
+    "key": 22838236,
+    "name": "Wasserverband Eifel-Rur - Zentrale Vergabestelle -",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 20038121
+   },
+   {
+    "index": 6,
+    "key": 22914331,
+    "name": "Kolpingstadt Kerpen",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 2383569
+   },
+   {
+    "index": 7,
+    "key": 22898749,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Münster",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 1222044
+   },
+   {
+    "index": 8,
+    "key": 22807165,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Zentrale",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 7195752
+   },
+   {
+    "index": 9,
+    "key": 22808070,
+    "name": "Landkreis Northeim",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 4563
+   },
+   {
+    "index": 10,
+    "key": 22886247,
+    "name": "Universität Stuttgart",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 1262231
+   },
+   {
+    "index": 11,
+    "key": 22860164,
+    "name": "Stadt Salzgitter",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 1190366
+   },
+   {
+    "index": 12,
+    "key": 22914565,
+    "name": "Bundesstadt Bonn - Referat Vergabedienste",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 15234277
+   },
+   {
+    "index": 13,
+    "key": 22898487,
+    "name": "Universität Münster",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": 13342269
+   },
+   {
+    "index": 14,
+    "key": 23053387,
+    "name": "Stadt Spremberg - Vergabestelle",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand1",
+    "role": "buyer",
+    "target": null,
+    "note": "R conditional: missing target key (6 rows / 12 mentions); holds if Build 2 mints the 234 row"
+   },
+   {
+    "index": 15,
+    "key": 22858429,
+    "name": "Landkreis Vorpommern-Greifswald, Der Landrat",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": 21537255
+   },
+   {
+    "index": 16,
+    "key": 22839698,
+    "name": "Deutsche Gesellschaft für Internationale Zusammenarbeit (GIZ) GmbH",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": 1165385
+   },
+   {
+    "index": 17,
+    "key": 22856837,
+    "name": "Gemeinde Kreien über Amt Eldenburg -Lübz",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": null,
+    "note": "R conditional: missing target key; holds if Build 2 mints the 234 row"
+   },
+   {
+    "index": 18,
+    "key": 22776193,
+    "name": "Stadt Radevormwald",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": 6048109
+   },
+   {
+    "index": 19,
+    "key": 22835704,
+    "name": "Stadt Remscheid, Fachdienst Recht und Vergabe, Abteilung Zentrale Vergabestelle",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": 16921787
+   },
+   {
+    "index": 20,
+    "key": 22810161,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Dortmund",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": 8119131
+   },
+   {
+    "index": 21,
+    "key": 22822634,
+    "name": "Stadtverwaltung Brilon",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": 13011247
+   },
+   {
+    "index": 22,
+    "key": 22843947,
+    "name": "Stadt Sundern",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": 8028818
+   },
+   {
+    "index": 23,
+    "key": 22840993,
+    "name": "Land Niedersachsen vertreten durch IT.Niedersachsen FG 24 - Zentrale Vergabestelle IT",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": 7652
+   },
+   {
+    "index": 24,
+    "key": 22895106,
+    "name": "Sport- und Bäderbetriebe Essen, Verfahrensbegleitung durch die GVE Grundstücksverwaltung Stadt Essen GmbH",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "buyer",
+    "target": null,
+    "note": "R conditional: missing target key (6 rows / 12 mentions); holds if Build 2 mints the 234 row"
+   },
+   {
+    "index": 25,
+    "key": 23761350,
+    "name": "GSI - Gesellschaft für Schweißtechnik International mbH",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "review_or_info",
+    "target": 20316475
+   },
+   {
+    "index": 26,
+    "key": 22834378,
+    "name": "Geschäftsstelle der Vergabekammern beim Ministerium für Wirtschaft, Infrastruktur, Tourismus und Arbeit Mecklenburg-Vorpommern",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "review_or_info",
+    "target": 23021560
+   },
+   {
+    "index": 27,
+    "key": 22957396,
+    "name": "Zentrale Beschaffungsstelle des Landes Rheinland-Pfalz (ZBL) im Landesbetrieb Mobilität Rheinland-Pfalz",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "review_or_info",
+    "target": 8335910
+   },
+   {
+    "index": 28,
+    "key": 22975386,
+    "name": "Vergabekammer Rheinland · c/o Bezirksregierung Köln",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "review_or_info",
+    "target": 12774348
+   },
+   {
+    "index": 29,
+    "key": 22795050,
+    "name": "Dresdner Verkehrsbetriebe AG",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand2",
+    "role": "review_or_info",
+    "target": 1230216
+   },
+   {
+    "index": 30,
+    "key": 22959819,
+    "name": "Kolpingstadt Kerpen",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 2383569
+   },
+   {
+    "index": 31,
+    "key": 22879585,
+    "name": "Verwaltungs-Berufsgenossenschaft (VBG) - Hauptverwaltung Hamburg",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 10749091
+   },
+   {
+    "index": 32,
+    "key": 22965730,
+    "name": "Vergabekammer Niedersachsen beim Nds. Ministerium für Wirtschaft, Arbeit und Verkehr",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 1166553
+   },
+   {
+    "index": 33,
+    "key": 22868220,
+    "name": "Vergabekammer Westfalen bei der Bezirksregierung Münster",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 6136373
+   },
+   {
+    "index": 34,
+    "key": 22886295,
+    "name": "Bundesstadt Bonn - Referat Vergabedienste",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 15234277
+   },
+   {
+    "index": 35,
+    "key": 22858436,
+    "name": "Vergabekammer bei der Finanzbehörde der Freien und Hansestadt Hamburg",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 1653832
+   },
+   {
+    "index": 36,
+    "key": 22770771,
+    "name": "Brandenburgischer Landesbetrieb für Liegenschaften und Bauen (BLB) - Zentrale Vergabestelle",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 14256311
+   },
+   {
+    "index": 37,
+    "key": 23001169,
+    "name": "Vergabekammer des Landes Hessen bei dem Regierungspräsidium Darmstadt",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 1175826
+   },
+   {
+    "index": 38,
+    "key": 22840798,
+    "name": "Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 1166261
+   },
+   {
+    "index": 39,
+    "key": 22808978,
+    "name": "Universitätsklinikum Köln AöR",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 1281557
+   },
+   {
+    "index": 40,
+    "key": 22830288,
+    "name": "Stadt Münster",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 2251109
+   },
+   {
+    "index": 41,
+    "key": 22795894,
+    "name": "Universitätsmedizin Greifswald KöR",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 1476299
+   },
+   {
+    "index": 42,
+    "key": 22897538,
+    "name": "Vergabekammer Rheinland",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 7615
+   },
+   {
+    "index": 43,
+    "key": 22966357,
+    "name": "Vergabekammer Rheinland",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 7615
+   },
+   {
+    "index": 44,
+    "key": 22914741,
+    "name": "Vergabekammer des Landes Brandenburg",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand3",
+    "role": "review_or_info",
+    "target": 1168329
+   },
+   {
+    "index": 45,
+    "key": 22851601,
+    "name": "Stadt Falkensee",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "review_or_info",
+    "target": 1310644
+   },
+   {
+    "index": 46,
+    "key": 22974691,
+    "name": "Vergabekammer Rheinland c/o Bezirksregierung Köln",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "review_or_info",
+    "target": 11823847
+   },
+   {
+    "index": 47,
+    "key": 22846852,
+    "name": "Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "review_or_info",
+    "target": 1166261
+   },
+   {
+    "index": 48,
+    "key": 22865917,
+    "name": "Vergabekammer des Landes Brandenburg beim Ministerium für Wirtschaft und Energie",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "review_or_info",
+    "target": 5880993
+   },
+   {
+    "index": 49,
+    "key": 22898599,
+    "name": "Vergabekammer Westfalen, Bezirksregierung Münster",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "review_or_info",
+    "target": 6441314
+   },
+   {
+    "index": 50,
+    "key": 23029156,
+    "name": "Zentraldienst der Polizei des Landes Brandenburg",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 1168328
+   },
+   {
+    "index": 51,
+    "key": 22859791,
+    "name": "IHP GmbH - Leibniz-Institut für innovative Mikroelektronik",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 1648483
+   },
+   {
+    "index": 52,
+    "key": 23011460,
+    "name": "Kupferstadt Stolberg (Rhld.)",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 3796660
+   },
+   {
+    "index": 53,
+    "key": 22831663,
+    "name": "POT Project on time GmbH & Co. KG",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 17833093
+   },
+   {
+    "index": 54,
+    "key": 22987736,
+    "name": "Facility Care AG",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 1341058,
+    "note": "weakest R: no target mention read directly"
+   },
+   {
+    "index": 55,
+    "key": 22845186,
+    "name": "Vergabeprüfstelle beim Landesbetrieb Mobilität Rheinland-Pfalz",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 1213069
+   },
+   {
+    "index": 56,
+    "key": 22811966,
+    "name": "Stadtwerke Schwerin GmbH (SWS)",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 4791242
+   },
+   {
+    "index": 57,
+    "key": 23070066,
+    "name": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 8100
+   },
+   {
+    "index": 58,
+    "key": 22760026,
+    "name": "Stadtwerke Schwerin GmbH (SWS)",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "other",
+    "target": 4791242
+   },
+   {
+    "index": 59,
+    "key": 22933591,
+    "name": "P.S.A. Bauunternehmung GmbH",
+    "kind": "planned_guid_row",
+    "verdict": "R",
+    "reader": "read_rand4",
+    "role": "tenderer_winner",
+    "target": 13150074
+   }
+  ],
+  "r2_top_targets": [
+   {
+    "index": 0,
+    "key": 7615,
+    "name": "Vergabekammer Rheinland",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 673,
+    "planned_mentions": 1346,
+    "target_mentions": 29617
+   },
+   {
+    "index": 1,
+    "key": 8100,
+    "name": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 358,
+    "planned_mentions": 716,
+    "target_mentions": 721
+   },
+   {
+    "index": 2,
+    "key": 15234277,
+    "name": "Bundesstadt Bonn - Referat Vergabedienste",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 246,
+    "planned_mentions": 492,
+    "target_mentions": 376
+   },
+   {
+    "index": 3,
+    "key": 1165385,
+    "name": "Deutsche Gesellschaft für internationale Zusammenarbeit (GIZ) GmbH",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 244,
+    "planned_mentions": 488,
+    "target_mentions": 4851
+   },
+   {
+    "index": 4,
+    "key": 2251109,
+    "name": "Stadt Münster",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 237,
+    "planned_mentions": 474,
+    "target_mentions": 192
+   },
+   {
+    "index": 5,
+    "key": 1168328,
+    "name": "Zentraldienst der Polizei des Landes Brandenburg",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 218,
+    "planned_mentions": 436,
+    "target_mentions": 2154
+   },
+   {
+    "index": 6,
+    "key": 1405749,
+    "name": "HIL Heeresinstandsetzungslogistik GmbH",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 215,
+    "planned_mentions": 430,
+    "target_mentions": 2076
+   },
+   {
+    "index": 7,
+    "key": 7195752,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Zentrale",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 196,
+    "planned_mentions": 392,
+    "target_mentions": 1101
+   },
+   {
+    "index": 8,
+    "key": 6136373,
+    "name": "Vergabekammer Westfalen bei der Bezirksregierung Münster",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 158,
+    "planned_mentions": 316,
+    "target_mentions": 15723
+   },
+   {
+    "index": 9,
+    "key": 30899495,
+    "name": "Stadt Aachen - Zentrale Vergabestelle FB60/300",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 151,
+    "planned_mentions": 302,
+    "target_mentions": 64
+   },
+   {
+    "index": 10,
+    "key": 11823847,
+    "name": "Vergabekammer Rheinland c/o Bezirksregierung Köln",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 148,
+    "planned_mentions": 296,
+    "target_mentions": 6223
+   },
+   {
+    "index": 11,
+    "key": 1168329,
+    "name": "Vergabekammer des Landes Brandenburg",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 136,
+    "planned_mentions": 272,
+    "target_mentions": 10598
+   },
+   {
+    "index": 12,
+    "key": 1166261,
+    "name": "Vergabekammer Rheinland-Pfalz beim Ministerium für Wirtschaft, Verkehr, Landwirtschaft und Weinbau",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 130,
+    "planned_mentions": 260,
+    "target_mentions": 8500
+   },
+   {
+    "index": 13,
+    "key": 20040451,
+    "name": "Stadt Osnabrück - FD Öffentliche Aufträge",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 130,
+    "planned_mentions": 260,
+    "target_mentions": 321
+   },
+   {
+    "index": 14,
+    "key": 1166553,
+    "name": "Vergabekammer Niedersachsen beim Nds. Ministerium für Wirtschaft, Arbeit und Verkehr",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top1",
+    "planned_rows": 128,
+    "planned_mentions": 256,
+    "target_mentions": 13668
+   },
+   {
+    "index": 15,
+    "key": 1262231,
+    "name": "Universität Stuttgart",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 127,
+    "planned_mentions": 254,
+    "target_mentions": 420
+   },
+   {
+    "index": 16,
+    "key": 3233,
+    "name": "Vergabekammer Westfalen",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 122,
+    "planned_mentions": 244,
+    "target_mentions": 37696
+   },
+   {
+    "index": 17,
+    "key": 2443792,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Aachen",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 118,
+    "planned_mentions": 236,
+    "target_mentions": 573
+   },
+   {
+    "index": 18,
+    "key": 14256311,
+    "name": "Brandenburgischer Landesbetrieb für Liegenschaften und Bauen (BLB) - Zentrale Vergabestelle",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 114,
+    "planned_mentions": 228,
+    "target_mentions": 371
+   },
+   {
+    "index": 19,
+    "key": 622,
+    "name": "Vergabekammer des Bundes",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 107,
+    "planned_mentions": 214,
+    "target_mentions": 111305
+   },
+   {
+    "index": 20,
+    "key": 1175826,
+    "name": "Vergabekammer des Landes Hessen bei dem Regierungspräsidium Darmstadt",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 101,
+    "planned_mentions": 202,
+    "target_mentions": 6648
+   },
+   {
+    "index": 21,
+    "key": 3856,
+    "name": "Vergabekammern des Bundes",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 96,
+    "planned_mentions": 192,
+    "target_mentions": 17642
+   },
+   {
+    "index": 22,
+    "key": 5880993,
+    "name": "Vergabekammer des Landes Brandenburg beim Ministerium für Wirtschaft und Energie",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 96,
+    "planned_mentions": 192,
+    "target_mentions": 14414
+   },
+   {
+    "index": 23,
+    "key": 1222044,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Münster",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 94,
+    "planned_mentions": 188,
+    "target_mentions": 261
+   },
+   {
+    "index": 24,
+    "key": 1190366,
+    "name": "Stadt Salzgitter",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 91,
+    "planned_mentions": 182,
+    "target_mentions": 1003
+   },
+   {
+    "index": 25,
+    "key": 3796660,
+    "name": "Kupferstadt Stolberg (Rhld.)",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 85,
+    "planned_mentions": 170,
+    "target_mentions": 52
+   },
+   {
+    "index": 26,
+    "key": 1167697,
+    "name": "Medizinische Hochschule Hannover",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 84,
+    "planned_mentions": 168,
+    "target_mentions": 480
+   },
+   {
+    "index": 27,
+    "key": 1164082,
+    "name": "Bau- und Liegenschaftsbetrieb NRW Duisburg",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 82,
+    "planned_mentions": 164,
+    "target_mentions": 726
+   },
+   {
+    "index": 28,
+    "key": 21317603,
+    "name": "Zentrale Vergabestelle - Kooperation Landkreis Lüneburg - Harburg",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 82,
+    "planned_mentions": 164,
+    "target_mentions": 2
+   },
+   {
+    "index": 29,
+    "key": 3645,
+    "name": "Vergabekammer Baden-Württemberg beim Regierungspräsidium Karlsruhe",
+    "kind": "top_target",
+    "verdict": "R",
+    "reader": "read_top2",
+    "planned_rows": 80,
+    "planned_mentions": 160,
+    "target_mentions": 49411
+   }
+  ],
+  "r2_city_flagged": [
+   {
+    "index": 0,
+    "key": 7615,
+    "name": "Vergabekammer Rheinland",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 673,
+    "planned_mentions": 1346,
+    "target_mentions": 29617,
+    "note": "duplicate of r2_top_targets[0]"
+   },
+   {
+    "index": 1,
+    "key": 1165385,
+    "name": "Deutsche Gesellschaft für internationale Zusammenarbeit (GIZ) GmbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 244,
+    "planned_mentions": 488,
+    "target_mentions": 4851,
+    "note": "duplicate of r2_top_targets[3]; 2 Bonn planned mentions not located (one GmbH, two seats)"
+   },
+   {
+    "index": 2,
+    "key": 30899495,
+    "name": "Stadt Aachen - Zentrale Vergabestelle FB60/300",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 151,
+    "planned_mentions": 302,
+    "target_mentions": 64,
+    "note": "duplicate of r2_top_targets[9]; 1 Geilenkirchen mention not located"
+   },
+   {
+    "index": 3,
+    "key": 5180467,
+    "name": "Leinemann Partner Rechtsanwälte mbB",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 26,
+    "planned_mentions": 88,
+    "target_mentions": 250
+   },
+   {
+    "index": 4,
+    "key": 16003275,
+    "name": "Stadt Achim c/o Landkreis Verden - Zentrale Vergabestelle",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 40,
+    "planned_mentions": 80,
+    "target_mentions": 21
+   },
+   {
+    "index": 5,
+    "key": 11195375,
+    "name": "Wald und Holz NRW",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 38,
+    "planned_mentions": 76,
+    "target_mentions": 302,
+    "note": "10 Bad Driburg mentions not located (own Regionalforstamt)"
+   },
+   {
+    "index": 6,
+    "key": 1178976,
+    "name": "Bezirksregierung Münster",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 25,
+    "planned_mentions": 50,
+    "target_mentions": 1138
+   },
+   {
+    "index": 7,
+    "key": 1496424,
+    "name": "AOK NordWest - Die Gesundheitskasse",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 20,
+    "planned_mentions": 40,
+    "target_mentions": 164
+   },
+   {
+    "index": 8,
+    "key": 31365873,
+    "name": "FREISTAAT BAYERN, VERTRETEN DURCH DIE UNIVERSITÄT ERLANGEN-NÜRNBERG",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 10,
+    "planned_mentions": 36,
+    "target_mentions": 3,
+    "note": "weakest R: planned rows not located; rests on target notices, name and cities"
+   },
+   {
+    "index": 9,
+    "key": 3353580,
+    "name": "Vergabekammer NRW",
+    "kind": "city_flagged_target",
+    "verdict": "W",
+    "reader": "read_city1",
+    "planned_rows": 16,
+    "planned_mentions": 32,
+    "target_mentions": 675,
+    "skeptic": "skeptic_city1: W kept",
+    "note": "W (A6): umbrella over VK Rheinland (Koeln) and VK Westfalen (Muenster); 32 planned Muenster mentions would extend the mix"
+   },
+   {
+    "index": 10,
+    "key": 1314444,
+    "name": "Universität Duisburg-Essen",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 13,
+    "planned_mentions": 26,
+    "target_mentions": 362
+   },
+   {
+    "index": 11,
+    "key": 4193988,
+    "name": "Verband der Ersatzkassen e. V. (vdek)",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 12,
+    "planned_mentions": 24,
+    "target_mentions": 146,
+    "note": "R; at worst N if each Landesvertretung counts as a separate buyer"
+   },
+   {
+    "index": 12,
+    "key": 8223129,
+    "name": "Sozialversicherung für Landwirtschaft, Forsten und Gartenbau (SVLFG), als landwirtschaftliche Krankenkasse (LKK)",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 8,
+    "planned_mentions": 16,
+    "target_mentions": 45
+   },
+   {
+    "index": 13,
+    "key": 20316475,
+    "name": "GSI - Gesellschaft für Schweißtechnik International mbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city1",
+    "planned_rows": 8,
+    "planned_mentions": 16,
+    "target_mentions": 3
+   },
+   {
+    "index": 14,
+    "key": 1366195,
+    "name": "Regierungspräsidium Stuttgart",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 5,
+    "planned_mentions": 10,
+    "target_mentions": 465,
+    "note": "Heilbronn mention not located"
+   },
+   {
+    "index": 15,
+    "key": 6622773,
+    "name": "Geschäftsstelle der Vergabekammer",
+    "kind": "city_flagged_target",
+    "verdict": "W",
+    "reader": "read_city2",
+    "planned_rows": 5,
+    "planned_mentions": 10,
+    "target_mentions": 105,
+    "skeptic": "skeptic_city2: W kept",
+    "note": "W (A6): Thuringian chamber (Weimar) target; planned rows are VK Westfalen printing the function name"
+   },
+   {
+    "index": 16,
+    "key": 1171471,
+    "name": "Klinikum Esslingen GmbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 4,
+    "planned_mentions": 8,
+    "target_mentions": 71
+   },
+   {
+    "index": 17,
+    "key": 1176914,
+    "name": "Capgemini Deutschland GmbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 4,
+    "planned_mentions": 8,
+    "target_mentions": 163
+   },
+   {
+    "index": 18,
+    "key": 1252070,
+    "name": "AOK Bayern - Die Gesundheitskasse",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 4,
+    "planned_mentions": 8,
+    "target_mentions": 946
+   },
+   {
+    "index": 19,
+    "key": 1437249,
+    "name": "Gemeinde Ensdorf",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 4,
+    "planned_mentions": 8,
+    "target_mentions": 12,
+    "note": "R, latent homonym: Gemeinde Ensdorf also exists in the Oberpfalz; target and planned rows are Saarland only"
+   },
+   {
+    "index": 20,
+    "key": 1450065,
+    "name": "AOK - Die Gesundheitskasse in Hessen",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 4,
+    "planned_mentions": 8,
+    "target_mentions": 423
+   },
+   {
+    "index": 21,
+    "key": 2146835,
+    "name": "NRW.Urban GmbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 3,
+    "planned_mentions": 6,
+    "target_mentions": 100
+   },
+   {
+    "index": 22,
+    "key": 2156517,
+    "name": "Malteser Hilfsdienst gGmbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 3,
+    "planned_mentions": 6,
+    "target_mentions": 287
+   },
+   {
+    "index": 23,
+    "key": 9147905,
+    "name": "Stadt Lübbenau/Spreewald",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 3,
+    "planned_mentions": 6,
+    "target_mentions": 225
+   },
+   {
+    "index": 24,
+    "key": 16989550,
+    "name": "JVA Werl",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 3,
+    "planned_mentions": 6,
+    "target_mentions": 13
+   },
+   {
+    "index": 25,
+    "key": 2217,
+    "name": "Vergabekammer des Bundes beim Bundeskartellamt",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 90279,
+    "note": "Eschborn city not reached"
+   },
+   {
+    "index": 26,
+    "key": 9190,
+    "name": "Vergabekammer Schleswig-Holstein",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 13382
+   },
+   {
+    "index": 27,
+    "key": 1163070,
+    "name": "Tribunal administratif de Toulouse",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city2",
+    "planned_rows": 4,
+    "planned_mentions": 4,
+    "target_mentions": 32566
+   },
+   {
+    "index": 28,
+    "key": 1163241,
+    "name": "Tribunal administratif de Lyon",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 4,
+    "planned_mentions": 4,
+    "target_mentions": 46473
+   },
+   {
+    "index": 29,
+    "key": 1206438,
+    "name": "IKK classic",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 2117
+   },
+   {
+    "index": 30,
+    "key": 1289810,
+    "name": "Deloitte Consulting GmbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 135
+   },
+   {
+    "index": 31,
+    "key": 8808564,
+    "name": "Deloitte GmbH Wirtschaftsprüfungsgesellschaft",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 99
+   },
+   {
+    "index": 32,
+    "key": 13918251,
+    "name": "Cassini Consulting AG",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 26
+   },
+   {
+    "index": 33,
+    "key": 13957982,
+    "name": "Drees & Sommer SE",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 959
+   },
+   {
+    "index": 34,
+    "key": "missing:22942473",
+    "name": "]init[ DCP LDA",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 0,
+    "note": "missing target key; R conditional on the mint; notice text not located"
+   },
+   {
+    "index": 35,
+    "key": 1163111,
+    "name": "Tribunal administratif de Cergy-Pontoise",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 2,
+    "target_mentions": 35410
+   },
+   {
+    "index": 36,
+    "key": 1163191,
+    "name": "Tribunal administratif de Toulon",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 2,
+    "target_mentions": 22269
+   },
+   {
+    "index": 37,
+    "key": 1163864,
+    "name": "Tribunal administratif de Montpellier",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 2,
+    "target_mentions": 27192
+   },
+   {
+    "index": 38,
+    "key": 2126721,
+    "name": "KUBUS Kommunalberatung und Service GmbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 1,
+    "planned_mentions": 2,
+    "target_mentions": 131
+   },
+   {
+    "index": 39,
+    "key": 8545951,
+    "name": "BIB Augsburg gGmbH",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 1,
+    "planned_mentions": 2,
+    "target_mentions": 60,
+    "note": "weaker evidence: Gersthofen mention not located"
+   },
+   {
+    "index": 40,
+    "key": 14658291,
+    "name": "Tribunal judiciaire de Marseille",
+    "kind": "city_flagged_target",
+    "verdict": "R",
+    "reader": "read_city3",
+    "planned_rows": 2,
+    "planned_mentions": 2,
+    "target_mentions": 2223
+   }
+  ],
+  "r2_incoherent": [
+   {
+    "index": 0,
+    "key": "24311920|universitätsklinikum essen, aör",
+    "name": "universitätsklinikum essen, aör",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22795019,
+     22795020,
+     22795021,
+     22795022
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Lot-TenderReceipt",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003",
+     "ORG-0004"
+    ]
+   },
+   {
+    "index": 1,
+    "key": "24363701|justizvollzugsanstalt rheinbach",
+    "name": "justizvollzugsanstalt rheinbach",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22834907,
+     22834908,
+     22834909,
+     22834910
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Lot-TenderReceipt",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003",
+     "ORG-0004"
+    ]
+   },
+   {
+    "index": 2,
+    "key": "24385146|hochschule bonn-rhein-sieg",
+    "name": "hochschule bonn-rhein-sieg",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22851636,
+     22851637,
+     22851639,
+     22851641
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Lot-TenderReceipt",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0004",
+     "ORG-0006"
+    ]
+   },
+   {
+    "index": 3,
+    "key": "24453957|kolpingstadt kerpen",
+    "name": "kolpingstadt kerpen",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22905103,
+     22905104,
+     22905106,
+     22905108
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Lot-TenderReceipt",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0004",
+     "ORG-0006"
+    ]
+   },
+   {
+    "index": 4,
+    "key": "26492363|universitätsklinikum essen, aör",
+    "name": "universitätsklinikum essen, aör",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22795019,
+     22795020,
+     22795021,
+     22795022
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Lot-TenderReceipt",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003",
+     "ORG-0004"
+    ]
+   },
+   {
+    "index": 5,
+    "key": "26496944|justizvollzugsanstalt rheinbach",
+    "name": "justizvollzugsanstalt rheinbach",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22834907,
+     22834908,
+     22834909,
+     22834910
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Lot-TenderReceipt",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003",
+     "ORG-0004"
+    ]
+   },
+   {
+    "index": 6,
+    "key": "26506733|hochschule bonn-rhein-sieg",
+    "name": "hochschule bonn-rhein-sieg",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22851636,
+     22851637,
+     22851639,
+     22851641
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Lot-TenderReceipt",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0004",
+     "ORG-0006"
+    ]
+   },
+   {
+    "index": 7,
+    "key": "26522080|kolpingstadt kerpen",
+    "name": "kolpingstadt kerpen",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22905103,
+     22905104,
+     22905106,
+     22905108
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Lot-TenderReceipt",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0004",
+     "ORG-0006"
+    ]
+   },
+   {
+    "index": 8,
+    "key": "24253392|aok - die gesundheitskasse für niedersachsen",
+    "name": "aok - die gesundheitskasse für niedersachsen",
+    "kind": "role_incoherent_group",
+    "verdict": "W",
+    "reader": "read_inc1",
+    "org_ids": [
+     22752175,
+     22752176,
+     22752177
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003"
+    ],
+    "skeptic": "skeptic_inc1: W kept",
+    "note": "W (A7): ORG-0003 Lot-ReviewOrg carries the VK Bund phone +49 22894990 and NUTS DEA22 under the AOK name; 1 wrong mention per copy"
+   },
+   {
+    "index": 9,
+    "key": "24417385|rbb vermögensgesellschaft mbh & co. kg",
+    "name": "rbb vermögensgesellschaft mbh & co. kg",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22876714,
+     22876715,
+     22876716
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-Mediator",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 10,
+    "key": "24417606|rbb vermögensgesellschaft mbh & co. kg",
+    "name": "rbb vermögensgesellschaft mbh & co. kg",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22876875,
+     22876876,
+     22876877
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-Mediator",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 11,
+    "key": "24527963|justizvollzugsanstalt rheinbach",
+    "name": "justizvollzugsanstalt rheinbach",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22963579,
+     22963580,
+     22963581
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 12,
+    "key": "26483158|aok - die gesundheitskasse für niedersachsen",
+    "name": "aok - die gesundheitskasse für niedersachsen",
+    "kind": "role_incoherent_group",
+    "verdict": "W",
+    "reader": "read_inc1",
+    "org_ids": [
+     22752175,
+     22752176,
+     22752177
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003"
+    ],
+    "skeptic": "skeptic_inc1: W kept",
+    "note": "W (A7): DOEE copy of 24253392, same defect in AppealReceiverParty ORG-0003"
+   },
+   {
+    "index": 13,
+    "key": "26537626|rbb vermögensgesellschaft mbh & co. kg",
+    "name": "rbb vermögensgesellschaft mbh & co. kg",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22876875,
+     22876876,
+     22876877
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-Mediator",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 14,
+    "key": "26537732|rbb vermögensgesellschaft mbh & co. kg",
+    "name": "rbb vermögensgesellschaft mbh & co. kg",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc1",
+    "org_ids": [
+     22876714,
+     22876715,
+     22876716
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-Mediator",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 15,
+    "key": "26549982|justizvollzugsanstalt rheinbach",
+    "name": "justizvollzugsanstalt rheinbach",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22963579,
+     22963580,
+     22963581
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 16,
+    "key": "24345339|ikk classic",
+    "name": "ikk classic",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22820369,
+     22820370
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 17,
+    "key": "24441480|kreis weseler abfallgesellschaft regio mbh",
+    "name": "kreis weseler abfallgesellschaft regio mbh",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22895799,
+     22895800
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 18,
+    "key": "24460436|gsi helmholtzzentrum für schwerionenforschung gmbh",
+    "name": "gsi helmholtzzentrum für schwerionenforschung gmbh",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22909793,
+     22909795
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 19,
+    "key": "24537105|kolpingstadt kerpen",
+    "name": "kolpingstadt kerpen",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22970624,
+     22970626
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 20,
+    "key": "26508153|ikk classic",
+    "name": "ikk classic",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22820369,
+     22820370
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 21,
+    "key": "26532531|gsi helmholtzzentrum für schwerionenforschung gmbh",
+    "name": "gsi helmholtzzentrum für schwerionenforschung gmbh",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22909793,
+     22909795
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 22,
+    "key": "26535235|kreis weseler abfallgesellschaft regio mbh",
+    "name": "kreis weseler abfallgesellschaft regio mbh",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22895799,
+     22895800
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 23,
+    "key": "26578966|kolpingstadt kerpen",
+    "name": "kolpingstadt kerpen",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22970624,
+     22970626
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0001",
+     "ORG-0003"
+    ]
+   },
+   {
+    "index": 24,
+    "key": "24657948|handwerkskammer niederbayern-oberpfalz",
+    "name": "handwerkskammer niederbayern-oberpfalz",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22331352,
+     23055099
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 25,
+    "key": "24725278|handwerkskammer niederbayern-oberpfalz",
+    "name": "handwerkskammer niederbayern-oberpfalz",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22331352,
+     23055099
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 26,
+    "key": "26605236|handwerkskammer niederbayern-oberpfalz",
+    "name": "handwerkskammer niederbayern-oberpfalz",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22331352,
+     23055099
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 27,
+    "key": "26617325|handwerkskammer niederbayern-oberpfalz",
+    "name": "handwerkskammer niederbayern-oberpfalz",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22331352,
+     23055099
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 28,
+    "key": "26675286|handwerkskammer niederbayern-oberpfalz",
+    "name": "handwerkskammer niederbayern-oberpfalz",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22331352,
+     23055099
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0002"
+    ]
+   },
+   {
+    "index": 29,
+    "key": "44557159|handwerkskammer niederbayern-oberpfalz",
+    "name": "handwerkskammer niederbayern-oberpfalz",
+    "kind": "role_incoherent_group",
+    "verdict": "R",
+    "reader": "read_inc2",
+    "org_ids": [
+     22331352,
+     23055099
+    ],
+    "roles": [
+     "Lot-AddInfo",
+     "Lot-ReviewInfo",
+     "Lot-ReviewOrg",
+     "Procedure-Buyer"
+    ],
+    "refused": [
+     "ORG-0002"
+    ]
+   }
+  ],
+  "r2_office_two_words": [
+   {
+    "index": 0,
+    "key": 7615,
+    "name": "Vergabekammer Rheinland",
+    "kind": "office_two_word_target",
+    "verdict": "R",
+    "reader": "read_office",
+    "planned_rows": 673,
+    "planned_mentions": 1346,
+    "target_mentions": 29617,
+    "note": "duplicate of r2_top_targets[0]"
+   },
+   {
+    "index": 1,
+    "key": 3233,
+    "name": "Vergabekammer Westfalen",
+    "kind": "office_two_word_target",
+    "verdict": "R",
+    "reader": "read_office",
+    "planned_rows": 122,
+    "planned_mentions": 244,
+    "target_mentions": 37696,
+    "note": "duplicate of r2_top_targets[16]"
+   },
+   {
+    "index": 2,
+    "key": 622,
+    "name": "Vergabekammer des Bundes",
+    "kind": "office_two_word_target",
+    "verdict": "R",
+    "reader": "read_office",
+    "planned_rows": 107,
+    "planned_mentions": 214,
+    "target_mentions": 111305,
+    "note": "duplicate of r2_top_targets[19]"
+   },
+   {
+    "index": 3,
+    "key": 1222120,
+    "name": "Vergabekammer Niedersachsen",
+    "kind": "office_two_word_target",
+    "verdict": "R",
+    "reader": "read_office",
+    "planned_rows": 41,
+    "planned_mentions": 94,
+    "target_mentions": 7937
+   },
+   {
+    "index": 4,
+    "key": 2175136,
+    "name": "Vergabekammer BW",
+    "kind": "office_two_word_target",
+    "verdict": "R",
+    "reader": "read_office",
+    "planned_rows": 24,
+    "planned_mentions": 48,
+    "target_mentions": 469
+   },
+   {
+    "index": 5,
+    "key": 3353580,
+    "name": "Vergabekammer NRW",
+    "kind": "office_two_word_target",
+    "verdict": "W",
+    "reader": "read_office",
+    "planned_rows": 16,
+    "planned_mentions": 32,
+    "target_mentions": 675,
+    "skeptic": "skeptic_office: W kept",
+    "note": "duplicate of r2_city_flagged[9] (W)"
+   },
+   {
+    "index": 6,
+    "key": 3180,
+    "name": "Vergabekammer Südbayern",
+    "kind": "office_two_word_target",
+    "verdict": "R",
+    "reader": "read_office",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 42828,
+    "note": "planned rows not located; city screen only"
+   },
+   {
+    "index": 7,
+    "key": 1163917,
+    "name": "Vergabekammer Nordbayern",
+    "kind": "office_two_word_target",
+    "verdict": "R",
+    "reader": "read_office",
+    "planned_rows": 2,
+    "planned_mentions": 4,
+    "target_mentions": 24306,
+    "note": "planned rows not located; city screen only"
+   }
+  ]
+ }
+}
