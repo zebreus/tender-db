@@ -7296,6 +7296,29 @@ fn read_results(
     raw
 }
 
+/// Issue 571: the organization references an award block (`RES-n`) can hold that name no winner, so
+/// [`read_legacy_results`]' winner arm never takes them. Each is refused as a role too (issue 534,
+/// `LEGACY_ROLE_REFUSED`), and the role layer still serves it there.
+///
+/// - `ADDRESS_PARTY`: R2.0.9 MOVE (T02) only. Its `AWARD_CONTRACT` is a `LotResult`, and the
+///   reception schema (`MOVE.xsd`, `award_contract_move`) gives each `CONTRACTOR` its
+///   `ADDRESS_CONTRACTOR` (the operator, the winner), then `OWNERSHIP`, then 0-100 `ADDRESS_PARTY`,
+///   the parties exercising legal control over the operator: its owners. `Rule::Org`, so the walker
+///   records the ref on `RES-n`, and before 571 every owner was a result winner beside the operator
+///   (67 notices carried the field when unit 1 sized it).
+///
+/// Nothing else qualifies. The other `Rule::Org` elements a legacy award block holds are its winners:
+/// `ADDRESS_CONTRACTOR`, `ADDRESS_WINNER` / `WINNER` (R2.0.9 design-contest `RESULTS`), and the
+/// R2.0.8 `CONTACT_DATA*` blocks, named after their wrapper (`ECONOMIC_OPERATOR_NAME_ADDRESS`,
+/// `NAME_ADDRESS_WINNER`, F06's `AWARD_AND_CONTRACT_VALUE`) — every ref under an award block in the
+/// committed r208 and r209 fixtures is one of those (81 blocks). The R2.0.8 twin `PARTY_NAME_ADDRESS`
+/// sits in `AWARD_CONTRACT_MOVE`, a Group, so it lands on the notice section and never in a `RES-n`
+/// ([`read_move_award`] reads only its operator, issue 541). The review, mediation and
+/// information bodies are section I and VI blocks, never inside the award. And no `Rule::Org`
+/// element names a subcontractor: the legacy forms publish subcontracting as a value, a share and
+/// prose.
+const LEGACY_NON_WINNER_REFS: &[&str] = &["TED-ADDRESS_PARTY"];
+
 /// Legacy award blocks (`AWARD_CONTRACT`/`RESULTS` → `RES-n`) read as
 /// LotResults. The winner is the inline contractor address block, the awarded
 /// value sits on the block, and the received-bid count is the one statistic —
@@ -7336,9 +7359,10 @@ fn read_legacy_results(
         match (value.field_id.as_str(), &value.value) {
             // Any inline organization reference in an award block is a winner
             // (contractors, joint AWARDED_TO_GROUP members); the OJS chain edges
-            // are scheme "ojs" and never appear here.
-            (_, NoticeValue::Id { value: org, is_ref: true, scheme })
-                if scheme.as_deref() != Some("ojs") =>
+            // are scheme "ojs" and never appear here. Issue 571: except an
+            // operator's owners ([`LEGACY_NON_WINNER_REFS`]), which bind nothing.
+            (f, NoticeValue::Id { value: org, is_ref: true, scheme })
+                if scheme.as_deref() != Some("ojs") && !LEGACY_NON_WINNER_REFS.contains(&f) =>
             {
                 // Issue 510: a void-lot "winner" is the publisher saying no award. Issue 511:
                 // a placeholder says a winner exists, withheld or named elsewhere; a blank
@@ -15014,6 +15038,16 @@ mod tests {
             assert!(has_destination(f, Channel::Integer), "{f}: Integer");
             assert!(has_destination(f, Channel::Number), "{f}: Number");
         }
+        // Issue 571: the refs the winner arm passes over still have a destination, the party
+        // layer's refused verbatim role (issue 534), so the diagnostics never list them as dropped.
+        for f in LEGACY_NON_WINNER_REFS {
+            assert!(has_destination(f, Channel::Id { is_ref: true }), "issue 571: {f}");
+            let element = f.strip_prefix("TED-").expect("a TED- field");
+            assert!(
+                LEGACY_ROLE_REFUSED.iter().any(|(r, _)| *r == element),
+                "issue 571: {f} is no winner, so it is no party role either: refuse it in LEGACY_ROLE_REFUSED"
+            );
+        }
         // And every const the reader matches on is one this test names.
         for name in [
             "LEGACY_AWARD_DATE_FIELD",
@@ -15023,6 +15057,11 @@ mod tests {
         ] {
             assert!(body.contains(name), "{name} is no longer used by the reader; update this test");
         }
+        // Issue 571's guard by its use, not its name: the arm's comment names the const too.
+        assert!(
+            body.contains("!LEGACY_NON_WINNER_REFS.contains("),
+            "LEGACY_NON_WINNER_REFS no longer guards the reader's winner arm; update this test"
+        );
     }
 
     /// Every satellite table a "published and dropped" diagnostic walks has a
@@ -19907,6 +19946,188 @@ mod tests {
             let [result] = &round.lot_results[..] else { panic!("one result") };
             assert_eq!((result.decision.as_deref(), result.winners.as_slice()), (decision, &[][..]), "{name}");
         }
+    }
+
+    // ---- Issue 571: an R2.0.9 T02 award's owners (`ADDRESS_PARTY`) are never result winners ----
+
+    /// An R2.0.9 MOVE T02 as the r209 walker stores its award. `AWARD_CONTRACT` is `RES-1`; inside it
+    /// `AWARDED_CONTRACT` (the marker, when `marker`) > `CONTRACTORS` > `CONTRACTOR` are no sections,
+    /// so the operator's `ADDRESS_CONTRACTOR` ref and its owners' `ADDRESS_PARTY` refs all land on
+    /// `RES-1`. `refs` are `(field, ordinal, org)`, each org `ORG-n` named `Org n`; the buyer is ORG-1
+    /// on the notice section. `dated` adds the R2.0.9 `DATE_CONCLUSION_CONTRACT`.
+    fn r209_t02_award(refs: &[(&str, i64, &str)], marker: bool, dated: bool) -> Parsed {
+        let mut sections = vec![("PROCEDURE", "Notice"), ("RES-1", "LotResult"), ("ORG-1", ORGANIZATION_KIND)];
+        let mut values = vec![
+            b1_form("T02"),
+            t02_ref("PROCEDURE", "TED-ADDRESS_CONTRACTING_BODY", 0, "ORG-1"),
+            text_value("ORG-1", "TED-OFFICIALNAME", 0, Some("DE"), "Landkreis Barnim"),
+            b1_id("RES-1", "TED-ITEM", "1"),
+        ];
+        for (field, ordinal, org) in refs {
+            values.push(t02_ref("RES-1", field, *ordinal, org));
+            if !sections.iter().any(|(id, _)| id == org) {
+                sections.push((*org, ORGANIZATION_KIND));
+                values.push(text_value(org, "TED-OFFICIALNAME", 0, Some("DE"), &org.replace("ORG-", "Org ")));
+            }
+        }
+        if marker {
+            values.push(b1_value("RES-1", LEGACY_AWARDED_MARKER, NoticeValue::Integer(1)));
+        }
+        if dated {
+            values.push(b1_value("RES-1", LEGACY_AWARD_DATE_FIELD_R209, T02_AWARD_DATE));
+        }
+        b1_parsed(&sections, values)
+    }
+
+    /// The operator ORG-2 and two owners, ORG-3 and ORG-4: the award shape issue 571 sized (67 notices).
+    const R209_T02_OPERATOR_AND_OWNERS: &[(&str, i64, &str)] = &[
+        ("TED-ADDRESS_CONTRACTOR", 0, "ORG-2"),
+        ("TED-ADDRESS_PARTY", 0, "ORG-3"),
+        ("TED-ADDRESS_PARTY", 1, "ORG-4"),
+    ];
+
+    /// An R2.0.9 T02's `RES-1` holding the operator's `ADDRESS_CONTRACTOR` and two `ADDRESS_PARTY`
+    /// owners: only the operator is the result's winner, `selec-w`, exactly as the block reads with
+    /// no owners at all. Through the whole read the result binds ORG-2's organization alone, the
+    /// `winner` role agrees, and the owners keep issue 534's refused verbatim role.
+    #[test]
+    fn an_r209_t02_award_binds_its_operator_and_never_its_owners() {
+        let decided = Some((1_474_416_000, 0, false));
+        for dated in [true, false] {
+            let parsed = r209_t02_award(R209_T02_OPERATOR_AND_OWNERS, true, dated);
+            let decided = decided.filter(|_| dated);
+            assert_eq!(
+                t02_results(&t02_read(&parsed, &[])),
+                vec![("RES-1", vec!["ORG-2"], Some("selec-w"), decided, None, None)],
+                "dated={dated}"
+            );
+            let operator_only = r209_t02_award(&R209_T02_OPERATOR_AND_OWNERS[..1], true, dated);
+            assert_eq!(
+                t02_results(&t02_read(&parsed, &[])),
+                t02_results(&t02_read(&operator_only, &[])),
+                "the owners change nothing (dated={dated})"
+            );
+        }
+
+        let parsed = r209_t02_award(R209_T02_OPERATOR_AND_OWNERS, true, true);
+        let state = b1_bound(&b1_notice(4, "ted", "ted-export-r209"), &parsed);
+        let round = state.round.as_ref().expect("the T02 binds a round");
+        let [result] = &round.lot_results[..] else { panic!("one result: {:?}", round.lot_results.len()) };
+        assert_eq!(result.key, "RES-1");
+        assert_eq!(result.decision.as_deref(), Some("selec-w"));
+        assert_eq!(result.winners, vec![1_002], "the operator, never its owners");
+        assert_eq!(t02_parties(&state, "winner"), vec!["ORG-2"]);
+        assert_eq!(t02_parties(&state, "ADDRESS_PARTY"), vec!["ORG-3", "ORG-4"], "issue 534's refused role");
+        // The read keeps no read_move_award result beside the block: R2.0.9 is the RES-n path.
+        assert!(!round.lot_results.iter().any(|r| r.key == MOVE_AWARD_RESULT_KEY));
+    }
+
+    /// An R2.0.9 T02 block whose only references are `ADDRESS_PARTY` owners binds no winner, and the
+    /// legacy decision rule decides it as it decides the same block with no reference at all: bare,
+    /// `clos-nw` (no award evidence); with the `AWARDED_CONTRACT` marker, the only place the schema
+    /// puts an owner, NULL (issue 550: an awarded block, its outcome unpublished), dated or not.
+    /// An owner is never a `withheld_winner` or a `void_lot` either, whatever the fold made of its name.
+    #[test]
+    fn an_r209_t02_award_naming_only_owners_binds_no_winner() {
+        let owners = &R209_T02_OPERATOR_AND_OWNERS[1..];
+        for (marker, dated, decision) in [(false, false, Some("clos-nw")), (true, false, None), (true, true, None)] {
+            let parsed = r209_t02_award(owners, marker, dated);
+            let raw = t02_read(&parsed, &[]);
+            let [r] = &raw.lot_results[..] else { panic!("the block is one result") };
+            assert!(r.direct_winners.is_empty(), "marker={marker} dated={dated}: {:?}", r.direct_winners);
+            assert_eq!(r.decision.as_deref(), decision, "marker={marker} dated={dated}");
+            let empty = r209_t02_award(&[], marker, dated);
+            assert_eq!(t02_results(&raw), t02_results(&t02_read(&empty, &[])), "as with no ref (marker={marker} dated={dated})");
+            // The `dropped` verdicts are the winner slot's; an owner never reaches them.
+            for class in [NotAName::VoidLot, NotAName::Placeholder] {
+                let raw = t02_read(&parsed, &[("ORG-3", class), ("ORG-4", class)]);
+                let r = &raw.lot_results[0];
+                assert_eq!((r.void_lot, r.withheld_winner, r.decision.as_deref()), (false, false, decision), "{class:?}");
+            }
+        }
+
+        let state = b1_bound(&b1_notice(5, "ted", "ted-export-r209"), &r209_t02_award(owners, true, true));
+        let round = state.round.as_ref().expect("the block binds a round");
+        let [result] = &round.lot_results[..] else { panic!("one result") };
+        assert_eq!((result.decision.as_deref(), result.winners.as_slice()), (None, &[][..]));
+        assert!(t02_parties(&state, "winner").is_empty(), "and no owner becomes a winner party");
+        assert_eq!(t02_parties(&state, "ADDRESS_PARTY"), vec!["ORG-3", "ORG-4"]);
+    }
+
+    /// Every contractor field a legacy award block names stays a result winner beside issue 571's
+    /// guard, each in the shape its walker stores it: the R2.0.8 standard forms'
+    /// `ECONOMIC_OPERATOR_NAME_ADDRESS` (F03, VEAT, defence), F06's `AWARD_AND_CONTRACT_VALUE` and
+    /// F13's `NAME_ADDRESS_WINNER` flat on `RES-1` beside the R2.0.8 award date, and R2.0.9's
+    /// `ADDRESS_CONTRACTOR` (F03, T02) flat on `RES-1` beside R2.0.9's `DATE_CONCLUSION_CONTRACT`.
+    /// R2.0.9's F13 nests: see [`an_r209_f13_prize_winner_stays_a_result_winner`]. Each folds to the
+    /// `winner` role, and none is listed as an owner.
+    #[test]
+    fn every_legacy_contractor_field_stays_a_result_winner() {
+        for (form, field, date) in [
+            ("F03", "TED-ECONOMIC_OPERATOR_NAME_ADDRESS", LEGACY_AWARD_DATE_FIELD),
+            ("F06", "TED-AWARD_AND_CONTRACT_VALUE", LEGACY_AWARD_DATE_FIELD),
+            ("F13", "TED-NAME_ADDRESS_WINNER", LEGACY_AWARD_DATE_FIELD),
+            ("F03", "TED-ADDRESS_CONTRACTOR", LEGACY_AWARD_DATE_FIELD_R209),
+            ("T02", "TED-ADDRESS_CONTRACTOR", LEGACY_AWARD_DATE_FIELD_R209),
+        ] {
+            assert!(!LEGACY_NON_WINNER_REFS.contains(&field), "{field}");
+            assert_eq!(legacy_role(field.strip_prefix("TED-").expect("TED-")), "winner", "{field}");
+            let parsed = b1_parsed(
+                &[("PROCEDURE", "Notice"), ("RES-1", "LotResult"), ("ORG-2", ORGANIZATION_KIND), ("ORG-5", ORGANIZATION_KIND)],
+                vec![
+                    b1_form(form),
+                    t02_ref("RES-1", field, 0, "ORG-2"),
+                    t02_ref("RES-1", field, 1, "ORG-5"),
+                    b1_value("RES-1", date, T02_AWARD_DATE),
+                ],
+            );
+            assert_eq!(
+                t02_results(&t02_read(&parsed, &[])),
+                vec![("RES-1", vec!["ORG-2", "ORG-5"], Some("selec-w"), Some((1_474_416_000, 0, false)), None, None)],
+                "{form} {field}"
+            );
+        }
+    }
+
+    /// R2.0.9 F13 as the walker stores `RESULTS` > `AWARDED_PRIZE` > `WINNERS` > `WINNER` >
+    /// `ADDRESS_WINNER` (fixture `r209/f13-prize-winner-362996-2018.xml`): both are `Rule::Org`, so
+    /// each `WINNER` opens an organization under `RES-1` (`TED-WINNER` on `RES-1`) and its
+    /// `ADDRESS_WINNER` a second one under that (`TED-ADDRESS_WINNER` on the outer half, reaching the
+    /// block only through [`enclosing`]) — [`nested_void_winner`]'s shape. Issue 571's guard keeps
+    /// both halves of both winners the result's winners, as before it. The form's
+    /// `DATE_DECISION_JURY` is no award date the reader reads, so the block is undated.
+    #[test]
+    fn an_r209_f13_prize_winner_stays_a_result_winner() {
+        use placeholder_511::*;
+        for field in ["TED-WINNER", "TED-ADDRESS_WINNER"] {
+            assert!(!LEGACY_NON_WINNER_REFS.contains(&field), "{field}");
+            assert_eq!(legacy_role(field.strip_prefix("TED-").expect("TED-")), "winner", "{field}");
+        }
+        let mut values = vec![
+            b1_form("F13"),
+            t02_ref("RES-1", "TED-WINNER", 0, "ORG-2"),
+            t02_ref("ORG-2", "TED-ADDRESS_WINNER", 0, "ORG-3"),
+            text_value("ORG-3", "TED-OFFICIALNAME", 0, Some("PT"), "Opal Publicidade, S. A."),
+            t02_ref("RES-1", "TED-WINNER", 1, "ORG-4"),
+            t02_ref("ORG-4", "TED-ADDRESS_WINNER", 0, "ORG-5"),
+            text_value("ORG-5", "TED-OFFICIALNAME", 0, Some("PT"), "Atelier Norte, Lda."),
+        ];
+        values.sort_by(|a, b| (&a.section_id, &a.field_id, a.ordinal).cmp(&(&b.section_id, &b.field_id, b.ordinal)));
+        let parsed = Parsed {
+            sections: vec![
+                section("PROCEDURE", "Notice", None),
+                section("RES-1", "LotResult", Some("PROCEDURE")),
+                section("ORG-2", ORGANIZATION_KIND, Some("RES-1")),
+                section("ORG-3", ORGANIZATION_KIND, Some("ORG-2")),
+                section("ORG-4", ORGANIZATION_KIND, Some("RES-1")),
+                section("ORG-5", ORGANIZATION_KIND, Some("ORG-4")),
+            ],
+            values,
+        };
+        assert_eq!(
+            t02_results(&t02_read(&parsed, &[])),
+            vec![("RES-1", vec!["ORG-2", "ORG-3", "ORG-4", "ORG-5"], Some("selec-w"), None, None, None)]
+        );
     }
 
     // ---- Issue 567: a legacy award block resolves to the lot its own LOT_NO names ----
