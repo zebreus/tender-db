@@ -233,3 +233,14 @@ unit 4 (the probe files leave the top level of `tests/`) and unit 5, the last (C
   If it refuses, run it once with `GATE_DISK_NEED_BYTES=3221225472`: target/ holds the current family,
   since only the formula moved. That green run records the new hash and the manifest.
 
+
+## Finding (2026-10-19 22:5xZ, hourly AUDIT): focused runs outside the gate leave their test databases in /tmp
+
+- Free disk fell to 2.5 GB while two build workflows ran only focused `cargo test` runs (the CLAUDE.md recipe with the gate's
+  flags). /tmp held 5,103 `tender-db-*` files (3.1 GB), 4,944 of them written that day: about 230 tests leave their .db and
+  2.6 MB -wal on every run, and only `ops/check.sh`'s `sweep_run_scratch` removes them — for its OWN run only.
+- Swept with the gate's own rule (files no process holds open, here also older than 20 min): 4,888 files, 2.98 GB; free disk
+  2.5 → 5.5 GB.
+- Proposed unit (small): factor the sweep into `ops/sweep-test-scratch.sh` (same held-file check, an age floor so a running
+  test elsewhere is safe), call it from `ops/check.sh`, and add it to the CLAUDE.md focused-run recipe ("run
+  `ops/sweep-test-scratch.sh` after a focused run"), so agents' focused runs stop filling the disk between gates.
