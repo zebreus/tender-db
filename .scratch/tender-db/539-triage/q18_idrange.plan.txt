@@ -1,0 +1,7 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (copy of 545-triage/u2b/plan.db; notices_fetch_id, tender_versions_notice present)
+(6, 0, 0, 'SEARCH n USING INTEGER PRIMARY KEY (rowid>? AND rowid<?)')
+(11, 0, 0, 'USE TEMP B-TREE FOR GROUP BY')
+-- turso plan-probe (rc=0)
+PLAN	q18_idrange	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q18_idrange	USE SORTER FOR GROUP BY
+-- turso prints (rowid=?) for a rowid range; confirmed a seek on a 600k-row synthetic copy: ids 300000..300010 ran 0.005 s (11 groups) vs 1..600000 31.2 s (debug plan-probe run)

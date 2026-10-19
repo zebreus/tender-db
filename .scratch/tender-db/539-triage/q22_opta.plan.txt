@@ -1,0 +1,312 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (copy of 545-triage/u2b/plan.db; notices_fetch_id, tender_versions_notice present)
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(9, 2, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(14, 2, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(577, 1, 0, 'UNION ALL')
+(584, 577, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(589, 577, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(1152, 1, 0, 'UNION ALL')
+(1159, 1152, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(1164, 1152, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(1727, 1, 0, 'UNION ALL')
+(1734, 1727, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(1739, 1727, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(2302, 1, 0, 'UNION ALL')
+(2309, 2302, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(2314, 2302, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(2877, 1, 0, 'UNION ALL')
+(2884, 2877, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(2889, 2877, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(3452, 1, 0, 'UNION ALL')
+(3459, 3452, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(3464, 3452, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(4027, 1, 0, 'UNION ALL')
+(4034, 4027, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(4039, 4027, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(4602, 1, 0, 'UNION ALL')
+(4609, 4602, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(4614, 4602, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(5177, 1, 0, 'UNION ALL')
+(5184, 5177, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(5189, 5177, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(5752, 1, 0, 'UNION ALL')
+(5759, 5752, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(5764, 5752, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(6327, 1, 0, 'UNION ALL')
+(6334, 6327, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(6339, 6327, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(6902, 1, 0, 'UNION ALL')
+(6909, 6902, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(6914, 6902, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(7477, 1, 0, 'UNION ALL')
+(7484, 7477, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(7489, 7477, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(8052, 1, 0, 'UNION ALL')
+(8059, 8052, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(8064, 8052, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(8627, 1, 0, 'UNION ALL')
+(8634, 8627, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(8639, 8627, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(9202, 1, 0, 'UNION ALL')
+(9209, 9202, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(9214, 9202, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(9777, 1, 0, 'UNION ALL')
+(9784, 9777, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(9789, 9777, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(10352, 1, 0, 'UNION ALL')
+(10359, 10352, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(10364, 10352, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(10927, 1, 0, 'UNION ALL')
+(10934, 10927, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(10939, 10927, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(11502, 1, 0, 'UNION ALL')
+(11509, 11502, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(11514, 11502, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(12077, 1, 0, 'UNION ALL')
+(12084, 12077, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(12089, 12077, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(12652, 1, 0, 'UNION ALL')
+(12659, 12652, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(12664, 12652, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(13227, 1, 0, 'UNION ALL')
+(13234, 13227, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(13239, 13227, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(13802, 1, 0, 'UNION ALL')
+(13809, 13802, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(13814, 13802, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(14377, 1, 0, 'UNION ALL')
+(14384, 14377, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(14389, 14377, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(14952, 1, 0, 'UNION ALL')
+(14959, 14952, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(14964, 14952, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(15527, 1, 0, 'UNION ALL')
+(15534, 15527, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(15539, 15527, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(16102, 1, 0, 'UNION ALL')
+(16109, 16102, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(16114, 16102, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(16677, 1, 0, 'UNION ALL')
+(16684, 16677, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(16689, 16677, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(17252, 1, 0, 'UNION ALL')
+(17259, 17252, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(17264, 17252, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(17827, 1, 0, 'UNION ALL')
+(17834, 17827, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(17839, 17827, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(18402, 1, 0, 'UNION ALL')
+(18409, 18402, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(18414, 18402, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(18977, 1, 0, 'UNION ALL')
+(18984, 18977, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(18989, 18977, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(19552, 1, 0, 'UNION ALL')
+(19559, 19552, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(19564, 19552, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(20127, 1, 0, 'UNION ALL')
+(20134, 20127, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(20139, 20127, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(20702, 1, 0, 'UNION ALL')
+(20709, 20702, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(20714, 20702, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(21277, 1, 0, 'UNION ALL')
+(21284, 21277, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(21289, 21277, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(21852, 1, 0, 'UNION ALL')
+(21859, 21852, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(21864, 21852, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(22427, 1, 0, 'UNION ALL')
+(22434, 22427, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(22439, 22427, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(23002, 1, 0, 'UNION ALL')
+(23009, 23002, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(23014, 23002, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(23577, 1, 0, 'UNION ALL')
+(23584, 23577, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(23589, 23577, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(24152, 1, 0, 'UNION ALL')
+(24159, 24152, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(24164, 24152, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(24727, 1, 0, 'UNION ALL')
+(24734, 24727, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(24739, 24727, 0, 'USE TEMP B-TREE FOR GROUP BY')
+-- turso plan-probe (rc=0)
+PLAN	q22_opta	COMPOUND QUERY
+PLAN	q22_opta	  LEFT-MOST SUBQUERY
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY
+PLAN	q22_opta	  UNION ALL
+PLAN	q22_opta	    SCAN (subquery-0)
+PLAN	q22_opta	      SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q22_opta	    USE SORTER FOR GROUP BY

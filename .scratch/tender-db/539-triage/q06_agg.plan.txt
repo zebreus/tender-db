@@ -1,0 +1,82 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (copy of 545-triage/u2b/plan.db; notices_fetch_id, tender_versions_notice present)
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(9, 2, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(14, 2, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(306, 1, 0, 'UNION ALL')
+(313, 306, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(318, 306, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(610, 1, 0, 'UNION ALL')
+(617, 610, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(622, 610, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(914, 1, 0, 'UNION ALL')
+(921, 914, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(926, 914, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(1218, 1, 0, 'UNION ALL')
+(1225, 1218, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(1230, 1218, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(1522, 1, 0, 'UNION ALL')
+(1529, 1522, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(1534, 1522, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(1826, 1, 0, 'UNION ALL')
+(1833, 1826, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(1838, 1826, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(2130, 1, 0, 'UNION ALL')
+(2137, 2130, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(2142, 2130, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(2434, 1, 0, 'UNION ALL')
+(2441, 2434, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(2446, 2434, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(2738, 1, 0, 'UNION ALL')
+(2745, 2738, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(2750, 2738, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(3042, 1, 0, 'UNION ALL')
+(3049, 3042, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(3054, 3042, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(3346, 1, 0, 'UNION ALL')
+(3353, 3346, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(3358, 3346, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(3650, 1, 0, 'UNION ALL')
+(3657, 3650, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(3662, 3650, 0, 'USE TEMP B-TREE FOR GROUP BY')
+-- turso plan-probe (rc=0)
+PLAN	q06_agg	COMPOUND QUERY
+PLAN	q06_agg	  LEFT-MOST SUBQUERY
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY
+PLAN	q06_agg	  UNION ALL
+PLAN	q06_agg	    SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q06_agg	    USE SORTER FOR GROUP BY

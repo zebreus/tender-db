@@ -1,0 +1,64 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (copy of 545-triage/u2b/plan.db; notices_fetch_id, tender_versions_notice present)
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(6, 2, 0, 'SEARCH n USING INTEGER PRIMARY KEY (rowid=?)')
+(9, 2, 0, 'SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN')
+(32, 2, 0, 'CORRELATED SCALAR SUBQUERY 1')
+(37, 32, 0, 'SEARCH x USING COVERING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)')
+(56, 1, 0, 'UNION ALL')
+(60, 56, 0, 'SEARCH n USING INTEGER PRIMARY KEY (rowid=?)')
+(63, 56, 0, 'SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN')
+(86, 56, 0, 'CORRELATED SCALAR SUBQUERY 3')
+(91, 86, 0, 'SEARCH x USING COVERING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)')
+(110, 1, 0, 'UNION ALL')
+(114, 110, 0, 'SEARCH n USING INTEGER PRIMARY KEY (rowid=?)')
+(117, 110, 0, 'SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN')
+(140, 110, 0, 'CORRELATED SCALAR SUBQUERY 5')
+(145, 140, 0, 'SEARCH x USING COVERING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)')
+(164, 1, 0, 'UNION ALL')
+(168, 164, 0, 'SEARCH n USING INTEGER PRIMARY KEY (rowid=?)')
+(171, 164, 0, 'SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN')
+(194, 164, 0, 'CORRELATED SCALAR SUBQUERY 7')
+(199, 194, 0, 'SEARCH x USING COVERING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)')
+(218, 1, 0, 'UNION ALL')
+(222, 218, 0, 'SEARCH n USING INTEGER PRIMARY KEY (rowid=?)')
+(225, 218, 0, 'SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN')
+(248, 218, 0, 'CORRELATED SCALAR SUBQUERY 9')
+(253, 248, 0, 'SEARCH x USING COVERING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)')
+(272, 1, 0, 'UNION ALL')
+(276, 272, 0, 'SEARCH n USING INTEGER PRIMARY KEY (rowid=?)')
+(279, 272, 0, 'SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN')
+(302, 272, 0, 'CORRELATED SCALAR SUBQUERY 11')
+(307, 302, 0, 'SEARCH x USING COVERING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)')
+-- turso plan-probe (rc=0)
+PLAN	q19_samples	COMPOUND QUERY
+PLAN	q19_samples	  LEFT-MOST SUBQUERY
+PLAN	q19_samples	    SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q19_samples	    SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN
+PLAN	q19_samples	    CORRELATED SCALAR SUBQUERY 1
+PLAN	q19_samples	      SEARCH x USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	q19_samples	  UNION ALL
+PLAN	q19_samples	    SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q19_samples	    SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN
+PLAN	q19_samples	    CORRELATED SCALAR SUBQUERY 2
+PLAN	q19_samples	      SEARCH x USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	q19_samples	  UNION ALL
+PLAN	q19_samples	    SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q19_samples	    SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN
+PLAN	q19_samples	    CORRELATED SCALAR SUBQUERY 3
+PLAN	q19_samples	      SEARCH x USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	q19_samples	  UNION ALL
+PLAN	q19_samples	    SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q19_samples	    SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN
+PLAN	q19_samples	    CORRELATED SCALAR SUBQUERY 4
+PLAN	q19_samples	      SEARCH x USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	q19_samples	  UNION ALL
+PLAN	q19_samples	    SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q19_samples	    SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN
+PLAN	q19_samples	    CORRELATED SCALAR SUBQUERY 5
+PLAN	q19_samples	      SEARCH x USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	q19_samples	  UNION ALL
+PLAN	q19_samples	    SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	q19_samples	    SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?) LEFT-JOIN
+PLAN	q19_samples	    CORRELATED SCALAR SUBQUERY 6
+PLAN	q19_samples	      SEARCH x USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)

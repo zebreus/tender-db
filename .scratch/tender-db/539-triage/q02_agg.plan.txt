@@ -1,0 +1,6 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (copy of 545-triage/u2b/plan.db; notices_fetch_id, tender_versions_notice present)
+(7, 0, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(12, 0, 0, 'USE TEMP B-TREE FOR GROUP BY')
+-- turso plan-probe (rc=0)
+PLAN	q02_agg	SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	q02_agg	USE SORTER FOR GROUP BY

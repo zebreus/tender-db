@@ -1,6 +1,6 @@
 # 539 — DÖE `published_at` is the buyer's requested publication date; on a share of sdk-0.1 notices it predates the export that published them by weeks to 586 days, so the IssueDate lands after it
 
-Status: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, measure `published_at` against the delivering export's period per DÖE profile (S, in-process read).
+Status: ready-for-agent — unit 1 MEASURED and unit 2 DECIDED 2026-10-19: (a) for source doe, published_at = the latest of every publication-date candidate present and the IssueDate's civil day (= max(requested, IssueDate day) whenever a requested date exists), date-only rendering kept; the OpenAPI/docs dispatched_at sentence corrected in the same unit. Measured across all 135 DÖE fetches (.scratch/tender-db/539-triage/, adversarially re-derived): 2+-day staleness always carries an IssueDate (sdk-0.1: mostly change-notice versions inheriting version 1's requested date; de-*: a stale stamped OPP-012 / DE1-Publication-PublicationDate); (a) re-dates 16,344 notices and fixes 8,292 of 8,296 sdk-0.1 rows 2+ days stale and 5,343 of 5,669 regular rows 30+ days stale; about 23.5% of re-dated versions change order (~3,800, extrapolated). NEXT: unit 3 build (resolver + test on 26044864 / 26411995 / 27077227, docs), then the drain (repair-notice-instants → repair-version-instants → project) AFTER issue 551 B6's flip and U8 and off the 10-20/10-21 D5 mornings. Was: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, measure `published_at` against the delivering export's period per DÖE profile (S, in-process read).
 Kind: data quality (dates) / API contract (`published_at`, `dispatched_at`)
 Relates to:
 - 18 (resolved 2026-07-20): chose BT-738 / `SDK01-RequestedPublicationDate` as the DÖE publication date ("the DÖE
@@ -123,3 +123,195 @@ same semantics, and shows the same multi-day shape at 1.0%.
    - Under (c): edit crates/app/data/openapi.json:971 and docs.rs, and gate the served sentence (the 370 class).
    - Either way, the OpenAPI sentence is false today for the multi-day rows. Correct it in the same unit, even
      under (a)/(b), until the drain lands.
+
+## Unit 1 — measured (2026-10-19, workflow wf_1e9fae7b-5bd: a measurer and an adversarial checker)
+
+The unit as proposed said `fetches` is not on /v1/sql. It is: `v_fetches` (issue 45) is served, and `notices.fetch_id` is indexed
+(`notices_fetch_id`), so the measurement ran as bounded per-fetch reads (29 + 4 /v1/sql, 7 + 1 GETs, all plans SEARCH-only, no 408s).
+Files: `.scratch/tender-db/539-triage/` (notes.md, q*.sql/.out.json/.plan.txt, v539_check_*.py, v539_r*).
+
+**Coverage.** I covered all 135 DÖE fetches through /v1/sql, using 29 of the 40 allowed reads plus 7 of the 10 allowed GETs. Every read returned rows and columns; there were no 408s, no truncated results and no transport failures (see requests.log).
+- Fetches 3, 5 and 445 (daily, 2026-07-17 to 19) own no notices. The other 132 hold 1,162,607 notices.
+- Steps 2, 3 and the option-(a) residuals each covered all 132. Fetch 444 was split into two reads by +n.id.
+- The option-(a) totals match step 2 exactly (1,162,607).
+- The stamped-date relation was checked on a stratified sample of 7 fetches (425, 413, 4, 491, 562, 693, 846; 46,304 notices).
+
+Period spelling:
+- monthly: 'YYYY-MM' (pubMonth). 44 fetches, 2022-12 to 2026-07. Fetch 444 is 2022-12; ids descend to 403 = 2026-05; 4 = 2026-06; 402 = 2026-07, which is partial (days 1 to 19, fetched 2026-07-20 00:24Z).
+- daily: 'YYYY-MM-DD' (pubDay). 91 fetches, 2026-07-17 to 2026-10-18.
+- Incidental gap: 2026-07-20, 07-21 and 07-24 were never fetched.
+
+Method:
+- Each UNION ALL arm is bounded by n.fetch_id equality, with GROUP BY +n.profile.
+- Every plan was checked locally with python sqlite3 and turso plan-probe on 539-triage/plan.db, a copy of 545-triage/u2b/plan.db. It already had notices_fetch_id, tender_versions_notice and the autoindexes, so nothing was added.
+- Every plan showed only SEARCH steps (notices_fetch_id, tender_versions_notice, tender_versions autoindex, notices rowid, notice_dates PK). The only SCANs are of fetches (135 rows) or a derived (subquery-N).
+- One SCAN was caught locally and removed before sending: a constant-false EXISTS for 444.
+- Ingest order: monthlies were ingested oldest month first (444 at 18:07 through 402 at 19:46 on 07-23), and the store keeps the first fetch that delivered a notice. So a "stale" notice genuinely first appeared in a later export; deduplication does not inflate the counts.
+
+**By profile.** Gap = days from published_at's civil day (in its own offset) back to the start of the delivering export's window.
+
+There are three different behaviours:
+
+**(1) The 2022-12 export (fetch 444) is a backlog load.** 109,658 of its 121,947 notices (89.9%) are dated before the window, by up to 364 days.
+- sdk-0.1 makes up 109,467 of these: 23,037 have an IssueDate and 86,430 do not.
+- Every one of those IssueDates is also before 2022-12, and none is later than its requested date. The two dates agree, so these are genuinely old notices, not stale dates.
+
+**(2) There is a publishing cadence: the requested date usually precedes the export day.**
+- Daily exports, 68,690 notices:
+  - 8,675 are in window.
+  - 45,158 (65.7%) have gap = 1: export D mostly holds requests for D−1.
+  - 14,314 (20.8%) are 2–29 days early, mostly weekend lag; de-2.1 Sunday exports each hold about 500 gap-2 notices.
+  - 541 are 30+ days early.
+- In monthly exports this only shows at month boundaries: 23,542 notices have gap = 1.
+
+**(3) The real stale tail, regular exports only (2023-01 onward, excluding 2022-12):**
+
+| Profile | Notices | Gap 1 | 2–29 | 30–179 | 180–364 | 365+ |
+|---|---|---|---|---|---|---|
+| sdk-0.1 | 564,734 (162,320 with IssueDate, 28.7%) | 8,590 with / 25,997 without IssueDate | 4,490 | 3,596 | 165 | 45 |
+| de-2.1 | 164,049 | 25,542 | 15,933 | 652 | 288 | 43 |
+| de-1.1 | 145,859 | 4,042 | 1,436 | 395 | 46 | 1 |
+| de-2.0 | 89,338 | 2,420 | 1,108 | 50 | 0 | 0 |
+| de-1.2 | 72,986 | 2,078 | 1,314 | 336 | 15 | 0 |
+| sdk-1.0 | 3,297 | 19 | 243 | 27 | 0 | 0 |
+| Other (sdk-1.10/1.12/1.13/1.14, de-1.0) | 397 | 12 | 9 | 10 | 0 | 0 |
+
+- For sdk-0.1, every row at 2 days or more has an IssueDate: 8,296 rows, 5.1% of dispatch-bearing notices.
+- Every de-* notice and every sdk-1.x notice carries an IssueDate.
+- **No dispatch-less sdk-0.1 notice in any regular export is more than 1 day stale.**
+- 350 notices are dated after the window end (sdk-0.1 190, de-1.1 86, de-2.1 33, de-1.2 21, de-2.0 20). No IssueDate falls after its window (0 of 664,654).
+- 16,344 DÖE notices have an IssueDate civil day after their published_at civil day: sdk-0.1 10,890, de-2.1 2,487, de-1.1 1,360, de-1.2 1,138, de-2.0 469.
+
+**New finding that corrects the issue's premise.** The resolver ranks OPP-012-notice and DE1-Publication-PublicationDate above BT-738 / DE1-RequestedPublicationDate.
+- For 1,824 of the 1,826 de-* notices that are 30+ days stale, the served date is that stamped date, not the requested date.
+- On those rows the requested date is inside the window for 1,540, 1 day before for 154, and 2–29 days before for 130.
+- In the sample, a stamped date appears on only 0.4–2.2% of de-* notices. It is never later than the requested date: equal on 194 of 702, earlier on 508 (180 of them by 30+ days).
+- sdk-1.x has neither field, so published_at falls back to the IssueDate.
+
+**Supersession.** Every stale DÖE notice causes exactly one version: 208,560 of 208,560.
+
+"Reorder" (r_doe) means a later version in the chain came from a DÖE export whose window ended before the stale notice's window began. The fold orders versions by published_at, so this is a version the stale date pushed ahead of one the portal published earlier.
+
+| Stale class | Stale | In multi-version tenders | r_doe | r_ted | r_pub |
+|---|---|---|---|---|---|
+| Gap ≥ 1 day | 208,560 | 61,297 | 495 (0.8% of multi-version) | 1,555 | 3,568 |
+| Gap ≥ 2 days | 139,234 | 27,022 | 480 | 790 | 2,380 |
+| Gap ≥ 30 days | 101,784 | 3,644 | 259 | 325 | 772 |
+
+- r_ted: a later version from another source (TED) was published before the DÖE window.
+- r_pub: a later version from any source was published before the window. These are the versions a re-date to the window would jump past.
+
+By profile:
+- sdk-0.1 with an IssueDate (regular exports): 16,886 stale, 5,451 multi-version, r_doe 101, r_pub 1,147.
+- sdk-0.1 without an IssueDate: 112,427 stale, 0 multi-version, so no exposure.
+- de-1.1 / 1.2 / 2.0 / 2.1: almost all multi-version (42,335 of 42,458 for 2.1, consistent with TED twins). r_doe 38 / 22 / 22 / 202; r_pub 305 / 176 / 129 / 1,648.
+- sdk-1.0: r_doe 110.
+- 2022-12 export: 23 multi-version (sdk-1.0 only), r_doe 0 (no earlier export exists), r_pub 15.
+
+Under option (a), the drain re-dates 16,344 notices. r_pub is a lower bound on the versions (a) moves past. About 5,173 of the re-dates stay within one month; those could add same-month reorders, which I did not measure.
+
+**The issue's fetch-439 counts.** The issue's numbers come from an id range that spans two fetches.
+
+IDs 26,100,000 to 26,110,000 are all present (10,001):
+- 269 belong to fetch 440, the 2023-04 export (ids 26,100,000 to 26,100,268). All are dated 2023-04, which is inside that export's window.
+- 9,732 belong to fetch 439, the 2023-05 export. Of these:
+  - 9,296 are dated 2023-05.
+  - 316 are dated 2023-04: 312 sdk-0.1 (158 without an IssueDate, all dated 2023-04-30, and 154 with one) and 4 sdk-1.0.
+  - 120 are dated 2022-10 to 2023-03.
+
+How each of the issue's figures reconciles:
+- **9,934** is not fetch 439. It is the sdk-0.1 count across the whole id range (9,666 + 268), or equivalently 10,001 minus the 67 sdk-1.0 notices.
+- **120** matches exactly.
+- **586 April-dated** = 316 from fetch 439 + 269 from fetch 440 (in window for April) + 1.
+- **280 without an IssueDate** = 158 from 439 + 122 from 440, exactly.
+- **The +1, and 9,295 versus my 9,296:** notice 26100269 (sdk-1.0) is 2023-04-30T22:00:05Z, which is 2023-05-01 at +02:00. The refute counted it in UTC (April); I count the civil day in its own offset (May).
+
+So 9,295 + 120 + 586 = 10,001 covers the whole range across both fetches and both profiles. Only 436 of those ids are stale against their own export (120 + 316), and 158 of the 436 are 1-day-gap notices without an IssueDate.
+
+The whole of fetch 439 has 18,484 notices (ids 26,100,269 to 26,118,752). 574 are stale: 179 by 1 day, 222 by 2–29 days, 171 by 30–179 days, 2 by 180–364 days.
+
+The issue's IssueDate span of 2023-03-25 to 2023-05-16 also reconciles. The 2023-03-25 minimum comes from sdk-1.0, whose published_at is the IssueDate itself.
+
+**Samples.** Notice 26044864 (tender 65023) came from fetch 443, the 2023-01 export.
+- Served published_at: 2022-10-19, which equals SDK01-RequestedPublicationDate.
+- Served dispatched_at: 2023-01-31T14:02:48+01:00, which equals SDK01-IssueDate and falls inside the window.
+
+The other four samples:
+
+| Notice | Profile | Fetch / window | Served published_at | Gap | Field used | IssueDate | IssueDate vs window |
+|---|---|---|---|---|---|---|---|
+| 26100484 | sdk-0.1 | 439 / 2023-05 | 2023-03-17 | 45 days | RequestedPublicationDate | 2023-05-02T08:11+02:00 | inside |
+| 26044079 | sdk-0.1 | 443 / 2023-01 | 2021-06-23 | 557 days (586 to the IssueDate, the issue's maximum) | RequestedPublicationDate | 2023-01-30T10:42:32+01:00 | inside |
+| 26411995 | de-1.1 | 425 / 2024-07 | 2023-12-19 | 195 days | DE1-Publication-PublicationDate (DE1-RequestedPublicationDate is 2024-07-25) | 2024-07-25T14:01:02+02:00 | inside |
+| 27077227 | de-2.1 | 456 / pubDay 2026-07-23 | 2025-07-14 | 374 days | OPP-012-notice (BT-738 is 2026-07-22) | 2026-07-22T09:00+02:00 | pubDay − 1 (the cadence) |
+
+- In all five, the IssueDate equals the served dispatched_at, checked in both the database row and the parsed content. The API detail endpoint serves exactly these strings for 26044864 and 27077227.
+- The requested date equals the served published_at only for the three sdk-0.1 notices.
+
+**Recommendation (measurer).** Choose (a), generalised for source = 'doe': published_at = the latest of every publication-date candidate present and the IssueDate's civil day, keeping the 367/418 rendering. Because a stamped date is never later than the requested date, this equals max(requested date, IssueDate day) whenever a requested date exists.
+
+What each option fixes, over regular exports (98,902 stale notices: 5,669 at 30+ days, 24,533 at 2–29, 68,700 at 1 day):
+
+**(a)**
+- 30+ days: 5,343 moved into the window (94.3%), 154 more to within 1 day, 131 left at 2–29, 41 left at 30+ (37 of those are sdk-1.x, whose date already is the IssueDate).
+- 2–29 days: 5,499 fixed (22.4%).
+- 1 day: 329 fixed.
+- The issue's own class (sdk-0.1, 2+ days): 8,292 of 8,296 fixed (99.95%).
+- It also fixes the de-* stale-stamped-date tail; for example 26411995 becomes 2024-07-25.
+- Total re-dated: 16,344 notices, all of them inversions. No notice is pushed past its export window.
+- It leaves the 2022-12 backlog (109,658 notices with consistent old dates) and the 1–3-day cadence untouched.
+- The objection "it only fixes the 29% with an IssueDate" does not apply: the whole multi-day class carries an IssueDate.
+
+**(b)** Fixes 100% by construction, but:
+- Re-dates all 98,902: 68,700 by exactly 1 day, 24,533 by 2–29 days (18,846 of them are cadence rows that (a) leaves alone), and 5,669 by 30+ days.
+- Would collapse the 109,658 backlog notices onto 2022-12-01 unless that export is exempted.
+- A month floor gives the 1st of the month, which is a bound, not a date. (a) gives the exact IssueDate day.
+- Needs a notice-to-fetch link that stays stable across re-fetches.
+- A daily-only "published_at = pubDay" rule would redefine published_at for 87% of daily-era notices. That deserves its own follow-up issue rather than being folded into 539.
+
+**(c)** Fixes 0%.
+
+Do the docs part of (c) either way:
+- State that DÖE published_at is the requested date, or a stamped OPP-012 / DE1-Publication-PublicationDate, and usually runs 1–3 days before the portal's export day.
+- The OpenAPI Tender.dispatched_at sentence "earlier than published_at" (openapi.json:971) is false today for the 16,344 notices whose IssueDate falls on a later day than their published_at. Correct it in the same unit until the drain lands.
+
+**Adversarial check** (sound: True):
+
+- Verdict: the measurement holds up. Every reported number re-derives exactly from the saved .out.json files, and the windows are right. The problems below are in how some numbers were read and in small counts; none of them reverses the recommendation. Re-derived: 1,162,607 notices and the per-profile totals (exact 'eforms:eforms-…' profile strings); the three-era table; the regular-export table; 16,344 inversions; 350 dated after the window; 0 of 664,654 IssueDates after the window; the (a) residuals 5,343/154/131/41, 5,499, 329 and 8,292 of 8,296; supersession 208,560 / 61,297 / r_doe 495 / r_ted 1,555 / r_pub 3,568 and the per-profile rows; the step-4 id-range reconciliation; sample gaps 557/586/45/195/374. Check scripts: .scratch/tender-db/539-triage/v539_check_*.py.
+- Windows, calendar and coverage are correct. All 539 UNION ALL arms carry the same constants as an independent calendar computation: monthly is [1st, 1st of next month), daily is [pubDay, +1). The CASE structure matches on all 267 aggregation and option-(a) arms. The civil-day formula is right for date-only values (stored at civil 00:00Z with offset 0/60/120 per 418) and for timed ones (26100269 lands on 2023-05-01). Steps 2, (a) and supersession each have rows for 132 fetches. Fetches 3, 5 and 445 were queried in q07 and returned nothing. The stamped-date read (q24–q27) covers the 131 regular fetches; 444 is excluded on purpose. The r_doe 'earlier export' predicate matches the independent windows for all 133 arms against all 135 fetches, with 0 mismatches. Version seq is publication order (fold ORDER BY published_at, source_rank, publication_id). Every plan file predates its request, shows only SEARCH steps on notices, tender_versions and notice_dates, and plan.db's indexes match the store DDL.
+- Wrong claim about the reorder count. The notes call r_pub (3,568) 'a lower bound on the versions (a) moves past'. It is not. r_pub counts stale versions whether or not (a) touches them, and (a) re-dates only the 16,344 inversions. In fetch 491, r_pub is 17 but only 2 of (a)'s re-dates move past another version. Meanwhile (a) also re-dates 4,563 in-window inversions that r_pub never counts. Measured directly (v539_r3_aswap: fetches 439, 425, 411 and 491; 1,368 re-dates): 322 (23.5%) would move past at least one version currently ordered after them, 71 of those from in-window re-dates. By profile: sdk-0.1 214 of 1,017, de-2.1 93 of 170, de-1.1 15 of 140. That extrapolates to roughly 3,800–3,900 re-dated versions changing order across the drain, so the size of the D5 corrections is still an estimate, not a measurement. Also, 'reorders 495 chains' is wrong wording: r_doe counts stale versions, not tenders.
+- The mechanism behind the stale dates is different from what the issue and notes describe (v539_r1_sibling, v539_r4_examples, plus 1 GET). In fetch 439, 294 of the 385 sdk-0.1 notices that are 2+ days stale (76%) are later versions (UUID suffix -2…-n) of a notice already in the database. For 279 of them a sibling version came in an earlier export, and 275 have a sibling with the identical published_at. The in-window rate is 504 of 5,018 (10%). Exhibit: 26100556 (…-5, IssueDate 2023-05-02, fetch 439) states RequestedPublicationDate 2023-02-13, the same date as versions -2 to -8, whose IssueDates run from 02-20 to 06-26. So the stale date is mostly inherited from the first version of a change-notice chain; the notice did not reach us months late. No exact publication_id duplicates exist (0), so deduplication does not inflate the counts, as the notes say. This strengthens (a): each version gets its own IssueDate day, and the fold no longer has to break tied dates on the publication_id string. 65023 (a lone -1 whose date predates FIRST_MONTH) is the minority case.
+- Generalised (a) checked (v539_r2_general: 7 sample fetches, 46,304 non-sdk-0.1 notices, 702 with a stamped date). On every one of the 702, max(stamped, requested, IssueDate day) equals the measured max(served, IssueDate day), and the same 508 notices are re-dated. So the 16,344 count carries over to the generalised rule, but only as a sample check, not a corpus-wide one.
+- Small count errors: (1) published_offset is NULL on 2 rows, not 1. Both are dateless de-2.1 notices with no published_at (26983293 in fetch 4, 46856314 in fetch 659). (2) The era table leaves out those 2 null rows: monthly 971,970 = 932,731 + 349 + 38,889 + 1, and daily 68,690 = 8,675 + 1 + 60,013 + 1. (3) 'Every de-* notice carries an IssueDate' is true except for the same 2 notices. (4) Fetch 444 was ingested in two passes: 2026-07-21 00:46 (ids from 468,244) and 07-23 18:07 (ids around 26.0M), not only at 18:07. This does not affect the deduplication argument. (5) That fetches 3, 5 and 445 own nothing because monthlies 4 and 402 already owned their notices is an inference, not a measurement.
+- Process deviation, no safety impact: several reads covered 20–44 fetches each (q11 about 20 fetches and ~500k notices; q22, q23, q26 and q27 44 fetches each). The rule asks for one fetch per read or a small IN-list of fetch ids. Every arm was still bounded by fetch_id equality, every plan only SEARCHed, the slowest took 3.3 s, and there were no 408s.
+- Caveat that does not change any number: a pubDay-D export mostly carries day D−1 (requested dates and IssueDates both; Monday exports hold about 80 notices). So daily-era 'gap 1' and much of the 'gap 2–29' bucket (14,314 notices, e.g. Sunday gap-2 rows) is how the export is cut, not staleness. The notes already treat it as cadence, and (a) leaves it alone. The recommendation holds: (a) does better than (b), which re-dates 98,902 regular notices and would need 444 exempted, and better than (c), which fixes nothing.
+- Budget used: 4 /v1/sql reads (v539_r1–r4; each plan checked locally first, about 2 s each, no 408s) and 1 GET (c26100556). requests.log now shows 33 sql and 8 get lines.
+
+## Unit 2 — decided (2026-10-19)
+
+**(a), generalised for `source = doe`.** `published_at` = the latest of every publication-date candidate the notice carries
+(OPP-012 / DE1-Publication-PublicationDate, BT-738 / DE1- / SDK01-RequestedPublicationDate) and the IssueDate's civil day in its own
+offset. A date-only result stays date-only (367/418 rendering). No other source changes.
+- Why (a): the whole multi-day class carries an IssueDate (0 dispatch-less sdk-0.1 rows more than 1 day stale in any regular export), so
+  the issue's objection that (a) fixes only ~29% does not hold; (a) fixes 99.95% of the issue's own class and 94% of the 30+-day tail,
+  re-dates only real inversions (16,344), pushes nothing past its export window, and leaves the 2022-12 backlog (109,658 consistent old
+  dates) and the 1–3-day export cadence alone. In sdk-0.1 it also gives each change-notice version its own day instead of version 1's.
+- Not (b): it would re-date all 98,902 regular-export stale rows (68,700 by exactly the cadence day), collapse the 2022-12 backlog onto
+  2022-12-01 unless exempted, and a month floor is a bound, not a date. A daily-era `published_at = pubDay` redefinition is a separate
+  question, not 539's.
+- Not (c) alone: it fixes nothing. Its docs half is done in unit 3 regardless: DÖE `published_at` is the requested (or a stamped) date and
+  usually runs 1–3 days before the export day; `Tender.dispatched_at` "earlier than published_at" is false today for 16,344 DÖE notices
+  (until the drain) and stays qualified for DÖE afterwards only where a candidate is later than the IssueDate (none measured).
+- Exposure: about 23.5% of re-dated versions change order within their tender (~3,800 extrapolated from 4 fetches, 322 of 1,368 measured).
+  The 495 compare engine announces each as a D5 correction. Unit 3's dry run counts it exactly before the wet drain.
+
+## Unit 3 — proposed build
+
+- Resolver (`notice_stamps` / `notice_instants`, crates/ingest/src/project.rs ~925–947, ~10081): for DÖE, take the max over the
+  publication candidates present and the IssueDate civil day; keep the rendering flags right (a date-only winner stays date-only; an
+  IssueDate-day winner is date-only too). Tests: 26044864 (sdk-0.1: requested 2022-10-19, IssueDate 2023-01-31 → 2023-01-31), 26411995
+  (de-1.1: stamped 2023-12-19, requested 2024-07-25, IssueDate 2024-07-25 → 2024-07-25), 27077227 (de-2.1: OPP-012 2025-07-14, BT-738
+  2026-07-22, IssueDate 2026-07-22 → 2026-07-22), an sdk-1.x notice (unchanged), a TED notice (unchanged).
+- Docs: openapi.json `Tender.dispatched_at` (~971), /docs dates list (docs.rs ~838), a CHANGELOG entry; gate the served sentence.
+- Drain after 551 B6's flip and U8, not on a D5 morning that 560 U-d reads: `repair-notice-instants` (doe) → `repair-version-instants`
+  → `project`; dry-run counts first (expect ~16,344 notices re-stamped).

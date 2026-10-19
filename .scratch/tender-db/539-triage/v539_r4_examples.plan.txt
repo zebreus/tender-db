@@ -1,0 +1,6 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (copy of 545-triage/u2b/plan.db; notices_fetch_id, tender_versions_notice present)
+(6, 0, 0, 'SEARCH n USING INDEX notices_fetch_id (fetch_id=?)')
+(23, 0, 0, 'SEARCH o USING INDEX sqlite_autoindex_notices_1 (source=? AND publication_id>? AND publication_id<?)')
+-- turso plan-probe (rc=0)
+PLAN	v539_r4_examples	SEARCH n USING INDEX notices_fetch_id (fetch_id=?)
+PLAN	v539_r4_examples	SEARCH o USING INDEX sqlite_autoindex_notices_1 (source=? AND publication_id>=? AND publication_id<?)

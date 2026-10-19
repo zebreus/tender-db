@@ -1,0 +1,22 @@
+
+eforms:eforms-sdk-0.1: n=121660 disp=26123 (21.5%) in=12193 after=0 null=0 stale=109467 (89.98%) fut=0 nooff=0 timed=0 inv(dcd>pcd)=0 inv_nonstale=0
+   gap    with-IssueDate  without   total
+   1             156      466      622
+   2-29         2911     9939    12850
+   30-179      14272    53342    67614
+   180-364      5698    22683    28381
+   365+            0        0        0
+   >=1         23037    86430   109467   (stale share of dispatch-bearing 88.19%, of dispatch-less 90.47%)
+   IssueDate position of stale rows: before=23037, none=86430
+   IssueDate position of in-window rows: in=3086, none=9107
+
+eforms:eforms-sdk-1.0: n=287 disp=287 (100.0%) in=96 after=0 null=0 stale=191 (66.55%) fut=0 nooff=0 timed=287 inv(dcd>pcd)=0 inv_nonstale=0
+   gap    with-IssueDate  without   total
+   1               4        0        4
+   2-29           67        0       67
+   30-179        119        0      119
+   180-364         1        0        1
+   365+            0        0        0
+   >=1           191        0      191   (stale share of dispatch-bearing 66.55%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=191
+   IssueDate position of in-window rows: in=96

@@ -1,0 +1,6 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (copy of 545-triage/u2b/plan.db; notices_fetch_id, tender_versions_notice present)
+(4, 0, 0, 'SEARCH fetches USING INDEX fetches_period (source=?)')
+(17, 0, 0, 'USE TEMP B-TREE FOR ORDER BY')
+-- turso plan-probe (rc=0)
+PLAN	q01_fetches	SEARCH v_fetches USING INDEX ephemeral_subquery_t2 (source=?)
+PLAN	q01_fetches	  SCAN fetches

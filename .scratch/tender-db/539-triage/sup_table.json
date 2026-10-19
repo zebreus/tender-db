@@ -1,0 +1,1064 @@
+{
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / 2-29 / 1": {
+"stale": 4266,
+"with_v": 4266,
+"vers": 4266,
+"multi": 3273,
+"r_doe": 28,
+"r_ted": 0,
+"r_pub": 736
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / ALL / 1": {
+"stale": 10528,
+"with_v": 10528,
+"vers": 10528,
+"multi": 5076,
+"r_doe": 101,
+"r_ted": 0,
+"r_pub": 1093
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / >=2 / 1": {
+"stale": 7750,
+"with_v": 7750,
+"vers": 7750,
+"multi": 4906,
+"r_doe": 100,
+"r_ted": 0,
+"r_pub": 1049
+},
+"ALL / eforms:eforms-sdk-0.1 / ALL / 1": {
+"stale": 39923,
+"with_v": 39923,
+"vers": 39923,
+"multi": 5451,
+"r_doe": 101,
+"r_ted": 0,
+"r_pub": 1147
+},
+"ALL / eforms:eforms-sdk-0.1 / >=2 / 1": {
+"stale": 31177,
+"with_v": 31177,
+"vers": 31177,
+"multi": 5261,
+"r_doe": 100,
+"r_ted": 0,
+"r_pub": 1098
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / 30-179 / 1": {
+"stale": 3290,
+"with_v": 3290,
+"vers": 3290,
+"multi": 1554,
+"r_doe": 69,
+"r_ted": 0,
+"r_pub": 299
+},
+"ALL / eforms:eforms-sdk-0.1 / >=30 / 1": {
+"stale": 23776,
+"with_v": 23776,
+"vers": 23776,
+"multi": 1787,
+"r_doe": 72,
+"r_ted": 0,
+"r_pub": 324
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / 365+ / 1": {
+"stale": 40,
+"with_v": 40,
+"vers": 40,
+"multi": 13,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.0 / 1 / 1": {
+"stale": 16,
+"with_v": 16,
+"vers": 16,
+"multi": 11,
+"r_doe": 5,
+"r_ted": 0,
+"r_pub": 6
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.0 / ALL / 1": {
+"stale": 276,
+"with_v": 276,
+"vers": 276,
+"multi": 209,
+"r_doe": 106,
+"r_ted": 0,
+"r_pub": 127
+},
+"ALL / eforms:eforms-sdk-1.0 / ALL / 1": {
+"stale": 480,
+"with_v": 480,
+"vers": 480,
+"multi": 239,
+"r_doe": 110,
+"r_ted": 0,
+"r_pub": 146
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.0 / 2-29 / 1": {
+"stale": 233,
+"with_v": 233,
+"vers": 233,
+"multi": 172,
+"r_doe": 86,
+"r_ted": 0,
+"r_pub": 103
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.0 / >=2 / 1": {
+"stale": 260,
+"with_v": 260,
+"vers": 260,
+"multi": 198,
+"r_doe": 101,
+"r_ted": 0,
+"r_pub": 121
+},
+"ALL / eforms:eforms-sdk-1.0 / >=2 / 1": {
+"stale": 457,
+"with_v": 457,
+"vers": 457,
+"multi": 227,
+"r_doe": 104,
+"r_ted": 0,
+"r_pub": 139
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.0 / 30-179 / 1": {
+"stale": 27,
+"with_v": 27,
+"vers": 27,
+"multi": 26,
+"r_doe": 15,
+"r_ted": 0,
+"r_pub": 18
+},
+"ALL / eforms:eforms-sdk-1.0 / >=30 / 1": {
+"stale": 147,
+"with_v": 147,
+"vers": 147,
+"multi": 26,
+"r_doe": 15,
+"r_ted": 0,
+"r_pub": 18
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / 1 / 1": {
+"stale": 2778,
+"with_v": 2778,
+"vers": 2778,
+"multi": 170,
+"r_doe": 1,
+"r_ted": 0,
+"r_pub": 44
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / 180-364 / 1": {
+"stale": 154,
+"with_v": 154,
+"vers": 154,
+"multi": 66,
+"r_doe": 3,
+"r_ted": 0,
+"r_pub": 14
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / 1 / 0": {
+"stale": 9460,
+"with_v": 9460,
+"vers": 9460,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-0.1 / ALL / 0": {
+"stale": 9460,
+"with_v": 9460,
+"vers": 9460,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"ALL / eforms:eforms-sdk-0.1 / ALL / 0": {
+"stale": 112427,
+"with_v": 112427,
+"vers": 112427,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.1 / 1 / 1": {
+"stale": 4042,
+"with_v": 4042,
+"vers": 4042,
+"multi": 4042,
+"r_doe": 0,
+"r_ted": 99,
+"r_pub": 195
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.1 / ALL / 1": {
+"stale": 5920,
+"with_v": 5920,
+"vers": 5920,
+"multi": 5920,
+"r_doe": 38,
+"r_ted": 185,
+"r_pub": 305
+},
+"ALL / eforms:eforms-de-1.1 / ALL / 1": {
+"stale": 5920,
+"with_v": 5920,
+"vers": 5920,
+"multi": 5920,
+"r_doe": 38,
+"r_ted": 185,
+"r_pub": 305
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.1 / 2-29 / 1": {
+"stale": 1436,
+"with_v": 1436,
+"vers": 1436,
+"multi": 1436,
+"r_doe": 15,
+"r_ted": 40,
+"r_pub": 48
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.1 / >=2 / 1": {
+"stale": 1878,
+"with_v": 1878,
+"vers": 1878,
+"multi": 1878,
+"r_doe": 38,
+"r_ted": 86,
+"r_pub": 110
+},
+"ALL / eforms:eforms-de-1.1 / >=2 / 1": {
+"stale": 1878,
+"with_v": 1878,
+"vers": 1878,
+"multi": 1878,
+"r_doe": 38,
+"r_ted": 86,
+"r_pub": 110
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.1 / 30-179 / 1": {
+"stale": 395,
+"with_v": 395,
+"vers": 395,
+"multi": 395,
+"r_doe": 14,
+"r_ted": 36,
+"r_pub": 52
+},
+"ALL / eforms:eforms-de-1.1 / >=30 / 1": {
+"stale": 442,
+"with_v": 442,
+"vers": 442,
+"multi": 442,
+"r_doe": 23,
+"r_ted": 46,
+"r_pub": 62
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.10 / 2-29 / 1": {
+"stale": 7,
+"with_v": 7,
+"vers": 7,
+"multi": 7,
+"r_doe": 0,
+"r_ted": 7,
+"r_pub": 7
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.10 / ALL / 1": {
+"stale": 21,
+"with_v": 21,
+"vers": 21,
+"multi": 21,
+"r_doe": 0,
+"r_ted": 17,
+"r_pub": 17
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.10 / >=2 / 1": {
+"stale": 17,
+"with_v": 17,
+"vers": 17,
+"multi": 17,
+"r_doe": 0,
+"r_ted": 17,
+"r_pub": 17
+},
+"ALL / eforms:eforms-sdk-1.10 / ALL / 1": {
+"stale": 21,
+"with_v": 21,
+"vers": 21,
+"multi": 21,
+"r_doe": 0,
+"r_ted": 17,
+"r_pub": 17
+},
+"ALL / eforms:eforms-sdk-1.10 / >=2 / 1": {
+"stale": 17,
+"with_v": 17,
+"vers": 17,
+"multi": 17,
+"r_doe": 0,
+"r_ted": 17,
+"r_pub": 17
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.10 / 30-179 / 1": {
+"stale": 10,
+"with_v": 10,
+"vers": 10,
+"multi": 10,
+"r_doe": 0,
+"r_ted": 10,
+"r_pub": 10
+},
+"ALL / eforms:eforms-sdk-1.10 / >=30 / 1": {
+"stale": 10,
+"with_v": 10,
+"vers": 10,
+"multi": 10,
+"r_doe": 0,
+"r_ted": 10,
+"r_pub": 10
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.2 / 1 / 1": {
+"stale": 2078,
+"with_v": 2078,
+"vers": 2078,
+"multi": 2078,
+"r_doe": 0,
+"r_ted": 26,
+"r_pub": 67
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.2 / ALL / 1": {
+"stale": 3743,
+"with_v": 3743,
+"vers": 3743,
+"multi": 3743,
+"r_doe": 22,
+"r_ted": 88,
+"r_pub": 176
+},
+"ALL / eforms:eforms-de-1.2 / ALL / 1": {
+"stale": 3743,
+"with_v": 3743,
+"vers": 3743,
+"multi": 3743,
+"r_doe": 22,
+"r_ted": 88,
+"r_pub": 176
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.2 / 2-29 / 1": {
+"stale": 1314,
+"with_v": 1314,
+"vers": 1314,
+"multi": 1314,
+"r_doe": 9,
+"r_ted": 33,
+"r_pub": 72
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.2 / >=2 / 1": {
+"stale": 1665,
+"with_v": 1665,
+"vers": 1665,
+"multi": 1665,
+"r_doe": 22,
+"r_ted": 62,
+"r_pub": 109
+},
+"ALL / eforms:eforms-de-1.2 / >=2 / 1": {
+"stale": 1665,
+"with_v": 1665,
+"vers": 1665,
+"multi": 1665,
+"r_doe": 22,
+"r_ted": 62,
+"r_pub": 109
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.10 / 1 / 1": {
+"stale": 4,
+"with_v": 4,
+"vers": 4,
+"multi": 4,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.1 / 180-364 / 1": {
+"stale": 46,
+"with_v": 46,
+"vers": 46,
+"multi": 46,
+"r_doe": 9,
+"r_ted": 9,
+"r_pub": 9
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.2 / 30-179 / 1": {
+"stale": 336,
+"with_v": 336,
+"vers": 336,
+"multi": 336,
+"r_doe": 12,
+"r_ted": 28,
+"r_pub": 36
+},
+"ALL / eforms:eforms-de-1.2 / >=30 / 1": {
+"stale": 351,
+"with_v": 351,
+"vers": 351,
+"multi": 351,
+"r_doe": 13,
+"r_ted": 29,
+"r_pub": 37
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.0 / 2-29 / 1": {
+"stale": 1108,
+"with_v": 1108,
+"vers": 1108,
+"multi": 1108,
+"r_doe": 10,
+"r_ted": 46,
+"r_pub": 64
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.0 / ALL / 1": {
+"stale": 3578,
+"with_v": 3578,
+"vers": 3578,
+"multi": 3578,
+"r_doe": 22,
+"r_ted": 100,
+"r_pub": 129
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.0 / >=2 / 1": {
+"stale": 1158,
+"with_v": 1158,
+"vers": 1158,
+"multi": 1158,
+"r_doe": 22,
+"r_ted": 71,
+"r_pub": 92
+},
+"ALL / eforms:eforms-de-2.0 / ALL / 1": {
+"stale": 3578,
+"with_v": 3578,
+"vers": 3578,
+"multi": 3578,
+"r_doe": 22,
+"r_ted": 100,
+"r_pub": 129
+},
+"ALL / eforms:eforms-de-2.0 / >=2 / 1": {
+"stale": 1158,
+"with_v": 1158,
+"vers": 1158,
+"multi": 1158,
+"r_doe": 22,
+"r_ted": 71,
+"r_pub": 92
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.0 / 1 / 1": {
+"stale": 2420,
+"with_v": 2420,
+"vers": 2420,
+"multi": 2420,
+"r_doe": 0,
+"r_ted": 29,
+"r_pub": 37
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.12 / 1 / 1": {
+"stale": 5,
+"with_v": 5,
+"vers": 5,
+"multi": 5,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.12 / ALL / 1": {
+"stale": 6,
+"with_v": 6,
+"vers": 6,
+"multi": 6,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"ALL / eforms:eforms-sdk-1.12 / ALL / 1": {
+"stale": 6,
+"with_v": 6,
+"vers": 6,
+"multi": 6,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.12 / 2-29 / 1": {
+"stale": 1,
+"with_v": 1,
+"vers": 1,
+"multi": 1,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.12 / >=2 / 1": {
+"stale": 1,
+"with_v": 1,
+"vers": 1,
+"multi": 1,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"ALL / eforms:eforms-sdk-1.12 / >=2 / 1": {
+"stale": 1,
+"with_v": 1,
+"vers": 1,
+"multi": 1,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.1 / 365+ / 1": {
+"stale": 1,
+"with_v": 1,
+"vers": 1,
+"multi": 1,
+"r_doe": 0,
+"r_ted": 1,
+"r_pub": 1
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-1.2 / 180-364 / 1": {
+"stale": 15,
+"with_v": 15,
+"vers": 15,
+"multi": 15,
+"r_doe": 1,
+"r_ted": 1,
+"r_pub": 1
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.0 / 30-179 / 1": {
+"stale": 50,
+"with_v": 50,
+"vers": 50,
+"multi": 50,
+"r_doe": 12,
+"r_ted": 25,
+"r_pub": 28
+},
+"ALL / eforms:eforms-de-2.0 / >=30 / 1": {
+"stale": 50,
+"with_v": 50,
+"vers": 50,
+"multi": 50,
+"r_doe": 12,
+"r_ted": 25,
+"r_pub": 28
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.1 / 1 / 1": {
+"stale": 2736,
+"with_v": 2736,
+"vers": 2736,
+"multi": 2732,
+"r_doe": 1,
+"r_ted": 50,
+"r_pub": 60
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.1 / ALL / 1": {
+"stale": 5353,
+"with_v": 5353,
+"vers": 5353,
+"multi": 5323,
+"r_doe": 160,
+"r_ted": 314,
+"r_pub": 475
+},
+"ALL / eforms:eforms-de-2.1 / ALL / 1": {
+"stale": 42458,
+"with_v": 42458,
+"vers": 42458,
+"multi": 42335,
+"r_doe": 202,
+"r_ted": 1165,
+"r_pub": 1648
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.1 / 2-29 / 1": {
+"stale": 1853,
+"with_v": 1853,
+"vers": 1853,
+"multi": 1828,
+"r_doe": 51,
+"r_ted": 89,
+"r_pub": 164
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.1 / >=2 / 1": {
+"stale": 2617,
+"with_v": 2617,
+"vers": 2617,
+"multi": 2591,
+"r_doe": 159,
+"r_ted": 264,
+"r_pub": 415
+},
+"ALL / eforms:eforms-de-2.1 / >=2 / 1": {
+"stale": 16916,
+"with_v": 16916,
+"vers": 16916,
+"multi": 16814,
+"r_doe": 194,
+"r_ted": 554,
+"r_pub": 815
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.1 / 30-179 / 1": {
+"stale": 571,
+"with_v": 571,
+"vers": 571,
+"multi": 570,
+"r_doe": 78,
+"r_ted": 125,
+"r_pub": 166
+},
+"ALL / eforms:eforms-de-2.1 / >=30 / 1": {
+"stale": 983,
+"with_v": 983,
+"vers": 983,
+"multi": 978,
+"r_doe": 124,
+"r_ted": 215,
+"r_pub": 293
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.13 / 1 / 1": {
+"stale": 3,
+"with_v": 3,
+"vers": 3,
+"multi": 3,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.13 / ALL / 1": {
+"stale": 4,
+"with_v": 4,
+"vers": 4,
+"multi": 4,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"ALL / eforms:eforms-sdk-1.13 / ALL / 1": {
+"stale": 4,
+"with_v": 4,
+"vers": 4,
+"multi": 4,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.1 / 180-364 / 1": {
+"stale": 186,
+"with_v": 186,
+"vers": 186,
+"multi": 186,
+"r_doe": 29,
+"r_ted": 49,
+"r_pub": 78
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.13 / 2-29 / 1": {
+"stale": 1,
+"with_v": 1,
+"vers": 1,
+"multi": 1,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-sdk-1.13 / >=2 / 1": {
+"stale": 1,
+"with_v": 1,
+"vers": 1,
+"multi": 1,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"ALL / eforms:eforms-sdk-1.13 / >=2 / 1": {
+"stale": 1,
+"with_v": 1,
+"vers": 1,
+"multi": 1,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"monthly 2023-01..2026-07 / eforms:eforms-de-2.1 / 365+ / 1": {
+"stale": 7,
+"with_v": 7,
+"vers": 7,
+"multi": 7,
+"r_doe": 1,
+"r_ted": 1,
+"r_pub": 7
+},
+"daily 2026-07-22..10-18 / eforms:eforms-de-2.1 / 1 / 1": {
+"stale": 22806,
+"with_v": 22806,
+"vers": 22806,
+"multi": 22789,
+"r_doe": 7,
+"r_ted": 561,
+"r_pub": 773
+},
+"daily 2026-07-22..10-18 / eforms:eforms-de-2.1 / ALL / 1": {
+"stale": 37105,
+"with_v": 37105,
+"vers": 37105,
+"multi": 37012,
+"r_doe": 42,
+"r_ted": 851,
+"r_pub": 1173
+},
+"daily 2026-07-22..10-18 / eforms:eforms-de-2.1 / 2-29 / 1": {
+"stale": 14080,
+"with_v": 14080,
+"vers": 14080,
+"multi": 14008,
+"r_doe": 19,
+"r_ted": 250,
+"r_pub": 358
+},
+"daily 2026-07-22..10-18 / eforms:eforms-de-2.1 / >=2 / 1": {
+"stale": 14299,
+"with_v": 14299,
+"vers": 14299,
+"multi": 14223,
+"r_doe": 35,
+"r_ted": 290,
+"r_pub": 400
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / 1 / 0": {
+"stale": 16537,
+"with_v": 16537,
+"vers": 16537,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / ALL / 0": {
+"stale": 16537,
+"with_v": 16537,
+"vers": 16537,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / 1 / 1": {
+"stale": 5812,
+"with_v": 5812,
+"vers": 5812,
+"multi": 20,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 5
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / ALL / 1": {
+"stale": 6358,
+"with_v": 6358,
+"vers": 6358,
+"multi": 375,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 54
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / 2-29 / 1": {
+"stale": 224,
+"with_v": 224,
+"vers": 224,
+"multi": 201,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 38
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / >=2 / 1": {
+"stale": 546,
+"with_v": 546,
+"vers": 546,
+"multi": 355,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 49
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / 30-179 / 1": {
+"stale": 306,
+"with_v": 306,
+"vers": 306,
+"multi": 147,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 11
+},
+"daily 2026-07-22..10-18 / eforms:eforms-de-2.1 / 180-364 / 1": {
+"stale": 102,
+"with_v": 102,
+"vers": 102,
+"multi": 102,
+"r_doe": 4,
+"r_ted": 13,
+"r_pub": 13
+},
+"daily 2026-07-22..10-18 / eforms:eforms-de-2.1 / 365+ / 1": {
+"stale": 36,
+"with_v": 36,
+"vers": 36,
+"multi": 35,
+"r_doe": 9,
+"r_ted": 16,
+"r_pub": 17
+},
+"daily 2026-07-22..10-18 / eforms:eforms-de-2.1 / 30-179 / 1": {
+"stale": 81,
+"with_v": 81,
+"vers": 81,
+"multi": 78,
+"r_doe": 3,
+"r_ted": 11,
+"r_pub": 12
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / 180-364 / 1": {
+"stale": 11,
+"with_v": 11,
+"vers": 11,
+"multi": 5,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-1.0 / 2-29 / 1": {
+"stale": 10,
+"with_v": 10,
+"vers": 10,
+"multi": 6,
+"r_doe": 3,
+"r_ted": 0,
+"r_pub": 3
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-1.0 / ALL / 1": {
+"stale": 13,
+"with_v": 13,
+"vers": 13,
+"multi": 7,
+"r_doe": 4,
+"r_ted": 0,
+"r_pub": 4
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-1.0 / >=2 / 1": {
+"stale": 10,
+"with_v": 10,
+"vers": 10,
+"multi": 6,
+"r_doe": 3,
+"r_ted": 0,
+"r_pub": 3
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-0.1 / 365+ / 1": {
+"stale": 5,
+"with_v": 5,
+"vers": 5,
+"multi": 2,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"daily 2026-07-22..10-18 / eforms:eforms-sdk-1.0 / 1 / 1": {
+"stale": 3,
+"with_v": 3,
+"vers": 3,
+"multi": 1,
+"r_doe": 1,
+"r_ted": 0,
+"r_pub": 1
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / 2-29 / 0": {
+"stale": 9939,
+"with_v": 9939,
+"vers": 9939,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / ALL / 0": {
+"stale": 86430,
+"with_v": 86430,
+"vers": 86430,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / >=2 / 0": {
+"stale": 85964,
+"with_v": 85964,
+"vers": 85964,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"ALL / eforms:eforms-sdk-0.1 / >=2 / 0": {
+"stale": 85964,
+"with_v": 85964,
+"vers": 85964,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / 30-179 / 0": {
+"stale": 53342,
+"with_v": 53342,
+"vers": 53342,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"ALL / eforms:eforms-sdk-0.1 / >=30 / 0": {
+"stale": 76025,
+"with_v": 76025,
+"vers": 76025,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / 30-179 / 1": {
+"stale": 14272,
+"with_v": 14272,
+"vers": 14272,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / ALL / 1": {
+"stale": 23037,
+"with_v": 23037,
+"vers": 23037,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / >=2 / 1": {
+"stale": 22881,
+"with_v": 22881,
+"vers": 22881,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / 180-364 / 0": {
+"stale": 22683,
+"with_v": 22683,
+"vers": 22683,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / 180-364 / 1": {
+"stale": 5698,
+"with_v": 5698,
+"vers": 5698,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-1.0 / 1 / 1": {
+"stale": 4,
+"with_v": 4,
+"vers": 4,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-1.0 / ALL / 1": {
+"stale": 191,
+"with_v": 191,
+"vers": 191,
+"multi": 23,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 15
+},
+"2022-12 initial / eforms:eforms-sdk-1.0 / 2-29 / 1": {
+"stale": 67,
+"with_v": 67,
+"vers": 67,
+"multi": 23,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 15
+},
+"2022-12 initial / eforms:eforms-sdk-1.0 / >=2 / 1": {
+"stale": 187,
+"with_v": 187,
+"vers": 187,
+"multi": 23,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 15
+},
+"2022-12 initial / eforms:eforms-sdk-1.0 / 30-179 / 1": {
+"stale": 119,
+"with_v": 119,
+"vers": 119,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-1.0 / 180-364 / 1": {
+"stale": 1,
+"with_v": 1,
+"vers": 1,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / 1 / 0": {
+"stale": 466,
+"with_v": 466,
+"vers": 466,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / 1 / 1": {
+"stale": 156,
+"with_v": 156,
+"vers": 156,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+},
+"2022-12 initial / eforms:eforms-sdk-0.1 / 2-29 / 1": {
+"stale": 2911,
+"with_v": 2911,
+"vers": 2911,
+"multi": 0,
+"r_doe": 0,
+"r_ted": 0,
+"r_pub": 0
+}
+}

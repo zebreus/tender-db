@@ -1,0 +1,121 @@
+
+eforms:eforms-sdk-0.1: n=536673 disp=153981 (28.7%) in=516495 after=190 null=0 stale=19988 (3.72%) fut=0 nooff=0 timed=0 inv(dcd>pcd)=10323 inv_nonstale=2381
+   gap    with-IssueDate  without   total
+   1            2778     9460    12238
+   2-29         4266        0     4266
+   30-179       3290        0     3290
+   180-364       154        0      154
+   365+           40        0       40
+   >=1         10528     9460    19988   (stale share of dispatch-bearing 6.84%, of dispatch-less 2.47%)
+   IssueDate position of stale rows: before=2587, in=7941, none=9460
+   IssueDate position of in-window rows: in=143263, none=373232
+
+eforms:eforms-de-1.1: n=145859 disp=145859 (100.0%) in=139853 after=86 null=0 stale=5920 (4.06%) fut=0 nooff=0 timed=0 inv(dcd>pcd)=1360 inv_nonstale=584
+   gap    with-IssueDate  without   total
+   1            4042        0     4042
+   2-29         1436        0     1436
+   30-179        395        0      395
+   180-364        46        0       46
+   365+            1        0        1
+   >=1          5920        0     5920   (stale share of dispatch-bearing 4.06%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=5213, in=707
+   IssueDate position of in-window rows: before=1065, in=138788
+
+eforms:eforms-de-2.1: n=123537 disp=123536 (100.0%) in=118151 after=32 null=1 stale=5353 (4.33%) fut=0 nooff=1 timed=2 inv(dcd>pcd)=2048 inv_nonstale=814
+   gap    with-IssueDate  without   total
+   1            2736        0     2736
+   2-29         1853        0     1853
+   30-179        571        0      571
+   180-364       186        0      186
+   365+            7        0        7
+   >=1          5353        0     5353   (stale share of dispatch-bearing 4.33%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=4197, in=1156
+   IssueDate position of in-window rows: before=1026, in=117125
+
+eforms:eforms-de-2.0: n=89338 disp=89338 (100.0%) in=85740 after=20 null=0 stale=3578 (4.01%) fut=0 nooff=0 timed=0 inv(dcd>pcd)=469 inv_nonstale=278
+   gap    with-IssueDate  without   total
+   1            2420        0     2420
+   2-29         1108        0     1108
+   30-179         50        0       50
+   180-364         0        0        0
+   365+            0        0        0
+   >=1          3578        0     3578   (stale share of dispatch-bearing 4.01%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=3406, in=172
+   IssueDate position of in-window rows: before=327, in=85413
+
+eforms:eforms-de-1.2: n=72986 disp=72986 (100.0%) in=69222 after=21 null=0 stale=3743 (5.13%) fut=0 nooff=0 timed=0 inv(dcd>pcd)=1138 inv_nonstale=506
+   gap    with-IssueDate  without   total
+   1            2078        0     2078
+   2-29         1314        0     1314
+   30-179        336        0      336
+   180-364        15        0       15
+   365+            0        0        0
+   >=1          3743        0     3743   (stale share of dispatch-bearing 5.13%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=3148, in=595
+   IssueDate position of in-window rows: before=145, in=69077
+
+eforms:eforms-sdk-1.0: n=3180 disp=3180 (100.0%) in=2904 after=0 null=0 stale=276 (8.68%) fut=0 nooff=0 timed=3180 inv(dcd>pcd)=0 inv_nonstale=0
+   gap    with-IssueDate  without   total
+   1              16        0       16
+   2-29          233        0      233
+   30-179         27        0       27
+   180-364         0        0        0
+   365+            0        0        0
+   >=1           276        0      276   (stale share of dispatch-bearing 8.68%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=276
+   IssueDate position of in-window rows: in=2904
+
+eforms:eforms-sdk-1.13: n=164 disp=164 (100.0%) in=160 after=0 null=0 stale=4 (2.44%) fut=0 nooff=0 timed=89 inv(dcd>pcd)=0 inv_nonstale=0
+   gap    with-IssueDate  without   total
+   1               3        0        3
+   2-29            1        0        1
+   30-179          0        0        0
+   180-364         0        0        0
+   365+            0        0        0
+   >=1             4        0        4   (stale share of dispatch-bearing 2.44%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=4
+   IssueDate position of in-window rows: before=1, in=159
+
+eforms:eforms-sdk-1.10: n=102 disp=102 (100.0%) in=81 after=0 null=0 stale=21 (20.59%) fut=0 nooff=0 timed=71 inv(dcd>pcd)=0 inv_nonstale=0
+   gap    with-IssueDate  without   total
+   1               4        0        4
+   2-29            7        0        7
+   30-179         10        0       10
+   180-364         0        0        0
+   365+            0        0        0
+   >=1            21        0       21   (stale share of dispatch-bearing 20.59%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=21
+   IssueDate position of in-window rows: in=81
+
+eforms:eforms-sdk-1.12: n=87 disp=87 (100.0%) in=81 after=0 null=0 stale=6 (6.90%) fut=0 nooff=0 timed=55 inv(dcd>pcd)=0 inv_nonstale=0
+   gap    with-IssueDate  without   total
+   1               5        0        5
+   2-29            1        0        1
+   30-179          0        0        0
+   180-364         0        0        0
+   365+            0        0        0
+   >=1             6        0        6   (stale share of dispatch-bearing 6.90%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: before=6
+   IssueDate position of in-window rows: in=81
+
+eforms:eforms-de-1.0: n=31 disp=31 (100.0%) in=31 after=0 null=0 stale=0 (0.00%) fut=0 nooff=0 timed=0 inv(dcd>pcd)=0 inv_nonstale=0
+   gap    with-IssueDate  without   total
+   1               0        0        0
+   2-29            0        0        0
+   30-179          0        0        0
+   180-364         0        0        0
+   365+            0        0        0
+   >=1             0        0        0   (stale share of dispatch-bearing 0.00%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: 
+   IssueDate position of in-window rows: before=2, in=29
+
+eforms:eforms-sdk-1.14: n=13 disp=13 (100.0%) in=13 after=0 null=0 stale=0 (0.00%) fut=0 nooff=0 timed=7 inv(dcd>pcd)=0 inv_nonstale=0
+   gap    with-IssueDate  without   total
+   1               0        0        0
+   2-29            0        0        0
+   30-179          0        0        0
+   180-364         0        0        0
+   365+            0        0        0
+   >=1             0        0        0   (stale share of dispatch-bearing 0.00%, of dispatch-less 0.00%)
+   IssueDate position of stale rows: 
+   IssueDate position of in-window rows: before=1, in=12
