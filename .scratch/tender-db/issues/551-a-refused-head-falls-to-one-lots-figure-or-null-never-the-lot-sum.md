@@ -1333,3 +1333,16 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   read would adopt G-cover, G-cover is judged on ALL its refusals (the 12 overlap keep their R_single verdicts, plus 7202436): adopt
   iff ≥ 10 % of that 13-read set is non-right. If both are adopted, P = v2+both (3,467); single only, P = v2+single (3,468);
   cover only, P = v2+cover (3,489); neither, P = v2 (3,502).
+
+## B6 U3 — Rust v2+G vs the port: parity PASSED (2026-10-19, wf_2a97436e-983; adversarially re-verified)
+
+- B6 U3 parity PASSED, adversarially re-verified 2026-10-19 15:32Z. Rust v2+G (awards_path_check_guards / head_value_with_awards_path_guards under NONE/SINGLE/COVER/BOTH) equals the port rule_v2_g (sha256 23cbd850…, unchanged) on 37,732 (row, guard set) pairs: 9,433 population rows covering 8,731 distinct Tenders, times 4 guard sets. 0 disagreements and 0 invariant failures. Re-running compare_u3.py on the saved files reproduces u3-compare.json and compare.log exactly, and an independent strict recount agrees. Ships (port = Rust) under v2 / +single / +cover / +both: b3api 73/72/73/72, b3rec 0, c563 73/72/73/72, s61 61/60/60/60, f3502 3,502/3,468/3,489/3,467. The port equals U2's decisions on 3,502/3,502. R_single is 34 (= U2's file), R_cover 13, R_excess {7202436}. 6465510, 6595330 and 7202436 each differ between NONE and BOTH on both sides. Every ship's vouched_by is the port's first kept vouch (14,747/14,747). Fixtures match the served rows in their own layer on all 4,688 API Tenders (lot results, bids, amounts, lots, version chain, stated-total notices and keys). Projection parity is clean: the only difference is LotState.kind (71 on the 3,502, 122 on the 562 and the 563, 0 on the 61), and per-notice result counts are equal. Two harness-side fixes are justified and changed no semantics: the records' withheld encoding now matches the port's _entry, and the projection's chain order was a comparison-input bug. crates/ equals HEAD 8455018 (whose crates/ is identical to ab9aa22), verified twice: git diff --quiet exit 0, empty porcelain status, no u3_harness anywhere. Two record defects remain: export_meta.json mis-records the tender/notice layers for b3api, c563 and s61 (the actual reads are verified correct), and COMPARE-EXIT does not cover projection parity.
+- Evidence: `551-lot-sum/b6/u3/` (u3-result.md/json, run.sh, export_u3.py, compare_u3.py, harness/*.rs + insert.py,
+  inputs/outputs gzipped with their sha256). The harness was temporary (inserted by `harness/insert.py`, removed); crates/ is
+  byte-identical to HEAD (re-checked by the orchestrator: `git diff --quiet HEAD -- crates/` clean).
+- Record defects noted, no data effect: `export_meta.json` names the f3502 layers for every population (a shared-list mutation;
+  the reads themselves verify per population), and `compare_u3.py`'s exit code covers decisions only — projection parity is read
+  from its printed `by_what` (only LotState.kind, the DE1 ProcurementProjectLot→Lot rename B3 recorded).
+- The end-to-end test stays the recorded deviation; D1 on 6465510 in drain stage 1 remains its guard.
+- Next: U4's adoption reads (running, wf_e231858e-cd0) fix the guard set and P; then U5's fresh read of 30 from P.
+
