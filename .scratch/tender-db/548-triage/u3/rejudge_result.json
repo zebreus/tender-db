@@ -1,0 +1,364 @@
+{
+ "tally": {
+  "R": 51
+ },
+ "rows": [
+  {
+   "org_id": 3229862,
+   "verdict": "R",
+   "old_name": "SPL Euralille agissant au nom et pour le compte de Lille m\u00e9tropole communaut\u00e9 urbaine, coordonnateur du groupement de commandes Lille m\u00e9tropole communaut\u00e9 urbaine et ville de Lille",
+   "new_name": "SPL Euralille",
+   "why": "Mandate wrapper dropped; the entity is the same SPL. This org's own mentions all date from 2013, and the SPL Euralille prints run to 2013-06-21. Sibling org 3225846 on the identical SIRET 37822478600020 is served 'SPL Euralille' (111 mentions), and its buyer notices of 2026-10-14 (00710678-2026, tender 8843579) print 'Spl euralille'."
+  },
+  {
+   "org_id": 8387450,
+   "verdict": "R",
+   "old_name": "Acl courtage (mandataire du groupement)",
+   "new_name": "ACL Courtage",
+   "why": "Role annotation dropped; same firm. Newest tender 241273 (00565584-2026, 2026-08-14) prints 'ACL COURTAGE'. The rival on 2026-06-25 is 'Groupement ACL COURTAGE - GENERALI IARD' (tender 1163820), again a wrapper. Top cluster 96/116."
+  },
+  {
+   "org_id": 8387452,
+   "verdict": "R",
+   "old_name": "Sarre et Moselle (mandataire du groupement)",
+   "new_name": "Sarre et Moselle",
+   "why": "Role annotation dropped; same brokerage. Newest tender 988857 (00706582-2026, 2026-10-13) prints 'SARRE ET MOSELLE'. On 2026-06-25 it prints 'Groupement SARRE ET MOSELLE - PROTEXIA', a wrapper. Top cluster 197/257."
+  },
+  {
+   "org_id": 8560943,
+   "verdict": "R",
+   "old_name": "le Groupement 331 corniche architectes (mandataire)",
+   "new_name": "331 CORNICHE ARCHITECTES",
+   "why": "Groupement wrapper dropped. Newest tender 884035 (00682572-2024, 2024-11-08) prints '331 CORNICHE ARCHITECTES', which is the firm's only standalone print (3 of 4 votes). The head is from 2016-08-05."
+  },
+  {
+   "org_id": 8594004,
+   "verdict": "R",
+   "old_name": "Alenium Consultants (mandataire)",
+   "new_name": "Alenium consultants",
+   "why": "Role annotation dropped; same firm. Newest tender 570425 (00842299-2025, 2025-12-18) prints 'ALENIUM CONSULTANTS'. The rival on 2024-08-23 is the typo 'ALENUIM CONSULTANTS', which was not elected. The lower-case 'c' is casing only, R per the U1c precedent 'Atelier ruelle'."
+  },
+  {
+   "org_id": 9056889,
+   "verdict": "R",
+   "old_name": "Accenture sas, mandataire du groupement",
+   "new_name": "Accenture",
+   "why": "Role phrase dropped, and the legal form with it. 'Accenture' is the SAS's denomination. Newest tender 7940190 (00593905-2026, 2026-08-28) prints 'ACCENTURE SAS' as a groupement member. On 2025-02-05 it prints 'GROUPEMENT : ACCENTURE'. Top cluster 30/43."
+  },
+  {
+   "org_id": 9122340,
+   "verdict": "R",
+   "old_name": "Credoc \u2014 mandataire",
+   "new_name": "Cr\u00e9doc",
+   "why": "Role annotation dropped; same research centre, in its own accented styling. Newest bid 891806 (00691114-2026, 2026-10-07) prints 'Credoc'. Newest win 8541414 (2025-06-26) prints 'CREDOC'. On 2025-03-12 it prints 'CO-traitant CREDOC'."
+  },
+  {
+   "org_id": 9134954,
+   "verdict": "R",
+   "old_name": "Arhs Developments S.A. (as consortium leader)",
+   "new_name": "ARHS Developments S.A",
+   "why": "Consortium-leader annotation dropped; same firm. Newest tender 632230 (00248525-2026, 2026-04-13) prints exactly 'ARHS Developments S.A'. On 2025-09-12 it prints 'ARHS DEVELOPMENTS S.A. Soci\u00e9t\u00e9 Anonyme'. The missing final dot is cosmetic, and the ARHS name is still current, so this is no revert."
+  },
+  {
+   "org_id": 9134956,
+   "verdict": "R",
+   "old_name": "Sword Technologies S.A. (as consortium member)",
+   "new_name": "Sword Technologies S.A.",
+   "why": "Consortium-member annotation dropped; the new name is the member firm on its own RCS B71238. Newest tender 436710 (00015002-2026, 2026-01-12) prints 'Sword Technologies S.A.'. On 2024-11-22 it prints 'Sword Technologies'. Top cluster 16/21."
+  },
+  {
+   "org_id": 9134957,
+   "verdict": "R",
+   "old_name": "Everis Spain, S.L.U., succursale en Belgique (as consortium leader)",
+   "new_name": "Everis Spain SLU, Succursale en Belgique",
+   "why": "Same branch with the role annotation dropped. The newest mention, the 2019-04-05 award (tender 6233425), prints the new name exactly; the head was printed once, on 2016-12-02. Everis has since become NTT DATA, but nothing under this identifier prints NTT (2 clusters). Both names are Everis names and the new one is the later, so this is no revert (same call as the U1c Unisys precedent)."
+  },
+  {
+   "org_id": 9467375,
+   "verdict": "R",
+   "old_name": "OPSIA M\u00e9diterran\u00e9e (mandataire)",
+   "new_name": "OPSIA M\u00e9diterran\u00e9e",
+   "why": "Role annotation dropped. 2026-01-26 (tender 1098461) prints exactly 'OPSIA M\u00e9diterran\u00e9e'. The rival's 2026-06-18 print is 'OPSIA MEDITERRANEE SELACA', the same firm with its form. SIREN 434074209 sits on the Opsia M\u00e9diterran\u00e9e orgs (np_opsia). The head was printed in 2017."
+  },
+  {
+   "org_id": 9553896,
+   "verdict": "R",
+   "old_name": "Groupement TP Spada NGE g\u00e9nie civil",
+   "new_name": "TP Spada",
+   "why": "Firm taken out of its 2017 groupement with NGE. 2026-02-09 (tender 1100120) prints 'TP SPADA' (top_newest 2026-09-10). SIREN 413179607 carries 'tp spada sas' in np_tpspada, so the identifier is TP Spada's, not NGE's."
+  },
+  {
+   "org_id": 9699686,
+   "verdict": "R",
+   "old_name": "UTE Gesein, S.L.- Altran Innovaci\u00f3n S.L.- Tecnocom Espa\u00f1a Solutions, S.L.U.",
+   "new_name": "Gesein, S.L.",
+   "why": "Firm taken out of its UTE. 2026-09-23 (tender 8580506) prints exactly 'Gesein, S.L.'. A B-prefix NIF belongs to a sociedad limitada, not a UTE, and 24 of 31 votes print Gesein. The head was last printed on 2017-05-03."
+  },
+  {
+   "org_id": 9741944,
+   "verdict": "R",
+   "old_name": "SAS MAG PRIM \u2014 mandataire du groupement solidaire MAG PRIM \u2014 GROUP MAG",
+   "new_name": "SAS MAG PRIM",
+   "why": "Firm taken out of the groupement sentence; sas -> sas. 2026-03-31 (tender 641175) prints 'MAG PRIM', and the new name is the most-printed spelling (6). The head was printed once, on 2017-05-19."
+  },
+  {
+   "org_id": 9795935,
+   "verdict": "R",
+   "old_name": "Groupement Agri Compost 70",
+   "new_name": "AGRI Compost 70",
+   "why": "Here 'Groupement' wraps a consortium and is not the company's name: the head's only print, the 2017-05-27 award of tender 5857778, went to a 3-firm groupement (with Agri Compost Conflans and Agri Trans 70). Every later print drops it, most recently 'AGRI COMPOST 70' on 2026-03-17 (tender 845588). The 'AGRI Compost' casing is a byte-order tiebreak quirk, not a worse name."
+  },
+  {
+   "org_id": 9930423,
+   "verdict": "R",
+   "old_name": "Groupement Dumez Auvergne",
+   "new_name": "DUMEZ AUVERGNE",
+   "why": "The head's only print is the 2017-06-24 design-build team award (tender 5417144, with Atelier 127, NOX and others), so 'Groupement' is a consortium wrapper. 2026-05-18 (tender 1108906) prints 'DUMEZ AUVERGNE', and SIREN 863200184 carries DUMEZ AUVERGNE. Only the casing changes and no word of the firm's name is lost, so the Mithieux precedent does not apply."
+  },
+  {
+   "org_id": 9945607,
+   "verdict": "R",
+   "old_name": "Agence Saf\u00e8ge Bureau d'etudes VRD (Mandataire)",
+   "new_name": "Saf\u00e8ge",
+   "why": "Agency line and role annotation dropped, leaving the company. 2026-05-26 (tender 1026993) prints 'SAFEGE'. The rival's 2026-07-07 print (tender 892131) is 'SAFEGE - SUEZ CONSULTING', the same company under its brand, so no other entity is printed after the top. The head was printed once, in 2017."
+  },
+  {
+   "org_id": 10387870,
+   "verdict": "R",
+   "old_name": "Groupement alliance environnement exploitation / SARL Patrick Tubert",
+   "new_name": "Alliance environnement exploitation",
+   "why": "Firm taken out of its 2-firm groupement; the dropped SARL is the other member's form. 2026-10-12 (tender 1035771) prints 'ALLIANCE ENVIRONNEMENT EXPLOITATION', and np_allianceenv ties this SIRET to that name. The rival's 2026-03-13 print is another groupement wrapper, not a newer name. The head was printed in 2017."
+  },
+  {
+   "org_id": 10442507,
+   "old_name": "groupement st groupe sas / eurovia",
+   "new_name": "ST Groupe",
+   "verdict": "R",
+   "why": "Two-firm groupement with Eurovia -> the firm on its own SIRET. The newest tender, 76953 (00305785-2026, 2026-05-05), prints 'ST GROUPE' as Tenderer, Tenderer-MainCont and lot-8 winner. The top cluster holds 5/6 votes, newest 2026-04-14. The head is one print from 2017. No rival. The difference from 'ST GROUPE' is casing only."
+  },
+  {
+   "org_id": 10463751,
+   "old_name": "Consortium ARNI (leading organisation: Axianseu Digital Solutions S.A.) (second contractor in the cascade)",
+   "new_name": "AXIANSEU - Digital Solutions, S. A.",
+   "verdict": "R",
+   "why": "Consortium label -> the PT VAT holder's legal name. The newest tender, 7948499 (00607869-2026, 2026-09-03), prints 'AXIANSEU - DIGITAL SOLUTIONS, S.A.' as tenderer and winner. The single-vote rival dated 2026-05-26 is tender 595600 (EU HACS), which prints 'AXIANS': the trading brand on the same VAT, so the same firm. The top holds 6/8 votes."
+  },
+  {
+   "org_id": 10490568,
+   "old_name": "Groupement Spie Citynetworks",
+   "new_name": "Spie Citynetworks",
+   "verdict": "R",
+   "why": "Only the 'Groupement' prefix is dropped. The newest tender, 1076813 (00082859-2026, 2026-02-05), prints 'SPIE CITYNETWORKS' on 4 bids and as winner of all 4 lots. The top holds 3/4 votes. The head is from 2017. Same entity, current print."
+  },
+  {
+   "org_id": 10629424,
+   "old_name": "Groupement Sit\u00e9tudes / Citec / Traverses",
+   "new_name": "Sitetudes",
+   "verdict": "R",
+   "why": "Three-firm groupement -> the engineering firm alone. All 3 non-head mentions print 'Sitetudes'; the newest is tender 6207300 (007287-2019, 2019-01-08), where it is a winner. Nothing under this SIRET is dated after 2019, and no rename shows on the identifier or the name-prefix lookups. The lost accent is not a Brlic downgrade, because the old name was a consortium label, not a correct name."
+  },
+  {
+   "org_id": 10664296,
+   "old_name": "Paris Nord Assurances Services (courtier Mandataire)",
+   "new_name": "Paris nord assurances services",
+   "verdict": "R",
+   "why": "The role annotation is dropped. The newest tender, 1028460 (00089197-2026, 2026-02-06), prints 'PARIS NORD ASSURANCES SERVICES' as winner of lots 1-2. The 2-vote rival dated 2025-12-16 is tender 3660, which prints 'Paris Nord Assurances Services (PNAS), mandataire du groupement ...': the same broker in a wrapper. The new name differs by sentence case only, as in the Atelier ruelle R precedent; it is not broken casing. The top holds 15/24 votes."
+  },
+  {
+   "org_id": 10664298,
+   "old_name": "Sarre et Moselle (Courtier Mandataire)",
+   "new_name": "Sarre et Moselle",
+   "verdict": "R",
+   "why": "The role annotation is dropped. Tender 1028460 (2026-02-06) prints 'SARRE ET MOSELLE' as winner of lot 4. The top holds 16/26 votes. The 2-vote rival dated 2026-01-07 is tender 1055670, which prints 'HISCOX SA' (the insurer attached to the broker's SIREN). That is the losing rival, not the new name. The same SIREN as row 2's SIRET 30157314300023 was read R for the same new name."
+  },
+  {
+   "org_id": 10664560,
+   "old_name": "UTE Acciona Agua, S.A., FCC Aqualia, S.A.",
+   "new_name": "Acciona Agua, S. A.",
+   "verdict": "R",
+   "why": "UTE (a joint venture with FCC Aqualia) -> the firm. The newest tender, 1086885 (00684612-2026, 2026-10-05), prints 'ACCIONA AGUA, S.A.' as winner of 3 lots, and notice 47358482 gives CIF A95113361 as BT-501 of ORG-0002 'ACCIONA AGUA, S.A.' (Madrid, acciona.es). The top holds 53/60 votes. The 3-vote rival dated 2025-04-03 is not located; it is inferred to be 'ACCIONA AGUA, S.A. Unipersonal' and is older than the top either way. The 'S. A.' spacing is cosmetic."
+  },
+  {
+   "org_id": 10688250,
+   "old_name": "Artelia Ville et Transport (mandataire)",
+   "new_name": "ARTELIA",
+   "verdict": "R",
+   "why": "Rename under the same SIRET: the 2017-2018 prints are 'Artelia Ville et Transport'/'Artelia VT', and the 2022-2026 prints are 'artelia'/'ARTELIA'/'ARTELIA SAS'. The newest tender, 1047307 (00536705-2026, 2026-08-03), prints 'artelia' as winner, and notice 27338988 gives SIRET 44452352600051 as BT-501 of that org. The top holds 7/9 votes; the rival (2018-12-14) is the older name. Not a revert."
+  },
+  {
+   "org_id": 10704476,
+   "old_name": "soci\u00e9t\u00e9 Mc2i mandataire du groupement compos\u00e9 \u00e9galement des soci\u00e9t\u00e9s temesis, atalan et oceane consulting",
+   "new_name": "MC2i",
+   "verdict": "R",
+   "why": "Sentence naming mc2i as mandataire of a four-firm groupement -> the firm. The newest tender, 8847511 (00715715-2026, 2026-10-16), prints exactly 'MC2i' as tenderer and winner. Tender 30704, on the rival's date 2026-02-03, prints 'MC2I (lot 1)', a lot annotation on the same firm. The top holds 26/37 votes."
+  },
+  {
+   "org_id": 11226363,
+   "verdict": "R",
+   "old_name": "Scop Euro Flandres TP (mandataire du groupement)",
+   "new_name": "EURO FLANDRES TP",
+   "why": "The head is one print from 2018-03-09. The newest tender, 7973586 (2026-09-11), prints exactly EURO FLANDRES TP as tenderer and winner. The new name drops the role phrase and the SCOP form word and keeps every name token: same entity, current print."
+  },
+  {
+   "org_id": 12055155,
+   "verdict": "R",
+   "old_name": "Agrupamento \u201cCons\u00f3rcio Teixeira Couto\u201d \u2014 Liderado por Ilumina\u00e7\u00f5es \u2014 Teixeira Couto, Lda.",
+   "new_name": "Ilumina\u00e7\u00f5es Teixeira Couto, Lda.",
+   "why": "The head is the consortium this Lda leads (newest 2018-08-11), and the NIF belongs to the firm. Tender 7930105 (2025-11-24) prints the new name verbatim. Tender 7943384 (2026-08-31) prints the same words with a hyphen. The dropped hyphen is cosmetic."
+  },
+  {
+   "org_id": 12622564,
+   "verdict": "R",
+   "old_name": "Avenir Deconstruction (mandataire)",
+   "new_name": "AVENIR DECONSTRUCTION",
+   "why": "The head is one print from 2018-12-01. The other 3 mentions, through tender 52154 (2026-09-23, tenderer and winner), print AVENIR DECONSTRUCTION. This is the firm's only standalone print. There is no rival."
+  },
+  {
+   "org_id": 14043573,
+   "verdict": "R",
+   "old_name": "SARL Bouchet Francis et Fils (mandataire)",
+   "new_name": "Bouchet Francis et Fils",
+   "why": "The head is from 2019-09-26. Tender 6686680 (2020) prints the new name. The newest, 713416 (2025-12-04), prints SARL BOUCHET FRANCIS ET FILS. Only the form token is dropped and every name word is kept: same SARL, no Brlic-type loss."
+  },
+  {
+   "org_id": 14103011,
+   "verdict": "R",
+   "old_name": "ARGE Feuerstein Josef GmbH & Co KG \u2014 Johann Huter & S\u00f6hne",
+   "new_name": "Josef Feuerstein GmbH & Co KG",
+   "why": "The ARGE head is one print from 2019-10-30. The other 6 of 7 mentions are Feuerstein alone, through tender 263740 (2025-11-25). The identifier is Feuerstein's, so this is the firm out of its ARGE (U1c precedent 18124034, S Hoch 2)."
+  },
+  {
+   "org_id": 14394565,
+   "verdict": "R",
+   "old_name": "SAS Guintoli (groupe NGE), mandataire",
+   "new_name": "Guintoli SAS",
+   "why": "The head is from 2019-11-25. Tender 6959749 (2021) prints Guintoli SAS. The newest, 326243 (2026-07-23), prints GUINTOLI SAS next to NGE's other companies. The new name is the subsidiary the SIRET belongs to, not the group (U1c precedent 11219959)."
+  },
+  {
+   "org_id": 14395645,
+   "verdict": "R",
+   "old_name": "SAS Espaces verts du dauphine (EVD), mandataire",
+   "new_name": "ESPACES VERTS DU DAUPHINE",
+   "why": "The head is from 2019-11-25. Tenders 802519 (2026-09-29) and 294885 (2026-07-14) print the new name exactly, and the newest, 8845586 (2026-10-15), prints SAS ESPACES VERTS DU DAUPHINE. Only the form and the (EVD) parenthetical are dropped. The head also lacks the accent, so no diacritic is lost."
+  },
+  {
+   "org_id": 14873976,
+   "verdict": "R",
+   "old_name": "WWS/Informantem em cons\u00f3rcio \u2014 WWS, Consultoria Inform\u00e1tica, Lda.",
+   "new_name": "WWS - Consultoria Inform\u00e1tica, Lda.",
+   "why": "The consortium head is from 2020-02-04. The newest tender, 7940004 (2026-08-28), prints the new name verbatim as tenderer and winner. The top cluster holds 20 of 25 votes. The NIF belongs to WWS."
+  },
+  {
+   "org_id": 14892786,
+   "verdict": "R",
+   "old_name": "Rang 2 \u2014 Capgemini Consulting (mandataire)",
+   "new_name": "Capgemini Consulting",
+   "why": "The head is from 2020-02-10. All 15 other winner tenders I read (2020-06 to 2026-09-30, newest 682148) print Capgemini Consulting, and the same-SIREN sibling 9068707 is served Capgemini Consulting. Caveat: 4 INVENT prints and the 2026-10-16 rival could not be reached through the API to date them. The head already serves Capgemini Consulting, so this change cannot be a revert."
+  },
+  {
+   "org_id": 15782290,
+   "old_name": "Groupement Getec Sud-Ouest/sixense Engineering",
+   "new_name": "GETEC Sud Ouest",
+   "verdict": "R",
+   "why": "Head is one 2020-09-15 print of a two-firm groupement; Sixense is a separate company. Newest tender 892131 (2026-07-07) prints GETEC SUD-OUEST as tenderer and winner, with its partners as separate tenderers. Notice 45865869 gives BT-501 52517618600019 to GETEC SUD-OUEST. The hyphen and casing differences are cosmetic."
+  },
+  {
+   "org_id": 16993161,
+   "old_name": "EMCH + Berger SARL (mandataire)",
+   "new_name": "emch & BERGER",
+   "verdict": "R",
+   "why": "The old name carried the role (mandataire). Newest tender 266331 (2026-02-24) prints EMCH & BERGER, and notice 25535802 gives BT-501 39907079600020 to EMCH & BERGER (Hoenheim). The 2025-07-30 rival EMCH ET BERGER is the same firm. The served lower-case 'emch' comes from one 2023 notice and is a casing quirk (judge_2 AGRI Compost precedent). No token is lost; a skeptic would make it N at worst, never W."
+  },
+  {
+   "org_id": 17311886,
+   "old_name": "Suez Water A/S (part of consortium \u2018Suez-MTH\u2019)",
+   "new_name": "SUEZ Water A/S",
+   "verdict": "R",
+   "why": "Head is one 2021-06-11 consortium print. Newest tender 1159558 (2026-07-16) prints Suez Water A/S as tenderer and winner, and notice 45846019 gives BT-501 14451234 to Suez Water A/S. The firm still uses this name in 2026. SUEZ against Suez is casing only."
+  },
+  {
+   "org_id": 18263464,
+   "old_name": "lyde conseil sas (co-traitant d'un groupement dont MEJA sarl est mandataire)",
+   "new_name": "lyde Conseil",
+   "verdict": "R",
+   "why": "Head is a role sentence from 2021-12-31. Newest tender 231102 (2025-02-24) prints LYDE CONSEIL in a joint bid, with MEJA CONSEIL as a separate tenderer. Notice 24565212 gives BT-501 81086989100038 to LYDE CONSEIL. 'lyde Conseil' is the 2023-03-10 print (7444338); the casing is a quirk and no worse than the head's all-lower-case form."
+  },
+  {
+   "org_id": 18874640,
+   "old_name": "Groupement CuREA \u2013 Chef de file CGI Luxembourg SA",
+   "new_name": "CGI Luxembourg S.A.",
+   "verdict": "R",
+   "why": "CuREA is a consortium label. Newest tender 485036 (2026-08-06) prints CGI LUXEMBOURG SA as winner of lots 1-3, and notice 27525230 binds LU21747447 to CGI LUXEMBOURG SA (Bertrange) in all three of its org sections. The 2024-01-31 rival (461605) prints 'CGI Luxembourg', the same firm. The new name is the most-printed spelling."
+  },
+  {
+   "org_id": 19603409,
+   "old_name": "ARGE B2M Baumanagement GmbH / Hirm & Partner ZT GmbH",
+   "new_name": "B2M Baumanagement GmbH",
+   "verdict": "R",
+   "why": "Head is a 2022-08-31 ARGE with Hirm & Partner, a separate firm. Newest tender 446718 (2026-10-15) prints B2M Baumanagement GmbH verbatim, and notice 47399885 gives BT-501 9110028958557 to it. The 2022-09-16 rival is the same ARGE pairing, four years older than the top."
+  },
+  {
+   "org_id": 20073092,
+   "old_name": "cabinet madelaine brisset (mandataire du groupement)",
+   "new_name": "Cabinet MADELAINE BRISSET",
+   "verdict": "R",
+   "why": "Top tender 1089584 (2026-01-06) prints CABINET MADELAINE BRISSET, and notice 25517851 gives BT-501 38113350300049 to that agency (Saint-Lo, AXA agency). The newer 2-vote rival (514698, 2026-02-05) is 'Cabinet MADELAINE BRISSET / Compagnie CFDP', the agency paired with an insurer, and 393107 (2026-02-03) misspells it 'Madeleine'. Both name the same agency and neither names a successor. The new name is a casing variant of the 7-print form."
+  },
+  {
+   "org_id": 20363598,
+   "old_name": "co-s (mandataire d'un des 4 groupements titulaires)",
+   "new_name": "Co-S",
+   "verdict": "R",
+   "why": "Head is the firm plus a role sentence (2022-12-21). Newest tender 151247 (2024-09-09) prints CO-S as tenderer and winner, and notice 24246802 gives BT-501 81939414900036 to CO-S (Paris). Nothing newer exists. Casing only."
+  },
+  {
+   "org_id": 21029204,
+   "old_name": "etudes et synergies (mandataire)",
+   "new_name": "Etudes et Synergies",
+   "verdict": "R",
+   "why": "The change drops only the role (Atelier Ruelle precedent). Newest tender 774254 (2026-07-22) prints ETUDES ET SYNERGIES, and notice 27016631 gives BT-501 48028153400036 to it. There are four more 2026 wins under the same print. Same entity, current."
+  },
+  {
+   "org_id": 22534691,
+   "old_name": "Troiber GmbH & Co. KG (Bietergemeinschaft mit Bauer GmbH & Co.KG, R\u00f6dental; Nu\u00dfbaumer GmbH & Co.KG, K\u00fcrnach; Omega Sorg GmbH, Rednitzhembach; Fr\u00fcchte Jork GmbH, Isny; Rittner Food Service GmbH & Co.KG, Unterschlei\u00dfheim)",
+   "new_name": "Troiber GmbH & Co. KG",
+   "verdict": "R",
+   "why": "The head is one 2024-03-13 bidding-consortium print (tender 901151). The same VAT prints 'Troiber GmbH & Co. KG' alone from 2024-03-19 (660090) through 2026-08-06/07 (1017771, 386855), 20 of 22 votes. The new name is the lead firm cut out of its Bietergemeinschaft, and no partner is promoted."
+  },
+  {
+   "org_id": 22564460,
+   "old_name": "CUADRA (mandataire) \ncotraitant ACDe\ncotraitant B3E\ncotraitant CDB ACOUSTIQUE \ncotraitant PLANTAGO",
+   "new_name": "CUADRA",
+   "verdict": "R",
+   "why": "The head is one 2024-04-08 print (468510), with CUADRA as mandataire and four co-contractors. The SIRET prints 'CUADRA' alone on 252041 (2024-06-10), 1130536 (2026-04-17) and the newest, 101480 (2026-06-01), 9 of 10 votes. The new name is the mandataire whose SIRET this is."
+  },
+  {
+   "org_id": 22590748,
+   "old_name": "Titulaire 1: SOLVHA (mandataire) / MEOTEC (co-traitant)\nTitulaire 2: KLB GROUP \nTitulaire 3: VISIATIV",
+   "new_name": "SOLVHA",
+   "verdict": "R",
+   "why": "The head is one 2024-04-30 multi-holder framework print (666256). The SIRET prints 'SOLVHA' alone on 488585 (2024-07-22) and 119567 (2025-04-24, 3 lots). The plan's 2026-02-12 top_newest is in a non-bid role the public filters do not index, but it sits in the exact-'SOLVHA' cluster. The new name is the holder-1 mandataire, and no other holder is promoted."
+  },
+  {
+   "org_id": 22648040,
+   "old_name": "ARGE ARCUS + DEGAT\nARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+   "new_name": "ARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+   "verdict": "R",
+   "why": "The head is one 2024-06-10 ARGE print (581970), and its own second line is the new name. The new name prints verbatim on 309024 (2024-07-11), 490635 (2024-09-27) and the newest, 1031795 (2025-12-23), 6 of 10 votes. The rival 'Beratungs ... Bauplanungsgesellschaft' (965058, 2025-10-20) is an older buyer misspelling without mbH. DEGAT is not promoted."
+  },
+  {
+   "org_id": 22715315,
+   "old_name": "COLAS DURAND ARCHITECTES (MANDATAIRE)\nCOTRAITANTS\nBSO/OPRYME/EICE/ACCOUSTIBEL",
+   "new_name": "COLAS DURAND Architectes",
+   "verdict": "R",
+   "why": "The head is one 2024-09-17 print (238068). 363333 (2026-03-30) prints both casings, and the newest, 749903 (2026-08-05), prints exactly 'COLAS DURAND Architectes'. The new name is the mandataire architects' firm with every token kept, the only other change is casing, and no co-contractor is promoted."
+  },
+  {
+   "org_id": 22838635,
+   "old_name": "Ville de Gueugnon\nCoordonnateur du groupement de commande Ville de Gueugnon / Communaut\u00e9 de Communes Entre Arroux, Loire et Somme",
+   "new_name": "Ville de Gueugnon",
+   "verdict": "R",
+   "why": "This is a buyer, and the SIRET is the commune of Gueugnon (INSEE 71230). The head comes from two joint fuel-card procedures it coordinated (388523, 2024-11-04; 294733, 2025-03-26). Its own procedures 1014010 (2026-07-27) and 8830475 (2026-10-07) print 'VILLE DE GUEUGNON' as Procedure-Buyer, 6 of 8 votes. The new name is the commune without its coordinator role, the only change from the newest print is casing, and the Communaut\u00e9 de Communes is not promoted."
+  }
+ ]
+}
