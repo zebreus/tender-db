@@ -1,0 +1,1193 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "tender-db API",
+    "description": "Public procurement data — REST, live feeds (SSE), read-only SQL and webhooks. The historical backfill is ongoing, so collection counts grow over time. Money is integer minor units (`{\"cents\": 1234, \"currency\": \"EUR\"}`), never a float. Change cursors are opaque strings: compare for equality and pass back verbatim. Every endpoint that needs no token is CORS-open to any origin (browser JavaScript can call it directly, SSE resume included); the token-gated endpoints are not — call those server-side. The human-readable reference lives at /docs.",
+    "version": "0.1.0",
+    "license": {
+      "name": "AGPL-3.0-or-later",
+      "url": "https://www.gnu.org/licenses/agpl-3.0.html"
+    },
+    "contact": {
+      "name": "tender-db",
+      "url": "https://tenders.zebreus.click/_source"
+    }
+  },
+  "servers": [
+    { "url": "https://tenders.zebreus.click" }
+  ],
+  "tags": [
+    { "name": "collections", "description": "Paged reads over the canonical layer. Send `Accept: text/event-stream` to any collection endpoint to turn the same query into a live subscription (snapshot, then diffs)." },
+    { "name": "changes", "description": "The change feed — everything the canonical layer learned, in learn order, resumable by cursor." },
+    { "name": "sql", "description": "One read-only SELECT per request against the public schema." },
+    { "name": "webhooks", "description": "Account-scoped endpoints receiving signed change batches (Standard Webhooks)." },
+    { "name": "account", "description": "Token identity." },
+    { "name": "service", "description": "Service info, health and the AGPL source offer." }
+  ],
+  "paths": {
+    "/v1": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Service info",
+        "description": "Version, deployed revision, current change cursor, feed generation, endpoint list, the AGPL source offer and each data source's reuse terms.",
+        "operationId": "serviceInfo",
+        "responses": {
+          "200": {
+            "description": "Service description.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "service": { "type": "string", "example": "tender-db" },
+                    "version": { "type": "string" },
+                    "source": { "type": "string", "description": "Deployed git revision." },
+                    "source_offer": { "type": "string", "format": "uri", "description": "The running revision's source tree on the public repository (AGPL §13); the repository itself for a build that names no revision." },
+                    "license": { "type": "string", "example": "AGPL-3.0-or-later", "description": "The licence of tender-db's code. The data's reuse terms are in data_sources." },
+                    "data_sources": {
+                      "type": "array",
+                      "description": "The reuse terms of each publication source, with the attribution statement its licence asks a re-user to carry (issue 446).",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "source": { "type": "string", "example": "fts", "description": "The value notices and Tenders carry in `source`." },
+                          "name": { "type": "string" },
+                          "url": { "type": "string" },
+                          "license": { "type": "string", "example": "Open Government Licence v3.0" },
+                          "license_url": { "type": "string" },
+                          "attribution": { "type": "string", "example": "Contains public sector information licensed under the Open Government Licence v3.0." }
+                        }
+                      }
+                    },
+                    "docs": { "type": "string", "example": "/docs" },
+                    "openapi": { "type": "string", "example": "/v1/openapi.json" },
+                    "cursor": { "$ref": "#/components/schemas/Cursor" },
+                    "generation": { "type": "integer", "description": "Feed generation — moves only on an operator-initiated rebuild. Cursors and entity ids from different generations do not compose." },
+                    "endpoints": { "type": "array", "items": { "type": "string" } },
+                    "live": { "type": "string" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/tenders": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "List Tenders",
+        "description": "The current version of each Tender. Default order is ascending id (a stable keyset order for pagination); `sort=published_at` switches to publication-date order (newest first by default) and `sort=deadline` to submission-deadline order (closing soonest first by default) — on a page a bound on either date column implies its ordering. With `Accept: text/event-stream` this becomes a live subscription with the same filters, snapshotted in id order whatever its date bounds: on a stream sort unset or `id` and order unset or `asc` are accepted and mean that id order, and any other sort or order is 400, as is a date bound spelled as the literal `now` (pages only; see EventStream).",
+        "operationId": "listTenders",
+        "parameters": [
+          { "$ref": "#/components/parameters/source" },
+          { "$ref": "#/components/parameters/country" },
+          { "$ref": "#/components/parameters/cpv" },
+          { "$ref": "#/components/parameters/buyer" },
+          { "$ref": "#/components/parameters/winner" },
+          { "$ref": "#/components/parameters/bidder" },
+          { "$ref": "#/components/parameters/status" },
+          { "$ref": "#/components/parameters/min_value" },
+          { "$ref": "#/components/parameters/max_value" },
+          { "$ref": "#/components/parameters/currency" },
+          { "$ref": "#/components/parameters/procedure_type" },
+          { "$ref": "#/components/parameters/lang" },
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/publication_id" },
+          { "$ref": "#/components/parameters/published_after" },
+          { "$ref": "#/components/parameters/published_before" },
+          { "$ref": "#/components/parameters/deadline_after" },
+          { "$ref": "#/components/parameters/deadline_before" },
+          { "$ref": "#/components/parameters/sort" },
+          { "$ref": "#/components/parameters/order" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/include_data" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Tenders, or a live event stream when `Accept: text/event-stream` was sent.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Page" },
+                    { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Tender" } } } }
+                  ]
+                }
+              },
+              "text/event-stream": {
+                "schema": { "$ref": "#/components/schemas/EventStream" }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/tenders/{id}": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "One Tender in full",
+        "description": "The current version plus its satellites: lot details, texts, amounts, dates, classifications, parties, lot results (award decisions), bids, contracts, and the version history — each version naming the `caused_by_notice_id` that produced it.",
+        "operationId": "getTender",
+        "parameters": [
+          { "$ref": "#/components/parameters/id" },
+          { "$ref": "#/components/parameters/lang" }
+        ],
+        "responses": {
+          "200": {
+            "description": "The Tender detail.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/TenderDetail" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/lots": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "List Lots",
+        "description": "Lots — subdivisions of Tenders. Same filters as every collection; `tender` restricts to one Tender's Lots. SSE-capable. A Tender whose notices published no lot section (the text era; internal-ojs 2008 without a `LOTS` section; r2.0.8 without a contract-notice lot annex, since an r2.0.8 award notice carries none; a standalone r2.0.9 F14 corrigendum; an eForms prior-information notice without lots; an FTS Tender whose releases list no `tender.lots`) has no row here: find it on /v1/tenders (issue 535).",
+        "operationId": "listLots",
+        "parameters": [
+          { "$ref": "#/components/parameters/source" },
+          { "$ref": "#/components/parameters/country" },
+          { "$ref": "#/components/parameters/cpv" },
+          { "$ref": "#/components/parameters/buyer" },
+          { "$ref": "#/components/parameters/winner" },
+          { "$ref": "#/components/parameters/bidder" },
+          { "$ref": "#/components/parameters/status" },
+          { "$ref": "#/components/parameters/min_value" },
+          { "$ref": "#/components/parameters/max_value" },
+          { "$ref": "#/components/parameters/currency" },
+          { "$ref": "#/components/parameters/procedure_type" },
+          { "$ref": "#/components/parameters/lang" },
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/tender" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/include_data" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Lots, or a live event stream.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Page" },
+                    { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Lot" } } } }
+                  ]
+                }
+              },
+              "text/event-stream": { "schema": { "$ref": "#/components/schemas/EventStream" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/organizations": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "List Organizations",
+        "description": "Canonical Organizations — buyers, bidders, winners. SSE-capable.",
+        "operationId": "listOrganizations",
+        "parameters": [
+          { "$ref": "#/components/parameters/country" },
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/identifier" },
+          { "$ref": "#/components/parameters/name_prefix" },
+          { "$ref": "#/components/parameters/buyer" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/include_data" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Organizations, or a live event stream.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Page" },
+                    { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Organization" } } } }
+                  ]
+                }
+              },
+              "text/event-stream": { "schema": { "$ref": "#/components/schemas/EventStream" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/organizations/{id}": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "One Organization",
+        "description": "The counterpart of a Tender detail's `parties[].organization_id`. An id that a merge folded into another organization answers `308` to the survivor (issue 455).",
+        "operationId": "getOrganization",
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The Organization.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Organization" } } }
+          },
+          "308": {
+            "description": "This organization was merged into another; `Location` and `merged_into` name the survivor. A client that follows redirects receives the survivor's row.",
+            "headers": { "Location": { "description": "`/v1/organizations/<survivor id>`.", "schema": { "type": "string" } } },
+            "content": { "application/json": { "schema": { "allOf": [ { "$ref": "#/components/schemas/Error" }, { "type": "object", "properties": { "merged_into": { "type": "integer", "format": "int64" } } } ] } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/notices": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "List Notices",
+        "description": "Raw import records. `tender` lists the Notices that caused that Tender's versions. Notices produce no canonical change rows, so an SSE subscription here is a snapshot then silence.",
+        "operationId": "listNotices",
+        "parameters": [
+          { "$ref": "#/components/parameters/source" },
+          { "$ref": "#/components/parameters/kind" },
+          { "$ref": "#/components/parameters/tender" },
+          { "$ref": "#/components/parameters/publication_id" },
+          { "$ref": "#/components/parameters/limit" },
+          { "$ref": "#/components/parameters/cursor" },
+          { "$ref": "#/components/parameters/include_data" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of Notices.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    { "$ref": "#/components/schemas/Page" },
+                    { "type": "object", "properties": { "items": { "type": "array", "items": { "$ref": "#/components/schemas/Notice" } } } }
+                  ]
+                }
+              },
+              "text/event-stream": { "schema": { "$ref": "#/components/schemas/EventStream" } }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/notices/{id}": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "One Notice",
+        "description": "The counterpart of a version's `caused_by_notice_id`.",
+        "operationId": "getNotice",
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The Notice.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NoticeDetail" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/notices/{id}/content": {
+      "get": {
+        "tags": ["collections"],
+        "summary": "A Notice's parsed content",
+        "description": "The notice's whole parsed payload: the section tree (repeatable-node instances, `PROCEDURE` for the root) and every typed field value, verbatim from the parse layer — field ids in the source's own vocabulary (eForms BT/OPT ids, TED export field ids; the notice's `profile` names which). This is the pre-projection reading: every business term of the notice is here even before (or without) earning a canonical field. A quarantined notice has zero sections — its payload is held whole; see the notice detail's `quarantine` field for why.",
+        "operationId": "getNoticeContent",
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The parsed content.",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/NoticeContent" } } }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/changes": {
+      "get": {
+        "tags": ["changes"],
+        "summary": "Change feed (poll)",
+        "description": "Everything the canonical layer learned after `since` (start at 0). Same events as SSE without holding a connection. **Only `entity` narrows this feed** \u2014 the collection filters (`country`, `cpv`, `source`, `status`, `min_value`\u2026) parse but are not applied here, and every one you send comes back named in `ignored_filters`. To follow a filtered subset, subscribe to the collection endpoint with `Accept: text/event-stream`, which does apply them. Loop, passing `last_cursor` as the next `since`, until `more` is false. The cursor is learn order (ingestion), independent of publication date. Store `generation` beside your cursor: when it moves, drop local state, re-snapshot, and continue from that response's `last_cursor`.",
+        "operationId": "pollChanges",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "The cursor to read after — `0` or a previous response's `last_cursor`, verbatim. A cursor this feed never issued (past the head, or below a pruned log's horizon) is answered with a `reset` field — `cursor_ahead` or `cursor_expired` — an empty `events` array and `last_cursor: \"0\"`, the same verdict the SSE transport gives for the same cursor: drop your state, re-snapshot, resume from `0`. An unparseable `since` is lenient and serves the first page.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "entity",
+            "in": "query",
+            "description": "Narrow to one entity kind.",
+            "schema": { "type": "string", "enum": ["tender", "lot", "organization"] }
+          },
+          { "$ref": "#/components/parameters/limit" }
+        ],
+        "responses": {
+          "200": {
+            "description": "A batch of change events.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "events": { "type": "array", "items": { "$ref": "#/components/schemas/ChangeEvent" } },
+                    "last_cursor": { "$ref": "#/components/schemas/Cursor" },
+                    "more": { "type": "boolean" },
+                    "generation": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "$ref": "#/components/responses/Unavailable" }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "tags": ["account"],
+        "summary": "Who the presented token belongs to",
+        "operationId": "me",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "The token's account.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "user": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer" },
+                        "username": { "type": "string" },
+                        "created_at": { "type": "integer", "description": "Epoch seconds." }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/sql": {
+      "post": {
+        "tags": ["sql"],
+        "summary": "Run one read-only SELECT",
+        "description": "The SQL travels as the raw request body (never in the URL). Exactly one statement, a bare SELECT — no writes, PRAGMA, ATTACH, EXPLAIN or multi-statement bodies. The queryable surface is a positive allow-list (see GET /v1/sql/schema). Time columns are epoch seconds here, unlike REST's ISO 8601. Caps: 10 000 rows / 10 MB per result (`truncated: true` when hit); per token 4 concurrent, 960/hour, 15 s per query (408 when exceeded).",
+        "operationId": "runSql",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/plain": {
+              "schema": { "type": "string", "example": "SELECT source, count(*) FROM v_tenders GROUP BY source" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The result set.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "columns": { "type": "array", "items": { "type": "string" } },
+                    "rows": { "type": "array", "items": { "type": "array", "items": {} } },
+                    "row_count": { "type": "integer" },
+                    "truncated": { "type": "boolean" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "408": { "description": "The QUERY exceeded the per-query time limit. The query is interrupted at the limit (issue 425), so the server-side work ends with the answer. Make the query cheaper (narrow the range, add a LIMIT) before retrying — never retry it unchanged.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "429": { "$ref": "#/components/responses/RateLimited" },
+          "503": { "description": "The BACKEND could not get to the query, so it was never run — either no reader connection came free, or every SQL worker thread is busy with an earlier query that is still running (each stops at the time limit). Distinct from 408 on purpose: retry the same query unchanged rather than rewriting it. The message names which of the two it was.", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/v1/sql/schema": {
+      "get": {
+        "tags": ["sql"],
+        "summary": "The queryable schema",
+        "description": "Public, no token. Every allow-listed table and view with per-column notes, timestamp flags, enum vocabularies and worked examples. The main entry points are the current-state views v_tenders, v_lots, v_lot_results and v_organizations.",
+        "operationId": "sqlSchema",
+        "responses": {
+          "200": {
+            "description": "Tables and views with their columns and notes.",
+            "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+          },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/webhooks": {
+      "get": {
+        "tags": ["webhooks"],
+        "summary": "List your endpoints",
+        "description": "No secrets in the response.",
+        "operationId": "listWebhooks",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Your registered endpoints.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "webhooks": { "type": "array", "items": { "$ref": "#/components/schemas/Webhook" } } }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      },
+      "post": {
+        "tags": ["webhooks"],
+        "summary": "Register an endpoint",
+        "description": "Only https URLs resolving to publicly-routable addresses are accepted (SSRF guard). The response carries the signing secret ONCE — it is never returned again. Deliveries are signed Standard Webhooks POSTs; delivery is at-least-once and advances only on a 2xx.",
+        "operationId": "createWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["url"],
+                "properties": { "url": { "type": "string", "format": "uri", "example": "https://example.com/hooks/tenders" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registered. Copy `secret` now.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "secret": { "type": "string", "description": "The whsec_… signing secret, shown once." },
+                    "webhook": { "$ref": "#/components/schemas/Webhook" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { "$ref": "#/components/responses/BadRequest" },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/webhooks/{id}": {
+      "get": {
+        "tags": ["webhooks"],
+        "summary": "One endpoint with recent deliveries",
+        "operationId": "getWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "The endpoint and its recent delivery attempts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "webhook": { "$ref": "#/components/schemas/Webhook" },
+                    "deliveries": { "type": "array", "items": { "$ref": "#/components/schemas/WebhookDelivery" } }
+                  }
+                }
+              }
+            }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      },
+      "delete": {
+        "tags": ["webhooks"],
+        "summary": "Remove an endpoint",
+        "operationId": "deleteWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "204": { "description": "Removed." },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/enable": {
+      "post": {
+        "tags": ["webhooks"],
+        "summary": "Resume delivery",
+        "description": "Default replays what was missed (the change log is the queue). Body `{\"from_now\": true}` drops the backlog and resumes at the head.",
+        "operationId": "enableWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "from_now": { "type": "boolean", "default": false } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Enabled.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "enabled": { "type": "integer" } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/webhooks/{id}/disable": {
+      "post": {
+        "tags": ["webhooks"],
+        "summary": "Pause delivery",
+        "operationId": "disableWebhook",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [{ "$ref": "#/components/parameters/id" }],
+        "responses": {
+          "200": {
+            "description": "Disabled.",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "disabled": { "type": "integer" } } } } }
+          },
+          "401": { "$ref": "#/components/responses/Unauthorized" },
+          "404": { "$ref": "#/components/responses/NotFound" },
+          "429": { "$ref": "#/components/responses/RateLimited" }
+        }
+      }
+    },
+    "/v1/openapi.json": {
+      "get": {
+        "tags": ["service"],
+        "summary": "This document",
+        "description": "The machine-readable description of this API, served with CORS enabled so browser-based viewers (Swagger UI, Redoc) can load it directly.",
+        "operationId": "openapi",
+        "responses": {
+          "200": {
+            "description": "The OpenAPI document.",
+            "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Liveness probe",
+        "description": "Process is up and serving HTTP. Does not query the database — see /health/deep for a DB-backed readiness check. Outside the rate limiter.",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Healthy.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": { "type": "boolean" },
+                    "rev": { "type": "string" },
+                    "cursor": { "$ref": "#/components/schemas/Cursor" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/deep": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Deep operational probe",
+        "description": "Liveness plus ingest freshness, job failures and disk — the endpoint an external pinger watches. Outside the rate limiter.",
+        "operationId": "healthDeep",
+        "responses": {
+          "200": { "description": "All checks green.", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } },
+          "503": { "description": "At least one check failing; the body names it.", "content": { "application/json": { "schema": { "type": "object", "additionalProperties": true } } } }
+        }
+      }
+    },
+    "/metrics": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Prometheus metrics scrape",
+        "description": "Operational gauges in Prometheus text exposition format: change cursor, RSS, live SSE streams, disk and WAL size, per-job last-run duration and outcome, ingest freshness and lag, canonical row counts and quarantine totals. Every value is O(1) or read from the dashboard's 60-second cache, so a scrape never runs a table scan; a gauge not yet measured is absent rather than reported as zero. Outside the rate limiter, and — unlike the health probes — not CORS-open, being an operator surface.",
+        "operationId": "metrics",
+        "responses": {
+          "200": { "description": "The current gauges.", "content": { "text/plain": { "schema": { "type": "string" } } } }
+        }
+      }
+    },
+    "/_source": {
+      "get": {
+        "tags": ["service"],
+        "summary": "AGPL §13 corresponding-source offer",
+        "description": "Names the running revision and links its source: the public repository's tree at that revision.",
+        "operationId": "sourceOffer",
+        "responses": {
+          "200": { "description": "The source offer.", "content": { "text/plain": { "schema": { "type": "string" } } } }
+        }
+      }
+    },
+    "/docs": {
+      "get": {
+        "tags": ["service"],
+        "summary": "Human-readable API reference",
+        "operationId": "docs",
+        "responses": {
+          "200": { "description": "The reference page.", "content": { "text/html": { "schema": { "type": "string" } } } }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "tdb_… API token",
+        "description": "Create tokens on the dashboard (/account). Shown once at creation."
+      }
+    },
+    "parameters": {
+      "id": {
+        "name": "id",
+        "in": "path",
+        "required": true,
+        "description": "Entity id.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "source": {
+        "name": "source",
+        "in": "query",
+        "description": "Source key, e.g. `ted`.",
+        "schema": { "type": "string" }
+      },
+      "country": {
+        "name": "country",
+        "in": "query",
+        "description": "On Tenders and Lots, a NUTS place-code prefix matched against the notice's places: at the country level NUTS is ISO-3166 alpha-2, so Germany is `DE` (not `DEU`), and a longer prefix narrows to a region, e.g. `DE1` or `DEB35`. A tender whose notices give the place of performance only as a country (eForms BT-5141; DÖE's realized-location country), and whose version carries no NUTS place code, is served that country's **NUTS level-0 code**, so `LT` finds it and `LT0` does not (Greece `EL`, the United Kingdom `UK`). Only the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania, Montenegro, North Macedonia, Serbia and Türkiye are served this way: a place in any other country, e.g. Egypt or the USA, carries none, and so does a place given as an overseas region's own ISO code (e.g. Réunion, Åland). On Organizations, an exact match on the Organization's own (alpha-2) country. Not applied by Notices. Letters and digits only \u2014 a value containing anything else (including an empty one) is a 400, because the prefix is matched as a pattern and a metacharacter would change what the filter means rather than what it matches. At most five characters \u2014 a NUTS code is `DEB35` at its longest \u2014 so a longer value, which can prefix no code, is a 400 rather than a walk to the service deadline.",
+        "schema": { "type": "string" }
+      },
+      "cpv": {
+        "name": "cpv",
+        "in": "query",
+        "description": "CPV code prefix, e.g. `45` (construction). One to eight digits \u2014 the length of a full code \u2014 and nothing else: a letter, an empty value or a ninth digit is a 400.",
+        "schema": { "type": "string" }
+      },
+      "buyer": {
+        "name": "buyer",
+        "in": "query",
+        "description": "On Tenders and Lots, the Organization id in a buyer role. On Organizations, selects that one Organization by id. Not applied by Notices.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "winner": {
+        "name": "winner",
+        "in": "query",
+        "description": "Organization id that won at least one Lot — excluding awards where the winner is the tender's own buyer (`is_buyer`, issue 484): a notice that names one organization as buyer and contractor keeps that award as published, flagged, and it does not count as a win here.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "bidder": {
+        "name": "bidder",
+        "in": "query",
+        "description": "Organization id named as a tenderer on a published bid of the Tender (TED eForms, eForms-DE), won or not. On FTS, an award supplier only: FTS publishes no losing bidders. The pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1 publish winners without bids, so a win there appears under winner only. To find every tender where an organization is named as a tenderer or a winner, query both; on the formats without bids, an award to the tender's own buyer is in neither (issue 531).",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "status": {
+        "name": "status",
+        "in": "query",
+        "description": "By submission deadline, and by what the newest notice says. `open`: a submission deadline in the future, and the procedure not closed by its newest notice. `closed`: everything else: no deadline in the future (none published, or every one past), or a newest notice that published results when every result the procedure has published is a no-award (all `clos-nw`, e.g. a cancellation or an FTS UK12 termination) and together they decide every lot of kind `Lot` (lots groups and parts need no result; a Tender-scoped result decides no lot, so it closes only a Tender with no `Lot`-kind lot), unless the Tender declares an open-ended scheme, where such a result reports one round: a dynamic purchasing system, procedure `oth-single`/`oth-mult`, a qualification-system (eForms 15) or dynamic-market (UK13-UK16) notice, or a current deadline more than a year after the publication of the first notice that published a deadline (an admission window; an explicit r2.0.9 discontinued/unsuccessful no-award closes even then). A result naming a winner, or a NULL decision, never closes a Tender here. A later notice that publishes no results of its own (a re-launch contract notice, but also e.g. a corrigendum) reopens it. On `/v1/lots` a lot is `closed` with its Tender: a no-award for some lots of a Tender that stays open does not close those lots. A lot's deadline may be the procedure's rather than its own (see /docs caveats, Dates).",
+        "schema": { "type": "string", "enum": ["open", "closed"] }
+      },
+      "min_value": {
+        "name": "min_value",
+        "in": "query",
+        "description": "Minimum value in EUR cents, compared against the tender's head value in EUR: its elected amount converted to EUR at its publication date (derived eur_cents) or, where value_derivation is set, the sum of its lots converted the same way. Rows with no convertible amount match no value bound: lot-sum-awards, which sums their lot awards where a total the buyer stated vouches for the sum (issue 551 unit 4b), is switched off since 2026-10-19 (pending an investigation); a Tender not yet refolded since still compares the sum stored for it.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "max_value": {
+        "name": "max_value",
+        "in": "query",
+        "description": "Maximum value in EUR cents — same comparison basis as min_value.",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "currency": {
+        "name": "currency",
+        "in": "query",
+        "description": "Published currency: ISO 4217 code, case-insensitive (e.g. `EUR`). Matches Tenders/Lots whose current version publishes at least one amount in that currency, as published — no conversion.",
+        "schema": { "type": "string", "pattern": "^[A-Za-z]{3}$", "example": "EUR" }
+      },
+      "procedure_type": {
+        "name": "procedure_type",
+        "in": "query",
+        "description": "Procedure type (issue 479): one or more codes of eForms' `procurement-procedure-type` list (BT-105), comma-separated, case-insensitive, at most 10 — e.g. procedure_type=open or procedure_type=neg-wo-call,oth-single. EU codes: `open`, `restricted`, `neg-w-call`, `neg-wo-call`, `comp-dial`, `innovation`, `oth-single`, `oth-mult`. German national codes are kept as published, not cross-walked: eForms-DE's below-threshold `us-open`, `us-res-tw`, `us-res-no-tw`, `us-neg-w-call`, `us-neg-wo-call`, `us-free-tw`, `us-free-no-tw`, `us-hhr`, and DÖE sdk-0.1's `de-*` codes. Exact match against the current version's Tender-scope procedure type — the latest MAPPED type a notice of the Tender published; lots inherit their Tender's. The pre-eForms TED eras fold the form's own procedure checkbox where it names one type (e.g. PT_OPEN, PT_AWARD_CONTRACT_WITHOUT_CALL), else TED's PR code through a closed table (1 open, 2/3 restricted, 4 neg-w-call, T neg-wo-call). Any other value — another PR code, a free-text label — and a notice that states none fold nothing, so the type an earlier notice stated stays in place (it can then predate the latest notice), and a Tender no notice typed carries none. Coverage is therefore not complete before eForms: a legacy award without a prior call is typed neg-wo-call only when its form ticked a without-call box, and FTS's Procurement Act routes (Competitive flexible procedure, Direct award, award under a framework, the below-threshold routes) are not mapped, so neg-wo-call is not every direct award. A well-formed code the corpus does not carry matches nothing; a malformed one is a 400.",
+        "schema": { "type": "string", "pattern": "^[A-Za-z0-9-]{1,32}(,[A-Za-z0-9-]{1,32})*$", "example": "open" }
+      },
+      "lang": {
+        "name": "lang",
+        "in": "query",
+        "description": "Preferred language for picked text values (titles): ISO 639 code, case-insensitive (`de`/`DEU`). Fallback: requested, then English, then any labelled, then unlabelled. A selector, not a filter — never narrows results and never appears in ignored_filters; the detail's texts array always carries every variant.",
+        "schema": { "type": "string", "pattern": "^[A-Za-z]{2,3}$", "example": "de" }
+      },
+      "kind": {
+        "name": "kind",
+        "in": "query",
+        "description": "A kind flag whose meaning is collection-specific: `procedure`/`registration` for Tenders, the lot kind (`Lot`/`LotsGroup`/`Part`) for Lots, the identifier kind for Organizations, and the mapping profile for Notices.",
+        "schema": { "type": "string" }
+      },
+      "tender": {
+        "name": "tender",
+        "in": "query",
+        "description": "Restrict Lots to one Tender id; on /v1/notices, list the Notices that caused that Tender's versions (a lookup, not a subscription: sending Accept: text/event-stream with this parameter is a 400).",
+        "schema": { "type": "integer", "format": "int64" }
+      },
+      "publication_id": {
+        "name": "publication_id",
+        "in": "query",
+        "description": "An official publication number. On /v1/notices it matches the notice carrying that number; on /v1/tenders it resolves the tender whose versions that number caused — current or superseded. Takes a TED number as TED prints it, unpadded (`79997-2017`), at the 6 or 8 digits the archive stores (`079997-2017`, `00079997-2017`), or in the OJ S form (`2017/S 044-079997`); surrounding whitespace is ignored. The stored width follows the notice's format, not its year (unpadded in the 1993–2010 text era, 6 digits in the XML era 2011–2024, 8 in eForms from 2022), and a TED number is one notice per year whichever width you send. Those widths answer TED notices only. Other sources match their own number exactly: a UK Find a Tender (FTS) number is its 6-digit release id, `083685-2026` (also asked as `2026/S 000-083685`: issue 000 is no TED issue, so that form looks up the FTS spelling only), and a DÖE number is `<uuid or number>-<version>`, version suffix included. FTS numbers from 2021 on coincide with TED's 6-digit ones, so `083685-2026` answers FTS's notice and TED's `00083685-2026` alike — pair with `source=`. When the page matched a stored spelling other than the one sent, it names it in `resolved_filters.publication_id` as `{\"asked\": \"79997-2017\", \"matched\": [\"079997-2017\"]}`. Index-served (up to four spellings of the number, each found by an index seek), so present and absent values are both fast; the TED scope above and the source/kind companions narrow the same fast result after the read (the other tender filters are part of the SQL), so a page of it can be short, or empty, while more is true, its next_cursor the last row examined.",
+        "schema": { "type": "string" }
+      },
+      "published_after": {
+        "name": "published_after",
+        "in": "query",
+        "description": "Only tenders whose current version was published at or after this instant (unix seconds, RFC 3339, a bare `YYYY-MM-DD` taken as midnight UTC, or the literal `now`). `now` is accepted on pages only: an event stream refuses it with 400, because a resume would resolve it again and its bound would move; pass an absolute timestamp there. Implies sort=published_at unless sort=id is explicit (pages only; a stream snapshots in id order). /v1/tenders only.",
+        "schema": { "type": "string" }
+      },
+      "published_before": {
+        "name": "published_before",
+        "in": "query",
+        "description": "Only tenders whose current version was published before this instant (exclusive; unix seconds, RFC 3339, a bare `YYYY-MM-DD` taken as midnight UTC, or the literal `now`). `now` is accepted on pages only: an event stream refuses it with 400, because a resume would resolve it again and its bound would move; pass an absolute timestamp there. Implies sort=published_at unless sort=id is explicit (pages only; a stream snapshots in id order). /v1/tenders only.",
+        "schema": { "type": "string" }
+      },
+      "sort": {
+        "name": "sort",
+        "in": "query",
+        "description": "List order for /v1/tenders: `id` (default, ascending), `published_at` (publication date of the current version) or `deadline` (submission deadline of the current version). Tenders without the chosen date are omitted from that ordering. Index-served in every case.",
+        "schema": { "type": "string", "enum": ["id", "published_at", "deadline"] }
+      },
+      "order": {
+        "name": "order",
+        "in": "query",
+        "description": "`asc` or `desc`. Defaults follow the question each ordering answers: ascending for sort=id (descending id is not supported), descending (newest first) for sort=published_at, ascending (closing soonest first) for sort=deadline. Keep sort/order stable while paginating and pass next_cursor verbatim.",
+        "schema": { "type": "string", "enum": ["asc", "desc"] }
+      },
+      "deadline_after": {
+        "name": "deadline_after",
+        "in": "query",
+        "description": "Only tenders whose current version's submission deadline is at or after this instant (unix seconds, RFC 3339, a bare `YYYY-MM-DD` taken as midnight UTC, or the literal `now`). `deadline_after=now` with sort=deadline&order=asc is the \"closes soon\" query on a page. `now` is accepted on pages only: an event stream refuses it with 400, because a resume would resolve it again and its bound would move; pass an absolute timestamp there, or status=open for tenders still open, which also reads the clock when the stream connects (see EventStream). Implies sort=deadline unless an explicit sort says otherwise (pages only; a stream snapshots in id order). /v1/tenders only.",
+        "schema": { "type": "string" }
+      },
+      "deadline_before": {
+        "name": "deadline_before",
+        "in": "query",
+        "description": "Only tenders whose current version's submission deadline is before this instant (exclusive; unix seconds, RFC 3339, a bare `YYYY-MM-DD` taken as midnight UTC, or the literal `now`). `now` is accepted on pages only: an event stream refuses it with 400, because a resume would resolve it again and its bound would move; pass an absolute timestamp there. Implies sort=deadline unless an explicit sort says otherwise (pages only; a stream snapshots in id order). /v1/tenders only.",
+        "schema": { "type": "string" }
+      },
+      "name_prefix": {
+        "name": "name_prefix",
+        "in": "query",
+        "description": "Case-insensitive organization name prefix (Unicode-aware, so umlauts match either case). Returns matches in name order with a keyset cursor; combine with country/kind to narrow. It matches the organization's served name only: after a head refresh renames an organization, its former spelling no longer matches it. /v1/organizations only; must not be empty.",
+        "schema": { "type": "string", "minLength": 1 }
+      },
+      "identifier": {
+        "name": "identifier",
+        "in": "query",
+        "description": "Exact-match an Organization's official identifier value (e.g. a VAT number) on /v1/organizations, as stored (normalised: upper-case letters and digits). Also matches an identifier a merge folded into an organization (its `merged_identifiers`, issue 460); the page then names those organizations in `resolved_filters.identifier`. Pair with `kind` to pin the scheme of the identifier that matched when a value is reused across schemes. Index-served (organizations_identifier_id and the merged identifiers' primary key), so present and absent values are both fast.",
+        "schema": { "type": "string" }
+      },
+      "limit": {
+        "name": "limit",
+        "in": "query",
+        "description": "Page size. Must be between 1 and 1000 inclusive; anything outside that range is a 400, not silently clamped.",
+        "schema": { "type": "integer", "default": 100, "maximum": 1000, "minimum": 1 }
+      },
+      "cursor": {
+        "name": "cursor",
+        "in": "query",
+        "description": "Opaque page position — pass back the previous page's `next_cursor` verbatim. On an SSE request, an event id to resume from (equivalent to Last-Event-ID).",
+        "schema": { "type": "string" }
+      },
+      "include_data": {
+        "name": "include_data",
+        "in": "query",
+        "description": "SSE only: embed the entity's current JSON in each event.",
+        "schema": { "type": "boolean" }
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid input — an unknown or misspelled query parameter is rejected rather than silently ignored.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unauthorized": {
+        "description": "Missing or invalid bearer token.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "NotFound": {
+        "description": "No such entity.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "Unavailable": {
+        "description": "The read was not answered, and the message says which of three causes it was. (1) Every isolated slot for expensive filtered reads was busy, so it was shed at once: retry shortly. (2) The read ran past the 25 s read limit and was stopped (issue 120): this filter combination costs more than that here, so narrow the filters (a country, a date bound, a tender) rather than repeating it. (3) No response within the 30 s service bound. In every case the work ends with the answer; nothing keeps running behind it.",
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      },
+      "RateLimited": {
+        "description": "Rate limit exceeded (~10 req/s per client, burst 50, across /v1). Carries Retry-After.",
+        "headers": { "Retry-After": { "description": "Seconds to wait.", "schema": { "type": "string" } } },
+        "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "description": "The one error shape, matching the HTTP status.",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "status": { "type": "integer", "example": 404 },
+              "message": { "type": "string", "example": "no such tender" }
+            }
+          }
+        }
+      },
+      "Cursor": {
+        "type": "string",
+        "nullable": true,
+        "description": "Opaque change/page cursor. Compare for equality and pass back verbatim; never parse or do arithmetic on it."
+      },
+      "Money": {
+        "type": "object",
+        "description": "Integer minor units — never a float.",
+        "properties": {
+          "cents": { "type": "integer", "format": "int64", "example": 1234 },
+          "currency": { "type": "string", "example": "EUR" }
+        }
+      },
+      "Page": {
+        "type": "object",
+        "description": "The collection envelope. Paginate by following next_cursor until more is false. A page can be short or empty while more is true: a filtered read that walks the id order is bounded to one band of ids per page and its cursor is the last id examined, and a publication_id page that narrows its number's rows after the read hands back the last row examined the same way, so page length is never an end-of-results signal. An organization-seeded lots read (winner/bidder) pages in (tender, lot) order off its participation index and its cursor is compound; pass it back verbatim.",
+        "properties": {
+          "items": { "type": "array", "items": {} },
+          "next_cursor": { "$ref": "#/components/schemas/Cursor" },
+          "more": { "type": "boolean" },
+          "ignored_filters": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Filter parameters the client sent that this collection does not apply — every collection accepts the shared filter vocabulary but honours only the subset meaningful to it, so a dropped filter is named here rather than silently returning an unfiltered page. Empty when every filter applied."
+          },
+          "resolved_filters": {
+            "type": "object",
+            "description": "Present only when the page answers through a merge, or at another spelling of a publication number. An organization-id filter (`buyer`, `winner`, `bidder`) that named an organization a merge folded into another is applied to the survivor and named here as `{\"asked\": <the id sent>, \"merged_into\": <the survivor>}` (issue 455); store the survivor's id, and note that an id that never was an organization is not rewritten and answers an empty page. On /v1/organizations, `identifier` matches an identifier a merge folded into an organization too, and the organizations the page reached that way are named as `{\"identifier\": {\"asked\": \"<the value sent>\", \"merged_into\": [<ids>]}}` — an array, because one identifier can answer several organizations (issue 460). A match on an organization's own identifier is not named. On /v1/notices and /v1/tenders, a `publication_id` that the page matched at another stored spelling of the number (a TED width, a trimmed space, FTS's OJ S issue 000) is named as `{\"publication_id\": {\"asked\": \"<the value sent>\", \"matched\": [<the stored spellings>]}}` (issue 536); on /v1/tenders the spelling is the matched version's, which need not be the current one's.",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "asked": { "oneOf": [ { "type": "integer", "format": "int64" }, { "type": "string" } ], "description": "The value sent: an organization id, or (for `identifier` and `publication_id`) the string." },
+                "matched": { "type": "array", "items": { "type": "string" }, "description": "For `publication_id`: the stored spellings of the number the page's rows were found under (issue 536)." },
+                "merged_into": {
+                  "oneOf": [
+                    { "type": "integer", "format": "int64" },
+                    { "type": "array", "items": { "type": "integer", "format": "int64" } }
+                  ],
+                  "description": "The survivor's id; for `identifier`, the ids of the organizations reached through a merged identifier."
+                }
+              }
+            }
+          }
+        }
+      },
+      "Tender": {
+        "type": "object",
+        "description": "A Tender row — the current version of one procedure. Rows echo the cpv and country codes they carry so a filter match is explainable. Fields beyond these evolve with the backfill; unknown fields must be tolerated.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "source": { "type": "string" },
+          "title": { "type": "string", "nullable": true, "description": "The version's title, picked by `lang`; the Tender's own before a lot's. Decoded of a publisher's extra escaping (issue 538): numeric character references and the five XML entity names (any letter case), up to three levels deep, an escaped `<br>` as a line break and an escaped private-use symbol as `•`; nothing else is changed. The notice content keeps the text as parsed. Until the issue-538 refold reaches it, a Tender folded before the change serves its old text." },
+          "cpv": { "type": "array", "items": { "type": "string" } },
+          "country": { "type": "array", "items": { "type": "string" }, "description": "NUTS place codes; a level-0 code (`LT`) where the version's notices gave the place only as a country (issue 532)." },
+          "procedure_type": { "type": "string", "nullable": true, "description": "The current version's procedure type in eForms' `procurement-procedure-type` vocabulary (BT-105; German national codes as published) — what procedure_type filters on. Null where no notice of the Tender published a mapped one, including every Tender folded before issue 479 until its refold." },
+          "published_at": { "type": "string", "nullable": true, "description": "ISO 8601 in the offset the source published; a source that published a date only yields a date only (`2026-09-05`), and its instant is that civil day's UTC midnight, so a bare-date bound finds it (issue 418). A row stamped before that pair was stored (issue 367 unit 3) renders the UTC instant until `repair-notice-instants` fills it. DÖE publishes no journal date: a DÖE published_at is the publication date the buyer requested (or one the portal stamped), raised to the day of the notice's IssueDate when that is later (issue 539), a date only when that day wins; it usually runs 1–3 days before the day of the portal's daily export that carries the notice. A DÖE sdk-1.x notice states neither, and its published_at is its IssueDate itself, time included. Until the issue-539 drain re-dates the notices already stored, a row whose current version a DÖE notice caused (a `ted`-labelled Tender included) can serve the requested (or stamped) date alone." },
+          "kind": { "type": "string", "description": "What this row IS: `procedure` for a procurement, or a non-procedure publication kind." },
+          "version": { "type": "integer", "description": "The current version's sequence number in this Tender's chain (ADR-0001)." },
+          "publication_id": { "type": "string", "nullable": true, "description": "Publication number of the notice that caused the current version, e.g. `00710890-2023`." },
+          "procedure_key": { "type": "string", "nullable": true, "description": "The grouping key binding this chain's notices into one Tender; null for an island." },
+          "notice_subtype": { "type": "string", "nullable": true, "description": "The subtype code of the notice that caused the current version: the eForms subtype (OPP-070, e.g. `16`, `29`; TED eForms and eForms-DE) or, on FTS, the UK form code, else the release tags joined with `+` (e.g. `award+contract`), and null when the release has neither. Null for the pre-eForms TED formats (text, internal-ojs, r2.0.8, r2.0.9) and DÖE sdk-0.1, which publish no subtype (issue 535). Their own document type is kept out of this column (issue 235). It is in /v1/notices/{id}/content and in `notice_codes` on /v1/sql, field `TED-TD_DOCUMENT_TYPE` (r2.0.8, r2.0.9), `TXT-TD` (text), `TED-NAT_NOTICE` (internal-ojs) or `SDK01-NoticeTypeCode` (DÖE sdk-0.1)." },
+          "original_lang": { "type": "string", "nullable": true, "description": "The language the notice that caused the current version says it was originally published in, mapped to uppercase ISO 639-2/T (ADR-0013). A published code the mapping does not recognise passes through uppercased, e.g. `FR NL` on some bilingual Belgian TED notices. Null where that notice states no language, as many DÖE sdk-0.1 notices do not (issue 535). FTS serves the release's language, English when the release names none." },
+          "dispatched_at": { "type": "string", "nullable": true, "description": "When the buyer dispatched the notice for publication — earlier than published_at, except where a DÖE notice caused the current version (a Tender labelled `ted` included, since a DÖE Tender turns `ted` when its TED twin arrives), where it falls on or before the day of published_at: a DÖE published_at is the publication date the buyer requested (or one the portal stamped), raised to the day of the notice's IssueDate when that is later (issue 539); a DÖE sdk-1.x notice states neither, and its published_at is its IssueDate itself, time included, the same instant as dispatched_at. Until the issue-539 drain re-dates the notices already stored, a DÖE notice's dispatch can fall days after its published_at. Same rendering rule as published_at." },
+          "submission_deadline": { "type": "string", "format": "date-time", "nullable": true, "description": "The instant deadline_after/deadline_before filter on and sort=deadline orders by." },
+          "submission_deadline_scope": { "type": "string", "nullable": true, "description": "Which scope submission_deadline came from (issue 370): `procedure` for the procedure's own date, `lot` when the elected deadline is a lot-level date — the head election takes the newest over both scopes. Null exactly when submission_deadline is. Whether the newest notice republished the date or the row carries it forward from an earlier version is not on the row; see /docs → caveats → Dates." },
+          "lots": { "type": "integer", "description": "How many Lots (LotsGroups and Parts included) the current version carries: every one the Tender's notices published up to it. Whether a single-lot procurement serves 1 or 0 depends on the format (issue 535). It serves 1 on r2.0.9 (its object description is a Lot) and on eForms (DÖE sdk-0.1 included). It serves 0 on the text era (no lot structure), on internal-ojs 2008 without a `LOTS` section, and on r2.0.8 unless a contract notice published a lot annex (an r2.0.8 award notice carries no lot section, divided or not): the source publishes no lot, and none is invented. FTS makes a Lot only from a release's `tender.lots`, so an FTS Tender serves 0 until one of its releases lists a lot; award, contract and tenderUpdate releases often list none. Also lot-less: a Tender that is only an r2.0.9 F14 corrigendum, and an eForms prior-information notice with no lot or part section. A lot-less Tender has no row on /v1/lots; find it on /v1/tenders." },
+          "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "Headline value: the ONE published figure the value election elects, or null when none survives it. Since issue 551 it can instead be a DERIVED lot sum, in the lots' own currency, when value_derivation is set: the head version's lots added up, served only where the buyer's own procedure total vouches for that sum (lot-sum-vouched), or the lots' latest awards added up on a Tender with no procedure figure, served only where a total the buyer stated, within 1% of the sum, vouches for it (lot-sum-awards, issue 551 unit 4b), and only while lot-sum-awards is switched on: it is switched off since 2026-10-19 (pending an investigation), so lot-sum-awards is not served while it is off. A multi-lot Tender with no procedure figure serves ONE figure, an award's copy or null. A multi-lot Tender whose only figures are lot estimates (BT-27-Lot) or framework maxima (BT-271-Lot), with no procedure figure, still serves ONE lot's figure, never their sum." },
+          "value_derivation": {
+            "type": "object",
+            "nullable": true,
+            "description": "Issue 551: null when value is a published figure; otherwise how the lot sum in value was derived. Set on the current version only. `method` is `lot-sum-vouched` (a procedure-level figure that a scale rule refused is exactly 10^exponent times this sum, so the buyer's own total, with its decimal separator lost, vouches for it; issue 537's lot-sum rule, 471's exact 10^k partner or 492's x100), or `lot-sum-awards` (each lot's latest award added up, on a Tender with no procedure figure at all, whose value would otherwise be an award's copy or null; path W, as issue 551 calls it). lot-sum-awards was withdrawn in October 2026 (issue 551 unit 4a: its first design was wrong on 18% of a uniform sample read against the notices) and was re-enabled with its guards R1-R10 (issue 551 unit 4b, 2026-10-18): no lot won by two separate tenders, no colliding or missing published lot numbers, no notice total below the lots it awards, no award 10x its lot's estimate, 10x or a tenth of its earlier award, or 10x the next largest award, none of fifteen known shapes (closed lots, unit rates, ceilings copied per supplier, a procedure total booked on one lot), no lot restated under a second key, no award resolved through another lot's tender, and every awards sum, at any size, needs a total the buyer stated within 1% of it, which `vouched_by` names. It is switched off again since 2026-10-19 (issue 551, B5's stop rule: its rollout changed about twice as many Tenders as projected; under investigation), so lot-sum-awards is not served while path W is off: no fold derives it, and the Tenders folded with it are refolded back to the value election's one figure (an award's copy) or null. The published figures stay in amounts; no amount row is invented.",
+            "properties": {
+              "method": { "type": "string", "enum": ["lot-sum-vouched", "lot-sum-awards"], "description": "lot-sum-vouched, the one method served while lot-sum-awards is switched off (since 2026-10-19). lot-sum-awards (issue 551 unit 4b, always with vouched_by) is not served while it is switched off; it stays in the enum for when it is switched back on (and a Tender not yet refolded since)." },
+              "summed": { "type": "string", "enum": ["awards", "BT-27-Lot", "BT-271-Lot"], "description": "Which lot figures were added: each lot's latest award, its largest estimated value, or its largest framework maximum. The award notice's partner-only framework values (BT-709 / BT-660) are never summed." },
+              "lots": { "type": "integer", "description": "How many lots the sum covers." },
+              "rule": { "type": "string", "enum": ["537", "471", "492"], "description": "lot-sum-vouched only: the issue whose scale rule refused the procedure figure." },
+              "exponent": { "type": "integer", "description": "lot-sum-vouched only: the refused figure is 10^exponent times the sum (to one cent per lot)." },
+              "refused": {
+                "type": "object",
+                "description": "lot-sum-vouched only: the refused procedure figure as published.",
+                "properties": {
+                  "field": { "type": "string" },
+                  "value": { "$ref": "#/components/schemas/Money" }
+                }
+              },
+              "vouched_by": {
+                "type": "object",
+                "description": "lot-sum-awards only (issue 551 unit 4b, R10): the buyer-stated total that vouches for the sum: a total some notice of the Tender stated in the sum's currency, within 1% of it, and not one lot's own award. Absent on lot-sum-vouched, whose refused figure vouches instead. Written only while lot-sum-awards is switched on (off since 2026-10-19).",
+                "properties": {
+                  "field": { "type": "string", "description": "The published field that stated it: BT-161-NoticeResult, BT-118-NoticeResult, BT-1118-NoticeResult, BT-27-Procedure, TED-VAL_TOTAL, TED-VAL_ESTIMATED_TOTAL, or TED-LOW / TED-HIGH (the ends of a TED VAL_RANGE_TOTAL)." },
+                  "notice_id": { "type": "integer", "description": "The notice that stated it (a /v1/notices id)." },
+                  "cents": { "type": "integer", "description": "The stated total, in minor units of value's currency." }
+                }
+              }
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "TenderDetail": {
+        "allOf": [
+          { "$ref": "#/components/schemas/Tender" },
+          {
+            "type": "object",
+            "description": "The Tender plus its satellites.",
+            "properties": {
+              "lots": { "type": "integer", "description": "Lot count, as on the Tender row. 0 means no notice of the Tender published a lot section (the text era; internal-ojs 2008 without a `LOTS` section; r2.0.8 without a contract-notice lot annex, since an r2.0.8 award notice carries none; a standalone r2.0.9 F14 corrigendum; an eForms prior-information notice without lots; an FTS Tender whose releases list no `tender.lots`), so the Tender has no row on /v1/lots (issue 535)." },
+              "lot_details": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "texts": { "type": "array", "description": "The version's texts, each `{lot, field, lang, value}`, every stored language variant. `title` and `description` values are decoded of a publisher's extra escaping exactly as the row's `title` is (issue 538); every other field is served as parsed.", "items": { "type": "object", "additionalProperties": true } },
+              "amounts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "dates": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "classifications": { "type": "array", "description": "Coded facts about the version, each `{field, scheme, code, lot_id}`. Schemes: `cpv` (field `main` or `additional`; the bare 8-digit code, one per row), `nuts` (field `place`, as published; or field `place_country`: the NUTS level-0 code of a place the notices gave only as a country, present only on a version with no other `nuts` row, issue 532), and `nature` (field `nature`): the contract nature in one vocabulary across eras — `works`, `supplies`, `services`, or the pre-2004 text era's `combined` — folded from eForms BT-23, the XML era's NC_CONTRACT_NATURE and the text era's NC header (issue 397). Rows folded before that unit carry no `nature` row until their Tender is refolded. And `procedure` (field `procedure`, Tender scope only, at most one per version): the procedure type in eForms' `procurement-procedure-type` vocabulary, folded from BT-105 (eForms, eForms-DE, FTS), DÖE sdk-0.1's ProcedureCode, the XML eras' section-IV procedure checkbox or PR_PROC code, the internal-ojs era's PROC and the text era's PR header (issue 479); the same value the row's `procedure_type` serves. And `dps` (field `dps`): a declared dynamic purchasing system (issue 533) — eForms BT-766 `dps-list` / `dps-nlist` at the lot that declared it (eForms-DE 1.x and DÖE sdk-0.1 under their own field ids), or `dps` at Tender scope for the r2.0.9 DPS marker; a later notice's `none` never clears it, so every later version carries it. Complete since the 2026-10-16 fields refold (jobs 2563 and 2564).", "items": { "type": "object", "additionalProperties": true } },
+              "parties": { "type": "array", "description": "The organizations this version names, and the role each plays. TWO vocabularies, deliberately (issue 393). The LEGACY TED eras fold onto canonical roles: `buyer`, `purchasing-body`, `winner`, `review-body`, `mediation-body`, `tender-receipt`, `further-information`, `specifications-provider`, `appeal-information`, `tax-legislation-information`, `environmental-legislation-information`, `employment-legislation-information`. eForms is served AS PUBLISHED — `Procedure-Buyer`, `Tenderer`, `Lot-ReviewOrg`, `Lot-ReviewInfo`, `Lot-TenderReceipt` — because the suffix carries the lot/procedure SCOPE that a canonical name would lose; `Lot-ReviewOrg` means `review-body`, `Lot-ReviewInfo` (where to get information on appeals) means `appeal-information` and `Lot-Mediator` means `mediation-body`. So a buyer is `buyer` or `Procedure-Buyer`. A `Tenderer` is a bidder, won or not (a losing bidder keeps the role), so do not read who won from this array: ask `lot_results[].winners`, or `?winner=` on `/v1/tenders`. Any other value is a source element name not yet folded, kept verbatim rather than guessed at: treat it as unknown, not as canonical. Each party names its organization twice (issue 456). `organization_name` is the organization's head, one name for every tender it appears on (elected from its mentions since issue 524, so it can change with no new notice: see `Organization.name`); `mention_name` is the name the party's anchoring notice published for it — the version's own notice, or an earlier notice of the chain when a later one republished no party in that role (parties carry forward per role) — served always, equal to the head or not. They differ for ordinary reasons (a trading name, a rename, another language) and for a bad one: a mention binds to an organization by its official identifier before its name, so a notice that published another organization's identifier on a party puts that party on the other organization, whose head then names it — `mention_name` still says what the notice said. `organization_id` follows the identifier, so read it with that in mind. A `winner` or `Tenderer` party that IS the notice's own buyer carries `is_buyer: true` (issue 484; see `lot_results`).", "items": { "type": "object", "properties": { "lot": { "type": "string", "nullable": true, "description": "The lot key the role is scoped to, or null for the whole procedure." }, "organization_id": { "type": "integer", "format": "int64" }, "organization_name": { "type": "string", "description": "The organization's head name: one name for every tender the organization appears on, not necessarily what this notice published. For an organization with an identifier it is elected from its mentions (issue 524; see `Organization.name`), so it can change with no new notice: the rename is an `organization changed` event, not a Tender one." }, "mention_name": { "type": "string", "nullable": true, "description": "The name the party's anchoring notice published for it (issue 456): the version's own notice, or an earlier one when a later notice republished no party in this role. Served whether or not it equals organization_name; null only when that notice published no name." }, "role": { "type": "string", "description": "The canonical party role — see the array description for the vocabulary." }, "is_buyer": { "type": "boolean", "enum": [true], "description": "Present, and true, only on a `winner` / `Tenderer` party that is its notice's own buyer: every winner row this organization holds on the party's own decisions — those of its anchoring notice on the party's lot, or all of that notice's decisions when the party has no lot — is flagged (`lot_results[].winners[].is_buyer`). A party of the same organization on another lot it won under another name (an in-house unit sharing the authority's identifier) is not flagged. Absent otherwise." } }, "additionalProperties": true } },
+              "lot_results": { "type": "array", "description": "Award decisions, accumulating across framework/DPS rounds. A decision's `winners[]` name the organization by its head (`organization_name`) only: a winner row carries no anchor to the notice's own party block, so it has no `mention_name`. In eForms the name the round's notice published for a winner is normally on the winning bid's `parties[]` (bids accumulate with their rounds). On the detail's `parties[]` (role `winner` or `Tenderer`) it is there only while the version's parties still come from that round's notice: parties are replaced role by role by each newer notice while decisions accumulate, so an earlier round's winner can have no `parties[]` entry left — and in the legacy eras, which publish no bids, its published name is then nowhere on the detail. It is in `organization_mentions` under the decision's `notice_id` (queryable through `/v1/sql`) and in `/v1/notices/{id}/content`. A winner that IS the decision's own buyer — the notice names one organization (the same party, or the same name up to case and accents) as buyer and as contractor — carries `is_buyer: true` (issue 484). It is published data kept as published: an in-house award to the authority's own service is real, and a publisher who repeated its own block in the contractor slot still said so. Supplier statistics leave such wins out (`?winner=` does; on `/v1/sql`, `WHERE winner_is_buyer IS NULL` on `v_lot_results` / `v_awards`). The key is absent on every other winner, including rows folded before the flag existed (2026-10), until their tender is next re-folded.", "items": { "type": "object", "properties": { "winners": { "type": "array", "items": { "type": "object", "properties": { "role": { "type": "string" }, "organization_id": { "type": "integer", "format": "int64" }, "organization_name": { "type": "string", "description": "The organization's head name (`Organization.name`: elected from its mentions since issue 524)." }, "is_buyer": { "type": "boolean", "enum": [true], "description": "Present, and true, only when this winner is the decision notice's own buyer. Absent otherwise." } }, "additionalProperties": true } } }, "additionalProperties": true } },
+              "bids": { "type": "array", "items": { "type": "object", "properties": { "parties": { "type": "array", "description": "Who stands behind the bid: `tenderer` and `subcontractor` organizations, each named twice like the detail's `parties[]` (issue 456).", "items": { "type": "object", "properties": { "role": { "type": "string", "description": "`tenderer` or `subcontractor`." }, "organization_id": { "type": "integer", "format": "int64" }, "organization_name": { "type": "string", "description": "The organization's head name (`Organization.name`: elected from its mentions since issue 524)." }, "mention_name": { "type": "string", "nullable": true, "description": "The name the bid's notice published for the party, served whether or not it equals organization_name; null only when that notice published no name." } }, "additionalProperties": true } } }, "additionalProperties": true } },
+              "contracts": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+              "versions": { "type": "array", "items": { "type": "object", "properties": { "caused_by_notice_id": { "type": "integer", "format": "int64" } }, "additionalProperties": true } }
+            }
+          }
+        ]
+      },
+      "Lot": {
+        "type": "object",
+        "description": "A subdivision of a Tender.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "tender_id": { "type": "integer", "format": "int64" },
+          "kind": { "type": "string", "description": "The source's section kind for this lot (`Lot`, `LotGroup`, …)." },
+          "lot_key": { "type": "string", "description": "The source's own lot identifier within its notice, e.g. `LOT-0001` — unique per tender, not globally." },
+          "title": { "type": "string", "nullable": true, "description": "The lot's title, or the tender's when the lot publishes none." },
+          "version": { "type": "integer", "description": "The parent Tender version this lot belongs to." },
+          "submission_deadline": { "type": "string", "format": "date-time", "nullable": true, "description": "The lot's own deadline where the source states one per lot, otherwise the procedure's. The legacy form generations publish one procedure-level deadline for the whole notice (the r209 era's DATE_RECEIPT_TENDERS is procedure-scoped by design), and that is the date a bidder submits by and the date `?status=open` evaluates — so a lot returned as open carries the deadline that opened it. A lot's own deadline wins even when the procedure's is later. `submission_deadline_scope` says which of the two it is." },
+          "submission_deadline_scope": { "type": "string", "nullable": true, "description": "`lot` when the lot published this deadline itself, `procedure` when it inherits the procedure's (issue 389 unit 2, issue 370 unit 4). Null exactly when submission_deadline is." },
+          "value": { "nullable": true, "allOf": [{ "$ref": "#/components/schemas/Money" }], "description": "The lot's elected value: the largest PUBLISHED figure among the lot's own amounts that the value election admits — not a withheld marker, an exact zero, a negative, a one-unit token, a repdigit field maximum, a converted amount above the implausibility ceiling, or an exact 10^k scale slip of another figure of the Tender (issues 366, 471). Null when no lot figure survives; a lot never falls back to its Tender's figure, and award results are never elected. Stored by the fold, so /v1/sql reads the same figure at tender_version_lots.value_cents / value_currency (issue 490)." }
+        },
+        "additionalProperties": true
+      },
+      "Organization": {
+        "type": "object",
+        "description": "A canonical Organization — buyer, bidder or winner.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string", "nullable": true, "description": "The organization's head name: one name for every tender it appears on (`parties[].organization_name`). For an organization with an identifier it is ELECTED from the names its notice mentions published (issue 524, ADR-0013's 2026-10-15 amendment): the operator's `refresh-org-names` job serves a fit spelling of the winning cluster, its whitespace collapsed (trimmed, every run one space). The votes are the mentions that published a name (one with no name, a blank one or a non-name one does not vote), clustered as one name across casing, diacritics, `the` and a legal form. The head changes only when a cluster other than its own holds at least 55% of the votes, at least 3 votes and at least twice the head's; or when the head's own cluster holds at most 1 vote and a unique top cluster holds at least 3 votes and at least 25%; or when the head is empty or not a name (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script that name is written in. Even then it stays when the change would swap one legal-form family for another (`AG` to `Sàrl`) while the head's own cluster holds at least 2 votes, drop a consortium mark unless the new name keeps a word besides its legal forms and every such word is a word of the head, fail the NHS ODS name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when the identifier is a placeholder (`KEINEANGABE`, `UNBEKANNT` or `NICHTVORHANDEN` with any digits, or all zeros); when no spelling of the winning cluster is fit to serve; when the identifier carries a `wrong` or unapplied `related` review verdict; on the 55% arm, while the organization's newest procedures still use the current head (a rename: the head names at least 2 procedures and two thirds of the organization's newest as many), or while a notice printed the current head within 3 years (1,095 days) before the job's plan; on the 55% and 25% arms, while the current head is the only one of the organization's names printed on its newest publication day; all three unless the head is unfit to serve for a reason other than being all lower case, or carries a standalone number the other name lacks while the other name drops at most one other word of it (a number the other name prints joined to a neighbouring word, `SMD 3` against `Smd3`, is the name's own); a head unfit only through a line break or a tab counts as unfit only when the other name's words lie inside one of its lines or are exactly those of a run of its whole lines, and a head held this way is instead served as its own words on one line when every break falls mid-phrase (the line before ends in an unspaced hyphen or a joining word such as `und`, `of` or `z`, or the next line starts lower case, and the line before does not end in a legal form, a comma, a semicolon or a colon) and the name on one line does not itself carry such a standalone number, unless that change would trip the legal-form, consortium, NHS or placeholder check above; on the 55% arm, while a name other than the winning one and the current head's also has votes and no notice printed the winning name (any spelling of it) within a year (365 days) before the job's plan (an undated one counts as not printed), unless one of those three holds was lifted for the head; on the 55% and 25% arms, when the change would serve a review body's name (a procurement review chamber or court) for a head that is not one, a name led by a contracting organ (`Junta de Gobierno …`, `Alcaldía …`) for a head that is not, the head's own words plus a code (`(976)`), a name that adds a number after a comma or semicolon (an appended address; not for a Czech or Slovak school), an ALL-CAPS respelling of a mixed-case head's same words, the same words printed twice (`X - X`) for a head that is not, or the head with its seat dropped (a tail of 2 or 3 words led by `w`, `we`, `v`, `ve` or `vo`: `Ośrodek Pomocy Społecznej w Kluczborku` to `Ośrodek Pomocy Społecznej`); and, on the 55% and 25% arms only, when the head is in another script than its mentions (TED's English rendering). A rename is announced as an `organization changed` event (no Tender event: the parties join the organization at read time). Where the job has not renamed an organization, and always for one without an identifier (whose name is its matching key), it is the first spelling a notice published. It is not necessarily what any one notice said: `parties[].mention_name` is that." },
+          "country": { "type": "string", "nullable": true, "description": "ISO 3166-1 alpha-2; null where no publication stated one." },
+          "identifier": { "type": "string", "nullable": true, "description": "Registration identifier, normalised (issue 300); null for a provisional row." },
+          "identifier_kind": { "type": "string", "nullable": true, "description": "Which register the identifier belongs to — `national`, `vat`, `eu`, …. Matched case-insensitively by ?kind=." },
+          "mentions": { "type": "integer", "description": "How many notice mentions resolve to this organization — a proxy for how well-attested the identity is." },
+          "provisional": { "type": "boolean", "description": "True when minted from a name alone with no identifier to bind it: a placeholder a later publication may merge away." },
+          "identifier_status": { "type": "string", "nullable": true, "enum": ["register_mismatch", "related_entity", null], "description": "Set when a review against the official register found `identifier` is not this organization's own: `register_mismatch` — another company's number, a dissolved stranger's, or one never issued (such a number never merges this organization with another, and another spelling of it reaches this organization only under a matching name; a notice publishing exactly that number still resolves here); `related_entity` — a parent's or subsidiary's. Null when no review found a problem, which is not the same as checked." },
+          "merged_identifiers": {
+            "type": "array",
+            "description": "The identifiers merges folded into this organization (issue 460) — a PPON whose organization was merged into this company-number one, another spelling of one register key. `?identifier=` finds this organization by each of them. Empty when no merge left one. A number a review found was never this organization's own (another company's) is never among them, in any spelling, once the organization is re-keyed onto its right number.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "identifier": { "type": "string" },
+                "identifier_kind": { "type": "string", "nullable": true },
+                "country": { "type": "string", "nullable": true }
+              }
+            }
+          }
+        },
+        "additionalProperties": true
+      },
+      "Notice": {
+        "type": "object",
+        "description": "A raw import record — the traceability anchor of every canonical version (ADR-0001).",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "source": { "type": "string" },
+          "publication_id": { "type": "string", "description": "Official publication number, e.g. `00497150-2026`. Filter with ?publication_id=." },
+          "published_at": { "type": "string", "nullable": true, "description": "When it was published, ISO 8601 in the offset the source published — a date only when the source gave a date only; null for a notice held out of the canonical layer. DÖE publishes no journal date: a DÖE published_at is the publication date the buyer requested (or one the portal stamped), raised to the day of the notice's IssueDate when that is later (issue 539), a date only when that day wins; it usually runs 1–3 days before the day of the portal's daily export that carries the notice. A DÖE sdk-1.x notice states neither, and its published_at is its IssueDate itself, time included. Until the issue-539 drain re-dates the notices already stored, a DÖE notice can serve the requested (or stamped) date alone." },
+          "dispatched_at": { "type": "string", "nullable": true, "description": "When the buyer dispatched it for publication; same rendering rule as published_at." },
+          "ingested_at": { "type": "string", "format": "date-time", "description": "When this system first stored it — learn order, not publication order." },
+          "profile": { "type": "string", "description": "The mapping profile that parsed it, e.g. `eforms:eforms-sdk-1.13`, `text`, `ted-export-r209`." },
+          "declared_version": { "type": "string", "nullable": true, "description": "The schema version the payload declared for itself, where it declares one." },
+          "parse_state": { "type": "string", "description": "`pending`, `parsed` or `quarantined` (ADR-0004). THIS — not the presence of `quarantine` — says whether the notice is held today." },
+          "content_hash": { "type": "string", "description": "Hash of the stored payload; the identity a re-fetch dedupes against." },
+          "member_path": { "type": "string", "description": "Where the notice sits inside its source package — the provenance a /v1/sql join on v_fetches resolves." }
+        },
+        "additionalProperties": true
+      },
+      "NoticeContent": {
+        "type": "object",
+        "description": "A notice's parsed payload, grouped by section. Each value carries its source field_id, its ordinal (document-order repeat counter within the section) and a `type` tag naming which typed shape follows: text {lang, value}, code {list, code}, classification {scheme, code}, amount {cents, currency}, date {value: ISO 8601 in the published offset}, integer {value}, number {value, unit}, id {scheme, value, is_ref}.",
+        "properties": {
+          "notice_id": { "type": "integer", "format": "int64" },
+          "sections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "section_id": { "type": "string", "description": "The identifier the notice published (LOT-0001, ORG-0002, PROCEDURE for the root)." },
+                "kind": { "type": "string", "description": "The repeatable node's kind (Lot, Organisation, LotResult, …)." },
+                "parent_section_id": { "type": "string", "nullable": true },
+                "values": {
+                  "type": "array",
+                  "items": { "type": "object", "additionalProperties": true }
+                }
+              }
+            }
+          }
+        }
+      },
+      "NoticeDetail": {
+        "description": "One Notice by id: the list-row identity plus `quarantine`, which is the notice's hold HISTORY and not a statement about today. Ask `parse_state` whether the notice is held now: `quarantined` means held, and only a held notice lacks parsed satellites and a canonical tender. Most notices carrying a `quarantine` object parsed long ago \u2014 the row is retained after a reclaim so the hold stays auditable.",
+        "allOf": [
+          { "$ref": "#/components/schemas/Notice" },
+          {
+            "type": "object",
+            "properties": {
+              "quarantine": {
+                "nullable": true,
+                "description": "Why the notice was ever held out of the canonical layer, or null if it never was. NOT a held-today flag: the row is retained after the member is reclaimed, so `reprocessed_at != null` means the member was reclaimed and its content IS served (`/v1/notices/{id}/content`, and it backs a tender version). `skipped_at != null` means resolved as a policy skip and still out of the corpus; both stamps null means outstanding. For \\\"is this notice held?\\\" read `parse_state`.",
+                "allOf": [{ "$ref": "#/components/schemas/Quarantine" }]
+              }
+            }
+          }
+        ]
+      },
+      "Quarantine": {
+        "type": "object",
+        "description": "A held notice's quarantine record. `reason`/`detail` are the current hold cause; `first_reason`/`first_detail` the original when a re-attempt overwrote it. The terminal stamps say which outcome the member reached: outstanding (both null), reclaimed (`reprocessed_at` set), or skipped-by-policy (`skipped_at` set).",
+        "properties": {
+          "reason": { "type": "string" },
+          "detail": { "type": "string", "nullable": true },
+          "profile": { "type": "string", "nullable": true },
+          "first_seen": { "type": "string", "description": "ISO 8601." },
+          "attempts": { "type": "integer", "nullable": true },
+          "last_attempt_at": { "type": "string", "nullable": true, "description": "ISO 8601." },
+          "reprocessed_at": { "type": "string", "nullable": true, "description": "ISO 8601; set when the member was reclaimed into the corpus." },
+          "skipped_at": { "type": "string", "nullable": true, "description": "ISO 8601; set when a dispatch policy declines the member (e.g. duplicate siblings)." },
+          "skipped_reason": { "type": "string", "nullable": true },
+          "first_reason": { "type": "string", "nullable": true },
+          "first_detail": { "type": "string", "nullable": true }
+        }
+      },
+      "ChangeEvent": {
+        "type": "object",
+        "description": "One shape across SSE change events, poll items and webhook batches.",
+        "properties": {
+          "cursor": { "$ref": "#/components/schemas/Cursor" },
+          "op": { "type": "string", "enum": ["added", "changed", "removed"] },
+          "entity": { "type": "string", "enum": ["tender", "lot", "organization"] },
+          "id": { "type": "integer", "format": "int64" },
+          "version": { "type": "integer", "nullable": true, "description": "The canonical version seq the change is at. Null when no version moved: an organization event, an entity removed because it left its Tender, or a tender or lot whose existing versions were rewritten in place (an organization merge re-pointing its parties; a re-derivation correcting what the fold stored, which announces only the Tenders and lots whose reading moved; or the fold re-labelling a Tender's source or kind, as when a DÖE Tender turns `ted`, which announces the Tender and every lot of its current version). Re-read the entity by id and upsert it." },
+          "changed_at": { "type": "string", "description": "ISO 8601. Poll only." },
+          "data": { "type": "object", "additionalProperties": true, "description": "Only with ?include_data=true on SSE." }
+        }
+      },
+      "EventStream": {
+        "type": "string",
+        "description": "Server-Sent Events: one `added` event per row currently matching the filter (the snapshot, read page by page with no transaction held across the pages, so not a point-in-time view), a `live` marker carrying the snapshot's cursor, then `change` events forever. Under concurrent writes the snapshot is at-least-once: an entity written during it can arrive as `added` and again as a `change` after `live`, and one that left the filter before its page was read is not sent, while its `removed` is. So apply `added` as an upsert by id and `removed` as an idempotent delete — a `removed` can name an entity never received; the diff stream then makes the final state exact, with known exceptions: on /v1/lots, a filter that reads the lot's Tender (country, cpv, buyer, winner, bidder, procedure_type, currency, status) is checked again only when a change row is written for the lot itself, so a version that moves only such a Tender fact (a second award notice naming a winner, the lot's own facts unchanged) can leave a lot the filter now excludes held, or one it now admits not sent (issue 565); and under min_value/max_value, a version since superseded is read as a superset on both sides, whether a later version was written in the same fold or the stream resumes, or lags, past it, so a `changed` or an `added` can name an entity outside the bound, on a live stream as well as a resumed one, until a later change probes the current version (issue 561). Each diff event re-evaluates the filter against the old and new version: moving into it is `added`, out of it `removed`, within it `changed`. Apply `changed` as an upsert by id too (re-read the entity, or use include_data): under min_value/max_value, source or (on /v1/tenders) kind a `changed` can name an entity never received where `added` was due — an earlier version's value is not stored and is read as a superset (issue 561), and when the fold re-labels a Tender's source or kind (a DÖE Tender turns `ted` when its TED twin arrives) both the version's own change and the `version: null` correction that follows read the Tender's current label on both sides, so a subscriber to the new label hears `changed` (or `added`, for an entity the version before did not hold) and one to the old label `removed` (issue 562). On /v1/lots a lot `changed` can arrive when only its Tender's value or closure moved: a lot's min_value/max_value bound and its status read its Tender, so a version that moves either is the lot's change too (issues 560 and 533). Each event's SSE id is an opaque, generation-qualified resume token (e.g. `3:193055`); pass it back as Last-Event-ID or ?cursor= to skip the snapshot and receive exactly what was missed. That is why a /v1/tenders stream refuses a date bound spelled as the literal `now` with 400: a stream resolves `now` when its connection opens, so a resume would resolve it again and check a later bound than the one the client's state was built under, and a Tender that crossed the moving bound between the two connects would not be sent the move. Pass an absolute timestamp instead (unix seconds, RFC 3339 or a bare date); pages accept `now` as before (issue 563). In place of deadline_after=now, status=open selects tenders still open, but status also reads the clock when the stream connects, and has no absolute spelling: no event marks a deadline passing, so drop a Tender from a status=open state once its deadline has passed (after a resume, a change that leaves such a Tender closed is not sent; a version that reopens it arrives as `added`). A `reset` event ({\"reason\":\"cursor_expired\"|\"cursor_ahead\"|\"feed_rebuilt\"}) means the token cannot resume: drop local state and re-subscribe fresh. Streams are capped at 5 per client; a 15 s keep-alive comment holds the connection open."
+      },
+      "Webhook": {
+        "type": "object",
+        "description": "A registered endpoint (no secret). Deliveries are Standard Webhooks POSTs: webhook-id, webhook-timestamp and webhook-signature headers, the signature `v1,<base64 HMAC-SHA256>` over `{id}.{timestamp}.{body}` keyed by your secret. Retries back off 30 s → 2 m → 10 m → 1 h → 4 h → 12 h → daily; after ~3 days of continuous failure the endpoint auto-disables.",
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "url": { "type": "string", "format": "uri" },
+          "created_at": { "type": "integer", "description": "Epoch seconds." },
+          "disabled_at": { "type": "integer", "nullable": true, "description": "Set when disabled (by the owner or after sustained failure); null means active." },
+          "last_delivered_cursor": { "type": "integer", "description": "Newest change cursor this endpoint has a 2xx for." },
+          "failing_since": { "type": "integer", "nullable": true, "description": "First failure of the current streak, if currently failing." },
+          "consecutive_failures": { "type": "integer" }
+        }
+      },
+      "WebhookDelivery": {
+        "type": "object",
+        "description": "One recent delivery attempt.",
+        "properties": {
+          "attempted_at": { "type": "integer", "description": "Epoch seconds." },
+          "cursor_from": { "type": "integer" },
+          "cursor_to": { "type": "integer" },
+          "events": { "type": "integer" },
+          "status": { "type": "integer", "nullable": true, "description": "HTTP status, when the endpoint answered." },
+          "duration_ms": { "type": "integer" },
+          "ok": { "type": "boolean" },
+          "error": { "type": "string", "nullable": true }
+        }
+      }
+    }
+  }
+}

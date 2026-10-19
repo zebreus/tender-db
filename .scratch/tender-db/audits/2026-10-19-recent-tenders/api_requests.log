@@ -1,0 +1,49 @@
+2026-10-19T21:50:23Z #1 GET https://tenders.zebreus.click/v1/openapi.json -> 200 104131 (0.8s) saved=openapi.json
+2026-10-19T21:50:25Z #2 GET https://tenders.zebreus.click/docs -> 200 109234 (0.9s) saved=docs.html
+2026-10-19T21:50:2xZ agent=doe-fts #1 GET https://tenders.zebreus.click/docs -> status=200 bytes=109234 saved=raw/docs.html (line reconstructed after the fact: wrapper bug dropped the original log line)
+2026-10-19T21:50:2xZ agent=doe-fts #2 GET https://tenders.zebreus.click/v1/openapi.json -> status=200 bytes=104131 saved=raw/openapi.json (line reconstructed after the fact: wrapper bug dropped the original log line)
+2026-10-19T21:51:33Z #5 GET https://tenders.zebreus.click/v1/tenders?source=ted&published_after=2026-10-16T21:50:00Z&limit=20 -> 200 11229 (0.8s) saved=list_tenders_p1.json
+2026-10-19T21:51:43Z #6 GET https://tenders.zebreus.click/v1/tenders/8852009 -> 200 2872 (0.5s) saved=tender_8852009.json
+2026-10-19T21:51:46Z #7 GET https://tenders.zebreus.click/v1/tenders/8852005 -> 200 4679 (0.5s) saved=tender_8852005.json
+2026-10-19T21:52:04Z #8 GET https://tenders.zebreus.click/v1/notices/47414082 -> 200 414 (0.9s) saved=notice_47414082.json
+2026-10-19T21:52:03.895Z agent=doe-fts #3 GET https://tenders.zebreus.click/v1/tenders?source=doe&published_before=now&limit=10 -> status=200 bytes=5035 time=0.610468s curl_rc=0 saved=raw/list_doe.json
+2026-10-19T21:52:06Z #9 GET https://tenders.zebreus.click/v1/notices/47414082/content -> 200 8913 (0.4s) saved=content_47414082.json
+2026-10-19T21:52:06.764Z agent=doe-fts #4 GET https://tenders.zebreus.click/v1/tenders?source=fts&published_before=now&limit=10 -> status=200 bytes=5526 time=0.440962s curl_rc=0 saved=raw/list_fts.json
+2026-10-19T21:52:08Z #11 GET https://tenders.zebreus.click/v1/notices/47413608 -> 200 414 (0.4s) saved=notice_47413608.json
+2026-10-19T21:52:10Z #13 GET https://tenders.zebreus.click/v1/notices/47413608/content -> 200 15881 (0.5s) saved=content_47413608.json
+2026-10-19T21:52:14.280Z agent=doe-fts #5 GET https://tenders.zebreus.click/v1/tenders/8852013 -> status=200 bytes=2512 time=0.419391s curl_rc=0 saved=raw/tender_8852013.json
+2026-10-19T21:52:16.971Z agent=doe-fts #6 GET https://tenders.zebreus.click/v1/tenders/8590779 -> status=200 bytes=3899 time=0.653363s curl_rc=0 saved=raw/tender_8590779.json
+2026-10-19T21:52:30Z agent=ted NOTE: the untagged lines numbered #1,#2,#5,#6,#7,#8,#9,#11,#13 above are agent=ted (TED eForms audit); their numbering was skewed by the shared log. agent=ted has made 9 GETs so far; raw bodies moved to raw/ted/.
+2026-10-19T21:52:35Z agent=doe-fts NOTE (not a request): files logged above as raw/<name> for agent=doe-fts #1-#6 were moved to raw/doe-fts/<name> to avoid collisions with a parallel agent writing into raw/
+2026-10-19T21:52:48.407Z agent=doe-fts #8 GET https://tenders.zebreus.click/v1/notices/47414315/content -> status=200 bytes=4912 time=1.182958s curl_rc=0 saved=raw/doe-fts/content_47414315.json
+2026-10-19T21:52:51.860Z agent=doe-fts #9 GET https://tenders.zebreus.click/v1/notices/47414817/content -> status=200 bytes=3668 time=0.412744s curl_rc=0 saved=raw/doe-fts/content_47414817.json
+2026-10-19T21:52:54.548Z agent=doe-fts #10 GET https://tenders.zebreus.click/v1/notices/47414815/content -> status=200 bytes=3670 time=0.428012s curl_rc=0 saved=raw/doe-fts/content_47414815.json
+2026-10-19T21:53:03Z agent=doe-fts NOTE (not a request): numbering skipped #7 (the previous NOTE line was miscounted as a request); requests #8-#10 are this agent's 7th-9th GETs
+2026-10-19T21:53:30Z agent=ted #10 GET https://tenders.zebreus.click/v1/organizations/4545 -> 200 195 (0.7s) saved=org_4545.json
+2026-10-19T21:53:32Z agent=ted #11 GET https://tenders.zebreus.click/v1/organizations/88 -> 200 205 (0.5s) saved=org_88.json
+2026-10-19T21:53:34Z agent=ted #12 GET https://tenders.zebreus.click/v1/organizations/4643720 -> 200 210 (0.4s) saved=org_4643720.json
+2026-10-19T21:53:37Z agent=ted #13 GET https://tenders.zebreus.click/v1/organizations/1772 -> 200 185 (0.6s) saved=org_1772.json
+2026-10-19T21:53:39Z agent=ted #14 GET https://tenders.zebreus.click/v1/organizations/398 -> 200 188 (0.4s) saved=org_398.json
+2026-10-19T21:54:13.421Z agent=doe-fts #11 GET https://tenders.zebreus.click/v1/notices/46714265/content -> status=200 bytes=5698 time=0.685425s curl_rc=0 saved=raw/doe-fts/content_46714265.json
+2026-10-19T21:54:16.354Z agent=doe-fts #12 GET https://tenders.zebreus.click/v1/notices/46857338/content -> status=200 bytes=5689 time=0.440387s curl_rc=0 saved=raw/doe-fts/content_46857338.json
+2026-10-19T21:54:26.046Z agent=doe-fts #13 GET https://tenders.zebreus.click/v1/organizations/18174 -> status=200 bytes=180 time=0.444845s curl_rc=0 saved=raw/doe-fts/org_18174.json
+2026-10-19T21:54:28.739Z agent=doe-fts #14 GET https://tenders.zebreus.click/v1/organizations/30915379 -> status=200 bytes=222 time=0.499078s curl_rc=0 saved=raw/doe-fts/org_30915379.json
+2026-10-19T21:54:42.537Z agent=doe-fts #15 GET https://tenders.zebreus.click/v1/tenders?publication_id=25944788-1&source=doe&status=closed -> status=200 bytes=539 time=0.627860s curl_rc=0 saved=raw/doe-fts/status_closed_25944788-1.json
+2026-10-19T21:54:45.421Z agent=doe-fts #16 GET https://tenders.zebreus.click/v1/tenders?publication_id=098239-2026&source=fts&status=open -> status=200 bytes=743 time=0.434226s curl_rc=0 saved=raw/doe-fts/status_open_098239-2026.json
+2026-10-19T21:58:30.648Z agent=award #1 GET https://tenders.zebreus.click/v1/tenders?published_before=now&limit=200 -> status=200 bytes=115257 time=0.906733s curl_rc=0 saved=raw/award/list_recent_p1.json
+2026-10-19T21:58:53.312Z agent=award #2 GET https://tenders.zebreus.click/v1/tenders/8851944 -> status=200 bytes=3805 time=0.615095s curl_rc=0 saved=raw/award/tender_8851944.json
+2026-10-19T21:58:55.455Z agent=award #3 GET https://tenders.zebreus.click/v1/tenders/8851923 -> status=200 bytes=4027 time=0.431654s curl_rc=0 saved=raw/award/tender_8851923.json
+2026-10-19T21:59:12.444Z agent=award #4 GET https://tenders.zebreus.click/v1/notices/47411306/content -> status=200 bytes=16880 time=0.808873s curl_rc=0 saved=raw/award/content_47411306.json
+2026-10-19T21:59:14.593Z agent=award #5 GET https://tenders.zebreus.click/v1/notices/47410357/content -> status=200 bytes=15009 time=0.501241s curl_rc=0 saved=raw/award/content_47410357.json
+2026-10-19T21:59:16.732Z agent=award #6 GET https://tenders.zebreus.click/v1/notices/47411306 -> status=200 bytes=414 time=0.387669s curl_rc=0 saved=raw/award/notice_47411306.json
+2026-10-19T21:59:18.875Z agent=award #7 GET https://tenders.zebreus.click/v1/notices/47410357 -> status=200 bytes=414 time=0.392810s curl_rc=0 saved=raw/award/notice_47410357.json
+2026-10-19T22:00:13.697Z agent=award #8 GET https://tenders.zebreus.click/v1/organizations/6614 -> status=200 bytes=287 time=0.748940s curl_rc=0 saved=raw/award/org_6614.json
+2026-10-19T22:00:15.836Z agent=award #9 GET https://tenders.zebreus.click/v1/organizations/12032625 -> status=200 bytes=192 time=0.405218s curl_rc=0 saved=raw/award/org_12032625.json
+2026-10-19T22:00:17.975Z agent=award #10 GET https://tenders.zebreus.click/v1/organizations/31969111 -> status=200 bytes=195 time=0.403840s curl_rc=0 saved=raw/award/org_31969111.json
+2026-10-19T22:00:20.131Z agent=award #11 GET https://tenders.zebreus.click/v1/organizations/47 -> status=200 bytes=202 time=0.416533s curl_rc=0 saved=raw/award/org_47.json
+2026-10-19T22:00:22.302Z agent=award #12 GET https://tenders.zebreus.click/v1/organizations/31762953 -> status=200 bytes=187 time=0.419965s curl_rc=0 saved=raw/award/org_31762953.json
+2026-10-19T22:01:18.166Z agent=verify_ted #1 GET https://tenders.zebreus.click/v1/tenders/8851996 -> status=200 bytes=15343 time=0.767706s curl_rc=0 saved=raw/verify_ted/tender_8851996.json
+2026-10-19T22:01:33.292Z agent=verify_ted #2 GET https://tenders.zebreus.click/v1/notices/47413157/content -> status=200 bytes=42642 time=0.793813s curl_rc=0 saved=raw/verify_ted/content_47413157.json
+2026-10-19T22:01:44.408Z agent=award #13 GET https://tenders.zebreus.click/v1/tenders?publication_id=00722535-2026&source=ted&status=closed -> status=200 bytes=667 time=0.645150s curl_rc=0 saved=raw/award/status_closed_00722535-2026.json
+2026-10-19T22:01:46.542Z agent=award #14 GET https://tenders.zebreus.click/v1/tenders?publication_id=00719637-2026&source=ted&status=closed -> status=200 bytes=551 time=0.420898s curl_rc=0 saved=raw/award/status_closed_00719637-2026.json
+2026-10-19T22:06:48.690Z agent=verify_award #1 GET https://tenders.zebreus.click/v1/tenders/8851944 -> status=200 bytes=3805 time=0.655170s curl_rc=0 saved=raw/verify_award/tender_8851944_recheck.json
