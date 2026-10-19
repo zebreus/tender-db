@@ -1390,3 +1390,22 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   and gated but held off main until the gap; rates refreshed (A5) and their sha256 recorded; L_changed re-fixed at U6 with the
   2630-excluded reading; the gap = 10-21 after the 07:35Z chain (10-20 only if 560 records U-d PASS and closed on the 10-20
   morning and 562 unit 5 has its cursor ranges).
+
+## B6 flip commit — built and held (2026-10-19, wf_f58c9b34-9a9; patch `551-lot-sum/b6/flip-f0e58cf.patch`)
+
+- Built on base 3df8748 (implement, three lenses — fidelity / docs / regression — a skeptic per finding, fix): 12 findings
+  survived, 11 fixed, 1 deferred (a Rust pin on the eight newly served pins 6908248, 6679375, 7153588, 7398935, 7722197,
+  6779279, 6850401, 7698260 — a U10 follow-up, the f3502 harness being the measured evidence; generate with
+  `unit4b/gen_fixtures.py` into `canonical_551_v2_fixtures.rs` and add to `the_r10_guards_move_no_pin`'s served table).
+- Code: `LOT_SUM_AWARDS_PATH = true`, `R10_G_SINGLE` / `R10_G_COVER` stay true; a new `the_production_guard_set_is_both`
+  pin and a 7202436-shape G-cover test (`g_cover_refuses_a_total_from_a_notice_naming_no_summed_lot_that_g_single_keeps`);
+  tests re-pinned from "path W off" to production == the switch-on twin under BOTH (585917 → EUR 250,000.00, 5995030 → PLN
+  1,549,511.60, 8426318 → GBP 3,000,000,000.00; the switch-off twin keeps the max election); head_election_agreement's
+  drain-back test now plants a head production refuses (G-cover, a total on a no-round notice). /docs, OpenAPI, /v1/sql
+  notes, CHANGELOG (third value correction since B5; 2,334 of the 3,467 also moved by the first drain and 4a's drain-back,
+  so their fifth) and operations.md flip to "served again since issue 551 B6"; G-cover is worded as "a result on at least
+  one summed lot (one that closes the lot or awards nothing counts)", matching the code.
+- Full package suite (the gate's command, unfiltered) green on base 3df8748: 2,456 passed, 0 failed, 34 ignored.
+  ops/check.sh NOT run: the commit is re-gated on the final base when it ships (530 Build 1b lands on main first).
+- Local branch `hold/551-b6-flip` (f0e58cf); `git apply --check` clean on 3df8748. The held 546 patch (`546-triage/
+  u3-42cc601.patch`) applies on top of the flip with a 3-way merge; only CHANGELOG.md conflicts (top-of-file entry order).
