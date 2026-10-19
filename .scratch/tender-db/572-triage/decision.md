@@ -41,10 +41,11 @@ The served answer is 456 design 3. `organization_id` / `organization_name` is th
 `mention_name` is the body the notice printed.
 
 Unit 2 ships five things:
-1. **A /docs caveat**, pinned by a test, that covers both directions, the host case, the `?buyer=` behaviour, and
-   the `procuringEntity` / `roleDetails` drop.
-2. **An honesty fix to the FTS checklist.** `parties[].roleDetails` is listed as Ignored, and `parties[].roles` says
-   that `procuringEntity` becomes Procedure-Buyer.
+1. **A /docs caveat**, pinned by a test, that covers both directions, the host case, the `?buyer=` behaviour, the SQL
+   views (`v_tender_buyers` serves the head; the printed name is in `organization_mentions`), and the
+   `procuringEntity` / `roleDetails` drop.
+2. **An honesty fix to the FTS checklist.** `parties[].roleDetails` and `parties[].details.classifications` are
+   listed as Ignored and "owed", and `parties[].roles` says that `procuringEntity` becomes Procedure-Buyer.
 3. **Five 545-F-shaped mentions move to issue 545's follow-up cohort.** The measure counted them in class A, but
    none of them is an agent buying for a member:
    - Pagabo ×2 on CNTW's PPON;
@@ -71,7 +72,7 @@ What each judge contributed:
 
 | from | taken |
 |---|---|
-| user-value | The caveat's content: both directions, the host case, "read `mention_name` for display", the `?buyer=` workaround, the `procuringEntity` / `roleDetails` sentence, and a dated size. The rule that every number in the caveat is already in `measure.md` (amended: or in this decision's "Critic amendments" section, which is where the post-transfer count lives). The R2 buyer-filter read and its pairs. The reopen triggers (a consumer asks; 2× the current P@A rows; routed tenders above 10% for 5 or more principals; a structured on-behalf field). The checklist honesty fix as part of the ship. |
+| user-value | The caveat's content: both directions, the host case, "read `mention_name` for display", the `?buyer=` workaround, the `procuringEntity` / `roleDetails` sentence, and a dated size. The rule that every number in the caveat is already in `measure.md` (amended: or in this decision's "Critic amendments" section, which is where the post-transfer count lives). The R2 buyer-filter read and its pairs. The reopen triggers (a consumer asks; 2× the current P@A rows; routed tenders above 10% for 5 or more principals, rewritten after the critic because 16 already were; a structured on-behalf field). The checklist honesty fix as part of the ship. |
 | operations | The build surface: the docs change is in `crates/app` only, outside 551's drift rule, and the checklist change waits for 551's flip. R1's served-state read: the exemplars plus 30 salted rows, salt `572-u2-`, 0 W. The known-A record. The cost case against the three other paths (a role split yields 0 for P@A; a fold gate lands principals on provisional rows; a per-mention rehome has no rebuild parity and spreads the agent's PPON as a raw identifier). The reopen triggers on 300 §10 / GB principal consolidation and on a general reviewed alias. The stop rule. |
 | identity | The decisive structural fact. In A@P the identifier is the real buyer in most mentions (amended: 30 of 38 proven by one read notice per (agent, holder) pair, 2 not proven by their read, 1 found F-shaped (Swansea University), 3 host, 2 Pagabo); in P@A it is the agent's publishing account. So any future rule must key on "this identifier is an agent's account", never on name-wins or identifier-wins. This is kept as invariant I1. Also: the AGENT_ACCOUNTS list with its proof bar (B2), the negative controls (B5), and the list of non-principal names on agent accounts, all as the pre-registered reopen design. The bounded 8-org read (its B6) as the monitor and as the Verify's monitored count. The two Tenderer slips, which this synthesis routes to 545 (see "Stock"). |
 
@@ -492,8 +493,8 @@ a fresh 30 at salt `572-u2b-`.
   lists (median 1.2%), but 10% or more for 16 smaller or non-council principals, most of whose own records are a
   fragment (a tiny, split or missing identified row). Its I1 finding is adopted.
 - **The agent as a separate role** (map `procuringEntity` to a non-buyer role). Declined in 572.
-  - It yields 0 for P@A: 129 of 153 P@A mentions sit on single-section notices, and NHC, Welland and Gibbs print no
-    agent party.
+  - It yields 0 for P@A: 127 of 151 P@A buyer-role mentions sit on single-section notices; NHC and Welland print no
+    agent party, and Gibbs prints itself once, as a swap (46801228).
   - Even where a `procuringEntity` is printed (E5, E9, E13), the buyer party still carries the agent's PPON.
   - It changes the ADR-0015 surface (`v_tender_buyers` keys on `role LIKE '%uyer%'`) on an unmeasured number of FTS
     notices.
@@ -635,3 +636,206 @@ stay live as well.
 5. **The host case stays a wrong-role credit** (Trafford ×2, Cardiff ×1 on an older version) until F1.
 6. **Caveat drift.** The figure is dated (2026-10-19) and says "about". If a reopen later builds Rule 572-A, the
    caveat and its test are retired in the same change.
+
+## Critic amendments (adopted 2026-10-19)
+
+The critic's verdict was "AMEND BEFORE ADOPTING": 2 blocking, 4 should and 6 nit amendments, checked against 10
+claims and 7 GETs of its own. Every blocking and should amendment held on the evidence and is adopted above. The nits
+are adopted too. Five points are rejected or corrected in part; they are listed at the end of this section with the
+reason for each.
+
+**Reads made for this pass** (all logged "(572 amend)" in `requests.log`):
+- 12 GETs: 8 notice contents for B1 and N4 (46784422, 46823552, 46697948, 46742484, 46789370, 46806701, 46762943,
+  46801228), the org 30913750 for B1, and 3 Velindre-named notices for N5 (46856148, 46744906, 47382186). Bodies in
+  `bodies/`.
+- 3 `/v1/sql` requests, each plan-probed locally with python sqlite3 and turso `plan-probe` on `plan.db` (SEARCH
+  only, saved as `.plan.txt`) before it ran:
+  - `q9a_principal_orgs`: every identified org an exact `name_norm` seek finds for each of the 69 P@A principals on a
+    current class row (115 spellings), plus 21 known ids, with each org's current buyer count; plus S1's two
+    Birmingham mention counts. 135 rows.
+  - `q9b_routed`: per principal, the current tenders routed through the agent's identifier, and how many of those do
+    not also carry one of the principal's own identified orgs as buyer. 69 rows. (The read is split in two because
+    `/v1/sql` takes at most 64 KiB of body, `sql.rs` MAX_BODY.)
+  - `q10_class_dates`: `published_at` of the 190 class notices, by primary key.
+- Scripts: `build_q9.py`, `analyze_q9.py` (writes `q9_share.summary.json`), `analyze_growth.py` (writes
+  `growth.summary.json`), `build_frozen.py` (writes `triage_frozen_lists.json`), and `get_amend.sh` (`get.sh` with
+  the log tag).
+
+### B1 (blocking): the A@P own-buyer presumption — adopted
+
+The critic's misbind holds. Notice 46768416 is a Swansea Bay University Health Board contract ("Neath Port Talbot
+Hospital within Swansea Bay University Health Board"). It prints NWSSP's name under PTNV-7472-GRTW, and that binds
+org 30913750, headed "Swansea University", 160 mentions (`bodies/v1_organizations_30913750.json`). One qualification:
+the row is on an older tender version only (q6 `cur = 0`). So "served as Procedure-Buyer" is true of the version
+history, not of any current `parties[]`. The misbind stands either way.
+
+One notice was read for each A@P pair that had no read notice:
+
+| pair | notice | what the notice says | verdict |
+|---|---|---|---|
+| NWSSP on 30926792 Cwm Taf Morgannwg UHB | 46784422 | "Cwm Taf Morgannwg University Health Board (CTMUHB) has awarded …" | proven |
+| NWSSP on 30926924 Cardiff and Vale UHB | 46742484 | "Cardiff and Vale University Health Board, acting on behalf of the All Wales Genomics Service …" | proven |
+| NWSSP on 30929723 Betsi Cadwaladr UHB | 46697948 | "Betsi Cadwaladr University Health Board is seeking …" | proven |
+| NWSSP on 30928312 Public Health Wales | 46823552 | "NHS Wales Performance and Improvement are awarding …"; Public Health Wales is not named | not proven |
+| TMT on 30967593 Tunbridge Wells BC | 46789370 | "Tunbridge Wells Borough Council is looking to have the large Pond … relined" | proven |
+| Scape on 30974616 Arc | 46806701 | "SCAPE, on behalf of Arc Partnership (the Client) …" | proven |
+| PaLS on 30917832 Northern HSCT | 46762943 | "Patient information for consent leaflets …"; no body named | not proven |
+| TMT on 30916821 Maidstone BC | 46750905 (E10, no new GET) | "Maidstone Borough Council (MBC) is looking to appoint …" | proven (already) |
+
+With E4 (NWSSP on ABUHB) and E11 (Gleeds on College of Policing), which were read before, the 38 A@P mentions now
+split like this:
+- **own buyer, 32:** 30 proven and 2 not proven;
+- **host, 3;**
+- **F-shaped, 3:** Pagabo ×2 and Swansea University ×1.
+
+All F-shaped rows, the 2 Tenderer slips included, now total 5. **Left as published: 186 mentions on 185 notices,
+from 14 agents (P@A 151, A@P 35).**
+
+What changed:
+- the Decision list (5 transfers) and "Stock";
+- the subtype table, now "usually the right buyer";
+- the identity judge's row and I1, now "30 proven (32 presumed)";
+- rule 4 (b), now a frozen list of 11 pairs, each with its proof notice;
+- B5, now 5 health-body orgs with 14 mentions, plus Gibbs on YMCA;
+- the caveat, now "usually the right organization";
+- U2c and the 513/519 note.
+
+### B2 (blocking): the harm figure and trigger 2(d) — adopted, with 572-L kept and the trigger rewritten
+
+The critic's figures hold exactly. q9 measured every principal on a current class row:
+- **The count is right.** q9a's own count equals `?buyer=` for all 8 lists read by GET: Darlington 172, Birmingham
+  198, NHC 74, Hywel Dda 27, HEIW 31, Public Health Wales 23, Cardiff and Vale 76, Solihull Community Housing 6.
+- **The critic's 5 shares reproduce:** Solihull Community Housing 5 of 6, Public Health Wales 5 of 23, Hywel Dda 7
+  of 27, HEIW 3 of 31, Cardiff and Vale 6 of 76.
+- **Size:** 95 routed current tenders. On 93 of them the principal is absent, across 67 principals. The other 2
+  are swaps: ABUHB and YMCA are printed under their own PPON too.
+- **Distribution:**
+  - councils: median 1.2%, 1 of 30 above 10%;
+  - housing associations: median 10.0%, 10 of 21 above 10%;
+  - health bodies: median 9.7%, 2 of 6 above 10%;
+  - school trusts: 3 of 3 above 10%.
+- **Unmatched:** 7 principals have no identified row an exact-name seek finds. Better spellings may find a row for
+  City of Lincoln or RBKC; they were not tried.
+
+So 16 principals are above 10%. The old trigger 2(d) (5 or more) was met on the day of adoption.
+
+The decision text changed in seven places:
+- the vote note;
+- "Why": the table, the fragments point and the opportunities point;
+- the reason the alias is not built;
+- "What is declined";
+- trigger 2(d), rewritten as 2× the measured 16, or 30% for a principal with 20 or more listed tenders;
+- "today only Hywel Dda", deleted;
+- Risks, and the 513/519 note.
+
+**Why 572-L still stands on the corrected numbers.** The judges were not reconvened in this pass. Keeping 572-L is
+this synthesis's call, recorded here so a reviewer can overturn it on these numbers.
+1. **The absolute harm is unchanged:** 93 tenders, 1 to 7 per body.
+2. **The high shares sit on fragments.** The six bodies whose identified row holds 1 tender, Solihull Community
+   Housing's bare-number row, the PPON/NHS splits (Hywel Dda, HEIW, Cardiff and Vale, ABUHB) and the 7 with no row
+   found are where the share is high. Moving 1 to 7 tenders onto such a row does not make the body's record whole.
+   That is reopen trigger 4's condition, which stays live.
+3. **Opportunities are mostly not lost.** 0 of NHC's 58 member call-offs are biddable. NWSSP is the exception, with
+   1 of 4 sampled.
+4. **The cost case is unchanged:** the resolver arm, 70 keys to review, split destinations, and the overlap with
+   513/519.
+
+The Welsh health bodies have the largest real lists among the high shares. They go to 513/519 with their figures.
+
+### S1 (should): the evidence trail — adopted in part
+
+**Copied:**
+- `judges/user-value/`: the user-value judge's 5 `?buyer=` lists and 4 notice bodies.
+- `judges/critic/`: the critic's 7 bodies.
+
+**Re-derived:**
+- Birmingham's split, 347 mentions on 30914707 against 10,165 on 1291257: exact (q9a, "S1 mentions").
+- Darlington 172 / 2, Birmingham 198 / 1, NHC 74 / 58 and Hywel Dda 27 / 7: from q9a, q9b and the copied lists.
+- **The growth rate** (`growth.summary.json`, from q10). Over the whole span, 191 mentions in 19.6 months
+  (2025-03-11 to 2026-10-19) give 9.7 a month, NHC 4.9. That confirms "9–10, NHC about 5" as a whole-span average.
+  But the last 12 months run at 13.1 a month (NHC 8.1) and the last 6 at 13.3. So "trigger 2 is years away" was
+  wrong: about a year. This is corrected in "Reopen conditions" and in Risks.
+- **Good–Turing:** 30 of the 70 P@A `name_norm` keys were seen once, over 151 buyer-role mentions, which gives
+  0.199. That confirms "about 20%".
+- **"Misses almost no opportunities":**
+  - NHC's list holds 60 UK7, 8 UK1, 3 UK2, 1 UK5, 1 UK6, 1 UK11 and no UK4.
+  - Its 58 member call-offs are 56 UK7, 1 UK6 and 1 UK11.
+  - NWSSP's 4 sampled notices: 46803631 UK4 (HEIW), 46754741 UK6, 46808676 UK5, 46828235 UK7.
+
+**Not possible:** the three judges' notes themselves. They were never written to a file; the session scratchpad
+holds the user-value judge's bodies and the critic's bodies and nothing else for 572. The operations judge's two
+"stdout only" GETs (the Birmingham and Hywel Dda `name_prefix` searches) cannot be recovered either. What they
+showed is re-derived by q5 and q9a. The decision's "Why" now rests only on files in this directory.
+
+### S2 (should): the caveat overgeneralised — adopted
+
+The new wording is in U2a item 1, and it changes five things:
+- "a buyer party can carry the identifier of the account that published the notice instead of its own";
+- NHC "regularly", and NWSSP, Welland, Gibbs Laidler and the brokers "occasionally" (NWSSP 41 of 1,170 mentions,
+  Welland 1 of 287, per `measure.md` (c));
+- "binds by the published identifier (issue 456), and the printed name stays in `mention_name`", in place of
+  "served as published";
+- the host example is STAR/Trafford alone, because 8621643 v5 serves Cardiff as "Cardiff Council";
+- the count is after the transfers: about 186 mentions on 185 notices, from 14 agents.
+
+### S3 (should): the SQL surface — adopted
+
+Verified:
+- `v_tender_buyers` serves `buyer_name = o.name`, the head (`canonical.rs:1231-1241`).
+- `v_awards`' representative `buyer_name` is the same head (`canonical.rs:1263-1266`).
+
+What was added:
+- a caveat sentence pointing to `organization_mentions.name` at the party's mention keys;
+- U2a item 4, a sentence for `sql.rs:972`'s `v_tender_buyers` note;
+- the test needle `v_tender_buyers`.
+
+### S4 (should): triage rule (a) too broad — adopted
+
+Rule 4 (a) now skips only a name on a frozen, dated list of reviewed names: 70 principal keys covering 151 mentions,
+and 10 non-principal names (`triage_frozen_lists.json`). Any new name on the 8 orgs gets normal review and lands in
+monitor M's "unreviewed key" bucket until a reviewer clears it.
+
+### Nits — adopted
+
+- **N1:** the `roleDetails` entry now reads "owed", and a `parties[].details.classifications` entry for UK_CA_TYPE
+  is added (U2b).
+- **N2:** the done line reads "landed on main, or held as patch `<sha>` gated green".
+- **N3:** the unit-2 budget allows 3 SQL requests. Monitor M is keyed on the 8 identifiers, resolved first through
+  merges, and checks each org's head. RPJ3's head is recorded as known.
+- **N4:** three corrections.
+  - The alias share is now 127 of 151 P@A buyer-role mentions (84%).
+  - The Gibbs sentence is corrected. Gibbs on YMCA (46801228, "… as required by YMCA Saint Pauls Group") is read,
+    proven, and recorded outside the slices, so it is not in the 186.
+  - Trigger 2(c) is re-baselined to 95.
+- **N5:** 3 of 3 Velindre-named notices read are Velindre's own procurements: two for the Welsh Blood Service and
+  one PR contract. Velindre has no identified row. The 47 mentions are left out of both I1 counts (now about 40
+  non-principal names, against 151) and are counted on their own line in monitor M.
+- **N6:** CONTEXT.md has no term for a buying agent, a principal or a host. Adding one is U2a item 5, because this
+  pass edits no repo file outside `572-triage`.
+
+### Rejected or corrected in part
+
+1. **B1's read of TMT on 30916821:** not made. Exemplar E10 (46750905) already proves that pair, so the critic's
+   list counted it as unread by mistake.
+2. **S1's "copy the judges' notes":** cannot be done, because the notes do not exist as files. Re-derivation
+   replaces them (above).
+3. **N4's baseline of 96:** corrected to 95. Both Tenderer slips are current rows (q6: Riverside `cur = 1` and the
+   Hywel Dda Tenderer `cur = 1`), and q9b's routed total is 95.
+4. **B2's other option, re-running the judges' vote:** not taken. The amendment allows either path. This pass took
+   "keep 572-L, say openly that 2(d) is met, rewrite the trigger".
+5. **B1's wording that Swansea University "is served as Procedure-Buyer":** qualified. The row is on an older
+   version only. The transfer is adopted unchanged.
+
+### Found in this pass, beyond the critic
+
+- **The class is growing faster than the decision said:** 13 a month over the last 12 months, against 9.7 over the
+  whole span (S1).
+- **Two routed rows are not missing.** For ABUHB (46819472) and YMCA Saint Pauls (46801228) the routed tender still
+  lists the principal under its own PPON, so their routed count does not mean "missing". A 545 or 572 reviewer must
+  not read every P@A row as a missing principal.
+- **Velindre has no identified row, and NWSSP's PPON carries its own procurements.** This goes to 513/519.
+- **The Public Health Wales pair is open.** Notice 46823552 puts an "NHS Wales Performance and Improvement" contract
+  under Public Health Wales's PPON, and the read does not settle which body is the contracting authority. That
+  question goes to 513/519. The pair stays out of rule 4 (b).
+
+`measure.md` is left as it was. Where it says "33 own buyer (3 read, 30 presumed)", this decision supersedes it.

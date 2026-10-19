@@ -1937,3 +1937,8 @@ about 2 plus new ones, and holds up by about 4 (the collapsed R0w heads, now fit
 **Persistence audit (2026-10-19 19:5xZ, hourly AUDIT):** 6 salted samples (seed 5302) of job 2568's v11 renames
 (13067304, 22107996, 10496191, 16330071, 14016700, 18707735) still serve their new name on the public API after three
 daily folds (10-17, 10-18, 10-19): 6/6, no fold reverted a refreshed name.
+
+## Side note from 572 unit 1 (2026-10-19)
+
+RPJ3's head is "RPJ3 Group Limited on Behalf of Aspirational Futures MAT" — an "on behalf of" agent suffix in an elected head
+(a candidate for the R1 suffix family's lexicon when 524's rules are next revised).

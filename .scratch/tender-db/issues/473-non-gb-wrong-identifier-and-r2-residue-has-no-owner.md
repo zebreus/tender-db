@@ -198,3 +198,7 @@ their numbers are in the body and in step 1.
   - line 3 reads `[]`: no org is keyed by a DB file number. If step 4 declines, it rewrites this line.
   - line 4 reads one row per authority the recorded Bavarian decision recognises (four under step 3: Oberbayern,
     Südbayern, Nordbayern, Mittelfranken), with 1448 about 2,204 mentions lighter.
+
+## Side note from 572 unit 1 (2026-10-19)
+
+Gleeds is split between 11550220 `06472932` and 31615833 `GBCOH6472932` (a GBCOH spelling split; 470/514's shape).

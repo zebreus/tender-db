@@ -90,3 +90,9 @@ against a resolver rule ("design 1" here) in favour of reviewed rehoming through
 design 1 is therefore rejected by that decision; 456's exhibit (Schneider Electric on Sellafield's PPON, tender 8751605)
 joins 545's reviewed cohort rather than getting a rule of its own. Work it under 545.
 
+## From 572 unit 1 (2026-10-19)
+
+572 decided (rule 572-L, `572-triage/decision.md`) that the buying-agent class A (186 mentions, 14 agents: a principal's name
+printed with the agent's identifier, or the reverse) stays as published under design 3 (each party serves its own published
+`mention_name`); design 1 stays rejected (545). 456's measurement readers apply 572's triage rule (guard G-A, the frozen lists in
+`572-triage/triage_frozen_lists.json`).

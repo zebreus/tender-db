@@ -298,3 +298,11 @@ holds a LOSER whose key is owned elsewhere, and add a test that admits a PPON su
 re-census, and post the seven verdicts as the read gives them (`../513-nhs/u5/residue-read-wf_2411cb6d.json`,
 `unblock`), re-checking `coded_notices_after_legal_end` for RNK (legal end 2026-03-31, successor G6V2S).
 
+## Side note from 572 unit 1 (2026-10-19, not 572 work)
+
+NWSSP is split across 30913738, provisional 15641552 (2,123 mentions, its `GB-NHS-RQF` procuringEntity sections), 31537662 and
+114 provisional spellings. The Welsh principals each have a PPON row and an NHS row; their current tenders routed through
+NWSSP's PPON are missing from their own PPON-row lists: Hywel Dda 7 of 27, Public Health Wales 5 of 23, HEIW 3 of 31, Cardiff
+and Vale 6 of 76, Betsi 2 of 42 (`572-triage/q9_share.summary.json`). Velindre's own procurements (47 mentions) sit on NWSSP's
+PPON and Velindre has no identified row. Notice 46823552 puts NHS Wales Performance and Improvement's contract under Public
+Health Wales's PPON; which body is the contracting authority is unsettled.

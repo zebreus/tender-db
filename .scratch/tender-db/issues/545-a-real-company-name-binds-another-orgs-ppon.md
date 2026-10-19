@@ -356,3 +356,22 @@ Files are in /home/user/tender-db/.scratch/tender-db/545-triage/u2b/: notes.md, 
   carries a change for all 47 corrected tenders (`touched_tenders_final.json`), each `version: null` (ADR-0017 D3).
 - **Keep audit (2026-10-19 13:5xZ, hourly AUDIT):** all 12 `keep` verdicts of cohort 545 (8 parked rows, Jeremy Benn, Accenture x3)
   still bind their holder on the tender (12/12 via `/v1/tenders/{id}`): apply-rehoming moved rehomes only.
+
+## From 572 unit 1 (2026-10-19, `572-triage/decision.md` U2c): follow-up cohort additions and guard G-A
+
+- Add to the follow-up rehome cohort beside Wyre Forest 46842882 (each through 545's machinery: reviewer + skeptic per
+  mention, `POST /admin/rehoming` HIGH only, `apply-rehoming` dry == cohort, wet, `project`; tender ids join 551 B6
+  `L_changed` if before the flip):
+  - Pagabo 46844727 and 46844778 (on CNTW's PPON PDBW-5798-GPLT, org 31546270; destination Pagabo's own org or 545's exact
+    provisional rule — NOT The Education Alliance, already printed in its own buyer section; if PDBW-5798-GPLT is Pagabo's
+    account it is an identifier verdict, the CUH / Accenture precedent);
+  - Riverside 46798381 `ORG-GB-PPON-PJXZ-4423-NDBT` (Tenderer section "Riverside Group Limited"; its own identified row by a
+    bounded seek; G1 clean);
+  - Hywel Dda 46776118 `ORG-GB-PPON-PXWV-6492-CGMN` (Tenderer; destination split PPON 30926960 / GBNHS7A2 31544733 /
+    provisional 4863254 — 545's tiebreak, coordinated with 519's Welsh 7A* work; park if 519 is about to fold them);
+  - NWSSP on Swansea University 46768416 `ORG-GB-PPON-PTNV-7472-GRTW` (org 30913750; destination NWSSP 30913738 or park;
+    also decide whether PTNV-7472-GRTW is the university's PPON (rehome) or Swansea Bay UHB's on the university's org
+    (identifier verdict); older version only).
+- **Guard G-A (572's class-A triage rule):** stray reviews (545 / 456 / 524) skip the names on the two frozen, dated lists in
+  `572-triage/triage_frozen_lists.json` (70 principal keys / 151 mentions + 10 non-principal names; 11 proven A@P pairs); any
+  other name gets normal review and lands in monitor M's "unreviewed key" bucket.
