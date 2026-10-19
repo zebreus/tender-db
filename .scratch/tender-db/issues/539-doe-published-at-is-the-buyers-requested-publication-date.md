@@ -342,3 +342,8 @@ offset. A date-only result stays date-only (367/418 rendering). No other source 
     re-run the zero-drift probe (refold-lot-sum on the 3,502; expect 0 corrected) before U6.
 - **Served-docs audit (2026-10-19 15:5xZ, hourly AUDIT):** `/docs` on rev 0787596 serves the 539 Dates caveat ("raised to the day of
   the notice's IssueDate when that is later (issue 539)") and the pre-drain caveat ("Until the issue-539 drain re-dates …").
+
+**Verify re-read (2026-10-19 20:5xZ, hourly AUDIT, rev 8e9222c):** line 1 still `[65023,"2022-10-19","2023-01-31T14:02:48+01:00"]`
+(expected: the stored date moves only with the pending drain — repair-notice-instants dry/wet, then the DÖE R3 refold, after
+551 U8); line 2 now reads "earlier than published_at, except where a DÖE notice caused the current version … raised to the day
+of the notice's IssueDate when that is later (issue 539)" — the served description half of `done` holds.
