@@ -6,8 +6,32 @@
 //! the notice itself proves the values are no entity key (`530-triage/decision.md`, the pair-scoped (a)
 //! "530-T", critic amendments A1–A12 adopted). The rule refuses those values' identifiers — the mention
 //! then takes the issue-234 identifier-NULL path, `raw_identifier` kept — except values on the frozen,
-//! value-keyed `KEEP_530` (A4), names that are not safe as a fallback key (A8), and groups with no
-//! country.
+//! value-keyed `KEEP_530` (A4), names that are not safe as a fallback key (A8), groups with no
+//! country, and role-incoherent groups (A7).
+//!
+//! **Build 1b (R2, 2026-10-19, wf_5d7ad2e8-333: FAILED on 3 W; fixes F1/F2 decided).**
+//! - F1, names: R2 convicted two keys whose fold lands on a row that already holds another body —
+//!   `Vergabekammer NRW` (target 3353580, an umbrella over VK Rheinland and VK Westfalen) and
+//!   `Geschäftsstelle der Vergabekammer` (target 6622773, Thuringia's chamber; the planned rows were VK
+//!   Westfalen printing the same function name). Both, and three precautionary spellings, are on
+//!   [`GUID_TWIN_UNSAFE_NAMES`] as a LIST: a `Vergabekammer <Land>` pattern would refuse the right folds
+//!   into single-chamber Länder (Niedersachsen, Baden-Württemberg, Brandenburg, Schleswig-Holstein).
+//!   `geschäftsstelle` joins [`GUID_TWIN_OFFICE_NOUNS`] (stored folded, as compared).
+//! - F2, roles (A7 as written): a twin group whose sections' roles BY THIS NOTICE COPY'S OWN OPT-300 /
+//!   OPT-301 references ([`guid_twin_section_roles`]; never `tender_version_parties`) are
+//!   role-incoherent ([`store::guid_twin_role_mix`]: Lot-ReviewOrg beside a buyer-side role —
+//!   Procedure-Buyer, Procedure-SProvider, Lot-/Part-AddInfo, Lot-/Part-TenderReceipt — or a tenderer
+//!   beside a role outside the tenderer class) binds whole ([`TwinBind::RoleMix`]). R2's W3 was the AOK
+//!   Niedersachsen copy pair 24253392 / 26483158, whose Lot-ReviewOrg section printed the AOK's name
+//!   over VK Bund's phone and NUTS. The guard binds the whole group, so it also binds the right folds of
+//!   a buyer that printed ITSELF into the review slot (28 of R2's 30 role-incoherent reads were that
+//!   shape): it trades those folds — the rows stay split as today, under (c) — for never attaching a
+//!   review body's role to the buyer's row.
+//!
+//! The gate (Build 2) will call [`guid_twin_section_roles`] on the parsed copy in
+//! `mentions_and_dropped`; the dry planner folds the copy's stored `notice_ids` references with the same
+//! fold ([`store::guid_twin_fold_roles`]) and mapping ([`guid_twin_role_ref`], passed as a fn pointer),
+//! so both read one section → roles map.
 //!
 //! It sits beside `idgate::condemns`, not inside it: `condemns` sees one value, this rule needs the
 //! whole notice. `condemns` and `idgate::uuid_v4` are unchanged. It lives under `project` because the
@@ -28,11 +52,11 @@
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::sync::OnceLock;
 
-use store::{GuidKeep, TwinBind, TwinDecision, TwinGroup, TwinView};
+use store::{GuidKeep, GuidTwinSectionRoles, NoticeValue, Parsed, TwinBind, TwinDecision, TwinGroup, TwinView};
 
 use super::{
-    PREFIX_FUNCTION_WORDS, canonical_country, content_words, gated_identifier, generic_body_name, guard_name_words,
-    merge_initials,
+    DE1_FIELD_ALIASES, PREFIX_FUNCTION_WORDS, canonical_country, content_words, gated_identifier, generic_body_name,
+    guard_name_words, merge_initials, role_name,
 };
 
 /// Issue 530 (decision §5, A8 ii): names that are not safe as a twin's fallback key, beside
@@ -79,6 +103,22 @@ pub const GUID_TWIN_UNSAFE_NAMES: &[&str] = &[
     "Natürliche Person",
     "Natürliche Personen",
     "Privatperson",
+    // R2 (2026-10-19, wf_5d7ad2e8-333; `530-triage/r2/r2-result.md` F1): names that more than one
+    // review chamber prints, so their fallback row already mixes bodies. EXACT names, never a
+    // `Vergabekammer <Land>` pattern: that would refuse the right folds into the single-chamber Länder
+    // (Vergabekammer Niedersachsen, Baden-Württemberg, Brandenburg, Schleswig-Holstein; Rheinland and
+    // Westfalen are one chamber each). The list matches the WHOLE folded name, so the MV key
+    // `Geschäftsstelle der Vergabekammern beim Ministerium … Mecklenburg-Vorpommern` stays out.
+    // The two convicted keys: W1, target 3353580 (holds VK Rheinland, Köln, and VK Westfalen, Münster);
+    // W2, target 6622773 (Thuringia's chamber, Weimar; the planned rows were VK Westfalen).
+    "Vergabekammer NRW",
+    "Geschäftsstelle der Vergabekammer",
+    // Precautionary (no planned key under them in job 2659; future notices): the long NRW spelling
+    // (folded words meet with or without its hyphen), the umbrella over Nordbayern and Südbayern, the
+    // bare plural.
+    "Vergabekammer Nordrhein-Westfalen",
+    "Vergabekammer Bayern",
+    "Geschäftsstelle der Vergabekammern",
 ];
 
 /// A8 i: legal-form tokens, dropped before the content-word test and both generic lists, so
@@ -93,8 +133,12 @@ pub const GUID_TWIN_LEGAL_FORMS: &[&str] =
 pub const GUID_TWIN_POLITY_HEADS: &[&str] = &["freistaat", "land", "bundesland", "kanton", "canton"];
 
 /// R2's office nouns: a planned key of exactly 2 content words led by one (`Vergabekammer Rheinland`,
-/// `Amt 66`, `Referat Beschaffung`) is read whole in R2 (decision R2 "Also read").
+/// `Amt 66`, `Referat Beschaffung`) is read whole in R2 (decision R2 "Also read"). Stored FOLDED, as
+/// [`office_two_words`] compares them against [`guid_twin_name_words`] (`ä` → `a`, so `Geschäftsstelle`
+/// is `geschaftsstelle`; pinned by `every_office_noun_is_stored_folded`).
 pub const GUID_TWIN_OFFICE_NOUNS: &[&str] = &[
+    // R2 (2026-10-19) F1: a `Geschäftsstelle X` key is read whole.
+    "geschaftsstelle",
     "amt",
     "vergabestelle",
     "vergabekammer",
@@ -174,6 +218,42 @@ fn office_two_words(name: &str) -> bool {
     content.len() == 2 && GUID_TWIN_OFFICE_NOUNS.contains(&content[0].as_str())
 }
 
+/// A7 (Build 1b): the ORG role one id value of a notice copy references, as the projection reads it —
+/// the mapping rule 530-T's role guard and the dry planner share (store takes it as a
+/// `store::GuidTwinRoleRef`). A DE-1.x alias source ([`DE1_FIELD_ALIASES`]) is read as its eForms id
+/// and counts as a reference whatever its stored flag, as `normalise_de1_parse` marks it
+/// (`de1_mark_reference`); then an OPT-300 / OPT-301 id-ref outside the `ojs` scheme (a chain edge)
+/// names [`role_name`]'s role (`OPT-301-Lot-ReviewOrg` → `Lot-ReviewOrg`). Anything else names none:
+/// identifiers, other references, and the legacy `TED-` address roles (rule 530-T reads eForms
+/// references only). So the raw stored copy and the normalised parse the gate sees read alike.
+pub fn guid_twin_role_ref(field_id: &str, scheme: Option<&str>, is_ref: bool) -> Option<String> {
+    let (field_id, is_ref) = match DE1_FIELD_ALIASES.iter().find(|(de1, _)| *de1 == field_id) {
+        Some((_, eforms)) => (*eforms, true),
+        None => (field_id, is_ref),
+    };
+    if !is_ref || scheme == Some("ojs") || !(field_id.starts_with("OPT-300-") || field_id.starts_with("OPT-301-")) {
+        return None;
+    }
+    role_name(field_id)
+}
+
+/// A7 (Build 1b): the roles ONE notice copy gives its sections by its own OPT-300 / OPT-301
+/// references — `section_id -> roles`, sorted and distinct — never by `tender_version_parties` (a
+/// party row is the projection's verdict, after the role census may have moved a body; the guard reads
+/// what the notice printed). The ONE place the role read is spelled: the gate (Build 2) calls it in
+/// `mentions_and_dropped` on the parsed copy, raw or normalised alike ([`guid_twin_role_ref`]); the dry
+/// planner folds the copy's stored `notice_ids` rows with the same [`store::guid_twin_fold_roles`] and
+/// [`guid_twin_role_ref`]. Pure.
+pub fn guid_twin_section_roles(parsed: &Parsed) -> GuidTwinSectionRoles {
+    store::guid_twin_fold_roles(
+        parsed.values.iter().filter_map(|v| match &v.value {
+            NoticeValue::Id { value, is_ref, scheme } => Some((v.field_id.as_str(), scheme.as_deref(), value.as_str(), *is_ref)),
+            _ => None,
+        }),
+        guid_twin_role_ref,
+    )
+}
+
 /// Rule 530-T over ONE notice copy (a TED copy and a DÖE copy are each decided alone):
 ///
 /// 1. Candidates: sections whose gated identifier ([`gated_identifier`] under the canonical country,
@@ -182,13 +262,21 @@ fn office_two_words(name: &str) -> bool {
 ///    by the register country, the key the 234 fallback resolves on. A candidate with an empty name
 ///    joins no group; one with no country forms a group that always binds (`no_country`).
 /// 3. Twin: a group holding 2 or more DISTINCT values.
-/// 4. Refusal: every section of a twin whose value is not in `keep` — unless the name is not safe
-///    ([`guid_twin_unsafe_name`]) or every value is in `keep`, when the whole group binds.
+/// 4. Refusal: every section of a twin whose value is not in `keep` — unless the whole group binds:
+///    the name is not safe ([`guid_twin_unsafe_name`]); or (A7, Build 1b) the members' roles by the
+///    copy's own references ([`TwinView::roles`], [`guid_twin_section_roles`]) are role-incoherent
+///    ([`store::guid_twin_role_mix`]: `Lot-ReviewOrg` or `Part-ReviewOrg` beside a buyer-side role —
+///    `Procedure-Buyer`, `Procedure-SProvider`, `Lot-`/`Part-AddInfo`, `Lot-`/`Part-TenderReceipt`,
+///    each read after its `Procedure-`/`Lot-`/`Part-` scope — or a `Tenderer`, `Tenderer-MainCont` or
+///    `Tenderer-SubCont` beside any other role); or every value is in `keep`. The role guard binds a
+///    buyer that printed itself into the review slot too: those right folds are traded for never giving
+///    a review body's (or a bidder's) role to the buyer's row (the rows stay split, under (c)).
 ///
 /// Pure: no DB read, no state. The planner passes it to store as a `store::GuidTwinRule`.
 pub fn guid_twin_decide(sections: &[TwinView<'_>], keep: &GuidKeep, extra_unsafe_names: &[String]) -> TwinDecision {
     let mut decision = TwinDecision::default();
-    let mut groups: BTreeMap<(Option<String>, String), Vec<(String, String)>> = BTreeMap::new();
+    type Members = (Vec<(String, String)>, BTreeSet<String>);
+    let mut groups: BTreeMap<(Option<String>, String), Members> = BTreeMap::new();
     for s in sections {
         let country = s.country.map(canonical_country);
         let Some(id) = gated_identifier(s.raw_identifier, s.scheme, country.as_deref()) else { continue };
@@ -201,17 +289,22 @@ pub fn guid_twin_decide(sections: &[TwinView<'_>], keep: &GuidKeep, extra_unsafe
             decision.unnamed += 1;
             continue;
         }
-        groups.entry((id.country, norm)).or_default().push((s.section_id.to_owned(), id.value));
+        let group = groups.entry((id.country, norm)).or_default();
+        group.0.push((s.section_id.to_owned(), id.value));
+        group.1.extend(s.roles.iter().cloned());
     }
-    for ((country, name_norm), members) in groups {
+    for ((country, name_norm), (members, roles)) in groups {
         let distinct = members.iter().map(|(_, v)| v.as_str()).collect::<BTreeSet<_>>().len();
         if distinct < 2 {
             continue;
         }
+        let roles: Vec<String> = roles.into_iter().collect();
         let bind = if country.is_none() {
             Some(TwinBind::NoCountry)
         } else if let Some(reason) = guid_twin_unsafe_name(&name_norm, extra_unsafe_names) {
             Some(reason)
+        } else if store::guid_twin_role_mix(&roles).is_some() {
+            Some(TwinBind::RoleMix)
         } else if members.iter().all(|(_, v)| keep.contains(v)) {
             Some(TwinBind::Keep)
         } else {
@@ -230,6 +323,7 @@ pub fn guid_twin_decide(sections: &[TwinView<'_>], keep: &GuidKeep, extra_unsafe
             distinct_values: distinct,
             bind,
             refused,
+            roles,
         });
     }
     decision
@@ -307,8 +401,45 @@ mod tests {
                 country: m.country.as_deref(),
                 raw_identifier: m.raw_identifier.as_deref(),
                 scheme: m.scheme.as_deref(),
+                roles: &[],
             })
             .collect()
+    }
+
+    /// The gate's views of a parsed copy: its mentions, each with the roles the copy's own references
+    /// give it ([`guid_twin_section_roles`]).
+    fn views_with<'a>(mentions: &'a [Mention], roles: &'a GuidTwinSectionRoles) -> Vec<TwinView<'a>> {
+        let mut out = views(mentions);
+        for v in &mut out {
+            v.roles = roles.get(v.section_id).map_or(&[], Vec::as_slice);
+        }
+        out
+    }
+
+    /// One role reference of a fixture copy: (referring section, field id, target ORG section).
+    type Ref<'a> = (&'a str, &'a str, &'a str);
+
+    /// [`parsed`] plus the copy's role references, as published (`is_ref` set, as eForms types them).
+    fn parsed_with(orgs: &[Org<'_>], refs: &[Ref<'_>]) -> Parsed {
+        let mut p = parsed(orgs);
+        for (section, field, target) in refs {
+            p.values.push(ValueRow {
+                section_id: (*section).into(),
+                field_id: (*field).into(),
+                ordinal: 0,
+                value: NoticeValue::Id { scheme: None, value: (*target).into(), is_ref: true },
+            });
+        }
+        p
+    }
+
+    /// Rule 530-T over a parsed copy with its role references, the gate's way: `mentions_and_dropped`,
+    /// then [`guid_twin_section_roles`] on the same parse.
+    fn decide_with(orgs: &[Org<'_>], refs: &[Ref<'_>], keep: &GuidKeep) -> TwinDecision {
+        let p = parsed_with(orgs, refs);
+        let m = NoticeState::mentions_and_dropped(false, 9, &p).0;
+        let roles = guid_twin_section_roles(&p);
+        guid_twin_decide(&views_with(&m, &roles), keep, &[])
     }
 
     /// Rule 530-T over a parsed notice, through the real mention path.
@@ -570,8 +701,8 @@ mod tests {
         assert_eq!(d.groups[0].bind, Some(TwinBind::NoCountry));
         // A hand-built view: an empty published name.
         let views = [
-            TwinView { section_id: "ORG-1", name: " ", country: Some("DE"), raw_identifier: Some("037c1508-d945-4e73-9d6e-65099a79bec1"), scheme: None },
-            TwinView { section_id: "ORG-2", name: "", country: Some("DE"), raw_identifier: Some("5b1c2d3e-4f5a-4b6c-8d7e-8f9a0b1c2d3e"), scheme: None },
+            TwinView { section_id: "ORG-1", name: " ", country: Some("DE"), raw_identifier: Some("037c1508-d945-4e73-9d6e-65099a79bec1"), scheme: None, roles: &[] },
+            TwinView { section_id: "ORG-2", name: "", country: Some("DE"), raw_identifier: Some("5b1c2d3e-4f5a-4b6c-8d7e-8f9a0b1c2d3e"), scheme: None, roles: &[] },
         ];
         let d = guid_twin_decide(&views, &none(), &[]);
         assert_eq!((d.candidates, d.unnamed, d.groups.len()), (2, 2, 0));
@@ -644,6 +775,255 @@ mod tests {
         let vat = [("ORG-0001", GOETTINGEN, Some("DEU"), Some("DE308703297")), ("ORG-0002", GOETTINGEN, Some("DEU"), Some("DE811569869"))];
         let d = decide(&vat, &none());
         assert_eq!((d.candidates, d.refused.len()), (0, 0), "only v4 national keys are candidates");
+    }
+
+    // ---- Build 1b, F1: R2's names (a list, not a pattern) ----
+
+    /// The MV key R2 read R (rand2 item 26): the list matches whole names, so it stays out.
+    const MV_KEY: &str = "Geschäftsstelle der Vergabekammern beim Ministerium für Wirtschaft, Infrastruktur, Tourismus und Arbeit \
+                          Mecklenburg-Vorpommern";
+
+    /// R2 F1: every spelling R2's W rows print — the BT-500 of the planned mentions and the target keys
+    /// of plan 2659's `r2_city_flagged[9]` (3353580) and `[15]` (6622773), as published and as folded —
+    /// and the three precautionary names bind as `unsafe_list`; the single-chamber names a `Vergabekammer
+    /// <Land>` pattern would have caught stay safe, and so does the MV key.
+    #[test]
+    fn r2s_umbrella_chamber_names_bind_and_single_chambers_stay_safe() {
+        let unsafe_ = |name: &str| guid_twin_unsafe_name(name, &[]);
+        for name in [
+            // W1 (target 3353580) and W2 (target 6622773), as the rows print them and as keyed.
+            "Vergabekammer NRW",
+            "vergabekammer nrw",
+            "VERGABEKAMMER NRW",
+            "Geschäftsstelle der Vergabekammer",
+            "geschäftsstelle der vergabekammer",
+            "GESCHÄFTSSTELLE DER VERGABEKAMMER",
+            // Precautionary.
+            "Vergabekammer Nordrhein-Westfalen",
+            "Vergabekammer Nordrhein Westfalen",
+            "Vergabekammer Bayern",
+            "Geschäftsstelle der Vergabekammern",
+        ] {
+            assert_eq!(unsafe_(name), Some(TwinBind::UnsafeList), "{name}");
+        }
+        for name in [
+            "Vergabekammer Rheinland",
+            "Vergabekammer Westfalen",
+            "Vergabekammer Niedersachsen",
+            CHAMBER,
+            "Regierung von Oberbayern - Vergabekammer Südbayern",
+            "Vergabekammer Südbayern",
+            "Vergabekammer Nordbayern",
+            "Vergabekammer BW",
+            "Vergabekammer Schleswig-Holstein",
+            "Vergabekammer des Landes Brandenburg",
+            "Vergabekammer Westfalen bei der Bezirksregierung Münster",
+            "Vergabekammer Rheinland c/o Bezirksregierung Köln",
+            MV_KEY,
+        ] {
+            assert_eq!(unsafe_(name), None, "{name}: a single chamber, safe");
+        }
+        // As twins, through the real mention path: the convicted names bind whole, a single chamber's
+        // twin still refuses.
+        let twin = |name: &str| -> TwinDecision {
+            let orgs = [
+                ("ORG-0001", name, Some("DEU"), Some("1f2e3d4c-5b6a-4978-8a9b-0c1d2e3f4a5b")),
+                ("ORG-0002", name, Some("DEU"), Some("2a3b4c5d-6e7f-4089-9b0c-1d2e3f4a5b6c")),
+            ];
+            decide(&orgs, &none())
+        };
+        for name in ["Vergabekammer NRW", "Geschäftsstelle der Vergabekammer"] {
+            let d = twin(name);
+            assert!(d.refused.is_empty(), "{name}: {d:?}");
+            assert_eq!(d.groups[0].bind, Some(TwinBind::UnsafeList), "{name}");
+        }
+        for name in ["Vergabekammer Westfalen", "Vergabekammer Niedersachsen", MV_KEY] {
+            assert_eq!(twin(name).refused.len(), 2, "{name}: refused");
+        }
+    }
+
+    /// The office nouns are compared against [`guid_twin_name_words`], so each is stored as it folds
+    /// (`geschäftsstelle` → `geschaftsstelle`), and a two-word `Geschäftsstelle X` key is an office key.
+    #[test]
+    fn every_office_noun_is_stored_folded() {
+        for noun in GUID_TWIN_OFFICE_NOUNS {
+            assert_eq!(guid_twin_name_words(noun), vec![(*noun).to_owned()], "{noun} must be stored folded");
+        }
+        assert_eq!(guid_twin_name_words("Geschäftsstelle"), vec!["geschaftsstelle".to_owned()]);
+        assert!(office_two_words("Geschäftsstelle Vergabewesen"));
+        assert!(office_two_words("GESCHÄFTSSTELLE Vergabewesen"));
+        assert!(office_two_words("Geschäftsstelle der Vergabekammer"), "the function word is skipped");
+        assert!(!office_two_words("Geschäftsstelle Vergabekammer Südbayern"), "three content words");
+        // A safe `Geschäftsstelle X` twin is refused and read whole in R2; the convicted name binds, so
+        // its group is no office read.
+        let orgs = |name| {
+            [
+                ("ORG-0001", name, Some("DEU"), Some("1f2e3d4c-5b6a-4978-8a9b-0c1d2e3f4a5b")),
+                ("ORG-0002", name, Some("DEU"), Some("2a3b4c5d-6e7f-4089-9b0c-1d2e3f4a5b6c")),
+            ]
+        };
+        let d = decide(&orgs("Geschäftsstelle Vergabewesen"), &none());
+        assert_eq!((d.refused.len(), d.groups[0].office_two_words), (2, true));
+        let d = decide(&orgs("Geschäftsstelle der Vergabekammer"), &none());
+        assert_eq!((d.refused.len(), d.groups[0].office_two_words), (0, false));
+    }
+
+    // ---- Build 1b, F2: A7's role guard (the notice's own role references) ----
+
+    /// The AOK Niedersachsen award (TED 24253392, DÖE copy 26483158; R2's W3): the buyer (ORG-0001,
+    /// Procedure-Buyer), its information desk (ORG-0002, Lot-AddInfo) and a review slot (ORG-0003,
+    /// Lot-ReviewOrg) all print the AOK's name under three v4 values; the winner Bechtle and the eSender
+    /// (Procedure-SProvider, no v4 value) are named once. Values as published.
+    const AOK: &str = "AOK - Die Gesundheitskasse für Niedersachsen";
+    const AOK_V: [&str; 4] = [
+        "617a9b4a-867f-4946-9210-0658d0a6ca70",
+        "dfe86ded-2374-46d0-abcc-28456aa60795",
+        "26a934f6-ecc1-4faf-9c24-50bf06f55811",
+        "e215f915-8828-4309-a44f-7d637f09f83d",
+    ];
+
+    fn aok() -> Vec<Org<'static>> {
+        vec![
+            ("ORG-0001", AOK, Some("DEU"), Some(AOK_V[0])),
+            ("ORG-0002", AOK, Some("DEU"), Some(AOK_V[1])),
+            ("ORG-0003", AOK, Some("DEU"), Some(AOK_V[2])),
+            ("ORG-0004", "Bechtle GmbH", Some("DEU"), Some(AOK_V[3])),
+            ("ORG-0005", "Deutsches Ausschreibungsblatt GmbH", Some("DEU"), Some("0204:994-DOEVD-83")),
+        ]
+    }
+
+    /// The TED copy's role references, as published.
+    const AOK_REFS: [Ref<'static>; 6] = [
+        ("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"),
+        ("LOT-0001", "OPT-301-Lot-AddInfo", "ORG-0002"),
+        ("LOT-0001", "OPT-301-Lot-ReviewOrg", "ORG-0003"),
+        ("PROCEDURE", "OPT-301-Lot-ReviewOrg", "ORG-0003"),
+        ("ND-Tenderer#0", "OPT-300-Tenderer", "ORG-0004"),
+        ("ND-ServiceProviderParty#0", "OPT-300-Procedure-SProvider", "ORG-0005"),
+    ];
+
+    /// R0 (R2 F2): the AOK shape binds whole as `role_mix` through the gate's path (the parsed copy's
+    /// mentions, its own references read by [`guid_twin_section_roles`]), its roles named; without the
+    /// review slot it is the Göttingen shape (Buyer + AddInfo + TenderReceipt) and refuses. The fixture
+    /// is R2's R0 shape (Buyer and AddInfo on two values, ReviewOrg on a third, as the published AOK
+    /// copy); the bare Procedure-Buyer + Lot-ReviewOrg pair on two values is pinned in
+    /// `the_role_guard_reads_the_groups_own_references_after_their_scope`.
+    #[test]
+    fn an_aok_shaped_buyer_and_review_org_twin_binds_as_role_mix() {
+        let d = decide_with(&aok(), &AOK_REFS, &none());
+        assert!(d.refused.is_empty(), "{d:?}");
+        assert_eq!(d.groups.len(), 1, "the AOK twin; Bechtle is named once");
+        let g = &d.groups[0];
+        assert_eq!(g.bind, Some(TwinBind::RoleMix));
+        assert_eq!(g.roles, vec!["Lot-AddInfo", "Lot-ReviewOrg", "Procedure-Buyer"]);
+        assert_eq!(g.distinct_values, 3);
+        // Without any reference (as Build 1 read it), the same copy refuses all three.
+        assert_eq!(decide(&aok(), &none()).refused.len(), 3);
+        // Buyer + AddInfo + TenderReceipt, no review slot: coherent, refused.
+        let receipt = [
+            ("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"),
+            ("LOT-0001", "OPT-301-Lot-AddInfo", "ORG-0002"),
+            ("LOT-0001", "OPT-301-Lot-TenderReceipt", "ORG-0003"),
+        ];
+        let d = decide_with(&aok(), &receipt, &none());
+        assert_eq!(d.refused.iter().map(String::as_str).collect::<Vec<_>>(), vec!["ORG-0001", "ORG-0002", "ORG-0003"]);
+        assert_eq!(d.groups[0].roles, vec!["Lot-AddInfo", "Lot-TenderReceipt", "Procedure-Buyer"]);
+        // KEEP over every value does not hide the role mix: the role guard reads first.
+        let keep: GuidKeep = AOK_V[..3].iter().collect();
+        assert_eq!(decide_with(&aok(), &AOK_REFS, &keep).groups[0].bind, Some(TwinBind::RoleMix));
+    }
+
+    /// A7's role set, read after the scope: a `Part-ReviewOrg` beside a Procedure-SProvider binds; a
+    /// review body beside review information (a chamber in both slots) refuses; a review slot on ANOTHER
+    /// name does not touch the buyer's group; a tenderer beside an information desk binds
+    /// (`tenderer_mixed`); and a twin with no reference at all refuses (an sdk-0.1 copy, a legacy copy).
+    #[test]
+    fn the_role_guard_reads_the_groups_own_references_after_their_scope() {
+        let two = |name: &'static str| -> Vec<Org<'static>> {
+            vec![("ORG-0001", name, Some("DEU"), Some(AOK_V[0])), ("ORG-0002", name, Some("DEU"), Some(AOK_V[1]))]
+        };
+        let bind = |orgs: &[Org<'_>], refs: &[Ref<'_>]| decide_with(orgs, refs, &none()).groups[0].bind;
+        let part = [("ND-ServiceProviderParty#0", "OPT-300-Procedure-SProvider", "ORG-0001"), ("LOT-0001", "OPT-301-Part-ReviewOrg", "ORG-0002")];
+        assert_eq!(bind(&two(AOK), &part), Some(TwinBind::RoleMix), "a Part- scope is a Lot- scope");
+        let buyer_review = [("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"), ("LOT-0001", "OPT-301-Lot-ReviewOrg", "ORG-0002")];
+        assert_eq!(bind(&two(AOK), &buyer_review), Some(TwinBind::RoleMix), "buyer + review slot on two values, no AddInfo: the brief's AOK pair");
+        let chamber = [("LOT-0001", "OPT-301-Lot-ReviewInfo", "ORG-0001"), ("LOT-0001", "OPT-301-Lot-ReviewOrg", "ORG-0002")];
+        assert_eq!(bind(&two(CHAMBER), &chamber), None, "a chamber in both review slots is one body");
+        let tenderer = [("ND-Tenderer#0", "OPT-300-Tenderer", "ORG-0001"), ("LOT-0001", "OPT-301-Lot-AddInfo", "ORG-0002")];
+        assert_eq!(bind(&two(ROMMEL), &tenderer), Some(TwinBind::RoleMix), "a bidder under an information desk's name");
+        let subcont = [("ND-Tenderer#0", "OPT-300-Tenderer", "ORG-0001"), ("ND-SubContractor#0", "OPT-301-Tenderer-SubCont", "ORG-0002")];
+        assert_eq!(bind(&two(ROMMEL), &subcont), None, "one class: coherent");
+        assert_eq!(bind(&two(AOK), &[]), None, "no reference, no role: refused");
+        // The review slot names the VK Bund section, not an AOK one: the AOK buyer twin refuses.
+        let mut orgs = two(AOK);
+        orgs.push(("ORG-0003", "Vergabekammer des Bundes", Some("DEU"), Some(BUND_RAW)));
+        let refs = [
+            ("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"),
+            ("LOT-0001", "OPT-301-Lot-AddInfo", "ORG-0002"),
+            ("LOT-0001", "OPT-301-Lot-ReviewOrg", "ORG-0003"),
+        ];
+        let d = decide_with(&orgs, &refs, &none());
+        assert_eq!(d.refused.iter().map(String::as_str).collect::<Vec<_>>(), vec!["ORG-0001", "ORG-0002"]);
+    }
+
+    /// The role mapping is the projection's: an OPT-300/OPT-301 id-ref names its suffix; a DE-1.x alias
+    /// source names its eForms role whatever its stored flag (as `normalise_de1_parse` marks it); an
+    /// unflagged eForms id, an `ojs` chain edge, an OPT-302 reference, a legacy `TED-` address block, an
+    /// identifier and a DE-1.x non-role alias name none. A raw DE-1.x copy and its normalised parse read
+    /// one map.
+    #[test]
+    fn the_role_mapping_reads_references_as_the_projection_does() {
+        let r = |field: &str, scheme: Option<&str>, is_ref: bool| guid_twin_role_ref(field, scheme, is_ref);
+        assert_eq!(r("OPT-300-Procedure-Buyer", None, true).as_deref(), Some("Procedure-Buyer"));
+        assert_eq!(r("OPT-301-Part-ReviewOrg", Some("organization"), true).as_deref(), Some("Part-ReviewOrg"));
+        assert_eq!(r("OPT-301-Lot-ReviewOrg", None, false), None, "an eForms id typed as no reference");
+        assert_eq!(r("OPT-301-Lot-ReviewOrg", Some("ojs"), true), None, "a chain edge");
+        assert_eq!(r("OPT-302-Organization", None, true), None);
+        assert_eq!(r("TED-ADDRESS_CONTRACTOR", None, true), None, "legacy address roles are not read");
+        assert_eq!(r("BT-501-Organization-Company", None, false), None);
+        assert_eq!(
+            r("DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", None, false).as_deref(),
+            Some("Lot-ReviewOrg"),
+            "a DÖE copy parsed before issue 98's inventory fix"
+        );
+        assert_eq!(r("DE1-ContractingParty-Party-PartyIdentification-ID", None, true).as_deref(), Some("Procedure-Buyer"));
+        assert_eq!(r("DE1-Organizations-Organization-Company-PartyLegalEntity-CompanyID", None, false), None);
+        assert_eq!(r("DE1-Organizations-Organization-Company-PartyIdentification-ID", None, false), None);
+
+        // A raw DÖE parse (DE-1.x ids, one stored unflagged) and its normalised form: one map.
+        let mut raw = parsed(&aok()[..4]);
+        for (section, field, target, is_ref) in [
+            ("ND-ContractingParty#0", "DE1-ContractingParty-Party-PartyIdentification-ID", "ORG-0001", false),
+            ("LOT-0001", "DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID", "ORG-0002", true),
+            ("PROCEDURE", "DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "ORG-0003", true),
+            ("ND-Tenderer#0", "DE1-NoticeResult-TenderingParty-Tenderer-ID", "ORG-0004", true),
+            ("ORG-0001", "DE1-Organizations-Organization-Company-PartyIdentification-ID", "ORG-0001", false),
+        ] {
+            raw.values.push(ValueRow {
+                section_id: section.into(),
+                field_id: field.into(),
+                ordinal: 0,
+                value: NoticeValue::Id { scheme: None, value: target.into(), is_ref },
+            });
+        }
+        let mut normalised = raw.clone();
+        super::super::normalise_de1_parse(&mut normalised);
+        let want: GuidTwinSectionRoles = [
+            ("ORG-0001", "Procedure-Buyer"),
+            ("ORG-0002", "Lot-AddInfo"),
+            ("ORG-0003", "Lot-ReviewOrg"),
+            ("ORG-0004", "Tenderer"),
+        ]
+        .into_iter()
+        .map(|(s, r)| (s.to_owned(), vec![r.to_owned()]))
+        .collect();
+        assert_eq!(guid_twin_section_roles(&raw), want);
+        assert_eq!(guid_twin_section_roles(&normalised), want, "the gate's normalised parse reads the same");
+        // And the gate decides the DÖE copy as it decides the TED copy.
+        let m = NoticeState::mentions_and_dropped(false, 26_483_158, &normalised).0;
+        let roles = guid_twin_section_roles(&normalised);
+        let d = guid_twin_decide(&views_with(&m, &roles), &none(), &[]);
+        assert_eq!((d.refused.len(), d.groups[0].bind), (0, Some(TwinBind::RoleMix)));
     }
 
     // ---- The planner on a fixture DB, and its parity with the rule (and the gate's input path) ----
@@ -815,6 +1195,7 @@ mod tests {
             .plan_guid_twins(store::GuidTwinPlanArgs {
                 is_guid: crate::idgate::uuid_v4,
                 rule: guid_twin_decide,
+                role_ref: guid_twin_role_ref,
                 role_class,
                 stable_ids: &[254, 255, 8_378],
                 stable_mentions: store::GUID_TWIN_R1_STABLE_MENTIONS,
@@ -837,8 +1218,10 @@ mod tests {
 
     /// PARITY: the planner's refused `(notice, section)` set — its planned mentions and its off-GUID
     /// refusals — is exactly what [`guid_twin_refusals`] gives over the stored mentions, notice by notice,
-    /// with the plan's own KEEP. Returns the planner's set.
-    async fn assert_parity(conn: &store::turso::Connection, plan: &store::GuidTwinPlan) -> BTreeSet<(i64, String)> {
+    /// with the plan's own KEEP and each copy's roles read the GATE's way: [`guid_twin_section_roles`]
+    /// over the copy as the projection loads it (`parsed_by_ids`), normalised as the projection
+    /// normalises it (`normalise_de1`). Returns the planner's set.
+    async fn assert_parity(db: &store::Db, conn: &store::turso::Connection, plan: &store::GuidTwinPlan) -> BTreeSet<(i64, String)> {
         assert!(!plan.planned_mention_keys_truncated);
         let keep: GuidKeep = plan.keep_candidates.iter().map(|c| c.value.clone()).collect();
         let mut planned: BTreeSet<(i64, String)> =
@@ -859,8 +1242,14 @@ mod tests {
             stored.entry(n).or_default().push((s(1).unwrap(), s(2).unwrap_or_default(), s(3), s(4), s(5)));
         }
         drop(rows);
+        let mut copies = db.parsed_by_ids(&stored.keys().copied().collect::<Vec<_>>()).await.unwrap();
+        super::super::normalise_de1(&mut copies);
+        let roles: BTreeMap<i64, GuidTwinSectionRoles> =
+            copies.iter().map(|(n, parsed)| (n.id, guid_twin_section_roles(parsed))).collect();
+        let none = GuidTwinSectionRoles::new();
         let mut by_rule: BTreeSet<(i64, String)> = BTreeSet::new();
         for (n, ms) in &stored {
+            let section_roles = roles.get(n).unwrap_or(&none);
             let views: Vec<TwinView<'_>> = ms
                 .iter()
                 .map(|(sec, name, country, raw, scheme)| TwinView {
@@ -869,6 +1258,7 @@ mod tests {
                     country: country.as_deref(),
                     raw_identifier: raw.as_deref(),
                     scheme: scheme.as_deref(),
+                    roles: section_roles.get(sec).map_or(&[], Vec::as_slice),
                 })
                 .collect();
             by_rule.extend(guid_twin_refusals(&views, &keep, &[]).into_iter().map(|s| (*n, s)));
@@ -908,7 +1298,11 @@ mod tests {
     ///   target, flag b); one planned copy publishes Duderstadt (flag a; with the others' Göttingen, flag c).
     ///   VAT row 22183653 of the same name is never a target.
     /// - 40000001 [990001]: Klinikum Musterstadt as Procedure-Buyer (F) and Lot-ReviewOrg (G), and Muster
-    ///   Bau AG as a bid tenderer (H) and Lot-AddInfo (I): two role-incoherent refused groups. Their
+    ///   Bau AG as a bid tenderer (H) and Lot-AddInfo (I): two PARTY-role-incoherent refused groups. The
+    ///   fixture stores no `notice_ids` references, so A7's role guard (which reads the copy's own
+    ///   references, never `tender_version_parties`) sees no roles here and the groups stay refused;
+    ///   only the party-role composition (step 4d) lists them as incoherent. The reference-driven
+    ///   `role_mix` bind is the AOK test's. Their
     ///   identifier-NULL rows: 30000201 (51 mentions; only the OLDEST is in Andernstadt, the newest 50 in
     ///   Musterstadt: one city, not flagged) and 30000202 (two mentions in two cities: flag b alone).
     /// - 40000002 [990002]: a bare `Vergabekammer` twin (J, K): bound by the guard.
@@ -1070,6 +1464,14 @@ mod tests {
         assert_eq!(plan.guard["content_words"].mentions, 2);
         assert_eq!(plan.guard["keep"].groups, 3, "the SBH pair, in 40000003, 40000004 and 40000005");
         assert_eq!(plan.guard["no_country"].groups, 0);
+        assert_eq!(
+            (plan.guard["role_mix"].groups, plan.bars.tripwire_role_mix, plan.role_ref_rows_read),
+            (0, 0, 0),
+            "no notice_ids references in this seed: the guard reads references only; the party-role report still \
+             lists Klinikum/Muster Bau"
+        );
+        assert!(plan.role_ref_notices > 0, "the role read ran for the twin copies and found nothing");
+        assert_eq!(plan.bars.role_ref_disagree, 0, "the real rule's role union is the planner's read");
 
         // Targets: Göttingen's identifier-NULL row (never the VAT row), Klinikum's and Muster Bau's; the
         // chamber, SBH and DB InfraGO have none.
@@ -1112,7 +1514,9 @@ mod tests {
         let klinikum = plan.r2_top_targets.iter().find(|t| t.target_id == Some(30_000_201)).unwrap();
         assert_eq!((klinikum.mentions, klinikum.cities.clone(), klinikum.multi_city), (51, vec!["musterstadt".to_owned()], false));
 
-        // Role composition: buyer + Lot-ReviewOrg (Klinikum), a bid tenderer + Lot-AddInfo (Muster Bau).
+        // Role composition by PARTY roles (`tender_version_parties`, bid parties, winners), not by the
+        // notice references the guard reads: buyer + Lot-ReviewOrg (Klinikum), a bid tenderer + Lot-AddInfo
+        // (Muster Bau) — refused here because the seed stores no references.
         assert_eq!(plan.roles.buyer_with_review_org, 1);
         assert_eq!(plan.roles.tenderer_mixed, 1);
         assert_eq!(plan.roles.incoherent_count, 2);
@@ -1184,7 +1588,7 @@ mod tests {
 
         // PARITY over the stored mentions, then the gate's input path: the award's two copies, parsed and
         // folded by mentions_and_dropped.
-        let planned = assert_parity(&conn, &plan).await;
+        let planned = assert_parity(&db, &conn, &plan).await;
         let keep: GuidKeep = plan.keep_candidates.iter().map(|c| c.value.clone()).collect();
         for (n, source) in [(24_262_502i64, "ted"), (26_483_825, "doe")] {
             let mut orgs: Vec<Org<'_>> = vec![
@@ -1269,7 +1673,7 @@ mod tests {
         let largest = plan.largest_target.clone().unwrap();
         assert_eq!((largest.target_id, largest.sample_id, largest.name.as_str(), largest.planned_mentions), (None, 101, "Amt 66", 4));
         assert!(plan.r2_top_targets.iter().any(|t| t.name_norm == largest.name_norm && t.country == largest.country));
-        assert_parity(&conn, &plan).await;
+        assert_parity(&db, &conn, &plan).await;
         drop(conn);
         cleanup(&path);
     }
@@ -1299,7 +1703,7 @@ mod tests {
         assert_eq!((plan.missing_targets.rows, plan.missing_targets.mentions), (0, 0));
         assert_eq!((plan.bars.target_country_mismatch, plan.bars.target_country_unchecked), (0, 0));
         assert_eq!(plan.largest_target.as_ref().and_then(|t| t.country.clone()).as_deref(), Some("FR"));
-        assert_parity(&conn, &plan).await;
+        assert_parity(&db, &conn, &plan).await;
         drop(conn);
         cleanup(&path);
     }
@@ -1354,7 +1758,164 @@ mod tests {
         assert_eq!((plan.roles.tenderer_mixed, plan.roles.buyer_with_review_org, plan.roles.incoherent_count), (1, 0, 1));
         assert_eq!(plan.roles.incoherent[0].notice_id, 101);
         assert_eq!(plan.roles.incoherent[0].roles, vec!["Lot-AddInfo", "result-winner"]);
-        assert_parity(&conn, &plan).await;
+        assert_parity(&db, &conn, &plan).await;
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// A stored id value of a fixture copy (`notice_ids`).
+    #[allow(clippy::too_many_arguments)]
+    async fn id_row(
+        conn: &store::turso::Connection,
+        notice: i64,
+        section: &str,
+        field: &str,
+        ordinal: i64,
+        scheme: Option<&str>,
+        value: &str,
+        is_ref: bool,
+    ) {
+        exec(
+            conn,
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            vec![
+                Value::Integer(notice),
+                txt(section),
+                txt(field),
+                Value::Integer(ordinal),
+                scheme.map_or(Value::Null, txt),
+                txt(value),
+                Value::Integer(i64::from(is_ref)),
+            ],
+        )
+        .await;
+    }
+
+    /// Build 1b (R2 F2, W3): the AOK Niedersachsen award in both copies — TED 24253392 with OPT-300/301
+    /// references, its DÖE copy 26483158 with DE-1.x references (the buyer's stored unflagged, as a copy
+    /// parsed before issue 98's inventory fix) — rows 22752175/76/77 under one name as Procedure-Buyer,
+    /// Lot-AddInfo and Lot-ReviewOrg, beside a Göttingen-shaped coherent twin (Buyer + AddInfo +
+    /// TenderReceipt). The planner reads the role references of the three twin copies, binds both AOK
+    /// copies as `role_mix` (so 22752175-77 are NOT planned: R1's controls pass) and still plans the
+    /// coherent twin; its role self-check stays 0 and the party-based incoherent list no longer holds
+    /// the AOK. PARITY: the planner's stored-role read equals the gate's [`guid_twin_section_roles`] over
+    /// each copy as the projection loads it, raw and normalised, and its refusals equal the rule's (the
+    /// gate's decision on the parsed TED copy binds the same group as `role_mix`).
+    #[tokio::test]
+    async fn the_planner_binds_the_aok_role_mix_from_the_notices_own_references() {
+        let (db, conn, path) = fixture("aok").await;
+        const TED: i64 = 24_253_392;
+        const DOE: i64 = 26_483_158;
+        const MUSTER: i64 = 24_253_393;
+        const MUSTER_NAME: &str = "Stadt Musterhausen";
+        const MV: [&str; 2] = ["5d1e2f3a-4b5c-4d6e-8f7a-8b9c0d1e2f3a", "6e2f3a4b-5c6d-4e7f-9a8b-9c0d1e2f3a4b"];
+        org(&conn, 7_861, None, AOK).await;
+        for (k, value) in AOK_V[..3].iter().enumerate() {
+            org(&conn, 22_752_175 + k as i64, Some(value), AOK).await;
+        }
+        org(&conn, 22_752_178, Some(AOK_V[3]), "Bechtle GmbH").await;
+        org(&conn, 30_100_001, Some(MV[0]), MUSTER_NAME).await;
+        org(&conn, 30_100_002, Some(MV[1]), MUSTER_NAME).await;
+        for (n, source, seq) in [(TED, "ted", 1), (DOE, "doe", 2)] {
+            notice(&conn, n, source, 990_100, seq).await;
+            let v = (990_100, seq);
+            for (k, (section, role)) in [("ORG-0001", "Procedure-Buyer"), ("ORG-0002", "Lot-AddInfo"), ("ORG-0003", "Lot-ReviewOrg")]
+                .into_iter()
+                .enumerate()
+            {
+                mention(&conn, n, section, 22_752_175 + k as i64, AOK, Some(AOK_V[k]), role, v, Some("Hannover")).await;
+            }
+            mention(&conn, n, "ORG-0004", 22_752_178, "Bechtle GmbH", Some(AOK_V[3]), "", v, None).await;
+        }
+        exec(&conn, "UPDATE notices SET profile = 'eforms:eforms-de-1.1' WHERE id = 26483158", vec![]).await;
+        // The TED copy's references, an identifier beside them (no role).
+        for (section, field, target) in AOK_REFS {
+            let scheme = field.contains("ReviewOrg").then_some("organization");
+            id_row(&conn, TED, section, field, 0, scheme, target, true).await;
+        }
+        id_row(&conn, TED, "ORG-0001", "BT-501-Organization-Company", 0, None, AOK_V[0], false).await;
+        // The DÖE copy's references: DE-1.x ids, the buyer's stored unflagged; its own ORG ids (no role).
+        for (section, field, target, is_ref) in [
+            ("ND-ContractingParty#0", "DE1-ContractingParty-Party-PartyIdentification-ID", "ORG-0001", false),
+            ("LOT-0001", "DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID", "ORG-0002", true),
+            ("LOT-0001", "DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "ORG-0003", true),
+            ("PROCEDURE", "DE1-TenderingTerms-AppealTerms-AppealReceiverParty-PartyIdentification-ID", "ORG-0003", true),
+            ("ND-Tenderer#0", "DE1-NoticeResult-TenderingParty-Tenderer-ID", "ORG-0004", true),
+            ("ORG-0001", "DE1-Organizations-Organization-Company-PartyIdentification-ID", "ORG-0001", false),
+        ] {
+            id_row(&conn, DOE, section, field, 0, None, target, is_ref).await;
+        }
+        // The coherent twin: Buyer, and AddInfo + TenderReceipt on the second section.
+        notice(&conn, MUSTER, "ted", 990_101, 1).await;
+        mention(&conn, MUSTER, "ORG-0001", 30_100_001, MUSTER_NAME, Some(MV[0]), "Procedure-Buyer", (990_101, 1), None).await;
+        mention(&conn, MUSTER, "ORG-0002", 30_100_002, MUSTER_NAME, Some(MV[1]), "Lot-AddInfo", (990_101, 1), None).await;
+        for (section, field, target) in [
+            ("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"),
+            ("LOT-0001", "OPT-301-Lot-AddInfo", "ORG-0002"),
+            ("LOT-0001", "OPT-301-Lot-TenderReceipt", "ORG-0002"),
+        ] {
+            id_row(&conn, MUSTER, section, field, 0, None, target, true).await;
+        }
+
+        let plan = run_plan(&db, &[22_752_175, 22_752_176, 22_752_177], &[]).await;
+        assert!(plan.bars.not_planned_failed.is_empty(), "{:?}", plan.bars.not_planned_failed);
+        assert_eq!(plan.planned_row_ids, vec![30_100_001, 30_100_002], "the coherent twin alone");
+        assert!(plan.bars.pass, "{:#?}", plan.bars);
+        assert_eq!(plan.bars.tripwire_role_mix, 0);
+        assert_eq!(plan.bars.role_ref_disagree, 0, "the real rule's roles are the planner's own read");
+        let role_mix = plan.guard["role_mix"];
+        assert_eq!((role_mix.groups, role_mix.mentions), (2, 6), "both AOK copies, three sections each");
+        let clause = plan.roles.role_mix_by_clause["buyer_review_org"];
+        assert_eq!((clause.groups, clause.mentions), (2, 6));
+        let samples: Vec<(i64, Vec<String>, Vec<i64>)> = plan.guard_samples["role_mix"]
+            .iter()
+            .map(|g| (g.notice_id, g.ref_roles.clone(), g.org_ids.clone()))
+            .collect();
+        let aok_roles: Vec<String> = ["Lot-AddInfo", "Lot-ReviewOrg", "Procedure-Buyer"].map(str::to_owned).to_vec();
+        let aok_rows = vec![22_752_175, 22_752_176, 22_752_177];
+        assert_eq!(samples, vec![(TED, aok_roles.clone(), aok_rows.clone()), (DOE, aok_roles.clone(), aok_rows)]);
+        assert_eq!(plan.roles.refused_groups, 1, "the coherent twin");
+        assert_eq!(plan.roles.incoherent_count, 0, "the AOK copies bind, so the party-based list no longer holds them");
+        assert_eq!(plan.role_ref_notices, 3, "the three copies holding a twin group");
+        assert_eq!(plan.role_ref_rows_read, 6 + 6 + 3, "TED's six id-refs, all six DE-1.x rows, Musterhausen's three");
+        assert_eq!(plan.role_refs, 5 + 4 + 3, "distinct (section, role) pairs");
+
+        // PARITY of the role read: the planner's stored read, the gate's over the loaded copy (raw and
+        // normalised as the projection normalises it).
+        let stored = db.guid_twin_stored_roles(&[TED, DOE, MUSTER], guid_twin_role_ref).await.unwrap();
+        let want = |pairs: &[(&str, &[&str])]| -> GuidTwinSectionRoles {
+            pairs.iter().map(|(s, r)| ((*s).to_owned(), r.iter().map(|x| (*x).to_owned()).collect())).collect()
+        };
+        assert_eq!(
+            stored[&TED],
+            want(&[
+                ("ORG-0001", &["Procedure-Buyer"]),
+                ("ORG-0002", &["Lot-AddInfo"]),
+                ("ORG-0003", &["Lot-ReviewOrg"]),
+                ("ORG-0004", &["Tenderer"]),
+                ("ORG-0005", &["Procedure-SProvider"]),
+            ])
+        );
+        assert_eq!(
+            stored[&DOE],
+            want(&[("ORG-0001", &["Procedure-Buyer"]), ("ORG-0002", &["Lot-AddInfo"]), ("ORG-0003", &["Lot-ReviewOrg"]), ("ORG-0004", &["Tenderer"])])
+        );
+        assert_eq!(stored[&MUSTER], want(&[("ORG-0001", &["Procedure-Buyer"]), ("ORG-0002", &["Lot-AddInfo", "Lot-TenderReceipt"])]));
+        let raw = db.parsed_by_ids(&[TED, DOE, MUSTER]).await.unwrap();
+        let mut normalised = raw.clone();
+        super::super::normalise_de1(&mut normalised);
+        for copies in [&raw, &normalised] {
+            let gate: BTreeMap<i64, GuidTwinSectionRoles> = copies.iter().map(|(n, p)| (n.id, guid_twin_section_roles(p))).collect();
+            assert_eq!(gate, stored, "the gate's role read equals the planner's");
+        }
+        assert!(normalised[2].1.values.iter().any(|v| v.field_id == "OPT-301-Lot-ReviewOrg"), "the DÖE copy was normalised");
+        // PARITY of the decision: the planner's refusals are the rule's over the stored copies with the
+        // gate's roles; and the gate's decision on the parsed TED copy binds the AOK group as role_mix.
+        let planned = assert_parity(&db, &conn, &plan).await;
+        assert!(planned.iter().all(|(n, _)| *n == MUSTER), "{planned:?}");
+        let gate = decide_with(&aok(), &AOK_REFS, &GuidKeep::default());
+        assert_eq!(gate.groups[0].bind, Some(TwinBind::RoleMix));
+        assert_eq!(gate.groups[0].roles, aok_roles);
         drop(conn);
         cleanup(&path);
     }

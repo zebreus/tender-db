@@ -1395,8 +1395,10 @@ const GUID_CENSUS_REPORT: &str = "guid-census";
 const GUID_TWIN_REPORT: &str = "guid-twin-plan";
 /// Issue 530 unit 3, R1: the controls the plan must NOT plan — the stable keys (254, 255, 8378,
 /// 30530641), the KEEP pairs spanning several Tenders (SBH 3866/3868, Nürnberg 2529/2530, 21983972/73,
-/// Westfalen 21987063, 5351, 8756, Sprinkenhof 10966, Nürnberg Hochbauamt 1085, GMH 22040636/37), and
-/// the no-twin rows (Göttingen 23014305, Südbayern 30971684/734/757, Bremen 30532145/147).
+/// Westfalen 21987063, 5351, 8756, Sprinkenhof 10966, Nürnberg Hochbauamt 1085, GMH 22040636/37), the
+/// no-twin rows (Göttingen 23014305, Südbayern 30971684/734/757, Bremen 30532145/147), and (Build 1b,
+/// R2's W3) the AOK Niedersachsen group 22752175/76/77 — notice 24253392 and its DÖE copy 26483158,
+/// ORG-0003 the Lot-ReviewOrg under the buyer's name — which A7's role guard binds.
 const GUID_TWIN_NOT_PLANNED: &[i64] = &[
     254,
     255,
@@ -1421,6 +1423,9 @@ const GUID_TWIN_NOT_PLANNED: &[i64] = &[
     30_971_757,
     30_532_145,
     30_532_147,
+    22_752_175,
+    22_752_176,
+    22_752_177,
 ];
 /// Issue 530 unit 3, R1: planned whole, with this target (the Göttingen pair → 2294259, Göttingen's DE
 /// identifier-NULL row, never the VAT row 22183653 or the country-NULL row 16393).
@@ -2697,8 +2702,30 @@ fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
              (gated_identifier under the canonical country) is a uuid_v4 national key, grouped by (identifier \
              country = register_jurisdiction, org_name_norm(name)); a group with >= 2 distinct values refuses \
              every section whose value is not in KEEP, unless the name is unsafe (< 2 content words after the \
-             legal forms, generic_body_name, GUID_TWIN_UNSAFE_NAMES or a polity umbrella, extra_unsafe_names) or \
-             the group has no country. The gate is NOT wired (Build 1): production ingest is unchanged"
+             legal forms, generic_body_name, GUID_TWIN_UNSAFE_NAMES — with R2's Vergabekammer NRW, Geschäftsstelle \
+             der Vergabekammer, Vergabekammer Nordrhein-Westfalen, Vergabekammer Bayern, Geschäftsstelle der \
+             Vergabekammern — or a polity umbrella, extra_unsafe_names), the group has no country, or (Build 1b, \
+             A7) the group's roles by the notice copy's own OPT-300/OPT-301 references are role-incoherent \
+             (role_mix: Lot-/Part-ReviewOrg beside Procedure-Buyer, Procedure-SProvider, Lot-/Part-AddInfo or \
+             Lot-/Part-TenderReceipt, or a Tenderer/Tenderer-MainCont/Tenderer-SubCont beside another role). The \
+             gate is NOT wired (Build 1b): production ingest is unchanged"
+                .into(),
+        );
+        all.insert(
+            "role_basis".to_owned(),
+            "A7's guard reads each twin copy's OWN role references, never tender_version_parties: the copy's \
+             notice_ids rows (primary-key prefix, IN chunks of 512; is_ref = 1, and every DE1- row whatever its \
+             flag, as normalise_de1 marks the aliased role references) mapped by \
+             ingest::project::guid_twin::guid_twin_role_ref (role_name over OPT-300/OPT-301, DE1 aliases \
+             resolved, ojs edges and legacy TED- roles skipped) and folded by store::guid_twin_fold_roles — the \
+             gate's guid_twin_section_roles over the parsed copy reads the same map. Read only for copies holding \
+             a twin group (role_ref_notices; the guard binds groups only, so that is exact); role_ref_rows_read, \
+             role_refs and role_ref_ms count the extra read. guard.role_mix and roles.role_mix_by_clause are the \
+             groups it bound; bars.tripwire_role_mix (refused groups whose reference roles, as the PLANNER read \
+             them from notice_ids, are incoherent) must be 0, and so must bars.role_ref_disagree (groups whose \
+             roles as the rule returned them are not the planner's read: a rule that lost them). ref_roles on \
+             every sample is the planner's read. roles.by_role_set / incoherent stay the PARTY-role composition \
+             of the refused groups (reported for R2; ref_roles beside each)"
                 .into(),
         );
         all.insert(
@@ -2735,8 +2762,11 @@ fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
              at R1's fixed 100 mentions (or a stable id) whatever stable_mentions says, or with a value in KEEP; the \
              run's stable_mentions is 100; the not-planned and planned controls; 0 planned mentions whose target key \
              or found row's country is not register_jurisdiction(mention country) (A11; a target's identifier is NULL \
-             by construction); the KEEP self-check. Reported, not bars: no-Tender rows (tripwire_no_tender) and \
-             mentions whose country A11 cannot read (target_country_unchecked)"
+             by construction); the KEEP self-check; 0 refused groups whose notice-reference roles (the planner's own \
+             notice_ids read, not the rule's echo) are role-incoherent (tripwire_role_mix, Build 1b: the rule binds \
+             them, so one is a rule without A7's guard); 0 groups whose rule roles differ from that read \
+             (role_ref_disagree). Reported, not bars: no-Tender rows (tripwire_no_tender) and mentions whose \
+             country A11 cannot read (target_country_unchecked)"
                 .into(),
         );
         all.insert(
@@ -2749,6 +2779,16 @@ fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
              missing; a missing key's sample_id is the smallest org id among its planned rows"
                 .into(),
         );
+        all.insert(
+            "r2_basis".to_owned(),
+            "r2_random: 60 planned rows (whole or partial) stratified buyer 25 / review_or_info 25 / other or \
+             tenderer 10 at salt 530003 (Build 1b: the fresh re-read of decision A5 / R2 F3), the smallest \
+             ((org_id XOR salt) * 2654435761) mod 2^32 first, skipping the 60 rows R2 read at 530002 \
+             (store::GUID_TWIN_R2_READ, r2_read_excluded; r2_random_excluded of them were planned here) so the \
+             next rows in salted order fill each stratum. The flagged-class lists (top targets, office keys, \
+             city-flagged, incoherent) are whole up to 45, else the top 30 plus 15 at the same salt"
+                .into(),
+        );
         all.insert("not_planned_ids".to_owned(), serde_json::json!(GUID_TWIN_NOT_PLANNED));
         all.insert("planned_ids".to_owned(), serde_json::json!(GUID_TWIN_PLANNED));
     }
@@ -2759,12 +2799,21 @@ fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
 /// one line.
 fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
     let guard = |label: &str| r.guard.get(label).map_or((0, 0), |g| (g.groups, g.mentions));
-    let guards = ["no_country", "content_words", "generic", "unsafe_list", "extra", "keep"]
+    // Every bind reason, from the one list (Build 1b added role_mix): a reason cannot drop out here.
+    let guards = store::TwinBind::ALL
         .iter()
-        .map(|label| {
+        .map(|reason| {
+            let label = reason.label();
             let (groups, mentions) = guard(label);
             format!("{label} {groups}/{mentions}")
         })
+        .collect::<Vec<_>>()
+        .join(", ");
+    let role_mix = r
+        .roles
+        .role_mix_by_clause
+        .iter()
+        .map(|(clause, c)| format!("{clause} {}/{}", c.groups, c.mentions))
         .collect::<Vec<_>>()
         .join(", ");
     let keep = r.keep_by_reason.iter().map(|(reason, n)| format!("{reason} {n}")).collect::<Vec<_>>().join(", ");
@@ -2809,12 +2858,16 @@ fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
          exclusions (groups/mentions): {guards}; KEEP partners {}; KEEP spares {} mention(s) on {} row(s). City \
          screen: {} planned mention(s) with a city, {} without; {} absent from the target's cities ({} row(s), {} \
          target(s)); {} multi-city target(s); {} key(s) whose planned mentions show 2+ cities ({} mention(s), {} \
-         row(s)); {} flagged. Roles of refused groups: {} buyer+ReviewOrg, {} tenderer-mixed of {}. Census twin \
+         row(s)); {} flagged. Role guard (A7, the notices' own references): bound {{{role_mix}}}; references read \
+         for {} twin copy(ies), {} row(s), {} (section, role) pair(s) in {} ms. Party roles of refused groups: {} \
+         buyer+ReviewOrg, {} tenderer-mixed of {}. Census twin \
          rows after the plan: {} -> {} (stable {} -> {}, several Tenders {} -> {}). R1 BARS {}: comparable planned \
          rows (whole + partial) {} (whole {}) <= {} {}; above the census max {}; partner off GUID rows {}; \
-         tripwires several-Tenders {}, stable (>= {} mentions) {}, KEEP {}; stable_mentions {} {}; not-planned \
-         misses {:?}; planned misses {:?}; target-country mismatches {}; KEEP self-check missing {}; reported: \
-         no-Tender rows {}, country unchecked {}. Controls: {controls}. {exhibits}. {} ms. NOTHING IS WRITTEN.",
+         tripwires several-Tenders {}, stable (>= {} mentions) {}, KEEP {}, role-mix refused {}; rule/planner \
+         role disagreements {}; stable_mentions {} {}; not-planned misses {:?}; planned misses {:?}; \
+         target-country mismatches {}; KEEP self-check missing {}; reported: no-Tender rows {}, country unchecked \
+         {}. Controls: {controls}. {exhibits}. R2 random: {} row(s) at salt {}, {} planned row(s) R2 already read \
+         skipped. {} ms. NOTHING IS WRITTEN.",
         r.guid_rows,
         r.distinct_values,
         r.max_id,
@@ -2851,6 +2904,10 @@ fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
         r.city.planned_multi_city_mentions,
         r.city.planned_multi_city_rows,
         r.city.flagged_count,
+        r.role_ref_notices,
+        r.role_ref_rows_read,
+        r.role_refs,
+        r.role_ref_ms,
         r.roles.buyer_with_review_org,
         r.roles.tenderer_mixed,
         r.roles.refused_groups,
@@ -2871,6 +2928,8 @@ fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
         store::GUID_TWIN_R1_STABLE_MENTIONS,
         b.tripwire_stable,
         b.tripwire_keep,
+        b.tripwire_role_mix,
+        b.role_ref_disagree,
         r.stable_mentions,
         if b.stable_mentions_is_decision { "ok" } else { "NOT THE DECISION'S" },
         b.not_planned_failed,
@@ -2879,6 +2938,9 @@ fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
         b.keep_self_check_missing.len(),
         b.tripwire_no_tender,
         b.target_country_unchecked,
+        r.r2_random.len(),
+        r.salt,
+        r.r2_random_excluded,
         r.runtime_ms,
     )
 }
@@ -15411,6 +15473,7 @@ impl Supervisor {
                 let r = Box::pin(self.db.plan_guid_twins(store::GuidTwinPlanArgs {
                     is_guid: ingest::idgate::uuid_v4,
                     rule: ingest::project::guid_twin::guid_twin_decide,
+                    role_ref: ingest::project::guid_twin::guid_twin_role_ref,
                     role_class: guid_role_class,
                     stable_ids: GUID_CENSUS_STABLE_IDS,
                     stable_mentions: *stable_mentions,
@@ -23575,14 +23638,50 @@ mod tests {
         let body: serde_json::Value = serde_json::from_str(&guid_twin_plan_json(&plan).unwrap()).unwrap();
         assert!(body["scope_basis"].as_str().unwrap().contains("LOWER BOUNDS"), "{body}");
         assert_eq!(body["bars"]["pass"], false);
+        // Build 1b: every bind reason is in the summary (role_mix too), with the role guard's clauses,
+        // the extra read and its tripwire; the stored body names the role basis; R2's W3 rows are
+        // not-planned controls.
+        let mut plan = plan;
+        plan.roles.role_mix_by_clause.insert(
+            "buyer_review_org".to_owned(),
+            store::GuidTwinGuardCount { groups: 2, mentions: 6 },
+        );
+        plan.guard.insert("role_mix", store::GuidTwinGuardCount { groups: 2, mentions: 6 });
+        (plan.role_ref_notices, plan.role_ref_rows_read, plan.role_refs) = (3, 15, 12);
+        plan.bars.tripwire_role_mix = 1;
+        plan.bars.role_ref_disagree = 2;
+        (plan.salt, plan.r2_read_excluded, plan.r2_random_excluded) = (store::GUID_TWIN_SALT, 60, 7);
+        let msg = guid_twin_plan_summary(&plan);
+        for reason in store::TwinBind::ALL {
+            assert!(msg.contains(&format!("{} ", reason.label())), "{reason:?}: {msg}");
+        }
+        assert!(msg.contains("role_mix 2/6"), "{msg}");
+        assert!(msg.contains("bound {buyer_review_org 2/6}"), "{msg}");
+        assert!(msg.contains("references read for 3 twin copy(ies), 15 row(s), 12 (section, role) pair(s)"), "{msg}");
+        assert!(msg.contains("role-mix refused 1; rule/planner role disagreements 2"), "{msg}");
+        assert!(msg.contains("R2 random: 0 row(s) at salt 530003, 7 planned row(s) R2 already read skipped"), "{msg}");
+        let body: serde_json::Value = serde_json::from_str(&guid_twin_plan_json(&plan).unwrap()).unwrap();
+        assert!(body["role_basis"].as_str().unwrap().contains("never tender_version_parties"), "{body}");
+        assert!(body["r2_basis"].as_str().unwrap().contains("salt 530003"), "{body}");
+        assert_eq!((body["salt"].as_u64(), body["r2_read_excluded"].as_u64(), body["r2_random_excluded"].as_u64()), (Some(530_003), Some(60), Some(7)));
+        assert_eq!(body["bars"]["role_ref_disagree"], 2, "{body}");
+        assert!(body["rule"].as_str().unwrap().contains("Vergabekammer NRW"), "{body}");
+        let not_planned = body["not_planned_ids"].as_array().unwrap();
+        for id in [22_752_175, 22_752_176, 22_752_177] {
+            assert!(not_planned.contains(&serde_json::json!(id)), "{id}: {body}");
+        }
     }
 
     /// Issue 530 unit 3 (Build 1): the job wired to the REAL `idgate::uuid_v4`, rule 530-T
-    /// (`ingest::project::guid_twin::guid_twin_decide`) and `guid_role_class`. Without a deferred index it
-    /// refuses and stores nothing; with them it stores `guid-twin-plan` — the Göttingen award's DÖE copy
-    /// names the buyer under two GUIDs, both rows are planned whole onto the DE identifier-NULL row
-    /// 2294259 (never the VAT row) and R1's bars pass — and answers a one-line summary; nothing is
-    /// written but the report, and a cancelled run stores none.
+    /// (`ingest::project::guid_twin::guid_twin_decide`), `guid_role_class` and (Build 1b) A7's role
+    /// mapping `ingest::project::guid_twin::guid_twin_role_ref`. Without a deferred index it refuses and
+    /// stores nothing; with them it stores `guid-twin-plan` — the Göttingen award's DÖE copy names the
+    /// buyer under two GUIDs, both rows are planned whole onto the DE identifier-NULL row 2294259 (never
+    /// the VAT row) and R1's bars pass — and answers a one-line summary; nothing is written but the
+    /// report, and a cancelled run stores none. The R1 control is planned under its OWN role references,
+    /// stored as the DÖE copy holds them (DE-1.x ids, the buyer's unflagged as before issue 98's
+    /// inventory fix): Procedure-Buyer on ORG-0001 and Lot-AddInfo on ORG-0002, no review slot on its
+    /// name, so A7's guard reads both and binds nothing (a stub mapping would read 0 references).
     #[tokio::test]
     async fn the_dissolve_guid_twins_job_refuses_without_its_indexes_and_stores_its_plan() {
         use store::turso::Value;
@@ -23645,6 +23744,21 @@ mod tests {
             .await
             .unwrap();
         }
+        // The DÖE copy's own role references (decision.md R0's GETs: the buyer as Procedure-Buyer on
+        // ORG-0001, its information desk as Lot-AddInfo on ORG-0002): DE-1.x ids, the ContractingParty
+        // one stored unflagged, so the real job also pins the read's `DE1-` branch.
+        for (section, field, target, is_ref) in [
+            ("ND-ContractingParty#0", "DE1-ContractingParty-Party-PartyIdentification-ID", "ORG-0001", 0i64),
+            ("LOT-0001", "DE1-ProcurementProjectLot-TenderingTerms-AdditionalInformationParty-PartyIdentification-ID", "ORG-0002", 1),
+        ] {
+            conn.execute(
+                "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref)
+                 VALUES (26483825, ?, ?, 0, NULL, ?, ?)",
+                (Value::Text(section.into()), Value::Text(field.into()), Value::Text(target.into()), Value::Integer(is_ref)),
+            )
+            .await
+            .unwrap();
+        }
         let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         let job = |id: u64| Job {
             id,
@@ -23671,6 +23785,8 @@ mod tests {
         assert!(msg.contains("R1 BARS PASS"), "{msg}");
         assert!(msg.contains("22759261 planned whole") && msg.contains("254 not_planned not a GUID row"), "{msg}");
         assert!(msg.contains("DE landkreis göttingen: 2 GUID row(s), 2 planned, 0 partial, 0 kept"), "{msg}");
+        assert!(msg.contains("references read for 1 twin copy(ies), 2 row(s), 2 (section, role) pair(s)"), "{msg}");
+        assert!(msg.contains("role-mix refused 0; rule/planner role disagreements 0"), "{msg}");
         assert!(msg.ends_with("NOTHING IS WRITTEN."), "{msg}");
         let (body, _) = db.latest_report(GUID_TWIN_REPORT).await.unwrap().expect("report");
         let report: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -23678,6 +23794,17 @@ mod tests {
         assert_eq!(report["largest_target"]["target_id"], 2_294_259, "{body}");
         assert_eq!(report["bars"]["pass"], true, "{body}");
         assert_eq!(report["roles"]["by_role_set"]["Lot-AddInfo+Procedure-Buyer"], 1, "{body}");
+        // A7 through the REAL mapping: the twin copy's two references read and mapped (a stub returning
+        // no role would give role_refs 0), coherent, so nothing bound and nothing tripped.
+        assert_eq!(report["role_ref_notices"], 1, "{body}");
+        assert_eq!(report["role_ref_rows_read"], 2, "{body}");
+        assert_eq!(report["role_refs"], 2, "{body}");
+        assert_eq!(report["guard"]["role_mix"]["groups"], 0, "{body}");
+        assert_eq!(report["bars"]["tripwire_role_mix"], 0, "{body}");
+        assert_eq!(report["bars"]["role_ref_disagree"], 0, "{body}");
+        let refused = &report["roles"]["incoherent"];
+        assert_eq!(refused.as_array().map(Vec::len), Some(0), "{body}");
+        assert_eq!(report["salt"], 530_003, "{body}");
         assert_eq!(report["not_planned_ids"][0], 254, "{body}");
         assert!(report["rule"].as_str().unwrap().contains("NOT wired"), "{body}");
         // Read-only: the GUID rows and their mentions stand as they were.

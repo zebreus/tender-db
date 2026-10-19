@@ -4,7 +4,10 @@
 //! ORG sections whose gated BT-501 identifier is a `uuid_v4` national key are grouped by
 //! `(register_jurisdiction(country), org_name_norm(name))`; a group holding two or more DISTINCT values
 //! refuses every section's identifier whose value is not on the frozen, value-keyed `KEEP_530`, unless
-//! the group's name is not safe as a fallback key or the group has no country. The rule is a pure
+//! the group's name is not safe as a fallback key, the group has no country, or (Build 1b, A7) the
+//! group's roles by the notice copy's OWN OPT-300/OPT-301 references are role-incoherent
+//! ([`guid_twin_role_mix`]; read through one fold, [`guid_twin_fold_roles`], and one injected
+//! mapping, [`GuidTwinRoleRef`], by the gate and the planner alike). The rule is a pure
 //! function of the notice (`ingest::project::guid_twin::guid_twin_decide`); store never depends on
 //! ingest, so it is injected here as a [`GuidTwinRule`] fn pointer, the way `idgate::condemns` is
 //! injected into `repair_placeholder_orgs_batch`. The planner and (in Build 2) the gate decide with
@@ -17,6 +20,11 @@
 //! the issue-234 resolver path binds (`ORDER BY id LIMIT 1`), never an identified row (300 §10); a key
 //! with no such row is reported as a missing target. KEEP is computed in memory from the same walk
 //! (Build 1): the stable rows, every row spanning two or more Tenders, and every merged v4 identifier.
+//!
+//! Build 1b also checks the rule against its own role read — the role tripwire and
+//! `bars.role_ref_disagree` read the planner's `notice_ids` read of each group's sections, never the
+//! roles the rule hands back — and moves R2's random draw to the fresh re-read's salt
+//! ([`GUID_TWIN_SALT`], 530003), skipping the 60 rows R2 read at 530002 ([`GUID_TWIN_R2_READ`]).
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::time::Instant;
@@ -36,8 +44,12 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 // ---- Rule 530-T's shared types (the gate in ingest and this planner) ----
 
 /// One ORG section of ONE notice copy as rule 530-T reads it: the published name, the mention's
-/// country as the fold stores it (alpha-2), and the raw BT-501 with its declared scheme. The gate
-/// builds these from `mentions_and_dropped`'s mentions, the planner from `organization_mentions` rows.
+/// country as the fold stores it (alpha-2), the raw BT-501 with its declared scheme, and the roles the
+/// notice copy's OWN OPT-300/OPT-301 references give the section (Build 1b, A7). The gate builds these
+/// from `mentions_and_dropped`'s mentions and `ingest::project::guid_twin::guid_twin_section_roles` over
+/// the parsed copy, the planner from `organization_mentions` rows and the copy's stored `notice_ids`
+/// references folded by [`guid_twin_fold_roles`] with the same mapping — never from
+/// `tender_version_parties`.
 #[derive(Debug, Clone, Copy)]
 pub struct TwinView<'a> {
     pub section_id: &'a str,
@@ -45,6 +57,77 @@ pub struct TwinView<'a> {
     pub country: Option<&'a str>,
     pub raw_identifier: Option<&'a str>,
     pub scheme: Option<&'a str>,
+    /// The section's notice-reference roles, sorted and distinct (`Procedure-Buyer`, `Lot-ReviewOrg`,
+    /// …); empty when the copy references it in no role.
+    pub roles: &'a [String],
+}
+
+/// The mapping of one stored or parsed id value to the ORG role it references:
+/// `(field_id, scheme, is_ref) -> role`. `ingest::project::guid_twin::guid_twin_role_ref` — the
+/// projection's own `role_name` reading of OPT-300/OPT-301, DE-1.x aliases resolved — injected, as
+/// [`GuidTwinRule`] is: store never depends on ingest.
+pub type GuidTwinRoleRef = fn(&str, Option<&str>, bool) -> Option<String>;
+
+/// One notice copy's roles by referenced section: `section_id -> roles` (sorted, distinct).
+pub type GuidTwinSectionRoles = BTreeMap<String, Vec<String>>;
+
+/// Rule 530-T's role read, in ONE place for the gate and the planner: each id value
+/// `(field_id, scheme, target section, is_ref)` of one notice copy that `role_ref` maps to a role
+/// gives the TARGET section that role. The gate feeds it the parsed copy's values, the planner the
+/// copy's stored `notice_ids` rows; both pass the same `role_ref`, so both read one map.
+pub fn guid_twin_fold_roles<'a>(
+    refs: impl IntoIterator<Item = (&'a str, Option<&'a str>, &'a str, bool)>,
+    role_ref: GuidTwinRoleRef,
+) -> GuidTwinSectionRoles {
+    let mut sets: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+    for (field_id, scheme, target, is_ref) in refs {
+        if let Some(role) = role_ref(field_id, scheme, is_ref) {
+            sets.entry(target.to_owned()).or_default().insert(role);
+        }
+    }
+    sets.into_iter().map(|(section, roles)| (section, roles.into_iter().collect())).collect()
+}
+
+/// A7's role scopes: an eForms role is `<scope>-<role>` (`Procedure-Buyer`, `Lot-ReviewOrg`,
+/// `Part-ReviewOrg`); the guard reads the role AFTER its scope, so a `Lot-` and a `Part-` variant of
+/// one role are alike.
+pub const GUID_TWIN_ROLE_SCOPES: [&str; 3] = ["Procedure", "Lot", "Part"];
+/// A7's buyer-side roles, after the scope: `Buyer`, `SProvider`, `AddInfo`, `TenderReceipt` — so
+/// exactly Procedure-Buyer, Procedure-SProvider, Lot-/Part-AddInfo and Lot-/Part-TenderReceipt (and a
+/// `Procedure-`/`Lot-`/`Part-` variant of any of them).
+pub const GUID_TWIN_BUYER_SIDE_ROLES: [&str; 4] = ["Buyer", "SProvider", "AddInfo", "TenderReceipt"];
+/// A7's review body, after the scope: `ReviewOrg` (Lot-ReviewOrg, Part-ReviewOrg).
+pub const GUID_TWIN_REVIEW_ORG_ROLE: &str = "ReviewOrg";
+/// A7's tenderer class among the notice-reference roles (OPT-300-Tenderer, OPT-301-Tenderer-MainCont,
+/// OPT-301-Tenderer-SubCont): a winner is a tenderer the result names, so "not a winner" is any role
+/// outside this class.
+pub const GUID_TWIN_TENDERER_ROLES: [&str; 3] = ["Tenderer", "Tenderer-MainCont", "Tenderer-SubCont"];
+
+/// A role after its [`GUID_TWIN_ROLE_SCOPES`] scope (`Part-ReviewOrg` → `ReviewOrg`); a role with no
+/// such scope (`Tenderer-SubCont`, `LotResult-Paying`, `Contract-Signatory`) is read whole.
+pub fn guid_twin_role_after_scope(role: &str) -> &str {
+    match role.split_once('-') {
+        Some((scope, rest)) if GUID_TWIN_ROLE_SCOPES.contains(&scope) => rest,
+        _ => role,
+    }
+}
+
+/// A7's role-incoherent twin, over a group's notice-reference roles (`530-triage/decision.md` A7,
+/// decided as written by R2 F2): `Some("buyer_review_org")` when they hold [`GUID_TWIN_REVIEW_ORG_ROLE`]
+/// and any [`GUID_TWIN_BUYER_SIDE_ROLES`] role; `Some("tenderer_mixed")` when they hold a
+/// [`GUID_TWIN_TENDERER_ROLES`] role and any role outside that class; else `None`. Such a group binds
+/// whole ([`TwinBind::RoleMix`]): the twin proves one name printed twice, not one body — a review body
+/// or a bidder entered under the buyer's name would gain the buyer's row.
+pub fn guid_twin_role_mix(roles: &[String]) -> Option<&'static str> {
+    let after: Vec<&str> = roles.iter().map(|r| guid_twin_role_after_scope(r)).collect();
+    if after.contains(&GUID_TWIN_REVIEW_ORG_ROLE) && after.iter().any(|r| GUID_TWIN_BUYER_SIDE_ROLES.contains(r)) {
+        return Some("buyer_review_org");
+    }
+    let tenderer = |r: &String| GUID_TWIN_TENDERER_ROLES.contains(&r.as_str());
+    if roles.iter().any(tenderer) && !roles.iter().all(tenderer) {
+        return Some("tenderer_mixed");
+    }
+    None
 }
 
 /// `KEEP_530`: the v4 values that keep binding inside a twin group. VALUE-keyed (A4): matched on the
@@ -104,17 +187,22 @@ pub enum TwinBind {
     UnsafeList,
     /// The run's `extra_unsafe_names` (an R2 finding, re-run without a deploy).
     Extra,
+    /// A7 (Build 1b, R2 F2): the group's notice-reference roles are role-incoherent
+    /// ([`guid_twin_role_mix`]): Lot-ReviewOrg beside a buyer-side role, or a tenderer beside a role
+    /// outside the tenderer class.
+    RoleMix,
     /// Every value of the group is on KEEP: nothing fresh to refuse (an SBH-shaped pair).
     Keep,
 }
 
 impl TwinBind {
-    pub const ALL: [TwinBind; 6] = [
+    pub const ALL: [TwinBind; 7] = [
         TwinBind::NoCountry,
         TwinBind::ContentWords,
         TwinBind::Generic,
         TwinBind::UnsafeList,
         TwinBind::Extra,
+        TwinBind::RoleMix,
         TwinBind::Keep,
     ];
 
@@ -125,6 +213,7 @@ impl TwinBind {
             TwinBind::Generic => "generic",
             TwinBind::UnsafeList => "unsafe_list",
             TwinBind::Extra => "extra",
+            TwinBind::RoleMix => "role_mix",
             TwinBind::Keep => "keep",
         }
     }
@@ -146,6 +235,9 @@ pub struct TwinGroup {
     /// The folded name has exactly 2 content words and the first is an office noun (`Amt`,
     /// `Vergabestelle`, `Referat`, …): R2 reads every such planned key.
     pub office_two_words: bool,
+    /// The members' notice-reference roles, sorted and distinct ([`TwinView::roles`]): what A7's role
+    /// guard read.
+    pub roles: Vec<String>,
 }
 
 /// What rule 530-T decided for one notice copy.
@@ -181,8 +273,24 @@ pub const GUID_TWIN_CENSUS_BAR: u64 = 11_258;
 /// default): the stable tripwire reads it whatever the run's `stable_mentions` knob says, and a run at
 /// any other knob cannot pass R1 (`GuidTwinBars::stable_mentions_is_decision`).
 pub const GUID_TWIN_R1_STABLE_MENTIONS: u64 = 100;
-/// The R2 salt (decision: fixed before the dry run).
-pub const GUID_TWIN_SALT: u64 = 530_002;
+/// The R2 salt (decision: fixed in the job before the dry run). Build 1b: 530003, the fresh re-read's
+/// (decision A5, "on any W, the fresh re-read is 60 rows at salt 530003"; R2 F3). R2 read its random 60
+/// at 530002 — those rows are [`GUID_TWIN_R2_READ`], skipped by the random draw.
+pub const GUID_TWIN_SALT: u64 = 530_003;
+/// The 60 GUID rows R2 read as its random sample at salt 530002 (2026-10-19, wf_5d7ad2e8-333:
+/// `530-triage/r2/r2-result.json` `items.r2_random[*].key`), sorted. The fresh re-read at
+/// [`GUID_TWIN_SALT`] excludes them (R2 F3, `rerun.r2.exclude`: "the 60 rows already read (take the
+/// next in salted order)"): each stratum of the random draw skips them before taking its size, so the
+/// next rows in salted order fill it. Only the random draw: the flagged-class picks ([`GUID_TWIN_READ_ALL`])
+/// read targets and groups, and R2 re-reads any of those it has not read.
+pub const GUID_TWIN_R2_READ: [i64; 60] = [
+    22_760_026, 22_770_771, 22_776_193, 22_795_050, 22_795_894, 22_807_165, 22_808_070, 22_808_978, 22_810_161, 22_811_966,
+    22_816_858, 22_822_634, 22_824_042, 22_830_288, 22_831_663, 22_832_955, 22_834_378, 22_835_704, 22_838_236, 22_839_698,
+    22_840_798, 22_840_993, 22_842_358, 22_843_947, 22_845_186, 22_846_852, 22_851_601, 22_856_837, 22_858_429, 22_858_436,
+    22_859_791, 22_860_164, 22_865_917, 22_868_220, 22_879_585, 22_886_247, 22_886_295, 22_891_825, 22_895_106, 22_897_538,
+    22_898_487, 22_898_599, 22_898_749, 22_914_331, 22_914_565, 22_914_741, 22_933_591, 22_957_396, 22_959_819, 22_965_730,
+    22_966_357, 22_974_691, 22_975_386, 22_987_736, 23_001_169, 23_011_460, 23_029_156, 23_053_387, 23_070_066, 23_761_350,
+];
 /// The newest mentions of a target read for its city set (A6).
 pub const GUID_TWIN_TARGET_NEWEST: i64 = 50;
 /// The city a mention publishes (A6): the BT-513 text of its ORG section, first ordinal.
@@ -239,6 +347,21 @@ pub(crate) fn guid_twin_notice_mentions_sql(n: usize) -> String {
     format!(
         "SELECT notice_id, section_id, organization_id, name, country, raw_identifier, scheme \
            FROM organization_mentions WHERE notice_id IN ({}) AND section_id >= 'ORG-' AND section_id < 'ORG.'",
+        placeholders(n)
+    )
+}
+
+/// Build 1b (A7): the ORG-role references of `n` notice copies — the `notice_ids` primary-key prefix on
+/// `notice_id`. The id-refs (`is_ref = 1`), and every DE-1.x row whatever its flag: a DÖE copy parsed
+/// before issue 98's inventory fix stores its role references `is_ref = 0`, and the projection marks
+/// them references as it aliases them (`normalise_de1_parse`), so the gate reads them as roles and the
+/// planner must too. The role mapping (`GuidTwinPlanArgs::role_ref`) drops every row that names no
+/// role. The OR is no `is_ref = 1` predicate alone, so `notice_ids_target` (partial on `is_ref = 1`)
+/// cannot serve it; the primary key does (pinned by `the_twin_planner_reads_by_index_at_the_chunk_width`).
+pub(crate) fn guid_twin_role_refs_sql(n: usize) -> String {
+    format!(
+        "SELECT notice_id, field_id, scheme, value, is_ref FROM notice_ids WHERE notice_id IN ({}) \
+           AND (is_ref = 1 OR (field_id >= 'DE1-' AND field_id < 'DE1.'))",
         placeholders(n)
     )
 }
@@ -322,6 +445,9 @@ pub struct GuidTwinPlanArgs<'a> {
     pub is_guid: fn(&str) -> bool,
     /// Rule 530-T: `ingest::project::guid_twin::guid_twin_decide`.
     pub rule: GuidTwinRule,
+    /// A7's notice-reference role mapping: `ingest::project::guid_twin::guid_twin_role_ref`, the one
+    /// the gate's `guid_twin_section_roles` reads the parsed copy with.
+    pub role_ref: GuidTwinRoleRef,
     /// A party role's class, one of `GUID_ROLE_CLASSES` (the census's `guid_role_class`).
     pub role_class: fn(&str) -> &'static str,
     /// GUID rows stable whatever their mentions (254, 255, 8378).
@@ -469,6 +595,15 @@ pub struct GuidTwinGroupSample {
     pub outcome: &'static str,
     /// The sections' roles (party roles; `bid-tenderer`, `bid-subcontractor`; `result-winner`).
     pub roles: Vec<String>,
+    /// The members' roles by the notice copy's own OPT-300/OPT-301 references, as the PLANNER read them
+    /// from `notice_ids` (Build 1b): the union over the group's sections of the copy's section → roles
+    /// map — what A7's role guard must have read, taken independently of the roles the rule returned.
+    pub ref_roles: Vec<String>,
+    /// The roles the rule returned for the group ([`TwinGroup::roles`]), filled only where they differ
+    /// from `ref_roles` (`bars.role_ref_disagree_samples`): a rule that mis-keyed them. Empty (and not
+    /// serialized) elsewhere — and for a rule that returned NONE, which only a disagreement sample shows.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub rule_roles: Vec<String>,
 }
 
 /// One planned mention (A2: the plan's unit is the `(notice_id, section_id)` mention).
@@ -544,9 +679,16 @@ pub struct GuidTwinCityScreen {
     pub flagged_count: u64,
 }
 
-/// The role composition of the refused groups (A7). Reported, not enforced, in Build 1.
+/// The role composition of the refused groups (A7), by PARTY roles (`tender_version_parties`, bid
+/// parties, result winners): reported, so R2 can read what the projection made of them. The guard itself
+/// (Build 1b, [`TwinBind::RoleMix`]) reads the notice's own references, not these; the guard's
+/// exclusions are `guard.role_mix` and `role_mix_by_clause`, its self-check `bars.tripwire_role_mix`.
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
 pub struct GuidTwinRoles {
+    /// The groups the role guard bound, by [`guid_twin_role_mix`]'s clause (`buyer_review_org`,
+    /// `tenderer_mixed`) over the planner's own read of their references: groups and their candidate
+    /// mentions. `(rule only)`: the rule bound `role_mix` where the planner's read shows no mix.
+    pub role_mix_by_clause: BTreeMap<String, GuidTwinGuardCount>,
     pub refused_groups: u64,
     /// Refused groups by the sorted set of their sections' roles, the largest
     /// [`GUID_TWIN_ROLE_SETS_MAX`]; the rest under `(rest)`.
@@ -616,6 +758,21 @@ pub struct GuidTwinBars {
     pub target_country_unchecked: u64,
     /// A3 iii: (census twin ∧ ≥ 2 Tenders) ∪ stable values missing from KEEP (tautological in Build 1).
     pub keep_self_check_missing: Vec<String>,
+    /// Build 1b's role self-check, a tripwire that must be 0: REFUSED groups whose notice-reference
+    /// roles are role-incoherent ([`guid_twin_role_mix`]: Lot-ReviewOrg beside a buyer-side role, or a
+    /// tenderer beside another role). It reads the PLANNER's own OPT-300/OPT-301 read of the copy's
+    /// `notice_ids` (the union of the group's sections' roles), independent of the roles the rule
+    /// returns, so it also catches a rule that loses them (and with them A7's guard). The rule binds every
+    /// such group, so a non-zero count is a rule that did not apply A7's guard to what the notice says;
+    /// each is listed in `role_mix_refused` (the first [`GUID_TWIN_LIST_CAP`]).
+    pub tripwire_role_mix: u64,
+    pub role_mix_refused: Vec<GuidTwinGroupSample>,
+    /// Twin groups (bound or refused) whose roles as the rule returned them ([`TwinGroup::roles`]) are
+    /// not the planner's own read of the same sections — must be 0: the rule's role union and the
+    /// planner's run over the same members and the same section → roles map. The first `samples` are
+    /// listed, each with its `rule_roles` beside the planner's `ref_roles`.
+    pub role_ref_disagree: u64,
+    pub role_ref_disagree_samples: Vec<GuidTwinGroupSample>,
     pub pass: bool,
 }
 
@@ -643,12 +800,20 @@ pub struct GuidTwinPlan {
     /// ORG sections whose gated identifier is a v4 national key, and those with no name.
     pub candidate_mentions: u64,
     pub unnamed_candidates: u64,
+    /// Build 1b (A7): the notice copies whose own role references were read — exactly those holding a
+    /// twin group (two or more distinct values), the only copies where the role guard can bind (it only
+    /// removes refusals) — the `notice_ids` rows read for them (id-refs and DE-1.x rows), the distinct
+    /// (section, role) pairs those rows gave, and the read's wall time (inside `runtime_ms`).
+    pub role_ref_notices: u64,
+    pub role_ref_rows_read: u64,
+    pub role_refs: u64,
+    pub role_ref_ms: u64,
     /// Twin groups (two or more distinct values) and those the rule refuses.
     pub twin_groups: u64,
     pub refused_groups: u64,
     pub refused_mentions: u64,
     /// Guard exclusions by reason (`no_country`, `content_words`, `generic`, `unsafe_list`, `extra`,
-    /// `keep`), and the first `samples` groups of each.
+    /// `role_mix`, `keep`: [`TwinBind::ALL`]), and the first `samples` groups of each.
     pub guard: BTreeMap<&'static str, GuidTwinGuardCount>,
     pub guard_samples: BTreeMap<&'static str, Vec<GuidTwinGroupSample>>,
     /// KEEP sections beside refused fresh ones (the "KEEP partner" exclusion).
@@ -687,8 +852,13 @@ pub struct GuidTwinPlan {
     pub controls: Vec<GuidTwinControl>,
     /// Per exhibit name (`country name_norm`): GUID rows, planned whole, partial, and the kept ids.
     pub exhibits: BTreeMap<String, GuidTwinExhibit>,
-    /// R2: the random planned rows, stratified (A5), at [`GUID_TWIN_SALT`].
+    /// R2: the random planned rows, stratified (A5), at [`GUID_TWIN_SALT`] (530003, the fresh re-read),
+    /// skipping the rows R2 read at 530002.
     pub r2_random: Vec<GuidTwinRowSample>,
+    /// The rows R2 read at 530002 ([`GUID_TWIN_R2_READ`]: 60), and how many planned rows (whole or
+    /// partial) the random draw skipped as already read.
+    pub r2_read_excluded: u64,
+    pub r2_random_excluded: u64,
     /// R2: the 30 targets with the most planned mentions, plus any of the 20 with the most planned rows.
     pub r2_top_targets: Vec<GuidTwinTargetSample>,
     /// R2: planned keys of 2 content words led by an office noun (all, or the top 30 plus 15 salted).
@@ -767,6 +937,9 @@ struct RefusedGroup {
     country: Option<String>,
     /// (section, bound org, value, refused)
     members: Vec<(String, i64, String, bool)>,
+    /// The members' notice-reference roles as the PLANNER read them ([`GuidTwinGroupSample::ref_roles`]),
+    /// not the rule's echo: the role tripwire reads these.
+    ref_roles: Vec<String>,
 }
 
 /// A target key and what is known of its row.
@@ -859,12 +1032,24 @@ fn r2_pick<T: Clone>(items: &[T], rank: impl Fn(&T) -> (u64, i64), salt_id: impl
     picked.into_iter().map(|i| items[i].clone()).collect()
 }
 
+/// Whether R2 already read `org_id` in its random sample ([`GUID_TWIN_R2_READ`]).
+pub fn guid_twin_r2_read(org_id: i64) -> bool {
+    GUID_TWIN_R2_READ.binary_search(&org_id).is_ok()
+}
+
 /// R2's random planned rows (A5): `rows` as `(role class, org id)`; per stratum of
 /// [`GUID_TWIN_R2_STRATA`], in that order (buyer, review_or_info, other or tenderer), the rows with the
-/// smallest [`guid_twin_sample_key`] at [`GUID_TWIN_SALT`], up to the stratum's size. Indexes into `rows`.
-fn r2_random_pick(rows: &[(&str, i64)]) -> Vec<usize> {
+/// smallest [`guid_twin_sample_key`] at [`GUID_TWIN_SALT`], up to the stratum's size — the rows R2 read
+/// already ([`GUID_TWIN_R2_READ`]) skipped first, so the next in salted order take their places.
+/// Indexes into `rows`, and how many rows were skipped as read.
+fn r2_random_pick(rows: &[(&str, i64)]) -> (Vec<usize>, u64) {
     let mut strata: BTreeMap<&str, Vec<((u64, i64), usize)>> = BTreeMap::new();
+    let mut skipped = 0u64;
     for (i, &(role, id)) in rows.iter().enumerate() {
+        if guid_twin_r2_read(id) {
+            skipped += 1;
+            continue;
+        }
         let stratum = match role {
             GUID_ROLE_BUYER => "buyer",
             GUID_ROLE_REVIEW_INFO => "review_or_info",
@@ -879,7 +1064,7 @@ fn r2_random_pick(rows: &[(&str, i64)]) -> Vec<usize> {
             out.extend(list.iter().take(n).map(|&(_, i)| i));
         }
     }
-    out
+    (out, skipped)
 }
 
 /// R2's top targets (decision R2 (1)): the 30 target keys with the most planned mentions, ties by
@@ -910,7 +1095,11 @@ impl Db {
     ///    computes KEEP: stable rows, rows spanning ≥ 2 Tenders, merged values.
     /// 3. Reads EVERY ORG mention of each candidate notice (one with a mention on a GUID row) in IN
     ///    chunks of notice ids on the primary-key prefix, and applies `args.rule` to each notice copy
-    ///    alone, with KEEP and again with an empty KEEP (what KEEP spares).
+    ///    alone, with KEEP and again with an empty KEEP (what KEEP spares). Build 1b (A7): a copy whose
+    ///    rule run (roles not yet read) shows a twin group first has its own role references read
+    ///    ([`guid_twin_role_refs_sql`], the `notice_ids` primary-key prefix, one IN statement per
+    ///    chunk) and folded by [`guid_twin_fold_roles`] with `args.role_ref`, and the rule decides it
+    ///    with those roles. A copy with no twin group needs none: the role guard only binds groups.
     /// 4. Classifies refused mentions bound off GUID rows (by primary key and the survivor index),
     ///    finds each target (the 234 index), counts its mentions and reads its newest
     ///    [`GUID_TWIN_TARGET_NEWEST`] (reverse index walk), reads the BT-513 cities of the planned
@@ -938,6 +1127,7 @@ impl Db {
             extra_unsafe_names: args.extra_unsafe_names.to_vec(),
             samples_per_list: args.samples,
             salt: GUID_TWIN_SALT,
+            r2_read_excluded: GUID_TWIN_R2_READ.len() as u64,
             ..Default::default()
         };
         let reader = self.reader().await?;
@@ -1096,9 +1286,29 @@ impl Db {
             }
             drop(rows);
             plan.notice_chunks += 1;
+            // A7's roles, read only for the copies holding a twin group (the guard binds groups only,
+            // so a copy without one decides alike with or without roles).
+            let twins: Vec<i64> = by_notice
+                .iter()
+                .filter(|(_, mentions)| guid_twin_has_group(&args, &keep, mentions))
+                .map(|(notice, _)| *notice)
+                .collect();
+            let roles = if twins.is_empty() {
+                HashMap::new()
+            } else {
+                if (args.stop)() {
+                    return Ok(stopped());
+                }
+                let at = Instant::now();
+                let roles = guid_twin_read_roles(&reader, &twins, args.role_ref, &mut plan).await?;
+                plan.role_ref_ms += at.elapsed().as_millis() as u64;
+                roles
+            };
+            let no_roles = GuidTwinSectionRoles::new();
             for (notice, mentions) in by_notice {
                 plan.org_mentions_read += mentions.len() as u64;
-                guid_twin_notice(&args, &keep, &empty_keep, &mut walk, &mut plan, notice, &mentions);
+                let section_roles = roles.get(&notice).unwrap_or(&no_roles);
+                guid_twin_notice(&args, &keep, &empty_keep, &mut walk, &mut plan, notice, &mentions, section_roles);
             }
             (args.progress)(
                 ((k + 1) * IN_CHUNK).min(notice_ids.len()) as u64,
@@ -1380,6 +1590,25 @@ impl Db {
         }
         Ok(true)
     }
+
+    /// Build 1b (A7): the roles each of `notices`' copies gives its sections by its own stored
+    /// references — the planner's read ([`guid_twin_read_roles`]: [`guid_twin_role_refs_sql`] in IN
+    /// chunks of [`IN_CHUNK`], folded by [`guid_twin_fold_roles`] with `role_ref`), exposed so a parity
+    /// test can hold it against the gate's `guid_twin_section_roles` over the parsed copy. A notice with
+    /// no role reference is absent. Read-only.
+    pub async fn guid_twin_stored_roles(
+        &self,
+        notices: &[i64],
+        role_ref: GuidTwinRoleRef,
+    ) -> turso::Result<BTreeMap<i64, GuidTwinSectionRoles>> {
+        let reader = self.reader().await?;
+        let mut plan = GuidTwinPlan::default();
+        let mut out: BTreeMap<i64, GuidTwinSectionRoles> = BTreeMap::new();
+        for chunk in notices.chunks(IN_CHUNK) {
+            out.extend(guid_twin_read_roles(&reader, chunk, role_ref, &mut plan).await?);
+        }
+        Ok(out)
+    }
 }
 
 /// One ORG mention of a candidate notice.
@@ -1392,9 +1621,67 @@ struct MentionRow {
     scheme: Option<String>,
 }
 
-/// Rule 530-T over one notice copy, folded into the walk: the guard tallies, the refused groups and
-/// mentions (planned on GUID rows, or off them), what KEEP spares, and the census twin before and
-/// after.
+/// One notice copy's mentions as rule 530-T reads them, with the copy's notice-reference roles.
+fn guid_twin_views<'a>(mentions: &'a [MentionRow], roles: &'a GuidTwinSectionRoles) -> Vec<TwinView<'a>> {
+    mentions
+        .iter()
+        .map(|m| TwinView {
+            section_id: &m.section,
+            name: &m.name,
+            country: m.country.as_deref(),
+            raw_identifier: m.raw.as_deref(),
+            scheme: m.scheme.as_deref(),
+            roles: roles.get(&m.section).map_or(&[], Vec::as_slice),
+        })
+        .collect()
+}
+
+/// Whether rule 530-T finds a twin group (two or more distinct values under one key) in a notice copy,
+/// roles not yet read: the copies whose role references the planner reads (A7). The group set does
+/// not depend on the roles or on KEEP, only each group's outcome does.
+fn guid_twin_has_group(args: &GuidTwinPlanArgs<'_>, keep: &GuidKeep, mentions: &[MentionRow]) -> bool {
+    let none = GuidTwinSectionRoles::new();
+    !(args.rule)(&guid_twin_views(mentions, &none), keep, args.extra_unsafe_names).groups.is_empty()
+}
+
+/// The role references of `notices` (at most [`IN_CHUNK`]: ONE statement on the `notice_ids` primary
+/// key, [`guid_twin_role_refs_sql`]), folded per notice copy by [`guid_twin_fold_roles`] with
+/// `role_ref` — the gate's fold and mapping over the stored copy. Tallies `role_ref_*` into `plan`.
+async fn guid_twin_read_roles(
+    reader: &crate::read::Reader,
+    notices: &[i64],
+    role_ref: GuidTwinRoleRef,
+    plan: &mut GuidTwinPlan,
+) -> turso::Result<HashMap<i64, GuidTwinSectionRoles>> {
+    debug_assert!(notices.len() <= IN_CHUNK);
+    let params: Vec<Value> = notices.iter().map(|&id| Value::Integer(id)).collect();
+    let mut rows = reader.query(&guid_twin_role_refs_sql(notices.len()), params).await?;
+    // (field_id, scheme, target, is_ref) per notice.
+    let mut refs: HashMap<i64, Vec<(String, Option<String>, String, bool)>> = HashMap::new();
+    while let Some(row) = rows.next().await? {
+        plan.role_ref_rows_read += 1;
+        refs.entry(int(&row, 0)).or_default().push((text(&row, 1), opt_text_of(&row, 2), text(&row, 3), int(&row, 4) != 0));
+    }
+    drop(rows);
+    plan.role_ref_notices += notices.len() as u64;
+    let mut out: HashMap<i64, GuidTwinSectionRoles> = HashMap::new();
+    for (notice, list) in refs {
+        let roles = guid_twin_fold_roles(
+            list.iter().map(|(field, scheme, target, is_ref)| (field.as_str(), scheme.as_deref(), target.as_str(), *is_ref)),
+            role_ref,
+        );
+        plan.role_refs += roles.values().map(|r| r.len() as u64).sum::<u64>();
+        if !roles.is_empty() {
+            out.insert(notice, roles);
+        }
+    }
+    Ok(out)
+}
+
+/// Rule 530-T over one notice copy (with its notice-reference roles), folded into the walk: the guard
+/// tallies, the refused groups and mentions (planned on GUID rows, or off them), what KEEP spares, and
+/// the census twin before and after.
+#[allow(clippy::too_many_arguments)]
 fn guid_twin_notice(
     args: &GuidTwinPlanArgs<'_>,
     keep: &GuidKeep,
@@ -1403,17 +1690,9 @@ fn guid_twin_notice(
     plan: &mut GuidTwinPlan,
     notice: i64,
     mentions: &[MentionRow],
+    section_roles: &GuidTwinSectionRoles,
 ) {
-    let views: Vec<TwinView<'_>> = mentions
-        .iter()
-        .map(|m| TwinView {
-            section_id: &m.section,
-            name: &m.name,
-            country: m.country.as_deref(),
-            raw_identifier: m.raw.as_deref(),
-            scheme: m.scheme.as_deref(),
-        })
-        .collect();
+    let views = guid_twin_views(mentions, section_roles);
     let decision = (args.rule)(&views, keep, args.extra_unsafe_names);
     plan.candidate_mentions += decision.candidates as u64;
     plan.unnamed_candidates += decision.unnamed as u64;
@@ -1421,6 +1700,18 @@ fn guid_twin_notice(
     let org_of = |section: &str| by_section.get(section).map_or(0, |m| m.org);
     for g in &decision.groups {
         plan.twin_groups += 1;
+        // The group's notice-reference roles by the PLANNER's own read (the copy's section -> roles map
+        // over the group's sections), never the rule's echo: the role tripwire and the clause tally read
+        // these, so a rule that loses or mis-keys the roles shows (`bars.role_ref_disagree`).
+        let ref_roles: Vec<String> = g
+            .members
+            .iter()
+            .filter_map(|(s, _)| section_roles.get(s))
+            .flatten()
+            .cloned()
+            .collect::<BTreeSet<_>>()
+            .into_iter()
+            .collect();
         let sample = |outcome: &'static str| GuidTwinGroupSample {
             notice_id: notice,
             name_norm: g.name_norm.clone(),
@@ -1431,11 +1722,27 @@ fn guid_twin_notice(
             refused: g.refused.clone(),
             outcome,
             roles: Vec::new(),
+            ref_roles: ref_roles.clone(),
+            rule_roles: if g.roles == ref_roles { Vec::new() } else { g.roles.clone() },
         };
+        if g.roles != ref_roles {
+            plan.bars.role_ref_disagree += 1;
+            if plan.bars.role_ref_disagree_samples.len() < args.samples {
+                let outcome = g.bind.map_or("refused", TwinBind::label);
+                plan.bars.role_ref_disagree_samples.push(sample(outcome));
+            }
+        }
         if let Some(reason) = g.bind {
             let tally = plan.guard.entry(reason.label()).or_default();
             tally.groups += 1;
             tally.mentions += g.members.len() as u64;
+            if reason == TwinBind::RoleMix {
+                // "(rule only)": the rule bound role_mix, the planner's read of the copy shows no mix.
+                let clause = guid_twin_role_mix(&ref_roles).unwrap_or("(rule only)");
+                let by = plan.roles.role_mix_by_clause.entry(clause.to_owned()).or_default();
+                by.groups += 1;
+                by.mentions += g.members.len() as u64;
+            }
             let list = plan.guard_samples.entry(reason.label()).or_default();
             if list.len() < args.samples {
                 list.push(sample(reason.label()));
@@ -1483,6 +1790,7 @@ fn guid_twin_notice(
                 .iter()
                 .map(|(s, v)| (s.clone(), org_of(s), v.clone(), g.refused.contains(s)))
                 .collect(),
+            ref_roles,
         });
     }
     // What KEEP spares: refused under an empty KEEP, bound under this one.
@@ -1731,8 +2039,11 @@ fn guid_twin_finish(
         let b = tenderer && other;
         plan.roles.buyer_with_review_org += u64::from(a);
         plan.roles.tenderer_mixed += u64::from(b);
-        if a || b {
-            incoherent.push(GuidTwinGroupSample {
+        // Build 1b's self-check: a refused group whose NOTICE-REFERENCE roles (the planner's own read,
+        // not the rule's echo) are incoherent is one the role guard should have bound.
+        let ref_mixed = guid_twin_role_mix(&g.ref_roles).is_some();
+        if a || b || ref_mixed {
+            let sample = GuidTwinGroupSample {
                 notice_id: g.notice,
                 name_norm: g.name_norm.clone(),
                 country: g.country.clone(),
@@ -1742,7 +2053,18 @@ fn guid_twin_finish(
                 refused: g.members.iter().filter(|m| m.3).map(|m| m.0.clone()).collect(),
                 outcome: "refused",
                 roles: set.into_iter().collect(),
-            });
+                ref_roles: g.ref_roles.clone(),
+                rule_roles: Vec::new(),
+            };
+            if ref_mixed {
+                plan.bars.tripwire_role_mix += 1;
+                if plan.bars.role_mix_refused.len() < GUID_TWIN_LIST_CAP {
+                    plan.bars.role_mix_refused.push(sample.clone());
+                }
+            }
+            if a || b {
+                incoherent.push(sample);
+            }
         }
     }
     let mut sets: Vec<(String, u64)> = by_set.into_iter().collect();
@@ -1918,8 +2240,10 @@ fn guid_twin_finish(
     }
     plan.bars.census_bar = GUID_TWIN_CENSUS_BAR;
     plan.bars.within_census_bar = plan.bars.planned_rows_comparable <= GUID_TWIN_CENSUS_BAR;
-    // R2's random stratum.
-    for i in r2_random_pick(&r2_rows) {
+    // R2's random stratum, at the re-read's salt, the rows R2 read at 530002 skipped.
+    let (picked, skipped) = r2_random_pick(&r2_rows);
+    plan.r2_random_excluded = skipped;
+    for i in picked {
         plan.r2_random.push(row_sample(&walk.rows[r2_at[i] as usize]));
     }
     // The controls.
@@ -1967,7 +2291,9 @@ fn guid_twin_finish(
         && b.not_planned_failed.is_empty()
         && b.planned_failed.is_empty()
         && b.target_country_mismatch == 0
-        && b.keep_self_check_missing.is_empty();
+        && b.keep_self_check_missing.is_empty()
+        && b.tripwire_role_mix == 0
+        && b.role_ref_disagree == 0;
     plan.bars.pass = pass;
     for reason in TwinBind::ALL {
         plan.guard.entry(reason.label()).or_default();
@@ -1989,20 +2315,36 @@ mod tests {
             && matches!(hex[16].to_ascii_lowercase(), b'8' | b'9' | b'a' | b'b')
     }
 
-    /// A miniature rule 530-T for the planner's structural tests (the real one, with its name guard, is
-    /// `ingest::project::guid_twin`, whose tests pin the planner's parity with it): group the v4 raws by
-    /// (country, lower-cased name), refuse the non-KEEP values of a group with two distinct values.
-    fn rule(sections: &[TwinView<'_>], keep: &GuidKeep, _extra: &[String]) -> TwinDecision {
+    /// A miniature rule 530-T for the planner's structural tests (the real one, with its name and role
+    /// guards, is `ingest::project::guid_twin`, whose tests pin the planner's parity with it): group the
+    /// v4 raws by (country, lower-cased name), refuse the non-KEEP values of a group with two distinct
+    /// values. It carries the members' roles into the group but applies NO role guard, so the planner's
+    /// role self-check (`bars.tripwire_role_mix`) can be driven to fire.
+    fn rule(sections: &[TwinView<'_>], keep: &GuidKeep, extra: &[String]) -> TwinDecision {
+        mini_rule(sections, keep, extra, true)
+    }
+
+    /// [`rule`], but it LOSES the roles (every group's `roles` empty): the regression the role tripwire
+    /// must still catch, because it reads the planner's own reference read, not the rule's echo.
+    fn rule_without_roles(sections: &[TwinView<'_>], keep: &GuidKeep, extra: &[String]) -> TwinDecision {
+        mini_rule(sections, keep, extra, false)
+    }
+
+    fn mini_rule(sections: &[TwinView<'_>], keep: &GuidKeep, _extra: &[String], carry_roles: bool) -> TwinDecision {
         let mut d = TwinDecision::default();
-        let mut groups: BTreeMap<(Option<String>, String), Vec<(String, String)>> = BTreeMap::new();
+        let mut groups: BTreeMap<(Option<String>, String), (Vec<(String, String)>, BTreeSet<String>)> = BTreeMap::new();
         for s in sections {
             let Some(raw) = s.raw_identifier.filter(|r| uuid_v4(r)) else { continue };
             d.candidates += 1;
             let norm = org_name_norm(s.name);
             let country = s.country.map(|c| if c == "DEU" { "DE".to_owned() } else { c.to_owned() });
-            groups.entry((country, norm)).or_default().push((s.section_id.to_owned(), GuidKeep::key(raw)));
+            let group = groups.entry((country, norm)).or_default();
+            group.0.push((s.section_id.to_owned(), GuidKeep::key(raw)));
+            if carry_roles {
+                group.1.extend(s.roles.iter().cloned());
+            }
         }
-        for ((country, name_norm), members) in groups {
+        for ((country, name_norm), (members, roles)) in groups {
             let distinct = members.iter().map(|(_, v)| v).collect::<BTreeSet<_>>().len();
             if distinct < 2 {
                 continue;
@@ -2018,9 +2360,19 @@ mod tests {
                 bind,
                 refused,
                 office_two_words: false,
+                roles: roles.into_iter().collect(),
             });
         }
         d
+    }
+
+    /// A miniature notice-reference role mapping (the real one is
+    /// `ingest::project::guid_twin::guid_twin_role_ref`): an OPT-300/OPT-301 id-ref names its suffix.
+    fn role_ref(field_id: &str, _scheme: Option<&str>, is_ref: bool) -> Option<String> {
+        if !is_ref {
+            return None;
+        }
+        field_id.strip_prefix("OPT-300-").or_else(|| field_id.strip_prefix("OPT-301-")).map(str::to_owned)
     }
 
     fn role_class(role: &str) -> &'static str {
@@ -2110,6 +2462,7 @@ mod tests {
         GuidTwinPlanArgs {
             is_guid: uuid_v4,
             rule,
+            role_ref,
             role_class,
             stable_ids: &[254, 255, 8_378],
             stable_mentions: 100,
@@ -2133,6 +2486,8 @@ mod tests {
         assert!(keep.contains("FB197F94757846738A574642AE120532"));
         assert!(!keep.contains("0A9EA48008E44AB6BF12D722D0AD54B6"));
         assert_eq!(guid_twin_sample_key(31_558_903, 530_002).0, ((31_558_903u64 ^ 530_002) * 2_654_435_761) % (1 << 32));
+        assert_eq!(guid_twin_sample_key(31_558_903, 530_003).0, ((31_558_903u64 ^ 530_003) * 2_654_435_761) % (1 << 32));
+        assert_eq!(GUID_TWIN_SALT, 530_003, "Build 1b: the fresh re-read's salt (A5, R2 F3)");
         assert_eq!(guid_twin_city_fold("  Göttingen, "), "gottingen");
         assert_eq!(guid_twin_city_fold("Frankfurt am Main"), "frankfurt am main");
     }
@@ -2204,6 +2559,7 @@ mod tests {
                 "organization_mentions_org",
             ),
             ("cities", guid_twin_cities_sql(IN_CHUNK), cities, "SEARCH notice_texts"),
+            ("role refs", guid_twin_role_refs_sql(IN_CHUNK), ids.clone(), "sqlite_autoindex_notice_ids_1"),
             ("parties", guid_twin_parties_sql(IN_CHUNK), ids.clone(), "tender_version_parties_mention_key"),
             ("bid parties", guid_twin_bid_parties_sql(IN_CHUNK), ids.clone(), "tender_version_bid_parties_mention_key"),
             ("result winners", guid_twin_result_winners_sql(IN_CHUNK), ids.clone(), "SEARCH tender_version_result_winners"),
@@ -2229,7 +2585,7 @@ mod tests {
     // ---- R2's sample selection (A5, A6, A7, R2 (1)) ----
 
     /// R2 reads a flagged class whole up to 45; past it, the top 30 by rank (ties by id), then the 15
-    /// of the rest with the smallest salted key at 530002.
+    /// of the rest with the smallest salted key at [`GUID_TWIN_SALT`].
     #[test]
     fn r2_reads_a_class_whole_to_45_then_the_top_30_and_15_salted() {
         // Ranks `id % 7`: 7 ids each of ranks 6, 5, 4 and 3 fill 28 places; ranks 2 ties break by id.
@@ -2250,7 +2606,7 @@ mod tests {
     }
 
     /// R2's random 60 (A5): buyer 25, review_or_info 25, other or tenderer 10, each block in ascending
-    /// salted-key order at 530002, and nothing past a stratum's cap.
+    /// salted-key order at [`GUID_TWIN_SALT`], and nothing past a stratum's cap.
     #[test]
     fn r2s_random_strata_take_25_25_10_in_salted_order() {
         let mut rows: Vec<(&str, i64)> = Vec::new();
@@ -2263,7 +2619,9 @@ mod tests {
             rows.push((GUID_ROLE_OTHER, 4_000 + i));
             rows.push((GUID_ROLE_NONE, 5_000 + i));
         }
-        let picked: Vec<i64> = r2_random_pick(&rows).into_iter().map(|i| rows[i].1).collect();
+        let (picked, skipped) = r2_random_pick(&rows);
+        assert_eq!(skipped, 0, "no row R2 read");
+        let picked: Vec<i64> = picked.into_iter().map(|i| rows[i].1).collect();
         let block = |ids: &mut dyn Iterator<Item = i64>, n: usize| {
             let mut v: Vec<i64> = ids.collect();
             v.sort_by_key(|&id| guid_twin_sample_key(id, GUID_TWIN_SALT));
@@ -2277,6 +2635,60 @@ mod tests {
         assert_eq!(picked[..25].to_vec(), buyers, "buyer first");
         assert_eq!(picked[25..50].to_vec(), review, "review_or_info second");
         assert_eq!(picked[50..].to_vec(), other, "other, tenderer and no-role rows share the last 10");
+    }
+
+    /// R2's read list: the 60 rows of r2-result.json's `r2_random`, distinct and sorted (the lookup is
+    /// a binary search).
+    #[test]
+    fn r2s_read_list_holds_60_distinct_sorted_ids() {
+        assert_eq!(GUID_TWIN_R2_READ.len(), 60);
+        assert!(GUID_TWIN_R2_READ.windows(2).all(|w| w[0] < w[1]), "sorted and distinct");
+        for id in GUID_TWIN_R2_READ {
+            assert!(guid_twin_r2_read(id), "{id}");
+        }
+        assert!(!guid_twin_r2_read(22_759_261), "the Göttingen control was not in R2's random 60");
+        assert!(guid_twin_r2_read(22_824_042) && guid_twin_r2_read(23_761_350), "the first item read, the largest id");
+    }
+
+    /// The fresh re-read (R2 F3): a row R2 already read is skipped even where its salted key ranks it
+    /// inside its stratum's 25, and the next rows in salted order take their places; in a stratum under
+    /// its cap a read row is simply absent. Built at the real salt over R2's real read ids, so the read
+    /// rows inside the top 25 are found by the key, not hand-picked.
+    #[test]
+    fn r2s_random_draw_skips_the_rows_r2_read_and_fills_from_the_next_in_salted_order() {
+        // 59 buyer rows: the 19 read ids below 22_839_000 and 40 fresh ids.
+        let read: Vec<i64> = GUID_TWIN_R2_READ.iter().copied().filter(|&id| id < 22_839_000).collect();
+        assert_eq!(read.len(), 19);
+        let fresh: Vec<i64> = (1..=40).map(|k| 22_700_000 + k).collect();
+        let mut rows: Vec<(&str, i64)> = read.iter().chain(&fresh).map(|&id| (GUID_ROLE_BUYER, id)).collect();
+        // A review_or_info stratum of 3 (under its cap), one of them read.
+        rows.extend([(GUID_ROLE_REVIEW_INFO, 22_870_001), (GUID_ROLE_REVIEW_INFO, 22_879_585), (GUID_ROLE_REVIEW_INFO, 22_870_002)]);
+        let (picked, skipped) = r2_random_pick(&rows);
+        assert_eq!(skipped, 20, "19 read buyers and 1 read review row");
+        let picked: Vec<i64> = picked.into_iter().map(|i| rows[i].1).collect();
+        assert_eq!(picked.len(), 25 + 2);
+        // Without the skip the buyer block would be the 25 smallest keys of all 59 rows.
+        let mut all: Vec<i64> = read.iter().chain(&fresh).copied().collect();
+        all.sort_by_key(|&id| guid_twin_sample_key(id, GUID_TWIN_SALT));
+        let read_in_top: Vec<i64> = all[..25].iter().copied().filter(|id| guid_twin_r2_read(*id)).collect();
+        assert!(!read_in_top.is_empty(), "the fixture puts read rows inside the top 25 at the salt");
+        // With it: the 25 smallest keys among the unread rows.
+        let mut unread: Vec<i64> = fresh.clone();
+        unread.sort_by_key(|&id| guid_twin_sample_key(id, GUID_TWIN_SALT));
+        assert_eq!(picked[..25].to_vec(), unread[..25].to_vec(), "read rows skipped, the next in salted order fill the stratum");
+        for id in &read_in_top {
+            assert!(!picked.contains(id), "{id}: read at 530002, ranked inside the top 25 at 530003, skipped");
+        }
+        // The rows just past the top 25 in salted order take the read rows' places, one each.
+        let past: Vec<i64> = all[25..].iter().copied().filter(|id| !guid_twin_r2_read(*id)).take(read_in_top.len()).collect();
+        assert_eq!(past.len(), read_in_top.len());
+        for id in &past {
+            assert!(picked[..25].contains(id), "{id}: the next in salted order takes a read row's place");
+        }
+        assert!(!picked.contains(&all[25..].iter().copied().filter(|id| !guid_twin_r2_read(*id)).nth(read_in_top.len()).unwrap()));
+        let mut review = vec![22_870_001, 22_870_002];
+        review.sort_by_key(|&id| guid_twin_sample_key(id, GUID_TWIN_SALT));
+        assert_eq!(picked[25..].to_vec(), review, "the read review row is absent");
     }
 
     /// R2's top targets: 30 by planned mentions (ties by `sample_id`), then the 20 by planned rows not
@@ -2566,6 +2978,144 @@ mod tests {
         assert_eq!(r.bars.target_country_mismatch, 2, "register_jurisdiction(RE) is FR, the key and the row say RE");
         assert_eq!(r.bars.target_country_unchecked, 2, "DEU is no 2-letter code");
         assert!(!r.bars.pass);
+        drop(conn);
+        cleanup(&path);
+    }
+
+    // ---- Build 1b: A7's role guard (notice-reference roles) ----
+
+    fn roles(list: &[&str]) -> Vec<String> {
+        list.iter().map(|r| (*r).to_owned()).collect()
+    }
+
+    /// A7 as written: Lot-ReviewOrg beside a buyer-side role (Procedure-Buyer, Procedure-SProvider,
+    /// Lot-AddInfo, Lot-TenderReceipt — read after the scope, so a `Part-` variant is alike), or a
+    /// tenderer beside a role outside the tenderer class; a buyer-side group without a review body, a
+    /// review body beside review information, and an all-tenderer group are coherent.
+    #[test]
+    fn the_role_mix_reads_roles_after_their_scope() {
+        let mix = |list: &[&str]| guid_twin_role_mix(&roles(list));
+        for buyer_side in ["Procedure-Buyer", "Procedure-SProvider", "Lot-AddInfo", "Lot-TenderReceipt", "Part-AddInfo", "Part-TenderReceipt"] {
+            assert_eq!(mix(&[buyer_side, "Lot-ReviewOrg"]), Some("buyer_review_org"), "{buyer_side}");
+            assert_eq!(mix(&[buyer_side, "Part-ReviewOrg"]), Some("buyer_review_org"), "{buyer_side}, Part- scope");
+        }
+        assert_eq!(mix(&["Lot-AddInfo", "Lot-ReviewOrg", "Procedure-Buyer"]), Some("buyer_review_org"), "the AOK group");
+        assert_eq!(mix(&["Lot-AddInfo", "Lot-TenderReceipt", "Procedure-Buyer"]), None, "no review body: Göttingen-shaped");
+        assert_eq!(mix(&["Lot-ReviewInfo", "Lot-ReviewOrg"]), None, "a chamber in both review slots");
+        assert_eq!(mix(&["Lot-Mediator", "Lot-ReviewOrg"]), None, "the mediator is no buyer-side role");
+        assert_eq!(mix(&["Lot-ReviewOrg"]), None);
+        assert_eq!(mix(&[]), None);
+        assert_eq!(mix(&["Lot-AddInfo", "Tenderer"]), Some("tenderer_mixed"));
+        assert_eq!(mix(&["Procedure-Buyer", "Tenderer-SubCont"]), Some("tenderer_mixed"));
+        assert_eq!(mix(&["Tenderer", "Tenderer-MainCont", "Tenderer-SubCont"]), None, "one class");
+        assert_eq!(guid_twin_role_after_scope("Part-ReviewOrg"), "ReviewOrg");
+        assert_eq!(guid_twin_role_after_scope("Procedure-Buyer"), "Buyer");
+        assert_eq!(guid_twin_role_after_scope("Tenderer-SubCont"), "Tenderer-SubCont", "Tenderer is no scope");
+        assert_eq!(guid_twin_role_after_scope("LotResult-Paying"), "LotResult-Paying");
+    }
+
+    /// The fold gives each referenced (target) section its roles, sorted and distinct, and drops every
+    /// value the mapping names no role for.
+    #[test]
+    fn the_role_fold_keys_roles_by_their_target_section() {
+        let refs = [
+            ("OPT-300-Procedure-Buyer", None, "ORG-0001", true),
+            ("OPT-301-Lot-AddInfo", None, "ORG-0002", true),
+            ("OPT-301-Lot-ReviewOrg", Some("organization"), "ORG-0003", true),
+            ("OPT-301-Lot-ReviewOrg", Some("organization"), "ORG-0003", true),
+            ("OPT-301-Lot-TenderReceipt", None, "ORG-0001", true),
+            ("BT-501-Organization-Company", None, "617a9b4a-867f-4946-9210-0658d0a6ca70", false),
+            ("OPT-301-Lot-Mediator", None, "ORG-0009", false),
+        ];
+        let folded = guid_twin_fold_roles(refs, role_ref);
+        let want: GuidTwinSectionRoles = [
+            ("ORG-0001".to_owned(), roles(&["Lot-TenderReceipt", "Procedure-Buyer"])),
+            ("ORG-0002".to_owned(), roles(&["Lot-AddInfo"])),
+            ("ORG-0003".to_owned(), roles(&["Lot-ReviewOrg"])),
+        ]
+        .into_iter()
+        .collect();
+        assert_eq!(folded, want);
+    }
+
+    async fn ref_row(conn: &turso::Connection, notice: i64, section: &str, field: &str, ordinal: i64, target: &str, is_ref: bool) {
+        exec(
+            conn,
+            "INSERT INTO notice_ids (notice_id, section_id, field_id, ordinal, scheme, value, is_ref) VALUES (?, ?, ?, ?, NULL, ?, ?)",
+            vec![
+                Value::Integer(notice),
+                Value::Text(section.into()),
+                Value::Text(field.into()),
+                Value::Integer(ordinal),
+                Value::Text(target.into()),
+                Value::Integer(i64::from(is_ref)),
+            ],
+        )
+        .await;
+    }
+
+    /// Build 1b: the planner reads the role references of the copies holding a twin group, and only
+    /// those (a copy naming the body once is not read), counting the rows and the (section, role) pairs;
+    /// its stored-roles read gives the map the fold gives. Its role self-check fires when the injected
+    /// rule ignores A7: the miniature rule here refuses a buyer + Lot-ReviewOrg twin, and the tripwire
+    /// lists it and fails R1 — while a buyer + Lot-AddInfo twin (coherent) passes it. The tripwire reads
+    /// the planner's OWN reference read, so a rule that loses the roles is caught too (the tripwire still
+    /// fires, and `role_ref_disagree` counts the rule against the planner even on a coherent group).
+    #[tokio::test]
+    async fn the_role_refs_are_read_for_twin_copies_and_the_role_tripwire_fires() {
+        let (db, conn, path) = open("roles", true).await;
+        seed(&conn).await;
+        // The Göttingen copy's references: buyer and AddInfo (coherent).
+        ref_row(&conn, 26_483_825, "ND-ContractingParty#0", "OPT-300-Procedure-Buyer", 0, "ORG-0001", true).await;
+        ref_row(&conn, 26_483_825, "LOT-0001", "OPT-301-Lot-AddInfo", 0, "ORG-0002", true).await;
+        ref_row(&conn, 26_483_825, "ORG-0001", "OPT-200-Organization-Company", 0, "ORG-0001", false).await;
+        // A copy naming a body once: its references are never read.
+        org_row(&conn, 700, Some("national"), Some(V1), "Blau Werke", "DE").await;
+        notice_row(&conn, 2_001, Some(8_001)).await;
+        mention_row(&conn, 2_001, "ORG-0001", 700, "Blau Werke", "DE", Some(V1)).await;
+        ref_row(&conn, 2_001, "ND-ContractingParty#0", "OPT-300-Procedure-Buyer", 0, "ORG-0001", true).await;
+        let stop = || false;
+        let progress = |_: u64, _: &str| {};
+        let r = db.plan_guid_twins(args(&stop, &progress)).await.unwrap();
+        assert_eq!(r.planned_row_ids, vec![22_759_261, 22_759_262]);
+        assert_eq!((r.role_ref_notices, r.role_ref_rows_read, r.role_refs), (1, 2, 2), "the twin copy alone, its two id-refs");
+        assert_eq!(r.bars.tripwire_role_mix, 0);
+        assert!(r.bars.pass, "{:#?}", r.bars);
+        let stored = db.guid_twin_stored_roles(&[26_483_825, 2_001, 9_999], role_ref).await.unwrap();
+        assert_eq!(stored.len(), 2, "a notice with no reference is absent");
+        assert_eq!(stored[&26_483_825]["ORG-0001"], roles(&["Procedure-Buyer"]));
+        assert_eq!(stored[&26_483_825]["ORG-0002"], roles(&["Lot-AddInfo"]));
+
+        // ORG-0002 is also the review body: buyer + Lot-ReviewOrg, refused by the miniature rule.
+        ref_row(&conn, 26_483_825, "LOT-0001", "OPT-301-Lot-ReviewOrg", 0, "ORG-0002", true).await;
+        let r = db.plan_guid_twins(args(&stop, &progress)).await.unwrap();
+        assert_eq!(r.planned_row_ids, vec![22_759_261, 22_759_262], "the miniature rule applies no role guard");
+        assert_eq!(r.bars.tripwire_role_mix, 1);
+        let listed = &r.bars.role_mix_refused[0];
+        assert_eq!((listed.notice_id, listed.ref_roles.clone()), (26_483_825, roles(&["Lot-AddInfo", "Lot-ReviewOrg", "Procedure-Buyer"])));
+        assert_eq!(r.bars.role_ref_disagree, 0, "the miniature rule returns the roles it was given");
+        assert!(!r.bars.pass, "a refused role-incoherent group fails R1");
+
+        // A rule that LOSES the roles (every group's `roles` empty): the tripwire reads the planner's own
+        // reference read, so it still fires, lists the roles read from storage, and the disagreement
+        // between the rule and the planner is counted and fails R1 on its own.
+        let lossy = || GuidTwinPlanArgs { rule: rule_without_roles, ..args(&stop, &progress) };
+        let r = db.plan_guid_twins(lossy()).await.unwrap();
+        assert_eq!(r.bars.tripwire_role_mix, 1, "the planner's read still sees buyer + Lot-ReviewOrg");
+        let aok_like = roles(&["Lot-AddInfo", "Lot-ReviewOrg", "Procedure-Buyer"]);
+        assert_eq!(r.bars.role_mix_refused[0].ref_roles, aok_like, "read from notice_ids, not echoed by the rule");
+        assert_eq!(r.bars.role_ref_disagree, 1);
+        let d = &r.bars.role_ref_disagree_samples[0];
+        assert_eq!((d.notice_id, d.outcome, d.ref_roles.clone(), d.rule_roles.clone()), (26_483_825, "refused", aok_like, Vec::new()));
+        assert!(!r.bars.pass);
+        // Without the review slot the group is coherent (no tripwire), but the lost roles still fail R1.
+        exec(&conn, "DELETE FROM notice_ids WHERE notice_id = 26483825 AND field_id = 'OPT-301-Lot-ReviewOrg'", vec![]).await;
+        let r = db.plan_guid_twins(lossy()).await.unwrap();
+        assert_eq!((r.bars.tripwire_role_mix, r.bars.role_ref_disagree), (0, 1));
+        assert!(!r.bars.pass, "a rule that drops the roles is caught even on a coherent group");
+        let r = db.plan_guid_twins(args(&stop, &progress)).await.unwrap();
+        assert_eq!((r.bars.tripwire_role_mix, r.bars.role_ref_disagree), (0, 0));
+        assert!(r.bars.pass, "{:#?}", r.bars);
         drop(conn);
         cleanup(&path);
     }
