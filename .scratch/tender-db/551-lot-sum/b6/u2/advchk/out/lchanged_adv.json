@@ -1,0 +1,212 @@
+{
+ "entities": {
+  "tender": 8573
+ },
+ "events": 8573,
+ "fetch_hist_by_hour": {
+  "2026-10-19T05": 69,
+  "2026-10-19T06": 1774,
+  "2026-10-19T07": 1659
+ },
+ "fetch_range": [
+  "2026-10-19T05:47:56Z",
+  "2026-10-19T07:41:30.381Z"
+ ],
+ "head": 958848784,
+ "ids_of_3502_with_any_non2630_row_to_head": [],
+ "j2630": {
+  "all_changed_vnull": true,
+  "cursor": [
+   958787062,
+   958809773
+  ],
+  "ids_eq_3502": true,
+  "one_row_per_id": true,
+  "rows": 3502,
+  "stamp": "2026-10-19T03:34:07Z"
+ },
+ "jobs": [
+  {
+   "changed_at": "2026-10-19T03:34:07Z",
+   "cursor": [
+    958787062,
+    958809773
+   ],
+   "ids": 3502,
+   "ids_in_3502": [
+    909,
+    3296,
+    5733,
+    10700,
+    17251,
+    20295,
+    23846,
+    24526,
+    24566,
+    25078,
+    29793,
+    29841,
+    30223,
+    30546,
+    31000,
+    31287,
+    33101,
+    35440,
+    37368,
+    39401
+   ],
+   "n_ids_in_3502": 3502,
+   "ops": {
+    "changed/vnull": 3502
+   },
+   "rows": 3502
+  },
+  {
+   "changed_at": "2026-10-19T04:23:30Z",
+   "cursor": [
+    958809779,
+    958809905
+   ],
+   "ids": 126,
+   "ids_in_3502": [],
+   "n_ids_in_3502": 0,
+   "ops": {
+    "changed/vnull": 126
+   },
+   "rows": 126
+  },
+  {
+   "changed_at": "2026-10-19T05:53:39Z",
+   "cursor": [
+    958809906,
+    958810036
+   ],
+   "ids": 66,
+   "ids_in_3502": [],
+   "n_ids_in_3502": 0,
+   "ops": {
+    "changed/vnull": 66
+   },
+   "rows": 66
+  },
+  {
+   "changed_at": "2026-10-19T07:35:55Z",
+   "cursor": [
+    958811147,
+    958848404
+   ],
+   "ids": 4081,
+   "ids_in_3502": [],
+   "n_ids_in_3502": 0,
+   "ops": {
+    "added/ver": 2023,
+    "changed/ver": 2648,
+    "changed/vnull": 102,
+    "removed/vnull": 11
+   },
+   "rows": 4784
+  },
+  {
+   "changed_at": "2026-10-19T11:06:08Z",
+   "cursor": [
+    958848498,
+    958848545
+   ],
+   "ids": 48,
+   "ids_in_3502": [],
+   "n_ids_in_3502": 0,
+   "ops": {
+    "changed/vnull": 48
+   },
+   "rows": 48
+  },
+  {
+   "changed_at": "2026-10-19T11:06:21Z",
+   "cursor": [
+    958848546,
+    958848656
+   ],
+   "ids": 47,
+   "ids_in_3502": [],
+   "n_ids_in_3502": 0,
+   "ops": {
+    "changed/vnull": 47
+   },
+   "rows": 47
+  }
+ ],
+ "literal_a_n": 3502,
+ "n_fetched_before_2630_end": 0,
+ "n_fetched_in_0730_0900": 460,
+ "named_keys": {
+  "caused_by_notice_id": 15537,
+  "notice_id": 36320
+ },
+ "named_notices_n": 15537,
+ "newest_named": 47406725,
+ "newest_probed": true,
+ "operative_a_excl2630_n": 0,
+ "pages": 9,
+ "probes": {
+  "47396127": "2026-10-14T07:35:02Z",
+  "47398305": "2026-10-15T07:35:03Z",
+  "47400399": "2026-10-15T07:35:03Z",
+  "47401649": "2026-10-15T07:35:03Z",
+  "47402365": "2026-10-15T07:35:32Z",
+  "47406725": "2026-10-16T07:35:45Z"
+ },
+ "r541": {
+  "in_3502": [],
+  "n": 126,
+  "stamps": [
+   "2026-10-19T04:23:30Z"
+  ]
+ },
+ "s545": {
+  "eq_feed_1106": true,
+  "feed_1106_n": 47,
+  "in_3502": [],
+  "n": 47
+ },
+ "s571": {
+  "eq_feed_0553": true,
+  "in_3502": [],
+  "n": 66
+ },
+ "tender_top_keys": {
+  "amounts": 3502,
+  "bids": 3502,
+  "classifications": 3502,
+  "contracts": 3502,
+  "country": 3502,
+  "cpv": 3502,
+  "dates": 3502,
+  "dispatched_at": 3502,
+  "id": 3502,
+  "kind": 3502,
+  "lot_details": 3502,
+  "lot_results": 3502,
+  "lots": 3502,
+  "notice_subtype": 3502,
+  "original_lang": 3502,
+  "parties": 3502,
+  "procedure_key": 3502,
+  "procedure_type": 3502,
+  "publication_id": 3502,
+  "published_at": 3502,
+  "source": 3502,
+  "submission_deadline": 3502,
+  "submission_deadline_scope": 3502,
+  "texts": 3502,
+  "title": 3502,
+  "value": 3502,
+  "value_derivation": 3502,
+  "version": 3502,
+  "versions": 3502
+ },
+ "union_excl2630": {
+  "in_3502": [],
+  "n": 239,
+  "sha256": "5b5eb683f22b2cf7a2d29fc7ff314dbed2008b35d635d0b60bddb08487305605"
+ }
+}

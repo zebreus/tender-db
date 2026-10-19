@@ -1,0 +1,113 @@
+{
+ "R_cover_all": [
+  6356382,
+  6465510,
+  6582856,
+  7163120,
+  7166738,
+  7179291,
+  7202436,
+  7380025,
+  7394272,
+  7423850,
+  7600895,
+  7605188,
+  7651470
+ ],
+ "R_cover_and_single": [
+  6356382,
+  6465510,
+  6582856,
+  7163120,
+  7166738,
+  7179291,
+  7380025,
+  7394272,
+  7423850,
+  7600895,
+  7605188,
+  7651470
+ ],
+ "alt_R_both_minus_R_single": [
+  7202436
+ ],
+ "alt_equals_primary": true,
+ "entries": [
+  {
+   "S": 2722200,
+   "S_eur_cents": 2722200,
+   "currency": "EUR",
+   "first": "R10",
+   "id": 7202436,
+   "n": 2,
+   "refusals": [
+    "R10"
+   ],
+   "removed": [
+    {
+     "cents": 2698120,
+     "content_lot_results": 3,
+     "field": "TED-VAL_TOTAL",
+     "form": "F03",
+     "g_cover": true,
+     "g_single": false,
+     "kind": "award",
+     "names_summed_keys": [],
+     "notice_id": 22179136,
+     "round_results": 3
+    }
+   ],
+   "summed": [
+    [
+     "LOT-18",
+     22139899,
+     1137200
+    ],
+    [
+     "LOT-6",
+     22139899,
+     1585000
+    ]
+   ],
+   "v2_vouched_by": {
+    "cents": 2698120,
+    "field": "TED-VAL_TOTAL",
+    "notice_id": 22179136
+   },
+   "v2_vouches": [
+    [
+     "TED-VAL_TOTAL",
+     22179136,
+     2698120
+    ]
+   ],
+   "year": "2022"
+  }
+ ],
+ "ids": [
+  7202436
+ ],
+ "ids_sha256": "39165ec9cbe9a7a28340d73fe7695bbb7c9e1c94ca6920ea7632041c702b3b46",
+ "interaction_refused_only_with_both_guards": [],
+ "n": 1,
+ "n_R_cover_all": 13,
+ "n_alt": 1,
+ "shape_mix": {
+  "eur_band": {
+   "<100k": 1
+  },
+  "removed_field": {
+   "TED-VAL_TOTAL": 1
+  },
+  "removed_kind": {
+   "award": 1
+  },
+  "v2_vouched_by_field": {
+   "TED-VAL_TOTAL": 1
+  },
+  "year": {
+   "2022": 1
+  }
+ },
+ "what": "v2 ships G-cover refuses beyond G-single (amendment A3: G-cover \\ G-single = (v2 ships refused under {cover}) minus R_single)"
+}

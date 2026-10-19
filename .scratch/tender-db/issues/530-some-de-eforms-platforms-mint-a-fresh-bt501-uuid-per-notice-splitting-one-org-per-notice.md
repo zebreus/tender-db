@@ -191,3 +191,5 @@ Constraints for any choice:
 - Canaries: 254 (24,219 mentions, 4,463 tenders), 255 (73,039; 9,342), 8378 (3,382; 120) stable; Göttingen 22759261/62/65 single-use
   (twin, twin+cross, twin-notice+cross); Südbayern 30971684/734/757 and Bremen 30532145/147 single-use, cross only (no twin), as the
   issue predicted.
+- **Census audit (2026-10-19 14:5xZ, hourly AUDIT):** the report's canary mention counts equal the live `/v1/organizations/{id}`
+  values: 254 → 24,219, 255 → 73,039, 22759261 → 2, 30971684 → 2 (identifiers identical).

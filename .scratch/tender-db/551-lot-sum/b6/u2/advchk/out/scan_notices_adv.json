@@ -1,0 +1,98 @@
+{
+ "n_tenders": 3502,
+ "n_notices": 15537,
+ "missing": [],
+ "layers": {
+  "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices": 15246,
+  "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices": 291
+ },
+ "cost_parameters_carriers": [],
+ "move_fields": [
+  {
+   "notice": 18002514,
+   "tenders": [
+    5278856
+   ],
+   "form": "{'code': 'T01', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   "fields": [
+    "TED-SERVICE_CATEGORY_MOVE",
+    "TED-TYPE_OF_ACTIVITY_MOVE"
+   ]
+  }
+ ],
+ "T01_T02": [],
+ "forms_top": [
+  [
+   "{'code': 'F20', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   5720
+  ],
+  [
+   "{'code': 'F03', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   3221
+  ],
+  [
+   null,
+   2507
+  ],
+  [
+   "{'code': 'F02', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   1881
+  ],
+  [
+   "{'code': 'F14', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   1310
+  ],
+  [
+   "{'code': 'F06', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   412
+  ],
+  [
+   "{'code': 'F05', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   270
+  ],
+  [
+   "{'code': 'F21', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   124
+  ],
+  [
+   "{'code': '2', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   45
+  ],
+  [
+   "{'code': 'F15', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   28
+  ],
+  [
+   "{'code': '3', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   6
+  ],
+  [
+   "{'code': 'F25', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   4
+  ],
+  [
+   "{'code': 'F24', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   3
+  ],
+  [
+   "{'code': 'F23', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   2
+  ],
+  [
+   "{'code': 'T01', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   1
+  ],
+  [
+   "{'code': 'F12', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   1
+  ],
+  [
+   "{'code': 'F13', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   1
+  ],
+  [
+   "{'code': '18', 'field_id': 'TED-FORM', 'list': None, 'ordinal': 0, 'type': 'code'}",
+   1
+  ]
+ ]
+}

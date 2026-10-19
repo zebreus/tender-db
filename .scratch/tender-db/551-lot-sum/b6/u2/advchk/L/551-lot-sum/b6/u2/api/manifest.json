@@ -1,0 +1,198 @@
+{
+ "boundary": {
+  "cutoff": "2026-10-18T20:30:00Z",
+  "first_id_at_or_after": null,
+  "first_index_at_or_after": 15537,
+  "last_id_before": 47406725,
+  "margin": 6,
+  "n_named": 15537
+ },
+ "changes": [
+  {
+   "file": "changes/000.json",
+   "first_changed_at": "2026-10-19T03:34:07Z",
+   "generation": 2,
+   "i": 0,
+   "last_changed_at": "2026-10-19T03:34:07Z",
+   "last_cursor": "958792731",
+   "more": true,
+   "n": 1000,
+   "path": "/v1/changes?since=958787061&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:12:59.570Z",
+   "sha256": "3f1963edeb0c767b7fc63abed653721b67435a29568a61f9b93688592f858ac8",
+   "status": 200
+  },
+  {
+   "file": "changes/001.json",
+   "first_changed_at": "2026-10-19T03:34:07Z",
+   "generation": 2,
+   "i": 1,
+   "last_changed_at": "2026-10-19T03:34:07Z",
+   "last_cursor": "958799407",
+   "more": true,
+   "n": 1000,
+   "path": "/v1/changes?since=958792731&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:13:01.571Z",
+   "sha256": "1cbeeccd64063737bd40bcc15a026078cef356ced3dc571bce92acf1d731444a",
+   "status": 200
+  },
+  {
+   "file": "changes/002.json",
+   "first_changed_at": "2026-10-19T03:34:07Z",
+   "generation": 2,
+   "i": 2,
+   "last_changed_at": "2026-10-19T03:34:07Z",
+   "last_cursor": "958806489",
+   "more": true,
+   "n": 1000,
+   "path": "/v1/changes?since=958799407&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:13:03.572Z",
+   "sha256": "486c063a2e0d9fef6d9a640d4a23723d2ea8fba5d3b756a0c9842968649313db",
+   "status": 200
+  },
+  {
+   "file": "changes/003.json",
+   "first_changed_at": "2026-10-19T03:34:07Z",
+   "generation": 2,
+   "i": 3,
+   "last_changed_at": "2026-10-19T07:35:55Z",
+   "last_cursor": "958812585",
+   "more": true,
+   "n": 1000,
+   "path": "/v1/changes?since=958806489&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:13:05.573Z",
+   "sha256": "896b01e05a8162111a557536e7a52a54bd18aa25599c2171e7c25035bc901f57",
+   "status": 200
+  },
+  {
+   "file": "changes/004.json",
+   "first_changed_at": "2026-10-19T07:35:55Z",
+   "generation": 2,
+   "i": 4,
+   "last_changed_at": "2026-10-19T07:35:55Z",
+   "last_cursor": "958818821",
+   "more": true,
+   "n": 1000,
+   "path": "/v1/changes?since=958812585&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:13:07.574Z",
+   "sha256": "2bb12e0a787c160f6bb23ab2a890ef7ed5add6faa27115874905a36e3cc0f08f",
+   "status": 200
+  },
+  {
+   "file": "changes/005.json",
+   "first_changed_at": "2026-10-19T07:35:55Z",
+   "generation": 2,
+   "i": 5,
+   "last_changed_at": "2026-10-19T07:35:55Z",
+   "last_cursor": "958828592",
+   "more": true,
+   "n": 1000,
+   "path": "/v1/changes?since=958818821&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:13:09.574Z",
+   "sha256": "e1a253368631eca96eb931063f52b437a1c5b2e1079c334d944664ec4a730449",
+   "status": 200
+  },
+  {
+   "file": "changes/006.json",
+   "first_changed_at": "2026-10-19T07:35:55Z",
+   "generation": 2,
+   "i": 6,
+   "last_changed_at": "2026-10-19T07:35:55Z",
+   "last_cursor": "958836215",
+   "more": true,
+   "n": 1000,
+   "path": "/v1/changes?since=958828592&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:13:11.575Z",
+   "sha256": "dbd69579b313ae442d9dcc88219faebb26ce68ed6e7a27868d6cd786dcf97882",
+   "status": 200
+  },
+  {
+   "file": "changes/007.json",
+   "first_changed_at": "2026-10-19T07:35:55Z",
+   "generation": 2,
+   "i": 7,
+   "last_changed_at": "2026-10-19T07:35:55Z",
+   "last_cursor": "958845910",
+   "more": true,
+   "n": 1000,
+   "path": "/v1/changes?since=958836215&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:13:13.578Z",
+   "sha256": "6288910ca6a6ee2255908d0b379f805d9853fe54d6074402998e2497728a9078",
+   "status": 200
+  },
+  {
+   "file": "changes/008.json",
+   "first_changed_at": "2026-10-19T07:35:55Z",
+   "generation": 2,
+   "i": 8,
+   "last_changed_at": "2026-10-19T11:06:21Z",
+   "last_cursor": "958848784",
+   "more": false,
+   "n": 573,
+   "path": "/v1/changes?since=958845910&entity=tender&limit=1000",
+   "reset": null,
+   "sent_at": "2026-10-19T14:13:15.580Z",
+   "sha256": "1089b5db04a7005e4bef0933937c5c0da12d696f65655ad2d9d0ac157ea3538d",
+   "status": 200
+  }
+ ],
+ "notices": {
+  "47396127": {
+   "file": "notices/47396127.json",
+   "ingested_at": "2026-10-14T07:35:02Z",
+   "path": "/v1/notices/47396127",
+   "sent_at": "2026-10-19T14:13:30.054Z",
+   "sha256": "2a4cc6866d743fb47511ccb4e17298eb973ebfa93cd0ae4a326633466ced1881",
+   "status": 200
+  },
+  "47398305": {
+   "file": "notices/47398305.json",
+   "ingested_at": "2026-10-15T07:35:03Z",
+   "path": "/v1/notices/47398305",
+   "sent_at": "2026-10-19T14:13:32.057Z",
+   "sha256": "28fe3fb66daa47a1ea5b33560f9699fc3add2fed66b8d1fe316640cc6708b967",
+   "status": 200
+  },
+  "47400399": {
+   "file": "notices/47400399.json",
+   "ingested_at": "2026-10-15T07:35:03Z",
+   "path": "/v1/notices/47400399",
+   "sent_at": "2026-10-19T14:13:34.058Z",
+   "sha256": "3fee1926029168d8bbacb9f7f18cd54fde0573548f8a61bb6f200b1f99bf21fe",
+   "status": 200
+  },
+  "47401649": {
+   "file": "notices/47401649.json",
+   "ingested_at": "2026-10-15T07:35:03Z",
+   "path": "/v1/notices/47401649",
+   "sent_at": "2026-10-19T14:13:36.058Z",
+   "sha256": "18b947af28ec7df46650cda3a4e524f4cd59236a45b1bc1137496eaaee44f7bd",
+   "status": 200
+  },
+  "47402365": {
+   "file": "notices/47402365.json",
+   "ingested_at": "2026-10-15T07:35:32Z",
+   "path": "/v1/notices/47402365",
+   "sent_at": "2026-10-19T14:13:38.061Z",
+   "sha256": "12561fcfe534c1adf556839563bb87e556053aeb1e19e48bb37443f91f952a2e",
+   "status": 200
+  },
+  "47406725": {
+   "file": "notices/47406725.json",
+   "ingested_at": "2026-10-16T07:35:45Z",
+   "path": "/v1/notices/47406725",
+   "sent_at": "2026-10-19T14:13:28.053Z",
+   "sha256": "d6ea3b53b8edee539547717e343257a5221f7ba0a05d276292f9ba1ddc0e32e3",
+   "status": 200
+  }
+ },
+ "what": "issue 551 B6 U2 public-API reads (fetch_u2_api.py)"
+}
