@@ -1,0 +1,194 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/061940-2025?limit=100&updatedTo=2026-10-19T21:06:06",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2025-10-02T19:06:02+01:00",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "ocid": "ocds-h6vhtk-05a764",
+            "id": "061940-2025",
+            "tag": [
+                "tender"
+            ],
+            "date": "2025-10-02T19:06:02+01:00",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "TMT Procurement Partnership",
+                    "id": "GB-PPON-PGRT-5366-CGWY",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PGRT-5366-CGWY"
+                    },
+                    "address": {
+                        "streetAddress": "Maidstone House, King Street",
+                        "locality": "Maidstone",
+                        "postalCode": "ME15 6JQ",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKJ45"
+                    },
+                    "contactPoint": {
+                        "name": "Louisa Coley",
+                        "email": "procurement@tunbridgewells.gov.uk",
+                        "telephone": "01892554425"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PGRT-5366-CGWY",
+                "name": "TMT Procurement Partnership"
+            },
+            "tender": {
+                "id": "ocds-h6vhtk-05a764",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "MBC - Play area surfacing repairs at various sites in Maidstone, Kent",
+                "description": "Maidstone Borough Council (MBC) is looking to appoint a contractor to undertake play area surfacing repairs include all preparatory work and base preparation.\nFor more information about this opportunity, please visit the Delta eSourcing portal at: \nhttps://www.kentbusinessportal.org.uk/tenders/UK-UK-Maidstone:-Playground-equipment./F76YFCE8BD\nTo respond to this opportunity, please click here: \nhttps://www.kentbusinessportal.org.uk/respond/F76YFCE8BD",
+                "status": "active",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "37535200",
+                                "description": "Playground equipment"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "43325000",
+                                "description": "Park and playground equipment"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45112723",
+                                "description": "Landscaping work for playgrounds"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "50870000",
+                                "description": "Repair and maintenance services of playground equipment"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKJ45",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "value": {
+                    "amountGross": 276000.00,
+                    "currency": "GBP"
+                },
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Below threshold - open competition",
+                "mainProcurementCategory": "works",
+                "aboveThreshold": false,
+                "submissionMethodDetails": "https://www.kentbusinessportal.org.uk/",
+                "submissionTerms": {
+                    "electronicSubmissionPolicy": "allowed"
+                },
+                "tenderPeriod": {
+                    "endDate": "2025-10-30T12:00:00+00:00"
+                },
+                "enquiryPeriod": {
+                    "endDate": "2025-10-23T12:00:00+01:00"
+                },
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 276000.00,
+                            "currency": "GBP"
+                        },
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "cost",
+                                    "name": "Criterion 1",
+                                    "description": "Cost",
+                                    "numbers": [
+                                        {
+                                            "number": 70,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "quality",
+                                    "name": "Criterion 2",
+                                    "description": "Quality",
+                                    "numbers": [
+                                        {
+                                            "number": 30,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "suitability": {
+                            "sme": true,
+                            "vcse": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2025-12-01T00:00:00+00:00",
+                            "endDate": "2027-03-31T23:59:59+01:00"
+                        }
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "061940-2025",
+                        "documentType": "tenderNotice",
+                        "noticeType": "UK4",
+                        "description": "Tender notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/061940-2025",
+                        "datePublished": "2025-10-02T19:06:02+01:00",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "language": "en"
+        }
+    ]
+}

@@ -1,0 +1,229 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/043745-2026?limit=100&updatedTo=2026-10-19T21:05:55",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2026-05-13T09:59:41+01:00",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "ocid": "ocds-h6vhtk-069746",
+            "id": "043745-2026",
+            "tag": [
+                "tender"
+            ],
+            "date": "2026-05-13T09:59:41+01:00",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "Rochdale Metropolitan Borough Council",
+                    "id": "GB-PPON-PXXD-6682-MDRX",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PXXD-6682-MDRX"
+                    },
+                    "address": {
+                        "streetAddress": "4th Floor, Waterside House",
+                        "locality": "Sale",
+                        "postalCode": "M33 7ZF",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKD34"
+                    },
+                    "contactPoint": {
+                        "name": "Christopher Leigh",
+                        "email": "Christopher.Leigh@star-procurement.gov.uk",
+                        "telephone": "+44 7834869726"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "http://www.rochdale.gov.uk/",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthorityCentralGovernment",
+                                "description": "Public authority - central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Star Procurement",
+                    "id": "GB-PPON-PGZW-1429-QQZQ",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PGZW-1429-QQZQ"
+                    },
+                    "address": {
+                        "streetAddress": "Waterside Plaza",
+                        "locality": "Sale",
+                        "postalCode": "M33 7ZF",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKD34"
+                    },
+                    "contactPoint": {
+                        "email": "Christopher.Leigh@star-procurement.gov.uk"
+                    },
+                    "roles": [
+                        "procuringEntity"
+                    ],
+                    "roleDetails": "Managing the Tender"
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PXXD-6682-MDRX",
+                "name": "Rochdale Metropolitan Borough Council"
+            },
+            "tender": {
+                "id": "CLv2",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Alkrington Primary School – Roofing Refurbishment Works",
+                "description": "The work comprises refurbishment of pitched Roof 1, pitched Roof 2, encapsulation of the parapet wall between Roofs 2 & 3, encapsulation of the parapet wall at the gable end of pitched Roof 4. Re-pointing works to gable end of Roof 4. Internal plaster repairs. Minor Bauder felt roof repairs to pitched Roof 5 and flat roofs A&B.",
+                "status": "active",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "45000000",
+                                "description": "Construction work"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "44000000",
+                                "description": "Construction structures and materials; auxiliary products to construction (except electric apparatus)"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UK",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "value": {
+                    "amountGross": 227000.00,
+                    "amount": 190000.00,
+                    "currency": "GBP"
+                },
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Below threshold - open competition",
+                "mainProcurementCategory": "works",
+                "aboveThreshold": false,
+                "submissionMethodDetails": "https://procontract.due-north.com/",
+                "submissionTerms": {
+                    "electronicSubmissionPolicy": "allowed"
+                },
+                "tenderPeriod": {
+                    "endDate": "2026-06-05T12:00:00+01:00"
+                },
+                "enquiryPeriod": {
+                    "endDate": "2026-05-29T12:00:00+01:00"
+                },
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 227000.00,
+                            "amount": 190000.00,
+                            "currency": "GBP"
+                        },
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "quality",
+                                    "name": "Quality",
+                                    "description": "30%",
+                                    "numbers": [
+                                        {
+                                            "number": 30.00,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "price",
+                                    "name": "price",
+                                    "description": "70%",
+                                    "numbers": [
+                                        {
+                                            "number": 70.00,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "selectionCriteria": {
+                            "criteria": [
+                                {
+                                    "description": "All contractors must complete the documents on the Chest"
+                                }
+                            ]
+                        },
+                        "suitability": {
+                            "sme": true,
+                            "vcse": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2026-07-22T00:00:00+01:00",
+                            "endDate": "2026-08-28T23:59:59+01:00"
+                        }
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "L-1",
+                        "documentType": "biddingDocuments",
+                        "description": "All doc uploaded",
+                        "url": "https://procontract.due-north.com/"
+                    },
+                    {
+                        "id": "L-2",
+                        "documentType": "technicalSpecifications",
+                        "description": "All documents on the Chest",
+                        "url": "https://procontract.due-north.com//"
+                    },
+                    {
+                        "id": "043745-2026",
+                        "documentType": "tenderNotice",
+                        "noticeType": "UK4",
+                        "description": "Tender notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/043745-2026",
+                        "datePublished": "2026-05-13T09:59:41+01:00",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "language": "en"
+        }
+    ]
+}

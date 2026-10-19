@@ -1,0 +1,1025 @@
+{
+ "NHC": {
+  "label": "Northern Housing Consortium",
+  "kind": "consortium (housing, member councils + HAs)",
+  "pattern": "northern housing consortium|\\bnhc\\b",
+  "own_orgs": [
+   {
+    "org": 30953692,
+    "ident": "GBPPONPJXZ4423NDBT",
+    "head": "Northern Housing Consortium Ltd",
+    "in_slices": true,
+    "mentions": 124,
+    "agent_named_mentions": 23,
+    "other_named_mentions": 101,
+    "other_named_keys": 53,
+    "principal_named_mentions": 97,
+    "principal_named_keys": 52,
+    "other_named_class": {
+     "ARCHES HOUSING LIMITED|GB-PPON": "P",
+     "BELIEVE HOUSING LIMITED|GB-PPON": "P",
+     "BLACKPOOL COASTAL HOUSING LIMITED|GB-PPON": "P",
+     "Bernicia Group|GB-PPON": "P",
+     "Birmingham City Council|GB-PPON": "P",
+     "Bristol City Council|GB-PPON": "P",
+     "Carmarthenshire County Council|GB-PPON": "P",
+     "City of Lincoln Council|GB-PPON": "P",
+     "City of York Council|GB-PPON": "P",
+     "Darlington Borough Council|GB-PPON": "P",
+     "East Riding of Yorkshire Council|GB-PPON": "P",
+     "East Suffolk Council|GB-PPON": "P",
+     "Gateshead Borough Council|GB-PPON": "P",
+     "HOUSING 21|GB-PPON": "P",
+     "High Peak Borough Council|GB-PPON": "P",
+     "ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED|GB-PPON": "P",
+     "Karbon Homes (54North Homes)|GB-PPON": "P",
+     "LIVIN HOUSING LIMITED|GB-PPON": "P",
+     "LONDON & QUADRANT HOUSING TRUST|GB-PPON": "P",
+     "Lancaster City Council|GB-PPON": "P",
+     "Leeds City Council|GB-PPON": "P",
+     "London Borough of Newham|GB-PPON": "P",
+     "Metropolitan borough of Bury|GB-PPON": "P",
+     "Moat Homes Limited|GB-PPON": "P",
+     "Newark And Sherwood District Council|GB-PPON": "P",
+     "Newcastle City Council|GB-PPON": "P",
+     "North Northamptonshire Council|GB-PPON": "P",
+     "North Tyneside Borough Council|GB-PPON": "P",
+     "ONE MANCHESTER LIMITED|GB-PPON": "P",
+     "ONE VISION HOUSING LIMITED|GB-PPON": "P",
+     "ONWARD HOMES LIMITED|GB-PPON": "P",
+     "ORBIT GROUP LIMITED|GB-PPON": "P",
+     "Ongo Homes Limited|GB-PPON": "P",
+     "Powys County Council|GB-PPON": "P",
+     "Riverside Group Limited|GB-PPON": "P",
+     "Rochdale Borough Council|GB-PPON": "P",
+     "Royal Borough of Kensington and Chelsea|GB-PPON": "P",
+     "ST LEGER HOMES OF DONCASTER LIMITED|GB-PPON": "P",
+     "Sandwell Metropolitan Borough Council|GB-PPON": "P",
+     "Solihull Community Housing Limited|GB-PPON": "P",
+     "South Derbyshire District Council|GB-PPON": "P",
+     "South Lakes Housing|GB-PPON": "P",
+     "South Tyneside Borough Council|GB-PPON": "P",
+     "Stairlifts and Lifting Equipment Framework 2026|GB-PPON": "T",
+     "Stockton on Tees Borough Council|GB-PPON": "P",
+     "Stoke on Trent City Council|GB-PPON": "P",
+     "THE GUINNESS PARTNERSHIP LIMITED|GB-PPON": "P",
+     "Tamworth Borough Council|GB-PPON": "P",
+     "The Council of the Borough of Kirklees|GB-PPON": "P",
+     "The Pioneer Housing and Community Group Limited|GB-PPON": "P",
+     "Thurrock Council|GB-PPON": "P",
+     "Warwick District Council|GB-PPON": "P",
+     "Wigan Council|GB-PPON": "P"
+    },
+    "agent_named": {
+     "Northern Housing Consortium Ltd|GB-PPON": 21,
+     "Northern Housing Consortium|GB-PPON": 2
+    },
+    "other_named": {
+     "Darlington Borough Council|GB-PPON": 5,
+     "Solihull Community Housing Limited|GB-PPON": 5,
+     "Rochdale Borough Council|GB-PPON": 4,
+     "Stairlifts and Lifting Equipment Framework 2026|GB-PPON": 4,
+     "Stockton on Tees Borough Council|GB-PPON": 4,
+     "East Suffolk Council|GB-PPON": 3,
+     "Newcastle City Council|GB-PPON": 3,
+     "North Northamptonshire Council|GB-PPON": 3,
+     "Birmingham City Council|GB-PPON": 2,
+     "Bristol City Council|GB-PPON": 2,
+     "Carmarthenshire County Council|GB-PPON": 2,
+     "City of Lincoln Council|GB-PPON": 2,
+     "City of York Council|GB-PPON": 2,
+     "East Riding of Yorkshire Council|GB-PPON": 2,
+     "High Peak Borough Council|GB-PPON": 2,
+     "LIVIN HOUSING LIMITED|GB-PPON": 2,
+     "Lancaster City Council|GB-PPON": 2,
+     "Leeds City Council|GB-PPON": 2,
+     "London Borough of Newham|GB-PPON": 2,
+     "Metropolitan borough of Bury|GB-PPON": 2,
+     "Newark And Sherwood District Council|GB-PPON": 2,
+     "North Tyneside Borough Council|GB-PPON": 2,
+     "Powys County Council|GB-PPON": 2,
+     "Royal Borough of Kensington and Chelsea|GB-PPON": 2,
+     "Sandwell Metropolitan Borough Council|GB-PPON": 2,
+     "South Derbyshire District Council|GB-PPON": 2,
+     "South Tyneside Borough Council|GB-PPON": 2,
+     "Stoke on Trent City Council|GB-PPON": 2,
+     "Tamworth Borough Council|GB-PPON": 2,
+     "The Council of the Borough of Kirklees|GB-PPON": 2,
+     "Thurrock Council|GB-PPON": 2,
+     "Warwick District Council|GB-PPON": 2,
+     "Wigan Council|GB-PPON": 2,
+     "ARCHES HOUSING LIMITED|GB-PPON": 1,
+     "BELIEVE HOUSING LIMITED|GB-PPON": 1,
+     "BLACKPOOL COASTAL HOUSING LIMITED|GB-PPON": 1,
+     "Bernicia Group|GB-PPON": 1,
+     "Gateshead Borough Council|GB-PPON": 1,
+     "HOUSING 21|GB-PPON": 1,
+     "ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED|GB-PPON": 1,
+     "Karbon Homes (54North Homes)|GB-PPON": 1,
+     "LONDON & QUADRANT HOUSING TRUST|GB-PPON": 1,
+     "Moat Homes Limited|GB-PPON": 1,
+     "ONE MANCHESTER LIMITED|GB-PPON": 1,
+     "ONE VISION HOUSING LIMITED|GB-PPON": 1,
+     "ONWARD HOMES LIMITED|GB-PPON": 1,
+     "ORBIT GROUP LIMITED|GB-PPON": 1,
+     "Ongo Homes Limited|GB-PPON": 1,
+     "Riverside Group Limited|GB-PPON": 1,
+     "ST LEGER HOMES OF DONCASTER LIMITED|GB-PPON": 1,
+     "South Lakes Housing|GB-PPON": 1,
+     "THE GUINNESS PARTNERSHIP LIMITED|GB-PPON": 1,
+     "The Pioneer Housing and Community Group Limited|GB-PPON": 1
+    }
+   }
+  ],
+  "own_candidates": {
+   "30953692": "Northern Housing Consortium Ltd"
+  },
+  "elsewhere_orgs": 0,
+  "elsewhere_mentions": 0,
+  "elsewhere": []
+ },
+ "NWSSP": {
+  "label": "NHS Wales Shared Services Partnership (Procurement Services)",
+  "kind": "shared-service (hosted by Velindre)",
+  "pattern": "shared services? partnership|nwssp|partneriaeth cydwasanaethau",
+  "own_orgs": [
+   {
+    "org": 30913738,
+    "ident": "GBPPONPXWV6492CGMN",
+    "head": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+    "in_slices": true,
+    "mentions": 1170,
+    "agent_named_mentions": 1048,
+    "other_named_mentions": 122,
+    "other_named_keys": 16,
+    "principal_named_mentions": 41,
+    "principal_named_keys": 7,
+    "other_named_class": {
+     "Aneurin Bevan University Bevan Health Board|GB-PPON": "P",
+     "Betsi Cadwaladr University Health Board|GB-PPON": "P",
+     "Cardiff & Vale University Health Board|GB-PPON": "P",
+     "Cardiff and Vale University Health Board|GB-PPON": "P",
+     "Cardiff and Vale University Health Board\t|GB-PPON": "P",
+     "Health Education and Improvement Wales (HEIW)|GB-PPON": "P",
+     "Hywel Dda University Health Board|GB-PPON": "P",
+     "Hywel Dda University Health Board |GB-PPON": "P",
+     "Hywel Dda University Health Board  |GB-PPON": "P",
+     "NHS |GB-PPON": "T",
+     "NHS Wales|GB-PPON": "V",
+     "NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morgannwg University Health Board |GB-PPON": "P",
+     "NHS Wales Shared Services|GB-PPON": "V",
+     "NHS Wales Shared Services (Hosted by Velindre University NHS Trust)|GB-PPON": "V",
+     "NHS Wales Shared Services Partership|GB-PPON": "V",
+     "NHS Wales Shared Services Procurement Partnership|GB-PPON": "V",
+     "NHS Wales Shared Services and Partnership|GB-PPON": "V",
+     "Public Health Wales NHS Trust|GB-PPON": "P",
+     "Velindre University NHS Trust|GB-PPON": "U",
+     "Velindre University NHS Trust\t|GB-PPON": "U",
+     "Velindre University NHS Trust |GB-PPON": "U",
+     "Welsh Blood Service (Velindre University NHS Trust)|GB-PPON": "U"
+    },
+    "agent_named": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 630,
+     "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)|GB-PPON": 249,
+     "NHS Wales Shared Services Partnership|GB-PPON": 75,
+     "NHS Wales Shared Service Partnership|GB-PPON": 13,
+     "NHS WALES SHARED SERVICES PARTNERSHIP|GB-PPON": 12,
+     "NHS Wales Shared Services Partnerships|GB-PPON": 11,
+     "NHS Wales Shared Services Partnership (NWSSP)|GB-PPON": 6,
+     "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)  |GB-PPON": 6,
+     "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust|GB-PPON": 4,
+     "NHS Wales Shared Services Partnership (hosted by Velindre University NHS)|GB-PPON": 4,
+     "NHS Wales Shared Services Partnership-Procurement Services |GB-PPON": 4,
+     "NHS Wales Shared Services Partnership-Procurement Services|GB-PPON": 3,
+     " NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)|GB-PPON": 2,
+     "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust) Organisation details|GB-PPON": 2,
+     "NHS Wales Shared Services Partnership - Procurement Services (hosted by Velindre NHS Trust)|GB-PPON": 2,
+     "NWSSP- Procurement Services|GB-PPON": 2,
+     "NHS Shared Services Partnership|GB-PPON": 1,
+     "NHS Wales Shared Service Partnership (Hosted by Velindre University NHS Trust)|GB-PPON": 1,
+     "NHS Wales Shared Service Partnership-Procurement Services (hosted by Velindre University NHS Trust) |GB-PPON": 1,
+     "NHS Wales Shared Services Partnership |GB-PPON": 1,
+     "NHS Wales Shared Services Partnership (Hosted by Velindre NHS Trust)|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership (NWSSP), hosted by Velindre University NHS Trust|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)\t|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust) role in NWSSP|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership - Procurement Services|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership - Procurement Services, Woodlands House|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership hosted by Velindre University NHS Trust|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust) Undertaking the procurement on behalf of the contracting authorities|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership-Procurement Services - Velindre University NHS Trust|GB-PPON": 1,
+     "NHS Wales shared service partnership (hosted by Velindre)|GB-PPON": 1,
+     "NHS Wales shared service partnership hosted by Velindre university NHS|GB-PPON": 1,
+     "NHS Wales shared service partnership hosted by Velindre university NHS |GB-PPON": 1,
+     "NHS wales shared service partnership (hosted by Velindre) |GB-PPON": 1,
+     "NWSSP|GB-PPON": 1,
+     "NWSSP- Procurement Sevices|GB-PPON": 1,
+     "Nhs Wales Shared Services Partnership|GB-PPON": 1,
+     "North Wales Shared Services Partnership (Hosted by Velindre University NHS Trust)|GB-PPON": 1,
+     "North Wales Shared services Partnership|GB-PPON": 1
+    },
+    "other_named": {
+     "Velindre University NHS Trust|GB-PPON": 40,
+     "NHS Wales Shared Services and Partnership|GB-PPON": 11,
+     "Hywel Dda University Health Board|GB-PPON": 10,
+     "NHS Wales|GB-PPON": 10,
+     "Public Health Wales NHS Trust|GB-PPON": 9,
+     "Cardiff and Vale University Health Board|GB-PPON": 8,
+     "Health Education and Improvement Wales (HEIW)|GB-PPON": 6,
+     "NHS Wales Shared Services Partership|GB-PPON": 5,
+     "Velindre University NHS Trust |GB-PPON": 5,
+     "NHS Wales Shared Services|GB-PPON": 4,
+     "Betsi Cadwaladr University Health Board|GB-PPON": 2,
+     "NHS |GB-PPON": 2,
+     "Aneurin Bevan University Bevan Health Board|GB-PPON": 1,
+     "Cardiff & Vale University Health Board|GB-PPON": 1,
+     "Cardiff and Vale University Health Board\t|GB-PPON": 1,
+     "Hywel Dda University Health Board |GB-PPON": 1,
+     "Hywel Dda University Health Board  |GB-PPON": 1,
+     "NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morgannwg University Health Board |GB-PPON": 1,
+     "NHS Wales Shared Services (Hosted by Velindre University NHS Trust)|GB-PPON": 1,
+     "NHS Wales Shared Services Procurement Partnership|GB-PPON": 1,
+     "Velindre University NHS Trust\t|GB-PPON": 1,
+     "Welsh Blood Service (Velindre University NHS Trust)|GB-PPON": 1
+    }
+   }
+  ],
+  "own_candidates": {
+   "30913738": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+  },
+  "elsewhere_orgs": 6,
+  "elsewhere_mentions": 15,
+  "elsewhere": [
+   {
+    "org": 30926924,
+    "ident": "GBPPONPPPR7969BTJG",
+    "head": "Cardiff and Vale University Health Board",
+    "org_mentions": 165,
+    "agent_named_mentions": 7,
+    "agent_named": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 7
+    },
+    "first": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46742484
+    },
+    "last": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46758368
+    }
+   },
+   {
+    "org": 30919377,
+    "ident": "GBPPONPVLN4733WJBQ",
+    "head": "Aneurin Bevan University Health Board",
+    "org_mentions": 47,
+    "agent_named_mentions": 3,
+    "agent_named": {
+     "NHS WALES SHARED SERVICES PARTNERSHIP|GB-PPON": 1,
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 2
+    },
+    "first": {
+     "NHS WALES SHARED SERVICES PARTNERSHIP|GB-PPON": 46819472,
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46816840
+    },
+    "last": {
+     "NHS WALES SHARED SERVICES PARTNERSHIP|GB-PPON": 46819472,
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46844096
+    }
+   },
+   {
+    "org": 30926792,
+    "ident": "GBPPONPBCZ4581GCVG",
+    "head": "Cwm Taf Morgannwg University Health Board",
+    "org_mentions": 109,
+    "agent_named_mentions": 2,
+    "agent_named": {
+     "NHS Wales Shared Services Partnership-Procurement Services|GB-PPON": 2
+    },
+    "first": {
+     "NHS Wales Shared Services Partnership-Procurement Services|GB-PPON": 46784422
+    },
+    "last": {
+     "NHS Wales Shared Services Partnership-Procurement Services|GB-PPON": 46784734
+    }
+   },
+   {
+    "org": 30928312,
+    "ident": "GBPPONPBXD6758YMPY",
+    "head": "Public Health Wales",
+    "org_mentions": 27,
+    "agent_named_mentions": 1,
+    "agent_named": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 1
+    },
+    "first": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46823552
+    },
+    "last": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46823552
+    }
+   },
+   {
+    "org": 30929723,
+    "ident": "GBPPONPHBY3981QBMR",
+    "head": "Betsi Cadwaladr University Health Board",
+    "org_mentions": 61,
+    "agent_named_mentions": 1,
+    "agent_named": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 1
+    },
+    "first": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46697948
+    },
+    "last": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46697948
+    }
+   },
+   {
+    "org": 30913750,
+    "ident": "GBPPONPTNV7472GRTW",
+    "head": "Swansea University",
+    "org_mentions": 160,
+    "agent_named_mentions": 1,
+    "agent_named": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 1
+    },
+    "first": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46768416
+    },
+    "last": {
+     "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON": 46768416
+    }
+   }
+  ]
+ },
+ "STAR": {
+  "label": "STAR Procurement",
+  "kind": "shared-service (Stockport/Rochdale/Trafford/Tameside)",
+  "pattern": "\\bstar procurement\\b|\\bstar shared\\b",
+  "own_orgs": [],
+  "own_candidates": {},
+  "elsewhere_orgs": 1,
+  "elsewhere_mentions": 2,
+  "elsewhere": [
+   {
+    "org": 30917275,
+    "ident": "GBPPONPGZW1429QQZQ",
+    "head": "Trafford Council",
+    "org_mentions": 100,
+    "agent_named_mentions": 2,
+    "agent_named": {
+     "Star Procurement|GB-PPON": 1,
+     "Star procurement|GB-PPON": 1
+    },
+    "first": {
+     "Star Procurement|GB-PPON": 46817944,
+     "Star procurement|GB-PPON": 46817583
+    },
+    "last": {
+     "Star Procurement|GB-PPON": 46817944,
+     "Star procurement|GB-PPON": 46817583
+    }
+   }
+  ]
+ },
+ "ARDAL": {
+  "label": "Ardal",
+  "kind": "shared-service (Cardiff-hosted, south-east Wales councils)",
+  "pattern": "\\bardal\\b",
+  "own_orgs": [],
+  "own_candidates": {},
+  "elsewhere_orgs": 1,
+  "elsewhere_mentions": 1,
+  "elsewhere": [
+   {
+    "org": 30913763,
+    "ident": "GBPPONPVHP5769YHRQ",
+    "head": "Cardiff Council",
+    "org_mentions": 200,
+    "agent_named_mentions": 1,
+    "agent_named": {
+     "Ardal|GB-PPON": 1
+    },
+    "first": {
+     "Ardal|GB-PPON": 46765017
+    },
+    "last": {
+     "Ardal|GB-PPON": 46765017
+    }
+   }
+  ]
+ },
+ "WELLAND": {
+  "label": "Welland Procurement",
+  "kind": "shared-service (Rutland, Melton, Harborough, ...)",
+  "pattern": "\\bwelland\\b",
+  "own_orgs": [
+   {
+    "org": 30913798,
+    "ident": "GBPPONPVMQ1845NYPP",
+    "head": "Welland Procurement",
+    "in_slices": true,
+    "mentions": 287,
+    "agent_named_mentions": 286,
+    "other_named_mentions": 1,
+    "other_named_keys": 1,
+    "principal_named_mentions": 1,
+    "principal_named_keys": 1,
+    "other_named_class": {
+     "Rutland County Council|GB-PPON": "P"
+    },
+    "agent_named": {
+     "Welland Procurement|GB-PPON": 286
+    },
+    "other_named": {
+     "Rutland County Council|GB-PPON": 1
+    }
+   }
+  ],
+  "own_candidates": {
+   "30913798": "Welland Procurement",
+   "30915474": "Little Malvern and Welland Parish Council",
+   "31621756": "WELLAND HOUSE CARE CENTRE LIMITED"
+  },
+  "elsewhere_orgs": 0,
+  "elsewhere_mentions": 0,
+  "elsewhere": []
+ },
+ "TMT": {
+  "label": "TMT Procurement Partnership",
+  "kind": "shared-service (Tunbridge Wells/Maidstone/Tonbridge)",
+  "pattern": "\\btmt\\b",
+  "own_orgs": [],
+  "own_candidates": {
+   "31552499": "TMT FIRST LIMITED"
+  },
+  "elsewhere_orgs": 2,
+  "elsewhere_mentions": 11,
+  "elsewhere": [
+   {
+    "org": 30967593,
+    "ident": "GBPPONPLDX6964RZQX",
+    "head": "Tunbridge Wells Borough Council",
+    "org_mentions": 72,
+    "agent_named_mentions": 6,
+    "agent_named": {
+     "TMT Procurement Partnership|GB-PPON": 6
+    },
+    "first": {
+     "TMT Procurement Partnership|GB-PPON": 46789370
+    },
+    "last": {
+     "TMT Procurement Partnership|GB-PPON": 47290364
+    }
+   },
+   {
+    "org": 30916821,
+    "ident": "GBPPONPGRT5366CGWY",
+    "head": "Maidstone Borough Council",
+    "org_mentions": 89,
+    "agent_named_mentions": 5,
+    "agent_named": {
+     "TMT Procurement Partnership|GB-PPON": 5
+    },
+    "first": {
+     "TMT Procurement Partnership|GB-PPON": 46750905
+    },
+    "last": {
+     "TMT Procurement Partnership|GB-PPON": 46785773
+    }
+   }
+  ]
+ },
+ "PALS": {
+  "label": "BSO Procurement & Logistics Service (NI)",
+  "kind": "shared-service (HSC)",
+  "pattern": "procurement (and|&) logistics|\\bpals\\b|business services organisation",
+  "own_orgs": [
+   {
+    "org": 30914040,
+    "ident": "GBPPONPWNJ1991NGDW",
+    "head": "Business Services Organisation, Procurement and Logistics Service",
+    "in_slices": true,
+    "mentions": 435,
+    "agent_named_mentions": 435,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "Business Services Organisation Procurement and Logistics Service|GB-PPON": 150,
+     "Regional Business Services Organisation Procurement and Logistics Service|GB-PPON": 89,
+     "Regional Business Services Organisation, Procurement and Logistics Service|GB-PPON": 71,
+     "Business Services Organisation, Procurement and Logistics Service|GB-PPON": 26,
+     "Business Services Organisation|GB-PPON": 17,
+     "Procurement and Logistics Service|GB-PPON": 11,
+     "Business Services Organisations, Procurement and Logistics Service|GB-PPON": 9,
+     "Regional Business Services Organisation Procurement and Logistics|GB-PPON": 9,
+     "Business Services Organisation Procurment and Logistics Service|GB-PPON": 6,
+     "Regional Business Services Organisation, Procurement and Logistics Service (PaLS)|GB-PPON": 5,
+     "Business Services Organisation (BSO) Procurement and Logistics Service (PaLS)|GB-PPON": 4,
+     "Business Services Organisation Procurement and Logistics Services|GB-PPON": 4,
+     "Business Services Organisation, Procurement and Logistics Service (PaLS)|GB-PPON": 3,
+     "Procurement and Logistics Service (PaLS)|GB-PPON": 3,
+     "Business Services Organisation (BSO), Procurement and Logistics Service (PaLS)|GB-PPON": 2,
+     "Business Services Organisation Procuermant and Logistics Service|GB-PPON": 2,
+     "Business Services Organisation Procurement and Logistic Service|GB-PPON": 2,
+     "Business Services Organistion Procurement and Logistics Service|GB-PPON": 2,
+     "Regional Business Services Organisation Procurmeent and Logistics Service|GB-PPON": 2,
+     " Regional Business Services Organisation Procurement and Logistics Service|GB-PPON": 1,
+     "BSO Procurement and Logistics Service|GB-PPON": 1,
+     "Business Service Organisation Procurement and Logistics|GB-PPON": 1,
+     "Business Services Organisation  Procurement and Logistics Service |GB-PPON": 1,
+     "Business Services Organisation (BSO)|GB-PPON": 1,
+     "Business Services Organisation (BSO) - Procurement and Logistics Service|GB-PPON": 1,
+     "Business Services Organisation (BSO) - Procurement and Logistics Service (PaLS)|GB-PPON": 1,
+     "Business Services Organisation (BSO) Procurement and Logistics Service (PaLS).|GB-PPON": 1,
+     "Business Services Organisation - Procurement and Logistics Services (PAL)|GB-PPON": 1,
+     "Business Services Organisation Procurement and Logistics|GB-PPON": 1,
+     "Business Services Organisation, Procurement and Logistics Service, PaLS|GB-PPON": 1,
+     "Business Services Organisation, Procurement and Logistics Services (PaLS)|GB-PPON": 1,
+     "Business Services Organisations, Procurment and Logistics Service|GB-PPON": 1,
+     "Business Services Procurement and Logistics Services|GB-PPON": 1,
+     "Business services Organisation Procurement and Logistics Service|GB-PPON": 1,
+     "Regional Business Services Organisation (BSO), Procurement and Logistics Service (PaLS)|GB-PPON": 1,
+     "Regional Business Services Organisation - Procurement and Logistics Service|GB-PPON": 1,
+     "Regional Business Services Organisation Procurment and Logistics Service|GB-PPON": 1
+    },
+    "other_named": {}
+   },
+   {
+    "org": 30915904,
+    "ident": "GBPPONPCQH8657NGMT",
+    "head": "Business Services Organisation",
+    "in_slices": true,
+    "mentions": 46,
+    "agent_named_mentions": 46,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "Business Services Organisation|GB-PPON": 40,
+     "Regional Business Services Organisation|GB-PPON": 5,
+     "Business Services Organisation Procurement and Logistics Service|GB-PPON": 1
+    },
+    "other_named": {}
+   }
+  ],
+  "own_candidates": {
+   "30914040": "Business Services Organisation, Procurement and Logistics Service",
+   "30915904": "Business Services Organisation",
+   "31545908": "PALS LTD"
+  },
+  "elsewhere_orgs": 1,
+  "elsewhere_mentions": 1,
+  "elsewhere": [
+   {
+    "org": 30917832,
+    "ident": "GBPPONPBRP6676CQZY",
+    "head": "Northern Health And Social Care Trust",
+    "org_mentions": 198,
+    "agent_named_mentions": 1,
+    "agent_named": {
+     "Procurement & Logistics Service|GB-PPON": 1
+    },
+    "first": {
+     "Procurement & Logistics Service|GB-PPON": 46762943
+    },
+    "last": {
+     "Procurement & Logistics Service|GB-PPON": 46762943
+    }
+   }
+  ]
+ },
+ "NHSLCH": {
+  "label": "NHS London Commercial Hub",
+  "kind": "shared-service (London ICBs)",
+  "pattern": "commercial hub",
+  "own_orgs": [
+   {
+    "org": 30916628,
+    "ident": "GBPPONPBWD3998QHRQ",
+    "head": "NHS LONDON COMMERCIAL HUB",
+    "in_slices": true,
+    "mentions": 26,
+    "agent_named_mentions": 25,
+    "other_named_mentions": 1,
+    "other_named_keys": 1,
+    "principal_named_mentions": 1,
+    "principal_named_keys": 1,
+    "other_named_class": {
+     "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD|GB-PPON": "P"
+    },
+    "agent_named": {
+     "NHS LONDON COMMERCIAL HUB|GB-PPON": 22,
+     "NHS London Commercial Hub (hosted by NHS North East London ICB)|GB-PPON": 3
+    },
+    "other_named": {
+     "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD|GB-PPON": 1
+    }
+   }
+  ],
+  "own_candidates": {
+   "30916628": "NHS LONDON COMMERCIAL HUB"
+  },
+  "elsewhere_orgs": 0,
+  "elsewhere_mentions": 0,
+  "elsewhere": []
+ },
+ "PAGABO": {
+  "label": "Pagabo",
+  "kind": "framework-operator",
+  "pattern": "pagabo",
+  "own_orgs": [
+   {
+    "org": 31557760,
+    "ident": "GBCOH08787322",
+    "head": "PAGABO LIMITED",
+    "in_slices": true,
+    "mentions": 15,
+    "agent_named_mentions": 15,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "Pagabo Limited|GB-PPON": 8,
+     "PAGABO LIMITED|GB-COH": 4,
+     "Pagabo|GB-COH": 1,
+     "Pagabo Limited|GB-COH": 1,
+     "Pagabo Ltd|GB-COH": 1
+    },
+    "other_named": {}
+   },
+   {
+    "org": 31648640,
+    "ident": "GBPPONPLBP8199WVWT",
+    "head": "Pagabo",
+    "in_slices": true,
+    "mentions": 1,
+    "agent_named_mentions": 1,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "Pagabo|GB-PPON": 1
+    },
+    "other_named": {}
+   }
+  ],
+  "own_candidates": {
+   "31557760": "PAGABO LIMITED",
+   "31648640": "Pagabo"
+  },
+  "elsewhere_orgs": 1,
+  "elsewhere_mentions": 2,
+  "elsewhere": [
+   {
+    "org": 31546270,
+    "ident": "GBPPONPDBW5798GPLT",
+    "head": "Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust",
+    "org_mentions": 9,
+    "agent_named_mentions": 2,
+    "agent_named": {
+     "Pagabo|GB-PPON": 2
+    },
+    "first": {
+     "Pagabo|GB-PPON": 46844727
+    },
+    "last": {
+     "Pagabo|GB-PPON": null
+    }
+   }
+  ]
+ },
+ "SCAPE": {
+  "label": "SCAPE Group",
+  "kind": "framework-operator",
+  "pattern": "\\bscape\\b",
+  "own_orgs": [],
+  "own_candidates": {},
+  "elsewhere_orgs": 1,
+  "elsewhere_mentions": 2,
+  "elsewhere": [
+   {
+    "org": 30974616,
+    "ident": "GBPPONPVWR6662QTQX",
+    "head": "Arc Property Services Partnership Limited",
+    "org_mentions": 39,
+    "agent_named_mentions": 2,
+    "agent_named": {
+     "Scape Group Limited (trading as SCAPE)|GB-PPON": 2
+    },
+    "first": {
+     "Scape Group Limited (trading as SCAPE)|GB-PPON": 46806701
+    },
+    "last": {
+     "Scape Group Limited (trading as SCAPE)|GB-PPON": 46807157
+    }
+   }
+  ]
+ },
+ "INVICTUS": {
+  "label": "Invictus Partnership",
+  "kind": "broker (schools/trusts)",
+  "pattern": "invictus",
+  "own_orgs": [
+   {
+    "org": 30930308,
+    "ident": "GBPPONPGGP8622HHRX",
+    "head": "INVICTUS PARTNERSHIP LTD (13647652)",
+    "in_slices": true,
+    "mentions": 56,
+    "agent_named_mentions": 54,
+    "other_named_mentions": 2,
+    "other_named_keys": 2,
+    "principal_named_mentions": 2,
+    "principal_named_keys": 2,
+    "other_named_class": {
+     "CORE Education Trust|GB-PPON": "P",
+     "William Farr C of E Comprehensive School|GB-PPON": "P"
+    },
+    "agent_named": {
+     "Invictus Partnership Limited|GB-PPON": 52,
+     "INVICTUS PARTNERSHIP LTD (13647652)|GB-PPON": 2
+    },
+    "other_named": {
+     "CORE Education Trust|GB-PPON": 1,
+     "William Farr C of E Comprehensive School|GB-PPON": 1
+    }
+   }
+  ],
+  "own_candidates": {
+   "30930308": "INVICTUS PARTNERSHIP LTD (13647652)",
+   "30972060": "INVICTUS VENTURES LIMITED",
+   "31573158": "Invictus Complex Care Limited",
+   "31582484": "INVICTUS DATA LTD",
+   "31584735": "INVICTUS INNOVATIONS LIMITED",
+   "31587101": "INVICTUS DATA LTD",
+   "31968959": "INVICTUS MECHANICAL LIMITED"
+  },
+  "elsewhere_orgs": 0,
+  "elsewhere_mentions": 0,
+  "elsewhere": []
+ },
+ "GINGER": {
+  "label": "Ginger Energy",
+  "kind": "broker (energy, schools/trusts)",
+  "pattern": "ginger",
+  "own_orgs": [
+   {
+    "org": 30917636,
+    "ident": "GBCOH06889612",
+    "head": "Ginger Energy Limited",
+    "in_slices": true,
+    "mentions": 6,
+    "agent_named_mentions": 6,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "Ginger Energy Limited|GB-COH": 6
+    },
+    "other_named": {}
+   },
+   {
+    "org": 30968739,
+    "ident": "GBPPONPLMN9829JXLV",
+    "head": "Ginger energy",
+    "in_slices": true,
+    "mentions": 31,
+    "agent_named_mentions": 29,
+    "other_named_mentions": 2,
+    "other_named_keys": 2,
+    "principal_named_mentions": 2,
+    "principal_named_keys": 2,
+    "other_named_class": {
+     "The Howard Partnership Trust|GB-PPON": "P",
+     "The Keys Academy Trust|GB-PPON": "P"
+    },
+    "agent_named": {
+     "Ginger energy|GB-PPON": 13,
+     "Ginger Energy Limited|GB-PPON": 8,
+     "Ginger Energy|GB-PPON": 6,
+     "Ginger Energy Limited |GB-PPON": 1,
+     "Ginger Energy Ltd|GB-PPON": 1
+    },
+    "other_named": {
+     "The Howard Partnership Trust|GB-PPON": 1,
+     "The Keys Academy Trust|GB-PPON": 1
+    }
+   },
+   {
+    "org": 31540891,
+    "ident": "GBPPONPJYB7771WVXD",
+    "head": "Ginger Energy",
+    "in_slices": true,
+    "mentions": 3,
+    "agent_named_mentions": 3,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "Ginger Energy|GB-PPON": 2,
+     "Ginger energy|GB-PPON": 1
+    },
+    "other_named": {}
+   }
+  ],
+  "own_candidates": {
+   "30917636": "Ginger Energy Limited",
+   "30968739": "Ginger energy",
+   "30974963": "GINGERBREAD PROPERTIES LIMITED",
+   "31540891": "Ginger Energy",
+   "31561726": "GINGERBREAD FAMILY SUPPORT LIMITED",
+   "31609260": "Ginger Nut Media Limited"
+  },
+  "elsewhere_orgs": 0,
+  "elsewhere_mentions": 0,
+  "elsewhere": []
+ },
+ "RPJ3": {
+  "label": "RPJ3 Group",
+  "kind": "broker (on behalf of trusts/schools)",
+  "pattern": "rpj3",
+  "own_orgs": [
+   {
+    "org": 30914820,
+    "ident": "GBPPONPRYY6263NQHG",
+    "head": "RPJ3 Group Limited on Behalf of Aspirational Futures MAT",
+    "in_slices": true,
+    "mentions": 24,
+    "agent_named_mentions": 23,
+    "other_named_mentions": 1,
+    "other_named_keys": 1,
+    "principal_named_mentions": 1,
+    "principal_named_keys": 1,
+    "other_named_class": {
+     "Remarkable Autism|GB-PPON": "P"
+    },
+    "agent_named": {
+     "RPJ3 Group|GB-PPON": 18,
+     "RPJ3 Group - On behalf of Thornleigh Salesian College|GB-PPON": 1,
+     "RPJ3 Group Limited on Behalf of Aspirational Futures MAT|GB-PPON": 1,
+     "RPJ3 Group Limited on Behalf of Cidari MAT|GB-PPON": 1,
+     "RPJ3 Group Limited on Behalf of the Barnsley Collaborative Primary School Group|GB-PPON": 1,
+     "RPJ3 Group on Behalf of Fylde Coast Academy Trust|GB-PPON": 1
+    },
+    "other_named": {
+     "Remarkable Autism|GB-PPON": 1
+    }
+   },
+   {
+    "org": 31594875,
+    "ident": "GBCOH04642430",
+    "head": "RPJ3 Group Limited",
+    "in_slices": true,
+    "mentions": 1,
+    "agent_named_mentions": 1,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "RPJ3 Group Limited|GB-COH": 1
+    },
+    "other_named": {}
+   }
+  ],
+  "own_candidates": {
+   "30914820": "RPJ3 Group Limited on Behalf of Aspirational Futures MAT",
+   "31594875": "RPJ3 Group Limited"
+  },
+  "elsewhere_orgs": 0,
+  "elsewhere_mentions": 0,
+  "elsewhere": []
+ },
+ "GIBBS": {
+  "label": "Gibbs Laidler Consulting",
+  "kind": "consultant (for housing associations)",
+  "pattern": "gibbs\\s*laidler",
+  "own_orgs": [
+   {
+    "org": 30913722,
+    "ident": "GBCOHOC322760",
+    "head": "GIBBS LAIDLER CONSULTING LLP",
+    "in_slices": true,
+    "mentions": 163,
+    "agent_named_mentions": 155,
+    "other_named_mentions": 8,
+    "other_named_keys": 4,
+    "principal_named_mentions": 8,
+    "principal_named_keys": 4,
+    "other_named_class": {
+     "English Rural Housing Association|GB-PPON": "P",
+     "Hull Churches Housing Association|GB-PPON": "P",
+     "Newlon Housing Trust|GB-PPON": "P",
+     "YMCA Saint Pauls Group|GB-PPON": "P"
+    },
+    "agent_named": {
+     "Gibbs Laidler Consulting LLP|GB-PPON": 131,
+     "GIBBS LAIDLER CONSULTING LLP|GB-COH": 14,
+     "Gibbs Laidler|GB-PPON": 5,
+     "Gibbs Laidler Consulting|GB-PPON": 2,
+     "Gibbslaidler|GB-PPON": 2,
+     "Gibbs Laidler Consulting LLP|GB-COH": 1
+    },
+    "other_named": {
+     "English Rural Housing Association|GB-PPON": 3,
+     "Hull Churches Housing Association|GB-PPON": 2,
+     "YMCA Saint Pauls Group|GB-PPON": 2,
+     "Newlon Housing Trust|GB-PPON": 1
+    }
+   }
+  ],
+  "own_candidates": {
+   "30913722": "GIBBS LAIDLER CONSULTING LLP"
+  },
+  "elsewhere_orgs": 0,
+  "elsewhere_mentions": 0,
+  "elsewhere": []
+ },
+ "GLEEDS": {
+  "label": "Gleeds Cost Management",
+  "kind": "consultant (cost manager as co-buyer)",
+  "pattern": "gleeds",
+  "own_orgs": [
+   {
+    "org": 30915130,
+    "ident": "GBCOHOC453959",
+    "head": "GLEEDS LLP",
+    "in_slices": true,
+    "mentions": 26,
+    "agent_named_mentions": 26,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "GLEEDS LLP|GB-COH": 16,
+     "Gleeds LLP|GB-COH": 3,
+     "GLEEDS LLP|GB-PPON": 2,
+     "GLEEDS LLP (OC453959)|GB-PPON": 2,
+     "Gleeds|GB-PPON": 2,
+     "Gleeds LLP trading as Gleeds|GB-COH": 1
+    },
+    "other_named": {}
+   },
+   {
+    "org": 31615833,
+    "ident": "GBCOH6472932",
+    "head": "Gleeds Cost Management Limited",
+    "in_slices": true,
+    "mentions": 1,
+    "agent_named_mentions": 1,
+    "other_named_mentions": 0,
+    "other_named_keys": 0,
+    "principal_named_mentions": 0,
+    "principal_named_keys": 0,
+    "other_named_class": {},
+    "agent_named": {
+     "Gleeds Cost Management Limited|GB-COH": 1
+    },
+    "other_named": {}
+   }
+  ],
+  "own_candidates": {
+   "30915130": "GLEEDS LLP",
+   "31595255": "Gleeds Building Surveying Limited",
+   "31615808": "Gleeds Advisory Limited (Gleeds)",
+   "31615833": "Gleeds Cost Management Limited"
+  },
+  "elsewhere_orgs": 1,
+  "elsewhere_mentions": 4,
+  "elsewhere": [
+   {
+    "org": 30914436,
+    "ident": "GBCOH08235199",
+    "head": "COLLEGE OF POLICING LIMITED",
+    "org_mentions": 142,
+    "agent_named_mentions": 4,
+    "agent_named": {
+     "GLEEDS COST MANAGEMENT LIMITED|GB-PPON": 4
+    },
+    "first": {
+     "GLEEDS COST MANAGEMENT LIMITED|GB-PPON": 46693105
+    },
+    "last": {
+     "GLEEDS COST MANAGEMENT LIMITED|GB-PPON": 46698168
+    }
+   }
+  ]
+ }
+}

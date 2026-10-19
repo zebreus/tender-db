@@ -1,0 +1,319 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/011922-2026?limit=100&updatedTo=2026-10-19T21:05:53",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2026-02-10T14:02:58Z",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "id": "011922-2026",
+            "tag": [
+                "tender"
+            ],
+            "date": "2026-02-10T14:02:58Z",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-0524b5",
+            "parties": [
+                {
+                    "name": "Health Education and Improvement Wales (HEIW)",
+                    "id": "GB-PPON-PXWV-6492-CGMN",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PXWV-6492-CGMN"
+                    },
+                    "address": {
+                        "streetAddress": "Tŷ Dysgu Cefn Coed",
+                        "locality": "Cardiff",
+                        "postalCode": "CF15 7QQ",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKL15"
+                    },
+                    "contactPoint": {
+                        "name": "Keri Jones",
+                        "email": "keri.jones3@wales.nhs.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "http://nwssp.nhs.wales/ourservices/procurement-services/",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthorityCentralGovernment",
+                                "description": "Public authority - central government"
+                            },
+                            {
+                                "scheme": "UK_CA_DEVOLVED_REGULATIONS",
+                                "id": "GB-WLS",
+                                "description": "Welsh devolved regulations apply"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+                    "id": "GB-NHS-RQF",
+                    "identifier": {
+                        "scheme": "GB-NHS",
+                        "id": "RQF"
+                    },
+                    "address": {
+                        "streetAddress": "4-5 Charnwood Court, Heol Billingsley, Parc Nantgarw",
+                        "locality": "Cardiff ",
+                        "postalCode": "CF15 7QZ",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKL15"
+                    },
+                    "contactPoint": {
+                        "name": "Keri Jones",
+                        "email": "keri.jones3@wales.nhs.uk"
+                    },
+                    "roles": [
+                        "procuringEntity"
+                    ],
+                    "roleDetails": "NHS Wales Shared Services Partnership-Procurement Services is providing the procurement advice and procurement tendering platform on behalf of HEIW to facilitate this procurement. Health Education and Improvement Wales is the Commissioner for this Procurement"
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PXWV-6492-CGMN",
+                "name": "Health Education and Improvement Wales (HEIW)"
+            },
+            "tender": {
+                "id": "COMM-FTS-60287",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Mental Health Education and Training",
+                "description": "Multi provider Open Framework for various levels of specialist mental health intervention education and training (credit and non credit bearing) that is reflective of current mental health practice in Wales, for staff employed in health care.\nThe Framework will be opened biennially (being once every two years) to allow new entrants to the market to seek appointment onto the Framework. \nInitial Term - the first delivery of the Programme(s) shall commence from the services commencement date on 1st September 2027 and expire 31st August 2032.\nFuture Refresh Dates (appointment to the Framework Agreement) shall be on or around:\n1st Sep 2029, [responses by 30th November 2028]\n1st Sep 2031, [responses by 30th November 2030]\n1st Sep 2033, [responses by 30th November 2032]*\n*In the event the Framework Agreement is extended. \nThere is an option to extend the Initial Term of the Framework Agreement up to 3 years until the 31st August 2035.",
+                "status": "active",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "80000000",
+                                "description": "Education and training services"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKL",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "2",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "80000000",
+                                "description": "Education and training services"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKL",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "2"
+                    }
+                ],
+                "value": {
+                    "amountGross": 7600000,
+                    "amount": 7600000,
+                    "currency": "GBP"
+                },
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Open procedure",
+                "mainProcurementCategory": "services",
+                "specialRegime": [
+                    "lightTouch"
+                ],
+                "aboveThreshold": true,
+                "coveredBy": [
+                    "GPA"
+                ],
+                "techniques": {
+                    "hasFrameworkAgreement": true,
+                    "frameworkAgreement": {
+                        "isOpenFrameworkScheme": true,
+                        "method": "withoutReopeningCompetition",
+                        "type": "closed",
+                        "description": "The Framework will be opened biennially (being once every two years) to allow new entrants to the market to seek appointment onto the Framework.\nFuture Refresh Dates (appointment to the Framework Agreement) shall be on or around:\n1st Sep 2029, [responses by 30th November 2028]\n1st Sep 2031, [responses by 30th November 2030]\n1st Sep 2033, [responses by 30th November 2032]*\n*In the event the Framework Agreement is extended ",
+                        "openFrameworkSchemeEndDate": "2035-08-31T23:59:59+01:00"
+                    }
+                },
+                "submissionMethodDetails": "Further detail of the requirement is outlined within the service specification included with this tender which is available online via e-tenderwales (https://etenderwales.ukp.app.jaggaer.com/web/login.shtml)\nitt_121257",
+                "submissionTerms": {
+                    "electronicSubmissionPolicy": "allowed",
+                    "languages": [
+                        "en",
+                        "cy"
+                    ]
+                },
+                "tenderPeriod": {
+                    "endDate": "2026-03-23T12:00:00+00:00"
+                },
+                "enquiryPeriod": {
+                    "endDate": "2026-03-17T00:00:00+00:00"
+                },
+                "awardPeriod": {
+                    "endDate": "2026-10-12T23:59:59+01:00"
+                },
+                "lots": [
+                    {
+                        "id": "1",
+                        "title": "Lot 1 - Credit bearing Programmes",
+                        "description": "Credit bearing Programmes related to the following categories - \nCognitive and behavioural therapy (CBT) - Specialisms \nLow Intensity CBT\nFamily & Systemic Interventions\nPsychotherapy modalities\nDialectical Behaviour Therapy (DBT)\nCounselling\nArts Therapies\nParenting and Behavioural Interventions \nSolution Focused Therapies (SFT)\nPhysical Health Needs",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 1,
+                            "amount": 1,
+                            "currency": "GBP"
+                        },
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "quality",
+                                    "name": "Quality",
+                                    "description": "Capped Pricing\n85% Quality\n15% Social Value",
+                                    "numbers": [
+                                        {
+                                            "number": 100.00,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "selectionCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "economic",
+                                    "description": "Information can be found in the tender documents"
+                                },
+                                {
+                                    "type": "technical",
+                                    "description": "Information can be found in the tender documents"
+                                }
+                            ]
+                        },
+                        "suitability": {
+                            "sme": true,
+                            "vcse": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2027-09-01T00:00:00+01:00",
+                            "endDate": "2032-08-31T23:59:59+01:00",
+                            "maxExtentDate": "2035-08-31T23:59:59+01:00"
+                        },
+                        "hasRenewal": true,
+                        "renewal": {
+                            "description": "Option to extend up to 3 years"
+                        }
+                    },
+                    {
+                        "id": "2",
+                        "title": "Lot 2 - Non-Credit Bearing Programmes",
+                        "description": "Non-Credit Bearing Programmes related to the following categories - \nCredit bearing Programmes - \nCognitive and behavioural therapy (CBT) - Specialisms \nLow Intensity CBT\nFamily & Systemic Interventions\nPsychotherapy modalities\nDialectical Behaviour Therapy (DBT)\nCounselling\nArts Therapies\nParenting and Behavioural Interventions \nSolution Focused Therapies (SFT)\nPhysical Health Needs",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 1,
+                            "amount": 1,
+                            "currency": "GBP"
+                        },
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "quality",
+                                    "name": "Quality",
+                                    "description": "85% Quality\n15% Social Value",
+                                    "numbers": [
+                                        {
+                                            "number": 100.00,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "selectionCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "economic",
+                                    "description": "Information can be found in the tender documents"
+                                },
+                                {
+                                    "type": "technical",
+                                    "description": "Information can be found in the tender documents"
+                                }
+                            ]
+                        },
+                        "suitability": {
+                            "sme": true,
+                            "vcse": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2027-09-01T00:00:00+01:00",
+                            "endDate": "2032-08-31T23:59:59+01:00",
+                            "maxExtentDate": "2035-08-31T23:59:59+01:00"
+                        },
+                        "hasRenewal": true,
+                        "renewal": {
+                            "description": "Option to extend for up to 3 years"
+                        }
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "conflictOfInterest",
+                        "documentType": "conflictOfInterest",
+                        "description": "Not published"
+                    },
+                    {
+                        "id": "011922-2026",
+                        "documentType": "tenderNotice",
+                        "noticeType": "UK4",
+                        "description": "Tender notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/011922-2026",
+                        "datePublished": "2026-02-10T14:02:58Z",
+                        "format": "text/html"
+                    }
+                ],
+                "contractTerms": {
+                    "financialTerms": "Payment terms are included in the tender documentation "
+                },
+                "riskDetails": "Non committal framework agreement. Tuition fees will be reviewed in accordance with the terms and conditions. "
+            },
+            "language": "en"
+        }
+    ]
+}

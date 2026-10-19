@@ -1,0 +1,471 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/068424-2025?limit=100&updatedTo=2026-10-19T21:06:11",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2025-10-27T10:05:11Z",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "id": "068424-2025",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "date": "2025-10-27T10:05:11Z",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-05155a",
+            "parties": [
+                {
+                    "name": "English Rural Housing Association",
+                    "id": "GB-PPON-PGJB-3773-RCMH",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PGJB-3773-RCMH"
+                    },
+                    "address": {
+                        "streetAddress": "The Granary, Greenways Studios, Lower Eashing",
+                        "locality": "Godalming",
+                        "postalCode": "GU7 2QF",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKJ25"
+                    },
+                    "contactPoint": {
+                        "name": "James Foreman",
+                        "email": "james.foreman@gibbslaidler.co.uk",
+                        "telephone": "+44 1959562242"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Marsh",
+                    "id": "GB-PPON-PGGV-7645-JTDL",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PGGV-7645-JTDL"
+                    },
+                    "address": {
+                        "streetAddress": "1 Tower Place West",
+                        "locality": "London",
+                        "postalCode": "EC3R 5BU",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKI31"
+                    },
+                    "contactPoint": {
+                        "name": "Nicola Hodgson",
+                        "email": "nicola.hodgson@marsh.com"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "scale": "large",
+                        "vcse": false,
+                        "publicServiceMissionOrganization": false,
+                        "shelteredWorkshop": false
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PGJB-3773-RCMH",
+                "name": "English Rural Housing Association"
+            },
+            "tender": {
+                "id": "ocds-h6vhtk-05155a",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Provision of Insurance and Related Services to English Rural Housing Association",
+                "description": "English Rural Housing Association are looking to appoint one or more providers to deliver their Insurance and related services for Property, legal liability and other general (non-life) insurable risks.  \nThe programme will require Insurance and related services for risks that may include but not be limited to: property damage and business interruption, employers, public, products and property owners liability, business combined/office, money, all risks, computer, contract works, group personal accident and employment practices liability. This list is to be decided at the sole discretion of English Rural Housing Association.\nSuppliers will be required to have the financial ability to deliver the programme, including Insurers with a minimum rating of ‘BBB’ from standard and poor, 'B++' from AM Best, or an equivalent rating by an independent and reputable credit rating agency and approved by the bidder’s market security committee. In the case of any rating less than A-, the contracting authority will evaluate and accept the nominated insurer(s) at its sole discretion, subject to disclosure and acceptance prior to the ITT bid deadline of the bidder’s market security committee’s latest report, including written recommendation from the bidder’s market security committee.\nSuppliers will be assessed but not limited to the following high level criterion: \n- The ability to provide the Contracting Authority with a choice of suitable insurers and/or suitable cover options\n- A skilled and competent service team, being Client Relationship Management, Insurance Claims management, Insurance Broking / underwriting and insurable risk managers\n- The delivery of quality service to the Contracting Authority and our clients, including that provided to us by any third-party contractor employed by you or by the Insurer(s) you propose\nPlease note the contract will commence as expected on the 31st October\nTo view this notice, please click here: \nhttps://www.delta-esourcing.com/delta/viewNotice.html?noticeId=989638243",
+                "status": "complete",
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Competitive flexible procedure",
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "complete"
+                    },
+                    {
+                        "id": "2",
+                        "status": "complete"
+                    },
+                    {
+                        "id": "3",
+                        "status": "complete"
+                    }
+                ]
+            },
+            "bids": {
+                "statistics": [
+                    {
+                        "id": "1",
+                        "measure": "bids",
+                        "value": 3,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "2",
+                        "measure": "finalStageBids",
+                        "value": 3,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "3",
+                        "measure": "smeFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "4",
+                        "measure": "vcseFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "5",
+                        "measure": "bids",
+                        "value": 3,
+                        "relatedLot": "2"
+                    },
+                    {
+                        "id": "6",
+                        "measure": "finalStageBids",
+                        "value": 3,
+                        "relatedLot": "2"
+                    },
+                    {
+                        "id": "7",
+                        "measure": "smeFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "2"
+                    },
+                    {
+                        "id": "8",
+                        "measure": "vcseFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "2"
+                    },
+                    {
+                        "id": "9",
+                        "measure": "bids",
+                        "value": 2,
+                        "relatedLot": "3"
+                    },
+                    {
+                        "id": "10",
+                        "measure": "finalStageBids",
+                        "value": 2,
+                        "relatedLot": "3"
+                    },
+                    {
+                        "id": "11",
+                        "measure": "smeFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "3"
+                    },
+                    {
+                        "id": "12",
+                        "measure": "vcseFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "3"
+                    }
+                ]
+            },
+            "awards": [
+                {
+                    "id": "1",
+                    "title": "Insurance and related services for Property, legal liability and other general (non-life) insurable risks, as required by English Rural Housing Association",
+                    "status": "pending",
+                    "date": "2025-10-02T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 600000.00,
+                        "amount": 600000.00,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": true,
+                    "suppliers": [
+                        {
+                            "id": "GB-PPON-PGGV-7645-JTDL",
+                            "name": "Marsh"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66510000",
+                                    "description": "Insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66516000",
+                                    "description": "Liability insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66516500",
+                                    "description": "Professional liability insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66517300",
+                                    "description": "Risk management insurance services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "standstillPeriod": {
+                        "endDate": "2025-11-05T23:59:59+00:00"
+                    },
+                    "contractPeriod": {
+                        "startDate": "2025-11-08T00:00:00+00:00",
+                        "endDate": "2028-10-30T23:59:59+00:00",
+                        "maxExtentDate": "2030-10-30T23:59:59+00:00"
+                    },
+                    "hasRenewal": true,
+                    "renewal": {
+                        "description": "English Rural Housing Association will consider entering into Long Term Agreements with the bidder and/or the bidder's proposed Risk carriers for 3 years (or 3 periods of insurance), with the option to extend the award period by up to 2 further years (or 2 periods of insurance), subject to satisfactory service, performance and cost.\nPlease note the contract will commence as expected on the 31st October"
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "documents": [
+                        {
+                            "id": "068424-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/068424-2025",
+                            "datePublished": "2025-10-27T10:05:11Z",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-10-23T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-11-07T23:59:59+00:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                },
+                {
+                    "id": "2",
+                    "title": "Insurance and related services associated with Cyber Risk for English Rural Housing Association",
+                    "status": "active",
+                    "date": "2025-10-02T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 15000.00,
+                        "amount": 15000.00,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": false,
+                    "suppliers": [
+                        {
+                            "id": "GB-PPON-PGGV-7645-JTDL",
+                            "name": "Marsh"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "2",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66510000",
+                                    "description": "Insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66516000",
+                                    "description": "Liability insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66517300",
+                                    "description": "Risk management insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66518300",
+                                    "description": "Insurance claims adjustment services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "2"
+                        }
+                    ],
+                    "contractPeriod": {
+                        "startDate": "2025-11-08T00:00:00+00:00",
+                        "endDate": "2028-10-30T23:59:59+00:00",
+                        "maxExtentDate": "2030-10-30T23:59:59+00:00"
+                    },
+                    "hasRenewal": true,
+                    "renewal": {
+                        "description": "English Rural Housing Association will consider entering into Long Term Agreements with the bidder and/or the bidder's proposed Risk carriers for 3 years (or 3 periods of insurance), with the option to extend the award period by up to 2 further years (or 2 periods of insurance), subject to satisfactory service, performance and cost.\nPlease note the contract will commence as expected on the 31st October"
+                    },
+                    "relatedLots": [
+                        "2"
+                    ],
+                    "documents": [
+                        {
+                            "id": "068424-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/068424-2025",
+                            "datePublished": "2025-10-27T10:05:11Z",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-10-23T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "2",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-11-07T23:59:59+00:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                },
+                {
+                    "id": "3",
+                    "title": "Insurance and related services associated with Terrorism and/or Political Violence (Pool Re) for English Rural Housing Association",
+                    "status": "active",
+                    "date": "2025-10-02T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 40000.00,
+                        "amount": 40000.00,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "services",
+                    "aboveThreshold": false,
+                    "suppliers": [
+                        {
+                            "id": "GB-PPON-PGGV-7645-JTDL",
+                            "name": "Marsh"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "3",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66510000",
+                                    "description": "Insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66516000",
+                                    "description": "Liability insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66517300",
+                                    "description": "Risk management insurance services"
+                                },
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66518300",
+                                    "description": "Insurance claims adjustment services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "3"
+                        }
+                    ],
+                    "contractPeriod": {
+                        "startDate": "2025-11-08T00:00:00+00:00",
+                        "endDate": "2028-10-30T23:59:59+00:00",
+                        "maxExtentDate": "2030-10-30T23:59:59+00:00"
+                    },
+                    "hasRenewal": true,
+                    "renewal": {
+                        "description": "English Rural Housing Association will consider entering into Long Term Agreements with the bidder and/or the bidder's proposed Risk carriers for 3 years (or 3 periods of insurance), with the option to extend the award period by up to 2 further years (or 2 periods of insurance), subject to satisfactory service, performance and cost.\nPlease note the contract will commence as expected on the 31st October"
+                    },
+                    "relatedLots": [
+                        "3"
+                    ],
+                    "documents": [
+                        {
+                            "id": "068424-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/068424-2025",
+                            "datePublished": "2025-10-27T10:05:11Z",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-10-23T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "3",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-11-07T23:59:59+00:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                }
+            ],
+            "language": "en"
+        }
+    ]
+}

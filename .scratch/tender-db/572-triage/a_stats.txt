@@ -1,0 +1,121 @@
+PART 1 — 545 class A rows (detector-bound)
+total {'rows': 65, 'keys': 64, 'mentions': 129, 'orgs': 21}
+-- by source
+   u2a                    {'rows': 52, 'keys': 51, 'mentions': 79, 'orgs': 15}
+   2a-tail                {'rows': 9, 'keys': 9, 'mentions': 39, 'orgs': 4}
+   2b                     {'rows': 3, 'keys': 3, 'mentions': 9, 'orgs': 2}
+   unit1-carried          {'rows': 1, 'keys': 1, 'mentions': 2, 'orgs': 1}
+-- by half
+   GBPPON                 {'rows': 62, 'keys': 61, 'mentions': 120, 'orgs': 19}
+   GBCOH                  {'rows': 3, 'keys': 3, 'mentions': 9, 'orgs': 2}
+-- by direction
+   P@A                    {'rows': 51, 'keys': 51, 'mentions': 99, 'orgs': 8}
+   A@P                    {'rows': 14, 'keys': 13, 'mentions': 30, 'orgs': 13}
+-- by agent
+   NHC                    {'rows': 41, 'keys': 41, 'mentions': 81, 'orgs': 1}
+   NWSSP                  {'rows': 6, 'keys': 6, 'mentions': 13, 'orgs': 6}
+   TMT                    {'rows': 2, 'keys': 2, 'mentions': 11, 'orgs': 2}
+   GIBBS                  {'rows': 2, 'keys': 2, 'mentions': 5, 'orgs': 1}
+   GLEEDS                 {'rows': 1, 'keys': 1, 'mentions': 4, 'orgs': 1}
+   GINGER                 {'rows': 2, 'keys': 2, 'mentions': 2, 'orgs': 1}
+   INVICTUS               {'rows': 2, 'keys': 2, 'mentions': 2, 'orgs': 1}
+   PAGABO                 {'rows': 1, 'keys': 1, 'mentions': 2, 'orgs': 1}
+   SCAPE                  {'rows': 1, 'keys': 1, 'mentions': 2, 'orgs': 1}
+   STAR                   {'rows': 2, 'keys': 1, 'mentions': 2, 'orgs': 1}
+   ARDAL                  {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+   NHSLCH                 {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+   PALS                   {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+   RPJ3                   {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+   WELLAND                {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+-- by agent+direction
+   NHC P@A                {'rows': 41, 'keys': 41, 'mentions': 81, 'orgs': 1}
+   TMT A@P                {'rows': 2, 'keys': 2, 'mentions': 11, 'orgs': 2}
+   NWSSP A@P              {'rows': 5, 'keys': 5, 'mentions': 7, 'orgs': 5}
+   NWSSP P@A              {'rows': 1, 'keys': 1, 'mentions': 6, 'orgs': 1}
+   GIBBS P@A              {'rows': 2, 'keys': 2, 'mentions': 5, 'orgs': 1}
+   GLEEDS A@P             {'rows': 1, 'keys': 1, 'mentions': 4, 'orgs': 1}
+   GINGER P@A             {'rows': 2, 'keys': 2, 'mentions': 2, 'orgs': 1}
+   INVICTUS P@A           {'rows': 2, 'keys': 2, 'mentions': 2, 'orgs': 1}
+   PAGABO A@P             {'rows': 1, 'keys': 1, 'mentions': 2, 'orgs': 1}
+   SCAPE A@P              {'rows': 1, 'keys': 1, 'mentions': 2, 'orgs': 1}
+   STAR A@P               {'rows': 2, 'keys': 1, 'mentions': 2, 'orgs': 1}
+   ARDAL A@P              {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+   NHSLCH P@A             {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+   PALS A@P               {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+   RPJ3 P@A               {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+   WELLAND P@A            {'rows': 1, 'keys': 1, 'mentions': 1, 'orgs': 1}
+-- by detector
+   HELD-2                 {'rows': 31, 'keys': 30, 'mentions': 60, 'orgs': 7}
+   STRAY                  {'rows': 23, 'keys': 23, 'mentions': 23, 'orgs': 11}
+   HELD-3                 {'rows': 4, 'keys': 4, 'mentions': 12, 'orgs': 2}
+   HELD-4                 {'rows': 3, 'keys': 3, 'mentions': 12, 'orgs': 2}
+   HELD-6                 {'rows': 2, 'keys': 2, 'mentions': 12, 'orgs': 2}
+   HELD-5                 {'rows': 2, 'keys': 2, 'mentions': 10, 'orgs': 2}
+
+slices loaded: 45824 orgs (14338 GBPPON, 31486 GBCOH)
+PART 2 — exhaustive within the slices (no K cap, no prefilter)
+== NHC (Northern Housing Consortium)
+   own org 30953692 GBPPONPJXZ4423NDBT 'Northern Housing Consortium Ltd': 124 mentions, agent-named 23, other-named 101 (53 keys), of which principal-named 97 (52 keys)
+   agent-named mentions on 0 other orgs: 0
+== NWSSP (NHS Wales Shared Services Partnership (Procurement Services))
+   own org 30913738 GBPPONPXWV6492CGMN 'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)': 1170 mentions, agent-named 1048, other-named 122 (16 keys), of which principal-named 41 (7 keys)
+   agent-named mentions on 6 other orgs: 15
+      30926924 GBPPONPPPR7969BTJG 'Cardiff and Vale University Health Board': {'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON': 7}
+      30919377 GBPPONPVLN4733WJBQ 'Aneurin Bevan University Health Board': {'NHS WALES SHARED SERVICES PARTNERSHIP|GB-PPON': 1, 'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON': 2}
+      30926792 GBPPONPBCZ4581GCVG 'Cwm Taf Morgannwg University Health Board': {'NHS Wales Shared Services Partnership-Procurement Services|GB-PPON': 2}
+      30928312 GBPPONPBXD6758YMPY 'Public Health Wales': {'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON': 1}
+      30929723 GBPPONPHBY3981QBMR 'Betsi Cadwaladr University Health Board': {'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON': 1}
+      30913750 GBPPONPTNV7472GRTW 'Swansea University': {'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)|GB-PPON': 1}
+== STAR (STAR Procurement)
+   agent-named mentions on 1 other orgs: 2
+      30917275 GBPPONPGZW1429QQZQ 'Trafford Council': {'Star Procurement|GB-PPON': 1, 'Star procurement|GB-PPON': 1}
+== ARDAL (Ardal)
+   agent-named mentions on 1 other orgs: 1
+      30913763 GBPPONPVHP5769YHRQ 'Cardiff Council': {'Ardal|GB-PPON': 1}
+== WELLAND (Welland Procurement)
+   own org 30913798 GBPPONPVMQ1845NYPP 'Welland Procurement': 287 mentions, agent-named 286, other-named 1 (1 keys), of which principal-named 1 (1 keys)
+   agent-named mentions on 0 other orgs: 0
+== TMT (TMT Procurement Partnership)
+   agent-named mentions on 2 other orgs: 11
+      30967593 GBPPONPLDX6964RZQX 'Tunbridge Wells Borough Council': {'TMT Procurement Partnership|GB-PPON': 6}
+      30916821 GBPPONPGRT5366CGWY 'Maidstone Borough Council': {'TMT Procurement Partnership|GB-PPON': 5}
+== PALS (BSO Procurement & Logistics Service (NI))
+   own org 30914040 GBPPONPWNJ1991NGDW 'Business Services Organisation, Procurement and Logistics Service': 435 mentions, agent-named 435, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   own org 30915904 GBPPONPCQH8657NGMT 'Business Services Organisation': 46 mentions, agent-named 46, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   agent-named mentions on 1 other orgs: 1
+      30917832 GBPPONPBRP6676CQZY 'Northern Health And Social Care Trust': {'Procurement & Logistics Service|GB-PPON': 1}
+== NHSLCH (NHS London Commercial Hub)
+   own org 30916628 GBPPONPBWD3998QHRQ 'NHS LONDON COMMERCIAL HUB': 26 mentions, agent-named 25, other-named 1 (1 keys), of which principal-named 1 (1 keys)
+   agent-named mentions on 0 other orgs: 0
+== PAGABO (Pagabo)
+   own org 31557760 GBCOH08787322 'PAGABO LIMITED': 15 mentions, agent-named 15, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   own org 31648640 GBPPONPLBP8199WVWT 'Pagabo': 1 mentions, agent-named 1, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   agent-named mentions on 1 other orgs: 2
+      31546270 GBPPONPDBW5798GPLT 'Cumbria, Northumberland, Tyne and Wear NHS Foundat': {'Pagabo|GB-PPON': 2}
+== SCAPE (SCAPE Group)
+   agent-named mentions on 1 other orgs: 2
+      30974616 GBPPONPVWR6662QTQX 'Arc Property Services Partnership Limited': {'Scape Group Limited (trading as SCAPE)|GB-PPON': 2}
+== INVICTUS (Invictus Partnership)
+   own org 30930308 GBPPONPGGP8622HHRX 'INVICTUS PARTNERSHIP LTD (13647652)': 56 mentions, agent-named 54, other-named 2 (2 keys), of which principal-named 2 (2 keys)
+   agent-named mentions on 0 other orgs: 0
+== GINGER (Ginger Energy)
+   own org 30917636 GBCOH06889612 'Ginger Energy Limited': 6 mentions, agent-named 6, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   own org 30968739 GBPPONPLMN9829JXLV 'Ginger energy': 31 mentions, agent-named 29, other-named 2 (2 keys), of which principal-named 2 (2 keys)
+   own org 31540891 GBPPONPJYB7771WVXD 'Ginger Energy': 3 mentions, agent-named 3, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   agent-named mentions on 0 other orgs: 0
+== RPJ3 (RPJ3 Group)
+   own org 30914820 GBPPONPRYY6263NQHG 'RPJ3 Group Limited on Behalf of Aspirational Futures MAT': 24 mentions, agent-named 23, other-named 1 (1 keys), of which principal-named 1 (1 keys)
+   own org 31594875 GBCOH04642430 'RPJ3 Group Limited': 1 mentions, agent-named 1, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   agent-named mentions on 0 other orgs: 0
+== GIBBS (Gibbs Laidler Consulting)
+   own org 30913722 GBCOHOC322760 'GIBBS LAIDLER CONSULTING LLP': 163 mentions, agent-named 155, other-named 8 (4 keys), of which principal-named 8 (4 keys)
+   agent-named mentions on 0 other orgs: 0
+== GLEEDS (Gleeds Cost Management)
+   own org 30915130 GBCOHOC453959 'GLEEDS LLP': 26 mentions, agent-named 26, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   own org 31615833 GBCOH6472932 'Gleeds Cost Management Limited': 1 mentions, agent-named 1, other-named 0 (0 keys), of which principal-named 0 (0 keys)
+   agent-named mentions on 1 other orgs: 4
+      30914436 GBCOH08235199 'COLLEGE OF POLICING LIMITED': {'GLEEDS COST MANAGEMENT LIMITED|GB-PPON': 4}
+
+PART 2 TOTALS (exhaustive within the slices)
+  P@A principal-named mentions on the agent's own org: 153 mentions, 70 keys  {'NHC': (97, 52), 'NWSSP': (41, 7), 'WELLAND': (1, 1), 'NHSLCH': (1, 1), 'INVICTUS': (2, 2), 'GINGER': (2, 2), 'RPJ3': (1, 1), 'GIBBS': (8, 4)}
+  A@P agent-named mentions on principal orgs: 38 mentions on 14 orgs  {'NWSSP': (15, 6), 'STAR': (2, 1), 'ARDAL': (1, 1), 'TMT': (11, 2), 'PALS': (1, 1), 'PAGABO': (2, 1), 'SCAPE': (2, 1), 'GLEEDS': (4, 1)}

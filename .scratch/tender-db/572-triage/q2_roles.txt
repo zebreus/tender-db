@@ -1,0 +1,244 @@
+== 30953692 roles(notices): {'Procedure-Buyer': 123, 'Tenderer': 1}
+    Northern Housing Consortium Ltd                                        Procedure-Buyer    n=21 t=13 rows=21
+    Darlington Borough Council                                             Procedure-Buyer    n=5 t=2 rows=5
+    Solihull Community Housing Limited                                     Procedure-Buyer    n=5 t=5 rows=5
+    Rochdale Borough Council                                               Procedure-Buyer    n=4 t=2 rows=4
+    Stairlifts and Lifting Equipment Framework 2026                        Procedure-Buyer    n=4 t=1 rows=4
+    Stockton on Tees Borough Council                                       Procedure-Buyer    n=4 t=2 rows=4
+    East Suffolk Council                                                   Procedure-Buyer    n=3 t=1 rows=3
+    Newcastle City Council                                                 Procedure-Buyer    n=3 t=2 rows=3
+    North Northamptonshire Council                                         Procedure-Buyer    n=3 t=1 rows=3
+    Birmingham City Council                                                Procedure-Buyer    n=2 t=1 rows=2
+    Bristol City Council                                                   Procedure-Buyer    n=2 t=1 rows=2
+    Carmarthenshire County Council                                         Procedure-Buyer    n=2 t=1 rows=2
+    City of Lincoln Council                                                Procedure-Buyer    n=2 t=1 rows=2
+    City of York Council                                                   Procedure-Buyer    n=2 t=1 rows=2
+    East Riding of Yorkshire Council                                       Procedure-Buyer    n=2 t=1 rows=2
+    High Peak Borough Council                                              Procedure-Buyer    n=2 t=1 rows=2
+    LIVIN HOUSING LIMITED                                                  Procedure-Buyer    n=2 t=1 rows=2
+    Lancaster City Council                                                 Procedure-Buyer    n=2 t=1 rows=2
+    Leeds City Council                                                     Procedure-Buyer    n=2 t=1 rows=2
+    London Borough of Newham                                               Procedure-Buyer    n=2 t=1 rows=2
+    Metropolitan borough of Bury                                           Procedure-Buyer    n=2 t=1 rows=2
+    Newark And Sherwood District Council                                   Procedure-Buyer    n=2 t=1 rows=2
+    North Tyneside Borough Council                                         Procedure-Buyer    n=2 t=1 rows=2
+    Northern Housing Consortium                                            Procedure-Buyer    n=2 t=2 rows=2
+    Powys County Council                                                   Procedure-Buyer    n=2 t=1 rows=2
+    Royal Borough of Kensington and Chelsea                                Procedure-Buyer    n=2 t=1 rows=2
+    Sandwell Metropolitan Borough Council                                  Procedure-Buyer    n=2 t=1 rows=2
+    South Derbyshire District Council                                      Procedure-Buyer    n=2 t=1 rows=2
+    South Tyneside Borough Council                                         Procedure-Buyer    n=2 t=1 rows=2
+    Stoke on Trent City Council                                            Procedure-Buyer    n=2 t=1 rows=2
+    Tamworth Borough Council                                               Procedure-Buyer    n=2 t=1 rows=2
+    The Council of the Borough of Kirklees                                 Procedure-Buyer    n=2 t=1 rows=2
+    Thurrock Council                                                       Procedure-Buyer    n=2 t=1 rows=2
+    Warwick District Council                                               Procedure-Buyer    n=2 t=1 rows=2
+    Wigan Council                                                          Procedure-Buyer    n=2 t=1 rows=2
+    ARCHES HOUSING LIMITED                                                 Procedure-Buyer    n=1 t=1 rows=1
+    BELIEVE HOUSING LIMITED                                                Procedure-Buyer    n=1 t=1 rows=1
+    BLACKPOOL COASTAL HOUSING LIMITED                                      Procedure-Buyer    n=1 t=1 rows=1
+    Bernicia Group                                                         Procedure-Buyer    n=1 t=1 rows=1
+    Gateshead Borough Council                                              Procedure-Buyer    n=1 t=1 rows=1
+    HOUSING 21                                                             Procedure-Buyer    n=1 t=1 rows=1
+    ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED                     Procedure-Buyer    n=1 t=1 rows=1
+    Karbon Homes (54North Homes)                                           Procedure-Buyer    n=1 t=1 rows=1
+    LONDON & QUADRANT HOUSING TRUST                                        Procedure-Buyer    n=1 t=1 rows=1
+    Moat Homes Limited                                                     Procedure-Buyer    n=1 t=1 rows=1
+    ONE MANCHESTER LIMITED                                                 Procedure-Buyer    n=1 t=1 rows=1
+    ONE VISION HOUSING LIMITED                                             Procedure-Buyer    n=1 t=1 rows=1
+    ONWARD HOMES LIMITED                                                   Procedure-Buyer    n=1 t=1 rows=1
+    ORBIT GROUP LIMITED                                                    Procedure-Buyer    n=1 t=1 rows=1
+    Ongo Homes Limited                                                     Procedure-Buyer    n=1 t=1 rows=1
+    Riverside Group Limited                                                Tenderer           n=1 t=1 rows=1
+    ST LEGER HOMES OF DONCASTER LIMITED                                    Procedure-Buyer    n=1 t=1 rows=1
+    South Lakes Housing                                                    Procedure-Buyer    n=1 t=1 rows=1
+    THE GUINNESS PARTNERSHIP LIMITED                                       Procedure-Buyer    n=1 t=1 rows=1
+    The Pioneer Housing and Community Group Limited                        Procedure-Buyer    n=1 t=1 rows=1
+== 30913738 roles(notices): {'Procedure-Buyer': 1169, 'Tenderer': 1}
+    NHS Wales Shared Services Partnership-Procurement Services (hosted by  Procedure-Buyer    n=630 t=374 rows=630
+    NHS Wales Shared Services Partnership (hosted by Velindre University N Procedure-Buyer    n=249 t=160 rows=249
+    NHS Wales Shared Services Partnership                                  Procedure-Buyer    n=75 t=55 rows=75
+    Velindre University NHS Trust                                          Procedure-Buyer    n=40 t=29 rows=40
+    NHS Wales Shared Service Partnership                                   Procedure-Buyer    n=13 t=11 rows=13
+    NHS WALES SHARED SERVICES PARTNERSHIP                                  Procedure-Buyer    n=12 t=6 rows=12
+    NHS Wales Shared Services Partnerships                                 Procedure-Buyer    n=11 t=7 rows=11
+    NHS Wales Shared Services and Partnership                              Procedure-Buyer    n=11 t=9 rows=11
+    NHS Wales                                                              Procedure-Buyer    n=10 t=6 rows=10
+    Hywel Dda University Health Board                                      Procedure-Buyer    n=9 t=6 rows=9
+    Public Health Wales NHS Trust                                          Procedure-Buyer    n=9 t=5 rows=9
+    Cardiff and Vale University Health Board                               Procedure-Buyer    n=8 t=6 rows=8
+    Health Education and Improvement Wales (HEIW)                          Procedure-Buyer    n=6 t=3 rows=6
+    NHS Wales Shared Services Partnership (NWSSP)                          Procedure-Buyer    n=6 t=5 rows=6
+    NHS Wales Shared Services Partnership (hosted by Velindre University N Procedure-Buyer    n=6 t=5 rows=6
+    NHS Wales Shared Services Partership                                   Procedure-Buyer    n=5 t=3 rows=5
+    Velindre University NHS Trust                                          Procedure-Buyer    n=5 t=5 rows=5
+    NHS Wales Shared Services                                              Procedure-Buyer    n=4 t=4 rows=4
+    NHS Wales Shared Services Partnership (hosted by Velindre University N Procedure-Buyer    n=4 t=4 rows=4
+    NHS Wales Shared Services Partnership (hosted by Velindre University N Procedure-Buyer    n=4 t=4 rows=4
+    NHS Wales Shared Services Partnership-Procurement Services             Procedure-Buyer    n=4 t=4 rows=4
+    NHS Wales Shared Services Partnership-Procurement Services             Procedure-Buyer    n=3 t=3 rows=3
+     NHS Wales Shared Services Partnership (hosted by Velindre University  Procedure-Buyer    n=2 t=1 rows=2
+    Betsi Cadwaladr University Health Board                                Procedure-Buyer    n=2 t=2 rows=2
+    NHS                                                                    Procedure-Buyer    n=2 t=1 rows=2
+    NHS Wales Shared Services Partnership (hosted by Velindre University N Procedure-Buyer    n=2 t=2 rows=2
+    NHS Wales Shared Services Partnership - Procurement Services (hosted b Procedure-Buyer    n=2 t=2 rows=2
+    NWSSP- Procurement Services                                            Procedure-Buyer    n=2 t=1 rows=2
+    Aneurin Bevan University Bevan Health Board                            Procedure-Buyer    n=1 t=1 rows=1
+    Cardiff & Vale University Health Board                                 Procedure-Buyer    n=1 t=1 rows=1
+    Cardiff and Vale University Health Board	                              Procedure-Buyer    n=1 t=1 rows=1
+    Hywel Dda University Health Board                                      Tenderer           n=1 t=1 rows=1
+    Hywel Dda University Health Board                                      Procedure-Buyer    n=1 t=1 rows=1
+    Hywel Dda University Health Board                                      Procedure-Buyer    n=1 t=1 rows=1
+    NHS Shared Services Partnership                                        Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morg Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Service Partnership (Hosted by Velindre University NH Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Service Partnership-Procurement Services (hosted by V Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services (Hosted by Velindre University NHS Trust)    Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership                                  Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership (Hosted by Velindre NHS Trust)   Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership (NWSSP), hosted by Velindre Univ Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership (hosted by Velindre University N Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership (hosted by Velindre University N Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership - Procurement Services           Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership - Procurement Services, Woodland Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership hosted by Velindre University NH Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership-Procurement Services (hosted by  Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership-Procurement Services (hosted by  Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership-Procurement Services - Velindre  Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Procurement Partnership                      Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales shared service partnership (hosted by Velindre)              Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales shared service partnership hosted by Velindre university NHS Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales shared service partnership hosted by Velindre university NHS Procedure-Buyer    n=1 t=1 rows=1
+    NHS wales shared service partnership (hosted by Velindre)              Procedure-Buyer    n=1 t=1 rows=1
+    NWSSP                                                                  Procedure-Buyer    n=1 t=1 rows=1
+    NWSSP- Procurement Sevices                                             Procedure-Buyer    n=1 t=1 rows=1
+    Nhs Wales Shared Services Partnership                                  Procedure-Buyer    n=1 t=1 rows=1
+    North Wales Shared Services Partnership (Hosted by Velindre University Procedure-Buyer    n=1 t=1 rows=1
+    North Wales Shared services Partnership                                Procedure-Buyer    n=1 t=1 rows=1
+    Velindre University NHS Trust	                                         Procedure-Buyer    n=1 t=1 rows=1
+    Welsh Blood Service (Velindre University NHS Trust)                    Procedure-Buyer    n=1 t=1 rows=1
+== 30913798 roles(notices): {'Procedure-Buyer': 287}
+    Welland Procurement                                                    Procedure-Buyer    n=286 t=118 rows=286
+    Rutland County Council                                                 Procedure-Buyer    n=1 t=1 rows=1
+== 30916628 roles(notices): {'Procedure-Buyer': 26}
+    NHS LONDON COMMERCIAL HUB                                              Procedure-Buyer    n=22 t=13 rows=22
+    NHS London Commercial Hub (hosted by NHS North East London ICB)        Procedure-Buyer    n=3 t=1 rows=3
+    NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD                         Procedure-Buyer    n=1 t=1 rows=1
+== 30930308 roles(notices): {'Procedure-Buyer': 54, 'Tenderer': 2}
+    Invictus Partnership Limited                                           Procedure-Buyer    n=52 t=25 rows=52
+    INVICTUS PARTNERSHIP LTD (13647652)                                    Tenderer           n=2 t=1 rows=2
+    CORE Education Trust                                                   Procedure-Buyer    n=1 t=1 rows=1
+    William Farr C of E Comprehensive School                               Procedure-Buyer    n=1 t=1 rows=1
+== 30968739 roles(notices): {'Procedure-Buyer': 31}
+    Ginger energy                                                          Procedure-Buyer    n=13 t=9 rows=13
+    Ginger Energy Limited                                                  Procedure-Buyer    n=8 t=4 rows=8
+    Ginger Energy                                                          Procedure-Buyer    n=6 t=4 rows=6
+    Ginger Energy Limited                                                  Procedure-Buyer    n=1 t=1 rows=1
+    Ginger Energy Ltd                                                      Procedure-Buyer    n=1 t=1 rows=1
+    The Howard Partnership Trust                                           Procedure-Buyer    n=1 t=1 rows=1
+    The Keys Academy Trust                                                 Procedure-Buyer    n=1 t=1 rows=1
+== 30914820 roles(notices): {'Procedure-Buyer': 24}
+    RPJ3 Group                                                             Procedure-Buyer    n=18 t=17 rows=18
+    RPJ3 Group - On behalf of Thornleigh Salesian College                  Procedure-Buyer    n=1 t=1 rows=1
+    RPJ3 Group Limited on Behalf of Aspirational Futures MAT               Procedure-Buyer    n=1 t=1 rows=1
+    RPJ3 Group Limited on Behalf of Cidari MAT                             Procedure-Buyer    n=1 t=1 rows=1
+    RPJ3 Group Limited on Behalf of the Barnsley Collaborative Primary Sch Procedure-Buyer    n=1 t=1 rows=1
+    RPJ3 Group on Behalf of Fylde Coast Academy Trust                      Procedure-Buyer    n=1 t=1 rows=1
+    Remarkable Autism                                                      Procedure-Buyer    n=1 t=1 rows=1
+== 30913722 roles(notices): {'Procedure-Buyer': 159, 'Tenderer': 4}
+    Gibbs Laidler Consulting LLP                                           Procedure-Buyer    n=131 t=71 rows=131
+    GIBBS LAIDLER CONSULTING LLP                                           Procedure-Buyer    n=12 t=5 rows=12
+    Gibbs Laidler                                                          Procedure-Buyer    n=4 t=2 rows=4
+    English Rural Housing Association                                      Procedure-Buyer    n=3 t=2 rows=3
+    GIBBS LAIDLER CONSULTING LLP                                           Tenderer           n=2 t=2 rows=2
+    Gibbs Laidler Consulting                                               Procedure-Buyer    n=2 t=1 rows=2
+    Gibbslaidler                                                           Procedure-Buyer    n=2 t=1 rows=2
+    Hull Churches Housing Association                                      Procedure-Buyer    n=2 t=1 rows=2
+    YMCA Saint Pauls Group                                                 Procedure-Buyer    n=2 t=1 rows=2
+    Gibbs Laidler                                                          Tenderer           n=1 t=1 rows=1
+    Gibbs Laidler Consulting LLP                                           Tenderer           n=1 t=1 rows=1
+    Newlon Housing Trust                                                   Procedure-Buyer    n=1 t=1 rows=1
+== 30926924 roles(notices): {'Procedure-Buyer': 165}
+    Cardiff and Vale University Health Board                               Procedure-Buyer    n=132 t=65 rows=132
+    Cardiff and Vale University Health Board                               Procedure-Buyer    n=14 t=14 rows=14
+    NHS Wales Shared Services Partnership-Procurement Services (hosted by  Procedure-Buyer    n=7 t=5 rows=7
+    Cardiff & Vale University Health Board                                 Procedure-Buyer    n=5 t=4 rows=5
+    Cardiff and vale University Health Board                               Procedure-Buyer    n=4 t=2 rows=4
+    Cardiff And Vale University Health Board                               Procedure-Buyer    n=1 t=1 rows=1
+    Cardiff and Vale University Health Board (CAVUHB)                      Procedure-Buyer    n=1 t=1 rows=1
+    Cardiff and Vale University health board                               Procedure-Buyer    n=1 t=1 rows=1
+== 30919377 roles(notices): {'Procedure-Buyer': 47}
+    Aneurin Bevan University Health Board                                  Procedure-Buyer    n=40 t=24 rows=40
+    NHS Wales Shared Services Partnership-Procurement Services (hosted by  Procedure-Buyer    n=2 t=2 rows=2
+    Aneurin Bevan                                                          Procedure-Buyer    n=1 t=1 rows=1
+    Aneurin Bevan University Health Board	                                 Procedure-Buyer    n=1 t=1 rows=1
+    Aneurin Bevan University Health board                                  Procedure-Buyer    n=1 t=1 rows=1
+    Aneurin Bevan University health board                                  Procedure-Buyer    n=1 t=1 rows=1
+    NHS WALES SHARED SERVICES PARTNERSHIP                                  Procedure-Buyer    n=1 t=1 rows=1
+== 30926792 roles(notices): {'Procedure-Buyer': 109}
+    Cwm Taf Morgannwg University Health Board                              Procedure-Buyer    n=104 t=61 rows=104
+    NHS Wales Shared Services Partnership-Procurement Services             Procedure-Buyer    n=2 t=2 rows=2
+    Cwm Taff Morgannwg Universty Health Board                              Procedure-Buyer    n=1 t=1 rows=1
+    Cwm Taff Morgannwg Universty Health Board                              Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morg Procedure-Buyer    n=1 t=1 rows=1
+== 30928312 roles(notices): {'Procedure-Buyer': 27}
+    Public Health Wales NHS Trust                                          Procedure-Buyer    n=22 t=18 rows=22
+    Public Health Wales                                                    Procedure-Buyer    n=3 t=3 rows=3
+    NHS Wales Performance and Improvement (hosted by Public Health Wales N Procedure-Buyer    n=1 t=1 rows=1
+    NHS Wales Shared Services Partnership-Procurement Services (hosted by  Procedure-Buyer    n=1 t=1 rows=1
+== 30929723 roles(notices): {'Procedure-Buyer': 57, 'Tenderer': 4}
+    Betsi Cadwaladr University Health Board                                Procedure-Buyer    n=53 t=40 rows=53
+    Betsi Cadwaladr University Health Board                                Tenderer           n=4 t=1 rows=4
+    Betsi Cadwaladr University Health Board                                Procedure-Buyer    n=3 t=3 rows=3
+    NHS Wales Shared Services Partnership-Procurement Services (hosted by  Procedure-Buyer    n=1 t=1 rows=1
+== 30913750 roles(notices): {'Procedure-Buyer': 154, 'Tenderer': 6}
+    Swansea University                                                     Procedure-Buyer    n=128 t=76 rows=128
+    Swansea Bay University Health Board                                    Procedure-Buyer    n=15 t=10 rows=15
+    SWANSEA BAY UNIVERSITY HEALTH BOARD                                    Procedure-Buyer    n=6 t=6 rows=6
+    Swansea University                                                     Tenderer           n=5 t=5 rows=5
+    Swansea Bay University Health Board                                    Procedure-Buyer    n=4 t=4 rows=4
+    NHS Wales Shared Services Partnership-Procurement Services (hosted by  Procedure-Buyer    n=1 t=1 rows=1
+    Swansea University                                                     Tenderer           n=1 t=1 rows=1
+== 30917275 roles(notices): {'Procedure-Buyer': 100}
+    Trafford Council                                                       Procedure-Buyer    n=98 t=61 rows=98
+    Star Procurement                                                       Procedure-Buyer    n=1 t=1 rows=1
+    Star procurement                                                       Procedure-Buyer    n=1 t=1 rows=1
+== 30913763 roles(notices): {'Procedure-Buyer': 186, 'Tenderer': 14}
+    Cardiff Council                                                        Procedure-Buyer    n=182 t=115 rows=182
+    Cardiff Council                                                        Tenderer           n=12 t=7 rows=12
+    Cardiff Council - WITS                                                 Tenderer           n=2 t=1 rows=2
+    Cardiff County Council                                                 Procedure-Buyer    n=2 t=2 rows=2
+    Ardal                                                                  Procedure-Buyer    n=1 t=1 rows=1
+    Cardiff Council                                                        Procedure-Buyer    n=1 t=1 rows=1
+== 30916821 roles(notices): {'Procedure-Buyer': 89}
+    Maidstone Borough Council                                              Procedure-Buyer    n=84 t=48 rows=84
+    TMT Procurement Partnership                                            Procedure-Buyer    n=5 t=3 rows=5
+== 30967593 roles(notices): {'Procedure-Buyer': 72}
+    Tunbridge Wells Borough Council                                        Procedure-Buyer    n=66 t=32 rows=66
+    TMT Procurement Partnership                                            Procedure-Buyer    n=6 t=2 rows=6
+== 30917832 roles(notices): {'Procedure-Buyer': 198}
+    Northern Health and Social Care Trust                                  Procedure-Buyer    n=152 t=73 rows=152
+    Northern Health And Social Care Trust                                  Procedure-Buyer    n=22 t=9 rows=22
+    NORTHERN HEALTH & SOCIAL CARE TRUST                                    Procedure-Buyer    n=5 t=4 rows=5
+    Northern Health & Social Care Trust                                    Procedure-Buyer    n=5 t=5 rows=5
+    Northern Health & Social Care Trust (NHSCT)                            Procedure-Buyer    n=4 t=3 rows=4
+    Northern Health and Social Care Trust (NHSCT)                          Procedure-Buyer    n=4 t=2 rows=4
+    Northern Health and Social care Trust                                  Procedure-Buyer    n=2 t=1 rows=2
+    NHSCT                                                                  Procedure-Buyer    n=1 t=1 rows=1
+    Northern Health and Social Services Trust                              Procedure-Buyer    n=1 t=1 rows=1
+    Procurement & Logistics Service                                        Procedure-Buyer    n=1 t=1 rows=1
+    The Northern Health and Social Care Trust                              Procedure-Buyer    n=1 t=1 rows=1
+== 31546270 roles(notices): {'Procedure-Buyer': 9}
+    Cumbria, Northumberland, Tyne and Wear NHS Foundation Trust            Procedure-Buyer    n=7 t=5 rows=7
+    Pagabo                                                                 Procedure-Buyer    n=2 t=2 rows=2
+== 30974616 roles(notices): {'Procedure-Buyer': 39}
+    Arc Property Services Partnership Limited                              Procedure-Buyer    n=30 t=20 rows=30
+    Arc Property Services Partnership Ltd                                  Procedure-Buyer    n=7 t=5 rows=7
+    Scape Group Limited (trading as SCAPE)                                 Procedure-Buyer    n=2 t=1 rows=2
+== 30914436 roles(notices): {'Procedure-Buyer': 120, 'Tenderer': 22}
+    COLLEGE OF POLICING LIMITED                                            Procedure-Buyer    n=116 t=56 rows=116
+    COLLEGE OF POLICING LIMITED                                            Tenderer           n=15 t=13 rows=15
+    College of Policing                                                    Tenderer           n=4 t=3 rows=4
+    GLEEDS COST MANAGEMENT LIMITED                                         Procedure-Buyer    n=4 t=1 rows=4
+    College of Policing Limited                                            Tenderer           n=2 t=2 rows=2
+    College Of Policing Ltd                                                Tenderer           n=1 t=1 rows=1

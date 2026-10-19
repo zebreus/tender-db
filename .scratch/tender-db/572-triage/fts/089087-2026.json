@@ -1,0 +1,354 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/089087-2026?limit=100&updatedTo=2026-10-19T21:06:09",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2026-09-21T12:06:36+01:00",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "ocid": "ocds-h6vhtk-07764d",
+            "id": "089087-2026",
+            "tag": [
+                "tender"
+            ],
+            "date": "2026-09-21T12:06:36+01:00",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "COLLEGE OF POLICING LIMITED",
+                    "id": "GB-COH-08235199",
+                    "identifier": {
+                        "scheme": "GB-COH",
+                        "id": "08235199"
+                    },
+                    "additionalIdentifiers": [
+                        {
+                            "scheme": "GB-PPON",
+                            "id": "PJNL-2763-PVHM"
+                        }
+                    ],
+                    "address": {
+                        "streetAddress": "Rugby Building Leamington Road",
+                        "locality": "Coventry",
+                        "postalCode": "CV8 3EN",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKG13"
+                    },
+                    "contactPoint": {
+                        "email": "CPU.Mailbox@college.police.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://www.college.police.uk/",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "GLEEDS COST MANAGEMENT LIMITED",
+                    "id": "GB-PPON-PJNL-2763-PVHM",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PJNL-2763-PVHM"
+                    },
+                    "address": {
+                        "streetAddress": "Rugby Building Leamington Road",
+                        "locality": "Coventry",
+                        "postalCode": "CV8 3EN",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKG13"
+                    },
+                    "contactPoint": {
+                        "email": "CPU.Mailbox@college.police.uk"
+                    },
+                    "roles": [
+                        "procuringEntity"
+                    ],
+                    "roleDetails": "Specification preparation/ evaluation",
+                    "details": {
+                        "url": "https://www.college.police.uk/"
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-COH-08235199",
+                "name": "COLLEGE OF POLICING LIMITED"
+            },
+            "tender": {
+                "id": "COP29_2026",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Distribution Board Replacement, heating works (environmental controls) and Replacement of Gymnasium Lighting, College of Policing Ryton",
+                "description": "College of Policing seeks supplier(s)  to attend site at Ryton on Dunsmore, CV8 3EN, to carry out a programme of works for the following packages (\"Lots)  in accordance with the documents associated with the applicable invitation to tender.\nTenderers may bid for any or all of the Lots as follows:-\nReplacement of distribution boards\nReplacement of gymnasium lighting\nHeating works  (environmental controls)\nCompetitive bids are sought against the guideline budget shown therein.\nIt is envisaged that works relating to this opportunity will commence in  late  November 2026 or early December 2026. \nBidders are required to submit proposals and all other correspondence via the Home Office Jaggaer portal.\nIf necessary, the link to register for the Jaggaer portal can be found here:-\nhttps://homeoffice.app.jaggaer.com/\nThe invitation to tender for this opportunity with associated documents can be found here\nhttps://homeoffice.app.jaggaer.com/esop/toolkit/negotiation/rfq/modifyRfq.do?from=menu&_ncp=1789737660495.1866900-1\nIn the event of any difficulty in registering for the Jaggaer portal, please contact the Jaggaer supplier helpdesk, or alternatively CPU.Mailbox@college.police.uk",
+                "status": "active",
+                "items": [
+                    {
+                        "id": "A",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "31213100",
+                                "description": "Distribution boxes"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "31213400",
+                                "description": "Distribution system"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "39715200",
+                                "description": "Heating equipment"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45311000",
+                                "description": "Electrical wiring and fitting work"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45315000",
+                                "description": "Electrical installation work of heating and other electrical building-equipment"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45316000",
+                                "description": "Installation work of illumination and signalling systems"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45317300",
+                                "description": "Electrical installation work of electrical distribution apparatus"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKG",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "A"
+                    },
+                    {
+                        "id": "B",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "31213100",
+                                "description": "Distribution boxes"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "31213400",
+                                "description": "Distribution system"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "39715200",
+                                "description": "Heating equipment"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45311000",
+                                "description": "Electrical wiring and fitting work"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45315000",
+                                "description": "Electrical installation work of heating and other electrical building-equipment"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45316000",
+                                "description": "Installation work of illumination and signalling systems"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45317300",
+                                "description": "Electrical installation work of electrical distribution apparatus"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKG",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "B"
+                    },
+                    {
+                        "id": "C",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "31213100",
+                                "description": "Distribution boxes"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "31213400",
+                                "description": "Distribution system"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "39715200",
+                                "description": "Heating equipment"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45311000",
+                                "description": "Electrical wiring and fitting work"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45315000",
+                                "description": "Electrical installation work of heating and other electrical building-equipment"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45316000",
+                                "description": "Installation work of illumination and signalling systems"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "45317300",
+                                "description": "Electrical installation work of electrical distribution apparatus"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKG",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "C"
+                    }
+                ],
+                "value": {
+                    "amountGross": 82000,
+                    "currency": "GBP"
+                },
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Below threshold - open competition",
+                "mainProcurementCategory": "works",
+                "aboveThreshold": false,
+                "submissionMethodDetails": "Tenders and any other correspondence  must be submitted electronically , using the Jaggaer portal, to\nhttps://homeoffice.app.jaggaer.com/esop/toolkit/negotiation/rfq/modifyRfq.do?from=menu&_ncp=1789739657525.1877587-1",
+                "submissionTerms": {
+                    "electronicSubmissionPolicy": "allowed"
+                },
+                "tenderPeriod": {
+                    "endDate": "2026-10-08T15:00:00+01:00"
+                },
+                "enquiryPeriod": {
+                    "endDate": "2026-10-02T15:00:00+01:00"
+                },
+                "lots": [
+                    {
+                        "id": "A",
+                        "title": "Replacement of Distribution boards",
+                        "description": "As detailed under documents attached to invitation to tender found at https://homeoffice.app.jaggaer.com/esop/toolkit/negotiation/rfq/modifyRfq.do?from=menu&_ncp=1789739657525.1877587-1",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 49000,
+                            "currency": "GBP"
+                        },
+                        "suitability": {
+                            "sme": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2026-11-30T00:00:00Z",
+                            "endDate": "2027-01-31T23:59:59Z"
+                        },
+                        "awardCriteria": {
+                            "description": "Commercial- 90%\nSocial value (Technical) 10%"
+                        }
+                    },
+                    {
+                        "id": "B",
+                        "title": "Replacement of gymnasium lighting",
+                        "description": "As detailed under documents attached to Invitation to Tender \nhttps://homeoffice.app.jaggaer.com/esop/toolkit/negotiation/rfq/modifyRfq.do?from=menu&_ncp=1789739657525.1877587-1",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 14000,
+                            "currency": "GBP"
+                        },
+                        "suitability": {
+                            "sme": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2026-11-30T00:00:00Z",
+                            "endDate": "2027-01-31T23:59:59Z"
+                        },
+                        "awardCriteria": {
+                            "description": "Commercial- 90%\nSocial value (Technical) 10%"
+                        }
+                    },
+                    {
+                        "id": "C",
+                        "title": "Heating workings (Environmental controls)",
+                        "description": "As detailed under the documents attached to Invitation to  tender\nhttps://homeoffice.app.jaggaer.com/esop/toolkit/negotiation/rfq/modifyRfq.do?from=menu&_ncp=1789739657525.1877587-1",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 19000,
+                            "currency": "GBP"
+                        },
+                        "suitability": {
+                            "sme": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2026-11-30T00:00:00Z",
+                            "endDate": "2027-01-31T23:59:59Z"
+                        },
+                        "awardCriteria": {
+                            "description": "Commercial- 90%\nSocial value (Technical) 10%"
+                        }
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "089087-2026",
+                        "documentType": "tenderNotice",
+                        "noticeType": "UK4",
+                        "description": "Tender notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/089087-2026",
+                        "datePublished": "2026-09-21T12:06:36+01:00",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "language": "en"
+        }
+    ]
+}

@@ -1,0 +1,3361 @@
+[
+ {
+  "org": 30913722,
+  "agent": "GIBBS",
+  "direction": "P@A",
+  "notice": 46755465,
+  "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+  "name": "Hull Churches Housing Association",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913722,
+  "agent": "GIBBS",
+  "direction": "P@A",
+  "notice": 46757368,
+  "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+  "name": "English Rural Housing Association",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913722,
+  "agent": "GIBBS",
+  "direction": "P@A",
+  "notice": 46775006,
+  "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+  "name": "YMCA Saint Pauls Group",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PRRT-7576-MMBX",
+    15069937,
+    "YMCA Saint Pauls Group"
+   ]
+  ]
+ },
+ {
+  "org": 30913722,
+  "agent": "GIBBS",
+  "direction": "P@A",
+  "notice": 46801228,
+  "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+  "name": "YMCA Saint Pauls Group",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PRRT-7576-MMBX",
+    15069937,
+    "Gibbs Laidler Consulting LLP"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PRRT-7576-MMBX",
+    15069937,
+    "Gibbs Laidler Consulting LLP"
+   ]
+  ]
+ },
+ {
+  "org": 30913722,
+  "agent": "GIBBS",
+  "direction": "P@A",
+  "notice": 46868795,
+  "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+  "name": "Hull Churches Housing Association",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913722,
+  "agent": "GIBBS",
+  "direction": "P@A",
+  "notice": 47205050,
+  "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+  "name": "Newlon Housing Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913722,
+  "agent": "GIBBS",
+  "direction": "P@A",
+  "notice": 47209609,
+  "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+  "name": "English Rural Housing Association",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913722,
+  "agent": "GIBBS",
+  "direction": "P@A",
+  "notice": 47209610,
+  "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+  "name": "English Rural Housing Association",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 30807073,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 30812693,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46132639,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morgannwg University Health Board ",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46731877,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46739929,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46744066,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board ",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46746021,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board  ",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PYMR-6838-HZQY",
+    30914391,
+    "Pembrokeshire County Council"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46750901,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46754741,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46758897,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46763990,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46764648,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46773193,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Betsi Cadwaladr University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46776118,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Tenderer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PTVL-7854-TMRZ",
+    30915408,
+    "Carmarthenshire County Council"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46787268,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Health Education and Improvement Wales (HEIW)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46788140,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46790066,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46791017,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46799560,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Health Education and Improvement Wales (HEIW)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46803631,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Health Education and Improvement Wales (HEIW)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46805032,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Health Education and Improvement Wales (HEIW)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    15641552,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46808676,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46819160,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46819472,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Aneurin Bevan University Bevan Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PVLN-4733-WJBQ",
+    30919377,
+    "NHS WALES SHARED SERVICES PARTNERSHIP"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PVLN-4733-WJBQ",
+    30919377,
+    "NHS WALES SHARED SERVICES PARTNERSHIP"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46821071,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 5,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PTVL-7854-TMRZ",
+    30915408,
+    "Carmarthenshire County Council"
+   ],
+   [
+    "ORG-GB-PPON-PYMR-6838-HZQY",
+    30914391,
+    "Pembrokeshire County Council"
+   ],
+   [
+    "ORG-GB-PPON-PRYH-5713-PHLR",
+    30914095,
+    "Ceredigion County Council"
+   ],
+   [
+    "ORG-GB-PPON-PYBL-9173-QNJN",
+    30917812,
+    "Police and Crime Commissioner for Dyfed-Powys"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46822958,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46828235,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46828632,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46842199,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Betsi Cadwaladr University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PQJH-8668-YMDV",
+    30916218,
+    "Conwy County Borough Council"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46853208,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46869858,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46870532,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board\t",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46870911,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46871082,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Health Education and Improvement Wales (HEIW)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46872137,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46873054,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff & Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46879093,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Cardiff and Vale University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46883773,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Hywel Dda University Health Board",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 46886792,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Health Education and Improvement Wales (HEIW)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 47402582,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913738,
+  "agent": "NWSSP",
+  "direction": "P@A",
+  "notice": 47402805,
+  "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+  "name": "Public Health Wales NHS Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30913750,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46768416,
+  "section": "ORG-GB-PPON-PTNV-7472-GRTW",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    1264053,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30913763,
+  "agent": "ARDAL",
+  "direction": "A@P",
+  "notice": 46765017,
+  "section": "ORG-GB-PPON-PVHP-5769-YHRQ",
+  "name": "Ardal",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PDJQ-5588-HWLY",
+    30928156,
+    "Welsh Local Government Association (WLGA)"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PDJQ-5588-HWLY",
+    30928156,
+    "Welsh Local Government Association (WLGA)"
+   ]
+  ]
+ },
+ {
+  "org": 30913798,
+  "agent": "WELLAND",
+  "direction": "P@A",
+  "notice": 46845134,
+  "section": "ORG-GB-PPON-PVMQ-1845-NYPP",
+  "name": "Rutland County Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 3,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXRT-5737-VBQD",
+    30914352,
+    "Leicester City Council"
+   ],
+   [
+    "ORG-GB-PPON-PNHT-9235-VXDV",
+    30913776,
+    "Leicestershire County Council"
+   ]
+  ]
+ },
+ {
+  "org": 30914436,
+  "agent": "GLEEDS",
+  "direction": "A@P",
+  "notice": 46693105,
+  "section": "ORG-GB-PPON-PJNL-2763-PVHM",
+  "name": "GLEEDS COST MANAGEMENT LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-COH-08235199",
+    30914436,
+    "COLLEGE OF POLICING LIMITED"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-COH-08235199",
+    30914436,
+    "COLLEGE OF POLICING LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30914436,
+  "agent": "GLEEDS",
+  "direction": "A@P",
+  "notice": 46697860,
+  "section": "ORG-GB-PPON-PJNL-2763-PVHM",
+  "name": "GLEEDS COST MANAGEMENT LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-COH-08235199",
+    30914436,
+    "COLLEGE OF POLICING LIMITED"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-COH-08235199",
+    30914436,
+    "COLLEGE OF POLICING LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30914436,
+  "agent": "GLEEDS",
+  "direction": "A@P",
+  "notice": 46697940,
+  "section": "ORG-GB-PPON-PJNL-2763-PVHM",
+  "name": "GLEEDS COST MANAGEMENT LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-COH-08235199",
+    30914436,
+    "COLLEGE OF POLICING LIMITED"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-COH-08235199",
+    30914436,
+    "COLLEGE OF POLICING LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30914436,
+  "agent": "GLEEDS",
+  "direction": "A@P",
+  "notice": 46698168,
+  "section": "ORG-GB-PPON-PJNL-2763-PVHM",
+  "name": "GLEEDS COST MANAGEMENT LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-COH-08235199",
+    30914436,
+    "COLLEGE OF POLICING LIMITED"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-COH-08235199",
+    30914436,
+    "COLLEGE OF POLICING LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30914820,
+  "agent": "RPJ3",
+  "direction": "P@A",
+  "notice": 46869370,
+  "section": "ORG-GB-PPON-PRYY-6263-NQHG",
+  "name": "Remarkable Autism",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-COH-04642430",
+    31594875,
+    "RPJ3 Group Limited"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-COH-04642430",
+    31594875,
+    "RPJ3 Group Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30916628,
+  "agent": "NHSLCH",
+  "direction": "P@A",
+  "notice": 47271894,
+  "section": "ORG-GB-PPON-PBWD-3998-QHRQ",
+  "name": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30916821,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 46750905,
+  "section": "ORG-GB-PPON-PGRT-5366-CGWY",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30916821,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 46751431,
+  "section": "ORG-GB-PPON-PGRT-5366-CGWY",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30916821,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 46774362,
+  "section": "ORG-GB-PPON-PGRT-5366-CGWY",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30916821,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 46783096,
+  "section": "ORG-GB-PPON-PGRT-5366-CGWY",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30916821,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 46785773,
+  "section": "ORG-GB-PPON-PGRT-5366-CGWY",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30917275,
+  "agent": "STAR",
+  "direction": "A@P",
+  "notice": 46817583,
+  "section": "ORG-GB-PPON-PGZW-1429-QQZQ",
+  "name": "Star procurement",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PXXD-6682-MDRX",
+    30916230,
+    "Rochdale Metropolitan Borough Council"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXXD-6682-MDRX",
+    30916230,
+    "Rochdale Metropolitan Borough Council"
+   ]
+  ]
+ },
+ {
+  "org": 30917275,
+  "agent": "STAR",
+  "direction": "A@P",
+  "notice": 46817944,
+  "section": "ORG-GB-PPON-PGZW-1429-QQZQ",
+  "name": "Star Procurement",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PXXD-6682-MDRX",
+    30916230,
+    "Rochdale Metropolitan Borough Council"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXXD-6682-MDRX",
+    30916230,
+    "Rochdale Metropolitan Borough Council"
+   ]
+  ]
+ },
+ {
+  "org": 30917832,
+  "agent": "PALS",
+  "direction": "A@P",
+  "notice": 46762943,
+  "section": "ORG-GB-PPON-PBRP-6676-CQZY",
+  "name": "Procurement & Logistics Service",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30919377,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46816840,
+  "section": "ORG-GB-PPON-PVLN-4733-WJBQ",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30919377,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46819472,
+  "section": "ORG-GB-PPON-PVLN-4733-WJBQ",
+  "name": "NHS WALES SHARED SERVICES PARTNERSHIP",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "Aneurin Bevan University Bevan Health Board"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "Aneurin Bevan University Bevan Health Board"
+   ]
+  ]
+ },
+ {
+  "org": 30919377,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46844096,
+  "section": "ORG-GB-PPON-PVLN-4733-WJBQ",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership"
+   ]
+  ]
+ },
+ {
+  "org": 30926792,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46784422,
+  "section": "ORG-GB-PPON-PBCZ-4581-GCVG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30926792,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46784734,
+  "section": "ORG-GB-PPON-PBCZ-4581-GCVG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30926924,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46742484,
+  "section": "ORG-GB-PPON-PPPR-7969-BTJG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS wales shared service partnership (hosted by Velindre) "
+   ]
+  ]
+ },
+ {
+  "org": 30926924,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46748272,
+  "section": "ORG-GB-PPON-PPPR-7969-BTJG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust"
+   ]
+  ]
+ },
+ {
+  "org": 30926924,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46749550,
+  "section": "ORG-GB-PPON-PPPR-7969-BTJG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership (NWSSP), hosted by Velindre University NHS Trust"
+   ]
+  ]
+ },
+ {
+  "org": 30926924,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46751168,
+  "section": "ORG-GB-PPON-PPPR-7969-BTJG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30926924,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46753171,
+  "section": "ORG-GB-PPON-PPPR-7969-BTJG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30926924,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46753568,
+  "section": "ORG-GB-PPON-PPPR-7969-BTJG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30926924,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46758368,
+  "section": "ORG-GB-PPON-PPPR-7969-BTJG",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30928312,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46823552,
+  "section": "ORG-GB-PPON-PBXD-6758-YMPY",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-NHS-RQF",
+    31575191,
+    "NHS Wales Shared Service Partnership (NWSSP)"
+   ]
+  ]
+ },
+ {
+  "org": 30929723,
+  "agent": "NWSSP",
+  "direction": "A@P",
+  "notice": 46697948,
+  "section": "ORG-GB-PPON-PHBY-3981-QBMR",
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PXWV-6492-CGMN",
+    30913738,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)"
+   ]
+  ]
+ },
+ {
+  "org": 30930308,
+  "agent": "INVICTUS",
+  "direction": "P@A",
+  "notice": 46879845,
+  "section": "ORG-GB-PPON-PGGP-8622-HHRX",
+  "name": "William Farr C of E Comprehensive School",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30930308,
+  "agent": "INVICTUS",
+  "direction": "P@A",
+  "notice": 46888222,
+  "section": "ORG-GB-PPON-PGGP-8622-HHRX",
+  "name": "CORE Education Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46132719,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Solihull Community Housing Limited",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46132735,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Solihull Community Housing Limited",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46381429,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "ONE VISION HOUSING LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46433965,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Solihull Community Housing Limited",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46697778,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Solihull Community Housing Limited",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46697881,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Stoke on Trent City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46697938,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Stoke on Trent City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46702998,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "ST LEGER HOMES OF DONCASTER LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46789522,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Darlington Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46789542,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Newcastle City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46789661,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Darlington Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46789790,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Darlington Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46790512,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Thurrock Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46790515,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "North Tyneside Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46790550,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "North Northamptonshire Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46790638,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "North Tyneside Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46790656,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "North Northamptonshire Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46790691,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "LIVIN HOUSING LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46790786,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Thurrock Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46792477,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Sandwell Metropolitan Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46792688,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "South Tyneside Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46792873,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Darlington Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46793615,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Newcastle City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46793638,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Newcastle City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46793765,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Birmingham City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46793788,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Gateshead Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46793812,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Sandwell Metropolitan Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46793832,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "The Council of the Borough of Kirklees",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46793950,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Wigan Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46794092,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Karbon Homes (54North Homes)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46794121,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "The Council of the Borough of Kirklees",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46794436,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Newark And Sherwood District Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46794555,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Newark And Sherwood District Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46794621,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "South Tyneside Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46795453,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Birmingham City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46796013,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "East Suffolk Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46796157,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Wigan Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46796172,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "East Suffolk Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46798381,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Riverside Group Limited",
+  "own_roles": [
+   "OPT-300-Tenderer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PHVX-4316-ZVGZ",
+    30913745,
+    "Ministry of Defence"
+   ]
+  ]
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46800777,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Powys County Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46801009,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Powys County Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46806840,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Lancaster City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46806856,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Lancaster City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46809388,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "East Riding of Yorkshire Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46809696,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "South Lakes Housing",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46812990,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Warwick District Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46813040,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Warwick District Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46814470,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "London Borough of Newham",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46814746,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "London Borough of Newham",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46818155,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "THE GUINNESS PARTNERSHIP LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46819799,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Leeds City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46820183,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Leeds City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46820519,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "City of York Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46820619,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "City of York Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46823485,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46823501,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Moat Homes Limited",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46825974,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Metropolitan borough of Bury",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46825981,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Metropolitan borough of Bury",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46829517,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "BLACKPOOL COASTAL HOUSING LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46830406,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Royal Borough of Kensington and Chelsea",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46830445,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Royal Borough of Kensington and Chelsea",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46831455,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "LONDON & QUADRANT HOUSING TRUST",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46832659,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "The Pioneer Housing and Community Group Limited",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46834849,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "High Peak Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46834922,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "High Peak Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46840987,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Bristol City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46841024,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Bristol City Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46841342,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "City of Lincoln Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46841445,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "City of Lincoln Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46842011,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Stockton on Tees Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46842025,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Stockton on Tees Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46842229,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Stockton on Tees Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46842261,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Stockton on Tees Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46843775,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "HOUSING 21",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46844733,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "ONWARD HOMES LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46848740,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "BELIEVE HOUSING LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46848785,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Ongo Homes Limited",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46849921,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Carmarthenshire County Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46850020,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Carmarthenshire County Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46857373,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Rochdale Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46857380,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Rochdale Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46857430,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Rochdale Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46857436,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Rochdale Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46857614,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Tamworth Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 46966759,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Tamworth Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47159393,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "ARCHES HOUSING LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47159495,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "ORBIT GROUP LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47159646,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "ONE MANCHESTER LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47288592,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Darlington Borough Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47289467,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "North Northamptonshire Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47289502,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "LIVIN HOUSING LIMITED",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47296537,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "East Suffolk Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47310073,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "East Riding of Yorkshire Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47366075,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Bernicia Group",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47382041,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "Solihull Community Housing Limited",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47392453,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "South Derbyshire District Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30953692,
+  "agent": "NHC",
+  "direction": "P@A",
+  "notice": 47392508,
+  "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+  "name": "South Derbyshire District Council",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30967593,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 46789370,
+  "section": "ORG-GB-PPON-PLDX-6964-RZQX",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30967593,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 46791550,
+  "section": "ORG-GB-PPON-PLDX-6964-RZQX",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30967593,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 46791551,
+  "section": "ORG-GB-PPON-PLDX-6964-RZQX",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30967593,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 47288165,
+  "section": "ORG-GB-PPON-PLDX-6964-RZQX",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30967593,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 47290363,
+  "section": "ORG-GB-PPON-PLDX-6964-RZQX",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30967593,
+  "agent": "TMT",
+  "direction": "A@P",
+  "notice": 47290364,
+  "section": "ORG-GB-PPON-PLDX-6964-RZQX",
+  "name": "TMT Procurement Partnership",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30968739,
+  "agent": "GINGER",
+  "direction": "P@A",
+  "notice": 46737636,
+  "section": "ORG-GB-PPON-PLMN-9829-JXLV",
+  "name": "The Howard Partnership Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PJYB-7771-WVXD",
+    31540891,
+    "Ginger Energy"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PJYB-7771-WVXD",
+    31540891,
+    "Ginger Energy"
+   ]
+  ]
+ },
+ {
+  "org": 30968739,
+  "agent": "GINGER",
+  "direction": "P@A",
+  "notice": 46785018,
+  "section": "ORG-GB-PPON-PLMN-9829-JXLV",
+  "name": "The Keys Academy Trust",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PJYB-7771-WVXD",
+    31540891,
+    "Ginger energy"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PJYB-7771-WVXD",
+    31540891,
+    "Ginger energy"
+   ]
+  ]
+ },
+ {
+  "org": 30974616,
+  "agent": "SCAPE",
+  "direction": "A@P",
+  "notice": 46806701,
+  "section": "ORG-GB-PPON-PVWR-6662-QTQX",
+  "name": "Scape Group Limited (trading as SCAPE)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 30974616,
+  "agent": "SCAPE",
+  "direction": "A@P",
+  "notice": 46807157,
+  "section": "ORG-GB-PPON-PVWR-6662-QTQX",
+  "name": "Scape Group Limited (trading as SCAPE)",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 1,
+  "partner_printed": false,
+  "partner": [],
+  "other_buyers": []
+ },
+ {
+  "org": 31546270,
+  "agent": "PAGABO",
+  "direction": "A@P",
+  "notice": 46844727,
+  "section": "ORG-GB-PPON-PDBW-5798-GPLT",
+  "name": "Pagabo",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-COH-07542211",
+    31587300,
+    "THE EDUCATION ALLIANCE"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-COH-07542211",
+    31587300,
+    "THE EDUCATION ALLIANCE"
+   ]
+  ]
+ },
+ {
+  "org": 31546270,
+  "agent": "PAGABO",
+  "direction": "A@P",
+  "notice": 46844778,
+  "section": "ORG-GB-PPON-PDBW-5798-GPLT",
+  "name": "Pagabo",
+  "own_roles": [
+   "OPT-300-Procedure-Buyer"
+  ],
+  "n_buyer_sections": 2,
+  "partner_printed": true,
+  "partner": [
+   [
+    "ORG-GB-PPON-PWHP-1324-QPYH",
+    31578022,
+    "THE EDUCATION ALLIANCE"
+   ]
+  ],
+  "other_buyers": [
+   [
+    "ORG-GB-PPON-PWHP-1324-QPYH",
+    31578022,
+    "THE EDUCATION ALLIANCE"
+   ]
+  ]
+ }
+]

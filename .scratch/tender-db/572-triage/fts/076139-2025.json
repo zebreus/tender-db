@@ -1,0 +1,206 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/076139-2025?limit=100&updatedTo=2026-10-19T21:05:58",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2025-11-21T15:37:36Z",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "ocid": "ocds-h6vhtk-05e689",
+            "id": "076139-2025",
+            "tag": [
+                "planning"
+            ],
+            "date": "2025-11-21T15:37:36Z",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "Welsh Local Government Association (WLGA)",
+                    "id": "GB-PPON-PDJQ-5588-HWLY",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PDJQ-5588-HWLY"
+                    },
+                    "address": {
+                        "streetAddress": "4th Floor, One Canal Parade, Dumballs Road",
+                        "locality": "Cardiff",
+                        "postalCode": "CF10 5BF",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKL22"
+                    },
+                    "contactPoint": {
+                        "name": "Laura Pine",
+                        "email": "ArdalProcurement@Cardiff.gov.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://www.wlga.wales/home",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            },
+                            {
+                                "scheme": "UK_CA_DEVOLVED_REGULATIONS",
+                                "id": "GB-WLS",
+                                "description": "Welsh devolved regulations apply"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Ardal",
+                    "id": "GB-PPON-PVHP-5769-YHRQ",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PVHP-5769-YHRQ"
+                    },
+                    "address": {
+                        "streetAddress": "County Hall",
+                        "locality": "Cardiff",
+                        "postalCode": "CF10 4UW",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKL22"
+                    },
+                    "contactPoint": {
+                        "name": "Laura Pine",
+                        "email": "ArdalProcurement@cardiff.gov.uk"
+                    },
+                    "roles": [
+                        "procuringEntity"
+                    ],
+                    "roleDetails": "Ardal is the new name for the procurement service run by Cardiff Council and is working collaboratively with WLGA to manage this procurement, combining expertise and resources to deliver the best outcomes for Welsh councils. As a socially responsible procurement partner, Ardal ensures a fair and efficient process.",
+                    "details": {
+                        "url": "https://ardal-procurement.gov.wales/"
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PDJQ-5588-HWLY",
+                "name": "Welsh Local Government Association (WLGA)"
+            },
+            "planning": {
+                "milestones": [
+                    {
+                        "id": "engagement",
+                        "type": "engagement",
+                        "description": "The Welsh Local Government Association (WLGA) intends to procure a supplier to design and deliver a leadership development programme for councillors across Wales.\nBefore commencing the formal procurement process, WLGA is seeking market insight to understand the capability and capacity of the market. \nPlease refer to Proactis (REF: ERFX1008722), where a short set of questions have been provided to gather feedback from the market.\nTo participate in the PME and subsequent tender, please ensure you are registered at: https://supplierlive.proactisp2p.com. ",
+                        "dueDate": "2025-11-28T23:59:59+00:00",
+                        "status": "scheduled"
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "076139-2025",
+                        "documentType": "marketEngagementNotice",
+                        "noticeType": "UK2",
+                        "description": "Preliminary market engagement notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/076139-2025",
+                        "datePublished": "2025-11-21T15:37:36Z",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "tender": {
+                "id": "ERFX1008722",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Welsh Local Government Association (WLGA) Leadership Programme",
+                "description": "The leadership programme for councillors in Wales is a place where leaders, and those in leadership positions, can explore the latest thinking in political leadership, and equip themselves with the knowledge and skills they need to rise to these challenges.\nThe WLGA Leadership Programme has been delivered for some 25 years, primarily through the LGA and latterly with Academi Wales. From 2026 it will be delivered solely by the WLGA and funded by the Welsh Government. \nThe aim of this procurement is to appoint a single supplier to design and deliver the leadership programme for councillors during the period October 2026 – December 2029. No programme will be required April to June 2027 due to local elections. \nThere is scope for the contract to be extended for a further year for 2 additional programmes to be delivered starting in April and October 2030.\nThe main aim of the programme is to increase the political leadership capacity of Welsh councils.\nPlease note that this procurement will be run through Proactis. To participate in the PME and subsequent tender, please ensure you are registered at: https://supplierlive.proactisp2p.com. \nProactis Reference: ERFX1008722",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "80570000",
+                                "description": "Personal development training services"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "80590000",
+                                "description": "Tutorial services"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "80300000",
+                                "description": "Higher education services"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "80400000",
+                                "description": "Adult and other education services"
+                            },
+                            {
+                                "scheme": "CPV",
+                                "id": "80500000",
+                                "description": "Training services"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKL",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "value": {
+                    "amountGross": 300000,
+                    "amount": 250000,
+                    "currency": "GBP"
+                },
+                "mainProcurementCategory": "services",
+                "aboveThreshold": true,
+                "lots": [
+                    {
+                        "id": "1",
+                        "suitability": {
+                            "sme": true,
+                            "vcse": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2026-10-01T00:00:00+01:00",
+                            "endDate": "2029-12-01T23:59:59+00:00",
+                            "maxExtentDate": "2030-12-01T23:59:59+00:00"
+                        },
+                        "hasRenewal": true,
+                        "status": "planning"
+                    }
+                ],
+                "communication": {
+                    "futureNoticeDate": "2025-12-15T23:59:59+00:00"
+                },
+                "status": "planning"
+            },
+            "language": "en"
+        }
+    ]
+}

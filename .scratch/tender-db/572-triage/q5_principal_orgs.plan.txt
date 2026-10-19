@@ -1,0 +1,68 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on plan.db (545 u2b copy: prod schema + prod org indexes)
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(5, 2, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(18, 1, 0, 'UNION ALL')
+(21, 18, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(34, 1, 0, 'UNION ALL')
+(37, 34, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(50, 1, 0, 'UNION ALL')
+(53, 50, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(66, 1, 0, 'UNION ALL')
+(69, 66, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(82, 1, 0, 'UNION ALL')
+(85, 82, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(98, 1, 0, 'UNION ALL')
+(101, 98, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(114, 1, 0, 'UNION ALL')
+(117, 114, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(130, 1, 0, 'UNION ALL')
+(133, 130, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(146, 1, 0, 'UNION ALL')
+(149, 146, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(162, 1, 0, 'UNION ALL')
+(165, 162, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(178, 1, 0, 'UNION ALL')
+(181, 178, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(194, 1, 0, 'UNION ALL')
+(197, 194, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(210, 1, 0, 'UNION ALL')
+(213, 210, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(226, 1, 0, 'UNION ALL')
+(229, 226, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+(242, 1, 0, 'UNION ALL')
+(245, 242, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)')
+-- turso plan-probe (rc=0)
+PLAN	q5_principal_orgs	COMPOUND QUERY
+PLAN	q5_principal_orgs	  LEFT-MOST SUBQUERY
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)
+PLAN	q5_principal_orgs	  UNION ALL
+PLAN	q5_principal_orgs	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm=?)

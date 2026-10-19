@@ -1,0 +1,2271 @@
+{
+ "issue": 572,
+ "unit": "1 MEASURE",
+ "date": "2026-10-19",
+ "requests": {
+  "sql": 6,
+  "api_get": 35,
+  "fts_get": 13,
+  "local_copy": 1,
+  "non_200": [],
+  "sql_nonzero_rc": []
+ },
+ "size": {
+  "part1_545_detector_bound": {
+   "what": "545's class-A rows: u2a/cand_judged.json (52), the unit-1 carried Pagabo row (u2a/verdicts.json), u2b/tail_judged.json (9), u2b/cand2b_judged.json (3). rows = 545 spelling rows, keys = distinct (org, keys.alt), mentions = sum n. Detector-bound: STRAY + HELD-2..6 + prefilter.",
+   "total": {
+    "rows": 65,
+    "keys": 64,
+    "mentions": 129,
+    "orgs": 21
+   },
+   "by_source": {
+    "u2a": {
+     "rows": 52,
+     "keys": 51,
+     "mentions": 79,
+     "orgs": 15
+    },
+    "2a-tail": {
+     "rows": 9,
+     "keys": 9,
+     "mentions": 39,
+     "orgs": 4
+    },
+    "2b": {
+     "rows": 3,
+     "keys": 3,
+     "mentions": 9,
+     "orgs": 2
+    },
+    "unit1-carried": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 2,
+     "orgs": 1
+    }
+   },
+   "by_half": {
+    "GBPPON": {
+     "rows": 62,
+     "keys": 61,
+     "mentions": 120,
+     "orgs": 19
+    },
+    "GBCOH": {
+     "rows": 3,
+     "keys": 3,
+     "mentions": 9,
+     "orgs": 2
+    }
+   },
+   "by_direction": {
+    "P@A": {
+     "rows": 51,
+     "keys": 51,
+     "mentions": 99,
+     "orgs": 8
+    },
+    "A@P": {
+     "rows": 14,
+     "keys": 13,
+     "mentions": 30,
+     "orgs": 13
+    }
+   },
+   "by_agent_direction": {
+    "NHC P@A": {
+     "rows": 41,
+     "keys": 41,
+     "mentions": 81,
+     "orgs": 1
+    },
+    "TMT A@P": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 11,
+     "orgs": 2
+    },
+    "NWSSP A@P": {
+     "rows": 5,
+     "keys": 5,
+     "mentions": 7,
+     "orgs": 5
+    },
+    "NWSSP P@A": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 6,
+     "orgs": 1
+    },
+    "GIBBS P@A": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 5,
+     "orgs": 1
+    },
+    "GLEEDS A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 4,
+     "orgs": 1
+    },
+    "GINGER P@A": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 2,
+     "orgs": 1
+    },
+    "INVICTUS P@A": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 2,
+     "orgs": 1
+    },
+    "PAGABO A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 2,
+     "orgs": 1
+    },
+    "SCAPE A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 2,
+     "orgs": 1
+    },
+    "STAR A@P": {
+     "rows": 2,
+     "keys": 1,
+     "mentions": 2,
+     "orgs": 1
+    },
+    "ARDAL A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    },
+    "NHSLCH P@A": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    },
+    "PALS A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    },
+    "RPJ3 P@A": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    },
+    "WELLAND P@A": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    }
+   },
+   "by_detector": {
+    "HELD-2": {
+     "rows": 31,
+     "keys": 30,
+     "mentions": 60,
+     "orgs": 7
+    },
+    "STRAY": {
+     "rows": 23,
+     "keys": 23,
+     "mentions": 23,
+     "orgs": 11
+    },
+    "HELD-3": {
+     "rows": 4,
+     "keys": 4,
+     "mentions": 12,
+     "orgs": 2
+    },
+    "HELD-4": {
+     "rows": 3,
+     "keys": 3,
+     "mentions": 12,
+     "orgs": 2
+    },
+    "HELD-6": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 12,
+     "orgs": 2
+    },
+    "HELD-5": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 10,
+     "orgs": 2
+    }
+   }
+  },
+  "part2_exhaustive_within_slices": {
+   "what": "Exhaustive within 545's slice reads (all 14,338 GBPPON + 31,486 GBCOH-keyed orgs) for the 15 agents of part 1, no K cap and no prefilter (measure_a.py part 2), re-read live with role references (q4_class_refs, analyze_q4.py). P@A = every non-agent, non-host, non-title name on the agent's own org; A@P = every agent-named mention on another org.",
+   "total": {
+    "mentions": 191,
+    "keys": 85,
+    "notices": 190
+   },
+   "by_direction": {
+    "P@A": {
+     "mentions": 153,
+     "keys": 70
+    },
+    "A@P": {
+     "mentions": 38,
+     "keys": 15
+    }
+   },
+   "by_agent_direction": {
+    "NHC P@A": {
+     "mentions": 97,
+     "keys": 52,
+     "orgs": 1,
+     "notices": 97
+    },
+    "NWSSP P@A": {
+     "mentions": 41,
+     "keys": 7,
+     "orgs": 1,
+     "notices": 41
+    },
+    "NWSSP A@P": {
+     "mentions": 15,
+     "keys": 7,
+     "orgs": 6,
+     "notices": 15
+    },
+    "TMT A@P": {
+     "mentions": 11,
+     "keys": 2,
+     "orgs": 2,
+     "notices": 11
+    },
+    "GIBBS P@A": {
+     "mentions": 8,
+     "keys": 4,
+     "orgs": 1,
+     "notices": 8
+    },
+    "GLEEDS A@P": {
+     "mentions": 4,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 4
+    },
+    "STAR A@P": {
+     "mentions": 2,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 2
+    },
+    "INVICTUS P@A": {
+     "mentions": 2,
+     "keys": 2,
+     "orgs": 1,
+     "notices": 2
+    },
+    "GINGER P@A": {
+     "mentions": 2,
+     "keys": 2,
+     "orgs": 1,
+     "notices": 2
+    },
+    "SCAPE A@P": {
+     "mentions": 2,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 2
+    },
+    "PAGABO A@P": {
+     "mentions": 2,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 2
+    },
+    "ARDAL A@P": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    },
+    "WELLAND P@A": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    },
+    "RPJ3 P@A": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    },
+    "NHSLCH P@A": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    },
+    "PALS A@P": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    }
+   },
+   "beyond_part1": {
+    "NHC": "11 member names / 16 mentions the prefilter dropped (shared token \"housing\": Solihull Community Housing x5, LIVIN x2, Arches, Believe, Blackpool Coastal, Housing 21, Islington & Shoreditch HA, L&Q, One Vision, South Lakes, Pioneer) (52 keys / 97 mentions against 545's 41 / 81)",
+    "NWSSP P@A": "Hywel Dda x12, Public Health Wales NHS Trust x9, Cardiff and Vale x10, Betsi x2, ABUHB x1, NWJCC x1 beyond 545's HEIW x6",
+    "NWSSP A@P": "Cardiff and Vale UHB x7 (held 7 > K=6)",
+    "GIBBS": "Hull Churches HA x2, Newlon Housing Trust x1 (prefilter: shared \"housing\" with English Rural HA)"
+   }
+  }
+ },
+ "agents": [
+  {
+   "agent": "Northern Housing Consortium",
+   "key": "NHC",
+   "kind": "consortium (housing, member councils + HAs)",
+   "own_org_ids": [
+    30953692
+   ],
+   "own_orgs": [
+    {
+     "org": 30953692,
+     "identifier": "GBPPONPJXZ4423NDBT",
+     "head": "Northern Housing Consortium Ltd",
+     "mentions": 124,
+     "agent_named": 23,
+     "principal_named": 97,
+     "principal_keys": 52
+    }
+   ],
+   "principal_orgs_holding_agent_name": [],
+   "part1": {
+    "P@A": {
+     "rows": 41,
+     "keys": 41,
+     "mentions": 81,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "NHC P@A": {
+     "mentions": 97,
+     "keys": 52,
+     "orgs": 1,
+     "notices": 97
+    }
+   }
+  },
+  {
+   "agent": "NHS Wales Shared Services Partnership (Procurement Services)",
+   "key": "NWSSP",
+   "kind": "shared-service (hosted by Velindre)",
+   "own_org_ids": [
+    30913738
+   ],
+   "own_orgs": [
+    {
+     "org": 30913738,
+     "identifier": "GBPPONPXWV6492CGMN",
+     "head": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "mentions": 1170,
+     "agent_named": 1048,
+     "principal_named": 41,
+     "principal_keys": 7
+    }
+   ],
+   "principal_orgs_holding_agent_name": [
+    30913750,
+    30919377,
+    30926792,
+    30926924,
+    30928312,
+    30929723
+   ],
+   "part1": {
+    "A@P": {
+     "rows": 5,
+     "keys": 5,
+     "mentions": 7,
+     "orgs": 5
+    },
+    "P@A": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 6,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "NWSSP P@A": {
+     "mentions": 41,
+     "keys": 7,
+     "orgs": 1,
+     "notices": 41
+    },
+    "NWSSP A@P": {
+     "mentions": 15,
+     "keys": 7,
+     "orgs": 6,
+     "notices": 15
+    }
+   }
+  },
+  {
+   "agent": "STAR Procurement",
+   "key": "STAR",
+   "kind": "shared-service (Stockport/Rochdale/Trafford/Tameside)",
+   "own_org_ids": [],
+   "own_orgs": [],
+   "principal_orgs_holding_agent_name": [
+    30917275
+   ],
+   "part1": {
+    "A@P": {
+     "rows": 2,
+     "keys": 1,
+     "mentions": 2,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "STAR A@P": {
+     "mentions": 2,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 2
+    }
+   }
+  },
+  {
+   "agent": "Ardal",
+   "key": "ARDAL",
+   "kind": "shared-service (Cardiff-hosted, south-east Wales councils)",
+   "own_org_ids": [],
+   "own_orgs": [],
+   "principal_orgs_holding_agent_name": [
+    30913763
+   ],
+   "part1": {
+    "A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "ARDAL A@P": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    }
+   }
+  },
+  {
+   "agent": "Welland Procurement",
+   "key": "WELLAND",
+   "kind": "shared-service (Rutland, Melton, Harborough, ...)",
+   "own_org_ids": [
+    30913798
+   ],
+   "own_orgs": [
+    {
+     "org": 30913798,
+     "identifier": "GBPPONPVMQ1845NYPP",
+     "head": "Welland Procurement",
+     "mentions": 287,
+     "agent_named": 286,
+     "principal_named": 1,
+     "principal_keys": 1
+    }
+   ],
+   "principal_orgs_holding_agent_name": [],
+   "part1": {
+    "P@A": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "WELLAND P@A": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    }
+   }
+  },
+  {
+   "agent": "TMT Procurement Partnership",
+   "key": "TMT",
+   "kind": "shared-service (Tunbridge Wells/Maidstone/Tonbridge)",
+   "own_org_ids": [],
+   "own_orgs": [],
+   "principal_orgs_holding_agent_name": [
+    30916821,
+    30967593
+   ],
+   "part1": {
+    "A@P": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 11,
+     "orgs": 2
+    }
+   },
+   "part2": {
+    "TMT A@P": {
+     "mentions": 11,
+     "keys": 2,
+     "orgs": 2,
+     "notices": 11
+    }
+   }
+  },
+  {
+   "agent": "BSO Procurement & Logistics Service (NI)",
+   "key": "PALS",
+   "kind": "shared-service (HSC)",
+   "own_org_ids": [
+    30914040,
+    30915904
+   ],
+   "own_orgs": [
+    {
+     "org": 30914040,
+     "identifier": "GBPPONPWNJ1991NGDW",
+     "head": "Business Services Organisation, Procurement and Logistics Service",
+     "mentions": 435,
+     "agent_named": 435,
+     "principal_named": 0,
+     "principal_keys": 0
+    },
+    {
+     "org": 30915904,
+     "identifier": "GBPPONPCQH8657NGMT",
+     "head": "Business Services Organisation",
+     "mentions": 46,
+     "agent_named": 46,
+     "principal_named": 0,
+     "principal_keys": 0
+    }
+   ],
+   "principal_orgs_holding_agent_name": [
+    30917832
+   ],
+   "part1": {
+    "A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "PALS A@P": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    }
+   }
+  },
+  {
+   "agent": "NHS London Commercial Hub",
+   "key": "NHSLCH",
+   "kind": "shared-service (London ICBs)",
+   "own_org_ids": [
+    30916628
+   ],
+   "own_orgs": [
+    {
+     "org": 30916628,
+     "identifier": "GBPPONPBWD3998QHRQ",
+     "head": "NHS LONDON COMMERCIAL HUB",
+     "mentions": 26,
+     "agent_named": 25,
+     "principal_named": 1,
+     "principal_keys": 1
+    }
+   ],
+   "principal_orgs_holding_agent_name": [],
+   "part1": {
+    "P@A": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "NHSLCH P@A": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    }
+   }
+  },
+  {
+   "agent": "Pagabo",
+   "key": "PAGABO",
+   "kind": "framework-operator",
+   "own_org_ids": [
+    31557760,
+    31648640
+   ],
+   "own_orgs": [
+    {
+     "org": 31557760,
+     "identifier": "GBCOH08787322",
+     "head": "PAGABO LIMITED",
+     "mentions": 15,
+     "agent_named": 15,
+     "principal_named": 0,
+     "principal_keys": 0
+    },
+    {
+     "org": 31648640,
+     "identifier": "GBPPONPLBP8199WVWT",
+     "head": "Pagabo",
+     "mentions": 1,
+     "agent_named": 1,
+     "principal_named": 0,
+     "principal_keys": 0
+    }
+   ],
+   "principal_orgs_holding_agent_name": [
+    31546270
+   ],
+   "part1": {
+    "A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 2,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "PAGABO A@P": {
+     "mentions": 2,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 2
+    }
+   }
+  },
+  {
+   "agent": "SCAPE Group",
+   "key": "SCAPE",
+   "kind": "framework-operator",
+   "own_org_ids": [],
+   "own_orgs": [],
+   "principal_orgs_holding_agent_name": [
+    30974616
+   ],
+   "part1": {
+    "A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 2,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "SCAPE A@P": {
+     "mentions": 2,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 2
+    }
+   }
+  },
+  {
+   "agent": "Invictus Partnership",
+   "key": "INVICTUS",
+   "kind": "broker (schools/trusts)",
+   "own_org_ids": [
+    30930308
+   ],
+   "own_orgs": [
+    {
+     "org": 30930308,
+     "identifier": "GBPPONPGGP8622HHRX",
+     "head": "INVICTUS PARTNERSHIP LTD (13647652)",
+     "mentions": 56,
+     "agent_named": 54,
+     "principal_named": 2,
+     "principal_keys": 2
+    }
+   ],
+   "principal_orgs_holding_agent_name": [],
+   "part1": {
+    "P@A": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 2,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "INVICTUS P@A": {
+     "mentions": 2,
+     "keys": 2,
+     "orgs": 1,
+     "notices": 2
+    }
+   }
+  },
+  {
+   "agent": "Ginger Energy",
+   "key": "GINGER",
+   "kind": "broker (energy, schools/trusts)",
+   "own_org_ids": [
+    30917636,
+    30968739,
+    31540891
+   ],
+   "own_orgs": [
+    {
+     "org": 30917636,
+     "identifier": "GBCOH06889612",
+     "head": "Ginger Energy Limited",
+     "mentions": 6,
+     "agent_named": 6,
+     "principal_named": 0,
+     "principal_keys": 0
+    },
+    {
+     "org": 30968739,
+     "identifier": "GBPPONPLMN9829JXLV",
+     "head": "Ginger energy",
+     "mentions": 31,
+     "agent_named": 29,
+     "principal_named": 2,
+     "principal_keys": 2
+    },
+    {
+     "org": 31540891,
+     "identifier": "GBPPONPJYB7771WVXD",
+     "head": "Ginger Energy",
+     "mentions": 3,
+     "agent_named": 3,
+     "principal_named": 0,
+     "principal_keys": 0
+    }
+   ],
+   "principal_orgs_holding_agent_name": [],
+   "part1": {
+    "P@A": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 2,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "GINGER P@A": {
+     "mentions": 2,
+     "keys": 2,
+     "orgs": 1,
+     "notices": 2
+    }
+   }
+  },
+  {
+   "agent": "RPJ3 Group",
+   "key": "RPJ3",
+   "kind": "broker (on behalf of trusts/schools)",
+   "own_org_ids": [
+    30914820,
+    31594875
+   ],
+   "own_orgs": [
+    {
+     "org": 30914820,
+     "identifier": "GBPPONPRYY6263NQHG",
+     "head": "RPJ3 Group Limited on Behalf of Aspirational Futures MAT",
+     "mentions": 24,
+     "agent_named": 23,
+     "principal_named": 1,
+     "principal_keys": 1
+    },
+    {
+     "org": 31594875,
+     "identifier": "GBCOH04642430",
+     "head": "RPJ3 Group Limited",
+     "mentions": 1,
+     "agent_named": 1,
+     "principal_named": 0,
+     "principal_keys": 0
+    }
+   ],
+   "principal_orgs_holding_agent_name": [],
+   "part1": {
+    "P@A": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 1,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "RPJ3 P@A": {
+     "mentions": 1,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 1
+    }
+   }
+  },
+  {
+   "agent": "Gibbs Laidler Consulting",
+   "key": "GIBBS",
+   "kind": "consultant (for housing associations)",
+   "own_org_ids": [
+    30913722
+   ],
+   "own_orgs": [
+    {
+     "org": 30913722,
+     "identifier": "GBCOHOC322760",
+     "head": "GIBBS LAIDLER CONSULTING LLP",
+     "mentions": 163,
+     "agent_named": 155,
+     "principal_named": 8,
+     "principal_keys": 4
+    }
+   ],
+   "principal_orgs_holding_agent_name": [],
+   "part1": {
+    "P@A": {
+     "rows": 2,
+     "keys": 2,
+     "mentions": 5,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "GIBBS P@A": {
+     "mentions": 8,
+     "keys": 4,
+     "orgs": 1,
+     "notices": 8
+    }
+   }
+  },
+  {
+   "agent": "Gleeds Cost Management",
+   "key": "GLEEDS",
+   "kind": "consultant (cost manager as co-buyer)",
+   "own_org_ids": [
+    30915130,
+    31615833
+   ],
+   "own_orgs": [
+    {
+     "org": 30915130,
+     "identifier": "GBCOHOC453959",
+     "head": "GLEEDS LLP",
+     "mentions": 26,
+     "agent_named": 26,
+     "principal_named": 0,
+     "principal_keys": 0
+    },
+    {
+     "org": 31615833,
+     "identifier": "GBCOH6472932",
+     "head": "Gleeds Cost Management Limited",
+     "mentions": 1,
+     "agent_named": 1,
+     "principal_named": 0,
+     "principal_keys": 0
+    }
+   ],
+   "principal_orgs_holding_agent_name": [
+    30914436
+   ],
+   "part1": {
+    "A@P": {
+     "rows": 1,
+     "keys": 1,
+     "mentions": 4,
+     "orgs": 1
+    }
+   },
+   "part2": {
+    "GLEEDS A@P": {
+     "mentions": 4,
+     "keys": 1,
+     "orgs": 1,
+     "notices": 4
+    }
+   }
+  }
+ ],
+ "a_shaped_545_labelled_otherwise": [
+  {
+   "rows": "University of Essex x2 + The Bolton Impact Trust x2 on EMBARK MULTI ACADEMY TRUST 31577532 (GBCOH11717748)",
+   "545_label": "F, PARK-shared-procurement (u2b/verdicts2b.json)",
+   "evidence": "545-triage/u3/guards.md (b): notice 46851503 is Essex's own Energy Management Solutions Dynamic Market, Dukefield Energy co-buyer 'the agent'; reviewer verdict 'stay PARKED (A or shared procurement)'; and a different defect first: PYLY-4964-TXGH may be Essex's or Dukefield's PPON attached to Embark's org",
+   "counted_in_A": false,
+   "mentions": 4
+  },
+  {
+   "rows": "Create Partnership Trust x1 on The Howard Partnership Trust 30917637 (GBCOH07597068)",
+   "545_label": "F, PARK-shared-procurement",
+   "evidence": "545-triage/u3/guards.md (b): notice 46758153 prints Create PT with the holder's own number and broker Ginger Energy (an A agent) as second Procedure-Buyer; reviewer: 'V-or-A, holder's own number'",
+   "counted_in_A": false,
+   "mentions": 1
+  }
+ ],
+ "role_carried": {
+  "source_fts_exemplars": {
+   "procuringEntity_party": 7,
+   "buyer_only": 6,
+   "read": 13
+  },
+  "tender_db": "never distinct: crates/ingest/src/fts/parse.rs:249 maps roles 'buyer' AND 'procuringEntity' to OPT-300-Procedure-Buyer; parties[].roleDetails is not read (Party struct) and parties[].details (UK_CA_TYPE) is Ignored in checklist.rs:63. q2_roles: every class mention's party row is Procedure-Buyer (except 2 Tenderer: Riverside on NHC, Hywel Dda on NWSSP).",
+  "class_wide_proxy": {
+   "what": "Procedure-Buyer sections on the notice of each of the 191 part-2 mentions (q4_class_refs)",
+   "counts": {
+    "1 buyer section": 143,
+    "2+ buyer sections": 48
+   },
+   "by_agent": {
+    "GIBBS": {
+     "1 buyer section": 6,
+     "2+ buyer sections": 2
+    },
+    "NWSSP": {
+     "1 buyer section": 23,
+     "2+ buyer sections": 33
+    },
+    "ARDAL": {
+     "2+ buyer sections": 1
+    },
+    "WELLAND": {
+     "2+ buyer sections": 1
+    },
+    "GLEEDS": {
+     "2+ buyer sections": 4
+    },
+    "RPJ3": {
+     "2+ buyer sections": 1
+    },
+    "NHSLCH": {
+     "1 buyer section": 1
+    },
+    "TMT": {
+     "1 buyer section": 11
+    },
+    "STAR": {
+     "2+ buyer sections": 2
+    },
+    "PALS": {
+     "1 buyer section": 1
+    },
+    "INVICTUS": {
+     "1 buyer section": 2
+    },
+    "NHC": {
+     "1 buyer section": 97
+    },
+    "GINGER": {
+     "2+ buyer sections": 2
+    },
+    "SCAPE": {
+     "1 buyer section": 2
+    },
+    "PAGABO": {
+     "2+ buyer sections": 2
+    }
+   },
+   "own_role_of_the_A_mention": {
+    "OPT-300-Procedure-Buyer": 189,
+    "OPT-300-Tenderer": 2
+   }
+  }
+ },
+ "served_today": {
+  "rule": "issue 456 design 3: /v1/tenders/{id} parties[] serves organization_id + organization_name = the identifier holder's org and head, mention_name = the name the notice printed; parties[] is the CURRENT version's",
+  "class_wide_current_version": {
+   "by_direction": {
+    "P@A current": 97,
+    "P@A older-version": 56,
+    "A@P older-version": 25,
+    "A@P current": 13
+   },
+   "by_agent": {
+    "NHC P@A": {
+     "current": 59,
+     "older-version": 38
+    },
+    "NWSSP P@A": {
+     "current": 26,
+     "older-version": 15
+    },
+    "WELLAND P@A": {
+     "current": 1
+    },
+    "NHSLCH P@A": {
+     "current": 1
+    },
+    "INVICTUS P@A": {
+     "current": 2
+    },
+    "GINGER P@A": {
+     "current": 2
+    },
+    "RPJ3 P@A": {
+     "current": 1
+    },
+    "GIBBS P@A": {
+     "older-version": 3,
+     "current": 5
+    },
+    "NWSSP A@P": {
+     "older-version": 9,
+     "current": 6
+    },
+    "STAR A@P": {
+     "current": 2
+    },
+    "ARDAL A@P": {
+     "older-version": 1
+    },
+    "TMT A@P": {
+     "older-version": 10,
+     "current": 1
+    },
+    "PALS A@P": {
+     "older-version": 1
+    },
+    "PAGABO A@P": {
+     "current": 2
+    },
+    "SCAPE A@P": {
+     "older-version": 1,
+     "current": 1
+    },
+    "GLEEDS A@P": {
+     "older-version": 3,
+     "current": 1
+    }
+   },
+   "total_party_rows": 191
+  },
+  "principal_orgs_exist": {
+   "birmingham city council": [
+    [
+     7585480,
+     null,
+     1
+    ],
+    [
+     1291257,
+     null,
+     1
+    ],
+    [
+     30914707,
+     "GBPPONPCJJ4826QMLZ",
+     0
+    ]
+   ],
+   "darlington borough council": [
+    [
+     1798544,
+     null,
+     1
+    ],
+    [
+     1251124,
+     null,
+     1
+    ],
+    [
+     30914393,
+     "GBPPONPCRZ3744WXXZ",
+     0
+    ]
+   ],
+   "karbon homes": [
+    [
+     10445737,
+     null,
+     1
+    ],
+    [
+     30913799,
+     "GBCHCRS007529",
+     0
+    ],
+    [
+     30915057,
+     "GBPPONPCDL6326LXPW",
+     0
+    ],
+    [
+     31599199,
+     "GBCHCPCDL6326LXPW",
+     0
+    ],
+    [
+     31619955,
+     "GBMPRRS007529",
+     0
+    ]
+   ],
+   "karbon homes limited": [
+    [
+     10445739,
+     null,
+     1
+    ]
+   ],
+   "54north homes": [
+    [
+     22134415,
+     null,
+     1
+    ]
+   ],
+   "health education and improvement wales": [
+    [
+     12008955,
+     null,
+     1
+    ]
+   ],
+   "health education and improvement wales (heiw)": [
+    [
+     30917293,
+     "GBPPONPRNH7564JLCQ",
+     0
+    ],
+    [
+     31539418,
+     "GBNHST1530",
+     0
+    ],
+    [
+     31547740,
+     null,
+     1
+    ]
+   ],
+   "rutland county council": [
+    [
+     1774911,
+     null,
+     1
+    ],
+    [
+     30915335,
+     "GBPPONPMQJ3429NZWQ",
+     0
+    ]
+   ],
+   "the howard partnership trust": [
+    [
+     10166080,
+     null,
+     1
+    ],
+    [
+     30917637,
+     "GBCOH07597068",
+     0
+    ]
+   ],
+   "english rural housing association": [
+    [
+     2291108,
+     null,
+     1
+    ]
+   ],
+   "remarkable autism": [],
+   "aneurin bevan university health board": [
+    [
+     4754055,
+     null,
+     1
+    ],
+    [
+     4863250,
+     null,
+     1
+    ],
+    [
+     30914825,
+     "GBNHS7A6",
+     0
+    ],
+    [
+     30919377,
+     "GBPPONPVLN4733WJBQ",
+     0
+    ]
+   ],
+   "welsh local government association": [
+    [
+     4079296,
+     null,
+     1
+    ]
+   ],
+   "hywel dda university health board": [
+    [
+     4823776,
+     null,
+     1
+    ],
+    [
+     4863254,
+     null,
+     1
+    ],
+    [
+     30926960,
+     "GBPPONPNPY2728GCWW",
+     0
+    ],
+    [
+     31544733,
+     "GBNHS7A2",
+     0
+    ]
+   ],
+   "solihull community housing limited": [
+    [
+     2750809,
+     null,
+     1
+    ],
+    [
+     5539040,
+     "04462630",
+     0
+    ]
+   ],
+   "the education alliance": [
+    [
+     11458922,
+     null,
+     1
+    ],
+    [
+     31578022,
+     "GBPPONPWHP1324QPYH",
+     0
+    ],
+    [
+     31587300,
+     "GBCOH07542211",
+     0
+    ]
+   ]
+  }
+ },
+ "a_at_p_subtypes": {
+  "own_buyer": {
+   "mentions": 33,
+   "what": "the agent's name on the actual buyer's identifier: the bound org IS the buyer; only the printed name is the agent's",
+   "rows": {
+    "NWSSP on health boards/PHW/Swansea Univ": 15,
+    "TMT on Maidstone/Tunbridge Wells": 11,
+    "Gleeds on College of Policing": 4,
+    "Scape on Arc Property Services": 2,
+    "PaLS on Northern HSC Trust": 1
+   },
+   "read": "E4 (ABUHB), E10 (Maidstone), E11 (CoP) read; the rest presumed from the same agent/holder pairs",
+   "caveat": "NWSSP notice 46819472 crosses two names over two PPONs (ABUHB name on NWSSP PPON and v.v.)"
+  },
+  "host": {
+   "mentions": 3,
+   "what": "the agent's name on its HOST council's identifier while buying for another member: the host is served as buyer",
+   "rows": {
+    "Star Procurement on Trafford (for Rochdale)": 2,
+    "Ardal on Cardiff (for WLGA)": 1
+   },
+   "read": "E6, E7 (FTS roleDetails: \"Ardal is ... the procurement service run by Cardiff Council\")"
+  },
+  "unrelated": {
+   "mentions": 2,
+   "what": "the agent's name on an unrelated body's identifier (545-F-shaped)",
+   "rows": {
+    "Pagabo on Cumbria, Northumberland, Tyne and Wear NHS FT (buying for The Education Alliance)": 2
+   },
+   "read": "q4 refs only"
+  }
+ },
+ "exemplars": [
+  {
+   "id": "E1",
+   "agent": "NHC",
+   "direction": "P@A",
+   "notice_id": 46793765,
+   "publication_id": "018561-2026",
+   "notice_subtype": "UK6",
+   "tender_id": 8641682,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 2,
+   "title": "Birmingham City Council TCI May 26",
+   "org_sections": [
+    {
+     "section": "ORG-GB-COH-00024869",
+     "name": "ECCLESIASTICAL INSURANCE OFFICE PUBLIC LIMITED COMPANY",
+     "identifiers": [
+      "GB-COH-00024869",
+      "GB-PPON-PTLT-9325-HBMW"
+     ],
+     "roles": [
+      "Tenderer"
+     ],
+     "bound_org": 30968749
+    },
+    {
+     "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+     "name": "Birmingham City Council",
+     "identifiers": [
+      "GB-PPON-PJXZ-4423-NDBT"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30953692
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PJXZ-4423-NDBT",
+     "name": "Birmingham City Council",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    }
+   ],
+   "source_has_procuringEntity": false,
+   "description_head": "This contract award notice is to notify the market that Birmingham City Council has appointed Ecclesiastical Insurance Office PLC for their Simple Tenants' Contents Insurance Scheme (2026-2030). This appointment has been made under the Northern Housing Consortium's Simple Tenants' Contents Insurance",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "Birmingham City Council",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E2",
+   "agent": "NHC",
+   "direction": "P@A",
+   "notice_id": 46789522,
+   "publication_id": "014218-2026",
+   "notice_subtype": "UK6",
+   "tender_id": 8636304,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 2,
+   "title": "Darlington BC 2026 TCI",
+   "org_sections": [
+    {
+     "section": "ORG-GB-COH-00024869",
+     "name": "ECCLESIASTICAL INSURANCE OFFICE PUBLIC LIMITED COMPANY",
+     "identifiers": [
+      "GB-COH-00024869",
+      "GB-PPON-PTLT-9325-HBMW"
+     ],
+     "roles": [
+      "Tenderer"
+     ],
+     "bound_org": 30968749
+    },
+    {
+     "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+     "name": "Darlington Borough Council",
+     "identifiers": [
+      "GB-PPON-PJXZ-4423-NDBT"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30953692
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PJXZ-4423-NDBT",
+     "name": "Darlington Borough Council",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    }
+   ],
+   "source_has_procuringEntity": false,
+   "description_head": "This contract award notice is to notify the market that Darlington Borough Council has appointed Ecclesiastical Insurance Office PLC for their Simple Tenants' Contents Insurance Scheme (2026-2030). This appointment has been made under the Northern Housing Consortium's Simple Tenants' Contents Insura",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "Darlington Borough Council",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E3",
+   "agent": "NHC",
+   "direction": "P@A",
+   "notice_id": 46794092,
+   "publication_id": "018898-2026",
+   "notice_subtype": "UK7",
+   "tender_id": 8677647,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 1,
+   "title": "54 North Homes TCI 2026",
+   "org_sections": [
+    {
+     "section": "ORG-GB-COH-00024869",
+     "name": "ECCLESIASTICAL INSURANCE OFFICE PUBLIC LIMITED COMPANY",
+     "identifiers": [
+      "GB-COH-00024869",
+      "GB-PPON-PTLT-9325-HBMW"
+     ],
+     "roles": [
+      "Tenderer"
+     ],
+     "bound_org": 30968749
+    },
+    {
+     "section": "ORG-GB-PPON-PJXZ-4423-NDBT",
+     "name": "Karbon Homes (54North Homes)",
+     "identifiers": [
+      "GB-PPON-PJXZ-4423-NDBT"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30953692
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PJXZ-4423-NDBT",
+     "name": "Karbon Homes (54North Homes)",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    }
+   ],
+   "source_has_procuringEntity": false,
+   "description_head": "This contract details notice is to notify the market that 54North Homes has appointed Ecclesiastical Insurance Office PLC for their Simple Tenants' Contents Insurance Scheme (2026-2030). This appointment has been made under the Northern Housing Consortium's Simple Tenants' Contents Insurance Scheme ",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "Karbon Homes (54North Homes)",
+     "organization_id": 30953692,
+     "organization_name": "Northern Housing Consortium Ltd",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E4",
+   "agent": "NWSSP",
+   "direction": "A@P",
+   "notice_id": 46816840,
+   "publication_id": "042613-2026",
+   "notice_subtype": "UK4",
+   "tender_id": 8654651,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 2,
+   "title": "Framework Agreement for the Provision Of Leadership, Governance and Development Services",
+   "org_sections": [
+    {
+     "section": "ORG-GB-PPON-PVLN-4733-WJBQ",
+     "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "identifiers": [
+      "GB-PPON-PVLN-4733-WJBQ"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30919377
+    },
+    {
+     "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+     "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)",
+     "identifiers": [
+      "GB-PPON-PXWV-6492-CGMN"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30913738
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PVLN-4733-WJBQ",
+     "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthorityCentralGovernment"
+     ]
+    },
+    {
+     "id": "GB-PPON-PXWV-6492-CGMN",
+     "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)",
+     "roles": [
+      "procuringEntity"
+     ],
+     "roleDetails": "NHS Shared Services Local Procurement is acting on behalf of Aneurin Bevan University Health Board in relation to this procurement",
+     "UK_CA_TYPE": []
+    }
+   ],
+   "source_has_procuringEntity": true,
+   "description_head": "Aneurin Bevan University Health Board (ABUHB) intends to establish a framework of suitably experienced providers to support the delivery of leadership, governance, and development activities for Board members, Executives, and senior leaders. ABUHB plans to appoint six providers to this framework. \nT",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Aneurin Bevan University Health Board",
+     "organization_id": 30919377,
+     "organization_name": "Aneurin Bevan University Health Board",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E5",
+   "agent": "NWSSP",
+   "direction": "P@A",
+   "notice_id": 46787268,
+   "publication_id": "011922-2026",
+   "notice_subtype": "UK4",
+   "tender_id": 8698064,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 4,
+   "title": "Mental Health Education and Training",
+   "org_sections": [
+    {
+     "section": "ORG-GB-NHS-RQF",
+     "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "identifiers": [
+      "GB-NHS-RQF"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 15641552
+    },
+    {
+     "section": "ORG-GB-PPON-PXWV-6492-CGMN",
+     "name": "Health Education and Improvement Wales (HEIW)",
+     "identifiers": [
+      "GB-PPON-PXWV-6492-CGMN"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30913738
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PXWV-6492-CGMN",
+     "name": "Health Education and Improvement Wales (HEIW)",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthorityCentralGovernment",
+      "GB-WLS"
+     ]
+    },
+    {
+     "id": "GB-NHS-RQF",
+     "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "roles": [
+      "procuringEntity"
+     ],
+     "roleDetails": "NHS Wales Shared Services Partnership-Procurement Services is providing the procurement advice and procurement tendering platform on behalf of HEIW to facilitate this procurement. Health Education and Improvement Wales is the Commissioner for this Procurement",
+     "UK_CA_TYPE": []
+    }
+   ],
+   "source_has_procuringEntity": true,
+   "description_head": "Multi provider Open Framework for various levels of specialist mental health intervention education and training (credit and non credit bearing) that is reflective of current mental health practice in Wales, for staff employed in health care.\nThe Framework will be opened biennially (being once every",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "organization_id": 15641552,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Health Education and Improvement Wales (HEIW)",
+     "organization_id": 30913738,
+     "organization_name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E6",
+   "agent": "STAR",
+   "direction": "A@P",
+   "notice_id": 46817944,
+   "publication_id": "043745-2026",
+   "notice_subtype": "UK4",
+   "tender_id": 8655231,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 1,
+   "title": "Alkrington Primary School – Roofing Refurbishment Works",
+   "org_sections": [
+    {
+     "section": "ORG-GB-PPON-PGZW-1429-QQZQ",
+     "name": "Star Procurement",
+     "identifiers": [
+      "GB-PPON-PGZW-1429-QQZQ"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30917275
+    },
+    {
+     "section": "ORG-GB-PPON-PXXD-6682-MDRX",
+     "name": "Rochdale Metropolitan Borough Council",
+     "identifiers": [
+      "GB-PPON-PXXD-6682-MDRX"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30916230
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PXXD-6682-MDRX",
+     "name": "Rochdale Metropolitan Borough Council",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthorityCentralGovernment"
+     ]
+    },
+    {
+     "id": "GB-PPON-PGZW-1429-QQZQ",
+     "name": "Star Procurement",
+     "roles": [
+      "procuringEntity"
+     ],
+     "roleDetails": "Managing the Tender",
+     "UK_CA_TYPE": []
+    }
+   ],
+   "source_has_procuringEntity": true,
+   "description_head": "The work comprises refurbishment of pitched Roof 1, pitched Roof 2, encapsulation of the parapet wall between Roofs 2 & 3, encapsulation of the parapet wall at the gable end of pitched Roof 4. Re-pointing works to gable end of Roof 4. Internal plaster repairs. Minor Bauder felt roof repairs to pitch",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "Rochdale Metropolitan Borough Council",
+     "organization_id": 30916230,
+     "organization_name": "Rochdale Borough Council",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Star Procurement",
+     "organization_id": 30917275,
+     "organization_name": "Trafford Council",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E7",
+   "agent": "ARDAL",
+   "direction": "A@P",
+   "notice_id": 46765017,
+   "publication_id": "076139-2025",
+   "notice_subtype": "UK2",
+   "tender_id": 8621643,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 5,
+   "title": "Welsh Local Government Association (WLGA) Leadership Programme",
+   "org_sections": [
+    {
+     "section": "ORG-GB-PPON-PDJQ-5588-HWLY",
+     "name": "Welsh Local Government Association (WLGA)",
+     "identifiers": [
+      "GB-PPON-PDJQ-5588-HWLY"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30928156
+    },
+    {
+     "section": "ORG-GB-PPON-PVHP-5769-YHRQ",
+     "name": "Ardal",
+     "identifiers": [
+      "GB-PPON-PVHP-5769-YHRQ"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30913763
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PDJQ-5588-HWLY",
+     "name": "Welsh Local Government Association (WLGA)",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment",
+      "GB-WLS"
+     ]
+    },
+    {
+     "id": "GB-PPON-PVHP-5769-YHRQ",
+     "name": "Ardal",
+     "roles": [
+      "procuringEntity"
+     ],
+     "roleDetails": "Ardal is the new name for the procurement service run by Cardiff Council and is working collaboratively with WLGA to manage this procurement, combining expertise and resources to deliver the best outcomes for Welsh councils. As a socially responsible procurement partner, Ardal ensures a fair and efficient process.",
+     "UK_CA_TYPE": []
+    }
+   ],
+   "source_has_procuringEntity": true,
+   "description_head": "The leadership programme for councillors in Wales is a place where leaders, and those in leadership positions, can explore the latest thinking in political leadership, and equip themselves with the knowledge and skills they need to rise to these challenges.\nThe WLGA Leadership Programme has been del",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "Cardiff Council",
+     "organization_id": 30913763,
+     "organization_name": "Cardiff Council",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Welsh Local Government Association (WLGA)",
+     "organization_id": 30928156,
+     "organization_name": "WLGA",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E8",
+   "agent": "WELLAND",
+   "direction": "P@A",
+   "notice_id": 46845134,
+   "publication_id": "071214-2026",
+   "notice_subtype": "UK1",
+   "tender_id": 8677040,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 1,
+   "title": "Independent Specialist Education and Inclusion Framework",
+   "org_sections": [
+    {
+     "section": "ORG-GB-PPON-PNHT-9235-VXDV",
+     "name": "Leicestershire County Council",
+     "identifiers": [
+      "GB-PPON-PNHT-9235-VXDV"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30913776
+    },
+    {
+     "section": "ORG-GB-PPON-PVMQ-1845-NYPP",
+     "name": "Rutland County Council",
+     "identifiers": [
+      "GB-PPON-PVMQ-1845-NYPP"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30913798
+    },
+    {
+     "section": "ORG-GB-PPON-PXRT-5737-VBQD",
+     "name": "Leicester City Council",
+     "identifiers": [
+      "GB-PPON-PXRT-5737-VBQD"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30914352
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PXRT-5737-VBQD",
+     "name": "Leicester City Council",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    },
+    {
+     "id": "GB-PPON-PNHT-9235-VXDV",
+     "name": "Leicestershire County Council",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    },
+    {
+     "id": "GB-PPON-PVMQ-1845-NYPP",
+     "name": "Rutland County Council",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    }
+   ],
+   "source_has_procuringEntity": false,
+   "description_head": "All Local Authorities (LA) have a requirement to ensure that all Children and Young People (CYP) have access to Education Provision. Leicester City Council is committed to finding placements for CYP with Special Educational Needs and Disabilities (SEND) within Leicester City. The provision is mainta",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "Leicestershire County Council",
+     "organization_id": 30913776,
+     "organization_name": "Leicestershire County Council",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Rutland County Council",
+     "organization_id": 30913798,
+     "organization_name": "Welland Procurement",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Leicester City Council",
+     "organization_id": 30914352,
+     "organization_name": "Leicester City Council",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E9",
+   "agent": "GINGER",
+   "direction": "P@A",
+   "notice_id": 46737636,
+   "publication_id": "048614-2025",
+   "notice_subtype": "UK6",
+   "tender_id": 8639202,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 1,
+   "title": "The Howard Partnership Trust – Gas Fixed Supply Products Oct 2025",
+   "org_sections": [
+    {
+     "section": "ORG-GB-PPON-PJYB-7771-WVXD",
+     "name": "Ginger Energy",
+     "identifiers": [
+      "GB-PPON-PJYB-7771-WVXD"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 31540891
+    },
+    {
+     "section": "ORG-GB-PPON-PLMN-9829-JXLV",
+     "name": "The Howard Partnership Trust",
+     "identifiers": [
+      "GB-PPON-PLMN-9829-JXLV"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30968739
+    },
+    {
+     "section": "ORG-GB-PPON-PLMZ-7451-PPQV",
+     "name": "Corona energy",
+     "identifiers": [
+      "GB-PPON-PLMZ-7451-PPQV"
+     ],
+     "roles": [
+      "Tenderer"
+     ],
+     "bound_org": 31540892
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PLMN-9829-JXLV",
+     "name": "The Howard Partnership Trust",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicUndertaking"
+     ]
+    },
+    {
+     "id": "GB-PPON-PJYB-7771-WVXD",
+     "name": "Ginger Energy",
+     "roles": [
+      "procuringEntity"
+     ],
+     "roleDetails": "This tender is being managed on behalf of THPT by Ginger Energy Limited. Ginger Energy Limited (GEL) is a specialist consultancy with extensive expert knowledge in the utility industry. Ginger Energy provides its clients a wide variety of energy related services",
+     "UK_CA_TYPE": []
+    }
+   ],
+   "source_has_procuringEntity": true,
+   "description_head": "The requirement is for the provision of fixed price natural gas supply in accordance with the specifications set out in the Invitation to Tender (ITT). The contract is due to commence on 1 October 2025 and may include the addition of further sites during the term. The initial contract period is 36 m",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "The Howard Partnership Trust",
+     "organization_id": 30968739,
+     "organization_name": "Ginger energy",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "Ginger Energy",
+     "organization_id": 31540891,
+     "organization_name": "Ginger Energy",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E10",
+   "agent": "TMT",
+   "direction": "A@P",
+   "notice_id": 46750905,
+   "publication_id": "061940-2025",
+   "notice_subtype": "UK4",
+   "tender_id": 8613154,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 4,
+   "title": "MBC - Play area surfacing repairs at various sites in Maidstone, Kent",
+   "org_sections": [
+    {
+     "section": "ORG-GB-PPON-PGRT-5366-CGWY",
+     "name": "TMT Procurement Partnership",
+     "identifiers": [
+      "GB-PPON-PGRT-5366-CGWY"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30916821
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PGRT-5366-CGWY",
+     "name": "TMT Procurement Partnership",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    }
+   ],
+   "source_has_procuringEntity": false,
+   "description_head": "Maidstone Borough Council (MBC) is looking to appoint a contractor to undertake play area surfacing repairs include all preparatory work and base preparation.\nFor more information about this opportunity, please visit the Delta eSourcing portal at: \nhttps://www.kentbusinessportal.org.uk/tenders/UK-UK",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "Maidstone Borough Council",
+     "organization_id": 30916821,
+     "organization_name": "Maidstone Borough Council",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E11",
+   "agent": "GLEEDS",
+   "direction": "A@P",
+   "notice_id": 46693105,
+   "publication_id": "089087-2026",
+   "notice_subtype": "UK4",
+   "tender_id": 8580124,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 4,
+   "title": "Distribution Board Replacement, heating works (environmental controls) and Replacement of Gymnasium Lighting, College of Policing Ryton",
+   "org_sections": [
+    {
+     "section": "ORG-GB-COH-08235199",
+     "name": "COLLEGE OF POLICING LIMITED",
+     "identifiers": [
+      "GB-COH-08235199",
+      "GB-PPON-PJNL-2763-PVHM"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30914436
+    },
+    {
+     "section": "ORG-GB-PPON-PJNL-2763-PVHM",
+     "name": "GLEEDS COST MANAGEMENT LIMITED",
+     "identifiers": [
+      "GB-PPON-PJNL-2763-PVHM"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30914436
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-COH-08235199",
+     "name": "COLLEGE OF POLICING LIMITED",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    },
+    {
+     "id": "GB-PPON-PJNL-2763-PVHM",
+     "name": "GLEEDS COST MANAGEMENT LIMITED",
+     "roles": [
+      "procuringEntity"
+     ],
+     "roleDetails": "Specification preparation/ evaluation",
+     "UK_CA_TYPE": []
+    }
+   ],
+   "source_has_procuringEntity": true,
+   "description_head": "College of Policing seeks supplier(s)  to attend site at Ryton on Dunsmore, CV8 3EN, to carry out a programme of works for the following packages (\"Lots)  in accordance with the documents associated with the applicable invitation to tender.\nTenderers may bid for any or all of the Lots as follows:-\nR",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "COLLEGE OF POLICING LIMITED",
+     "organization_id": 30914436,
+     "organization_name": "COLLEGE OF POLICING LIMITED",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "GLEEDS COST MANAGEMENT LIMITED",
+     "organization_id": 30914436,
+     "organization_name": "COLLEGE OF POLICING LIMITED",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E12",
+   "agent": "GIBBS",
+   "direction": "P@A",
+   "notice_id": 46757368,
+   "publication_id": "068424-2025",
+   "notice_subtype": "UK6",
+   "tender_id": 8596944,
+   "tender_version_of_notice": 2,
+   "tender_current_version": 2,
+   "title": "Provision of Insurance and Related Services to English Rural Housing Association",
+   "org_sections": [
+    {
+     "section": "ORG-GB-PPON-PGGV-7645-JTDL",
+     "name": "Marsh",
+     "identifiers": [
+      "GB-PPON-PGGV-7645-JTDL"
+     ],
+     "roles": [
+      "Tenderer",
+      "Tenderer",
+      "Tenderer"
+     ],
+     "bound_org": 16348141
+    },
+    {
+     "section": "ORG-GB-PPON-PGJB-3773-RCMH",
+     "name": "English Rural Housing Association",
+     "identifiers": [
+      "GB-PPON-PGJB-3773-RCMH"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30913722
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PGJB-3773-RCMH",
+     "name": "English Rural Housing Association",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    }
+   ],
+   "source_has_procuringEntity": false,
+   "description_head": "English Rural Housing Association are looking to appoint one or more providers to deliver their Insurance and related services for Property, legal liability and other general (non-life) insurable risks.  \nThe programme will require Insurance and related services for risks that may include but not be",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "English Rural Housing Association",
+     "organization_id": 30913722,
+     "organization_name": "GIBBS LAIDLER CONSULTING LLP",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  },
+  {
+   "id": "E13",
+   "agent": "RPJ3",
+   "direction": "P@A",
+   "notice_id": 46869370,
+   "publication_id": "009438-2025",
+   "notice_subtype": "UK4",
+   "tender_id": 8687157,
+   "tender_version_of_notice": 1,
+   "tender_current_version": 1,
+   "title": "Remarkable Autism Cleaning Tender 2025",
+   "org_sections": [
+    {
+     "section": "ORG-GB-COH-04642430",
+     "name": "RPJ3 Group Limited",
+     "identifiers": [
+      "GB-COH-04642430"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 31594875
+    },
+    {
+     "section": "ORG-GB-PPON-PRYY-6263-NQHG",
+     "name": "Remarkable Autism",
+     "identifiers": [
+      "GB-PPON-PRYY-6263-NQHG"
+     ],
+     "roles": [
+      "Procedure-Buyer"
+     ],
+     "bound_org": 30914820
+    }
+   ],
+   "fts_source_buyer_side_parties": [
+    {
+     "id": "GB-PPON-PRYY-6263-NQHG",
+     "name": "Remarkable Autism",
+     "roles": [
+      "buyer"
+     ],
+     "roleDetails": null,
+     "UK_CA_TYPE": [
+      "publicAuthoritySubCentralGovernment"
+     ]
+    },
+    {
+     "id": "GB-COH-04642430",
+     "name": "RPJ3 Group Limited",
+     "roles": [
+      "procuringEntity"
+     ],
+     "roleDetails": "RPJ3 Group will manage the procurement process on behalf of Remarkable Autism",
+     "UK_CA_TYPE": []
+    }
+   ],
+   "source_has_procuringEntity": true,
+   "description_head": "This cleaning tender process is targeted to have a cleaning contract in place to commence on 01/09/25. The process will be through a competitive flexible procedure commencing with a participation stage to create a select bidder list following analysis of a PSQ document (within which the scoring crit",
+   "served_procedure_buyers_current_version": [
+    {
+     "lot": null,
+     "mention_name": "Remarkable Autism",
+     "organization_id": 30914820,
+     "organization_name": "RPJ3 Group Limited on Behalf of Aspirational Futures MAT",
+     "role": "Procedure-Buyer"
+    },
+    {
+     "lot": null,
+     "mention_name": "RPJ3 Group Limited",
+     "organization_id": 31594875,
+     "organization_name": "RPJ3 Group Limited",
+     "role": "Procedure-Buyer"
+    }
+   ]
+  }
+ ]
+}

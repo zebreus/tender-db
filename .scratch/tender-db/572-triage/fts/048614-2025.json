@@ -1,0 +1,259 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/048614-2025?limit=100&updatedTo=2026-10-19T21:06:03",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2025-08-14T09:32:07+01:00",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "id": "048614-2025",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "date": "2025-08-14T09:32:07+01:00",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-055443",
+            "parties": [
+                {
+                    "name": "The Howard Partnership Trust",
+                    "id": "GB-PPON-PLMN-9829-JXLV",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PLMN-9829-JXLV"
+                    },
+                    "address": {
+                        "streetAddress": "C/O Howard Of Effingham School, Lower road",
+                        "locality": "Effingham",
+                        "postalCode": "KT24 5JR",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKJ25"
+                    },
+                    "contactPoint": {
+                        "name": "Derek Smith",
+                        "email": "DEREK.SMITH@THPT.ORG.UK",
+                        "telephone": "+447414607252"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://www.thehowardpartnership.org/",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicUndertaking",
+                                "description": "Public undertaking"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Ginger Energy",
+                    "id": "GB-PPON-PJYB-7771-WVXD",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PJYB-7771-WVXD"
+                    },
+                    "address": {
+                        "streetAddress": "4 The Cloisters, 12 George Road, Edgbaston,",
+                        "locality": "Birmingham",
+                        "postalCode": "B15 1NP",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKG31"
+                    },
+                    "contactPoint": {
+                        "name": "Becky Maipambe",
+                        "email": "becky.maipambe@gingerenergy.co.uk",
+                        "telephone": "+447494251795"
+                    },
+                    "roles": [
+                        "procuringEntity"
+                    ],
+                    "roleDetails": "This tender is being managed on behalf of THPT by Ginger Energy Limited. Ginger Energy Limited (GEL) is a specialist consultancy with extensive expert knowledge in the utility industry. Ginger Energy provides its clients a wide variety of energy related services",
+                    "details": {
+                        "url": "https://gingerenergy.co.uk/"
+                    }
+                },
+                {
+                    "name": "Corona energy",
+                    "id": "GB-PPON-PLMZ-7451-PPQV",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PLMZ-7451-PPQV"
+                    },
+                    "address": {
+                        "streetAddress": "Building 2 Level 2, Croxley Park",
+                        "locality": "Watford",
+                        "postalCode": "WD18 8YA",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKH23"
+                    },
+                    "contactPoint": {
+                        "email": "phil.batty@coronaenergy.co.uk"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "scale": "large",
+                        "vcse": false,
+                        "publicServiceMissionOrganization": false,
+                        "shelteredWorkshop": false
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PLMN-9829-JXLV",
+                "name": "The Howard Partnership Trust"
+            },
+            "tender": {
+                "id": "ocds-h6vhtk-055443",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "The Howard Partnership Trust – Gas Fixed Supply Products Oct 2025",
+                "description": "The requirement is for the provision of fixed price natural gas supply in accordance with the specifications set out in the Invitation to Tender (ITT). The contract is due to commence on 1 October 2025 and may include the addition of further sites during the term. The initial contract period is 36 months, with the option to extend, up to a maximum duration of 4 years. The procurement will be conducted in line with the Procurement Act 2023, ensuring a fair, transparent, and competitive process to identify the most advantageous tender for our client.",
+                "status": "complete",
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Open procedure",
+                "specialRegime": [
+                    "utilities"
+                ],
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "complete"
+                    }
+                ]
+            },
+            "bids": {
+                "statistics": [
+                    {
+                        "id": "1",
+                        "measure": "bids",
+                        "value": 5,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "2",
+                        "measure": "finalStageBids",
+                        "value": 5,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "3",
+                        "measure": "smeFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "1"
+                    },
+                    {
+                        "id": "4",
+                        "measure": "vcseFinalStageBids",
+                        "value": 0,
+                        "relatedLot": "1"
+                    }
+                ]
+            },
+            "awards": [
+                {
+                    "id": "1",
+                    "title": "The Howard Partnership Trust – Gas Fixed Supply Products Oct 2025",
+                    "status": "pending",
+                    "date": "2025-08-13T00:00:00+01:00",
+                    "value": {
+                        "amountGross": 1920000,
+                        "amount": 1600000,
+                        "currency": "GBP"
+                    },
+                    "mainProcurementCategory": "goods",
+                    "aboveThreshold": true,
+                    "suppliers": [
+                        {
+                            "id": "GB-PPON-PLMZ-7451-PPQV",
+                            "name": "Corona energy"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "09123000",
+                                    "description": "Natural gas"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "standstillPeriod": {
+                        "endDate": "2025-08-26T23:59:59+01:00"
+                    },
+                    "contractPeriod": {
+                        "startDate": "2025-10-01T00:00:00+01:00",
+                        "endDate": "2028-09-30T23:59:59+01:00",
+                        "maxExtentDate": "2029-09-30T23:59:59+01:00"
+                    },
+                    "hasRenewal": true,
+                    "renewal": {
+                        "description": "Following the expiry of the initial fixed term, the Contracting Authority reserves the right, at its absolute discretion, to extend the contract. Any extension shall be subject to the Authority’s requirements at the relevant time and may be structured in a manner deemed appropriate by the Authority. The decision to exercise this option, and the form it may take, rests solely with the Contracting Authority. Under no circumstances shall the total contract duration, including any extensions, exceed four (4) years from the initial commencement date. This extension provision is made in accordance with the principles of the Procurement Act 2023, ensuring transparency, fairness, and value throughout the contract lifecycle."
+                    },
+                    "relatedLots": [
+                        "1"
+                    ],
+                    "documents": [
+                        {
+                            "id": "048614-2025",
+                            "documentType": "awardNotice",
+                            "noticeType": "UK6",
+                            "description": "Contract award notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/048614-2025",
+                            "datePublished": "2025-08-14T09:32:07+01:00",
+                            "format": "text/html"
+                        }
+                    ],
+                    "assessmentSummariesDateSent": "2025-08-13T00:00:00+01:00",
+                    "milestones": [
+                        {
+                            "id": "1",
+                            "type": "futureSignatureDate",
+                            "dueDate": "2025-08-29T23:59:59+01:00",
+                            "status": "scheduled"
+                        }
+                    ]
+                }
+            ],
+            "language": "en"
+        }
+    ]
+}

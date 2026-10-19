@@ -1,0 +1,205 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/042613-2026?limit=100&updatedTo=2026-10-19T21:05:50",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_performance_failures_extension/master/extension.json"
+    ],
+    "publishedDate": "2026-05-08T15:04:53+01:00",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "ocid": "ocds-h6vhtk-0694e3",
+            "id": "042613-2026",
+            "tag": [
+                "tender"
+            ],
+            "date": "2026-05-08T15:04:53+01:00",
+            "initiationType": "tender",
+            "parties": [
+                {
+                    "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+                    "id": "GB-PPON-PVLN-4733-WJBQ",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PVLN-4733-WJBQ"
+                    },
+                    "address": {
+                        "streetAddress": "Headquarters,  St Cadoc's Hospital,  Lodge Road,  Caerleon,  Newport,  ",
+                        "locality": "Newport",
+                        "postalCode": "NP18 3XQ",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKL21"
+                    },
+                    "contactPoint": {
+                        "name": "Nicola Ann Jones",
+                        "email": "nicola.jones71@wales.nhs.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "http://nwssp.nhs.wales/ourservices/procurement-services/",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthorityCentralGovernment",
+                                "description": "Public authority - central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)",
+                    "id": "GB-PPON-PXWV-6492-CGMN",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PXWV-6492-CGMN"
+                    },
+                    "address": {
+                        "streetAddress": "4-5 Charnwood Court",
+                        "locality": "Cardiff",
+                        "postalCode": "CF15 7QZ",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKL15"
+                    },
+                    "contactPoint": {
+                        "name": "Nicola Ann Jones",
+                        "email": "nicola.jones71@wales.nhs.uk"
+                    },
+                    "roles": [
+                        "procuringEntity"
+                    ],
+                    "roleDetails": "NHS Shared Services Local Procurement is acting on behalf of Aneurin Bevan University Health Board in relation to this procurement"
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PVLN-4733-WJBQ",
+                "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+            },
+            "tender": {
+                "id": "ABU-ITT-62817",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "Framework Agreement for the Provision of Leadership, Governance and Development Services",
+                "description": "Aneurin Bevan University Health Board (ABUHB) intends to establish a framework of suitably experienced providers to support the delivery of leadership, governance, and development activities for Board members, Executives, and senior leaders. ABUHB plans to appoint six providers to this framework. \nThe framework is intended to provide ABUHB with flexible access to a range of development expertise, recognising that specific requirements may evolve over the life of the framework and may be commissioned on a planned or ad‑hoc basis.\nProviders appointed to the framework will be required to demonstrate proven experience of delivering high‑quality leadership and governance development within the public sector, ideally within NHS or other complex, regulated environments.",
+                "status": "active",
+                "items": [
+                    {
+                        "id": "1",
+                        "additionalClassifications": [
+                            {
+                                "scheme": "CPV",
+                                "id": "80000000",
+                                "description": "Education and training services"
+                            }
+                        ],
+                        "deliveryAddresses": [
+                            {
+                                "region": "UKL",
+                                "country": "GB",
+                                "countryName": "United Kingdom"
+                            }
+                        ],
+                        "relatedLot": "1"
+                    }
+                ],
+                "value": {
+                    "amountGross": 132000.00,
+                    "amount": 110000.00,
+                    "currency": "GBP"
+                },
+                "procurementMethod": "open",
+                "procurementMethodDetails": "Below threshold - open competition",
+                "mainProcurementCategory": "services",
+                "aboveThreshold": false,
+                "submissionMethodDetails": "https://etenderwales.ukp.app.jaggaer.com/home.html",
+                "submissionTerms": {
+                    "electronicSubmissionPolicy": "allowed"
+                },
+                "tenderPeriod": {
+                    "endDate": "2026-06-04T12:00:00+01:00"
+                },
+                "enquiryPeriod": {
+                    "endDate": "2026-06-01T12:00:00+01:00"
+                },
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "active",
+                        "value": {
+                            "amountGross": 132000.00,
+                            "amount": 110000.00,
+                            "currency": "GBP"
+                        },
+                        "awardCriteria": {
+                            "criteria": [
+                                {
+                                    "type": "quality",
+                                    "name": "Technical Quality",
+                                    "numbers": [
+                                        {
+                                            "number": 40.00,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                },
+                                {
+                                    "type": "cost",
+                                    "name": "Cost commercial",
+                                    "numbers": [
+                                        {
+                                            "number": 60.00,
+                                            "weight": "percentageExact"
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        "suitability": {
+                            "sme": true,
+                            "vcse": true
+                        },
+                        "contractPeriod": {
+                            "startDate": "2026-07-06T00:00:00+01:00",
+                            "endDate": "2030-07-01T23:59:59+01:00"
+                        },
+                        "description": null
+                    }
+                ],
+                "documents": [
+                    {
+                        "id": "042613-2026",
+                        "documentType": "tenderNotice",
+                        "noticeType": "UK4",
+                        "description": "Tender notice on Find a Tender",
+                        "url": "https://www.find-tender.service.gov.uk/Notice/042613-2026",
+                        "datePublished": "2026-05-08T15:04:53+01:00",
+                        "format": "text/html"
+                    }
+                ]
+            },
+            "language": "en"
+        }
+    ]
+}

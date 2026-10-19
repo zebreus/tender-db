@@ -1,0 +1,209 @@
+{
+    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/018898-2026?limit=100&updatedTo=2026-10-19T21:05:47",
+    "version": "1.1",
+    "extensions": [
+        "https://standard.open-contracting.org/profiles/eu/latest/en/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_amendment_rationale_classifications_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_budget_breakdown_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_contract_completion_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_documentation_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_pagination_extension/master/extension.json",
+        "https://raw.githubusercontent.com/open-contracting-extensions/ocds_suitability_extension/master/extension.json",
+        "https://raw.githubusercontent.com/portaledcahn/ocds_Links_extension/main/extension.json",
+        "https://raw.githubusercontent.com/cabinetoffice/ocds_uk_extension/main/extension.json"
+    ],
+    "publishedDate": "2026-03-03T12:30:41Z",
+    "publisher": {
+        "name": "Cabinet Office",
+        "scheme": "GB-GOR",
+        "uid": "D2",
+        "uri": "https://www.gov.uk/government/organisations/cabinet-office"
+    },
+    "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    "publicationPolicy": "https://www.gov.uk/government/publications/open-contracting",
+    "releases": [
+        {
+            "id": "018898-2026",
+            "tag": [
+                "award",
+                "contract"
+            ],
+            "date": "2026-03-03T12:30:41Z",
+            "initiationType": "tender",
+            "ocid": "ocds-h6vhtk-0660bc",
+            "parties": [
+                {
+                    "name": "Karbon Homes (54North Homes)",
+                    "id": "GB-PPON-PJXZ-4423-NDBT",
+                    "identifier": {
+                        "scheme": "GB-PPON",
+                        "id": "PJXZ-4423-NDBT"
+                    },
+                    "address": {
+                        "streetAddress": "Number 5",
+                        "locality": "Newcasle",
+                        "postalCode": "NE12 8EG",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKC22"
+                    },
+                    "contactPoint": {
+                        "email": "Procurement@Karbonhomes.co.uk"
+                    },
+                    "roles": [
+                        "buyer"
+                    ],
+                    "details": {
+                        "url": "https://www.karbonhomes.co.uk/",
+                        "classifications": [
+                            {
+                                "scheme": "UK_CA_TYPE",
+                                "id": "publicAuthoritySubCentralGovernment",
+                                "description": "Public authority - sub-central government"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "ECCLESIASTICAL INSURANCE OFFICE PUBLIC LIMITED COMPANY",
+                    "id": "GB-COH-00024869",
+                    "identifier": {
+                        "scheme": "GB-COH",
+                        "id": "00024869"
+                    },
+                    "additionalIdentifiers": [
+                        {
+                            "scheme": "GB-PPON",
+                            "id": "PTLT-9325-HBMW"
+                        }
+                    ],
+                    "address": {
+                        "streetAddress": "Benefact House 2000 Pioneer Avenue",
+                        "locality": "Gloucester",
+                        "postalCode": "GL3 4AW",
+                        "country": "GB",
+                        "countryName": "United Kingdom",
+                        "region": "UKK13"
+                    },
+                    "contactPoint": {
+                        "email": "london@ecclesiastical.com"
+                    },
+                    "roles": [
+                        "supplier"
+                    ],
+                    "details": {
+                        "url": "http://www.ecclesiastical.com",
+                        "scale": "large",
+                        "vcse": true
+                    }
+                }
+            ],
+            "buyer": {
+                "id": "GB-PPON-PJXZ-4423-NDBT",
+                "name": "Karbon Homes (54North Homes)"
+            },
+            "tender": {
+                "id": "ocds-h6vhtk-0660bc",
+                "legalBasis": {
+                    "id": "2023/54",
+                    "scheme": "UKPGA",
+                    "uri": "https://www.legislation.gov.uk/ukpga/2023/54/contents"
+                },
+                "title": "54 North Homes TCI 2026",
+                "description": "This contract details notice is to notify the market that 54North Homes has appointed Ecclesiastical Insurance Office PLC for their Simple Tenants' Contents Insurance Scheme (2026-2030). This appointment has been made under the Northern Housing Consortium's Simple Tenants' Contents Insurance Scheme Framework. OCID (Open Contracting ID) Ref: ocds-h6vhtk-055721.",
+                "status": "complete",
+                "procurementMethod": "selective",
+                "procurementMethodDetails": "Below threshold - award under framework",
+                "competitive": false,
+                "lots": [
+                    {
+                        "id": "1",
+                        "status": "complete"
+                    }
+                ]
+            },
+            "awards": [
+                {
+                    "id": "1",
+                    "status": "active",
+                    "mainProcurementCategory": "services",
+                    "suppliers": [
+                        {
+                            "id": "GB-COH-00024869",
+                            "name": "ECCLESIASTICAL INSURANCE OFFICE PUBLIC LIMITED COMPANY"
+                        }
+                    ],
+                    "items": [
+                        {
+                            "id": "1",
+                            "additionalClassifications": [
+                                {
+                                    "scheme": "CPV",
+                                    "id": "66510000",
+                                    "description": "Insurance services"
+                                }
+                            ],
+                            "deliveryAddresses": [
+                                {
+                                    "region": "UK",
+                                    "country": "GB",
+                                    "countryName": "United Kingdom"
+                                }
+                            ],
+                            "relatedLot": "1"
+                        }
+                    ],
+                    "relatedLots": [
+                        "1"
+                    ]
+                }
+            ],
+            "contracts": [
+                {
+                    "id": "1",
+                    "awardID": "1",
+                    "status": "active",
+                    "period": {
+                        "startDate": "2026-05-01T00:00:00+01:00",
+                        "endDate": "2027-04-30T23:59:59+01:00",
+                        "maxExtentDate": "2030-04-30T23:59:59+01:00"
+                    },
+                    "hasRenewal": true,
+                    "renewal": {
+                        "description": "THREE x ONE year individual periods"
+                    },
+                    "value": {
+                        "amountGross": 13644.96,
+                        "amount": 13644.96,
+                        "currency": "GBP"
+                    },
+                    "aboveThreshold": false,
+                    "dateSigned": "2026-02-26T00:00:00Z",
+                    "documents": [
+                        {
+                            "id": "018898-2026",
+                            "documentType": "contractNotice",
+                            "noticeType": "UK7",
+                            "description": "Contract details notice on Find a Tender",
+                            "url": "https://www.find-tender.service.gov.uk/Notice/018898-2026",
+                            "datePublished": "2026-03-03T12:30:41Z",
+                            "format": "text/html"
+                        }
+                    ]
+                }
+            ],
+            "relatedProcesses": [
+                {
+                    "id": "framework",
+                    "relationship": [
+                        "framework"
+                    ],
+                    "scheme": "ocid",
+                    "identifier": "ocds-h6vhtk-055721",
+                    "uri": "https://www.find-tender.service.gov.uk/api/1.0/ocdsReleasePackages/ocds-h6vhtk-055721"
+                }
+            ],
+            "language": "en"
+        }
+    ]
+}
