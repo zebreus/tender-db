@@ -1,0 +1,1767 @@
+[
+ {
+  "org": 30928204,
+  "ident": "GBPPONPBDJ9838DQRQ",
+  "head": "Newlon House Office Cleaning Services",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Albion Works Replacement Project",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 31723770,
+  "last_notice": 47274917,
+  "keep": true,
+  "tokens": [
+   "albion",
+   "project",
+   "replacement",
+   "works"
+  ],
+  "others": [
+   [
+    3,
+    "Newlon Housing Trust"
+   ],
+   [
+    1,
+    "newlon housing trust"
+   ],
+   [
+    1,
+    "Newlon House Office Cleaning Services"
+   ],
+   [
+    1,
+    "HN 1 and 2 (15 & 17) Hornsey Street, HN 3 (13) Hornsey Street and  HN 4 (9) Hornsey Street"
+   ],
+   [
+    1,
+    "2, 10, 18, 27, 34, 42 Queensland Road"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31564277,
+  "ident": "GBPPONPBMJ3394DBQQ",
+  "head": "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 178,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "North Cheshire and Mersey NHS Foundation Trust",
+  "scheme": null,
+  "n": 2,
+  "first_notice": 46810428,
+  "last_notice": 46829562,
+  "keep": true,
+  "tokens": [
+   "cheshire",
+   "mersey"
+  ],
+  "others": [
+   [
+    95,
+    "WARRINGTON AND HALTON TEACHING HOSPITALS NHS FOUNDATION TRUST"
+   ],
+   [
+    36,
+    "Warrington and Halton Teaching Hospitals NHS Foundation Trust"
+   ],
+   [
+    26,
+    "WARRINGTON AND HALTON TEACHING HOSPITALS NHS FOUNDATION TRUST"
+   ],
+   [
+    8,
+    "Warrington and Halton Teaching Hospitals NHS Foundation Trust"
+   ],
+   [
+    4,
+    "Warrington and Halton Teaching Hospitals NHS Foundation Trust"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 31564277,
+  "ident": "GBPPONPBMJ3394DBQQ",
+  "head": "Warrington and Halton Teaching Hospitals NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 178,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "North Cheshire and Mersey NHS Foundation Trust",
+  "scheme": "GB-NHS",
+  "n": 1,
+  "first_notice": 46813584,
+  "last_notice": 46813584,
+  "keep": true,
+  "tokens": [
+   "cheshire",
+   "mersey"
+  ],
+  "others": [
+   [
+    95,
+    "WARRINGTON AND HALTON TEACHING HOSPITALS NHS FOUNDATION TRUST"
+   ],
+   [
+    36,
+    "Warrington and Halton Teaching Hospitals NHS Foundation Trust"
+   ],
+   [
+    26,
+    "WARRINGTON AND HALTON TEACHING HOSPITALS NHS FOUNDATION TRUST"
+   ],
+   [
+    8,
+    "Warrington and Halton Teaching Hospitals NHS Foundation Trust"
+   ],
+   [
+    4,
+    "Warrington and Halton Teaching Hospitals NHS Foundation Trust"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 30926639,
+  "ident": "GBPPONPBPX2845LQQH",
+  "head": "CPD - Construction Division",
+  "country": "GB",
+  "org_mentions": 68,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Department of Finance",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46769634,
+  "last_notice": 46850292,
+  "keep": true,
+  "tokens": [
+   "department",
+   "finance"
+  ],
+  "others": [
+   [
+    28,
+    "CPD - Construction Division"
+   ],
+   [
+    13,
+    "Construction and Procurement Delivery (CPD)"
+   ],
+   [
+    6,
+    "CONSTRUCTION AND PROCUREMENT DELEIVERY (CPD)"
+   ],
+   [
+    5,
+    "CPD Construction Division"
+   ],
+   [
+    3,
+    "Department of Finance CPD"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30916821,
+  "ident": "GBPPONPGRT5366CGWY",
+  "head": "Maidstone Borough Council",
+  "country": "GB",
+  "org_mentions": 89,
+  "detector": "HELD-5",
+  "key_count": 5,
+  "name": "TMT Procurement Partnership",
+  "scheme": "GB-PPON",
+  "n": 5,
+  "first_notice": 46750905,
+  "last_notice": 46785773,
+  "keep": true,
+  "tokens": [
+   "procurement",
+   "tmt"
+  ],
+  "others": [
+   [
+    84,
+    "Maidstone Borough Council"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30916261,
+  "ident": "GBPPONPGTM8337GYXM",
+  "head": "British Business Bank",
+  "country": "GB",
+  "org_mentions": 94,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "The Start-Up Loans Company",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 47392247,
+  "last_notice": 47407933,
+  "keep": true,
+  "tokens": [
+   "loans",
+   "start"
+  ],
+  "others": [
+   [
+    38,
+    "British Business Bank"
+   ],
+   [
+    27,
+    "British Business Bank Plc"
+   ],
+   [
+    26,
+    "British Business Bank PLC"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913560,
+  "ident": "GBPPONPHMT6197NWNZ",
+  "head": "Transport for London",
+  "country": "GB",
+  "org_mentions": 1055,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "LONDON BUS SERVICES LIMITED",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46840691,
+  "last_notice": 46840693,
+  "keep": true,
+  "tokens": [
+   "bus"
+  ],
+  "others": [
+   [
+    1042,
+    "Transport for London"
+   ],
+   [
+    3,
+    "transport for London"
+   ],
+   [
+    2,
+    "Transport for London  5 Endeavour Square  London  E201JN"
+   ],
+   [
+    2,
+    "London Bus Services Limited (LBSL)"
+   ],
+   [
+    1,
+    "Transport For London"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913560,
+  "ident": "GBPPONPHMT6197NWNZ",
+  "head": "Transport for London",
+  "country": "GB",
+  "org_mentions": 1055,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "London Bus Services Limited (LBSL)",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46837519,
+  "last_notice": 46840658,
+  "keep": true,
+  "tokens": [
+   "bus"
+  ],
+  "others": [
+   [
+    1042,
+    "Transport for London"
+   ],
+   [
+    3,
+    "transport for London"
+   ],
+   [
+    2,
+    "Transport for London  5 Endeavour Square  London  E201JN"
+   ],
+   [
+    2,
+    "LONDON BUS SERVICES LIMITED"
+   ],
+   [
+    1,
+    "Transport For London"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31557115,
+  "ident": "GBPPONPHQR1485BDJQ",
+  "head": "Cambridgeshire Community Services NHS Trust",
+  "country": "GB",
+  "org_mentions": 126,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Cambridge Community Services NHS Trust",
+  "scheme": null,
+  "n": 2,
+  "first_notice": 18024737,
+  "last_notice": 46927297,
+  "keep": true,
+  "tokens": [
+   "cambridge"
+  ],
+  "others": [
+   [
+    68,
+    "Cambridgeshire Community Services NHS Trust"
+   ],
+   [
+    33,
+    "CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST"
+   ],
+   [
+    12,
+    "CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST"
+   ],
+   [
+    6,
+    "Cambridgeshire Community Services NHS Trust"
+   ],
+   [
+    4,
+    "Cambridgeshire Community Services NHS Trust"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31557115,
+  "ident": "GBPPONPHQR1485BDJQ",
+  "head": "Cambridgeshire Community Services NHS Trust",
+  "country": "GB",
+  "org_mentions": 126,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Cambridge Community Services NHS Trust",
+  "scheme": "GB-NHS",
+  "n": 1,
+  "first_notice": 46775101,
+  "last_notice": 46775101,
+  "keep": true,
+  "tokens": [
+   "cambridge"
+  ],
+  "others": [
+   [
+    68,
+    "Cambridgeshire Community Services NHS Trust"
+   ],
+   [
+    33,
+    "CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST"
+   ],
+   [
+    12,
+    "CAMBRIDGESHIRE COMMUNITY SERVICES NHS TRUST"
+   ],
+   [
+    6,
+    "Cambridgeshire Community Services NHS Trust"
+   ],
+   [
+    4,
+    "Cambridgeshire Community Services NHS Trust"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913745,
+  "ident": "GBPPONPHVX4316ZVGZ",
+  "head": "Ministry of Defence",
+  "country": "GB",
+  "org_mentions": 1310,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "DE&S",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46733058,
+  "last_notice": 46738566,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    1296,
+    "Ministry of Defence"
+   ],
+   [
+    6,
+    "Defence Infrastructure Organisation"
+   ],
+   [
+    2,
+    "Defence Equipment & Support"
+   ],
+   [
+    1,
+    "Defence Digitial"
+   ],
+   [
+    1,
+    "Defence Digital"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31534701,
+  "ident": "GBPPONPJNR3745PPBV",
+  "head": "South West College",
+  "country": "GB",
+  "org_mentions": 11,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "South West College (SWC)",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46790172,
+  "last_notice": 46834554,
+  "keep": true,
+  "tokens": [
+   "swc"
+  ],
+  "others": [
+   [
+    5,
+    "South West College"
+   ],
+   [
+    3,
+    "Southwest College (SWC)"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31534701,
+  "ident": "GBPPONPJNR3745PPBV",
+  "head": "South West College",
+  "country": "GB",
+  "org_mentions": 11,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Southwest College (SWC)",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46770777,
+  "last_notice": 46809741,
+  "keep": true,
+  "tokens": [
+   "southwest",
+   "swc"
+  ],
+  "others": [
+   [
+    5,
+    "South West College"
+   ],
+   [
+    3,
+    "South West College (SWC)"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31540518,
+  "ident": "GBPPONPJXX6763PBZL",
+  "head": "DBS",
+  "country": "GB",
+  "org_mentions": 22,
+  "detector": "HELD-5",
+  "key_count": 5,
+  "name": "Disclosure and Barring Service",
+  "scheme": "GB-PPON",
+  "n": 5,
+  "first_notice": 46751033,
+  "last_notice": 46820722,
+  "keep": true,
+  "tokens": [
+   "barring",
+   "disclosure"
+  ],
+  "others": [
+   [
+    17,
+    "DBS"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-5",
+  "key_count": 5,
+  "name": "Darlington Borough Council",
+  "scheme": "GB-PPON",
+  "n": 5,
+  "first_notice": 46789522,
+  "last_notice": 47288592,
+  "keep": true,
+  "tokens": [
+   "darlington"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ],
+   [
+    4,
+    "Rochdale Borough Council"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "East Suffolk Council",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46796013,
+  "last_notice": 47296537,
+  "keep": true,
+  "tokens": [
+   "suffolk"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Newcastle City Council",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46789542,
+  "last_notice": 46793638,
+  "keep": true,
+  "tokens": [
+   "newcastle"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "North Northamptonshire Council",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46790550,
+  "last_notice": 47289467,
+  "keep": true,
+  "tokens": [
+   "northamptonshire"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Rochdale Borough Council",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46857373,
+  "last_notice": 46857436,
+  "keep": true,
+  "tokens": [
+   "rochdale"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Stairlifts and Lifting Equipment Framework 2026",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46739561,
+  "last_notice": 46817180,
+  "keep": true,
+  "tokens": [
+   "2026",
+   "equipment",
+   "framework",
+   "lifting",
+   "stairlifts"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Rochdale Borough Council"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Stockton on Tees Borough Council",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46842011,
+  "last_notice": 46842261,
+  "keep": true,
+  "tokens": [
+   "stockton",
+   "tees"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ],
+   [
+    4,
+    "Rochdale Borough Council"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30976588,
+  "ident": "GBPPONPLDR6183VJGX",
+  "head": "HICO Ltd.",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Hugh Irwin Associates Ltd",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46731267,
+  "last_notice": 47287708,
+  "keep": true,
+  "tokens": [
+   "associates",
+   "hugh",
+   "irwin"
+  ],
+  "others": [
+   [
+    2,
+    "HICO Ltd."
+   ],
+   [
+    2,
+    "HICO Ltd"
+   ],
+   [
+    1,
+    "Hugh Irwin Associated Ltd"
+   ],
+   [
+    1,
+    "HICO ltd"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30967593,
+  "ident": "GBPPONPLDX6964RZQX",
+  "head": "Tunbridge Wells Borough Council",
+  "country": "GB",
+  "org_mentions": 72,
+  "detector": "HELD-6",
+  "key_count": 6,
+  "name": "TMT Procurement Partnership",
+  "scheme": "GB-PPON",
+  "n": 6,
+  "first_notice": 46789370,
+  "last_notice": 47290364,
+  "keep": true,
+  "tokens": [
+   "procurement",
+   "tmt"
+  ],
+  "others": [
+   [
+    66,
+    "Tunbridge Wells Borough Council"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30913776,
+  "ident": "GBPPONPNHT9235VXDV",
+  "head": "Leicestershire County Council",
+  "country": "GB",
+  "org_mentions": 410,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Leicester County Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46804404,
+  "last_notice": 46805922,
+  "keep": true,
+  "tokens": [
+   "leicester"
+  ],
+  "others": [
+   [
+    407,
+    "Leicestershire County Council"
+   ],
+   [
+    1,
+    "Leicester County council"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913776,
+  "ident": "GBPPONPNHT9235VXDV",
+  "head": "Leicestershire County Council",
+  "country": "GB",
+  "org_mentions": 410,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Leicester County council",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46835904,
+  "last_notice": 46835904,
+  "keep": true,
+  "tokens": [
+   "leicester"
+  ],
+  "others": [
+   [
+    407,
+    "Leicestershire County Council"
+   ],
+   [
+    2,
+    "Leicester County Council"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30916212,
+  "ident": "GBPPONPNQQ5614CVGN",
+  "head": "Acquisition Systems Ltd",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Pharmagraph Ltd",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46825884,
+  "last_notice": 46831689,
+  "keep": true,
+  "tokens": [
+   "pharmagraph"
+  ],
+  "others": [
+   [
+    3,
+    "Acquisition Systems Limited"
+   ],
+   [
+    2,
+    "Acquisition Systems Ltd"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 30915848,
+  "ident": "GBPPONPPHD4211XYXJ",
+  "head": "Transport for Wales",
+  "country": "GB",
+  "org_mentions": 106,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Pullman Rail Ltd",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46734421,
+  "last_notice": 46739172,
+  "keep": true,
+  "tokens": [
+   "pullman",
+   "rail"
+  ],
+  "others": [
+   [
+    86,
+    "Transport for Wales"
+   ],
+   [
+    7,
+    "Transport for Wales (TfW)"
+   ],
+   [
+    4,
+    "Transport for Wales (TFW)"
+   ],
+   [
+    3,
+    "Transport for Wales Limited"
+   ],
+   [
+    2,
+    "Transport for Wales (Group)"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30926961,
+  "ident": "GBPPONPQDY1678DHXN",
+  "head": "Swansea Bay University Health Board",
+  "country": "GB",
+  "org_mentions": 15,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "HOSPITAL INNOVATIONS LIMITED",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46830621,
+  "last_notice": 46847682,
+  "keep": true,
+  "tokens": [
+   "hospital",
+   "innovations"
+  ],
+  "others": [
+   [
+    9,
+    "Swansea Bay University Health Board"
+   ],
+   [
+    2,
+    "Swansea Bay University Health Board (SBUHB)"
+   ],
+   [
+    1,
+    "Swansea Bay University Health Board "
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30914597,
+  "ident": "GBPPONPRJD7336PDHX",
+  "head": "B3Living",
+  "country": "GB",
+  "org_mentions": 27,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "B3 Living",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46812958,
+  "last_notice": 46845423,
+  "keep": true,
+  "tokens": [
+   "living"
+  ],
+  "others": [
+   [
+    23,
+    "B3Living"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30914652,
+  "ident": "GBPPONPRNG7762JCRY",
+  "head": "The Royal Parks Ltd",
+  "country": "GB",
+  "org_mentions": 69,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "TRP TRADING COMPANY LIMITED",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46730453,
+  "last_notice": 46787965,
+  "keep": true,
+  "tokens": [
+   "trading",
+   "trp"
+  ],
+  "others": [
+   [
+    30,
+    "The Royal Parks Ltd"
+   ],
+   [
+    27,
+    "The Royal Parks Limited"
+   ],
+   [
+    7,
+    "The Royal Parks"
+   ],
+   [
+    2,
+    "Conservation Architect"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30919411,
+  "ident": "GBPPONPTCY3946LHDG",
+  "head": "Everyone Active",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Sports and Leisure Management Ltd",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46755068,
+  "last_notice": 46781295,
+  "keep": true,
+  "tokens": [
+   "leisure",
+   "sports"
+  ],
+  "others": [
+   [
+    3,
+    "Everyone Active"
+   ],
+   [
+    1,
+    "Sport and Leisure Management Limited"
+   ],
+   [
+    1,
+    "Everyone Active "
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913624,
+  "ident": "GBPPONPTMT7816YCQG",
+  "head": "London Legacy Development Corporation",
+  "country": "GB",
+  "org_mentions": 447,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "London Stadium 185 Limited",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46739350,
+  "last_notice": 46870567,
+  "keep": true,
+  "tokens": [
+   "185",
+   "stadium"
+  ],
+  "others": [
+   [
+    219,
+    "Mayor's Office for Policing and Crime"
+   ],
+   [
+    122,
+    "The Mayor's Office for Policing And Crime"
+   ],
+   [
+    29,
+    "Mayors Office For Policing And Crime"
+   ],
+   [
+    19,
+    "Mayor's Office for Policing and Crime (MOPAC)"
+   ],
+   [
+    17,
+    "The Mayor's Office for Policing and Crime (MOPAC)"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913603,
+  "ident": "GBPPONPTQH2444LZZX",
+  "head": "Catering for Staff Summer Engagement Event 2025",
+  "country": "GB",
+  "org_mentions": 22,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Luton and Dunstable Hospital",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 30805682,
+  "last_notice": 46847269,
+  "keep": true,
+  "tokens": [
+   "dunstable",
+   "hospital",
+   "luton"
+  ],
+  "others": [
+   [
+    15,
+    "Bedfordshire Hospitals NHS Foundation Trust"
+   ],
+   [
+    3,
+    "Bedfordshire Hospitals NHSFT"
+   ],
+   [
+    1,
+    "Catering for Staff Summer Engagement Event 2025"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31560408,
+  "ident": "GBPPONPTQY8812XHLH",
+  "head": "Shropshire Fire Rescue Service",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Wyre Forest District Council",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46826419,
+  "last_notice": 46842882,
+  "keep": true,
+  "tokens": [
+   "forest",
+   "wyre"
+  ],
+  "others": [
+   [
+    3,
+    "Shropshire Fire and Rescue Service"
+   ],
+   [
+    2,
+    "Shropshire Fire Rescue Service"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30915408,
+  "ident": "GBPPONPTVL7854TMRZ",
+  "head": "Carmarthenshire County Council",
+  "country": "GB",
+  "org_mentions": 216,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Camarthenshire County Council",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46790235,
+  "last_notice": 47289041,
+  "keep": true,
+  "tokens": [
+   "camarthenshire"
+  ],
+  "others": [
+   [
+    207,
+    "Carmarthenshire County Council"
+   ],
+   [
+    4,
+    "Carmarthenshire County Council "
+   ],
+   [
+    1,
+    "Carmarthenshire Council  "
+   ],
+   [
+    1,
+    "Carmarthen County Council"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913851,
+  "ident": "GBPPONPVLQ8225QVHT",
+  "head": "London Borough of Wandsworth",
+  "country": "GB",
+  "org_mentions": 214,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "London Borough of Hounslow",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46381132,
+  "last_notice": 46825561,
+  "keep": true,
+  "tokens": [
+   "hounslow"
+  ],
+  "others": [
+   [
+    189,
+    "London Borough of Wandsworth"
+   ],
+   [
+    22,
+    "Wandsworth Borough Council"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30913704,
+  "ident": "GBPPONPVMT4274HPBN",
+  "head": "Stonewater Limited",
+  "country": "GB",
+  "org_mentions": 79,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Print and Mailing Services - 00472-CX",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 30812816,
+  "last_notice": 47232408,
+  "keep": true,
+  "tokens": [
+   "00472",
+   "mailing",
+   "print"
+  ],
+  "others": [
+   [
+    55,
+    "Stonewater Limited"
+   ],
+   [
+    18,
+    "Stonewater Ltd"
+   ],
+   [
+    1,
+    "00538-CS - Recruitment Tracking System"
+   ],
+   [
+    1,
+    "00419-AST Windows and Doors Replacement Programme"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30930612,
+  "ident": "GBPPONPVNT4551BLHL",
+  "head": "OneAdvanced IT Services Limited",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Advanced Health & Care Limited T/A One Advanced",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46767767,
+  "last_notice": 46768238,
+  "keep": true,
+  "tokens": [
+   "advanced"
+  ],
+  "others": [
+   [
+    5,
+    "OneAdvanced IT Services Limited"
+   ],
+   [
+    1,
+    "Advanced Health and Care Limited"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30930612,
+  "ident": "GBPPONPVNT4551BLHL",
+  "head": "OneAdvanced IT Services Limited",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Advanced Health and Care Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46761128,
+  "last_notice": 46761128,
+  "keep": true,
+  "tokens": [
+   "advanced"
+  ],
+  "others": [
+   [
+    5,
+    "OneAdvanced IT Services Limited"
+   ],
+   [
+    2,
+    "Advanced Health & Care Limited T/A One Advanced"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913970,
+  "ident": "GBPPONPVWG8426YWXV",
+  "head": "CPD - Supplies & Services Division",
+  "country": "GB",
+  "org_mentions": 671,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "Department of Finance",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46738594,
+  "last_notice": 46746022,
+  "keep": true,
+  "tokens": [
+   "department",
+   "finance"
+  ],
+  "others": [
+   [
+    385,
+    "CPD - Supplies & Services Division"
+   ],
+   [
+    116,
+    "CPD - Supplies and Services Division"
+   ],
+   [
+    63,
+    "The Executive Office (TEO)"
+   ],
+   [
+    23,
+    "CPD - Supplies & Service Division"
+   ],
+   [
+    20,
+    "CPD - Supplies and Service Division"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913862,
+  "ident": "GBPPONPVZW3234DTLY",
+  "head": "Met Office",
+  "country": "GB",
+  "org_mentions": 532,
+  "detector": "HELD-3",
+  "key_count": 3,
+  "name": "National Meteorological Service",
+  "scheme": "GB-PPON",
+  "n": 3,
+  "first_notice": 46882834,
+  "last_notice": 46884716,
+  "keep": true,
+  "tokens": [
+   "meteorological"
+  ],
+  "others": [
+   [
+    529,
+    "Met Office"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913738,
+  "ident": "GBPPONPXWV6492CGMN",
+  "head": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "country": "GB",
+  "org_mentions": 1170,
+  "detector": "HELD-6",
+  "key_count": 6,
+  "name": "Health Education and Improvement Wales (HEIW)",
+  "scheme": "GB-PPON",
+  "n": 6,
+  "first_notice": 46787268,
+  "last_notice": 46886792,
+  "keep": true,
+  "tokens": [
+   "education",
+   "heiw",
+   "improvement"
+  ],
+  "others": [
+   [
+    630,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ],
+   [
+    249,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)"
+   ],
+   [
+    75,
+    "NHS Wales Shared Services Partnership"
+   ],
+   [
+    40,
+    "Velindre University NHS Trust"
+   ],
+   [
+    13,
+    "NHS Wales Shared Service Partnership"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30917424,
+  "ident": "GBPPONPYCX4938CCHM",
+  "head": "Kent County Council (T/a Procurement Services)",
+  "country": "GB",
+  "org_mentions": 176,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Connect2Framework for The Supply of Professional & Operational Support Interim & Temporary agency Staff to the Public Sector",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46794987,
+  "last_notice": 46855181,
+  "keep": true,
+  "tokens": [
+   "agency",
+   "connect2framework",
+   "interim",
+   "operational",
+   "professional",
+   "public",
+   "sector",
+   "staff",
+   "supply",
+   "support",
+   "temporary"
+  ],
+  "others": [
+   [
+    77,
+    "Kent County Council (t/a Procurement Services)"
+   ],
+   [
+    30,
+    "Kent County Council trading as Procurement Services"
+   ],
+   [
+    10,
+    "Cantium Business Solutions Limited"
+   ],
+   [
+    8,
+    "Commercial Services Kent Limited"
+   ],
+   [
+    6,
+    "Commercial Services Kent Ltd"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30917424,
+  "ident": "GBPPONPYCX4938CCHM",
+  "head": "Kent County Council (T/a Procurement Services)",
+  "country": "GB",
+  "org_mentions": 176,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Connect2Framework for the supply of Specialist Social Care, Education & Community Interim and temporary staffing Services to the Public Sector",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46794983,
+  "last_notice": 47158763,
+  "keep": true,
+  "tokens": [
+   "connect2framework",
+   "education",
+   "interim",
+   "public",
+   "sector",
+   "social",
+   "specialist",
+   "staffing",
+   "supply",
+   "temporary"
+  ],
+  "others": [
+   [
+    77,
+    "Kent County Council (t/a Procurement Services)"
+   ],
+   [
+    30,
+    "Kent County Council trading as Procurement Services"
+   ],
+   [
+    10,
+    "Cantium Business Solutions Limited"
+   ],
+   [
+    8,
+    "Commercial Services Kent Limited"
+   ],
+   [
+    6,
+    "Commercial Services Kent Ltd"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30914454,
+  "ident": "GBPPONPYDD1122TCVN",
+  "head": "Leicestershire County Council, trading as ESPO",
+  "country": "GB",
+  "org_mentions": 342,
+  "detector": "HELD-5",
+  "key_count": 5,
+  "name": "ESPO",
+  "scheme": "GB-PPON",
+  "n": 5,
+  "first_notice": 46783237,
+  "last_notice": 46810070,
+  "keep": true,
+  "tokens": [
+   "espo"
+  ],
+  "others": [
+   [
+    332,
+    "Leicestershire County Council, trading as ESPO"
+   ],
+   [
+    4,
+    "Eastern Shires Purchasing Organisation"
+   ],
+   [
+    1,
+    "Eastern Shires Purchasing Organisation "
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30914454,
+  "ident": "GBPPONPYDD1122TCVN",
+  "head": "Leicestershire County Council, trading as ESPO",
+  "country": "GB",
+  "org_mentions": 342,
+  "detector": "HELD-5",
+  "key_count": 5,
+  "name": "Eastern Shires Purchasing Organisation",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46783653,
+  "last_notice": 46816506,
+  "keep": true,
+  "tokens": [
+   "eastern",
+   "organisation",
+   "purchasing",
+   "shires"
+  ],
+  "others": [
+   [
+    332,
+    "Leicestershire County Council, trading as ESPO"
+   ],
+   [
+    5,
+    "ESPO"
+   ],
+   [
+    1,
+    "Eastern Shires Purchasing Organisation "
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30914454,
+  "ident": "GBPPONPYDD1122TCVN",
+  "head": "Leicestershire County Council, trading as ESPO",
+  "country": "GB",
+  "org_mentions": 342,
+  "detector": "HELD-5",
+  "key_count": 5,
+  "name": "Eastern Shires Purchasing Organisation ",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46730372,
+  "last_notice": 46730372,
+  "keep": true,
+  "tokens": [
+   "eastern",
+   "organisation",
+   "purchasing",
+   "shires"
+  ],
+  "others": [
+   [
+    332,
+    "Leicestershire County Council, trading as ESPO"
+   ],
+   [
+    5,
+    "ESPO"
+   ],
+   [
+    4,
+    "Eastern Shires Purchasing Organisation"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30915378,
+  "ident": "GBPPONPYDQ9172CNVV",
+  "head": "THANET DISTRICT COUNCIL",
+  "country": "GB",
+  "org_mentions": 57,
+  "detector": "HELD-4",
+  "key_count": 4,
+  "name": "Walpole Bay Beach Facilities",
+  "scheme": "GB-PPON",
+  "n": 4,
+  "first_notice": 46796155,
+  "last_notice": 46811359,
+  "keep": true,
+  "tokens": [
+   "bay",
+   "beach",
+   "facilities",
+   "walpole"
+  ],
+  "others": [
+   [
+    29,
+    "Thanet District Council"
+   ],
+   [
+    19,
+    "THANET DISTRICT COUNCIL"
+   ],
+   [
+    2,
+    "Replacement Backup Solution Platform"
+   ],
+   [
+    2,
+    "Ramsgate Royal Harbour, Kent Mechanical Dredging"
+   ],
+   [
+    1,
+    "Thanet Bus Shelter Replacement Project"
+   ]
+  ],
+  "class": "T"
+ }
+]

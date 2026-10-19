@@ -1,0 +1,20 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on v551 plan.db copy + prod org indexes
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(11, 2, 0, 'SEARCH o USING INDEX organizations_identifier_id (identifier>? AND identifier<?)')
+(17, 2, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(22, 2, 0, 'USE TEMP B-TREE FOR GROUP BY')
+(79, 1, 0, 'UNION ALL')
+(88, 79, 0, 'SEARCH o USING INDEX organizations_identifier_id (identifier>? AND identifier<?)')
+(94, 79, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(99, 79, 0, 'USE TEMP B-TREE FOR GROUP BY')
+-- turso plan-probe (rc=0)
+PLAN	b2	COMPOUND QUERY
+PLAN	b2	  LEFT-MOST SUBQUERY
+PLAN	b2	    SEARCH o USING INDEX organizations_identifier_id (identifier>=? AND identifier<?)
+PLAN	b2	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	b2	    USE SORTER FOR GROUP BY
+PLAN	b2	  UNION ALL
+PLAN	b2	    SEARCH o USING INDEX organizations_identifier_id (identifier>=? AND identifier<?)
+PLAN	b2	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	b2	    USE SORTER FOR GROUP BY

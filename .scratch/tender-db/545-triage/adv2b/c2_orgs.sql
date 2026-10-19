@@ -1,0 +1,1 @@
+SELECT o.id, o.identifier, o.name, o.provisional, o.country, (SELECT count(*) FROM organization_mentions m WHERE m.organization_id = o.id) AS refs FROM organizations o WHERE o.id IN (8881761, 30916935, 31541038, 30914698, 31565528, 30913749, 31548301, 31545104, 30917202, 30913587, 31561689)

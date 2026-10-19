@@ -1,0 +1,152 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on v551 plan.db copy + prod org indexes
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(5, 2, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(15, 1, 0, 'UNION ALL')
+(18, 15, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(28, 1, 0, 'UNION ALL')
+(31, 28, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(41, 1, 0, 'UNION ALL')
+(44, 41, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(54, 1, 0, 'UNION ALL')
+(57, 54, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(67, 1, 0, 'UNION ALL')
+(70, 67, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(80, 1, 0, 'UNION ALL')
+(83, 80, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(93, 1, 0, 'UNION ALL')
+(96, 93, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(106, 1, 0, 'UNION ALL')
+(109, 106, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(119, 1, 0, 'UNION ALL')
+(122, 119, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(132, 1, 0, 'UNION ALL')
+(135, 132, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(145, 1, 0, 'UNION ALL')
+(148, 145, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(158, 1, 0, 'UNION ALL')
+(161, 158, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(171, 1, 0, 'UNION ALL')
+(174, 171, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(184, 1, 0, 'UNION ALL')
+(187, 184, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(197, 1, 0, 'UNION ALL')
+(200, 197, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(210, 1, 0, 'UNION ALL')
+(213, 210, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(223, 1, 0, 'UNION ALL')
+(226, 223, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(236, 1, 0, 'UNION ALL')
+(239, 236, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(249, 1, 0, 'UNION ALL')
+(252, 249, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(262, 1, 0, 'UNION ALL')
+(265, 262, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(275, 1, 0, 'UNION ALL')
+(278, 275, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(288, 1, 0, 'UNION ALL')
+(291, 288, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(301, 1, 0, 'UNION ALL')
+(304, 301, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(314, 1, 0, 'UNION ALL')
+(317, 314, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(327, 1, 0, 'UNION ALL')
+(330, 327, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(340, 1, 0, 'UNION ALL')
+(343, 340, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(353, 1, 0, 'UNION ALL')
+(356, 353, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(366, 1, 0, 'UNION ALL')
+(369, 366, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(379, 1, 0, 'UNION ALL')
+(382, 379, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(392, 1, 0, 'UNION ALL')
+(395, 392, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(405, 1, 0, 'UNION ALL')
+(408, 405, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(418, 1, 0, 'UNION ALL')
+(421, 418, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(431, 1, 0, 'UNION ALL')
+(434, 431, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(444, 1, 0, 'UNION ALL')
+(447, 444, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(457, 1, 0, 'UNION ALL')
+(460, 457, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+(470, 1, 0, 'UNION ALL')
+(473, 470, 0, 'SEARCH organization_mentions USING COVERING INDEX organization_mentions_org (organization_id=?)')
+-- turso plan-probe (rc=0)
+PLAN	r12_refs	COMPOUND QUERY
+PLAN	r12_refs	  LEFT-MOST SUBQUERY
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r12_refs	  UNION ALL
+PLAN	r12_refs	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)

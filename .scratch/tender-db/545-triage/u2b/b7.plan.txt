@@ -1,0 +1,8 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on v551 plan.db copy + prod org indexes
+(9, 0, 0, 'SEARCH o USING INDEX organizations_identifier_id (identifier>? AND identifier<?)')
+(15, 0, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(20, 0, 0, 'USE TEMP B-TREE FOR GROUP BY')
+-- turso plan-probe (rc=0)
+PLAN	b7	SEARCH o USING INDEX organizations_identifier_id (identifier>=? AND identifier<?)
+PLAN	b7	SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	b7	USE SORTER FOR GROUP BY

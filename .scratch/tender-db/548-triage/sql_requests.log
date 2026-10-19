@@ -1,2 +1,4 @@
 2026-10-19T08:18:37Z q01_gb_spellings rc=0 secs=1.582028989 bytes=581
 2026-10-19T08:38:50Z q02_votes_per_notice rc=0 secs=1.567244124 bytes=2886
+2026-10-19T09:16:33Z q03_pernotice_a rc=0 secs=1.862492680 bytes=68905
+2026-10-19T09:16:42Z q04_pernotice_b rc=0 secs=1.921510027 bytes=73236

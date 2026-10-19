@@ -1,0 +1,628 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on v551 plan.db copy + prod org indexes
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(7, 2, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(14, 2, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(44, 1, 0, 'UNION ALL')
+(49, 44, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(56, 44, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(86, 1, 0, 'UNION ALL')
+(91, 86, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(98, 86, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(128, 1, 0, 'UNION ALL')
+(133, 128, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(140, 128, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(170, 1, 0, 'UNION ALL')
+(175, 170, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(182, 170, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(212, 1, 0, 'UNION ALL')
+(217, 212, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(224, 212, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(254, 1, 0, 'UNION ALL')
+(259, 254, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(266, 254, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(296, 1, 0, 'UNION ALL')
+(301, 296, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(308, 296, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(338, 1, 0, 'UNION ALL')
+(343, 338, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(350, 338, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(380, 1, 0, 'UNION ALL')
+(385, 380, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(392, 380, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(422, 1, 0, 'UNION ALL')
+(427, 422, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(434, 422, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(464, 1, 0, 'UNION ALL')
+(469, 464, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(476, 464, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(506, 1, 0, 'UNION ALL')
+(511, 506, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(518, 506, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(548, 1, 0, 'UNION ALL')
+(553, 548, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(560, 548, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(590, 1, 0, 'UNION ALL')
+(595, 590, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(602, 590, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(632, 1, 0, 'UNION ALL')
+(637, 632, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(644, 632, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(674, 1, 0, 'UNION ALL')
+(679, 674, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(686, 674, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(716, 1, 0, 'UNION ALL')
+(721, 716, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(728, 716, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(758, 1, 0, 'UNION ALL')
+(763, 758, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(770, 758, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(800, 1, 0, 'UNION ALL')
+(805, 800, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(812, 800, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(842, 1, 0, 'UNION ALL')
+(847, 842, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(854, 842, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(884, 1, 0, 'UNION ALL')
+(889, 884, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(896, 884, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(926, 1, 0, 'UNION ALL')
+(931, 926, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(938, 926, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(968, 1, 0, 'UNION ALL')
+(973, 968, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(980, 968, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1010, 1, 0, 'UNION ALL')
+(1015, 1010, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1022, 1010, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1052, 1, 0, 'UNION ALL')
+(1057, 1052, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1064, 1052, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1094, 1, 0, 'UNION ALL')
+(1099, 1094, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1106, 1094, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1136, 1, 0, 'UNION ALL')
+(1141, 1136, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1148, 1136, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1178, 1, 0, 'UNION ALL')
+(1183, 1178, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1190, 1178, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1220, 1, 0, 'UNION ALL')
+(1225, 1220, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1232, 1220, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1262, 1, 0, 'UNION ALL')
+(1267, 1262, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1274, 1262, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1304, 1, 0, 'UNION ALL')
+(1309, 1304, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1316, 1304, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1346, 1, 0, 'UNION ALL')
+(1351, 1346, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1358, 1346, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1388, 1, 0, 'UNION ALL')
+(1393, 1388, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1400, 1388, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1430, 1, 0, 'UNION ALL')
+(1435, 1430, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1442, 1430, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1472, 1, 0, 'UNION ALL')
+(1477, 1472, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1484, 1472, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1514, 1, 0, 'UNION ALL')
+(1519, 1514, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1526, 1514, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1556, 1, 0, 'UNION ALL')
+(1561, 1556, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1568, 1556, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1598, 1, 0, 'UNION ALL')
+(1603, 1598, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1610, 1598, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1640, 1, 0, 'UNION ALL')
+(1645, 1640, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1652, 1640, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1682, 1, 0, 'UNION ALL')
+(1687, 1682, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1694, 1682, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1724, 1, 0, 'UNION ALL')
+(1729, 1724, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1736, 1724, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1766, 1, 0, 'UNION ALL')
+(1771, 1766, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1778, 1766, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1808, 1, 0, 'UNION ALL')
+(1813, 1808, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1820, 1808, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1850, 1, 0, 'UNION ALL')
+(1855, 1850, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1862, 1850, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1892, 1, 0, 'UNION ALL')
+(1897, 1892, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1904, 1892, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(1934, 1, 0, 'UNION ALL')
+(1939, 1934, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1946, 1934, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(1976, 1, 0, 'UNION ALL')
+(1981, 1976, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(1988, 1976, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2018, 1, 0, 'UNION ALL')
+(2023, 2018, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2030, 2018, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2060, 1, 0, 'UNION ALL')
+(2065, 2060, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2072, 2060, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2102, 1, 0, 'UNION ALL')
+(2107, 2102, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2114, 2102, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2144, 1, 0, 'UNION ALL')
+(2149, 2144, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2156, 2144, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2186, 1, 0, 'UNION ALL')
+(2191, 2186, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2198, 2186, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2228, 1, 0, 'UNION ALL')
+(2233, 2228, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2240, 2228, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2270, 1, 0, 'UNION ALL')
+(2275, 2270, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2282, 2270, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2312, 1, 0, 'UNION ALL')
+(2317, 2312, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2324, 2312, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2354, 1, 0, 'UNION ALL')
+(2359, 2354, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2366, 2354, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2396, 1, 0, 'UNION ALL')
+(2401, 2396, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2408, 2396, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2438, 1, 0, 'UNION ALL')
+(2443, 2438, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2450, 2438, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2480, 1, 0, 'UNION ALL')
+(2485, 2480, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2492, 2480, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2522, 1, 0, 'UNION ALL')
+(2527, 2522, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2534, 2522, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2564, 1, 0, 'UNION ALL')
+(2569, 2564, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2576, 2564, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2606, 1, 0, 'UNION ALL')
+(2611, 2606, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2618, 2606, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2648, 1, 0, 'UNION ALL')
+(2653, 2648, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2660, 2648, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2690, 1, 0, 'UNION ALL')
+(2695, 2690, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2702, 2690, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2732, 1, 0, 'UNION ALL')
+(2737, 2732, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2744, 2732, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2774, 1, 0, 'UNION ALL')
+(2779, 2774, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2786, 2774, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2816, 1, 0, 'UNION ALL')
+(2821, 2816, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2828, 2816, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2858, 1, 0, 'UNION ALL')
+(2863, 2858, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2870, 2858, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2900, 1, 0, 'UNION ALL')
+(2905, 2900, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2912, 2900, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(2942, 1, 0, 'UNION ALL')
+(2947, 2942, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2954, 2942, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(2984, 1, 0, 'UNION ALL')
+(2989, 2984, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(2996, 2984, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3026, 1, 0, 'UNION ALL')
+(3031, 3026, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3038, 3026, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3068, 1, 0, 'UNION ALL')
+(3073, 3068, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3080, 3068, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3110, 1, 0, 'UNION ALL')
+(3115, 3110, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3122, 3110, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3152, 1, 0, 'UNION ALL')
+(3157, 3152, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3164, 3152, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3194, 1, 0, 'UNION ALL')
+(3199, 3194, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3206, 3194, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3236, 1, 0, 'UNION ALL')
+(3241, 3236, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3248, 3236, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3278, 1, 0, 'UNION ALL')
+(3283, 3278, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3290, 3278, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3320, 1, 0, 'UNION ALL')
+(3325, 3320, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3332, 3320, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3362, 1, 0, 'UNION ALL')
+(3367, 3362, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3374, 3362, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3404, 1, 0, 'UNION ALL')
+(3409, 3404, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3416, 3404, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3446, 1, 0, 'UNION ALL')
+(3451, 3446, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3458, 3446, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3488, 1, 0, 'UNION ALL')
+(3493, 3488, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3500, 3488, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3530, 1, 0, 'UNION ALL')
+(3535, 3530, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3542, 3530, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3572, 1, 0, 'UNION ALL')
+(3577, 3572, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3584, 3572, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3614, 1, 0, 'UNION ALL')
+(3619, 3614, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3626, 3614, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3656, 1, 0, 'UNION ALL')
+(3661, 3656, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3668, 3656, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3698, 1, 0, 'UNION ALL')
+(3703, 3698, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3710, 3698, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3740, 1, 0, 'UNION ALL')
+(3745, 3740, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3752, 3740, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3782, 1, 0, 'UNION ALL')
+(3787, 3782, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3794, 3782, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3824, 1, 0, 'UNION ALL')
+(3829, 3824, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3836, 3824, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3866, 1, 0, 'UNION ALL')
+(3871, 3866, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3878, 3866, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3908, 1, 0, 'UNION ALL')
+(3913, 3908, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3920, 3908, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(3950, 1, 0, 'UNION ALL')
+(3955, 3950, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(3962, 3950, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(3992, 1, 0, 'UNION ALL')
+(3997, 3992, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4004, 3992, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(4034, 1, 0, 'UNION ALL')
+(4039, 4034, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4046, 4034, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(4076, 1, 0, 'UNION ALL')
+(4081, 4076, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4088, 4076, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(4118, 1, 0, 'UNION ALL')
+(4123, 4118, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4130, 4118, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(4160, 1, 0, 'UNION ALL')
+(4165, 4160, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4172, 4160, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(4202, 1, 0, 'UNION ALL')
+(4207, 4202, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4214, 4202, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(4244, 1, 0, 'UNION ALL')
+(4249, 4244, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4256, 4244, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+(4286, 1, 0, 'UNION ALL')
+(4291, 4286, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4298, 4286, 0, 'SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN')
+(4328, 1, 0, 'UNION ALL')
+(4333, 4328, 0, 'SEARCH m USING INDEX organization_mentions_org (organization_id=?)')
+(4340, 4328, 0, 'SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN')
+-- turso plan-probe (rc=0)
+PLAN	r10_sec	COMPOUND QUERY
+PLAN	r10_sec	  LEFT-MOST SUBQUERY
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_parties_org (organization_id=?) LEFT-JOIN
+PLAN	r10_sec	  UNION ALL
+PLAN	r10_sec	    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+PLAN	r10_sec	    SEARCH p USING INDEX tender_version_bid_parties_org (organization_id=?) LEFT-JOIN

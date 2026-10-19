@@ -1,0 +1,410 @@
+0 V
+1 T person (an LSE academic)
+2 V
+3 V
+4 V
+5 V
+6 T
+7 T
+8 F
+9 U MSA owns Bristol Uniforms
+10 V
+11 V
+12 V
+13 V
+14 V former name
+15 V
+16 V
+17 V
+18 V
+19 F? small firms
+20 F
+21 V former name
+22 V trading name
+23 U M Group (former Dyer & Butler)
+24 V
+25 V
+26 U Avenues group
+27 V
+28 V
+29 V
+30 F? same-trade small firms
+31 V
+32 U Vyaire owns Jaeger
+33 V
+34 F buyer name on supplier
+35 V
+36 U FirstGroup subsidiary
+37 F? small firms
+38 V
+39 F buyer (Barnsley MBC) on supplier
+40 U OneAdvanced group
+41 U Care UK group
+42 V
+43 U BMI hospital of Circle
+44 T
+45 F
+46 U Pennon subsidiary
+47 F
+48 V
+49 F
+50 U Huws Gray acquired Lloyd Worrall
+51 U ICE venue / Thomas Telford is ICE's arm
+52 V
+53 V
+54 V
+55 V
+56 F
+57 V
+58 F buyer on supplier
+59 F
+60 V
+61 V
+62 U UCAS parent
+63 V
+64 V former name
+65 U a service the holder runs
+66 V
+67 U RLDatix group
+68 V
+69 V
+70 V
+71 F
+72 V
+73 F supplier on NPL
+74 F
+75 V
+76 U Pcubed / MI-GSO
+77 V
+78 U Williams Lea owns TSO
+79 V
+80 V
+81 V rebrand (Tuvida)
+82 F? small firms
+83 F? small firms
+84 F? small firms
+85 U Arriva subsidiary
+86 V
+87 T
+88 V
+89 V
+90 U First Bus subsidiary
+91 U First Bus subsidiary
+92 V
+93 U Altia-ABM
+94 U Altia-ABM
+95 F buyer on supplier
+96 V
+97 U Salutem group
+98 V
+99 V
+100 F? small firms
+101 V
+102 V
+103 V
+104 V
+105 V
+106 V
+107 F
+108 F? possible acquirer
+109 U
+110 T
+111 V
+112 V
+113 V
+114 V
+115 T
+116 V
+117 V
+118 V
+119 V former name
+120 T
+121 V
+122 V
+123 F
+124 V
+125 U Knorr-Bremse owns Merak
+126 U Knorr-Bremse owns Merak
+127 T email address
+128 V
+129 V
+130 V
+131 U GCI / Colibri
+132 F unit 1 Bedford/Comensura
+133 V
+134 F unit 1 DDM Health
+135 V
+136 V
+137 V
+138 F unit 1 London Cactus
+139 F? small firms
+140 F unit 1 Diabetes UK
+141 U merged into NHS Confederation
+142 F? unit 1 ambiguous
+143 F unit 1 Autocross Euroshell
+144 F? unit 1 ambiguous
+145 V
+146 V
+147 F buyer on supplier
+148 V
+149 F? possible group
+150 V
+151 V
+152 F unit 1 LUC
+153 V
+154 V
+155 V
+156 U Thermo Fisher group
+157 U Tracsis subsidiary
+158 T
+159 V
+160 F? small firms
+161 U Sureserve renamed K&T
+162 V
+163 T
+164 F? small firms
+165 F? small firms
+166 F? sister agencies possible
+167 F? small firms
+168 V
+169 F
+170 V
+171 V
+172 V
+173 V
+174 T
+175 V
+176 V
+177 F? small firms
+178 V former name
+179 F? small firms
+180 F? possible trading name
+181 F? small firms
+182 V slogan
+183 V
+184 F? possible acquirer
+185 T site name
+186 V
+187 F? small charities
+188 F buyer on supplier
+189 U Ramsay owns Pinehill
+190 U Ramsay owns Pinehill
+191 U Ramsay owns Pinehill
+192 V
+193 V
+194 V
+195 F
+196 F? small firms
+197 V
+198 U sister company
+199 V
+200 F? small firms
+201 T person
+202 V
+203 V
+204 V
+205 U Interaction group
+206 V former name
+207 V
+208 V
+209 F? small firms
+210 U D&G owns Chaserider
+211 V
+212 V
+213 V
+214 V
+215 V
+216 T
+217 V
+218 V
+219 V
+220 V
+221 V
+222 V
+223 U member practice
+224 V
+225 V
+226 U Sureserve group
+227 V
+228 F
+229 V
+230 T
+231 V
+232 V
+233 F? small firms
+234 U parent
+235 U parent
+236 V
+237 F? sister agencies possible
+238 V
+239 U RDG company
+240 A buyer-side (r10): Gleeds runs College of Policing procurements as its agent
+241 F? small firms
+242 V
+243 V
+244 V
+245 F buyer on supplier
+246 U SCC group
+247 V
+248 U KTN merged into Innovate UK
+249 U
+250 U AfC owner council
+251 V former name
+252 U parent
+253 F? small firms
+254 F
+255 F
+256 V
+257 V
+258 V
+259 U Sureserve acquired CorEnergy
+260 V
+261 V franchise name
+262 V legal name
+263 F? consortium wording
+264 F? small firms
+265 F? small firms
+266 U Socitm trading arm
+267 F buyer on supplier
+268 F buyer on supplier
+269 V
+270 V
+271 V
+272 F? small firms
+273 V
+274 F
+275 F? possible group
+276 T
+277 V
+278 T
+279 V
+280 V
+281 V
+282 V
+283 V
+284 V
+285 V
+286 V product brand
+287 V
+288 V
+289 V
+290 V
+291 V
+292 F? small firms
+293 U Veritone owns Broadbean
+294 V
+295 U hosted by LGA
+296 U hosted by LGA
+297 V
+298 F? possible group
+299 F
+300 V
+301 V typo of top key
+302 F
+303 F
+304 U operator group
+305 U Tees group
+306 V
+307 F? possible rename
+308 V
+309 U NELFT co-founded Care City
+310 F
+311 V
+312 F? small firms
+313 F? small firms
+314 V
+315 V
+316 V
+317 F? small firms
+318 F? small firms
+319 V
+320 F? possible trading name
+321 F supplier on buyer
+322 V
+323 V
+324 V
+325 V
+326 T
+327 V
+328 V
+329 V
+330 V
+331 V
+332 V
+333 V
+334 F? small firms
+335 V
+336 V
+337 F? small firms
+338 F? small firms
+339 V former name
+340 V
+341 V
+342 V
+343 V
+344 V
+345 F
+346 V
+347 V
+348 V
+349 F? small firms
+350 V
+351 V
+352 V
+353 U
+354 V
+355 V
+356 V
+357 V
+358 V
+359 F buyer on supplier
+360 V
+361 V
+362 V
+363 F
+364 F
+365 V
+366 U both ITW divisions
+367 V
+368 U franchise
+369 V
+370 V
+371 F
+372 F? small charities
+373 V
+374 V
+375 V
+376 V
+377 U parent
+378 F? small firms
+379 V
+380 V
+381 V
+382 F? possible group
+383 F? possible trading name
+384 V
+385 V
+386 V
+387 A consultant buying for a housing association
+388 V
+389 A consultant buying for a housing association
+390 U Daresbury SIC partnership
+391 U SThree brand
+392 F
+393 V
+394 U trust subsidiary
+395 V
+396 F
+397 F? possible typo of the holder
+398 F
+399 V
+400 V
+401 V
+402 V
+403 V predecessor
+404 T
+405 U hosted by RCPsych
+406 V
+407 F
+408 U Mears group
+409 V

@@ -1,0 +1,48 @@
+0 T
+1 F? probable merger/successor name of the holder
+2 F? probable merger/successor name of the holder
+3 U CPD is part of the Department of Finance
+4 A
+5 U subsidiary
+6 U TfL subsidiary
+7 U TfL subsidiary
+8 V
+9 V
+10 U MOD bearing arm
+11 V
+12 V
+13 V
+14 A NHC member
+15 A NHC member
+16 A NHC member
+17 A NHC member
+18 A NHC member
+19 T framework title
+20 A NHC member
+21 V initials (Hugh Irwin CO)
+22 A
+23 V
+24 V
+25 F? same-niche small firms, possible group
+26 F
+27 F
+28 V
+29 U trading subsidiary
+30 V
+31 U LLDC subsidiary (org is itself mixed: MOPAC majority)
+32 U predecessor trust / site of the holder
+33 F
+34 V
+35 F
+36 T
+37 U group company
+38 U group company
+39 U CPD is part of the Department of Finance
+40 V
+41 A NWSSP buys for HEIW
+42 T
+43 T
+44 V
+45 V
+46 V
+47 T

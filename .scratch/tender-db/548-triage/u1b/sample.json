@@ -1,0 +1,1496 @@
+[
+ {
+  "clusters": 4,
+  "country": "HR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2014-03-21",
+  "head_procs": 1,
+  "identifier": "73301344150",
+  "in_population": true,
+  "merged": false,
+  "n": 11,
+  "new_name": "ABB d.o.o.",
+  "new_name_norm": "abb d.o.o",
+  "newest_is_head": false,
+  "old_name": "Zajednica ponuditelja: ABB d.d.; Dalekovod-projekt d.o.o.; Dalekovod-proizvodnja d.o.o.",
+  "old_name_norm": "zajednica ponuditelja: abb d.d.; dalekovod-projekt d.o.o.; dalekovod-proizvodnja d.o.o.",
+  "org_id": 4930460,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2015-07-23",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "ABB d.o.o.",
+    6
+   ],
+   [
+    "ABB d. o. o.",
+    2
+   ],
+   [
+    "ABB d.d.",
+    1
+   ],
+   [
+    "Zajednica ponuditelja: ABB d.d.; Dalekovod",
+    1
+   ],
+   [
+    "Zajednica ponuditelja: ABB d.d.; Dalekovod-projekt d.o.o.; Dalekovod-proizvodnja d.o.o.",
+    1
+   ]
+  ],
+  "top": 8,
+  "top_newest": "2020-10-27",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 11
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sas",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2019-02-07",
+  "head_procs": 1,
+  "identifier": "31186751900028",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "AUTOCARS STRIEBIG",
+  "new_name_norm": "autocars striebig",
+  "newest_is_head": false,
+  "old_name": "Autocars Strebig SAS — groupe Keolis",
+  "old_name_norm": "autocars strebig sas — groupe keolis",
+  "org_id": 12915436,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-07-04",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "AUTOCARS STRIEBIG",
+    2
+   ],
+   [
+    "autocars striebig",
+    2
+   ],
+   [
+    "Autocars Strebig SAS — groupe Keolis",
+    1
+   ],
+   [
+    "STRIEBIG KEOLIS",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2025-07-24",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 6
+ },
+ {
+  "clusters": 3,
+  "country": "NL",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2021-10-29",
+  "head_procs": 1,
+  "identifier": "73811483",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "Energiebox",
+  "new_name_norm": "energiebox",
+  "newest_is_head": false,
+  "old_name": "Stichting Trias Innervatie",
+  "old_name_norm": "stichting trias innervatie",
+  "org_id": 18001989,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2022-03-28",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Energiebox",
+    3
+   ],
+   [
+    "Energiebox Amersfoort",
+    1
+   ],
+   [
+    "Stichting Trias Innervatie",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2024-01-10",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 5
+ },
+ {
+  "clusters": 3,
+  "country": "PL",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2022-12-23",
+  "head_procs": 1,
+  "identifier": "6991927510",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "METALIKA RECYCLING Sp. z o.o. - partner",
+  "new_name_norm": "metalika recycling sp. z o.o. - partner",
+  "newest_is_head": false,
+  "old_name": "Partner: „METALIKA RECYCLING”  SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+  "old_name_norm": "partner: „metalika recycling”  spółka z ograniczoną odpowiedzialnością",
+  "org_id": 20247399,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2023-06-02",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "METALIKA RECYCLING Sp. z o.o. - partner",
+    3
+   ],
+   [
+    "Metalica Recycling Sp. z o..o.",
+    1
+   ],
+   [
+    "Partner: „METALIKA RECYCLING”  SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2023-09-13",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 5
+ },
+ {
+  "clusters": 3,
+  "country": "FI",
+  "eng": null,
+  "family_new": "aktiebolag",
+  "family_old": "aktiebolag",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2015-01-22",
+  "head_procs": 1,
+  "identifier": "01109614",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "Hurrikaanit Ympäristöhuolto Oy",
+  "new_name_norm": "hurrikaanit ympäristöhuolto oy",
+  "newest_is_head": false,
+  "old_name": "Hurrikaanit Ympäristönhuolto Oy",
+  "old_name_norm": "hurrikaanit ympäristönhuolto oy",
+  "org_id": 6162929,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2021-01-22",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Hurrikaanit Ympäristöhuolto Oy",
+    6
+   ],
+   [
+    "Hurrikaanit Ympäristönhuolto Oy",
+    1
+   ],
+   [
+    "Kiinteistö Oy Sectagoona",
+    1
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2023-04-04",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 8
+ },
+ {
+  "clusters": 3,
+  "country": "PL",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2017-01-18",
+  "head_procs": 1,
+  "identifier": "5951057628",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "Partner konsorcjum Usługi Leśne Ryszard Flak",
+  "new_name_norm": "partner konsorcjum usługi leśne ryszard flak",
+  "newest_is_head": false,
+  "old_name": "Usługi Leśne Ryszard Flak",
+  "old_name_norm": "usługi leśne ryszard flak",
+  "org_id": 9168556,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2020-01-22",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Partner konsorcjum Usługi Leśne Ryszard Flak",
+    3
+   ],
+   [
+    "Usługi Leśne Ryszard Flak",
+    2
+   ],
+   [
+    "Partner Konsorcjum - Usługi Leśne Ryszard Flak",
+    1
+   ],
+   [
+    "Partner Konsorcjum - Usługi Leśne Ryszrad Flak",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2023-01-30",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 7
+ },
+ {
+  "clusters": 3,
+  "country": "PL",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2020-06-15",
+  "head_procs": 1,
+  "identifier": "5581576447",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "Firma ,,DRWAL\" Mariusz Siwiak",
+  "new_name_norm": "firma ,,drwal\" mariusz siwiak",
+  "newest_is_head": false,
+  "old_name": "Mariusz Siwiak Firma „Drwal\"",
+  "old_name_norm": "mariusz siwiak firma „drwal\"",
+  "org_id": 15402029,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2021-05-04",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "FIRMA DRWAL MARIUSZ SIWIAK",
+    2
+   ],
+   [
+    "Firma ,,DRWAL\" Mariusz Siwiak",
+    1
+   ],
+   [
+    "Mariusz Siwiak Firma „Drwal\"",
+    1
+   ],
+   [
+    "konsorcjum Żubr: Firma „Drwal” Mariusz Siwiak (jako wspólnik Usługi Leśne s.c. Dziejak Mariusz, Siwiak Mariusz)",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2024-01-26",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 5
+ },
+ {
+  "clusters": 3,
+  "country": "PL",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2019-01-08",
+  "head_procs": 1,
+  "identifier": "8851238243",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "Zakład Usług Leśnych Piotr Graczewski",
+  "new_name_norm": "zakład usług leśnych piotr graczewski",
+  "newest_is_head": false,
+  "old_name": "Konsorcjum firm: Zakład Usług Leśnych Piotr Graczewski (Wykonawca)",
+  "old_name_norm": "konsorcjum firm: zakład usług leśnych piotr graczewski (wykonawca)",
+  "org_id": 12782788,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2023-02-09",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Zakład Usług Leśnych Piotr Graczewski",
+    5
+   ],
+   [
+    "Konsorcjum firm: Zakład Usług Leśnych Piotr Graczewski (Wykonawca)",
+    1
+   ],
+   [
+    "Zakład Usług Leśnych Piotr Graczewski, ul. Graniczna 15, 58-340 Głuszyca",
+    1
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2024-02-09",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 7
+ },
+ {
+  "clusters": 3,
+  "country": "SI",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-07-07",
+  "head_procs": 1,
+  "identifier": "6219217000",
+  "in_population": true,
+  "merged": false,
+  "n": 19,
+  "new_name": "IMSA, INSTALACIJE IN MATERIALI SA, prodaja instalacijskega materiala, d.o.o.",
+  "new_name_norm": "imsa, instalacije in materiali sa, prodaja instalacijskega materiala, d.o.o",
+  "newest_is_head": false,
+  "old_name": "Instalacije in materiali SA d.o.o.",
+  "old_name_norm": "instalacije in materiali sa d.o.o.",
+  "org_id": 10092211,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2017-10-26",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "IMSA, INSTALACIJE IN MATERIALI SA, prodaja instalacijskega materiala, d.o.o.",
+    8
+   ],
+   [
+    "IMSA, instalacije in materiali SA, prodaja instalacijskega materiala, d.o.o.",
+    5
+   ],
+   [
+    "IMSA, Instalacije in materiali SA, prodaja instalacijskega materiala, d.o.o.",
+    3
+   ],
+   [
+    "Imsa, Instalacije in materiali SA, prodaja instalacijskega materiala, d.o.o.",
+    1
+   ],
+   [
+    "Instalacije in materiali SA d.o.o.",
+    1
+   ]
+  ],
+  "top": 17,
+  "top_newest": "2025-02-26",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 19
+ },
+ {
+  "clusters": 3,
+  "country": "PL",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2018-02-02",
+  "head_procs": 1,
+  "identifier": "5552000408",
+  "in_population": true,
+  "merged": false,
+  "n": 26,
+  "new_name": "Firma Usługowa Joanna Skwierawska",
+  "new_name_norm": "firma usługowa joanna skwierawska",
+  "newest_is_head": false,
+  "old_name": "Firma Usługowa, Joanna Kurs, ul. Kaszubska 23, 83-425 Dziemiany",
+  "old_name_norm": "firma usługowa, joanna kurs, ul. kaszubska 23, 83-425 dziemiany",
+  "org_id": 11039579,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2018-12-29",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Firma Usługowa Joanna Skwierawska",
+    20
+   ],
+   [
+    "FIRMA USŁUGOWA JOANNA SKWIERAWSKA",
+    4
+   ],
+   [
+    "Firma Usługowa Joanna Kurs",
+    1
+   ],
+   [
+    "Firma Usługowa, Joanna Kurs, ul. Kaszubska 23, 83-425 Dziemiany",
+    1
+   ]
+  ],
+  "top": 24,
+  "top_newest": "2025-02-14",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 26
+ },
+ {
+  "clusters": 3,
+  "country": "ES",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2018-02-06",
+  "head_procs": 1,
+  "identifier": "B24214926",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "Carflor, S. L.",
+  "new_name_norm": "carflor, s. l",
+  "newest_is_head": false,
+  "old_name": "Carflor Servicios Asistenciales, S.L.",
+  "old_name_norm": "carflor servicios asistenciales, s.l.",
+  "org_id": 11058007,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2019-06-10",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Carflor, S. L.",
+    6
+   ],
+   [
+    "Carflor",
+    1
+   ],
+   [
+    "Carflor Servicios Asistenciales, S.L.",
+    1
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2020-10-09",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 8
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2021-06-25",
+  "head_procs": 1,
+  "identifier": "32652078000031",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "MITHIEUX",
+  "new_name_norm": "mithieux",
+  "newest_is_head": false,
+  "old_name": "Mithieux TP",
+  "old_name_norm": "mithieux tp",
+  "org_id": 17269219,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2023-02-24",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "MITHIEUX",
+    3
+   ],
+   [
+    "Mithieux TP",
+    1
+   ],
+   [
+    "société mithieux tp",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2023-09-12",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 5
+ },
+ {
+  "clusters": 3,
+  "country": "CZ",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2023-07-04",
+  "head_procs": 1,
+  "identifier": "48549886",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "Česká jezdecká federace",
+  "new_name_norm": "česká jezdecká federace",
+  "newest_is_head": false,
+  "old_name": "Výběrové řízení \"pořízení sportovních setů pro regionální závody a SCM\"",
+  "old_name_norm": "výběrové řízení \"pořízení sportovních setů pro regionální závody a scm\"",
+  "org_id": 21495464,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2023-10-27",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Česká jezdecká federace",
+    3
+   ],
+   [
+    "Výběrové řízení \"pořízení sportovních setů pro regionální závody a SCM\"",
+    1
+   ],
+   [
+    "„Pořízení sportovních setů pro regionální závody a SCM“",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2025-10-10",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 5
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2012-05-11",
+  "head_procs": 1,
+  "identifier": "13000960800014",
+  "in_population": true,
+  "merged": true,
+  "n": 21,
+  "new_name": "MEDDE — DREAL Bourgogne",
+  "new_name_norm": "medde — dreal bourgogne",
+  "newest_is_head": false,
+  "old_name": "DREAL Bourgogne",
+  "old_name_norm": "dreal bourgogne",
+  "org_id": 1578233,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2011-12-29",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "MEDDE — DREAL Bourgogne",
+    16
+   ],
+   [
+    "Direction régionale de l'environnement de l'aménagement et du logement",
+    2
+   ],
+   [
+    "DREAL Bourgogne",
+    1
+   ],
+   [
+    "Dreal Bourgogne",
+    1
+   ],
+   [
+    "Medde — DREAL Bourgogne",
+    1
+   ]
+  ],
+  "top": 17,
+  "top_newest": "2015-12-02",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 21
+ },
+ {
+  "clusters": 3,
+  "country": "ES",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 3,
+  "head_in_window": 0,
+  "head_newest": "2013-05-16",
+  "head_procs": 3,
+  "identifier": "P7990003A",
+  "in_population": true,
+  "merged": false,
+  "n": 65,
+  "new_name": "Instituto Municipal de la Vivienda de Málaga",
+  "new_name_norm": "instituto municipal de la vivienda de málaga",
+  "newest_is_head": false,
+  "old_name": "Instituto Municipal de la Vivienda del Excmo. Ayuntamiento de Málaga",
+  "old_name_norm": "instituto municipal de la vivienda del excmo. ayuntamiento de málaga",
+  "org_id": 1808521,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2014-04-05",
+  "rule": "R1",
+  "second": 4,
+  "spellings": [
+   [
+    "Instituto Municipal de la Vivienda de Málaga",
+    58
+   ],
+   [
+    "Instituto Municipal de la Vivienda",
+    4
+   ],
+   [
+    "Instituto Municipal de la Vivienda del Excmo. Ayuntamiento de Málaga",
+    2
+   ],
+   [
+    "Instituto Municipal de La Vivienda del Excmo. Ayuntamiento de Málaga",
+    1
+   ]
+  ],
+  "top": 58,
+  "top_newest": "2023-11-17",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 65
+ },
+ {
+  "clusters": 3,
+  "country": "CH",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2023-10-09",
+  "head_procs": 1,
+  "identifier": "552248",
+  "in_population": true,
+  "merged": false,
+  "n": 16,
+  "new_name": "Baudepartement Stadt Zug",
+  "new_name_norm": "baudepartement stadt zug",
+  "newest_is_head": false,
+  "old_name": "Baudepartement Stadt Zug Abteilung Hochbau",
+  "old_name_norm": "baudepartement stadt zug abteilung hochbau",
+  "org_id": 22088092,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2024-05-13",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Baudepartement Stadt Zug",
+    13
+   ],
+   [
+    "Baudepartement Stadt Zug Abteilung Hochbau",
+    2
+   ],
+   [
+    "Abteilung Hochbau",
+    1
+   ]
+  ],
+  "top": 13,
+  "top_newest": "2024-08-19",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 16
+ },
+ {
+  "clusters": 4,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sas",
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2017-08-26",
+  "head_procs": 2,
+  "identifier": "56211864600149",
+  "in_population": true,
+  "merged": false,
+  "n": 51,
+  "new_name": "Hénéo",
+  "new_name_norm": "hénéo",
+  "newest_is_head": false,
+  "old_name": "SAS Lerichemont",
+  "old_name_norm": "sas lerichemont",
+  "org_id": 8587172,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2018-10-12",
+  "rule": "R1",
+  "second": 9,
+  "spellings": [
+   [
+    "Hénéo",
+    14
+   ],
+   [
+    "heneo",
+    14
+   ],
+   [
+    "HENEO",
+    10
+   ],
+   [
+    "SAS le Richemont",
+    8
+   ],
+   [
+    "SAS Lerichemont",
+    2
+   ]
+  ],
+  "top": 39,
+  "top_newest": "2024-08-29",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 51
+ },
+ {
+  "clusters": 3,
+  "country": "IE",
+  "eng": null,
+  "family_new": "ltd",
+  "family_old": null,
+  "head": 6,
+  "head_in_window": 0,
+  "head_newest": "2018-09-25",
+  "head_procs": 3,
+  "identifier": "IE9655305G",
+  "in_population": true,
+  "merged": false,
+  "n": 24,
+  "new_name": "Aspira (AspiraCon Ltd., trading as Aspira)",
+  "new_name_norm": "aspira (aspiracon ltd., trading as aspira)",
+  "newest_is_head": false,
+  "old_name": "Aspira",
+  "old_name_norm": "aspira",
+  "org_id": 8917378,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2021-05-12",
+  "rule": "R1",
+  "second": 6,
+  "spellings": [
+   [
+    "Aspira (AspiraCon Ltd., trading as Aspira)",
+    15
+   ],
+   [
+    "Aspira",
+    6
+   ],
+   [
+    "AspiraCon Ltd, trading as Aspira",
+    2
+   ],
+   [
+    "AspiraCon Ltd., trading as Aspira",
+    1
+   ]
+  ],
+  "top": 15,
+  "top_newest": "2022-09-16",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 24
+ },
+ {
+  "clusters": 4,
+  "country": "ES",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-10-18",
+  "head_procs": 1,
+  "identifier": "Q4119004B",
+  "in_population": true,
+  "merged": false,
+  "n": 38,
+  "new_name": "TGSS-Dirección provincial de Sevilla",
+  "new_name_norm": "tgss-dirección provincial de sevilla",
+  "newest_is_head": false,
+  "old_name": "Dirección Provincial de la Tesorería General de la Seguridad Social de Sevilla",
+  "old_name_norm": "dirección provincial de la tesorería general de la seguridad social de sevilla",
+  "org_id": 8848515,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2021-09-03",
+  "rule": "R1",
+  "second": 9,
+  "spellings": [
+   [
+    "TGSS-Dirección provincial de Sevilla",
+    13
+   ],
+   [
+    "Dirección Provincial de la Tesorería General de la Seguridad Social en Sevilla",
+    8
+   ],
+   [
+    "TGSS — Dirección Provincial de Sevilla",
+    5
+   ],
+   [
+    "TGSS, Dirección Provincial de Sevilla",
+    3
+   ],
+   [
+    "TGSS — Dirección provincial de Sevilla",
+    2
+   ]
+  ],
+  "top": 24,
+  "top_newest": "2023-09-05",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 38
+ },
+ {
+  "clusters": 4,
+  "country": "RW",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2018-01-19",
+  "head_procs": 1,
+  "identifier": "026481435420100",
+  "in_population": true,
+  "merged": false,
+  "n": 9,
+  "new_name": "Enabel",
+  "new_name_norm": "enabel",
+  "newest_is_head": false,
+  "old_name": "Enabel — Agence belge de développement",
+  "old_name_norm": "enabel — agence belge de développement",
+  "org_id": 10975171,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2020-11-18",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Enabel",
+    5
+   ],
+   [
+    "Enabel Rwanda",
+    2
+   ],
+   [
+    "Enabel RWA",
+    1
+   ],
+   [
+    "Enabel — Agence belge de développement",
+    1
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2023-06-14",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 9
+ },
+ {
+  "clusters": 3,
+  "country": "PT",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2020-03-03",
+  "head_procs": 2,
+  "identifier": "513333444",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "JJ Santo António - Transporte Rodoviário de Passageiros, Unipessoal, LDA",
+  "new_name_norm": "jj santo antónio - transporte rodoviário de passageiros, unipessoal, lda",
+  "newest_is_head": false,
+  "old_name": "JJ Santo António, Transporte Regular Passageiros, Unipessoal, Limitada",
+  "old_name_norm": "jj santo antónio, transporte regular passageiros, unipessoal, limitada",
+  "org_id": 12467678,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2018-11-22",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "JJ Santo António - Transporte Rodoviário de Passageiros, Unipessoal, LDA",
+    4
+   ],
+   [
+    "JJ Santo António, Transporte Regular Passageiros, Unipessoal, Limitada",
+    2
+   ],
+   [
+    "JJ Santo António, Transporte Regular de Passageiros, Unipessoal, Lda.",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2022-10-24",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 7
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2018-02-22",
+  "head_procs": 1,
+  "identifier": "38898300900035",
+  "in_population": true,
+  "merged": false,
+  "n": 9,
+  "new_name": "APASE",
+  "new_name_norm": "apase",
+  "newest_is_head": false,
+  "old_name": "Atelier protégé au service d'entreprise",
+  "old_name_norm": "atelier protégé au service d'entreprise",
+  "org_id": 11144274,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2019-09-02",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "APASE",
+    7
+   ],
+   [
+    "Atelier protégé au service d'entreprise",
+    1
+   ],
+   [
+    "Impulsion",
+    1
+   ]
+  ],
+  "top": 7,
+  "top_newest": "2025-08-11",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 9
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sarl",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2019-01-16",
+  "head_procs": 1,
+  "identifier": "43862846300012",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "Assurances Jouet Florin",
+  "new_name_norm": "assurances jouet florin",
+  "newest_is_head": false,
+  "old_name": "SARL assurances Jouet Lelievre",
+  "old_name_norm": "sarl assurances jouet lelievre",
+  "org_id": 12752600,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2019-02-15",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Assurances Jouet Florin",
+    3
+   ],
+   [
+    "Cabinet Jouet Lelièvre",
+    1
+   ],
+   [
+    "SARL assurances Jouet Lelievre",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2021-01-20",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 5
+ },
+ {
+  "clusters": 3,
+  "country": "DK",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-03-03",
+  "head_procs": 1,
+  "identifier": "19342735",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "Grundfos DK A/S",
+  "new_name_norm": "grundfos dk a/s",
+  "newest_is_head": false,
+  "old_name": "Grundfos DK A/S, Center Øst",
+  "old_name_norm": "grundfos dk a/s, center øst",
+  "org_id": 9431487,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2018-11-15",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Grundfos DK A/S",
+    4
+   ],
+   [
+    "Grundfos DK A/S, Center Øst",
+    1
+   ],
+   [
+    "Grundfos Danmark A/S",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2024-12-02",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 6
+ },
+ {
+  "clusters": 3,
+  "country": "HU",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 7,
+  "head_in_window": 0,
+  "head_newest": "2013-12-27",
+  "head_procs": 5,
+  "identifier": "AK00839",
+  "in_population": true,
+  "merged": false,
+  "n": 23,
+  "new_name": "Békés Megyei Rendőr-főkapitányság",
+  "new_name_norm": "békés megyei rendőr-főkapitányság",
+  "newest_is_head": false,
+  "old_name": "Békés Megyei Rendőrfőkapitányság",
+  "old_name_norm": "békés megyei rendőrfőkapitányság",
+  "org_id": 3176582,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2017-05-18",
+  "rule": "R1",
+  "second": 7,
+  "spellings": [
+   [
+    "Békés Megyei Rendőr-főkapitányság",
+    15
+   ],
+   [
+    "Békés Megyei Rendőrfőkapitányság",
+    7
+   ],
+   [
+    "Borsod-Abaúj-Zemplén Megyei Rendőr-főkapitányság",
+    1
+   ]
+  ],
+  "top": 15,
+  "top_newest": "2017-11-18",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 23
+ },
+ {
+  "clusters": 5,
+  "country": "LT",
+  "eng": null,
+  "family_new": "aktiebolag",
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2015-09-05",
+  "head_procs": 2,
+  "identifier": "124107111",
+  "in_population": true,
+  "merged": false,
+  "n": 23,
+  "new_name": "UAB „Transrevis“",
+  "new_name_norm": "uab „transrevis“",
+  "newest_is_head": false,
+  "old_name": "Uždaroji akcinė bendrovė „Transrevis“",
+  "old_name_norm": "uždaroji akcinė bendrovė „transrevis“",
+  "org_id": 4688514,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2021-10-05",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "UAB „Transrevis“",
+    14
+   ],
+   [
+    "UAB Transrevis",
+    3
+   ],
+   [
+    "Uždaroji akcinė bendrovė „Transrevis“",
+    2
+   ],
+   [
+    "UAB \"Transrevis\"",
+    1
+   ],
+   [
+    "UAB „Transveris“",
+    1
+   ]
+  ],
+  "top": 18,
+  "top_newest": "2023-05-12",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 23
+ },
+ {
+  "clusters": 3,
+  "country": "FI",
+  "eng": null,
+  "family_new": "aktiebolag",
+  "family_old": "aktiebolag",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-01-11",
+  "head_procs": 1,
+  "identifier": "24892736",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "Hoivia Oy",
+  "new_name_norm": "hoivia oy",
+  "newest_is_head": false,
+  "old_name": "Hoivia Oy/ Palvelukoti Keinula",
+  "old_name_norm": "hoivia oy/ palvelukoti keinula",
+  "org_id": 9225060,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2017-01-11",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Hoivia Oy",
+    6
+   ],
+   [
+    "Hoivia Oy/ Palvelukoti Keinula",
+    1
+   ],
+   [
+    "Hoivia Oy/ Tervapadankatu 2",
+    1
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2022-10-31",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 8
+ },
+ {
+  "clusters": 3,
+  "country": "GR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2019-09-09",
+  "head_procs": 1,
+  "identifier": "096120158",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "Αγροτικός Ελαιουργικός Συνεταιρισμός Αχλαδοκάμπου",
+  "new_name_norm": "αγροτικός ελαιουργικός συνεταιρισμός αχλαδοκάμπου",
+  "newest_is_head": false,
+  "old_name": "Αγροτικός Ελαιουργικός Συν/σμός Αχλαδόκαμπου",
+  "old_name_norm": "αγροτικός ελαιουργικός συν/σμός αχλαδόκαμπου",
+  "org_id": 13974288,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2023-07-18",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "ΑΓΡΟΤΙΚΟΣ ΕΛΑΙΟΥΡΓΙΚΟΣ ΣΥΝΕΤΑΙΡΙΣΜΟΣ ΑΧΛΑΔΟΚΑΜΠΟΥ",
+    4
+   ],
+   [
+    "ΑΓΡΟΤΙΚΟΣ ΓΑΛΑΚΤΟΚΟΜΙΚΟΣ ΕΛΑΙΟΥΡΓΙΚΟΣ ΣΥΝΕΤΑΙΡΙΣΜΟΣ ΑΧΛΑΔΟΚΑΜΠΟΥ",
+    2
+   ],
+   [
+    "Αγροτικός Ελαιουργικός Συν/σμός Αχλαδόκαμπου",
+    1
+   ],
+   [
+    "Αγροτικός Ελαιουργικός Συνεταιρισμός Αχλαδοκάμπου",
+    1
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2025-06-13",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 8
+ },
+ {
+  "clusters": 3,
+  "country": "CZ",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2013-12-04",
+  "head_procs": 2,
+  "identifier": "70200815",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "Dům dětí a mládeže Libertin, příspěvková organizace",
+  "new_name_norm": "dům dětí a mládeže libertin, příspěvková organizace",
+  "newest_is_head": false,
+  "old_name": "Dům dětí a mládeže Libertin",
+  "old_name_norm": "dům dětí a mládeže libertin",
+  "org_id": 2976481,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2014-11-19",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Dům dětí a mládeže Libertin, příspěvková organizace",
+    4
+   ],
+   [
+    "Dům dětí a mládeže Libertin",
+    2
+   ],
+   [
+    "Dům dětí a mládeže Libertin, Česká Lípa, Škroupovo nám. 138, příspěvková organizace",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2016-06-24",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 7
+ },
+ {
+  "clusters": 4,
+  "country": "HU",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 22,
+  "head_in_window": 0,
+  "head_newest": "2015-11-04",
+  "head_procs": 13,
+  "identifier": "AK15575",
+  "in_population": true,
+  "merged": false,
+  "n": 120,
+  "new_name": "Budapest Közút Zártkörűen Működő Részvénytársaság",
+  "new_name_norm": "budapest közút zártkörűen működő részvénytársaság",
+  "newest_is_head": false,
+  "old_name": "BKK Közút Zártkörűen Működő Részvénytársaság",
+  "old_name_norm": "bkk közút zártkörűen működő részvénytársaság",
+  "org_id": 3333925,
+  "provisional": false,
+  "reason": "top_stale",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2018-08-14",
+  "rule": "R1",
+  "second": 22,
+  "spellings": [
+   [
+    "Budapest Közút Zártkörűen Működő Részvénytársaság",
+    92
+   ],
+   [
+    "BKK Közút Zártkörűen Működő Részvénytársaság",
+    22
+   ],
+   [
+    "BKK Közút Zrt.",
+    4
+   ],
+   [
+    "Budapest Közút Zrt.",
+    2
+   ]
+  ],
+  "top": 92,
+  "top_newest": "2022-01-11",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 120
+ }
+]

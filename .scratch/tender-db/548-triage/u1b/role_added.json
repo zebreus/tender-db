@@ -1,0 +1,142 @@
+{
+ "counts": {
+  "head_current": 24,
+  "top_stale:T1_arm": 1,
+  "address_added": 5,
+  "recent": 2,
+  "top_stale:T1_held": 2,
+  "residue": 2,
+  "family": 1
+ },
+ "examples": {
+  "head_current": [
+   [
+    8689978,
+    "Cundall LLP",
+    "Cundall Johnston and Partners LLP T/A Cundall"
+   ],
+   [
+    17554923,
+    "CALA-CENTRUL DE TEHNOLOGII FARA SAPATURA",
+    "SC CALA-CENTRUL DE TEHNOLOGII FARA SAPATURA SA ( Lider de asociere)"
+   ],
+   [
+    19351990,
+    "TORMEL Sp. z o.o.",
+    "TORMEL Sp. z o.o. – lider konsorcjum"
+   ],
+   [
+    21026492,
+    "Katarzyna Jędrzejczak Architekt",
+    "Konsorcjum Zespół Autorski Katarzyna Jędrzejczak Architekt"
+   ],
+   [
+    21256645,
+    "Radosław Koper",
+    "Radosław Koper, wspólnik spółki cywilnej Tom-net"
+   ],
+   [
+    22393665,
+    "Wiener Towarzystwo Ubezpieczeń Spółka Akcyjna Vienna Insuran",
+    "Nord Partner Sp. z o.o."
+   ],
+   [
+    22400860,
+    "Rödl GmbH Rechtsanwaltsgesellschaft Steuerberatungsgesellsch",
+    "Rödl & Partner"
+   ],
+   [
+    22489249,
+    "Gothaer Allgemeine Versicherung AG",
+    "Bühner & Partner Rechtsanwälte mbB"
+   ],
+   [
+    22495626,
+    "GvW Graf von Westphalen",
+    "GvW Graf von Westphalen Rechtsanwälte Steuerberater Partnerschaft mbB"
+   ],
+   [
+    22570199,
+    "GREENBOX Landschaftsarchitekten PartGmbB Schäfer/Pieper/Patz",
+    "Greenbox Landschaftsarchitekten Partnerschaftsgesellschaft mbB"
+   ]
+  ],
+  "top_stale:T1_arm": [
+   [
+    9168556,
+    "Usługi Leśne Ryszard Flak",
+    "Partner konsorcjum Usługi Leśne Ryszard Flak"
+   ]
+  ],
+  "address_added": [
+   [
+    9259364,
+    "Wojewódzki Zespół Reumatologiczny im. dr Jadwigi Titz-Kosko",
+    "Konsorcjum firm: PGF URTICA Sp. z o.o. – Lider ul. Krzemieniecka 120, "
+   ],
+   [
+    10474022,
+    "GRAFMET HT Sp. z o.o.",
+    "GRAFMET HT Sp. z o.o., ul. Koksownicza 7, 42-523 Dąbrowa Górnicza (Lid"
+   ],
+   [
+    11339015,
+    "PRK7 Nieruchomości Sp. z o.o.",
+    "konsorcjum firm: lider: PRK7 Nieruchomości Sp. z o.o., ul. Leszno 12, "
+   ],
+   [
+    14804133,
+    "U. T. E. Telefónica de España, S. A. U., Telefónica Móviles ",
+    "Telefónica España, S. A. U., Telefónica Móviles España, S. A. U., Unió"
+   ],
+   [
+    22600744,
+    "Cremades & Calvo Sotelo Sevilla",
+    "CORPORACIÓN TECNOLÓGICA DE ANDALUCÍA CREMADES Y CALVO-SOTELO E IDOM Un"
+   ]
+  ],
+  "recent": [
+   [
+    9439920,
+    "Halina Karpowicz",
+    "Konsorcjum Halina Karpowicz"
+   ],
+   [
+    22181357,
+    "EGIDA IT SOLUTIONS Sp. z o.o.",
+    "EGIDA IT SOLUTIONS Sp. z o.o. - Lider Konsorcjum"
+   ]
+  ],
+  "top_stale:T1_held": [
+   [
+    10866207,
+    "B. K. Tras Roboty Drogowe Borsukiewicz Spółka Jawna",
+    "BK-Tras Roboty Drogowe Borsukiewicz Sp. j. – lider konsorcjum"
+   ],
+   [
+    11965180,
+    "PROGIS Sp. z o.o.",
+    "Progis Sp. z o.o. - Partner Konsorcjum"
+   ]
+  ],
+  "residue": [
+   [
+    13414189,
+    "IORGA Group",
+    "titulaire unique : IORGA Group"
+   ],
+   [
+    13736003,
+    "„Rozeta” Konserwacja Zabytków Katarzyna Sułkowska",
+    "„ROZETA” Konserwacja Zabytków Katarzyna Sułkowska – lider"
+   ]
+  ],
+  "family": [
+   [
+    22914016,
+    "ACP IT Solutions AG",
+    "Office Partner GmbH"
+   ]
+  ]
+ }
+}

@@ -1,0 +1,1 @@
+SELECT o.id, o.identifier, o.name, o.country, m.name AS mname, m.scheme, count(*) AS n, min(m.notice_id) AS first_notice, max(m.notice_id) AS last_notice FROM organizations o CROSS JOIN organization_mentions m ON m.organization_id = o.id WHERE o.identifier >= 'GBCOH138' AND o.identifier < 'GBCOH344' GROUP BY o.identifier, o.id, m.name, m.scheme
