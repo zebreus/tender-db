@@ -240,3 +240,6 @@ reads every ORG mention of a notice through `gated_identifier` with the gate's c
   tenderer-mixed. Post-state: census twin rows 11,437 → 329 (stable 70 → 69, several-Tenders 179 → 174).
 - R2 picks in the report: random 60 (salt 530002, stratified), top 30 targets, 41 city-flagged, 30 incoherent, 8 office
   two-word keys.
+- **Target audit (2026-10-19 17:5xZ, hourly AUDIT):** the plan's Göttingen target 2294259 is `Landkreis Göttingen`, identifier
+  NULL, country DE, 216 mentions (the 234 fallback row the decision names); the VAT row 22183653 (`DE308703297`, 649 mentions)
+  is not a target (300 §10).
