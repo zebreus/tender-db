@@ -200,7 +200,7 @@ impl Server {
         // The notice row's instants as the processor stamps them — with the
         // offset and precision the source published (issue 367 unit 3).
         let (published_at, dispatched_at) = match &parse {
-            Parse::Parsed(parsed) => project::notice_stamps(parsed),
+            Parse::Parsed(parsed) => project::notice_stamps(source, parsed),
             _ => (None, None),
         };
         self.db

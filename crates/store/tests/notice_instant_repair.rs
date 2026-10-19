@@ -23,11 +23,13 @@ fn fields() -> Vec<&'static str> {
     PUBLICATION.iter().chain(DISPATCH).copied().collect()
 }
 
-/// A stand-in with `ingest::project::notice_stamps`' exact contract: the first
-/// publication field the parse carries, falling back to dispatch; `None` on
-/// either axis when the parse states nothing; a date-only value anchored at its
-/// civil day's UTC midnight (issue 418 — the stored value is local midnight).
-fn resolve(parsed: &Parsed) -> (Option<Stamp>, Option<Stamp>) {
+/// A stand-in with `ingest::project::notice_stamps`' contract for a non-DÖE
+/// Source: the first publication field the parse carries, falling back to
+/// dispatch; `None` on either axis when the parse states nothing; a date-only
+/// value anchored at its civil day's UTC midnight (issue 418 — the stored value
+/// is local midnight). The row's source is handed in (issue 539) and ignored
+/// here; `the_resolver_is_handed_each_rows_source` pins that it arrives.
+fn resolve(_source: &str, parsed: &Parsed) -> (Option<Stamp>, Option<Stamp>) {
     let first = |field: &str| {
         parsed.values.iter().find(|v| v.field_id == field).and_then(|v| match &v.value {
             NoticeValue::Date { utc_seconds, offset_minutes, has_time } => Some(Stamp {
@@ -435,4 +437,32 @@ async fn a_local_midnight_date_only_instant_is_shifted_to_its_civil_midnight_wit
 
     let again = plan(&db).await;
     assert_eq!((again.agree, again.shifted, again.unstamped, again.rows), (1, 0, 0, 0));
+}
+
+/// Issue 539: the job hands the resolver each row's `source`, because the real
+/// resolver's publication rule reads it (a DÖE notice takes the latest candidate,
+/// raised to its IssueDate's civil day). A stand-in that answers by source alone:
+/// two rows with the same parse plan different instants exactly when the job
+/// passed each its own `notices.source`.
+#[tokio::test]
+async fn the_resolver_is_handed_each_rows_source() {
+    fn by_source(source: &str, _parsed: &Parsed) -> (Option<Stamp>, Option<Stamp>) {
+        let utc = match source {
+            "doe" => 1_000,
+            "ted" => 2_000,
+            other => panic!("unexpected source {other:?}"),
+        };
+        (Some(Stamp::utc(utc)), None)
+    }
+    let (db, conn) = open("test-instants-source").await;
+    for id in [1, 2] {
+        notice(&conn, id, "eforms:eforms-sdk-1.13", "parsed", Some(0), None).await;
+        date(&conn, id, "OPP-012-notice", 500).await;
+    }
+    conn.execute("UPDATE notices SET source = 'ted' WHERE id = 2", ()).await.unwrap();
+
+    let p = db.repair_notice_instants(&fields(), by_source, true, None, &never).await.unwrap();
+    let planned: Vec<(i64, Option<i64>)> =
+        p.plan.iter().map(|f| (f.notice, f.to_published.map(|s| s.utc_seconds))).collect();
+    assert_eq!(planned, vec![(1, Some(1_000)), (2, Some(2_000))], "each row resolved under its own source");
 }

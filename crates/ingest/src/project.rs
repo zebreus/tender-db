@@ -950,6 +950,14 @@ const ORG_NATIONALID_FIELD: &str = "TED-NATIONALID";
 /// placed out of order would out- or under-rank its own alias target and the
 /// notice row would resolve a different date than its version. Pinned by
 /// `every_de1_date_alias_sits_beside_its_target`.
+///
+/// **For DÖE the rank only breaks ties** (issue 539): [`doe_publication`] takes
+/// the LATEST candidate by civil day, raised to the IssueDate's day when that is
+/// later, because a DÖE stamped date (OPP-012 / DE1-Publication-PublicationDate)
+/// is never later than the requested one and on the stale tail is the stale one.
+/// Adjacency still matters there: two candidates on one day resolve to the
+/// better-ranked, and a dialect id out of place would break that tie differently
+/// at the two layers.
 const PUBLICATION_DATE_FIELDS: &[&str] = &[
     "OPP-012-notice",                  // eForms efbc:PublicationDate (TED; DÖE when stamped)
     "DE1-Publication-PublicationDate", // ↑ its eForms-DE 1.x spelling (issue 367)
@@ -4415,7 +4423,7 @@ impl BucketRow {
     /// `bind_organizations`). `group_key` is the grouping plan's; `source`/
     /// `source_rank` the notice's Source; everything else the bound state. The plan
     /// and the state agree on published_at/publication_id/subtype by construction
-    /// (both read `notice_instants(parsed).0` / `notice.publication_id` /
+    /// (both read `notice_instants(&notice.source, parsed).0` / `notice.publication_id` /
     /// `first_code(parsed, SUBTYPE_FIELD)`), so one field serves both the fold-order
     /// sort key and the written version.
     fn snapshot(group_key: String, notice: &store::NoticeRef, state: NoticeState) -> BucketRow {
@@ -5813,7 +5821,7 @@ impl NoticeState {
         // lands on the nullable NOTICE column (see [`notice_instants`]); the two
         // still AGREE wherever the resolver found anything, which is the
         // invariant `notices_and_their_versions_carry_the_same_instants` pins.
-        let (published_at, dispatched_at) = notice_instants(parsed);
+        let (published_at, dispatched_at) = notice_instants(&notice.source, parsed);
         let published_at = published_at.unwrap_or(0);
         let logical_id = first_id(parsed, LOGICAL_NOTICE_FIELD);
         // Issue 551 unit 4b (B1): the totals this notice states, for path W's guards only.
@@ -6633,7 +6641,7 @@ impl Ident {
             // The plan's fold-order key. Same epoch fallback as `NoticeState`,
             // and it must be the SAME one — the two are documented to agree by
             // construction (see `BucketRow::snapshot`).
-            published_at: notice_instants(parsed).0.unwrap_or(0),
+            published_at: notice_instants(&notice.source, parsed).0.unwrap_or(0),
             legacy,
             sdk01,
             procedure_key: procedure_key(parsed, sdk01, is_de1_profile(&notice.profile)),
@@ -12201,8 +12209,14 @@ pub fn original_lang(parsed: &Parsed) -> Option<String> {
 /// column is nullable and now says so. `tender_versions.published_at` is NOT
 /// NULL, so the two projection call sites keep an explicit epoch fallback for
 /// the (vanishing) dateless notice — the fold has to order versions somehow.
-pub fn notice_instants(parsed: &Parsed) -> (Option<i64>, Option<i64>) {
-    let (published, dispatched) = notice_stamps(parsed);
+///
+/// **`source` decides the publication rule** (issue 539): a DÖE notice's
+/// publication date is [`doe_publication`]'s, every other Source's is the first
+/// candidate of [`PUBLICATION_DATE_FIELDS`]. It is the notice row's `source`
+/// (`notices.source`, [`store::NoticeRef::source`]), which every caller has in
+/// hand — the processor, both projection reads and `repair-notice-instants`.
+pub fn notice_instants(source: &str, parsed: &Parsed) -> (Option<i64>, Option<i64>) {
+    let (published, dispatched) = notice_stamps(source, parsed);
     (published.map(|s| s.utc_seconds), dispatched.map(|s| s.utc_seconds))
 }
 
@@ -12210,11 +12224,88 @@ pub fn notice_instants(parsed: &Parsed) -> (Option<i64>, Option<i64>) {
 /// in (issue 367 unit 3) — what the notice row stores beside the UTC seconds, so
 /// the API can render a date-only publication as the date the source stated
 /// rather than that civil day's local midnight shifted to UTC.
-pub fn notice_stamps(parsed: &Parsed) -> (Option<store::Stamp>, Option<store::Stamp>) {
+///
+/// This is THE resolver: the processor stamps the notice row with it, the
+/// projection stamps the version with it (through [`notice_instants`]), and the
+/// `repair-notice-instants` job (`store::Db::repair_notice_instants`, handed this
+/// function by the supervisor together with the row's `source`) re-derives stored
+/// rows with it. So a rule change here reaches a stored NOTICE row through that job
+/// (or a re-parse), and a stored VERSION at the next fold of its Tender: the fold
+/// re-derives every instant from the parse and never reads `notices.published_at`,
+/// so any refold after the deploy already serves the new rule. A change that moves
+/// a served date drains as that job plus an ADR-0017 R3 refold of the affected
+/// Tenders, whose compare engine re-sorts the chains and announces each move (D3);
+/// `repair-version-instants` writes in place with no change row, so it is not that
+/// drain (issue 539).
+pub fn notice_stamps(source: &str, parsed: &Parsed) -> (Option<store::Stamp>, Option<store::Stamp>) {
     let dispatched = DISPATCH_DATE_FIELDS.iter().find_map(|f| first_stamp(parsed, f));
-    let published =
-        PUBLICATION_DATE_FIELDS.iter().find_map(|f| first_stamp(parsed, f)).or(dispatched);
+    let published = if source == DOE_SOURCE {
+        doe_publication(parsed, dispatched)
+    } else {
+        PUBLICATION_DATE_FIELDS.iter().find_map(|f| first_stamp(parsed, f))
+    }
+    .or(dispatched);
     (published.map(civil_day), dispatched.map(civil_day))
+}
+
+/// The Source whose publication date is a buyer's request, not a journal's stamp
+/// (issue 539) — `notices.source` as `doe::monthly` / `doe::day` name it.
+const DOE_SOURCE: &str = "doe";
+
+/// Issue 539: a DÖE notice's publication date — the LATEST of every
+/// publication-date candidate it carries ([`PUBLICATION_DATE_FIELDS`]: a stamped
+/// `OPP-012-notice` / `DE1-Publication-PublicationDate`, the requested
+/// `BT-738-notice` / `DE1-` / `SDK01-RequestedPublicationDate`) and of its
+/// IssueDate's civil day (`issued`, the dispatch candidate). `None` when it
+/// carries no publication candidate; [`notice_stamps`] then falls back to the
+/// dispatch instant itself, as for every Source (sdk-1.x carries neither field).
+///
+/// **Why the latest.** DÖE notices carry no OJEU stamp: the requested date is
+/// what the buyer ASKED for, and on a change-notice chain sdk-0.1 repeats version
+/// 1's request on every later version. Measured over all 135 DÖE fetches (issue
+/// 539 unit 1): 2+-day staleness always carries an IssueDate, and the IssueDate
+/// lies inside the export that delivered the notice. A stamped date is never
+/// later than the requested one, but on the de-* deep tail it is the stale one
+/// (1,824 of the 1,826 de-* notices 30+ days stale served it), so the best-first
+/// rank the other Sources use would keep picking it.
+///
+/// **By civil day, each in its own offset** ([`local_day`]). Among the
+/// publication candidates a tie keeps the best-ranked one, so a notice whose
+/// candidates agree resolves exactly what the best-first rule did, value, offset
+/// and precision. Only when the IssueDate's day is STRICTLY later than every
+/// candidate does that day win, and then as a DATE-ONLY value in the IssueDate's
+/// own offset ([`date_only`]) — the day, never the IssueDate's time of day,
+/// because the portal publishes days. Otherwise the winning candidate is returned
+/// as parsed (a timed one stays timed), and the caller anchors it as always.
+fn doe_publication(parsed: &Parsed, issued: Option<store::Stamp>) -> Option<store::Stamp> {
+    let latest = PUBLICATION_DATE_FIELDS.iter().filter_map(|f| first_stamp(parsed, f)).fold(
+        None,
+        |best: Option<store::Stamp>, s| match best {
+            Some(b) if local_day(b) >= local_day(s) => Some(b),
+            _ => Some(s),
+        },
+    );
+    match (latest, issued) {
+        (Some(p), Some(i)) if local_day(i) > local_day(p) => Some(date_only(local_day(i), i.offset_minutes)),
+        _ => latest,
+    }
+}
+
+/// The civil day a PARSE-LAYER stamp names, in the offset it was written in, as
+/// days since 1970-01-01. A timed value is its local wall-clock day; a date-only
+/// value is stored at its local midnight in UTC (`midnight − offset`), so adding
+/// the offset back lands exactly on that midnight. Read before [`civil_day`]
+/// anchors anything: an anchored date-only value would count its offset twice.
+fn local_day(s: store::Stamp) -> i64 {
+    (s.utc_seconds + s.offset_minutes * 60).div_euclid(86_400)
+}
+
+/// A date-only value for civil `day` in `offset_minutes`, in the parse layer's
+/// form (its local midnight in UTC) — so [`civil_day`] anchors it at the day's
+/// 00:00Z with the offset kept, exactly as it anchors a date-only value the
+/// source wrote (issues 367 unit 3, 418).
+fn date_only(day: i64, offset_minutes: i64) -> store::Stamp {
+    store::Stamp { utc_seconds: day * 86_400 - offset_minutes * 60, offset_minutes, has_time: false }
 }
 
 /// Issue 418: a date-only publication or dispatch instant anchors at its civil
@@ -12250,6 +12341,249 @@ fn first_stamp(parsed: &Parsed, field_id: &str) -> Option<store::Stamp> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // ------------------------------------------------ issue 539: DÖE published_at
+
+    /// A parse-layer date value as the parsers store it: a timed value at its exact
+    /// UTC instant, a date-only one at its local midnight in UTC (`midnight − offset`).
+    fn d539(field: &str, utc_seconds: i64, offset_minutes: i64, has_time: bool) -> store::ValueRow {
+        store::ValueRow {
+            section_id: "PROCEDURE".into(),
+            field_id: field.into(),
+            ordinal: 0,
+            value: NoticeValue::Date { utc_seconds, offset_minutes, has_time },
+        }
+    }
+
+    /// A date-only value for the civil day whose UTC midnight is `civil_midnight`,
+    /// written in `offset_minutes` — stored, like every parsed date-only value, at
+    /// that day's local midnight in UTC.
+    fn day539(field: &str, civil_midnight: i64, offset_minutes: i64) -> store::ValueRow {
+        d539(field, civil_midnight - offset_minutes * 60, offset_minutes, false)
+    }
+
+    fn stamps539(source: &str, values: Vec<store::ValueRow>) -> (Option<store::Stamp>, Option<store::Stamp>) {
+        notice_stamps(source, &Parsed { sections: vec![], values })
+    }
+
+    /// The resolver's output for a date-only instant: its civil day's UTC midnight, the
+    /// offset kept beside it, no time (issues 367 unit 3 and 418).
+    fn date_only539(civil_midnight: i64, offset_minutes: i64) -> Option<store::Stamp> {
+        Some(store::Stamp { utc_seconds: civil_midnight, offset_minutes, has_time: false })
+    }
+
+    fn timed539(utc_seconds: i64, offset_minutes: i64) -> Option<store::Stamp> {
+        Some(store::Stamp { utc_seconds, offset_minutes, has_time: true })
+    }
+
+    /// 2022-10-19, 2023-01-31, 2023-12-19, 2024-07-25, 2025-07-14 and 2026-07-22 at 00:00Z.
+    const D2022_10_19: i64 = 1_666_137_600;
+    const D2023_01_31: i64 = 1_675_123_200;
+    const D2023_12_19: i64 = 1_702_944_000;
+    const D2024_07_25: i64 = 1_721_865_600;
+    const D2025_07_14: i64 = 1_752_451_200;
+    const D2026_07_22: i64 = 1_784_678_400;
+
+    /// Issue 539, exhibit 1: notice 26044864 (tender 65023, DÖE sdk-0.1, fetch 443 = the
+    /// 2023-01 export). It states `SDK01-RequestedPublicationDate` 2022-10-19 (no offset)
+    /// and `SDK01-IssueDate` 2023-01-31T14:02:48+01:00, and served published_at 2022-10-19
+    /// beside a dispatch 104 days later. The IssueDate's day is later than the request, so
+    /// published_at becomes 2023-01-31 — DATE-ONLY in the IssueDate's +01:00, never its
+    /// 14:02:48 — and dispatched_at is the IssueDate exactly as before.
+    #[test]
+    fn a_doe_sdk01_requested_date_is_raised_to_its_later_issue_day() {
+        let issued = 1_675_170_168; // 2023-01-31T14:02:48+01:00, the stored dispatched_at
+        let values = || {
+            vec![
+                day539("SDK01-RequestedPublicationDate", D2022_10_19, 0),
+                d539("SDK01-IssueDate", issued, 60, true),
+            ]
+        };
+        let (published, dispatched) = stamps539("doe", values());
+        assert_eq!(published, date_only539(D2023_01_31, 60), "the IssueDate's civil day, date-only, at +01:00");
+        assert_eq!(dispatched, timed539(issued, 60), "dispatched_at is unchanged");
+        assert_eq!(
+            notice_instants("doe", &Parsed { sections: vec![], values: values() }),
+            (Some(D2023_01_31), Some(issued)),
+            "the version's instants follow the same rule"
+        );
+    }
+
+    /// Issue 539, exhibit 2: notice 26411995 (DÖE eforms-de-1.1, fetch 425 = the 2024-07
+    /// export) served its stamped `DE1-Publication-PublicationDate` 2023-12-19 (195 days
+    /// before the export), because the best-first rank puts it over the requested date. Its
+    /// `DE1-RequestedPublicationDate` is 2024-07-25 and its `DE1-IssueDate`
+    /// 2024-07-25T14:01:02+02:00: the latest candidate is the request, the IssueDate's day
+    /// is not later than it, so published_at is the requested value itself (date-only,
+    /// +02:00). Same answer on the raw DE-1.x ids the processor reads and on the eForms ids
+    /// `normalise_de1` folds them to, which the projection reads (issue 367).
+    #[test]
+    fn a_doe_de1_stale_stamped_date_loses_to_the_later_requested_date() {
+        let issued = 1_721_908_862; // 2024-07-25T14:01:02+02:00
+        let raw = vec![
+            day539("DE1-Publication-PublicationDate", D2023_12_19, 60),
+            day539("DE1-RequestedPublicationDate", D2024_07_25, 120),
+            d539("DE1-IssueDate", issued, 120, true),
+        ];
+        let folded = vec![
+            day539("OPP-012-notice", D2023_12_19, 60),
+            day539("BT-738-notice", D2024_07_25, 120),
+            d539("BT-05(a)-notice", issued, 120, true),
+        ];
+        let expected = (date_only539(D2024_07_25, 120), timed539(issued, 120));
+        assert_eq!(stamps539("doe", raw), expected, "the requested date, unchanged, over the stale stamp");
+        assert_eq!(stamps539("doe", folded), expected, "the folded parse resolves the same pair");
+    }
+
+    /// Issue 539, exhibit 3: notice 27077227 (DÖE eforms-de-2.1, pubDay export 2026-07-23)
+    /// served its stamped `OPP-012-notice` 2025-07-14 (374 days early). Its `BT-738-notice`
+    /// is 2026-07-22 and its IssueDate 2026-07-22T09:00+02:00, so published_at is 2026-07-22
+    /// — the request, the day before the export, which is the portal's cadence.
+    #[test]
+    fn a_doe_de2_stale_opp012_loses_to_the_later_bt738() {
+        let issued = 1_784_703_600; // 2026-07-22T09:00:00+02:00
+        assert_eq!(
+            stamps539(
+                "doe",
+                vec![
+                    day539("OPP-012-notice", D2025_07_14, 120),
+                    day539("BT-738-notice", D2026_07_22, 120),
+                    d539("BT-05(a)-notice", issued, 120, true),
+                ],
+            ),
+            (date_only539(D2026_07_22, 120), timed539(issued, 120))
+        );
+    }
+
+    /// Issue 539: what the rule leaves alone on DÖE. A notice with no IssueDate keeps its
+    /// requested date (71% of sdk-0.1 carry none, and none of those in a regular export is
+    /// more than a day stale). An IssueDate on the same day as the request, or before it,
+    /// changes nothing either — value, offset and precision, so a time-bearing publication
+    /// candidate stays time-bearing. And a candidate later than the IssueDate stays.
+    #[test]
+    fn a_doe_publication_date_not_before_its_issue_day_is_unchanged() {
+        // No IssueDate: the sdk-0.1 numeric island.
+        assert_eq!(
+            stamps539("doe", vec![day539("SDK01-RequestedPublicationDate", D2022_10_19, 0)]),
+            (date_only539(D2022_10_19, 0), None)
+        );
+        // Same civil day, a time-bearing request: 2024-01-10T12:00+01:00 beside an
+        // IssueDate of 2024-01-10T08:00+01:00 stays exactly as published.
+        let requested = 1_704_884_400;
+        let issued = 1_704_870_000;
+        assert_eq!(
+            stamps539(
+                "doe",
+                vec![d539("BT-738-notice", requested, 60, true), d539("BT-05(a)-notice", issued, 60, true)],
+            ),
+            (timed539(requested, 60), timed539(issued, 60)),
+            "a same-day IssueDate is not later: the timed request stays timed"
+        );
+        // IssueDate days before the request (2024-01-08 against 2024-01-10, both +01:00).
+        const D2024_01_10: i64 = 1_704_844_800;
+        let early = 1_704_672_000 + 9 * 3600; // 2024-01-08T10:00+01:00
+        assert_eq!(
+            stamps539(
+                "doe",
+                vec![day539("DE1-RequestedPublicationDate", D2024_01_10, 60), d539("DE1-IssueDate", early, 60, true)],
+            ),
+            (date_only539(D2024_01_10, 60), timed539(early, 60))
+        );
+        // Specimen 26244735's real pair: a date-only request for 2024-01-10+01:00 and a TIMED
+        // IssueDate at 2024-01-10T00:01:25+01:00 (23:01:25Z on the 9th). The IssueDate's day is
+        // the request's day, so the request stays and the dispatch is the IssueDate as published.
+        assert_eq!(
+            stamps539(
+                "doe",
+                vec![
+                    day539("DE1-RequestedPublicationDate", D2024_01_10, 60),
+                    d539("DE1-IssueDate", 1_704_841_285, 60, true),
+                ],
+            ),
+            (date_only539(D2024_01_10, 60), timed539(1_704_841_285, 60))
+        );
+    }
+
+    /// Issue 539: the IssueDate's civil day is read in the offset it was WRITTEN in, not in
+    /// UTC, in the candidate's offset or in Vienna time. Both directions are pinned on one
+    /// instant, 2024-01-10T23:30Z, beside a date-only request for 2024-01-10+01:00:
+    /// - written as 2024-01-11T00:30+01:00 its own day is the 11th, which is later, so
+    ///   published_at is raised to 2024-01-11 (a UTC reading would call it the 10th);
+    /// - written in Z, as `offset_or_utc` stores a zoneless `SDK01-IssueDate`, its own day
+    ///   is the 10th, the request's day, so nothing is raised (a reading in the candidate's
+    ///   +01:00 or in Vienna time would wrongly raise it to the 11th).
+    #[test]
+    fn a_doe_issue_day_is_read_in_its_own_offset() {
+        const D2024_01_10: i64 = 1_704_844_800;
+        const D2024_01_11: i64 = 1_704_931_200;
+        let issued = 1_704_929_400; // 2024-01-10T23:30:00Z = 2024-01-11T00:30:00+01:00
+        assert_eq!(
+            stamps539(
+                "doe",
+                vec![day539("BT-738-notice", D2024_01_10, 60), d539("BT-05(a)-notice", issued, 60, true)],
+            ),
+            (date_only539(D2024_01_11, 60), timed539(issued, 60))
+        );
+        assert_eq!(
+            stamps539(
+                "doe",
+                vec![day539("BT-738-notice", D2024_01_10, 60), d539("BT-05(a)-notice", issued, 0, true)],
+            ),
+            (date_only539(D2024_01_10, 60), timed539(issued, 0)),
+            "a Z IssueDate counts its UTC day: the written offset alone decides"
+        );
+    }
+
+    /// Issue 539: [`DOE_SOURCE`] is the `source` the DÖE fetch targets write onto every DÖE
+    /// notice row (`doe::monthly` / `doe::day`, two separate literals). If either drifts, the
+    /// DÖE rule silently stops firing in production while every test that hands in a literal
+    /// "doe" still passes.
+    #[test]
+    fn the_doe_rule_keys_on_the_source_the_doe_targets_write() {
+        assert_eq!(crate::doe::monthly(crate::doe::BASE, 2026, 6).source, DOE_SOURCE);
+        assert_eq!(crate::doe::day(crate::doe::BASE, (2026, 7, 22)).source, DOE_SOURCE);
+    }
+
+    /// Issue 539: a DÖE sdk-1.x notice carries neither a requested nor a stamped date, so
+    /// published_at already IS the IssueDate (timed) and stays so. Notice 26100269's values:
+    /// 2023-05-01T00:00:05+02:00 on both axes.
+    #[test]
+    fn a_doe_sdk1x_notice_keeps_its_issue_date_as_published_at() {
+        let issued = 1_682_892_005;
+        assert_eq!(
+            stamps539("doe", vec![d539("BT-05(a)-notice", issued, 120, true)]),
+            (timed539(issued, 120), timed539(issued, 120))
+        );
+    }
+
+    /// Issue 539 changes DÖE only. A TED notice whose dispatch falls on a later day than its
+    /// OJEU PublicationDate keeps the stamp, value and precision; the same parse under the
+    /// DÖE source is the one that is raised, which pins that the source — not the field ids,
+    /// which eForms-DE 2.x shares with TED — decides the rule. FTS likewise.
+    #[test]
+    fn a_ted_notice_with_a_later_dispatch_is_unchanged() {
+        const D2024_01_10: i64 = 1_704_844_800;
+        const D2024_01_12: i64 = 1_705_017_600;
+        let issued = 1_705_050_000; // 2024-01-12T10:00+01:00
+        let values = || vec![day539("OPP-012-notice", D2024_01_10, 60), d539("BT-05(a)-notice", issued, 60, true)];
+        for source in ["ted", "fts"] {
+            assert_eq!(
+                stamps539(source, values()),
+                (date_only539(D2024_01_10, 60), timed539(issued, 60)),
+                "{source}: the publication stamp stands"
+            );
+        }
+        assert_eq!(stamps539("doe", values()), (date_only539(D2024_01_12, 60), timed539(issued, 60)));
+        // And a TED notice's best-first rank is untouched: a later BT-738 never outranks OPP-012.
+        assert_eq!(
+            stamps539(
+                "ted",
+                vec![day539("OPP-012-notice", D2024_01_10, 60), day539("BT-738-notice", D2024_01_12, 60)],
+            )
+            .0,
+            date_only539(D2024_01_10, 60)
+        );
+    }
 
     /// Issue 386 unit 2, on the two releases the finding named.
     ///

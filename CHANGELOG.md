@@ -4,6 +4,48 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 539) — a DÖE notice's `published_at` is raised to its IssueDate's day when that is later
+
+DÖE publishes no journal date. A DÖE notice's `published_at` was the publication date the buyer requested (BT-738 /
+`RequestedPublicationDate`) or, where the notice carries one, a date the portal stamped (OPP-012 /
+`DE1-Publication-PublicationDate`), the stamped one first. On a share of notices that date is weeks or months older
+than the notice's own IssueDate, which lies inside the export that delivered it (586 days on notice 26044079, the
+largest gap in the sampled id ranges): an sdk-0.1 change notice repeats its first version's request, and a de-*
+stamped date can be months older than the request beside it. So `dispatched_at` (the IssueDate) fell days to months
+after `published_at`.
+- From the deploy on, a DÖE notice that states a publication date (requested or stamped) gets as its `published_at`
+  the latest of those dates and of its IssueDate's day, the day read in the IssueDate's own offset. When it states
+  one and the IssueDate's day is later than every one, `published_at` is that day as a date only (`2023-01-31`),
+  never the IssueDate's time of day. Otherwise it is the latest stated date, served as before. An sdk-1.x notice
+  (3,950 DÖE notices) states none and keeps its IssueDate, timed, as before; the rule does not touch it.
+  `dispatched_at` is unchanged, and no other source changes. E.g. tender 65023 (notice 26044864) serves
+  `published_at` 2023-01-31 instead of 2022-10-19, beside `dispatched_at` 2023-01-31T14:02:48+01:00; notice 26411995
+  serves its requested 2024-07-25 instead of its stamped 2023-12-19.
+- Counted over the 135 DÖE exports stored on 2026-10-19, **16,344** DÖE notices had an IssueDate on a later day than
+  their `published_at`. The drain is expected to re-date about that many, plus the notices of this kind ingested
+  before the deploy (the `repair-notice-instants` dry pass gives the exact count). On a 7-export sample (702 notices
+  with a stamped date) the latest-date rule re-dated no notice outside that set. The rule fixes 8,292 of the 8,296
+  sdk-0.1 notices dated 2 or more days before their export, and 5,343 of the 5,669 notices 30 or more days early in
+  the regular exports. A DÖE `published_at` still usually runs 1–3 days before the day of the portal's daily export
+  that carries it; that is how the portal cuts its exports, and it is left alone, as are the 2022-12 backlog export's
+  genuinely old notices.
+- `published_at` orders a Tender's versions, so a re-dated version can move within its chain: about **3,800** are
+  estimated to (23.5% of the re-dated versions in a four-export sample).
+- **Stored rows change at the drain.** `repair-notice-instants` re-dates the stored DÖE notice rows. Then a `refold`
+  of the DÖE profiles that re-date (sdk-0.1 and de-1.0 to de-2.1) re-queues their notices, stamps their Tenders stale
+  and folds them, so each chain is re-sorted. Every Tender with a re-dated version is announced like any correction:
+  a `version: null` `changed` row (ADR-0017 D3). That covers the roughly 16,344 re-dated versions, about 3,800 of
+  which also change order. `repair-version-instants` is not part of this drain: it rewrites dates in place without a
+  change row and re-sorts no chain.
+- Until the drain, a stored DÖE notice (`/v1/notices/{id}`) keeps the date it was stamped with, unless it is
+  re-parsed. A Tender is different: it dates its DÖE versions again whenever it is refolded after the deploy (a new
+  notice joining it in the daily `project`, or a refold run for another issue), each move announced like any
+  correction. So until the drain, a Tender's `published_at` and version order can be ahead of its notices'
+  `published_at`. `/docs` (the Dates caveats) and OpenAPI `Tender.published_at`, `Tender.dispatched_at` and
+  `Notice.published_at` say so: `Tender.dispatched_at` no longer promises "earlier than published_at" where a DÖE
+  notice caused the current version (a `ted`-labelled Tender included): there a dispatch falls on or before
+  `published_at`'s day, and days after it until the drain.
+
 ## 2026-10-19 (issue 551 B5's stop rule) — `lot-sum-awards` is switched off again, pending an investigation
 
 The B4/B5 entry below switched `lot-sum-awards` (path W v2) on, with a stop rule set before the drain ran: if the

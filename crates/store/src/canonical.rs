@@ -35737,10 +35737,17 @@ impl Db {
     ///
     /// Idempotent: a repaired row agrees with the resolver, so the next run
     /// counts it in `agree` and plans nothing.
+    ///
+    /// **`resolve` is handed each row's `source`** (issue 539): the supervisor
+    /// passes `ingest::project::notice_stamps` itself, the resolver the processor
+    /// and the projection call, and a DÖE notice's publication date follows its own
+    /// rule there (the latest candidate, raised to the IssueDate's civil day). So a
+    /// resolver change reaches the stored rows through this job with no change
+    /// here: its notices plan as real disagreements, never as `shifted`.
     pub async fn repair_notice_instants(
         &self,
         fields: &[&str],
-        resolve: fn(&Parsed) -> (Option<Stamp>, Option<Stamp>),
+        resolve: fn(&str, &Parsed) -> (Option<Stamp>, Option<Stamp>),
         dry_run: bool,
         expect_rows: Option<u64>,
         stop: &(dyn Fn() -> bool + Sync),
@@ -35770,15 +35777,24 @@ impl Db {
                     ..Default::default()
                 });
             }
-            // (id, profile, published_at, dispatched_at, and the two as stamps —
-            // `Some` only where the row carries the unit-3 pair).
-            let mut window: Vec<(i64, String, Option<i64>, Option<i64>, Option<Stamp>, Option<Stamp>)> =
-                Vec::new();
+            // (id, profile, published_at, dispatched_at, the two as stamps —
+            // `Some` only where the row carries the unit-3 pair — and the source
+            // the resolver's publication rule reads, issue 539).
+            #[allow(clippy::type_complexity)]
+            let mut window: Vec<(
+                i64,
+                String,
+                Option<i64>,
+                Option<i64>,
+                Option<Stamp>,
+                Option<Stamp>,
+                String,
+            )> = Vec::new();
             {
                 let mut rows = reader
                     .query(
                         "SELECT id, profile, published_at, dispatched_at, published_offset, \
-                                published_has_time, dispatched_offset, dispatched_has_time \
+                                published_has_time, dispatched_offset, dispatched_has_time, source \
                            FROM notices \
                           WHERE id > ? AND parse_state = 'parsed' ORDER BY id LIMIT ?",
                         (Value::Integer(after), Value::Integer(WINDOW)),
@@ -35799,6 +35815,7 @@ impl Db {
                         opt_int_of(&row, 3),
                         stored(2, 4),
                         stored(3, 6),
+                        text(&row, 8),
                     ));
                 }
             }
@@ -35839,10 +35856,10 @@ impl Db {
             }
 
             let mut unstamped: Vec<UnstampedRow> = Vec::new();
-            for (id, profile, from_published, from_dispatched, from_pub, from_disp) in window {
+            for (id, profile, from_published, from_dispatched, from_pub, from_disp, source) in window {
                 let values = dates.remove(&id).unwrap_or_default();
                 let (to_published, to_dispatched) =
-                    resolve(&Parsed { sections: Vec::new(), values });
+                    resolve(&source, &Parsed { sections: Vec::new(), values });
                 let to_utc =
                     (to_published.map(|s| s.utc_seconds), to_dispatched.map(|s| s.utc_seconds));
                 // A stored axis is MECHANICALLY reconcilable when it equals the

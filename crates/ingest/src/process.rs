@@ -363,7 +363,7 @@ fn resolved_notice(
     parse: &store::Parse,
 ) -> store::Notice {
     let (published_at, dispatched_at) = match parse {
-        store::Parse::Parsed(parsed) => crate::project::notice_stamps(parsed),
+        store::Parse::Parsed(parsed) => crate::project::notice_stamps(source, parsed),
         _ => (None, None),
     };
     store::Notice {

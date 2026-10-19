@@ -82,7 +82,7 @@ async fn ingest_bytes(db: &Db, fetch_id: i64, source: &str, relative: &str, byte
     // Issue 367: both axes come straight from the resolver — `None` means the
     // payload states no date, and nothing here turns that into the epoch.
     let (published_at, dispatched_at) = match &parse {
-        Parse::Parsed(parsed) => project::notice_stamps(parsed),
+        Parse::Parsed(parsed) => project::notice_stamps(source, parsed),
         _ => (None, None),
     };
     db.record_notice(
@@ -2918,8 +2918,12 @@ fn published_and_dispatched_resolve_per_era() {
         ordinal: 0,
         value: NoticeValue::Date { utc_seconds: utc, offset_minutes: 0, has_time: false },
     };
-    let instants =
-        |rows: Vec<ValueRow>| project::notice_instants(&Parsed { sections: vec![], values: rows });
+    // The source a notice row carries: DÖE's publication rule is its own (issue 539),
+    // and none of the DÖE cases below has an IssueDate on a later day than its
+    // publication candidates, so each resolves what it did before that issue too.
+    let instants = |source: &str, rows: Vec<ValueRow>| {
+        project::notice_instants(source, &Parsed { sections: vec![], values: rows })
+    };
 
     // The regression pin (issue 367): each era below already resolved these
     // dates before both axes became `Option`, and must still resolve the SAME
@@ -2927,56 +2931,57 @@ fn published_and_dispatched_resolve_per_era() {
     //
     // TED eForms: the OJEU PublicationDate (OPP-012) over the dispatch (BT-05).
     assert_eq!(
-        instants(vec![date("BT-05(a)-notice", 100), date("OPP-012-notice", 200)]),
+        instants("ted", vec![date("BT-05(a)-notice", 100), date("OPP-012-notice", 200)]),
         (Some(200), Some(100))
     );
     // DÖE eforms-de: no OJEU stamp → the requested/portal date; dispatch kept.
     assert_eq!(
-        instants(vec![date("BT-05(a)-notice", 100), date("BT-738-notice", 250)]),
+        instants("doe", vec![date("BT-05(a)-notice", 100), date("BT-738-notice", 250)]),
         (Some(250), Some(100))
     );
     // DÖE sdk-0.1 numeric island: only a requested publication date, no dispatch.
-    assert_eq!(instants(vec![date("SDK01-RequestedPublicationDate", 300)]), (Some(300), None));
+    assert_eq!(instants("doe", vec![date("SDK01-RequestedPublicationDate", 300)]), (Some(300), None));
     // DÖE sdk-0.1 with an issue date as its dispatch.
     assert_eq!(
-        instants(vec![date("SDK01-IssueDate", 90), date("SDK01-RequestedPublicationDate", 300)]),
+        instants("doe", vec![date("SDK01-IssueDate", 90), date("SDK01-RequestedPublicationDate", 300)]),
         (Some(300), Some(90))
     );
     // Legacy TED: the OJ DATE_PUB over the dispatch fields.
     assert_eq!(
-        instants(vec![date("TED-DS_DATE_DISPATCH", 10), date("TED-DATE_PUB", 20)]),
+        instants("ted", vec![date("TED-DS_DATE_DISPATCH", 10), date("TED-DATE_PUB", 20)]),
         (Some(20), Some(10))
     );
     // Text era: PD over DS.
-    assert_eq!(instants(vec![date("TXT-DS", 5), date("TXT-PD", 8)]), (Some(8), Some(5)));
+    assert_eq!(instants("ted", vec![date("TXT-DS", 5), date("TXT-PD", 8)]), (Some(8), Some(5)));
     // Dispatch-only notice: published_at falls back to it.
-    assert_eq!(instants(vec![date("BT-05(a)-notice", 100)]), (Some(100), Some(100)));
+    assert_eq!(instants("ted", vec![date("BT-05(a)-notice", 100)]), (Some(100), Some(100)));
 
     // Issue 367 (a): eForms-DE 1.x publishes the same three instants under its
     // own path-shaped ids, and the RESOLVER — not just the projection's folded
     // view — must see them. Before this the whole dialect resolved nothing.
     assert_eq!(
-        instants(vec![date("DE1-IssueDate", 100), date("DE1-RequestedPublicationDate", 250)]),
+        instants("doe", vec![date("DE1-IssueDate", 100), date("DE1-RequestedPublicationDate", 250)]),
         (Some(250), Some(100))
     );
     assert_eq!(
-        instants(vec![
+        instants("doe", vec![
             date("DE1-IssueDate", 100),
             date("DE1-RequestedPublicationDate", 250),
             date("DE1-Publication-PublicationDate", 400),
         ]),
         (Some(400), Some(100)),
-        "the DE-1.x publication stamp outranks the requested date, exactly as \
-         OPP-012 outranks BT-738 after normalise_de1"
+        "on one civil day the DE-1.x publication stamp outranks the requested date, \
+         exactly as OPP-012 outranks BT-738 after normalise_de1 (a LATER requested date \
+         wins for DÖE since issue 539; project.rs's unit tests pin that)"
     );
-    assert_eq!(instants(vec![date("DE1-IssueDate", 100)]), (Some(100), Some(100)));
+    assert_eq!(instants("doe", vec![date("DE1-IssueDate", 100)]), (Some(100), Some(100)));
 
     // Issue 367 (b): a payload that states no date at all is NULL on both axes.
     // `.unwrap_or(0)` used to make this 1970-01-01, and 218,876 stored rows say
     // so — an invented publication date that read as real to every consumer.
-    assert_eq!(instants(vec![]), (None, None));
+    assert_eq!(instants("ted", vec![]), (None, None));
     assert_eq!(
-        instants(vec![ValueRow {
+        instants("ted", vec![ValueRow {
             section_id: "PROCEDURE".into(),
             field_id: "BT-21-Procedure".into(),
             ordinal: 0,
@@ -3016,8 +3021,10 @@ fn the_raw_and_the_normalised_parse_resolve_the_same_instants() {
             })
             .collect()
     };
+    // DE-1.x is DÖE's dialect, so the DÖE publication rule (issue 539) is the one both
+    // layers must agree under.
     let instants =
-        |rows: Vec<ValueRow>| project::notice_instants(&Parsed { sections: vec![], values: rows });
+        |rows: Vec<ValueRow>| project::notice_instants("doe", &Parsed { sections: vec![], values: rows });
 
     for raw in [
         vec![date("DE1-IssueDate", 1_704_841_285), date("DE1-RequestedPublicationDate", 1_704_841_200)],
@@ -3123,6 +3130,76 @@ async fn a_de1_notice_stores_its_real_instants_on_the_notice_row_too() {
     assert_eq!(scalar(&db, "SELECT dispatched_at FROM tender_versions").await, issued);
 
     let _ = std::fs::remove_file(&path);
+}
+
+/// Issue 539, end to end on the one committed DÖE fixture the rule fires on: sdk-0.1
+/// notice 427d4645 requests 2022-11-29 (zoneless, so Z) and was issued
+/// 2023-01-30T11:53:32+01:00 (`IssueDate` + `IssueTime`, one timed `SDK01-IssueDate`).
+/// The unit tests beside the resolver hand it a literal source and hand-built values, and
+/// the instant invariant below compares UTC columns only. This runs the real parse through
+/// the processor's stamp, the store's `notices.source` round trip, the projection and the
+/// `repair-notice-instants` walk with the real resolver, and reads the stored offset and
+/// precision too. The same payload under source `ted` keeps its request: the row's
+/// source decides the rule, not the payload.
+#[tokio::test]
+async fn a_doe_sdk01_notice_is_re_dated_to_its_later_issue_day() {
+    const FIXTURE: &str = "doe/sdk-0.1-uuid-can-427d4645-163c-419d-93a9-5f5ce05ff9b7-1.xml";
+    const ISSUE_DAY: i64 = 1_675_036_800; // 2023-01-30 00:00Z: the IssueDate's civil day
+    const REQUESTED: i64 = 1_669_680_000; // 2022-11-29 00:00Z: the request, the pre-539 stamp
+    const ISSUED: i64 = 1_675_076_012; // 2023-01-30T11:53:32+01:00
+    /// The notice row's (instant, offset, has_time) on one axis.
+    async fn row(db: &Db, axis: &str) -> (i64, i64, i64) {
+        (
+            scalar(db, &format!("SELECT {axis}_at FROM notices")).await,
+            scalar(db, &format!("SELECT {axis}_offset FROM notices")).await,
+            scalar(db, &format!("SELECT {axis}_has_time FROM notices")).await,
+        )
+    }
+
+    let (db, fetch_id, path) = scratch("doe-539").await;
+    ingest_from(&db, fetch_id, "doe", FIXTURE).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(
+        row(&db, "published").await,
+        (ISSUE_DAY, 60, 0),
+        "the notice row serves the IssueDate's day, date-only, in its +01:00 — not 2022-11-29"
+    );
+    assert_eq!(row(&db, "dispatched").await, (ISSUED, 60, 1), "dispatched_at is the timed IssueDate, unchanged");
+    assert_eq!(scalar(&db, "SELECT published_at FROM tender_versions").await, ISSUE_DAY);
+    assert_eq!(scalar(&db, "SELECT dispatched_at FROM tender_versions").await, ISSUED);
+
+    // The drain path: the row as it was stamped before issue 539 is a real disagreement
+    // the job plans (not a mechanical 418 shift), and the wet run writes the new stamp.
+    db.execute_for_test(&format!(
+        "UPDATE notices SET published_at = {REQUESTED}, published_offset = 0, published_has_time = 0"
+    ))
+    .await
+    .expect("reset to the pre-539 stamp");
+    let dry = db
+        .repair_notice_instants(project::INSTANT_DATE_FIELDS, project::notice_stamps, true, None, &|| false)
+        .await
+        .expect("dry repair");
+    assert_eq!((dry.rows, dry.shifted, dry.unstamped), (1, 0, 0), "one planned rewrite");
+    assert_eq!(dry.plan[0].from_published, Some(REQUESTED));
+    assert_eq!(
+        dry.plan[0].to_published,
+        Some(store::Stamp { utc_seconds: ISSUE_DAY, offset_minutes: 60, has_time: false })
+    );
+    let wet = db
+        .repair_notice_instants(project::INSTANT_DATE_FIELDS, project::notice_stamps, false, Some(1), &|| false)
+        .await
+        .expect("wet repair");
+    assert_eq!(wet.applied, 1);
+    assert_eq!(row(&db, "published").await, (ISSUE_DAY, 60, 0), "the repair writes the 539 stamp back");
+    let _ = std::fs::remove_file(&path);
+
+    // Control: the same payload under TED keeps the request (offset 0, date-only).
+    let (ted, ted_fetch, ted_path) = scratch("doe-539-as-ted").await;
+    ingest_from(&ted, ted_fetch, "ted", FIXTURE).await;
+    project::project(&ted, false).await.expect("project");
+    assert_eq!(row(&ted, "published").await, (REQUESTED, 0, 0));
+    assert_eq!(scalar(&ted, "SELECT published_at FROM tender_versions").await, REQUESTED);
+    let _ = std::fs::remove_file(&ted_path);
 }
 
 /// Issue 367, the invariant `notice_instants`' doc comment claims and nothing
@@ -5966,7 +6043,7 @@ fn fixture_notice(fetch_id: i64, relative: &str) -> (Notice, Parsed) {
     let Parse::Parsed(parsed) = process::parse_payload(&n.profile, &bytes) else {
         panic!("{relative}: did not parse");
     };
-    let (published_at, dispatched_at) = project::notice_stamps(&parsed);
+    let (published_at, dispatched_at) = project::notice_stamps(SOURCE, &parsed);
     let notice = Notice {
         source: SOURCE.into(),
         publication_id: n.publication_id.clone(),
@@ -6331,7 +6408,7 @@ fn defence_award_with_winner(fetch_id: i64, winner: &str) -> (Notice, Parsed, Pa
         other => panic!("{other:?}"),
     };
     let (original, voided) = (parsed(&original), parsed(voided.as_bytes()));
-    let (published_at, dispatched_at) = project::notice_stamps(&original);
+    let (published_at, dispatched_at) = project::notice_stamps(SOURCE, &original);
     let notice = Notice {
         source: SOURCE.into(),
         publication_id: n.publication_id.clone(),
