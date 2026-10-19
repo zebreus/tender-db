@@ -54,6 +54,11 @@ OUT = {k: os.path.join(HERE, v) for k, v in (
     ('P', 'P.json'), ('R_single', 'R_single.json'), ('R_excess', 'R_excess.json'),
     ('estimate_flags', 'estimate_flags.json'), ('result_json', 'u2-result.json'), ('result_md', 'u2-result.md'))}
 
+# Provenance of stage 1 (a constant, so the outputs stay reproducible): when l_changed_provisional.json was first fixed.
+STAGE1_NOTE = ('Order: `run_u2.py --stage lchanged` first wrote l_changed_provisional.json at 2026-10-19T14:19:50Z '
+               '(sha256 bc893c3da0e649a8600f3b0c683cfe0646bf033f513bc824ce3df1a4c3495cf0) BEFORE any port decision or '
+               'comparison ran; every later run reproduces it byte for byte.')
+
 # Disagreement causes, filled in by hand after reading each one (input / port / served). Empty: none found.
 CAUSES = {}
 
@@ -494,7 +499,7 @@ def stage_sets(R, ids, recs):
                       'shape_5816379': {'n': len(sup), 'n_lot_null': sum(1 for v in sup.values() if v['lot_null']),
                                         'ids': sorted(sup), 'ids_lot_null': sorted(t for t, v in sup.items() if v['lot_null']),
                                         'detail': {str(t): v for t, v in sorted(sup.items())},
-                                        'definition': superseded_shape.__doc__.strip()},
+                                        'definition': ' '.join(superseded_shape.__doc__.split())},
                       'vouched_by_moved_from_v2_still_ships': moved, 'n_vouched_by_moved': len(moved),
                       'eur_band': dict(sorted(collections.Counter(band(e['S_eur_cents']) for e in ent).items())),
                       'currency': dict(sorted(collections.Counter(e['currency'] for e in ent).items()))}
@@ -565,6 +570,7 @@ def stage_estimate(R, ids, recs, ships):
     (only: S has no other support)."""
     flagged = {}
     examined = 0
+    breakdown = collections.Counter()
     for t in ships['v2']:
         rec = recs[t]
         ests = [c for c in rec['vouch_candidates'] or [] if c['kind'] == 'estimate']
@@ -586,6 +592,8 @@ def stage_estimate(R, ids, recs, ships):
                 back = [k for k, o in (inv.get(c['notice_id']) or {}).items() if o == own]
                 served_key = back[0] if back else own
             flag = bool(is_cn and len(lots) == 1 and served_key not in keys)
+            breakdown[f'{"cn" if is_cn else "not-cn"}/lot_sections={min(len(lots), 3) if len(lots) < 3 else "3+"}'
+                      + ('' if len(lots) != 1 else ('/key_in_S' if served_key in keys else '/key_not_in_S'))] += 1
             out.append({'field': c['field'], 'notice_id': c['notice_id'], 'cents': c['cents'], 'form': why,
                         'is_cn': bool(is_cn), 'n_lot_sections': len(lots), 'lot_section': lots[0] if len(lots) == 1 else None,
                         'served_key': served_key, 'key_in_S': (served_key in keys) if len(lots) == 1 else None,
@@ -614,8 +622,10 @@ def stage_estimate(R, ids, recs, ships):
                    'only': only_}
     return {'what': 'issue 551 B6 U2: estimate vouches from a single-lot-section CN whose lot is not in S (decision '
                     'point 7 / amendment D4; the estimate twin of 6465510). Recorded only; flagged to B-fresh readers.',
-            'definition': stage_estimate.__doc__.strip() + ' ' + notice_cn.__doc__.strip(),
-            'n_estimate_candidates_examined': examined, 'per_guard_set': per, 'flagged': flagged}
+            'definition': ' '.join(stage_estimate.__doc__.split()) + ' CN test: ' +
+                          ' '.join(notice_cn.__doc__.split()[3:]),
+            'n_estimate_candidates_examined': examined, 'breakdown': dict(sorted(breakdown.items())),
+            'per_guard_set': per, 'flagged': flagged}
 
 
 # ---------------------------------------------------------------- driver
@@ -651,6 +661,7 @@ def build(stage=None):
         'run_u2.py_sha256': sha_file(os.path.abspath(__file__)),
         'fetch_u2_api.py_sha256': sha_file(os.path.join(HERE, 'fetch_u2_api.py')),
         'api_requests_log_lines': sum(1 for _ in open(os.path.join(HERE, 'api_requests.log'))),
+        'api_requests_log_sha256': sha_file(os.path.join(HERE, 'api_requests.log')),
         'inputs': dict(lch['inputs'], fresh_layer=digests),
         'misses': {'port_errors': len(errors), 'notices_only_in_rb8': 0 if not errors else 'see port_errors'},
         'l_changed_provisional': {'n': lch['n'], 'n_in_3502': lch['n_in_3502'], 'ids_sha256': lch['ids_sha256'],
@@ -698,7 +709,8 @@ def render_md(res, lch, par, sets, est, extras, json_sha):
     w = L.append
     w('# Issue 551 B6 U2 -- result (decision points 4 and 7)\n')
     w('Produced by `run_u2.py` (offline; network disabled; reproduces every output byte for byte; `--check` verifies). '
-      'Public-API reads by `fetch_u2_api.py` (15 GETs, `api_requests.log`).\n')
+      f'Public-API reads by `fetch_u2_api.py` ({res["api_requests_log_lines"]} GETs, `api_requests.log` sha256 '
+      f'{res["api_requests_log_sha256"]}; none retried, no 408).\n')
     w('## Inputs\n')
     w(f'- Port of record `b6/rule_v2_g.py` **sha256 {RULE_SHA}** (matches `b6/SHA256SUMS`; not edited).')
     for f, h in res['rates']['files'].items():
@@ -732,7 +744,8 @@ def render_md(res, lch, par, sets, est, extras, json_sha):
     w(f'- Sets: 541 2632 corrections {len(lch["set_541_2632"])} (feed range ({R541[0]}, {R541[1]}]), 571 '
       f'{len(lch["set_571"])} (= the feed\'s 05:53:39Z rows), 545 {len(lch["set_545"])} (= the feed\'s 11:06:21Z rows).')
     w(f'- **Provisional L_changed: {lch["n"]} ids** (sha256 {lch["ids_sha256"]}), **{lch["n_in_3502"]} of them among '
-      f'the 3,502**, so all {lch["n_compared"]} are compared.\n')
+      f'the 3,502**, so all {lch["n_compared"]} are compared.')
+    w(f'- {STAGE1_NOTE}\n')
     w('## 2. v2 parity (port guards=frozenset() vs served_lsa_rows.json)\n')
     w(f'- Compared **{par["n_compared"]}** (outside L_changed), **agree {par["n_agree"]}, disagree {par["n_disagree"]}**, '
       f'unread {len(par["unread"])}, port errors {len(par["port_errors"])}. Kinds: {par["disagreement_kinds"] or "none"}.')
@@ -755,12 +768,25 @@ def render_md(res, lch, par, sets, est, extras, json_sha):
       f'Shape: {rx["shape_mix"]}. All G-cover refusals {rx["n_R_cover_all"]}, of which in R_single '
       f'{len(rx["R_cover_and_single"])}; R_both minus R_single = {rx["n_alt"]} (equal to R_excess: '
       f'{rx["alt_equals_primary"]}); refused only with both guards: {rx["interaction_refused_only_with_both_guards"] or "none"}.')
+    w(f'- 5816379 shape (recorded only): {extras["v2+both"]["shape_5816379"]["definition"]}')
     w(f'- Adoption reads (U4, not done here): min(|R|, 30) of each set in `sha256("551-b6-gcost-"+id)` order, M2 protocol; '
       f'adopt iff >= 10 % non-right.\n')
+    cover_all = set(rx['R_cover_all'])
+    for title, st in (('R_single', rs), ('R_excess', rx)):
+        w(f'### {title} by id\n')
+        w('| id | S | cur | n | EUR | year | removed vouch (field @ notice, cents; kind; results on that notice; summed keys it names) | also G-cover |')
+        w('|---|---|---|---|---|---|---|---|')
+        for e in st['entries']:
+            rem = '; '.join(f'{c["field"]} @ {c["notice_id"]}, {c["cents"]}; {c["kind"]}; {c["round_results"]}; '
+                            f'{",".join(c["names_summed_keys"]) or "none"}' for c in e['removed'])
+            eur = '' if e['S_eur_cents'] is None else f'{e["S_eur_cents"] / 100:,.2f}'
+            w(f'| {e["id"]} | {e["S"]} | {e["currency"]} | {e["n"]} | {eur} | {e["year"]} | {rem} | '
+              f'{"yes" if e["id"] in cover_all else "no"} |')
+        w('')
     w('## 4. Estimate-vouch flags (point 7 / D4; recorded only, flagged to B-fresh readers)\n')
     w(f'- Definition: {est["definition"]}')
-    w(f'- Estimate candidates examined (v2 ships): {est["n_estimate_candidates_examined"]}; ids with a flagged candidate: '
-      f'{len(est["flagged"])}.')
+    w(f'- Estimate candidates examined (v2 ships): {est["n_estimate_candidates_examined"]} (by notice: '
+      f'{est["breakdown"]}); ids with a flagged candidate: {len(est["flagged"])}.')
     for nm in NAMES:
         p = est['per_guard_set'][nm]
         w(f'- {nm}: any {p["n_any"]} ({fmt_ids(p["any"], 40) or "none"}); first (vouched_by) {p["n_first"]}; only '

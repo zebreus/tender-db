@@ -1,5 +1,6 @@
 {
  "api_requests_log_lines": 15,
+ "api_requests_log_sha256": "a15248ab11117cf245debee732f30588b8f21ee97f097143b0ed849068daef74",
  "counts": {
   "P_v2+both": 3467,
   "P_v2+cover": 3489,
@@ -96,7 +97,7 @@
    "n_ships": 3502,
    "n_vouched_by_moved": 0,
    "shape_5816379": {
-    "definition": "5816379's shape (recorded only, not a bar; issue 551 M2 fallback: \"a vouch from an earlier award notice while a\n    later award notice in the chain states its own different total\"), as tested here: the first kept vouch is of kind\n    award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results\n    row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the\n    vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern,\n    which the port's summed set cannot see).",
+    "definition": "5816379's shape (recorded only, not a bar; issue 551 M2 fallback: \"a vouch from an earlier award notice while a later award notice in the chain states its own different total\"), as tested here: the first kept vouch is of kind award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern, which the port's summed set cannot see).",
     "detail": {
      "1040303": {
       "later": [
@@ -5692,7 +5693,7 @@
    "n_ships": 3467,
    "n_vouched_by_moved": 0,
    "shape_5816379": {
-    "definition": "5816379's shape (recorded only, not a bar; issue 551 M2 fallback: \"a vouch from an earlier award notice while a\n    later award notice in the chain states its own different total\"), as tested here: the first kept vouch is of kind\n    award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results\n    row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the\n    vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern,\n    which the port's summed set cannot see).",
+    "definition": "5816379's shape (recorded only, not a bar; issue 551 M2 fallback: \"a vouch from an earlier award notice while a later award notice in the chain states its own different total\"), as tested here: the first kept vouch is of kind award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern, which the port's summed set cannot see).",
     "detail": {
      "1040303": {
       "later": [
@@ -10951,7 +10952,7 @@
    "n_ships": 3489,
    "n_vouched_by_moved": 0,
    "shape_5816379": {
-    "definition": "5816379's shape (recorded only, not a bar; issue 551 M2 fallback: \"a vouch from an earlier award notice while a\n    later award notice in the chain states its own different total\"), as tested here: the first kept vouch is of kind\n    award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results\n    row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the\n    vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern,\n    which the port's summed set cannot see).",
+    "definition": "5816379's shape (recorded only, not a bar; issue 551 M2 fallback: \"a vouch from an earlier award notice while a later award notice in the chain states its own different total\"), as tested here: the first kept vouch is of kind award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern, which the port's summed set cannot see).",
     "detail": {
      "1040303": {
       "later": [
@@ -16370,7 +16371,7 @@
    "n_ships": 3468,
    "n_vouched_by_moved": 0,
    "shape_5816379": {
-    "definition": "5816379's shape (recorded only, not a bar; issue 551 M2 fallback: \"a vouch from an earlier award notice while a\n    later award notice in the chain states its own different total\"), as tested here: the first kept vouch is of kind\n    award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results\n    row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the\n    vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern,\n    which the port's summed set cannot see).",
+    "definition": "5816379's shape (recorded only, not a bar; issue 551 M2 fallback: \"a vouch from an earlier award notice while a later award notice in the chain states its own different total\"), as tested here: the first kept vouch is of kind award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern, which the port's summed set cannot see).",
     "detail": {
      "1040303": {
       "later": [
@@ -21660,7 +21661,7 @@
   "R_excess.json": "3d134390f82269a5c568e3a82269264b5f16648bcfc5cb63372cc8f711b8e252",
   "R_single.json": "c1b413e034dc8bbc57229cc6b89b4eacc7be60f700dc6d93890fefd0afa62c60",
   "decisions.jsonl.gz": "0add92e36c70ca76b81049e9faf678e91305e790d1fd914ff4952a0f1d0749cb",
-  "estimate_flags.json": "c53d91720ada09e778b85f449ed24c835afc907925f3534b1138572421e36734",
+  "estimate_flags.json": "b5fbc732b1c66e0365d4056ce2bfacbf3638badd352fa72f457f220cf8d684d0",
   "l_changed_provisional.json": "bc893c3da0e649a8600f3b0c683cfe0646bf033f513bc824ce3df1a4c3495cf0",
   "parity_v2.json": "8457029c6a19d54293b986e5cb90e2b8dfd5c7d4b917cbb1403dda075a003034"
  },
@@ -21687,7 +21688,7 @@
    "eurofxref-hist.zip": "8e925cef1572f8df5c8743229a761b029180f3b5cd4aa2213592192964ebd793"
   }
  },
- "run_u2.py_sha256": "376e8652c80eae1215656ce4e4c914b52eedce9c85ab5fb115097a3728a0cc0a",
+ "run_u2.py_sha256": "e9a9675d10d61991cdc9c8cba46389fced465fe0c0a61ecfdda9e1cc98db16fa",
  "shape_mix": {
   "R_excess": {
    "eur_band": {

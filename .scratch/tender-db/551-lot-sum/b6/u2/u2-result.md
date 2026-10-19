@@ -1,6 +1,6 @@
 # Issue 551 B6 U2 -- result (decision points 4 and 7)
 
-Produced by `run_u2.py` (offline; network disabled; reproduces every output byte for byte; `--check` verifies). Public-API reads by `fetch_u2_api.py` (15 GETs, `api_requests.log`).
+Produced by `run_u2.py` (offline; network disabled; reproduces every output byte for byte; `--check` verifies). Public-API reads by `fetch_u2_api.py` (15 GETs, `api_requests.log` sha256 a15248ab11117cf245debee732f30588b8f21ee97f097143b0ed849068daef74; none retried, no 408).
 
 ## Inputs
 
@@ -30,6 +30,7 @@ Produced by `run_u2.py` (offline; network disabled; reproduces every output byte
 - Criterion (b), notices: **0** ids. The decision words this three ways: "a notice folded since 2026-10-18 20:30Z" (point 4, amendment B5), "the tender ids of every notice ingested since 2026-10-18 20:30Z" (synthesis) and "notices folded since 2627, not ingested_at (notices fetched before the cutoff but parsed later fall through)" (C3). Wider reading taken: first folded (parsed and folded for the first time) since the EARLIER cutoff 2026-10-18T20:30:00Z. Re-folds of already-folded notices are not counted (2627, 2630 and the zero-drift probe re-folded every notice of the 3,502, which would make the criterion vacuous). On the public API the only per-notice instant is ingested_at; it is assigned at insert in id order, so the probes binary-searched the boundary over the 15,537 named notices: the newest named notice, 47406725, was ingested 2026-10-16T07:35:45Z, before the cutoff, so no named notice was ingested since it. A notice ingested earlier but first parsed later (a quarantine reclaim or a re-parse keeps its ingested_at) is not visible per notice without a detail GET of each; no reclaim or re-parse job is on record in the window (the daily chain does not reclaim), and such a fold that moved facts, rounds, groups, closure or value writes a tender change row (canonical.rs append_version_changes), which (a) reads; only a silent (projection-only) version would escape. Recorded as a residual. Probes (id, ingested_at): [[47396127, '2026-10-14T07:35:02Z'], [47398305, '2026-10-15T07:35:03Z'], [47400399, '2026-10-15T07:35:03Z'], [47401649, '2026-10-15T07:35:03Z'], [47402365, '2026-10-15T07:35:32Z'], [47406725, '2026-10-16T07:35:45Z']].
 - Sets: 541 2632 corrections 126 (feed range (958809778, 958809905]), 571 66 (= the feed's 05:53:39Z rows), 545 47 (= the feed's 11:06:21Z rows).
 - **Provisional L_changed: 239 ids** (sha256 5b5eb683f22b2cf7a2d29fc7ff314dbed2008b35d635d0b60bddb08487305605), **0 of them among the 3,502**, so all 3502 are compared.
+- Order: `run_u2.py --stage lchanged` first wrote l_changed_provisional.json at 2026-10-19T14:19:50Z (sha256 bc893c3da0e649a8600f3b0c683cfe0646bf033f513bc824ce3df1a4c3495cf0) BEFORE any port decision or comparison ran; every later run reproduces it byte for byte.
 
 ## 2. v2 parity (port guards=frozenset() vs served_lsa_rows.json)
 
@@ -44,17 +45,58 @@ Produced by `run_u2.py` (offline; network disabled; reproduces every output byte
 - **v2+both: P = 3467** (ids sha256 a2619fd9e380d3d5672b3417d807e504b3a85965b8e5ea319425564e3cd21872), g = 35; vouched_by moved but still ships 0; B_P (>= EUR 100 m) 29: 683951, 707424, 726354, 1102571, 1147190, 1148297, 5278856, 5769515, 5842187, 6017838, 6057925, 6195903, 6370901, 6435162, 6548237, 6569442, 6603588, 6679375, 6718092, 7001924, 7011414, 7139761, 7167278, 7196993, 7461921, 7542368, 8407303, 8426318, 8460630; within 2 % of EUR 100 m: 899272, 5842187; 5816379 shape 286 (lot-less later award 144: 5557595, 5574008, 5673713, 5816379, 5826698, 5847452, 5859852, 5863173, 5907365, 5914032, 5924297, 5935164, 5944341, 5970225, 5992450, 5993394, 5999026, 6015175, 6041010, 6043463, 6052980, 6096892, 6113606, 6129027, 6130837, 6154617, 6168075, 6173282, 6177790, 6210355, 6214381, 6230981, 6253467, 6273141, 6296643, 6297927, 6298078, 6306585, 6345927, 6357976, ... (144 in all)).
 - **R_single = 34** (sha256 65224f5239d68b4ed1fec108b2b03024cc4a24ee436a1fa03ec4b50d44b4aa5d): 402503, 472292, 5581720, 5663701, 5884304, 6003114, 6234738, 6342738, 6356382, 6403567, 6465510, 6582856, 6595330, 6784258, 6815094, 6838776, 6852228, 6937514, 7014656, 7102361, 7163120, 7166738, 7179291, 7348648, 7354861, 7380025, 7394272, 7423850, 7600895, 7605188, 7608791, 7651470, 7675062, 7785319. Shape: {'removed_field': {'BT-161-NoticeResult': 3, 'TED-VAL_TOTAL': 35}, 'removed_kind': {'award': 38}, 'v2_vouched_by_field': {'BT-161-NoticeResult': 2, 'TED-VAL_TOTAL': 32}, 'year': {'2016': 1, '2017': 1, '2018': 3, '2019': 1, '2020': 3, '2021': 4, '2022': 4, '2023': 14, '2024': 2, '2025': 1}, 'eur_band': {'<100k': 4, '<100m': 5, '<10k': 3, '<10m': 12, '<1m': 10}}.
 - **R_excess = 1** (G-cover refuses beyond G-single; sha256 39165ec9cbe9a7a28340d73fe7695bbb7c9e1c94ca6920ea7632041c702b3b46): 7202436. Shape: {'removed_field': {'TED-VAL_TOTAL': 1}, 'removed_kind': {'award': 1}, 'v2_vouched_by_field': {'TED-VAL_TOTAL': 1}, 'year': {'2022': 1}, 'eur_band': {'<100k': 1}}. All G-cover refusals 13, of which in R_single 12; R_both minus R_single = 1 (equal to R_excess: True); refused only with both guards: none.
+- 5816379 shape (recorded only): 5816379's shape (recorded only, not a bar; issue 551 M2 fallback: "a vouch from an earlier award notice while a later award notice in the chain states its own different total"), as tested here: the first kept vouch is of kind award or range, from version notice N; a LATER version notice N' (higher seq) holds at least one served lot_results row and states its own award-kind total (the port's frozen table, r3_kind 'award') more than 1 % away from the vouching total. `lot_null`: every lot_results row of such an N' is stored lot = null (5816379's exact pattern, which the port's summed set cannot see).
 - Adoption reads (U4, not done here): min(|R|, 30) of each set in `sha256("551-b6-gcost-"+id)` order, M2 protocol; adopt iff >= 10 % non-right.
+
+### R_single by id
+
+| id | S | cur | n | EUR | year | removed vouch (field @ notice, cents; kind; results on that notice; summed keys it names) | also G-cover |
+|---|---|---|---|---|---|---|---|
+| 402503 | 3529888888800 | HUF | 2 | 89,199,426.09 | 2025 | BT-161-NoticeResult @ 24416505, 3529888888800; award; 1; LOT-0002 | no |
+| 472292 | 51361537100 | HUF | 4 | 1,333,442.47 | 2024 | BT-161-NoticeResult @ 23758321, 51361537100; award; 1; LOT-0003; BT-161-NoticeResult @ 23795731, 51361537100; award; 1; LOT-0004 | no |
+| 5581720 | 138000000 | EUR | 2 | 1,380,000.00 | 2017 | TED-VAL_TOTAL @ 18983294, 138000000; award; 1; LOT-2 | no |
+| 5663701 | 450000000 | EUR | 2 | 4,500,000.00 | 2016 | TED-VAL_TOTAL @ 18933186, 450000000; award; 1; LOT-1 | no |
+| 5884304 | 12022244 | EUR | 2 | 120,222.44 | 2018 | TED-VAL_TOTAL @ 19344705, 12022244; award; 1; LOT-2 | no |
+| 6003114 | 3820000 | PLN | 3 | 8,902.15 | 2018 | TED-VAL_TOTAL @ 19427538, 3820000; award; 1; LOT-1; TED-VAL_TOTAL @ 19437670, 3820000; award; 1; LOT-1 | no |
+| 6234738 | 6849720 | EUR | 2 | 68,497.20 | 2018 | TED-VAL_TOTAL @ 20033615, 6849720; award; 1; LOT-2 | no |
+| 6342738 | 18073600 | EUR | 2 | 180,736.00 | 2020 | TED-VAL_TOTAL @ 20223375, 18073600; award; 1; LOT-2 | no |
+| 6356382 | 28537952 | EUR | 2 | 285,379.52 | 2023 | TED-VAL_TOTAL @ 20317908, 28537953; award; 1; none | yes |
+| 6403567 | 28000000 | EUR | 2 | 280,000.00 | 2019 | TED-VAL_TOTAL @ 20520516, 28000000; award; 1; LOT-1 | no |
+| 6465510 | 16202092 | EUR | 2 | 162,020.92 | 2020 | TED-VAL_TOTAL @ 20772908, 16129032; award; 1; none | yes |
+| 6582856 | 416040 | EUR | 7 | 4,160.40 | 2020 | TED-VAL_TOTAL @ 20932731, 420000; award; 1; none | yes |
+| 6595330 | 229519500 | EUR | 2 | 2,295,195.00 | 2021 | TED-VAL_TOTAL @ 20747457, 229519500; award; 1; LOT-2 | no |
+| 6784258 | 4656910569 | PLN | 2 | 10,535,996.76 | 2023 | TED-VAL_TOTAL @ 21353722, 4656910569; award; 1; LOT-2; TED-VAL_TOTAL @ 21366937, 4656910569; award; 1; LOT-1 | no |
+| 6815094 | 67740000 | EUR | 4 | 677,400.00 | 2022 | TED-VAL_TOTAL @ 21285538, 67740000; award; 1; LOT-2 | no |
+| 6838776 | 9299600 | EUR | 5 | 92,996.00 | 2021 | TED-VAL_TOTAL @ 21254549, 9299600; award; 1; LOT-6 | no |
+| 6852228 | 1982261000 | PLN | 6 | 4,446,226.14 | 2023 | TED-VAL_TOTAL @ 21600409, 1982261000; award; 1; LOT-6 | no |
+| 6937514 | 8873200 | EUR | 4 | 88,732.00 | 2021 | TED-VAL_TOTAL @ 21530641, 8873200; award; 1; LOT-4 | no |
+| 7014656 | 16316000 | EUR | 2 | 163,160.00 | 2022 | TED-VAL_TOTAL @ 21635083, 16316000; award; 1; LOT-1 | no |
+| 7102361 | 100000000 | EUR | 2 | 1,000,000.00 | 2021 | TED-VAL_TOTAL @ 22048453, 100000000; award; 1; LOT-2 | no |
+| 7163120 | 420440000 | EUR | 2 | 4,204,400.00 | 2022 | TED-VAL_TOTAL @ 22136632, 420440000; award; 1; none | yes |
+| 7166738 | 89880496 | EUR | 2 | 898,804.96 | 2023 | TED-VAL_TOTAL @ 22450615, 89880496; award; 1; none | yes |
+| 7179291 | 8334990 | EUR | 3 | 83,349.90 | 2022 | TED-VAL_TOTAL @ 22780357, 8314673; award; 1; none | yes |
+| 7348648 | 9762606820 | HRK | 17 | 12,957,205.95 | 2023 | TED-VAL_TOTAL @ 22886555, 9762606820; award; 1; LOT-7 | no |
+| 7354861 | 53115549 | EUR | 3 | 531,155.49 | 2023 | TED-VAL_TOTAL @ 22499826, 53115549; award; 1; LOT-1 | no |
+| 7380025 | 278437310 | EUR | 3 | 2,784,373.10 | 2023 | TED-VAL_TOTAL @ 22369006, 278437310; award; 1; none | yes |
+| 7394272 | 369296550 | EUR | 5 | 3,692,965.50 | 2023 | TED-VAL_TOTAL @ 22388431, 369296550; award; 1; none | yes |
+| 7423850 | 117686500 | EUR | 2 | 1,176,865.00 | 2023 | TED-VAL_TOTAL @ 22432073, 117686500; award; 1; none | yes |
+| 7600895 | 2204602700 | EUR | 3 | 22,046,027.00 | 2023 | TED-VAL_TOTAL @ 22875211, 2204602700; award; 1; none | yes |
+| 7605188 | 381610000 | EUR | 2 | 3,816,100.00 | 2023 | TED-VAL_TOTAL @ 22923984, 381610000; award; 1; none | yes |
+| 7608791 | 5275000000 | EUR | 2 | 52,750,000.00 | 2023 | TED-VAL_TOTAL @ 23061269, 5275000000; award; 1; LOT-1 | no |
+| 7651470 | 566731310 | EUR | 2 | 5,667,313.10 | 2024 | TED-VAL_TOTAL @ 23006164, 566731310; award; 1; none | yes |
+| 7675062 | 18210653 | EUR | 3 | 182,106.53 | 2023 | TED-VAL_TOTAL @ 23312560, 18210653; award; 1; LOT-2; TED-VAL_TOTAL @ 23314405, 18210653; award; 1; LOT-3 | no |
+| 7785319 | 4150000 | PLN | 2 | 9,557.81 | 2023 | TED-VAL_TOTAL @ 23564346, 4150000; award; 1; LOT-1 | no |
+
+### R_excess by id
+
+| id | S | cur | n | EUR | year | removed vouch (field @ notice, cents; kind; results on that notice; summed keys it names) | also G-cover |
+|---|---|---|---|---|---|---|---|
+| 7202436 | 2722200 | EUR | 2 | 27,222.00 | 2022 | TED-VAL_TOTAL @ 22179136, 2698120; award; 3; none | yes |
 
 ## 4. Estimate-vouch flags (point 7 / D4; recorded only, flagged to B-fresh readers)
 
-- Definition: Every estimate-kind R10 candidate of every v2 ship, tested: from a CN-type notice with exactly ONE lot section
-    whose served key (the 570 remap target of that section) is not a summed key. Then, per guard set, the ships whose
-    KEPT vouch list holds such a candidate (any), whose vouched_by is one (first), or whose every kept vouch is one
-    (only: S has no other support). -> (is_cn, reason). CN-type when the notice's form says so: a TED-FORM in the port's frozen CN set
-    (cn_type), an eForms subtype (OPP-070-notice / DE1-NoticeSubType-SubTypeCode) 1..24 or E1..E3, or a BT-02-notice
-    cn-*/pin-*/qu-*/subco*; with no form field at all, a notice holding no LotResult section.
-- Estimate candidates examined (v2 ships): 605; ids with a flagged candidate: 0.
+- Definition: Every estimate-kind R10 candidate of every v2 ship, tested: from a CN-type notice with exactly ONE lot section whose served key (the 570 remap target of that section) is not a summed key. Then, per guard set, the ships whose KEPT vouch list holds such a candidate (any), whose vouched_by is one (first), or whose every kept vouch is one (only: S has no other support). CN test: CN-type when the notice's form says so: a TED-FORM in the port's frozen CN set (cn_type), an eForms subtype (OPP-070-notice / DE1-NoticeSubType-SubTypeCode) 1..24 or E1..E3, or a BT-02-notice cn-*/pin-*/qu-*/subco*; with no form field at all, a notice holding no LotResult section.
+- Estimate candidates examined (v2 ships): 605 (by notice: {'cn/lot_sections=2': 287, 'cn/lot_sections=3+': 311, 'not-cn/lot_sections=2': 2, 'not-cn/lot_sections=3+': 5}); ids with a flagged candidate: 0.
 - v2: any 0 (none); first (vouched_by) 0; only (no other kept vouch) 0 (none).
 - v2+single: any 0 (none); first (vouched_by) 0; only (no other kept vouch) 0 (none).
 - v2+cover: any 0 (none); first (vouched_by) 0; only (no other kept vouch) 0 (none).
@@ -68,6 +110,6 @@ Produced by `run_u2.py` (offline; network disabled; reproduces every output byte
 - `u2/P.json` 5f8b7f7ce50b07d9a474539d0aa7a162a6a1933e638ec9914218c22727f4f75b
 - `u2/R_single.json` c1b413e034dc8bbc57229cc6b89b4eacc7be60f700dc6d93890fefd0afa62c60
 - `u2/R_excess.json` 3d134390f82269a5c568e3a82269264b5f16648bcfc5cb63372cc8f711b8e252
-- `u2/estimate_flags.json` c53d91720ada09e778b85f449ed24c835afc907925f3534b1138572421e36734
-- `u2/u2-result.json` b608b8812b88f4cbfa3b393f599b66ad823f9463edd915daa1ae137affb02ee5
-- `u2/run_u2.py` 376e8652c80eae1215656ce4e4c914b52eedce9c85ab5fb115097a3728a0cc0a; `u2/fetch_u2_api.py` 7c38605aa6be0e9100082371d953a363fcb24b85ff84dcec54183c1211979163
+- `u2/estimate_flags.json` b5fbc732b1c66e0365d4056ce2bfacbf3638badd352fa72f457f220cf8d684d0
+- `u2/u2-result.json` ff33a210404dc8dade655604dfe12a0e9b4239fec6dae775e91d935564b99c3e
+- `u2/run_u2.py` e9a9675d10d61991cdc9c8cba46389fced465fe0c0a61ecfdda9e1cc98db16fa; `u2/fetch_u2_api.py` 7c38605aa6be0e9100082371d953a363fcb24b85ff84dcec54183c1211979163

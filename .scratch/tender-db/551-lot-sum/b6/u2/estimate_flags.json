@@ -1,5 +1,11 @@
 {
- "definition": "Every estimate-kind R10 candidate of every v2 ship, tested: from a CN-type notice with exactly ONE lot section\n    whose served key (the 570 remap target of that section) is not a summed key. Then, per guard set, the ships whose\n    KEPT vouch list holds such a candidate (any), whose vouched_by is one (first), or whose every kept vouch is one\n    (only: S has no other support). -> (is_cn, reason). CN-type when the notice's form says so: a TED-FORM in the port's frozen CN set\n    (cn_type), an eForms subtype (OPP-070-notice / DE1-NoticeSubType-SubTypeCode) 1..24 or E1..E3, or a BT-02-notice\n    cn-*/pin-*/qu-*/subco*; with no form field at all, a notice holding no LotResult section.",
+ "breakdown": {
+  "cn/lot_sections=2": 287,
+  "cn/lot_sections=3+": 311,
+  "not-cn/lot_sections=2": 2,
+  "not-cn/lot_sections=3+": 5
+ },
+ "definition": "Every estimate-kind R10 candidate of every v2 ship, tested: from a CN-type notice with exactly ONE lot section whose served key (the 570 remap target of that section) is not a summed key. Then, per guard set, the ships whose KEPT vouch list holds such a candidate (any), whose vouched_by is one (first), or whose every kept vouch is one (only: S has no other support). CN test: CN-type when the notice's form says so: a TED-FORM in the port's frozen CN set (cn_type), an eForms subtype (OPP-070-notice / DE1-NoticeSubType-SubTypeCode) 1..24 or E1..E3, or a BT-02-notice cn-*/pin-*/qu-*/subco*; with no form field at all, a notice holding no LotResult section.",
  "flagged": {},
  "n_estimate_candidates_examined": 605,
  "per_guard_set": {
