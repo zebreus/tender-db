@@ -1,6 +1,6 @@
 # 546 — legacy TED serves the buyer's and the winner's address NUTS as the tender's `country`, so `?country=` over-matches
 
-Status: ready-for-agent — unit 1 measured 2026-10-19 (.scratch/tender-db/546-triage/notes.txt, verify_notes.txt). r208 has no address NUTS: 2013 (W13, n=5,000) and the 43 r208 notices of 2019 in W19 carry none. In r209 (W17 2017 / W19 2019 / W22 2022), 32.2% / 32.9% / 23.6% of notices carry a buyer or winner code that adds a `?country=` match the performance place does not give. 0.9% / 1.1% / 0.7% match a wrong country, and about 42% / 42% / 31% serve a longer list. 1.5% / 0.9% / 0% are address-only: 27 of these 30 are F12/F13 design contests, and the other 3 are F14 corrigenda. Every ORG-section TED-NUTS code is restated by CA_CE_NUTS ∪ TENDERER_NUTS. Decision D1 (unit 2, recorded below): drop buyer, winner and other-address NUTS from canonical `place`, with no fallback on empty, and keep them on the notice layer. Next: unit 3 builds it. Then unit 4 runs the dry-run cohort count and a refold of about 4.5M r209 notices (about 4.5 h); the Verify should then read ['FRK22']. Was: needs-triage — filed 2026-10-15 from issue 532's unit-1 decision (D7), which confirmed the precedent and left
+Status: ready-for-agent — unit 3 BUILT and GATED 2026-10-19 (wf_ce324a9f-c14: built, reviewed, 6 findings fixed; gate green at 42cc601, 1432 s), HELD OFF MAIN as `.scratch/tender-db/546-triage/u3-42cc601.patch` (`git apply` clean on da9b0de): issue 551 B6's flip deploy must carry no other projection change, so unit 3 lands and deploys only after the flip and its U8 verification. Then re-apply the patch, re-gate, deploy, and run unit 4 (cohort count + refold). The patch also carries the CHANGELOG entries for 541 and 571 and issue 540's MODIFIED_ADDRESS reason string. Was: ready-for-agent — unit 1 measured 2026-10-19 (.scratch/tender-db/546-triage/notes.txt, verify_notes.txt). r208 has no address NUTS: 2013 (W13, n=5,000) and the 43 r208 notices of 2019 in W19 carry none. In r209 (W17 2017 / W19 2019 / W22 2022), 32.2% / 32.9% / 23.6% of notices carry a buyer or winner code that adds a `?country=` match the performance place does not give. 0.9% / 1.1% / 0.7% match a wrong country, and about 42% / 42% / 31% serve a longer list. 1.5% / 0.9% / 0% are address-only: 27 of these 30 are F12/F13 design contests, and the other 3 are F14 corrigenda. Every ORG-section TED-NUTS code is restated by CA_CE_NUTS ∪ TENDERER_NUTS. Decision D1 (unit 2, recorded below): drop buyer, winner and other-address NUTS from canonical `place`, with no fallback on empty, and keep them on the notice layer. Next: unit 3 builds it. Then unit 4 runs the dry-run cohort count and a refold of about 4.5M r209 notices (about 4.5 h); the Verify should then read ['FRK22']. Was: needs-triage — filed 2026-10-15 from issue 532's unit-1 decision (D7), which confirmed the precedent and left
 it out of 532's scope. Next: measure how many legacy tenders serve a buyer/winner-only NUTS, then decide.
 Kind: API semantics (the `country` field and `?country=` on legacy TED)
 Relates to:
@@ -179,3 +179,17 @@ flip enumerates its id list from every tender change row after cursor 958787061 
 U8 verification are done** (no earlier than the 10-21 post-chain gap). Unit 3 (the build) can land and deploy before then:
 it changes only Tenders folded afterwards.
 
+
+
+## Unit 3 — built, gated, held (2026-10-19)
+
+- Built by wf_ce324a9f-c14 (implement, review lenses, a skeptic per finding; 6 findings fixed). Focused runs green (87 passed).
+- `TED-CA_CE_NUTS` and `TED-TENDERER_NUTS` are no longer CLASSIFICATIONS on the canonical `place`; `TED-NUTS` inside an
+  Organization section is skipped (`enclosing(&sections, ..., &[ORGANIZATION_KIND])`); the notice layer keeps all three.
+  /docs, openapi (`country` parameter, `Tender.country`, `TenderDetail.classifications`) and the /v1/sql notes say so,
+  each with the pre-refold caveat tagged `issue-546 refold` (retire through RETIRED after unit 4's Verify).
+- Committed 42cc601 with the CHANGELOG entries for 541/571 and 540's reason string; `ops/check.sh` green, 1432 s, marker
+  `gate-v2 42cc601`. Main was then rebuilt WITHOUT it (da9b0de = 638f624 + scratch only) and the commit saved as
+  `546-triage/u3-42cc601.patch`, because the 551 B6 flip (U6/U7, ≥ 10-21) is a deploy whose exact-set drain must show
+  path W's changes alone (D1/D2 tolerance 0): a deployed 546 would re-place every legacy tender that drain re-projects.
+- After the flip and U8: `git apply` the patch (resolve any drift), re-gate, deploy, then unit 4.
