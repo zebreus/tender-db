@@ -1,0 +1,32 @@
+Issue 540 unit 3 plan probes, 2026-10-19. Engine: turso via target/debug/plan-probe plan, on a copy of v551/plan.db
+(scratchpad u540/plan.db). Output verbatim below; per-query blocks appended as they are sent.
+
+s01_r208_dist (same driving as c02: notices_profile walk, which the c02 read already ran on prod; + sorter on its 557,040 rows)
+PLAN	dist	SEARCH notices USING INDEX notices_profile (profile=?)
+PLAN	dist	USE SORTER FOR GROUP BY
+NOTE: turso prints only (profile=?) for this index, i.e. the rowid bound is a filter, not a seek: the walk covers every r208
+index entry. That is why the per-window sweep below drives from the notices PRIMARY KEY range with +n.profile instead.
+
+window sweep (s02+), driven by notices PK range, one probe per r208 notice per check:
+PLAN	win_sub	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	win_sub	CORRELATED SCALAR SUBQUERY 1
+PLAN	win_sub	  SEARCH s USING INDEX notice_sections_kind_notice (kind=? AND notice_id=?)
+PLAN	win_sub	SEARCH s USING INDEX notice_sections_kind_notice (kind=? AND notice_id=?)
+PLAN	win_sub	SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)
+PLAN	win_sub	SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)
+PLAN	win_sub	SEARCH i USING INDEX sqlite_autoindex_notice_ids_1 (notice_id=? AND section_id=? AND field_id=? AND ordinal=?)
+PLAN	win_sub	SEARCH i USING INDEX sqlite_autoindex_notice_ids_1 (notice_id=?)
+Logic checked on a synthetic copy (u540/synth.db: 3 r208 + 1 r209 rows): returned (3, lo, hi, 2, 1, 2, 1, 2, 2) = expected.
+
+s02-s11, s13, s14: win_template.sql (PK-driven, +n.profile), plan = win_sub above (byte-identical SQL to the planned one
+  for s02's shape; only the two bounds change).
+s12 (sparse tail 20,250,001-27,161,439): win_template_idx.sql (profile-index-driven; PK scan of 6.9M ids avoided):
+PLAN	win_idx	SEARCH n USING INDEX notices_profile (profile=?)
+PLAN	win_idx	CORRELATED SCALAR SUBQUERY 1
+PLAN	win_idx	  SEARCH s USING INDEX notice_sections_kind_notice (kind=? AND notice_id=?)
+PLAN	win_idx	SEARCH s USING INDEX notice_sections_kind_notice (kind=? AND notice_id=?)
+PLAN	win_idx	SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)
+PLAN	win_idx	SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)
+PLAN	win_idx	SEARCH i USING INDEX sqlite_autoindex_notice_ids_1 (notice_id=? AND section_id=? AND field_id=? AND ordinal=?)
+PLAN	win_idx	SEARCH i USING INDEX sqlite_autoindex_notice_ids_1 (notice_id=?)
+s15ctl (r209 positive control, ctl_template_r209.sql: profile r209, TED-FORM 'F14'): plan in ctl_plan.txt, same shape as win_sub.

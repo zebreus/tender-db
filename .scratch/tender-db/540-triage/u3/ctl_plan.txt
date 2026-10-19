@@ -1,0 +1,8 @@
+PLAN	ctl	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ctl	CORRELATED SCALAR SUBQUERY 1
+PLAN	ctl	  SEARCH s USING INDEX notice_sections_kind_notice (kind=? AND notice_id=?)
+PLAN	ctl	SEARCH s USING INDEX notice_sections_kind_notice (kind=? AND notice_id=?)
+PLAN	ctl	SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)
+PLAN	ctl	SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)
+PLAN	ctl	SEARCH i USING INDEX sqlite_autoindex_notice_ids_1 (notice_id=? AND section_id=? AND field_id=? AND ordinal=?)
+PLAN	ctl	SEARCH i USING INDEX sqlite_autoindex_notice_ids_1 (notice_id=?)

@@ -1,0 +1,35 @@
+Issue 540 unit 3, 2026-10-19: the late r208 band swept for the corrigendum shape. Read-only.
+/v1/sql: 15 requests (s01..s14, s15ctl) of the 20 allowed; no 408, no retry, every body carried columns + row_count (checked
+in tally.txt's script, which asserts the shape before summing). Round trips 2.0-11.0 s including ssh. Public GETs: 3, >= 2.5 s apart.
+Plans: plans.txt (turso, target/debug/plan-probe plan, on a copy of v551/plan.db). Query logic checked on a synthetic copy.
+
+Band: c02 said 557,040 ted-export-r208 notices at ids 18,579,251-27,161,439.
+s01 (id/250k buckets, notices_profile walk like c02): 24 buckets summing to exactly 557,040. Dense at the bottom
+  (18.58M-18.75M is ~98 % r208: 167,030 in 170,749 ids), thinning to ~1.5k per 250k ids by 21M-23.5M, then 32 rows to 23.89M,
+  one row at 24,033,137, and 1,898 at 27,159,542-27,161,439.
+  Dating (public GETs): 18,579,251 = 456429-2015 (R2.0.8.S02.E01, published 2015-12-26); 23,894,968 = 199921-2024
+  (declared R2.0.8, published 2024-04-05); 27,161,439 = 071207-2010 (R2.0.7.S02.E01, a 2010 re-ingest at a high id).
+
+Sweep (one query per window; per r208 notice: count of Change sections, TED-FORM present, TED-FORM = '14',
+  CA_CE pointer at PROCEDURE/0, CA_CE pointer anywhere else). 13 contiguous windows 18,579,248..27,161,439:
+  r208 notices covered       557,040 / 557,040 (100 %)
+  (a) Change sections         0 (0 notices)
+  (b) TED-FORM 14             0
+  (c) CA_CE outside PROC/0    0
+  positive controls on the same rows: TED-FORM present 445,609; CA_CE at PROCEDURE/0 445,609 (equal in every window).
+  111,431 r208 notices carry no TED-FORM (the OTH_NOT-prose shape g04 showed); (a) and (c) cover them too, since those
+  checks do not depend on the form.
+s15ctl (instrument control, r209 rows in 19,190,001-19,200,000, same probes, form 'F14'): 7,424 r209 notices, 817 with
+  Change sections (2,017 sections), 854 F14. So the Change and form probes find the corrigendum shape where it exists: on
+  the r209 rows interleaved in the same band, never on the r208 ones.
+
+Decision: all zero, so wontfix per the Status line. The structured R2.0.8 F14 (ADDITIONAL_INFORMATION_CORRIGENDUM with
+ADD/DELETE/REPLACE or ADDR_CORR) never arrives anywhere in the corpus's r208 rows: 0 below 18,579,247 (r08/r09 + c01) and 0 in
+all 557,040 above it. No corrected block is ever served as `buyer`.
+Follow-up (comment-only, rides the next gate): the MODIFIED_ADDRESS reason string in NOT_CONTACT_DATA_WRAPPERS
+(crates/ingest/src/project.rs ~17173) becomes, e.g.:
+  'R2.0.8 corrigenda arrive as OTH_NOT prose: 0 Change sections, 0 TED-FORM 14 and 0 CA_CE outside PROCEDURE/0 on all
+   557,040 r208 notices above id 18,579,247, and 0 r208 Change sections below it (issue 540)'
+(the test asserts only length > 40). Point issue 534's side-observation line (~379) at this.
+Verify (replace the placeholder; a /v1/sql read): the s14 query, u3/s14_win.sql (ids 20,000,001-20,250,000, 3.5 s).
+  done = chg_sections 0, f14 0, cace_x 0 with cace0 > 0 (12,590 on 2026-10-19); open = any non-zero chg/f14/cace_x.

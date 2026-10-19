@@ -1,0 +1,5017 @@
+{
+ "family": [
+  {
+   "clusters": 3,
+   "country": "IT",
+   "eng": null,
+   "family_new": "spa",
+   "family_old": "aps",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2021-10-26",
+   "head_procs": 1,
+   "identifier": "00930530324",
+   "in_population": true,
+   "merged": false,
+   "n": 125,
+   "new_name": "AcegasApsAmga S.p.A.",
+   "new_name_norm": "acegasapsamga s.p.a",
+   "newest_is_head": false,
+   "old_name": "ACEGAS APS AMGA SPA",
+   "old_name_norm": "acegas aps amga spa",
+   "org_id": 17990506,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2026-08-17",
+   "rule": "R1",
+   "second": 4,
+   "spellings": [
+    [
+     "AcegasApsAmga S.p.A.",
+     81
+    ],
+    [
+     "ACEGASAPSAMGA SPA",
+     15
+    ],
+    [
+     "AcegasApsAmga S.p.a.",
+     12
+    ],
+    [
+     "AcegasApsAmga S.p.A",
+     8
+    ],
+    [
+     "ACEGASAPSAMGA S.P.A.",
+     3
+    ]
+   ],
+   "top": 120,
+   "top_newest": "2026-09-24",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 125
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": "sas",
+   "family_old": "sarl",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-10-11",
+   "head_procs": 1,
+   "identifier": "43827558800038",
+   "in_population": true,
+   "merged": true,
+   "n": 4,
+   "new_name": "SAS Kardham Digital",
+   "new_name_norm": "sas kardham digital",
+   "newest_is_head": false,
+   "old_name": "SARL HDR Communications",
+   "old_name_norm": "sarl hdr communications",
+   "org_id": 10486452,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "KARDHAM DIGITAL",
+     2
+    ],
+    [
+     "SARL HDR Communications",
+     1
+    ],
+    [
+     "SAS Kardham Digital",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2025-12-15",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": "sas",
+   "family_old": "sarl",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2021-05-07",
+   "head_procs": 1,
+   "identifier": "32892011100049",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "Sas Pépinières de Beaufort",
+   "new_name_norm": "sas pépinières de beaufort",
+   "newest_is_head": false,
+   "old_name": "SARL pépinière de Beaufort",
+   "old_name_norm": "sarl pépinière de beaufort",
+   "org_id": 17145263,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "PEPINIERES DE BEAUFORT",
+     1
+    ],
+    [
+     "SARL pépinière de Beaufort",
+     1
+    ],
+    [
+     "SAS PEPINIERES DE BEAUFORT",
+     1
+    ],
+    [
+     "Sas Pépinières de Beaufort",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2025-11-07",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 3,
+   "country": "AT",
+   "eng": null,
+   "family_new": "bv",
+   "family_old": "gmbh",
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2021-06-28",
+   "head_procs": 2,
+   "identifier": "9110017181720",
+   "in_population": true,
+   "merged": false,
+   "n": 16,
+   "new_name": "K-BV Development GmbH",
+   "new_name_norm": "k-bv development gmbh",
+   "newest_is_head": false,
+   "old_name": "SIG-Seeliegenschaftengesellschaft Kärnten Verwaltungs GmbH",
+   "old_name_norm": "sig-seeliegenschaftengesellschaft kärnten verwaltungs gmbh",
+   "org_id": 17310252,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2022-09-14",
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "K-BV Development GmbH",
+     11
+    ],
+    [
+     "SIG-Seeliegenschaftengesellschaft Kärnten Verwaltungs GmbH",
+     3
+    ],
+    [
+     "K-BV Development GmbH (vormals: SIG-Seeliegenschaftengesellschaft Kärnten Verwaltungs GmbH)",
+     2
+    ]
+   ],
+   "top": 11,
+   "top_newest": "2026-09-21",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 16
+  },
+  {
+   "clusters": 2,
+   "country": "RO",
+   "eng": null,
+   "family_new": "srl",
+   "family_old": "nv",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-05-13",
+   "head_procs": 1,
+   "identifier": "RO16489575",
+   "in_population": true,
+   "merged": false,
+   "n": 17,
+   "new_name": "HILL INTERNATIONAL(BUCHAREST) S.R.L.",
+   "new_name_norm": "hill international(bucharest) s.r.l",
+   "newest_is_head": false,
+   "old_name": "Asocierea Hill International NV — Hill International (Bucharest) S.R.L.",
+   "old_name_norm": "asocierea hill international nv — hill international (bucharest) s.r.l.",
+   "org_id": 13470498,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "HILL INTERNATIONAL(BUCHAREST) S.R.L.",
+     10
+    ],
+    [
+     "HILL INTERNATIONAL (BUCHAREST)",
+     6
+    ],
+    [
+     "Asocierea Hill International NV — Hill International (Bucharest) S.R.L.",
+     1
+    ]
+   ],
+   "top": 16,
+   "top_newest": "2026-09-18",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 17
+  },
+  {
+   "clusters": 2,
+   "country": "CZ",
+   "eng": null,
+   "family_new": "ag",
+   "family_old": "sro",
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2020-10-27",
+   "head_procs": 2,
+   "identifier": "25072251",
+   "in_population": true,
+   "merged": false,
+   "n": 11,
+   "new_name": "Energie AG Teplo Bohemia s.r.o.",
+   "new_name_norm": "energie ag teplo bohemia s.r.o",
+   "newest_is_head": false,
+   "old_name": "Tepelné zásobování Rakovník, spol. s.r.o.",
+   "old_name_norm": "tepelné zásobování rakovník, spol. s.r.o.",
+   "org_id": 15351295,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "Energie AG Teplo Bohemia s.r.o.",
+     8
+    ],
+    [
+     "Tepelné zásobování Rakovník, spol. s.r.o.",
+     3
+    ]
+   ],
+   "top": 8,
+   "top_newest": "2025-12-10",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 11
+  },
+  {
+   "clusters": 2,
+   "country": "RO",
+   "eng": null,
+   "family_new": "ag",
+   "family_old": "srl",
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2022-07-01",
+   "head_procs": 3,
+   "identifier": "RO36948656",
+   "in_population": true,
+   "merged": false,
+   "n": 10,
+   "new_name": "Constructii Montaj AG SRL",
+   "new_name_norm": "constructii montaj ag srl",
+   "newest_is_head": false,
+   "old_name": "Eurocert Bucovina SRL",
+   "old_name_norm": "eurocert bucovina srl",
+   "org_id": 14721467,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "CONSTRUCTII MONTAJ AG",
+     5
+    ],
+    [
+     "Eurocert Bucovina SRL",
+     3
+    ],
+    [
+     "Constructii Montaj AG SRL",
+     2
+    ]
+   ],
+   "top": 7,
+   "top_newest": "2026-10-05",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 10
+  },
+  {
+   "clusters": 5,
+   "country": "LT",
+   "eng": null,
+   "family_new": "aktiebolag",
+   "family_old": "sia",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2013-06-07",
+   "head_procs": 1,
+   "identifier": "111687721",
+   "in_population": true,
+   "merged": false,
+   "n": 21,
+   "new_name": "UAB Tilde informacinės technologijos",
+   "new_name_norm": "uab tilde informacinės technologijos",
+   "newest_is_head": false,
+   "old_name": "Uždaroji akcinė bendrovė „Tilde informacinės technologijos“ (Ūkio subjektų grupė pasiūlymą pateikusi jungtinės veiklos pagrindu: Uždaroji akcinė bendrovė „Tilde informacinės technologijos“ (įmonės kodas: 111687721) ir Tilde SIA (Latvijos Respublikos įmonė. Įmonės kodas: 000302723))",
+   "old_name_norm": "uždaroji akcinė bendrovė „tilde informacinės technologijos“ (ūkio subjektų grupė pasiūlymą pateikusi jungtinės veiklos pagrindu: uždaroji akcinė bendrovė „tilde informacinės technologijos“ (įmonės kodas: 111687721) ir tilde sia (latvijos respublikos įmonė. įmonės kodas: 000302723))",
+   "org_id": 3741752,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-01-22",
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "UAB Tilde informacinės technologijos",
+     8
+    ],
+    [
+     "UAB \"Tilde informacinės technologijos\"",
+     6
+    ],
+    [
+     "UAB \"Tilde informacinės technologijos\" ir UAB \"Fotonija\" veikiančios pagal jungtinės veiklos sutartį",
+     1
+    ],
+    [
+     "UAB „Tilde informacines technologijos“",
+     1
+    ],
+    [
+     "UAB „Tilde informacinės technologijos“",
+     1
+    ]
+   ],
+   "top": 17,
+   "top_newest": "2026-09-30",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 21
+  },
+  {
+   "clusters": 2,
+   "country": "IT",
+   "eng": null,
+   "family_new": "srl",
+   "family_old": "gmbh",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2021-12-15",
+   "head_procs": 1,
+   "identifier": "02828530218",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": "Rosenbauer Italia S.r.l.",
+   "new_name_norm": "rosenbauer italia s.r.l",
+   "newest_is_head": false,
+   "old_name": "ROSENBAUER ITALIA S.R.L./G.mbH",
+   "old_name_norm": "rosenbauer italia s.r.l./g.mbh",
+   "org_id": 18179679,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "ROSENBAUER ITALIA SRL",
+     3
+    ],
+    [
+     "ROSENBAUER ITALIA S.R.L./G.mbH",
+     1
+    ],
+    [
+     "Rosenbauer Italia S.r.l.",
+     1
+    ],
+    [
+     "Rosenbauer italia srl",
+     1
+    ]
+   ],
+   "top": 5,
+   "top_newest": "2026-10-06",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 3,
+   "country": "SK",
+   "eng": null,
+   "family_new": "gmbh",
+   "family_old": "sro",
+   "head": 24,
+   "head_in_window": 0,
+   "head_newest": "2022-02-25",
+   "head_procs": 11,
+   "identifier": "00612791",
+   "in_population": true,
+   "merged": false,
+   "n": 103,
+   "new_name": "UNOMED spol. s r. o. UNOMED GmbH. - v jazyku nemeckom UNOMED Ltd. - v jazyku anglickom",
+   "new_name_norm": "unomed spol. s r. o. unomed gmbh. - v jazyku nemeckom unomed ltd. - v jazyku anglickom",
+   "newest_is_head": false,
+   "old_name": "Unomed, spol. s r.o.",
+   "old_name_norm": "unomed, spol. s r.o.",
+   "org_id": 3728305,
+   "provisional": false,
+   "reason": "family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2013-09-19",
+   "rule": "R1",
+   "second": 24,
+   "spellings": [
+    [
+     "UNOMED spol. s r. o. UNOMED GmbH. - v jazyku nemeckom UNOMED Ltd. - v jazyku anglickom",
+     30
+    ],
+    [
+     "Unomed spol. s r. o. Unomed GmbH. - v jazyku nemeckom Unomed Ltd. - v jazyku anglickom",
+     19
+    ],
+    [
+     "Unomed spol. s r. o. Unomed GmbH. – v jazyku nemeckom Unomed Ltd. – v jazyku anglickom",
+     11
+    ],
+    [
+     "Unomed, spol. s r. o. Unomed GmbH. – v jazyku nemeckom Unomed Ltd. – v jazyku anglickom",
+     10
+    ],
+    [
+     "Unomed spol. s r.o.",
+     7
+    ]
+   ],
+   "top": 78,
+   "top_newest": "2026-08-24",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 103
+  }
+ ],
+ "gb_family": [
+  {
+   "clusters": 2,
+   "country": "GB",
+   "eng": null,
+   "family_new": "ltd",
+   "family_old": "plc",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-09-12",
+   "head_procs": 1,
+   "identifier": "264322",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": "Bethell Construction Ltd",
+   "new_name_norm": "bethell construction ltd",
+   "newest_is_head": false,
+   "old_name": "Bethall Group PLC",
+   "old_name_norm": "bethall group plc",
+   "org_id": 10319218,
+   "provisional": false,
+   "reason": "gb_family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Bethell Construction Ltd",
+     5
+    ],
+    [
+     "Bethall Group PLC",
+     1
+    ]
+   ],
+   "top": 5,
+   "top_newest": "2020-05-14",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 2,
+   "country": "GB",
+   "eng": null,
+   "family_new": "ltd",
+   "family_old": "llp",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-10-02",
+   "head_procs": 1,
+   "identifier": "05458987",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": "Ernst & Young Limited",
+   "new_name_norm": "ernst & young limited",
+   "newest_is_head": false,
+   "old_name": "EY UK LLP",
+   "old_name_norm": "ey uk llp",
+   "org_id": 15909819,
+   "provisional": false,
+   "reason": "gb_family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "ERNST & YOUNG LIMITED",
+     2
+    ],
+    [
+     "Ernst & Young Limited",
+     2
+    ],
+    [
+     "EY UK LLP",
+     1
+    ],
+    [
+     "Ernst & Young LLP",
+     1
+    ]
+   ],
+   "top": 5,
+   "top_newest": "2025-09-17",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 2,
+   "country": "GB",
+   "eng": null,
+   "family_new": "ltd",
+   "family_old": "plc",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-07-15",
+   "head_procs": 1,
+   "identifier": "2228297",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "EDF Energy Customers Ltd",
+   "new_name_norm": "edf energy customers ltd",
+   "newest_is_head": false,
+   "old_name": "EDF PLC",
+   "old_name_norm": "edf plc",
+   "org_id": 10047073,
+   "provisional": false,
+   "reason": "gb_family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "EDF Energy Customers Ltd",
+     3
+    ],
+    [
+     "EDF PLC",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2020-05-04",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "GB",
+   "eng": null,
+   "family_new": "plc",
+   "family_old": "ltd",
+   "head": 7,
+   "head_in_window": 0,
+   "head_newest": "2021-05-28",
+   "head_procs": 3,
+   "identifier": "00782931",
+   "in_population": true,
+   "merged": false,
+   "n": 29,
+   "new_name": "Breyer Group PLC",
+   "new_name_norm": "breyer group plc",
+   "newest_is_head": false,
+   "old_name": "Breyer Group Public Ltd Company",
+   "old_name_norm": "breyer group public ltd company",
+   "org_id": 13448374,
+   "provisional": false,
+   "reason": "gb_family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 7,
+   "spellings": [
+    [
+     "Breyer Group PLC",
+     8
+    ],
+    [
+     "Breyer Group plc",
+     7
+    ],
+    [
+     "Breyer Group Plc",
+     6
+    ],
+    [
+     "Breyer Group Public Limited Company",
+     6
+    ],
+    [
+     "Breyer Group Plc.",
+     1
+    ]
+   ],
+   "top": 22,
+   "top_newest": "2025-03-21",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 29
+  },
+  {
+   "clusters": 3,
+   "country": "GB",
+   "eng": null,
+   "family_new": "ltd",
+   "family_old": "plc",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-08-11",
+   "head_procs": 1,
+   "identifier": "04958135",
+   "in_population": true,
+   "merged": false,
+   "n": 51,
+   "new_name": "Scotia Gas Networks Ltd",
+   "new_name_norm": "scotia gas networks ltd",
+   "newest_is_head": false,
+   "old_name": "Southern Gas Network PLC",
+   "old_name_norm": "southern gas network plc",
+   "org_id": 10213161,
+   "provisional": false,
+   "reason": "gb_family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2023-03-20",
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "SCOTIA GAS NETWORKS LIMITED",
+     47
+    ],
+    [
+     "Scotia Gas Networks Ltd",
+     1
+    ],
+    [
+     "Scotia Gas Networks Plc",
+     1
+    ],
+    [
+     "Scotland Gas Networks (SGN)",
+     1
+    ],
+    [
+     "Southern Gas Network PLC",
+     1
+    ]
+   ],
+   "top": 49,
+   "top_newest": "2026-10-02",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 51
+  },
+  {
+   "clusters": 2,
+   "country": "GB",
+   "eng": null,
+   "family_new": "plc",
+   "family_old": "ltd",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-06-15",
+   "head_procs": 1,
+   "identifier": "02081330",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "Capita PLC",
+   "new_name_norm": "capita plc",
+   "newest_is_head": false,
+   "old_name": "Capita Business Services Limited",
+   "old_name_norm": "capita business services limited",
+   "org_id": 11628199,
+   "provisional": false,
+   "reason": "gb_family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Capita PLC",
+     2
+    ],
+    [
+     "Capita Business Services Limited",
+     1
+    ],
+    [
+     "Capita Plc",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2026-09-16",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 4,
+   "country": "GB",
+   "eng": null,
+   "family_new": "ltd",
+   "family_old": "plc",
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2020-05-25",
+   "head_procs": 2,
+   "identifier": "04273754",
+   "in_population": true,
+   "merged": false,
+   "n": 84,
+   "new_name": "Morgan Sindall Construction and Infrastructure Ltd",
+   "new_name_norm": "morgan sindall construction and infrastructure ltd",
+   "newest_is_head": false,
+   "old_name": "Morgan Sindall plc",
+   "old_name_norm": "morgan sindall plc",
+   "org_id": 9087207,
+   "provisional": false,
+   "reason": "gb_family",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-07-29",
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "MORGAN SINDALL CONSTRUCTION & INFRASTRUCTURE LTD",
+     24
+    ],
+    [
+     "Morgan Sindall Construction and Infrastructure Ltd",
+     19
+    ],
+    [
+     "Morgan Sindall Construction & Infrastructure Ltd",
+     17
+    ],
+    [
+     "Morgan Sindall Construction and Infrastructure",
+     7
+    ],
+    [
+     "Morgan Sindall Construction & Infrastructure Limited",
+     4
+    ]
+   ],
+   "top": 79,
+   "top_newest": "2026-10-06",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 84
+  }
+ ],
+ "consortium_removed": [
+  {
+   "clusters": 4,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2020-11-10",
+   "head_procs": 1,
+   "identifier": "52886168500030",
+   "in_population": true,
+   "merged": false,
+   "n": 73,
+   "new_name": "Europolia",
+   "new_name_norm": "europolia",
+   "newest_is_head": false,
+   "old_name": "Europolia mandataire Toulouse Métropole",
+   "old_name_norm": "europolia mandataire toulouse métropole",
+   "org_id": 15165788,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-12-17",
+   "rule": "R1",
+   "second": 4,
+   "spellings": [
+    [
+     "Europolia",
+     54
+    ],
+    [
+     "EUROPOLIA",
+     12
+    ],
+    [
+     "Europolia, agissant au nom et pour le compte de Toulouse Métropole",
+     4
+    ],
+    [
+     "Europolia mandataire Toulouse Métropole",
+     2
+    ],
+    [
+     "Tribunal Administratif de Toulouse",
+     1
+    ]
+   ],
+   "top": 66,
+   "top_newest": "2026-10-14",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 73
+  },
+  {
+   "clusters": 4,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2022-03-28",
+   "head_procs": 1,
+   "identifier": "43884541400038",
+   "in_population": true,
+   "merged": false,
+   "n": 10,
+   "new_name": "2LM",
+   "new_name_norm": "2lm",
+   "newest_is_head": false,
+   "old_name": "gpt 2lm / oceam",
+   "old_name_norm": "gpt 2lm / oceam",
+   "org_id": 18808472,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2026-02-03",
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "2LM",
+     3
+    ],
+    [
+     "SAS 2LM",
+     3
+    ],
+    [
+     "2LM (VRD)",
+     2
+    ],
+    [
+     "gpt 2lm / oceam",
+     1
+    ],
+    [
+     "sa 2lm",
+     1
+    ]
+   ],
+   "top": 6,
+   "top_newest": "2026-01-13",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 10
+  },
+  {
+   "clusters": 4,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-12-19",
+   "head_procs": 1,
+   "identifier": "80352183000015",
+   "in_population": true,
+   "merged": false,
+   "n": 7,
+   "new_name": "1090 Architectes",
+   "new_name_norm": "1090 architectes",
+   "newest_is_head": false,
+   "old_name": "1090 Architectes (Mandataire)",
+   "old_name_norm": "1090 architectes (mandataire)",
+   "org_id": 10804351,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-02-10",
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "1090 ARCHITECTES",
+     2
+    ],
+    [
+     "1090 Architectes",
+     2
+    ],
+    [
+     "1090 Architectes (Mandataire)",
+     1
+    ],
+    [
+     "Groupement conjoint 1090 ARCHITECTES (mandataire) avec LAURENT TAILLANDIER (cotraitant)",
+     1
+    ],
+    [
+     "Groupement conjoint 1090 ARCHITECTES (mandataire) et LAURENT TAILLANDIER ; GROULT EMMA ; BRANCHE BRITTANY ; GAULTIER GILLES (cotraitants)",
+     1
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2026-01-26",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 7
+  },
+  {
+   "clusters": 6,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-07-24",
+   "head_procs": 1,
+   "identifier": "34438343500031",
+   "in_population": true,
+   "merged": false,
+   "n": 18,
+   "new_name": "GECOP",
+   "new_name_norm": "gecop",
+   "newest_is_head": false,
+   "old_name": "GECOP - GENERALE DE COUVERTURE PLOMBERIE (mandataire)",
+   "old_name_norm": "gecop - generale de couverture plomberie (mandataire)",
+   "org_id": 21596565,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2026-05-27",
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "GECOP",
+     10
+    ],
+    [
+     "GECOP - GENERALE DE COUVERTURE PLOMBERIE",
+     2
+    ],
+    [
+     "gecop",
+     2
+    ],
+    [
+     "GECOP - GENERALE DE COUVERTURE PLOMBERIE (mandataire)",
+     1
+    ],
+    [
+     "GECOP Générale de couverture de plomberie",
+     1
+    ]
+   ],
+   "top": 12,
+   "top_newest": "2026-07-02",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 18
+  },
+  {
+   "clusters": 4,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": "sas",
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2019-10-21",
+   "head_procs": 1,
+   "identifier": "31321186400027",
+   "in_population": true,
+   "merged": false,
+   "n": 14,
+   "new_name": "CAZAL",
+   "new_name_norm": "cazal",
+   "newest_is_head": false,
+   "old_name": "Mandataire: Cazal SAS",
+   "old_name_norm": "mandataire: cazal sas",
+   "org_id": 14259882,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2024-05-22",
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "CAZAL",
+     6
+    ],
+    [
+     "cazal",
+     3
+    ],
+    [
+     "Mandataire: Cazal SAS",
+     2
+    ],
+    [
+     "CAZAL (Cotraitant)",
+     1
+    ],
+    [
+     "CAZAL SAS",
+     1
+    ]
+   ],
+   "top": 10,
+   "top_newest": "2026-09-16",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 14
+  },
+  {
+   "clusters": 9,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2016-06-29",
+   "head_procs": 1,
+   "identifier": "97120154600043",
+   "in_population": true,
+   "merged": false,
+   "n": 57,
+   "new_name": "Satélec",
+   "new_name_norm": "satélec",
+   "newest_is_head": false,
+   "old_name": "Satelec (mandataire)",
+   "old_name_norm": "satelec (mandataire)",
+   "org_id": 8346204,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-09-04",
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "SATELEC",
+     22
+    ],
+    [
+     "Satelec",
+     9
+    ],
+    [
+     "satelec",
+     7
+    ],
+    [
+     "satelec sas",
+     3
+    ],
+    [
+     "SAS SATELEC",
+     2
+    ]
+   ],
+   "top": 49,
+   "top_newest": "2026-08-20",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 57
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": "sarl",
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2021-12-24",
+   "head_procs": 1,
+   "identifier": "43772004800051",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "SARL CPR",
+   "new_name_norm": "sarl cpr",
+   "newest_is_head": false,
+   "old_name": "CONSORTIUM DES PEINTURES ET REVETEMENTS",
+   "old_name_norm": "consortium des peintures et revetements",
+   "org_id": 18287356,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "SARL CPR",
+     2
+    ],
+    [
+     "CONSORTIUM DES PEINTURES ET REVETEMENTS",
+     1
+    ],
+    [
+     "CPR",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2026-03-04",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-02-11",
+   "head_procs": 1,
+   "identifier": "Q0801205F",
+   "in_population": true,
+   "merged": false,
+   "n": 51,
+   "new_name": "Consorci d'Educació de Barcelona",
+   "new_name_norm": "consorci d'educació de barcelona",
+   "newest_is_head": false,
+   "old_name": "Consorcio de Educación de Barcelona",
+   "old_name_norm": "consorcio de educación de barcelona",
+   "org_id": 14831056,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Consorci d'Educació de Barcelona",
+     45
+    ],
+    [
+     "CONSORCI D'EDUCACIÓ DE BARCELONA",
+     5
+    ],
+    [
+     "Consorcio de Educación de Barcelona",
+     1
+    ]
+   ],
+   "top": 50,
+   "top_newest": "2026-05-29",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 51
+  },
+  {
+   "clusters": 3,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-02-01",
+   "head_procs": 1,
+   "identifier": "42399908500057",
+   "in_population": true,
+   "merged": false,
+   "n": 13,
+   "new_name": "Ovive",
+   "new_name_norm": "ovive",
+   "newest_is_head": false,
+   "old_name": "Groupement OVIVE",
+   "old_name_norm": "groupement ovive",
+   "org_id": 11030337,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-05-12",
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "OVIVE",
+     3
+    ],
+    [
+     "Ovive",
+     3
+    ],
+    [
+     "Groupement OVIVE",
+     1
+    ],
+    [
+     "OVIVE SAS",
+     1
+    ],
+    [
+     "Ovive - mandataire",
+     1
+    ]
+   ],
+   "top": 11,
+   "top_newest": "2025-12-24",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 13
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-02-08",
+   "head_procs": 1,
+   "identifier": "A24025744",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "CYMOT, S.A.",
+   "new_name_norm": "cymot, s.a",
+   "newest_is_head": false,
+   "old_name": "UTE Cymotsa - Sindo Castro",
+   "old_name_norm": "ute cymotsa - sindo castro",
+   "org_id": 11072974,
+   "provisional": false,
+   "reason": "consortium_removed",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "CYMOT, S.A.",
+     3
+    ],
+    [
+     "UTE Cymotsa - Sindo Castro",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2025-09-15",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  }
+ ],
+ "nhs_check": [],
+ "placeholder_id": [],
+ "organ": [
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2014-04-29",
+   "head_procs": 2,
+   "identifier": "A79508537",
+   "in_population": true,
+   "merged": false,
+   "n": 18,
+   "new_name": "Consejo de Administración de Empresa Municipal de Suelo de Leganés (EMSULE, S.A.U.)",
+   "new_name_norm": "consejo de administración de empresa municipal de suelo de leganés (emsule, s.a.u.)",
+   "newest_is_head": false,
+   "old_name": "EMSULE, S.A.",
+   "old_name_norm": "emsule, s.a.",
+   "org_id": 4521469,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "Consejo de Administración de Empresa Municipal de Suelo de Leganés (EMSULE, S.A.U.)",
+     9
+    ],
+    [
+     "Consejo de Administración de Empresa Municipal de Suelo de Leganés (Emsule, S. A. U.)",
+     6
+    ],
+    [
+     "Consejo de Administración de Empresa Municipal de Suelo de Leganés (EMSULE, S. A. U.)",
+     1
+    ],
+    [
+     "EMSULE, S.A.",
+     1
+    ],
+    [
+     "Emsule, S.A.",
+     1
+    ]
+   ],
+   "top": 16,
+   "top_newest": "2023-04-25",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 18
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-05-10",
+   "head_procs": 1,
+   "identifier": "P2814000B",
+   "in_population": true,
+   "merged": false,
+   "n": 8,
+   "new_name": "Pleno del Ayuntamiento de Serranillos del Valle",
+   "new_name_norm": "pleno del ayuntamiento de serranillos del valle",
+   "newest_is_head": false,
+   "old_name": "Ayuntamiento de Serranillos del Valle",
+   "old_name_norm": "ayuntamiento de serranillos del valle",
+   "org_id": 5129828,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Pleno del Ayuntamiento de Serranillos del Valle",
+     7
+    ],
+    [
+     "Ayuntamiento de Serranillos del Valle",
+     1
+    ]
+   ],
+   "top": 7,
+   "top_newest": "2020-11-20",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 8
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-04-16",
+   "head_procs": 1,
+   "identifier": "P4600072E",
+   "in_population": true,
+   "merged": false,
+   "n": 15,
+   "new_name": "Presidencia de la Entidad Metropolitana para el Tratamiento de Residuos",
+   "new_name_norm": "presidencia de la entidad metropolitana para el tratamiento de residuos",
+   "newest_is_head": false,
+   "old_name": "Entidad Metropolitana para el Tratamiento de Residuos",
+   "old_name_norm": "entidad metropolitana para el tratamiento de residuos",
+   "org_id": 5044100,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Presidencia de la Entidad Metropolitana para el Tratamiento de Residuos",
+     14
+    ],
+    [
+     "Entidad Metropolitana para el Tratamiento de Residuos",
+     1
+    ]
+   ],
+   "top": 14,
+   "top_newest": "2023-11-03",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 15
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 16,
+   "head_in_window": 0,
+   "head_newest": "2021-08-03",
+   "head_procs": 8,
+   "identifier": "P3502300A",
+   "in_population": true,
+   "merged": false,
+   "n": 59,
+   "new_name": "Alcaldía del Ayuntamiento de Santa Lucía de Tirajana",
+   "new_name_norm": "alcaldía del ayuntamiento de santa lucía de tirajana",
+   "newest_is_head": false,
+   "old_name": "Ayuntamiento de Santa Lucía de Tirajana",
+   "old_name_norm": "ayuntamiento de santa lucía de tirajana",
+   "org_id": 12291526,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 16,
+   "spellings": [
+    [
+     "Alcaldía del Ayuntamiento de Santa Lucía de Tirajana",
+     43
+    ],
+    [
+     "Ayuntamiento de Santa Lucía de Tirajana",
+     16
+    ]
+   ],
+   "top": 43,
+   "top_newest": "2023-11-10",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 59
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-05-30",
+   "head_procs": 1,
+   "identifier": "A50477256",
+   "in_population": true,
+   "merged": false,
+   "n": 5,
+   "new_name": "Consejo de Administración de la Residencia Estudiantil y Centro de Estudios Ramón Pignatelli, S. A.",
+   "new_name_norm": "consejo de administración de la residencia estudiantil y centro de estudios ramón pignatelli, s. a",
+   "newest_is_head": false,
+   "old_name": "Residencia de Estudiantes y Centro de Estudios Ramón Pignatelli, S.A.U.",
+   "old_name_norm": "residencia de estudiantes y centro de estudios ramón pignatelli, s.a.u.",
+   "org_id": 5207211,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Consejo de Administración de la Residencia Estudiantil y Centro de Estudios Ramón Pignatelli, S. A.",
+     3
+    ],
+    [
+     "Consejo de Administración de la Residencia Estudiantil y Centro de Estudios Ramón Pignatelli S.A.",
+     1
+    ],
+    [
+     "Residencia de Estudiantes y Centro de Estudios Ramón Pignatelli, S.A.U.",
+     1
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2023-09-25",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 5
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 7,
+   "head_in_window": 0,
+   "head_newest": "2018-08-04",
+   "head_procs": 5,
+   "identifier": "P3803500B",
+   "in_population": true,
+   "merged": false,
+   "n": 34,
+   "new_name": "Alcaldía del Ayuntamiento de San Miguel de Abona",
+   "new_name_norm": "alcaldía del ayuntamiento de san miguel de abona",
+   "newest_is_head": false,
+   "old_name": "Ayuntamiento de San Miguel de Abona",
+   "old_name_norm": "ayuntamiento de san miguel de abona",
+   "org_id": 5326030,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 7,
+   "spellings": [
+    [
+     "Alcaldía del Ayuntamiento de San Miguel de Abona",
+     27
+    ],
+    [
+     "Ayuntamiento de San Miguel de Abona",
+     7
+    ]
+   ],
+   "top": 27,
+   "top_newest": "2023-10-25",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 34
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 7,
+   "head_in_window": 0,
+   "head_newest": "2016-10-07",
+   "head_procs": 4,
+   "identifier": "A12377297",
+   "in_population": true,
+   "merged": false,
+   "n": 24,
+   "new_name": "Consejo de Administración de Reciplasa, Reciclados de Residuos La Plana, S.A.",
+   "new_name_norm": "consejo de administración de reciplasa, reciclados de residuos la plana, s.a",
+   "newest_is_head": false,
+   "old_name": "Reciplasa, Reciclados de Residuos La Plana, S.A.",
+   "old_name_norm": "reciplasa, reciclados de residuos la plana, s.a.",
+   "org_id": 7354337,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 7,
+   "spellings": [
+    [
+     "Consejo de Administración de Reciplasa, Reciclados de Residuos La Plana, S.A.",
+     13
+    ],
+    [
+     "Reciplasa, Reciclados de Residuos La Plana, S.A.",
+     6
+    ],
+    [
+     "Consejo de Administración de Reciplasa, Reciclados de Residuos La Plana, S. A.",
+     4
+    ],
+    [
+     "Reciplasa, Reciclados de Residuos La Plana, S. A.",
+     1
+    ]
+   ],
+   "top": 17,
+   "top_newest": "2023-10-24",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 24
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 4,
+   "head_in_window": 0,
+   "head_newest": "2020-05-12",
+   "head_procs": 3,
+   "identifier": "G45418985",
+   "in_population": true,
+   "merged": false,
+   "n": 12,
+   "new_name": "Presidencia del Patronato de la Fundación Impulsa Castilla-La Mancha",
+   "new_name_norm": "presidencia del patronato de la fundación impulsa castilla-la mancha",
+   "newest_is_head": false,
+   "old_name": "Vicepresidencia del Patronato de la Fundación Impulsa Castilla-La Mancha",
+   "old_name_norm": "vicepresidencia del patronato de la fundación impulsa castilla-la mancha",
+   "org_id": 11229692,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 4,
+   "spellings": [
+    [
+     "Presidencia del Patronato de la Fundación Impulsa Castilla-La Mancha",
+     8
+    ],
+    [
+     "Vicepresidencia del Patronato de la Fundación Impulsa Castilla-La Mancha",
+     4
+    ]
+   ],
+   "top": 8,
+   "top_newest": "2022-11-18",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 12
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2020-09-16",
+   "head_procs": 1,
+   "identifier": "G35657048",
+   "in_population": true,
+   "merged": false,
+   "n": 33,
+   "new_name": "Gerencia de la Fundación Canaria de Juventud Ideo",
+   "new_name_norm": "gerencia de la fundación canaria de juventud ideo",
+   "newest_is_head": false,
+   "old_name": "Fundación Canaria de Juventud IDEO",
+   "old_name_norm": "fundación canaria de juventud ideo",
+   "org_id": 13847407,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "Gerencia de la Fundación Canaria de Juventud Ideo",
+     31
+    ],
+    [
+     "Fundación Canaria de Juventud IDEO",
+     1
+    ],
+    [
+     "Fundación Canaria de Juventud Ideo",
+     1
+    ]
+   ],
+   "top": 31,
+   "top_newest": "2023-10-11",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 33
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 7,
+   "head_in_window": 0,
+   "head_newest": "2019-02-18",
+   "head_procs": 5,
+   "identifier": "P3603800H",
+   "in_population": true,
+   "merged": false,
+   "n": 87,
+   "new_name": "Junta de Gobierno Local del Ayuntamiento de Pontevedra",
+   "new_name_norm": "junta de gobierno local del ayuntamiento de pontevedra",
+   "newest_is_head": false,
+   "old_name": "Concello de Pontevedra",
+   "old_name_norm": "concello de pontevedra",
+   "org_id": 5216866,
+   "provisional": false,
+   "reason": "organ",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 7,
+   "spellings": [
+    [
+     "Junta de Gobierno Local del Ayuntamiento de Pontevedra",
+     80
+    ],
+    [
+     "Concello de Pontevedra",
+     7
+    ]
+   ],
+   "top": 80,
+   "top_newest": "2023-10-25",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 87
+  }
+ ],
+ "code_added": [
+  {
+   "clusters": 3,
+   "country": "IE",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-01-25",
+   "head_procs": 1,
+   "identifier": "190417",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": "Ballyhoura Development CLG_1274",
+   "new_name_norm": "ballyhoura development clg_1274",
+   "newest_is_head": false,
+   "old_name": "Ballyhoura Development CLG",
+   "old_name_norm": "ballyhoura development clg",
+   "org_id": 11001761,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2024-12-03",
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Ballyhoura Development CLG_1274",
+     4
+    ],
+    [
+     "Ballyhoura Development",
+     1
+    ],
+    [
+     "Ballyhoura Development CLG",
+     1
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2026-03-13",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-04-11",
+   "head_procs": 1,
+   "identifier": "79270011400012",
+   "in_population": true,
+   "merged": false,
+   "n": 8,
+   "new_name": "SPIC - ARENA LOIRE TRELAZE (49)",
+   "new_name_norm": "spic - arena loire trelaze (49)",
+   "newest_is_head": false,
+   "old_name": "spic - arena loire trelaze",
+   "old_name_norm": "spic - arena loire trelaze",
+   "org_id": 21038974,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "SPIC - ARENA LOIRE TRELAZE (49)",
+     7
+    ],
+    [
+     "spic - arena loire trelaze",
+     1
+    ]
+   ],
+   "top": 7,
+   "top_newest": "2026-06-16",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 8
+  },
+  {
+   "clusters": 3,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2022-03-02",
+   "head_procs": 3,
+   "identifier": "20000879500011",
+   "in_population": true,
+   "merged": false,
+   "n": 29,
+   "new_name": "Commune de Dzaoudzi-Labattoir (976)",
+   "new_name_norm": "commune de dzaoudzi-labattoir (976)",
+   "newest_is_head": false,
+   "old_name": "commune de dzaoudzi labattoir",
+   "old_name_norm": "commune de dzaoudzi labattoir",
+   "org_id": 18301242,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2022-01-31",
+   "rule": "R1",
+   "second": 4,
+   "spellings": [
+    [
+     "Commune de Dzaoudzi-Labattoir (976)",
+     22
+    ],
+    [
+     "commune de Dzaoudzi-Labattoir Mairie de Dzaoudzi-Labattoir",
+     4
+    ],
+    [
+     "commune de dzaoudzi labattoir",
+     3
+    ]
+   ],
+   "top": 22,
+   "top_newest": "2026-09-24",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 29
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-06-09",
+   "head_procs": 1,
+   "identifier": "20008578500018",
+   "in_population": true,
+   "merged": true,
+   "n": 4,
+   "new_name": "Commune d'Airvault (79)",
+   "new_name_norm": "commune d'airvault (79)",
+   "newest_is_head": false,
+   "old_name": "Commune d'Airvault",
+   "old_name_norm": "commune d'airvault",
+   "org_id": 15323093,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Commune d'Airvault (79)",
+     3
+    ],
+    [
+     "Commune d'Airvault",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2026-09-14",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2023-01-27",
+   "head_procs": 2,
+   "identifier": "21380052700011",
+   "in_population": true,
+   "merged": false,
+   "n": 7,
+   "new_name": "Commune du Bourg d'Oisans (38)",
+   "new_name_norm": "commune du bourg d'oisans (38)",
+   "newest_is_head": false,
+   "old_name": "commune du Bourg d'oisans",
+   "old_name_norm": "commune du bourg d'oisans",
+   "org_id": 18946095,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "Commune du Bourg d'Oisans (38)",
+     5
+    ],
+    [
+     "commune du Bourg d'oisans",
+     2
+    ]
+   ],
+   "top": 5,
+   "top_newest": "2026-10-14",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 7
+  },
+  {
+   "clusters": 5,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 5,
+   "head_in_window": 0,
+   "head_newest": "2021-06-30",
+   "head_procs": 3,
+   "identifier": "24010080000020",
+   "in_population": true,
+   "merged": true,
+   "n": 27,
+   "new_name": "Communauté de Communes de Miribel et du Plateau (01)",
+   "new_name_norm": "communauté de communes de miribel et du plateau (01)",
+   "newest_is_head": false,
+   "old_name": "Communauté de communes de Miribel et du Plateau",
+   "old_name_norm": "communauté de communes de miribel et du plateau",
+   "org_id": 11476091,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-02-27",
+   "rule": "R1",
+   "second": 5,
+   "spellings": [
+    [
+     "Communauté de Communes de Miribel et du Plateau (01)",
+     17
+    ],
+    [
+     "Communauté de communes de Miribel et du Plateau",
+     4
+    ],
+    [
+     "cc de Miribel et du Plateau",
+     3
+    ],
+    [
+     "CC de Miribel et du Plateau (01)",
+     1
+    ],
+    [
+     "Cté de Cnes de Miribel et du Plateau",
+     1
+    ]
+   ],
+   "top": 17,
+   "top_newest": "2025-11-18",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 27
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 9,
+   "head_in_window": 0,
+   "head_newest": "2017-10-19",
+   "head_procs": 5,
+   "identifier": "49800312800028",
+   "in_population": true,
+   "merged": false,
+   "n": 29,
+   "new_name": "Domitia Habitat (11)",
+   "new_name_norm": "domitia habitat (11)",
+   "newest_is_head": false,
+   "old_name": "Domitia Habitat",
+   "old_name_norm": "domitia habitat",
+   "org_id": 10379298,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 9,
+   "spellings": [
+    [
+     "Domitia Habitat (11)",
+     20
+    ],
+    [
+     "Domitia Habitat",
+     9
+    ]
+   ],
+   "top": 20,
+   "top_newest": "2025-10-23",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 29
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-09-06",
+   "head_procs": 1,
+   "identifier": "21860078100015",
+   "in_population": true,
+   "merged": false,
+   "n": 5,
+   "new_name": "Commune de Civray (86)",
+   "new_name_norm": "commune de civray (86)",
+   "newest_is_head": false,
+   "old_name": "commune de Civray",
+   "old_name_norm": "commune de civray",
+   "org_id": 21884902,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Commune de Civray (86)",
+     4
+    ],
+    [
+     "commune de Civray",
+     1
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2026-01-26",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 5
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2017-04-04",
+   "head_procs": 2,
+   "identifier": "79802623300022",
+   "in_population": true,
+   "merged": true,
+   "n": 9,
+   "new_name": "Grand Paris Sud Energie Positive (92)",
+   "new_name_norm": "grand paris sud energie positive (92)",
+   "newest_is_head": false,
+   "old_name": "Grand Paris Sud énergie positive",
+   "old_name_norm": "grand paris sud énergie positive",
+   "org_id": 9502566,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "Grand Paris Sud Energie Positive (92)",
+     7
+    ],
+    [
+     "Grand Paris Sud Energie Positive",
+     1
+    ],
+    [
+     "Grand Paris Sud énergie positive",
+     1
+    ]
+   ],
+   "top": 7,
+   "top_newest": "2026-03-06",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 9
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-11-11",
+   "head_procs": 1,
+   "identifier": "24850056300031",
+   "in_population": true,
+   "merged": false,
+   "n": 11,
+   "new_name": "Communauté de Communes Vendée Sèvre Autise (85)",
+   "new_name_norm": "communauté de communes vendée sèvre autise (85)",
+   "newest_is_head": false,
+   "old_name": "Communauté de communes Vendée Sèvre Autise",
+   "old_name_norm": "communauté de communes vendée sèvre autise",
+   "org_id": 14319363,
+   "provisional": false,
+   "reason": "code_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Communauté de Communes Vendée Sèvre Autise (85)",
+     10
+    ],
+    [
+     "Communauté de communes Vendée Sèvre Autise",
+     1
+    ]
+   ],
+   "top": 10,
+   "top_newest": "2026-08-25",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 11
+  }
+ ],
+ "address_added": [
+  {
+   "clusters": 2,
+   "country": "HR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 1,
+   "head_newest": "2021-10-22",
+   "head_procs": 2,
+   "identifier": "34442129124",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": "\"SKRIPTARNICA\" PROMET ROBE NA MALO I VELIKO PRIJEPIS I UMNOŽAVANJE, VL. DAMIR BANIĆ, ZAGREB, UNSKA 3",
+   "new_name_norm": "\"skriptarnica\" promet robe na malo i veliko prijepis i umnožavanje, vl. damir banić, zagreb, unska 3",
+   "newest_is_head": false,
+   "old_name": "Skriptarnica",
+   "old_name_norm": "skriptarnica",
+   "org_id": 9563497,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "\"SKRIPTARNICA\" PROMET ROBE NA MALO I VELIKO PRIJEPIS I UMNOŽAVANJE, VL. DAMIR BANIĆ, ZAGREB, UNSKA 3",
+     4
+    ],
+    [
+     "Skriptarnica",
+     2
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2026-09-30",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 3,
+   "country": "SI",
+   "eng": null,
+   "family_new": "gmbh",
+   "family_old": null,
+   "head": 32,
+   "head_in_window": 0,
+   "head_newest": "2017-04-21",
+   "head_procs": 4,
+   "identifier": "5845297000",
+   "in_population": true,
+   "merged": false,
+   "n": 139,
+   "new_name": "LOHMANN & RAUSCHER GmbH, Kirchengasse 17, 2525 Schonau an der Triesting, Avstrija Podružnica: LOHMANN & RAUSCHER",
+   "new_name_norm": "lohmann & rauscher gmbh, kirchengasse 17, 2525 schonau an der triesting, avstrija podružnica: lohmann & rauscher",
+   "newest_is_head": false,
+   "old_name": "LOHMANN & RAUSCHER Cesta v Skoke 11, 2204 Miklavž na Dravskem polju",
+   "old_name_norm": "lohmann & rauscher cesta v skoke 11, 2204 miklavž na dravskem polju",
+   "org_id": 8270356,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2017-04-26",
+   "rule": "R1",
+   "second": 32,
+   "spellings": [
+    [
+     "LOHMANN & RAUSCHER GmbH, Kirchengasse 17, 2525 Schonau an der Triesting, Avstrija Podružnica: LOHMANN & RAUSCHER",
+     71
+    ],
+    [
+     "LOHMANN & RAUSCHER Cesta v Skoke 11, 2204 Miklavž na Dravskem polju",
+     32
+    ],
+    [
+     "Lohmann & Rauscher GmbH, Kirchengasse 17, 2525 Schonau an der Triesting, Avstrija Podružnica: Lohmann & Rauscher",
+     31
+    ],
+    [
+     "Lohmann & Rauscher",
+     4
+    ],
+    [
+     "Lohmann & Rauscher GmbH, Kirchengasse 17, 2525 Schonau an der Triesting, Avstrija Podružnica: LOHMANN & RAUSCHER",
+     1
+    ]
+   ],
+   "top": 103,
+   "top_newest": "2026-01-13",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 139
+  },
+  {
+   "clusters": 2,
+   "country": "HR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2022-04-15",
+   "head_procs": 3,
+   "identifier": "13935236459",
+   "in_population": true,
+   "merged": false,
+   "n": 16,
+   "new_name": "GOLEMI, vl. Vinko Golem, Vrana, Dr. Ante Starčevića 43",
+   "new_name_norm": "golemi, vl. vinko golem, vrana, dr. ante starčevića 43",
+   "newest_is_head": false,
+   "old_name": "Golemi, vl. Vinko Golem",
+   "old_name_norm": "golemi, vl. vinko golem",
+   "org_id": 12960092,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "GOLEMI, vl. Vinko Golem, Vrana, Dr. Ante Starčevića 43",
+     13
+    ],
+    [
+     "Golemi, vl. Vinko Golem",
+     2
+    ],
+    [
+     "Golemi,vl. Vinko Golem",
+     1
+    ]
+   ],
+   "top": 13,
+   "top_newest": "2026-07-10",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 16
+  },
+  {
+   "clusters": 3,
+   "country": "SI",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 16,
+   "head_in_window": 0,
+   "head_newest": "2017-06-17",
+   "head_procs": 7,
+   "identifier": "5673500000",
+   "in_population": true,
+   "merged": false,
+   "n": 90,
+   "new_name": "ADD trgovina, inženiring, vzdrževanje d.o.o., Tbilisijska 85, Ljubljana",
+   "new_name_norm": "add trgovina, inženiring, vzdrževanje d.o.o., tbilisijska 85, ljubljana",
+   "newest_is_head": false,
+   "old_name": "ADD d.o.o. Ljubljana",
+   "old_name_norm": "add d.o.o. ljubljana",
+   "org_id": 8571882,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2020-11-06",
+   "rule": "R1",
+   "second": 16,
+   "spellings": [
+    [
+     "ADD trgovina, inženiring, vzdrževanje d.o.o., Tbilisijska 85, Ljubljana",
+     69
+    ],
+    [
+     "ADD d.o.o. Ljubljana",
+     14
+    ],
+    [
+     "ADD trgovina, inženiring, vzdrževanje d.o.o.",
+     4
+    ],
+    [
+     "ADD d.o.o., Ljubljana",
+     2
+    ],
+    [
+     "ADD, trgovina, inženiring, vzdrževanje d.o.o., Tbilisijska 85, Ljubljana",
+     1
+    ]
+   ],
+   "top": 70,
+   "top_newest": "2026-07-01",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 90
+  },
+  {
+   "clusters": 2,
+   "country": "HR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2019-07-30",
+   "head_procs": 2,
+   "identifier": "42808260709",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": "AR Savjetovanje, obrt za usluge, vl. Alen Rubčić, Zagreb, Ulica kraljice Jelene 4",
+   "new_name_norm": "ar savjetovanje, obrt za usluge, vl. alen rubčić, zagreb, ulica kraljice jelene 4",
+   "newest_is_head": false,
+   "old_name": "AR Savjetovanje, obrt za usluge, vl. Alen Rubčić",
+   "old_name_norm": "ar savjetovanje, obrt za usluge, vl. alen rubčić",
+   "org_id": 13256112,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "AR Savjetovanje, obrt za usluge, vl. Alen Rubčić, Zagreb, Ulica kraljice Jelene 4",
+     4
+    ],
+    [
+     "AR Savjetovanje, obrt za usluge, vl. Alen Rubčić",
+     2
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2026-09-30",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 2,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-03-06",
+   "head_procs": 1,
+   "identifier": "010778269",
+   "in_population": true,
+   "merged": false,
+   "n": 5,
+   "new_name": "ŚCINANIE I WYRZYNANIE DRZEW PIELĘGNACJA LASÓW ROMUALD KOWALCZYK SWOBODNIA15, 05-180 POMIECHÓWEK",
+   "new_name_norm": "ścinanie i wyrzynanie drzew pielęgnacja lasów romuald kowalczyk swobodnia15, 05-180 pomiechówek",
+   "newest_is_head": false,
+   "old_name": "Ścinanie i Wyrzynanie Drzew Pielęgnacja Lasów Romuald Kowalczyk",
+   "old_name_norm": "ścinanie i wyrzynanie drzew pielęgnacja lasów romuald kowalczyk",
+   "org_id": 15019832,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "ŚCINANIE I WYRZYNANIE DRZEW PIELĘGNACJA LASÓW ROMUALD KOWALCZYK SWOBODNIA15, 05-180 POMIECHÓWEK",
+     4
+    ],
+    [
+     "Ścinanie i Wyrzynanie Drzew Pielęgnacja Lasów Romuald Kowalczyk",
+     1
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2023-05-10",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 5
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2022-04-15",
+   "head_procs": 1,
+   "identifier": "18010059R",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "Ramon Perna Subias, C/ San Jose de Calasanz, Nº 1 -22580-Benabarre (Huesca)",
+   "new_name_norm": "ramon perna subias, c/ san jose de calasanz, nº 1 -22580-benabarre (huesca)",
+   "newest_is_head": false,
+   "old_name": "Ramón Perna Subías",
+   "old_name_norm": "ramón perna subías",
+   "org_id": 18982169,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Ramon Perna Subias, C/ San Jose de Calasanz, Nº 1 -22580-Benabarre (Huesca)",
+     2
+    ],
+    [
+     "Ramon Perna Subias, C/ San Jose de Calasanz, Nº 1  -22580-Benabarre (Huesca)",
+     1
+    ],
+    [
+     "Ramón Perna Subías",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2024-03-08",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 4,
+   "country": "HR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 5,
+   "head_in_window": 0,
+   "head_newest": "2014-07-10",
+   "head_procs": 1,
+   "identifier": "59506454450",
+   "in_population": true,
+   "merged": false,
+   "n": 30,
+   "new_name": "\"INFODATA\" ELEKTRONIKA, USLUGE I TRGOVINA, VL. DRŽISLAV DLESK,ZAGREB, SAVICA ŠANCI 111",
+   "new_name_norm": "\"infodata\" elektronika, usluge i trgovina, vl. držislav dlesk,zagreb, savica šanci 111",
+   "newest_is_head": false,
+   "old_name": "Infodata elektronika, usluge i trgovina",
+   "old_name_norm": "infodata elektronika, usluge i trgovina",
+   "org_id": 5372850,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2023-09-11",
+   "rule": "R1",
+   "second": 7,
+   "spellings": [
+    [
+     "\"INFODATA\" ELEKTRONIKA, USLUGE I TRGOVINA, VL. DRŽISLAV DLESK,ZAGREB, SAVICA ŠANCI 111",
+     17
+    ],
+    [
+     "Infodata",
+     7
+    ],
+    [
+     "Infodata elektronika, usluge i trgovina",
+     5
+    ],
+    [
+     "„Infodata” elektronika, usluge i trgovina, vl. Držislav Dlesk",
+     1
+    ]
+   ],
+   "top": 17,
+   "top_newest": "2026-04-17",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 30
+  },
+  {
+   "clusters": 2,
+   "country": "HR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2022-12-23",
+   "head_procs": 2,
+   "identifier": "65435430481",
+   "in_population": true,
+   "merged": false,
+   "n": 16,
+   "new_name": "Zanatska radnja \"Zidar\" vlasnik: Šoštarić Dražen, Tršće, Makov Hrib, Prhutarska 24",
+   "new_name_norm": "zanatska radnja \"zidar\" vlasnik: šoštarić dražen, tršće, makov hrib, prhutarska 24",
+   "newest_is_head": false,
+   "old_name": "ZR Zidar",
+   "old_name_norm": "zr zidar",
+   "org_id": 17147496,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "Zanatska radnja \"Zidar\" vlasnik: Šoštarić Dražen, Tršće, Makov Hrib, Prhutarska 24",
+     14
+    ],
+    [
+     "ZR  ZIDAR",
+     1
+    ],
+    [
+     "ZR Zidar",
+     1
+    ]
+   ],
+   "top": 14,
+   "top_newest": "2026-09-16",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 16
+  },
+  {
+   "clusters": 2,
+   "country": "SI",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-02-04",
+   "head_procs": 1,
+   "identifier": "5462614000",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": "SITEL napajalne naprave in sistemi d.o.o., Ljubljana, Savlje 89",
+   "new_name_norm": "sitel napajalne naprave in sistemi d.o.o., ljubljana, savlje 89",
+   "newest_is_head": false,
+   "old_name": "Sitel d.o.o., Ljubljana",
+   "old_name_norm": "sitel d.o.o., ljubljana",
+   "org_id": 9339625,
+   "provisional": false,
+   "reason": "address_added",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "SITEL napajalne naprave in sistemi d.o.o., Ljubljana, Savlje 89",
+     2
+    ],
+    [
+     "Sitel napajalne naprave in sistemi d.o.o., Ljubljana, Savlje 89",
+     2
+    ],
+    [
+     "Sitel d.o.o., Ljubljana",
+     1
+    ],
+    [
+     "Sitel, napajalne naprave in sistemi d. o. o., Ljubljana, Savlje 89",
+     1
+    ]
+   ],
+   "top": 5,
+   "top_newest": "2026-02-09",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  }
+ ],
+ "seat_dropped": [
+  {
+   "clusters": 2,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2021-12-06",
+   "head_procs": 1,
+   "identifier": "6570234815",
+   "in_population": true,
+   "merged": false,
+   "n": 9,
+   "new_name": "Teatr Lalki i Aktora „Kubuś”",
+   "new_name_norm": "teatr lalki i aktora „kubuś”",
+   "newest_is_head": false,
+   "old_name": "Teatr Lalki i Aktora „Kubuś” w Kielcach",
+   "old_name_norm": "teatr lalki i aktora „kubuś” w kielcach",
+   "org_id": 17824715,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "Teatr Lalki i Aktora „Kubuś”",
+     6
+    ],
+    [
+     "Teatr Lalki i Aktora „Kubuś” w Kielcach",
+     3
+    ]
+   ],
+   "top": 6,
+   "top_newest": "2025-01-13",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 9
+  },
+  {
+   "clusters": 2,
+   "country": "SK",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2013-06-07",
+   "head_procs": 1,
+   "identifier": "37781154",
+   "in_population": true,
+   "merged": false,
+   "n": 8,
+   "new_name": "Podduklianska knižnica",
+   "new_name_norm": "podduklianska knižnica",
+   "newest_is_head": false,
+   "old_name": "Podduklianska knižnica vo Svidníku",
+   "old_name_norm": "podduklianska knižnica vo svidníku",
+   "org_id": 3283530,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "Podduklianska knižnica",
+     6
+    ],
+    [
+     "Podduklianska knižnica vo Svidníku",
+     2
+    ]
+   ],
+   "top": 6,
+   "top_newest": "2022-04-15",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 8
+  },
+  {
+   "clusters": 2,
+   "country": "PL",
+   "eng": null,
+   "family_new": "spzoo",
+   "family_old": null,
+   "head": 5,
+   "head_in_window": 0,
+   "head_newest": "2023-07-05",
+   "head_procs": 3,
+   "identifier": "192471199",
+   "in_population": true,
+   "merged": false,
+   "n": 47,
+   "new_name": "Zakład Utylizacji Odpadów Stałych sp. z o.o.",
+   "new_name_norm": "zakład utylizacji odpadów stałych sp. z o.o",
+   "newest_is_head": false,
+   "old_name": "Zakład Utylizacji Odpadów Stałych sp. z o.o. w Tczewie",
+   "old_name_norm": "zakład utylizacji odpadów stałych sp. z o.o. w tczewie",
+   "org_id": 20132104,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 5,
+   "spellings": [
+    [
+     "Zakład Utylizacji Odpadów Stałych sp. z o.o.",
+     42
+    ],
+    [
+     "Zakład Utylizacji Odpadów Stałych sp. z o.o. w Tczewie",
+     5
+    ]
+   ],
+   "top": 42,
+   "top_newest": "2026-10-05",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 47
+  },
+  {
+   "clusters": 2,
+   "country": "PL",
+   "eng": null,
+   "family_new": "spzoo",
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2022-11-14",
+   "head_procs": 1,
+   "identifier": "367452261",
+   "in_population": true,
+   "merged": false,
+   "n": 5,
+   "new_name": "SULĘCIŃSKI ZAKŁAD USŁUG KOMUNALNYCH\" Sp. z o.o.",
+   "new_name_norm": "sulęciński zakład usług komunalnych\" sp. z o.o",
+   "newest_is_head": false,
+   "old_name": "Sulęciński Zakład Usług Komunalnych Sp. z o.o w Sulęcinie",
+   "old_name_norm": "sulęciński zakład usług komunalnych sp. z o.o w sulęcinie",
+   "org_id": 20145666,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "SULĘCIŃSKI ZAKŁAD USŁUG KOMUNALNYCH\" Sp. z o.o.",
+     4
+    ],
+    [
+     "Sulęciński Zakład Usług Komunalnych Sp. z o.o w Sulęcinie",
+     1
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2026-03-24",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 5
+  },
+  {
+   "clusters": 2,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2022-01-18",
+   "head_procs": 1,
+   "identifier": "000037144",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": "Zespół Szkół Technicznych",
+   "new_name_norm": "zespół szkół technicznych",
+   "newest_is_head": false,
+   "old_name": "Zespół Szkół Technicznych w Mielcu",
+   "old_name_norm": "zespół szkół technicznych w mielcu",
+   "org_id": 17738449,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "Zespół Szkół Technicznych",
+     4
+    ],
+    [
+     "Zespół Szkół Technicznych w Mielcu",
+     2
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2024-12-20",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 6,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2017-05-19",
+   "head_procs": 1,
+   "identifier": "5370001603",
+   "in_population": true,
+   "merged": false,
+   "n": 45,
+   "new_name": "Spółdzielnia Inwalidów ELREMET",
+   "new_name_norm": "spółdzielnia inwalidów elremet",
+   "newest_is_head": false,
+   "old_name": "Spółdzielnia Inwalidów „Elremet” w Białej Podlaskiej",
+   "old_name_norm": "spółdzielnia inwalidów „elremet” w białej podlaskiej",
+   "org_id": 9741898,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-10-14",
+   "rule": "R1",
+   "second": 4,
+   "spellings": [
+    [
+     "Spółdzielnia Inwalidów ELREMET",
+     25
+    ],
+    [
+     "Spółdzielnia Inwalidów Elremet",
+     6
+    ],
+    [
+     "SPÓŁDZIELNIA INWALIDÓW ELREMET",
+     3
+    ],
+    [
+     "Spółdzielnia Inwalidów ELREMET – Partner",
+     2
+    ],
+    [
+     "Spółdzielnia Inwalidów „Elremet” w Białej Podlaskiej",
+     2
+    ]
+   ],
+   "top": 36,
+   "top_newest": "2026-09-02",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 45
+  },
+  {
+   "clusters": 3,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 6,
+   "head_in_window": 0,
+   "head_newest": "2023-04-07",
+   "head_procs": 2,
+   "identifier": "7342752853",
+   "in_population": true,
+   "merged": false,
+   "n": 24,
+   "new_name": "Samodzielny Publiczny Zakład Opieki Zdrowotnej Sądeckie Pogotowie Ratunkowe",
+   "new_name_norm": "samodzielny publiczny zakład opieki zdrowotnej sądeckie pogotowie ratunkowe",
+   "newest_is_head": false,
+   "old_name": "Samodzielny Publiczny Zakład Opieki Zdrowotnej Sądeckie Pogotowie Ratunkowe w Nowym Sączu",
+   "old_name_norm": "samodzielny publiczny zakład opieki zdrowotnej sądeckie pogotowie ratunkowe w nowym sączu",
+   "org_id": 17902871,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-08-26",
+   "rule": "R1",
+   "second": 6,
+   "spellings": [
+    [
+     "Samodzielny Publiczny Zakład Opieki Zdrowotnej Sądeckie Pogotowie Ratunkowe",
+     16
+    ],
+    [
+     "Samodzielny Publiczny Zakład Opieki Zdrowotnej Sądeckie Pogotowie Ratunkowe w Nowym Sączu",
+     6
+    ],
+    [
+     "SPZOZ Sądeckie Pogotowie Ratunkowe w Nowym Sączu",
+     2
+    ]
+   ],
+   "top": 16,
+   "top_newest": "2026-10-07",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 24
+  },
+  {
+   "clusters": 2,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2014-07-05",
+   "head_procs": 1,
+   "identifier": "7511005640",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "Ośrodek Sportu i Rekreacji",
+   "new_name_norm": "ośrodek sportu i rekreacji",
+   "newest_is_head": false,
+   "old_name": "Ośrodek Sportu i Rekreacji w Kluczborku",
+   "old_name_norm": "ośrodek sportu i rekreacji w kluczborku",
+   "org_id": 5350673,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Ośrodek Sportu i Rekreacji",
+     3
+    ],
+    [
+     "Ośrodek Sportu i Rekreacji w Kluczborku",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2017-05-27",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2022-07-29",
+   "head_procs": 2,
+   "identifier": "8961004718",
+   "in_population": true,
+   "merged": false,
+   "n": 11,
+   "new_name": "Miejski Ośrodek Pomocy Społecznej",
+   "new_name_norm": "miejski ośrodek pomocy społecznej",
+   "newest_is_head": false,
+   "old_name": "Miejski Ośrodek Pomocy Społecznej we Wrocławiu",
+   "old_name_norm": "miejski ośrodek pomocy społecznej we wrocławiu",
+   "org_id": 16701291,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "Miejski Ośrodek Pomocy Społecznej",
+     8
+    ],
+    [
+     "Miejski Ośrodek Pomocy Społecznej we Wrocławiu",
+     3
+    ]
+   ],
+   "top": 8,
+   "top_newest": "2026-08-31",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 11
+  },
+  {
+   "clusters": 2,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2021-12-06",
+   "head_procs": 1,
+   "identifier": "9590829973",
+   "in_population": true,
+   "merged": false,
+   "n": 9,
+   "new_name": "Biuro Wystaw Artystycznych",
+   "new_name_norm": "biuro wystaw artystycznych",
+   "newest_is_head": false,
+   "old_name": "Biuro Wystaw Artystycznych w Kielcach",
+   "old_name_norm": "biuro wystaw artystycznych w kielcach",
+   "org_id": 17824709,
+   "provisional": false,
+   "reason": "seat_dropped",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "Biuro Wystaw Artystycznych",
+     6
+    ],
+    [
+     "Biuro Wystaw Artystycznych w Kielcach",
+     3
+    ]
+   ],
+   "top": 6,
+   "top_newest": "2025-01-13",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 9
+  }
+ ],
+ "review_body": [
+  {
+   "clusters": 4,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-05-12",
+   "head_procs": 1,
+   "identifier": "17830001800011",
+   "in_population": true,
+   "merged": false,
+   "n": 17,
+   "new_name": "Tribunal Administratif de Toulon",
+   "new_name_norm": "tribunal administratif de toulon",
+   "newest_is_head": false,
+   "old_name": "Préfecture du Var",
+   "old_name_norm": "préfecture du var",
+   "org_id": 11595231,
+   "provisional": false,
+   "reason": "review_body",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-10-20",
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "Tribunal Administratif de Toulon",
+     8
+    ],
+    [
+     "Tribunal Administratif Toulon",
+     3
+    ],
+    [
+     "Tribunal administratif de Toulon",
+     3
+    ],
+    [
+     "Tribunal Administratifs de Toulon",
+     2
+    ],
+    [
+     "Préfecture du Var",
+     1
+    ]
+   ],
+   "top": 11,
+   "top_newest": "2026-06-26",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 17
+  },
+  {
+   "clusters": 8,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": "spzoo",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-07-20",
+   "head_procs": 1,
+   "identifier": "6772398589",
+   "in_population": true,
+   "merged": true,
+   "n": 104,
+   "new_name": "Krajowa Izba Odwoławcza",
+   "new_name_norm": "krajowa izba odwoławcza",
+   "newest_is_head": false,
+   "old_name": "ISS HS Sp. z o.o.",
+   "old_name_norm": "iss hs sp. z o.o.",
+   "org_id": 15556355,
+   "provisional": false,
+   "reason": "review_body",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2026-10-07",
+   "rule": "R1",
+   "second": 30,
+   "spellings": [
+    [
+     "Krajowa Izba Odwoławcza",
+     60
+    ],
+    [
+     "Naprzód Catering Sp. z o.o.",
+     13
+    ],
+    [
+     "Naprzód Catering sp. z o.o.",
+     8
+    ],
+    [
+     "Restauracja Cristal S.C. R. Kokoszka, A. Kokoszka",
+     6
+    ],
+    [
+     "Naprzód Catering Sp. z o. o.",
+     4
+    ]
+   ],
+   "top": 60,
+   "top_newest": "2026-10-01",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 104
+  },
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-01-13",
+   "head_procs": 1,
+   "identifier": "SS4111001F",
+   "in_population": true,
+   "merged": false,
+   "n": 26,
+   "new_name": "TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA",
+   "new_name_norm": "tribunal administrativo de recursos contractuales de la junta de andalucia",
+   "newest_is_head": false,
+   "old_name": "Delegación del Gobierno de Cádiz",
+   "old_name_norm": "delegación del gobierno de cádiz",
+   "org_id": 9195726,
+   "provisional": false,
+   "reason": "review_body",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2024-02-12",
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "TRIBUNAL ADMINISTRATIVO DE RECURSOS CONTRACTUALES DE LA JUNTA DE ANDALUCIA",
+     24
+    ],
+    [
+     "Consejería de la Presidencia y Administración Local de la Junta de Andalucía",
+     1
+    ],
+    [
+     "Delegación del Gobierno de Cádiz",
+     1
+    ]
+   ],
+   "top": 24,
+   "top_newest": "2026-06-08",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 26
+  },
+  {
+   "clusters": 8,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2015-09-05",
+   "head_procs": 2,
+   "identifier": "17971001700015",
+   "in_population": true,
+   "merged": true,
+   "n": 46,
+   "new_name": "Tribunal administratif de Basse-Terre",
+   "new_name_norm": "tribunal administratif de basse-terre",
+   "newest_is_head": false,
+   "old_name": "Préfecture Région Guadeloupe",
+   "old_name_norm": "préfecture région guadeloupe",
+   "org_id": 6806003,
+   "provisional": false,
+   "reason": "review_body",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2026-07-15",
+   "rule": "R1",
+   "second": 5,
+   "spellings": [
+    [
+     "Tribunal administratif de Basse-Terre",
+     20
+    ],
+    [
+     "TRIBUNAL ADMINISTRATIF DE BASSE-TERRE",
+     6
+    ],
+    [
+     "Préfecture Région Guadeloupe",
+     3
+    ],
+    [
+     "TRIBUNAL ADMINISTRATIF DE LA GUADELOUPE",
+     3
+    ],
+    [
+     "TRIBUNAL ADMINISTRATIF DE GUADELOUPE",
+     2
+    ]
+   ],
+   "top": 29,
+   "top_newest": "2026-10-16",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 46
+  },
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-05-31",
+   "head_procs": 1,
+   "identifier": "A41961608",
+   "in_population": true,
+   "merged": false,
+   "n": 5,
+   "new_name": "Tribunal Administrativo Central de Recursos Contractuales Adscrito al Ministerio de Hacienda y Administraciones Públicas",
+   "new_name_norm": "tribunal administrativo central de recursos contractuales adscrito al ministerio de hacienda y administraciones públicas",
+   "newest_is_head": false,
+   "old_name": "DESARROLLO DE TECNOLOGIAS DE DEPURACION,",
+   "old_name_norm": "desarrollo de tecnologias de depuracion,",
+   "org_id": 21185404,
+   "provisional": false,
+   "reason": "review_body",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2026-03-25",
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Tribunal Administrativo Central de Recursos Contractuales Adscrito al Ministerio de Hacienda y Administraciones Públicas",
+     3
+    ],
+    [
+     "DESARROLLO DE TECNOLOGIAS DE DEPURACION,",
+     1
+    ],
+    [
+     "DESARROLLO DE TECNOLOGIAS DE DEPURACION, S.A.",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2026-07-29",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 5
+  },
+  {
+   "clusters": 3,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-01-11",
+   "head_procs": 1,
+   "identifier": "7962543948",
+   "in_population": true,
+   "merged": false,
+   "n": 33,
+   "new_name": "Krajowa Izba Odwoławcza",
+   "new_name_norm": "krajowa izba odwoławcza",
+   "newest_is_head": false,
+   "old_name": "Zakład Usług Leśnych  Marcin Z. Fryziel",
+   "old_name_norm": "zakład usług leśnych  marcin z. fryziel",
+   "org_id": 20435435,
+   "provisional": false,
+   "reason": "review_body",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2026-09-21",
+   "rule": "R1",
+   "second": 10,
+   "spellings": [
+    [
+     "Krajowa Izba Odwoławcza",
+     22
+    ],
+    [
+     "Zakład Usług Leśnych Marcin Fryziel",
+     9
+    ],
+    [
+     "Zakład Usług Leśnych  Marcin Z. Fryziel",
+     1
+    ],
+    [
+     "Zakład Usług Leśnych – Marcin Fryziel",
+     1
+    ]
+   ],
+   "top": 22,
+   "top_newest": "2026-09-30",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 33
+  },
+  {
+   "clusters": 2,
+   "country": "DK",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-03-23",
+   "head_procs": 1,
+   "identifier": "9460013387",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "Klagenævnet for Udbud",
+   "new_name_norm": "klagenævnet for udbud",
+   "newest_is_head": false,
+   "old_name": "Øresundsbro Konsortiet",
+   "old_name_norm": "øresundsbro konsortiet",
+   "org_id": 9512566,
+   "provisional": false,
+   "reason": "review_body",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Klagenævnet for Udbud",
+     3
+    ],
+    [
+     "Øresundsbro Konsortiet",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2024-12-23",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 4,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": "spzoo",
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2021-10-27",
+   "head_procs": 1,
+   "identifier": "790011345",
+   "in_population": true,
+   "merged": false,
+   "n": 254,
+   "new_name": "Krajowa Izba Odwoławcza",
+   "new_name_norm": "krajowa izba odwoławcza",
+   "newest_is_head": false,
+   "old_name": "Przedsiębiorstwo Wodociągów i Kanalizacji w Suwałkach Sp. zo.o.",
+   "old_name_norm": "przedsiębiorstwo wodociągów i kanalizacji w suwałkach sp. zo.o.",
+   "org_id": 17974417,
+   "provisional": false,
+   "reason": "review_body",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2025-12-31",
+   "rule": "R1",
+   "second": 18,
+   "spellings": [
+    [
+     "Krajowa Izba Odwoławcza",
+     225
+    ],
+    [
+     "Przedsiębiorstwo Wodociągów i Kanalizacji w Suwałkach Spółka z o.o.",
+     18
+    ],
+    [
+     "Przedsiębiorstwo Wodociągów i Kanalizacji w Suwałkach Sp. z o.o.",
+     9
+    ],
+    [
+     "Przedsiębiorstwo Wodociągów i Kanalizacji w Suwałkach Sp. zo.o.",
+     2
+    ]
+   ],
+   "top": 225,
+   "top_newest": "2026-09-21",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 254
+  }
+ ],
+ "caps_variant": [
+  {
+   "clusters": 2,
+   "country": "RO",
+   "eng": null,
+   "family_new": null,
+   "family_old": "srl",
+   "head": 6,
+   "head_in_window": 0,
+   "head_newest": "2021-10-18",
+   "head_procs": 1,
+   "identifier": "41541666",
+   "in_population": true,
+   "merged": true,
+   "n": 36,
+   "new_name": "MISOLA CORPORATION",
+   "new_name_norm": "misola corporation",
+   "newest_is_head": false,
+   "old_name": "S.C. Misola Corporation S.R.L.",
+   "old_name_norm": "s.c. misola corporation s.r.l.",
+   "org_id": 15933261,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 6,
+   "spellings": [
+    [
+     "MISOLA CORPORATION",
+     30
+    ],
+    [
+     "S.C. MISOLA CORPORATION S.R.L.",
+     3
+    ],
+    [
+     "S.C. Misola Corporation S.R.L.",
+     3
+    ]
+   ],
+   "top": 30,
+   "top_newest": "2024-07-12",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 36
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": "sas",
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-02-07",
+   "head_procs": 1,
+   "identifier": "41235095100023",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "SAS ANDRE PETIT",
+   "new_name_norm": "sas andre petit",
+   "newest_is_head": false,
+   "old_name": "PETIT André",
+   "old_name_norm": "petit andré",
+   "org_id": 20625534,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "SAS ANDRE PETIT",
+     2
+    ],
+    [
+     "ANDRE PETIT",
+     1
+    ],
+    [
+     "PETIT André",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2025-12-23",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2021-03-22",
+   "head_procs": 1,
+   "identifier": "F08493611",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "COOPERATIVA D'ARQUITECTES JORDI CAPELL",
+   "new_name_norm": "cooperativa d'arquitectes jordi capell",
+   "newest_is_head": false,
+   "old_name": "Cooperativa Arquitectes Jordi Capell, S. C. C. L.",
+   "old_name_norm": "cooperativa arquitectes jordi capell, s. c. c. l.",
+   "org_id": 16777451,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "COOPERATIVA D'ARQUITECTES JORDI CAPELL",
+     3
+    ],
+    [
+     "Cooperativa Arquitectes Jordi Capell, S. C. C. L.",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2021-11-26",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 3,
+   "country": "PL",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-07-31",
+   "head_procs": 1,
+   "identifier": "5250000825",
+   "in_population": true,
+   "merged": false,
+   "n": 15,
+   "new_name": "PCO S.A.",
+   "new_name_norm": "pco s.a",
+   "newest_is_head": false,
+   "old_name": "PCO Spółka Akcyjna",
+   "old_name_norm": "pco spółka akcyjna",
+   "org_id": 13804962,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2026-06-15",
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "PCO S.A.",
+     11
+    ],
+    [
+     "Bydgoskie Zakłady Elektromechaniczne \"BELMA\" S.A.",
+     2
+    ],
+    [
+     "PCO S.A",
+     1
+    ],
+    [
+     "PCO Spółka Akcyjna",
+     1
+    ]
+   ],
+   "top": 12,
+   "top_newest": "2026-09-17",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 15
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": "sas",
+   "family_old": null,
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2018-11-10",
+   "head_procs": 3,
+   "identifier": "451079412",
+   "in_population": true,
+   "merged": false,
+   "n": 11,
+   "new_name": "SAS TERTIAIRE MIXTE",
+   "new_name_norm": "sas tertiaire mixte",
+   "newest_is_head": false,
+   "old_name": "SCI Tertiaire mixte",
+   "old_name_norm": "sci tertiaire mixte",
+   "org_id": 11520587,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "SAS TERTIAIRE MIXTE",
+     6
+    ],
+    [
+     "SCI Tertiaire Mixte",
+     2
+    ],
+    [
+     "TERTIAIRE MIXTE",
+     2
+    ],
+    [
+     "SCI Tertiaire mixte",
+     1
+    ]
+   ],
+   "top": 8,
+   "top_newest": "2026-07-23",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 11
+  },
+  {
+   "clusters": 2,
+   "country": "RO",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-12-24",
+   "head_procs": 1,
+   "identifier": "RO15475580",
+   "in_population": true,
+   "merged": true,
+   "n": 1772,
+   "new_name": "ELECTROCONS GROUP PROIECT INT'L",
+   "new_name_norm": "electrocons group proiect int'l",
+   "newest_is_head": false,
+   "old_name": "Electrocons Group Proiect INT'L S.R.L.",
+   "old_name_norm": "electrocons group proiect int'l s.r.l.",
+   "org_id": 16430606,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "ELECTROCONS GROUP PROIECT INT'L",
+     1756
+    ],
+    [
+     "ELECTROCONS GROUP PROIECT INT'L SRL",
+     15
+    ],
+    [
+     "Electrocons Group Proiect INT'L S.R.L.",
+     1
+    ]
+   ],
+   "top": 1771,
+   "top_newest": "2026-08-27",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 1772
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2017-02-09",
+   "head_procs": 1,
+   "identifier": "B85686921",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "QUARK TECHNOLOGICAL SOLUTIONS",
+   "new_name_norm": "quark technological solutions",
+   "newest_is_head": false,
+   "old_name": "Quark Technological Solutions, S.L.",
+   "old_name_norm": "quark technological solutions, s.l.",
+   "org_id": 9367553,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "QUARK TECHNOLOGICAL SOLUTIONS",
+     3
+    ],
+    [
+     "Quark Technological Solutions, S.L.",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2026-04-24",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-03-08",
+   "head_procs": 1,
+   "identifier": "02658029000067",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "TEDELEC",
+   "new_name_norm": "tedelec",
+   "newest_is_head": false,
+   "old_name": "société TEDELEC",
+   "old_name_norm": "société tedelec",
+   "org_id": 20766023,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "TEDELEC",
+     3
+    ],
+    [
+     "société TEDELEC",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2026-02-13",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2023-05-31",
+   "head_procs": 2,
+   "identifier": "32066261200037",
+   "in_population": true,
+   "merged": false,
+   "n": 13,
+   "new_name": "FONDATION BON SAUVEUR D'ALBY",
+   "new_name_norm": "fondation bon sauveur d'alby",
+   "newest_is_head": false,
+   "old_name": "fondation Bon Sauveur Alby",
+   "old_name_norm": "fondation bon sauveur alby",
+   "org_id": 21128622,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "FONDATION BON SAUVEUR D'ALBY",
+     11
+    ],
+    [
+     "fondation Bon Sauveur Alby",
+     2
+    ]
+   ],
+   "top": 11,
+   "top_newest": "2024-10-31",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 13
+  },
+  {
+   "clusters": 2,
+   "country": "RO",
+   "eng": null,
+   "family_new": null,
+   "family_old": "srl",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-02-28",
+   "head_procs": 1,
+   "identifier": "RO3118800",
+   "in_population": true,
+   "merged": false,
+   "n": 20,
+   "new_name": "VEGA 93",
+   "new_name_norm": "vega 93",
+   "newest_is_head": false,
+   "old_name": "S.C. Vega 93 S.R.L.",
+   "old_name_norm": "s.c. vega 93 s.r.l.",
+   "org_id": 14864888,
+   "provisional": false,
+   "reason": "caps_variant",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "VEGA 93",
+     19
+    ],
+    [
+     "S.C. Vega 93 S.R.L.",
+     1
+    ]
+   ],
+   "top": 19,
+   "top_newest": "2025-12-17",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 20
+  }
+ ],
+ "doubled": [
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 4,
+   "head_in_window": 0,
+   "head_newest": "2015-03-21",
+   "head_procs": 3,
+   "identifier": "P4801600J",
+   "in_population": true,
+   "merged": false,
+   "n": 24,
+   "new_name": "Ayuntamiento de Bakio - Ayuntamiento de Bakio",
+   "new_name_norm": "ayuntamiento de bakio - ayuntamiento de bakio",
+   "newest_is_head": false,
+   "old_name": "Bakioko Udala",
+   "old_name_norm": "bakioko udala",
+   "org_id": 2566692,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2020-08-10",
+   "rule": "R1",
+   "second": 5,
+   "spellings": [
+    [
+     "Ayuntamiento de Bakio - Ayuntamiento de Bakio",
+     15
+    ],
+    [
+     "Ayuntamiento de Bakio",
+     5
+    ],
+    [
+     "Bakioko Udala",
+     4
+    ]
+   ],
+   "top": 15,
+   "top_newest": "2026-07-02",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 24
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 5,
+   "head_in_window": 0,
+   "head_newest": "2020-10-30",
+   "head_procs": 4,
+   "identifier": "P2006900A",
+   "in_population": true,
+   "merged": false,
+   "n": 20,
+   "new_name": "Ayuntamiento de Pasaia - Ayuntamiento de Pasaia",
+   "new_name_norm": "ayuntamiento de pasaia - ayuntamiento de pasaia",
+   "newest_is_head": false,
+   "old_name": "Ayuntamiento de Pasaia",
+   "old_name_norm": "ayuntamiento de pasaia",
+   "org_id": 12031122,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 5,
+   "spellings": [
+    [
+     "Ayuntamiento de Pasaia - Ayuntamiento de Pasaia",
+     15
+    ],
+    [
+     "Ayuntamiento de Pasaia",
+     5
+    ]
+   ],
+   "top": 15,
+   "top_newest": "2026-06-22",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 20
+  },
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2015-07-11",
+   "head_procs": 1,
+   "identifier": "P2005700F",
+   "in_population": true,
+   "merged": false,
+   "n": 33,
+   "new_name": "Ayuntamiento de Lezo - Ayuntamiento de Lezo",
+   "new_name_norm": "ayuntamiento de lezo - ayuntamiento de lezo",
+   "newest_is_head": false,
+   "old_name": "Lezoko Unibertsitateko Udala",
+   "old_name_norm": "lezoko unibertsitateko udala",
+   "org_id": 6546919,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2019-04-19",
+   "rule": "R1",
+   "second": 10,
+   "spellings": [
+    [
+     "Ayuntamiento de Lezo - Ayuntamiento de Lezo",
+     21
+    ],
+    [
+     "Ayuntamiento de Lezo",
+     10
+    ],
+    [
+     "Lezoko Unibertsitateko Udala",
+     2
+    ]
+   ],
+   "top": 21,
+   "top_newest": "2026-07-15",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 33
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-10-18",
+   "head_procs": 1,
+   "identifier": "P4802600I",
+   "in_population": true,
+   "merged": false,
+   "n": 10,
+   "new_name": "Ayuntamiento de Carranza - Ayuntamiento de Carranza",
+   "new_name_norm": "ayuntamiento de carranza - ayuntamiento de carranza",
+   "newest_is_head": false,
+   "old_name": "Ayuntamiento de Carranza",
+   "old_name_norm": "ayuntamiento de carranza",
+   "org_id": 12353904,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Ayuntamiento de Carranza - Ayuntamiento de Carranza",
+     9
+    ],
+    [
+     "Ayuntamiento de Carranza",
+     1
+    ]
+   ],
+   "top": 9,
+   "top_newest": "2025-02-12",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 10
+  },
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 4,
+   "head_in_window": 0,
+   "head_newest": "2020-08-10",
+   "head_procs": 3,
+   "identifier": "P4809400G",
+   "in_population": true,
+   "merged": false,
+   "n": 19,
+   "new_name": "Ayuntamiento de Lezama - Ayuntamiento de Lezama",
+   "new_name_norm": "ayuntamiento de lezama - ayuntamiento de lezama",
+   "newest_is_head": false,
+   "old_name": "Ayuntamiento de Lezama",
+   "old_name_norm": "ayuntamiento de lezama",
+   "org_id": 10064219,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2024-03-05",
+   "rule": "R1",
+   "second": 4,
+   "spellings": [
+    [
+     "Ayuntamiento de Lezama - Ayuntamiento de Lezama",
+     13
+    ],
+    [
+     "Ayuntamiento de Lezama",
+     4
+    ],
+    [
+     "Alaiki Zerbitzu Gizakulturalak",
+     1
+    ],
+    [
+     "Ayuntamiento de Lezama — Ayuntamiento de Lezama",
+     1
+    ]
+   ],
+   "top": 14,
+   "top_newest": "2026-09-07",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 19
+  },
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 8,
+   "head_in_window": 0,
+   "head_newest": "2019-08-01",
+   "head_procs": 4,
+   "identifier": "G95122321",
+   "in_population": true,
+   "merged": false,
+   "n": 26,
+   "new_name": "Fundación Museo de Bellas Artes de Bilbao - Fundación Museo de Bellas Artes de Bilbao",
+   "new_name_norm": "fundación museo de bellas artes de bilbao - fundación museo de bellas artes de bilbao",
+   "newest_is_head": false,
+   "old_name": "Fundación Museo de Bellas Artes de Bilbao-Bilboko Arte Ederren Museoa Fundazioa",
+   "old_name_norm": "fundación museo de bellas artes de bilbao-bilboko arte ederren museoa fundazioa",
+   "org_id": 3948628,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2019-08-01",
+   "rule": "R1",
+   "second": 8,
+   "spellings": [
+    [
+     "Fundación Museo de Bellas Artes de Bilbao - Fundación Museo de Bellas Artes de Bilbao",
+     17
+    ],
+    [
+     "Fundación Museo de Bellas Artes de Bilbao-Bilboko Arte Ederren Museoa Fundazioa",
+     4
+    ],
+    [
+     "Fundación Museo de Bellas Artes de Bilbao — Bilboko Arte Ederren Museoa Fundazioa",
+     3
+    ],
+    [
+     "Fundación Museo de Bellas Artes de Bilbao",
+     1
+    ],
+    [
+     "Fundación Museo de Bellas Artes de Bilbao – Bilboko Arte Ederren Museoa Fundazioa",
+     1
+    ]
+   ],
+   "top": 17,
+   "top_newest": "2026-09-14",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 26
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-06-08",
+   "head_procs": 1,
+   "identifier": "G20633897",
+   "in_population": true,
+   "merged": false,
+   "n": 4,
+   "new_name": "Kirolgi Fundazioa - Kirolgi Fundazioa",
+   "new_name_norm": "kirolgi fundazioa - kirolgi fundazioa",
+   "newest_is_head": false,
+   "old_name": "Kirolgi Fundazioa",
+   "old_name_norm": "kirolgi fundazioa",
+   "org_id": 15319718,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "Kirolgi Fundazioa - Kirolgi Fundazioa",
+     3
+    ],
+    [
+     "Kirolgi Fundazioa",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2024-07-22",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 23,
+   "head_in_window": 0,
+   "head_newest": "2021-07-14",
+   "head_procs": 15,
+   "identifier": "P2002100B",
+   "in_population": true,
+   "merged": false,
+   "n": 70,
+   "new_name": "Ayuntamiento de Beasain - Ayuntamiento de Beasain",
+   "new_name_norm": "ayuntamiento de beasain - ayuntamiento de beasain",
+   "newest_is_head": false,
+   "old_name": "Ayuntamiento de Beasain",
+   "old_name_norm": "ayuntamiento de beasain",
+   "org_id": 3909556,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2024-03-08",
+   "rule": "R1",
+   "second": 23,
+   "spellings": [
+    [
+     "Ayuntamiento de Beasain - Ayuntamiento de Beasain",
+     45
+    ],
+    [
+     "Ayuntamiento de Beasain",
+     22
+    ],
+    [
+     "Ayuntamiento de Beasain — Ayuntamiento de Beasain",
+     1
+    ],
+    [
+     "Ayuntamiento de Beasáin",
+     1
+    ],
+    [
+     "INSTAL.DEPORT.MAS QUATRO, S.L.",
+     1
+    ]
+   ],
+   "top": 46,
+   "top_newest": "2026-09-30",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 70
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 4,
+   "head_in_window": 0,
+   "head_newest": "2019-12-10",
+   "head_procs": 2,
+   "identifier": "P4800021J",
+   "in_population": true,
+   "merged": false,
+   "n": 17,
+   "new_name": "Arratiako Egoitza - Arratiako Egoitza",
+   "new_name_norm": "arratiako egoitza - arratiako egoitza",
+   "newest_is_head": false,
+   "old_name": "Arratiako Egoitza",
+   "old_name_norm": "arratiako egoitza",
+   "org_id": 12386123,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 4,
+   "spellings": [
+    [
+     "Arratiako Egoitza - Arratiako Egoitza",
+     13
+    ],
+    [
+     "Arratiako Egoitza",
+     4
+    ]
+   ],
+   "top": 13,
+   "top_newest": "2026-04-30",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 17
+  },
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2020-06-26",
+   "head_procs": 1,
+   "identifier": "V20999827",
+   "in_population": true,
+   "merged": false,
+   "n": 8,
+   "new_name": "Instituto Vasco Etxepare - Instituto Vasco Etxepare",
+   "new_name_norm": "instituto vasco etxepare - instituto vasco etxepare",
+   "newest_is_head": false,
+   "old_name": "Etxepare, Instituto Vasco Etxepare",
+   "old_name_norm": "etxepare, instituto vasco etxepare",
+   "org_id": 14678837,
+   "provisional": false,
+   "reason": "doubled",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2020-08-18",
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "Instituto Vasco Etxepare - Instituto Vasco Etxepare",
+     5
+    ],
+    [
+     "Etxepare — Instituto Vasco Etxepare",
+     1
+    ],
+    [
+     "Etxepare, Instituto Vasco Etxepare",
+     1
+    ],
+    [
+     "Instituto Vasco Etxepare",
+     1
+    ]
+   ],
+   "top": 5,
+   "top_newest": "2026-05-29",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 8
+  }
+ ],
+ "no_fit": [
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2018-06-06",
+   "head_procs": 1,
+   "identifier": "28RUEDESAURUPT",
+   "in_population": true,
+   "merged": false,
+   "n": 5,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "GIP formation tout au long de la vie",
+   "old_name_norm": "gip formation tout au long de la vie",
+   "org_id": 11760208,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "gip ftlv",
+     4
+    ],
+    [
+     "GIP formation tout au long de la vie",
+     1
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2023-10-20",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 5
+  },
+  {
+   "clusters": 2,
+   "country": "SK",
+   "eng": null,
+   "family_new": null,
+   "family_old": "sro",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2020-03-24",
+   "head_procs": 1,
+   "identifier": "46882936",
+   "in_population": true,
+   "merged": false,
+   "n": 7,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "Brain:IT s. r. o.",
+   "old_name_norm": "brain:it s. r. o.",
+   "org_id": 14972269,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "abc factory s.r.o.",
+     6
+    ],
+    [
+     "Brain:IT s. r. o.",
+     1
+    ]
+   ],
+   "top": 6,
+   "top_newest": "2023-12-05",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 7
+  },
+  {
+   "clusters": 2,
+   "country": "AT",
+   "eng": null,
+   "family_new": null,
+   "family_old": "gmbh",
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2023-06-16",
+   "head_procs": 1,
+   "identifier": "ATU57298338",
+   "in_population": true,
+   "merged": false,
+   "n": 17,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "kpp consulting gmbh Schrems",
+   "old_name_norm": "kpp consulting gmbh schrems",
+   "org_id": 21425568,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "kpp consulting gmbh",
+     16
+    ],
+    [
+     "kpp consulting gmbh Schrems",
+     1
+    ]
+   ],
+   "top": 16,
+   "top_newest": "2026-09-15",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 17
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2018-02-08",
+   "head_procs": 1,
+   "identifier": "25330630200014",
+   "in_population": true,
+   "merged": false,
+   "n": 6,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "Syndicat mixte de la Rive Droite",
+   "old_name_norm": "syndicat mixte de la rive droite",
+   "org_id": 10202605,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "sivom de la rive droite",
+     4
+    ],
+    [
+     "Syndicat mixte de la Rive Droite",
+     1
+    ],
+    [
+     "Syndicat mixte de la rive droite",
+     1
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2023-03-01",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 3,
+   "head_in_window": 0,
+   "head_newest": "2020-07-31",
+   "head_procs": 3,
+   "identifier": "21690149600010",
+   "in_population": true,
+   "merged": false,
+   "n": 12,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "Ville d'Oullins",
+   "old_name_norm": "ville d'oullins",
+   "org_id": 14548612,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 3,
+   "spellings": [
+    [
+     "mairie d'oullins",
+     9
+    ],
+    [
+     "Ville d'Oullins",
+     3
+    ]
+   ],
+   "top": 9,
+   "top_newest": "2023-07-26",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 12
+  },
+  {
+   "clusters": 2,
+   "country": "DE",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 4,
+   "head_in_window": 0,
+   "head_newest": "2018-02-07",
+   "head_procs": 1,
+   "identifier": "DE244590904",
+   "in_population": true,
+   "merged": false,
+   "n": 22,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "Die Schwenninger Krankenkasse",
+   "old_name_norm": "die schwenninger krankenkasse",
+   "org_id": 10829487,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 4,
+   "spellings": [
+    [
+     "vivida bkk",
+     18
+    ],
+    [
+     "Die Schwenninger Krankenkasse",
+     4
+    ]
+   ],
+   "top": 18,
+   "top_newest": "2026-05-26",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 22
+  },
+  {
+   "clusters": 3,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 16,
+   "head_in_window": 0,
+   "head_newest": "2020-02-11",
+   "head_procs": 11,
+   "identifier": "Q5856250E",
+   "in_population": true,
+   "merged": false,
+   "n": 76,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "Museu Nacional d'Art de Catalunya",
+   "old_name_norm": "museu nacional d'art de catalunya",
+   "org_id": 7356155,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": "2023-11-10",
+   "rule": "R1",
+   "second": 18,
+   "spellings": [
+    [
+     "CONSORCIO DEL MUSEU NACIONAL D'ART DE CATALUNYA",
+     42
+    ],
+    [
+     "Consorci del Museu Nacional d'Art de Catalunya",
+     18
+    ],
+    [
+     "Museu Nacional d'Art de Catalunya",
+     16
+    ]
+   ],
+   "top": 42,
+   "top_newest": "2026-09-09",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 76
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 2,
+   "head_in_window": 0,
+   "head_newest": "2019-08-08",
+   "head_procs": 1,
+   "identifier": "42113098000020",
+   "in_population": true,
+   "merged": true,
+   "n": 6,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "Jehu & CIE",
+   "old_name_norm": "jehu & cie",
+   "org_id": 13901395,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 2,
+   "spellings": [
+    [
+     "jehu sas",
+     4
+    ],
+    [
+     "Jehu & CIE",
+     2
+    ]
+   ],
+   "top": 4,
+   "top_newest": "2023-10-24",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 6
+  },
+  {
+   "clusters": 2,
+   "country": "FR",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 1,
+   "head_in_window": 0,
+   "head_newest": "2019-06-05",
+   "head_procs": 1,
+   "identifier": "79934418900011",
+   "in_population": true,
+   "merged": true,
+   "n": 4,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "SPL Eaux de Grenoble Alpes",
+   "old_name_norm": "spl eaux de grenoble alpes",
+   "org_id": 13515946,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 1,
+   "spellings": [
+    [
+     "eaux de grenoble alpes",
+     3
+    ],
+    [
+     "SPL Eaux de Grenoble Alpes",
+     1
+    ]
+   ],
+   "top": 3,
+   "top_newest": "2023-11-03",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 4
+  },
+  {
+   "clusters": 2,
+   "country": "ES",
+   "eng": null,
+   "family_new": null,
+   "family_old": null,
+   "head": 8,
+   "head_in_window": 0,
+   "head_newest": "2020-02-20",
+   "head_procs": 1,
+   "identifier": "U88476700",
+   "in_population": true,
+   "merged": false,
+   "n": 28,
+   "new_name": null,
+   "new_name_norm": null,
+   "newest_is_head": false,
+   "old_name": "SERVICIOS MICROINFORMÁTICA, S.A. - AVENET IT, S.L. - TÉCNICOS ASOCIADOS INFORMÁTICA, S.A. - SPHERA DITI, S.A. - DATEK SISTEMAS, S.L., UNIÓN TEMPORAL DE EMPRESAS, LEY 18/1982",
+   "old_name_norm": "servicios microinformática, s.a. - avenet it, s.l. - técnicos asociados informática, s.a. - sphera diti, s.a. - datek sistemas, s.l., unión temporal de empresas, ley 18/1982",
+   "org_id": 14882722,
+   "provisional": false,
+   "reason": "no_fit",
+   "recent_released": null,
+   "release_withheld": null,
+   "rival_newest": null,
+   "rule": "R1",
+   "second": 8,
+   "spellings": [
+    [
+     "UTE SERVICIOS MICROINFORMÁTICA, AVENET IT, TÉCNICOS ASOCIADOS INF. SPHERA, DATEK",
+     15
+    ],
+    [
+     "SERVICIOS MICROINFORMÁTICA, S.A. - AVENET IT, S.L. - TÉCNICOS ASOCIADOS INFORMÁTICA, S.A. - SPHERA DITI, S.A. - DATEK SISTEMAS, S.L., UNIÓN TEMPORAL DE EMPRESAS, LEY 18/1982",
+     8
+    ],
+    [
+     "UTE SERVICIOS MICROINFORMATICA, AVENET IT, TECNICOS ASOCIADOS INF. SPHERA, DATEK",
+     5
+    ]
+   ],
+   "top": 20,
+   "top_newest": "2025-07-25",
+   "undated_mentions": 0,
+   "verdict": "hold",
+   "voting": 28
+  }
+ ]
+}

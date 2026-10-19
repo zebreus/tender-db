@@ -1,0 +1,6 @@
+PLAN	c03	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	c03	SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)
+PLAN	c03	USE SORTER FOR GROUP BY
+PLAN	c04	SEARCH n USING INDEX notices_profile (profile=?)
+PLAN	c04	SEARCH c USING INDEX sqlite_autoindex_notice_codes_1 (notice_id=? AND section_id=? AND field_id=?)
+PLAN	c04	USE SORTER FOR GROUP BY

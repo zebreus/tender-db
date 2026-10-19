@@ -1,0 +1,1456 @@
+[
+ {
+  "clusters": 2,
+  "country": "DE",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 6,
+  "head_in_window": 0,
+  "head_newest": "2025-04-15",
+  "head_procs": 1,
+  "identifier": "DE143296505",
+  "in_population": true,
+  "merged": false,
+  "n": 22,
+  "new_name": "Gemeinde Nußloch",
+  "new_name_norm": "gemeinde nußloch",
+  "newest_is_head": false,
+  "old_name": "Gemeinde Nußloch, Körperschaft des öffentlichen Rechts",
+  "old_name_norm": "gemeinde nußloch, körperschaft des öffentlichen rechts",
+  "org_id": 22699221,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 6,
+  "spellings": [
+   [
+    "Gemeinde Nußloch",
+    16
+   ],
+   [
+    "Gemeinde Nußloch, Körperschaft des öffentlichen Rechts",
+    6
+   ]
+  ],
+  "top": 16,
+  "top_newest": "2025-12-15",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 22
+ },
+ {
+  "clusters": 4,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 4,
+  "head_in_window": 0,
+  "head_newest": "2023-10-30",
+  "head_procs": 2,
+  "identifier": "13002175100131",
+  "in_population": true,
+  "merged": true,
+  "n": 35,
+  "new_name": "CCI Rouen Métropole",
+  "new_name_norm": "cci rouen métropole",
+  "newest_is_head": false,
+  "old_name": "cci de Rouen",
+  "old_name_norm": "cci de rouen",
+  "org_id": 21150938,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-05-19",
+  "rule": "R1",
+  "second": 5,
+  "spellings": [
+   [
+    "CCI ROUEN METROPOLE",
+    15
+   ],
+   [
+    "CCI Rouen Métropole",
+    10
+   ],
+   [
+    "CHAMBRE DE COMMERCE ET D'INDUSTRIE METROPOLITAINE ROUEN METROPOLE",
+    5
+   ],
+   [
+    "cci de Rouen",
+    4
+   ],
+   [
+    "CFA MARCEL SAUVAGE",
+    1
+   ]
+  ],
+  "top": 25,
+  "top_newest": "2026-10-09",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 35
+ },
+ {
+  "clusters": 2,
+  "country": "IT",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2025-10-20",
+  "head_procs": 2,
+  "identifier": "01295910911",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "UNIONE COMUNI D'OGLIASTRA",
+  "new_name_norm": "unione comuni d'ogliastra",
+  "newest_is_head": false,
+  "old_name": "unione dei comuni d'ogliastra",
+  "old_name_norm": "unione dei comuni d'ogliastra",
+  "org_id": 22793049,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "UNIONE COMUNI D'OGLIASTRA",
+    5
+   ],
+   [
+    "unione dei comuni d'ogliastra",
+    2
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2026-09-30",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 7
+ },
+ {
+  "clusters": 2,
+  "country": "DE",
+  "eng": null,
+  "family_new": "gmbh",
+  "family_old": "gmbh",
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2025-07-10",
+  "head_procs": 1,
+  "identifier": "DE178053781",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "Gradtke GmbH & Co. Blitzschutztechnik KG",
+  "new_name_norm": "gradtke gmbh & co. blitzschutztechnik kg",
+  "newest_is_head": false,
+  "old_name": "Gradtke GmbH & Co. Blitzschutz KG",
+  "old_name_norm": "gradtke gmbh & co. blitzschutz kg",
+  "org_id": 23187854,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Gradtke GmbH & Co. Blitzschutztechnik KG",
+    4
+   ],
+   [
+    "Gradtke GmbH & Co. Blitzschutz KG",
+    2
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-04-20",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 6
+ },
+ {
+  "clusters": 6,
+  "country": "PL",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 3,
+  "head_in_window": 0,
+  "head_newest": "2024-09-06",
+  "head_procs": 1,
+  "identifier": "5210414265",
+  "in_population": true,
+  "merged": false,
+  "n": 125,
+  "new_name": "POLSKIE RADIO - SPÓŁKA AKCYJNA W WARSZAWIE W LIKWIDACJI",
+  "new_name_norm": "polskie radio - spółka akcyjna w warszawie w likwidacji",
+  "newest_is_head": false,
+  "old_name": "POLSKIE RADIO - SPÓŁKA AKCYJNA W WARSZAWIE",
+  "old_name_norm": "polskie radio - spółka akcyjna w warszawie",
+  "org_id": 22349201,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-10-06",
+  "rule": "R1",
+  "second": 5,
+  "spellings": [
+   [
+    "POLSKIE RADIO - SPÓŁKA AKCYJNA W WARSZAWIE W LIKWIDACJI",
+    111
+   ],
+   [
+    "POLSKIE RADIO - SPÓŁKA AKCYJNA W WARSZAWIE",
+    3
+   ],
+   [
+    "Polskie Radio SA w likwidacji",
+    3
+   ],
+   [
+    "Polskie Radio Spółka Akcyjna w likwidacji",
+    2
+   ],
+   [
+    "Polskie Radio Spółka Akcyjna w likwidacji z siedzibą w Warszawie",
+    2
+   ]
+  ],
+  "top": 111,
+  "top_newest": "2026-10-09",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 125
+ },
+ {
+  "clusters": 2,
+  "country": "DE",
+  "eng": null,
+  "family_new": null,
+  "family_old": "gmbh",
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2025-02-07",
+  "head_procs": 1,
+  "identifier": "0533400040043300561",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "Stadt Alsdorf",
+  "new_name_norm": "stadt alsdorf",
+  "newest_is_head": false,
+  "old_name": "Stadtwerke Alsdorf GmbH",
+  "old_name_norm": "stadtwerke alsdorf gmbh",
+  "org_id": 23004257,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Stadt Alsdorf",
+    4
+   ],
+   [
+    "Stadtwerke Alsdorf GmbH",
+    2
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-01-16",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 6
+ },
+ {
+  "clusters": 2,
+  "country": "GB",
+  "eng": null,
+  "family_new": "ltd",
+  "family_old": "ltd",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2026-04-23",
+  "head_procs": 1,
+  "identifier": "GBCOH09914529",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "NORTHDOWN PROPERTY SERVICES (NPS) LTD",
+  "new_name_norm": "northdown property services (nps) ltd",
+  "newest_is_head": false,
+  "old_name": "Northdown Property Services Ltd",
+  "old_name_norm": "northdown property services ltd",
+  "org_id": 31571991,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "NORTHDOWN PROPERTY SERVICES (NPS) LTD",
+    7
+   ],
+   [
+    "Northdown Property Services Ltd",
+    1
+   ]
+  ],
+  "top": 7,
+  "top_newest": "2026-09-01",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 8
+ },
+ {
+  "clusters": 2,
+  "country": "IS",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2024-11-06",
+  "head_procs": 2,
+  "identifier": "4610090420",
+  "in_population": true,
+  "merged": false,
+  "n": 16,
+  "new_name": "Klettur-sala og þjónusta",
+  "new_name_norm": "klettur-sala og þjónusta",
+  "newest_is_head": false,
+  "old_name": "Klettur-sala og þjónusta ehf",
+  "old_name_norm": "klettur-sala og þjónusta ehf",
+  "org_id": 11059191,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Klettur-sala og þjónusta",
+    14
+   ],
+   [
+    "Klettur-sala og þjónusta ehf",
+    2
+   ]
+  ],
+  "top": 14,
+  "top_newest": "2026-05-13",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 16
+ },
+ {
+  "clusters": 2,
+  "country": "MK",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2024-02-12",
+  "head_procs": 1,
+  "identifier": "4116569",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "Ministry of Foreign Affairs and Foreign Trade of the Republic of North Macedonia",
+  "new_name_norm": "ministry of foreign affairs and foreign trade of the republic of north macedonia",
+  "newest_is_head": false,
+  "old_name": "Ministry of Foreign Affairs of the Republic of North Macedonia",
+  "old_name_norm": "ministry of foreign affairs of the republic of north macedonia",
+  "org_id": 22525055,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Ministry of Foreign Affairs and Foreign Trade of the Republic of North Macedonia",
+    3
+   ],
+   [
+    "Ministry of Foreign Affairs of the Republic of North Macedonia",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2026-08-03",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 4
+ },
+ {
+  "clusters": 13,
+  "country": "DE",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2023-11-07",
+  "head_procs": 1,
+  "identifier": "00722600660",
+  "in_population": true,
+  "merged": false,
+  "n": 356,
+  "new_name": "Kommunales Vergabezentrum Kreis Groß-Gerau",
+  "new_name_norm": "kommunales vergabezentrum kreis groß-gerau",
+  "newest_is_head": false,
+  "old_name": "Kommunales Vergabezentrum Kreis Groß-Gerau Stadt Kelsterbach",
+  "old_name_norm": "kommunales vergabezentrum kreis groß-gerau stadt kelsterbach",
+  "org_id": 22142633,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2024-10-08",
+  "rule": "R1",
+  "second": 20,
+  "spellings": [
+   [
+    "Kommunales Vergabezentrum Kreis Groß-Gerau",
+    254
+   ],
+   [
+    "Kommunales Vergabezentrum Kreis Groß-Gerau für die Stadt Mörfelden-Walldorf",
+    20
+   ],
+   [
+    "Kommunales Vergabezentrum Kreis Groß-Gerau im Rahmen der Interkommunalen Zusammenarbeit",
+    14
+   ],
+   [
+    "Kommunales Vergabezentrum Kreis Groß-Gerau für die Gemeinde Trebur",
+    12
+   ],
+   [
+    "Kommunales Vergabezentrum Kreis Groß-Gerau, für das Kommunale Jobcenter Groß-Gerau",
+    12
+   ]
+  ],
+  "top": 254,
+  "top_newest": "2025-03-11",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 356
+ },
+ {
+  "clusters": 2,
+  "country": "BE",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2023-11-08",
+  "head_procs": 1,
+  "identifier": "BE0466908609",
+  "in_population": true,
+  "merged": true,
+  "n": 4,
+  "new_name": "Immed Benelux",
+  "new_name_norm": "immed benelux",
+  "newest_is_head": false,
+  "old_name": "IMMED BENELUX BVBA",
+  "old_name_norm": "immed benelux bvba",
+  "org_id": 22185918,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Immed Benelux",
+    2
+   ],
+   [
+    "IMMED BENELUX BVBA",
+    1
+   ],
+   [
+    "IMMED BENELUX SRL",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2025-11-14",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 4
+ },
+ {
+  "clusters": 4,
+  "country": "PL",
+  "eng": null,
+  "family_new": "spzoo",
+  "family_old": null,
+  "head": 7,
+  "head_in_window": 0,
+  "head_newest": "2025-12-11",
+  "head_procs": 7,
+  "identifier": "5223174900",
+  "in_population": true,
+  "merged": false,
+  "n": 55,
+  "new_name": "Busnex Poland Sp. z o.o.",
+  "new_name_norm": "busnex poland sp. z o.o",
+  "newest_is_head": false,
+  "old_name": "Busnex Poland Spółka z ograniczoną odpowiedzialnością",
+  "old_name_norm": "busnex poland spółka z ograniczoną odpowiedzialnością",
+  "org_id": 16324356,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-08-22",
+  "rule": "R1",
+  "second": 7,
+  "spellings": [
+   [
+    "Busnex Poland Sp. z o.o.",
+    15
+   ],
+   [
+    "BUSNEX POLAND SP. Z O.O.",
+    9
+   ],
+   [
+    "BUSNEX POLAND Sp. z o.o.",
+    9
+   ],
+   [
+    "BUSNEX POLAND SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+    4
+   ],
+   [
+    "Busnex Poland Sp. z o. o.",
+    4
+   ]
+  ],
+  "top": 45,
+  "top_newest": "2026-08-27",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 55
+ },
+ {
+  "clusters": 17,
+  "country": "NO",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 34,
+  "head_in_window": 3,
+  "head_newest": "2025-05-28",
+  "head_procs": 18,
+  "identifier": "988517860",
+  "in_population": true,
+  "merged": false,
+  "n": 1005,
+  "new_name": "Forsvaret v/Forsvarets logistikkorganisasjon",
+  "new_name_norm": "forsvaret v/forsvarets logistikkorganisasjon",
+  "newest_is_head": false,
+  "old_name": "Forsvarets Logistikkorganisasjon",
+  "old_name_norm": "forsvarets logistikkorganisasjon",
+  "org_id": 5792926,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-10-15",
+  "rule": "R1",
+  "second": 34,
+  "spellings": [
+   [
+    "Forsvaret v/Forsvarets logistikkorganisasjon",
+    885
+   ],
+   [
+    "Forsvaret v/Forsvarets Logistikkorganisasjon",
+    42
+   ],
+   [
+    "Forsvarets logistikkorganisasjon",
+    24
+   ],
+   [
+    "The Norwegian Armed Forces c/o the Norwegian Defence Logistics Organisation",
+    18
+   ],
+   [
+    "Forsvarets Logistikkorganisasjon",
+    10
+   ]
+  ],
+  "top": 929,
+  "top_newest": "2025-12-11",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 1005
+ },
+ {
+  "clusters": 2,
+  "country": "ES",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 3,
+  "head_in_window": 0,
+  "head_newest": "2024-08-06",
+  "head_procs": 2,
+  "identifier": "ESB95235495",
+  "in_population": true,
+  "merged": false,
+  "n": 11,
+  "new_name": "Elytt Energy S.L.C.",
+  "new_name_norm": "elytt energy s.l.c",
+  "newest_is_head": false,
+  "old_name": "Elytt Energy SL",
+  "old_name_norm": "elytt energy sl",
+  "org_id": 9623394,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 3,
+  "spellings": [
+   [
+    "Elytt Energy S.L.C.",
+    6
+   ],
+   [
+    "Elytt Energy S.L.",
+    2
+   ],
+   [
+    "Elytt Energy S.L.C",
+    2
+   ],
+   [
+    "Elytt Energy SL",
+    1
+   ]
+  ],
+  "top": 8,
+  "top_newest": "2026-07-30",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 11
+ },
+ {
+  "clusters": 4,
+  "country": "PL",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2024-01-08",
+  "head_procs": 1,
+  "identifier": "5262239325",
+  "in_population": true,
+  "merged": false,
+  "n": 150,
+  "new_name": "Krajowa Izba Odwoławcza",
+  "new_name_norm": "krajowa izba odwoławcza",
+  "newest_is_head": false,
+  "old_name": "Urząd Zamówień Publicznych Departament Odwołań",
+  "old_name_norm": "urząd zamówień publicznych departament odwołań",
+  "org_id": 22493638,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-08-21",
+  "rule": "R1",
+  "second": 51,
+  "spellings": [
+   [
+    "Krajowa Izba Odwoławcza",
+    97
+   ],
+   [
+    "Prezes Krajowej Izby Odwoławczej",
+    51
+   ],
+   [
+    "KIO",
+    1
+   ],
+   [
+    "Urząd Zamówień Publicznych Departament Odwołań",
+    1
+   ]
+  ],
+  "top": 97,
+  "top_newest": "2026-08-24",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 150
+ },
+ {
+  "clusters": 3,
+  "country": "IE",
+  "eng": null,
+  "family_new": "ltd",
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2024-06-26",
+  "head_procs": 1,
+  "identifier": "407040",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "Howley Hayes Architects Ltd t/a Howley Hayes Cooney Architecture",
+  "new_name_norm": "howley hayes architects ltd t/a howley hayes cooney architecture",
+  "newest_is_head": false,
+  "old_name": "Howley Hayes Cooney Architecture",
+  "old_name_norm": "howley hayes cooney architecture",
+  "org_id": 22639281,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-06-22",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Howley Hayes Architects Ltd t/a Howley Hayes Cooney Architecture",
+    6
+   ],
+   [
+    "Howley Hayes Cooney Architects",
+    1
+   ],
+   [
+    "Howley Hayes Cooney Architecture",
+    1
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2026-07-13",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 8
+ },
+ {
+  "clusters": 3,
+  "country": "DE",
+  "eng": null,
+  "family_new": "gmbh",
+  "family_old": "gmbh",
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2023-12-13",
+  "head_procs": 1,
+  "identifier": "DE813141496",
+  "in_population": true,
+  "merged": false,
+  "n": 12,
+  "new_name": "Bechtle GmbH & Co. KG IT-Systemhaus Karlsruhe",
+  "new_name_norm": "bechtle gmbh & co. kg it-systemhaus karlsruhe",
+  "newest_is_head": false,
+  "old_name": "Bechtle GmbH & Co.KG",
+  "old_name_norm": "bechtle gmbh & co.kg",
+  "org_id": 22342044,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2024-07-24",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Bechtle GmbH & Co. KG IT-Systemhaus Karlsruhe",
+    8
+   ],
+   [
+    "Bechtle GmbH & Co.KG",
+    2
+   ],
+   [
+    "Bechtle Systemhaus Karlsruhe",
+    2
+   ]
+  ],
+  "top": 8,
+  "top_newest": "2026-02-16",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 12
+ },
+ {
+  "clusters": 2,
+  "country": "DE",
+  "eng": null,
+  "family_new": "gmbh",
+  "family_old": "gmbh",
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2024-03-07",
+  "head_procs": 1,
+  "identifier": "7A7831F3150647D2AD85C7A3566F5A33",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "Eichhorn Ingenieure GmbH & Co. KG",
+  "new_name_norm": "eichhorn ingenieure gmbh & co. kg",
+  "newest_is_head": false,
+  "old_name": "Eichhorn + Engler GmbH & Co. KG",
+  "old_name_norm": "eichhorn + engler gmbh & co. kg",
+  "org_id": 22560163,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Eichhorn Ingenieure GmbH & Co. KG",
+    4
+   ],
+   [
+    "Eichhorn + Engler GmbH & Co. KG",
+    2
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-06-30",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 6
+ },
+ {
+  "clusters": 2,
+  "country": "DE",
+  "eng": null,
+  "family_new": "gmbh",
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2026-04-15",
+  "head_procs": 1,
+  "identifier": "DE202633634",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "Krupper & Schäfer GmbH",
+  "new_name_norm": "krupper & schäfer gmbh",
+  "newest_is_head": false,
+  "old_name": "Krupper & Schäfer GmbHx",
+  "old_name_norm": "krupper & schäfer gmbhx",
+  "org_id": 23626335,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Krupper & Schäfer GmbH",
+    4
+   ],
+   [
+    "Krupper & Schäfer GmbHx",
+    2
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-07-22",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 6
+ },
+ {
+  "clusters": 6,
+  "country": "DE",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2023-11-07",
+  "head_procs": 1,
+  "identifier": "121299226217616739",
+  "in_population": true,
+  "merged": false,
+  "n": 358,
+  "new_name": "Stadt Schwedt/Oder",
+  "new_name_norm": "stadt schwedt/oder",
+  "newest_is_head": false,
+  "old_name": "Stadt Schwedt/Oder für die mitverwaltete Gemeinde Pinnow",
+  "old_name_norm": "stadt schwedt/oder für die mitverwaltete gemeinde pinnow",
+  "org_id": 22140973,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-10-14",
+  "rule": "R1",
+  "second": 66,
+  "spellings": [
+   [
+    "Stadt Schwedt/Oder",
+    254
+   ],
+   [
+    "Stadt Schwedt/Oder, FB 3.4, Abt. Baucontrolling und Vergabestelle",
+    66
+   ],
+   [
+    "Stadt Schwedt/Oder,",
+    22
+   ],
+   [
+    "Stadt Schwedt/Oder, FB 3, Abt. Baucontrolling und Vergabestelle",
+    10
+   ],
+   [
+    "Stadt Schwedt",
+    2
+   ]
+  ],
+  "top": 276,
+  "top_newest": "2026-09-23",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 358
+ },
+ {
+  "clusters": 2,
+  "country": "PT",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2026-07-28",
+  "head_procs": 1,
+  "identifier": "510369499",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "MobitArtrodelite - Dispositivos Médicos Unipessoal, Lda",
+  "new_name_norm": "mobitartrodelite - dispositivos médicos unipessoal, lda",
+  "newest_is_head": false,
+  "old_name": "Mobitartrodelite,Lda.",
+  "old_name_norm": "mobitartrodelite,lda.",
+  "org_id": 30534934,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "MobitArtrodelite - Dispositivos Médicos Unipessoal, Lda",
+    3
+   ],
+   [
+    "Mobitartrodelite,Lda.",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2026-09-22",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 4
+ },
+ {
+  "clusters": 9,
+  "country": "PL",
+  "eng": null,
+  "family_new": "spzoo",
+  "family_old": null,
+  "head": 7,
+  "head_in_window": 0,
+  "head_newest": "2026-09-16",
+  "head_procs": 7,
+  "identifier": "6762468443",
+  "in_population": true,
+  "merged": true,
+  "n": 194,
+  "new_name": "MDT Sp. z o.o.",
+  "new_name_norm": "mdt sp. z o.o",
+  "newest_is_head": false,
+  "old_name": "MDT SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ",
+  "old_name_norm": "mdt spółka z ograniczoną odpowiedzialnością",
+  "org_id": 17571396,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-08-07",
+  "rule": "R1",
+  "second": 13,
+  "spellings": [
+   [
+    "MDT Sp. z o.o.",
+    61
+   ],
+   [
+    "MDT sp. z o.o.",
+    46
+   ],
+   [
+    "MDT Sp. Z o. o.",
+    21
+   ],
+   [
+    "MDT Sp. z o. o., ul. Skośna 12a, 30-383 Kraków",
+    13
+   ],
+   [
+    "MDT Sp. z o. o.",
+    11
+   ]
+  ],
+  "top": 166,
+  "top_newest": "2026-10-12",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 194
+ },
+ {
+  "clusters": 2,
+  "country": "PL",
+  "eng": null,
+  "family_new": "spzoo",
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2025-10-08",
+  "head_procs": 2,
+  "identifier": "6422886791",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "PROMET Sp. z o.o.",
+  "new_name_norm": "promet sp. z o.o",
+  "newest_is_head": false,
+  "old_name": "PROMET Sp. z o.o.  44-200 Rybnik ul. Ks. Siwca 4",
+  "old_name_norm": "promet sp. z o.o.  44-200 rybnik ul. ks. siwca 4",
+  "org_id": 22594426,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": "junk_only",
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "PROMET Sp. z o.o.",
+    2
+   ],
+   [
+    "PROMET",
+    1
+   ],
+   [
+    "PROMET SP. Z O.O.",
+    1
+   ],
+   [
+    "PROMET Sp. z o. o.",
+    1
+   ],
+   [
+    "PROMET Sp. z o.o.  44-200 Rybnik ul. Ks. Siwca 4",
+    1
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2026-10-05",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 7
+ },
+ {
+  "clusters": 2,
+  "country": "DE",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 6,
+  "head_in_window": 0,
+  "head_newest": "2025-07-14",
+  "head_procs": 1,
+  "identifier": "T08303790",
+  "in_population": true,
+  "merged": false,
+  "n": 30,
+  "new_name": "Gemeinde Waltenhofen",
+  "new_name_norm": "gemeinde waltenhofen",
+  "newest_is_head": false,
+  "old_name": "Gemeinde Waltenhofen im Allgäu",
+  "old_name_norm": "gemeinde waltenhofen im allgäu",
+  "org_id": 22695310,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 6,
+  "spellings": [
+   [
+    "Gemeinde Waltenhofen",
+    24
+   ],
+   [
+    "Gemeinde Waltenhofen im Allgäu",
+    6
+   ]
+  ],
+  "top": 24,
+  "top_newest": "2026-01-09",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 30
+ },
+ {
+  "clusters": 2,
+  "country": "NO",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2024-06-11",
+  "head_procs": 1,
+  "identifier": "SANDNESKOMMUNE964965137",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "SANDNES KOMMUNE (964965137)",
+  "new_name_norm": "sandnes kommune (964965137)",
+  "newest_is_head": false,
+  "old_name": "SANDNES Municipality",
+  "old_name_norm": "sandnes municipality",
+  "org_id": 22627722,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "SANDNES KOMMUNE (964965137)",
+    4
+   ],
+   [
+    "SANDNES Municipality",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2024-12-31",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 5
+ },
+ {
+  "clusters": 6,
+  "country": "DE",
+  "eng": null,
+  "family_new": null,
+  "family_old": "gmbh",
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2024-07-29",
+  "head_procs": 1,
+  "identifier": "99667788",
+  "in_population": true,
+  "merged": false,
+  "n": 40,
+  "new_name": "Land Berlin, Bezirksamt Friedrichshain-Kreuzberg",
+  "new_name_norm": "land berlin, bezirksamt friedrichshain-kreuzberg",
+  "newest_is_head": false,
+  "old_name": "Schulversorgung & Catering Thomas Warnhoff GmbH",
+  "old_name_norm": "schulversorgung & catering thomas warnhoff gmbh",
+  "org_id": 22667102,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-04-28",
+  "rule": "R1",
+  "second": 4,
+  "spellings": [
+   [
+    "Land Berlin, Bezirksamt Friedrichshain-Kreuzberg",
+    28
+   ],
+   [
+    "Dienstleister",
+    4
+   ],
+   [
+    "HK Facilities Engineering GmbH",
+    2
+   ],
+   [
+    "SDL Sterndienstleistung GmbH",
+    2
+   ],
+   [
+    "Schulversorgung & Catering Thomas Warnhoff GmbH",
+    2
+   ]
+  ],
+  "top": 28,
+  "top_newest": "2025-03-05",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 40
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2025-04-30",
+  "head_procs": 2,
+  "identifier": "47907600200019",
+  "in_population": true,
+  "merged": false,
+  "n": 18,
+  "new_name": "AFNOR Certification",
+  "new_name_norm": "afnor certification",
+  "newest_is_head": false,
+  "old_name": "AFNOR",
+  "old_name_norm": "afnor",
+  "org_id": 11342945,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "AFNOR CERTIFICATION",
+    14
+   ],
+   [
+    "AFNOR",
+    2
+   ],
+   [
+    "AFNOR Certification",
+    2
+   ]
+  ],
+  "top": 16,
+  "top_newest": "2026-07-02",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 18
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2024-07-04",
+  "head_procs": 1,
+  "identifier": "39492023500048",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "EPICURE ing",
+  "new_name_norm": "epicure ing",
+  "newest_is_head": false,
+  "old_name": "BEHAL",
+  "old_name_norm": "behal",
+  "org_id": 22671320,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "EPICURE ing",
+    2
+   ],
+   [
+    "BEHAL",
+    1
+   ],
+   [
+    "EPICURE ING",
+    1
+   ],
+   [
+    "EPICURE ING SARL",
+    1
+   ],
+   [
+    "EPICURE Ing",
+    1
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2026-07-16",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 6
+ },
+ {
+  "clusters": 2,
+  "country": "GB",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 6,
+  "head_in_window": 0,
+  "head_newest": "2025-09-05",
+  "head_procs": 5,
+  "identifier": "GBPPONPYYN4743GYVQ",
+  "in_population": true,
+  "merged": false,
+  "n": 201,
+  "new_name": "The Crown Estate",
+  "new_name_norm": "the crown estate",
+  "newest_is_head": false,
+  "old_name": "The Crown Estate Commissioners",
+  "old_name_norm": "the crown estate commissioners",
+  "org_id": 30917051,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 6,
+  "spellings": [
+   [
+    "The Crown Estate",
+    195
+   ],
+   [
+    "The Crown Estate Commissioners",
+    6
+   ]
+  ],
+  "top": 195,
+  "top_newest": "2026-10-09",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 201
+ },
+ {
+  "clusters": 10,
+  "country": "ES",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 78,
+  "head_in_window": 4,
+  "head_newest": "2026-09-16",
+  "head_procs": 38,
+  "identifier": "B87583019",
+  "in_population": true,
+  "merged": false,
+  "n": 475,
+  "new_name": "Iberian Care 2016, S.L.",
+  "new_name_norm": "iberian care 2016, s.l",
+  "newest_is_head": false,
+  "old_name": "Torroval y Lopez, Servicios Profesionales, S. L.",
+  "old_name_norm": "torroval y lopez, servicios profesionales, s. l.",
+  "org_id": 15824334,
+  "provisional": false,
+  "reason": "head_current",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-10-07",
+  "rule": "R1",
+  "second": 78,
+  "spellings": [
+   [
+    "IBERIAN CARE 2016, S.L.",
+    201
+   ],
+   [
+    "Iberian Care 2016, S.L.",
+    44
+   ],
+   [
+    "IBERIAN CARE 2016 S.L.",
+    37
+   ],
+   [
+    "TORROVAL Y LOPEZ SERVICIOS PROFESIONALES, S.L.",
+    37
+   ],
+   [
+    "IBERIAN CARE 2016 SL",
+    34
+   ]
+  ],
+  "top": 385,
+  "top_newest": "2026-10-15",
+  "undated_mentions": 0,
+  "verdict": "hold",
+  "voting": 475
+ }
+]

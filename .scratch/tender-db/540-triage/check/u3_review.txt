@@ -1,0 +1,20 @@
+Adversarial check of 540 unit 3, 2026-10-19. Read-only. /v1/sql: 2 (c03, c04), no 408, no retry; plans c03_c04_plan.txt (turso
+plan-probe, same shapes as u3 s10 / s12). Public GETs: 0.
+
+Recomputed from u3/s*.json: 13 windows contiguous 18,579,248..27,161,439; r208 sum 557,040 = c02; has_form 445,609, cace0 445,609
+(equal per window), formless 111,431; chg/f14/cace_x all 0. s01 24 buckets sum 557,040; bucket 80 = s14 (15,374); buckets 81+
+sum 27,985 = s12. s15ctl matches its json (7,424 / 817 / 2,017 / 854). GET jsons match the dating claims.
+Code: r208 profile = anything not R2.0.9, parsed by r209::parse (ADD/DELETE/REPLACE -> Section(Change), FORM attr -> PROCEDURE
+TED-FORM verbatim), so the probes see r208 rows.
+
+c03 (TED-FORM by profile, 19,190,001-19,250,000): r208 codes are bare numbers (1..18, T01, T02; 11,177 rows, no 14, no F-codes);
+  r209 codes are F-prefixed (F14 5,170). So '14' is the right literal for r208 and 'F14' for the r209 control.
+c04 (r208 TED-FORM mix, 20,250,001-27,161,439): 18 codes summing 20,526 = s12 has_form; no 14, no F14. The 2016-2024 tail is the
+  defence forms (16 449, 17 8,315, 18 9,959, 19 9); the 1/2/3/... rows run to 27.16M (the 2010 re-ingest).
+
+Caveats: (1) below 18,579,247 only Change sections are swept fully (0); TED-FORM 14 and CA_CE outside PROCEDURE/0 there are
+samples (r04/r05 ~13k ids; r02/r03/r10/r11 320k ids). An ADDR_CORR outside ADD/DELETE/REPLACE would land at PROCEDURE ordinal>=1,
+which only cace_x sees, so "never arrives in the corpus" is full-coverage above the band and sampled below it. (2) s01, s12 (and
+c04) drive from notices_profile with the rowid bound as a turso filter; plans.txt's "PK scan of 6.9M ids avoided" contradicts its
+own note that such a walk covers every r208 index entry (ran in seconds, so harmless in practice).
+Verdict: numbers match the reads; decision wontfix follows.

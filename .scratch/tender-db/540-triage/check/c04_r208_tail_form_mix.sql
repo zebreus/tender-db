@@ -1,0 +1,1 @@
+SELECT c.code, count(*) AS n, min(n.id) AS lo, max(n.id) AS hi FROM notices n CROSS JOIN notice_codes c ON c.notice_id = n.id AND c.section_id = 'PROCEDURE' AND c.field_id = 'TED-FORM' WHERE n.profile = 'ted-export-r208' AND n.id BETWEEN 20250001 AND 27161439 GROUP BY +c.code LIMIT 200

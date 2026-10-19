@@ -1,6 +1,6 @@
 # 548 — the head refresh's holds block mostly right changes (consortium, family, gb_family, part of initialism)
 
-Status: ready-for-agent — **U0 DONE 2026-10-19 (blocker cleared)**: the stored `org-name-refresh-plan` was read by the orchestrator (`/admin/reports/org-name-refresh-plan`, computed 2026-10-16 23:03Z, epoch 524u2-v12, scope_ids null, rev 3475272, population 2,102,132 orgs / 46,130,516 mentions, `held` 11,652 rows, held_truncated false) and saved as `548-triage/org-name-refresh-plan-2026-10-16.json.gz`; unit 1 runs on it. Triaged 2026-10-19 (.scratch/tender-db/548-triage/notes.md). BLOCKER, retry it: unit 1 needs the full `held` listing. It exists only in the stored `org-name-refresh-plan` report, and `reports` is not on /v1/sql. This session's classifier refused the `aj.sh /admin/reports/org-name-refresh-plan` read ('Production Reads'). U0 must also confirm that the report is an unscoped v12 plan (org_ids null), or run a fresh full dry plan. Found so far: (1) The 553 counts are rule v5's. A released bind-guard hold ships today only if: its rule is R0e, R0n or R1 (R2 and R0w are excluded); its release is not `unfit` (exclude_released); and, for R1 only, its head is older than 1,095 days or it has a `digits` release, and top_stale does not fire. Unit 1 filters `held` to that subset before judging. (2) initialism is R2-only and R2 is withheld, so it is decided moot. R2 stays planner-only; that is recorded as D1. (3) Both gb_family exhibits read the other way round from the issue: a single stale subsidiary or sibling print is the head on the register entity's own CH number. 11628199 has 3 of 4 votes and 10213161 has 49 of 51; both changes are right and would ship. (4) top_stale variant T1 (hold only when rival_newest > top_newest) was tested in-sample on gate (d)'s 20 holds. It releases 12 (5 harmful, 6 neutral, 1 same-entity downgrade) and keeps 7301922 (a real rename) and 8291325 (another entity) held. NEXT: U0, then U1 on the filtered listing; U1b, a fresh dated 30 from T1's release arm; and the classes routed to unit 1: a head_current 30-sample, mojibake before the serve holds, a generic-name signal, and votes per procedure. Was: needs-triage — filed 2026-10-15 from the judgement of 524's dry plan 2515 (workflow wf_f9b41c3f-643); 524's v8–v10 re-judges added the R2 withdrawal, generic names and a mojibake serve-hold harm (below). Next:
+Status: ready-for-agent — U1 DONE 2026-10-19 (548-triage/u1/judgements.json; the counts reproduce). Shippable / held: gb_family 7/10, family 33/79, consortium_removed 109/246. nhs_check and placeholder_id ship 0, because head_current re-holds them. Findings: - gb_family: 7/7 right (5 confirmed by CH register names). Release, recording whether the release is whole or limited to D3's H<=1 stale stray. - family: 29R/4W, all 4 wrongs H>=2. Release at H<=1: 22/22 R, 462 mentions. - consortium_removed: salted 9R/1W (CPR 18287356, wrong). The token-subset candidate is 79 rows only when legal-form tokens in the new name are ignored. Only 7 of the 79 have recorded verdicts (7R); the rest were skimmed, not recorded. Release is NOT yet adopted: write the test down, then record verdicts for the 79 (or a salted 30 excluding 524 skip-ids). - Serve holds and head_current (dated 30: 20R/7N/3W): keep. The serve holds were read on a salted 10 each, below U1's all-if-<=60 / 30 plan; that is enough for a keep. seat_dropped already holds the generic-name shape (5350675). - R2 stays planner-only (D1). - Mojibake 22435268 needs a defective-head (R0) path, because head_current and exclude_released unfit block it. - Votes per notice would stop 2 wrongs (Barameda, CPR); still to be measured. U3's by_hold check must predict full-listing drops, not shippable counts: gb_family -10, family(H<=1) -36, consortium subset about -181 (all R1+R2 rows leave the reason). NEXT: U1c (consortium subset: codify the test and record verdicts), U1b (T1 dated 30), then U2 decides, then U3 builds v13. Was: ready-for-agent — **U0 DONE 2026-10-19 (blocker cleared)**: the stored `org-name-refresh-plan` was read by the orchestrator (`/admin/reports/org-name-refresh-plan`, computed 2026-10-16 23:03Z, epoch 524u2-v12, scope_ids null, rev 3475272, population 2,102,132 orgs / 46,130,516 mentions, `held` 11,652 rows, held_truncated false) and saved as `548-triage/org-name-refresh-plan-2026-10-16.json.gz`; unit 1 runs on it. Triaged 2026-10-19 (.scratch/tender-db/548-triage/notes.md). BLOCKER, retry it: unit 1 needs the full `held` listing. It exists only in the stored `org-name-refresh-plan` report, and `reports` is not on /v1/sql. This session's classifier refused the `aj.sh /admin/reports/org-name-refresh-plan` read ('Production Reads'). U0 must also confirm that the report is an unscoped v12 plan (org_ids null), or run a fresh full dry plan. Found so far: (1) The 553 counts are rule v5's. A released bind-guard hold ships today only if: its rule is R0e, R0n or R1 (R2 and R0w are excluded); its release is not `unfit` (exclude_released); and, for R1 only, its head is older than 1,095 days or it has a `digits` release, and top_stale does not fire. Unit 1 filters `held` to that subset before judging. (2) initialism is R2-only and R2 is withheld, so it is decided moot. R2 stays planner-only; that is recorded as D1. (3) Both gb_family exhibits read the other way round from the issue: a single stale subsidiary or sibling print is the head on the register entity's own CH number. 11628199 has 3 of 4 votes and 10213161 has 49 of 51; both changes are right and would ship. (4) top_stale variant T1 (hold only when rival_newest > top_newest) was tested in-sample on gate (d)'s 20 holds. It releases 12 (5 harmful, 6 neutral, 1 same-entity downgrade) and keeps 7301922 (a real rename) and 8291325 (another entity) held. NEXT: U0, then U1 on the filtered listing; U1b, a fresh dated 30 from T1's release arm; and the classes routed to unit 1: a head_current 30-sample, mojibake before the serve holds, a generic-name signal, and votes per procedure. Was: needs-triage — filed 2026-10-15 from the judgement of 524's dry plan 2515 (workflow wf_f9b41c3f-643); 524's v8–v10 re-judges added the R2 withdrawal, generic names and a mojibake serve-hold harm (below). Next:
 measure each hold's right/wrong split on its full listing (`held` in `org-name-refresh-plan`), then decide per hold.
 Kind: data quality (served organization names; tuning)
 Relates to:
@@ -236,3 +236,83 @@ seat_dropped 68; initialism 32; gb_family 10; placeholder_id 10; nhs_check 1. Sa
 spellings, release fields). Unit 1 filters it with the skeptic's corrected subset (rule ∈ {R0e, R0n, R1}; release not
 `unfit`; head_current / top_stale cuts for R1 only) before judging.
 
+## Unit 1 — the held listing judged (2026-10-19, workflow wf_ceb29935-046)
+
+Files: `548-triage/u1/` (filter.py, judge.py, judgements.json, hc_sample.json, api/).
+
+I ran the U1 measurement on the held listing of the 2026-10-16 plan (epoch 524u2-v12). All files are in /home/user/tender-db/.scratch/tender-db/548-triage/u1/:
+- filter.py: makes shippable.json and samples.json
+- judge.py: writes judgements.json, which holds every verdict, the per-hold proposals and a meta block
+- hc_sample.py / hc_sample.json: the dated head_current 30
+- q02_votes_per_notice.sql and .plan.txt; the output is ../q02_votes_per_notice.out.json
+- api/: the 20 public GET bodies
+
+**Filter (the skeptic's corrected subset).**
+- No row in `held` has rule R0e or R0n, and none has release `unfit`. So the subset comes down to: rule R1, the head not printed within 1,095 days, and top_stale not firing.
+- The `digits` release is not modelled.
+- A released bind guard still meets head_serve_hold before it ships, so every ship count below is an upper bound.
+
+**Bind guards (the five that `head_change_hold` returns).** Counts are held rows, then shippable rows.
+- **gb_family**, 10 → 7. All 7 read right. The local Companies House cache confirms 5 of them: Bethell Construction, EDF Energy Customers, Morgan Sindall C&I, Capita plc, Scotia Gas Networks. **Release.**
+- **family**, 79 → 33. All 33 read: 29 right, 4 wrong. The salted 10 were 9 right, 1 wrong.
+  - Every wrong has 2 or more head votes:
+    - 3728305 and 10037554: language-annotation tails on the new name;
+    - 7081895: a letter-spaced `A B A U T O B O S S`;
+    - 20415415: the Lithuanian UAB Barameda on an Austrian VAT number, with all 7 votes from one notice.
+  - Rows with a head of at most 1 vote: 22 of 22 right.
+  - **Refine:** release only when the head has at most 1 vote (22 orgs, 462 mentions).
+- **consortium_removed**, 246 → 109. Salted 10: 9 right, 1 wrong. I also skimmed all 109.
+  - The wrong is 18287356: `CONSORTIUM DES PEINTURES ET REVETEMENTS` → `SARL CPR`. "Consortium" is the company's own name and the new name is an initialism.
+  - Three are uncertain: 11026616, 9806693, 10878002.
+  - Every row where the new name's tokens are a subset of the head's read right.
+  - **Refine:** release on that token-subset test (79 orgs, 1,716 mentions). The alternative is to release when the head has at most 1 vote (88 orgs), but that lets CPR through.
+- **nhs_check**, 1 → 0, and **placeholder_id**, 10 → 0. head_current would re-hold all of them. **Keep.**
+
+**Serve holds (the task listed them too).** Counts are shippable rows, then the salted read.
+- **Keep:**
+  - organ: 188; 9 wrong, 1 neutral.
+  - code_added: 46; 6 wrong, 4 neutral.
+  - address_added: 38; 9 wrong, 1 neutral.
+  - review_body: 8; 8 wrong.
+  - caps_variant: 198; 4 wrong, 4 neutral, 2 right.
+  - doubled: 80; 10 wrong as served. Serving the half instead would differ from the head in 30 of 80, mostly Basque→Spanish swaps, which are neutral.
+  - no_fit: 60; there is no fit spelling to serve.
+- **seat_dropped**, 38: 5 wrong, 5 neutral. **Keep.** It already acts as the generic-name guard:
+  - At v12, 5350675 is held by seat_dropped.
+  - Public `name_prefix` lookups count how many orgs are already served exactly the shortened name:
+    - Ośrodek Pomocy Społecznej: 16
+    - MOPS: 23
+    - OSiR: 7
+    - ZST: 4
+    - BWA: 4
+  - For names that really are specific the count is 0 to 3.
+
+**Other items.**
+- **head_current, dated 30.** 20 right, 7 neutral, 3 wrong:
+  - 11059191: drops `ehf`;
+  - 22627722: adds an org number;
+  - 22667102: a buyer's name on a supplier org.
+  Each wrong is a different shape and 3 of 30 fails the 1-wrong bar, so **keep**. The hold blocks about two thirds right changes. If released, 6,083 of its 6,330 would ship and 247 would meet top_stale.
+- **Mojibake case 22435268** (held as review_body). Fixing review_body alone does not ship it:
+  - Its head was printed 2024-02-09, so head_current re-holds it.
+  - If the unfit test learned the dropped-accent shape, the result would be an `unfit` release, and wet runs pass exclude_released unfit.
+  - It needs an R0-style path for defective (mojibake) heads.
+- **Votes per procedure (q02).** Barameda's 7 mentions come from 1 notice, against the head's 2 notices. SARL CPR's 2 mentions come from 1 notice. Counting votes per notice would block both wrongs.
+- **R2 stays planner-only (D1).** No R2 sub-shape ships.
+
+**Budget used:** 1 /v1/sql request (plan-probed locally first), 20 public GETs at least 2.2 s apart, no admin reads, no writes, no code edits, no git.
+
+### Decision (as proposed)
+
+Release gb_family. Narrow family to a stray head (H≤1, stale). Narrow consortium_removed to the token-subset test, where the holder's own name is in the head. Keep nhs_check, placeholder_id, organ, code_added, address_added, seat_dropped, review_body, caps_variant, doubled, no_fit and head_current. R2 stays planner-only. 22435268 goes to an R0-style mojibake defective-head path, not a reordering of review_body. Count votes per notice or procedure as a separate candidate.
+
+### Check (amendments, adopted)
+
+- REPRODUCED. I re-ran filter.py and judge.py in the scratchpad: shippable.json and samples.json come out byte-identical, and every per-hold count and tally in the result matches. That covers family 33/79 (29R 4W, salted 9R 1W, H<=1 22/22R over 462 mentions), gb_family 7/10, consortium_removed 109/246 with a salted 9R 1W, all the serve-hold splits, head_current 20R/7N/3W with 6,083 of 6,330 shippable and 247 meeting top_stale, and nhs_check/placeholder_id at 0. No R0e/R0n row and no `unfit` release exist anywhere in the 11,652 held rows. q02's 39 rows back the per-notice claims: Barameda has 7 mentions from 1 notice against the head's 2 from 2, and SARL CPR has 2 mentions from 1 notice. The CH caches give the 5 register names cited. The budget is as stated: 20 GETs at 2.2 s or more apart, and 1 /v1/sql request with the index-only plan probed first. I checked the filter's day-granularity cut-offs against head_election.rs (as_of 1792191671): 4 rows sit within a day of either cut-off, and none of them changes a count.
+- OVERSTATED COVERAGE on consortium_removed. Both the status line and the decision say the token-subset rule covers '79 orgs, all read right'. judgements.json holds 10 consortium verdicts, and only 7 of them fall inside the 79-row subset. The other 72 rest on a 'skim' that no file records, and the 3 'uncertain' ids (11026616, 9806693, 10878002) have no recorded verdicts either. The rule was also shaped after seeing the one wrong (CPR 18287356) and was scored on the same rows, so it has no out-of-sample read. My own skim of the 79 found no clear wrong, so the rule may well hold. Even so, '79/79 R' is not a measured number.
+- THE RULE AS WORDED DOES NOT GIVE 79. A literal subset test ('the new name's tokens are a subset of the head's') gives 70 to 73 rows and 1,589 to 1,661 mentions, depending on the tokenizer, plus 56 rows on whitespace-split norms. 79 rows and 1,716 mentions reproduce only when legal-form tokens in the NEW name (SARL, SAS, SA, GmbH, Ltd, ...) are ignored. Examples are 21104135 `FRANCISCI TRANSPORT SARL` and 21480661 `SAS CHUDEAU`. No script records the test. U3 would build from a rule whose exact definition, including the legal-form list, is unwritten.
+- DEPARTS FROM THE U1 METHOD WITHOUT SAYING SO. The U1 unit says: judge all of a shippable set of 60 or fewer, otherwise a salted 30, excluding 524's skip-ids.tsv. The worker drew 10 per class instead. code_added (46), address_added (38), seat_dropped (38) and no_fit (60) should each have been read in full. consortium_removed (109), organ (188), caps_variant (198) and doubled (80) should have had 30 each. Skip-ids were not excluded, and 10379298 (code_added) is on 524-v11/skip-ids.tsv. This does not change any KEEP, since those samples are 0 to 2 right of 10. It does weaken the consortium RELEASE, which rests on a salted 10 plus the unrecorded skim.
+- THE U3 by_hold PREDICTION IS WRONG IN KIND. A release takes EVERY row matching the predicate out of that hold reason. Rows that are not shippable move to head_current, top_stale, a serve hold or an R2 change, so they also leave the reason. The expected drops are therefore: gb_family -10 (all of it, not -7); family at H<=1 -36 (33 R1 + 3 R2, not -22); consortium token-subset about -181 over the full listing (155 R1 + 26 R2 with the legal-form-free tokenizer, not -79). A ±10% by_hold check against -7/-22/-79 would fail on a correct build. The shippable counts belong in the predicted changes column, not in the hold drops.
+- MINOR: the meta block says 'digits release not modelled', but filter.py does honour recent_released. Only 1 row carries it (12523760, no_fit), so nothing changes. 'R?' verdicts are counted as R: 14721467 in family (H=3, inside the kept-held H>=2 group, so it does not touch the 22/22) and 22671320 in head_current (20R includes 1 R?). The MOPS 23 and OSiR 7 counts are case-insensitive; exact matches are 21 and 6. In q02, CPR's top cluster is 3 votes (SARL CPR 2 + CPR 1, from 2 notices), not 2. Per-notice votes still block it (2 < top_min 3).
+- JUDGEMENT RISK, not an error. Releasing gb_family WHOLE rests on all 7 shippable rows, 2 of which have H>=2 (13448374 H=7 and 9087207 H=2). The triage's D3 candidate was the narrower release: H<=1, head stale, R1 passed (5 rows). A whole-guard release also stops this guard firing on every future weekly-upkeep row. Either form is defensible on 7/7, but the decision should say why it goes beyond D3.
+- WHAT FOLLOWS. Keeping head_current, the serve holds, nhs_check and placeholder_id, the family H<=1 release (22/22 recorded), R2 staying planner-only, and the mojibake R0-path finding all follow from the files. For mojibake, 22435268's head_newest of 2024-02-09 falls inside 1,095 days, so head_current re-holds it, and an unfit release is excluded on wet runs. The consortium release should stay a candidate until the 79-row subset's test is written down and read on recorded verdicts, all 79 or a salted 30 excluding skip-ids. U3's by_hold predictions need correcting to the full-listing counts.
