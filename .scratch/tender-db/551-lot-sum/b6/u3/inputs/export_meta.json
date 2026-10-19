@@ -1,0 +1,362 @@
+{
+ "b3api": {
+  "population": "b3api",
+  "ids": 562,
+  "stats": {
+   "exported": 562
+  },
+  "seconds": 7.0,
+  "tender_layers": [
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/tenders",
+    "{}.json.gz",
+    true
+   ]
+  ],
+  "notice_layers": [
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices",
+    "{}.json.gz",
+    true
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/bundle/cache/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band/notices",
+    "notices_{}_content.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band/notices",
+    "n{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+    "notices_{}_content.json",
+    false
+   ],
+   [
+    "/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/api/notices",
+    "{}.json",
+    false
+   ]
+  ],
+  "tender_reads_sha256": "fed21b42d448039a8c05ba70afde22f3ac049bab5987eaa8c0072cc5e0136a72",
+  "notice_layer_map_sha256": "fed420f2c4e2da089ba0b186b3da9d29c142205262ccf4488762bb92c6e40a34",
+  "notices": 4416,
+  "notice_layer_use": {
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices": 4416
+  },
+  "b3_api_in_sha256": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+  "regenerated_sha256": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+  "regenerated_equals_b3": true
+ },
+ "b3rec": {
+  "population": "b3rec",
+  "encoding": "api",
+  "ids": 4745,
+  "stats": {
+   "exported": 4745,
+   "withheld_reencoded": 7,
+   "withheld_reencoded_ids": [
+    120725,
+    155057,
+    451260,
+    514883,
+    529266,
+    952397,
+    7961363
+   ]
+  },
+  "seconds": 8.7
+ },
+ "b3rec_b3enc": {
+  "population": "b3rec",
+  "encoding": "b3",
+  "ids": 4745,
+  "stats": {
+   "exported": 4745
+  },
+  "seconds": 8.1
+ },
+ "c563": {
+  "population": "c563",
+  "ids": 563,
+  "stats": {
+   "exported": 563,
+   "served_aware": 73
+  },
+  "seconds": 6.7,
+  "tender_layers": [
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/tenders",
+    "{}.json.gz",
+    true
+   ]
+  ],
+  "notice_layers": [
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices",
+    "{}.json.gz",
+    true
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/bundle/cache/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band/notices",
+    "notices_{}_content.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band/notices",
+    "n{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+    "notices_{}_content.json",
+    false
+   ],
+   [
+    "/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/api/notices",
+    "{}.json",
+    false
+   ]
+  ],
+  "tender_reads_sha256": "bdb452e38bfe6820a118306c161ff16b501eef328c8704987ac4aa2f50a27d32",
+  "notice_layer_map_sha256": "aa7b162e4fb8db23797d4e19933e5f9eaa24cf9122f62855b0fe0bbe8165d69f",
+  "notices": 4420,
+  "notice_layer_use": {
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices": 4416,
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices": 4
+  }
+ },
+ "s61": {
+  "population": "s61",
+  "ids": 61,
+  "stats": {
+   "served_aware": 61,
+   "exported": 61
+  },
+  "seconds": 0.7,
+  "tender_layers": [
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/tenders",
+    "{}.json.gz",
+    true
+   ]
+  ],
+  "notice_layers": [
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices",
+    "{}.json.gz",
+    true
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/bundle/cache/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band/notices",
+    "notices_{}_content.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band/notices",
+    "n{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+    "notices_{}_content.json",
+    false
+   ],
+   [
+    "/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/api/notices",
+    "{}.json",
+    false
+   ]
+  ],
+  "tender_reads_sha256": "f2c8ed53456351902459368abbe361cc07b9dafb47d68d2f643214b7ae47b629",
+  "notice_layer_map_sha256": "ab63745831c686973e9db55fce5b53c376d62ec792b65206a58bbc119e065fd4",
+  "notices": 372,
+  "notice_layer_use": {
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices": 372
+  }
+ },
+ "f3502": {
+  "population": "f3502",
+  "ids": 3502,
+  "stats": {
+   "u2_same": 3502,
+   "exported": 3502
+  },
+  "seconds": 34.8,
+  "tender_layers": [
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/tenders",
+    "{}.json.gz",
+    true
+   ]
+  ],
+  "notice_layers": [
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices",
+    "{}.json.gz",
+    true
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/bundle/cache/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/raw/notices",
+    "{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band/notices",
+    "notices_{}_content.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band/notices",
+    "n{}.json",
+    false
+   ],
+   [
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+    "notices_{}_content.json",
+    false
+   ],
+   [
+    "/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/api/notices",
+    "{}.json",
+    false
+   ]
+  ],
+  "tender_reads_sha256": "cda6154ab88077d069ffe1b58553bc381a9debb91fddb38bf1b446c459568a1f",
+  "notice_layer_map_sha256": "f46377d086126b5e0e6807e799355de5a5b91688f5168b51386afa8a30c1ad21",
+  "notices": 15537,
+  "notice_layer_use": {
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices": 15246,
+   "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices": 291
+  }
+ },
+ "_files": {
+  "b3api_in.tsv": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+  "b3api_port.jsonl": "20ee60fabb203f5557eb58785eee1b20a892a32ac7f324a8558d33844671d09d",
+  "b3api_proj_in.jsonl": "3c9008cca586c6f8ec763f18d4d27f8d6760f5dd18ca05c93a9ce27e9f9cfdf2",
+  "b3api_projport.jsonl": "08d21e62355c1630be3b4e9529ab8c253004e8f2572efec7f7c719c363fa03d5",
+  "b3api_regen.tsv": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+  "b3rec_in.tsv": "4c0dc216305b11e0c946791f6cad7f6a828b7f275475028558648e4c930f4d3b",
+  "b3rec_port.jsonl": "a0ea0240c61b27ee79b54fe55558cc47bb442e906a98521357137cd52eee3864",
+  "b3rec_port_b3enc.jsonl": "60d9e4d74f9fd94fbe7fbc55839d6c83a8155ed107f562e9b7436f47d3b6fd4e",
+  "c563_in.tsv": "91bfc5b46001497190d572e37f66bfea65b0bd87b34dc24cef2eb20315dfa2f8",
+  "c563_port.jsonl": "bd20713668beca8a89ef12769834d4974d6ba1bc6ae163fb0a59cdeb156b12a5",
+  "c563_proj_in.jsonl": "f9cba84d25d876842fc15a93eb3d56f959820f418d66fad4b2dd9fff852a903c",
+  "c563_projport.jsonl": "ec070dd1d02e210871f118a1aa6771ff922939f2251746840365f5e92972a697",
+  "f3502_in.tsv": "be3899c16d44c9b23f0fdcb4565fcbb62bdfd061c4383b6cbd47814991d9dd7f",
+  "f3502_port.jsonl": "605b604d0ec07726df34611528449b4d60dd0d0dbf973ee5025ffe91c169da00",
+  "f3502_proj_in.jsonl": "7abda2861dbd272baacd68b50a970a47801b131580c05bb44b51e065ebb5806f",
+  "s61_in.tsv": "f69d4c793b9ee0ae5e79e5ca69d42f064b2d6115d5685a53d798721db2b99d22",
+  "s61_port.jsonl": "022eb2f5bcb0dfff96c55999fcb023ecfd786e28995f407e2a9fe55a0caeb455",
+  "s61_proj_in.jsonl": "a86be21f231e7693595e113339b04a808acc4b4d95589e2b523c771ef4265d0c",
+  "s61_projport.jsonl": "e5ca39d0292f5c7746c4dde41bd846ef1bcdb74c0541166f790630dabbbb44ed"
+ },
+ "_pins": {
+  "rule_v2_g.py": "23cbd8508a3afa35b195f8a2ee91a75bb3b8f08aa2e2f3f9abbd0ea80454452f",
+  "gen_b3.py": "2e9635bae0a49b7924780d7829d549ec9edf5180a69c37d9b6062aa83cc6d9de",
+  "export.py": "2203cab002f581f8733a364f7442c535efd38d1234dada64907460adbd577ea5",
+  "records.py": "124382c2e056cb9aed1d8fb90916e21278bbc6ab2b1fc8151ec04f358f16fc14",
+  "rates": {
+   "ecu-ert_bil_eur_d.csv": "48e2c9f17ae7219b2b145a66ace399aba7c306c88721b7ce8f7c76f4758e131b",
+   "ecu-ert_h_eur_d.csv": "47e941270ac4a0f0f22416bd4b41c9b427d43c3a4f430996f8457dca8f134e5c",
+   "eurofxref-hist.zip": "8e925cef1572f8df5c8743229a761b029180f3b5cd4aa2213592192964ebd793"
+  }
+ }
+}

@@ -1,0 +1,13 @@
+== check 2 (2026-10-19T15:20:55Z), HEAD ab9aa22d1946a18451fc22eb53350ca40287e2a2
+$ git diff --quiet HEAD -- crates/
+exit 0
+$ git status --porcelain -- crates/ | wc -l
+0
+$ git status --porcelain --ignored -- crates/ | grep -v '^!! .*target' (harness names)
+0
+$ find crates -name '*u3_harness*' | wc -l
+0
+$ grep -rn 'u3_harness' crates/ | wc -l
+0
+crates/store/src/canonical.rs work 42c9b2b5038a563c600c358d73017a3cb29a741950f75944b9feb14dcda1dbcd HEAD 42c9b2b5038a563c600c358d73017a3cb29a741950f75944b9feb14dcda1dbcd
+crates/ingest/src/project.rs work 66b7076f30776dcc3f224e5787bdf5356f58fbd8c6b49d06bab1dc0757d170f5 HEAD 66b7076f30776dcc3f224e5787bdf5356f58fbd8c6b49d06bab1dc0757d170f5

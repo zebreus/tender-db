@@ -1,0 +1,5 @@
+HEAD ab9aa22d1946a18451fc22eb53350ca40287e2a2
+crates/store/src/canonical.rs work 42c9b2b5038a563c600c358d73017a3cb29a741950f75944b9feb14dcda1dbcd head 42c9b2b5038a563c600c358d73017a3cb29a741950f75944b9feb14dcda1dbcd
+crates/ingest/src/project.rs work 66b7076f30776dcc3f224e5787bdf5356f58fbd8c6b49d06bab1dc0757d170f5 head 66b7076f30776dcc3f224e5787bdf5356f58fbd8c6b49d06bab1dc0757d170f5
+ls: cannot access 'crates/store/src/canonical_u3_harness.rs': No such file or directory
+ls: cannot access 'crates/ingest/src/project_u3_harness.rs': No such file or directory

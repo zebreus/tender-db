@@ -1,0 +1,60 @@
+b3api {"ids_compared": 562, "ids_agree_all_guards": 562} served-aware 0
+    v2 {"agree": 562, "compared": 562, "port_ship": 73, "rust_ship": 73, "vouched_by_first_equal": 73}
+    v2+single {"agree": 562, "compared": 562, "port_ship": 72, "rust_ship": 72, "vouched_by_first_equal": 72}
+    v2+cover {"agree": 562, "compared": 562, "port_ship": 73, "rust_ship": 73, "vouched_by_first_equal": 73}
+    v2+both {"agree": 562, "compared": 562, "port_ship": 72, "rust_ship": 72, "vouched_by_first_equal": 72}
+    refusal sets equal True R_single 1 / 1 R_cover 0 / 0 R_excess [] / []
+    disagreements 0 invariant failures 0 name-level 0
+b3rec {"ids_compared": 4745, "ids_agree_all_guards": 4745} served-aware 0
+    v2 {"agree": 4745, "compared": 4745, "port_ship": 0, "rust_ship": 0}
+    v2+single {"agree": 4745, "compared": 4745, "port_ship": 0, "rust_ship": 0}
+    v2+cover {"agree": 4745, "compared": 4745, "port_ship": 0, "rust_ship": 0}
+    v2+both {"agree": 4745, "compared": 4745, "port_ship": 0, "rust_ship": 0}
+    refusal sets equal True R_single 0 / 0 R_cover 0 / 0 R_excess [] / []
+    disagreements 0 invariant failures 0 name-level 0
+c563 {"ids_compared": 563, "ids_agree_all_guards": 563} served-aware 73
+    v2 {"agree": 563, "compared": 563, "port_ship": 73, "rust_ship": 73, "vouched_by_first_equal": 73}
+    v2+single {"agree": 563, "compared": 563, "port_ship": 72, "rust_ship": 72, "vouched_by_first_equal": 72}
+    v2+cover {"agree": 563, "compared": 563, "port_ship": 73, "rust_ship": 73, "vouched_by_first_equal": 73}
+    v2+both {"agree": 563, "compared": 563, "port_ship": 72, "rust_ship": 72, "vouched_by_first_equal": 72}
+    refusal sets equal True R_single 1 / 1 R_cover 0 / 0 R_excess [] / []
+    disagreements 0 invariant failures 0 name-level 0
+s61 {"ids_compared": 61, "ids_agree_all_guards": 61} served-aware 61
+    v2 {"agree": 61, "compared": 61, "port_ship": 61, "rust_ship": 61, "vouched_by_first_equal": 61}
+    v2+single {"agree": 61, "compared": 61, "port_ship": 60, "rust_ship": 60, "vouched_by_first_equal": 60}
+    v2+cover {"agree": 61, "compared": 61, "port_ship": 60, "rust_ship": 60, "vouched_by_first_equal": 60}
+    v2+both {"agree": 61, "compared": 61, "port_ship": 60, "rust_ship": 60, "vouched_by_first_equal": 60}
+    refusal sets equal True R_single 1 / 1 R_cover 1 / 1 R_excess [] / []
+    disagreements 0 invariant failures 0 name-level 0
+f3502 {"ids_compared": 3502, "ids_agree_all_guards": 3502} served-aware 0
+    v2 {"agree": 3502, "compared": 3502, "port_ship": 3502, "rust_ship": 3502, "vouched_by_first_equal": 3502}
+    v2+single {"agree": 3502, "compared": 3502, "port_ship": 3468, "rust_ship": 3468, "vouched_by_first_equal": 3468}
+    v2+cover {"agree": 3502, "compared": 3502, "port_ship": 3489, "rust_ship": 3489, "vouched_by_first_equal": 3489}
+    v2+both {"agree": 3502, "compared": 3502, "port_ship": 3467, "rust_ship": 3467, "vouched_by_first_equal": 3467}
+    refusal sets equal True R_single 34 / 34 R_cover 13 / 13 R_excess [7202436] / [7202436]
+    disagreements 0 invariant failures 0 name-level 0
+f3502[61] {"ids_compared": 61, "ids_agree_all_guards": 61} served-aware 0
+    v2 {"agree": 61, "compared": 61, "port_ship": 61, "rust_ship": 61, "vouched_by_first_equal": 61}
+    v2+single {"agree": 61, "compared": 61, "port_ship": 60, "rust_ship": 60, "vouched_by_first_equal": 60}
+    v2+cover {"agree": 61, "compared": 61, "port_ship": 60, "rust_ship": 60, "vouched_by_first_equal": 60}
+    v2+both {"agree": 61, "compared": 61, "port_ship": 60, "rust_ship": 60, "vouched_by_first_equal": 60}
+    refusal sets equal True R_single 1 / 1 R_cover 1 / 1 R_excess [] / []
+    disagreements 0 invariant failures 0 name-level 0
+cross-check b3api_port_v2_vs_B3_api_port {"same": 562}
+cross-check b3rec_port_v2_vs_B3_rec_port {"same": 4742, "differs": 3}
+cross-check b3rec_b3enc_port_v2_vs_B3_rec_port {"same": 4745}
+cross-check b3rec_port_moved_by_the_withheld_encoding {"ids": 3}
+cross-check b3api_rust_none_vs_B3_api_rust {"same": 562}
+cross-check b3rec_rust_none_vs_B3_rec_rust {"same": 4742, "differs": 3}
+cross-check served_lsa_rows_loaded 3502
+cross-check s61_port_v2_vs_served_lsa_rows {"same": 61, "first_vouch_equal": 61}
+cross-check f3502_port_v2_vs_served_lsa_rows {"same": 3502, "first_vouch_equal": 3502}
+cross-check f3502_port_equals_U2 {"True": 3502}
+cross-check c563_port_v2_vs_B5_result2 {"same": 563, "ships": 73}
+projection f3502 {"lot_kind_diff": 71, "lot_rows": 100158, "lot_versions": 15537, "result_rows": 25741, "tenders": 3502, "total_rows_port": 6257, "total_rows_rust": 6257} by what {'LotState.kind': 71}
+projection b3api {"lot_kind_diff": 122, "lot_rows": 26764, "lot_versions": 4416, "result_rows": 6699, "tenders": 562, "total_rows_port": 1737, "total_rows_rust": 1737} by what {'LotState.kind': 122}
+projection s61 {"lot_rows": 3115, "lot_versions": 372, "result_rows": 579, "tenders": 61, "total_rows_port": 144, "total_rows_rust": 144} by what {}
+projection c563 {"lot_kind_diff": 122, "lot_rows": 26788, "lot_versions": 4420, "result_rows": 6705, "tenders": 563, "total_rows_port": 1739, "total_rows_rust": 1739} by what {'LotState.kind': 122}
+record only: b3rec[B3 port encoding] disagreements 12 [(120725, 'first', 'W/K', "W/T'"), (155057, 'first', 'W/K', "W/T'"), (514883, 'first', 'W/K', "W/T'")]
+TOTALS {"disagreements": 0, "invariant_failures": 0, "name_level": 0, "compared": 37732, "agree": 37732}
+COMPARE-EXIT=0

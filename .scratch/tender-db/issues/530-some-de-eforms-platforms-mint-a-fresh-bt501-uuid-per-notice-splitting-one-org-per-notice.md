@@ -1,6 +1,6 @@
 # 530 — some DE eForms platforms mint a fresh BT-501 UUID per notice, splitting one org into a row per notice (buyers, review chambers, winners)
 
-Status: ready-for-agent — unit 1 MEASURED 2026-10-19: census job `guid-census` (built b81d9ce, gate green 1,466 s, deployed 0787596) ran as queue job 2655 in 12 s (`.scratch/tender-db/530-triage/guid_census_2655.json`). 81,323 v4-GUID org rows (510,037 mentions): 74,023 (91.0%) span ONE distinct tender; within-notice twin reaches 11,258 single-use rows (15.2%; notice-scoped 18,415, 24.9%); the cross-notice (name_norm, country) signal reaches 55,783 (75.4%) but would also reach 11 STABLE rows under 41 names; either signal 80.4% (14,530 single-use reached by neither). Stable population (254/255/8378 + 100+ mentions): 345 rows, 96.2% multi-tender. DE 42,040 + CH 27,837 + FR 3,597 single-use; platforms doe+ted dashed-lower 40,388, ted dashed-lower 28,285. NEXT: unit 2 decide (a)/(b)/(d)/(c) on these numbers. Was: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, the in-app census that sizes the single-use GUID class by platform.
+Status: ready-for-agent — unit 2 DECIDED 2026-10-19 (530-triage/decision.md, with critic amendments A1-A12 adopted). Decision: pair-scoped (a) 530-T plus (c). The gate runs in mentions_and_dropped with a frozen, value-keyed KEEP_530 (7,313+ values, including merged v4 identifiers) and the name and role guards. The stock is a one-time per-mention rehome or dissolve of at most 11,258 twin rows spanning one Tender (Göttingen 22759261/62 → 2294259). (d), notice-scoped (a) and (b) are declined; 530-F (the FR 8-4-4-16 hex) goes to a new issue. 300 design:84-85 is upheld for the class and amended for the twin sub-class. NEXT: unit 3 Build 1, the pure guid_twin_refusals plus a dry dissolve-guid-twins job that reads every ORG mention of a notice, with the city screen, role composition, partial rows and the post-state twin expectations. Then R1, then R2 (random 60 + top targets + flagged reads, 0 W). Build 2 commits KEEP, wires the gate and adds the refused-value recurrence arm. 530-F filed as issue 575. Was: ready-for-agent — unit 1 MEASURED 2026-10-19: census job `guid-census` (built b81d9ce, gate green 1,466 s, deployed 0787596) ran as queue job 2655 in 12 s (`.scratch/tender-db/530-triage/guid_census_2655.json`). 81,323 v4-GUID org rows (510,037 mentions): 74,023 (91.0%) span ONE distinct tender; within-notice twin reaches 11,258 single-use rows (15.2%; notice-scoped 18,415, 24.9%); the cross-notice (name_norm, country) signal reaches 55,783 (75.4%) but would also reach 11 STABLE rows under 41 names; either signal 80.4% (14,530 single-use reached by neither). Stable population (254/255/8378 + 100+ mentions): 345 rows, 96.2% multi-tender. DE 42,040 + CH 27,837 + FR 3,597 single-use; platforms doe+ted dashed-lower 40,388, ted dashed-lower 28,285. NEXT: unit 2 decide (a)/(b)/(d)/(c) on these numbers. Was: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, the in-app census that sizes the single-use GUID class by platform.
 Kind: data quality (organization identity, DE): identifier admission, split side
 Relates to:
 - 312 (RESOLVED 2026-08-30): measured the v4-GUID class for false merges (about 0) and for linking on a 306-row
@@ -193,3 +193,29 @@ Constraints for any choice:
   issue predicted.
 - **Census audit (2026-10-19 14:5xZ, hourly AUDIT):** the report's canary mention counts equal the live `/v1/organizations/{id}`
   values: 254 → 24,219, 255 → 73,039, 22759261 → 2, 30971684 → 2 (identifiers identical).
+
+
+## Unit 2 — decided (2026-10-19, panel wf_14c1e8ae-b39: precision / coverage / operations judges, synthesis, critic)
+
+Full record: `530-triage/decision.md` (judges' notes `judge_*.md`; critic amendments A1–A12 appended and ADOPTED, three of them
+blocking for the build: A1 a refused-value recurrence arm, A2 the plan's unit is the (notice, section) mention, A3 the planner
+reads every ORG mention of a notice through `gated_identifier` with the gate's constants).
+- **Decision: pair-scoped (a) "530-T" + (c).** Precision and operations chose it; coverage dissented with (d) + notice-scoped (a)
+  and its numbers are kept as the cost and the reopen conditions. Within one notice copy, ORG sections whose BT-501 is `uuid_v4`,
+  grouped by (country, org_name_norm(name)); a group with two or more distinct values refuses every section's identifier (the
+  mention takes the identifier-NULL 234 path, raw_identifier kept), except values on a frozen, value-keyed KEEP_530 (stable rows,
+  twin rows spanning several Tenders, merged v4 identifiers: 7,313+ values) and names that are not safe as a fallback key
+  (fewer than 2 content words after legal forms, a generic body name or polity umbrella: Vergabekammer, Tiefbauamt, Freistaat X,
+  …) or role-incoherent groups (A7).
+- **Declined:** (d) the cross-notice name rule (state- and order-dependent, consumes its own trigger rows, would have refused 11
+  stable and 1,570 multi-Tender rows, folds generic buyer names); notice-scoped (a) (reaches 114 stable rows incl. 254/255); (b)
+  (no clean axis; its one clean cell → issue 575).
+- **Expected:** at most 11,258 single-use rows rehomed/dissolved (DE 11,237), ~22k mentions, 0 stable and 0 multi-Tender rows by
+  construction; Göttingen 49 of 52 GUID rows fold into 2294259 (the DE identifier-NULL row, never the VAT row 22183653);
+  ~59.3k single-use rows stay split under (c) with the cost recorded (CH 27,837; the DE no-twin shape; most current minting).
+- **300 design §84-85:** upheld for the class ("merge-inert" stands; 7,300 multi-Tender rows and the 345 stable rows forbid a
+  class condemn), amended for the twin sub-class proven inside its own notice.
+- **Next:** unit 3 Build 1 — pure `guid_twin_refusals` + a dry `dissolve-guid-twins` planner reading every ORG mention of a
+  notice, with the city screen (A6), role composition (A7), partial rows (A2) and post-state twin expectations (A9); then R1 (dry
+  plan bars), R2 (random 60 stratified + top targets + every flagged row, 0 W), Build 2 (KEEP committed, gate wired, recurrence
+  arm), wet, R3.

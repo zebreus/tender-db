@@ -1,0 +1,4533 @@
+{
+ "cargo": {
+  "command": "CARGO_INCREMENTAL=0 CARGO_PROFILE_DEV_DEBUG=0 CARGO_PROFILE_TEST_DEBUG=0 cargo test -p model -p store -p ingest -p tender-db --features tender-db/server u3_harness -- --ignored --nocapture",
+  "gate_exit": {
+   "run1.log": [
+    "0"
+   ],
+   "run2_proj_b3api.log": [
+    "0"
+   ],
+   "run2_proj_c563.log": [
+    "0"
+   ],
+   "run2_proj_s61.log": [
+    "0"
+   ]
+  },
+  "harness_lines": [
+   "U3 PROJECTION HARNESS: 3502 Tenders folded from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/f3502_proj_in.jsonl -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/f3502_proj_rust.jsonl",
+   "U3 PARITY HARNESS: 562 Tenders x 4 guard sets evaluated from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/b3api_in.tsv -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/b3api_rust.tsv",
+   "U3 PARITY HARNESS: 4745 Tenders x 4 guard sets evaluated from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/b3rec_in.tsv -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/b3rec_rust.tsv",
+   "U3 PARITY HARNESS: 563 Tenders x 4 guard sets evaluated from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/c563_in.tsv -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/c563_rust.tsv",
+   "U3 PARITY HARNESS: 61 Tenders x 4 guard sets evaluated from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/s61_in.tsv -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/s61_rust.tsv",
+   "U3 PARITY HARNESS: 3502 Tenders x 4 guard sets evaluated from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/f3502_in.tsv -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/f3502_rust.tsv",
+   "U3 PROJECTION HARNESS: 562 Tenders folded from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/b3api_proj_in.jsonl -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/b3api_proj_rust.jsonl",
+   "U3 PARITY HARNESS: U3_JOBS unset, nothing to do",
+   "U3 PROJECTION HARNESS: 563 Tenders folded from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/c563_proj_in.jsonl -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/c563_proj_rust.jsonl",
+   "U3 PARITY HARNESS: U3_JOBS unset, nothing to do",
+   "U3 PROJECTION HARNESS: 61 Tenders folded from /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/inputs/s61_proj_in.jsonl -> /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/outputs/s61_proj_rust.jsonl",
+   "U3 PARITY HARNESS: U3_JOBS unset, nothing to do"
+  ]
+ },
+ "crates_restored": {
+  "crates_restored_1.txt": "== check 1 (2026-10-19T15:19:34Z), HEAD ab9aa22d1946a18451fc22eb53350ca40287e2a2\n$ git diff --quiet HEAD -- crates/\nexit 0\n$ git status --porcelain -- crates/  (empty below means clean)\n$ git diff --stat HEAD -- crates/\ncrates/store/src/canonical.rs work 42c9b2b5038a563c600c358d73017a3cb29a741950f75944b9feb14dcda1dbcd HEAD 42c9b2b5038a563c600c358d73017a3cb29a741950f75944b9feb14dcda1dbcd\ncrates/ingest/src/project.rs work 66b7076f30776dcc3f224e5787bdf5356f58fbd8c6b49d06bab1dc0757d170f5 HEAD 66b7076f30776dcc3f224e5787bdf5356f58fbd8c6b49d06bab1dc0757d170f5\nls: cannot access 'crates/store/src/canonical_u3_harness.rs': No such file or directory\nls: cannot access 'crates/ingest/src/project_u3_harness.rs': No such file or directory\nuntracked files under crates: 0\n",
+  "crates_restored_2.txt": "== check 2 (2026-10-19T15:20:55Z), HEAD ab9aa22d1946a18451fc22eb53350ca40287e2a2\n$ git diff --quiet HEAD -- crates/\nexit 0\n$ git status --porcelain -- crates/ | wc -l\n0\n$ git status --porcelain --ignored -- crates/ | grep -v '^!! .*target' (harness names)\n0\n$ find crates -name '*u3_harness*' | wc -l\n0\n$ grep -rn 'u3_harness' crates/ | wc -l\n0\ncrates/store/src/canonical.rs work 42c9b2b5038a563c600c358d73017a3cb29a741950f75944b9feb14dcda1dbcd HEAD 42c9b2b5038a563c600c358d73017a3cb29a741950f75944b9feb14dcda1dbcd\ncrates/ingest/src/project.rs work 66b7076f30776dcc3f224e5787bdf5356f58fbd8c6b49d06bab1dc0757d170f5 HEAD 66b7076f30776dcc3f224e5787bdf5356f58fbd8c6b49d06bab1dc0757d170f5\n"
+ },
+ "cross_checks": {
+  "b3api_port_v2_vs_B3_api_port": {
+   "counts": {
+    "same": 562
+   },
+   "diffs": []
+  },
+  "b3api_rust_none_vs_B3_api_rust": {
+   "counts": {
+    "same": 562
+   },
+   "diffs": [],
+   "population": "b3api"
+  },
+  "b3rec_b3enc_port_v2_vs_B3_rec_port": {
+   "counts": {
+    "same": 4745
+   },
+   "diffs": []
+  },
+  "b3rec_port_moved_by_the_withheld_encoding": {
+   "counts": {
+    "ids": 3
+   },
+   "detail": {
+    "120725": {
+     "api": {
+      "v2": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+both": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+cover": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+single": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ]
+     },
+     "b3enc": {
+      "v2": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+both": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+cover": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+single": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ]
+     }
+    },
+    "155057": {
+     "api": {
+      "v2": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+both": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+cover": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+single": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ]
+     },
+     "b3enc": {
+      "v2": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+both": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+cover": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+single": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ]
+     }
+    },
+    "514883": {
+     "api": {
+      "v2": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+both": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+cover": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ],
+      "v2+single": [
+       false,
+       "W/T'",
+       null,
+       null,
+       0
+      ]
+     },
+     "b3enc": {
+      "v2": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+both": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+cover": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ],
+      "v2+single": [
+       false,
+       "W/K",
+       null,
+       null,
+       0
+      ]
+     }
+    }
+   },
+   "ids": [
+    120725,
+    155057,
+    514883
+   ]
+  },
+  "b3rec_port_v2_vs_B3_rec_port": {
+   "counts": {
+    "differs": 3,
+    "same": 4742
+   },
+   "diffs": [
+    {
+     "b3": {
+      "S": null,
+      "cur": null,
+      "first": "W/K",
+      "n": 0,
+      "ship": false,
+      "vouched_by": null
+     },
+     "id": 120725,
+     "u3": {
+      "S": null,
+      "currency": null,
+      "first": "W/T'",
+      "g_cover_removed": null,
+      "g_removed": [],
+      "g_single_removed": null,
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     }
+    },
+    {
+     "b3": {
+      "S": null,
+      "cur": null,
+      "first": "W/K",
+      "n": 0,
+      "ship": false,
+      "vouched_by": null
+     },
+     "id": 155057,
+     "u3": {
+      "S": null,
+      "currency": null,
+      "first": "W/T'",
+      "g_cover_removed": null,
+      "g_removed": [],
+      "g_single_removed": null,
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     }
+    },
+    {
+     "b3": {
+      "S": null,
+      "cur": null,
+      "first": "W/K",
+      "n": 0,
+      "ship": false,
+      "vouched_by": null
+     },
+     "id": 514883,
+     "u3": {
+      "S": null,
+      "currency": null,
+      "first": "W/T'",
+      "g_cover_removed": null,
+      "g_removed": [],
+      "g_single_removed": null,
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     }
+    }
+   ]
+  },
+  "b3rec_rust_none_vs_B3_rec_rust": {
+   "counts": {
+    "differs": 3,
+    "same": 4742
+   },
+   "diffs": [
+    {
+     "b3_rust": {
+      "S": null,
+      "cur": null,
+      "first": "W/K",
+      "n": 0,
+      "ship": false,
+      "vouched": null
+     },
+     "id": 120725,
+     "u3_rust_none": {
+      "S": null,
+      "cur": null,
+      "first": "W/T'",
+      "n": 0,
+      "ship": false,
+      "vouched": null
+     }
+    },
+    {
+     "b3_rust": {
+      "S": null,
+      "cur": null,
+      "first": "W/K",
+      "n": 0,
+      "ship": false,
+      "vouched": null
+     },
+     "id": 155057,
+     "u3_rust_none": {
+      "S": null,
+      "cur": null,
+      "first": "W/T'",
+      "n": 0,
+      "ship": false,
+      "vouched": null
+     }
+    },
+    {
+     "b3_rust": {
+      "S": null,
+      "cur": null,
+      "first": "W/K",
+      "n": 0,
+      "ship": false,
+      "vouched": null
+     },
+     "id": 514883,
+     "u3_rust_none": {
+      "S": null,
+      "cur": null,
+      "first": "W/T'",
+      "n": 0,
+      "ship": false,
+      "vouched": null
+     }
+    }
+   ],
+   "population": "b3rec"
+  },
+  "c563_port_v2_vs_B5_result2": {
+   "b5_counts": {
+    "agree": 563,
+    "both_refuse": 490,
+    "both_ship": 73,
+    "compared": 563,
+    "disagree": 0,
+    "name_level_vouched_by": 0,
+    "port_error": 0,
+    "port_ships": 73,
+    "served_ships": 73,
+    "unread": 0
+   },
+   "counts": {
+    "same": 563,
+    "ships": 73
+   },
+   "diffs": []
+  },
+  "f3502_port_equals_U2": {
+   "True": 3502
+  },
+  "f3502_port_v2_vs_served_lsa_rows": {
+   "counts": {
+    "first_vouch_equal": 3502,
+    "same": 3502
+   },
+   "diffs": []
+  },
+  "s61_port_v2_vs_served_lsa_rows": {
+   "counts": {
+    "first_vouch_equal": 61,
+    "same": 61
+   },
+   "diffs": []
+  },
+  "served_lsa_rows_loaded": 3502
+ },
+ "export_meta": {
+  "_files": {
+   "b3api_in.tsv": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+   "b3api_port.jsonl": "20ee60fabb203f5557eb58785eee1b20a892a32ac7f324a8558d33844671d09d",
+   "b3api_proj_in.jsonl": "3c9008cca586c6f8ec763f18d4d27f8d6760f5dd18ca05c93a9ce27e9f9cfdf2",
+   "b3api_projport.jsonl": "08d21e62355c1630be3b4e9529ab8c253004e8f2572efec7f7c719c363fa03d5",
+   "b3api_regen.tsv": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+   "b3rec_in.tsv": "4c0dc216305b11e0c946791f6cad7f6a828b7f275475028558648e4c930f4d3b",
+   "b3rec_port.jsonl": "a0ea0240c61b27ee79b54fe55558cc47bb442e906a98521357137cd52eee3864",
+   "b3rec_port_b3enc.jsonl": "60d9e4d74f9fd94fbe7fbc55839d6c83a8155ed107f562e9b7436f47d3b6fd4e",
+   "c563_in.tsv": "91bfc5b46001497190d572e37f66bfea65b0bd87b34dc24cef2eb20315dfa2f8",
+   "c563_port.jsonl": "bd20713668beca8a89ef12769834d4974d6ba1bc6ae163fb0a59cdeb156b12a5",
+   "c563_proj_in.jsonl": "f9cba84d25d876842fc15a93eb3d56f959820f418d66fad4b2dd9fff852a903c",
+   "c563_projport.jsonl": "ec070dd1d02e210871f118a1aa6771ff922939f2251746840365f5e92972a697",
+   "f3502_in.tsv": "be3899c16d44c9b23f0fdcb4565fcbb62bdfd061c4383b6cbd47814991d9dd7f",
+   "f3502_port.jsonl": "605b604d0ec07726df34611528449b4d60dd0d0dbf973ee5025ffe91c169da00",
+   "f3502_proj_in.jsonl": "7abda2861dbd272baacd68b50a970a47801b131580c05bb44b51e065ebb5806f",
+   "s61_in.tsv": "f69d4c793b9ee0ae5e79e5ca69d42f064b2d6115d5685a53d798721db2b99d22",
+   "s61_port.jsonl": "022eb2f5bcb0dfff96c55999fcb023ecfd786e28995f407e2a9fe55a0caeb455",
+   "s61_proj_in.jsonl": "a86be21f231e7693595e113339b04a808acc4b4d95589e2b523c771ef4265d0c",
+   "s61_projport.jsonl": "e5ca39d0292f5c7746c4dde41bd846ef1bcdb74c0541166f790630dabbbb44ed"
+  },
+  "_pins": {
+   "export.py": "2203cab002f581f8733a364f7442c535efd38d1234dada64907460adbd577ea5",
+   "gen_b3.py": "2e9635bae0a49b7924780d7829d549ec9edf5180a69c37d9b6062aa83cc6d9de",
+   "rates": {
+    "ecu-ert_bil_eur_d.csv": "48e2c9f17ae7219b2b145a66ace399aba7c306c88721b7ce8f7c76f4758e131b",
+    "ecu-ert_h_eur_d.csv": "47e941270ac4a0f0f22416bd4b41c9b427d43c3a4f430996f8457dca8f134e5c",
+    "eurofxref-hist.zip": "8e925cef1572f8df5c8743229a761b029180f3b5cd4aa2213592192964ebd793"
+   },
+   "records.py": "124382c2e056cb9aed1d8fb90916e21278bbc6ab2b1fc8151ec04f358f16fc14",
+   "rule_v2_g.py": "23cbd8508a3afa35b195f8a2ee91a75bb3b8f08aa2e2f3f9abbd0ea80454452f"
+  },
+  "b3api": {
+   "b3_api_in_sha256": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+   "ids": 562,
+   "notice_layer_map_sha256": "fed420f2c4e2da089ba0b186b3da9d29c142205262ccf4488762bb92c6e40a34",
+   "notice_layer_use": {
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices": 4416
+   },
+   "notice_layers": [
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices",
+     "{}.json.gz",
+     true
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/bundle/cache/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band/notices",
+     "notices_{}_content.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band/notices",
+     "n{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+     "notices_{}_content.json",
+     false
+    ],
+    [
+     "/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/api/notices",
+     "{}.json",
+     false
+    ]
+   ],
+   "notices": 4416,
+   "population": "b3api",
+   "regenerated_equals_b3": true,
+   "regenerated_sha256": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+   "seconds": 7.0,
+   "stats": {
+    "exported": 562
+   },
+   "tender_layers": [
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/tenders",
+     "{}.json.gz",
+     true
+    ]
+   ],
+   "tender_reads_sha256": "fed21b42d448039a8c05ba70afde22f3ac049bab5987eaa8c0072cc5e0136a72"
+  },
+  "b3rec": {
+   "encoding": "api",
+   "ids": 4745,
+   "population": "b3rec",
+   "seconds": 8.7,
+   "stats": {
+    "exported": 4745,
+    "withheld_reencoded": 7,
+    "withheld_reencoded_ids": [
+     120725,
+     155057,
+     451260,
+     514883,
+     529266,
+     952397,
+     7961363
+    ]
+   }
+  },
+  "b3rec_b3enc": {
+   "encoding": "b3",
+   "ids": 4745,
+   "population": "b3rec",
+   "seconds": 8.1,
+   "stats": {
+    "exported": 4745
+   }
+  },
+  "c563": {
+   "ids": 563,
+   "notice_layer_map_sha256": "aa7b162e4fb8db23797d4e19933e5f9eaa24cf9122f62855b0fe0bbe8165d69f",
+   "notice_layer_use": {
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices": 4,
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices": 4416
+   },
+   "notice_layers": [
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices",
+     "{}.json.gz",
+     true
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/bundle/cache/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band/notices",
+     "notices_{}_content.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band/notices",
+     "n{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+     "notices_{}_content.json",
+     false
+    ],
+    [
+     "/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/api/notices",
+     "{}.json",
+     false
+    ]
+   ],
+   "notices": 4420,
+   "population": "c563",
+   "seconds": 6.7,
+   "stats": {
+    "exported": 563,
+    "served_aware": 73
+   },
+   "tender_layers": [
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/tenders",
+     "{}.json.gz",
+     true
+    ]
+   ],
+   "tender_reads_sha256": "bdb452e38bfe6820a118306c161ff16b501eef328c8704987ac4aa2f50a27d32"
+  },
+  "f3502": {
+   "ids": 3502,
+   "notice_layer_map_sha256": "f46377d086126b5e0e6807e799355de5a5b91688f5168b51386afa8a30c1ad21",
+   "notice_layer_use": {
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices": 15246,
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices": 291
+   },
+   "notice_layers": [
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices",
+     "{}.json.gz",
+     true
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/bundle/cache/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band/notices",
+     "notices_{}_content.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band/notices",
+     "n{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+     "notices_{}_content.json",
+     false
+    ],
+    [
+     "/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/api/notices",
+     "{}.json",
+     false
+    ]
+   ],
+   "notices": 15537,
+   "population": "f3502",
+   "seconds": 34.8,
+   "stats": {
+    "exported": 3502,
+    "u2_same": 3502
+   },
+   "tender_layers": [
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/tenders",
+     "{}.json.gz",
+     true
+    ]
+   ],
+   "tender_reads_sha256": "cda6154ab88077d069ffe1b58553bc381a9debb91fddb38bf1b446c459568a1f"
+  },
+  "s61": {
+   "ids": 61,
+   "notice_layer_map_sha256": "ab63745831c686973e9db55fce5b53c376d62ec792b65206a58bbc119e065fd4",
+   "notice_layer_use": {
+    "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices": 372
+   },
+   "notice_layers": [
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/notices",
+     "{}.json.gz",
+     true
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/cache/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/bundle/cache/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b3/verify/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b5/raw/notices",
+     "{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/band/notices",
+     "notices_{}_content.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/verify_band/notices",
+     "n{}.json",
+     false
+    ],
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/rb8/sets/u7notices",
+     "notices_{}_content.json",
+     false
+    ],
+    [
+     "/home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u3/api/notices",
+     "{}.json",
+     false
+    ]
+   ],
+   "notices": 372,
+   "population": "s61",
+   "seconds": 0.7,
+   "stats": {
+    "exported": 61,
+    "served_aware": 61
+   },
+   "tender_layers": [
+    [
+     "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/tenders",
+     "{}.json.gz",
+     true
+    ]
+   ],
+   "tender_reads_sha256": "f2c8ed53456351902459368abbe361cc07b9dafb47d68d2f643214b7ae47b629"
+  }
+ },
+ "files": {
+  "b3api_in.tsv": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+  "b3api_port.jsonl": "20ee60fabb203f5557eb58785eee1b20a892a32ac7f324a8558d33844671d09d",
+  "b3api_proj_in.jsonl": "3c9008cca586c6f8ec763f18d4d27f8d6760f5dd18ca05c93a9ce27e9f9cfdf2",
+  "b3api_proj_rust.jsonl": "9785dc68de11cbac41e90f166e9e9a48f9f931f81bc5a3ad2213e23bff48912f",
+  "b3api_projport.jsonl": "d93b1dd4c4b39d05e88c67b1092cbd1b54b11fe52cc7696d68ecf3d348771cdf",
+  "b3api_regen.tsv": "37a738e290af7a8e6b7af0128bf9bbc9c1ab0fb0c8abce8b4e0b695e90797c51",
+  "b3api_rust.tsv": "67e23651f9087013495d7f5b14de362f784789e70779cc1048d858f9631c33e2",
+  "b3rec_in.tsv": "4c0dc216305b11e0c946791f6cad7f6a828b7f275475028558648e4c930f4d3b",
+  "b3rec_port.jsonl": "a0ea0240c61b27ee79b54fe55558cc47bb442e906a98521357137cd52eee3864",
+  "b3rec_port_b3enc.jsonl": "60d9e4d74f9fd94fbe7fbc55839d6c83a8155ed107f562e9b7436f47d3b6fd4e",
+  "b3rec_rust.tsv": "a1c877b2f62c9b9cbdb3f86c3f02a0185f6fc7774250340abc8af1e3bca1fa5b",
+  "c563_in.tsv": "91bfc5b46001497190d572e37f66bfea65b0bd87b34dc24cef2eb20315dfa2f8",
+  "c563_port.jsonl": "bd20713668beca8a89ef12769834d4974d6ba1bc6ae163fb0a59cdeb156b12a5",
+  "c563_proj_in.jsonl": "f9cba84d25d876842fc15a93eb3d56f959820f418d66fad4b2dd9fff852a903c",
+  "c563_proj_rust.jsonl": "d22e09cab70c616900ad5c68b0abdc2445ca2863041dce28f2bec3a4229b7f40",
+  "c563_projport.jsonl": "91decb2339f3025f1643ae9f6a66b24f1b7e42a64ad01533e376439d7fccf50f",
+  "c563_rust.tsv": "9d665d8cb81997e43f1b9a7db0cefdc42bcef21f5e321db879bdefeb29e193e3",
+  "check_layers.json": "06d55661fde3dfe4ca3ca004a7572eda46c47fcb9ba63b10fafb6c99e18eda9d",
+  "export_meta.json": "babdf4a77703af078688476990f7d1b71f505fe795058d2e1a88f3b5b67b781a",
+  "f3502_in.tsv": "be3899c16d44c9b23f0fdcb4565fcbb62bdfd061c4383b6cbd47814991d9dd7f",
+  "f3502_port.jsonl": "605b604d0ec07726df34611528449b4d60dd0d0dbf973ee5025ffe91c169da00",
+  "f3502_proj_in.jsonl": "7abda2861dbd272baacd68b50a970a47801b131580c05bb44b51e065ebb5806f",
+  "f3502_proj_rust.jsonl": "0daad9bd0e9a986a74a4068c29ce5594e9d5094a03ea8e663b2b27b7cd30842e",
+  "f3502_rust.tsv": "62f533631e1f07147a52dbc14f99dabbfceb367937709484342a6e8b9b4094ca",
+  "s61_in.tsv": "f69d4c793b9ee0ae5e79e5ca69d42f064b2d6115d5685a53d798721db2b99d22",
+  "s61_port.jsonl": "022eb2f5bcb0dfff96c55999fcb023ecfd786e28995f407e2a9fe55a0caeb455",
+  "s61_proj_in.jsonl": "a86be21f231e7693595e113339b04a808acc4b4d95589e2b523c771ef4265d0c",
+  "s61_proj_rust.jsonl": "866f04cf6eefc9c76e01e4edbaa6e384181c64e723c612bea39190805ce95a72",
+  "s61_projport.jsonl": "b871ba4b6cfb6b7246287d6aa313291affd5af0102fe8dca0f8c18d9cee5cc29",
+  "s61_rust.tsv": "13ce5abbafc62dcb6fd0165e8c69df330b6c3d66a5089daa7f88d952c755c9a2",
+  "u3-compare.json": "e709775b9e540b0a5e29ca04ecdd8879a51d86f181a65cb1f737bae27abd8a10"
+ },
+ "files_gz": {
+  "inputs/b3api_in.tsv.gz": "e7a21360d3f552af7a026bb10099c7da7fdb4c2182558669d82541c14b892699",
+  "inputs/b3api_port.jsonl.gz": "c63b1ff68f919ea5d05c49297bd892deee23b6d86de0d01d288babeb2feee086",
+  "inputs/b3api_proj_in.jsonl.gz": "a6fa3ebef2a4c688801d592bdaf8cea6c7d6e88ae4062e4ec1a8ad7c94917772",
+  "inputs/b3api_projport.jsonl.gz": "ff3f0c670e374a65bba777b24ee880f0a521a8bcc9b860daa9f8883b4c850c4a",
+  "inputs/b3api_regen.tsv.gz": "e7a21360d3f552af7a026bb10099c7da7fdb4c2182558669d82541c14b892699",
+  "inputs/b3rec_in.tsv.gz": "00592d286b2a2d6161a416ca1a938b69204fe0abc05549ce6b5db3844017843e",
+  "inputs/b3rec_port.jsonl.gz": "e2474cc452bc4c57d77294b632e7306d00309a54d7f8eca744408ba53f8b598c",
+  "inputs/b3rec_port_b3enc.jsonl.gz": "a7d623e12a8a7929644e9c4ea7ae4a266fb506b7dde88b236795158b617f5095",
+  "inputs/c563_in.tsv.gz": "0b076714b54e45ca7ad518f6fe5822bf882ec84ca24cc79e6153e2a11962df53",
+  "inputs/c563_port.jsonl.gz": "58ca8911a66e8ce1753d78d512cf6d715842acc1869f5d604fcead328bfe94e1",
+  "inputs/c563_proj_in.jsonl.gz": "8a6a9d3991124480dfd6d3ff85b5181c871c9ea475d324f94686daa90c329f94",
+  "inputs/c563_projport.jsonl.gz": "c7bee949b33982c0fcb8d4c9f2347b6fe8c462128cf09ed55b820379b6222c4a",
+  "inputs/f3502_in.tsv.gz": "731b84d76d880669b74b34d1786615948e51886375f16fcb6a6df07e1f884f79",
+  "inputs/f3502_port.jsonl.gz": "9df31c64f1982f10877917e3cbef6e7139ea1aa8388f2a5a7896600e90f89ab4",
+  "inputs/f3502_proj_in.jsonl.gz": "5b81c4e52a087c7458fda053972d5c41c8027329fb8f0bfa2bd5b4c7a6e1f086",
+  "inputs/s61_in.tsv.gz": "448a0c7d6fae38f4f4405f47176fe543159ccb6f07bb189ce0b53a6def50271a",
+  "inputs/s61_port.jsonl.gz": "70e3686fc631d4d87fb1951d916475b07c9e69b21d18ef2bebe6c47b14cef452",
+  "inputs/s61_proj_in.jsonl.gz": "49faafa6751ad1a5f13872726593b01d992463ba9b353b3e95b1fa874c0b7f53",
+  "inputs/s61_projport.jsonl.gz": "d961f2c37f2f457b425c01d362fa17edbebc2cb6929bee9686755948e33a0881",
+  "outputs/b3api_proj_rust.jsonl.gz": "dc5b34307679cba85a65b5c3b4ae089e58a24801392cbada470e8708f602d325",
+  "outputs/b3api_rust.tsv.gz": "bab27756d630711a0207027d7d26db2e4575b5f3d1acd070b5e8c1ea9ea80bbc",
+  "outputs/b3rec_rust.tsv.gz": "2036d8cc3a92130dbd7bc401721f258a38f00c748fdf79a59e220af71dea6ead",
+  "outputs/c563_proj_rust.jsonl.gz": "c14f80f59dfe6b095471d219bdb27e7043b2bc02272fc2931d51805962efde2a",
+  "outputs/c563_rust.tsv.gz": "1f3d14cd19067d3efbaaedcc4ddf05fe1d063ebe2da6e88c4e5bbe458580182a",
+  "outputs/f3502_proj_rust.jsonl.gz": "768d54f7e3028b8ade2c717da94abb229a841d0bb0a1d6fbf91b5b8217734070",
+  "outputs/f3502_rust.tsv.gz": "352525aa795bc1d528fa2927b18bf7e1be86007bef157e2b2ad4888800d7cdf4",
+  "outputs/s61_proj_rust.jsonl.gz": "8df1716ade78436645fd05abaee900767dd0582424cdba6df170628a7ebdfb3d",
+  "outputs/s61_rust.tsv.gz": "71a0795119cf0fb05efe520ff41576a18f28bd4d8b3f04e7686e790086641c25"
+ },
+ "files_note": "'files' are the plain files' sha256 at the run; every .tsv/.jsonl was then gzipped (gzip -n -9): 'files_gz'. gunzip -k inputs/*.gz outputs/*.gz before re-running compare_u3.py.",
+ "harness_sha256": {
+  "canonical_u3_harness.rs": "1f11120930b13341ae24fdb18bd882f885157fa6566de9c96519a50469654c0f",
+  "insert.py": "abdc087f22c937c7d52ed14d4645e442e65fcfb119747238b84c9c43641ab395",
+  "project_u3_harness.rs": "38e07a2a4034c970a1e790c068d3ed22a700d03524c00dd1d78199cd1f708bd0"
+ },
+ "populations": {
+  "b3api": {
+   "R_cover": {
+    "port": [],
+    "rust": []
+   },
+   "R_excess": {
+    "port": [],
+    "rust": []
+   },
+   "R_single": {
+    "port": [
+     6595330
+    ],
+    "rust": [
+     6595330
+    ]
+   },
+   "disagreements": [],
+   "ids_compared": 562,
+   "invariant_failures": [],
+   "label": "B3's 562 API ids (B3's reads, B3's api_in.tsv verbatim)",
+   "missing_in_rust": 0,
+   "name_level": [],
+   "not_exported": 0,
+   "per_guard_set": {
+    "v2": {
+     "agree": 562,
+     "compared": 562,
+     "disagree": 0,
+     "ships_port": 73,
+     "ships_rust": 73,
+     "vouched_by_first_equal": 73,
+     "vouched_by_name_level": 0
+    },
+    "v2+both": {
+     "agree": 562,
+     "compared": 562,
+     "disagree": 0,
+     "ships_port": 72,
+     "ships_rust": 72,
+     "vouched_by_first_equal": 72,
+     "vouched_by_name_level": 0
+    },
+    "v2+cover": {
+     "agree": 562,
+     "compared": 562,
+     "disagree": 0,
+     "ships_port": 73,
+     "ships_rust": 73,
+     "vouched_by_first_equal": 73,
+     "vouched_by_name_level": 0
+    },
+    "v2+single": {
+     "agree": 562,
+     "compared": 562,
+     "disagree": 0,
+     "ships_port": 72,
+     "ships_rust": 72,
+     "vouched_by_first_equal": 72,
+     "vouched_by_name_level": 0
+    }
+   },
+   "refusal_sets_equal": true,
+   "served_aware_ids": 0,
+   "vouched_by_moved_under_guard": {
+    "v2+both": {
+     "port": [],
+     "rust": []
+    },
+    "v2+cover": {
+     "port": [],
+     "rust": []
+    },
+    "v2+single": {
+     "port": [],
+     "rust": []
+    }
+   }
+  },
+  "b3rec": {
+   "R_cover": {
+    "port": [],
+    "rust": []
+   },
+   "R_excess": {
+    "port": [],
+    "rust": []
+   },
+   "R_single": {
+    "port": [],
+    "rust": []
+   },
+   "disagreements": [],
+   "ids_compared": 4745,
+   "invariant_failures": [],
+   "label": "B3's 4,745 unit-1 records (B3's rec_in.tsv verbatim)",
+   "missing_in_rust": 0,
+   "name_level": [],
+   "not_exported": 0,
+   "per_guard_set": {
+    "v2": {
+     "agree": 4745,
+     "compared": 4745,
+     "disagree": 0,
+     "ships_port": 0,
+     "ships_rust": 0,
+     "vouched_by_first_equal": 0,
+     "vouched_by_name_level": 0
+    },
+    "v2+both": {
+     "agree": 4745,
+     "compared": 4745,
+     "disagree": 0,
+     "ships_port": 0,
+     "ships_rust": 0,
+     "vouched_by_first_equal": 0,
+     "vouched_by_name_level": 0
+    },
+    "v2+cover": {
+     "agree": 4745,
+     "compared": 4745,
+     "disagree": 0,
+     "ships_port": 0,
+     "ships_rust": 0,
+     "vouched_by_first_equal": 0,
+     "vouched_by_name_level": 0
+    },
+    "v2+single": {
+     "agree": 4745,
+     "compared": 4745,
+     "disagree": 0,
+     "ships_port": 0,
+     "ships_rust": 0,
+     "vouched_by_first_equal": 0,
+     "vouched_by_name_level": 0
+    }
+   },
+   "refusal_sets_equal": true,
+   "served_aware_ids": 0,
+   "vouched_by_moved_under_guard": {
+    "v2+both": {
+     "port": [],
+     "rust": []
+    },
+    "v2+cover": {
+     "port": [],
+     "rust": []
+    },
+    "v2+single": {
+     "port": [],
+     "rust": []
+    }
+   }
+  },
+  "c563": {
+   "R_cover": {
+    "port": [],
+    "rust": []
+   },
+   "R_excess": {
+    "port": [],
+    "rust": []
+   },
+   "R_single": {
+    "port": [
+     6595330
+    ],
+    "rust": [
+     6595330
+    ]
+   },
+   "disagreements": [],
+   "ids_compared": 563,
+   "invariant_failures": [],
+   "label": "the 563 cohort (B5's re-reads, path W on, served-aware v1)",
+   "missing_in_rust": 0,
+   "name_level": [],
+   "not_exported": 0,
+   "per_guard_set": {
+    "v2": {
+     "agree": 563,
+     "compared": 563,
+     "disagree": 0,
+     "ships_port": 73,
+     "ships_rust": 73,
+     "vouched_by_first_equal": 73,
+     "vouched_by_name_level": 0
+    },
+    "v2+both": {
+     "agree": 563,
+     "compared": 563,
+     "disagree": 0,
+     "ships_port": 72,
+     "ships_rust": 72,
+     "vouched_by_first_equal": 72,
+     "vouched_by_name_level": 0
+    },
+    "v2+cover": {
+     "agree": 563,
+     "compared": 563,
+     "disagree": 0,
+     "ships_port": 73,
+     "ships_rust": 73,
+     "vouched_by_first_equal": 73,
+     "vouched_by_name_level": 0
+    },
+    "v2+single": {
+     "agree": 563,
+     "compared": 563,
+     "disagree": 0,
+     "ships_port": 72,
+     "ships_rust": 72,
+     "vouched_by_first_equal": 72,
+     "vouched_by_name_level": 0
+    }
+   },
+   "refusal_sets_equal": true,
+   "served_aware_ids": 73,
+   "vouched_by_moved_under_guard": {
+    "v2+both": {
+     "port": [],
+     "rust": []
+    },
+    "v2+cover": {
+     "port": [],
+     "rust": []
+    },
+    "v2+single": {
+     "port": [],
+     "rust": []
+    }
+   }
+  },
+  "f3502": {
+   "R_cover": {
+    "port": [
+     6356382,
+     6465510,
+     6582856,
+     7163120,
+     7166738,
+     7179291,
+     7202436,
+     7380025,
+     7394272,
+     7423850,
+     7600895,
+     7605188,
+     7651470
+    ],
+    "rust": [
+     6356382,
+     6465510,
+     6582856,
+     7163120,
+     7166738,
+     7179291,
+     7202436,
+     7380025,
+     7394272,
+     7423850,
+     7600895,
+     7605188,
+     7651470
+    ]
+   },
+   "R_excess": {
+    "port": [
+     7202436
+    ],
+    "rust": [
+     7202436
+    ]
+   },
+   "R_single": {
+    "port": [
+     402503,
+     472292,
+     5581720,
+     5663701,
+     5884304,
+     6003114,
+     6234738,
+     6342738,
+     6356382,
+     6403567,
+     6465510,
+     6582856,
+     6595330,
+     6784258,
+     6815094,
+     6838776,
+     6852228,
+     6937514,
+     7014656,
+     7102361,
+     7163120,
+     7166738,
+     7179291,
+     7348648,
+     7354861,
+     7380025,
+     7394272,
+     7423850,
+     7600895,
+     7605188,
+     7608791,
+     7651470,
+     7675062,
+     7785319
+    ],
+    "rust": [
+     402503,
+     472292,
+     5581720,
+     5663701,
+     5884304,
+     6003114,
+     6234738,
+     6342738,
+     6356382,
+     6403567,
+     6465510,
+     6582856,
+     6595330,
+     6784258,
+     6815094,
+     6838776,
+     6852228,
+     6937514,
+     7014656,
+     7102361,
+     7163120,
+     7166738,
+     7179291,
+     7348648,
+     7354861,
+     7380025,
+     7394272,
+     7423850,
+     7600895,
+     7605188,
+     7608791,
+     7651470,
+     7675062,
+     7785319
+    ]
+   },
+   "disagreements": [],
+   "ids_compared": 3502,
+   "invariant_failures": [],
+   "label": "the 3,502 (fresh B6 layer, path W off)",
+   "missing_in_rust": 0,
+   "name_level": [],
+   "not_exported": 0,
+   "per_guard_set": {
+    "v2": {
+     "agree": 3502,
+     "compared": 3502,
+     "disagree": 0,
+     "ships_port": 3502,
+     "ships_rust": 3502,
+     "vouched_by_first_equal": 3502,
+     "vouched_by_name_level": 0
+    },
+    "v2+both": {
+     "agree": 3502,
+     "compared": 3502,
+     "disagree": 0,
+     "ships_port": 3467,
+     "ships_rust": 3467,
+     "vouched_by_first_equal": 3467,
+     "vouched_by_name_level": 0
+    },
+    "v2+cover": {
+     "agree": 3502,
+     "compared": 3502,
+     "disagree": 0,
+     "ships_port": 3489,
+     "ships_rust": 3489,
+     "vouched_by_first_equal": 3489,
+     "vouched_by_name_level": 0
+    },
+    "v2+single": {
+     "agree": 3502,
+     "compared": 3502,
+     "disagree": 0,
+     "ships_port": 3468,
+     "ships_rust": 3468,
+     "vouched_by_first_equal": 3468,
+     "vouched_by_name_level": 0
+    }
+   },
+   "refusal_sets_equal": true,
+   "served_aware_ids": 0,
+   "vouched_by_moved_under_guard": {
+    "v2+both": {
+     "port": [],
+     "rust": []
+    },
+    "v2+cover": {
+     "port": [],
+     "rust": []
+    },
+    "v2+single": {
+     "port": [],
+     "rust": []
+    }
+   }
+  },
+  "f3502[61]": {
+   "R_cover": {
+    "port": [
+     6465510
+    ],
+    "rust": [
+     6465510
+    ]
+   },
+   "R_excess": {
+    "port": [],
+    "rust": []
+   },
+   "R_single": {
+    "port": [
+     6465510
+    ],
+    "rust": [
+     6465510
+    ]
+   },
+   "disagreements": [],
+   "ids_compared": 61,
+   "invariant_failures": [],
+   "label": "the 61 inside the fresh layer (subset of f3502)",
+   "missing_in_rust": 0,
+   "name_level": [],
+   "not_exported": 0,
+   "per_guard_set": {
+    "v2": {
+     "agree": 61,
+     "compared": 61,
+     "disagree": 0,
+     "ships_port": 61,
+     "ships_rust": 61,
+     "vouched_by_first_equal": 61,
+     "vouched_by_name_level": 0
+    },
+    "v2+both": {
+     "agree": 61,
+     "compared": 61,
+     "disagree": 0,
+     "ships_port": 60,
+     "ships_rust": 60,
+     "vouched_by_first_equal": 60,
+     "vouched_by_name_level": 0
+    },
+    "v2+cover": {
+     "agree": 61,
+     "compared": 61,
+     "disagree": 0,
+     "ships_port": 60,
+     "ships_rust": 60,
+     "vouched_by_first_equal": 60,
+     "vouched_by_name_level": 0
+    },
+    "v2+single": {
+     "agree": 61,
+     "compared": 61,
+     "disagree": 0,
+     "ships_port": 60,
+     "ships_rust": 60,
+     "vouched_by_first_equal": 60,
+     "vouched_by_name_level": 0
+    }
+   },
+   "refusal_sets_equal": true,
+   "served_aware_ids": 0,
+   "vouched_by_moved_under_guard": {
+    "v2+both": {
+     "port": [],
+     "rust": []
+    },
+    "v2+cover": {
+     "port": [],
+     "rust": []
+    },
+    "v2+single": {
+     "port": [],
+     "rust": []
+    }
+   }
+  },
+  "s61": {
+   "R_cover": {
+    "port": [
+     6465510
+    ],
+    "rust": [
+     6465510
+    ]
+   },
+   "R_excess": {
+    "port": [],
+    "rust": []
+   },
+   "R_single": {
+    "port": [
+     6465510
+    ],
+    "rust": [
+     6465510
+    ]
+   },
+   "disagreements": [],
+   "ids_compared": 61,
+   "invariant_failures": [],
+   "label": "the 61 (B5 investigation served snapshots, path W on, served-aware v1)",
+   "missing_in_rust": 0,
+   "name_level": [],
+   "not_exported": 0,
+   "per_guard_set": {
+    "v2": {
+     "agree": 61,
+     "compared": 61,
+     "disagree": 0,
+     "ships_port": 61,
+     "ships_rust": 61,
+     "vouched_by_first_equal": 61,
+     "vouched_by_name_level": 0
+    },
+    "v2+both": {
+     "agree": 61,
+     "compared": 61,
+     "disagree": 0,
+     "ships_port": 60,
+     "ships_rust": 60,
+     "vouched_by_first_equal": 60,
+     "vouched_by_name_level": 0
+    },
+    "v2+cover": {
+     "agree": 61,
+     "compared": 61,
+     "disagree": 0,
+     "ships_port": 60,
+     "ships_rust": 60,
+     "vouched_by_first_equal": 60,
+     "vouched_by_name_level": 0
+    },
+    "v2+single": {
+     "agree": 61,
+     "compared": 61,
+     "disagree": 0,
+     "ships_port": 60,
+     "ships_rust": 60,
+     "vouched_by_first_equal": 60,
+     "vouched_by_name_level": 0
+    }
+   },
+   "refusal_sets_equal": true,
+   "served_aware_ids": 61,
+   "vouched_by_moved_under_guard": {
+    "v2+both": {
+     "port": [],
+     "rust": []
+    },
+    "v2+cover": {
+     "port": [],
+     "rust": []
+    },
+    "v2+single": {
+     "port": [],
+     "rust": []
+    }
+   }
+  }
+ },
+ "populations_record_only": {
+  "b3rec[B3 port encoding]": {
+   "disagreements": [
+    {
+     "field": "first",
+     "guard": "v2",
+     "id": 120725,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+single",
+     "id": 120725,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+cover",
+     "id": 120725,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+both",
+     "id": 120725,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2",
+     "id": 155057,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+single",
+     "id": 155057,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+cover",
+     "id": 155057,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+both",
+     "id": 155057,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2",
+     "id": 514883,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+single",
+     "id": 514883,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+cover",
+     "id": 514883,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    },
+    {
+     "field": "first",
+     "guard": "v2+both",
+     "id": 514883,
+     "port": "W/K",
+     "port_row": {
+      "S": null,
+      "currency": null,
+      "first": "W/K",
+      "g_removed": [],
+      "n": 0,
+      "refusals": [],
+      "ship": false,
+      "vouched_by": null,
+      "vouches": []
+     },
+     "port_v1_why": "W/K: no award lots",
+     "rust": "W/T'",
+     "rust_row": {
+      "S": null,
+      "currency": null,
+      "derived": null,
+      "first": "W/T'",
+      "hv": null,
+      "hv_derivation": null,
+      "hv_equals_check": true,
+      "hv_eur": null,
+      "hv_vouched_by": null,
+      "n": 0,
+      "production_derivation": null,
+      "production_eur": null,
+      "ship": false,
+      "today_eur": null,
+      "v1_fires": false,
+      "vouched_by": null
+     }
+    }
+   ],
+   "per_guard": {
+    "v2": {
+     "agree": 4742,
+     "compared": 4745,
+     "disagree": 3,
+     "port_ship": 0,
+     "rust_ship": 0
+    },
+    "v2+both": {
+     "agree": 4742,
+     "compared": 4745,
+     "disagree": 3,
+     "port_ship": 0,
+     "rust_ship": 0
+    },
+    "v2+cover": {
+     "agree": 4742,
+     "compared": 4745,
+     "disagree": 3,
+     "port_ship": 0,
+     "rust_ship": 0
+    },
+    "v2+single": {
+     "agree": 4742,
+     "compared": 4745,
+     "disagree": 3,
+     "port_ship": 0,
+     "rust_ship": 0
+    }
+   }
+  }
+ },
+ "port_sha256": "23cbd8508a3afa35b195f8a2ee91a75bb3b8f08aa2e2f3f9abbd0ea80454452f",
+ "projection_disagreements": {
+  "b3api": [
+   {
+    "id": 49224,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 448013,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26581683",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 448013,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26581683",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 448013,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26581683",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 521716,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26423223",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 521716,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26423223",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 521716,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26504108",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 521716,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26504108",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 677680,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26248038",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 677680,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26248038",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 677680,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26374263",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 677680,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26374263",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 680425,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26599102",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 680425,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26599102",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 750804,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225379",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 750804,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225379",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225020",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225020",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225020",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26266980",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26406407",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 822558,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26231172",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 822558,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26231172",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 822558,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26231172",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 822558,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26231172",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866035,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26258024",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866035,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26258024",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866035,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26258024",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0008",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0009",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0010",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0011",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0012",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0013",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0014",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0015",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0016",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0008",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0009",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0010",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0011",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0012",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0013",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0014",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0015",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0016",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 912466,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26337770",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 912466,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26337770",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 912466,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26337770",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0008",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26414791",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26414791",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26414791",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26455496",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26455496",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26455496",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26515810",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26515810",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26515810",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 989268,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26428710",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 989268,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26428710",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 989268,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26453060",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 989268,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26453060",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1079142,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26410901",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1079142,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26410901",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1079142,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26473070",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1079142,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26473070",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1094914,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26539375",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1094914,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26539375",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1094914,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26539375",
+    "what": "LotState.kind"
+   }
+  ],
+  "c563": [
+   {
+    "id": 49224,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 49224,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26343605",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449571",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 255403,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26571560",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 448013,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26581683",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 448013,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26581683",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 448013,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26581683",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 521716,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26423223",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 521716,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26423223",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 521716,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26504108",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 521716,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26504108",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 677680,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26248038",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 677680,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26248038",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 677680,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26374263",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 677680,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26374263",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 680425,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26599102",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 680425,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26599102",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 750804,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225379",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 750804,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225379",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225020",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225020",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26225020",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26266980",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 806550,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26406407",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 822558,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26231172",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 822558,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26231172",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 822558,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26231172",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 822558,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26231172",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866035,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26258024",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866035,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26258024",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866035,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26258024",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26211592",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223148",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 866431,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26277434",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0008",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0009",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0010",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0011",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0012",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0013",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0014",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0015",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0016",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26389735",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0008",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0009",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0010",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0011",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0012",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0013",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0014",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0015",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 911043,
+    "key": "LOT-0016",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26536042",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 912466,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26337770",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 912466,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26337770",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 912466,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26337770",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 936207,
+    "key": "LOT-0008",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26223478",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26414791",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26414791",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26414791",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26455496",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26455496",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26455496",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26515810",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26515810",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 985336,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26515810",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 989268,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26428710",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 989268,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26428710",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 989268,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26453060",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 989268,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26453060",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1079142,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26410901",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1079142,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26410901",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1079142,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26473070",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1079142,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26473070",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1094914,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26539375",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1094914,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26539375",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1094914,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26539375",
+    "what": "LotState.kind"
+   }
+  ],
+  "f3502": [
+   {
+    "id": 47302,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26540620",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 47302,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26540620",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 47302,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26540620",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 75073,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26605361",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 75073,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26605361",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0008",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0009",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 92774,
+    "key": "LOT-0010",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417997",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0005",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0006",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0007",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0008",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0009",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 237879,
+    "key": "LOT-0010",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26408443",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26304168",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26304168",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26304168",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26304168",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26307021",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26307021",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26307021",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26307021",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26433904",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26433904",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26433904",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 252473,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26433904",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 324818,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417767",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 324818,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417767",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 324818,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26417767",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26221487",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26221487",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26221487",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26246788",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26246788",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26246788",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26253603",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26253603",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26253603",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26328486",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26328486",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 568306,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26328486",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 586891,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26497410",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 586891,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26497410",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 586891,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26497410",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 645682,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26481717",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 645682,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26481717",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 903093,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26498124",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 903093,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26498124",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26446948",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26446948",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26446948",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26446948",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449407",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449407",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449407",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26449407",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0001",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26585522",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0002",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26585522",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0003",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26585522",
+    "what": "LotState.kind"
+   },
+   {
+    "id": 1000347,
+    "key": "LOT-0004",
+    "port": "ProcurementProjectLot",
+    "rust": "Lot",
+    "version": "26585522",
+    "what": "LotState.kind"
+   }
+  ],
+  "s61": []
+ },
+ "projection_parity": {
+  "b3api": {
+   "by_what": {
+    "LotState.kind": 122
+   },
+   "only_LotState_kind_differs": true,
+   "stats": {
+    "lot_kind_diff": 122,
+    "lot_rows": 26764,
+    "lot_versions": 4416,
+    "result_rows": 6699,
+    "tenders": 562,
+    "total_rows_port": 1737,
+    "total_rows_rust": 1737
+   }
+  },
+  "c563": {
+   "by_what": {
+    "LotState.kind": 122
+   },
+   "only_LotState_kind_differs": true,
+   "stats": {
+    "lot_kind_diff": 122,
+    "lot_rows": 26788,
+    "lot_versions": 4420,
+    "result_rows": 6705,
+    "tenders": 563,
+    "total_rows_port": 1739,
+    "total_rows_rust": 1739
+   }
+  },
+  "f3502": {
+   "by_what": {
+    "LotState.kind": 71
+   },
+   "only_LotState_kind_differs": true,
+   "stats": {
+    "lot_kind_diff": 71,
+    "lot_rows": 100158,
+    "lot_versions": 15537,
+    "result_rows": 25741,
+    "tenders": 3502,
+    "total_rows_port": 6257,
+    "total_rows_rust": 6257
+   }
+  },
+  "s61": {
+   "by_what": {},
+   "only_LotState_kind_differs": true,
+   "stats": {
+    "lot_rows": 3115,
+    "lot_versions": 372,
+    "result_rows": 579,
+    "tenders": 61,
+    "total_rows_port": 144,
+    "total_rows_rust": 144
+   }
+  }
+ },
+ "scripts_sha256": {
+  "compare_u3.py": "6a23430fc4cd2b7b90a23243294d49e7f2a1a51ea2d1dd67904e157db9f4e22b",
+  "export_u3.py": "65d606f1eedd1b2c895500765e7aa47492fd8f88e57249c0cb7884210dfd540b",
+  "make_result.py": "9e0dfed4916d26566625d33a1130085aad8e2f5e2cdfcf932d8fd65925348752",
+  "run.sh": "260a7941663d47e6b1049c3a10c6a15aab524e948475bcf95ee8f2c29039e40e",
+  "u3-result.md": "2c2bbf4d7d1e7343e631eafeb96f3efff65b48252f85f778103fb33dac7c4c7c"
+ },
+ "totals": {
+  "agree": 37732,
+  "compared": 37732,
+  "disagreements": 0,
+  "invariant_failures": 0,
+  "name_level": 0
+ },
+ "verdict": "PASS",
+ "what": "issue 551 B6 U3: Rust v2+G (awards_path_check_guards / head_value_with_awards_path_guards under R10Guards NONE/SINGLE/COVER/BOTH) vs the port of record b6/rule_v2_g.py decide(id, guards) under frozenset()/{single}/{cover}/{single,cover}, per id and guard set; projection parity on the 3,502"
+}

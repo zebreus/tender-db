@@ -1,0 +1,153 @@
+2026-10-19T15:00:56.975Z GET /v1/tenders/7380025 rc=200 reader=read_1 bytes=8171
+2026-10-19T15:00:59.767Z GET /v1/tenders/472292 rc=200 reader=read_1 bytes=34316
+2026-10-19T15:01:02.353Z GET /v1/tenders/7785319 rc=200 reader=read_1 bytes=6031
+2026-10-19T15:01:04.814Z GET /v1/tenders/7014656 rc=200 reader=read_1 bytes=4932
+2026-10-19T15:01:07.279Z GET /v1/tenders/7675062 rc=200 reader=read_1 bytes=6036
+2026-10-19T15:01:09.739Z GET /v1/tenders/6234738 rc=200 reader=read_1 bytes=5661
+2026-10-19T15:01:43.866Z GET /v1/tenders/6582856 rc=200 reader=read_2 bytes=11656 attempt=1 sha256=6aab2c3862877c7d
+2026-10-19T15:01:45.916Z GET /v1/tenders/7348648 rc=200 reader=read_2 bytes=37112 attempt=1 sha256=ab88db45d6b5d195
+2026-10-19T15:01:47.966Z GET /v1/tenders/7423850 rc=200 reader=read_2 bytes=7364 attempt=1 sha256=d161ed5de67034d5
+2026-10-19T15:01:50.017Z GET /v1/tenders/6342738 rc=200 reader=read_2 bytes=7383 attempt=1 sha256=7005d002ce7f5dcb
+2026-10-19T15:01:52.068Z GET /v1/tenders/5581720 rc=200 reader=read_2 bytes=5276 attempt=1 sha256=c6f92aa4a7082ee8
+2026-10-19T15:01:54.119Z GET /v1/tenders/7608791 rc=200 reader=read_2 bytes=5141 attempt=1 sha256=95c2d0128926cb08
+2026-10-19T15:02:20.908Z GET /v1/notices/20932731/content rc=200 reader=read_2 bytes=18084 attempt=1 sha256=e90de6b39e829537
+2026-10-19T15:02:22.959Z GET /v1/notices/20989144/content rc=200 reader=read_2 bytes=18066 attempt=1 sha256=f900c2df38ec928e
+2026-10-19T15:02:25.009Z GET /v1/notices/20722713/content rc=200 reader=read_2 bytes=21198 attempt=1 sha256=4f4770e15d2976e2
+2026-10-19T15:02:27.059Z GET /v1/notices/20781489/content rc=200 reader=read_2 bytes=21218 attempt=1 sha256=e5996dc9af44b5d0
+2026-10-19T15:02:29.109Z GET /v1/notices/20738475/content rc=200 reader=read_2 bytes=21331 attempt=1 sha256=bf675729901fa9e6
+2026-10-19T15:02:31.160Z GET /v1/notices/22886555/content rc=200 reader=read_2 bytes=61487 attempt=1 sha256=23fa729956dd7e31
+2026-10-19T15:02:33.210Z GET /v1/notices/22609100/content rc=200 reader=read_2 bytes=106788 attempt=1 sha256=c378bb6535fc8921
+2026-10-19T15:02:35.260Z GET /v1/notices/23005980/content rc=200 reader=read_2 bytes=18454 attempt=1 sha256=ef7f295b767804c9
+2026-10-19T15:02:37.311Z GET /v1/notices/22432073/content rc=200 reader=read_2 bytes=21181 attempt=1 sha256=c3e0fe22b320a82c
+2026-10-19T15:02:39.361Z GET /v1/notices/23566768/content rc=200 reader=read_2 bytes=20918 attempt=1 sha256=36e174ba27fdfcc9
+2026-10-19T15:02:41.412Z GET /v1/notices/23257062/content rc=200 reader=read_2 bytes=20372 attempt=1 sha256=1bdd6e84254715a1
+2026-10-19T15:02:43.462Z GET /v1/notices/20223375/content rc=200 reader=read_2 bytes=20007 attempt=1 sha256=12974fe17f7478b3
+2026-10-19T15:02:45.512Z GET /v1/notices/20909307/content rc=200 reader=read_2 bytes=20770 attempt=1 sha256=b0cdcf76223f677e
+2026-10-19T15:02:47.562Z GET /v1/notices/20909303/content rc=200 reader=read_2 bytes=20883 attempt=1 sha256=917a708a6510e594
+2026-10-19T15:02:49.613Z GET /v1/notices/18983294/content rc=200 reader=read_2 bytes=19329 attempt=1 sha256=eee1661851257d05
+2026-10-19T15:02:51.663Z GET /v1/notices/19107853/content rc=200 reader=read_2 bytes=18784 attempt=1 sha256=5de7870089931e68
+2026-10-19T15:02:53.713Z GET /v1/notices/23061269/content rc=200 reader=read_2 bytes=21119 attempt=1 sha256=bd05b0c33086a6c5
+2026-10-19T15:02:55.763Z GET /v1/notices/23063124/content rc=200 reader=read_2 bytes=21555 attempt=1 sha256=83a3f68b1f78841d
+2026-10-19T15:03:32.072Z GET /v1/tenders?publication_id=146509-2023 rc=200 reader=read_1 bytes=748
+2026-10-19T15:03:38.648Z GET /v1/tenders/7499938 rc=200 reader=read_1 bytes=37229
+2026-10-19T15:04:00.573Z GET /v1/notices/23018953/content rc=200 reader=read_1 bytes=92131
+2026-10-19T15:05:55.588Z GET /v1/notices/22369006/content rc=200 reader=read_1 bytes=21863
+2026-10-19T15:05:58.472Z GET /v1/notices/23081023/content rc=200 reader=read_1 bytes=20184
+2026-10-19T15:06:01.047Z GET /v1/notices/23081641/content rc=200 reader=read_1 bytes=20070
+2026-10-19T15:06:03.575Z GET /v1/notices/23081236/content rc=200 reader=read_1 bytes=20058
+2026-10-19T15:06:06.107Z GET /v1/notices/23014672/content rc=200 reader=read_1 bytes=20936
+2026-10-19T15:06:08.642Z GET /v1/notices/23758321/content rc=200 reader=read_1 bytes=36515
+2026-10-19T15:06:11.219Z GET /v1/notices/23795731/content rc=200 reader=read_1 bytes=36364
+2026-10-19T15:06:13.790Z GET /v1/notices/23951676/content rc=200 reader=read_1 bytes=47713
+2026-10-19T15:06:16.410Z GET /v1/notices/23730496/content rc=200 reader=read_1 bytes=37031
+2026-10-19T15:06:18.984Z GET /v1/notices/23564346/content rc=200 reader=read_1 bytes=22654
+2026-10-19T15:06:21.499Z GET /v1/notices/23613614/content rc=200 reader=read_1 bytes=22655
+2026-10-19T15:06:24.062Z GET /v1/notices/21635083/content rc=200 reader=read_1 bytes=18569
+2026-10-19T15:06:26.585Z GET /v1/notices/22164062/content rc=200 reader=read_1 bytes=19456
+2026-10-19T15:06:29.197Z GET /v1/notices/21621407/content rc=200 reader=read_1 bytes=18664
+2026-10-19T15:06:31.758Z GET /v1/notices/23312560/content rc=200 reader=read_1 bytes=20129
+2026-10-19T15:06:35.341Z GET /v1/notices/23314405/content rc=200 reader=read_1 bytes=20405
+2026-10-19T15:06:37.883Z GET /v1/notices/23316732/content rc=200 reader=read_1 bytes=20400
+2026-10-19T15:06:40.402Z GET /v1/notices/20033615/content rc=200 reader=read_1 bytes=16645
+2026-10-19T15:06:42.935Z GET /v1/notices/20033617/content rc=200 reader=read_1 bytes=16968
+2026-10-19T15:10:05.731Z GET /v1/tenders/6815094 rc=200 reader=read_3 bytes=8496
+2026-10-19T15:10:08.578Z GET /v1/tenders/6403567 rc=200 reader=read_3 bytes=7801
+2026-10-19T15:10:11.077Z GET /v1/tenders/7651470 rc=200 reader=read_3 bytes=6775
+2026-10-19T15:10:13.650Z GET /v1/tenders/6937514 rc=200 reader=read_3 bytes=11526
+2026-10-19T15:10:16.266Z GET /v1/tenders/6356382 rc=200 reader=read_3 bytes=6585
+2026-10-19T15:10:18.758Z GET /v1/tenders/7166738 rc=200 reader=read_3 bytes=9082
+2026-10-19T15:10:34.266Z GET /v1/tenders/7102361 rc=200 reader=read_4 bytes=4810
+2026-10-19T15:10:36.968Z GET /v1/tenders/6003114 rc=200 reader=read_4 bytes=12778
+2026-10-19T15:10:39.512Z GET /v1/tenders/7179291 rc=200 reader=read_4 bytes=7155
+2026-10-19T15:10:42.022Z GET /v1/tenders/402503 rc=200 reader=read_4 bytes=13430
+2026-10-19T15:10:44.602Z GET /v1/tenders/7394272 rc=200 reader=read_4 bytes=13708
+2026-10-19T15:10:47.176Z GET /v1/tenders/6852228 rc=200 reader=read_4 bytes=23932
+2026-10-19T15:11:14.009Z GET /v1/notices/21285538/content rc=200 reader=read_3 bytes=20799
+2026-10-19T15:11:16.896Z GET /v1/notices/21254550/content rc=200 reader=read_3 bytes=25070
+2026-10-19T15:11:19.474Z GET /v1/notices/21812830/content rc=200 reader=read_3 bytes=19202
+2026-10-19T15:11:22.075Z GET /v1/notices/22251256/content rc=200 reader=read_3 bytes=19601
+2026-10-19T15:11:24.662Z GET /v1/notices/21571535/content rc=200 reader=read_3 bytes=19614
+2026-10-19T15:11:27.235Z GET /v1/notices/21786612/content rc=200 reader=read_3 bytes=19913
+2026-10-19T15:11:29.868Z GET /v1/notices/20520516/content rc=200 reader=read_3 bytes=21917
+2026-10-19T15:11:32.444Z GET /v1/notices/20520354/content rc=200 reader=read_3 bytes=21345
+2026-10-19T15:11:35.012Z GET /v1/notices/23006164/content rc=200 reader=read_3 bytes=21410
+2026-10-19T15:11:37.567Z GET /v1/notices/23740527/content rc=200 reader=read_3 bytes=20160
+2026-10-19T15:11:40.118Z GET /v1/notices/23438905/content rc=200 reader=read_3 bytes=21722
+2026-10-19T15:11:42.675Z GET /v1/notices/23465553/content rc=200 reader=read_3 bytes=20397
+2026-10-19T15:11:45.219Z GET /v1/notices/22048453/content rc=200 reader=read_4 bytes=20251
+2026-10-19T15:11:47.932Z GET /v1/notices/22066668/content rc=200 reader=read_4 bytes=20271
+2026-10-19T15:11:50.505Z GET /v1/notices/19427538/content rc=200 reader=read_4 bytes=22386
+2026-10-19T15:11:53.151Z GET /v1/notices/21530641/content rc=200 reader=read_3 bytes=23542
+2026-10-19T15:11:55.739Z GET /v1/notices/19437670/content rc=200 reader=read_4 bytes=23865
+2026-10-19T15:11:58.292Z GET /v1/notices/19982269/content rc=200 reader=read_4 bytes=20171
+2026-10-19T15:12:00.844Z GET /v1/notices/21465935/content rc=200 reader=read_3 bytes=23409
+2026-10-19T15:12:03.405Z GET /v1/notices/19973462/content rc=200 reader=read_4 bytes=20214
+2026-10-19T15:12:05.965Z GET /v1/notices/21536830/content rc=200 reader=read_3 bytes=20019
+2026-10-19T15:12:08.510Z GET /v1/notices/19973463/content rc=200 reader=read_4 bytes=20118
+2026-10-19T15:12:11.055Z GET /v1/notices/21947679/content rc=200 reader=read_3 bytes=20599
+2026-10-19T15:12:13.688Z GET /v1/notices/22780357/content rc=200 reader=read_4 bytes=17953
+2026-10-19T15:12:16.252Z GET /v1/notices/22364146/content rc=200 reader=read_4 bytes=19899
+2026-10-19T15:12:19.057Z GET /v1/notices/21471905/content rc=200 reader=read_3 bytes=23381
+2026-10-19T15:12:21.642Z GET /v1/notices/22315443/content rc=200 reader=read_4 bytes=17950
+2026-10-19T15:12:24.208Z GET /v1/notices/21525584/content rc=200 reader=read_3 bytes=23527
+2026-10-19T15:12:26.781Z GET /v1/notices/22148426/content rc=200 reader=read_4 bytes=18300
+2026-10-19T15:12:29.345Z GET /v1/notices/20317908/content rc=200 reader=read_3 bytes=18728
+2026-10-19T15:12:31.931Z GET /v1/notices/23402733/content rc=200 reader=read_3 bytes=18083
+2026-10-19T15:12:34.498Z GET /v1/notices/23402794/content rc=200 reader=read_3 bytes=18525
+2026-10-19T15:12:37.148Z GET /v1/notices/24416505/content rc=200 reader=read_4 bytes=33619
+2026-10-19T15:12:39.830Z GET /v1/notices/23401003/content rc=200 reader=read_3 bytes=18544
+2026-10-19T15:12:42.365Z GET /v1/notices/22450615/content rc=200 reader=read_3 bytes=21525
+2026-10-19T15:12:44.908Z GET /v1/notices/24982264/content rc=200 reader=read_4 bytes=37418
+2026-10-19T15:12:47.456Z GET /v1/notices/22388431/content rc=200 reader=read_4 bytes=25574
+2026-10-19T15:12:50.253Z GET /v1/notices/23168277/content rc=200 reader=read_4 bytes=20417
+2026-10-19T15:12:52.944Z GET /v1/notices/23169697/content rc=200 reader=read_4 bytes=20427
+2026-10-19T15:12:55.501Z GET /v1/notices/23664577/content rc=200 reader=read_3 bytes=18499
+2026-10-19T15:12:58.039Z GET /v1/notices/23664044/content rc=200 reader=read_3 bytes=18487
+2026-10-19T15:13:00.588Z GET /v1/notices/23168435/content rc=200 reader=read_4 bytes=20418
+2026-10-19T15:13:03.162Z GET /v1/notices/22306669/content rc=200 reader=read_3 bytes=19803
+2026-10-19T15:13:05.802Z GET /v1/notices/23168097/content rc=200 reader=read_4 bytes=20423
+2026-10-19T15:13:08.381Z GET /v1/notices/22925424/content rc=200 reader=read_3 bytes=22984
+2026-10-19T15:13:10.929Z GET /v1/notices/23168536/content rc=200 reader=read_4 bytes=20415
+2026-10-19T15:13:13.490Z GET /v1/notices/21600409/content rc=200 reader=read_4 bytes=27124
+2026-10-19T15:13:16.038Z GET /v1/notices/22971695/content rc=200 reader=read_3 bytes=21118
+2026-10-19T15:13:18.592Z GET /v1/notices/22470437/content rc=200 reader=read_4 bytes=23117
+2026-10-19T15:13:21.375Z GET /v1/notices/23320304/content rc=200 reader=read_4 bytes=23662
+2026-10-19T15:13:23.931Z GET /v1/notices/21584710/content rc=0 err=URLError(ConnectionResetError(104, 'Connection reset by peer')) reader=read_4 bytes=0
+2026-10-19T15:13:38.034Z GET /v1/notices/22470439/content rc=200 reader=read_4 bytes=23302
+2026-10-19T15:13:40.804Z GET /v1/notices/23318309/content rc=200 reader=read_4 bytes=24131
+2026-10-19T15:13:43.344Z GET /v1/notices/23067905/content rc=200 reader=read_4 bytes=23468
+2026-10-19T15:13:55.147Z GET /v1/notices/21584710/content rc=200 reader=read_4 bytes=51783
+2026-10-19T15:16:10.730Z GET /v1/tenders?publication_id=275434-2021 rc=200 reader=read_4 bytes=620
+2026-10-19T15:16:18.480Z GET /v1/tenders/6896664 rc=200 reader=read_4 bytes=12951
+2026-10-19T15:16:24.501Z GET /v1/notices/21777064/content rc=200 reader=read_4 bytes=36685
+2026-10-19T15:20:55.614Z GET /v1/tenders/6784258 rc=200 reader=read_5 bytes=13574
+2026-10-19T15:20:58.179Z GET /v1/tenders/7605188 rc=200 reader=read_5 bytes=5774
+2026-10-19T15:21:00.642Z GET /v1/tenders/7163120 rc=200 reader=read_5 bytes=5633
+2026-10-19T15:21:03.088Z GET /v1/tenders/5884304 rc=200 reader=read_5 bytes=5885
+2026-10-19T15:21:05.551Z GET /v1/tenders/7202436 rc=200 reader=read_5 bytes=14990
+2026-10-19T15:21:08.121Z GET /v1/tenders/7600895 rc=200 reader=read_5 bytes=8005
+2026-10-19T15:21:35.732Z GET /v1/notices/21353722/content rc=200 reader=read_5 bytes=36335
+2026-10-19T15:21:38.589Z GET /v1/notices/21366937/content rc=200 reader=read_5 bytes=35482
+2026-10-19T15:21:41.190Z GET /v1/notices/23284790/content rc=200 reader=read_5 bytes=36710
+2026-10-19T15:21:43.782Z GET /v1/notices/21022946/content rc=200 reader=read_5 bytes=55985
+2026-10-19T15:21:46.447Z GET /v1/notices/19344705/content rc=200 reader=read_5 bytes=19976
+2026-10-19T15:21:49.110Z GET /v1/notices/19740228/content rc=200 reader=read_5 bytes=18652
+2026-10-19T15:21:51.646Z GET /v1/notices/19285258/content rc=200 reader=read_5 bytes=20572
+2026-10-19T15:21:54.172Z GET /v1/notices/19197976/content rc=200 reader=read_5 bytes=18052
+2026-10-19T15:21:56.708Z GET /v1/notices/19223468/content rc=200 reader=read_5 bytes=14624
+2026-10-19T15:21:59.229Z GET /v1/notices/22923984/content rc=200 reader=read_5 bytes=20455
+2026-10-19T15:22:01.776Z GET /v1/notices/23596947/content rc=200 reader=read_5 bytes=20457
+2026-10-19T15:22:04.333Z GET /v1/notices/23597536/content rc=200 reader=read_5 bytes=20439
+2026-10-19T15:22:06.856Z GET /v1/notices/22136632/content rc=200 reader=read_5 bytes=19040
+2026-10-19T15:22:09.489Z GET /v1/notices/22182794/content rc=200 reader=read_5 bytes=18957
+2026-10-19T15:22:12.133Z GET /v1/notices/22281094/content rc=200 reader=read_5 bytes=19123
+2026-10-19T15:22:14.680Z GET /v1/notices/21882899/content rc=200 reader=read_5 bytes=17761
+2026-10-19T15:22:17.220Z GET /v1/notices/22179136/content rc=200 reader=read_5 bytes=19108
+2026-10-19T15:22:19.747Z GET /v1/notices/22139899/content rc=200 reader=read_5 bytes=37845
+2026-10-19T15:22:22.330Z GET /v1/notices/21970781/content rc=200 reader=read_5 bytes=35890
+2026-10-19T15:22:24.863Z GET /v1/notices/22875211/content rc=200 reader=read_5 bytes=22124
+2026-10-19T15:22:27.397Z GET /v1/notices/23600177/content rc=200 reader=read_5 bytes=20654
+2026-10-19T15:22:29.919Z GET /v1/notices/23597734/content rc=200 reader=read_5 bytes=20665
+2026-10-19T15:22:32.444Z GET /v1/notices/23600770/content rc=200 reader=read_5 bytes=20675
+2026-10-19T15:23:20.914Z GET /v1/tenders/6582856 rc=200 reader=skeptic_2 bytes=11656 attempt=1 sha256=6aab2c3862877c7d
+2026-10-19T15:23:22.979Z GET /v1/notices/20568018/content rc=200 reader=skeptic_2 bytes=26578 attempt=1 sha256=f60dcb3f986e05b4

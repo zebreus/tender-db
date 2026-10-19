@@ -1,0 +1,30 @@
+  b3api: 250/562 in 3s
+  b3api: 500/562 in 6s
+b3api {"exported": 562} 7.0s
+b3api: regenerated fixture file equals B3 api_in.tsv: True
+b3rec api {'exported': 4745, 'withheld_reencoded': 7, 'withheld_reencoded_ids': [120725, 155057, 451260, 514883, 529266, 952397, 7961363]} 9s
+b3rec b3 {'exported': 4745} 8s
+  c563: 250/563 in 3s
+  c563: 500/563 in 5s
+c563 {"exported": 563, "served_aware": 73} 6.7s
+s61 {"served_aware": 61, "exported": 61} 0.7s
+  f3502: 250/3502 in 2s
+  f3502: 500/3502 in 4s
+  f3502: 750/3502 in 6s
+  f3502: 1000/3502 in 8s
+  f3502: 1250/3502 in 10s
+  f3502: 1500/3502 in 13s
+  f3502: 1750/3502 in 15s
+  f3502: 2000/3502 in 18s
+  f3502: 2250/3502 in 21s
+  f3502: 2500/3502 in 24s
+  f3502: 2750/3502 in 27s
+  f3502: 3000/3502 in 30s
+  f3502: 3250/3502 in 32s
+  f3502: 3500/3502 in 35s
+f3502 {"u2_same": 3502, "exported": 3502} 34.8s
+
+real	1m8.050s
+user	1m5.359s
+sys	0m1.656s
+EXPORT-EXIT=0
