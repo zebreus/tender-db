@@ -1,0 +1,676 @@
+== SECTION Lot LOT-1 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-ITEM 0 id 1
+   TED-LOT_NO 0 id 1
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-NO_OPTIONS 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in interoperability and agricultural/trans-European e-Government services. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-TITLE 0 text Specialised IT Consultancy in Interoperability and Agricultural/Trans-European e-Government Services
+== SECTION Lot LOT-2 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-ITEM 0 id 2
+   TED-LOT_NO 0 id 2
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-NO_OPTIONS 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in interoperability and agricultural/trans-European e-Government services. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-TITLE 0 text Specialised IT Consultancy in Interoperability and Agricultural/Trans-European e-Government Services
+== SECTION Lot LOT-3 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-ITEM 0 id 3
+   TED-LOT_NO 0 id 3
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-NO_OPTIONS 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in interoperability and agricultural/trans-European e-Government services. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-TITLE 0 text Specialised IT Consultancy in Interoperability and Agricultural/Trans-European e-Government Services
+== SECTION Lot LOT-4 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-ITEM 0 id 4
+   TED-LOT_NO 0 id 4
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-NO_OPTIONS 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in interoperability and agricultural/trans-European e-Government services. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-TITLE 0 text Specialised IT Consultancy in Interoperability and Agricultural/Trans-European e-Government Services
+== SECTION Lot LOT-5 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-ITEM 0 id 5
+   TED-LOT_NO 0 id 5
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-NO_OPTIONS 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in interoperability and agricultural/trans-European e-Government services. See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-TITLE 0 text Specialised IT Consultancy in Interoperability and Agricultural/Trans-European e-Government Services
+== SECTION Organization ORG-1 parent PROCEDURE
+   TED-ADDRESS 0 text rue Montoyer 15, Office: 07/P001
+   TED-CONTACT_POINT 0 text DIGIT Contracts Info Centre
+   TED-COUNTRY 0 code BE
+   TED-E_MAIL 0 text digit-contracts-info-centre@ec.europa.eu
+   TED-FAX 0 text +32 229-57702
+   TED-NUTS 0 classification BE100
+   TED-OFFICIALNAME 0 text European Commission, Directorate-General for Informatics, Directorate A for Strategy and Resources, Unit A3: ICT Procurement and Contracts
+   TED-PHONE 0 text +32 229-60762
+   TED-POSTAL_CODE 0 text 1000
+   TED-TOWN 0 text Brussels
+   TED-URL_BUYER 0 text https://ec.europa.eu/info/funding-tenders/tender-opportunities-department/informatics-tenders-and-contracts_en
+   TED-URL_GENERAL 0 text https://ec.europa.eu/info/departments/informatics_en
+== SECTION Organization ORG-10 parent RES-3
+   TED-ADDRESS 0 text 89A rue Pafebruch
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU19535286
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text C-DEV S.A.
+   TED-POSTAL_CODE 0 text 8308
+   TED-TOWN 0 text Capellen
+== SECTION Organization ORG-11 parent RES-3
+   TED-ADDRESS 0 text 2, rue d'Arlon
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU18044744
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Sword Technologies S.A.
+   TED-POSTAL_CODE 0 text 8399
+   TED-TOWN 0 text Windhof
+== SECTION Organization ORG-12 parent RES-4
+   TED-ADDRESS 0 text DaVinci Laan 5
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0401848135
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Atos Belgium S.A.
+   TED-POSTAL_CODE 0 text 1930
+   TED-TOWN 0 text Zaventeem
+== SECTION Organization ORG-13 parent RES-4
+   TED-ADDRESS 0 text 19-23 Al. Pantou Street
+   TED-COUNTRY 0 code GR
+   TED-NATIONALID 0 id EL094029552
+   TED-NUTS 0 classification EL
+   TED-OFFICIALNAME 0 text Unisystems Information Technology Systems Commercial S.A.
+   TED-POSTAL_CODE 0 text 17671
+   TED-TOWN 0 text Athens
+== SECTION Organization ORG-14 parent RES-4
+   TED-ADDRESS 0 text 11 rue de l’Industrie
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU14925288
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Computer Resources International
+   TED-POSTAL_CODE 0 text 8399
+   TED-TOWN 0 text Windhof
+== SECTION Organization ORG-15 parent RES-4
+   TED-ADDRESS 0 text rue Guimard 15
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0819095021
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Engineering International Belgium S.A.
+   TED-POSTAL_CODE 0 text 1040
+   TED-TOWN 0 text Brussels
+== SECTION Organization ORG-16 parent RES-5
+   TED-ADDRESS 0 text Via di Casal Boccone 188/190
+   TED-COUNTRY 0 code IT
+   TED-NATIONALID 0 id IT08450891000
+   TED-NUTS 0 classification IT
+   TED-OFFICIALNAME 0 text Almaviva S.p.A.
+   TED-POSTAL_CODE 0 text 00137
+   TED-TOWN 0 text Roma
+== SECTION Organization ORG-17 parent RES-5
+   TED-ADDRESS 0 text rue Pafebruch 38
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU16482901
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Aubay S.A.
+   TED-POSTAL_CODE 0 text 8308
+   TED-TOWN 0 text Capellen
+== SECTION Organization ORG-18 parent RES-5
+   TED-ADDRESS 0 text rue Charles Martel 62
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU15292018
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Infeurope S.A.
+   TED-POSTAL_CODE 0 text 2134
+   TED-TOWN 0 text Luxembourg
+== SECTION Organization ORG-19 parent RES-5
+   TED-ADDRESS 0 text Corso Magenta 56
+   TED-COUNTRY 0 code IT
+   TED-NATIONALID 0 id IT12795320154
+   TED-NUTS 0 classification IT
+   TED-OFFICIALNAME 0 text Fincons S.P.A.
+   TED-POSTAL_CODE 0 text 20123
+   TED-TOWN 0 text Milano
+== SECTION Organization ORG-2 parent RES-1
+   TED-ADDRESS 0 text DaVinci Laan 5
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0401848135
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Atos Belgium S.A.
+   TED-POSTAL_CODE 0 text 1930
+   TED-TOWN 0 text Zaventeem
+== SECTION Organization ORG-20 parent RES-6
+   TED-ADDRESS 0 text Pascalschacht 1
+   TED-COUNTRY 0 code DE
+   TED-NATIONALID 0 id DE138187809
+   TED-NUTS 0 classification DE
+   TED-OFFICIALNAME 0 text DlaLOGIKa GmbH
+   TED-POSTAL_CODE 0 text 66125
+   TED-TOWN 0 text Saarbrücken
+== SECTION Organization ORG-21 parent RES-6
+   TED-ADDRESS 0 text rue d’Epernay 16
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU16222163
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Dokumenta S.A.
+   TED-POSTAL_CODE 0 text 1490
+   TED-TOWN 0 text Luxembourg
+== SECTION Organization ORG-22 parent RES-7
+   TED-ADDRESS 0 text Al Pantou Street 19-23
+   TED-COUNTRY 0 code GR
+   TED-NATIONALID 0 id EL094029552
+   TED-NUTS 0 classification EL
+   TED-OFFICIALNAME 0 text UniSystems Information Technology Systems Commercial S.A.
+   TED-POSTAL_CODE 0 text 17671
+   TED-TOWN 0 text Athens
+== SECTION Organization ORG-23 parent RES-7
+   TED-ADDRESS 0 text 17, rue Edmond Reuter
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU15001853
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Atos Luxembourg PSF
+   TED-POSTAL_CODE 0 text 5326
+   TED-TOWN 0 text Contern
+== SECTION Organization ORG-24 parent RES-7
+   TED-ADDRESS 0 text 11 rue de l'Industrie
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU14925288
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Computer Resources International
+   TED-POSTAL_CODE 0 text 8399
+   TED-TOWN 0 text Windhof
+== SECTION Organization ORG-25 parent RES-7
+   TED-ADDRESS 0 text rue Guimard 15
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0819095021
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Engineering International Belgium S.A.
+   TED-POSTAL_CODE 0 text 1040
+   TED-TOWN 0 text Brussels
+== SECTION Organization ORG-26 parent RES-8
+   TED-ADDRESS 0 text 12, rue Jean Engling
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU17535424
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text European Dynamics Luxembourg S.A.
+   TED-POSTAL_CODE 0 text 1466
+   TED-TOWN 0 text Luxembourg
+== SECTION Organization ORG-27 parent RES-8
+   TED-ADDRESS 0 text 209, Kifissias ave. and Arkadiou Str.
+   TED-COUNTRY 0 code GR
+   TED-NATIONALID 0 id EL094402295
+   TED-NUTS 0 classification EL
+   TED-OFFICIALNAME 0 text European Dynamics S.A.
+   TED-POSTAL_CODE 0 text 15124
+   TED-TOWN 0 text Athens
+== SECTION Organization ORG-28 parent RES-9
+   TED-ADDRESS 0 text Boulevard du Jazz 13
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU19594051
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text ARHS Developments S.A.
+   TED-POSTAL_CODE 0 text 4370
+   TED-TOWN 0 text Belvaux
+== SECTION Organization ORG-29 parent RES-9
+   TED-ADDRESS 0 text rue de Spa 8
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0712941486
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Everis Belgique SPRL
+   TED-POSTAL_CODE 0 text 1000
+   TED-TOWN 0 text Brussels
+== SECTION Organization ORG-3 parent RES-1
+   TED-ADDRESS 0 text 19-23 Al. Pantou Street
+   TED-COUNTRY 0 code GR
+   TED-NATIONALID 0 id EL094029552
+   TED-NUTS 0 classification EL
+   TED-OFFICIALNAME 0 text Unisystems Information Technology Systems Commercial S.A.
+   TED-POSTAL_CODE 0 text 17671
+   TED-TOWN 0 text Athens
+== SECTION Organization ORG-30 parent RES-9
+   TED-ADDRESS 0 text 2, rue d'Arlon
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU18044744
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Sword Technologies S.A.
+   TED-POSTAL_CODE 0 text 8399
+   TED-TOWN 0 text Windhof
+== SECTION Organization ORG-31 parent RES-9
+   TED-ADDRESS 0 text 89A rue Pafebruch
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU19535286
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text C-DEV S.A.
+   TED-POSTAL_CODE 0 text 8308
+   TED-TOWN 0 text Capellen
+== SECTION Organization ORG-32 parent RES-10
+   TED-ADDRESS 0 text rue de Spa 8
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0712941486
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Everis Belgique SPRL
+   TED-POSTAL_CODE 0 text 1000
+   TED-TOWN 0 text Brussels
+== SECTION Organization ORG-33 parent RES-10
+   TED-ADDRESS 0 text Boulevard du Jazz 13
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU19594051
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text ARHS Developments SA
+   TED-POSTAL_CODE 0 text 4370
+   TED-TOWN 0 text Belvaux
+== SECTION Organization ORG-34 parent RES-10
+   TED-ADDRESS 0 text 89A rue Pafebruch
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU19535286
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text C-DEV S.A.
+   TED-POSTAL_CODE 0 text 8308
+   TED-TOWN 0 text Capellen
+== SECTION Organization ORG-35 parent RES-10
+   TED-ADDRESS 0 text 2, rue d'Arlon
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU18044744
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Sword Technologies S.A.
+   TED-POSTAL_CODE 0 text 8399
+   TED-TOWN 0 text Windhof
+== SECTION Organization ORG-36 parent RES-11
+   TED-ADDRESS 0 text Telecomlaan
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0405914514
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Unisys Belgium S.A.
+   TED-POSTAL_CODE 0 text 1831
+   TED-TOWN 0 text Diegem
+== SECTION Organization ORG-37 parent RES-11
+   TED-ADDRESS 0 text Bessenveldstraat 19
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0407184521
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Capgemini Belgium N.V.
+   TED-POSTAL_CODE 0 text 1831
+   TED-TOWN 0 text Diegem
+== SECTION Organization ORG-38 parent RES-11
+   TED-ADDRESS 0 text Square Marie Curie 12
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0430262405
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Fujitsu Technology Solutions N.V./S.A.
+   TED-POSTAL_CODE 0 text 1070
+   TED-TOWN 0 text Brussels
+== SECTION Organization ORG-39 parent RES-11
+   TED-ADDRESS 0 text 2b, rue Nicolas Bove
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU16853659
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Intrasoft International S.A.
+   TED-POSTAL_CODE 0 text 1253
+   TED-TOWN 0 text Luxembourg
+== SECTION Organization ORG-4 parent RES-1
+   TED-ADDRESS 0 text 11 rue de l’Industrie
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU14925288
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Computer Resources International
+   TED-POSTAL_CODE 0 text 8399
+   TED-TOWN 0 text Windhof
+== SECTION Organization ORG-40 parent RES-11
+   TED-ADDRESS 0 text rue du Bosquet 10
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0882094937
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text I.R.I.S. Solutions and Experts S.A.
+   TED-POSTAL_CODE 0 text 1435
+   TED-TOWN 0 text Mont-Saint-Guibert
+== SECTION Organization ORG-41 parent RES-11
+   TED-ADDRESS 0 text Route de Longwy 36
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU15554966
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text Sogeti Luxembourg S.A.
+   TED-POSTAL_CODE 0 text 8080
+   TED-TOWN 0 text Bertrange
+== SECTION Organization ORG-42 parent RES-11
+   TED-ADDRESS 0 text rue d’Arlon 53-7
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0667692570
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Trasys International EEIG
+   TED-POSTAL_CODE 0 text 1040
+   TED-TOWN 0 text Brussels
+== SECTION Organization ORG-43 parent PROCEDURE
+   TED-ADDRESS 0 text rue du Fort Niedergrünewald
+   TED-COUNTRY 0 code LU
+   TED-E_MAIL 0 text generalcourt.registry@curia.europa.eu
+   TED-FAX 0 text +352 4303-2100
+   TED-OFFICIALNAME 0 text General Court
+   TED-PHONE 0 text +352 4303-1
+   TED-POSTAL_CODE 0 text L-2925
+   TED-TOWN 0 text Luxembourg
+   TED-URL 0 text http://curia.europa.eu
+== SECTION Organization ORG-5 parent RES-1
+   TED-ADDRESS 0 text rue Guimard 15
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0819095021
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Engineering International Belgium S.A.
+   TED-POSTAL_CODE 0 text 1040
+   TED-TOWN 0 text Brussels
+== SECTION Organization ORG-6 parent RES-2
+   TED-ADDRESS 0 text rue Jean Engling 12
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU17535424
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text European Dynamics Luxembourg S.A.
+   TED-POSTAL_CODE 0 text 1466
+   TED-TOWN 0 text Luxembourg
+== SECTION Organization ORG-7 parent RES-2
+   TED-ADDRESS 0 text 209, Kifissias ave. and Arkadiou Str.
+   TED-COUNTRY 0 code GR
+   TED-NATIONALID 0 id EL094402295
+   TED-NUTS 0 classification EL
+   TED-OFFICIALNAME 0 text European Dynamics S.A.
+   TED-POSTAL_CODE 0 text 151 24
+   TED-TOWN 0 text Athens
+== SECTION Organization ORG-8 parent RES-3
+   TED-ADDRESS 0 text rue de Spa 8
+   TED-COUNTRY 0 code BE
+   TED-NATIONALID 0 id BE0712941486
+   TED-NUTS 0 classification BE
+   TED-OFFICIALNAME 0 text Everis Belgique SPRL
+   TED-POSTAL_CODE 0 text 1000
+   TED-TOWN 0 text Brussels
+== SECTION Organization ORG-9 parent RES-3
+   TED-ADDRESS 0 text Boulevard du Jazz 13
+   TED-COUNTRY 0 code LU
+   TED-NATIONALID 0 id LU19594051
+   TED-NUTS 0 classification LU
+   TED-OFFICIALNAME 0 text ARHS Developments SA
+   TED-POSTAL_CODE 0 text 4370
+   TED-TOWN 0 text Belvaux
+== SECTION Notice PROCEDURE parent None
+   TED-AA_AUTHORITY_TYPE 0 code 5
+   TED-AA_NAME 2 text European Commission, Directorate-General for Informatics, Directorate A for Strategy and Resources, Unit A3: ICT Procurement and Contracts
+   TED-AC_AWARD_CRIT 0 code 1
+   TED-ADDRESS_CONTRACTING_BODY 0 id ORG-1
+   TED-ADDRESS_REVIEW_BODY 0 id ORG-43
+   TED-CA_ACTIVITY 0 code GENERAL_PUBLIC_SERVICES
+   TED-CA_CE_NUTS 0 classification BE100
+   TED-CA_TYPE 0 code EU_INSTITUTION
+   TED-COLL_OJ 0 code S
+   TED-CONTRACT_COVERED_GPA 0 integer 1
+   TED-DATE_DISPATCH_NOTICE 0 date 2019-09-25
+   TED-DATE_PUB 0 date 2019-10-07
+   TED-DS_DATE_DISPATCH 0 date 2019-09-25
+   TED-FORM 0 code F03
+   TED-FRAMEWORK 0 integer 1
+   TED-HEADING 0 code ECC03
+   TED-IA_URL_GENERAL 0 text https://ec.europa.eu/info/departments/informatics_en
+   TED-INFO_ADD 0 text See procurement documents at https://etendering.ted.europa.eu/cft/cft-documents.html?cftId=4468.
+   TED-INITIATOR 0 code EC
+   TED-ISO_COUNTRY 0 code BE
+   TED-LEGAL_BASIS 0 code 32018R1046
+   TED-LG_ORIG 0 code EN
+   TED-LOT_DIVISION 0 integer 1
+   TED-MA_MAIN_ACTIVITIES 0 code S
+   TED-NC_CONTRACT_NATURE 0 code 4
+   TED-NOTICE_NUMBER_OJ 0 id 2019/S 042-094246
+   TED-NOTICE_NUMBER_OJ.PREV_KIND 0 code THIS_PROCEDURE
+   TED-NO_DOC_OJS 0 id 2019/S 193-467698
+   TED-NO_OJ 0 integer 193
+   TED-ORIGINAL_CPV 0 classification 72000000
+   TED-ORIGINAL_CPV 1 classification 72200000
+   TED-ORIGINAL_CPV 2 classification 72300000
+   TED-ORIGINAL_CPV 3 classification 72600000
+   TED-PERFORMANCE_NUTS 0 classification BE
+   TED-PR_PROC 0 code 1
+   TED-PT_OPEN 0 integer 1
+   TED-RECEPTION_ID 0 id 19-466436-001
+   TED-REFERENCE_NUMBER 0 id DIGIT/A3/PO/2018/018
+   TED-REF_NOTICE.NO_DOC_OJS 0 id 2019/S 042-094246
+   TED-REVIEW_PROCEDURE 0 text Within 2 months of the notification to the plaintiff or, in absence thereof, of the day on which it came to the knowledge of the plaintiff an action for annulment could be launched. Any request made and any reply from th...
+   TED-RP_REGULATION 0 code 3
+   TED-SHORT_DESCR 0 text Highly specialised IT consultancy services in time and means, proximity time and means, fixed price and/or quoted time and means.
+   TED-TD_DOCUMENT_TYPE 0 code 7
+   TED-TENDERER_NUTS 0 classification BE
+   TED-TENDERER_NUTS 1 classification EL
+   TED-TENDERER_NUTS 2 classification LU
+   TED-TENDERER_NUTS 3 classification IT
+   TED-TENDERER_NUTS 4 classification DE
+   TED-TITLE 0 text Specialised IT Consultancy Services (SITCO)
+   TED-TI_CY 2 text Belgium
+   TED-TI_TEXT 2 text Specialised IT Consultancy Services (SITCO)
+   TED-TI_TOWN 2 text Brussels
+   TED-TYPE_CONTRACT 0 code SERVICES
+   TED-TY_TYPE_BID 0 code 9
+   TED-VALUE 0 amount {'cents': 10866649300, 'currency': 'EUR'}
+   TED-VALUE.TYPE 0 code PROCUREMENT_TOTAL
+   TED-VAL_TOTAL 0 amount {'cents': 10866649300, 'currency': 'EUR'}
+== SECTION LotResult RES-1 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-2
+   TED-ADDRESS_CONTRACTOR 1 id ORG-3
+   TED-ADDRESS_CONTRACTOR 2 id ORG-4
+   TED-ADDRESS_CONTRACTOR 3 id ORG-5
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07760
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 1
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 1
+   TED-NB_TENDERS_RECEIVED 0 integer 7
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-NO_SME 2 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 15.0
+   TED-SME 0 integer 1
+   TED-TITLE 0 text Specialised IT Consultancy in Interoperability and Agricultural/Trans-European e-Government Services
+   TED-VAL_TOTAL 0 amount {'cents': 838587400, 'currency': 'EUR'}
+== SECTION LotResult RES-10 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-32
+   TED-ADDRESS_CONTRACTOR 1 id ORG-33
+   TED-ADDRESS_CONTRACTOR 2 id ORG-34
+   TED-ADDRESS_CONTRACTOR 3 id ORG-35
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07769
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 10
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 5
+   TED-NB_TENDERS_RECEIVED 0 integer 2
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-NO_SME 2 integer 1
+   TED-NO_SME 3 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 23.0
+   TED-TITLE 0 text Specialised IT Consultancy in Health and Food Safety
+   TED-VAL_TOTAL 0 amount {'cents': 2178480200, 'currency': 'EUR'}
+== SECTION LotResult RES-11 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-36
+   TED-ADDRESS_CONTRACTOR 1 id ORG-37
+   TED-ADDRESS_CONTRACTOR 2 id ORG-38
+   TED-ADDRESS_CONTRACTOR 3 id ORG-39
+   TED-ADDRESS_CONTRACTOR 4 id ORG-40
+   TED-ADDRESS_CONTRACTOR 5 id ORG-41
+   TED-ADDRESS_CONTRACTOR 6 id ORG-42
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07770
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 11
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 5
+   TED-NB_TENDERS_RECEIVED 0 integer 2
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-NO_SME 2 integer 1
+   TED-NO_SME 3 integer 1
+   TED-NO_SME 4 integer 1
+   TED-NO_SME 5 integer 1
+   TED-NO_SME 6 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 6.0
+   TED-TITLE 0 text Specialised IT Consultancy in Health and Food Safety
+   TED-VAL_TOTAL 0 amount {'cents': 2178480200, 'currency': 'EUR'}
+== SECTION LotResult RES-2 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-6
+   TED-ADDRESS_CONTRACTOR 1 id ORG-7
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07761
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 2
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 1
+   TED-NB_TENDERS_RECEIVED 0 integer 7
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 10.0
+   TED-TITLE 0 text Specialised IT Consultancy in Interoperability and Agricultural/Trans-European e-Government Services
+   TED-VAL_TOTAL 0 amount {'cents': 838587400, 'currency': 'EUR'}
+== SECTION LotResult RES-3 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-8
+   TED-ADDRESS_CONTRACTOR 1 id ORG-9
+   TED-ADDRESS_CONTRACTOR 2 id ORG-10
+   TED-ADDRESS_CONTRACTOR 3 id ORG-11
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07762
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 3
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 2
+   TED-NB_TENDERS_RECEIVED 0 integer 7
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-NO_SME 2 integer 1
+   TED-NO_SME 3 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 20.0
+   TED-TITLE 0 text Specialised IT Consultancy in Digital Business Solutions
+   TED-VAL_TOTAL 0 amount {'cents': 3844575900, 'currency': 'EUR'}
+== SECTION LotResult RES-4 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-12
+   TED-ADDRESS_CONTRACTOR 1 id ORG-13
+   TED-ADDRESS_CONTRACTOR 2 id ORG-14
+   TED-ADDRESS_CONTRACTOR 3 id ORG-15
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07763
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 4
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 2
+   TED-NB_TENDERS_RECEIVED 0 integer 7
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-NO_SME 2 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 20.0
+   TED-SME 0 integer 1
+   TED-TITLE 0 text Specialised IT Consultancy in Digital Business Solutions
+   TED-VAL_TOTAL 0 amount {'cents': 3844575900, 'currency': 'EUR'}
+== SECTION LotResult RES-5 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-16
+   TED-ADDRESS_CONTRACTOR 1 id ORG-17
+   TED-ADDRESS_CONTRACTOR 2 id ORG-18
+   TED-ADDRESS_CONTRACTOR 3 id ORG-19
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07764
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 5
+   TED-LOT_NO 0 id 2
+   TED-NB_TENDERS_RECEIVED 0 integer 7
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-SME 0 integer 1
+   TED-SME 1 integer 1
+   TED-TITLE 0 text Specialised IT Consultancy in Digital Business Solutions
+   TED-VAL_TOTAL 0 amount {'cents': 3844575900, 'currency': 'EUR'}
+== SECTION LotResult RES-6 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-20
+   TED-ADDRESS_CONTRACTOR 1 id ORG-21
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07765
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 6
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 3
+   TED-NB_TENDERS_RECEIVED 0 integer 2
+   TED-PCT_SUBCONTRACTING 0 number 10.0
+   TED-SME 0 integer 1
+   TED-SME 1 integer 1
+   TED-TITLE 0 text Specialised IT Consultancy in Office Automation, Cloud and Collaboration and e-signature
+   TED-VAL_TOTAL 0 amount {'cents': 2185092400, 'currency': 'EUR'}
+== SECTION LotResult RES-7 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-22
+   TED-ADDRESS_CONTRACTOR 1 id ORG-23
+   TED-ADDRESS_CONTRACTOR 2 id ORG-24
+   TED-ADDRESS_CONTRACTOR 3 id ORG-25
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07766
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 7
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 3
+   TED-NB_TENDERS_RECEIVED 0 integer 2
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-NO_SME 2 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 25.0
+   TED-SME 0 integer 1
+   TED-TITLE 0 text Specialised IT Consultancy in Office Automation, Cloud and Collaboration and e-signature
+   TED-VAL_TOTAL 0 amount {'cents': 2185092400, 'currency': 'EUR'}
+== SECTION LotResult RES-8 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-26
+   TED-ADDRESS_CONTRACTOR 1 id ORG-27
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07767
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 8
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 4
+   TED-NB_TENDERS_RECEIVED 0 integer 6
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 10.0
+   TED-TITLE 0 text Specialised IT Consultancy in Secure Data and Document Exchange
+   TED-VAL_TOTAL 0 amount {'cents': 1819913400, 'currency': 'EUR'}
+== SECTION LotResult RES-9 parent PROCEDURE
+   TED-ADDRESS_CONTRACTOR 0 id ORG-28
+   TED-ADDRESS_CONTRACTOR 1 id ORG-29
+   TED-ADDRESS_CONTRACTOR 2 id ORG-30
+   TED-ADDRESS_CONTRACTOR 3 id ORG-31
+   TED-AWARDED_CONTRACT 0 integer 1
+   TED-AWARDED_TO_GROUP 0 integer 1
+   TED-CONTRACT_NO 0 id DI-07768
+   TED-DATE_CONCLUSION_CONTRACT 0 date 2019-09-09
+   TED-ITEM 0 id 9
+   TED-LIKELY_SUBCONTRACTED 0 integer 1
+   TED-LOT_NO 0 id 4
+   TED-NB_TENDERS_RECEIVED 0 integer 6
+   TED-NO_SME 0 integer 1
+   TED-NO_SME 1 integer 1
+   TED-NO_SME 2 integer 1
+   TED-NO_SME 3 integer 1
+   TED-PCT_SUBCONTRACTING 0 number 35.0
+   TED-TITLE 0 text Specialised IT Consultancy in Secure Data and Document Exchange
+   TED-VAL_TOTAL 0 amount {'cents': 1819913400, 'currency': 'EUR'}

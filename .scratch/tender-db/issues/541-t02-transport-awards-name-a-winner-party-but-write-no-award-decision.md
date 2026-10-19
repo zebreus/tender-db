@@ -1,6 +1,6 @@
 # 541 — 2016 public-transport awards (T02) name their operator as a `winner` party but write no award decision
 
-Status: ready-for-agent — **unit 2 BUILT 2026-10-19** (wf_a8f42aac-9fa: implement, three review lenses, a skeptic per finding, fix; focused runs GATE-EXIT=0; full gate pending): a T02 (`TED-FORM` T02) with no LotResult writes one result `RES-T02` from its Notice section — winners = `ECONOMIC_OPERATOR_NAME_ADDRESS` refs through the `dropped` rule, decided = `CONTRACT_AWARD_DATE`, no value (none confirmed as section V's). Next: gate, deploy (after 551 B5's band seek), drain by `refold-fields` on `TED-COST_PARAMETERS` (notice_texts, 753 carriers), Verify on 5782055. Was: ready-for-agent — SIZED 2026-10-18 (refold-fields 2618, `expect: 1` on `TED-COST_PARAMETERS` in notice_texts): **753** notices carry it (T01 prior-information + T02 award MOVE forms together), against 970,980 for the shared `TED-ECONOMIC_OPERATOR_NAME_ADDRESS`. So the T02 cohort is at most 753 notices, small enough for an exact-cohort drain. Next: unit 2 build behind a MOVE-form predicate (a PROCEDURE-section award pair on a notice that carries the MOVE fields), then refold-fields over `TED-COST_PARAMETERS` (notice_texts) — size known: 753.
+Status: **DONE 2026-10-19** — unit 2 deployed (923172d, live in 9529345) and drained: refold-fields 2631 (753 TED-COST_PARAMETERS carriers re-queued, 753 Tenders stamped) + project 2632 (627 verified + 126 corrected); Verify: 5782055 serves `lot_results` RES-T02 winner 1953406 (Barnimer Busgesellschaft mbH) = its `winner` party, selec-w, 2016-09-21; 12 of 12 salted corrections likewise. Was: ready-for-agent — **unit 2 BUILT 2026-10-19** (wf_a8f42aac-9fa: implement, three review lenses, a skeptic per finding, fix; focused runs GATE-EXIT=0; full gate pending): a T02 (`TED-FORM` T02) with no LotResult writes one result `RES-T02` from its Notice section — winners = `ECONOMIC_OPERATOR_NAME_ADDRESS` refs through the `dropped` rule, decided = `CONTRACT_AWARD_DATE`, no value (none confirmed as section V's). Next: gate, deploy (after 551 B5's band seek), drain by `refold-fields` on `TED-COST_PARAMETERS` (notice_texts, 753 carriers), Verify on 5782055. Was: ready-for-agent — SIZED 2026-10-18 (refold-fields 2618, `expect: 1` on `TED-COST_PARAMETERS` in notice_texts): **753** notices carry it (T01 prior-information + T02 award MOVE forms together), against 970,980 for the shared `TED-ECONOMIC_OPERATOR_NAME_ADDRESS`. So the T02 cohort is at most 753 notices, small enough for an exact-cohort drain. Next: unit 2 build behind a MOVE-form predicate (a PROCEDURE-section award pair on a notice that carries the MOVE fields), then refold-fields over `TED-COST_PARAMETERS` (notice_texts) — size known: 753.
 T02 cohort and read whether its section V carries enough to write a result.
 Kind: coverage (legacy results)
 Relates to:
@@ -87,3 +87,17 @@ A T02 award (R2.0.8 MOVE, Regulation 1370/2007 public-transport contracts) names
   `bind_organizations` had moved them into facts — fixed with `t02_parties`), 2 refuted: a blank, undated operator
   slot reading `clos-nw` (needs a T02 without `CONTRACT_AWARD_DATE`, which the form requires), and the issue-384
   reader-arm guard not scanning the new function (both arms have a destination today).
+
+## RESOLVED-VERIFIED (2026-10-19)
+
+- Deployed with 551's switch-off (rev 9529345; 541 unit 2 is 923172d, gate green 1,450 s on its tree).
+- Drain: `refold-fields` 2631 (`{"profiles":["TED-COST_PARAMETERS"],"tables":["notice_texts"],"expect":753}`, 03:42Z,
+  sweep ~40 min): 753 carriers, 753 notices re-queued, 753 Tenders stamped; project 2632 (04:2xZ): 820 Tenders folded,
+  753 written, **627 verified + 126 corrected** (D7 complete), 128 versions, 127 correction rows. So 126 T02 Tenders gained
+  their result (the other 627 carriers are T01 prior information and T02s already identical).
+- Verify: `/v1/tenders/5782055` → winner parties [1953406], `lot_results` [RES-T02, winners [1953406 Barnimer
+  Busgesellschaft mbH], selec-w, decided 2016-09-21] — the issue's "done" line. 12 salted corrections (`/v1/changes` after
+  958809778, salt `541-`): each has one RES-T02 result whose winner is its `winner` party (Trenitalia, VR-Yhtymä, PKP
+  Intercity, VGS Südharz, …).
+- One exhibit carries a placeholder name as operator: 5266661 'Voir Section VI) Renseignement complémentaires' — already
+  its `winner` party before 541; the placeholder rule's gap is recorded as issue 511 unit 7 item 5.

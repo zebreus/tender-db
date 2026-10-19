@@ -1,0 +1,190 @@
+== SECTION Lot LOT-1 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-DURATION 0 number 48.0
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See Internet address provided in Section I.3.
+   TED-ITEM 0 id 1
+   TED-LOT_NO 0 id 1
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See Internet address provided in Section I.3.
+   TED-NO_ACCEPTED_VARIANTS 0 integer 1
+   TED-NO_OPTIONS 0 integer 1
+   TED-NO_RENEWAL 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in interoperability and agricultural/trans-European e-Government services. For further information, see the Internet address provided in Section I.3.
+   TED-TITLE 0 text Specialised IT Consultancy in Interoperability and Agricultural/Trans-European e-Government Services
+== SECTION Lot LOT-2 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-DURATION 0 number 48.0
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See Internet address provided in Section I.3.
+   TED-ITEM 0 id 2
+   TED-LOT_NO 0 id 2
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See Internet address provided in Section I.3.
+   TED-NO_ACCEPTED_VARIANTS 0 integer 1
+   TED-NO_OPTIONS 0 integer 1
+   TED-NO_RENEWAL 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-NUTS 1 classification LU
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in digital business solutions. For further information, see the Internet address provided in Section I.3.
+   TED-TITLE 0 text Specialised IT Consultancy in Digital Business Solutions
+== SECTION Lot LOT-3 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-DURATION 0 number 48.0
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See Internet address provided in Section I.3.
+   TED-ITEM 0 id 3
+   TED-LOT_NO 0 id 3
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See Internet address provided in Section I.3.
+   TED-NO_ACCEPTED_VARIANTS 0 integer 1
+   TED-NO_OPTIONS 0 integer 1
+   TED-NO_RENEWAL 0 integer 1
+   TED-NUTS 0 classification LU
+   TED-NUTS 1 classification BE
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in office automation, cloud and collaboration and e-signature. For further information, see the Internet address provided in Section I.3.
+   TED-TITLE 0 text Specialised IT Consultancy in Office Automation, Cloud and Collaboration and e-signature
+== SECTION Lot LOT-4 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-DURATION 0 number 48.0
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See Internet address provided in Section I.3.
+   TED-ITEM 0 id 4
+   TED-LOT_NO 0 id 4
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See Internet address provided in Section I.3.
+   TED-NO_ACCEPTED_VARIANTS 0 integer 1
+   TED-NO_OPTIONS 0 integer 1
+   TED-NO_RENEWAL 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-NUTS 1 classification LU
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in secure data and document exchange. For further information, see the Internet address provided in Section I.3.
+   TED-TITLE 0 text Specialised IT Consultancy in Secure Data and Document Exchange
+== SECTION Lot LOT-5 parent PROCEDURE
+   TED-AC_PRICE 0 integer 1
+   TED-DURATION 0 number 48.0
+   TED-EU_PROGR_RELATED 0 text EU administrative appropriations
+   TED-INFO_ADD 0 text See Internet address provided in Section I.3.
+   TED-ITEM 0 id 5
+   TED-LOT_NO 0 id 5
+   TED-MAIN_SITE 0 text The locations of the participating EU Institutions. See Internet address provided in Section I.3.
+   TED-NO_ACCEPTED_VARIANTS 0 integer 1
+   TED-NO_OPTIONS 0 integer 1
+   TED-NO_RENEWAL 0 integer 1
+   TED-NUTS 0 classification BE
+   TED-NUTS 1 classification LU
+   TED-NUTS 2 classification IE
+   TED-SHORT_DESCR 0 text Specialised IT consultancy in health and food safety. For further information, see the Internet address provided in Section I.3.
+   TED-TITLE 0 text Specialised IT Consultancy in Health and Food Safety
+== SECTION Organization ORG-1 parent PROCEDURE
+   TED-ADDRESS 0 text rue Montoyer 15, Office: 07/P001
+   TED-CONTACT_POINT 0 text DIGIT Contracts Info Centre
+   TED-COUNTRY 0 code BE
+   TED-E_MAIL 0 text digit-contracts-info-centre@ec.europa.eu
+   TED-FAX 0 text +32 229-57702
+   TED-NUTS 0 classification BE100
+   TED-OFFICIALNAME 0 text European Commission, Directorate-General for Informatics, Directorate for Strategy and Resources, ICT Procurement and Contracts Unit
+   TED-PHONE 0 text +32 229-60762
+   TED-POSTAL_CODE 0 text 1000
+   TED-TOWN 0 text Brussels
+   TED-URL_BUYER 0 text https://ec.europa.eu/info/funding-tenders/tender-opportunities-department/informatics-tenders-and-contracts_en
+   TED-URL_GENERAL 0 text https://ec.europa.eu/info/departments/informatics_en
+== SECTION Organization ORG-2 parent PROCEDURE
+   TED-ADDRESS 0 text rue du Fort Niedergrünewald
+   TED-COUNTRY 0 code LU
+   TED-E_MAIL 0 text generalcourt.registry@curia.europa.eu
+   TED-FAX 0 text +352 4303-2100
+   TED-OFFICIALNAME 0 text General Court
+   TED-PHONE 0 text +352 4303-1
+   TED-POSTAL_CODE 0 text L-2925
+   TED-TOWN 0 text Luxembourg
+   TED-URL 0 text http://curia.europa.eu
+== SECTION Notice PROCEDURE parent None
+   TED-AA_AUTHORITY_TYPE 0 code 5
+   TED-AA_NAME 2 text European Commission, Directorate-General for Informatics, Directorate for Strategy and Resources, ICT Procurement and Contracts Unit
+   TED-AC_AWARD_CRIT 0 code 1
+   TED-ADDRESS_CONTRACTING_BODY 0 id ORG-1
+   TED-ADDRESS_FURTHER_INFO_IDEM 0 integer 1
+   TED-ADDRESS_REVIEW_BODY 0 id ORG-2
+   TED-CA_ACTIVITY 0 code GENERAL_PUBLIC_SERVICES
+   TED-CA_CE_NUTS 0 classification BE100
+   TED-CA_TYPE 0 code EU_INSTITUTION
+   TED-COLL_OJ 0 code S
+   TED-CONTRACT_COVERED_GPA 0 integer 1
+   TED-DATE_DISPATCH_NOTICE 0 date 2019-02-20
+   TED-DATE_OPENING_TENDERS 0 date 2019-04-11T10:30:00+00:00
+   TED-DATE_PUB 0 date 2019-02-28
+   TED-DATE_RECEIPT_TENDERS 0 date 2019-04-09T15:00:00+00:00
+   TED-DOCUMENT_FULL 0 integer 1
+   TED-DS_DATE_DISPATCH 0 date 2019-02-20
+   TED-DT_DATE_FOR_SUBMISSION 0 date 2019-04-09T15:00:00+00:00
+   TED-DURATION_TENDER_VALID 0 number 9.0
+   TED-ECONOMIC_CRITERIA_DOC 0 integer 1
+   TED-FORM 0 code F02
+   TED-FRAMEWORK 0 integer 1
+   TED-HEADING 0 code ECC02
+   TED-IA_URL_ETENDERING 0 text https://etendering.ted.europa.eu/cft/cft-display.html?cftId=4468
+   TED-IA_URL_GENERAL 0 text https://ec.europa.eu/info/departments/informatics_en
+   TED-INFO_ADD 0 text See Internet address provided in Section I.3
+   TED-INFO_ADD 1 text Envisaged maximum number of contractors is 3 for lot 2, and 2 for each of lots 1, 3 4 and 5. See Internet address provided in Section I.3.
+   TED-INFO_ADD 2 text For the indicative estimation of the volumes of services to be supplied over the whole duration of the framework contracts per lot, see Internet address provided in Section I.3.
+   TED-INITIATOR 0 code EC
+   TED-ISO_COUNTRY 0 code BE
+   TED-LANGUAGE 0 code EN
+   TED-LANGUAGE 1 code BG
+   TED-LANGUAGE 2 code DA
+   TED-LANGUAGE 3 code DE
+   TED-LANGUAGE 4 code EL
+   TED-LANGUAGE 5 code ET
+   TED-LANGUAGE 6 code FI
+   TED-LANGUAGE 7 code FR
+   TED-LANGUAGE 8 code GA
+   TED-LANGUAGE 9 code HR
+   TED-LANGUAGE 10 code HU
+   TED-LANGUAGE 11 code IT
+   TED-LANGUAGE 12 code LV
+   TED-LANGUAGE 13 code LT
+   TED-LANGUAGE 14 code MT
+   TED-LANGUAGE 15 code NL
+   TED-LANGUAGE 16 code PL
+   TED-LANGUAGE 17 code PT
+   TED-LANGUAGE 18 code RO
+   TED-LANGUAGE 19 code SK
+   TED-LANGUAGE 20 code SL
+   TED-LANGUAGE 21 code ES
+   TED-LANGUAGE 22 code SV
+   TED-LANGUAGE 23 code CS
+   TED-LEGAL_BASIS 0 code 32018R1046
+   TED-LG_ORIG 0 code EN
+   TED-LOT_DIVISION 0 integer 1
+   TED-LOT_MAX_NUMBER 0 integer 5
+   TED-MA_MAIN_ACTIVITIES 0 code S
+   TED-NC_CONTRACT_NATURE 0 code 4
+   TED-NO_DOC_OJS 0 id 2019/S 042-094246
+   TED-NO_OJ 0 integer 42
+   TED-NO_RECURRENT_PROCUREMENT 0 integer 1
+   TED-ORIGINAL_CPV 0 classification 72000000
+   TED-ORIGINAL_CPV 1 classification 72200000
+   TED-ORIGINAL_CPV 2 classification 72300000
+   TED-ORIGINAL_CPV 3 classification 72600000
+   TED-PERFORMANCE_CONDITIONS 0 text See Internet address provided in Section I.3
+   TED-PERFORMANCE_NUTS 0 classification BE
+   TED-PERFORMANCE_NUTS 1 classification LU
+   TED-PERFORMANCE_NUTS 2 classification IE
+   TED-PLACE 0 text Rue Montoyer 15
+   TED-PLACE 1 text B-1000 Brussels
+   TED-PR_PROC 0 code 1
+   TED-PT_OPEN 0 integer 1
+   TED-RECEPTION_ID 0 id 19-087232-001
+   TED-REFERENCE_NUMBER 0 id DIGIT/A3/PO/2018/018
+   TED-REVIEW_PROCEDURE 0 text See Internet address provided in Section I.3
+   TED-RP_REGULATION 0 code 3
+   TED-SHORT_DESCR 0 text Highly specialised IT consultancy services in time and means, proximity time and means, fixed price and/or quoted time and means.
+   TED-SHORT_DESCR 1 text See Internet address provided in Section I.3.
+   TED-TD_DOCUMENT_TYPE 0 code 3
+   TED-TECHNICAL_CRITERIA_DOC 0 integer 1
+   TED-TITLE 0 text Specialised IT Consultancy Services (SITCO)
+   TED-TI_CY 2 text Belgium
+   TED-TI_TEXT 2 text Specialised IT Consultancy Services (SITCO)
+   TED-TI_TOWN 2 text Brussels
+   TED-TYPE_CONTRACT 0 code SERVICES
+   TED-TY_TYPE_BID 0 code 1
+   TED-URL_DOCUMENT 0 text https://etendering.ted.europa.eu/cft/cft-display.html?cftId=4468
+   TED-URL_PARTICIPATION 0 text https://etendering.ted.europa.eu/cft/cft-display.html?cftId=4468

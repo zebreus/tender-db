@@ -255,4 +255,8 @@ r208 appeal-information pointers.
    50(6)(a) — information withheld…' (it also carries a made-up GBCOH identifier).
 
 The readers' full notes are in `../511-placeholders/u6/reads-wf_285dee15.json`.
+5. **A bare section numeral with no number** (found 2026-10-19 by 541's drain read): 'Voir Section VI) Renseignement
+   complémentaires' (tender 5266661, a 2015 T02: org 5496719 is its `winner` party and, since 541 unit 2, its `RES-T02`
+   result winner). [`has_form_reference`] needs a numeral, a dot and a digit (`VI.3`), so `VI)` alone is no reference
+   and the name is kept. The fix would read `section`/`point`/`Ziffer` + a bare numeral + `)` as a reference.
 
