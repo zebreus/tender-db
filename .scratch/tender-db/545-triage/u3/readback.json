@@ -1,0 +1,124 @@
+[
+ {
+  "tender": 8582477,
+  "notice": 47158784,
+  "from": 30913753,
+  "to": 31555041,
+  "target_roles": [
+   "Tenderer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8651794,
+  "notice": 46811712,
+  "from": 30914046,
+  "to": 11314818,
+  "target_roles": [
+   "Tenderer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8662629,
+  "notice": 46847682,
+  "from": 30926961,
+  "to": 30974714,
+  "target_roles": [
+   "Tenderer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8643395,
+  "notice": 46796727,
+  "from": 31545104,
+  "to": 30917202,
+  "target_roles": [
+   "Procedure-Buyer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8700852,
+  "notice": 46890437,
+  "from": 31568872,
+  "to": 30953794,
+  "target_roles": [
+   "Tenderer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8660381,
+  "notice": 46826419,
+  "from": 31560408,
+  "to": 31550990,
+  "target_roles": [
+   "Procedure-Buyer",
+   "Procedure-Buyer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8588313,
+  "notice": 46709309,
+  "from": 30926847,
+  "to": 30929573,
+  "target_roles": [
+   "Tenderer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8639243,
+  "notice": 46381132,
+  "from": 30913851,
+  "to": 30918222,
+  "target_roles": [
+   "Procedure-Buyer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8642384,
+  "notice": 46794970,
+  "from": 31548301,
+  "to": 30913749,
+  "target_roles": [
+   "Tenderer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8664618,
+  "notice": 46834269,
+  "from": 30916588,
+  "to": 30915240,
+  "target_roles": [
+   "Tenderer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ },
+ {
+  "tender": 8664993,
+  "notice": 46834978,
+  "from": 30913706,
+  "to": 12991212,
+  "target_roles": [
+   "Tenderer"
+  ],
+  "holder_roles": [],
+  "ok": true
+ }
+]
