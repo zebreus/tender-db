@@ -1298,4 +1298,11 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   is at the deployed code's fixed point for the whole set, so the drain's D1/D2 will measure path W and nothing else.
 - Today's daily chain (07:35Z: ted 4,029 / doe 601 / fts 14 notices, project 2645: 4,070 written, 102 relabelled, rederive
   0 changed) ran before the probe; its folded Tenders join L_changed by the change-row range 958810037 → 958848408.
+- **Code-drift ledger, continued (2026-10-19, after the probe):** bcc501a → dc86e8e adds c09165d (548 rule v13: org heads only,
+  no Tender fold input; 127 renames by job 2654 are `organization changed` rows, not tender rows) → 47def3f adds 9ce8649 (539: a
+  DÖE notice's published_at is the latest publication candidate raised to its IssueDate's day; the fold re-derives it, so any
+  re-fold of a DÖE Tender can re-date it — 539's review measured 0 changed rows on this cohort: 54 DÖE Tenders, 104 DÖE
+  versions). 546 unit 3 is held OFF main (`546-triage/u3-42cc601.patch`). Issue 545's rehoming (2651/2652) corrected 47 Tenders,
+  listed in `b6/l_changed_545_ids.json` with 571's in `l_changed_571_ids.json`. **Before U6, re-run the zero-drift probe** on
+  the deployed rev (refold-lot-sum on the 3,502, expect 0 corrected) so the flip's D1/D2 still measure path W alone.
 
