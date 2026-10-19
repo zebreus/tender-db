@@ -1095,3 +1095,7 @@ both agree (no third reader was needed).
 - **Corpus drain started:** refold-lot-sum 2626 (`expect` 251,526): 759,642 notices re-queued, 251,526 stamped
   epoch-stale; project 2627 running. Stop window for the two drains' corrections together: 835–3,338 (cohort so far
   74 + 1).
+- **Confirmation draw's range, fixed now (2026-10-19 01:10Z, before project 2627 finished and before any read):**
+  `--range 958764958 <cursor after 2627>` — 958764958 is `/health`'s cursor read right after 2626/2627 were enqueued
+  (and still the cursor at 23:47Z, the project in its plan phase). The cohort drains' range is left out: its ids are
+  the excluded 279 + 277 bar 7 (the 6 px2 ids and 7511890).
