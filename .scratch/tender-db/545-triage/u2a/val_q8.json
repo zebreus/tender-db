@@ -1,0 +1,3875 @@
+[
+ {
+  "org": 30919627,
+  "ident": "GBCOH04001308",
+  "head": "POWER2 LTD",
+  "country": "GB",
+  "org_mentions": 12,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Power 2 Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46857528,
+  "last_notice": 46857528,
+  "keep": true,
+  "tokens": [
+   "power"
+  ],
+  "others": [
+   [
+    6,
+    "POWER2 LTD"
+   ],
+   [
+    3,
+    "POWER2 LTD"
+   ],
+   [
+    2,
+    "Power2 Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 30933178,
+  "ident": "GBCOH04002826",
+  "head": "MA EDUCATION & MUSIC LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "MA Education Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46991692,
+  "last_notice": 46991692,
+  "keep": false,
+  "tokens": [
+   "education"
+  ],
+  "others": [
+   [
+    2,
+    "MA EDUCATION & MUSIC LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31547228,
+  "ident": "GBCOH04004654",
+  "head": "SMITHS (GLOUCESTER) LIMITED",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Smith Gloucester Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46793956,
+  "last_notice": 46793956,
+  "keep": false,
+  "tokens": [
+   "gloucester",
+   "smith"
+  ],
+  "others": [
+   [
+    5,
+    "SMITHS (GLOUCESTER) LIMITED"
+   ],
+   [
+    1,
+    "Smiths (Gloucester) Ltd"
+   ],
+   [
+    1,
+    "Smith's (Gloucester) Limited"
+   ],
+   [
+    1,
+    "SMITHS (GLOUCESTER) LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31547228,
+  "ident": "GBCOH04004654",
+  "head": "SMITHS (GLOUCESTER) LIMITED",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Smith's (Gloucester) Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 47158153,
+  "last_notice": 47158153,
+  "keep": false,
+  "tokens": [
+   "gloucester",
+   "smith"
+  ],
+  "others": [
+   [
+    5,
+    "SMITHS (GLOUCESTER) LIMITED"
+   ],
+   [
+    1,
+    "Smiths (Gloucester) Ltd"
+   ],
+   [
+    1,
+    "Smith Gloucester Limited"
+   ],
+   [
+    1,
+    "SMITHS (GLOUCESTER) LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31578412,
+  "ident": "GBCOH04009541",
+  "head": "CHANGING FUTURES NORTH EAST",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Changing Future North East",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 47193485,
+  "last_notice": 47193485,
+  "keep": false,
+  "tokens": [
+   "changing",
+   "future"
+  ],
+  "others": [
+   [
+    2,
+    "CHANGING FUTURES NORTH EAST"
+   ]
+  ]
+ },
+ {
+  "org": 30926608,
+  "ident": "GBCOH04010426",
+  "head": "PROSPERO GROUP LTD",
+  "country": "GB",
+  "org_mentions": 38,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": " Prospero Recruitment Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46854763,
+  "last_notice": 46854763,
+  "keep": false,
+  "tokens": [
+   "prospero",
+   "recruitment"
+  ],
+  "others": [
+   [
+    26,
+    "PROSPERO GROUP LTD"
+   ],
+   [
+    5,
+    "Prospero Group Ltd"
+   ],
+   [
+    3,
+    "PROSPERO GROUP LTD"
+   ],
+   [
+    1,
+    "Prospero Teaching"
+   ],
+   [
+    1,
+    "Prospero Group Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 30926608,
+  "ident": "GBCOH04010426",
+  "head": "PROSPERO GROUP LTD",
+  "country": "GB",
+  "org_mentions": 38,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Prospero Teaching",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46920133,
+  "last_notice": 46920133,
+  "keep": false,
+  "tokens": [
+   "prospero",
+   "teaching"
+  ],
+  "others": [
+   [
+    26,
+    "PROSPERO GROUP LTD"
+   ],
+   [
+    5,
+    "Prospero Group Ltd"
+   ],
+   [
+    3,
+    "PROSPERO GROUP LTD"
+   ],
+   [
+    1,
+    "Prospero Group Ltd"
+   ],
+   [
+    1,
+    "PROSPERO GROUP LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31549572,
+  "ident": "GBCOH04026398",
+  "head": "GLOUCESTERSHIRE ACTION FOR REFUGEES AND ASYLUM SEEKERS",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Gloucestershire Action for Refugees and Asylum Seekers (GARAS)",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46798963,
+  "last_notice": 46798963,
+  "keep": false,
+  "tokens": [
+   "action",
+   "asylum",
+   "garas",
+   "gloucestershire",
+   "refugees",
+   "seekers"
+  ],
+  "others": [
+   [
+    3,
+    "GLOUCESTERSHIRE ACTION FOR REFUGEES AND ASYLUM SEEKERS"
+   ]
+  ]
+ },
+ {
+  "org": 31553579,
+  "ident": "GBCOH04034666",
+  "head": "CHUBB FIRE & SECURITY LTD",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Chubb Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46890519,
+  "last_notice": 46890519,
+  "keep": false,
+  "tokens": [
+   "chubb"
+  ],
+  "others": [
+   [
+    2,
+    "CHUBB FIRE & SECURITY LTD"
+   ]
+  ]
+ },
+ {
+  "org": 31598301,
+  "ident": "GBCOH04043124",
+  "head": "Methodist Homes (MHA)",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Methodist Homes (MHA)",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46877954,
+  "last_notice": 46877954,
+  "keep": false,
+  "tokens": [
+   "homes",
+   "methodist",
+   "mha"
+  ],
+  "others": [
+   [
+    6,
+    "Methodist Homes"
+   ],
+   [
+    1,
+    "METHODIST HOMES"
+   ]
+  ]
+ },
+ {
+  "org": 31540415,
+  "ident": "GBCOH04063391",
+  "head": "Elysium Healthcare Ltd",
+  "country": "GB",
+  "org_mentions": 22,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Elysium Healthcare Ltd.  Borehamwood",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46854398,
+  "last_notice": 46854398,
+  "keep": false,
+  "tokens": [
+   "borehamwood",
+   "elysium"
+  ],
+  "others": [
+   [
+    8,
+    "Elysium Healthcare Limited"
+   ],
+   [
+    7,
+    "ELYSIUM HEALTHCARE LIMITED"
+   ],
+   [
+    4,
+    "Elysium Healthcare Ltd"
+   ],
+   [
+    1,
+    "Elysium Healthcare Ltd."
+   ],
+   [
+    1,
+    "Elysium Healthcare"
+   ]
+  ]
+ },
+ {
+  "org": 31555041,
+  "ident": "GBCOH04078547",
+  "head": "WAVEMAKER LIMITED",
+  "country": "GB",
+  "org_mentions": 62,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "WPP plc",
+  "scheme": "GB-COH",
+  "n": 2,
+  "first_notice": 46845700,
+  "last_notice": null,
+  "keep": false,
+  "tokens": [
+   "wpp"
+  ],
+  "others": [
+   [
+    22,
+    "WAVEMAKER LIMITED"
+   ],
+   [
+    14,
+    "Wavemaker Limited"
+   ],
+   [
+    5,
+    "Wavemaker Ltd"
+   ],
+   [
+    3,
+    "Wavemaker Limited T/a WPP 650"
+   ],
+   [
+    2,
+    "Wavemaker trading as WPP650"
+   ]
+  ]
+ },
+ {
+  "org": 31554017,
+  "ident": "GBCOH04079081",
+  "head": "NETWORK HEALTHCARE PROFESSIONALS LIMITED",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NETWORK HEALTHCARE PROFESISONALS LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46770610,
+  "last_notice": 46770610,
+  "keep": false,
+  "tokens": [
+   "network",
+   "profesisonals"
+  ],
+  "others": [
+   [
+    6,
+    "NETWORK HEALTHCARE PROFESSIONALS LIMITED"
+   ],
+   [
+    2,
+    "Network Healthcare Professionals Ltd"
+   ],
+   [
+    1,
+    "Network Healthcare Professionals"
+   ]
+  ]
+ },
+ {
+  "org": 31540063,
+  "ident": "GBCOH04082862",
+  "head": "GCI NETWORK SOLUTIONS LIMITED",
+  "country": "GB",
+  "org_mentions": 13,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "GCI Networks Solutions Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46842900,
+  "last_notice": 46842900,
+  "keep": false,
+  "tokens": [
+   "gci",
+   "networks"
+  ],
+  "others": [
+   [
+    7,
+    "GCI NETWORK SOLUTIONS LIMITED"
+   ],
+   [
+    3,
+    "Colibri Digital"
+   ],
+   [
+    2,
+    "GCI NETWORK SOLUTIONS LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30968788,
+  "ident": "GBCOH04082871",
+  "head": "FG Library Products Limited",
+  "country": "GB",
+  "org_mentions": 11,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "FG Library Productd Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46740609,
+  "last_notice": 46740609,
+  "keep": false,
+  "tokens": [
+   "library",
+   "productd"
+  ],
+  "others": [
+   [
+    5,
+    "FG LIBRARY PRODUCTS LIMITED"
+   ],
+   [
+    2,
+    "FG Library Products Limited"
+   ],
+   [
+    1,
+    "FG Library Products Ltd"
+   ],
+   [
+    1,
+    "FG Library Products Limited"
+   ],
+   [
+    1,
+    "FG LIBRARY PRODUCTS LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30968615,
+  "ident": "GBCOH04085767",
+  "head": "Comensura Limited",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Bedford Borough Council",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 47300761,
+  "last_notice": 47300761,
+  "keep": true,
+  "tokens": [
+   "bedford"
+  ],
+  "others": [
+   [
+    4,
+    "Comensura Limited"
+   ],
+   [
+    2,
+    "Comensura limited"
+   ],
+   [
+    1,
+    "Commensura limited"
+   ],
+   [
+    1,
+    "Comensura"
+   ]
+  ]
+ },
+ {
+  "org": 30968615,
+  "ident": "GBCOH04085767",
+  "head": "Comensura Limited",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Commensura limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 47272826,
+  "last_notice": 47272826,
+  "keep": true,
+  "tokens": [
+   "commensura"
+  ],
+  "others": [
+   [
+    4,
+    "Comensura Limited"
+   ],
+   [
+    2,
+    "Comensura limited"
+   ],
+   [
+    1,
+    "Comensura"
+   ],
+   [
+    1,
+    "Bedford Borough Council"
+   ]
+  ]
+ },
+ {
+  "org": 31541321,
+  "ident": "GBCOH04088225",
+  "head": "EZEC MEDICAL TRANSPORT SERVICES TA  EMED GROUP LTD",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "EZEC MEDICAL TRANSPORT SERVICES TA  EMED GROUP LTD",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46738695,
+  "last_notice": 46738695,
+  "keep": false,
+  "tokens": [
+   "emed",
+   "ezec",
+   "medical",
+   "transport"
+  ],
+  "others": [
+   [
+    1,
+    "Ezec Medical Transport Services - trading as EMED Group Limited"
+   ],
+   [
+    1,
+    "EZEC MEDICAL TRANSPORT SERVICES - TRADING AS EMED GROUP LIMITED"
+   ],
+   [
+    1,
+    "EZEC MEDICAL TRANSPORT SERVICES - TRADING AS EMED GROUP LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31568872,
+  "ident": "GBCOH04100611",
+  "head": "NORWICH CITY COMMUNITY SPORTS FOUNDATION",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "DDM Health Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46890437,
+  "last_notice": 46890437,
+  "keep": true,
+  "tokens": [
+   "ddm"
+  ],
+  "others": [
+   [
+    2,
+    "NORWICH CITY COMMUNITY SPORTS FOUNDATION"
+   ]
+  ]
+ },
+ {
+  "org": 30968797,
+  "ident": "GBCOH04109393",
+  "head": "SAVARIA LIFTS (UK) LTD",
+  "country": "GB",
+  "org_mentions": 19,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "SAVARIA LIFTS (UK) LTD. (04109393) - a trading entity for Handicare",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46831273,
+  "last_notice": null,
+  "keep": false,
+  "tokens": [
+   "04109393",
+   "entity",
+   "handicare",
+   "lifts",
+   "savaria",
+   "trading"
+  ],
+  "others": [
+   [
+    7,
+    "SAVARIA LIFTS (UK) LTD"
+   ],
+   [
+    4,
+    "HANDICARE ACCESSIBILITY LIMITED"
+   ],
+   [
+    3,
+    "Handicare Accessibility Ltd"
+   ],
+   [
+    2,
+    "Savaria Lifts UK Ltd"
+   ],
+   [
+    1,
+    "SAVARIA LIFTS (UK) LTD"
+   ]
+  ]
+ },
+ {
+  "org": 30932903,
+  "ident": "GBCOH04110984",
+  "head": "SG FLEET SOLUTIONS UK LIMITED",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "SG FLEET SOLUTIONS UK LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 32143565,
+  "last_notice": 32143565,
+  "keep": false,
+  "tokens": [
+   "fleet"
+  ],
+  "others": [
+   [
+    3,
+    "SG Fleet"
+   ],
+   [
+    1,
+    "SG Fleet Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31541554,
+  "ident": "GBCOH04112320",
+  "head": "Northern Powergrid (Yorkshire) PLC",
+  "country": "GB",
+  "org_mentions": 26,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "northern powergrid",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46824536,
+  "last_notice": 46824536,
+  "keep": false,
+  "tokens": [
+   "powergrid"
+  ],
+  "others": [
+   [
+    11,
+    "Northern Powergrid (Yorkshire) plc"
+   ],
+   [
+    9,
+    "NORTHERN POWERGRID (YORKSHIRE) PLC"
+   ],
+   [
+    3,
+    "Northern Powergrid (Yorkshire) PLC"
+   ],
+   [
+    1,
+    "Northern Powergrid Yorkshire"
+   ],
+   [
+    1,
+    "Northern Powergrid (Yorkshire) plc"
+   ]
+  ]
+ },
+ {
+  "org": 31534690,
+  "ident": "GBCOH04125764",
+  "head": "THE WASTE AND RESOURCES ACTION PROGRAMME",
+  "country": "GB",
+  "org_mentions": 278,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "WRAP",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46867703,
+  "last_notice": 46867703,
+  "keep": false,
+  "tokens": [
+   "wrap"
+  ],
+  "others": [
+   [
+    184,
+    "Waste & Resources Action Programme"
+   ],
+   [
+    74,
+    "WRAP (Waste and Resources Action Programme)"
+   ],
+   [
+    19,
+    "THE WASTE AND RESOURCES ACTION PROGRAMME"
+   ]
+  ]
+ },
+ {
+  "org": 30917211,
+  "ident": "GBCOH04128328",
+  "head": "A.B.P Associates Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ABP Associates Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46797412,
+  "last_notice": 46797412,
+  "keep": false,
+  "tokens": [
+   "associates"
+  ],
+  "others": [
+   [
+    1,
+    "A.B.P. Associates Limited"
+   ],
+   [
+    1,
+    "A.B.P Associates Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31555503,
+  "ident": "GBCOH04128850",
+  "head": "Tribal Group Plc",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Tribal Education Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46833197,
+  "last_notice": 46833197,
+  "keep": false,
+  "tokens": [
+   "education",
+   "tribal"
+  ],
+  "others": [
+   [
+    2,
+    "Tribal Group"
+   ],
+   [
+    1,
+    "Tribal Group Plc"
+   ],
+   [
+    1,
+    "Tribal Group PLC"
+   ]
+  ]
+ },
+ {
+  "org": 31548037,
+  "ident": "GBCOH04146587",
+  "head": "1ST COVERALL COMPANY LIMITED",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "1st Coverall",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46908313,
+  "last_notice": 46908313,
+  "keep": false,
+  "tokens": [
+   "1st",
+   "coverall"
+  ],
+  "others": [
+   [
+    2,
+    "1st Coverall Co Ltd"
+   ],
+   [
+    1,
+    "1ST COVERALL COMPANY LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31540185,
+  "ident": "GBCOH04160275",
+  "head": "ECOONLINE UK LIMITED",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ECOONLINE SYPOL LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46818429,
+  "last_notice": 46818429,
+  "keep": false,
+  "tokens": [
+   "ecoonline",
+   "sypol"
+  ],
+  "others": [
+   [
+    5,
+    "ECOONLINE UK LIMITED"
+   ],
+   [
+    1,
+    "EcoOnline UK Ltd"
+   ],
+   [
+    1,
+    "ECOONLINE UK LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30973398,
+  "ident": "GBCOH04164081",
+  "head": "B & K PASSMORE LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "B&K Passmore Ltd T/As Passmore Group",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46795823,
+  "last_notice": 46795823,
+  "keep": false,
+  "tokens": [
+   "passmore"
+  ],
+  "others": [
+   [
+    2,
+    "B & K PASSMORE LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30919378,
+  "ident": "GBCOH04182567",
+  "head": "INSPIRA (01)",
+  "country": "GB",
+  "org_mentions": 12,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Inspira",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46898603,
+  "last_notice": 46898603,
+  "keep": false,
+  "tokens": [
+   "inspira"
+  ],
+  "others": [
+   [
+    11,
+    "INSPIRA (01)"
+   ]
+  ]
+ },
+ {
+  "org": 30972029,
+  "ident": "GBCOH04190816",
+  "head": "BT GROUP PLC",
+  "country": "GB",
+  "org_mentions": 19,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "BT Business Direct",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46911744,
+  "last_notice": 46911744,
+  "keep": true,
+  "tokens": [
+   "business",
+   "direct"
+  ],
+  "others": [
+   [
+    16,
+    "BT GROUP PLC"
+   ],
+   [
+    1,
+    "bt plc"
+   ],
+   [
+    1,
+    "BT Group PLC"
+   ]
+  ]
+ },
+ {
+  "org": 30972029,
+  "ident": "GBCOH04190816",
+  "head": "BT GROUP PLC",
+  "country": "GB",
+  "org_mentions": 19,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "bt plc",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46844497,
+  "last_notice": 46844497,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    16,
+    "BT GROUP PLC"
+   ],
+   [
+    1,
+    "BT Group PLC"
+   ],
+   [
+    1,
+    "BT Business Direct"
+   ]
+  ]
+ },
+ {
+  "org": 31605680,
+  "ident": "GBCOH04203130",
+  "head": "PROPER JOB THEATRE COMPANY",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Proper Job",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46991067,
+  "last_notice": 46991067,
+  "keep": false,
+  "tokens": [
+   "job",
+   "proper"
+  ],
+  "others": [
+   [
+    1,
+    "Proper Job theatre Company"
+   ],
+   [
+    1,
+    "Proper Job Theatre Company"
+   ],
+   [
+    1,
+    "PROPER JOB THEATRE COMPANY"
+   ]
+  ]
+ },
+ {
+  "org": 30926928,
+  "ident": "GBCOH04215584",
+  "head": "Everyone Health Limited",
+  "country": "GB",
+  "org_mentions": 12,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Everyone Health Limited 3 Watling Drive Hinckley LE10 3EY",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46967129,
+  "last_notice": 46967129,
+  "keep": false,
+  "tokens": [
+   "3ey",
+   "drive",
+   "everyone",
+   "hinckley",
+   "le10",
+   "watling"
+  ],
+  "others": [
+   [
+    4,
+    "Everyone Health Ltd"
+   ],
+   [
+    4,
+    "Everyone Health Limited"
+   ],
+   [
+    2,
+    "EVERYONE HEALTH LIMITED"
+   ],
+   [
+    1,
+    "Everyone Health"
+   ]
+  ]
+ },
+ {
+  "org": 31566342,
+  "ident": "GBCOH04227431",
+  "head": "THE BIG LIFE COMPANY LIMITED",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "The Big Life Group",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46831368,
+  "last_notice": 46831368,
+  "keep": false,
+  "tokens": [
+   "big",
+   "life"
+  ],
+  "others": [
+   [
+    5,
+    "THE BIG LIFE COMPANY LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30915425,
+  "ident": "GBCOH04236707",
+  "head": "BECTON DICKINSON (CME) U.K. LIMITED",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Becton Dickinson",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46779120,
+  "last_notice": 46779120,
+  "keep": false,
+  "tokens": [
+   "becton",
+   "dickinson"
+  ],
+  "others": [
+   [
+    6,
+    "BECTON DICKINSON (CME) U.K. LIMITED"
+   ],
+   [
+    1,
+    "CME Medical UK"
+   ],
+   [
+    1,
+    "Becton Dickinson (CME) U.K. Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30915425,
+  "ident": "GBCOH04236707",
+  "head": "BECTON DICKINSON (CME) U.K. LIMITED",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "CME Medical UK",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47371647,
+  "last_notice": 47371647,
+  "keep": false,
+  "tokens": [
+   "cme",
+   "medical"
+  ],
+  "others": [
+   [
+    6,
+    "BECTON DICKINSON (CME) U.K. LIMITED"
+   ],
+   [
+    1,
+    "Becton Dickinson (CME) U.K. Limited"
+   ],
+   [
+    1,
+    "Becton Dickinson"
+   ]
+  ]
+ },
+ {
+  "org": 31579958,
+  "ident": "GBCOH04243171",
+  "head": "FOUNDATION OF LIGHT",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Foundation of Light Lot 1.1, 1.2",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46842960,
+  "last_notice": 46842960,
+  "keep": false,
+  "tokens": [
+   "light",
+   "lot"
+  ],
+  "others": [
+   [
+    5,
+    "FOUNDATION OF LIGHT"
+   ],
+   [
+    1,
+    "Foundation of Light"
+   ]
+  ]
+ },
+ {
+  "org": 31538903,
+  "ident": "GBCOH04246192",
+  "head": "LIGHTING & ILLUMINATION TECHNOLOGY EXPERIENCE LIMITED",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "LITE Limited",
+  "scheme": "GB-COH",
+  "n": 2,
+  "first_notice": 46893543,
+  "last_notice": null,
+  "keep": true,
+  "tokens": [
+   "lite"
+  ],
+  "others": [
+   [
+    6,
+    "LIGHTING & ILLUMINATION TECHNOLOGY EXPERIENCE LIMITED"
+   ],
+   [
+    1,
+    "Lighting and Illumination technology experience limited (LITE LTD)"
+   ],
+   [
+    1,
+    "Lighting & Illumination Technology Experience Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31552695,
+  "ident": "GBCOH04253085",
+  "head": "JAMIESON CONTRACTING (NORTH WEST) LIMITED",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Jamieson Contracting (NW) Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 47293479,
+  "last_notice": 47293479,
+  "keep": false,
+  "tokens": [
+   "contracting",
+   "jamieson"
+  ],
+  "others": [
+   [
+    3,
+    "JAMIESON CONTRACTING (NORTH WEST) LIMITED"
+   ],
+   [
+    1,
+    "Jamieson Contracting (North West) Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31552695,
+  "ident": "GBCOH04253085",
+  "head": "JAMIESON CONTRACTING (NORTH WEST) LIMITED",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Jamieson Contracting (NW) Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46132963,
+  "last_notice": 46132963,
+  "keep": false,
+  "tokens": [
+   "contracting",
+   "jamieson"
+  ],
+  "others": [
+   [
+    3,
+    "JAMIESON CONTRACTING (NORTH WEST) LIMITED"
+   ],
+   [
+    1,
+    "Jamieson Contracting (North West) Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31539718,
+  "ident": "GBCOH04253883",
+  "head": "Enovation UK",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Enovation UK",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46735066,
+  "last_notice": 46735066,
+  "keep": false,
+  "tokens": [
+   "enovation"
+  ],
+  "others": [
+   [
+    5,
+    "E.Novation UK Ltd"
+   ],
+   [
+    2,
+    "E.NOVATION UK LIMITED TRADING AS ENOVATION"
+   ],
+   [
+    1,
+    "E.NOVATION UK LIMITED TRADING AS ENOVATION"
+   ]
+  ]
+ },
+ {
+  "org": 31555193,
+  "ident": "GBCOH04279849",
+  "head": "AQUATIC SURVEY AND MONITORING LTD.",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "AQUATIC SURVEY AND MONITORING LTD.",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46770003,
+  "last_notice": 46770003,
+  "keep": false,
+  "tokens": [
+   "aquatic",
+   "monitoring",
+   "survey"
+  ],
+  "others": [
+   [
+    2,
+    "ASML"
+   ]
+  ]
+ },
+ {
+  "org": 31563566,
+  "ident": "GBCOH04282182",
+  "head": "TRINITY HOMES (UK) LIMITED",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Trinity Homes Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46840454,
+  "last_notice": 46840454,
+  "keep": false,
+  "tokens": [
+   "homes",
+   "trinity"
+  ],
+  "others": [
+   [
+    3,
+    "TRINITY HOMES (UK) LIMITED"
+   ],
+   [
+    1,
+    "Trinity Homes (UK) Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31545576,
+  "ident": "GBCOH04285214",
+  "head": "Freeman Butchers",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Freeman Butchers",
+  "scheme": "GB-COH",
+  "n": 2,
+  "first_notice": 46748338,
+  "last_notice": null,
+  "keep": false,
+  "tokens": [
+   "butchers",
+   "freeman"
+  ],
+  "others": [
+   [
+    3,
+    "J. FREEMAN & SONS LIMITED"
+   ],
+   [
+    1,
+    "J Freeman and Sons t/a Freeman Catering Butchers"
+   ]
+  ]
+ },
+ {
+  "org": 31540361,
+  "ident": "GBCOH04286449",
+  "head": "FOUR COMMUNICATIONS LIMITED",
+  "country": "GB",
+  "org_mentions": 17,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Four Communication",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46778404,
+  "last_notice": 46778404,
+  "keep": false,
+  "tokens": [
+   "communication",
+   "four"
+  ],
+  "others": [
+   [
+    5,
+    "FOUR COMMUNICATIONS LIMITED"
+   ],
+   [
+    4,
+    "Four Communications Ltd"
+   ],
+   [
+    3,
+    "Four Communications Limited"
+   ],
+   [
+    3,
+    "Four Communications"
+   ],
+   [
+    1,
+    "Four Communications Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30972155,
+  "ident": "GBCOH04289790",
+  "head": "SOCIAL CARE INSTITUTE FOR EXCELLENCE",
+  "country": "GB",
+  "org_mentions": 13,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Social Care Institute of Excellence",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46796915,
+  "last_notice": null,
+  "keep": false,
+  "tokens": [
+   "excellence",
+   "social"
+  ],
+  "others": [
+   [
+    8,
+    "SOCIAL CARE INSTITUTE FOR EXCELLENCE"
+   ],
+   [
+    2,
+    "SOCIAL CARE INSTITUTE FOR EXCELLENCE"
+   ],
+   [
+    1,
+    "Social Care Institute of Excellence (SCIE)"
+   ]
+  ]
+ },
+ {
+  "org": 30972155,
+  "ident": "GBCOH04289790",
+  "head": "SOCIAL CARE INSTITUTE FOR EXCELLENCE",
+  "country": "GB",
+  "org_mentions": 13,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Social Care Institute of Excellence (SCIE)",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46741822,
+  "last_notice": 46741822,
+  "keep": false,
+  "tokens": [
+   "excellence",
+   "scie",
+   "social"
+  ],
+  "others": [
+   [
+    8,
+    "SOCIAL CARE INSTITUTE FOR EXCELLENCE"
+   ],
+   [
+    2,
+    "Social Care Institute of Excellence"
+   ],
+   [
+    2,
+    "SOCIAL CARE INSTITUTE FOR EXCELLENCE"
+   ]
+  ]
+ },
+ {
+  "org": 31537096,
+  "ident": "GBCOH04293062",
+  "head": "WYE VALLEY DEMOLITION LIMITED",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Wye Valley Demolistion Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46737679,
+  "last_notice": 46737679,
+  "keep": false,
+  "tokens": [
+   "demolistion",
+   "valley",
+   "wye"
+  ],
+  "others": [
+   [
+    3,
+    "WYE VALLEY DEMOLITION LIMITED"
+   ],
+   [
+    1,
+    "Wye Valley Demolition Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30967536,
+  "ident": "GBCOH04317514",
+  "head": "CASTLEVIEW GROUP TRAINING LIMITED",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Castle View Group Training Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46901139,
+  "last_notice": 46901139,
+  "keep": false,
+  "tokens": [
+   "castle",
+   "training",
+   "view"
+  ],
+  "others": [
+   [
+    3,
+    "CASTLEVIEW GROUP TRAINING LIMITED"
+   ],
+   [
+    1,
+    "Castleview Group Training Ltd"
+   ],
+   [
+    1,
+    "Castleview Group Training Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31546344,
+  "ident": "GBCOH04320403",
+  "head": "CERA CARE OPERATIONS LIMITED",
+  "country": "GB",
+  "org_mentions": 18,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Cera Care",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46837194,
+  "last_notice": 46837194,
+  "keep": false,
+  "tokens": [
+   "cera"
+  ],
+  "others": [
+   [
+    7,
+    "CERA CARE OPERATIONS LIMITED"
+   ],
+   [
+    4,
+    "Cera Care Operations Ltd"
+   ],
+   [
+    2,
+    "Cera Care Operations Limited"
+   ],
+   [
+    2,
+    "Cera Care Operations"
+   ],
+   [
+    1,
+    "Cera Care Operations Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31549941,
+  "ident": "GBCOH04323212",
+  "head": "Orton Mechanical Services Ltd",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Orton Mechanical Services Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46757668,
+  "last_notice": 46757668,
+  "keep": false,
+  "tokens": [
+   "mechanical",
+   "orton"
+  ],
+  "others": [
+   [
+    2,
+    "ORTON ELECTRICAL SERVICES LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30932866,
+  "ident": "GBCOH04335280",
+  "head": "Concept Care Solutions",
+  "country": "GB",
+  "org_mentions": 15,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "London Cactus",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46842859,
+  "last_notice": 46842859,
+  "keep": true,
+  "tokens": [
+   "cactus"
+  ],
+  "others": [
+   [
+    6,
+    "Concept Care Solutions"
+   ],
+   [
+    6,
+    "CONCEPT CARE SOLUTIONS LIMITED"
+   ],
+   [
+    1,
+    "Concept Care Solutions Ltd"
+   ],
+   [
+    1,
+    "Concept Care Solutions Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31588415,
+  "ident": "GBCOH04335541",
+  "head": "CITY & COUNTY CARE SERVICES LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Aspire UK",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46733842,
+  "last_notice": 46733842,
+  "keep": true,
+  "tokens": [
+   "aspire"
+  ],
+  "others": [
+   [
+    2,
+    "CITY & COUNTY CARE SERVICES LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30917533,
+  "ident": "GBCOH04345297",
+  "head": "CASTLE OWEN CONSTRUCTION AND PROPERTY CONSULTANTS LIMITED",
+  "country": "GB",
+  "org_mentions": 11,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "CASTLE OWEN CONSTRUCTION & PROPERTY LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46931239,
+  "last_notice": 46931239,
+  "keep": false,
+  "tokens": [
+   "castle",
+   "owen",
+   "property"
+  ],
+  "others": [
+   [
+    5,
+    "CASTLE OWEN CONSTRUCTION AND PROPERTY CONSULTANTS LIMITED"
+   ],
+   [
+    2,
+    "Castle Owen Construction & Property Consultants Limited"
+   ],
+   [
+    1,
+    "Castle Owen Construction and Property Consultants Ltd"
+   ],
+   [
+    1,
+    "Castle Owen Construction & Property Consultants Limited (appointed to Lot 8)"
+   ],
+   [
+    1,
+    "Castle Owen"
+   ]
+  ]
+ },
+ {
+  "org": 30917533,
+  "ident": "GBCOH04345297",
+  "head": "CASTLE OWEN CONSTRUCTION AND PROPERTY CONSULTANTS LIMITED",
+  "country": "GB",
+  "org_mentions": 11,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Castle Owen",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46709437,
+  "last_notice": 46709437,
+  "keep": false,
+  "tokens": [
+   "castle",
+   "owen"
+  ],
+  "others": [
+   [
+    5,
+    "CASTLE OWEN CONSTRUCTION AND PROPERTY CONSULTANTS LIMITED"
+   ],
+   [
+    2,
+    "Castle Owen Construction & Property Consultants Limited"
+   ],
+   [
+    1,
+    "Castle Owen Construction and Property Consultants Ltd"
+   ],
+   [
+    1,
+    "Castle Owen Construction & Property Consultants Limited (appointed to Lot 8)"
+   ],
+   [
+    1,
+    "CASTLE OWEN CONSTRUCTION & PROPERTY LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31553083,
+  "ident": "GBCOH04349864",
+  "head": "NORTHFIELD COMMUNITY PARTNERSHIP - A COMMUNITY DEVELOPMENT TRUST LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Northfield Community partnership",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46765118,
+  "last_notice": 46765118,
+  "keep": false,
+  "tokens": [
+   "northfield"
+  ],
+  "others": [
+   [
+    2,
+    "NORTHFIELD COMMUNITY PARTNERSHIP - A COMMUNITY DEVELOPMENT TRUST LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30914655,
+  "ident": "GBCOH04354059",
+  "head": "PULSE FITNESS LIMITED",
+  "country": "GB",
+  "org_mentions": 15,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Pulse Fitness Ltrd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 47407571,
+  "last_notice": 47407571,
+  "keep": false,
+  "tokens": [
+   "fitness",
+   "ltrd",
+   "pulse"
+  ],
+  "others": [
+   [
+    8,
+    "PULSE FITNESS LIMITED"
+   ],
+   [
+    3,
+    "Pulse Fitness Limited"
+   ],
+   [
+    1,
+    "Pulse Fitness Ltd"
+   ],
+   [
+    1,
+    "Pulse Fitness"
+   ],
+   [
+    1,
+    "PULSE FITNESS"
+   ]
+  ]
+ },
+ {
+  "org": 30926702,
+  "ident": "GBCOH04358614",
+  "head": "NHS Confederation",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Diabetes UK",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46786666,
+  "last_notice": 46786666,
+  "keep": true,
+  "tokens": [
+   "diabetes"
+  ],
+  "others": [
+   [
+    1,
+    "The NHS Alliance"
+   ],
+   [
+    1,
+    "THE NHS CONFEDERATION"
+   ],
+   [
+    1,
+    "NHS Employers/NHS Confederation"
+   ],
+   [
+    1,
+    "NHS Confederation (T/A NHS Employers)"
+   ],
+   [
+    1,
+    "NHS Confederation"
+   ]
+  ]
+ },
+ {
+  "org": 30926702,
+  "ident": "GBCOH04358614",
+  "head": "NHS Confederation",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NHS Employers/NHS Confederation",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46849483,
+  "last_notice": 46849483,
+  "keep": false,
+  "tokens": [
+   "confederation",
+   "employers"
+  ],
+  "others": [
+   [
+    1,
+    "The NHS Alliance"
+   ],
+   [
+    1,
+    "THE NHS CONFEDERATION"
+   ],
+   [
+    1,
+    "NHS Confederation (T/A NHS Employers)"
+   ],
+   [
+    1,
+    "NHS Confederation"
+   ],
+   [
+    1,
+    "Diabetes UK"
+   ]
+  ]
+ },
+ {
+  "org": 30926702,
+  "ident": "GBCOH04358614",
+  "head": "NHS Confederation",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "The NHS Alliance",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46850297,
+  "last_notice": 46850297,
+  "keep": true,
+  "tokens": [
+   "alliance"
+  ],
+  "others": [
+   [
+    1,
+    "THE NHS CONFEDERATION"
+   ],
+   [
+    1,
+    "NHS Employers/NHS Confederation"
+   ],
+   [
+    1,
+    "NHS Confederation (T/A NHS Employers)"
+   ],
+   [
+    1,
+    "NHS Confederation"
+   ],
+   [
+    1,
+    "Diabetes UK"
+   ]
+  ]
+ },
+ {
+  "org": 31598108,
+  "ident": "GBCOH04361196",
+  "head": "GTS ENTERPRISE LIMITED",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "GTS ENTERPRISE LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46877566,
+  "last_notice": 46877566,
+  "keep": false,
+  "tokens": [
+   "enterprise",
+   "gts"
+  ],
+  "others": [
+   [
+    3,
+    "GTS ENTERPRISES T/A WORLDNET SHIPPING"
+   ]
+  ]
+ },
+ {
+  "org": 31559599,
+  "ident": "GBCOH04370657",
+  "head": "MSS WATER LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "MSS WATER LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46780387,
+  "last_notice": 46780387,
+  "keep": false,
+  "tokens": [
+   "mss",
+   "water"
+  ],
+  "others": [
+   [
+    2,
+    "Acorn Chemical Services Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31562912,
+  "ident": "GBCOH04373945",
+  "head": "KCARE NURSING AGENCY LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Kcare Health",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46840861,
+  "last_notice": 46840861,
+  "keep": false,
+  "tokens": [
+   "kcare"
+  ],
+  "others": [
+   [
+    2,
+    "KCARE NURSING AGENCY LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30928179,
+  "ident": "GBCOH04375020",
+  "head": "Anti Graffiti Systems Ltd",
+  "country": "GB",
+  "org_mentions": 17,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Anti-Graffiti ",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46966843,
+  "last_notice": 46966843,
+  "keep": false,
+  "tokens": [
+   "anti",
+   "graffiti"
+  ],
+  "others": [
+   [
+    5,
+    "ANTI-GRAFFITI SYSTEMS LIMITED"
+   ],
+   [
+    2,
+    "Anti Graffiti Systems Ltd"
+   ],
+   [
+    2,
+    "Anti Graffiti Systems Ltd"
+   ],
+   [
+    2,
+    "ANTI-GRAFFITI SYSTEMS LIMITED (AGS)"
+   ],
+   [
+    1,
+    "ags one ltd"
+   ]
+  ]
+ },
+ {
+  "org": 30916288,
+  "ident": "GBCOH04383425",
+  "head": "Nightingales Goldencare Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Nightingales Recruitment Care Agency Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46774926,
+  "last_notice": 46774926,
+  "keep": false,
+  "tokens": [
+   "agency",
+   "nightingales",
+   "recruitment"
+  ],
+  "others": [
+   [
+    1,
+    "Nightingales Goldencare Limited"
+   ],
+   [
+    1,
+    "NIGHTINGALES GOLDENCARE LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31573639,
+  "ident": "GBCOH04389445",
+  "head": "BPM Project Management Limited",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "BPM Project Management Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46816868,
+  "last_notice": 46816868,
+  "keep": false,
+  "tokens": [
+   "bpm",
+   "project"
+  ],
+  "others": [
+   [
+    2,
+    "BPM PROJECT MANAGEMENT (QUARTET HOMES) LIMITED"
+   ],
+   [
+    1,
+    "BPM PROJECT MANAGEMENT (QUARTET HOMES)  LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31555879,
+  "ident": "GBCOH04392004",
+  "head": "SOUTHERN LAND SERVICES LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Southern Landscape Services Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46773965,
+  "last_notice": 46773965,
+  "keep": true,
+  "tokens": [
+   "landscape"
+  ],
+  "others": [
+   [
+    1,
+    "Southern Land Services Limited"
+   ],
+   [
+    1,
+    "SOUTHERN LAND SERVICES LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31562475,
+  "ident": "GBCOH04392766",
+  "head": "FUSION 360 GROUP LTD",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Fusion Electrics Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46924067,
+  "last_notice": 46924067,
+  "keep": false,
+  "tokens": [
+   "electrics",
+   "fusion"
+  ],
+  "others": [
+   [
+    2,
+    "FUSION 360 GROUP LTD"
+   ]
+  ]
+ },
+ {
+  "org": 31601983,
+  "ident": "GBCOH04394007",
+  "head": "PIRBRIGHT INNOVATIONS LIMITED",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "THE PIRBRIGHT INSTITUTE",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46912254,
+  "last_notice": 46912254,
+  "keep": false,
+  "tokens": [
+   "pirbright"
+  ],
+  "others": [
+   [
+    3,
+    "PIRBRIGHT INNOVATIONS LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30917353,
+  "ident": "GBCOH04413186",
+  "head": "Blakedown Sport & Play Ltd",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Blakedown Sports & Play",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46817561,
+  "last_notice": 46817561,
+  "keep": false,
+  "tokens": [
+   "blakedown",
+   "play",
+   "sports"
+  ],
+  "others": [
+   [
+    3,
+    "Blakedown Sport & Play Limited"
+   ],
+   [
+    2,
+    "Blakedown Sport and Play Ltd."
+   ],
+   [
+    2,
+    "Blakedown Sport & Play Ltd"
+   ],
+   [
+    1,
+    "BLAKEDOWN SPORT AND PLAY LIMITED"
+   ],
+   [
+    1,
+    "BLAKEDOWN SPORT & PLAY LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30953440,
+  "ident": "GBCOH04422108",
+  "head": "CEPHEID UK LIMITED",
+  "country": "GB",
+  "org_mentions": 20,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Cepheid",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47158920,
+  "last_notice": 47158920,
+  "keep": false,
+  "tokens": [
+   "cepheid"
+  ],
+  "others": [
+   [
+    11,
+    "CEPHEID UK LIMITED"
+   ],
+   [
+    3,
+    "Cepheid UK Ltd"
+   ],
+   [
+    3,
+    "Cepheid UK Limited"
+   ],
+   [
+    2,
+    "Cepheid UK Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30968919,
+  "ident": "GBCOH04426624",
+  "head": "WORK STRESS MANAGEMENT LIMITED",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Autocross Euroshell Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46933272,
+  "last_notice": 46933272,
+  "keep": true,
+  "tokens": [
+   "autocross",
+   "euroshell"
+  ],
+  "others": [
+   [
+    3,
+    "WORK STRESS MANAGEMENT LIMITED"
+   ],
+   [
+    2,
+    "Work Stress Management Limited"
+   ],
+   [
+    1,
+    "Work Stress Management Ltd -Trading as Wellbeing Solutions"
+   ],
+   [
+    1,
+    "Work Stress Management Limited (Trading as Wellbeing Solutions)"
+   ]
+  ]
+ },
+ {
+  "org": 30968919,
+  "ident": "GBCOH04426624",
+  "head": "WORK STRESS MANAGEMENT LIMITED",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Work Stress Management Ltd -Trading as Wellbeing Solutions",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46762020,
+  "last_notice": 46762020,
+  "keep": false,
+  "tokens": [
+   "stress",
+   "trading",
+   "wellbeing",
+   "work"
+  ],
+  "others": [
+   [
+    3,
+    "WORK STRESS MANAGEMENT LIMITED"
+   ],
+   [
+    2,
+    "Work Stress Management Limited"
+   ],
+   [
+    1,
+    "Work Stress Management Limited (Trading as Wellbeing Solutions)"
+   ],
+   [
+    1,
+    "Autocross Euroshell Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31551110,
+  "ident": "GBCOH04433890",
+  "head": "INUTEC LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Tradebe Inutec Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46857371,
+  "last_notice": 46857371,
+  "keep": false,
+  "tokens": [
+   "inutec",
+   "tradebe"
+  ],
+  "others": [
+   [
+    1,
+    "Inutec Limited"
+   ],
+   [
+    1,
+    "INUTEC LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31575594,
+  "ident": "GBCOH04454109",
+  "head": "STOREWATCH.CO.UK LIMITED",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "STOREWATCH LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46876054,
+  "last_notice": 46876054,
+  "keep": false,
+  "tokens": [
+   "storewatch"
+  ],
+  "others": [
+   [
+    3,
+    "STOREWATCH.CO.UK LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31544771,
+  "ident": "GBCOH04457083",
+  "head": "BEDSPACE RESOURCE LIMITED",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Bedspace",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46923196,
+  "last_notice": 46923196,
+  "keep": false,
+  "tokens": [
+   "bedspace"
+  ],
+  "others": [
+   [
+    5,
+    "BEDSPACE RESOURCE LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31544354,
+  "ident": "GBCOH04459448",
+  "head": "ROSSLEE CONSTRUCTION LTD",
+  "country": "GB",
+  "org_mentions": 14,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "R DEVELOPMENTS LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46991298,
+  "last_notice": 46991298,
+  "keep": true,
+  "tokens": [
+   "developments"
+  ],
+  "others": [
+   [
+    7,
+    "ROSSLEE CONSTRUCTION LTD"
+   ],
+   [
+    6,
+    "Rosslee Construction Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31538849,
+  "ident": "GBCOH04476109",
+  "head": "Envirocure Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Envirocure Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46733579,
+  "last_notice": 46733579,
+  "keep": false,
+  "tokens": [
+   "envirocure"
+  ],
+  "others": [
+   [
+    2,
+    "Envirocure :td"
+   ]
+  ]
+ },
+ {
+  "org": 31557591,
+  "ident": "GBCOH04477751",
+  "head": "Thomson Environmental Consultants Limited",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Thomson Ecology Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46838680,
+  "last_notice": 46838680,
+  "keep": false,
+  "tokens": [
+   "ecology",
+   "thomson"
+  ],
+  "others": [
+   [
+    3,
+    "Thomson Environmental Consultants Limited"
+   ],
+   [
+    1,
+    "Thomson Environmental Consultants"
+   ]
+  ]
+ },
+ {
+  "org": 30919361,
+  "ident": "GBCOH04493101",
+  "head": "A-DAY CONSULTANTS LIMITED",
+  "country": "GB",
+  "org_mentions": 14,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Quantum Scholars T/A A-Day Consultants",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46809379,
+  "last_notice": 46809379,
+  "keep": true,
+  "tokens": [
+   "quantum",
+   "scholars"
+  ],
+  "others": [
+   [
+    12,
+    "A-DAY CONSULTANTS LIMITED"
+   ],
+   [
+    1,
+    "A-Day Consultants Ltd trading as ACADEMICS"
+   ]
+  ]
+ },
+ {
+  "org": 31572807,
+  "ident": "GBCOH04512568",
+  "head": "VEEZU NORTH LIMITED",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Veezu",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46773403,
+  "last_notice": 46773403,
+  "keep": false,
+  "tokens": [
+   "veezu"
+  ],
+  "others": [
+   [
+    3,
+    "VEEZU NORTH LIMITED"
+   ],
+   [
+    2,
+    "Veezu North Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31564046,
+  "ident": "GBCOH04513292",
+  "head": "CIPLA (EU) LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "CIPLA (EU) LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46792126,
+  "last_notice": 46792126,
+  "keep": false,
+  "tokens": [
+   "cipla"
+  ],
+  "others": [
+   [
+    2,
+    "Cipla"
+   ]
+  ]
+ },
+ {
+  "org": 30929868,
+  "ident": "GBCOH04543146",
+  "head": "GREENTECH LIMITED",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Green-Tech Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46911557,
+  "last_notice": 46911557,
+  "keep": true,
+  "tokens": [
+   "green",
+   "tech"
+  ],
+  "others": [
+   [
+    5,
+    "GREENTECH LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31570697,
+  "ident": "GBCOH04549353",
+  "head": "Gowing Building Services Ltd",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Gowing Building Services Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46808325,
+  "last_notice": 46808325,
+  "keep": false,
+  "tokens": [
+   "building",
+   "gowing"
+  ],
+  "others": [
+   [
+    2,
+    "Gowing & Hunt Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31605681,
+  "ident": "GBCOH04551348",
+  "head": "Crosland Moor Computer Centre",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Crosland Moor Community Learning Centre",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46937188,
+  "last_notice": 46937188,
+  "keep": false,
+  "tokens": [
+   "crosland",
+   "learning",
+   "moor"
+  ],
+  "others": [
+   [
+    2,
+    "Crosland Moor Computer Centre"
+   ],
+   [
+    1,
+    "Croslandmoor Community Learning Centre"
+   ]
+  ]
+ },
+ {
+  "org": 31605681,
+  "ident": "GBCOH04551348",
+  "head": "Crosland Moor Computer Centre",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Croslandmoor Community Learning Centre",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46991067,
+  "last_notice": 46991067,
+  "keep": true,
+  "tokens": [
+   "croslandmoor",
+   "learning"
+  ],
+  "others": [
+   [
+    2,
+    "Crosland Moor Computer Centre"
+   ],
+   [
+    1,
+    "Crosland Moor Community Learning Centre"
+   ]
+  ]
+ },
+ {
+  "org": 31556930,
+  "ident": "GBCOH04569474",
+  "head": "Cura Terrae Water Limited",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Environmental Monitoring Solutions Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46991729,
+  "last_notice": 46991729,
+  "keep": true,
+  "tokens": [
+   "environmental",
+   "monitoring"
+  ],
+  "others": [
+   [
+    4,
+    "Cura Terrae Water Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30968717,
+  "ident": "GBCOH04570960",
+  "head": "INSURANCE CLAIMS ACCOMMODATION BUREAU LIMITED",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Insurance Claims Accommodation Burau Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46817094,
+  "last_notice": 46817094,
+  "keep": false,
+  "tokens": [
+   "accommodation",
+   "burau",
+   "claims",
+   "insurance"
+  ],
+  "others": [
+   [
+    4,
+    "INSURANCE CLAIMS ACCOMMODATION BUREAU LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31550662,
+  "ident": "GBCOH04575191",
+  "head": "MELTWATER (UK) LIMITED",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Melwater",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46783155,
+  "last_notice": 46783155,
+  "keep": true,
+  "tokens": [
+   "melwater"
+  ],
+  "others": [
+   [
+    3,
+    "MELTWATER (UK) LIMITED"
+   ],
+   [
+    1,
+    "Meltwater (UK) Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 30929974,
+  "ident": "GBCOH04595169",
+  "head": "ACCESS PAYSUITE LTD",
+  "country": "GB",
+  "org_mentions": 21,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Access UK Limited",
+  "scheme": "GB-COH",
+  "n": 2,
+  "first_notice": 46783914,
+  "last_notice": null,
+  "keep": false,
+  "tokens": [
+   "access"
+  ],
+  "others": [
+   [
+    7,
+    "ACCESS PAYSUITE LTD"
+   ],
+   [
+    4,
+    "Access Paysuite Limited"
+   ],
+   [
+    4,
+    "ACCESS PAYSUITE LTD"
+   ],
+   [
+    2,
+    "Access Paysuite Ltd"
+   ],
+   [
+    1,
+    "Access Paysuite Limited "
+   ]
+  ]
+ },
+ {
+  "org": 31537147,
+  "ident": "GBCOH04598550",
+  "head": "TEIGNMOUTH MARITIME SERVICES LIMITED",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "TMS",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46132963,
+  "last_notice": 46132963,
+  "keep": true,
+  "tokens": [
+   "tms"
+  ],
+  "others": [
+   [
+    6,
+    "TEIGNMOUTH MARITIME SERVICES LIMITED"
+   ],
+   [
+    1,
+    "Teignmouth Maritime Services Ltd"
+   ],
+   [
+    1,
+    "Teignmouth Maritime Services"
+   ]
+  ]
+ },
+ {
+  "org": 31542965,
+  "ident": "GBCOH04610338",
+  "head": "TERRA-FIRMA ENVIRONMENTAL LIMITED",
+  "country": "GB",
+  "org_mentions": 12,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Terra Firma",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46771638,
+  "last_notice": null,
+  "keep": false,
+  "tokens": [
+   "firma",
+   "terra"
+  ],
+  "others": [
+   [
+    8,
+    "TERRA-FIRMA ENVIRONMENTAL LIMITED"
+   ],
+   [
+    2,
+    "Terra Firma Environmental Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31563742,
+  "ident": "GBCOH04637136",
+  "head": "PEARL SCAN SOLUTIONS LTD",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Pearl Scan",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 47366143,
+  "last_notice": 47366143,
+  "keep": false,
+  "tokens": [
+   "pearl",
+   "scan"
+  ],
+  "others": [
+   [
+    1,
+    "Pearl Scan Solutions Ltd"
+   ],
+   [
+    1,
+    "PEARL SCAN SOLUTIONS LTD"
+   ]
+  ]
+ },
+ {
+  "org": 31578109,
+  "ident": "GBCOH04660521",
+  "head": "ATEBOL CYFYNGEDIG",
+  "country": "GB",
+  "org_mentions": 17,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Atebol Cyf.",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46791325,
+  "last_notice": 46791325,
+  "keep": false,
+  "tokens": [
+   "atebol",
+   "cyf"
+  ],
+  "others": [
+   [
+    9,
+    "Atebol"
+   ],
+   [
+    4,
+    "ATEBOL CYFYNGEDIG"
+   ],
+   [
+    1,
+    "Atebol Cyfyngedig"
+   ],
+   [
+    1,
+    "Atebol Cyfynedig"
+   ],
+   [
+    1,
+    "ATEBOL CYFYNGEDIG"
+   ]
+  ]
+ },
+ {
+  "org": 31578109,
+  "ident": "GBCOH04660521",
+  "head": "ATEBOL CYFYNGEDIG",
+  "country": "GB",
+  "org_mentions": 17,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Atebol Cyfynedig",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46789925,
+  "last_notice": 46789925,
+  "keep": false,
+  "tokens": [
+   "atebol",
+   "cyfynedig"
+  ],
+  "others": [
+   [
+    9,
+    "Atebol"
+   ],
+   [
+    4,
+    "ATEBOL CYFYNGEDIG"
+   ],
+   [
+    1,
+    "Atebol Cyfyngedig"
+   ],
+   [
+    1,
+    "Atebol Cyf."
+   ],
+   [
+    1,
+    "ATEBOL CYFYNGEDIG"
+   ]
+  ]
+ },
+ {
+  "org": 30976011,
+  "ident": "GBCOH04665579",
+  "head": "ASHBROOK CONSTRUCTION SERVICES LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Ashbrook Contracting Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46741544,
+  "last_notice": 46741544,
+  "keep": false,
+  "tokens": [
+   "ashbrook",
+   "contracting"
+  ],
+  "others": [
+   [
+    1,
+    "Ashbrook Construction Services Limited"
+   ],
+   [
+    1,
+    "ASHBROOK CONSTRUCTION SERVICES LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31565814,
+  "ident": "GBCOH04674757",
+  "head": "Snowdonia Fire",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Snowdonia Fire",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46795713,
+  "last_notice": 46795713,
+  "keep": false,
+  "tokens": [
+   "fire",
+   "snowdonia"
+  ],
+  "others": [
+   [
+    2,
+    "SNOWDONIA FIRE PROTECTION LIMITED"
+   ],
+   [
+    1,
+    "Snowdonia Fire Protection"
+   ]
+  ]
+ },
+ {
+  "org": 30918241,
+  "ident": "GBCOH04685684",
+  "head": "Phil Jones Associates",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Phil Jones Associates (PJA)",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46802308,
+  "last_notice": 46802308,
+  "keep": false,
+  "tokens": [
+   "associates",
+   "jones",
+   "phil",
+   "pja"
+  ],
+  "others": [
+   [
+    5,
+    "PHIL JONES ASSOCIATES LIMITED"
+   ],
+   [
+    1,
+    "Phil Jones Associates Limited"
+   ],
+   [
+    1,
+    "Phil Jones Associates"
+   ]
+  ]
+ },
+ {
+  "org": 31541324,
+  "ident": "GBCOH04687478",
+  "head": "SERCO LEISURE OPERATING LIMITED",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Maidstone Leisure Trust",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46797689,
+  "last_notice": null,
+  "keep": false,
+  "tokens": [
+   "leisure",
+   "maidstone"
+  ],
+  "others": [
+   [
+    5,
+    "SERCO LEISURE OPERATING LIMITED"
+   ],
+   [
+    3,
+    "Serco Leisure Operating Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31551788,
+  "ident": "GBCOH04693096",
+  "head": "ENVENTURE RESEARCH LIMITED",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "LAND USE CONSULTANTS LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46762813,
+  "last_notice": 46762813,
+  "keep": true,
+  "tokens": [
+   "land",
+   "use"
+  ],
+  "others": [
+   [
+    2,
+    "ENVENTURE RESEARCH LIMITED"
+   ],
+   [
+    1,
+    "Enventure Research Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31556683,
+  "ident": "GBCOH04696376",
+  "head": "REMONDIS LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Remondis Lyd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46873086,
+  "last_notice": 46873086,
+  "keep": false,
+  "tokens": [
+   "lyd",
+   "remondis"
+  ],
+  "others": [
+   [
+    2,
+    "REMONDIS LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30913948,
+  "ident": "GBCOH04700876",
+  "head": "Little Fish (UK) Limited",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Littlefish (UK) Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46842900,
+  "last_notice": 46842900,
+  "keep": true,
+  "tokens": [
+   "littlefish"
+  ],
+  "others": [
+   [
+    2,
+    "Little Fish (UK) Limited"
+   ],
+   [
+    1,
+    "LITTLE FISH (UK) LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 30929870,
+  "ident": "GBCOH04701394",
+  "head": "C G ROBINSON & SONS LTD",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "CG Robinson Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46921182,
+  "last_notice": 46921182,
+  "keep": false,
+  "tokens": [
+   "robinson"
+  ],
+  "others": [
+   [
+    4,
+    "C G ROBINSON & SONS LTD"
+   ]
+  ]
+ },
+ {
+  "org": 31546620,
+  "ident": "GBCOH04719155",
+  "head": "Bennett Leisure and Planning Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Bennett Leisure and Planning Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46750059,
+  "last_notice": 46750059,
+  "keep": false,
+  "tokens": [
+   "bennett",
+   "leisure",
+   "planning"
+  ],
+  "others": [
+   [
+    2,
+    "Bennett Lesiure and Planning Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30917240,
+  "ident": "GBCOH04719444",
+  "head": "STORETEC SERVICES LIMITED",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Storetec",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 30810208,
+  "last_notice": null,
+  "keep": false,
+  "tokens": [
+   "storetec"
+  ],
+  "others": [
+   [
+    3,
+    "STORETEC SERVICES LIMITED"
+   ],
+   [
+    2,
+    "STORETEC SERVICES LIMITED"
+   ],
+   [
+    1,
+    "Storetec Services Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31566584,
+  "ident": "GBCOH04744412",
+  "head": "PREMIER MOBILITY (UK) LIMITED",
+  "country": "GB",
+  "org_mentions": 17,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Premier Mobility",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46980077,
+  "last_notice": 46980077,
+  "keep": false,
+  "tokens": [
+   "mobility",
+   "premier"
+  ],
+  "others": [
+   [
+    7,
+    "PREMIER MOBILITY (UK) LIMITED"
+   ],
+   [
+    3,
+    "Premier Mobility (UK) Limited"
+   ],
+   [
+    2,
+    "PREMIER MOBILITY (UK) LIMITED"
+   ],
+   [
+    1,
+    "Premier Mobility (UK) Ltd"
+   ],
+   [
+    1,
+    "Premier Mobility (UK) Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31550093,
+  "ident": "GBCOH04763989",
+  "head": "Daisy Chain Project Teeside",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Daisy Chain Project Teeside",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46757964,
+  "last_notice": 46757964,
+  "keep": false,
+  "tokens": [
+   "chain",
+   "daisy",
+   "project",
+   "teeside"
+  ],
+  "others": [
+   [
+    2,
+    "Daisy Chain Project Teesside"
+   ]
+  ]
+ },
+ {
+  "org": 30915205,
+  "ident": "GBCOH04764232",
+  "head": "ACTION FOR CHILDREN",
+  "country": "GB",
+  "org_mentions": 35,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Action for Children Services Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46755783,
+  "last_notice": 46755783,
+  "keep": false,
+  "tokens": [
+   "action",
+   "children"
+  ],
+  "others": [
+   [
+    23,
+    "ACTION FOR CHILDREN"
+   ],
+   [
+    3,
+    "Action For Children"
+   ],
+   [
+    2,
+    "Action for Children"
+   ],
+   [
+    2,
+    "Action for Children"
+   ],
+   [
+    1,
+    "Action for children"
+   ]
+  ]
+ },
+ {
+  "org": 31542284,
+  "ident": "GBCOH04764706",
+  "head": "ENVISION MARINE LTD.",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Envision Mapping Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 45650826,
+  "last_notice": 45650826,
+  "keep": false,
+  "tokens": [
+   "envision",
+   "mapping"
+  ],
+  "others": [
+   [
+    3,
+    "ENVISION MARINE LTD."
+   ]
+  ]
+ },
+ {
+  "org": 31555784,
+  "ident": "GBCOH04767110",
+  "head": "INTUITION DISCOVERY AND DEVELOPMENT LTD",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "INTUITION DISCOVERY AND DEVELOPMENT LTD",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46771410,
+  "last_notice": 46771410,
+  "keep": false,
+  "tokens": [
+   "discovery",
+   "intuition"
+  ],
+  "others": [
+   [
+    3,
+    "MISSION INC LTD"
+   ]
+  ]
+ },
+ {
+  "org": 31555784,
+  "ident": "GBCOH04767110",
+  "head": "INTUITION DISCOVERY AND DEVELOPMENT LTD",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "INTUITION DISCOVERY AND DEVELOPMENT LTD",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46771410,
+  "last_notice": 46771410,
+  "keep": false,
+  "tokens": [
+   "discovery",
+   "intuition"
+  ],
+  "others": [
+   [
+    3,
+    "MISSION INC LTD"
+   ]
+  ]
+ },
+ {
+  "org": 31560016,
+  "ident": "GBCOH04768546",
+  "head": "BENIFEX LIMITED",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Benefex Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46933700,
+  "last_notice": 46933700,
+  "keep": true,
+  "tokens": [
+   "benefex"
+  ],
+  "others": [
+   [
+    2,
+    "BENIFEX LIMITED"
+   ],
+   [
+    1,
+    "Benifex Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31534852,
+  "ident": "GBCOH04785250",
+  "head": "4 WAYS HEALTHCARE LIMITED",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "4 WAYS HEALTHCARE LIMITED",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46725711,
+  "last_notice": 46725711,
+  "keep": false,
+  "tokens": [
+   "ways"
+  ],
+  "others": [
+   [
+    3,
+    "4ways Healthcare Ltd"
+   ],
+   [
+    2,
+    "4WAYS HEALTHCARE LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31539046,
+  "ident": "GBCOH04802772",
+  "head": "SIGN SOLUTIONS (SIGN LANGUAGE INTERPRETING AGENCY) LTD",
+  "country": "GB",
+  "org_mentions": 15,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Sign Solutions",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46805942,
+  "last_notice": 46805942,
+  "keep": false,
+  "tokens": [
+   "sign"
+  ],
+  "others": [
+   [
+    9,
+    "SIGN SOLUTIONS (SIGN LANGUAGE INTERPRETING AGENCY) LTD"
+   ],
+   [
+    3,
+    "Sign Solutions (SLIA) Ltd"
+   ],
+   [
+    1,
+    "Sign Solutions (Sign Language Interpreting Agency) Ltd"
+   ],
+   [
+    1,
+    "Sign Solutions (Sign Language Interpreting Agency) Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31565078,
+  "ident": "GBCOH04819289",
+  "head": "CHALLENGE-TRG SKILLS LIMITED",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "LEARNINGPLUS LIMITED (Previously CHALLENGE-TRG SKILLS LIMITED)",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46828015,
+  "last_notice": 46828015,
+  "keep": true,
+  "tokens": [
+   "learningplus"
+  ],
+  "others": [
+   [
+    2,
+    "CHALLENGE-TRG SKILLS LIMITED"
+   ],
+   [
+    1,
+    "Challenge-trg Skills Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 30913724,
+  "ident": "GBCOH04827750",
+  "head": "Axis Recruitment limited",
+  "country": "GB",
+  "org_mentions": 41,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Axis Recruitment Limted",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46752540,
+  "last_notice": 46752540,
+  "keep": false,
+  "tokens": [
+   "axis",
+   "limted",
+   "recruitment"
+  ],
+  "others": [
+   [
+    18,
+    "AXIS RECRUITMENT LIMITED"
+   ],
+   [
+    7,
+    "AXIS RECRUITMENT LIMITED (04827750)"
+   ],
+   [
+    6,
+    "Axis Recruitment Ltd"
+   ],
+   [
+    4,
+    "Axis Recruitment Limited"
+   ],
+   [
+    3,
+    "Axis Recruitment Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30928343,
+  "ident": "GBCOH04833496",
+  "head": "GLENN SLATER CONTRACTORS LTD",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Glenn Slater Building Contractors Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46842501,
+  "last_notice": 46842501,
+  "keep": false,
+  "tokens": [
+   "building",
+   "contractors",
+   "glenn",
+   "slater"
+  ],
+  "others": [
+   [
+    2,
+    "GLENN SLATER CONTRACTORS LTD"
+   ],
+   [
+    1,
+    "Glenn Slater Contractors Ltd"
+   ]
+  ]
+ },
+ {
+  "org": 31568784,
+  "ident": "GBCOH04858959",
+  "head": "N C Constriction Services Limited",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "N C Constriction Services Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46803130,
+  "last_notice": 46803130,
+  "keep": false,
+  "tokens": [
+   "constriction"
+  ],
+  "others": [
+   [
+    3,
+    "N.C. CONSTRUCTION SERVICES LIMITED"
+   ],
+   [
+    1,
+    "NC Construction Services Ltd"
+   ],
+   [
+    1,
+    "NC Construction Services Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31554531,
+  "ident": "GBCOH04877382",
+  "head": "JONES LANG LASALLE SERVICES LIMITED",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Jones Lang LaSelle Services Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46989207,
+  "last_notice": 46989207,
+  "keep": false,
+  "tokens": [
+   "jones",
+   "lang",
+   "laselle"
+  ],
+  "others": [
+   [
+    4,
+    "JONES LANG LASALLE SERVICES LIMITED"
+   ],
+   [
+    2,
+    "JONES LANG LASALLE SERVICES LIMITED"
+   ]
+  ]
+ },
+ {
+  "org": 31575713,
+  "ident": "GBCOH04879660",
+  "head": "Furlong Business Solutions Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Furlong Business Solutions Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46825927,
+  "last_notice": 46825927,
+  "keep": false,
+  "tokens": [
+   "business",
+   "furlong"
+  ],
+  "others": [
+   [
+    2,
+    "Furlong Business Solutions Linited"
+   ]
+  ]
+ },
+ {
+  "org": 31568291,
+  "ident": "GBCOH04955186",
+  "head": "Priory Supported Living Limited",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Craigmoor Supporting You Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46879385,
+  "last_notice": 46879385,
+  "keep": false,
+  "tokens": [
+   "craigmoor",
+   "supporting",
+   "you"
+  ],
+  "others": [
+   [
+    1,
+    "Priory Supported Living Limited"
+   ],
+   [
+    1,
+    "Craegmoor Supporting You Ltd"
+   ],
+   [
+    1,
+    "Craegmoor Supporting You Limited"
+   ]
+  ]
+ },
+ {
+  "org": 31568291,
+  "ident": "GBCOH04955186",
+  "head": "Priory Supported Living Limited",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Priory Supported Living Limited",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46801955,
+  "last_notice": 46801955,
+  "keep": false,
+  "tokens": [
+   "living",
+   "priory",
+   "supported"
+  ],
+  "others": [
+   [
+    1,
+    "Craigmoor Supporting You Limited"
+   ],
+   [
+    1,
+    "Craegmoor Supporting You Ltd"
+   ],
+   [
+    1,
+    "Craegmoor Supporting You Limited"
+   ]
+  ]
+ },
+ {
+  "org": 30968846,
+  "ident": "GBCOH04992207",
+  "head": "G4S LIMITED",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "G4S Care & Justice Services (UK) Ltd",
+  "scheme": "GB-COH",
+  "n": 1,
+  "first_notice": 46837561,
+  "last_notice": 46837561,
+  "keep": false,
+  "tokens": [
+   "g4s",
+   "justice"
+  ],
+  "others": [
+   [
+    6,
+    "G4S LIMITED"
+   ]
+  ]
+ }
+]

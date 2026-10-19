@@ -1,0 +1,274 @@
+PARK-agent-principal         [A ] u2a           30926792 'Cwm Taf Morgannwg University Health Bo' <- 'NHS Wales Shared Services Partnership-Procurement Services' x2 side=- dest=- rule=-
+PARK-no-destination          [F ] u2a           30913906 'Newcastle City Council' <- 'Abri Ltd' x1 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 31499520, 'section': 'ORG-GB-PPON-PBHM-6848-TWYG', 'roles': ['Tenderer'], 'tenders': [7974930]}
+      hint (9266880, 'GB', '09772167', 0, 'Abri Trading Limited')
+      hint (31603017, 'GB', 'GBCOH03482228', 0, 'Abri Group Ltd')
+PARK-sub-unit/group/sister   [U ] u2a           31548303 'Tradebe Gwent Limited' <- 'Inutec Limited' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30917832 'Northern Health And Social Care Trust' <- 'Procurement & Logistics Service' x1 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           30914265 'Mid and South Essex NHS Foundation Tru' <- 'Abbott Medical UK Limited' x1 side=supplier dest=11546762 rule=identified-unique
+      evidence {'notice': 46791071, 'section': 'ORG-GB-PPON-PBVJ-9475-ZCMD', 'roles': ['Tenderer'], 'tenders': [8637230]}
+      pool (11546762, 'GB', '02423907', 0, 'Abbott Medical UK Limited')
+PARK-agent-principal         [A ] u2a           30916628 'NHS LONDON COMMERCIAL HUB' <- 'NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30928312 'Public Health Wales' <- 'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)' x1 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           30914406 'Crown Commercial Service' <- 'Thomas Silvey' x1 side=supplier dest=31560264 rule=identified-unique
+      evidence {'notice': 46842097, 'section': 'ORG-GB-PPON-PBZB-4962-TVLR', 'roles': ['Tenderer'], 'tenders': [8668647]}
+      pool (31560264, 'GB', 'GBCOH00360922', 0, 'THOMAS SILVEY,LIMITED')
+PARK-shared-procurement      [F ] u2a           30917785 'Braintree District Council' <- 'Castle Point Borough Council' x2 side=buyer dest=30917238 rule=identified-unique
+      evidence {'notice': 46885921, 'section': 'ORG-GB-PPON-PGBP-7262-MJTR', 'roles': ['Procedure-Buyer'], 'tenders': [8695231]}
+      evidence {'notice': 46886644, 'section': 'ORG-GB-PPON-PGBP-7262-MJTR', 'roles': ['Procedure-Buyer'], 'tenders': [8695231]}
+      pool (30917238, 'GB', 'GBPPONPNQD4618BZPT', 0, 'Castle Point Borough Council')
+PARK-shared-procurement      [F ] u2a           30917785 'Braintree District Council' <- 'Castlepoint Borough Council' x1 side=buyer dest=- rule=PARK-destination-ambiguous (identified near-match exists)
+      evidence {'notice': 46876220, 'section': 'ORG-GB-PPON-PGBP-7262-MJTR', 'roles': ['Procedure-Buyer'], 'tenders': [8690412]}
+      pool (2156520, 'GB', None, 1, 'Castlepoint Borough Council')
+      hint (30917238, 'GB', 'GBPPONPNQD4618BZPT', 0, 'Castle Point Borough Council')
+PARK-agent-principal         [A ] u2a           30930308 'INVICTUS PARTNERSHIP LTD (13647652)' <- 'CORE Education Trust' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30930308 'INVICTUS PARTNERSHIP LTD (13647652)' <- 'William Farr C of E Comprehensive School' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           30913854 'Charford First School' <- "Prince Henry's High School" x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30917275 'Trafford Council' <- 'Star Procurement' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30917275 'Trafford Council' <- 'Star procurement' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           31563568 'Conscia Group UK Limited' <- 'ITGL Limited' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           30914149 'London Stadium 185 Limited' <- 'London Legacy Development Corporation' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30929723 'Betsi Cadwaladr University Health Boar' <- 'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)' x1 side=- dest=- rule=-
+PARK-relation-unknown        [F?] u2a           31548943 'Blue Stag' <- 'Everglow' x2 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           31560765 'Healthcare Financial Management Associ' <- 'TIAA LTD' x1 side=supplier dest=11853802 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46818192, 'section': 'ORG-GB-PPON-PHGQ-9419-WJLV', 'roles': ['Tenderer'], 'tenders': [8596135]}
+      pool (11853802, 'GB', '04546319', 0, 'TIAA Limited', 11)
+      pool (14730774, 'GB', '4546319', 0, 'TIAA Ltd', 6)
+      pool (31546403, 'GB', 'GBPPONPBRR3532NWYQ', 0, 'TIAA LTD', 10)
+      pool (31622768, 'GB', 'GBCOH4546319', 0, 'TIAA Ltd', 1)
+PARK-no-destination          [F ] u2a           31560765 'Healthcare Financial Management Associ' <- 'The Academy for Healthcare Science Limited' x1 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 46834778, 'section': 'ORG-GB-PPON-PHGQ-9419-WJLV', 'roles': ['Tenderer'], 'tenders': [8650106]}
+PARK-sub-unit/group/sister   [U ] u2a           30913560 'Transport for London' <- 'Greater London Authority (GLA)' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           30913560 'Transport for London' <- 'London Underground Limited' x1 side=- dest=- rule=-
+PARK-no-destination          [F ] u2a           30913556 'British Council' <- 'Cognition Education UK Ltd' x1 side=unbound dest=- rule=PARK-no-destination
+      evidence {'notice': 46850014, 'section': 'ORG-GB-PPON-PHTN-1551-GCQH', 'roles': [], 'tenders': []}
+      hint (31568230, 'GB', 'GBPPONPYGN6353RXHQ', 0, 'Cognition Education')
+PARK-sub-unit/group/sister   [U ] u2a           30917503 'Adur District Council' <- 'Worthing Borough Council' x2 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           30972047 'Ministry of Defence' <- 'Cyber & Specialist Operations Command (CSOC)' x1 side=- dest=- rule=-
+PARK-destination-ambiguous (identified near-match exists) [F ] u2a           30913748 'Department for Work & Pensions' <- 'London School of Economics and Political Science' x2 side=supplier dest=- rule=PARK-destination-ambiguous (identified near-match exists)
+      evidence {'notice': 46828149, 'section': 'ORG-GB-PPON-PJCP-7274-TLRQ', 'roles': ['Tenderer'], 'tenders': [8661352]}
+      evidence {'notice': 46828590, 'section': 'ORG-GB-PPON-PJCP-7274-TLRQ', 'roles': ['Tenderer'], 'tenders': [8661352]}
+      pool (1829341, 'GB', None, 1, 'London School of Economics and Political Science')
+      hint (30974649, 'GB', 'GBCOH00070527', 0, 'London School of Economics')
+PARK-sub-unit/group/sister   [U ] u2a           30915064 'Merseytravel' <- 'Liverpool City Region Combined Authority' x2 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           30913887 'Westminster City Council' <- 'The Royal Borough  of Kensington & Chelsea' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Bernicia Group' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Birmingham City Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Bristol City Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Carmarthenshire County Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'City of Lincoln Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'City of York Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'East Riding of Yorkshire Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Gateshead Borough Council' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'High Peak Borough Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Karbon Homes (54North Homes)' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Lancaster City Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Leeds City Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'London Borough of Newham' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Metropolitan borough of Bury' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Moat Homes Limited' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Newark And Sherwood District Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'North Tyneside Borough Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'ONE MANCHESTER LIMITED' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'ONWARD HOMES LIMITED' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'ORBIT GROUP LIMITED' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Ongo Homes Limited' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Powys County Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Riverside Group Limited' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Royal Borough of Kensington and Chelsea' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'ST LEGER HOMES OF DONCASTER LIMITED' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Sandwell Metropolitan Borough Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'South Derbyshire District Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'South Tyneside Borough Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Stoke on Trent City Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'THE GUINNESS PARTNERSHIP LIMITED' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Tamworth Borough Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'The Council of the Borough of Kirklees' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Thurrock Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Warwick District Council' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30953692 'Northern Housing Consortium Ltd' <- 'Wigan Council' x2 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           30916588 'Valuation Office Agency' <- 'NLA MEDIA ACCESS LIMITED' x1 side=supplier dest=30915240 rule=identified-unique
+      evidence {'notice': 46834269, 'section': 'ORG-GB-PPON-PLBJ-4721-TQQJ', 'roles': ['Tenderer'], 'tenders': [8664618]}
+      pool (30915240, 'GB', 'GBCOH03003569', 0, 'NLA media access Ltd')
+PARK-relation-unknown        [F?] u2a           31558765 'Redcorn Limited' <- 'ELV Solutions' x1 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           30929662 'South Eastern Health and Social Care T' <- 'PPL/PRS' x1 side=supplier dest=31546963 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46763175, 'section': 'ORG-GB-PPON-PLGY6381WWWR', 'roles': ['Tenderer'], 'tenders': [8620561]}
+      pool (31546963, 'GB', 'GBCOH10376001', 0, 'PPL PRS ltd', 5)
+      pool (31554686, 'GB', 'GBPPONPVTY2243HBDQ', 0, 'PPL PRS', 1)
+PARK-no-destination          [F ] u2a           30914865 'UK Atomic Energy Authority' <- 'RCD Lockindge Ltd' x2 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 46762444, 'section': 'ORG-GB-PPON-PLJV-1169-JTDD', 'roles': ['Tenderer'], 'tenders': [8620122]}
+      evidence {'notice': 46764026, 'section': 'ORG-GB-PPON-PLJV-1169-JTDD', 'roles': ['Tenderer'], 'tenders': [8620122]}
+      hint (31534569, 'GB', 'GBPPONPQJV1576DBQY', 0, 'RCD Lockinge Ltd')
+PARK-agent-principal         [A ] u2a           30968739 'Ginger energy' <- 'The Howard Partnership Trust' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30968739 'Ginger energy' <- 'The Keys Academy Trust' x1 side=- dest=- rule=-
+PARK-no-destination          [F ] u2a           30919333 'Frimley Health NHS Foundation Trust' <- 'INTUITIVE LIMITED' x1 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 46773162, 'section': 'ORG-GB-PPON-PLMQ-6855-CXLL', 'roles': ['Tenderer'], 'tenders': [8626258]}
+      hint (22397198, 'GB', '6727762', 0, 'INTUITIVE SURGICAL LTD')
+      hint (30914673, 'GB', 'GBCOH05204890', 0, 'Intuitive Thinking Skills Ltd')
+      hint (31605787, 'GB', 'GBCOH5204890', 0, 'Intuitive Thinking Skills')
+      hint (31624149, 'GB', 'GBCOH6727762', 0, 'Intuitive Surgical Limited')
+REHOME-HIGH                  [F ] u2a           30914046 'Department for Transport' <- 'FIRE SERVICE COLLEGE LIMITED' x1 side=supplier dest=11314818 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46811712, 'section': 'ORG-GB-PPON-PLTC-5358-LTWZ', 'roles': ['Tenderer'], 'tenders': [8651794]}
+      pool (11314818, 'GB', '08102633', 0, 'Fire Service College Ltd', 3)
+      pool (31573940, 'GB', 'GBPPONPTQB6315ZCDD', 0, 'Fire Service College Ltd', 2)
+PARK-sub-unit/group/sister   [U ] u2a           30915372 'Sunderland City Council' <- 'Together for Children' x1 side=- dest=- rule=-
+PARK-relation-unknown        [F?] u2a           31575297 'Paradigm Housing Group' <- 'Lifestone Home Limited' x1 side=- dest=- rule=-
+PARK-relation-unknown        [F?] u2a           31575297 'Paradigm Housing Group' <- 'Lifestone Home Limited ' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           31556600 'NHS North East and North Cumbria Integ' <- 'NHS England - North East & Yorkshire' x1 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           30913583 'DEPARTMENT OF ENVIRONMENT, FOOD AND RU' <- 'Red Kite Veterinary Consultants Ltd' x1 side=supplier dest=31578178 rule=identified-unique
+      evidence {'notice': 46868149, 'section': 'ORG-GB-PPON-PNBD-3289-CDGX', 'roles': ['Tenderer'], 'tenders': [8595247]}
+      pool (31578178, 'GB', 'GBCOH08716366', 0, 'RED KITE VETERINARY CONSULTANTS LIMITED')
+PARK-sub-unit/group/sister   [U ] u2a           31568749 'Gerald Davies & Sons Limited' <- 'Cymru Quarry  Group' x1 side=- dest=- rule=-
+PARK-relation-unknown        [F?] u2a           30969130 'Healthcare 25 Ltd' <- 'GEMINI SURGICAL UK LTD' x2 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           31549426 'Teleflex Group Ltd T/A Teleflex Medica' <- 'CAMBRIDGE UNIVERSITY HOSPITALS NHS FOUNDATION TRUST' x1 side=buyer dest=1168300 rule=provisional-exact-unique
+      evidence {'notice': 46815909, 'section': 'ORG-GB-PPON-PPCP-8863-HDGN', 'roles': ['Procedure-Buyer'], 'tenders': [8654110]}
+      pool (1168300, 'GB', None, 1, 'Cambridge University Hospitals NHS Foundation Trust')
+REHOME-HIGH                  [F ] u2a           31549426 'Teleflex Group Ltd T/A Teleflex Medica' <- 'Cambridge University Hospitals NHS Foundation Trust' x1 side=buyer dest=1168300 rule=provisional-exact-unique
+      evidence {'notice': 46796632, 'section': 'ORG-GB-PPON-PPCP-8863-HDGN', 'roles': ['Procedure-Buyer'], 'tenders': [8643351]}
+      pool (1168300, 'GB', None, 1, 'Cambridge University Hospitals NHS Foundation Trust')
+REHOME-HIGH                  [F ] u2a           31549426 'Teleflex Group Ltd T/A Teleflex Medica' <- 'Hologic Ltd' x2 side=supplier dest=30914006 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46877124, 'section': 'ORG-GB-PPON-PPCP-8863-HDGN', 'roles': ['Tenderer'], 'tenders': [8690126]}
+      evidence {'notice': 46882065, 'section': 'ORG-GB-PPON-PPCP-8863-HDGN', 'roles': ['Tenderer'], 'tenders': [8690126]}
+      pool (14381876, 'GB', '2722343', 0, 'Hologic Ltd', 7)
+      pool (15303476, 'GB', 'GB560664536', 0, 'Hologic Ltd', 1)
+      pool (30914006, 'GB', 'GBCOH02722343', 0, 'HOLOGIC LTD.', 37)
+PARK-relation-unknown        [F?] u2a           30969320 'ICTS UK Limited' <- 'Diagnose UK Limited' x1 side=- dest=- rule=-
+PARK-relation-unknown        [F?] u2a           30918257 'Megaplant Ltd' <- 'Mechplant NW Limited' x1 side=- dest=- rule=-
+PARK-no-destination          [F ] u2a           30915197 'Royal Borough of Kensington & Chelsea' <- 'The Centre for Systemic Social Work' x1 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 47371593, 'section': 'ORG-GB-PPON-PPRX-1592-MXGN', 'roles': ['Tenderer'], 'tenders': [8831821]}
+PARK-sub-unit/group/sister   [U ] u2a           30929605 'JOHN L LORD & SON (RIZISTAL) LIMITED (' <- 'STAL UK Limited' x1 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           31538012 'Great Ormond Street Hospital for Child' <- 'Renishaw Neuro Solutions Limited' x2 side=supplier dest=31552561 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46795678, 'section': 'ORG-GB-PPON-PPYL-1513-MZZL', 'roles': ['Tenderer'], 'tenders': [8642804]}
+      evidence {'notice': 46819442, 'section': 'ORG-GB-PPON-PPYL-1513-MZZL', 'roles': ['Tenderer'], 'tenders': [8642804]}
+      pool (31538013, 'GB', 'GBPPONPRJV6161YXYQ', 0, 'Renishaw Neuro Solutions Limited', 4)
+      pool (31552561, 'GB', 'GBCOH10375761', 0, 'Renishaw Neuro Solutions Limited', 6)
+REHOME-HIGH                  [F ] u2a           30913740 'Northampton General Hospital NHS Trust' <- 'Xiel' x1 side=supplier dest=30974378 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46835667, 'section': 'ORG-GB-PPON-PQBY-8547-GYGP', 'roles': ['Tenderer'], 'tenders': [8665378]}
+      pool (15942203, 'GB', '327080811', 0, 'Xiel Ltd', 1)
+      pool (17415439, 'GB', 'GB327080811', 0, 'Xiel Ltd', 1)
+      pool (30974378, 'GB', 'GBCOH11875702', 0, 'XIEL LTD', 12)
+REHOME-HIGH                  [F ] u2a           30916247 'Ofcom' <- 'Tech Against Terrorism' x1 side=supplier dest=31570425 rule=provisional-exact-unique
+      evidence {'notice': 47157838, 'section': 'ORG-GB-PPON-PQQZ-1663-NWMN', 'roles': ['Tenderer'], 'tenders': [8582476]}
+      pool (31570425, 'GB', None, 1, 'Tech Against Terrorism')
+PARK-relation-unknown        [F?] u2a           30967462 'ANGLESEY & GWYNEDD GROUNDWORKS LTD' <- 'Owen Environmental' x1 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           31571667 'Isle of Wight NHS Trust' <- 'ERMC Ltd' x1 side=supplier dest=18928807 rule=identified-unique
+      evidence {'notice': 46819437, 'section': 'ORG-GB-PPON-PRBY-9272-TQGX', 'roles': ['Tenderer'], 'tenders': [8656068]}
+      pool (18928807, 'GB', '04489340', 0, 'ERMC Limited')
+PARK-sub-unit/group/sister   [U ] u2a           30916394 'London Legacy Development Corporation' <- 'Stratford Waterfront Retail Company Ltd' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           30913935 'East and North Hertfordshire NHS Trust' <- 'National Radiotherapy trials (RTTQA) Group' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           30919606 'THE AD CONSTRUCTION GROUP LIMITED' <- 'THE AD CONSTRUCTION GROUP LIMITED' x1 side=- dest=- rule=-
+PARK-shared-procurement      [F ] u2a           31556399 'Department of Justice - DoJ' <- 'Waterways Ireland' x2 side=buyer dest=1370559 rule=provisional-exact-unique
+      evidence {'notice': 46779410, 'section': 'ORG-GB-PPON-PRXC-4231-PHBG', 'roles': ['Procedure-Buyer'], 'tenders': [8630000]}
+      evidence {'notice': 46783699, 'section': 'ORG-GB-PPON-PRXC-4231-PHBG', 'roles': ['Procedure-Buyer'], 'tenders': [8632690]}
+      pool (1370559, 'GB', None, 1, 'Waterways Ireland')
+PARK-no-destination          [F ] u2a           30926713 'London Borough of Enfield' <- 'CollectionHQ' x1 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 46806599, 'section': 'ORG-GB-PPON-PRYN-6967-GTQP', 'roles': ['Tenderer'], 'tenders': [8648920]}
+PARK-no-destination          [F ] u2a           30926713 'London Borough of Enfield' <- 'collectionHQ' x1 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 46814331, 'section': 'ORG-GB-PPON-PRYN-6967-GTQP', 'roles': ['Tenderer'], 'tenders': [8648920]}
+PARK-agent-principal         [A ] u2a           30914820 'RPJ3 Group Limited on Behalf of Aspira' <- 'Remarkable Autism' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30913750 'Swansea University' <- 'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)' x1 side=- dest=- rule=-
+PARK-shared-procurement      [F ] u2a           30914094 'Prifysgol Bangor / Bangor University' <- 'Betsi Cadwaladr University Health Board' x1 side=buyer dest=30916058 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46888404, 'section': 'ORG-GB-PPON-PTPM-4795-PZBG', 'roles': ['Procedure-Buyer'], 'tenders': [8800927]}
+      pool (30916058, 'GB', 'GBNHS7A1', 0, 'Betsi Cadwaladr University Health Board ', 80)
+      pool (30929723, 'GB', 'GBPPONPHBY3981QBMR', 0, 'Betsi Cadwaladr University Health Board', 61)
+PARK-sub-unit/group/sister   [U ] u2a           31541254 'National Children’s Bureau' <- 'Anti-Bullying Alliance' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30913763 'Cardiff Council' <- 'Ardal' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30919377 'Aneurin Bevan University Health Board' <- 'NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)' x2 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30913798 'Welland Procurement' <- 'Rutland County Council' x1 side=- dest=- rule=-
+PARK-agent-principal         [A ] u2a           30974616 'Arc Property Services Partnership Limi' <- 'Scape Group Limited (trading as SCAPE)' x2 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           31548720 'Spencer Quantum Ltd' <- 'Spencers ECA' x1 side=- dest=- rule=-
+REHOME-HIGH                  [F ] u2a           30926693 'General Medical Council (GMC)' <- 'Vohkus' x1 side=supplier dest=31551980 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46771116, 'section': 'ORG-GB-PPON-PXLD-1125-PGBY', 'roles': ['Tenderer'], 'tenders': [8639596]}
+      pool (31551980, 'GB', 'GBCOH04142508', 0, 'VOHKUS LIMITED', 2)
+      pool (31616633, 'GB', 'GBCOH4142508', 0, 'Vohkus Limited', 1)
+REHOME-HIGH                  [F ] u2a           30913561 'Manchester University NHS Foundation T' <- 'Bolton NHS Foundation Trust' x1 side=supplier dest=30917930 rule=identified-unique
+      evidence {'notice': 47366319, 'section': 'ORG-GB-PPON-PXQG-2592-VYYY', 'roles': ['Tenderer'], 'tenders': [8829421]}
+      pool (30917930, 'GB', 'GBPPONPTGM8148JHHN', 0, 'Bolton NHS Foundation Trust')
+PARK-shared-procurement      [F ] u2a           30914669 'North Tyneside Borough Council' <- 'Hartlepool Borough Council' x1 side=buyer dest=30917511 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46729910, 'section': 'ORG-GB-PPON-PYBQ-4733-WWLW', 'roles': ['Procedure-Buyer'], 'tenders': [7960374]}
+      pool (16340303, 'GB', 'AA7941', 0, 'Hartlepool Borough Council', 2)
+      pool (30917511, 'GB', 'GBPPONPTCQ5564CHJP', 0, 'Hartlepool Borough Council', 163)
+PARK-sub-unit/group/sister   [U ] u2a           30917424 'Kent County Council (T/a Procurement S' <- 'Edseco Limited trading as The Education People' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] u2a           30917424 'Kent County Council (T/a Procurement S' <- 'Laser Energy' x1 side=- dest=- rule=-
+PARK-relation-unknown        [F?] u2a           31555564 'STEPHEN W MOORE LIMITED' <- 'Johnston Gilpin & Co' x1 side=- dest=- rule=-
+PARK-shared-procurement      [F ] u2a           31549806 'The Walton Centre NHS Foundation Trust' <- 'Alder Hey' x1 side=buyer dest=- rule=PARK-destination-ambiguous (identified near-match exists)
+      evidence {'notice': 46800059, 'section': 'ORG-GB-PPON-PYLD-6221-NJVP', 'roles': ['Procedure-Buyer'], 'tenders': [8645306]}
+      pool (30968741, 'GB', None, 1, 'Alder Hey')
+      hint (31545296, 'GB', 'GBPPONPXDB2967MWLG', 0, "Alder Hey Children's NHS Foundation Trust")
+      hint (31554288, 'GB', 'GBNHSPXDB2967MWLG', 0, "ALDER HEY CHILDREN'S NHS FOUNDATION TRUST")
+REHOME-HIGH                  [F ] u2a           31551518 'FINSEN TECHNOLOGIES LIMITED' <- 'Gama Healthcare Ltd' x1 side=supplier dest=31551510 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46842943, 'section': 'ORG-GB-PPON-PYMW-5475-ZMBP', 'roles': ['Tenderer'], 'tenders': [8669104]}
+      pool (13175098, 'GB', '5316871', 0, 'GAMA Healthcare Ltd', 5)
+      pool (17042292, 'GB', '05316871', 0, 'GAMA Healthcare Ltd', 1)
+      pool (31551510, 'GB', 'GBPPONPPBZ6256TJCR', 0, 'GAMA Healthcare Ltd', 7)
+      pool (31578747, 'GB', 'GBCOH5316871', 0, 'GAMA Healthcare Ltd', 1)
+PARK-sub-unit/group/sister   [U ] u2a           30913608 'The Mayor and Commonalty and Citizens ' <- 'City of London Police' x1 side=- dest=- rule=-
+PARK-shared-procurement      [F ] u2a           30916395 'Chelmsford City Council' <- 'Uttlesford District Council' x2 side=buyer dest=30969067 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46726141, 'section': 'ORG-GB-PPON-PYRZ-1467-WNJW', 'roles': ['Procedure-Buyer'], 'tenders': [8598409]}
+      evidence {'notice': 46748250, 'section': 'ORG-GB-PPON-PYRZ-1467-WNJW', 'roles': ['Procedure-Buyer'], 'tenders': [8598409]}
+      pool (30969067, 'GB', 'GBPPONPGGT6971RDRL', 0, 'Uttlesford District Council', 15)
+      pool (31611648, 'GB', 'GBCOH424423242', 0, 'Uttlesford District Council', 4)
+REHOME-HIGH                  [F ] u2a           30913648 'Driver and Vehicle Licensing Agency' <- 'Virgin Media Limited' x1 side=supplier dest=31540412 rule=identified-unique
+      evidence {'notice': 47157734, 'section': 'ORG-GB-PPON-PYVZ-4215-PGYM', 'roles': ['Tenderer'], 'tenders': [8806962]}
+      pool (31540412, 'GB', 'GBCOH06024812', 0, 'Virgin Media Ltd')
+REHOME-HIGH                  [F ] u2a           30926847 'Network Rail' <- 'Compendium Regeneration Limited' x1 side=supplier dest=1307252 rule=provisional-exact-unique
+      evidence {'notice': 46853619, 'section': 'ORG-GB-PPON-PZLB-9446-RVML', 'roles': ['Tenderer'], 'tenders': [8675109]}
+      pool (1307252, 'GB', None, 1, 'Compendium Regeneration Limited')
+PARK-no-destination          [F ] u2a           30926847 'Network Rail' <- 'M Group Services' x1 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 46132740, 'section': 'ORG-GB-PPON-PZLB-9446-RVML', 'roles': ['Tenderer'], 'tenders': [8572450]}
+REHOME-HIGH                  [F ] u2a           30926847 'Network Rail' <- 'RSS International Ltd' x1 side=supplier dest=30929573 rule=identified-unique
+      evidence {'notice': 46709309, 'section': 'ORG-GB-PPON-PZLB-9446-RVML', 'roles': ['Tenderer'], 'tenders': [8588313]}
+      pool (30929573, 'GB', 'GBCOH06707779', 0, 'RSS INTERNATIONAL LTD')
+PARK-destination-ambiguous (identified near-match exists) [F ] u2a           30926847 'Network Rail' <- 'Taylor Wimpey' x1 side=supplier dest=- rule=PARK-destination-ambiguous (identified near-match exists)
+      evidence {'notice': 46843153, 'section': 'ORG-GB-PPON-PZLB-9446-RVML', 'roles': ['Tenderer'], 'tenders': [8669224]}
+      pool (1271667, 'GB', None, 1, 'Taylor Wimpey')
+      hint (11063641, 'GB', '01392762', 0, 'Taylor Wimpey UK Ltd')
+      hint (31575729, 'GB', 'GBCOH00296805', 0, 'Taylor Wimpey UK Plc')
+REHOME-HIGH                  [F ] u2a           30926847 'Network Rail' <- 'The Law Society' x1 side=supplier dest=14894295 rule=provisional-exact-unique
+      evidence {'notice': 46855540, 'section': 'ORG-GB-PPON-PZLB-9446-RVML', 'roles': ['Tenderer'], 'tenders': [8676092]}
+      pool (14894295, 'GB', None, 1, 'The Law Society')
+REHOME-HIGH                  [F ] u2a           30915227 'Storz Medical (UK) Limited' <- 'SWANSEA BAY UNIVERSITY HEALTH BOARD' x1 side=buyer dest=30916810 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46784746, 'section': 'ORG-GB-PPON-PZZV-3765-WXZQ', 'roles': ['Procedure-Buyer'], 'tenders': [8633322]}
+      pool (30916810, 'GB', 'GBNHS7A3', 0, 'Swansea Bay University Health Board', 59)
+      pool (30926961, 'GB', 'GBPPONPQDY1678DHXN', 0, 'Swansea Bay University Health Board', 15)
+REHOME-HIGH                  [F ] unit1-carried 30913706 'UK Research & Innovation' <- 'Jeol (U.K.) Limited' x1 side=supplier dest=12991212 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 46834978, 'section': 'ORG-GB-PPON-PDQJ-7126-JDHG', 'roles': ['Tenderer'], 'tenders': [8664993]}
+      pool (9534435, 'GB', '939456', 0, 'JEOL (UK) Ltd', 3)
+      pool (12991212, 'GB', '00939456', 0, 'JEOL (U.K.) Limited', 8)
+      pool (17870866, 'GB', '226825653', 0, 'JEOL UK Ltd', 3)
+      pool (31620129, 'GB', 'GBCOH939456', 0, 'JEOL (UK) LTD', 2)
+PARK-relation-unknown        [F?] unit1-carried 31560149 "Dewi's Ltd" <- 'Derek Lewis Ltd' x1 side=- dest=- rule=-
+      note skeptic: probable relation to holder
+REHOME-HIGH                  [F ] unit1-carried 31549890 'Institute for Fiscal Studies' <- 'Pensions Policy Institute' x1 side=supplier dest=31587812 rule=provisional-exact-unique
+      evidence {'notice': 46807946, 'section': 'ORG-GB-PPON-PCLN-8377-ZPPT', 'roles': ['Tenderer'], 'tenders': [8649688]}
+      pool (31587812, 'GB', None, 1, 'Pensions Policy Institute')
+PARK-relation-unknown        [F?] unit1-carried 31561172 'Primary Healthcare 21' <- 'Healthcare 21 NI' x1 side=- dest=- rule=-
+      note skeptic: likely sister company
+REHOME-HIGH                  [F ] unit1-carried 30914626 'Torfaen County Borough Council' <- 'Equal Education Partners ' x1 side=supplier dest=30928130 rule=identified-tiebreak-most-referenced
+      evidence {'notice': 47293389, 'section': 'ORG-GB-PPON-PDNG-5431-HGYV', 'roles': ['Tenderer'], 'tenders': [8655904]}
+      pool (30928130, 'GB', 'GBPPONPVWC8236ZZJZ', 0, 'Equal Education Partners Limited', 2)
+      pool (31582974, 'GB', 'GBCOH07611972', 0, 'Equal Education Partners', 1)
+REHOME-HIGH                  [F ] unit1-carried 30913629 'NHS England' <- 'Portsmouth Hospitals University NHS Trust' x1 side=supplier dest=30971975 rule=identified-unique
+      evidence {'notice': 46832653, 'section': 'ORG-GB-PPON-PDPT-3135-BWWY', 'roles': ['Tenderer'], 'tenders': [8663730]}
+      pool (30971975, 'GB', 'GBPPONPBDT9319TTHZ', 0, 'Portsmouth Hospitals University NHS Trust')
+PARK-no-destination          [F ] unit1-carried 31564015 'Placing Talent' <- 'QCI (UK) LIMITED' x1 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 46870095, 'section': 'ORG-GB-PPON-PDVV-9229-ZLDD', 'roles': ['Tenderer'], 'tenders': [8687517]}
+REHOME-HIGH                  [F ] unit1-carried 30916371 'Rhondda Cynon Taf CBC' <- 'WATKINS COACHES LTD' x1 side=supplier dest=2479435 rule=provisional-exact-unique
+      evidence {'notice': 46755521, 'section': 'ORG-GB-PPON-PDXZ-9391-VHZQ', 'roles': ['Tenderer'], 'tenders': [8615917]}
+      pool (2479435, 'GB', None, 1, 'Watkins Coaches Ltd')
+PARK-agent-principal         [A ] unit1-carried 31546270 'Cumbria, Northumberland, Tyne and Wear' <- 'Pagabo' x2 side=- dest=- rule=-
+REHOME-HIGH                  [F ] unit1-carried 30913753 'Ministry of Justice' <- 'WAVEMAKER LIMITED t/a WPP 650' x2 side=supplier dest=31555041 rule=identified-unique
+      evidence {'notice': 46697985, 'section': 'ORG-GB-PPON-PDNN-2773-HVYN', 'roles': ['Tenderer'], 'tenders': [8582477]}
+      evidence {'notice': 47158784, 'section': 'ORG-GB-PPON-PDNN-2773-HVYN', 'roles': ['Tenderer'], 'tenders': [8582477]}
+      pool (31555041, 'GB', 'GBCOH04078547', 0, 'WAVEMAKER LIMITED')
+PARK-no-destination          [F ] unit1-carried 30953754 'HM Land Registry' <- 'Charlton Park Academy' x2 side=supplier dest=- rule=PARK-no-destination
+      evidence {'notice': 46819650, 'section': 'ORG-GB-PPON-PDZV-7449-YCMT', 'roles': ['Tenderer'], 'tenders': [8656179]}
+      evidence {'notice': 46819659, 'section': 'ORG-GB-PPON-PDZV-7449-YCMT', 'roles': ['Tenderer'], 'tenders': [8656179]}
+PARK-sub-unit/group/sister   [U ] unit1-carried 31555134 'South Tees Development Corporation' <- 'Tees Valley Combined Authority' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] unit1-carried 30913801 'Tees Valley Combined Authority' <- 'South Tees Development Corporation' x1 side=- dest=- rule=-
+PARK-sub-unit/group/sister   [U ] unit1-carried 30913801 'Tees Valley Combined Authority' <- 'Hartlepool Development Corporation' x1 side=- dest=- rule=-
+PARK-distinct-entities (tied rows carry different numbers) [F ] issue-456     5718658 'Sellafield Ltd' <- 'Schneider Electric' x1 side=supplier dest=- rule=PARK-distinct-entities (tied rows carry different numbers)
+      evidence {'notice': 46966800, 'section': 'ORG-GB-PPON-PWYP-8439-MZWY', 'roles': ['Tenderer'], 'tenders': [8751605]}
+      pool (12539471, 'GB', '02886434', 0, 'Schneider Electric Ltd', 10)
+      pool (30916476, 'GB', 'GBCOH01407228', 0, 'SCHNEIDER ELECTRIC LIMITED', 33)
+      hint (10736313, 'GB', '00293260', 0, 'Schneider Electric Systems UK Limited')

@@ -1,0 +1,7214 @@
+[
+ {
+  "org": 30926792,
+  "ident": "GBPPONPBCZ4581GCVG",
+  "head": "Cwm Taf Morgannwg University Health Board",
+  "country": "GB",
+  "org_mentions": 109,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "NHS Wales Shared Services Partnership-Procurement Services",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46784422,
+  "last_notice": 46784734,
+  "keep": true,
+  "tokens": [
+   "procurement",
+   "shared"
+  ],
+  "others": [
+   [
+    104,
+    "Cwm Taf Morgannwg University Health Board"
+   ],
+   [
+    1,
+    "NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morgannwg University Health Board"
+   ],
+   [
+    1,
+    "Cwm Taff Morgannwg Universty Health Board "
+   ],
+   [
+    1,
+    "Cwm Taff Morgannwg Universty Health Board"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30928204,
+  "ident": "GBPPONPBDJ9838DQRQ",
+  "head": "Newlon House Office Cleaning Services",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "2, 10, 18, 27, 34, 42 Queensland Road",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46849033,
+  "last_notice": 46849033,
+  "keep": true,
+  "tokens": [
+   "queensland",
+   "road"
+  ],
+  "others": [
+   [
+    3,
+    "Newlon Housing Trust"
+   ],
+   [
+    3,
+    "Albion Works Replacement Project"
+   ],
+   [
+    1,
+    "newlon housing trust"
+   ],
+   [
+    1,
+    "Newlon House Office Cleaning Services"
+   ],
+   [
+    1,
+    "HN 1 and 2 (15 & 17) Hornsey Street, HN 3 (13) Hornsey Street and  HN 4 (9) Hornsey Street"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30928204,
+  "ident": "GBPPONPBDJ9838DQRQ",
+  "head": "Newlon House Office Cleaning Services",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "HN 1 and 2 (15 & 17) Hornsey Street, HN 3 (13) Hornsey Street and  HN 4 (9) Hornsey Street",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46792875,
+  "last_notice": 46792875,
+  "keep": true,
+  "tokens": [
+   "hornsey",
+   "street"
+  ],
+  "others": [
+   [
+    3,
+    "Newlon Housing Trust"
+   ],
+   [
+    3,
+    "Albion Works Replacement Project"
+   ],
+   [
+    1,
+    "newlon housing trust"
+   ],
+   [
+    1,
+    "Newlon House Office Cleaning Services"
+   ],
+   [
+    1,
+    "2, 10, 18, 27, 34, 42 Queensland Road"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30913906,
+  "ident": "GBPPONPBHM6848TWYG",
+  "head": "Newcastle City Council",
+  "country": "GB",
+  "org_mentions": 498,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Abri Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 31499520,
+  "last_notice": 31499520,
+  "keep": true,
+  "tokens": [
+   "abri"
+  ],
+  "others": [
+   [
+    497,
+    "Newcastle City Council"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30914819,
+  "ident": "GBPPONPBMQ7576DVGW",
+  "head": "UK Health Security Agency",
+  "country": "GB",
+  "org_mentions": 483,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "UKHSA",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46854426,
+  "last_notice": 46854426,
+  "keep": true,
+  "tokens": [
+   "ukhsa"
+  ],
+  "others": [
+   [
+    416,
+    "Secretary of State for Health and Social Care acting as part of the Crown through UK Health Security Agency"
+   ],
+   [
+    65,
+    "UK Health Security Agency"
+   ],
+   [
+    1,
+    "UK Health Security Agency (UKHSA)"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31548303,
+  "ident": "GBPPONPBPT5626NTBN",
+  "head": "Tradebe Gwent Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Inutec Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46760472,
+  "last_notice": 46760472,
+  "keep": true,
+  "tokens": [
+   "inutec"
+  ],
+  "others": [
+   [
+    2,
+    "Tradebe Gwent Limited"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30917832,
+  "ident": "GBPPONPBRP6676CQZY",
+  "head": "Northern Health And Social Care Trust",
+  "country": "GB",
+  "org_mentions": 198,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Procurement & Logistics Service",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46762943,
+  "last_notice": 46762943,
+  "keep": true,
+  "tokens": [
+   "logistics",
+   "procurement"
+  ],
+  "others": [
+   [
+    152,
+    "Northern Health and Social Care Trust"
+   ],
+   [
+    22,
+    "Northern Health And Social Care Trust"
+   ],
+   [
+    5,
+    "Northern Health & Social Care Trust"
+   ],
+   [
+    5,
+    "NORTHERN HEALTH & SOCIAL CARE TRUST"
+   ],
+   [
+    4,
+    "Northern Health and Social Care Trust (NHSCT)"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30914265,
+  "ident": "GBPPONPBVJ9475ZCMD",
+  "head": "Mid and South Essex NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 437,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Abbott Medical UK Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46791071,
+  "last_notice": 46791071,
+  "keep": true,
+  "tokens": [
+   "abbott",
+   "medical"
+  ],
+  "others": [
+   [
+    283,
+    "Mid and South Essex NHS Foundation Trust"
+   ],
+   [
+    66,
+    "Mid South Essex NHS Foundation Trust"
+   ],
+   [
+    42,
+    "Mid and South Essex NHS Foundation Trust"
+   ],
+   [
+    21,
+    "MID AND SOUTH ESSEX NHS FOUNDATION TRUST"
+   ],
+   [
+    15,
+    "Mid and South Essex NHS Foundation Trust"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30916628,
+  "ident": "GBPPONPBWD3998QHRQ",
+  "head": "NHS LONDON COMMERCIAL HUB",
+  "country": "GB",
+  "org_mentions": 26,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47271894,
+  "last_notice": 47271894,
+  "keep": true,
+  "tokens": [
+   "board",
+   "central",
+   "integrated"
+  ],
+  "others": [
+   [
+    22,
+    "NHS LONDON COMMERCIAL HUB"
+   ],
+   [
+    3,
+    "NHS London Commercial Hub (hosted by NHS North East London ICB)"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30928312,
+  "ident": "GBPPONPBXD6758YMPY",
+  "head": "Public Health Wales",
+  "country": "GB",
+  "org_mentions": 27,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46823552,
+  "last_notice": 46823552,
+  "keep": true,
+  "tokens": [
+   "hosted",
+   "procurement",
+   "shared",
+   "velindre"
+  ],
+  "others": [
+   [
+    22,
+    "Public Health Wales NHS Trust"
+   ],
+   [
+    3,
+    "Public Health Wales"
+   ],
+   [
+    1,
+    "NHS Wales Performance and Improvement (hosted by Public Health Wales NHS Trust)"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30930374,
+  "ident": "GBPPONPBYH4123BZWY",
+  "head": "Platfform for Change ",
+  "country": "GB",
+  "org_mentions": 12,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Plattform",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46807600,
+  "last_notice": 46807600,
+  "keep": true,
+  "tokens": [
+   "plattform"
+  ],
+  "others": [
+   [
+    3,
+    "Platfform for Change "
+   ],
+   [
+    2,
+    "Platform For Change"
+   ],
+   [
+    2,
+    "Platfform "
+   ],
+   [
+    2,
+    "PLATFFORM FOR CHANGE"
+   ],
+   [
+    1,
+    "Platfform for Change"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30914406,
+  "ident": "GBPPONPBZB4962TVLR",
+  "head": "Crown Commercial Service",
+  "country": "GB",
+  "org_mentions": 708,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Thomas Silvey",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46842097,
+  "last_notice": 46842097,
+  "keep": true,
+  "tokens": [
+   "silvey",
+   "thomas"
+  ],
+  "others": [
+   [
+    414,
+    "Crown Commercial Service"
+   ],
+   [
+    271,
+    "Government Commercial Agency"
+   ],
+   [
+    19,
+    "Crown Commercial Services"
+   ],
+   [
+    3,
+    "The Minister for the Cabinet Office acting through Crown Commercial Service"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31542351,
+  "ident": "GBPPONPBZT7637QJTP",
+  "head": "NHS Coventry and Warwickshire Integrated Care Board",
+  "country": "GB",
+  "org_mentions": 690,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Support to manage transition to systems of new delegated responsibilities",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46838221,
+  "last_notice": 46838221,
+  "keep": true,
+  "tokens": [
+   "delegated",
+   "manage",
+   "new",
+   "responsibilities",
+   "support",
+   "transition"
+  ],
+  "others": [
+   [
+    349,
+    "NHS Coventry and Warwickshire ICB"
+   ],
+   [
+    257,
+    "NHS COVENTRY AND WARWICKSHIRE INTEGRATED CARE BOARD"
+   ],
+   [
+    64,
+    "NHS Coventry and Warwickshire Integrated Care Board"
+   ],
+   [
+    13,
+    "NHS Coventry and Warwickshire Integrated Care Board"
+   ],
+   [
+    4,
+    "NHS Coventry and Warwickshire Integrated Care Board"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30917785,
+  "ident": "GBPPONPGBP7262MJTR",
+  "head": "Braintree District Council",
+  "country": "GB",
+  "org_mentions": 116,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Castle Point Borough Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46885921,
+  "last_notice": 46886644,
+  "keep": true,
+  "tokens": [
+   "castle",
+   "point"
+  ],
+  "others": [
+   [
+    113,
+    "Braintree District Council"
+   ],
+   [
+    1,
+    "Castlepoint Borough Council"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30917785,
+  "ident": "GBPPONPGBP7262MJTR",
+  "head": "Braintree District Council",
+  "country": "GB",
+  "org_mentions": 116,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Castlepoint Borough Council",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46876220,
+  "last_notice": 46876220,
+  "keep": true,
+  "tokens": [
+   "castlepoint"
+  ],
+  "others": [
+   [
+    113,
+    "Braintree District Council"
+   ],
+   [
+    2,
+    "Castle Point Borough Council"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31577607,
+  "ident": "GBPPONPGGM5751TRXX",
+  "head": "Lightening Solutions Wales",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Lighting Solutions ",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46854887,
+  "last_notice": 46854887,
+  "keep": true,
+  "tokens": [
+   "lighting"
+  ],
+  "others": [
+   [
+    3,
+    "Lightning Solutions (Wales) Limited"
+   ],
+   [
+    2,
+    "Lightning Solutions Wales Ltd"
+   ],
+   [
+    1,
+    "Lightning Solutions (Wales)"
+   ],
+   [
+    1,
+    "Lightening solutions wales"
+   ],
+   [
+    1,
+    "Lightening Solutions Wales"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30930582,
+  "ident": "GBPPONPGGN3967WJPR",
+  "head": "CDS Cooperatives",
+  "country": "GB",
+  "org_mentions": 16,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "the Co-Operative Development Society Limited ",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46888207,
+  "last_notice": 46888207,
+  "keep": true,
+  "tokens": [
+   "operative",
+   "society"
+  ],
+  "others": [
+   [
+    14,
+    "CDS Cooperatives"
+   ],
+   [
+    1,
+    "CDS CO-OPERATIVES"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30930308,
+  "ident": "GBPPONPGGP8622HHRX",
+  "head": "INVICTUS PARTNERSHIP LTD (13647652)",
+  "country": "GB",
+  "org_mentions": 56,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "CORE Education Trust",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46888222,
+  "last_notice": 46888222,
+  "keep": true,
+  "tokens": [
+   "core",
+   "education"
+  ],
+  "others": [
+   [
+    52,
+    "Invictus Partnership Limited"
+   ],
+   [
+    2,
+    "INVICTUS PARTNERSHIP LTD (13647652)"
+   ],
+   [
+    1,
+    "William Farr C of E Comprehensive School"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30930308,
+  "ident": "GBPPONPGGP8622HHRX",
+  "head": "INVICTUS PARTNERSHIP LTD (13647652)",
+  "country": "GB",
+  "org_mentions": 56,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "William Farr C of E Comprehensive School",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46879845,
+  "last_notice": 46879845,
+  "keep": true,
+  "tokens": [
+   "comprehensive",
+   "farr",
+   "william"
+  ],
+  "others": [
+   [
+    52,
+    "Invictus Partnership Limited"
+   ],
+   [
+    2,
+    "INVICTUS PARTNERSHIP LTD (13647652)"
+   ],
+   [
+    1,
+    "CORE Education Trust"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 31545519,
+  "ident": "GBPPONPGRL4951QTGX",
+  "head": "Hyde Housing Association Ltd",
+  "country": "GB",
+  "org_mentions": 34,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Capital Works - Windows & Doors",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46884673,
+  "last_notice": 46884722,
+  "keep": true,
+  "tokens": [
+   "capital",
+   "doors",
+   "windows",
+   "works"
+  ],
+  "others": [
+   [
+    12,
+    "Hyde Housing Association Limited"
+   ],
+   [
+    7,
+    "Hyde Housing Association Ltd"
+   ],
+   [
+    5,
+    "The Hyde Group"
+   ],
+   [
+    2,
+    "Hyde Housing Association"
+   ],
+   [
+    2,
+    "Fire and Security Systems Maintenance & Repair Services"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31545519,
+  "ident": "GBPPONPGRL4951QTGX",
+  "head": "Hyde Housing Association Ltd",
+  "country": "GB",
+  "org_mentions": 34,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Fire and Security Systems Maintenance & Repair Services",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46884675,
+  "last_notice": 46884724,
+  "keep": true,
+  "tokens": [
+   "fire",
+   "maintenance",
+   "repair",
+   "security"
+  ],
+  "others": [
+   [
+    12,
+    "Hyde Housing Association Limited"
+   ],
+   [
+    7,
+    "Hyde Housing Association Ltd"
+   ],
+   [
+    5,
+    "The Hyde Group"
+   ],
+   [
+    2,
+    "Hyde Housing Association"
+   ],
+   [
+    2,
+    "Capital Works - Windows & Doors"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31545519,
+  "ident": "GBPPONPGRL4951QTGX",
+  "head": "Hyde Housing Association Ltd",
+  "country": "GB",
+  "org_mentions": 34,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Provision of Waking Watch Services",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46884827,
+  "last_notice": 46884827,
+  "keep": true,
+  "tokens": [
+   "provision",
+   "waking",
+   "watch"
+  ],
+  "others": [
+   [
+    12,
+    "Hyde Housing Association Limited"
+   ],
+   [
+    7,
+    "Hyde Housing Association Ltd"
+   ],
+   [
+    5,
+    "The Hyde Group"
+   ],
+   [
+    2,
+    "Hyde Housing Association"
+   ],
+   [
+    2,
+    "Fire and Security Systems Maintenance & Repair Services"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31546102,
+  "ident": "GBPPONPGTT4778QBYZ",
+  "head": "Making Trax",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Tom Reeves trading as Making Trax",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46789674,
+  "last_notice": 46789674,
+  "keep": true,
+  "tokens": [
+   "reeves",
+   "tom"
+  ],
+  "others": [
+   [
+    3,
+    "Making Trax"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913854,
+  "ident": "GBPPONPGTZ2989RYNP",
+  "head": "Charford First School",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Prince Henry's High School",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47293527,
+  "last_notice": 47293527,
+  "keep": true,
+  "tokens": [
+   "henry",
+   "high",
+   "prince"
+  ],
+  "others": [
+   [
+    3,
+    "Charford First School"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30969284,
+  "ident": "GBPPONPGZP3581QBCD",
+  "head": "Q3 Services",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Q3 Services Group Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46850805,
+  "last_notice": 46850805,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    2,
+    "Q3 Services"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30917275,
+  "ident": "GBPPONPGZW1429QQZQ",
+  "head": "Trafford Council",
+  "country": "GB",
+  "org_mentions": 100,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Star Procurement",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46817944,
+  "last_notice": 46817944,
+  "keep": true,
+  "tokens": [
+   "procurement",
+   "star"
+  ],
+  "others": [
+   [
+    98,
+    "Trafford Council"
+   ],
+   [
+    1,
+    "Star procurement"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30917275,
+  "ident": "GBPPONPGZW1429QQZQ",
+  "head": "Trafford Council",
+  "country": "GB",
+  "org_mentions": 100,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Star procurement",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46817583,
+  "last_notice": 46817583,
+  "keep": true,
+  "tokens": [
+   "procurement",
+   "star"
+  ],
+  "others": [
+   [
+    98,
+    "Trafford Council"
+   ],
+   [
+    1,
+    "Star Procurement"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 31563568,
+  "ident": "GBPPONPHBL5543XDDG",
+  "head": "Conscia Group UK Limited",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ITGL Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46842900,
+  "last_notice": 46842900,
+  "keep": true,
+  "tokens": [
+   "itgl"
+  ],
+  "others": [
+   [
+    5,
+    "Conscia Group UK Limited"
+   ],
+   [
+    1,
+    "Conscia Group UK Ltd"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30914149,
+  "ident": "GBPPONPHBV4443HXBV",
+  "head": "London Stadium 185 Limited",
+  "country": "GB",
+  "org_mentions": 25,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "London Legacy Development Corporation",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46776508,
+  "last_notice": 46776508,
+  "keep": true,
+  "tokens": [
+   "corporation",
+   "legacy"
+  ],
+  "others": [
+   [
+    10,
+    "London Stadium 185 Limited"
+   ],
+   [
+    6,
+    "London Stadium 185"
+   ],
+   [
+    4,
+    "London Stadium"
+   ],
+   [
+    2,
+    "London Stadium OKI Printers, Support, Toner and Badge Stock"
+   ],
+   [
+    1,
+    "London stadium"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30914149,
+  "ident": "GBPPONPHBV4443HXBV",
+  "head": "London Stadium 185 Limited",
+  "country": "GB",
+  "org_mentions": 25,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "London Stadium185",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46856174,
+  "last_notice": 46856174,
+  "keep": true,
+  "tokens": [
+   "stadium185"
+  ],
+  "others": [
+   [
+    10,
+    "London Stadium 185 Limited"
+   ],
+   [
+    6,
+    "London Stadium 185"
+   ],
+   [
+    4,
+    "London Stadium"
+   ],
+   [
+    2,
+    "London Stadium OKI Printers, Support, Toner and Badge Stock"
+   ],
+   [
+    1,
+    "London stadium"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30929723,
+  "ident": "GBPPONPHBY3981QBMR",
+  "head": "Betsi Cadwaladr University Health Board",
+  "country": "GB",
+  "org_mentions": 61,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46697948,
+  "last_notice": 46697948,
+  "keep": true,
+  "tokens": [
+   "hosted",
+   "procurement",
+   "shared",
+   "velindre"
+  ],
+  "others": [
+   [
+    57,
+    "Betsi Cadwaladr University Health Board"
+   ],
+   [
+    3,
+    "Betsi Cadwaladr University Health Board "
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 31548943,
+  "ident": "GBPPONPHCC5161LHJD",
+  "head": "Blue Stag",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Everglow",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46758814,
+  "last_notice": 46759540,
+  "keep": true,
+  "tokens": [
+   "everglow"
+  ],
+  "others": [
+   [
+    3,
+    "Blue Stag"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 31560765,
+  "ident": "GBPPONPHGQ9419WJLV",
+  "head": "Healthcare Financial Management Association (HFMA)",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "TIAA LTD",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46818192,
+  "last_notice": 46818192,
+  "keep": true,
+  "tokens": [
+   "tiaa"
+  ],
+  "others": [
+   [
+    4,
+    "Healthcare Financial Management Association (HFMA)"
+   ],
+   [
+    1,
+    "The Academy for Healthcare Science Limited"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31560765,
+  "ident": "GBPPONPHGQ9419WJLV",
+  "head": "Healthcare Financial Management Association (HFMA)",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "The Academy for Healthcare Science Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46834778,
+  "last_notice": 46834778,
+  "keep": true,
+  "tokens": [
+   "science"
+  ],
+  "others": [
+   [
+    4,
+    "Healthcare Financial Management Association (HFMA)"
+   ],
+   [
+    1,
+    "TIAA LTD"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31535216,
+  "ident": "GBPPONPHHT9556BWJJ",
+  "head": "North East London NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 312,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "North East London Foundation Trust",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46738575,
+  "last_notice": 46738637,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    136,
+    "North East London NHS Foundation Trust"
+   ],
+   [
+    110,
+    "North East London NHS Foundation Trust"
+   ],
+   [
+    34,
+    "North East London NHS Foundation Trust"
+   ],
+   [
+    15,
+    "NORTH EAST LONDON NHS FOUNDATION TRUST"
+   ],
+   [
+    13,
+    "NORTH EAST LONDON NHS FOUNDATION TRUST"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913560,
+  "ident": "GBPPONPHMT6197NWNZ",
+  "head": "Transport for London",
+  "country": "GB",
+  "org_mentions": 1055,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Greater London Authority (GLA)",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46777712,
+  "last_notice": 46777712,
+  "keep": true,
+  "tokens": [
+   "gla",
+   "greater"
+  ],
+  "others": [
+   [
+    1042,
+    "Transport for London"
+   ],
+   [
+    3,
+    "transport for London"
+   ],
+   [
+    2,
+    "Transport for London  5 Endeavour Square  London  E201JN"
+   ],
+   [
+    2,
+    "London Bus Services Limited (LBSL)"
+   ],
+   [
+    2,
+    "LONDON BUS SERVICES LIMITED"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913560,
+  "ident": "GBPPONPHMT6197NWNZ",
+  "head": "Transport for London",
+  "country": "GB",
+  "org_mentions": 1055,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "London Underground Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47409333,
+  "last_notice": 47409333,
+  "keep": true,
+  "tokens": [
+   "underground"
+  ],
+  "others": [
+   [
+    1042,
+    "Transport for London"
+   ],
+   [
+    3,
+    "transport for London"
+   ],
+   [
+    2,
+    "Transport for London  5 Endeavour Square  London  E201JN"
+   ],
+   [
+    2,
+    "London Bus Services Limited (LBSL)"
+   ],
+   [
+    2,
+    "LONDON BUS SERVICES LIMITED"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913560,
+  "ident": "GBPPONPHMT6197NWNZ",
+  "head": "Transport for London",
+  "country": "GB",
+  "org_mentions": 1055,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "TFL",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46703093,
+  "last_notice": 46703093,
+  "keep": true,
+  "tokens": [
+   "tfl"
+  ],
+  "others": [
+   [
+    1042,
+    "Transport for London"
+   ],
+   [
+    3,
+    "transport for London"
+   ],
+   [
+    2,
+    "Transport for London  5 Endeavour Square  London  E201JN"
+   ],
+   [
+    2,
+    "London Bus Services Limited (LBSL)"
+   ],
+   [
+    2,
+    "LONDON BUS SERVICES LIMITED"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31574005,
+  "ident": "GBPPONPHNC5949LXXH",
+  "head": "Oxygen Care Ltd",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Oxygencare",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46834111,
+  "last_notice": 46848133,
+  "keep": true,
+  "tokens": [
+   "oxygencare"
+  ],
+  "others": [
+   [
+    3,
+    "Oxygen Care Ltd"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913556,
+  "ident": "GBPPONPHTN1551GCQH",
+  "head": "British Council",
+  "country": "GB",
+  "org_mentions": 570,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Cognition Education UK Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46850014,
+  "last_notice": 46850014,
+  "keep": true,
+  "tokens": [
+   "cognition",
+   "education"
+  ],
+  "others": [
+   [
+    568,
+    "British Council"
+   ],
+   [
+    1,
+    "British Council Colombia "
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30917503,
+  "ident": "GBPPONPHVN9435PHHP",
+  "head": "Adur District Council",
+  "country": "GB",
+  "org_mentions": 36,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Worthing Borough Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46779143,
+  "last_notice": 46780717,
+  "keep": true,
+  "tokens": [
+   "worthing"
+  ],
+  "others": [
+   [
+    32,
+    "Adur District Council"
+   ],
+   [
+    2,
+    "Adur / Worthing Borough Council"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30972047,
+  "ident": "GBPPONPHVX4316ZVGZ",
+  "head": "Ministry of Defence",
+  "country": "CY",
+  "org_mentions": 23,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Cyber & Specialist Operations Command (CSOC)",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46785393,
+  "last_notice": 46785393,
+  "keep": true,
+  "tokens": [
+   "command",
+   "csoc",
+   "cyber",
+   "operations",
+   "specialist"
+  ],
+  "others": [
+   [
+    21,
+    "Ministry of Defence"
+   ],
+   [
+    1,
+    "MOD"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30972047,
+  "ident": "GBPPONPHVX4316ZVGZ",
+  "head": "Ministry of Defence",
+  "country": "CY",
+  "org_mentions": 23,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "MOD",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46882760,
+  "last_notice": 46882760,
+  "keep": true,
+  "tokens": [
+   "mod"
+  ],
+  "others": [
+   [
+    21,
+    "Ministry of Defence"
+   ],
+   [
+    1,
+    "Cyber & Specialist Operations Command (CSOC)"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31544143,
+  "ident": "GBPPONPHWX6571HXTV",
+  "head": "University Biomedical Services",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "University of Cambridge - UBS",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46849884,
+  "last_notice": 47407563,
+  "keep": true,
+  "tokens": [
+   "cambridge",
+   "ubs"
+  ],
+  "others": [
+   [
+    3,
+    "University Biomedical Services"
+   ],
+   [
+    1,
+    "University of Cambridge"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31565242,
+  "ident": "GBPPONPHWZ6349VLXZ",
+  "head": "Robertson Construction NW",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Kajima Partnerships a 1 8 b 1 8 c 1 7 8 f 1 2 3 4 5 6 7 8 g 1 2 3 4 5 6 7 8 h 8",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47371636,
+  "last_notice": 47371636,
+  "keep": true,
+  "tokens": [
+   "kajima",
+   "partnerships"
+  ],
+  "others": [
+   [
+    2,
+    "Robertson Construction NW"
+   ],
+   [
+    1,
+    "Robertson Construction NW "
+   ],
+   [
+    1,
+    "Robertson Construction Group Limited (2)"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30913748,
+  "ident": "GBPPONPJCP7274TLRQ",
+  "head": "Department for Work & Pensions",
+  "country": "GB",
+  "org_mentions": 343,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "London School of Economics and Political Science",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46828149,
+  "last_notice": 46828590,
+  "keep": true,
+  "tokens": [
+   "economics",
+   "political",
+   "science"
+  ],
+  "others": [
+   [
+    311,
+    "Department for Work & Pensions"
+   ],
+   [
+    30,
+    "Department for Work and Pensions"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31567914,
+  "ident": "GBPPONPJNZ5986CBGH",
+  "head": "ND Care",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ND Care and Support",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46806099,
+  "last_notice": 46806099,
+  "keep": true,
+  "tokens": [
+   "support"
+  ],
+  "others": [
+   [
+    2,
+    "ND Care"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30915064,
+  "ident": "GBPPONPJQR8469DXQD",
+  "head": "Merseytravel",
+  "country": "GB",
+  "org_mentions": 92,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Liverpool City Region Combined Authority",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46795985,
+  "last_notice": 46795996,
+  "keep": true,
+  "tokens": [
+   "combined",
+   "liverpool",
+   "region"
+  ],
+  "others": [
+   [
+    90,
+    "Merseytravel"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913887,
+  "ident": "GBPPONPJVD6261BPPJ",
+  "head": "Westminster City Council",
+  "country": "GB",
+  "org_mentions": 487,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "The Royal Borough  of Kensington & Chelsea",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46887886,
+  "last_notice": 46887886,
+  "keep": true,
+  "tokens": [
+   "chelsea",
+   "kensington"
+  ],
+  "others": [
+   [
+    484,
+    "Westminster City Council"
+   ],
+   [
+    2,
+    "Westminster City Council (WCC)"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Bernicia Group",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47366075,
+  "last_notice": 47366075,
+  "keep": true,
+  "tokens": [
+   "bernicia"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Birmingham City Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46793765,
+  "last_notice": 46795453,
+  "keep": true,
+  "tokens": [
+   "birmingham"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Bristol City Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46840987,
+  "last_notice": 46841024,
+  "keep": true,
+  "tokens": [
+   "bristol"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Carmarthenshire County Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46849921,
+  "last_notice": 46850020,
+  "keep": true,
+  "tokens": [
+   "carmarthenshire"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "City of Lincoln Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46841342,
+  "last_notice": 46841445,
+  "keep": true,
+  "tokens": [
+   "lincoln"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "City of York Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46820519,
+  "last_notice": 46820619,
+  "keep": true,
+  "tokens": [
+   "york"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "East Riding of Yorkshire Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46809388,
+  "last_notice": 47310073,
+  "keep": true,
+  "tokens": [
+   "riding",
+   "yorkshire"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Gateshead Borough Council",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46793788,
+  "last_notice": 46793788,
+  "keep": true,
+  "tokens": [
+   "gateshead"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "High Peak Borough Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46834849,
+  "last_notice": 46834922,
+  "keep": true,
+  "tokens": [
+   "high",
+   "peak"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Karbon Homes (54North Homes)",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46794092,
+  "last_notice": 46794092,
+  "keep": true,
+  "tokens": [
+   "54north",
+   "homes",
+   "karbon"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Lancaster City Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46806840,
+  "last_notice": 46806856,
+  "keep": true,
+  "tokens": [
+   "lancaster"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Leeds City Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46819799,
+  "last_notice": 46820183,
+  "keep": true,
+  "tokens": [
+   "leeds"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "London Borough of Newham",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46814470,
+  "last_notice": 46814746,
+  "keep": true,
+  "tokens": [
+   "newham"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Metropolitan borough of Bury",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46825974,
+  "last_notice": 46825981,
+  "keep": true,
+  "tokens": [
+   "bury",
+   "metropolitan"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Moat Homes Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46823501,
+  "last_notice": 46823501,
+  "keep": true,
+  "tokens": [
+   "homes",
+   "moat"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Newark And Sherwood District Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46794436,
+  "last_notice": 46794555,
+  "keep": true,
+  "tokens": [
+   "newark",
+   "sherwood"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "North Tyneside Borough Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46790515,
+  "last_notice": 46790638,
+  "keep": true,
+  "tokens": [
+   "tyneside"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ONE MANCHESTER LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47159646,
+  "last_notice": 47159646,
+  "keep": true,
+  "tokens": [
+   "manchester",
+   "one"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ONWARD HOMES LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46844733,
+  "last_notice": 46844733,
+  "keep": true,
+  "tokens": [
+   "homes",
+   "onward"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ORBIT GROUP LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47159495,
+  "last_notice": 47159495,
+  "keep": true,
+  "tokens": [
+   "orbit"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Ongo Homes Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46848785,
+  "last_notice": 46848785,
+  "keep": true,
+  "tokens": [
+   "homes",
+   "ongo"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Powys County Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46800777,
+  "last_notice": 46801009,
+  "keep": true,
+  "tokens": [
+   "powys"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Riverside Group Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46798381,
+  "last_notice": 46798381,
+  "keep": true,
+  "tokens": [
+   "riverside"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Royal Borough of Kensington and Chelsea",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46830406,
+  "last_notice": 46830445,
+  "keep": true,
+  "tokens": [
+   "chelsea",
+   "kensington"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ST LEGER HOMES OF DONCASTER LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46702998,
+  "last_notice": 46702998,
+  "keep": true,
+  "tokens": [
+   "doncaster",
+   "homes",
+   "leger"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Sandwell Metropolitan Borough Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46792477,
+  "last_notice": 46793812,
+  "keep": true,
+  "tokens": [
+   "metropolitan",
+   "sandwell"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "South Derbyshire District Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 47392453,
+  "last_notice": 47392508,
+  "keep": true,
+  "tokens": [
+   "derbyshire"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "South Tyneside Borough Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46792688,
+  "last_notice": 46794621,
+  "keep": true,
+  "tokens": [
+   "tyneside"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Stoke on Trent City Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46697881,
+  "last_notice": 46697938,
+  "keep": true,
+  "tokens": [
+   "stoke",
+   "trent"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "THE GUINNESS PARTNERSHIP LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46818155,
+  "last_notice": 46818155,
+  "keep": true,
+  "tokens": [
+   "guinness"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Tamworth Borough Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46857614,
+  "last_notice": 46966759,
+  "keep": true,
+  "tokens": [
+   "tamworth"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "The Council of the Borough of Kirklees",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46793832,
+  "last_notice": 46794121,
+  "keep": true,
+  "tokens": [
+   "kirklees"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Thurrock Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46790512,
+  "last_notice": 46790786,
+  "keep": true,
+  "tokens": [
+   "thurrock"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Warwick District Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46812990,
+  "last_notice": 46813040,
+  "keep": true,
+  "tokens": [
+   "warwick"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30953692,
+  "ident": "GBPPONPJXZ4423NDBT",
+  "head": "Northern Housing Consortium Ltd",
+  "country": "GB",
+  "org_mentions": 124,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Wigan Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46793950,
+  "last_notice": 46796157,
+  "keep": true,
+  "tokens": [
+   "wigan"
+  ],
+  "others": [
+   [
+    21,
+    "Northern Housing Consortium Ltd"
+   ],
+   [
+    5,
+    "Solihull Community Housing Limited"
+   ],
+   [
+    5,
+    "Darlington Borough Council"
+   ],
+   [
+    4,
+    "Stockton on Tees Borough Council"
+   ],
+   [
+    4,
+    "Stairlifts and Lifting Equipment Framework 2026"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30916588,
+  "ident": "GBPPONPLBJ4721TQQJ",
+  "head": "Valuation Office Agency",
+  "country": "GB",
+  "org_mentions": 61,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NLA MEDIA ACCESS LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46834269,
+  "last_notice": 46834269,
+  "keep": true,
+  "tokens": [
+   "access",
+   "media",
+   "nla"
+  ],
+  "others": [
+   [
+    46,
+    "Valuation Office Agency"
+   ],
+   [
+    14,
+    "HMRC Valuation Office"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31563610,
+  "ident": "GBPPONPLBW9885BVBL",
+  "head": "Andrew D’Auria Solutions Ltd  ",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ADS",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46841934,
+  "last_notice": 46841934,
+  "keep": true,
+  "tokens": [
+   "ads"
+  ],
+  "others": [
+   [
+    1,
+    "Andrew D’Auria Solutions Ltd  "
+   ],
+   [
+    1,
+    "ANDREW D'AURIA SOLUTIONS LIMITED"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913691,
+  "ident": "GBPPONPLDL8938YGYW",
+  "head": "Kent County Council",
+  "country": "GB",
+  "org_mentions": 453,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Market Engagement - Engine Oil Collection, Treatment, Recovery, Recycling or Disposal Services",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46813691,
+  "last_notice": 46813691,
+  "keep": true,
+  "tokens": [
+   "collection",
+   "disposal",
+   "engagement",
+   "engine",
+   "market",
+   "oil",
+   "recovery",
+   "recycling",
+   "treatment"
+  ],
+  "others": [
+   [
+    448,
+    "Kent County Council"
+   ],
+   [
+    1,
+    "Wood Waste Disposal Services"
+   ],
+   [
+    1,
+    "Market Engagement - Textiles and Shoes Processing Services"
+   ],
+   [
+    1,
+    "Kent Downs National Landscape"
+   ],
+   [
+    1,
+    "Kent County Council (as Administering Authority of the Kent Pension Fund)"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30913691,
+  "ident": "GBPPONPLDL8938YGYW",
+  "head": "Kent County Council",
+  "country": "GB",
+  "org_mentions": 453,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Market Engagement - Textiles and Shoes Processing Services",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46834386,
+  "last_notice": 46834386,
+  "keep": true,
+  "tokens": [
+   "engagement",
+   "market",
+   "processing",
+   "shoes",
+   "textiles"
+  ],
+  "others": [
+   [
+    448,
+    "Kent County Council"
+   ],
+   [
+    1,
+    "Wood Waste Disposal Services"
+   ],
+   [
+    1,
+    "Market Engagement - Engine Oil Collection, Treatment, Recovery, Recycling or Disposal Services"
+   ],
+   [
+    1,
+    "Kent Downs National Landscape"
+   ],
+   [
+    1,
+    "Kent County Council (as Administering Authority of the Kent Pension Fund)"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30913691,
+  "ident": "GBPPONPLDL8938YGYW",
+  "head": "Kent County Council",
+  "country": "GB",
+  "org_mentions": 453,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Wood Waste Disposal Services",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46814731,
+  "last_notice": 46814731,
+  "keep": true,
+  "tokens": [
+   "disposal",
+   "waste",
+   "wood"
+  ],
+  "others": [
+   [
+    448,
+    "Kent County Council"
+   ],
+   [
+    1,
+    "Market Engagement - Textiles and Shoes Processing Services"
+   ],
+   [
+    1,
+    "Market Engagement - Engine Oil Collection, Treatment, Recovery, Recycling or Disposal Services"
+   ],
+   [
+    1,
+    "Kent Downs National Landscape"
+   ],
+   [
+    1,
+    "Kent County Council (as Administering Authority of the Kent Pension Fund)"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31558765,
+  "ident": "GBPPONPLGV3179PQMM",
+  "head": "Redcorn Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ELV Solutions",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46826280,
+  "last_notice": 46826280,
+  "keep": true,
+  "tokens": [
+   "elv"
+  ],
+  "others": [
+   [
+    2,
+    "Redcorn Limited"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 30929662,
+  "ident": "GBPPONPLGY6381WWWR",
+  "head": "South Eastern Health and Social Care Trust",
+  "country": "GB",
+  "org_mentions": 194,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "PPL/PRS",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46763175,
+  "last_notice": 46763175,
+  "keep": true,
+  "tokens": [
+   "ppl",
+   "prs"
+  ],
+  "others": [
+   [
+    107,
+    "South Eastern Health and Social Care Trust"
+   ],
+   [
+    73,
+    "South Eastern Health & Social Care Trust"
+   ],
+   [
+    5,
+    "SOUTH EASTERN HEALTH & SOCIAL CARE TRUST"
+   ],
+   [
+    4,
+    "South Eastern Health & Social Care Trust (SEHSCT)"
+   ],
+   [
+    2,
+    "South Eastern Health and Social Care Trust (SEHSCT)"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30914865,
+  "ident": "GBPPONPLJV1169JTDD",
+  "head": "UK Atomic Energy Authority",
+  "country": "GB",
+  "org_mentions": 347,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "RCD Lockindge Ltd",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46762444,
+  "last_notice": 46764026,
+  "keep": true,
+  "tokens": [
+   "lockindge",
+   "rcd"
+  ],
+  "others": [
+   [
+    341,
+    "UK Atomic Energy Authority"
+   ],
+   [
+    2,
+    "United Kingdom Atomic Energy Authority"
+   ],
+   [
+    2,
+    "UKAEA"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30914865,
+  "ident": "GBPPONPLJV1169JTDD",
+  "head": "UK Atomic Energy Authority",
+  "country": "GB",
+  "org_mentions": 347,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "UKAEA",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46785967,
+  "last_notice": 47284740,
+  "keep": true,
+  "tokens": [
+   "ukaea"
+  ],
+  "others": [
+   [
+    341,
+    "UK Atomic Energy Authority"
+   ],
+   [
+    2,
+    "United Kingdom Atomic Energy Authority"
+   ],
+   [
+    2,
+    "RCD Lockindge Ltd"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30968739,
+  "ident": "GBPPONPLMN9829JXLV",
+  "head": "Ginger energy",
+  "country": "GB",
+  "org_mentions": 31,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "The Howard Partnership Trust",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46737636,
+  "last_notice": 46737636,
+  "keep": true,
+  "tokens": [
+   "howard"
+  ],
+  "others": [
+   [
+    13,
+    "Ginger energy"
+   ],
+   [
+    8,
+    "Ginger Energy Limited"
+   ],
+   [
+    6,
+    "Ginger Energy"
+   ],
+   [
+    1,
+    "The Keys Academy Trust"
+   ],
+   [
+    1,
+    "Ginger Energy Ltd"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30968739,
+  "ident": "GBPPONPLMN9829JXLV",
+  "head": "Ginger energy",
+  "country": "GB",
+  "org_mentions": 31,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "The Keys Academy Trust",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46785018,
+  "last_notice": 46785018,
+  "keep": true,
+  "tokens": [
+   "keys"
+  ],
+  "others": [
+   [
+    13,
+    "Ginger energy"
+   ],
+   [
+    8,
+    "Ginger Energy Limited"
+   ],
+   [
+    6,
+    "Ginger Energy"
+   ],
+   [
+    1,
+    "The Howard Partnership Trust"
+   ],
+   [
+    1,
+    "Ginger Energy Ltd"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30919333,
+  "ident": "GBPPONPLMQ6855CXLL",
+  "head": "Frimley Health NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 193,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "INTUITIVE LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46773162,
+  "last_notice": 46773162,
+  "keep": true,
+  "tokens": [
+   "intuitive"
+  ],
+  "others": [
+   [
+    103,
+    "Frimley Health NHS Foundation Trust"
+   ],
+   [
+    61,
+    "FRIMLEY HEALTH NHS FOUNDATION TRUST"
+   ],
+   [
+    13,
+    "FRIMLEY HEALTH NHS FOUNDATION TRUST"
+   ],
+   [
+    12,
+    "Frimley Health NHS Foundation Trust"
+   ],
+   [
+    2,
+    "FRIMLEY HEALTH NHS FOUNDATION TRUST"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30914046,
+  "ident": "GBPPONPLTC5358LTWZ",
+  "head": "Department for Transport",
+  "country": "GB",
+  "org_mentions": 388,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "FIRE SERVICE COLLEGE LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46811712,
+  "last_notice": 46811712,
+  "keep": true,
+  "tokens": [
+   "fire"
+  ],
+  "others": [
+   [
+    387,
+    "Department for Transport"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30915372,
+  "ident": "GBPPONPLVZ4154GGRZ",
+  "head": "Sunderland City Council",
+  "country": "GB",
+  "org_mentions": 269,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Together for Children",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46886944,
+  "last_notice": 46886944,
+  "keep": true,
+  "tokens": [
+   "children",
+   "together"
+  ],
+  "others": [
+   [
+    268,
+    "Sunderland City Council"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31575297,
+  "ident": "GBPPONPLXC6287YGWX",
+  "head": "Paradigm Housing Group",
+  "country": "GB",
+  "org_mentions": 22,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Lifestone Home Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47402875,
+  "last_notice": 47402875,
+  "keep": true,
+  "tokens": [
+   "home",
+   "lifestone"
+  ],
+  "others": [
+   [
+    14,
+    "Paradigm Housing Group"
+   ],
+   [
+    5,
+    "Paradigm Housing Group Limited, trading as SettleParadigm"
+   ],
+   [
+    1,
+    "Paradigm Housing Group Limited"
+   ],
+   [
+    1,
+    "Lifestone Home Limited "
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 31575297,
+  "ident": "GBPPONPLXC6287YGWX",
+  "head": "Paradigm Housing Group",
+  "country": "GB",
+  "org_mentions": 22,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Lifestone Home Limited ",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47397778,
+  "last_notice": 47397778,
+  "keep": true,
+  "tokens": [
+   "home",
+   "lifestone"
+  ],
+  "others": [
+   [
+    14,
+    "Paradigm Housing Group"
+   ],
+   [
+    5,
+    "Paradigm Housing Group Limited, trading as SettleParadigm"
+   ],
+   [
+    1,
+    "Paradigm Housing Group Limited"
+   ],
+   [
+    1,
+    "Lifestone Home Limited"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 31539566,
+  "ident": "GBPPONPLXX7954VCLM",
+  "head": "East Hertfordshire District Council",
+  "country": "GB",
+  "org_mentions": 25,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "East Herts District Council",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46880769,
+  "last_notice": 46880769,
+  "keep": true,
+  "tokens": [
+   "herts"
+  ],
+  "others": [
+   [
+    24,
+    "East Hertfordshire District Council"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31585035,
+  "ident": "GBPPONPLYZ4935GHNN",
+  "head": "CRISIS24 LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Crisis 24 Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46853515,
+  "last_notice": 46853515,
+  "keep": true,
+  "tokens": [
+   "crisis"
+  ],
+  "others": [
+   [
+    2,
+    "CRISIS24 LIMITED"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30919318,
+  "ident": "GBPPONPMLQ6732ZLVW",
+  "head": "Gov Facility Services Ltd",
+  "country": "GB",
+  "org_mentions": 199,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "CDEL/SC/ERL 25-26-012-MM - HEALTHCARE RE-ROOF ITT",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46746899,
+  "last_notice": 46746899,
+  "keep": true,
+  "tokens": [
+   "012",
+   "cdel",
+   "erl",
+   "itt",
+   "roof"
+  ],
+  "others": [
+   [
+    198,
+    "Gov Facility Services Ltd"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31539237,
+  "ident": "GBPPONPMVP7349VTRG",
+  "head": "Wellingborough Town Council",
+  "country": "GB",
+  "org_mentions": 18,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Sally",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46734294,
+  "last_notice": 46734294,
+  "keep": true,
+  "tokens": [
+   "sally"
+  ],
+  "others": [
+   [
+    17,
+    "Wellingborough Town Council"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31556600,
+  "ident": "GBPPONPMYZ6944BYLH",
+  "head": "NHS North East and North Cumbria Integrated Care Board",
+  "country": "GB",
+  "org_mentions": 2926,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NHS England - North East & Yorkshire",
+  "scheme": "GB-NHS",
+  "n": 1,
+  "first_notice": 46991199,
+  "last_notice": 46991199,
+  "keep": true,
+  "tokens": [
+   "yorkshire"
+  ],
+  "others": [
+   [
+    991,
+    "North East and North Cumbria Integrated Care Board"
+   ],
+   [
+    902,
+    "NHS NORTH EAST AND NORTH CUMBRIA INTEGRATED CARE BOARD"
+   ],
+   [
+    823,
+    "North East and North Cumbria Integrated Care Board"
+   ],
+   [
+    72,
+    "NHS North East and North Cumbria Integrated Care Board"
+   ],
+   [
+    57,
+    "NHS North East and North Cumbria Integrated Care Board"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913583,
+  "ident": "GBPPONPNBD3289CDGX",
+  "head": "DEPARTMENT OF ENVIRONMENT, FOOD AND RURAL AFFAIRS",
+  "country": "GB",
+  "org_mentions": 800,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Red Kite Veterinary Consultants Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46868149,
+  "last_notice": 46868149,
+  "keep": true,
+  "tokens": [
+   "kite",
+   "red",
+   "veterinary"
+  ],
+  "others": [
+   [
+    368,
+    "DEPARTMENT OF ENVIRONMENT, FOOD AND RURAL AFFAIRS"
+   ],
+   [
+    346,
+    "DEPARTMENT FOR ENVIRONMENT, FOOD AND RURAL AFFAIRS"
+   ],
+   [
+    85,
+    "Department for Environment Food & Rural Affairs"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31534764,
+  "ident": "GBPPONPNGD6547JLNT",
+  "head": "LCRIG",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Local Councils Road Innovation Group",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46766045,
+  "last_notice": 46766045,
+  "keep": true,
+  "tokens": [
+   "councils",
+   "innovation",
+   "local",
+   "road"
+  ],
+  "others": [
+   [
+    2,
+    "LCRIG"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31568749,
+  "ident": "GBPPONPNRY4312PHBT",
+  "head": "Gerald Davies & Sons Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Cymru Quarry  Group",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46826312,
+  "last_notice": 46826312,
+  "keep": true,
+  "tokens": [
+   "quarry"
+  ],
+  "others": [
+   [
+    2,
+    "Gerald Davies & Sons Limited"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31550973,
+  "ident": "GBPPONPNTC6778ZLTM",
+  "head": "M&D Care",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "M&D Care",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46759915,
+  "last_notice": 46780529,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    3,
+    "M&D Care Operations Ltd"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30969130,
+  "ident": "GBPPONPNTQ6715JVMV",
+  "head": "Healthcare 25 Ltd",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "GEMINI SURGICAL UK LTD",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46744165,
+  "last_notice": 46753064,
+  "keep": true,
+  "tokens": [
+   "gemini",
+   "surgical"
+  ],
+  "others": [
+   [
+    3,
+    "Healthcare 25 Ltd"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 31536232,
+  "ident": "GBPPONPNTZ9346TLNH",
+  "head": "Integrated DNA Technologies",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "IDT",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47158920,
+  "last_notice": 47158920,
+  "keep": true,
+  "tokens": [
+   "idt"
+  ],
+  "others": [
+   [
+    4,
+    "Integrated DNA Technologies"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31559355,
+  "ident": "GBPPONPNYQ4199GPZX",
+  "head": "Oil4wales",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Oil 4 Wales Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47159434,
+  "last_notice": 47159434,
+  "keep": true,
+  "tokens": [
+   "oil"
+  ],
+  "others": [
+   [
+    1,
+    "Oil4wales"
+   ],
+   [
+    1,
+    "Oil4Wales"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31549426,
+  "ident": "GBPPONPPCP8863HDGN",
+  "head": "Teleflex Group Ltd T/A Teleflex Medical",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "CAMBRIDGE UNIVERSITY HOSPITALS NHS FOUNDATION TRUST",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46815909,
+  "last_notice": 46815909,
+  "keep": true,
+  "tokens": [
+   "cambridge",
+   "hospitals"
+  ],
+  "others": [
+   [
+    3,
+    "Teleflex Group Ltd T/A Teleflex Medical"
+   ],
+   [
+    2,
+    "Hologic Ltd"
+   ],
+   [
+    1,
+    "Cambridge University Hospitals NHS Foundation Trust"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31549426,
+  "ident": "GBPPONPPCP8863HDGN",
+  "head": "Teleflex Group Ltd T/A Teleflex Medical",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Cambridge University Hospitals NHS Foundation Trust",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46796632,
+  "last_notice": 46796632,
+  "keep": true,
+  "tokens": [
+   "cambridge",
+   "hospitals"
+  ],
+  "others": [
+   [
+    3,
+    "Teleflex Group Ltd T/A Teleflex Medical"
+   ],
+   [
+    2,
+    "Hologic Ltd"
+   ],
+   [
+    1,
+    "CAMBRIDGE UNIVERSITY HOSPITALS NHS FOUNDATION TRUST"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31549426,
+  "ident": "GBPPONPPCP8863HDGN",
+  "head": "Teleflex Group Ltd T/A Teleflex Medical",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Hologic Ltd",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46877124,
+  "last_notice": 46882065,
+  "keep": true,
+  "tokens": [
+   "hologic"
+  ],
+  "others": [
+   [
+    3,
+    "Teleflex Group Ltd T/A Teleflex Medical"
+   ],
+   [
+    1,
+    "Cambridge University Hospitals NHS Foundation Trust"
+   ],
+   [
+    1,
+    "CAMBRIDGE UNIVERSITY HOSPITALS NHS FOUNDATION TRUST"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30969319,
+  "ident": "GBPPONPPDV6339HBDH",
+  "head": "Securiplex Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "SECURI-PLEX LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46840746,
+  "last_notice": 46840746,
+  "keep": true,
+  "tokens": [
+   "plex",
+   "securi"
+  ],
+  "others": [
+   [
+    2,
+    "Securiplex Limited"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30969320,
+  "ident": "GBPPONPPGL7162WPRT",
+  "head": "ICTS UK Limited",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Diagnose UK Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46709259,
+  "last_notice": 46709259,
+  "keep": true,
+  "tokens": [
+   "diagnose"
+  ],
+  "others": [
+   [
+    3,
+    "I.C.T.S. (U.K.) LIMITED (02143366)"
+   ],
+   [
+    2,
+    "ICTS UK Limited"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 30915586,
+  "ident": "GBPPONPPLL6427QNDD",
+  "head": "Improvement and Development Agency",
+  "country": "GB",
+  "org_mentions": 91,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Liverpool & Sefton - Targeted Support",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46880337,
+  "last_notice": 46880337,
+  "keep": true,
+  "tokens": [
+   "liverpool",
+   "sefton",
+   "support",
+   "targeted"
+  ],
+  "others": [
+   [
+    41,
+    "Local Government Association"
+   ],
+   [
+    34,
+    "Improvement and Development Agency"
+   ],
+   [
+    8,
+    "IMPROVEMENT & DEVELOPMENT AGENCY"
+   ],
+   [
+    3,
+    "Local Government Association on behalf Improvement and Development Agency (IDEA)"
+   ],
+   [
+    2,
+    "Improvement and development Agency"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30976598,
+  "ident": "GBPPONPPMJ4372HGND",
+  "head": "Sten 10 Ltd",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Sten10 Ltd",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46775164,
+  "last_notice": 46779157,
+  "keep": true,
+  "tokens": [
+   "sten10"
+  ],
+  "others": [
+   [
+    2,
+    "Sten 10 Ltd"
+   ],
+   [
+    2,
+    "STEN 10 LIMITED (05586132)"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30918257,
+  "ident": "GBPPONPPNZ2371TZVX",
+  "head": "Megaplant Ltd",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Mechplant NW Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46832886,
+  "last_notice": 46832886,
+  "keep": true,
+  "tokens": [
+   "mechplant"
+  ],
+  "others": [
+   [
+    3,
+    "Megaplant Ltd"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 31585594,
+  "ident": "GBPPONPPQY5416CZTY",
+  "head": "KOOTH DIGITAL HEALTH LIMITED",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "XenZone",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46854763,
+  "last_notice": 46854763,
+  "keep": true,
+  "tokens": [
+   "xenzone"
+  ],
+  "others": [
+   [
+    2,
+    "KOOTH DIGITAL HEALTH LIMITED"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30915197,
+  "ident": "GBPPONPPRX1592MXGN",
+  "head": "Royal Borough of Kensington & Chelsea",
+  "country": "GB",
+  "org_mentions": 166,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Direct Award of Contract for Employee Engagement Surveys (Our Voice)",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46741981,
+  "last_notice": 46741981,
+  "keep": true,
+  "tokens": [
+   "award",
+   "contract",
+   "direct",
+   "employee",
+   "engagement",
+   "our",
+   "surveys",
+   "voice"
+  ],
+  "others": [
+   [
+    55,
+    "Royal Borough of Kensington and Chelsea"
+   ],
+   [
+    49,
+    "The Royal Borough of Kensington & Chelsea"
+   ],
+   [
+    37,
+    "The Royal Borough of Kensington and Chelsea"
+   ],
+   [
+    19,
+    "Royal Borough of Kensington & Chelsea"
+   ],
+   [
+    2,
+    "Royal Borough of Kensington and Chelsea (RBKC)"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30915197,
+  "ident": "GBPPONPPRX1592MXGN",
+  "head": "Royal Borough of Kensington & Chelsea",
+  "country": "GB",
+  "org_mentions": 166,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "The Centre for Systemic Social Work",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47371593,
+  "last_notice": 47371593,
+  "keep": true,
+  "tokens": [
+   "social",
+   "systemic",
+   "work"
+  ],
+  "others": [
+   [
+    55,
+    "Royal Borough of Kensington and Chelsea"
+   ],
+   [
+    49,
+    "The Royal Borough of Kensington & Chelsea"
+   ],
+   [
+    37,
+    "The Royal Borough of Kensington and Chelsea"
+   ],
+   [
+    19,
+    "Royal Borough of Kensington & Chelsea"
+   ],
+   [
+    2,
+    "Royal Borough of Kensington and Chelsea (RBKC)"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30929605,
+  "ident": "GBPPONPPWP6964PQCV",
+  "head": "JOHN L LORD & SON (RIZISTAL) LIMITED (00759394)",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "STAL UK Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46793476,
+  "last_notice": 46793476,
+  "keep": true,
+  "tokens": [
+   "stal"
+  ],
+  "others": [
+   [
+    2,
+    "John L Lord & Son (Rizistal) Ltd"
+   ],
+   [
+    2,
+    "JOHN L LORD & SON (RIZISTAL) LIMITED (00759394)"
+   ],
+   [
+    2,
+    "JOHN L LORD & SON (RIZISTAL) LIMITED"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31538012,
+  "ident": "GBPPONPPYL1513MZZL",
+  "head": "Great Ormond Street Hospital for Children NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 34,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Renishaw Neuro Solutions Limited",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46795678,
+  "last_notice": 46819442,
+  "keep": true,
+  "tokens": [
+   "neuro",
+   "renishaw"
+  ],
+  "others": [
+   [
+    32,
+    "Great Ormond Street Hospital for Children NHS Foundation Trust"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30929925,
+  "ident": "GBPPONPPZC7945VBHW",
+  "head": "NHS Litigation Authority",
+  "country": "GB",
+  "org_mentions": 18,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "NHS Resolution",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46766085,
+  "last_notice": 46766154,
+  "keep": true,
+  "tokens": [
+   "resolution"
+  ],
+  "others": [
+   [
+    16,
+    "NHS Litigation Authority"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31554622,
+  "ident": "GBPPONPPZY1684DVWT",
+  "head": "AtkinsRealis UK Limited",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "AtkinsRéalis",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46805888,
+  "last_notice": 46805888,
+  "keep": true,
+  "tokens": [
+   "alis",
+   "atkinsr"
+  ],
+  "others": [
+   [
+    3,
+    "AtkinsRealis UK Limited"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913740,
+  "ident": "GBPPONPQBY8547GYGP",
+  "head": "Northampton General Hospital NHS Trust",
+  "country": "GB",
+  "org_mentions": 489,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Xiel",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46835667,
+  "last_notice": 46835667,
+  "keep": true,
+  "tokens": [
+   "xiel"
+  ],
+  "others": [
+   [
+    227,
+    "Northampton General Hospital NHS Trust"
+   ],
+   [
+    158,
+    "NORTHAMPTON GENERAL HOSPITAL NHS TRUST"
+   ],
+   [
+    91,
+    "Northampton General Hospital NHS Trust"
+   ],
+   [
+    7,
+    "NORTHAMPTON GENERAL HOSPITAL NHS TRUST"
+   ],
+   [
+    5,
+    "Northampton General Hospital NHS Trust"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30915637,
+  "ident": "GBPPONPQCZ4732TCLN",
+  "head": "Three Rivers District Council",
+  "country": "GB",
+  "org_mentions": 13,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Landscape and Environmental Design",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46727865,
+  "last_notice": 46727865,
+  "keep": true,
+  "tokens": [
+   "design",
+   "environmental",
+   "landscape"
+  ],
+  "others": [
+   [
+    10,
+    "Three Rivers District Council"
+   ],
+   [
+    1,
+    "Watersmeet Electrical Intake Room"
+   ],
+   [
+    1,
+    "Replacement of Glade Bridge, Riverside Drive, Rickmansworth"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30915637,
+  "ident": "GBPPONPQCZ4732TCLN",
+  "head": "Three Rivers District Council",
+  "country": "GB",
+  "org_mentions": 13,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Replacement of Glade Bridge, Riverside Drive, Rickmansworth",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46758565,
+  "last_notice": 46758565,
+  "keep": true,
+  "tokens": [
+   "bridge",
+   "drive",
+   "glade",
+   "replacement",
+   "rickmansworth",
+   "riverside"
+  ],
+  "others": [
+   [
+    10,
+    "Three Rivers District Council"
+   ],
+   [
+    1,
+    "Watersmeet Electrical Intake Room"
+   ],
+   [
+    1,
+    "Landscape and Environmental Design"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30915637,
+  "ident": "GBPPONPQCZ4732TCLN",
+  "head": "Three Rivers District Council",
+  "country": "GB",
+  "org_mentions": 13,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Watersmeet Electrical Intake Room",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46728155,
+  "last_notice": 46728155,
+  "keep": true,
+  "tokens": [
+   "electrical",
+   "intake",
+   "room",
+   "watersmeet"
+  ],
+  "others": [
+   [
+    10,
+    "Three Rivers District Council"
+   ],
+   [
+    1,
+    "Replacement of Glade Bridge, Riverside Drive, Rickmansworth"
+   ],
+   [
+    1,
+    "Landscape and Environmental Design"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31547103,
+  "ident": "GBPPONPQJT7898GDPQ",
+  "head": "NORTEMECANICA",
+  "country": "ES",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Nortemecánica",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46850186,
+  "last_notice": 46850186,
+  "keep": true,
+  "tokens": [
+   "nica",
+   "nortemec"
+  ],
+  "others": [
+   [
+    3,
+    "NORTEMECANICA"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31541859,
+  "ident": "GBPPONPQNB4177TCMP",
+  "head": "Sport NI",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "SportNI",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46783186,
+  "last_notice": 46783186,
+  "keep": true,
+  "tokens": [
+   "sportni"
+  ],
+  "others": [
+   [
+    4,
+    "Sport NI"
+   ],
+   [
+    1,
+    "Sport Northern Ireland"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30914497,
+  "ident": "GBPPONPQQL9321BBQX",
+  "head": "Surrey Heath Borough Council",
+  "country": "GB",
+  "org_mentions": 104,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Provision of MEES Exemptions and/or Design Works",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46702768,
+  "last_notice": 46702768,
+  "keep": true,
+  "tokens": [
+   "design",
+   "exemptions",
+   "mees",
+   "provision",
+   "works"
+  ],
+  "others": [
+   [
+    103,
+    "Surrey Heath Borough Council"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30916247,
+  "ident": "GBPPONPQQZ1663NWMN",
+  "head": "Ofcom",
+  "country": "GB",
+  "org_mentions": 130,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Tech Against Terrorism",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47157838,
+  "last_notice": 47157838,
+  "keep": true,
+  "tokens": [
+   "against",
+   "tech",
+   "terrorism"
+  ],
+  "others": [
+   [
+    129,
+    "Ofcom"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30967462,
+  "ident": "GBPPONPQYH2794GRNH",
+  "head": "ANGLESEY & GWYNEDD GROUNDWORKS LTD",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Owen Environmental",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46799433,
+  "last_notice": 46799433,
+  "keep": true,
+  "tokens": [
+   "environmental",
+   "owen"
+  ],
+  "others": [
+   [
+    1,
+    "Anglesey and Gwynedd Groundworks Limited"
+   ],
+   [
+    1,
+    "Anglesey Gwynedd Groundworks"
+   ],
+   [
+    1,
+    "Anglesey & Gwynedd Groundworks Ltd"
+   ],
+   [
+    1,
+    "Anglesey & Gwynedd Groundworks LTD"
+   ],
+   [
+    1,
+    "ANGLESEY & GWYNEDD GROUNDWORKS LTD"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 31571667,
+  "ident": "GBPPONPRBY9272TQGX",
+  "head": "Isle of Wight NHS Trust",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ERMC Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46819437,
+  "last_notice": 46819437,
+  "keep": true,
+  "tokens": [
+   "ermc"
+  ],
+  "others": [
+   [
+    3,
+    "Isle of Wight NHS Trust"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30916394,
+  "ident": "GBPPONPRCL4221CWJR",
+  "head": "London Legacy Development Corporation",
+  "country": "GB",
+  "org_mentions": 50,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Stratford Waterfront Retail Company Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46779767,
+  "last_notice": 46779767,
+  "keep": true,
+  "tokens": [
+   "retail",
+   "stratford",
+   "waterfront"
+  ],
+  "others": [
+   [
+    49,
+    "London Legacy Development Corporation"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30913935,
+  "ident": "GBPPONPRMV5612HMQT",
+  "head": "East and North Hertfordshire NHS Trust",
+  "country": "GB",
+  "org_mentions": 83,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "National Radiotherapy trials (RTTQA) Group",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46849969,
+  "last_notice": 46849969,
+  "keep": true,
+  "tokens": [
+   "radiotherapy",
+   "rttqa",
+   "trials"
+  ],
+  "others": [
+   [
+    53,
+    "East and North Hertfordshire Teaching NHS Trust"
+   ],
+   [
+    29,
+    "East and North Hertfordshire NHS Trust"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30914652,
+  "ident": "GBPPONPRNG7762JCRY",
+  "head": "The Royal Parks Ltd",
+  "country": "GB",
+  "org_mentions": 69,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Conservation Architect",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46840592,
+  "last_notice": 46840815,
+  "keep": true,
+  "tokens": [
+   "architect",
+   "conservation"
+  ],
+  "others": [
+   [
+    30,
+    "The Royal Parks Ltd"
+   ],
+   [
+    27,
+    "The Royal Parks Limited"
+   ],
+   [
+    7,
+    "The Royal Parks"
+   ],
+   [
+    3,
+    "TRP TRADING COMPANY LIMITED"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30919606,
+  "ident": "GBPPONPRWG4976HYXL",
+  "head": "THE AD CONSTRUCTION GROUP LIMITED",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "THE AD CONSTRUCTION GROUP LIMITED",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 30977192,
+  "last_notice": 30977192,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    4,
+    "ARCHITECTURAL DECORATORS LIMITED"
+   ],
+   [
+    2,
+    "Architectural Decorators Limited"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31556399,
+  "ident": "GBPPONPRXC4231PHBG",
+  "head": "Department of Justice - DoJ",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Waterways Ireland",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46779410,
+  "last_notice": 46783699,
+  "keep": true,
+  "tokens": [
+   "ireland",
+   "waterways"
+  ],
+  "others": [
+   [
+    3,
+    "Department of Justice - DoJ"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30926713,
+  "ident": "GBPPONPRYN6967GTQP",
+  "head": "London Borough of Enfield",
+  "country": "GB",
+  "org_mentions": 270,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "CollectionHQ",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46806599,
+  "last_notice": 46806599,
+  "keep": true,
+  "tokens": [
+   "collectionhq"
+  ],
+  "others": [
+   [
+    268,
+    "London Borough of Enfield"
+   ],
+   [
+    1,
+    "collectionHQ"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30926713,
+  "ident": "GBPPONPRYN6967GTQP",
+  "head": "London Borough of Enfield",
+  "country": "GB",
+  "org_mentions": 270,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "collectionHQ",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46814331,
+  "last_notice": 46814331,
+  "keep": true,
+  "tokens": [
+   "collectionhq"
+  ],
+  "others": [
+   [
+    268,
+    "London Borough of Enfield"
+   ],
+   [
+    1,
+    "CollectionHQ"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30914820,
+  "ident": "GBPPONPRYY6263NQHG",
+  "head": "RPJ3 Group Limited on Behalf of Aspirational Futures MAT",
+  "country": "GB",
+  "org_mentions": 24,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Remarkable Autism",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46869370,
+  "last_notice": 46869370,
+  "keep": true,
+  "tokens": [
+   "autism",
+   "remarkable"
+  ],
+  "others": [
+   [
+    18,
+    "RPJ3 Group"
+   ],
+   [
+    1,
+    "RPJ3 Group on Behalf of Fylde Coast Academy Trust"
+   ],
+   [
+    1,
+    "RPJ3 Group Limited on Behalf of the Barnsley Collaborative Primary School Group"
+   ],
+   [
+    1,
+    "RPJ3 Group Limited on Behalf of Cidari MAT"
+   ],
+   [
+    1,
+    "RPJ3 Group Limited on Behalf of Aspirational Futures MAT"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30913750,
+  "ident": "GBPPONPTNV7472GRTW",
+  "head": "Swansea University",
+  "country": "GB",
+  "org_mentions": 160,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46768416,
+  "last_notice": 46768416,
+  "keep": true,
+  "tokens": [
+   "hosted",
+   "procurement",
+   "shared",
+   "velindre"
+  ],
+  "others": [
+   [
+    133,
+    "Swansea University"
+   ],
+   [
+    15,
+    "Swansea Bay University Health Board"
+   ],
+   [
+    6,
+    "SWANSEA BAY UNIVERSITY HEALTH BOARD"
+   ],
+   [
+    4,
+    "Swansea Bay University Health Board "
+   ],
+   [
+    1,
+    "Swansea University "
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30913971,
+  "ident": "GBPPONPTPG8659JMCD",
+  "head": "Denbighshire County Council",
+  "country": "GB",
+  "org_mentions": 104,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Denbigshire County Council ",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46772367,
+  "last_notice": 46772367,
+  "keep": true,
+  "tokens": [
+   "denbigshire"
+  ],
+  "others": [
+   [
+    98,
+    "Denbighshire County Council"
+   ],
+   [
+    2,
+    "Cyngor Sir Ddinbych / Denbighshire County Council"
+   ],
+   [
+    1,
+    "Denbighshire County Council / Cyngor Sir Ddinbych"
+   ],
+   [
+    1,
+    "Denbighshire County Council "
+   ],
+   [
+    1,
+    " Cyngor Sir Ddinbych / Denbighshire County Council"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30914094,
+  "ident": "GBPPONPTPM4795PZBG",
+  "head": "Prifysgol Bangor / Bangor University",
+  "country": "GB",
+  "org_mentions": 84,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Betsi Cadwaladr University Health Board",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46888404,
+  "last_notice": 46888404,
+  "keep": true,
+  "tokens": [
+   "betsi",
+   "board",
+   "cadwaladr"
+  ],
+  "others": [
+   [
+    81,
+    "Prifysgol Bangor / Bangor University"
+   ],
+   [
+    2,
+    "Bangor University "
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31541254,
+  "ident": "GBPPONPTRT7524JVJG",
+  "head": "National Children’s Bureau",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Anti-Bullying Alliance",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46744186,
+  "last_notice": 46753116,
+  "keep": true,
+  "tokens": [
+   "alliance",
+   "anti",
+   "bullying"
+  ],
+  "others": [
+   [
+    3,
+    "NATIONAL CHILDREN'S BUREAU"
+   ],
+   [
+    2,
+    "National Children’s Bureau"
+   ],
+   [
+    1,
+    "NCB RiP"
+   ],
+   [
+    1,
+    "NCB"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31541254,
+  "ident": "GBPPONPTRT7524JVJG",
+  "head": "National Children’s Bureau",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NCB",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46765118,
+  "last_notice": 46765118,
+  "keep": true,
+  "tokens": [
+   "ncb"
+  ],
+  "others": [
+   [
+    3,
+    "NATIONAL CHILDREN'S BUREAU"
+   ],
+   [
+    2,
+    "National Children’s Bureau"
+   ],
+   [
+    2,
+    "Anti-Bullying Alliance"
+   ],
+   [
+    1,
+    "NCB RiP"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31541254,
+  "ident": "GBPPONPTRT7524JVJG",
+  "head": "National Children’s Bureau",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NCB RiP",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46838134,
+  "last_notice": 46838134,
+  "keep": true,
+  "tokens": [
+   "ncb",
+   "rip"
+  ],
+  "others": [
+   [
+    3,
+    "NATIONAL CHILDREN'S BUREAU"
+   ],
+   [
+    2,
+    "National Children’s Bureau"
+   ],
+   [
+    2,
+    "Anti-Bullying Alliance"
+   ],
+   [
+    1,
+    "NCB"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30915408,
+  "ident": "GBPPONPTVL7854TMRZ",
+  "head": "Carmarthenshire County Council",
+  "country": "GB",
+  "org_mentions": 216,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Carmarthen County Council",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46819241,
+  "last_notice": 46819241,
+  "keep": true,
+  "tokens": [
+   "carmarthen"
+  ],
+  "others": [
+   [
+    207,
+    "Carmarthenshire County Council"
+   ],
+   [
+    4,
+    "Carmarthenshire County Council "
+   ],
+   [
+    3,
+    "Camarthenshire County Council"
+   ],
+   [
+    1,
+    "Carmarthenshire Council  "
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913969,
+  "ident": "GBPPONPTYH9512JWZZ",
+  "head": "Department of Education",
+  "country": "GB",
+  "org_mentions": 20,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "DE",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46871407,
+  "last_notice": 46871407,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    13,
+    "Department of Education"
+   ],
+   [
+    4,
+    "The Department of Education (DE)"
+   ],
+   [
+    2,
+    "Department for Education"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31567753,
+  "ident": "GBPPONPVGB3154ZYHR",
+  "head": "Martin's Removals Edinburgh",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Martins Removal Services Ltd",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46853200,
+  "last_notice": 47159727,
+  "keep": true,
+  "tokens": [
+   "martins",
+   "removal"
+  ],
+  "others": [
+   [
+    3,
+    "Martin's Removals Edinburgh"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31568013,
+  "ident": "GBPPONPVGP9689NVQZ",
+  "head": "LearningMate Solutions (UK) Limited",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Learning Mate Solutions Ltd",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46832942,
+  "last_notice": 46843965,
+  "keep": true,
+  "tokens": [
+   "learning",
+   "mate"
+  ],
+  "others": [
+   [
+    2,
+    "LEARNINGMATE SOLUTIONS (UK) LIMITED"
+   ],
+   [
+    1,
+    "LearningMate Solutions (UK) Limited"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913763,
+  "ident": "GBPPONPVHP5769YHRQ",
+  "head": "Cardiff Council",
+  "country": "GB",
+  "org_mentions": 200,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Ardal",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46765017,
+  "last_notice": 46765017,
+  "keep": true,
+  "tokens": [
+   "ardal"
+  ],
+  "others": [
+   [
+    194,
+    "Cardiff Council"
+   ],
+   [
+    2,
+    "Cardiff County Council"
+   ],
+   [
+    2,
+    "Cardiff Council - WITS"
+   ],
+   [
+    1,
+    "Cardiff Council "
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30919377,
+  "ident": "GBPPONPVLN4733WJBQ",
+  "head": "Aneurin Bevan University Health Board",
+  "country": "GB",
+  "org_mentions": 47,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46816840,
+  "last_notice": 46844096,
+  "keep": true,
+  "tokens": [
+   "hosted",
+   "procurement",
+   "shared",
+   "velindre"
+  ],
+  "others": [
+   [
+    40,
+    "Aneurin Bevan University Health Board"
+   ],
+   [
+    1,
+    "NHS WALES SHARED SERVICES PARTNERSHIP"
+   ],
+   [
+    1,
+    "Aneurin Bevan University health board"
+   ],
+   [
+    1,
+    "Aneurin Bevan University Health board"
+   ],
+   [
+    1,
+    "Aneurin Bevan University Health Board\t"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30913798,
+  "ident": "GBPPONPVMQ1845NYPP",
+  "head": "Welland Procurement",
+  "country": "GB",
+  "org_mentions": 287,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Rutland County Council",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46845134,
+  "last_notice": 46845134,
+  "keep": true,
+  "tokens": [
+   "rutland"
+  ],
+  "others": [
+   [
+    286,
+    "Welland Procurement"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30913704,
+  "ident": "GBPPONPVMT4274HPBN",
+  "head": "Stonewater Limited",
+  "country": "GB",
+  "org_mentions": 79,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "00419-AST Windows and Doors Replacement Programme",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46726358,
+  "last_notice": 46726358,
+  "keep": true,
+  "tokens": [
+   "00419",
+   "ast",
+   "doors",
+   "programme",
+   "replacement",
+   "windows"
+  ],
+  "others": [
+   [
+    55,
+    "Stonewater Limited"
+   ],
+   [
+    18,
+    "Stonewater Ltd"
+   ],
+   [
+    4,
+    "Print and Mailing Services - 00472-CX"
+   ],
+   [
+    1,
+    "00538-CS - Recruitment Tracking System"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30913704,
+  "ident": "GBPPONPVMT4274HPBN",
+  "head": "Stonewater Limited",
+  "country": "GB",
+  "org_mentions": 79,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "00538-CS - Recruitment Tracking System",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46879186,
+  "last_notice": 46879186,
+  "keep": true,
+  "tokens": [
+   "00538",
+   "recruitment",
+   "system",
+   "tracking"
+  ],
+  "others": [
+   [
+    55,
+    "Stonewater Limited"
+   ],
+   [
+    18,
+    "Stonewater Ltd"
+   ],
+   [
+    4,
+    "Print and Mailing Services - 00472-CX"
+   ],
+   [
+    1,
+    "00419-AST Windows and Doors Replacement Programme"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30913779,
+  "ident": "GBPPONPVRL5831GLMM",
+  "head": "Defence Equipment and Support",
+  "country": "GB",
+  "org_mentions": 783,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "DE&S",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46764716,
+  "last_notice": 46764716,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    753,
+    "Defence Equipment and Support"
+   ],
+   [
+    16,
+    "DE&S Deca"
+   ],
+   [
+    4,
+    "Defence Equipment and Support - DECA"
+   ],
+   [
+    3,
+    "Defence Equipment and Support Deca"
+   ],
+   [
+    2,
+    "National Armaments Director Group (formerly Defence Equipment and Support)"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31586384,
+  "ident": "GBPPONPVTH8735HMYV",
+  "head": "Lightcast",
+  "country": "US",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Economic Modeling LLC t/a Lightcast",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47382060,
+  "last_notice": 47382060,
+  "keep": true,
+  "tokens": [
+   "economic",
+   "llc",
+   "modeling"
+  ],
+  "others": [
+   [
+    2,
+    "Lightcast"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30974616,
+  "ident": "GBPPONPVWR6662QTQX",
+  "head": "Arc Property Services Partnership Limited",
+  "country": "GB",
+  "org_mentions": 39,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Scape Group Limited (trading as SCAPE)",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46806701,
+  "last_notice": 46807157,
+  "keep": true,
+  "tokens": [
+   "scape"
+  ],
+  "others": [
+   [
+    30,
+    "Arc Property Services Partnership Limited"
+   ],
+   [
+    7,
+    "Arc Property Services Partnership Ltd"
+   ]
+  ],
+  "class": "A"
+ },
+ {
+  "org": 30928095,
+  "ident": "GBPPONPVXM8562YPWZ",
+  "head": "E&O Laboratories Ltd",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "E&O Laboraties Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46849123,
+  "last_notice": 46849123,
+  "keep": true,
+  "tokens": [
+   "laboraties"
+  ],
+  "others": [
+   [
+    5,
+    "E&O Laboratories Ltd"
+   ],
+   [
+    1,
+    "E&O Laboratories"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31548720,
+  "ident": "GBPPONPWBT9763QMCG",
+  "head": "Spencer Quantum Ltd",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Spencers ECA",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46847726,
+  "last_notice": 46847726,
+  "keep": true,
+  "tokens": [
+   "eca",
+   "spencers"
+  ],
+  "others": [
+   [
+    2,
+    "Spencer Quantum Ltd"
+   ],
+   [
+    2,
+    "Spencer Quantum Limited"
+   ],
+   [
+    2,
+    "Spencer Quantum"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30976610,
+  "ident": "GBPPONPWLQ9391QGCV",
+  "head": "Louis Gray trading as InfluencyX",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "InfluencyX",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46840252,
+  "last_notice": 46840252,
+  "keep": true,
+  "tokens": [
+   "influencyx"
+  ],
+  "others": [
+   [
+    2,
+    "Louis Gray trading as InfluencyX"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30969160,
+  "ident": "GBPPONPWMW3183VJRW",
+  "head": "Liverpool University Hospital NHS FT - Trading as MIAA",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "MIAA (Mersey Internal Audit Agency)",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46730233,
+  "last_notice": 46730240,
+  "keep": true,
+  "tokens": [
+   "agency",
+   "audit",
+   "internal",
+   "mersey",
+   "miaa"
+  ],
+  "others": [
+   [
+    7,
+    "Liverpool University Hospital NHS FT - Trading as MIAA"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31537958,
+  "ident": "GBPPONPWVJ4777XLMQ",
+  "head": "Surecampus Ltd",
+  "country": "IE",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Sure Campus Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46847782,
+  "last_notice": 46847782,
+  "keep": true,
+  "tokens": [
+   "campus",
+   "sure"
+  ],
+  "others": [
+   [
+    2,
+    "Surecampus Ltd"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31567271,
+  "ident": "GBPPONPWVL6742YTTJ",
+  "head": "Ivolve DC Ltd",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ivolveDC Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46824418,
+  "last_notice": 46824418,
+  "keep": true,
+  "tokens": [
+   "ivolvedc"
+  ],
+  "others": [
+   [
+    2,
+    "Ivolve DC Ltd"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30914077,
+  "ident": "GBPPONPWVL6877BXXV",
+  "head": "University Hospitals Birmingham NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 1459,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "University Hosptials Birmigham NHS Trust",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46743021,
+  "last_notice": 46743021,
+  "keep": true,
+  "tokens": [
+   "birmigham",
+   "hosptials"
+  ],
+  "others": [
+   [
+    711,
+    "University Hospitals Birmingham NHS Foundation Trust"
+   ],
+   [
+    560,
+    "University Hospitals Birmingham NHS Foundation Trust"
+   ],
+   [
+    142,
+    "University Hospitals Birmingham"
+   ],
+   [
+    19,
+    "UNIVERSITY HOSPITALS BIRMINGHAM NHS FOUNDATION TRUST"
+   ],
+   [
+    13,
+    "UNIVERSITY HOSPITALS BIRMINGHAM NHS FOUNDATION TRUST"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30915344,
+  "ident": "GBPPONPWYH3898LDQR",
+  "head": "Medway Council",
+  "country": "GB",
+  "org_mentions": 233,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "UK-Chatham: Men in Sheds",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46756533,
+  "last_notice": 46756533,
+  "keep": true,
+  "tokens": [
+   "chatham",
+   "men",
+   "sheds"
+  ],
+  "others": [
+   [
+    229,
+    "Medway Council"
+   ],
+   [
+    2,
+    "Medway Council Youth Outreach"
+   ],
+   [
+    1,
+    "Medway Councll"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 31538014,
+  "ident": "GBPPONPWZJ8174DHQG",
+  "head": "SilverRail",
+  "country": "GB",
+  "org_mentions": 8,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Silver Rail",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46798452,
+  "last_notice": 46798452,
+  "keep": true,
+  "tokens": [
+   "rail",
+   "silver"
+  ],
+  "others": [
+   [
+    7,
+    "SilverRail"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30916757,
+  "ident": "GBPPONPXBG2414QYYH",
+  "head": "Centre for Agriculture and Bioscience (CAB) International",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "CABI Europe – UK",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46856028,
+  "last_notice": 46856028,
+  "keep": true,
+  "tokens": [
+   "cabi"
+  ],
+  "others": [
+   [
+    2,
+    "CAB International"
+   ],
+   [
+    1,
+    "Centre for Agriculture and Bioscience (CAB) International"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30930344,
+  "ident": "GBPPONPXCB1518MCRJ",
+  "head": "FM Services (City of Bradford Metropolitan District Council)",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "FM Services",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46819555,
+  "last_notice": 46819555,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    2,
+    "FM Services (City of Bradford Metropolitan District Council)"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30926693,
+  "ident": "GBPPONPXLD1125PGBY",
+  "head": "General Medical Council (GMC)",
+  "country": "GB",
+  "org_mentions": 83,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Vohkus",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46771116,
+  "last_notice": 46771116,
+  "keep": true,
+  "tokens": [
+   "vohkus"
+  ],
+  "others": [
+   [
+    82,
+    "General Medical Council (GMC)"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31540150,
+  "ident": "GBPPONPXPT8473XJDP",
+  "head": "Isle of Anglesey County Council",
+  "country": "GB",
+  "org_mentions": 39,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Cyngor Sir Ynys Mon",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46772737,
+  "last_notice": 46801730,
+  "keep": true,
+  "tokens": [
+   "cyngor",
+   "mon",
+   "sir",
+   "ynys"
+  ],
+  "others": [
+   [
+    37,
+    "Isle of Anglesey County Council"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913561,
+  "ident": "GBPPONPXQG2592VYYY",
+  "head": "Manchester University NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 275,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Bolton NHS Foundation Trust",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47366319,
+  "last_notice": 47366319,
+  "keep": true,
+  "tokens": [
+   "bolton"
+  ],
+  "others": [
+   [
+    180,
+    "Manchester University NHS Foundation Trust"
+   ],
+   [
+    82,
+    "Manchester University NHS Foundation Trust"
+   ],
+   [
+    6,
+    "MANCHESTER UNIVERSITY NHS FOUNDATION TRUST"
+   ],
+   [
+    2,
+    "Manchester University NHS Foundation Trust"
+   ],
+   [
+    2,
+    "MANCHESTER UNIVERSITY NHS FT"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30913738,
+  "ident": "GBPPONPXWV6492CGMN",
+  "head": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+  "country": "GB",
+  "org_mentions": 1170,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "NHS ",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46786675,
+  "last_notice": 46788783,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    630,
+    "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)"
+   ],
+   [
+    249,
+    "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)"
+   ],
+   [
+    75,
+    "NHS Wales Shared Services Partnership"
+   ],
+   [
+    40,
+    "Velindre University NHS Trust"
+   ],
+   [
+    13,
+    "NHS Wales Shared Service Partnership"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30914669,
+  "ident": "GBPPONPYBQ4733WWLW",
+  "head": "North Tyneside Borough Council",
+  "country": "GB",
+  "org_mentions": 185,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Hartlepool Borough Council",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46729910,
+  "last_notice": 46729910,
+  "keep": true,
+  "tokens": [
+   "hartlepool"
+  ],
+  "others": [
+   [
+    184,
+    "North Tyneside Borough Council"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30973303,
+  "ident": "GBPPONPYCL1549TNRX",
+  "head": "University of West of England",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "University Of The West Of England",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46812188,
+  "last_notice": 46812188,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    2,
+    "The University of the West of England, Bristol"
+   ],
+   [
+    2,
+    "The University of the West of England Bristol\t"
+   ],
+   [
+    1,
+    "University of the West of England, Bristol"
+   ],
+   [
+    1,
+    "University of West of England"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30973303,
+  "ident": "GBPPONPYCL1549TNRX",
+  "head": "University of West of England",
+  "country": "GB",
+  "org_mentions": 7,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "University of West of England",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46698018,
+  "last_notice": 46698018,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    2,
+    "The University of the West of England, Bristol"
+   ],
+   [
+    2,
+    "The University of the West of England Bristol\t"
+   ],
+   [
+    1,
+    "University of the West of England, Bristol"
+   ],
+   [
+    1,
+    "University Of The West Of England"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31559744,
+  "ident": "GBPPONPYCL7586NVHD",
+  "head": "Tinopolis Interactive Limited",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Tinint",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46782323,
+  "last_notice": 46782323,
+  "keep": true,
+  "tokens": [
+   "tinint"
+  ],
+  "others": [
+   [
+    2,
+    "Tinopolis Interactive Limited"
+   ],
+   [
+    2,
+    "TINOPOLIS INTERACTIVE LIMITED"
+   ],
+   [
+    1,
+    "Tinnint"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31559744,
+  "ident": "GBPPONPYCL7586NVHD",
+  "head": "Tinopolis Interactive Limited",
+  "country": "GB",
+  "org_mentions": 6,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Tinnint",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46787976,
+  "last_notice": 46787976,
+  "keep": true,
+  "tokens": [
+   "tinnint"
+  ],
+  "others": [
+   [
+    2,
+    "Tinopolis Interactive Limited"
+   ],
+   [
+    2,
+    "TINOPOLIS INTERACTIVE LIMITED"
+   ],
+   [
+    1,
+    "Tinint"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30917424,
+  "ident": "GBPPONPYCX4938CCHM",
+  "head": "Kent County Council (T/a Procurement Services)",
+  "country": "GB",
+  "org_mentions": 176,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Edseco Limited trading as The Education People",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47158866,
+  "last_notice": 47158866,
+  "keep": true,
+  "tokens": [
+   "edseco"
+  ],
+  "others": [
+   [
+    77,
+    "Kent County Council (t/a Procurement Services)"
+   ],
+   [
+    30,
+    "Kent County Council trading as Procurement Services"
+   ],
+   [
+    10,
+    "Cantium Business Solutions Limited"
+   ],
+   [
+    8,
+    "Commercial Services Kent Limited"
+   ],
+   [
+    6,
+    "Commercial Services Kent Ltd"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30917424,
+  "ident": "GBPPONPYCX4938CCHM",
+  "head": "Kent County Council (T/a Procurement Services)",
+  "country": "GB",
+  "org_mentions": 176,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Laser Energy",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46788609,
+  "last_notice": 46788609,
+  "keep": true,
+  "tokens": [
+   "energy",
+   "laser"
+  ],
+  "others": [
+   [
+    77,
+    "Kent County Council (t/a Procurement Services)"
+   ],
+   [
+    30,
+    "Kent County Council trading as Procurement Services"
+   ],
+   [
+    10,
+    "Cantium Business Solutions Limited"
+   ],
+   [
+    8,
+    "Commercial Services Kent Limited"
+   ],
+   [
+    6,
+    "Commercial Services Kent Ltd"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 31555564,
+  "ident": "GBPPONPYDC8959CVPN",
+  "head": "STEPHEN W MOORE LIMITED",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Johnston Gilpin & Co",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46797944,
+  "last_notice": 46797944,
+  "keep": true,
+  "tokens": [
+   "gilpin",
+   "johnston"
+  ],
+  "others": [
+   [
+    3,
+    "Stephen W Moore Limited"
+   ],
+   [
+    1,
+    "STEPHEN W MOORE LIMITED"
+   ]
+  ],
+  "class": "F?"
+ },
+ {
+  "org": 30915378,
+  "ident": "GBPPONPYDQ9172CNVV",
+  "head": "THANET DISTRICT COUNCIL",
+  "country": "GB",
+  "org_mentions": 57,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Ramsgate Royal Harbour, Kent Mechanical Dredging",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 31146625,
+  "last_notice": 46815228,
+  "keep": true,
+  "tokens": [
+   "dredging",
+   "harbour",
+   "kent",
+   "mechanical",
+   "ramsgate"
+  ],
+  "others": [
+   [
+    29,
+    "Thanet District Council"
+   ],
+   [
+    19,
+    "THANET DISTRICT COUNCIL"
+   ],
+   [
+    4,
+    "Walpole Bay Beach Facilities"
+   ],
+   [
+    2,
+    "Replacement Backup Solution Platform"
+   ],
+   [
+    1,
+    "Thanet Bus Shelter Replacement Project"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30915378,
+  "ident": "GBPPONPYDQ9172CNVV",
+  "head": "THANET DISTRICT COUNCIL",
+  "country": "GB",
+  "org_mentions": 57,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Replacement Backup Solution Platform",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46812094,
+  "last_notice": 46841075,
+  "keep": true,
+  "tokens": [
+   "backup",
+   "platform",
+   "replacement",
+   "solution"
+  ],
+  "others": [
+   [
+    29,
+    "Thanet District Council"
+   ],
+   [
+    19,
+    "THANET DISTRICT COUNCIL"
+   ],
+   [
+    4,
+    "Walpole Bay Beach Facilities"
+   ],
+   [
+    2,
+    "Ramsgate Royal Harbour, Kent Mechanical Dredging"
+   ],
+   [
+    1,
+    "Thanet Bus Shelter Replacement Project"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30969195,
+  "ident": "GBPPONPYDX4396NLJD",
+  "head": "Cyson Cymru",
+  "country": "GB",
+  "org_mentions": 10,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "NCC Commercial Services t/a Cyson Cymru",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46849250,
+  "last_notice": 46849250,
+  "keep": true,
+  "tokens": [
+   "commercial",
+   "ncc"
+  ],
+  "others": [
+   [
+    9,
+    "Cyson Cymru"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31549806,
+  "ident": "GBPPONPYLD6221NJVP",
+  "head": "The Walton Centre NHS Foundation Trust",
+  "country": "GB",
+  "org_mentions": 186,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Alder Hey",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46800059,
+  "last_notice": 46800059,
+  "keep": true,
+  "tokens": [
+   "alder",
+   "hey"
+  ],
+  "others": [
+   [
+    113,
+    "The Walton Centre NHS Foundation Trust"
+   ],
+   [
+    26,
+    "The Walton Centre"
+   ],
+   [
+    15,
+    "The Walton Centre NHS Foundation Trust"
+   ],
+   [
+    14,
+    "THE WALTON CENTRE NHS FOUNDATION TRUST"
+   ],
+   [
+    8,
+    "The Walton Centre NHS Foundation Trust"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31551518,
+  "ident": "GBPPONPYMW5475ZMBP",
+  "head": "FINSEN TECHNOLOGIES LIMITED",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Gama Healthcare Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46842943,
+  "last_notice": 46842943,
+  "keep": true,
+  "tokens": [
+   "gama"
+  ],
+  "others": [
+   [
+    3,
+    "FINSEN TECHNOLOGIES LIMITED"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30913608,
+  "ident": "GBPPONPYQD1693MYXR",
+  "head": "The Mayor and Commonalty and Citizens of the City of London",
+  "country": "GB",
+  "org_mentions": 902,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "CORPORATION OF LONDON T/A BARBICAN CENTRE",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46853436,
+  "last_notice": 46853436,
+  "keep": true,
+  "tokens": [
+   "corporation"
+  ],
+  "others": [
+   [
+    899,
+    "The Mayor and Commonalty and Citizens of the City of London"
+   ],
+   [
+    1,
+    "The Mablyor and Commonalty and Citizens of the City of London"
+   ],
+   [
+    1,
+    "City of London Police"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913608,
+  "ident": "GBPPONPYQD1693MYXR",
+  "head": "The Mayor and Commonalty and Citizens of the City of London",
+  "country": "GB",
+  "org_mentions": 902,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "City of London Police",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46840042,
+  "last_notice": 46840042,
+  "keep": true,
+  "tokens": [
+   "police"
+  ],
+  "others": [
+   [
+    899,
+    "The Mayor and Commonalty and Citizens of the City of London"
+   ],
+   [
+    1,
+    "The Mablyor and Commonalty and Citizens of the City of London"
+   ],
+   [
+    1,
+    "CORPORATION OF LONDON T/A BARBICAN CENTRE"
+   ]
+  ],
+  "class": "U"
+ },
+ {
+  "org": 30916395,
+  "ident": "GBPPONPYRZ1467WNJW",
+  "head": "Chelmsford City Council",
+  "country": "GB",
+  "org_mentions": 61,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "Uttlesford District Council",
+  "scheme": "GB-PPON",
+  "n": 2,
+  "first_notice": 46726141,
+  "last_notice": 46748250,
+  "keep": true,
+  "tokens": [
+   "uttlesford"
+  ],
+  "others": [
+   [
+    58,
+    "Chelmsford City Council"
+   ],
+   [
+    1,
+    "Chelmsford City Council,"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31563071,
+  "ident": "GBPPONPYVD4956TMVN",
+  "head": "GPOOLE FORESTRY SERVICES",
+  "country": "GB",
+  "org_mentions": 4,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Gerald Poole",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47407760,
+  "last_notice": 47407760,
+  "keep": true,
+  "tokens": [
+   "gerald",
+   "poole"
+  ],
+  "others": [
+   [
+    2,
+    "GPOOLE FORESTRY SERVICES"
+   ],
+   [
+    1,
+    "G Poole Forestry Services"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30913648,
+  "ident": "GBPPONPYVZ4215PGYM",
+  "head": "Driver and Vehicle Licensing Agency",
+  "country": "GB",
+  "org_mentions": 107,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Virgin Media Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47157734,
+  "last_notice": 47157734,
+  "keep": true,
+  "tokens": [
+   "media",
+   "virgin"
+  ],
+  "others": [
+   [
+    106,
+    "Driver and Vehicle Licensing Agency"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30926827,
+  "ident": "GBPPONPYXN5596QWGD",
+  "head": "National Maritime Museum",
+  "country": "GB",
+  "org_mentions": 34,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ROG First Light Exhibitions Scenic Engineering Model Contractor",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47293639,
+  "last_notice": 47293639,
+  "keep": true,
+  "tokens": [
+   "contractor",
+   "engineering",
+   "exhibitions",
+   "first",
+   "light",
+   "model",
+   "rog",
+   "scenic"
+  ],
+  "others": [
+   [
+    31,
+    "National Maritime Museum"
+   ],
+   [
+    1,
+    "Royal Museums Greenwich"
+   ],
+   [
+    1,
+    "ROG First Light Wayfinding"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30926827,
+  "ident": "GBPPONPYXN5596QWGD",
+  "head": "National Maritime Museum",
+  "country": "GB",
+  "org_mentions": 34,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ROG First Light Wayfinding",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47293627,
+  "last_notice": 47293627,
+  "keep": true,
+  "tokens": [
+   "first",
+   "light",
+   "rog",
+   "wayfinding"
+  ],
+  "others": [
+   [
+    31,
+    "National Maritime Museum"
+   ],
+   [
+    1,
+    "Royal Museums Greenwich"
+   ],
+   [
+    1,
+    "ROG First Light Exhibitions Scenic Engineering Model Contractor"
+   ]
+  ],
+  "class": "T"
+ },
+ {
+  "org": 30926827,
+  "ident": "GBPPONPYXN5596QWGD",
+  "head": "National Maritime Museum",
+  "country": "GB",
+  "org_mentions": 34,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Royal Museums Greenwich",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46735674,
+  "last_notice": 46735674,
+  "keep": true,
+  "tokens": [
+   "greenwich",
+   "museums"
+  ],
+  "others": [
+   [
+    31,
+    "National Maritime Museum"
+   ],
+   [
+    1,
+    "ROG First Light Wayfinding"
+   ],
+   [
+    1,
+    "ROG First Light Exhibitions Scenic Engineering Model Contractor"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31559992,
+  "ident": "GBPPONPYZQ8662WPNQ",
+  "head": "REACT XR LIMITED",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "ReactXR Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46828285,
+  "last_notice": 46828285,
+  "keep": true,
+  "tokens": [
+   "reactxr"
+  ],
+  "others": [
+   [
+    4,
+    "REACT XR LIMITED"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30926847,
+  "ident": "GBPPONPZLB9446RVML",
+  "head": "Network Rail",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Compendium Regeneration Limited",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46853619,
+  "last_notice": 46853619,
+  "keep": true,
+  "tokens": [
+   "compendium",
+   "regeneration"
+  ],
+  "others": [
+   [
+    2,
+    "Bupa Insurance Limted"
+   ],
+   [
+    1,
+    "The Law Society"
+   ],
+   [
+    1,
+    "Taylor Wimpey"
+   ],
+   [
+    1,
+    "RSS International Ltd"
+   ],
+   [
+    1,
+    "Network Rail"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30926847,
+  "ident": "GBPPONPZLB9446RVML",
+  "head": "Network Rail",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "M Group Services",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46132740,
+  "last_notice": 46132740,
+  "keep": true,
+  "tokens": [],
+  "others": [
+   [
+    2,
+    "Bupa Insurance Limted"
+   ],
+   [
+    1,
+    "The Law Society"
+   ],
+   [
+    1,
+    "Taylor Wimpey"
+   ],
+   [
+    1,
+    "RSS International Ltd"
+   ],
+   [
+    1,
+    "Network Rail"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30926847,
+  "ident": "GBPPONPZLB9446RVML",
+  "head": "Network Rail",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "RSS International Ltd",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46709309,
+  "last_notice": 46709309,
+  "keep": true,
+  "tokens": [
+   "rss"
+  ],
+  "others": [
+   [
+    2,
+    "Bupa Insurance Limted"
+   ],
+   [
+    1,
+    "The Law Society"
+   ],
+   [
+    1,
+    "Taylor Wimpey"
+   ],
+   [
+    1,
+    "Network Rail"
+   ],
+   [
+    1,
+    "NETWORK RAIL"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30926847,
+  "ident": "GBPPONPZLB9446RVML",
+  "head": "Network Rail",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "Taylor Wimpey",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46843153,
+  "last_notice": 46843153,
+  "keep": true,
+  "tokens": [
+   "taylor",
+   "wimpey"
+  ],
+  "others": [
+   [
+    2,
+    "Bupa Insurance Limted"
+   ],
+   [
+    1,
+    "The Law Society"
+   ],
+   [
+    1,
+    "RSS International Ltd"
+   ],
+   [
+    1,
+    "Network Rail"
+   ],
+   [
+    1,
+    "NETWORK RAIL"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 30926847,
+  "ident": "GBPPONPZLB9446RVML",
+  "head": "Network Rail",
+  "country": "GB",
+  "org_mentions": 9,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "The Law Society",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46855540,
+  "last_notice": 46855540,
+  "keep": true,
+  "tokens": [
+   "law",
+   "society"
+  ],
+  "others": [
+   [
+    2,
+    "Bupa Insurance Limted"
+   ],
+   [
+    1,
+    "Taylor Wimpey"
+   ],
+   [
+    1,
+    "RSS International Ltd"
+   ],
+   [
+    1,
+    "Network Rail"
+   ],
+   [
+    1,
+    "NETWORK RAIL"
+   ]
+  ],
+  "class": "F"
+ },
+ {
+  "org": 31547119,
+  "ident": "GBPPONPZLW5327RMRJ",
+  "head": "South East Consortium.",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "SEC PROCUREMENT LIMITED T/A SOUTH EAST CONSORTIUM",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46805445,
+  "last_notice": 46805445,
+  "keep": true,
+  "tokens": [
+   "procurement",
+   "sec"
+  ],
+  "others": [
+   [
+    3,
+    "South East Consortium."
+   ],
+   [
+    1,
+    "SEC Procurement Ltd T/A South East Consortium"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 31547119,
+  "ident": "GBPPONPZLW5327RMRJ",
+  "head": "South East Consortium.",
+  "country": "GB",
+  "org_mentions": 5,
+  "detector": "HELD-2",
+  "key_count": 2,
+  "name": "SEC Procurement Ltd T/A South East Consortium",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 47377024,
+  "last_notice": 47377024,
+  "keep": true,
+  "tokens": [
+   "procurement",
+   "sec"
+  ],
+  "others": [
+   [
+    3,
+    "South East Consortium."
+   ],
+   [
+    1,
+    "SEC PROCUREMENT LIMITED T/A SOUTH EAST CONSORTIUM"
+   ]
+  ],
+  "class": "V"
+ },
+ {
+  "org": 30915227,
+  "ident": "GBPPONPZZV3765WXZQ",
+  "head": "Storz Medical (UK) Limited",
+  "country": "GB",
+  "org_mentions": 3,
+  "detector": "STRAY",
+  "key_count": 1,
+  "name": "SWANSEA BAY UNIVERSITY HEALTH BOARD",
+  "scheme": "GB-PPON",
+  "n": 1,
+  "first_notice": 46784746,
+  "last_notice": 46784746,
+  "keep": true,
+  "tokens": [
+   "bay",
+   "board",
+   "swansea"
+  ],
+  "others": [
+   [
+    2,
+    "Storz Medical (UK) Limited"
+   ]
+  ],
+  "class": "F"
+ }
+]

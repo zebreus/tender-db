@@ -1,0 +1,18 @@
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(5, 2, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(39, 1, 0, 'UNION ALL')
+(42, 39, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(58, 1, 0, 'UNION ALL')
+(61, 58, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(77, 1, 0, 'UNION ALL')
+(80, 77, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+PLAN	c1	COMPOUND QUERY
+PLAN	c1	  LEFT-MOST SUBQUERY
+PLAN	c1	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	c1	  UNION ALL
+PLAN	c1	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	c1	  UNION ALL
+PLAN	c1	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	c1	  UNION ALL
+PLAN	c1	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)

@@ -1,0 +1,258 @@
+{
+ "meta": {
+  "read": "salted 30 of the 79 shippable rows the subset test matches (79 > 60)",
+  "salt": "548-u1c-",
+  "bar": "0 wrong (neutral allowed)",
+  "passes_bar": true
+ },
+ "salted_30": {
+  "R": 29,
+  "N": 1
+ },
+ "uncertain_3": {
+  "R": 2,
+  "N": 1
+ },
+ "recorded_within_79_incl_u1": {
+  "rows": 34,
+  "tally": {
+   "R": 33,
+   "N": 1
+  }
+ },
+ "verdicts": {
+  "18124034": {
+   "v": "R",
+   "why": "ARGE of 3 -> S Hoch 2 ZT GmbH: every one of the 5 mentions on AT 9110017975749 names S Hoch 2 ZT GmbH (3 alone, 2 in two different ARGEs), so the identifier is S Hoch 2's (np_shoch2: no other org serves it)",
+   "old": "ARGE David Schinerl / S hoch 2 ZT GmbH / schorn - architektur ZT GmbH",
+   "new": "S Hoch 2 ZT GmbH",
+   "H": 1
+  },
+  "9134963": {
+   "v": "R",
+   "why": "Unisys Belgium S.A. (as consortium member) -> Unisys Belgium SA; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Unisys Belgium S.A. (as consortium member)",
+   "new": "Unisys Belgium SA",
+   "H": 1
+  },
+  "13580689": {
+   "v": "R",
+   "why": "ARENA SI (mandataire) -> Arena SI; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "ARENA SI (mandataire)",
+   "new": "Arena SI",
+   "H": 1
+  },
+  "10266767": {
+   "v": "R",
+   "why": "buyer group \"Groupement de commande VSA/SIMCRA\" -> Val de Seine Amenagement; 7 of 9 mentions on SIRET 44992071900019 print VSA alone; np_valdeseine: 7478730 is served the same name (78 mentions)",
+   "old": "Groupement de commande Val de Seine Aménagement/SIMCRA",
+   "new": "Val de Seine Aménagement",
+   "H": 2
+  },
+  "16034881": {
+   "v": "R",
+   "why": "EDRA SA (mandataire) -> EDRA SA; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "EDRA SA (mandataire)",
+   "new": "EDRA SA",
+   "H": 2
+  },
+  "13556809": {
+   "v": "R",
+   "why": "Greta de Grenoble (mandataire) -> GRETA de Grenoble; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Greta de Grenoble (mandataire)",
+   "new": "GRETA de Grenoble",
+   "H": 2
+  },
+  "18181616": {
+   "v": "R",
+   "why": "groupement l'association l'eclaircie (mandataire) avec ... Fil d'ariane -> association L'Eclaircie; 5 of 6 mentions print L'Eclaircie alone on SIRET 38758257000033; np_eclaircie: 11018458 Association l'eclaircie",
+   "old": "groupement l'association l'eclaircie (mandataire) avec l'association Fil d'ariane",
+   "new": "association L'Eclaircie",
+   "H": 1
+  },
+  "21480661": {
+   "v": "R",
+   "why": "societe CHUDEAU (Mandataire du groupement) -> SAS CHUDEAU (14 of 15 mentions CHUDEAU [SAS]); role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "société CHUDEAU (Mandataire du groupement)",
+   "new": "SAS CHUDEAU",
+   "H": 1
+  },
+  "10371452": {
+   "v": "R",
+   "why": "Atelier Ruelle (Mandataire) -> Atelier ruelle; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Atelier Ruelle (Mandataire)",
+   "new": "Atelier ruelle",
+   "H": 1
+  },
+  "9074384": {
+   "v": "R",
+   "why": "Ville et Habitat (mandataire) -> Ville et Habitat; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Ville et Habitat (mandataire)",
+   "new": "Ville et Habitat",
+   "H": 1
+  },
+  "17144366": {
+   "v": "R",
+   "why": "Groupement AEI - Egis - Ecosphere - Presence - Noctiluca -> AEI; np_aei: 16444757 \"AEI\" on SIRET 41498295900036, same SIREN 414982959 as this org (41498295900044)",
+   "old": "Groupement AEI — Egis Villes et Transport — Écosphère — agence Presence et Noctiluca",
+   "new": "AEI",
+   "H": 1
+  },
+  "11219959": {
+   "v": "R",
+   "why": "Guintoli SAS (mandataire du groupement) -> Guintoli; np_guintoli: 10135477 \"Guintoli\" on SIREN 447754086 = this SIRET's SIREN",
+   "old": "Guintoli SAS (mandataire du groupement)",
+   "new": "Guintoli",
+   "H": 1
+  },
+  "10797792": {
+   "v": "R",
+   "why": "Atelier Nervures - mandataire -> ATELIER NERVURES; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Atelier Nervures — mandataire",
+   "new": "ATELIER NERVURES",
+   "H": 1
+  },
+  "17308510": {
+   "v": "R",
+   "why": "Groupement Kardham (mandataire) / Selas Charrel / GMSI -> Kardham; np_kardham: 10519114 \"Kardham\" on FR12384407896 and 30929212 \"KARDHAM SAS (Mandataire)\" on 38440789600198, both SIREN 384407896 = this org's",
+   "old": "Groupement: Kardham (mandataire) — Selas Charrel et associés (cotraitant 1) — GMSI Conseil (cotraitant 2)",
+   "new": "Kardham",
+   "H": 1
+  },
+  "16969861": {
+   "v": "R",
+   "why": "AVR ingenierie en groupement avec ... -> AVR INGENIERIE; np_avr: 18911984 \"avr ingenierie\" on SIRET 48811993400021, same SIREN 488119934",
+   "old": "AVR ingénierie en groupement avec les paysagistes associés et accoustique et conseil",
+   "new": "AVR INGÉNIERIE",
+   "H": 1
+  },
+  "14033882": {
+   "v": "R",
+   "why": "Flash Azur Voyages (mandataire) -> FLASH AZUR VOYAGES; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Flash Azur Voyages (mandataire)",
+   "new": "FLASH AZUR VOYAGES",
+   "H": 1
+  },
+  "15501192": {
+   "v": "R",
+   "why": "Bietergemeinschaft Sodexo Service Solutions Austria GmbH -> the GmbH (12 of 13 mentions); np_sodexoat: 4 orgs served it",
+   "old": "Bietergemeinschaft Sodexo Service Solutions Austria GmbH",
+   "new": "Sodexo Service Solutions Austria GmbH",
+   "H": 1
+  },
+  "14493390": {
+   "v": "R",
+   "why": "AXLR, SATT du Languedoc Roussillon (mandataire du groupement AXLR/Toulouse Tech Transfer) -> SATT AxLR; np_axlr: 10416059 \"SATT AxLR\" on the same SIRET 75364224800029",
+   "old": "AXLR, SATT du Languedoc Roussillon (mandataire du groupement de commande AXLR/Toulouse Tech Transfer)",
+   "new": "SATT AxLR",
+   "H": 2
+  },
+  "8321197": {
+   "v": "R",
+   "why": "Proxidrop (mandataire) -> PROXIDROP; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Proxidrop (mandataire)",
+   "new": "PROXIDROP",
+   "H": 1
+  },
+  "8346204": {
+   "v": "R",
+   "why": "Satelec (mandataire) -> Satelec (U1 recorded R too); role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Satelec (mandataire)",
+   "new": "Satélec",
+   "H": 1
+  },
+  "14259882": {
+   "v": "R",
+   "why": "Mandataire: Cazal SAS -> CAZAL (U1 recorded R too); role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Mandataire: Cazal SAS",
+   "new": "CAZAL",
+   "H": 2
+  },
+  "8217358": {
+   "v": "R",
+   "why": "Groupement Guintoli/EHTP/GTS/... -> Guintoli; 42 of 64 mentions print Guintoli [SAS] alone on SIRET 44775408600018; np_guintoli: 10135477 \"Guintoli\" on SIREN 447754086",
+   "old": "Groupement Guintoli/EHTP/GTS/La Nouvelle Sirolaise de Construction/DFC Battage",
+   "new": "Guintoli",
+   "H": 1
+  },
+  "21104135": {
+   "v": "R",
+   "why": "francisci transport (Mandataire) -> FRANCISCI TRANSPORT SARL; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "francisci transport (Mandataire)",
+   "new": "FRANCISCI TRANSPORT SARL",
+   "H": 1
+  },
+  "19357393": {
+   "v": "R",
+   "why": "SONEPAR FRANCE DISTRIBUTION (mandataire) -> SONEPAR France DISTRIBUTION (mixed-case display twin of the 23-vote spelling; odd but not wrong); role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "SONEPAR FRANCE DISTRIBUTION (mandataire)",
+   "new": "SONEPAR France DISTRIBUTION",
+   "H": 1
+  },
+  "9998909": {
+   "v": "R",
+   "why": "ETG SARL (mandataire) -> ETG SARL; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "ETG SARL (mandataire)",
+   "new": "ETG SARL",
+   "H": 4
+  },
+  "9225319": {
+   "v": "R",
+   "why": "Groupement Segc Topo (mandataire) et SARL ATM et SGE Levier-Castelli -> SEGC Topo; 4 of 5 mentions print SEGC Topo alone; np_segc: 1440912 \"SEGC Topo\" (16 mentions)",
+   "old": "Groupement Segc Topo (mandataire) et SARL ATM et SGE Levier-Castelli",
+   "new": "SEGC Topo",
+   "H": 1
+  },
+  "15165788": {
+   "v": "R",
+   "why": "Europolia mandataire Toulouse Metropole -> Europolia (U1 recorded R too); 66 of 73 mentions Europolia",
+   "old": "Europolia mandataire Toulouse Métropole",
+   "new": "Europolia",
+   "H": 2
+  },
+  "15344744": {
+   "v": "R",
+   "why": "META Group srl (in consortium with Ecorys ... Trust-IT srl) -> META Group Srl; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "META Group srl (in consortium with Ecorys Europe EEIG GEIE — Belgium -iCons — BDO Advisory CVBA — Trust-IT srl)",
+   "new": "META Group Srl",
+   "H": 1
+  },
+  "16970038": {
+   "v": "R",
+   "why": "Consorcio concorrente Quidgest - Consultores de Gestao S. A. e a LCG -> Quidgest - Consultores de Gestao SA; role annotation dropped, same firm; new spelling carries the identifier on its other notices",
+   "old": "Consórcio concorrente Quidgest — Consultores de Gestão S. A. e a LCG",
+   "new": "Quidgest - Consultores de Gestão SA",
+   "H": 1
+  },
+  "15497200": {
+   "v": "N",
+   "why": "Groupement de cooperation sanitaire (GCS) Achats du Centre -> GCS Achats du Centre: the head is the body's full legal name, not a bidder group; the new is the short form 177 of 178 mentions print. Neither is wrong",
+   "old": "Groupement de coopération sanitaire (GCS) Achats du Centre",
+   "new": "GCS Achats du Centre",
+   "H": 1
+  }
+ },
+ "uncertain": {
+  "11026616": {
+   "v": "R",
+   "why": "Families Health & Wellbeing Consortium (2018 TED, 1 mention) -> Spring North LTD: every FTS notice 2024-2026 (t_11026616) is won under Spring North on CH 07797133; np_springnorth: 31604091 \"Spring North\" on GBCHC07797133 (same number). A rename; \"Consortium\" was the holder's own name (the CPR shape, but the new name is the renamed entity, not an initialism)",
+   "old": "Families Health & Wellbeing Consortium",
+   "new": "Spring North LTD",
+   "H": 1
+  },
+  "9806693": {
+   "v": "R",
+   "why": "Entreprise PORALU (mandataire) (2017 TED, 1 mention, td_5718388) -> KAPECI: the 3 other mentions are 2025 eForms (t_9806693; td_1158841 prints KAPECI as tenderer). Poralu Menuiserie is SIREN 418245262 (np_poralu 16474152), not this 418245437, so the identifier is KAPECI's and the head is the group mandataire printed beside it",
+   "old": "Entreprise PORALU (mandataire)",
+   "new": "KAPECI",
+   "H": 1
+  },
+  "10878002": {
+   "v": "N",
+   "why": "Kerguen mandroit (mandataire) -> \"sas cabinet kerguen - mANDROIT\": right firm (Cabinet Kerguen-Mandroit, np_kerguen), role annotation dropped, but the elected display spelling has broken casing (\"mANDROIT\"); the 5 spellings are 1 vote each",
+   "old": "Kerguen mandroit (mandataire)",
+   "new": "sas cabinet kerguen - mANDROIT",
+   "H": 1
+  }
+ }
+}

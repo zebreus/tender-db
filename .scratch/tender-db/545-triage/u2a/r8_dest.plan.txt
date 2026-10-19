@@ -1,0 +1,212 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on v551 plan.db copy + prod org indexes
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(4, 2, 0, 'SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)')
+(15, 1, 0, 'UNION ALL')
+(18, 15, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(33, 1, 0, 'UNION ALL')
+(36, 33, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(51, 1, 0, 'UNION ALL')
+(54, 51, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(69, 1, 0, 'UNION ALL')
+(72, 69, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(87, 1, 0, 'UNION ALL')
+(90, 87, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(105, 1, 0, 'UNION ALL')
+(108, 105, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(123, 1, 0, 'UNION ALL')
+(126, 123, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(141, 1, 0, 'UNION ALL')
+(144, 141, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(159, 1, 0, 'UNION ALL')
+(162, 159, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(177, 1, 0, 'UNION ALL')
+(180, 177, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(195, 1, 0, 'UNION ALL')
+(198, 195, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(213, 1, 0, 'UNION ALL')
+(216, 213, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(231, 1, 0, 'UNION ALL')
+(234, 231, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(249, 1, 0, 'UNION ALL')
+(252, 249, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(267, 1, 0, 'UNION ALL')
+(270, 267, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(285, 1, 0, 'UNION ALL')
+(288, 285, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(303, 1, 0, 'UNION ALL')
+(306, 303, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(321, 1, 0, 'UNION ALL')
+(324, 321, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(339, 1, 0, 'UNION ALL')
+(342, 339, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(357, 1, 0, 'UNION ALL')
+(360, 357, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(375, 1, 0, 'UNION ALL')
+(378, 375, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(393, 1, 0, 'UNION ALL')
+(396, 393, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(411, 1, 0, 'UNION ALL')
+(414, 411, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(429, 1, 0, 'UNION ALL')
+(432, 429, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(447, 1, 0, 'UNION ALL')
+(450, 447, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(465, 1, 0, 'UNION ALL')
+(468, 465, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(483, 1, 0, 'UNION ALL')
+(486, 483, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(501, 1, 0, 'UNION ALL')
+(504, 501, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(519, 1, 0, 'UNION ALL')
+(522, 519, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(537, 1, 0, 'UNION ALL')
+(540, 537, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(555, 1, 0, 'UNION ALL')
+(558, 555, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(573, 1, 0, 'UNION ALL')
+(576, 573, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(591, 1, 0, 'UNION ALL')
+(594, 591, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(609, 1, 0, 'UNION ALL')
+(612, 609, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(627, 1, 0, 'UNION ALL')
+(630, 627, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(645, 1, 0, 'UNION ALL')
+(648, 645, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(663, 1, 0, 'UNION ALL')
+(666, 663, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(681, 1, 0, 'UNION ALL')
+(684, 681, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(699, 1, 0, 'UNION ALL')
+(702, 699, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(717, 1, 0, 'UNION ALL')
+(720, 717, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(735, 1, 0, 'UNION ALL')
+(738, 735, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(753, 1, 0, 'UNION ALL')
+(756, 753, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(771, 1, 0, 'UNION ALL')
+(774, 771, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(789, 1, 0, 'UNION ALL')
+(792, 789, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(807, 1, 0, 'UNION ALL')
+(810, 807, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(825, 1, 0, 'UNION ALL')
+(828, 825, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(843, 1, 0, 'UNION ALL')
+(846, 843, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(861, 1, 0, 'UNION ALL')
+(864, 861, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(879, 1, 0, 'UNION ALL')
+(882, 879, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(897, 1, 0, 'UNION ALL')
+(900, 897, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+(915, 1, 0, 'UNION ALL')
+(918, 915, 0, 'SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>? AND name_norm<?)')
+-- turso plan-probe (rc=0)
+PLAN	r8_dest	COMPOUND QUERY
+PLAN	r8_dest	  LEFT-MOST SUBQUERY
+PLAN	r8_dest	    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+PLAN	r8_dest	  UNION ALL
+PLAN	r8_dest	    SEARCH organizations USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)

@@ -1,0 +1,6568 @@
+{
+ "meta": {
+  "test": "tokens(new) - LEGAL_FORMS non-empty and subset of tokens(old); see header",
+  "salt": "548-u1c-",
+  "legal_forms": [
+   "ab",
+   "abp",
+   "ag",
+   "aps",
+   "as",
+   "bv",
+   "ett",
+   "eurl",
+   "fuh",
+   "gmbh",
+   "grsk",
+   "inc",
+   "kft",
+   "kg",
+   "llp",
+   "ltd",
+   "mbh",
+   "nv",
+   "nyrt",
+   "oy",
+   "oyj",
+   "phu",
+   "plc",
+   "pph",
+   "sa",
+   "sarl",
+   "sas",
+   "sasu",
+   "sca",
+   "scg",
+   "sci",
+   "scop",
+   "scs",
+   "selarl",
+   "selas",
+   "sia",
+   "sl",
+   "slu",
+   "snc",
+   "spa",
+   "spl",
+   "spz",
+   "spzoo",
+   "spzoz",
+   "srl",
+   "sro",
+   "uab",
+   "zoz",
+   "zrt"
+  ],
+  "extra_forms_sensitivity": [
+   "bvba",
+   "co",
+   "cvba",
+   "lda",
+   "sau",
+   "sprl"
+  ]
+ },
+ "counts": {
+  "full_listing_rows": 179,
+  "full_R1": 153,
+  "full_R2": 26,
+  "full_mentions": 2769,
+  "full_by_cut": {
+   "rule_R2": 26,
+   "ships": 79,
+   "top_stale": 18,
+   "head_current": 56
+  },
+  "shippable_rows": 79,
+  "shippable_mentions": 1716,
+  "shippable_H<=1": 67
+ },
+ "by_hold_predictions": {
+  "gb_family_whole": {
+   "orgs": -10,
+   "mentions": -209,
+   "of": {
+    "mentions": 209,
+    "orgs": 10
+   }
+  },
+  "family_H<=1": {
+   "orgs": -36,
+   "R1": 33,
+   "R2": 3,
+   "mentions": -680,
+   "of": {
+    "mentions": 1984,
+    "orgs": 79
+   }
+  },
+  "consortium_subset": {
+   "orgs": -179,
+   "R1": 153,
+   "R2": 26,
+   "mentions": -2769,
+   "with_extra_forms_orgs": -181,
+   "of": {
+    "mentions": 3692,
+    "orgs": 246
+   }
+  },
+  "shippable_changes_not_drops": {
+   "gb_family": 7,
+   "family_H<=1": 22,
+   "consortium_subset": 79
+  },
+  "cross_guard": "a family row released at H<=1 meets the LATER bind guards next; 15783942 (Consortium consisting of Kontron ... -> Kontron Transportation GmbH, H=1) would move family -> consortium_removed unless the consortium subset release ships too (it matches the test). gb_family 15909819 (EY UK LLP -> Ernst & Young Limited) meets no later guard."
+ },
+ "counts_with_extra_forms": {
+  "full_listing_rows": 181,
+  "full_R1": 155,
+  "full_R2": 26,
+  "full_mentions": 2792,
+  "full_by_cut": {
+   "rule_R2": 26,
+   "ships": 79,
+   "top_stale": 19,
+   "head_current": 57
+  },
+  "shippable_rows": 79,
+  "shippable_mentions": 1716,
+  "shippable_H<=1": 67
+ },
+ "counts_without_form_drop": {
+  "full_listing_rows": 168,
+  "full_R1": 146,
+  "full_R2": 22,
+  "full_mentions": 2624,
+  "full_by_cut": {
+   "rule_R2": 22,
+   "ships": 76,
+   "top_stale": 16,
+   "head_current": 54
+  },
+  "shippable_rows": 76,
+  "shippable_mentions": 1687,
+  "shippable_H<=1": 64
+ },
+ "salted_30": [
+  18124034,
+  9134963,
+  13580689,
+  10266767,
+  16034881,
+  13556809,
+  18181616,
+  21480661,
+  10371452,
+  9074384,
+  17144366,
+  11219959,
+  10797792,
+  17308510,
+  16969861,
+  14033882,
+  15501192,
+  14493390,
+  8321197,
+  8346204,
+  14259882,
+  8217358,
+  21104135,
+  19357393,
+  9998909,
+  9225319,
+  15165788,
+  15344744,
+  16970038,
+  15497200
+ ],
+ "matched_full": [
+  {
+   "org_id": 11978,
+   "rule": "R2",
+   "head": 1,
+   "n": 43,
+   "identifier": "34503941600085",
+   "country": "FR",
+   "old_name": "ORANGE BUSINESS SERVICES (Mandataire du groupement)",
+   "new_name": "Orange Business Services",
+   "spellings": [
+    [
+     "ORANGE BUSINESS SERVICES",
+     16
+    ],
+    [
+     "Orange Business Services",
+     6
+    ],
+    [
+     "Orange Business Services SA",
+     4
+    ],
+    [
+     "ORANGE BUSINESS SERVICES SA",
+     3
+    ],
+    [
+     "Groupement Orange Business Services (mandataire) et Orange Cyberdefense",
+     2
+    ]
+   ],
+   "head_newest": "2026-07-20",
+   "top_newest": "2026-09-11",
+   "ships": false
+  },
+  {
+   "org_id": 2989595,
+   "rule": "R2",
+   "head": 1,
+   "n": 6,
+   "identifier": "43483203600025",
+   "country": "FR",
+   "old_name": "DWPA Architectes (architecte mandataire)",
+   "new_name": "DWPA ARCHITECTES",
+   "spellings": [
+    [
+     "DWPA ARCHITECTES",
+     2
+    ],
+    [
+     "D.W.P.A",
+     1
+    ],
+    [
+     "DWPA",
+     1
+    ],
+    [
+     "DWPA Architectes (architecte mandataire)",
+     1
+    ],
+    [
+     "DWPA, ARCHITECTES",
+     1
+    ]
+   ],
+   "head_newest": "2012-12-06",
+   "top_newest": "2026-07-30",
+   "ships": false
+  },
+  {
+   "org_id": 3229862,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "37822478600020",
+   "country": null,
+   "old_name": "SPL Euralille agissant au nom et pour le compte de Lille métropole communauté urbaine, coordonnateur du groupement de commandes Lille métropole communauté urbaine et ville de Lille",
+   "new_name": "SPL Euralille",
+   "spellings": [
+    [
+     "SPL Euralille",
+     4
+    ],
+    [
+     "SPL Euralille agissant au nom et pour le compte de Lille métropole communauté urbaine, coordonnateur du groupement de commandes Lille métropole communauté urbaine et ville de Lille",
+     1
+    ]
+   ],
+   "head_newest": "2013-02-01",
+   "top_newest": "2013-06-21",
+   "ships": true
+  },
+  {
+   "org_id": 7800756,
+   "rule": "R2",
+   "head": 1,
+   "n": 18,
+   "identifier": "LU20826606",
+   "country": "LU",
+   "old_name": "Consortium 2forTOP led by Computer Task Group IT Solutions S.A.",
+   "new_name": "Computer Task Group IT Solutions S.A.",
+   "spellings": [
+    [
+     "Computer Task Group IT Solutions",
+     4
+    ],
+    [
+     "Computer Task Group IT Solutions S.A.",
+     3
+    ],
+    [
+     "Computer Task Group IT Solutions SA",
+     3
+    ],
+    [
+     "COMPUTER TASK GROUP IT SOLUTIONS SA",
+     2
+    ],
+    [
+     "CTG IT SOLUTIONS ~ COMPUTER TASK GROUP IT SOLUTIONS SA",
+     2
+    ]
+   ],
+   "head_newest": "2016-02-19",
+   "top_newest": "2026-03-12",
+   "ships": false
+  },
+  {
+   "org_id": 8121787,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "30158934700022",
+   "country": "FR",
+   "old_name": "Groupement CSM Bessac (mandataire)/SADE — Service Travaux Spéciaux/Urbaine de Travaux",
+   "new_name": "Bessac",
+   "spellings": [
+    [
+     "Bessac",
+     2
+    ],
+    [
+     "BESSAC",
+     1
+    ],
+    [
+     "Bessac (mandataire)",
+     1
+    ],
+    [
+     "Groupement CSM Bessac (mandataire)/SADE — Service Travaux Spéciaux/Urbaine de Travaux",
+     1
+    ],
+    [
+     "SASU Bessac",
+     1
+    ]
+   ],
+   "head_newest": "2016-04-28",
+   "top_newest": "2024-05-10",
+   "ships": false
+  },
+  {
+   "org_id": 8130470,
+   "rule": "R2",
+   "head": 1,
+   "n": 31,
+   "identifier": "311248637",
+   "country": "FR",
+   "old_name": "Gras Savoye (mandataire)",
+   "new_name": "Gras Savoye",
+   "spellings": [
+    [
+     "Gras Savoye",
+     7
+    ],
+    [
+     "willis towers watson france",
+     4
+    ],
+    [
+     "WILLIS TOWERS WATSON FRANCE",
+     3
+    ],
+    [
+     "ALLIANZ/WTW",
+     2
+    ],
+    [
+     "Gras Savoye Méditerranée",
+     2
+    ]
+   ],
+   "head_newest": "2016-04-30",
+   "top_newest": "2022-02-09",
+   "ships": false
+  },
+  {
+   "org_id": 8217358,
+   "rule": "R1",
+   "head": 1,
+   "n": 64,
+   "identifier": "44775408600018",
+   "country": "FR",
+   "old_name": "Groupement Guintoli/EHTP/GTS/La Nouvelle Sirolaise de Construction/DFC Battage",
+   "new_name": "Guintoli",
+   "spellings": [
+    [
+     "GUINTOLI",
+     15
+    ],
+    [
+     "GUINTOLI SAS",
+     12
+    ],
+    [
+     "Guintoli",
+     8
+    ],
+    [
+     "Guintoli SAS",
+     7
+    ],
+    [
+     "GROUPEMENT GUINTOLI (mandataire) / GARELLI TP et RAZEL BEC SAS (co-traitants)",
+     2
+    ]
+   ],
+   "head_newest": "2016-05-31",
+   "top_newest": "2026-07-30",
+   "ships": true
+  },
+  {
+   "org_id": 8301418,
+   "rule": "R2",
+   "head": 1,
+   "n": 23,
+   "identifier": "0401848135",
+   "country": "BE",
+   "old_name": "Consortium Bridge: consortium member Atos Belgium NV/SA",
+   "new_name": "Atos Belgium SA/NV",
+   "spellings": [
+    [
+     "Atos Belgium",
+     2
+    ],
+    [
+     "Atos Belgium SA/NV",
+     2
+    ],
+    [
+     "Eviden Belgium",
+     2
+    ],
+    [
+     "Eviden Belgium NV",
+     2
+    ],
+    [
+     "ATOS Belgium N.V.",
+     1
+    ]
+   ],
+   "head_newest": "2016-06-17",
+   "top_newest": "2023-04-20",
+   "ships": false
+  },
+  {
+   "org_id": 8321197,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "48286004600036",
+   "country": "FR",
+   "old_name": "Proxidrop (mandataire)",
+   "new_name": "PROXIDROP",
+   "spellings": [
+    [
+     "PROXIDROP",
+     3
+    ],
+    [
+     "Proxidrop (mandataire)",
+     1
+    ],
+    [
+     "proxidrop",
+     1
+    ]
+   ],
+   "head_newest": "2016-06-22",
+   "top_newest": "2025-09-17",
+   "ships": true
+  },
+  {
+   "org_id": 8336000,
+   "rule": "R2",
+   "head": 1,
+   "n": 22,
+   "identifier": "37750556500087",
+   "country": "FR",
+   "old_name": "Mazars SAS (mandataire) / fidal / egis eau",
+   "new_name": "Mazars",
+   "spellings": [
+    [
+     "Mazars",
+     4
+    ],
+    [
+     "Mazars SAS",
+     4
+    ],
+    [
+     "FORVIS MAZARS",
+     2
+    ],
+    [
+     "FORVIS MAZARS SAS",
+     2
+    ],
+    [
+     "Forvis Mazars",
+     2
+    ]
+   ],
+   "head_newest": "2016-06-25",
+   "top_newest": "2024-04-03",
+   "ships": false
+  },
+  {
+   "org_id": 8346204,
+   "rule": "R1",
+   "head": 1,
+   "n": 57,
+   "identifier": "97120154600043",
+   "country": "FR",
+   "old_name": "Satelec (mandataire)",
+   "new_name": "Satélec",
+   "spellings": [
+    [
+     "SATELEC",
+     22
+    ],
+    [
+     "Satelec",
+     9
+    ],
+    [
+     "satelec",
+     7
+    ],
+    [
+     "satelec sas",
+     3
+    ],
+    [
+     "SAS SATELEC",
+     2
+    ]
+   ],
+   "head_newest": "2016-06-29",
+   "top_newest": "2026-08-20",
+   "ships": true
+  },
+  {
+   "org_id": 8387450,
+   "rule": "R1",
+   "head": 1,
+   "n": 116,
+   "identifier": "81866077100028",
+   "country": "FR",
+   "old_name": "Acl courtage (mandataire du groupement)",
+   "new_name": "ACL Courtage",
+   "spellings": [
+    [
+     "ACL COURTAGE",
+     52
+    ],
+    [
+     "ACL Courtage",
+     17
+    ],
+    [
+     "acl courtage",
+     15
+    ],
+    [
+     "acl Courtage",
+     5
+    ],
+    [
+     "ACL COURTAGE SARL",
+     3
+    ]
+   ],
+   "head_newest": "2016-07-27",
+   "top_newest": "2026-08-14",
+   "ships": true
+  },
+  {
+   "org_id": 8387452,
+   "rule": "R1",
+   "head": 1,
+   "n": 257,
+   "identifier": "30157314300023",
+   "country": "FR",
+   "old_name": "Sarre et Moselle (mandataire du groupement)",
+   "new_name": "Sarre et Moselle",
+   "spellings": [
+    [
+     "SARRE ET MOSELLE",
+     118
+    ],
+    [
+     "Sarre et Moselle",
+     35
+    ],
+    [
+     "sarre et moselle",
+     14
+    ],
+    [
+     "SARRE ET MOSELLE SAS",
+     13
+    ],
+    [
+     "SARRE & MOSELLE",
+     5
+    ]
+   ],
+   "head_newest": "2016-07-27",
+   "top_newest": "2026-10-13",
+   "ships": true
+  },
+  {
+   "org_id": 8485332,
+   "rule": "R2",
+   "head": 1,
+   "n": 7,
+   "identifier": "49258645800019",
+   "country": "FR",
+   "old_name": "Dictys conseil (mandataire)",
+   "new_name": "Dictys Conseil",
+   "spellings": [
+    [
+     "Dictys Conseil",
+     2
+    ],
+    [
+     "DICTYS CONSEIL",
+     1
+    ],
+    [
+     "Dictys",
+     1
+    ],
+    [
+     "Dictys conseil (mandataire)",
+     1
+    ],
+    [
+     "GROUPEMENT DICTYS CONSEIL (Mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2016-07-15",
+   "top_newest": "2026-02-10",
+   "ships": false
+  },
+  {
+   "org_id": 8489419,
+   "rule": "R2",
+   "head": 1,
+   "n": 10,
+   "identifier": "FN168940F",
+   "country": "AT",
+   "old_name": "Consortium led by GeoVille Informationssysteme und Datenverarbeitung GmbH (GeoVille)",
+   "new_name": "GeoVille Informationssysteme und Datenverarbeitung GmbH (GeoVille)",
+   "spellings": [
+    [
+     "GeoVille Informationssysteme und Datenverarbeitung GmbH (GeoVille)",
+     3
+    ],
+    [
+     "Geoville Informationssysteme und Datenverarbeitung GmbH (GeoVille)",
+     2
+    ],
+    [
+     "Consortium led by GeoVille Informationssysteme und Datenverarbeitung GmbH",
+     1
+    ],
+    [
+     "Consortium led by GeoVille Informationssysteme und Datenverarbeitung GmbH (GeoVille)",
+     1
+    ],
+    [
+     "GeoVille Information Systems and Data Processing GmbH",
+     1
+    ]
+   ],
+   "head_newest": "2016-07-29",
+   "top_newest": "2017-01-04",
+   "ships": false
+  },
+  {
+   "org_id": 8560943,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "41848046300011",
+   "country": "FR",
+   "old_name": "le Groupement 331 corniche architectes (mandataire)",
+   "new_name": "331 CORNICHE ARCHITECTES",
+   "spellings": [
+    [
+     "331 CORNICHE ARCHITECTES",
+     3
+    ],
+    [
+     "le Groupement 331 corniche architectes (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2016-08-05",
+   "top_newest": "2024-11-08",
+   "ships": true
+  },
+  {
+   "org_id": 8594004,
+   "rule": "R1",
+   "head": 1,
+   "n": 13,
+   "identifier": "44885130300033",
+   "country": "FR",
+   "old_name": "Alenium Consultants (mandataire)",
+   "new_name": "Alenium consultants",
+   "spellings": [
+    [
+     "ALENIUM CONSULTANTS",
+     3
+    ],
+    [
+     "Alenium consultants",
+     3
+    ],
+    [
+     "ALENUIM CONSULTANTS",
+     1
+    ],
+    [
+     "Alenium Consultants",
+     1
+    ],
+    [
+     "Alenium Consultants (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2016-08-20",
+   "top_newest": "2025-12-18",
+   "ships": true
+  },
+  {
+   "org_id": 8752693,
+   "rule": "R1",
+   "head": 1,
+   "n": 9,
+   "identifier": "73820526901395",
+   "country": "FR",
+   "old_name": "Canon France (mandataire solidaire du groupement)",
+   "new_name": "Canon France",
+   "spellings": [
+    [
+     "Canon France",
+     4
+    ],
+    [
+     "Canon France SAS",
+     3
+    ],
+    [
+     "Cacnon France",
+     1
+    ],
+    [
+     "Canon France (mandataire solidaire du groupement)",
+     1
+    ]
+   ],
+   "head_newest": "2016-10-28",
+   "top_newest": "2018-10-05",
+   "ships": false
+  },
+  {
+   "org_id": 8821225,
+   "rule": "R1",
+   "head": 1,
+   "n": 9,
+   "identifier": "13002162900014",
+   "country": "FR",
+   "old_name": "La blanchisserie toulousaine de sante Groupement de coopération sanitaire",
+   "new_name": "Blanchisserie toulousaine de santé",
+   "spellings": [
+    [
+     "Blanchisserie toulousaine de santé",
+     3
+    ],
+    [
+     "chu de toulouse",
+     2
+    ],
+    [
+     "Blanchisserie Toulousaine de Santé",
+     1
+    ],
+    [
+     "Blanchisserie toulousaine de sante",
+     1
+    ],
+    [
+     "CHU Toulouse",
+     1
+    ]
+   ],
+   "head_newest": "2016-10-25",
+   "top_newest": "2020-05-29",
+   "ships": false
+  },
+  {
+   "org_id": 9056889,
+   "rule": "R1",
+   "head": 1,
+   "n": 43,
+   "identifier": "73207531200122",
+   "country": "FR",
+   "old_name": "Accenture sas, mandataire du groupement",
+   "new_name": "Accenture",
+   "spellings": [
+    [
+     "ACCENTURE",
+     11
+    ],
+    [
+     "accenture sas",
+     5
+    ],
+    [
+     "ACCENTURE SAS",
+     4
+    ],
+    [
+     "Accenture",
+     4
+    ],
+    [
+     "accenture",
+     4
+    ]
+   ],
+   "head_newest": "2016-12-31",
+   "top_newest": "2026-08-28",
+   "ships": true
+  },
+  {
+   "org_id": 9074384,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "39270586900015",
+   "country": "FR",
+   "old_name": "Ville et Habitat (mandataire)",
+   "new_name": "Ville et Habitat",
+   "spellings": [
+    [
+     "VILLE ET HABITAT",
+     3
+    ],
+    [
+     "Ville et Habitat",
+     1
+    ],
+    [
+     "Ville et Habitat (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2016-12-08",
+   "top_newest": "2026-04-03",
+   "ships": true
+  },
+  {
+   "org_id": 9122340,
+   "rule": "R1",
+   "head": 1,
+   "n": 11,
+   "identifier": "78453764900021",
+   "country": "FR",
+   "old_name": "Credoc — mandataire",
+   "new_name": "Crédoc",
+   "spellings": [
+    [
+     "CREDOC",
+     5
+    ],
+    [
+     "Credoc",
+     2
+    ],
+    [
+     "CO-traitant CREDOC",
+     1
+    ],
+    [
+     "Credoc — mandataire",
+     1
+    ],
+    [
+     "Crédoc",
+     1
+    ]
+   ],
+   "head_newest": "2016-12-23",
+   "top_newest": "2026-10-07",
+   "ships": true
+  },
+  {
+   "org_id": 9134952,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "0428364866",
+   "country": "BE",
+   "old_name": "Ordina Belgium S.A. (as consortium member)",
+   "new_name": "NV Ordina Belgium",
+   "spellings": [
+    [
+     "NV Ordina Belgium",
+     2
+    ],
+    [
+     "Ordina Belgium NV",
+     2
+    ],
+    [
+     "Ordina Belgium",
+     1
+    ],
+    [
+     "Ordina Belgium N.V. (as consortium leader)",
+     1
+    ],
+    [
+     "Ordina Belgium S.A. (as consortium member)",
+     1
+    ]
+   ],
+   "head_newest": "2016-12-02",
+   "top_newest": "2024-02-29",
+   "ships": false
+  },
+  {
+   "org_id": 9134954,
+   "rule": "R1",
+   "head": 2,
+   "n": 19,
+   "identifier": "B92986",
+   "country": "LU",
+   "old_name": "Arhs Developments S.A. (as consortium leader)",
+   "new_name": "ARHS Developments S.A",
+   "spellings": [
+    [
+     "ARHS Developments S.A",
+     4
+    ],
+    [
+     "ARHS Developments S.A.",
+     4
+    ],
+    [
+     "ARHS DEVELOPMENTS SA",
+     2
+    ],
+    [
+     "Arhs Developments S.A. (as consortium leader)",
+     2
+    ],
+    [
+     "AHRS Developments SA",
+     1
+    ]
+   ],
+   "head_newest": "2016-12-02",
+   "top_newest": "2026-04-13",
+   "ships": true
+  },
+  {
+   "org_id": 9134956,
+   "rule": "R1",
+   "head": 1,
+   "n": 21,
+   "identifier": "B71238",
+   "country": "LU",
+   "old_name": "Sword Technologies S.A. (as consortium member)",
+   "new_name": "Sword Technologies S.A.",
+   "spellings": [
+    [
+     "Sword Technologies S.A.",
+     10
+    ],
+    [
+     "Sword Technologies SA",
+     6
+    ],
+    [
+     "GIS4EURO Consortium — Sword Technologies S.A.",
+     1
+    ],
+    [
+     "GIS4EURO consortium — SWORD Technologies S.A.",
+     1
+    ],
+    [
+     "Sword Technologies",
+     1
+    ]
+   ],
+   "head_newest": "2016-12-02",
+   "top_newest": "2026-01-12",
+   "ships": true
+  },
+  {
+   "org_id": 9134957,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "0825811478",
+   "country": "BE",
+   "old_name": "Everis Spain, S.L.U., succursale en Belgique (as consortium leader)",
+   "new_name": "Everis Spain SLU, Succursale en Belgique",
+   "spellings": [
+    [
+     "Everis Spain SLU, Succursale en Belgique",
+     2
+    ],
+    [
+     "everis Spain S.L.U., succursale en Belgique",
+     2
+    ],
+    [
+     "Everis Spain S.L.U., succursale en Belgique",
+     1
+    ],
+    [
+     "Everis Spain, S.L.U., succursale en Belgique (as consortium leader)",
+     1
+    ]
+   ],
+   "head_newest": "2016-12-02",
+   "top_newest": "2019-04-05",
+   "ships": true
+  },
+  {
+   "org_id": 9134958,
+   "rule": "R2",
+   "head": 1,
+   "n": 10,
+   "identifier": "0430262405",
+   "country": "BE",
+   "old_name": "Fujitsu Technology Solutions N.V./S.A. (as consortium member)",
+   "new_name": "Fujitsu Technology Solutions",
+   "spellings": [
+    [
+     "FUJITSU TECHNOLOGY SOLUTIONS",
+     2
+    ],
+    [
+     "Fujitsu Technology Solutions",
+     2
+    ],
+    [
+     "Fujitsu",
+     1
+    ],
+    [
+     "Fujitsu Technologies Solutions",
+     1
+    ],
+    [
+     "Fujitsu Technology Solutions N.V./S.A. (as consortium member)",
+     1
+    ]
+   ],
+   "head_newest": "2016-12-02",
+   "top_newest": "2025-05-26",
+   "ships": false
+  },
+  {
+   "org_id": 9134963,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "0405914514",
+   "country": "BE",
+   "old_name": "Unisys Belgium S.A. (as consortium member)",
+   "new_name": "Unisys Belgium SA",
+   "spellings": [
+    [
+     "Unisys Belgium SA",
+     5
+    ],
+    [
+     "Unisys Belgium S.A. (as consortium member)",
+     1
+    ]
+   ],
+   "head_newest": "2016-12-02",
+   "top_newest": "2025-07-08",
+   "ships": true
+  },
+  {
+   "org_id": 9225319,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "33012782000034",
+   "country": "FR",
+   "old_name": "Groupement Segc Topo (mandataire) et SARL ATM et SGE Levier-Castelli",
+   "new_name": "SEGC Topo",
+   "spellings": [
+    [
+     "SEGC TOPO",
+     2
+    ],
+    [
+     "SEGC Topo",
+     2
+    ],
+    [
+     "Groupement Segc Topo (mandataire) et SARL ATM et SGE Levier-Castelli",
+     1
+    ]
+   ],
+   "head_newest": "2017-01-11",
+   "top_newest": "2019-09-11",
+   "ships": true
+  },
+  {
+   "org_id": 9396842,
+   "rule": "R2",
+   "head": 1,
+   "n": 7,
+   "identifier": "51497070600024",
+   "country": "FR",
+   "old_name": "Z Architecture (mandataire)",
+   "new_name": "z architecture SAS",
+   "spellings": [
+    [
+     "Groupement d'entreprises conjoint Z ARCHITECTURE (mandataire)\n SYNAPSE CONSTRUCTION BELLIGNAT - KORELL - EODD INGÉNIEURS CONSEILS - GLOBAL -  PEUTZ & ASSOCIÉS - LE CIEL PAR DESSUS LE TOIT - CREA FACTORY",
+     2
+    ],
+    [
+     "Z ARCHITECTURE",
+     2
+    ],
+    [
+     "Z Architecture (mandataire)",
+     1
+    ],
+    [
+     "z architecture  SAS",
+     1
+    ],
+    [
+     "z architecture (cotraitant)",
+     1
+    ]
+   ],
+   "head_newest": "2017-02-07",
+   "top_newest": "2025-08-18",
+   "ships": false
+  },
+  {
+   "org_id": 9467375,
+   "rule": "R1",
+   "head": 1,
+   "n": 26,
+   "identifier": "43407420900017",
+   "country": "FR",
+   "old_name": "OPSIA Méditerranée (mandataire)",
+   "new_name": "OPSIA Méditerranée",
+   "spellings": [
+    [
+     "OPSIA MEDITERRANEE",
+     6
+    ],
+    [
+     "opsia mediterranee",
+     3
+    ],
+    [
+     "OPSIA MEDITERRANEE SELAFA",
+     2
+    ],
+    [
+     "OPSIA Méditerranée",
+     2
+    ],
+    [
+     "Opsia Méditerranée",
+     2
+    ]
+   ],
+   "head_newest": "2017-03-11",
+   "top_newest": "2026-01-26",
+   "ships": true
+  },
+  {
+   "org_id": 9553896,
+   "rule": "R1",
+   "head": 1,
+   "n": 18,
+   "identifier": "41317960700226",
+   "country": "FR",
+   "old_name": "Groupement TP Spada NGE génie civil",
+   "new_name": "TP Spada",
+   "spellings": [
+    [
+     "TP SPADA",
+     7
+    ],
+    [
+     "TP Spada",
+     2
+    ],
+    [
+     "tp spada",
+     2
+    ],
+    [
+     "Entreprise TP SPADA SAS",
+     1
+    ],
+    [
+     "GROUPEMENT TP SPADA",
+     1
+    ]
+   ],
+   "head_newest": "2017-03-31",
+   "top_newest": "2026-09-10",
+   "ships": true
+  },
+  {
+   "org_id": 9699686,
+   "rule": "R1",
+   "head": 2,
+   "n": 31,
+   "identifier": "B80595747",
+   "country": "ES",
+   "old_name": "UTE Gesein, S.L.- Altran Innovación S.L.- Tecnocom España Solutions, S.L.U.",
+   "new_name": "Gesein, S.L.",
+   "spellings": [
+    [
+     "Gesein, S.L.",
+     10
+    ],
+    [
+     "GESEIN S.L.",
+     9
+    ],
+    [
+     "GESEIN, S.L.",
+     2
+    ],
+    [
+     "Gesein, S. L.",
+     2
+    ],
+    [
+     "UTE Altia — Gesein — Getronics",
+     2
+    ]
+   ],
+   "head_newest": "2017-05-03",
+   "top_newest": "2026-09-23",
+   "ships": true
+  },
+  {
+   "org_id": 9741944,
+   "rule": "R1",
+   "head": 1,
+   "n": 15,
+   "identifier": "40134697800018",
+   "country": "FR",
+   "old_name": "SAS MAG PRIM — mandataire du groupement solidaire MAG PRIM — GROUP MAG",
+   "new_name": "SAS MAG PRIM",
+   "spellings": [
+    [
+     "SAS MAG PRIM",
+     6
+    ],
+    [
+     "MAG PRIM",
+     3
+    ],
+    [
+     "sas mag prim",
+     2
+    ],
+    [
+     "MAG PRIM SAS",
+     1
+    ],
+    [
+     "SAS MAG PRIM — mandataire du groupement solidaire MAG PRIM — GROUP MAG",
+     1
+    ]
+   ],
+   "head_newest": "2017-05-19",
+   "top_newest": "2026-03-31",
+   "ships": true
+  },
+  {
+   "org_id": 9795935,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "44086377700023",
+   "country": "FR",
+   "old_name": "Groupement Agri Compost 70",
+   "new_name": "AGRI Compost 70",
+   "spellings": [
+    [
+     "AGRI COMPOST 70",
+     3
+    ],
+    [
+     "AGRI Compost 70",
+     1
+    ],
+    [
+     "Agri Compost 70",
+     1
+    ],
+    [
+     "Groupement Agri Compost 70",
+     1
+    ],
+    [
+     "agricompost 70",
+     1
+    ]
+   ],
+   "head_newest": "2017-05-27",
+   "top_newest": "2026-03-17",
+   "ships": true
+  },
+  {
+   "org_id": 9930423,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "86320018400092",
+   "country": "FR",
+   "old_name": "Groupement Dumez Auvergne",
+   "new_name": "DUMEZ AUVERGNE",
+   "spellings": [
+    [
+     "DUMEZ AUVERGNE",
+     5
+    ],
+    [
+     "dumez auvergne",
+     2
+    ],
+    [
+     "Groupement Dumez Auvergne",
+     1
+    ]
+   ],
+   "head_newest": "2017-06-24",
+   "top_newest": "2026-05-18",
+   "ships": true
+  },
+  {
+   "org_id": 9930896,
+   "rule": "R1",
+   "head": 1,
+   "n": 9,
+   "identifier": "80076540600015",
+   "country": "FR",
+   "old_name": "Ingemetrie SAS — bureau Ile-de-France/Nord (Mandataire)",
+   "new_name": "Ingemetrie SAS",
+   "spellings": [
+    [
+     "ingemetrie",
+     4
+    ],
+    [
+     "INGEMETRIE",
+     2
+    ],
+    [
+     "INGEMETRIE (mandataire) / BETEM ILE -DE-France / GRUE / EI Thierry HAROUTIOUNIAN",
+     1
+    ],
+    [
+     "Ingemetrie SAS",
+     1
+    ],
+    [
+     "Ingemetrie SAS — bureau Ile-de-France/Nord (Mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2017-06-24",
+   "top_newest": "2025-06-26",
+   "ships": false
+  },
+  {
+   "org_id": 9943888,
+   "rule": "R1",
+   "head": 2,
+   "n": 13,
+   "identifier": "49270633800026",
+   "country": "FR",
+   "old_name": "sas cereg Ingénierie (mandataire)",
+   "new_name": "CEREG Ingénierie",
+   "spellings": [
+    [
+     "CEREG Ingénierie",
+     2
+    ],
+    [
+     "cereg ingenierie",
+     2
+    ],
+    [
+     "sas cereg Ingénierie (mandataire)",
+     2
+    ],
+    [
+     "CEREG",
+     1
+    ],
+    [
+     "CEREG INGENIERIE",
+     1
+    ]
+   ],
+   "head_newest": "2017-06-27",
+   "top_newest": "2024-06-13",
+   "ships": false
+  },
+  {
+   "org_id": 9945607,
+   "rule": "R1",
+   "head": 1,
+   "n": 44,
+   "identifier": "54202182900107",
+   "country": "FR",
+   "old_name": "Agence Safège Bureau d'etudes VRD (Mandataire)",
+   "new_name": "Safège",
+   "spellings": [
+    [
+     "SAFEGE",
+     9
+    ],
+    [
+     "Safege",
+     5
+    ],
+    [
+     "safege",
+     5
+    ],
+    [
+     "Safege SAS",
+     3
+    ],
+    [
+     "SAFEGE SAS",
+     2
+    ]
+   ],
+   "head_newest": "2017-06-28",
+   "top_newest": "2026-05-26",
+   "ships": true
+  },
+  {
+   "org_id": 9998909,
+   "rule": "R1",
+   "head": 4,
+   "n": 16,
+   "identifier": "02404423200015",
+   "country": "FR",
+   "old_name": "ETG SARL (mandataire)",
+   "new_name": "ETG SARL",
+   "spellings": [
+    [
+     "ETG SARL",
+     7
+    ],
+    [
+     "ETG SARL (mandataire)",
+     4
+    ],
+    [
+     "etg",
+     2
+    ],
+    [
+     "ETG",
+     1
+    ],
+    [
+     "Groupement ETG",
+     1
+    ]
+   ],
+   "head_newest": "2020-01-03",
+   "top_newest": "2026-01-30",
+   "ships": true
+  },
+  {
+   "org_id": 10142430,
+   "rule": "R1",
+   "head": 2,
+   "n": 10,
+   "identifier": "BE0667692570",
+   "country": "BE",
+   "old_name": "Tratos+ Consortium — Trasys International EEIG (group leader)",
+   "new_name": "TRASYS International EEIG",
+   "spellings": [
+    [
+     "TRASYS International EEIG",
+     4
+    ],
+    [
+     "Trasys International EEIG",
+     2
+    ],
+    [
+     "TRASYS International EEIG (leader)",
+     1
+    ],
+    [
+     "TRATOS+ Consortium — TRASYS International EEIG (Group leader)",
+     1
+    ],
+    [
+     "Trasys International EEIG (leader)",
+     1
+    ]
+   ],
+   "head_newest": "2020-04-14",
+   "top_newest": "2019-10-07",
+   "ships": false
+  },
+  {
+   "org_id": 10266767,
+   "rule": "R1",
+   "head": 2,
+   "n": 9,
+   "identifier": "44992071900019",
+   "country": "FR",
+   "old_name": "Groupement de commande Val de Seine Aménagement/SIMCRA",
+   "new_name": "Val de Seine Aménagement",
+   "spellings": [
+    [
+     "Val de Seine Aménagement",
+     6
+    ],
+    [
+     "Groupement de commande Val de Seine Aménagement/SIMCRA",
+     2
+    ],
+    [
+     "Val de Seine aménagement",
+     1
+    ]
+   ],
+   "head_newest": "2018-02-15",
+   "top_newest": "2018-06-15",
+   "ships": true
+  },
+  {
+   "org_id": 10371452,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "45333976400012",
+   "country": "FR",
+   "old_name": "Atelier Ruelle (Mandataire)",
+   "new_name": "Atelier ruelle",
+   "spellings": [
+    [
+     "ATELIER RUELLE",
+     2
+    ],
+    [
+     "Atelier Ruelle (Mandataire)",
+     1
+    ],
+    [
+     "Atelier ruelle",
+     1
+    ],
+    [
+     "atelier Ruelle",
+     1
+    ]
+   ],
+   "head_newest": "2017-09-22",
+   "top_newest": "2025-02-10",
+   "ships": true
+  },
+  {
+   "org_id": 10387870,
+   "rule": "R1",
+   "head": 1,
+   "n": 22,
+   "identifier": "48953305900122",
+   "country": "FR",
+   "old_name": "Groupement alliance environnement exploitation / SARL Patrick Tubert",
+   "new_name": "Alliance environnement exploitation",
+   "spellings": [
+    [
+     "ALLIANCE ENVIRONNEMENT EXPLOITATION",
+     8
+    ],
+    [
+     "SAS ALLIANCE ENVIRONNEMENT EXPLOITATION",
+     3
+    ],
+    [
+     "Alliance environnement exploitation",
+     2
+    ],
+    [
+     "alliance environnement exploitation s.a.s",
+     2
+    ],
+    [
+     "ALLIANCE ENVIRONNEMENT/HYDRIAD EAU",
+     1
+    ]
+   ],
+   "head_newest": "2017-09-27",
+   "top_newest": "2026-10-12",
+   "ships": true
+  },
+  {
+   "org_id": 10442507,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "41312760600023",
+   "country": "FR",
+   "old_name": "groupement st groupe sas / eurovia",
+   "new_name": "ST Groupe",
+   "spellings": [
+    [
+     "ST GROUPE",
+     2
+    ],
+    [
+     "st groupe",
+     2
+    ],
+    [
+     "ST Groupe",
+     1
+    ],
+    [
+     "groupement st groupe sas / eurovia",
+     1
+    ]
+   ],
+   "head_newest": "2017-10-20",
+   "top_newest": "2026-04-14",
+   "ships": true
+  },
+  {
+   "org_id": 10463751,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "PT500074372",
+   "country": "PT",
+   "old_name": "Consortium ARNI (leading organisation: Axianseu Digital Solutions S.A.) (second contractor in the cascade)",
+   "new_name": "AXIANSEU - Digital Solutions, S. A.",
+   "spellings": [
+    [
+     "AXIANSEU - DIGITAL SOLUTIONS, S.A.",
+     3
+    ],
+    [
+     "AXIANS",
+     1
+    ],
+    [
+     "AXIANSEU - DIGITAL SOLUTIONS, SA",
+     1
+    ],
+    [
+     "AXIANSEU - Digital Solutions, S. A.",
+     1
+    ],
+    [
+     "Axianseu Digital Solutions, SA",
+     1
+    ]
+   ],
+   "head_newest": "2017-10-05",
+   "top_newest": "2026-09-03",
+   "ships": true
+  },
+  {
+   "org_id": 10490568,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "43408539500342",
+   "country": "FR",
+   "old_name": "Groupement Spie Citynetworks",
+   "new_name": "Spie Citynetworks",
+   "spellings": [
+    [
+     "Groupement Spie Citynetworks",
+     1
+    ],
+    [
+     "SPIE CITYNETWORKS",
+     1
+    ],
+    [
+     "Spie Citynetworks",
+     1
+    ],
+    [
+     "spie citynetworks sas",
+     1
+    ]
+   ],
+   "head_newest": "2017-10-11",
+   "top_newest": "2026-02-05",
+   "ships": true
+  },
+  {
+   "org_id": 10629424,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "44763334800092",
+   "country": "FR",
+   "old_name": "Groupement Sitétudes / Citec / Traverses",
+   "new_name": "Sitetudes",
+   "spellings": [
+    [
+     "Sitetudes",
+     3
+    ],
+    [
+     "Groupement Sitétudes / Citec / Traverses",
+     1
+    ]
+   ],
+   "head_newest": "2017-11-15",
+   "top_newest": "2019-01-08",
+   "ships": true
+  },
+  {
+   "org_id": 10653142,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "48773772800070",
+   "country": "FR",
+   "old_name": "Eiffage génie civil réseaux (mandataire)/SAT",
+   "new_name": "EIFFAGE GENIE CIVIL RESEAUX",
+   "spellings": [
+    [
+     "EIFFAGE GENIE CIVIL RESEAUX",
+     2
+    ],
+    [
+     "EIFFAGE GENIE CIVIL  RESEAUX",
+     1
+    ],
+    [
+     "Eiffage génie civil réseaux (mandataire)/SAT",
+     1
+    ],
+    [
+     "Eiffage génie civil réseaux — SNC",
+     1
+    ],
+    [
+     "Eiffage travaux publics réseaux",
+     1
+    ]
+   ],
+   "head_newest": "2017-11-18",
+   "top_newest": "2024-09-09",
+   "ships": false
+  },
+  {
+   "org_id": 10658772,
+   "rule": "R1",
+   "head": 2,
+   "n": 17,
+   "identifier": "74725212000015",
+   "country": "FR",
+   "old_name": "TSO (Mandataire)",
+   "new_name": "TSO",
+   "spellings": [
+    [
+     "TSO",
+     10
+    ],
+    [
+     "TSO (Mandataire)",
+     2
+    ],
+    [
+     "TSO SAS",
+     2
+    ],
+    [
+     "TSO CHELLES (Mandataire)",
+     1
+    ],
+    [
+     "TSO — SAS",
+     1
+    ]
+   ],
+   "head_newest": "2025-07-25",
+   "top_newest": "2026-06-17",
+   "ships": false
+  },
+  {
+   "org_id": 10664296,
+   "rule": "R1",
+   "head": 2,
+   "n": 24,
+   "identifier": "341539815",
+   "country": "FR",
+   "old_name": "Paris Nord Assurances Services (courtier Mandataire)",
+   "new_name": "Paris nord assurances services",
+   "spellings": [
+    [
+     "PARIS NORD ASSURANCES SERVICES",
+     13
+    ],
+    [
+     "PARIS NORD ASSURANCES",
+     2
+    ],
+    [
+     "Paris Nord Assurances Services (courtier Mandataire)",
+     2
+    ],
+    [
+     "*pnas*",
+     1
+    ],
+    [
+     "PARIS NORD ASSUSRANCES SERVICE",
+     1
+    ]
+   ],
+   "head_newest": "2017-11-22",
+   "top_newest": "2026-02-06",
+   "ships": true
+  },
+  {
+   "org_id": 10664298,
+   "rule": "R1",
+   "head": 1,
+   "n": 26,
+   "identifier": "301573143",
+   "country": "FR",
+   "old_name": "Sarre et Moselle (Courtier Mandataire)",
+   "new_name": "Sarre et Moselle",
+   "spellings": [
+    [
+     "SARRE ET MOSELLE",
+     12
+    ],
+    [
+     "Sarre et Moselle",
+     3
+    ],
+    [
+     "Hiscox/Sarre et Moselle",
+     2
+    ],
+    [
+     "sarre et LORRAINE",
+     2
+    ],
+    [
+     "Groupement SARRE & MOSELLE/ BERKSHIRE HATHAWAY SPECIALTY INSURANCE",
+     1
+    ]
+   ],
+   "head_newest": "2017-11-22",
+   "top_newest": "2026-02-06",
+   "ships": true
+  },
+  {
+   "org_id": 10664560,
+   "rule": "R1",
+   "head": 1,
+   "n": 60,
+   "identifier": "A95113361",
+   "country": "ES",
+   "old_name": "UTE Acciona Agua, S.A., FCC Aqualia, S.A.",
+   "new_name": "Acciona Agua, S. A.",
+   "spellings": [
+    [
+     "ACCIONA AGUA, S.A.",
+     35
+    ],
+    [
+     "Acciona Agua, S. A.",
+     9
+    ],
+    [
+     "ACCIONA AGUA, S.A",
+     4
+    ],
+    [
+     "ACCIONA AGUA, S.A. Unipersonal",
+     3
+    ],
+    [
+     "ACCIONA AGUA S.A.",
+     2
+    ]
+   ],
+   "head_newest": "2017-11-22",
+   "top_newest": "2026-10-05",
+   "ships": true
+  },
+  {
+   "org_id": 10688250,
+   "rule": "R1",
+   "head": 1,
+   "n": 9,
+   "identifier": "44452352600051",
+   "country": "FR",
+   "old_name": "Artelia Ville et Transport (mandataire)",
+   "new_name": "ARTELIA",
+   "spellings": [
+    [
+     "artelia",
+     3
+    ],
+    [
+     "ARTELIA",
+     2
+    ],
+    [
+     "ARTELIA SAS",
+     1
+    ],
+    [
+     "Artelia VT",
+     1
+    ],
+    [
+     "Artelia Ville et Transport (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2017-11-25",
+   "top_newest": "2026-08-03",
+   "ships": true
+  },
+  {
+   "org_id": 10704476,
+   "rule": "R1",
+   "head": 2,
+   "n": 37,
+   "identifier": "35203391400040",
+   "country": "FR",
+   "old_name": "société Mc2i mandataire du groupement composé également des sociétés temesis, atalan et oceane consulting",
+   "new_name": "MC2i",
+   "spellings": [
+    [
+     "MC2I",
+     14
+    ],
+    [
+     "mc2i",
+     6
+    ],
+    [
+     "MC2i",
+     4
+    ],
+    [
+     "MC2I Groupe",
+     3
+    ],
+    [
+     "société Mc2i mandataire du groupement composé également des sociétés temesis, atalan et oceane consulting",
+     2
+    ]
+   ],
+   "head_newest": "2017-11-30",
+   "top_newest": "2026-10-16",
+   "ships": true
+  },
+  {
+   "org_id": 10797792,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "42066858400063",
+   "country": "FR",
+   "old_name": "Atelier Nervures — mandataire",
+   "new_name": "ATELIER NERVURES",
+   "spellings": [
+    [
+     "ATELIER NERVURES",
+     2
+    ],
+    [
+     "Atelier Nervures — mandataire",
+     1
+    ],
+    [
+     "atelier nervures",
+     1
+    ]
+   ],
+   "head_newest": "2017-12-19",
+   "top_newest": "2026-02-10",
+   "ships": true
+  },
+  {
+   "org_id": 10804351,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "80352183000015",
+   "country": "FR",
+   "old_name": "1090 Architectes (Mandataire)",
+   "new_name": "1090 Architectes",
+   "spellings": [
+    [
+     "1090 ARCHITECTES",
+     2
+    ],
+    [
+     "1090 Architectes",
+     2
+    ],
+    [
+     "1090 Architectes (Mandataire)",
+     1
+    ],
+    [
+     "Groupement conjoint 1090 ARCHITECTES (mandataire) avec LAURENT TAILLANDIER (cotraitant)",
+     1
+    ],
+    [
+     "Groupement conjoint 1090 ARCHITECTES (mandataire) et LAURENT TAILLANDIER ; GROULT EMMA ; BRANCHE BRITTANY ; GAULTIER GILLES (cotraitants)",
+     1
+    ]
+   ],
+   "head_newest": "2017-12-19",
+   "top_newest": "2026-01-26",
+   "ships": true
+  },
+  {
+   "org_id": 10808017,
+   "rule": "R1",
+   "head": 1,
+   "n": 9,
+   "identifier": "31543485200036",
+   "country": "FR",
+   "old_name": "Groupement Bonglet Breuil Expert Étanche DBTS",
+   "new_name": "Bonglet",
+   "spellings": [
+    [
+     "Bonglet",
+     6
+    ],
+    [
+     "Bonglet SA",
+     2
+    ],
+    [
+     "Groupement Bonglet Breuil Expert Étanche DBTS",
+     1
+    ]
+   ],
+   "head_newest": "2017-12-20",
+   "top_newest": "2019-11-22",
+   "ships": false
+  },
+  {
+   "org_id": 10834196,
+   "rule": "R2",
+   "head": 1,
+   "n": 8,
+   "identifier": "440697712",
+   "country": "FR",
+   "old_name": "Onepoint (mandataire du groupement)",
+   "new_name": "Onepoint",
+   "spellings": [
+    [
+     "ONEPOINT",
+     3
+    ],
+    [
+     "CO TRAITANT ONE POINT",
+     1
+    ],
+    [
+     "GROUPE ONEPOINT",
+     1
+    ],
+    [
+     "Groupement ONEPOINT - CGI (ONEPOINT mandataire)",
+     1
+    ],
+    [
+     "Onepoint",
+     1
+    ]
+   ],
+   "head_newest": "2017-12-23",
+   "top_newest": "2026-04-07",
+   "ships": false
+  },
+  {
+   "org_id": 11030337,
+   "rule": "R1",
+   "head": 1,
+   "n": 13,
+   "identifier": "42399908500057",
+   "country": "FR",
+   "old_name": "Groupement OVIVE",
+   "new_name": "Ovive",
+   "spellings": [
+    [
+     "OVIVE",
+     3
+    ],
+    [
+     "Ovive",
+     3
+    ],
+    [
+     "Groupement OVIVE",
+     1
+    ],
+    [
+     "OVIVE SAS",
+     1
+    ],
+    [
+     "Ovive - mandataire",
+     1
+    ]
+   ],
+   "head_newest": "2018-02-01",
+   "top_newest": "2025-12-24",
+   "ships": true
+  },
+  {
+   "org_id": 11038734,
+   "rule": "R2",
+   "head": 1,
+   "n": 8,
+   "identifier": "32391299800073",
+   "country": "FR",
+   "old_name": "Groupement Eurogroup Consulting France et Wavestone SA",
+   "new_name": "Eurogroup Consulting",
+   "spellings": [
+    [
+     "Eurogroup Consulting",
+     2
+    ],
+    [
+     "Eurogroup Consulting France",
+     2
+    ],
+    [
+     "EUROGROUP CONSULTING",
+     1
+    ],
+    [
+     "Groupement Eurogroup Consulting France et Wavestone SA",
+     1
+    ],
+    [
+     "Rang 1 — Eurogroup Consulting France (cotraitant)",
+     1
+    ]
+   ],
+   "head_newest": "2018-02-02",
+   "top_newest": "2021-09-03",
+   "ships": false
+  },
+  {
+   "org_id": 11099325,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "39320673500655",
+   "country": "FR",
+   "old_name": "Antea group (Mandataire du groupement conjoint)",
+   "new_name": "Antea Group",
+   "spellings": [
+    [
+     "Antea Group",
+     2
+    ],
+    [
+     "ANTEA GROUP",
+     1
+    ],
+    [
+     "Antea France (mandataire)",
+     1
+    ],
+    [
+     "Antea group",
+     1
+    ],
+    [
+     "Antea group (Mandataire du groupement conjoint)",
+     1
+    ]
+   ],
+   "head_newest": "2018-02-14",
+   "top_newest": "2025-07-24",
+   "ships": false
+  },
+  {
+   "org_id": 11219959,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "44775408600034",
+   "country": "FR",
+   "old_name": "Guintoli SAS (mandataire du groupement)",
+   "new_name": "Guintoli",
+   "spellings": [
+    [
+     "GUINTOLI SAS",
+     2
+    ],
+    [
+     "GUINTOLI",
+     1
+    ],
+    [
+     "Groupement GUINTOLI/EHTP",
+     1
+    ],
+    [
+     "Guintoli",
+     1
+    ],
+    [
+     "Guintoli SAS (mandataire du groupement)",
+     1
+    ]
+   ],
+   "head_newest": "2018-03-15",
+   "top_newest": "2026-02-11",
+   "ships": true
+  },
+  {
+   "org_id": 11226363,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "34094705000050",
+   "country": "FR",
+   "old_name": "Scop Euro Flandres TP (mandataire du groupement)",
+   "new_name": "EURO FLANDRES TP",
+   "spellings": [
+    [
+     "EURO FLANDRES TP",
+     3
+    ],
+    [
+     "SCOP Euro Flandres TP",
+     1
+    ],
+    [
+     "Scop Euro Flandres TP (mandataire du groupement)",
+     1
+    ],
+    [
+     "euro flandres tp",
+     1
+    ]
+   ],
+   "head_newest": "2018-03-09",
+   "top_newest": "2026-09-11",
+   "ships": true
+  },
+  {
+   "org_id": 11610584,
+   "rule": "R2",
+   "head": 1,
+   "n": 8,
+   "identifier": "38069588200049",
+   "country": "FR",
+   "old_name": "Estp(Mandataire)",
+   "new_name": "ESTP",
+   "spellings": [
+    [
+     "ESTP",
+     3
+    ],
+    [
+     "ESTP SA",
+     2
+    ],
+    [
+     "ESTP (cotraitant)",
+     1
+    ],
+    [
+     "Estp(Mandataire)",
+     1
+    ],
+    [
+     "estp",
+     1
+    ]
+   ],
+   "head_newest": "2018-05-31",
+   "top_newest": "2024-10-09",
+   "ships": false
+  },
+  {
+   "org_id": 12055155,
+   "rule": "R1",
+   "head": 2,
+   "n": 14,
+   "identifier": "505760215",
+   "country": "PT",
+   "old_name": "Agrupamento “Consórcio Teixeira Couto” — Liderado por Iluminações — Teixeira Couto, Lda.",
+   "new_name": "Iluminações Teixeira Couto, Lda.",
+   "spellings": [
+    [
+     "Iluminações Teixeira Couto, Lda.",
+     3
+    ],
+    [
+     "Agrupamento “Consórcio Teixeira Couto” — Liderado por Iluminações — Teixeira Couto, Lda.",
+     2
+    ],
+    [
+     "ILUMINAÇÕES - TEIXEIRA COUTO, LDA",
+     2
+    ],
+    [
+     "Iluminações - Teixeira Couto, Lda.",
+     2
+    ],
+    [
+     "ILUMINAÇÕES - TEIXEIRA COUTO, LDA.",
+     1
+    ]
+   ],
+   "head_newest": "2018-08-11",
+   "top_newest": "2026-08-31",
+   "ships": true
+  },
+  {
+   "org_id": 12622564,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "413824319",
+   "country": "FR",
+   "old_name": "Avenir Deconstruction (mandataire)",
+   "new_name": "AVENIR DECONSTRUCTION",
+   "spellings": [
+    [
+     "AVENIR DECONSTRUCTION",
+     3
+    ],
+    [
+     "Avenir Deconstruction (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2018-12-01",
+   "top_newest": "2026-09-23",
+   "ships": true
+  },
+  {
+   "org_id": 13046146,
+   "rule": "R2",
+   "head": 1,
+   "n": 23,
+   "identifier": "33124096000020",
+   "country": "FR",
+   "old_name": "Groupement Garelli SAS — Suez Eau France",
+   "new_name": "Garelli SAS",
+   "spellings": [
+    [
+     "GARELLI SAS",
+     5
+    ],
+    [
+     "Garelli SAS",
+     3
+    ],
+    [
+     "GARELLI TP SAS",
+     2
+    ],
+    [
+     "SAS GARELLI",
+     2
+    ],
+    [
+     "groupement garelli (mandataire)",
+     2
+    ]
+   ],
+   "head_newest": "2019-03-26",
+   "top_newest": "2026-09-10",
+   "ships": false
+  },
+  {
+   "org_id": 13046147,
+   "rule": "R2",
+   "head": 1,
+   "n": 22,
+   "identifier": "56213603600885",
+   "country": "FR",
+   "old_name": "Groupement Razel Bec SAS — Sogea Côte d'Azur",
+   "new_name": "RAZEL BEC",
+   "spellings": [
+    [
+     "RAZEL BEC",
+     3
+    ],
+    [
+     "RAZEL-BEC",
+     2
+    ],
+    [
+     "RAZEL-BEC SAS",
+     2
+    ],
+    [
+     "GROUPEMENT RAZEL BEC (Mandataire) - GARELLI TP (Cotraitant) – TAMA (Cotraitant)",
+     1
+    ],
+    [
+     "GRPT RAZEL BEC (mandataire) / TAMA (cotraitant)",
+     1
+    ]
+   ],
+   "head_newest": "2019-03-26",
+   "top_newest": "2026-09-10",
+   "ships": false
+  },
+  {
+   "org_id": 13183959,
+   "rule": "R1",
+   "head": 1,
+   "n": 9,
+   "identifier": "53039736300041",
+   "country": "FR",
+   "old_name": "SAS Cogite (mandataire du groupement)",
+   "new_name": "Cogite SAS",
+   "spellings": [
+    [
+     "Cogite SAS",
+     2
+    ],
+    [
+     "cogite sas",
+     2
+    ],
+    [
+     "COGITE",
+     1
+    ],
+    [
+     "COGITE SAS",
+     1
+    ],
+    [
+     "Cogite",
+     1
+    ]
+   ],
+   "head_newest": "2019-03-07",
+   "top_newest": "2025-04-29",
+   "ships": false
+  },
+  {
+   "org_id": 13230085,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "0428304785",
+   "country": "BE",
+   "old_name": "European Service Network SA (leader Consortium Lumiere)",
+   "new_name": "EUROPEAN SERVICE NETWORK sa",
+   "spellings": [
+    [
+     "EUROPEAN SERVICE NETWORK sa",
+     1
+    ],
+    [
+     "European Service Network",
+     1
+    ],
+    [
+     "European Service Network S.A.",
+     1
+    ],
+    [
+     "European Service Network SA",
+     1
+    ],
+    [
+     "European Service Network SA (leader Consortium Lumiere)",
+     1
+    ]
+   ],
+   "head_newest": "2019-04-08",
+   "top_newest": "2025-03-17",
+   "ships": false
+  },
+  {
+   "org_id": 13340328,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "43156861700028",
+   "country": "FR",
+   "old_name": "Titulaire nº 1 sur 3: groupement conjoint composé de groupe Sirius, département IAMTE (mandataire) et KPMG SA",
+   "new_name": "Groupe Sirius",
+   "spellings": [
+    [
+     "GROUPE SIRIUS",
+     3
+    ],
+    [
+     "Groupe Sirius",
+     1
+    ],
+    [
+     "Titulaire nº 1 sur 3: groupement conjoint composé de groupe Sirius, département IAMTE (mandataire) et KPMG SA",
+     1
+    ],
+    [
+     "groupe sirius",
+     1
+    ],
+    [
+     "sirius Département IAMTE",
+     1
+    ]
+   ],
+   "head_newest": "2019-04-30",
+   "top_newest": "2025-03-20",
+   "ships": false
+  },
+  {
+   "org_id": 13396243,
+   "rule": "R1",
+   "head": 2,
+   "n": 10,
+   "identifier": "49446222900035",
+   "country": "FR",
+   "old_name": "STUDIO 02 ARCHITECTES (mandataire)",
+   "new_name": "studio 02 ARCHITECTES",
+   "spellings": [
+    [
+     "studio 02 ARCHITECTES",
+     5
+    ],
+    [
+     "STUDIO 02 ARCHITECTES (mandataire)",
+     2
+    ],
+    [
+     "STUDIO 02",
+     1
+    ],
+    [
+     "STUDIO 02 ARCHITECTES",
+     1
+    ],
+    [
+     "studio 02",
+     1
+    ]
+   ],
+   "head_newest": "2019-05-07",
+   "top_newest": "2024-08-13",
+   "ships": false
+  },
+  {
+   "org_id": 13440644,
+   "rule": "R2",
+   "head": 1,
+   "n": 14,
+   "identifier": "77558028500010",
+   "country": "FR",
+   "old_name": "Groupe Robert T.P. Groupement Travaux Publics et Carrières A. Robert/Eiffage Route",
+   "new_name": "SAS ROBERT Travaux Publics",
+   "spellings": [
+    [
+     "SAS ROBERT Travaux Publics",
+     3
+    ],
+    [
+     "SAS Robert TP",
+     2
+    ],
+    [
+     "Eiffage Route",
+     1
+    ],
+    [
+     "Eiffage route Méditerranée agence de Mondragon",
+     1
+    ],
+    [
+     "Groupe Robert T.P. Groupement Travaux Publics et Carrières A. Robert/Eiffage Route",
+     1
+    ]
+   ],
+   "head_newest": "2019-05-10",
+   "top_newest": "2026-09-18",
+   "ships": false
+  },
+  {
+   "org_id": 13556809,
+   "rule": "R1",
+   "head": 2,
+   "n": 16,
+   "identifier": "19380033100020",
+   "country": "FR",
+   "old_name": "Greta de Grenoble (mandataire)",
+   "new_name": "GRETA de Grenoble",
+   "spellings": [
+    [
+     "greta de grenoble",
+     11
+    ],
+    [
+     "Greta de Grenoble (mandataire)",
+     2
+    ],
+    [
+     "GRETA DE GRENOBLE",
+     1
+    ],
+    [
+     "GRETA de Grenoble",
+     1
+    ],
+    [
+     "Greta Grenoble (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2019-06-13",
+   "top_newest": "2026-05-12",
+   "ships": true
+  },
+  {
+   "org_id": 13580689,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "50172781200023",
+   "country": "FR",
+   "old_name": "ARENA SI (mandataire)",
+   "new_name": "Arena SI",
+   "spellings": [
+    [
+     "Arena SI",
+     2
+    ],
+    [
+     "ARENA SI",
+     1
+    ],
+    [
+     "ARENA SI (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2019-06-18",
+   "top_newest": "2019-08-07",
+   "ships": true
+  },
+  {
+   "org_id": 13824614,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "38238763700053",
+   "country": "FR",
+   "old_name": "Forma 6 (mandataire du groupement) Racine BE/SAS Techniques et Chantiers/Pragma Ingénierie/Sigma Ingénierie/ACE/Tribu/Acoustibel/BECG",
+   "new_name": "FORMA 6",
+   "spellings": [
+    [
+     "FORMA 6",
+     3
+    ],
+    [
+     "FORMA6",
+     1
+    ],
+    [
+     "Forma 6 (mandataire du groupement) Racine BE/SAS Techniques et Chantiers/Pragma Ingénierie/Sigma Ingénierie/ACE/Tribu/Acoustibel/BECG",
+     1
+    ]
+   ],
+   "head_newest": "2019-08-09",
+   "top_newest": "2025-10-03",
+   "ships": false
+  },
+  {
+   "org_id": 14033882,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "34151704300053",
+   "country": "FR",
+   "old_name": "Flash Azur Voyages (mandataire)",
+   "new_name": "FLASH AZUR VOYAGES",
+   "spellings": [
+    [
+     "flash azur voyages",
+     2
+    ],
+    [
+     "FLASH AZUR VOYAGES",
+     1
+    ],
+    [
+     "Flash Azur Voyages (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2019-09-02",
+   "top_newest": "2026-03-04",
+   "ships": true
+  },
+  {
+   "org_id": 14043573,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "32161684900022",
+   "country": "FR",
+   "old_name": "SARL Bouchet Francis et Fils (mandataire)",
+   "new_name": "Bouchet Francis et Fils",
+   "spellings": [
+    [
+     "Bouchet Francis et Fils",
+     2
+    ],
+    [
+     "SARL BOUCHET FRANCIS ET FILS",
+     1
+    ],
+    [
+     "SARL Bouchet Francis et Fils (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2019-09-26",
+   "top_newest": "2025-12-04",
+   "ships": true
+  },
+  {
+   "org_id": 14103011,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "9110016732015",
+   "country": "AT",
+   "old_name": "ARGE Feuerstein Josef GmbH & Co KG — Johann Huter & Söhne",
+   "new_name": "Josef Feuerstein GmbH & Co KG",
+   "spellings": [
+    [
+     "Josef Feuerstein GmbH & Co KG",
+     6
+    ],
+    [
+     "ARGE Feuerstein Josef GmbH & Co KG — Johann Huter & Söhne",
+     1
+    ]
+   ],
+   "head_newest": "2019-10-30",
+   "top_newest": "2025-11-25",
+   "ships": true
+  },
+  {
+   "org_id": 14259882,
+   "rule": "R1",
+   "head": 2,
+   "n": 14,
+   "identifier": "31321186400027",
+   "country": "FR",
+   "old_name": "Mandataire: Cazal SAS",
+   "new_name": "CAZAL",
+   "spellings": [
+    [
+     "CAZAL",
+     6
+    ],
+    [
+     "cazal",
+     3
+    ],
+    [
+     "Mandataire: Cazal SAS",
+     2
+    ],
+    [
+     "CAZAL (Cotraitant)",
+     1
+    ],
+    [
+     "CAZAL SAS",
+     1
+    ]
+   ],
+   "head_newest": "2019-10-21",
+   "top_newest": "2026-09-16",
+   "ships": true
+  },
+  {
+   "org_id": 14394565,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "44775408600075",
+   "country": "FR",
+   "old_name": "SAS Guintoli (groupe NGE), mandataire",
+   "new_name": "Guintoli SAS",
+   "spellings": [
+    [
+     "GUINTOLI",
+     2
+    ],
+    [
+     "GUINTOLI SAS",
+     1
+    ],
+    [
+     "Guintoli SAS",
+     1
+    ],
+    [
+     "SAS Guintoli (groupe NGE), mandataire",
+     1
+    ]
+   ],
+   "head_newest": "2019-11-25",
+   "top_newest": "2026-07-23",
+   "ships": true
+  },
+  {
+   "org_id": 14395645,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "38468875000023",
+   "country": "FR",
+   "old_name": "SAS Espaces verts du dauphine (EVD), mandataire",
+   "new_name": "ESPACES VERTS DU DAUPHINE",
+   "spellings": [
+    [
+     "ESPACES VERTS DU DAUPHINE",
+     2
+    ],
+    [
+     "SAS ESPACES VERTS DU DAUPHINE",
+     2
+    ],
+    [
+     "ESPACES VERTS DU DAUPHINE  (co-traitant n° 4)",
+     1
+    ],
+    [
+     "SAS Espaces verts du dauphine (EVD), mandataire",
+     1
+    ]
+   ],
+   "head_newest": "2019-11-25",
+   "top_newest": "2026-10-15",
+   "ships": true
+  },
+  {
+   "org_id": 14493390,
+   "rule": "R1",
+   "head": 2,
+   "n": 10,
+   "identifier": "75364224800029",
+   "country": "FR",
+   "old_name": "AXLR, SATT du Languedoc Roussillon (mandataire du groupement de commande AXLR/Toulouse Tech Transfer)",
+   "new_name": "SATT AxLR",
+   "spellings": [
+    [
+     "SATT AXLR",
+     7
+    ],
+    [
+     "AXLR, SATT du Languedoc Roussillon (mandataire du groupement de commande AXLR/Toulouse Tech Transfer)",
+     1
+    ],
+    [
+     "AxLR, SATT du Languedoc-Roussillon (mandataire du groupement de commande AxLR/Toulouse Tech Transfer)",
+     1
+    ],
+    [
+     "SATT AxLR",
+     1
+    ]
+   ],
+   "head_newest": "2021-04-12",
+   "top_newest": "2026-08-10",
+   "ships": true
+  },
+  {
+   "org_id": 14750106,
+   "rule": "R2",
+   "head": 1,
+   "n": 7,
+   "identifier": "48962613500045",
+   "country": "FR",
+   "old_name": "Ingerop Conseil et Ingénierie SAS (mandataire)",
+   "new_name": "INGEROP Conseil & Ingénierie S.A.S.",
+   "spellings": [
+    [
+     "INGEROP CONSEIL ET INGENIERIE",
+     2
+    ],
+    [
+     "INGEROP CONSEIL & INGENIERIE",
+     1
+    ],
+    [
+     "INGEROP Conseil & Ingénierie S.A.S.",
+     1
+    ],
+    [
+     "Ingerop Conseil et Ingénierie SAS (mandataire)",
+     1
+    ],
+    [
+     "Ingerop conseil & Ingénierie (cotraitant)",
+     1
+    ]
+   ],
+   "head_newest": "2020-02-06",
+   "top_newest": "2026-07-22",
+   "ships": false
+  },
+  {
+   "org_id": 14873976,
+   "rule": "R1",
+   "head": 1,
+   "n": 25,
+   "identifier": "513600728",
+   "country": "PT",
+   "old_name": "WWS/Informantem em consórcio — WWS, Consultoria Informática, Lda.",
+   "new_name": "WWS - Consultoria Informática, Lda.",
+   "spellings": [
+    [
+     "WWS - Consultoria Informática, Lda.",
+     5
+    ],
+    [
+     "WWS - CONSULTORIA INFORMÁTICA, LDA",
+     4
+    ],
+    [
+     "WWS - Consultoria Informática, Lda",
+     4
+    ],
+    [
+     "WWS - Consultadoria Informática, Lda",
+     2
+    ],
+    [
+     "WWS — Consultoria Informática, Lda.",
+     2
+    ]
+   ],
+   "head_newest": "2020-02-04",
+   "top_newest": "2026-08-28",
+   "ships": true
+  },
+  {
+   "org_id": 14892784,
+   "rule": "R2",
+   "head": 1,
+   "n": 42,
+   "identifier": "44302124100072",
+   "country": "FR",
+   "old_name": "Rang 1 — Bearingpoint France (mandataire)",
+   "new_name": "BearingPoint France SAS",
+   "spellings": [
+    [
+     "BEARINGPOINT",
+     8
+    ],
+    [
+     "BEARING POINT",
+     6
+    ],
+    [
+     "BEARINGPOINT FRANCE SAS",
+     6
+    ],
+    [
+     "BearingPoint France SAS",
+     6
+    ],
+    [
+     "BearingPoint France",
+     3
+    ]
+   ],
+   "head_newest": "2020-02-10",
+   "top_newest": "2026-08-28",
+   "ships": false
+  },
+  {
+   "org_id": 14892786,
+   "rule": "R1",
+   "head": 1,
+   "n": 26,
+   "identifier": "47976680000060",
+   "country": "FR",
+   "old_name": "Rang 2 — Capgemini Consulting (mandataire)",
+   "new_name": "Capgemini Consulting",
+   "spellings": [
+    [
+     "CAPGEMINI CONSULTING",
+     7
+    ],
+    [
+     "Capgemini Consulting",
+     4
+    ],
+    [
+     "CAPGEMINI",
+     3
+    ],
+    [
+     "CAP GEMINI INVENT",
+     2
+    ],
+    [
+     "CAPGEMINI INVENT",
+     2
+    ]
+   ],
+   "head_newest": "2020-02-10",
+   "top_newest": "2026-09-30",
+   "ships": true
+  },
+  {
+   "org_id": 14983077,
+   "rule": "R1",
+   "head": 2,
+   "n": 16,
+   "identifier": "B18967729",
+   "country": "ES",
+   "old_name": "UTE Greening Ingeniería Civil y Ambiental, S. L. y  pk. 28",
+   "new_name": "Greening Ingeniería Civil y Ambiental, S. L.",
+   "spellings": [
+    [
+     "GREENING INGENIERÍA CIVIL Y AMBIENTAL S.L.",
+     5
+    ],
+    [
+     "GREENING INGENIERIA CIVIL Y AMBIENTAL SL",
+     4
+    ],
+    [
+     "Greening Ingeniería Civil y Ambiental, S. L.",
+     3
+    ],
+    [
+     "Greening, S. L.",
+     2
+    ],
+    [
+     "UTE Greening Ingeniería Civil y Ambiental, S. L. y  pk. 28",
+     2
+    ]
+   ],
+   "head_newest": "2020-03-17",
+   "top_newest": "2025-07-10",
+   "ships": false
+  },
+  {
+   "org_id": 15165788,
+   "rule": "R1",
+   "head": 2,
+   "n": 73,
+   "identifier": "52886168500030",
+   "country": "FR",
+   "old_name": "Europolia mandataire Toulouse Métropole",
+   "new_name": "Europolia",
+   "spellings": [
+    [
+     "Europolia",
+     54
+    ],
+    [
+     "EUROPOLIA",
+     12
+    ],
+    [
+     "Europolia, agissant au nom et pour le compte de Toulouse Métropole",
+     4
+    ],
+    [
+     "Europolia mandataire Toulouse Métropole",
+     2
+    ],
+    [
+     "Tribunal Administratif de Toulouse",
+     1
+    ]
+   ],
+   "head_newest": "2020-11-10",
+   "top_newest": "2026-10-14",
+   "ships": true
+  },
+  {
+   "org_id": 15344744,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "RM1319015",
+   "country": "IT",
+   "old_name": "META Group srl (in consortium with Ecorys Europe EEIG GEIE — Belgium -iCons — BDO Advisory CVBA — Trust-IT srl)",
+   "new_name": "META Group Srl",
+   "spellings": [
+    [
+     "META Group Srl",
+     2
+    ],
+    [
+     "META Group srl",
+     1
+    ],
+    [
+     "META Group srl (in consortium with Ecorys Europe EEIG GEIE — Belgium -iCons — BDO Advisory CVBA — Trust-IT srl)",
+     1
+    ]
+   ],
+   "head_newest": "2020-06-02",
+   "top_newest": "2022-09-12",
+   "ships": true
+  },
+  {
+   "org_id": 15497200,
+   "rule": "R1",
+   "head": 1,
+   "n": 178,
+   "identifier": "13001627200010",
+   "country": "FR",
+   "old_name": "Groupement de coopération sanitaire (GCS) Achats du Centre",
+   "new_name": "GCS Achats du Centre",
+   "spellings": [
+    [
+     "GCS ACHATS DU CENTRE",
+     115
+    ],
+    [
+     "GCS Achats du Centre",
+     51
+    ],
+    [
+     "GCS Achats du centre",
+     7
+    ],
+    [
+     "GCS achats du centre",
+     3
+    ],
+    [
+     "GCS achats du Centre",
+     1
+    ]
+   ],
+   "head_newest": "2020-07-09",
+   "top_newest": "2024-08-14",
+   "ships": true
+  },
+  {
+   "org_id": 15501192,
+   "rule": "R1",
+   "head": 1,
+   "n": 13,
+   "identifier": "9110015269239",
+   "country": "AT",
+   "old_name": "Bietergemeinschaft Sodexo Service Solutions Austria GmbH",
+   "new_name": "Sodexo Service Solutions Austria GmbH",
+   "spellings": [
+    [
+     "Sodexo Service Solutions Austria GmbH",
+     12
+    ],
+    [
+     "Bietergemeinschaft Sodexo Service Solutions Austria GmbH",
+     1
+    ]
+   ],
+   "head_newest": "2020-07-09",
+   "top_newest": "2026-09-10",
+   "ships": true
+  },
+  {
+   "org_id": 15774943,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "34222703000018",
+   "country": "FR",
+   "old_name": "Mandataire: Sogea Martinique SAS",
+   "new_name": "SOGEA MARTINIQUE",
+   "spellings": [
+    [
+     "SOGEA MARTINIQUE",
+     3
+    ],
+    [
+     "Groupement SOGEA / AGENOV / ACB",
+     1
+    ],
+    [
+     "Mandataire: Sogea Martinique SAS",
+     1
+    ],
+    [
+     "SOGEA",
+     1
+    ],
+    [
+     "SOGEA MARTINIQUE SAS",
+     1
+    ]
+   ],
+   "head_newest": "2020-09-11",
+   "top_newest": "2025-09-29",
+   "ships": false
+  },
+  {
+   "org_id": 15782290,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "52517618600019",
+   "country": "FR",
+   "old_name": "Groupement Getec Sud-Ouest/sixense Engineering",
+   "new_name": "GETEC Sud Ouest",
+   "spellings": [
+    [
+     "GETEC SUD OUEST",
+     2
+    ],
+    [
+     "GETEC SUD-OUEST",
+     2
+    ],
+    [
+     "GETEC Sud Ouest",
+     1
+    ],
+    [
+     "GETEC Sud-Ouest",
+     1
+    ],
+    [
+     "Groupement Getec Sud-Ouest/sixense Engineering",
+     1
+    ]
+   ],
+   "head_newest": "2020-09-15",
+   "top_newest": "2026-07-07",
+   "ships": true
+  },
+  {
+   "org_id": 16034881,
+   "rule": "R1",
+   "head": 2,
+   "n": 10,
+   "identifier": "44761015500056",
+   "country": "FR",
+   "old_name": "EDRA SA (mandataire)",
+   "new_name": "EDRA SA",
+   "spellings": [
+    [
+     "EDRA SA",
+     4
+    ],
+    [
+     "EDRA SA (mandataire)",
+     2
+    ],
+    [
+     "edra sa",
+     2
+    ],
+    [
+     "EDRA",
+     1
+    ],
+    [
+     "edra",
+     1
+    ]
+   ],
+   "head_newest": "2020-10-23",
+   "top_newest": "2026-09-11",
+   "ships": true
+  },
+  {
+   "org_id": 16320667,
+   "rule": "R2",
+   "head": 1,
+   "n": 8,
+   "identifier": "43998740500164",
+   "country": "FR",
+   "old_name": "EHTP SAS (mandataire)",
+   "new_name": "EHTP",
+   "spellings": [
+    [
+     "EHTP",
+     2
+    ],
+    [
+     "EHTP SAS",
+     1
+    ],
+    [
+     "EHTP SAS (mandataire)",
+     1
+    ],
+    [
+     "EHTP mandataire du groupement d'entreprises",
+     1
+    ],
+    [
+     "Groupement EHTP (mandataire)/FAURIE /SCAM TP / TTPR SERVICES / RDL (co-traitants)",
+     1
+    ]
+   ],
+   "head_newest": "2020-12-23",
+   "top_newest": "2026-06-30",
+   "ships": false
+  },
+  {
+   "org_id": 16360958,
+   "rule": "R2",
+   "head": 1,
+   "n": 11,
+   "identifier": "44452352600531",
+   "country": "FR",
+   "old_name": "Artelia (mandataire du groupement Artelia/trace paysage et aménagement",
+   "new_name": "Artelia",
+   "spellings": [
+    [
+     "ARTELIA",
+     4
+    ],
+    [
+     "ARTELIA Agence de Lyon",
+     1
+    ],
+    [
+     "ARTELIA SAS",
+     1
+    ],
+    [
+     "Artelia",
+     1
+    ],
+    [
+     "Artelia (mandataire du groupement Artelia/trace paysage et aménagement",
+     1
+    ]
+   ],
+   "head_newest": "2020-12-18",
+   "top_newest": "2026-07-28",
+   "ships": false
+  },
+  {
+   "org_id": 16969861,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "48811993400039",
+   "country": "FR",
+   "old_name": "AVR ingénierie en groupement avec les paysagistes associés et accoustique et conseil",
+   "new_name": "AVR INGÉNIERIE",
+   "spellings": [
+    [
+     "AVR INGENIERIE",
+     3
+    ],
+    [
+     "AVR INGÉNIERIE",
+     1
+    ],
+    [
+     "AVR ingénierie en groupement avec les paysagistes associés et accoustique et conseil",
+     1
+    ],
+    [
+     "AVR lot 4",
+     1
+    ],
+    [
+     "Groupement AVR Ingénierie (mandataire) - Les Paysagistes Associés (cotraitant n°1)",
+     1
+    ]
+   ],
+   "head_newest": "2021-04-19",
+   "top_newest": "2025-12-18",
+   "ships": true
+  },
+  {
+   "org_id": 16970038,
+   "rule": "R1",
+   "head": 1,
+   "n": 9,
+   "identifier": "501989978",
+   "country": "PT",
+   "old_name": "Consórcio concorrente Quidgest — Consultores de Gestão S. A. e a LCG",
+   "new_name": "Quidgest - Consultores de Gestão SA",
+   "spellings": [
+    [
+     "Quidgest - Consultores de Gestão SA",
+     5
+    ],
+    [
+     "Consórcio concorrente Quidgest — Consultores de Gestão S. A. e a LCG",
+     1
+    ],
+    [
+     "Quidgest - Consultores de Gestão S.A",
+     1
+    ],
+    [
+     "Quidgest - Consultores de Gestão S.A.",
+     1
+    ],
+    [
+     "Quidgest-Consultores de Gestão, S.A",
+     1
+    ]
+   ],
+   "head_newest": "2021-04-19",
+   "top_newest": "2025-10-22",
+   "ships": true
+  },
+  {
+   "org_id": 16993161,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "39907079600020",
+   "country": "FR",
+   "old_name": "EMCH + Berger SARL (mandataire)",
+   "new_name": "emch & BERGER",
+   "spellings": [
+    [
+     "EMCH & BERGER",
+     2
+    ],
+    [
+     "EMCH ET BERGER",
+     2
+    ],
+    [
+     "emch & BERGER",
+     2
+    ],
+    [
+     "EMCH + Berger SARL (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2021-04-21",
+   "top_newest": "2026-02-24",
+   "ships": true
+  },
+  {
+   "org_id": 17144366,
+   "rule": "R1",
+   "head": 1,
+   "n": 20,
+   "identifier": "41498295900044",
+   "country": "FR",
+   "old_name": "Groupement AEI — Egis Villes et Transport — Écosphère — agence Presence et Noctiluca",
+   "new_name": "AEI",
+   "spellings": [
+    [
+     "AEI",
+     4
+    ],
+    [
+     "A.E.I.",
+     3
+    ],
+    [
+     "AEI SAS",
+     1
+    ],
+    [
+     "AEI lot 4 CT",
+     1
+    ],
+    [
+     "Agence Presence",
+     1
+    ]
+   ],
+   "head_newest": "2021-05-07",
+   "top_newest": "2026-07-31",
+   "ships": true
+  },
+  {
+   "org_id": 17308510,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "38440789600032",
+   "country": "FR",
+   "old_name": "Groupement: Kardham (mandataire) — Selas Charrel et associés (cotraitant 1) — GMSI Conseil (cotraitant 2)",
+   "new_name": "Kardham",
+   "spellings": [
+    [
+     "KARDHAM",
+     5
+    ],
+    [
+     "Kardham",
+     2
+    ],
+    [
+     "Groupement: Kardham (mandataire) — Selas Charrel et associés (cotraitant 1) — GMSI Conseil (cotraitant 2)",
+     1
+    ]
+   ],
+   "head_newest": "2021-06-07",
+   "top_newest": "2026-01-12",
+   "ships": true
+  },
+  {
+   "org_id": 17311886,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "14451234",
+   "country": "DK",
+   "old_name": "Suez Water A/S (part of consortium ‘Suez-MTH’)",
+   "new_name": "SUEZ Water A/S",
+   "spellings": [
+    [
+     "SUEZ Water A/S",
+     2
+    ],
+    [
+     "Suez Water A/S",
+     2
+    ],
+    [
+     "Suez Water A/S (part of consortium ‘Suez-MTH’)",
+     1
+    ]
+   ],
+   "head_newest": "2021-06-11",
+   "top_newest": "2026-07-16",
+   "ships": true
+  },
+  {
+   "org_id": 17708046,
+   "rule": "R2",
+   "head": 1,
+   "n": 6,
+   "identifier": "40209626700354",
+   "country": "FR",
+   "old_name": "eiffage route nord est (mandataire)",
+   "new_name": "EIFFAGE ROUTE NORD EST",
+   "spellings": [
+    [
+     "EIFFAGE ROUTE NORD EST",
+     2
+    ],
+    [
+     "EIFFAGE ROUTE NORD EST - AISNE CIRY SALSOGNE",
+     1
+    ],
+    [
+     "eiffage route nord est",
+     1
+    ],
+    [
+     "eiffage route nord est (mandataire)",
+     1
+    ],
+    [
+     "eiffage route nord est - aisne ciry salsogne",
+     1
+    ]
+   ],
+   "head_newest": "2021-09-10",
+   "top_newest": "2026-08-05",
+   "ships": false
+  },
+  {
+   "org_id": 17830281,
+   "rule": "R2",
+   "head": 1,
+   "n": 10,
+   "identifier": "MI2107100",
+   "country": "IT",
+   "old_name": "WEglobal (IT) in consortium with EPRD Biuro Polityki Gospodarczej I Rozwoju Regionalnego Sp. z o.o. (PL), Croatian Veterinary Institute (CVI) (HR), Veterinary Faculty of the University of Sarajevo (BA) and MONUNI Sh.p.k (previously known as Fauna Group Sh.p.k) (XK)",
+   "new_name": "WEglobal S.R.L",
+   "spellings": [
+    [
+     "WEglobal IT",
+     2
+    ],
+    [
+     "WEglobal Sri",
+     2
+    ],
+    [
+     "WEGLOBAL S.R.L",
+     1
+    ],
+    [
+     "WEglobal (IT) in consortium with EPRD Biuro Polityki Gospodarczej I Rozwoju Regionalnego Sp. z o.o. (PL), Croatian Veterinary Institute (CVI) (HR), Veterinary Faculty of the University of Sarajevo (BA) and MONUNI Sh.p.k (previously known as Fauna Group Sh.p.k) (XK)",
+     1
+    ],
+    [
+     "WEglobal S.R.L",
+     1
+    ]
+   ],
+   "head_newest": "2021-09-17",
+   "top_newest": "2024-03-08",
+   "ships": false
+  },
+  {
+   "org_id": 18124034,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "9110017975749",
+   "country": "AT",
+   "old_name": "ARGE David Schinerl / S hoch 2 ZT GmbH / schorn - architektur ZT GmbH",
+   "new_name": "S Hoch 2 ZT GmbH",
+   "spellings": [
+    [
+     "S Hoch 2 ZT GmbH",
+     3
+    ],
+    [
+     "ARGE David Schinerl / S hoch 2 ZT GmbH / schorn - architektur ZT GmbH",
+     1
+    ],
+    [
+     "ARGE GBS / S Hoch 2 ZT GmbH",
+     1
+    ]
+   ],
+   "head_newest": "2021-11-22",
+   "top_newest": "2026-09-07",
+   "ships": true
+  },
+  {
+   "org_id": 18181616,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "38758257000033",
+   "country": "FR",
+   "old_name": "groupement l'association l'eclaircie (mandataire) avec l'association Fil d'ariane",
+   "new_name": "association L'Eclaircie",
+   "spellings": [
+    [
+     "association L'Eclaircie",
+     3
+    ],
+    [
+     "ASSOCIATION L'ECLAIRCIE",
+     1
+    ],
+    [
+     "Association l'eclaircie",
+     1
+    ],
+    [
+     "groupement l'association l'eclaircie (mandataire) avec l'association Fil d'ariane",
+     1
+    ]
+   ],
+   "head_newest": "2021-12-15",
+   "top_newest": "2026-02-10",
+   "ships": true
+  },
+  {
+   "org_id": 18263464,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "81086989100038",
+   "country": "FR",
+   "old_name": "lyde conseil sas (co-traitant d'un groupement dont MEJA sarl est mandataire)",
+   "new_name": "lyde Conseil",
+   "spellings": [
+    [
+     "LYDE CONSEIL",
+     2
+    ],
+    [
+     "lyde Conseil",
+     1
+    ],
+    [
+     "lyde conseil sas (co-traitant d'un groupement dont MEJA sarl est mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2021-12-31",
+   "top_newest": "2025-02-24",
+   "ships": true
+  },
+  {
+   "org_id": 18808472,
+   "rule": "R1",
+   "head": 1,
+   "n": 10,
+   "identifier": "43884541400038",
+   "country": "FR",
+   "old_name": "gpt 2lm / oceam",
+   "new_name": "2LM",
+   "spellings": [
+    [
+     "2LM",
+     3
+    ],
+    [
+     "SAS 2LM",
+     3
+    ],
+    [
+     "2LM (VRD)",
+     2
+    ],
+    [
+     "gpt 2lm / oceam",
+     1
+    ],
+    [
+     "sa 2lm",
+     1
+    ]
+   ],
+   "head_newest": "2022-03-28",
+   "top_newest": "2026-01-13",
+   "ships": true
+  },
+  {
+   "org_id": 18874640,
+   "rule": "R1",
+   "head": 1,
+   "n": 14,
+   "identifier": "LU21747447",
+   "country": "LU",
+   "old_name": "Groupement CuREA – Chef de file CGI Luxembourg SA",
+   "new_name": "CGI Luxembourg S.A.",
+   "spellings": [
+    [
+     "CGI Luxembourg S.A.",
+     5
+    ],
+    [
+     "CGI Luxembourg SA",
+     4
+    ],
+    [
+     "CGI LUXEMBOURG SA",
+     3
+    ],
+    [
+     "CGI Luxembourg",
+     1
+    ],
+    [
+     "Groupement CuREA – Chef de file CGI Luxembourg SA",
+     1
+    ]
+   ],
+   "head_newest": "2022-04-13",
+   "top_newest": "2026-08-06",
+   "ships": true
+  },
+  {
+   "org_id": 19357393,
+   "rule": "R1",
+   "head": 1,
+   "n": 57,
+   "identifier": "82448465300012",
+   "country": "FR",
+   "old_name": "SONEPAR FRANCE DISTRIBUTION (mandataire)",
+   "new_name": "SONEPAR France DISTRIBUTION",
+   "spellings": [
+    [
+     "SONEPAR FRANCE DISTRIBUTION",
+     23
+    ],
+    [
+     "SONEPAR",
+     11
+    ],
+    [
+     "sonepar france distribution",
+     3
+    ],
+    [
+     "SONEPAR France",
+     2
+    ],
+    [
+     "SONEPAR France DISTRIBUTION",
+     2
+    ]
+   ],
+   "head_newest": "2022-07-08",
+   "top_newest": "2026-09-10",
+   "ships": true
+  },
+  {
+   "org_id": 19426241,
+   "rule": "R1",
+   "head": 4,
+   "n": 26,
+   "identifier": "48962613500391",
+   "country": "FR",
+   "old_name": "ingerop conseil et ingenierie (Mandataire du Groupement)",
+   "new_name": "INGEROP Conseil et Ingénierie",
+   "spellings": [
+    [
+     "INGEROP CONSEIL ET INGENIERIE",
+     7
+    ],
+    [
+     "INGEROP Conseil et Ingénierie",
+     6
+    ],
+    [
+     "ingerop Conseil et Ingénierie (Mandataire du groupement)",
+     2
+    ],
+    [
+     "ingerop conseil et ingenierie",
+     2
+    ],
+    [
+     "ingerop conseil et ingenierie (Mandataire du Groupement)",
+     2
+    ]
+   ],
+   "head_newest": "2023-11-13",
+   "top_newest": "2026-09-15",
+   "ships": false
+  },
+  {
+   "org_id": 19603409,
+   "rule": "R1",
+   "head": 1,
+   "n": 10,
+   "identifier": "9110028958557",
+   "country": "AT",
+   "old_name": "ARGE B2M Baumanagement GmbH / Hirm & Partner ZT GmbH",
+   "new_name": "B2M Baumanagement GmbH",
+   "spellings": [
+    [
+     "B2M Baumanagement GmbH",
+     8
+    ],
+    [
+     "ARGE B2M Baumanagement GmbH / Hirm & Partner ZT GmbH",
+     1
+    ],
+    [
+     "B2M Baumanagement GmbH / Hirm & Partner GmbH",
+     1
+    ]
+   ],
+   "head_newest": "2022-08-31",
+   "top_newest": "2026-10-15",
+   "ships": true
+  },
+  {
+   "org_id": 20073092,
+   "rule": "R1",
+   "head": 1,
+   "n": 24,
+   "identifier": "38113350300049",
+   "country": "FR",
+   "old_name": "cabinet madelaine brisset (mandataire du groupement)",
+   "new_name": "Cabinet MADELAINE BRISSET",
+   "spellings": [
+    [
+     "CABINET MADELAINE BRISSET",
+     7
+    ],
+    [
+     "Cabinet MADELAINE BRISSET",
+     2
+    ],
+    [
+     "Cabinet Madelaine BRISSET",
+     2
+    ],
+    [
+     "cabinet madelaine brisset",
+     2
+    ],
+    [
+     "BRISSET /CFDP",
+     1
+    ]
+   ],
+   "head_newest": "2022-11-11",
+   "top_newest": "2026-01-06",
+   "ships": true
+  },
+  {
+   "org_id": 20363598,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "81939414900036",
+   "country": "FR",
+   "old_name": "co-s (mandataire d'un des 4 groupements titulaires)",
+   "new_name": "Co-S",
+   "spellings": [
+    [
+     "CO-S",
+     2
+    ],
+    [
+     "Co-S",
+     1
+    ],
+    [
+     "co-s (mandataire d'un des 4 groupements titulaires)",
+     1
+    ]
+   ],
+   "head_newest": "2022-12-21",
+   "top_newest": "2024-09-09",
+   "ships": true
+  },
+  {
+   "org_id": 21029204,
+   "rule": "R1",
+   "head": 1,
+   "n": 12,
+   "identifier": "48028153400036",
+   "country": "FR",
+   "old_name": "etudes et synergies (mandataire)",
+   "new_name": "Etudes et Synergies",
+   "spellings": [
+    [
+     "ETUDES ET SYNERGIES",
+     9
+    ],
+    [
+     "Etudes et Synergies",
+     2
+    ],
+    [
+     "etudes et synergies (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2023-04-05",
+   "top_newest": "2026-07-22",
+   "ships": true
+  },
+  {
+   "org_id": 21104135,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "80845099300015",
+   "country": "FR",
+   "old_name": "francisci transport (Mandataire)",
+   "new_name": "FRANCISCI TRANSPORT SARL",
+   "spellings": [
+    [
+     "FRANCISCI TRANSPORT SARL",
+     2
+    ],
+    [
+     "francisci transport",
+     2
+    ],
+    [
+     "francisci transport (Mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2023-05-26",
+   "top_newest": "2026-07-28",
+   "ships": true
+  },
+  {
+   "org_id": 21130636,
+   "rule": "R2",
+   "head": 1,
+   "n": 11,
+   "identifier": "34864644900077",
+   "country": "FR",
+   "old_name": "gam s.a.s. (Groupement d'achat pour Médiathèques)",
+   "new_name": "GAM",
+   "spellings": [
+    [
+     "GAM",
+     2
+    ],
+    [
+     "GAMANNECY",
+     2
+    ],
+    [
+     "gam sas",
+     2
+    ],
+    [
+     "GAM-ANNECY",
+     1
+    ],
+    [
+     "Groupement d'Achat Pour Médiathèques (GAM) GAMANNECY",
+     1
+    ]
+   ],
+   "head_newest": "2023-05-08",
+   "top_newest": "2024-07-05",
+   "ships": false
+  },
+  {
+   "org_id": 21480661,
+   "rule": "R1",
+   "head": 1,
+   "n": 15,
+   "identifier": "66578045800048",
+   "country": "FR",
+   "old_name": "société CHUDEAU (Mandataire du groupement)",
+   "new_name": "SAS CHUDEAU",
+   "spellings": [
+    [
+     "SAS CHUDEAU",
+     8
+    ],
+    [
+     "CHUDEAU",
+     5
+    ],
+    [
+     "CHUDEAU SAS",
+     1
+    ],
+    [
+     "société CHUDEAU (Mandataire du groupement)",
+     1
+    ]
+   ],
+   "head_newest": "2023-07-25",
+   "top_newest": "2026-03-11",
+   "ships": true
+  },
+  {
+   "org_id": 21555937,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "40225042700125",
+   "country": "FR",
+   "old_name": "inddigo sas (Mandataire)",
+   "new_name": "INDDIGO SAS",
+   "spellings": [
+    [
+     "INDDIGO SAS",
+     2
+    ],
+    [
+     "INDDIGO",
+     1
+    ],
+    [
+     "INDIGGO SAS",
+     1
+    ],
+    [
+     "inddigo sas (Mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2023-07-07",
+   "top_newest": "2025-09-23",
+   "ships": false
+  },
+  {
+   "org_id": 21596565,
+   "rule": "R1",
+   "head": 1,
+   "n": 18,
+   "identifier": "34438343500031",
+   "country": "FR",
+   "old_name": "GECOP - GENERALE DE COUVERTURE PLOMBERIE (mandataire)",
+   "new_name": "GECOP",
+   "spellings": [
+    [
+     "GECOP",
+     10
+    ],
+    [
+     "GECOP - GENERALE DE COUVERTURE PLOMBERIE",
+     2
+    ],
+    [
+     "gecop",
+     2
+    ],
+    [
+     "GECOP - GENERALE DE COUVERTURE PLOMBERIE (mandataire)",
+     1
+    ],
+    [
+     "GECOP Générale de couverture de plomberie",
+     1
+    ]
+   ],
+   "head_newest": "2023-07-24",
+   "top_newest": "2026-07-02",
+   "ships": true
+  },
+  {
+   "org_id": 22048766,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "433900834",
+   "country": "FR",
+   "old_name": "BOUYGUES BATIMENT ILE DE FRANCE (mandataire)",
+   "new_name": "BOUYGUES BATIMENT ILE DE FRANCE",
+   "spellings": [
+    [
+     "BOUYGUES BATIMENT ILE DE FRANCE",
+     2
+    ],
+    [
+     "BOUYGUES BATIMENT ILE DE FRANCE (mandataire)",
+     1
+    ],
+    [
+     "BOUYGUES BATIMENT ILE DE FRANCE,",
+     1
+    ],
+    [
+     "BOUYGUES BATIMENT ILE-DE-FRANCE",
+     1
+    ],
+    [
+     "bouygues bâtiment IDF",
+     1
+    ]
+   ],
+   "head_newest": "2023-10-24",
+   "top_newest": "2025-11-24",
+   "ships": false
+  },
+  {
+   "org_id": 22243890,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "CHE105901715",
+   "country": "CH",
+   "old_name": "Consortium de la \"STEP de Lucens\" des entreprises: JPF Construction SA et Grisoni-Zaugg SA",
+   "new_name": "JPF Construction SA",
+   "spellings": [
+    [
+     "JPF Construction SA",
+     6
+    ],
+    [
+     "Consortium de la \"STEP de Lucens\" des entreprises: JPF Construction SA et Grisoni-Zaugg SA",
+     1
+    ],
+    [
+     "c/o JPF Construction SA - Grisoni Zaugg SA - Marti Construction SA - De Luca SA",
+     1
+    ]
+   ],
+   "head_newest": "2023-11-10",
+   "top_newest": "2024-12-06",
+   "ships": false
+  },
+  {
+   "org_id": 22298985,
+   "rule": "R1",
+   "head": 2,
+   "n": 9,
+   "identifier": "DE114170628",
+   "country": "DE",
+   "old_name": "ARGE INTEGRATION International Management Consultants GmbH (Lead) - CESI Algérie - INT-Frankfurt HR Consulting OÜ",
+   "new_name": "INTEGRATION International Management Consultants GmbH",
+   "spellings": [
+    [
+     "INTEGRATION INTERNATIONAL MANAGEMENT CONSULTANTS GMBH",
+     3
+    ],
+    [
+     "ARGE INTEGRATION International Management Consultants GmbH (Lead) - CESI Algérie - INT-Frankfurt HR Consulting OÜ",
+     2
+    ],
+    [
+     "Consortium INTEGRATION International Management Consultants GmbH – Encompass Alfa Line - INT-Frankfurt HR Consulting OÜ – Ekvita S.r.I.s",
+     2
+    ],
+    [
+     "INTEGRATION International Management Consultants GmbH",
+     2
+    ]
+   ],
+   "head_newest": "2023-12-07",
+   "top_newest": "2026-01-19",
+   "ships": false
+  },
+  {
+   "org_id": 22378401,
+   "rule": "R1",
+   "head": 2,
+   "n": 21,
+   "identifier": "DE150516887",
+   "country": "DE",
+   "old_name": "ARGE NTM-Bühnenbeleuchtung, bestehend aus LSS Licht-, Steuer- und Schaltanlagen GmbH und Zeiler-Technik GmbH & Co. KG",
+   "new_name": "LSS GmbH",
+   "spellings": [
+    [
+     "LSS GmbH",
+     17
+    ],
+    [
+     "ARGE NTM-Bühnenbeleuchtung, bestehend aus LSS Licht-, Steuer- und Schaltanlagen GmbH und Zeiler-Technik GmbH & Co. KG",
+     2
+    ],
+    [
+     "LSS Licht-, Steuer- und Schaltanlagenbau GmbH",
+     2
+    ]
+   ],
+   "head_newest": "2023-12-01",
+   "top_newest": "2026-07-14",
+   "ships": false
+  },
+  {
+   "org_id": 22496469,
+   "rule": "R1",
+   "head": 1,
+   "n": 12,
+   "identifier": "82329934200076",
+   "country": "FR",
+   "old_name": "Groupement TERIDEAL ATLANTIQUE/TERIDEAL SIREV",
+   "new_name": "SAS TERIDEAL - ATLANTIQUE",
+   "spellings": [
+    [
+     "SAS TERIDEAL - ATLANTIQUE",
+     4
+    ],
+    [
+     "TERIDEAL",
+     2
+    ],
+    [
+     "TERIDEAL-ATLANTIQUE",
+     2
+    ],
+    [
+     "Groupement TERIDEAL ATLANTIQUE/TERIDEAL SIREV",
+     1
+    ],
+    [
+     "SAS TERIDEAL ATLANTIQUE",
+     1
+    ]
+   ],
+   "head_newest": "2024-02-29",
+   "top_newest": "2026-08-11",
+   "ships": false
+  },
+  {
+   "org_id": 22516776,
+   "rule": "R1",
+   "head": 2,
+   "n": 16,
+   "identifier": "DE217539751",
+   "country": "DE",
+   "old_name": "ARGE Regierungsbaumeister Schlegel GmbH & Co.KG & BPR Dr. Schäpertöns Consult GmbH & Co.KG & Vogt Bauüberwachungsleistungen UG",
+   "new_name": "Regierungsbaumeister Schlegel GmbH & Co. KG",
+   "spellings": [
+    [
+     "Regierungsbaumeister Schlegel GmbH & Co. KG",
+     10
+    ],
+    [
+     "ARGE Regierungsbaumeister Schlegel GmbH & Co.KG & BPR Dr. Schäpertöns Consult GmbH & Co.KG & Vogt Bauüberwachungsleistungen UG",
+     2
+    ],
+    [
+     "BG Regierungsbaumeister Schlegel / p2m berlin",
+     2
+    ],
+    [
+     "BG Regierungsbaumeister Schlegel GmbH & Co. KG / p2m berlin GmbH",
+     2
+    ]
+   ],
+   "head_newest": "2024-02-19",
+   "top_newest": "2025-07-18",
+   "ships": false
+  },
+  {
+   "org_id": 22522314,
+   "rule": "R1",
+   "head": 2,
+   "n": 20,
+   "identifier": "HRA4169",
+   "country": "DE",
+   "old_name": "ARGE ECO Consult GmbH & Co. KG - SustaiNet Group Ltd.",
+   "new_name": "ECO Consult GmbH & Co KG",
+   "spellings": [
+    [
+     "ECO Consult GmbH & Co KG",
+     18
+    ],
+    [
+     "ARGE ECO Consult GmbH & Co. KG - SustaiNet Group Ltd.",
+     2
+    ]
+   ],
+   "head_newest": "2024-02-22",
+   "top_newest": "2026-10-14",
+   "ships": false
+  },
+  {
+   "org_id": 22524929,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "38345880900027",
+   "country": "FR",
+   "old_name": "Groupement VILLA BATTESTI ARCHITECTES ET ASSOCIES / BATTESTI ASSOCIES / DIANA DE MARI / BG INGENIEURS CONSEILS / INVEO / PROFILS CONSULTANTS",
+   "new_name": "Villa Battesti Architectes et associés",
+   "spellings": [
+    [
+     "Villa Battesti Architectes et associés",
+     3
+    ],
+    [
+     "Groupement VILLA BATTESTI ARCHITECTES ET ASSOCIES / BATTESTI ASSOCIES / DIANA DE MARI / BG INGENIEURS CONSEILS / INVEO / PROFILS CONSULTANTS",
+     1
+    ]
+   ],
+   "head_newest": "2024-02-12",
+   "top_newest": "2025-03-05",
+   "ships": false
+  },
+  {
+   "org_id": 22534691,
+   "rule": "R1",
+   "head": 2,
+   "n": 22,
+   "identifier": "DE361508840",
+   "country": "DE",
+   "old_name": "Troiber GmbH & Co. KG (Bietergemeinschaft mit Bauer GmbH & Co.KG, Rödental; Nußbaumer GmbH & Co.KG, Kürnach; Omega Sorg GmbH, Rednitzhembach; Früchte Jork GmbH, Isny; Rittner Food Service GmbH & Co.KG, Unterschleißheim)",
+   "new_name": "Troiber GmbH & Co. KG",
+   "spellings": [
+    [
+     "Troiber GmbH & Co. KG",
+     20
+    ],
+    [
+     "Troiber GmbH & Co. KG (Bietergemeinschaft mit Bauer GmbH & Co.KG, Rödental; Nußbaumer GmbH & Co.KG, Kürnach; Omega Sorg GmbH, Rednitzhembach; Früchte Jork GmbH, Isny; Rittner Food Service GmbH & Co.KG, Unterschleißheim)",
+     2
+    ]
+   ],
+   "head_newest": "2024-03-13",
+   "top_newest": "2026-08-07",
+   "ships": false
+  },
+  {
+   "org_id": 22534692,
+   "rule": "R1",
+   "head": 2,
+   "n": 6,
+   "identifier": "DE815728669",
+   "country": "DE",
+   "old_name": "EDEKA Foodservice Stiftung & Co. KG (Bietergemeinschaft mit Union SB-Großmarkt Südbayern GmbH)",
+   "new_name": "EDEKA Foodservice Stiftung & Co. KG",
+   "spellings": [
+    [
+     "EDEKA Foodservice Stiftung & Co. KG",
+     4
+    ],
+    [
+     "EDEKA Foodservice Stiftung & Co. KG (Bietergemeinschaft mit Union SB-Großmarkt Südbayern GmbH)",
+     2
+    ]
+   ],
+   "head_newest": "2024-03-13",
+   "top_newest": "2026-02-03",
+   "ships": false
+  },
+  {
+   "org_id": 22542189,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "78288385400161",
+   "country": "FR",
+   "old_name": "Groupement ACOPAD/LE CANA/AECD/ACPM",
+   "new_name": "ACOPAD",
+   "spellings": [
+    [
+     "ACOPAD",
+     4
+    ],
+    [
+     "Groupement ACOPAD / Nes&Cité",
+     1
+    ],
+    [
+     "Groupement ACOPAD/LE CANA/AECD/ACPM",
+     1
+    ]
+   ],
+   "head_newest": "2024-03-15",
+   "top_newest": "2025-10-22",
+   "ships": false
+  },
+  {
+   "org_id": 22553939,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "31591977900027",
+   "country": "FR",
+   "old_name": "NOUVETRA (mandataire du groupement NOUVETRA-SERPOLLET)",
+   "new_name": "NOUVETRA",
+   "spellings": [
+    [
+     "NOUVETRA",
+     4
+    ],
+    [
+     "NOUVETRA SAS",
+     2
+    ],
+    [
+     "NOUVETRA (mandataire du groupement NOUVETRA-SERPOLLET)",
+     1
+    ]
+   ],
+   "head_newest": "2024-03-04",
+   "top_newest": "2025-09-15",
+   "ships": false
+  },
+  {
+   "org_id": 22564157,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "37990656300034",
+   "country": "FR",
+   "old_name": "MOBILINK(mandataire)",
+   "new_name": "Mobilink",
+   "spellings": [
+    [
+     "MOBILINK",
+     2
+    ],
+    [
+     "MOBILINK (sous-traitant)",
+     1
+    ],
+    [
+     "MOBILINK(mandataire)",
+     1
+    ],
+    [
+     "Mobilink",
+     1
+    ]
+   ],
+   "head_newest": "2024-04-08",
+   "top_newest": "2024-12-09",
+   "ships": false
+  },
+  {
+   "org_id": 22564460,
+   "rule": "R1",
+   "head": 1,
+   "n": 10,
+   "identifier": "45066958500025",
+   "country": "FR",
+   "old_name": "CUADRA (mandataire) \ncotraitant ACDe\ncotraitant B3E\ncotraitant CDB ACOUSTIQUE \ncotraitant PLANTAGO",
+   "new_name": "CUADRA",
+   "spellings": [
+    [
+     "CUADRA",
+     9
+    ],
+    [
+     "CUADRA (mandataire) \ncotraitant ACDe\ncotraitant B3E\ncotraitant CDB ACOUSTIQUE \ncotraitant PLANTAGO",
+     1
+    ]
+   ],
+   "head_newest": "2024-04-08",
+   "top_newest": "2026-06-01",
+   "ships": false
+  },
+  {
+   "org_id": 22572466,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "91383543500011",
+   "country": "FR",
+   "old_name": "Groupement solidaire conduit par PARTNER FINE ART",
+   "new_name": "PARTNER FINE ART",
+   "spellings": [
+    [
+     "PARTNER FINE ART",
+     3
+    ],
+    [
+     "Groupement solidaire conduit par PARTNER FINE ART",
+     1
+    ]
+   ],
+   "head_newest": "2024-04-03",
+   "top_newest": "2026-09-28",
+   "ships": false
+  },
+  {
+   "org_id": 22585173,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "79582006700143",
+   "country": "FR",
+   "old_name": "GROUPEMENT ARBONIS CCL",
+   "new_name": "ARBONIS",
+   "spellings": [
+    [
+     "ARBONIS",
+     4
+    ],
+    [
+     "GROUPEMENT ARBONIS CCL",
+     1
+    ]
+   ],
+   "head_newest": "2024-04-23",
+   "top_newest": "2026-02-02",
+   "ships": false
+  },
+  {
+   "org_id": 22590748,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "91236214200024",
+   "country": "FR",
+   "old_name": "Titulaire 1: SOLVHA (mandataire) / MEOTEC (co-traitant)\nTitulaire 2: KLB GROUP \nTitulaire 3: VISIATIV",
+   "new_name": "SOLVHA",
+   "spellings": [
+    [
+     "SOLVHA",
+     4
+    ],
+    [
+     "Titulaire 1: SOLVHA (mandataire) / MEOTEC (co-traitant)\nTitulaire 2: KLB GROUP \nTitulaire 3: VISIATIV",
+     1
+    ]
+   ],
+   "head_newest": "2024-04-30",
+   "top_newest": "2026-02-12",
+   "ships": false
+  },
+  {
+   "org_id": 22596745,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "33878625400056",
+   "country": "FR",
+   "old_name": "GROUPEMENT FAURIE (MANDATAIRE) / EHTP (co-traitant)",
+   "new_name": "FAURIE SAS",
+   "spellings": [
+    [
+     "FAURIE SAS",
+     4
+    ],
+    [
+     "FAURIE",
+     2
+    ],
+    [
+     "GROUPEMENT FAURIE (MANDATAIRE) / EHTP (co-traitant)",
+     1
+    ]
+   ],
+   "head_newest": "2024-05-08",
+   "top_newest": "2026-05-21",
+   "ships": false
+  },
+  {
+   "org_id": 22597727,
+   "rule": "R1",
+   "head": 4,
+   "n": 12,
+   "identifier": "DE247989569",
+   "country": "DE",
+   "old_name": "Bursch Medizintechnik GmbH als 2. Mitglied der Bietergemeinschaft",
+   "new_name": "Bursch Medizintechnik GmbH",
+   "spellings": [
+    [
+     "Bursch Medizintechnik GmbH",
+     8
+    ],
+    [
+     "Bursch Medizintechnik GmbH als 2. Mitglied der Bietergemeinschaft",
+     4
+    ]
+   ],
+   "head_newest": "2024-05-03",
+   "top_newest": "2026-10-08",
+   "ships": false
+  },
+  {
+   "org_id": 22609154,
+   "rule": "R1",
+   "head": 4,
+   "n": 22,
+   "identifier": "DE300491024",
+   "country": "DE",
+   "old_name": "GVS Service GmbH - bevollmächtigter Vertreter der Bietergemeinschaft",
+   "new_name": "GVS-Service GmbH",
+   "spellings": [
+    [
+     "GVS-Service GmbH",
+     14
+    ],
+    [
+     "Dr. Butze GmbH & Co. KG - Bietergemeinschaftsmitglied",
+     2
+    ],
+    [
+     "GVS Service GmbH - bevollmächtigter Vertreter der Bietergemeinschaft",
+     2
+    ],
+    [
+     "GVS-Service GmbH - bevollmächtigter Vertreter der Bietergemeinschaft",
+     2
+    ],
+    [
+     "Kurt Müller GmbH",
+     2
+    ]
+   ],
+   "head_newest": "2025-03-25",
+   "top_newest": "2026-02-06",
+   "ships": false
+  },
+  {
+   "org_id": 22609164,
+   "rule": "R1",
+   "head": 2,
+   "n": 8,
+   "identifier": "DE356317230",
+   "country": "DE",
+   "old_name": "Topserv Vertriebs GmbH - bevollmächtigter Vertreter der Bietergemeinschaft",
+   "new_name": "Topserv Vertriebs GmbH",
+   "spellings": [
+    [
+     "Topserv Vertriebs GmbH",
+     6
+    ],
+    [
+     "Topserv Vertriebs GmbH - bevollmächtigter Vertreter der Bietergemeinschaft",
+     2
+    ]
+   ],
+   "head_newest": "2024-05-30",
+   "top_newest": "2024-07-11",
+   "ships": false
+  },
+  {
+   "org_id": 22618129,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "CHE105587665",
+   "country": "CH",
+   "old_name": "ARGE RSW c/o RS Suter AG",
+   "new_name": "RS Suter AG",
+   "spellings": [
+    [
+     "RS Suter AG",
+     3
+    ],
+    [
+     "ARGE RSW c/o RS Suter AG",
+     1
+    ]
+   ],
+   "head_newest": "2024-05-17",
+   "top_newest": "2024-10-15",
+   "ships": false
+  },
+  {
+   "org_id": 22619950,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "48820308400030",
+   "country": "FR",
+   "old_name": "Groupement CHAUVIER SAS associé à ACTION HABITAT",
+   "new_name": "CHAUVIER",
+   "spellings": [
+    [
+     "CHAUVIER",
+     5
+    ],
+    [
+     "CHAUVIER SAS",
+     2
+    ],
+    [
+     "Groupement CHAUVIER SAS associé à ACTION HABITAT",
+     1
+    ]
+   ],
+   "head_newest": "2024-05-21",
+   "top_newest": "2026-06-22",
+   "ships": false
+  },
+  {
+   "org_id": 22622636,
+   "rule": "R2",
+   "head": 1,
+   "n": 8,
+   "identifier": "95551000300077",
+   "country": "FR",
+   "old_name": "THERMO FISHER DIAGNOSTICS SAS\nMandataire du groupement THERMO FISHER    DIAGNOSTICS / BMT",
+   "new_name": "Thermo Fisher Diagnostics SAS",
+   "spellings": [
+    [
+     "THERMO FISHER DIAGNOSTICS SAS",
+     2
+    ],
+    [
+     "THERMO FISHER DIAGNOSTICS - Division TDX",
+     1
+    ],
+    [
+     "THERMO FISHER DIAGNOSTICS SAS\nMandataire du groupement THERMO FISHER    DIAGNOSTICS / BMT",
+     1
+    ],
+    [
+     "THERMO FISHER DIAGNOSTICS SAS -Division IDD",
+     1
+    ],
+    [
+     "THERMO FISHER DIAGNOSTICS SAS-Division CDD",
+     1
+    ]
+   ],
+   "head_newest": "2024-05-07",
+   "top_newest": "2026-07-02",
+   "ships": false
+  },
+  {
+   "org_id": 22628426,
+   "rule": "R1",
+   "head": 1,
+   "n": 17,
+   "identifier": "41336018100049",
+   "country": "FR",
+   "old_name": "Groupement LEASYS FRANCE et AUTOMOBILE DE BOURGOGNE",
+   "new_name": "LEASYS France",
+   "spellings": [
+    [
+     "LEASYS France",
+     5
+    ],
+    [
+     "LEASYS FRANCE",
+     4
+    ],
+    [
+     "LEASYS France SAS",
+     3
+    ],
+    [
+     "Groupement LEASYS FRANCE et AUTOMOBILE DE BOURGOGNE",
+     1
+    ],
+    [
+     "Groupement conjoint LEASYS France (mandataire) / SCP CHOPARD Cannes",
+     1
+    ]
+   ],
+   "head_newest": "2024-06-11",
+   "top_newest": "2025-10-02",
+   "ships": false
+  },
+  {
+   "org_id": 22638904,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "50140147500022",
+   "country": "FR",
+   "old_name": "GTM SUD-OUEST TP GC (Mandataire)",
+   "new_name": "GTM Sud-Ouest TP GC",
+   "spellings": [
+    [
+     "GTM SUD-OUEST TP GC",
+     2
+    ],
+    [
+     "GTM SUD OUEST",
+     1
+    ],
+    [
+     "GTM SUD-OUEST TP GC (Mandataire)",
+     1
+    ],
+    [
+     "GTM SUD-OUEST TP GC, SASU",
+     1
+    ],
+    [
+     "GTM Sud-Ouest TP GC",
+     1
+    ]
+   ],
+   "head_newest": "2024-06-26",
+   "top_newest": "2026-09-08",
+   "ships": false
+  },
+  {
+   "org_id": 22648040,
+   "rule": "R1",
+   "head": 2,
+   "n": 10,
+   "identifier": "DE138773422",
+   "country": "DE",
+   "old_name": "ARGE ARCUS + DEGAT\nARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+   "new_name": "ARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+   "spellings": [
+    [
+     "ARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+     6
+    ],
+    [
+     "ARCUS Planung + Beratungs Bauplanungsgesellschaft",
+     2
+    ],
+    [
+     "ARGE ARCUS + DEGAT\nARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+     2
+    ]
+   ],
+   "head_newest": "2024-06-10",
+   "top_newest": "2025-12-23",
+   "ships": false
+  },
+  {
+   "org_id": 22658782,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "84031454600028",
+   "country": "FR",
+   "old_name": "Groupement ADG ENERGY (mandataire) / BALTHAZARD / CARRION TP / SERP / CITEOS",
+   "new_name": "ADG ENERGY",
+   "spellings": [
+    [
+     "ADG ENERGY",
+     4
+    ],
+    [
+     "Groupement ADG ENERGY (mandataire) / BALTHAZARD / CARRION TP / SERP / CITEOS",
+     1
+    ]
+   ],
+   "head_newest": "2024-07-09",
+   "top_newest": "2025-07-21",
+   "ships": false
+  },
+  {
+   "org_id": 22667236,
+   "rule": "R1",
+   "head": 1,
+   "n": 11,
+   "identifier": "34217401800370",
+   "country": "FR",
+   "old_name": "GROUPEMENT GEOFIT (Mandataire) - SINTEGRA (cotraitant)",
+   "new_name": "Géofit",
+   "spellings": [
+    [
+     "GEOFIT",
+     6
+    ],
+    [
+     "GEOFIT (FIT)",
+     3
+    ],
+    [
+     "GROUPEMENT GEOFIT (Mandataire) - SINTEGRA (cotraitant)",
+     1
+    ],
+    [
+     "Géofit",
+     1
+    ]
+   ],
+   "head_newest": "2024-07-29",
+   "top_newest": "2026-02-02",
+   "ships": false
+  },
+  {
+   "org_id": 22696968,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "79810877500023",
+   "country": "FR",
+   "old_name": "Atelier MIMA (Architecte mandataire)",
+   "new_name": "Atelier MIMA",
+   "spellings": [
+    [
+     "ATELIER MIMA",
+     2
+    ],
+    [
+     "Atelier MIMA",
+     2
+    ],
+    [
+     "Atelier MIMA (Architecte mandataire)",
+     1
+    ],
+    [
+     "Atelier MIMA (Mandataire, Architecture)",
+     1
+    ]
+   ],
+   "head_newest": "2024-08-23",
+   "top_newest": "2026-03-25",
+   "ships": false
+  },
+  {
+   "org_id": 22715315,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "48046024500024",
+   "country": "FR",
+   "old_name": "COLAS DURAND ARCHITECTES (MANDATAIRE)\nCOTRAITANTS\nBSO/OPRYME/EICE/ACCOUSTIBEL",
+   "new_name": "COLAS DURAND Architectes",
+   "spellings": [
+    [
+     "COLAS DURAND Architectes",
+     2
+    ],
+    [
+     "COLAS DURAND ARCHITECTES",
+     1
+    ],
+    [
+     "COLAS DURAND ARCHITECTES (MANDATAIRE)\nCOTRAITANTS\nBSO/OPRYME/EICE/ACCOUSTIBEL",
+     1
+    ]
+   ],
+   "head_newest": "2024-09-17",
+   "top_newest": "2026-08-05",
+   "ships": false
+  },
+  {
+   "org_id": 22729641,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "72201317400114",
+   "country": "FR",
+   "old_name": "GROUPEMENT SETEC INTERNATIONAL SAS / SETEC ALS",
+   "new_name": "SETEC INTERNATIONAL",
+   "spellings": [
+    [
+     "SETEC INTERNATIONAL",
+     2
+    ],
+    [
+     "GROUPEMENT SETEC INTERNATIONAL SAS / SETEC ALS",
+     1
+    ],
+    [
+     "Groupement SETEC INTERNATIONAL / SETEC ALS / GETEC OCEAN INDIEN",
+     1
+    ],
+    [
+     "SETEC INTERNATIONAL SAS",
+     1
+    ]
+   ],
+   "head_newest": "2024-09-25",
+   "top_newest": "2025-12-01",
+   "ships": false
+  },
+  {
+   "org_id": 22741977,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "42878870700035",
+   "country": "FR",
+   "old_name": "GROUPEMENT ROUGNON ET DEGRE CELSIUS SERVICES",
+   "new_name": "Rougnon",
+   "spellings": [
+    [
+     "ROUGNON",
+     5
+    ],
+    [
+     "GROUPEMENT ROUGNON ET DEGRE CELSIUS SERVICES",
+     1
+    ],
+    [
+     "Rougnon",
+     1
+    ]
+   ],
+   "head_newest": "2024-09-30",
+   "top_newest": "2026-10-05",
+   "ships": false
+  },
+  {
+   "org_id": 22755534,
+   "rule": "R1",
+   "head": 1,
+   "n": 10,
+   "identifier": "42299315400067",
+   "country": "FR",
+   "old_name": "Groupement COLOMBUS CONSULTING / BALTHAZAR / GREENFLEX",
+   "new_name": "Colombus Consulting",
+   "spellings": [
+    [
+     "COLOMBUS CONSULTING",
+     6
+    ],
+    [
+     "Colombus Consulting",
+     3
+    ],
+    [
+     "Groupement COLOMBUS CONSULTING / BALTHAZAR / GREENFLEX",
+     1
+    ]
+   ],
+   "head_newest": "2024-10-10",
+   "top_newest": "2026-02-18",
+   "ships": false
+  },
+  {
+   "org_id": 22781837,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "38369397500070",
+   "country": "FR",
+   "old_name": "GROUPEMENT SAS KUBA / LA BANQUE POSTALE",
+   "new_name": "KUBA",
+   "spellings": [
+    [
+     "KUBA",
+     2
+    ],
+    [
+     "GROUPEMENT SAS KUBA / LA BANQUE POSTALE",
+     1
+    ],
+    [
+     "KUBA SASU",
+     1
+    ]
+   ],
+   "head_newest": "2024-10-08",
+   "top_newest": "2026-09-11",
+   "ships": false
+  },
+  {
+   "org_id": 22782871,
+   "rule": "R2",
+   "head": 1,
+   "n": 12,
+   "identifier": "26210007600302",
+   "country": "FR",
+   "old_name": "GROUPEMENT DE COMMANDE DU GHT 21-52 ET SES ETABLISSEMENTS PARTENAIRES\n Etablissement coordonnateur : CHU DIJON BOURGOGNE",
+   "new_name": "CHU Dijon Bourgogne",
+   "spellings": [
+    [
+     "CHU Dijon Bourgogne",
+     6
+    ],
+    [
+     "GHT 21-52",
+     3
+    ],
+    [
+     "GROUPEMENT HOSPITALIER DE TERRITOIRE 21-52",
+     2
+    ],
+    [
+     "GROUPEMENT DE COMMANDE DU GHT 21-52 ET SES ETABLISSEMENTS PARTENAIRES\n Etablissement coordonnateur : CHU DIJON BOURGOGNE",
+     1
+    ]
+   ],
+   "head_newest": "2024-10-23",
+   "top_newest": "2026-09-24",
+   "ships": false
+  },
+  {
+   "org_id": 22838635,
+   "rule": "R1",
+   "head": 2,
+   "n": 8,
+   "identifier": "21710230000019",
+   "country": "FR",
+   "old_name": "Ville de Gueugnon\nCoordonnateur du groupement de commande Ville de Gueugnon / Communauté de Communes Entre Arroux, Loire et Somme",
+   "new_name": "Ville de Gueugnon",
+   "spellings": [
+    [
+     "VILLE DE GUEUGNON",
+     3
+    ],
+    [
+     "Ville de Gueugnon",
+     3
+    ],
+    [
+     "Ville de Gueugnon\nCoordonnateur du groupement de commande Ville de Gueugnon / Communauté de Communes Entre Arroux, Loire et Somme",
+     1
+    ],
+    [
+     "Ville de Gueugnon Coordonnateur du groupement de commande Ville de Gueugnon / Communauté de Communes Entre Arroux, Loire et Somme",
+     1
+    ]
+   ],
+   "head_newest": "2025-03-26",
+   "top_newest": "2026-10-07",
+   "ships": false
+  },
+  {
+   "org_id": 22857451,
+   "rule": "R1",
+   "head": 2,
+   "n": 8,
+   "identifier": "U09983099",
+   "country": "ES",
+   "old_name": "UTE ZENER SOFT CONSULTING SL, TECNICOS ASOCIADOS INFORMATICA SAU",
+   "new_name": "Zener Soft Consulting Sl, Técnicos Asociados Informática Sau",
+   "spellings": [
+    [
+     "Zener Soft Consulting Sl, Técnicos Asociados Informática Sau",
+     6
+    ],
+    [
+     "UTE ZENER SOFT CONSULTING SL, TECNICOS ASOCIADOS INFORMATICA SAU",
+     2
+    ]
+   ],
+   "head_newest": "2025-05-07",
+   "top_newest": "2026-06-04",
+   "ships": false
+  },
+  {
+   "org_id": 22876648,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "301291738",
+   "country": "FR",
+   "old_name": "Groupement SOCIETE D'ETUDES DE TRAVAUX HYDRAULIQUES ET D'ADDUCTION D'EAU (SETHA - mandataire) / GTIE INFI / SADE TRAVAUX SPECIAUX",
+   "new_name": "SOCIETE D ETUDES, DE TRAVAUX HYDRAULIQUES ET D'ADDUCTION D'EAU",
+   "spellings": [
+    [
+     "SOCIETE D ETUDES, DE TRAVAUX HYDRAULIQUES ET D'ADDUCTION D'EAU",
+     3
+    ],
+    [
+     "Groupement SOCIETE D'ETUDES DE TRAVAUX HYDRAULIQUES ET D'ADDUCTION D'EAU (SETHA - mandataire) / GTIE INFI / SADE TRAVAUX SPECIAUX",
+     1
+    ]
+   ],
+   "head_newest": "2024-12-20",
+   "top_newest": "2026-09-11",
+   "ships": false
+  },
+  {
+   "org_id": 22915652,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "33517109600035",
+   "country": "FR",
+   "old_name": "GROUPEMENT RELYENS SPS / RELYENS MUTUAL INSURANCE / RELYENS LIFE INSURANCE",
+   "new_name": "RELYENS SPS",
+   "spellings": [
+    [
+     "RELYENS SPS",
+     4
+    ],
+    [
+     "GROUPEMENT RELYENS SPS / RELYENS MUTUAL INSURANCE / RELYENS LIFE INSURANCE",
+     1
+    ]
+   ],
+   "head_newest": "2025-01-03",
+   "top_newest": "2026-09-10",
+   "ships": false
+  },
+  {
+   "org_id": 22958521,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "49813957500027",
+   "country": "FR",
+   "old_name": "Groupement PARIN CLAIDIERE - PETER MARCEL - MARISOL - COTE PEINT",
+   "new_name": "PARIN CLAIDIERE",
+   "spellings": [
+    [
+     "PARIN CLAIDIERE",
+     4
+    ],
+    [
+     "Groupement PARIN CLAIDIERE - PETER MARCEL - MARISOL - COTE PEINT",
+     1
+    ]
+   ],
+   "head_newest": "2025-01-08",
+   "top_newest": "2026-01-05",
+   "ships": false
+  },
+  {
+   "org_id": 22970973,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "39409553300060",
+   "country": "FR",
+   "old_name": "Fondation pour la recherche stratégique (FRS)-Mandataire groupement",
+   "new_name": "Fondation pour la recherche stratégique (FRS)",
+   "spellings": [
+    [
+     "Fondation pour la recherche stratégique (FRS)",
+     5
+    ],
+    [
+     "Fondation pour la recherche stratégique",
+     1
+    ],
+    [
+     "Fondation pour la recherche stratégique (FRS)-Mandataire groupement",
+     1
+    ],
+    [
+     "GROUPEMENT FONDATION POUR LA RECHERCHE STRATEGIQUE (FRS)/INSTITUT FRANCAIS DES RELATIONS INTERNATIONALES",
+     1
+    ]
+   ],
+   "head_newest": "2025-02-19",
+   "top_newest": "2026-06-18",
+   "ships": false
+  },
+  {
+   "org_id": 23025749,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "20006787400061",
+   "country": "FR",
+   "old_name": "Communauté d'Agglomération de Haguenau coordonnateur pour le compte du groupement de commandes constitué avec la Communauté de Communes de la Basse Zorn",
+   "new_name": "Communauté d'Agglomération de Haguenau",
+   "spellings": [
+    [
+     "Communauté d'Agglomération de Haguenau",
+     3
+    ],
+    [
+     "Communauté d'Agglomération de Haguenau coordonnateur pour le compte du groupement de commandes constitué avec la Communauté de Communes de la Basse Zorn",
+     1
+    ]
+   ],
+   "head_newest": "2025-03-17",
+   "top_newest": "2026-07-10",
+   "ships": false
+  },
+  {
+   "org_id": 23131602,
+   "rule": "R1",
+   "head": 2,
+   "n": 9,
+   "identifier": "52945836600026",
+   "country": "FR",
+   "old_name": "SPL ALES CEVENNES mandataire au nom et pour le compte de la Communauté de communes ALES AGGLOMERATION",
+   "new_name": "SPL ALES CEVENNES",
+   "spellings": [
+    [
+     "SPL ALES CEVENNES",
+     6
+    ],
+    [
+     "SPL ALES CEVENNES mandataire au nom et pour le compte de la Communauté de communes ALES AGGLOMERATION",
+     2
+    ],
+    [
+     "SPL ALES CEVENNES Mandataire de la Ville D'ALES",
+     1
+    ]
+   ],
+   "head_newest": "2026-04-10",
+   "top_newest": "2026-09-07",
+   "ships": false
+  },
+  {
+   "org_id": 23139907,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "646050476",
+   "country": "FR",
+   "old_name": "Groupement SIGNAUX GIROD/SIGNAUX GIROD NORD",
+   "new_name": "SIGNAUX GIROD",
+   "spellings": [
+    [
+     "SIGNAUX GIROD",
+     4
+    ],
+    [
+     "Groupement SIGNAUX GIROD/SIGNAUX GIROD NORD",
+     1
+    ]
+   ],
+   "head_newest": "2025-05-21",
+   "top_newest": "2026-03-25",
+   "ships": false
+  },
+  {
+   "org_id": 23224838,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "89800553300010",
+   "country": "FR",
+   "old_name": "GPT CONJOINT AXES INGENIERIE (MANDATAIRE)/STOA",
+   "new_name": "AXES INGENIERIE",
+   "spellings": [
+    [
+     "AXES INGENIERIE",
+     5
+    ],
+    [
+     "GPT CONJOINT AXES INGENIERIE (MANDATAIRE)/STOA",
+     1
+    ]
+   ],
+   "head_newest": "2025-08-26",
+   "top_newest": "2026-09-17",
+   "ships": false
+  },
+  {
+   "org_id": 23312263,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "48159528800095",
+   "country": "FR",
+   "old_name": "COCO ARCHITECTURE (mandataire du groupement)",
+   "new_name": "COCO ARCHITECTURE",
+   "spellings": [
+    [
+     "COCO ARCHITECTURE",
+     4
+    ],
+    [
+     "COCO ARCHITECTURE (mandataire du groupement)",
+     1
+    ]
+   ],
+   "head_newest": "2025-09-01",
+   "top_newest": "2026-10-15",
+   "ships": false
+  },
+  {
+   "org_id": 23410461,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "44452352601034",
+   "country": "FR",
+   "old_name": "ARTELIA (mandataire)",
+   "new_name": "ARTELIA",
+   "spellings": [
+    [
+     "ARTELIA",
+     3
+    ],
+    [
+     "ARTELIA (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2025-11-11",
+   "top_newest": "2026-08-18",
+   "ships": false
+  },
+  {
+   "org_id": 23458031,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "65203895100024",
+   "country": "FR",
+   "old_name": "Groupement d'entreprises SEKATOL/MENUISERIE STANOISE",
+   "new_name": "SEKATOL",
+   "spellings": [
+    [
+     "SEKATOL",
+     3
+    ],
+    [
+     "Groupement d'entreprises SEKATOL/MENUISERIE STANOISE",
+     1
+    ]
+   ],
+   "head_newest": "2025-12-30",
+   "top_newest": "2026-09-17",
+   "ships": false
+  },
+  {
+   "org_id": 23525636,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "91215307900039",
+   "country": "FR",
+   "old_name": "Groupement dont LECONTE ELAGAGE est mandataire",
+   "new_name": "LECONTE ELAGAGE",
+   "spellings": [
+    [
+     "LECONTE ELAGAGE",
+     3
+    ],
+    [
+     "Entreprise LECONTE ELAGAGE",
+     1
+    ],
+    [
+     "Groupement dont LECONTE ELAGAGE est mandataire",
+     1
+    ]
+   ],
+   "head_newest": "2026-02-18",
+   "top_newest": "2026-03-20",
+   "ships": false
+  },
+  {
+   "org_id": 23587877,
+   "rule": "R1",
+   "head": 2,
+   "n": 8,
+   "identifier": "DE293551738",
+   "country": "DE",
+   "old_name": "ARGE - S2 -architekten und ingenieure PartGmbB / KLÄHNE BUNG Beratende Ingenieure im Bauwesen GmbH",
+   "new_name": "S2 -architekten und ingenieure PartGmbB",
+   "spellings": [
+    [
+     "S2 -architekten und ingenieure PartGmbB",
+     4
+    ],
+    [
+     "ARGE - S2 -architekten und ingenieure PartGmbB / KLÄHNE BUNG Beratende Ingenieure im Bauwesen GmbH",
+     2
+    ],
+    [
+     "S2 - architekten und ingenieure PartGmbB",
+     2
+    ]
+   ],
+   "head_newest": "2026-03-24",
+   "top_newest": "2026-04-01",
+   "ships": false
+  },
+  {
+   "org_id": 23600961,
+   "rule": "R1",
+   "head": 2,
+   "n": 6,
+   "identifier": "DE123772598",
+   "country": "DE",
+   "old_name": "Bietergemeinschaft Terhalle Holzbau GmbH, Ahaus, und Beton- und Monierbau GmbH, Nordhorn, vertreten durch die Terhalle Holzbau GmbH",
+   "new_name": "Terhalle Holzbau GmbH",
+   "spellings": [
+    [
+     "Terhalle Holzbau GmbH",
+     4
+    ],
+    [
+     "Bietergemeinschaft Terhalle Holzbau GmbH, Ahaus, und Beton- und Monierbau GmbH, Nordhorn, vertreten durch die Terhalle Holzbau GmbH",
+     2
+    ]
+   ],
+   "head_newest": "2026-03-09",
+   "top_newest": "2026-07-10",
+   "ships": false
+  },
+  {
+   "org_id": 30908759,
+   "rule": "R2",
+   "head": 1,
+   "n": 12,
+   "identifier": "501774360",
+   "country": "PT",
+   "old_name": "Consórcio representado e chefiado pela \"AXIANSEU II DIGITAL CONSULTING, S.A.\"",
+   "new_name": "Axianseu II Digital Consulting, S.A.",
+   "spellings": [
+    [
+     "AXIANSEU II DIGITAL CONSULTING, S.A.",
+     4
+    ],
+    [
+     "Consórcio Axianseu II Digital Consulting, S.A.",
+     3
+    ],
+    [
+     "Axianseu II Digital Consulting, S.A.",
+     1
+    ],
+    [
+     "Axianseu II, Digital Consulting, S.A.",
+     1
+    ],
+    [
+     "Consórcio Axianseu II Digital Consulting, S.A",
+     1
+    ]
+   ],
+   "head_newest": "2026-09-02",
+   "top_newest": "2026-10-08",
+   "ships": false
+  },
+  {
+   "org_id": 30934047,
+   "rule": "R1",
+   "head": 1,
+   "n": 27,
+   "identifier": "356000000",
+   "country": "FR",
+   "old_name": "Groupement de commandes composé de La Poste et sa filiale, La Poste Immobilier , représenté par La Poste en qualité de coordonnateur.",
+   "new_name": "La Poste",
+   "spellings": [
+    [
+     "La Poste",
+     21
+    ],
+    [
+     "Groupement de commandes compos? de La Poste et de la filiale La Poste Immobilier repr?sent? par La Poste en qualit? de coordonnateur.",
+     1
+    ],
+    [
+     "Groupement de commandes composé de La Poste et de sa filiale La Poste Immobilier, représenté par La Poste en qualité de coordonnateur.",
+     1
+    ],
+    [
+     "Groupement de commandes composé de La Poste et des filiales La Banque Postale, Chronopost et Alturing représenté par La Poste en qualité de coordonnateur.",
+     1
+    ],
+    [
+     "Groupement de commandes composé de La Poste et sa filiale, La Poste Immobilier , représenté par La Poste en qualité de coordonnateur.",
+     1
+    ]
+   ],
+   "head_newest": "2025-06-06",
+   "top_newest": "2026-10-15",
+   "ships": false
+  },
+  {
+   "org_id": 30937468,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "64203694100036",
+   "country": "FR",
+   "old_name": "Grand Paris Aménagement au nom et pour le compte du groupement de commandes GPA/ORSA/SPLAIN",
+   "new_name": "Grand Paris Aménagement",
+   "spellings": [
+    [
+     "Grand Paris Aménagement",
+     4
+    ],
+    [
+     "GRAND PARIS AMENAGEMENT",
+     2
+    ],
+    [
+     "Grand Paris Aménagement au nom et pour le compte du groupement de commandes GPA/ORSA/SPLAIN",
+     1
+    ]
+   ],
+   "head_newest": "2025-06-13",
+   "top_newest": "2026-10-01",
+   "ships": false
+  },
+  {
+   "org_id": 30939728,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "96850255900105",
+   "country": "FR",
+   "old_name": "GROUPEMENT EGIS RAIL (mandataire) - IN SITU (cotraitant) - STOA (co-traitant) - INGEROP CONSEIL ET INGENIERIE (co-traitant)",
+   "new_name": "EGIS RAIL",
+   "spellings": [
+    [
+     "EGIS RAIL",
+     2
+    ],
+    [
+     "GROUPEMENT EGIS RAIL (mandataire) - IN SITU (cotraitant) - STOA (co-traitant) - INGEROP CONSEIL ET INGENIERIE (co-traitant)",
+     1
+    ],
+    [
+     "egis rail",
+     1
+    ]
+   ],
+   "head_newest": "2025-06-16",
+   "top_newest": "2025-06-27",
+   "ships": false
+  },
+  {
+   "org_id": 31534713,
+   "rule": "R1",
+   "head": 2,
+   "n": 26,
+   "identifier": "GBCOH03284666",
+   "country": "GB",
+   "old_name": "Cirrus Consortium c/o Coastline Housing Limited",
+   "new_name": "COASTLINE HOUSING LIMITED",
+   "spellings": [
+    [
+     "COASTLINE HOUSING LIMITED",
+     24
+    ],
+    [
+     "Cirrus Consortium c/o Coastline Housing Limited",
+     2
+    ]
+   ],
+   "head_newest": "2026-09-28",
+   "top_newest": "2026-10-13",
+   "ships": false
+  }
+ ],
+ "shippable_not_matched": [
+  {
+   "org_id": 6363835,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "78612009700021",
+   "country": "FR",
+   "old_name": "SEAA, mandataire du Conseil régional Champagne-Ardenne",
+   "new_name": "Protéame (Société d'Equipement et d'Aménagement des Ardennes)",
+   "spellings": [
+    [
+     "Protéame (Société d'Equipement et d'Aménagement des Ardennes)",
+     3
+    ],
+    [
+     "Protéame (Société d'équipements d'aménagements des Ardennes)",
+     1
+    ],
+    [
+     "SEAA, mandataire du Conseil régional Champagne-Ardenne",
+     1
+    ]
+   ],
+   "head_newest": "2015-03-25",
+   "top_newest": "2026-07-16"
+  },
+  {
+   "org_id": 8275316,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "38501935100035",
+   "country": "FR",
+   "old_name": "Groupement Cabinet Klopfer/Cabinet Cabanes Neveu Associés",
+   "new_name": "cabinet Michel Klopfer",
+   "spellings": [
+    [
+     "CABINET MICHEL KLOPFER",
+     3
+    ],
+    [
+     "cabinet Michel Klopfer",
+     2
+    ],
+    [
+     "Cabinet Michel KLOPFER",
+     1
+    ],
+    [
+     "Groupement Cabinet Klopfer/Cabinet Cabanes Neveu Associés",
+     1
+    ]
+   ],
+   "head_newest": "2016-06-10",
+   "top_newest": "2026-03-06"
+  },
+  {
+   "org_id": 9161744,
+   "rule": "R1",
+   "head": 2,
+   "n": 52,
+   "identifier": "70282",
+   "country": "FR",
+   "old_name": "Groupement de commande commune de Gy et CC des monts Gy",
+   "new_name": "Ville de Caen",
+   "spellings": [
+    [
+     "Ville de Caen",
+     48
+    ],
+    [
+     "Gpt de cde com. de Gy et CC Monts Gy",
+     1
+    ],
+    [
+     "Groupement de commande commune de Gy et CC des Monts Gy",
+     1
+    ],
+    [
+     "Groupement de commande commune de Gy et CC des monts Gy",
+     1
+    ],
+    [
+     "Groupement de commandes de com. de Gy et CC Monts Gy",
+     1
+    ]
+   ],
+   "head_newest": "2017-09-13",
+   "top_newest": "2026-09-22"
+  },
+  {
+   "org_id": 9250977,
+   "rule": "R1",
+   "head": 2,
+   "n": 20,
+   "identifier": "37850670300024",
+   "country": "FR",
+   "old_name": "Mandataire: Archi 5 Prod Cotraitants: Cet Ingénierie // Oasiis // Alma Consulting // Cap Horn Solutions // Rainbow Ergonomie",
+   "new_name": "Archi5prod",
+   "spellings": [
+    [
+     "Archi5prod",
+     5
+    ],
+    [
+     "ARCHI5PROD",
+     4
+    ],
+    [
+     "ARCHI 5 PROD",
+     2
+    ],
+    [
+     "Archi 5 PROD",
+     2
+    ],
+    [
+     "Archi5prod, architecte mandataire",
+     2
+    ]
+   ],
+   "head_newest": "2017-01-28",
+   "top_newest": "2026-08-20"
+  },
+  {
+   "org_id": 9806693,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "41824543700011",
+   "country": "FR",
+   "old_name": "Entreprise PORALU (mandataire)",
+   "new_name": "KAPECI",
+   "spellings": [
+    [
+     "KAPECI",
+     2
+    ],
+    [
+     "Entreprise PORALU (mandataire)",
+     1
+    ],
+    [
+     "KAPECI SAS",
+     1
+    ]
+   ],
+   "head_newest": "2017-05-06",
+   "top_newest": "2025-08-20"
+  },
+  {
+   "org_id": 10878002,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "35150266100025",
+   "country": "FR",
+   "old_name": "Kerguen mandroit (mandataire)",
+   "new_name": "sas cabinet kerguen - mANDROIT",
+   "spellings": [
+    [
+     "CABINET KERGUEN MANDROIT",
+     1
+    ],
+    [
+     "CABINET KERGUEN-MANDROIT",
+     1
+    ],
+    [
+     "Kerguen mandroit (mandataire)",
+     1
+    ],
+    [
+     "SAS CABINET KERGUEN MANDROIT",
+     1
+    ],
+    [
+     "sas cabinet kerguen - mANDROIT",
+     1
+    ]
+   ],
+   "head_newest": "2018-01-20",
+   "top_newest": "2025-05-07"
+  },
+  {
+   "org_id": 10978007,
+   "rule": "R1",
+   "head": 2,
+   "n": 6,
+   "identifier": "A24004293",
+   "country": "ES",
+   "old_name": "UTE 2",
+   "new_name": "Autobuses Urbanos de Ponferrada, S. A.",
+   "spellings": [
+    [
+     "AUTOBUSES URBANOS DE PONFERRADA, S.A.",
+     3
+    ],
+    [
+     "UTE 2",
+     2
+    ],
+    [
+     "Autobuses Urbanos de Ponferrada, S. A.",
+     1
+    ]
+   ],
+   "head_newest": "2018-01-19",
+   "top_newest": "2025-01-08"
+  },
+  {
+   "org_id": 10978008,
+   "rule": "R1",
+   "head": 2,
+   "n": 7,
+   "identifier": "A24037905",
+   "country": "ES",
+   "old_name": "UTE 3",
+   "new_name": "AUTOCARES CASTILLA Y LEON, S.A.U.",
+   "spellings": [
+    [
+     "AUTOCARES CASTILLA Y LEON, S.A.U.",
+     4
+    ],
+    [
+     "UTE 3",
+     2
+    ],
+    [
+     "Autocares Castilla León, S. A. U.",
+     1
+    ]
+   ],
+   "head_newest": "2018-01-19",
+   "top_newest": "2026-08-31"
+  },
+  {
+   "org_id": 11026616,
+   "rule": "R1",
+   "head": 1,
+   "n": 8,
+   "identifier": "07797133",
+   "country": "GB",
+   "old_name": "Families Health & Wellbeing Consortium",
+   "new_name": "Spring North LTD",
+   "spellings": [
+    [
+     "Spring North LTD",
+     2
+    ],
+    [
+     "Spring North Ltd",
+     2
+    ],
+    [
+     "Families Health & Wellbeing Consortium",
+     1
+    ],
+    [
+     "SPRING NORTH LTD",
+     1
+    ],
+    [
+     "Spring North Limited",
+     1
+    ]
+   ],
+   "head_newest": "2018-01-26",
+   "top_newest": "2026-05-15"
+  },
+  {
+   "org_id": 11072974,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "A24025744",
+   "country": "ES",
+   "old_name": "UTE Cymotsa - Sindo Castro",
+   "new_name": "CYMOT, S.A.",
+   "spellings": [
+    [
+     "CYMOT, S.A.",
+     3
+    ],
+    [
+     "UTE Cymotsa - Sindo Castro",
+     1
+    ]
+   ],
+   "head_newest": "2018-02-08",
+   "top_newest": "2025-09-15"
+  },
+  {
+   "org_id": 12035970,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "HRB169151B",
+   "country": "DE",
+   "old_name": "(Consortium led by) CIVIC GmbH",
+   "new_name": "CIVIC Consulting GmbH",
+   "spellings": [
+    [
+     "(Consortium led by) CIVIC GmbH",
+     1
+    ],
+    [
+     "CIVIC CONSULTING GMBH",
+     1
+    ],
+    [
+     "CIVIC Consulting GmbH",
+     1
+    ],
+    [
+     "Civic Consulting GMBH",
+     1
+    ],
+    [
+     "Civic Consulting GmbH",
+     1
+    ]
+   ],
+   "head_newest": "2018-08-25",
+   "top_newest": "2025-01-21"
+  },
+  {
+   "org_id": 12436617,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "79758259000015",
+   "country": "FR",
+   "old_name": "Groupement ICS-ODM-INECO; ICS mandataire",
+   "new_name": "Infra conseils services",
+   "spellings": [
+    [
+     "Infra conseils services",
+     3
+    ],
+    [
+     "Groupement ICS-ODM-INECO; ICS mandataire",
+     1
+    ]
+   ],
+   "head_newest": "2018-11-24",
+   "top_newest": "2020-12-18"
+  },
+  {
+   "org_id": 12481198,
+   "rule": "R1",
+   "head": 1,
+   "n": 7,
+   "identifier": "B19669",
+   "country": "LU",
+   "old_name": "Telindus S.A (group leader of DISco consortium)",
+   "new_name": "Proximus Luxembourg S.A.",
+   "spellings": [
+    [
+     "Proximus Luxembourg S.A.",
+     3
+    ],
+    [
+     "Proximus Luxembourg SA",
+     3
+    ],
+    [
+     "Telindus S.A (group leader of DISco consortium)",
+     1
+    ]
+   ],
+   "head_newest": "2018-11-07",
+   "top_newest": "2026-06-15"
+  },
+  {
+   "org_id": 12906630,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "43490870300037",
+   "country": "FR",
+   "old_name": "SARL Bruhat et Bouchaudy Architecte mandataire et OPC",
+   "new_name": "SARL BOUCHAUDY ARCHITECTES",
+   "spellings": [
+    [
+     "SARL BOUCHAUDY ARCHITECTES",
+     2
+    ],
+    [
+     "BOUCHAUDY ARCHITECTES",
+     1
+    ],
+    [
+     "BOUCHAUDY ARCHITECTES (mandataire) /LANCRENON PAYSAGE / IGETEC / CAP TERRE / SIGMA ACOUSTIQUE / NODAL)",
+     1
+    ],
+    [
+     "SARL Bruhat et Bouchaudy Architecte mandataire et OPC",
+     1
+    ]
+   ],
+   "head_newest": "2019-02-05",
+   "top_newest": "2026-07-10"
+  },
+  {
+   "org_id": 13483299,
+   "rule": "R1",
+   "head": 2,
+   "n": 23,
+   "identifier": "A46149787",
+   "country": "ES",
+   "old_name": "UTE IBZ Asociados-Urbinsa",
+   "new_name": "URBANISTAS INGENIEROS, S.A.",
+   "spellings": [
+    [
+     "URBANISTAS INGENIEROS, S.A.",
+     16
+    ],
+    [
+     "ICOSA-URBINSA",
+     2
+    ],
+    [
+     "UTE IBZ Asociados-Urbinsa",
+     2
+    ],
+    [
+     "Urbanistas Ingenieros, S. A. — Alauda Ingeniería, S. A.",
+     2
+    ],
+    [
+     "URBANISTAS INGENIEROS S.A.",
+     1
+    ]
+   ],
+   "head_newest": "2019-05-08",
+   "top_newest": "2026-09-28"
+  },
+  {
+   "org_id": 13514786,
+   "rule": "R1",
+   "head": 1,
+   "n": 21,
+   "identifier": "9110015576146",
+   "country": "AT",
+   "old_name": "ARGE Biozentrum St. Marx – HKLS, ENGIE Gebäudetechnik GmbH, Ortner Ges. m. b. H.",
+   "new_name": "Equans Gebäudetechnik GmbH",
+   "spellings": [
+    [
+     "Equans Gebäudetechnik GmbH",
+     10
+    ],
+    [
+     "EQUANS Gebäudetechnik GmbH",
+     7
+    ],
+    [
+     "ENGIE Gebäudetechnik GmbH",
+     2
+    ],
+    [
+     "ARGE Biozentrum St. Marx – HKLS, ENGIE Gebäudetechnik GmbH, Ortner Ges. m. b. H.",
+     1
+    ],
+    [
+     "Engie Gebäudetechnik GmbH",
+     1
+    ]
+   ],
+   "head_newest": "2019-06-05",
+   "top_newest": "2026-08-21"
+  },
+  {
+   "org_id": 14048030,
+   "rule": "R1",
+   "head": 1,
+   "n": 23,
+   "identifier": "501515011",
+   "country": "PT",
+   "old_name": "Consórcio CONSULGAL/ISQ",
+   "new_name": "CONSULGAL – Consultores de Engenharia e Gestão, S.A.",
+   "spellings": [
+    [
+     "CONSULGAL, CONSULTORES DE ENGENHARIA E GESTÃO, S.A.",
+     4
+    ],
+    [
+     "CONSUGAL - CONSULTORES DE ENGENHARIA E GESTÃO, S.A.",
+     2
+    ],
+    [
+     "CONSULGAL – CONSULTORES DE ENGENHARIA E GESTÃO, S.A.",
+     2
+    ],
+    [
+     "CONSULGAL – Consultores de Engenharia e Gestão, S.A.",
+     2
+    ],
+    [
+     "Consulgal",
+     2
+    ]
+   ],
+   "head_newest": "2019-09-26",
+   "top_newest": "2026-04-16"
+  },
+  {
+   "org_id": 14730718,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "81471418400011",
+   "country": "FR",
+   "old_name": "Groupement SAS Terideal — Agrigex Nord Picardie/Terdeaal Tarvel SAS",
+   "new_name": "SAS Terideal Hauts de France",
+   "spellings": [
+    [
+     "Groupement SAS Terideal — Agrigex Nord Picardie/Terdeaal Tarvel SAS",
+     1
+    ],
+    [
+     "SAS TERIDEAL HAUTS DE FRANCE",
+     1
+    ],
+    [
+     "SAS Terideal Hauts de France",
+     1
+    ],
+    [
+     "TERIDEAL HAUTS DE FRANCE",
+     1
+    ]
+   ],
+   "head_newest": "2020-01-06",
+   "top_newest": "2025-09-10"
+  },
+  {
+   "org_id": 14831056,
+   "rule": "R1",
+   "head": 1,
+   "n": 51,
+   "identifier": "Q0801205F",
+   "country": "ES",
+   "old_name": "Consorcio de Educación de Barcelona",
+   "new_name": "Consorci d'Educació de Barcelona",
+   "spellings": [
+    [
+     "Consorci d'Educació de Barcelona",
+     45
+    ],
+    [
+     "CONSORCI D'EDUCACIÓ DE BARCELONA",
+     5
+    ],
+    [
+     "Consorcio de Educación de Barcelona",
+     1
+    ]
+   ],
+   "head_newest": "2020-02-11",
+   "top_newest": "2026-05-29"
+  },
+  {
+   "org_id": 15226062,
+   "rule": "R1",
+   "head": 1,
+   "n": 13,
+   "identifier": "68200822200379",
+   "country": "FR",
+   "old_name": "Burgeap (mandataire)",
+   "new_name": "Ginger Burgeap",
+   "spellings": [
+    [
+     "GINGER BURGEAP",
+     7
+    ],
+    [
+     "ginger burgeap sas",
+     2
+    ],
+    [
+     "BURGEAP",
+     1
+    ],
+    [
+     "Burgeap (mandataire)",
+     1
+    ],
+    [
+     "GINGER BURGEAP S.A.S",
+     1
+    ]
+   ],
+   "head_newest": "2020-05-27",
+   "top_newest": "2026-06-04"
+  },
+  {
+   "org_id": 15771534,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "9110015242966",
+   "country": "AT",
+   "old_name": "ARGE Schimpel – Pabsch",
+   "new_name": "Schimpel Gesellschaft m.b.H.",
+   "spellings": [
+    [
+     "Schimpel Gesellschaft m.b.H.",
+     4
+    ],
+    [
+     "ARGE Schimpel – Pabsch",
+     1
+    ]
+   ],
+   "head_newest": "2020-09-11",
+   "top_newest": "2021-05-17"
+  },
+  {
+   "org_id": 17534654,
+   "rule": "R1",
+   "head": 2,
+   "n": 85,
+   "identifier": "Q5856145G",
+   "country": "ES",
+   "old_name": "Consorcio Sanitario de Terrassa",
+   "new_name": "Consorci Sanitari de Terrassa",
+   "spellings": [
+    [
+     "Consorci Sanitari de Terrassa",
+     83
+    ],
+    [
+     "Consorcio Sanitario de Terrassa",
+     2
+    ]
+   ],
+   "head_newest": "2021-08-06",
+   "top_newest": "2026-07-29"
+  },
+  {
+   "org_id": 17759516,
+   "rule": "R1",
+   "head": 1,
+   "n": 5,
+   "identifier": "44171641200099",
+   "country": "FR",
+   "old_name": "groupement : IPPON (Mandataire) - webnet (Co-Traitant)",
+   "new_name": "IPPON TECHNOLOGIES",
+   "spellings": [
+    [
+     "IPPON TECHNOLOGIES",
+     3
+    ],
+    [
+     "groupement : IPPON (Mandataire) - webnet (Co-Traitant)",
+     1
+    ],
+    [
+     "ippon technologies",
+     1
+    ]
+   ],
+   "head_newest": "2021-09-20",
+   "top_newest": "2026-08-19"
+  },
+  {
+   "org_id": 17799838,
+   "rule": "R1",
+   "head": 2,
+   "n": 7,
+   "identifier": "B61699435",
+   "country": "ES",
+   "old_name": "UTE-ITA-PRISMA-FITA",
+   "new_name": "ITA Clinic BCN SL",
+   "spellings": [
+    [
+     "ITA CLINIC BCN SL",
+     2
+    ],
+    [
+     "ITA CLINIC BCN, S.L",
+     2
+    ],
+    [
+     "ITA Clinic BCN SL",
+     1
+    ],
+    [
+     "UTE ITA-PRISMA-FITA",
+     1
+    ],
+    [
+     "UTE-ITA-PRISMA-FITA",
+     1
+    ]
+   ],
+   "head_newest": "2021-09-14",
+   "top_newest": "2026-10-06"
+  },
+  {
+   "org_id": 17815443,
+   "rule": "R1",
+   "head": 4,
+   "n": 13,
+   "identifier": "B27443225",
+   "country": "ES",
+   "old_name": "UTE LUCAL",
+   "new_name": "INTER-ANIMA EVENTS SL",
+   "spellings": [
+    [
+     "INTER-ANIMA EVENTS SL",
+     9
+    ],
+    [
+     "UTE LUCAL",
+     4
+    ]
+   ],
+   "head_newest": "2021-09-13",
+   "top_newest": "2025-09-19"
+  },
+  {
+   "org_id": 17848674,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "39010376000018",
+   "country": "FR",
+   "old_name": "sarl bg net (mandataire)",
+   "new_name": "BG-Nett",
+   "spellings": [
+    [
+     "SARL B.G. NETT",
+     2
+    ],
+    [
+     "BG Nett (mandataire)",
+     1
+    ],
+    [
+     "BG-Nett",
+     1
+    ],
+    [
+     "SARL BG NETT",
+     1
+    ],
+    [
+     "sarl bg net (mandataire)",
+     1
+    ]
+   ],
+   "head_newest": "2021-09-27",
+   "top_newest": "2025-12-15"
+  },
+  {
+   "org_id": 18287356,
+   "rule": "R1",
+   "head": 1,
+   "n": 4,
+   "identifier": "43772004800051",
+   "country": "FR",
+   "old_name": "CONSORTIUM DES PEINTURES ET REVETEMENTS",
+   "new_name": "SARL CPR",
+   "spellings": [
+    [
+     "SARL CPR",
+     2
+    ],
+    [
+     "CONSORTIUM DES PEINTURES ET REVETEMENTS",
+     1
+    ],
+    [
+     "CPR",
+     1
+    ]
+   ],
+   "head_newest": "2021-12-24",
+   "top_newest": "2026-03-04"
+  },
+  {
+   "org_id": 19490350,
+   "rule": "R1",
+   "head": 1,
+   "n": 35,
+   "identifier": "DE206633447",
+   "country": "DE",
+   "old_name": "ARGE F. Meyer/C. Schnorpfeil/Sidla-Schönberger",
+   "new_name": "Fritz Meyer GmbH",
+   "spellings": [
+    [
+     "Fritz Meyer GmbH",
+     26
+    ],
+    [
+     "BG: Fritz Meyer GmbH / Heinrich Lauber GmbH & Co.KG",
+     2
+    ],
+    [
+     "BiGe Fritz Meyer GmbH / Dr. Fink-Stauf GmbH & Co. KG",
+     2
+    ],
+    [
+     "BieGe Fritz Meyer GmbH / Gebr. Schmidt Bauunternehmen AG",
+     2
+    ],
+    [
+     "Fritz Meyer GmbH - Bauunternehmung -",
+     2
+    ]
+   ],
+   "head_newest": "2022-07-20",
+   "top_newest": "2026-09-15"
+  },
+  {
+   "org_id": 19550184,
+   "rule": "R1",
+   "head": 2,
+   "n": 7,
+   "identifier": "40427722000012",
+   "country": "FR",
+   "old_name": "atelier Badia Berger en groupement avec les sociétés ote ingenierie, Eco+Construire, Etamine Paris, Era Paysagiste, Cabinet C. Mathieu Associés",
+   "new_name": "Badia Berger Architectes",
+   "spellings": [
+    [
+     "badia berger architectes",
+     4
+    ],
+    [
+     "atelier Badia Berger en groupement avec les sociétés ote ingenierie, Eco+Construire, Etamine Paris, Era Paysagiste, Cabinet C. Mathieu Associés",
+     2
+    ],
+    [
+     "Badia Berger Architectes",
+     1
+    ]
+   ],
+   "head_newest": "2022-08-10",
+   "top_newest": "2025-02-05"
+  },
+  {
+   "org_id": 19946300,
+   "rule": "R1",
+   "head": 1,
+   "n": 6,
+   "identifier": "33682009700010",
+   "country": "FR",
+   "old_name": "roux Frères - mandataire",
+   "new_name": "MENUISERIE DE BATIMENT ROUX FRERES",
+   "spellings": [
+    [
+     "MENUISERIE DE BATIMENT ROUX FRERES",
+     4
+    ],
+    [
+     "ROUX FRERES",
+     1
+    ],
+    [
+     "roux Frères - mandataire",
+     1
+    ]
+   ],
+   "head_newest": "2022-10-12",
+   "top_newest": "2025-12-22"
+  }
+ ]
+}

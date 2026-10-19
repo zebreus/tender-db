@@ -1,0 +1,580 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on v551 plan.db copy + prod org indexes
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(5, 2, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(22, 1, 0, 'UNION ALL')
+(25, 22, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(42, 1, 0, 'UNION ALL')
+(45, 42, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(62, 1, 0, 'UNION ALL')
+(65, 62, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(82, 1, 0, 'UNION ALL')
+(85, 82, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(102, 1, 0, 'UNION ALL')
+(105, 102, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(122, 1, 0, 'UNION ALL')
+(125, 122, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(142, 1, 0, 'UNION ALL')
+(145, 142, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(162, 1, 0, 'UNION ALL')
+(165, 162, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(182, 1, 0, 'UNION ALL')
+(185, 182, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(202, 1, 0, 'UNION ALL')
+(205, 202, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(222, 1, 0, 'UNION ALL')
+(225, 222, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(242, 1, 0, 'UNION ALL')
+(245, 242, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(262, 1, 0, 'UNION ALL')
+(265, 262, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(282, 1, 0, 'UNION ALL')
+(285, 282, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(302, 1, 0, 'UNION ALL')
+(305, 302, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(322, 1, 0, 'UNION ALL')
+(325, 322, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(342, 1, 0, 'UNION ALL')
+(345, 342, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(362, 1, 0, 'UNION ALL')
+(365, 362, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(382, 1, 0, 'UNION ALL')
+(385, 382, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(402, 1, 0, 'UNION ALL')
+(405, 402, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(422, 1, 0, 'UNION ALL')
+(425, 422, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(442, 1, 0, 'UNION ALL')
+(445, 442, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(462, 1, 0, 'UNION ALL')
+(465, 462, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(482, 1, 0, 'UNION ALL')
+(485, 482, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(502, 1, 0, 'UNION ALL')
+(505, 502, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(522, 1, 0, 'UNION ALL')
+(525, 522, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(542, 1, 0, 'UNION ALL')
+(545, 542, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(562, 1, 0, 'UNION ALL')
+(565, 562, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(582, 1, 0, 'UNION ALL')
+(585, 582, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(602, 1, 0, 'UNION ALL')
+(605, 602, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(622, 1, 0, 'UNION ALL')
+(625, 622, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(642, 1, 0, 'UNION ALL')
+(645, 642, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(662, 1, 0, 'UNION ALL')
+(665, 662, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(682, 1, 0, 'UNION ALL')
+(685, 682, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(702, 1, 0, 'UNION ALL')
+(705, 702, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(722, 1, 0, 'UNION ALL')
+(725, 722, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(742, 1, 0, 'UNION ALL')
+(745, 742, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(762, 1, 0, 'UNION ALL')
+(765, 762, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(782, 1, 0, 'UNION ALL')
+(785, 782, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(802, 1, 0, 'UNION ALL')
+(805, 802, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(822, 1, 0, 'UNION ALL')
+(825, 822, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(842, 1, 0, 'UNION ALL')
+(845, 842, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(862, 1, 0, 'UNION ALL')
+(865, 862, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(882, 1, 0, 'UNION ALL')
+(885, 882, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(902, 1, 0, 'UNION ALL')
+(905, 902, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(922, 1, 0, 'UNION ALL')
+(925, 922, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(942, 1, 0, 'UNION ALL')
+(945, 942, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(962, 1, 0, 'UNION ALL')
+(965, 962, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(982, 1, 0, 'UNION ALL')
+(985, 982, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1002, 1, 0, 'UNION ALL')
+(1005, 1002, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1022, 1, 0, 'UNION ALL')
+(1025, 1022, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1042, 1, 0, 'UNION ALL')
+(1045, 1042, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1062, 1, 0, 'UNION ALL')
+(1065, 1062, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1082, 1, 0, 'UNION ALL')
+(1085, 1082, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1102, 1, 0, 'UNION ALL')
+(1105, 1102, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1122, 1, 0, 'UNION ALL')
+(1125, 1122, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1142, 1, 0, 'UNION ALL')
+(1145, 1142, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1162, 1, 0, 'UNION ALL')
+(1165, 1162, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1182, 1, 0, 'UNION ALL')
+(1185, 1182, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1202, 1, 0, 'UNION ALL')
+(1205, 1202, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1222, 1, 0, 'UNION ALL')
+(1225, 1222, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1242, 1, 0, 'UNION ALL')
+(1245, 1242, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1262, 1, 0, 'UNION ALL')
+(1265, 1262, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1282, 1, 0, 'UNION ALL')
+(1285, 1282, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1302, 1, 0, 'UNION ALL')
+(1305, 1302, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1322, 1, 0, 'UNION ALL')
+(1325, 1322, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1342, 1, 0, 'UNION ALL')
+(1345, 1342, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1362, 1, 0, 'UNION ALL')
+(1365, 1362, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1382, 1, 0, 'UNION ALL')
+(1385, 1382, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1402, 1, 0, 'UNION ALL')
+(1405, 1402, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1422, 1, 0, 'UNION ALL')
+(1425, 1422, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1442, 1, 0, 'UNION ALL')
+(1445, 1442, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1462, 1, 0, 'UNION ALL')
+(1465, 1462, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1482, 1, 0, 'UNION ALL')
+(1485, 1482, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1502, 1, 0, 'UNION ALL')
+(1505, 1502, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1522, 1, 0, 'UNION ALL')
+(1525, 1522, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1542, 1, 0, 'UNION ALL')
+(1545, 1542, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1562, 1, 0, 'UNION ALL')
+(1565, 1562, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1582, 1, 0, 'UNION ALL')
+(1585, 1582, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1602, 1, 0, 'UNION ALL')
+(1605, 1602, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1622, 1, 0, 'UNION ALL')
+(1625, 1622, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1642, 1, 0, 'UNION ALL')
+(1645, 1642, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1662, 1, 0, 'UNION ALL')
+(1665, 1662, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1682, 1, 0, 'UNION ALL')
+(1685, 1682, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1702, 1, 0, 'UNION ALL')
+(1705, 1702, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1722, 1, 0, 'UNION ALL')
+(1725, 1722, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1742, 1, 0, 'UNION ALL')
+(1745, 1742, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1762, 1, 0, 'UNION ALL')
+(1765, 1762, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1782, 1, 0, 'UNION ALL')
+(1785, 1782, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1802, 1, 0, 'UNION ALL')
+(1805, 1802, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1822, 1, 0, 'UNION ALL')
+(1825, 1822, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1842, 1, 0, 'UNION ALL')
+(1845, 1842, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1862, 1, 0, 'UNION ALL')
+(1865, 1862, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1882, 1, 0, 'UNION ALL')
+(1885, 1882, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1902, 1, 0, 'UNION ALL')
+(1905, 1902, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1922, 1, 0, 'UNION ALL')
+(1925, 1922, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(1942, 1, 0, 'UNION ALL')
+(1945, 1942, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(1962, 1, 0, 'UNION ALL')
+(1965, 1962, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(1982, 1, 0, 'UNION ALL')
+(1985, 1982, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2002, 1, 0, 'UNION ALL')
+(2005, 2002, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2022, 1, 0, 'UNION ALL')
+(2025, 2022, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2042, 1, 0, 'UNION ALL')
+(2045, 2042, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2062, 1, 0, 'UNION ALL')
+(2065, 2062, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2082, 1, 0, 'UNION ALL')
+(2085, 2082, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2102, 1, 0, 'UNION ALL')
+(2105, 2102, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2122, 1, 0, 'UNION ALL')
+(2125, 2122, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2142, 1, 0, 'UNION ALL')
+(2145, 2142, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2162, 1, 0, 'UNION ALL')
+(2165, 2162, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2182, 1, 0, 'UNION ALL')
+(2185, 2182, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2202, 1, 0, 'UNION ALL')
+(2205, 2202, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2222, 1, 0, 'UNION ALL')
+(2225, 2222, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2242, 1, 0, 'UNION ALL')
+(2245, 2242, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2262, 1, 0, 'UNION ALL')
+(2265, 2262, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2282, 1, 0, 'UNION ALL')
+(2285, 2282, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2302, 1, 0, 'UNION ALL')
+(2305, 2302, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2322, 1, 0, 'UNION ALL')
+(2325, 2322, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2342, 1, 0, 'UNION ALL')
+(2345, 2342, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2362, 1, 0, 'UNION ALL')
+(2365, 2362, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2382, 1, 0, 'UNION ALL')
+(2385, 2382, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2402, 1, 0, 'UNION ALL')
+(2405, 2402, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2422, 1, 0, 'UNION ALL')
+(2425, 2422, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2442, 1, 0, 'UNION ALL')
+(2445, 2442, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2462, 1, 0, 'UNION ALL')
+(2465, 2462, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2482, 1, 0, 'UNION ALL')
+(2485, 2482, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2502, 1, 0, 'UNION ALL')
+(2505, 2502, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2522, 1, 0, 'UNION ALL')
+(2525, 2522, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2542, 1, 0, 'UNION ALL')
+(2545, 2542, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2562, 1, 0, 'UNION ALL')
+(2565, 2562, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2582, 1, 0, 'UNION ALL')
+(2585, 2582, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2602, 1, 0, 'UNION ALL')
+(2605, 2602, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2622, 1, 0, 'UNION ALL')
+(2625, 2622, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2642, 1, 0, 'UNION ALL')
+(2645, 2642, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2662, 1, 0, 'UNION ALL')
+(2665, 2662, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2682, 1, 0, 'UNION ALL')
+(2685, 2682, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2702, 1, 0, 'UNION ALL')
+(2705, 2702, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2722, 1, 0, 'UNION ALL')
+(2725, 2722, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2742, 1, 0, 'UNION ALL')
+(2745, 2742, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2762, 1, 0, 'UNION ALL')
+(2765, 2762, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2782, 1, 0, 'UNION ALL')
+(2785, 2782, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2802, 1, 0, 'UNION ALL')
+(2805, 2802, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+(2822, 1, 0, 'UNION ALL')
+(2825, 2822, 0, 'SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)')
+(2842, 1, 0, 'UNION ALL')
+(2845, 2842, 0, 'SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)')
+(2862, 1, 0, 'UNION ALL')
+(2865, 2862, 0, 'SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)')
+-- turso plan-probe (rc=0)
+PLAN	r7_sec	COMPOUND QUERY
+PLAN	r7_sec	  LEFT-MOST SUBQUERY
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH organization_mentions USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_parties USING INDEX tender_version_parties_org (organization_id=?)
+PLAN	r7_sec	  UNION ALL
+PLAN	r7_sec	    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
