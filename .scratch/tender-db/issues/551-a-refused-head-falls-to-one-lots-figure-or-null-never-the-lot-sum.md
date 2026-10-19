@@ -1306,3 +1306,12 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   listed in `b6/l_changed_545_ids.json` with 571's in `l_changed_571_ids.json`. **Before U6, re-run the zero-drift probe** on
   the deployed rev (refold-lot-sum on the 3,502, expect 0 corrected) so the flip's D1/D2 still measure path W alone.
 
+
+## B6 U2 — fetch complete (2026-10-19 ~14:00Z)
+
+- `b6/fetch_b6.py` over six windows (exit 124 ×5 at the 2 h cap, then 0): **3,502 tenders, 15,246 notices, 0 × 404, 0 other
+  errors, 0 tenders with a missing notice** (the summary's `notices_missing_now: 0` was computed after the rb8 scratch layer was
+  deleted for disk, so the rule needs no rb8 notice). Layer: `scratchpad/b6/tenders` (gzip + fetch-time sidecars),
+  `scratchpad/b6/notices`. Log: `scratchpad/b6_fetch_u2.log`.
+- Next, running: U2 parity (port v2 vs served_lsa_rows outside the provisional L_changed; P, R_single, R_excess for U4) as
+  wf_6fc422ac-117 with an adversarial re-derivation; U3's Rust harness waits for the 530 gate to leave the tree.
