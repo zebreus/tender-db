@@ -509,6 +509,17 @@ enum Spec {
     /// span, with the within-notice twin and cross-notice signals unit 2 weighs and the stable-platform
     /// rows as their own population. Read-only.
     GuidCensus { stable_mentions: u64, samples: usize },
+    /// Issue 530 unit 3 (Build 1): the DRY `dissolve-guid-twins` plan — rule 530-T
+    /// (`ingest::project::guid_twin`) over every ORG mention of each notice with a mention on a v4-GUID
+    /// row, planned per mention, KEEP computed in memory. Read-only: stores `guid-twin-plan`. A
+    /// `dry_run: false` is refused at enqueue and here (the wet path is Build 2).
+    DissolveGuidTwins {
+        dry_run: bool,
+        stable_mentions: u64,
+        samples: usize,
+        #[serde(default)]
+        extra_unsafe_names: Vec<String>,
+    },
     /// Issue 524 unit 2a: re-elect each identifier-bearing organization's served head from its mentions
     /// (`store::elect_head`, ADR-0013's 2026-10-15 amendment) and store what a wet run would change,
     /// hold and keep as `org-name-refresh-plan`. Always dry: since unit 2b a `dry_run: false` request
@@ -1303,8 +1314,13 @@ pub struct JobRequest {
     /// `guid-census` only (issue 530 unit 1): a GUID row with at least this many mentions joins the
     /// stable-platform population beside [`GUID_CENSUS_STABLE_IDS`]. Omitted,
     /// [`GUID_CENSUS_STABLE_MENTIONS`]; at or under [`store::GUID_CENSUS_FEW_MENTIONS`] is refused (a
-    /// single-use TED+DÖE pair would count as stable).
+    /// single-use TED+DÖE pair would count as stable). Also `dissolve-guid-twins` (issue 530 unit 3):
+    /// the stable bar of its KEEP, the same default and floor; `samples` reads as there too.
     pub stable_mentions: Option<u64>,
+    /// `dissolve-guid-twins` only (issue 530 unit 3): names the run also treats as unsafe twin keys (an
+    /// R2 finding, re-run without a deploy), folded as rule 530-T folds a name. 1 to
+    /// [`GUID_TWIN_EXTRA_MAX`] distinct non-blank names. Every other kind refuses it at enqueue.
+    pub extra_unsafe_names: Option<Vec<String>>,
     /// `refresh-org-names` only (issue 524 unit 2a): plan only these organizations instead of walking
     /// every one (a merge campaign's keeps, the canaries). 1 to [`ORG_NAME_REFRESH_ORG_IDS_MAX`] ids,
     /// each positive. On a wet run (unit 2b), rename only these of the stored plan's planned ids.
@@ -1375,6 +1391,55 @@ const GUID_CENSUS_CANARIES: &[i64] = &[
 ];
 /// Issue 530 unit 1: the report `guid-census` stores.
 const GUID_CENSUS_REPORT: &str = "guid-census";
+/// Issue 530 unit 3: the report `dissolve-guid-twins` stores.
+const GUID_TWIN_REPORT: &str = "guid-twin-plan";
+/// Issue 530 unit 3, R1: the controls the plan must NOT plan — the stable keys (254, 255, 8378,
+/// 30530641), the KEEP pairs spanning several Tenders (SBH 3866/3868, Nürnberg 2529/2530, 21983972/73,
+/// Westfalen 21987063, 5351, 8756, Sprinkenhof 10966, Nürnberg Hochbauamt 1085, GMH 22040636/37), and
+/// the no-twin rows (Göttingen 23014305, Südbayern 30971684/734/757, Bremen 30532145/147).
+const GUID_TWIN_NOT_PLANNED: &[i64] = &[
+    254,
+    255,
+    8_378,
+    30_530_641,
+    3_866,
+    3_868,
+    2_529,
+    2_530,
+    21_983_972,
+    21_983_973,
+    21_987_063,
+    5_351,
+    8_756,
+    10_966,
+    1_085,
+    22_040_636,
+    22_040_637,
+    23_014_305,
+    30_971_684,
+    30_971_734,
+    30_971_757,
+    30_532_145,
+    30_532_147,
+];
+/// Issue 530 unit 3, R1: planned whole, with this target (the Göttingen pair → 2294259, Göttingen's DE
+/// identifier-NULL row, never the VAT row 22183653 or the country-NULL row 16393).
+const GUID_TWIN_PLANNED: &[(i64, i64)] = &[(22_759_261, 2_294_259), (22_759_262, 2_294_259)];
+/// Issue 530 unit 3, R1: expected and reported, not bars (inferred from id adjacency and one GET): the
+/// Göttingen triple → 2294259, and Vergabekammer Niedersachsen 23014306/07 → that name's DE
+/// identifier-NULL row (`None`: any found target).
+const GUID_TWIN_EXPECTED: &[(i64, Option<i64>)] = &[
+    (22_761_155, Some(2_294_259)),
+    (22_761_156, Some(2_294_259)),
+    (22_761_159, Some(2_294_259)),
+    (23_014_306, None),
+    (23_014_307, None),
+];
+/// Issue 530 unit 3: the names whose GUID rows the plan tallies planned and kept (Verify line 1:
+/// Göttingen, 49 planned and 3 kept expected).
+const GUID_TWIN_EXHIBITS: &[(&str, &str)] = &[("DE", "landkreis göttingen")];
+/// Issue 530 unit 3: the most `extra_unsafe_names` one run takes.
+const GUID_TWIN_EXTRA_MAX: usize = 50;
 
 /// Issue 524 unit 2a: the most `org_ids` one `refresh-org-names` takes — the plan's listing cap, so a
 /// scoped plan can never be truncated.
@@ -2592,6 +2657,232 @@ fn guid_census_summary(r: &store::GuidCensusReport) -> String {
     )
 }
 
+/// Issue 530 unit 3: `dissolve-guid-twins`'s `extra_unsafe_names`, checked at enqueue — omitted is
+/// none; given, 1 to [`GUID_TWIN_EXTRA_MAX`] distinct names, each trimmed, non-blank and at most 200
+/// characters (a list meant to widen the guard must never be half-read).
+fn guid_twin_extra_names(names: Option<&[String]>) -> Result<Vec<String>, String> {
+    let Some(names) = names else { return Ok(Vec::new()) };
+    let mut out: Vec<String> = Vec::new();
+    for name in names {
+        let name = name.split_whitespace().collect::<Vec<_>>().join(" ");
+        if name.is_empty() || name.chars().count() > 200 || name.contains('|') {
+            return Err(format!(
+                "dissolve-guid-twins: each of `extra_unsafe_names` is a non-blank name of at most 200 characters \
+                 without `|`, got {name:?}"
+            ));
+        }
+        if !out.contains(&name) {
+            out.push(name);
+        }
+    }
+    if out.is_empty() || out.len() > GUID_TWIN_EXTRA_MAX {
+        return Err(format!(
+            "dissolve-guid-twins takes 1 to {GUID_TWIN_EXTRA_MAX} distinct `extra_unsafe_names`, got {}; omit the \
+             field for none",
+            out.len()
+        ));
+    }
+    Ok(out)
+}
+
+/// Issue 530 unit 3: `dissolve-guid-twins` as stored — the plan as serialised, with what it was read
+/// with: the rule, the KEEP basis, the target and the city screen. A sync free fn, so its temporaries
+/// stay off the boxed arm's poll frame (issue 467's lesson).
+fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
+    let mut body = serde_json::to_value(r).map_err(|e| e.to_string())?;
+    if let Some(all) = body.as_object_mut() {
+        all.insert(
+            "rule".to_owned(),
+            "530-T (ingest::project::guid_twin::guid_twin_decide), per notice copy: ORG sections whose gated BT-501 \
+             (gated_identifier under the canonical country) is a uuid_v4 national key, grouped by (identifier \
+             country = register_jurisdiction, org_name_norm(name)); a group with >= 2 distinct values refuses \
+             every section whose value is not in KEEP, unless the name is unsafe (< 2 content words after the \
+             legal forms, generic_body_name, GUID_TWIN_UNSAFE_NAMES or a polity umbrella, extra_unsafe_names) or \
+             the group has no country. The gate is NOT wired (Build 1): production ingest is unchanged"
+                .into(),
+        );
+        all.insert(
+            "keep_basis".to_owned(),
+            "computed in memory from this walk (Build 1): every uuid_v4 row spanning >= 2 distinct Tenders, the \
+             stable rows (254, 255, 8378 and every uuid_v4 row with stable_mentions+ mentions), and every uuid_v4 \
+             value in organization_merged_identifiers; value-keyed (undashed upper case), country ignored. Build \
+             2 commits keep_candidates as guid-keep-530.tsv"
+                .into(),
+        );
+        all.insert(
+            "plan_basis".to_owned(),
+            "per mention (notice_id, section_id): a GUID row whose every mention is refused is planned whole, a \
+             row with a refused and a kept mention is partial (its refused mentions are rehomes); the target is \
+             the lowest-id identifier-NULL row of (org_name_norm, register_jurisdiction(country)) — the 234 \
+             path, never an identified row (300 §10); none is a missing target. Refused mentions bound to a row \
+             that is not a GUID row are reported by bound kind (off_guid), not planned"
+                .into(),
+        );
+        all.insert(
+            "scope_basis".to_owned(),
+            "candidate notices = notices with >= 1 mention on a uuid_v4 (GUID) row at or below max_id; every ORG \
+             mention of each is read and the rule decides each alone. Notices with no GUID-row mention are not read, \
+             so off_guid, twin_groups, refused_groups, refused_mentions and guard are LOWER BOUNDS on what the gate \
+             would refuse in notices whose twin values all sit off GUID rows (on an identifier-NULL row, a merge \
+             survivor, another identified row or a v4 row above max_id; the last is counted as guid_above_max_id \
+             when a read notice holds one). The plan itself is whole: only GUID rows are planned"
+                .into(),
+        );
+        all.insert(
+            "bars_basis".to_owned(),
+            "R1: comparable planned rows, whole AND partial (every twin partner on a GUID row, id <= 31,970,152), <= \
+             11,258 (planned_rows_comparable_whole is the dissolve count); 0 planned rows with >= 2 Tenders, stable \
+             at R1's fixed 100 mentions (or a stable id) whatever stable_mentions says, or with a value in KEEP; the \
+             run's stable_mentions is 100; the not-planned and planned controls; 0 planned mentions whose target key \
+             or found row's country is not register_jurisdiction(mention country) (A11; a target's identifier is NULL \
+             by construction); the KEEP self-check. Reported, not bars: no-Tender rows (tripwire_no_tender) and \
+             mentions whose country A11 cannot read (target_country_unchecked)"
+                .into(),
+        );
+        all.insert(
+            "city_basis".to_owned(),
+            "BT-513-Organization-Company of the mention's ORG section, first ordinal, folded; a target's set over \
+             its newest 50 mentions (organization_mentions_org reverse walk). Flag a: a planned mention's city \
+             absent from a non-empty target set; flag b: a target with >= 2 cities; flag c (an A6 extension): a \
+             target key, found or missing, whose planned mentions alone show >= 2 cities (a missing key mints one \
+             row for all of them). R2's lists (top targets, office keys, flagged) read every planned key, found or \
+             missing; a missing key's sample_id is the smallest org id among its planned rows"
+                .into(),
+        );
+        all.insert("not_planned_ids".to_owned(), serde_json::json!(GUID_TWIN_NOT_PLANNED));
+        all.insert("planned_ids".to_owned(), serde_json::json!(GUID_TWIN_PLANNED));
+    }
+    Ok(body.to_string())
+}
+
+/// Issue 530 unit 3: `dissolve-guid-twins`'s job summary — R1's bars and the plan's headline numbers in
+/// one line.
+fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
+    let guard = |label: &str| r.guard.get(label).map_or((0, 0), |g| (g.groups, g.mentions));
+    let guards = ["no_country", "content_words", "generic", "unsafe_list", "extra", "keep"]
+        .iter()
+        .map(|label| {
+            let (groups, mentions) = guard(label);
+            format!("{label} {groups}/{mentions}")
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    let keep = r.keep_by_reason.iter().map(|(reason, n)| format!("{reason} {n}")).collect::<Vec<_>>().join(", ");
+    let off: u64 = r.off_guid.by_kind.values().sum();
+    let off_kinds = r.off_guid.by_kind.iter().map(|(kind, n)| format!("{kind} {n}")).collect::<Vec<_>>().join(", ");
+    let largest = r.largest_target.as_ref().map_or_else(
+        || "none".to_owned(),
+        |t| {
+            format!(
+                "{} {:?} +{} planned mention(s) of {} row(s), {} today",
+                t.target_id.map_or_else(|| "(missing)".to_owned(), |id| id.to_string()),
+                t.name,
+                t.planned_mentions,
+                t.planned_rows,
+                t.mentions
+            )
+        },
+    );
+    let controls = r
+        .controls
+        .iter()
+        .map(|c| {
+            let state = c.row.as_ref().map_or("not a GUID row", |row| row.planned);
+            format!("{} {} {}{}", c.org_id, c.expect, state, if c.ok { "" } else { " MISS" })
+        })
+        .collect::<Vec<_>>()
+        .join("; ");
+    let exhibits = r
+        .exhibits
+        .iter()
+        .map(|(name, e)| format!("{name}: {} GUID row(s), {} planned, {} partial, {} kept", e.guid_rows, e.planned, e.partial, e.kept))
+        .collect::<Vec<_>>()
+        .join("; ");
+    let b = &r.bars;
+    format!(
+        "dissolve-guid-twins (issue 530 unit 3, Build 1, DRY): {} GUID row(s) ({} distinct value(s)) to org id {} in {} \
+         window(s); {} candidate notice(s) (with a GUID-row mention), {} ORG mention(s) read, {} v4 candidate(s) ({} \
+         unnamed). KEEP {} value(s) ({keep}). Rule 530-T: {} twin group(s), {} refused, {} mention(s) refused. PLAN: \
+         {} row(s) whole ({} mention(s)), {} partial ({} rehome(s); copies disagreeing: {:?}); {} refused mention(s) \
+         off GUID rows in candidate notices, a lower bound ({off_kinds}; {} already on target). Targets: {} key(s), \
+         {} with an identifier-NULL row; {} planned mention(s) of {} row(s) have none; largest {largest}. Guard \
+         exclusions (groups/mentions): {guards}; KEEP partners {}; KEEP spares {} mention(s) on {} row(s). City \
+         screen: {} planned mention(s) with a city, {} without; {} absent from the target's cities ({} row(s), {} \
+         target(s)); {} multi-city target(s); {} key(s) whose planned mentions show 2+ cities ({} mention(s), {} \
+         row(s)); {} flagged. Roles of refused groups: {} buyer+ReviewOrg, {} tenderer-mixed of {}. Census twin \
+         rows after the plan: {} -> {} (stable {} -> {}, several Tenders {} -> {}). R1 BARS {}: comparable planned \
+         rows (whole + partial) {} (whole {}) <= {} {}; above the census max {}; partner off GUID rows {}; \
+         tripwires several-Tenders {}, stable (>= {} mentions) {}, KEEP {}; stable_mentions {} {}; not-planned \
+         misses {:?}; planned misses {:?}; target-country mismatches {}; KEEP self-check missing {}; reported: \
+         no-Tender rows {}, country unchecked {}. Controls: {controls}. {exhibits}. {} ms. NOTHING IS WRITTEN.",
+        r.guid_rows,
+        r.distinct_values,
+        r.max_id,
+        r.windows,
+        r.candidate_notices,
+        r.org_mentions_read,
+        r.candidate_mentions,
+        r.unnamed_candidates,
+        r.keep_size,
+        r.twin_groups,
+        r.refused_groups,
+        r.refused_mentions,
+        r.planned.rows,
+        r.planned.mentions,
+        r.planned_partial.rows,
+        r.planned_partial.mentions,
+        r.partial.by_sources,
+        off,
+        r.off_guid.already_on_target,
+        r.targets,
+        r.targets_found,
+        r.missing_targets.mentions,
+        r.missing_targets.rows,
+        r.keep_partner_mentions,
+        r.keep_spared.mentions,
+        r.keep_spared.rows,
+        r.city.planned_mentions_with_city,
+        r.city.planned_mentions_without_city,
+        r.city.city_absent_mentions,
+        r.city.city_absent_rows,
+        r.city.city_absent_targets,
+        r.city.multi_city_targets,
+        r.city.planned_multi_city_keys,
+        r.city.planned_multi_city_mentions,
+        r.city.planned_multi_city_rows,
+        r.city.flagged_count,
+        r.roles.buyer_with_review_org,
+        r.roles.tenderer_mixed,
+        r.roles.refused_groups,
+        r.post_state.twin_rows,
+        r.post_state.twin_rows_after,
+        r.post_state.twin_stable_rows,
+        r.post_state.twin_stable_rows_after,
+        r.post_state.twin_multi_tender_rows,
+        r.post_state.twin_multi_tender_rows_after,
+        if b.pass { "PASS" } else { "FAIL" },
+        b.planned_rows_comparable,
+        b.planned_rows_comparable_whole,
+        b.census_bar,
+        if b.within_census_bar { "ok" } else { "OVER" },
+        b.planned_rows_above_census,
+        b.planned_rows_off_guid_partner,
+        b.tripwire_multi_tender,
+        store::GUID_TWIN_R1_STABLE_MENTIONS,
+        b.tripwire_stable,
+        b.tripwire_keep,
+        r.stable_mentions,
+        if b.stable_mentions_is_decision { "ok" } else { "NOT THE DECISION'S" },
+        b.not_planned_failed,
+        b.planned_failed,
+        b.target_country_mismatch,
+        b.keep_self_check_missing.len(),
+        b.tripwire_no_tender,
+        b.target_country_unchecked,
+        r.runtime_ms,
+    )
+}
+
 impl Supervisor {
     /// The store handle, for read-only operator surfaces that need it (the stored
     /// report reader, issue 230). An accessor rather than a public field on purpose:
@@ -2753,6 +3044,13 @@ impl Supervisor {
         if req.tender_ids.is_some() && req.kind != "refold-lot-sum" {
             return Err(format!(
                 "{} refuses `tender_ids`: only refold-lot-sum takes a Tender id list (issue 551 unit 4b)",
+                req.kind
+            ));
+        }
+        // Issue 530 unit 3: likewise `extra_unsafe_names`, which only the twin plan reads.
+        if req.extra_unsafe_names.is_some() && req.kind != "dissolve-guid-twins" {
+            return Err(format!(
+                "{} refuses `extra_unsafe_names`: only dissolve-guid-twins takes it (issue 530 unit 3)",
                 req.kind
             ));
         }
@@ -3398,6 +3696,38 @@ impl Supervisor {
                         "guid-census",
                         format!("guid-census dry stable_mentions={stable_mentions} samples={samples}"),
                         Spec::GuidCensus { stable_mentions, samples },
+                    )
+                    .await,
+                ])
+            }
+            "dissolve-guid-twins" => {
+                // Issue 530 unit 3, Build 1: dry only. The wet path (KEEP committed, the gate wired, the
+                // id-set dissolve) is Build 2, so `dry_run: false` names a job that does not exist yet.
+                if req.dry_run == Some(false) {
+                    return Err("dissolve-guid-twins is dry in Build 1 (issue 530 unit 3): `dry_run: false` is \
+                                refused until Build 2 commits KEEP and wires the gate"
+                        .to_owned());
+                }
+                let few = store::GUID_CENSUS_FEW_MENTIONS;
+                let stable_mentions = req.stable_mentions.unwrap_or(GUID_CENSUS_STABLE_MENTIONS);
+                if stable_mentions <= few {
+                    return Err(format!(
+                        "dissolve-guid-twins needs `stable_mentions` above {few}, got {stable_mentions}: a \
+                         single-use row (a notice's TED+DÖE pair) would join KEEP as stable"
+                    ));
+                }
+                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
+                let extra_unsafe_names = guid_twin_extra_names(req.extra_unsafe_names.as_deref())?;
+                let extra = if extra_unsafe_names.is_empty() {
+                    String::new()
+                } else {
+                    format!(" extra_unsafe_names={}", extra_unsafe_names.join("|"))
+                };
+                Ok(vec![
+                    self.push(
+                        "dissolve-guid-twins",
+                        format!("dissolve-guid-twins dry stable_mentions={stable_mentions} samples={samples}{extra}"),
+                        Spec::DissolveGuidTwins { dry_run: true, stable_mentions, samples, extra_unsafe_names },
                     )
                     .await,
                 ])
@@ -5883,6 +6213,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 530 unit 1: read before every window of the walk and every batch of its reads; a stopped
     // run stores no report.
     "guid-census",
+    // Issue 530 unit 3: read before every window, batch and IN chunk of the plan's reads, and every 64
+    // target seeks; a stopped run stores no report.
+    "dissolve-guid-twins",
     // Issue 524 unit 2a: `plan_org_name_refresh` reads it before every page (and every scoped id
     // chunk); a stopped run stores no plan. Unit 2b: the wet run reads it before every rename
     // window, and the committed windows stand.
@@ -8347,6 +8680,7 @@ impl Supervisor {
             | Spec::NamePhraseCensus { .. }
             | Spec::OrgHeadDrift { .. }
             | Spec::GuidCensus { .. }
+            | Spec::DissolveGuidTwins { .. }
             | Spec::RefreshOrgNames { .. }
             | Spec::ProvisionalEchoCensus { .. }
             | Spec::DuplicateIdentityCensus
@@ -15061,6 +15395,45 @@ impl Supervisor {
                 self.db.put_report(GUID_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
                 Ok(guid_census_summary(&r))
             }).await,
+            Spec::DissolveGuidTwins { dry_run, stable_mentions, samples, extra_unsafe_names } => Box::pin(async move {
+                // BOXED, as every census arm here (CLAUDE.md: `run_spec`'s arms share one future), and the
+                // store future boxed inside it. The stored body and the summary are sync free fns.
+                if !*dry_run {
+                    // Unreachable from the queue: enqueue refuses `dry_run: false` in Build 1.
+                    return Err("dissolve-guid-twins is dry in Build 1 (issue 530 unit 3): the wet path is Build 2".to_owned());
+                }
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 530: planning the within-notice GUID twins".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                let r = Box::pin(self.db.plan_guid_twins(store::GuidTwinPlanArgs {
+                    is_guid: ingest::idgate::uuid_v4,
+                    rule: ingest::project::guid_twin::guid_twin_decide,
+                    role_class: guid_role_class,
+                    stable_ids: GUID_CENSUS_STABLE_IDS,
+                    stable_mentions: *stable_mentions,
+                    extra_unsafe_names,
+                    samples: *samples,
+                    window: store::GUID_TWIN_WINDOW,
+                    batch: store::GUID_TWIN_BATCH,
+                    not_planned: GUID_TWIN_NOT_PLANNED,
+                    planned: GUID_TWIN_PLANNED,
+                    expected: GUID_TWIN_EXPECTED,
+                    exhibits: GUID_TWIN_EXHIBITS,
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("dissolve-guid-twins STOPPED by cancel — no report stored".to_owned());
+                }
+                let body = guid_twin_plan_json(&r)?;
+                self.db.put_report(GUID_TWIN_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+                Ok(guid_twin_plan_summary(&r))
+            }).await,
             Spec::RefreshOrgNames { dry_run, min_mentions, samples, org_ids } => Box::pin(async move {
                 // BOXED, as every census arm here, and the store future boxed inside it, so neither this
                 // family's future nor its poll frame grows with the planner (issue 467's budgets). The
@@ -18076,6 +18449,7 @@ const LIGHT_KINDS: &[(&str, &str)] = &[
     ("generic-wall-census", "report only: `generic_wall_inflation_census` reads on the pool"),
     ("ghost-census", "report only: `ghost_census` reads notice-id slices on the pool"),
     ("guid-census", "report only: `guid_census` reads org-id windows and IN chunks on the pool"),
+    ("dissolve-guid-twins", "report only (dry, Build 1): `plan_guid_twins` reads windows and IN chunks on the pool"),
     ("member-twin-census", "report only: `member_twin_census` reads index batches on the pool"),
     ("name-attribution-probe", "report only: `name_attribution_probe` reads on the pool"),
     ("name-phrase-census", "report only: `name_phrase_census` reads on the pool"),
@@ -18971,6 +19345,7 @@ mod tests {
                 "name-phrase-census",
                 "org-head-drift",
                 "guid-census",
+                "dissolve-guid-twins",
                 // Issue 524 unit 2b: `apply_org_name_refresh` and `revert_org_name_refresh` read the
                 // flag before every window; the committed windows stand.
                 "refresh-org-names",
@@ -23110,6 +23485,217 @@ mod tests {
         assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
         let (body, _) = db.latest_report(GUID_CENSUS_REPORT).await.unwrap().expect("report");
         assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
+        drop(conn);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// Issue 530 unit 3 (Build 1): `dissolve-guid-twins` enqueues DRY (its params say so) and refuses
+    /// `dry_run: false` (the wet path is Build 2), a `stable_mentions` a single-use pair would meet, and
+    /// a bad `extra_unsafe_names` (empty, blank, `|`); every other kind refuses `extra_unsafe_names`;
+    /// names are whitespace-collapsed and deduplicated; the kind is light and stoppable.
+    #[tokio::test]
+    async fn dissolve_guid_twins_enqueues_dry_and_refuses_a_wet_run() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ask = |dry_run: Option<bool>, stable_mentions: Option<u64>, extra: Option<Vec<&str>>| JobRequest {
+            kind: "dissolve-guid-twins".into(),
+            dry_run,
+            stable_mentions,
+            extra_unsafe_names: extra.map(|names| names.into_iter().map(str::to_owned).collect()),
+            ..Default::default()
+        };
+        let err = sup.enqueue_request(&ask(Some(false), None, None)).await.expect_err("dry in Build 1");
+        assert!(err.contains("dry in Build 1") && err.contains("dry_run: false"), "{err}");
+        let err = sup.enqueue_request(&ask(None, Some(2), None)).await.expect_err("a pair is not stable");
+        assert!(err.contains("stable_mentions") && err.contains("above 2"), "{err}");
+        for bad in [vec![], vec!["  "], vec!["Stadt|Neustadt"]] {
+            let err = sup.enqueue_request(&ask(None, None, Some(bad.clone()))).await.expect_err("bad names");
+            assert!(err.contains("extra_unsafe_names"), "{bad:?}: {err}");
+        }
+        let other = JobRequest {
+            kind: "guid-census".into(),
+            extra_unsafe_names: Some(vec!["Stadt Neustadt".into()]),
+            ..Default::default()
+        };
+        let err = sup.enqueue_request(&other).await.expect_err("only the twin plan reads it");
+        assert!(err.contains("guid-census refuses `extra_unsafe_names`"), "{err}");
+        sup.enqueue_request(&ask(None, None, None)).await.expect("the defaults");
+        sup.enqueue_request(&ask(Some(true), Some(3), Some(vec![" Stadt   Neustadt ", "Stadt Neustadt", "Amt 66"])))
+            .await
+            .expect("dry asked, names folded");
+        let queued = sup.queued();
+        assert_eq!(queued.len(), 2, "the refused asks queued nothing");
+        assert_eq!(queued[0].kind, "dissolve-guid-twins");
+        assert_eq!(queued[0].params, "dissolve-guid-twins dry stable_mentions=100 samples=30");
+        assert_eq!(
+            queued[1].params,
+            "dissolve-guid-twins dry stable_mentions=3 samples=30 extra_unsafe_names=Stadt Neustadt|Amt 66"
+        );
+        assert!(matches!(
+            &sup.queue.lock().expect("queue lock")[1].spec,
+            Spec::DissolveGuidTwins { dry_run: true, stable_mentions: 3, samples: 30, extra_unsafe_names }
+                if extra_unsafe_names == &vec!["Stadt Neustadt".to_owned(), "Amt 66".to_owned()]
+        ));
+        assert!(!heavy_write_kind("dissolve-guid-twins"), "read-only in Build 1");
+        assert!(stoppable("dissolve-guid-twins", &queued[0].params), "a cancel reaches the plan between chunks");
+        assert_eq!(
+            GUID_CENSUS_STABLE_MENTIONS,
+            store::GUID_TWIN_R1_STABLE_MENTIONS,
+            "the job's default knob is R1's fixed threshold, so a default run can pass R1"
+        );
+    }
+
+    /// Issue 530 unit 3 (Build 1): a plan that misses R1 says so — the summary reads `R1 BARS FAIL`, the
+    /// missed control reads `MISS`, the misses are named, and a knob off the decision's 100 is called out.
+    #[test]
+    fn a_failing_twin_plan_summary_reads_r1_bars_fail() {
+        let control = store::GuidTwinControl { org_id: 254, expect: "not_planned", ok: false, ..Default::default() };
+        let plan = store::GuidTwinPlan {
+            stable_mentions: 500,
+            bars: store::GuidTwinBars {
+                pass: false,
+                not_planned_failed: vec![254],
+                planned_failed: vec![22_759_261],
+                within_census_bar: true,
+                stable_mentions_is_decision: false,
+                ..Default::default()
+            },
+            controls: vec![control],
+            ..Default::default()
+        };
+        let msg = guid_twin_plan_summary(&plan);
+        assert!(msg.contains("R1 BARS FAIL"), "{msg}");
+        assert!(!msg.contains("R1 BARS PASS"), "{msg}");
+        assert!(msg.contains("254 not_planned not a GUID row MISS"), "{msg}");
+        assert!(msg.contains("not-planned misses [254]"), "{msg}");
+        assert!(msg.contains("planned misses [22759261]"), "{msg}");
+        assert!(msg.contains("stable_mentions 500 NOT THE DECISION'S"), "{msg}");
+        assert!(msg.contains("off GUID rows in candidate notices, a lower bound"), "{msg}");
+        let body: serde_json::Value = serde_json::from_str(&guid_twin_plan_json(&plan).unwrap()).unwrap();
+        assert!(body["scope_basis"].as_str().unwrap().contains("LOWER BOUNDS"), "{body}");
+        assert_eq!(body["bars"]["pass"], false);
+    }
+
+    /// Issue 530 unit 3 (Build 1): the job wired to the REAL `idgate::uuid_v4`, rule 530-T
+    /// (`ingest::project::guid_twin::guid_twin_decide`) and `guid_role_class`. Without a deferred index it
+    /// refuses and stores nothing; with them it stores `guid-twin-plan` — the Göttingen award's DÖE copy
+    /// names the buyer under two GUIDs, both rows are planned whole onto the DE identifier-NULL row
+    /// 2294259 (never the VAT row) and R1's bars pass — and answers a one-line summary; nothing is
+    /// written but the report, and a cancelled run stores none.
+    #[tokio::test]
+    async fn the_dissolve_guid_twins_job_refuses_without_its_indexes_and_stores_its_plan() {
+        use store::turso::Value;
+        let path = format!("/tmp/tender-db-sup-530u3-{}-{}.db", std::process::id(), store::now_unix());
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
+                                  published_at, parse_state)
+             VALUES (26483825, 'doe', 'd', 'h', 'eforms:eforms-de-1.2', 1, 'm', 0, 1717200000, 'parsed')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (948285, 1, 26483825, 1717200000, 'd')",
+            (),
+        )
+        .await
+        .unwrap();
+        for (id, identifier, kind) in [
+            (2_294_259i64, None, None),
+            (22_183_653, Some("DE308703297"), Some("vat")),
+            (22_759_261, Some("037C1508D9454E739D6E65099A79BEC1"), Some("national")),
+            (22_759_262, Some("5B1C2D3E4F5A4B6C8D7E8F9A0B1C2D3E"), Some("national")),
+        ] {
+            conn.execute(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, 'DE', ?, ?, 'Landkreis Göttingen', 'landkreis göttingen', 0, 0)",
+                (
+                    Value::Integer(id),
+                    kind.map_or(Value::Null, |k: &str| Value::Text(k.into())),
+                    identifier.map_or(Value::Null, |i: &str| Value::Text(i.into())),
+                ),
+            )
+            .await
+            .unwrap();
+        }
+        for (org, section, guid, role) in [
+            (22_759_261i64, "ORG-0001", "037c1508-d945-4e73-9d6e-65099a79bec1", "Procedure-Buyer"),
+            (22_759_262, "ORG-0002", "5b1c2d3e-4f5a-4b6c-8d7e-8f9a0b1c2d3e", "Lot-AddInfo"),
+        ] {
+            conn.execute(
+                "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+                 VALUES (26483825, ?, ?, 'Landkreis Göttingen', 'DE', ?)",
+                (Value::Text(section.into()), Value::Integer(org), Value::Text(guid.into())),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO tender_version_parties (tender_id, seq, lot_id, role, organization_id, mention_notice_id,
+                                                     mention_section_id)
+                 VALUES (948285, 1, NULL, ?, ?, 26483825, ?)",
+                (Value::Text(role.into()), Value::Integer(org), Value::Text(section.into())),
+            )
+            .await
+            .unwrap();
+        }
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let job = |id: u64| Job {
+            id,
+            kind: "dissolve-guid-twins".into(),
+            params: String::new(),
+            spec: Spec::DissolveGuidTwins {
+                dry_run: true,
+                stable_mentions: GUID_CENSUS_STABLE_MENTIONS,
+                samples: 30,
+                extra_unsafe_names: Vec::new(),
+            },
+            resume_after: None,
+        };
+        let err = sup.run_spec(&job(1)).await.expect_err("the deferred tender indexes are absent");
+        assert!(err.contains("dissolve-guid-twins refused"), "{err}");
+        assert!(db.latest_report(GUID_TWIN_REPORT).await.unwrap().is_none(), "a refusal stores nothing");
+
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let msg = sup.run_spec(&job(2)).await.expect("plan");
+        assert!(msg.starts_with("dissolve-guid-twins (issue 530 unit 3, Build 1, DRY): 2 GUID row(s)"), "{msg}");
+        assert!(msg.contains("PLAN: 2 row(s) whole (2 mention(s)), 0 partial (0 rehome(s)"), "{msg}");
+        assert!(msg.contains("Targets: 1 key(s), 1 with an identifier-NULL row"), "{msg}");
+        assert!(msg.contains("R1 BARS PASS"), "{msg}");
+        assert!(msg.contains("22759261 planned whole") && msg.contains("254 not_planned not a GUID row"), "{msg}");
+        assert!(msg.contains("DE landkreis göttingen: 2 GUID row(s), 2 planned, 0 partial, 0 kept"), "{msg}");
+        assert!(msg.ends_with("NOTHING IS WRITTEN."), "{msg}");
+        let (body, _) = db.latest_report(GUID_TWIN_REPORT).await.unwrap().expect("report");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["planned_row_ids"], serde_json::json!([22_759_261, 22_759_262]), "{body}");
+        assert_eq!(report["largest_target"]["target_id"], 2_294_259, "{body}");
+        assert_eq!(report["bars"]["pass"], true, "{body}");
+        assert_eq!(report["roles"]["by_role_set"]["Lot-AddInfo+Procedure-Buyer"], 1, "{body}");
+        assert_eq!(report["not_planned_ids"][0], 254, "{body}");
+        assert!(report["rule"].as_str().unwrap().contains("NOT wired"), "{body}");
+        // Read-only: the GUID rows and their mentions stand as they were.
+        let mut rows = conn
+            .query("SELECT COUNT(*) FROM organization_mentions WHERE organization_id IN (22759261, 22759262)", ())
+            .await
+            .unwrap();
+        let still = rows.next().await.unwrap().unwrap().get_value(0).unwrap();
+        assert_eq!(still, Value::Integer(2), "a dry plan moves nothing");
+        drop(rows);
+
+        // A cancelled run stores nothing over the plan.
+        db.put_report(GUID_TWIN_REPORT, "{\"marker\":1}", store::now_unix()).await.unwrap();
+        sup.cancel_running.store(3, Ordering::Relaxed);
+        let msg = sup.run_spec(&job(3)).await.expect("stopped plan");
+        assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
+        let (body, _) = db.latest_report(GUID_TWIN_REPORT).await.unwrap().expect("report");
+        assert_eq!(body, "{\"marker\":1}", "a stopped plan stores nothing");
         drop(conn);
         for suffix in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{suffix}"));

@@ -11,6 +11,7 @@ pub mod analyze;
 pub mod canonical;
 pub mod checkpoint;
 pub mod guid_census;
+pub mod guid_twins;
 pub mod head_election;
 mod inplace;
 pub mod jobs;
@@ -107,6 +108,15 @@ pub use guid_census::{
     GUID_CENSUS_REST, GUID_CENSUS_SAMPLE_IDS, GUID_CENSUS_WINDOW, GUID_ROLE_BUYER, GUID_ROLE_CLASSES, GUID_ROLE_NONE,
     GUID_ROLE_OTHER, GUID_ROLE_REVIEW_INFO, GUID_ROLE_TENDERER, GuidCensusArgs, GuidCensusReport, GuidCrossSignal,
     GuidRowSample, GuidSamples, GuidTally, GuidTwinSample, GuidTwinSignal,
+};
+pub use guid_twins::{
+    GUID_TWIN_BATCH, GUID_TWIN_CENSUS_BAR, GUID_TWIN_CENSUS_MAX_ID, GUID_TWIN_CITY_FIELD, GUID_TWIN_INDEXES,
+    GUID_TWIN_LIST_CAP, GUID_TWIN_R1_STABLE_MENTIONS, GUID_TWIN_READ_ALL, GUID_TWIN_SALT, GUID_TWIN_TARGET_NEWEST,
+    GUID_TWIN_WINDOW, GuidKeep,
+    GuidKeepCandidate, GuidTwinBars, GuidTwinCityScreen, GuidTwinControl, GuidTwinCount, GuidTwinExhibit,
+    GuidTwinGroupSample, GuidTwinGuardCount, GuidTwinMentionKey, GuidTwinOffGuid, GuidTwinPartial, GuidTwinPlan, GuidTwinPlanArgs,
+    GuidTwinPostState, GuidTwinRoles, GuidTwinRowSample, GuidTwinRule, GuidTwinTargetSample, TwinBind, TwinDecision,
+    TwinGroup, TwinView, guid_twin_city_fold, guid_twin_sample_key,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;

@@ -876,6 +876,11 @@ pub mod role_census;
 /// Issue 538 unit 3: the publisher's extra escapes, decoded in served titles and descriptions.
 pub mod escapes;
 
+/// Issue 530 unit 3 (Build 1): rule 530-T, the within-notice GUID twin, as a pure function of one notice
+/// copy, and its name guard. NOT wired into `NoticeState::mentions_and_dropped` yet (Build 2): the dry
+/// `dissolve-guid-twins` planner is its only caller.
+pub mod guid_twin;
+
 /// Issue 570 unit 3: the cached legacy chains the lot-remap tests fold (test data only).
 #[cfg(test)]
 mod lot_keys_570;
