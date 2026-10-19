@@ -3394,22 +3394,24 @@ pub fn head_value_eur_cents_with(
     partners: &ScalePartners<'_>,
     rates: &crate::rates::RatesLookup,
 ) -> HeadValue {
-    head_value_on_paths(head, partners, rates, LOT_SUM_AWARDS_PATH)
+    head_value_on_paths(head, partners, rates, LOT_SUM_AWARDS_PATH, R10Guards::PRODUCTION)
 }
 
 /// [`head_value_eur_cents_with`] with path W (`lot-sum-awards`) on or off: production passes
 /// [`LOT_SUM_AWARDS_PATH`] (off from issue 551 unit 4a, on at unit 4b's B5, off again since
 /// B5's stop rule tripped on 2026-10-19); the path-W guard tests pass `true` (the test-only `head_value_with_awards_path`), so the path and
-/// its pins are exercised whatever the switch says.
+/// its pins are exercised whatever the switch says. `guards` are R10's candidate filters (issue 551
+/// B6, [`R10Guards`]): production passes [`R10Guards::PRODUCTION`], the B6 tests any of the four.
 fn head_value_on_paths(
     head: &TenderVersion,
     partners: &ScalePartners<'_>,
     rates: &crate::rates::RatesLookup,
     awards_path: bool,
+    guards: R10Guards,
 ) -> HeadValue {
     let date = crate::rates::civil_date(head.published_at);
     let today = elect_head_figure(head, partners, rates, &date);
-    match derive_lot_sum(head, partners, rates, &date, today.as_ref(), awards_path) {
+    match derive_lot_sum(head, partners, rates, &date, today.as_ref(), awards_path, guards) {
         Some((eur_cents, derived)) => HeadValue { eur_cents: Some(eur_cents), derived: Some(derived) },
         None => HeadValue { eur_cents: today.map(|t| t.eur_cents), derived: None },
     }
@@ -3420,11 +3422,20 @@ fn head_value_on_paths(
 /// its labelled pins. Unit 4b's B5 switched production on too, so it equalled [`head_value`];
 /// B5's stop rule switched production off again (2026-10-19, pending the investigation), so it
 /// is again what production would serve on the route back on (pinned in
-/// `path_w_is_off_so_its_vouched_pins_keep_the_max_election`).
+/// `path_w_is_off_so_its_vouched_pins_keep_the_max_election`), R10's B6 guards as production
+/// sets them ([`R10Guards::PRODUCTION`]).
 #[cfg(test)]
 fn head_value_with_awards_path(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> HeadValue {
+    head_value_with_awards_path_guards(chain, rates, R10Guards::PRODUCTION)
+}
+
+/// Issue 551 B6: [`head_value_with_awards_path`] under any of the four combinations of R10's
+/// candidate guards ([`R10Guards`]: none, G-single, G-cover, both), whatever
+/// [`R10_G_SINGLE`] / [`R10_G_COVER`] say, so U4's adoption can pick and the tests pin each.
+#[cfg(test)]
+fn head_value_with_awards_path_guards(chain: &[TenderVersion], rates: &crate::rates::RatesLookup, guards: R10Guards) -> HeadValue {
     match chain.last() {
-        Some(head) => head_value_on_paths(head, &ScalePartners::of_chain(chain), rates, true),
+        Some(head) => head_value_on_paths(head, &ScalePartners::of_chain(chain), rates, true, guards),
         None => HeadValue::default(),
     }
 }
@@ -3437,7 +3448,7 @@ fn head_value_with_awards_path(chain: &[TenderVersion], rates: &crate::rates::Ra
 #[cfg(test)]
 fn head_value_without_awards_path(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> HeadValue {
     match chain.last() {
-        Some(head) => head_value_on_paths(head, &ScalePartners::of_chain(chain), rates, false),
+        Some(head) => head_value_on_paths(head, &ScalePartners::of_chain(chain), rates, false, R10Guards::PRODUCTION),
         None => HeadValue::default(),
     }
 }
@@ -3445,14 +3456,21 @@ fn head_value_without_awards_path(chain: &[TenderVersion], rates: &crate::rates:
 /// Issue 551 unit 4b (B2): what [`head_value_with_awards_path`] decides for the chain's head, as
 /// the derived sum or the name of the check that kept today's head ([`lot_sum_decision`]: `V`,
 /// `V1`, `V0`, `W/T'`, `W/K`, `W/G0` … `W/G4`, `R1` … `R10`), so the guard tests can pin WHICH check refused,
-/// as unit B3's port check compares it.
+/// as unit B3's port check compares it. R10's B6 guards as production sets them.
 #[cfg(test)]
 fn awards_path_check(chain: &[TenderVersion], rates: &crate::rates::RatesLookup) -> Result<DerivedValue, &'static str> {
+    awards_path_check_guards(chain, rates, R10Guards::PRODUCTION)
+}
+
+/// Issue 551 B6: [`awards_path_check`] under any of the four combinations of R10's candidate
+/// guards ([`R10Guards`]); a guard that empties R10's candidates refuses under the name `R10`.
+#[cfg(test)]
+fn awards_path_check_guards(chain: &[TenderVersion], rates: &crate::rates::RatesLookup, guards: R10Guards) -> Result<DerivedValue, &'static str> {
     let head = chain.last().ok_or("no head")?;
     let partners = ScalePartners::of_chain(chain);
     let date = crate::rates::civil_date(head.published_at);
     let today = elect_head_figure(head, &partners, rates, &date);
-    lot_sum_decision(head, &partners, rates, &date, today.as_ref(), true).map(|(_, derived)| derived)
+    lot_sum_decision(head, &partners, rates, &date, today.as_ref(), true, guards).map(|(_, derived)| derived)
 }
 
 /// The figure the max election elects ([`elect_head_figure`]): its EUR value, its currency,
@@ -3850,8 +3868,9 @@ fn derive_lot_sum(
     date: &str,
     today: Option<&HeadFigure<'_>>,
     awards_path: bool,
+    guards: R10Guards,
 ) -> Option<(i64, DerivedValue)> {
-    lot_sum_decision(head, partners, rates, date, today, awards_path).ok()
+    lot_sum_decision(head, partners, rates, date, today, awards_path, guards).ok()
 }
 
 /// [`derive_lot_sum`] with the reason a head keeps the max election: `Err` names the check
@@ -3871,6 +3890,7 @@ fn lot_sum_decision(
     date: &str,
     today: Option<&HeadFigure<'_>>,
     awards_path: bool,
+    guards: R10Guards,
 ) -> Result<(i64, DerivedValue), &'static str> {
     // The head's procedure figures (Fact order), with the election's judgement of each.
     let mut procedure: Vec<(&str, &str, i64, Judged)> = Vec::new();
@@ -3929,7 +3949,7 @@ fn lot_sum_decision(
     }
     let sums = LotSums::by_currency(head);
     let copies = CopyJudgement { over_cap: copy_over_cap, refused: copy_refused };
-    awards_lot_sum(head, &procedure, copies, partners, &sums, rates, date, today)
+    awards_lot_sum(head, &procedure, copies, partners, &sums, rates, date, today, guards)
 }
 
 /// Issue 551 path W's G5 / G5' inputs from the head's award copies (a lot award's tender-scope
@@ -4026,6 +4046,7 @@ fn awards_lot_sum(
     rates: &crate::rates::RatesLookup,
     date: &str,
     today: Option<&HeadFigure<'_>>,
+    guards: R10Guards,
 ) -> Result<(i64, DerivedValue), &'static str> {
     // K: the elected copy's currency; a null head's, the currency with the most award lots (a
     // tie to the greater code).
@@ -4150,7 +4171,7 @@ fn awards_lot_sum(
             .ok_or("W/G0")?;
         summed.push(SummedAward { key: lot, notice_id, cents, result });
     }
-    let vouched_by = awards_v2_check(&AwardsView::new(head, currency, summed, sum), partners)?;
+    let vouched_by = awards_v2_check(&AwardsView::new(head, currency, summed, sum), partners, guards)?;
     let vouched_by = VouchingTotal { field: vouched_by.field.clone(), notice_id: vouched_by.notice_id, cents: vouched_by.cents };
     let derived = DerivedValue {
         path: DerivationPath::Awards { vouched_by },
@@ -4905,22 +4926,114 @@ fn r9_award_through_another_lots_tender(view: &AwardsView<'_>) -> bool {
 /// the order a notice's values are read), where the port groups one section's totals by field.
 /// They can name different totals only when one notice states two that vouch; ship or refuse,
 /// the checks B3 compares, cannot differ.
-fn r10_vouching_total<'v>(view: &AwardsView<'_>, usable: &[(&'v StatedTotal, bool)]) -> Option<&'v StatedTotal> {
+///
+/// **Issue 551 B6: two candidate guards** ([`R10Guards`]) filter the totals above before the first
+/// is taken: [`r10_g_single_refuses`] and [`r10_g_cover_refuses`]. Each only removes candidates
+/// (with none left R10 refuses, under the name `R10`), so a guarded fire is a v2 fire; a guard can
+/// move `vouched_by` on a sum that still ships, to the next candidate in the same order.
+fn r10_vouching_total<'v>(view: &AwardsView<'_>, usable: &[(&'v StatedTotal, bool)], guards: R10Guards) -> Option<&'v StatedTotal> {
     let singles: BTreeSet<i64> = view.summed.iter().map(|s| s.cents).collect();
     let sum = i128::from(view.sum);
     usable
         .iter()
-        .find(|(t, single)| {
+        .filter(|(t, single)| {
             !single && !singles.contains(&t.cents) && py_le((i128::from(t.cents) - sum).abs(), py_times(0.01, sum))
         })
+        .find(|(t, _)| !(guards.single && r10_g_single_refuses(view, t)) && !(guards.cover && r10_g_cover_refuses(view, t)))
         .map(|(t, _)| *t)
+}
+
+/// Issue 551 B6 (decided 2026-10-19, wf_834aaac1-932; "B6 — decision" point 2): whether G-single
+/// is on in production. G-single: a stated total from a notice whose round in this version has
+/// exactly ONE LotResult (keyed or not) does not vouch ([`r10_g_single_refuses`]) — the repair of
+/// R10's "not a single-lot notice's own award" clause, which compares the total with the stored
+/// award row and so could not see 6465510's TED-VAL_TOTAL on 20772908 (its one result is stored
+/// lot = null, awarded = null). It reads only path W's R10, and [`LOT_SUM_AWARDS_PATH`] is off, so
+/// it moves no served value until path W is switched on again; U4's adoption rule (point 3)
+/// decides whether it stays on for the flip. Tests reach all four combinations through the
+/// test-only `head_value_with_awards_path_guards` / `awards_path_check_guards`.
+const R10_G_SINGLE: bool = true;
+
+/// Issue 551 B6: whether G-cover is on in production. G-cover: a total of kind Award or Range
+/// vouches only if its notice names at least one summed key on R3's own accessor
+/// ([`r10_g_cover_refuses`]); estimate totals are unchanged. Like [`R10_G_SINGLE`] it reads only
+/// path W's R10 and moves nothing served while [`LOT_SUM_AWARDS_PATH`] is off; U4 decides it.
+const R10_G_COVER: bool = true;
+
+/// Issue 551 B6: which of R10's two candidate guards run. Production runs
+/// [`Self::PRODUCTION`] ([`R10_G_SINGLE`], [`R10_G_COVER`]); the port of record
+/// (`b6/rule_v2_g.py`, sha256 23cbd850…) decides under `frozenset()`, `{'single'}`, `{'cover'}` or
+/// `{'single', 'cover'}`, and so can the tests. With both off R10 is v2's exactly.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+struct R10Guards {
+    /// G-single ([`r10_g_single_refuses`]).
+    single: bool,
+    /// G-cover ([`r10_g_cover_refuses`]).
+    cover: bool,
+}
+
+impl R10Guards {
+    /// What production runs.
+    const PRODUCTION: R10Guards = R10Guards { single: R10_G_SINGLE, cover: R10_G_COVER };
+    /// Neither guard: R10 as v2 (the port's `frozenset()`).
+    #[cfg(test)]
+    const NONE: R10Guards = R10Guards { single: false, cover: false };
+    /// G-single alone (`{'single'}`).
+    #[cfg(test)]
+    const SINGLE: R10Guards = R10Guards { single: true, cover: false };
+    /// G-cover alone (`{'cover'}`).
+    #[cfg(test)]
+    const COVER: R10Guards = R10Guards { single: false, cover: true };
+    /// Both (`{'single', 'cover'}`).
+    #[cfg(test)]
+    const BOTH: R10Guards = R10Guards { single: true, cover: true };
+    /// The four, in the port's `GUARD_SETS` order.
+    #[cfg(test)]
+    const ALL: [R10Guards; 4] = [Self::NONE, Self::SINGLE, Self::COVER, Self::BOTH];
+}
+
+/// Issue 551 B6, G-single's count: how many LotResults the round of notice `notice_id` holds in
+/// this version, keyed or not — the port's `round_results` (`round_counts`: the served
+/// `lot_results` rows of the version with that `notice_id`). The writer stores one
+/// `tender_version_lot_results` row per [`LotResultState`] of every round of the version
+/// (`write_round`; keyless results included, `lot_id` NULL), and the API serves those rows with
+/// their round's notice id, so the Rust expression is exactly
+/// `AwardsView::results(head).filter(|&(n, _)| n == notice_id).count()`. A notice with no round
+/// in this version (a CN, or a round a correction replaced) counts 0.
+fn round_results(head: &TenderVersion, notice_id: i64) -> usize {
+    AwardsView::results(head).filter(|&(n, _)| n == notice_id).count()
+}
+
+/// Issue 551 B6, G-single (the port's `cand_flags` `g_single`: `round_results == 1`): the total's
+/// notice's round in this version has exactly one LotResult, keyed or not ([`round_results`]), so
+/// the total is that one result's own figure and does not vouch for a sum. Any kind.
+fn r10_g_single_refuses(view: &AwardsView<'_>, t: &StatedTotal) -> bool {
+    round_results(view.head, t.notice_id) == 1
+}
+
+/// Issue 551 B6, G-cover's test (the port's `names_summed_keys` non-empty): notice `notice_id`
+/// names at least one summed key, by R3's own accessor — [`AwardsView::on_lot`] of a summed key
+/// holds a result of that notice ([`r3_notice_total_below_its_lots`]'s "keys that notice awards",
+/// decision A1; not [`StatedTotal::lots_awarded`], which no guard reads). Keyless results are in no
+/// `on_lot` list, so they never name a key.
+fn names_a_summed_key(view: &AwardsView<'_>, notice_id: i64) -> bool {
+    view.summed.iter().any(|s| view.on_lot(s.key).iter().any(|(n, _)| *n == notice_id))
+}
+
+/// Issue 551 B6, G-cover (the port's `cand_flags` `g_cover`: `kind in ('award', 'range') and not
+/// names`): a total of kind [`StatedTotalKind::Award`] (BT-161, BT-118, BT-1118, a CAN-type
+/// form's `TED-VAL_TOTAL`) or [`StatedTotalKind::Range`] (`TED-LOW`, `TED-HIGH`; the port's Range
+/// by field, decision A2) whose notice names no summed key ([`names_a_summed_key`]) does not
+/// vouch. An [`StatedTotalKind::Estimate`] total is never removed.
+fn r10_g_cover_refuses(view: &AwardsView<'_>, t: &StatedTotal) -> bool {
+    matches!(t.kind, StatedTotalKind::Award | StatedTotalKind::Range) && !names_a_summed_key(view, t.notice_id)
 }
 
 /// Issue 551 path W v2 (unit 4b, B2): R1–R10 in `rule_v2.py`'s `V2_ORDER` (R1, R2a–R2d, R3, R4,
 /// R5.1–R5.15, R6, R7, R8, R9, R10), run after v1's G4 on a sum v1 would serve: `Err` names the
 /// first that refuses (today's head stays), `Ok` the total that vouches for S. v2 only adds
 /// refusals, so every v2 fire is a v1 fire.
-fn awards_v2_check<'v>(view: &AwardsView<'v>, partners: &ScalePartners<'_>) -> Result<&'v StatedTotal, &'static str> {
+fn awards_v2_check<'v>(view: &AwardsView<'v>, partners: &ScalePartners<'_>, guards: R10Guards) -> Result<&'v StatedTotal, &'static str> {
     if r1_lot_won_by_two_tenders(view) {
         return Err("R1");
     }
@@ -4949,7 +5062,7 @@ fn awards_v2_check<'v>(view: &AwardsView<'v>, partners: &ScalePartners<'_>) -> R
     if r9_award_through_another_lots_tender(view) {
         return Err("R9");
     }
-    r10_vouching_total(view, &usable).ok_or("R10")
+    r10_vouching_total(view, &usable, guards).ok_or("R10")
 }
 
 /// One lot-scoped amount offered to [`elect_lot_value`]: the published figure,
@@ -46989,8 +47102,8 @@ mod tests {
     #[test]
     fn path_w_switched_off_keeps_the_max_election_and_path_v() {
         use super::{
-            DerivationPath, HeadValue, ScalePartners, elect_head_figure, head_value, head_value_with_awards_path, head_value_without_awards_path,
-            lot_sum_decision, max_election_eur_cents,
+            DerivationPath, HeadValue, R10Guards, ScalePartners, elect_head_figure, head_value, head_value_with_awards_path,
+            head_value_without_awards_path, lot_sum_decision, max_election_eur_cents,
         };
         for id in [585917, 5995030, 8426318] {
             let fx = super::lot_sum_551_v2_fixtures::fixture(id);
@@ -47005,9 +47118,9 @@ mod tests {
             let partners = ScalePartners::of_chain(&chain);
             let date = crate::rates::civil_date(head.published_at);
             let today = elect_head_figure(head, &partners, &rates, &date);
-            assert_eq!(lot_sum_decision(head, &partners, &rates, &date, today.as_ref(), false).err(), Some("W/off"), "{id}: the switch names itself");
+            assert_eq!(lot_sum_decision(head, &partners, &rates, &date, today.as_ref(), false, R10Guards::PRODUCTION).err(), Some("W/off"), "{id}: the switch names itself");
             assert_eq!(
-                lot_sum_decision(head, &partners, &rates, &date, today.as_ref(), true).ok().map(|(_, d)| d),
+                lot_sum_decision(head, &partners, &rates, &date, today.as_ref(), true, R10Guards::PRODUCTION).ok().map(|(_, d)| d),
                 on.derived,
                 "{id}: switched on, the sum"
             );
@@ -47322,7 +47435,12 @@ mod tests {
     /// numbers (R2d).
     #[test]
     fn the_awards_path_refuses_every_shape_its_guards_name() {
-        use super::{LotResultState, LotSumKind, LotSums, Round, StatedTotal, StatedTotalKind, awards_path_check, head_value_with_awards_path as head_value};
+        use super::{LotResultState, LotSumKind, LotSums, R10Guards, Round, StatedTotal, StatedTotalKind, awards_path_check_guards, head_value_with_awards_path_guards};
+        // Issue 551 B6: on R10 as v2 decides it. Each shape states its total on its LAST round's
+        // notice, which can hold one LotResult or name no summed key, and pins v1's and v2's
+        // checks, not R10's B6 guards (pinned in `a_one_result_notices_total_naming_no_summed_lot_does_not_vouch`).
+        let head_value = |chain: &[TenderVersion], rates: &crate::rates::RatesLookup| head_value_with_awards_path_guards(chain, rates, R10Guards::NONE);
+        let awards_path_check = |chain: &[TenderVersion], rates: &crate::rates::RatesLookup| awards_path_check_guards(chain, rates, R10Guards::NONE);
         let rates = crate::rates::RatesLookup::default();
         let amt_in = |field: &str, cents: i64, currency: &str| Fact::Amount { field: field.into(), cents, currency: currency.into(), tax_basis: None, quality: None };
         let amt = |field: &str, cents: i64| amt_in(field, cents, "EUR");
@@ -47684,9 +47802,11 @@ mod tests {
         v
     }
 
-    /// What path W makes of a one-version chain: the sum served, or the check that refused.
+    /// What path W makes of a one-version chain: the sum served, or the check that refused. On
+    /// R10 as v2 decides it ([`super::R10Guards::NONE`]): these tests pin v2's checks, and a B6
+    /// guard (which only empties R10's candidates) gets an assertion of its own.
     fn v2_check(v: &TenderVersion) -> Result<i64, &'static str> {
-        super::awards_path_check(std::slice::from_ref(v), &crate::rates::RatesLookup::default()).map(|d| d.cents)
+        super::awards_path_check_guards(std::slice::from_ref(v), &crate::rates::RatesLookup::default(), super::R10Guards::NONE).map(|d| d.cents)
     }
 
     /// R1: a summed lot won by two or more separate tenders is not summed; a consortium on one
@@ -48277,8 +48397,13 @@ mod tests {
         }
         // The first vouching total in chain order is the one named.
         let two = stating(&base, vec![v2_total(9, "TED-LOW", Range, 299_000_000), v2_total(10, "BT-161-NoticeResult", Award, 300_000_000)]);
-        let derived = awards_path_check(std::slice::from_ref(&two), &rates).expect("vouched");
+        // (On R10 as v2 decides it: notice 9 has no round, so G-cover removes its range end, and
+        // the first total left, notice 10's BT-161, is named instead — a guard moves `vouched_by`,
+        // issue 551 B6 amendment A4.)
+        let derived = super::awards_path_check_guards(std::slice::from_ref(&two), &rates, super::R10Guards::NONE).expect("vouched");
         assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: "TED-LOW".into(), notice_id: 9, cents: 299_000_000 } });
+        let derived = super::awards_path_check_guards(std::slice::from_ref(&two), &rates, super::R10Guards::COVER).expect("vouched");
+        assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: "BT-161-NoticeResult".into(), notice_id: 10, cents: 300_000_000 } });
         // A total in another currency vouches for nothing in S's.
         let pln = super::StatedTotal { currency: "PLN".into(), ..v2_total(10, "BT-161-NoticeResult", Award, 300_000_000) };
         assert_eq!(v2_check(&stating(&base, vec![pln])), Err("R10"));
@@ -48286,8 +48411,11 @@ mod tests {
         // (since re-awarded at EUR 1 m) and states EUR 3 m; stated by notice 10, the same figure does.
         let mut reawarded = base.clone();
         reawarded.rounds.insert(0, v2_round(8, vec![v2_award("LOT-0001", 300_000_000, &[11])], vec![v2_bid("LOT-0001", 300_000_000, &[11])]));
-        assert_eq!(v2_check(&stating(&reawarded, vec![v2_total(8, "BT-161-NoticeResult", Award, 300_000_000)])), Err("R10"), "notice 8's own award");
+        let own = stating(&reawarded, vec![v2_total(8, "BT-161-NoticeResult", Award, 300_000_000)]);
+        assert_eq!(v2_check(&own), Err("R10"), "notice 8's own award");
         assert_eq!(v2_check(&stating(&reawarded, vec![v2_total(10, "BT-161-NoticeResult", Award, 300_000_000)])), Ok(300_000_000), "notice 10's total");
+        // (Issue 551 B6: notice 8's round holds one LotResult, so G-single refuses it too.)
+        assert_eq!(super::awards_path_check_guards(std::slice::from_ref(&own), &rates, super::R10Guards::SINGLE).map(|d| d.cents), Err("R10"), "G-single");
         // A total equal to a single summed award vouches for nothing. (Within 1 % of S, such an award
         // is at least 99 x the others, so R8 refuses the sum first; the clause is read on the pure
         // R10 test, with S as given.)
@@ -48300,9 +48428,9 @@ mod tests {
         let view = super::AwardsView::new(&v, "EUR", summed, 200_000_000);
         let equal = v2_total(10, "BT-161-NoticeResult", Award, 200_000_000);
         let near = v2_total(10, "BT-161-NoticeResult", Award, 199_000_000);
-        assert_eq!(super::r10_vouching_total(&view, &[(&equal, false)]), None, "LOT-0002's own figure");
-        assert_eq!(super::r10_vouching_total(&view, &[(&near, false)]), Some(&near));
-        assert_eq!(super::r10_vouching_total(&view, &[(&near, true)]), None, "a single-lot notice's own award");
+        assert_eq!(super::r10_vouching_total(&view, &[(&equal, false)], super::R10Guards::PRODUCTION), None, "LOT-0002's own figure");
+        assert_eq!(super::r10_vouching_total(&view, &[(&near, false)], super::R10Guards::PRODUCTION), Some(&near));
+        assert_eq!(super::r10_vouching_total(&view, &[(&near, true)], super::R10Guards::PRODUCTION), None, "a single-lot notice's own award");
 
         // Real rows (`canonical_551_v2_fixtures.rs`).
         for id in [6450467, 6450469, 6450473] {
@@ -48316,6 +48444,366 @@ mod tests {
         let derived = value.derived.expect("8426318 is served");
         assert_eq!((derived.cents, derived.currency.as_str(), derived.lots), (300_000_000_000, "GBP", 7), "GBP 3,000,000,000.00");
         assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: "TED-HIGH".into(), notice_id: 20083570, cents: 300_000_000_000 } });
+    }
+
+    // ---- Issue 551 B6: R10's two candidate guards, G-single and G-cover (canonical.rs
+    // `r10_g_single_refuses` / `r10_g_cover_refuses`, ported from the port of record
+    // `b6/rule_v2_g.py`, sha256 23cbd850…: `guard_kind`, `cand_flags`, `guarded_vouches`). Each
+    // only removes R10 candidates, so with none left R10 refuses under its own name. Run through
+    // the test-only twins under all four combinations ([`super::R10Guards::ALL`]), so U4's
+    // adoption can pick whichever the reads support; production has path W off and serves none.
+
+    /// Issue 551 B6: an EUR lot result keyed `key` on `lot` (or keyless), valued or not, with its
+    /// decision, winners and the award block's own number — a row as the API serves it.
+    fn b6_result(key: &str, lot: Option<&str>, cents: Option<i64>, decision: &str, winners: &[i64], no: Option<&str>) -> super::LotResultState {
+        super::LotResultState {
+            key: key.into(),
+            lot_key: lot.map(Into::into),
+            decision: Some(decision.into()),
+            reason: None,
+            awarded_cents: cents,
+            awarded_currency: cents.map(|_| "EUR".into()),
+            decided: None,
+            winners: winners.to_vec(),
+            buyer_winners: Vec::new(),
+            statistics: Vec::new(),
+            published_lot_no: no.map(Into::into),
+            group: false,
+        }
+    }
+
+    /// Issue 551 B6: an EUR range end, `TED-LOW` / `TED-HIGH`, stated by `notice_id` (kind Range).
+    fn b6_range(notice_id: i64, field: &str, cents: i64) -> super::StatedTotal {
+        v2_total(notice_id, field, super::StatedTotalKind::Range, cents)
+    }
+
+    /// Tender 6465510's head as the API serves it (issue 551 B5's one wrong of the investigation's
+    /// 61; the fresh B6 read of `/v1/tenders/6465510` and its notices' totals through the port of
+    /// record): a 2019 TED procedure of 22 lots, CN 20341803 (TED-VAL_ESTIMATED_TOTAL EUR
+    /// 967,741.94), then 22 single-lot award notices of one LotResult each. Twenty of them are
+    /// stored keyless and unvalued (lot = null, awarded = null), one names LOT-1 unvalued, and the
+    /// last two award LOT-2 EUR 91,680.50 (21020093) and LOT-6 EUR 70,340.42 (21044287): S = EUR
+    /// 162,020.92. Each award notice states its own TED-VAL_TOTAL (Award, form F03), or a
+    /// VAL_RANGE_TOTAL (Range); 20772908's EUR 161,290.32 — lot 4's own award, stored keyless — is
+    /// 0.45 % from S by coincidence and is v2's only vouch. The head's tender-scope estimate and
+    /// result value are LOT-6's award copied (today's head: EUR 70,340.42).
+    fn b6_6465510() -> TenderVersion {
+        use super::StatedTotalKind::{Award, Estimate};
+        // (notice, lot, award cents, winner): every round in the API's order.
+        const ROUNDS: [(i64, Option<&str>, Option<i64>, i64); 22] = [
+            (20_772_902, None, None, 6_406_354),
+            (20_772_903, None, None, 11_172_229),
+            (20_772_905, None, None, 13_996_220),
+            (20_772_906, None, None, 12_974_572),
+            (20_772_908, None, None, 12_160_768),
+            (20_767_549, None, None, 12_974_572),
+            (20_767_554, None, None, 14_449_670),
+            (20_767_555, Some("LOT-1"), None, 14_449_670),
+            (20_767_556, None, None, 14_449_670),
+            (20_767_559, None, None, 14_449_697),
+            (20_767_560, None, None, 14_449_703),
+            (20_767_563, None, None, 10_807_590),
+            (20_767_565, None, None, 10_328_316),
+            (20_767_567, None, None, 10_328_316),
+            (20_767_572, None, None, 10_328_316),
+            (20_767_574, None, None, 14_269_028),
+            (20_767_578, None, None, 14_449_776),
+            (20_767_581, None, None, 13_502_395),
+            (20_767_585, None, None, 13_996_241),
+            (20_781_606, None, None, 14_491_819),
+            (21_020_093, Some("LOT-2"), Some(9_168_050), 14_752_688),
+            (21_044_287, Some("LOT-6"), Some(7_034_042), 13_837_545),
+        ];
+        let award = |notice_id: i64, cents: i64| v2_total(notice_id, "TED-VAL_TOTAL", Award, cents);
+        let range = |notice_id: i64, cents: i64| {
+            let ends = [("TED-HIGH", cents), ("TED-HIGH", cents), ("TED-LOW", cents), ("TED-LOW", cents)];
+            ends.map(|(field, cents)| b6_range(notice_id, field, cents))
+        };
+        let mut stated_totals = vec![
+            v2_total(20_341_803, "TED-VAL_ESTIMATED_TOTAL", Estimate, 96_774_194),
+            award(20_772_902, 20_161_290),
+            award(20_772_903, 1_100_000),
+            award(20_772_905, 5_887_096),
+            award(20_772_906, 6_989_355),
+            award(20_772_908, 16_129_032),
+            award(20_767_549, 403_226),
+            award(20_767_554, 12_500_000),
+            award(20_767_555, 3_426_744),
+            award(20_767_556, 403_226),
+            award(20_767_559, 2_068_549),
+            award(20_767_560, 1_000_000),
+            award(20_767_563, 9_270_030),
+        ];
+        stated_totals.extend(range(20_767_565, 397_200));
+        stated_totals.push(award(20_767_567, 2_083_065));
+        stated_totals.extend(range(20_767_572, 1_020_000));
+        stated_totals.push(award(20_767_574, 401_613));
+        stated_totals.extend(range(20_767_578, 1_186_700));
+        stated_totals.extend([award(20_767_581, 2_650_000), award(20_767_585, 425_000)]);
+        stated_totals.extend(range(20_781_606, 1_079_032));
+        stated_totals.extend([award(21_020_093, 11_368_332), award(21_044_287, 7_034_042)]);
+        TenderVersion {
+            caused_by_notice_id: 21_044_287,
+            lots: (1..=22).map(|i| v2_lot(&format!("LOT-{i}"), Vec::new())).collect(),
+            rounds: ROUNDS
+                .iter()
+                .map(|&(notice_id, lot, cents, winner)| {
+                    let no = lot.map(|l| l.trim_start_matches("LOT-"));
+                    v2_round(notice_id, vec![b6_result("RES-1", lot, cents, "selec-w", &[winner], no)], Vec::new())
+                })
+                .collect(),
+            stated_totals,
+            ..head(vec![v2_eur("estimated_value", 7_034_042), v2_eur("result_value", 7_034_042)], Vec::new())
+        }
+    }
+
+    /// Issue 551 B6 (the decision's point 4 test, on a faithful hand-built fixture of 6465510's
+    /// served rows; no generated fixture of it exists): v2 ships S EUR 162,020.92 vouched by
+    /// 20772908's TED-VAL_TOTAL, the one candidate; it comes from a notice whose round holds ONE
+    /// LotResult (G-single) that names no summed key (G-cover), so each guard, and both, empty
+    /// R10's candidates and the head refuses at R10, keeping today's EUR 70,340.42. Production
+    /// (path W off) serves the same. The keyed row on LOT-1 (20767555) names no SUMMED key, and
+    /// the CN, with no round, counts no result.
+    #[test]
+    fn a_one_result_notices_total_naming_no_summed_lot_does_not_vouch() {
+        use super::{
+            DerivationPath, HeadValue, R10Guards, VouchingTotal, awards_path_check_guards, head_value, head_value_with_awards_path_guards,
+            max_election_eur_cents, names_a_summed_key, round_results,
+        };
+        let rates = crate::rates::RatesLookup::default();
+        let v = b6_6465510();
+        let chain = std::slice::from_ref(&v);
+        let derived = awards_path_check_guards(chain, &rates, R10Guards::NONE).unwrap_or_else(|check| panic!("v2 ships 6465510, refused by {check}"));
+        assert_eq!((derived.cents, derived.currency.as_str(), derived.lots), (16_202_092, "EUR", 2), "v2's S: LOT-2 + LOT-6");
+        assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: "TED-VAL_TOTAL".into(), notice_id: 20_772_908, cents: 16_129_032 } });
+        let today = max_election_eur_cents(chain, &rates);
+        assert_eq!(today, Some(7_034_042), "today's head: LOT-6's award copied");
+        for guards in [R10Guards::SINGLE, R10Guards::COVER, R10Guards::BOTH] {
+            assert_eq!(awards_path_check_guards(chain, &rates, guards).map(|d| d.cents), Err("R10"), "{guards:?}");
+            assert_eq!(head_value_with_awards_path_guards(chain, &rates, guards), HeadValue { eur_cents: today, derived: None }, "{guards:?}: today's head stays");
+        }
+        assert_eq!(head_value(chain, &rates), HeadValue { eur_cents: today, derived: None }, "production: path W off");
+        // The guards' facts, by the pure functions R10 reads (the port's `cand_flags`).
+        let summed: Vec<super::SummedAward<'_>> = v
+            .rounds
+            .iter()
+            .flat_map(|r| r.lot_results.iter().map(move |x| (r.notice_id, x)))
+            .filter(|(_, x)| x.awarded_cents.is_some())
+            .map(|(notice_id, x)| super::SummedAward { key: x.lot_key.as_deref().unwrap(), notice_id, cents: x.awarded_cents.unwrap(), result: x })
+            .collect();
+        let view = super::AwardsView::new(&v, "EUR", summed, 16_202_092);
+        let vouch = v.stated_totals.iter().find(|t| t.notice_id == 20_772_908).expect("20772908's total");
+        assert_eq!(round_results(&v, 20_772_908), 1, "one LotResult, keyless");
+        assert!(super::r10_g_single_refuses(&view, vouch));
+        assert!(!names_a_summed_key(&view, 20_772_908), "a keyless row names no key");
+        assert!(super::r10_g_cover_refuses(&view, vouch));
+        assert!(names_a_summed_key(&view, 21_020_093), "LOT-2's award notice");
+        assert!(!names_a_summed_key(&view, 20_767_555), "LOT-1 is keyed but not summed");
+        assert_eq!(round_results(&v, 20_341_803), 0, "the CN has no round");
+        let estimate = v.stated_totals.first().expect("the CN's estimate");
+        assert!(!super::r10_g_cover_refuses(&view, estimate), "an estimate is never removed by G-cover");
+    }
+
+    /// Tender 6595330's shape (B6 U1's recorded cost of G-single, one of read18's rights): LOT-1
+    /// awarded EUR 1,940,400.00 three times (20732304, 21229640, 21528648) and LOT-2 EUR
+    /// 354,795.00 twice (20747457, 21049685), each notice one LotResult; 20747457 states the whole
+    /// EUR 2,295,195.00 as its TED-VAL_TOTAL (20732304's equals its own award). S = EUR
+    /// 2,295,195.00 (21528648's LOT-1 + 21049685's LOT-2).
+    fn b6_6595330() -> TenderVersion {
+        use super::StatedTotalKind::Award;
+        const ROUNDS: [(i64, &str, i64); 5] = [
+            (20_732_304, "LOT-1", 194_040_000),
+            (20_747_457, "LOT-2", 35_479_500),
+            (21_049_685, "LOT-2", 35_479_500),
+            (21_229_640, "LOT-1", 194_040_000),
+            (21_528_648, "LOT-1", 194_040_000),
+        ];
+        TenderVersion {
+            caused_by_notice_id: 21_528_648,
+            lots: vec![v2_lot("LOT-1", Vec::new()), v2_lot("LOT-2", Vec::new())],
+            rounds: ROUNDS
+                .iter()
+                .map(|&(notice_id, lot, cents)| {
+                    let no = lot.trim_start_matches("LOT-");
+                    v2_round(notice_id, vec![b6_result("RES-1", Some(lot), Some(cents), "selec-w", &[5_151_273], Some(no))], Vec::new())
+                })
+                .collect(),
+            stated_totals: vec![
+                v2_total(20_732_304, "TED-VAL_TOTAL", Award, 194_040_000),
+                v2_total(20_747_457, "TED-VAL_TOTAL", Award, 229_519_500),
+            ],
+            ..head(vec![v2_eur("result_value", 194_040_000)], Vec::new())
+        }
+    }
+
+    /// Issue 551 B6: the two guards disagree on 6595330's shape. Its only candidate, 20747457's
+    /// TED-VAL_TOTAL, comes from a notice whose round holds ONE LotResult — which names a summed
+    /// key, LOT-2. G-single refuses it (and so does the pair); G-cover keeps it, vouched by the
+    /// same total as v2.
+    #[test]
+    fn g_single_refuses_a_one_result_notices_total_that_g_cover_keeps() {
+        use super::{DerivationPath, R10Guards, VouchingTotal, awards_path_check_guards};
+        let rates = crate::rates::RatesLookup::default();
+        let v = b6_6595330();
+        let chain = std::slice::from_ref(&v);
+        let vouched = DerivationPath::Awards { vouched_by: VouchingTotal { field: "TED-VAL_TOTAL".into(), notice_id: 20_747_457, cents: 229_519_500 } };
+        for guards in [R10Guards::NONE, R10Guards::COVER] {
+            let derived = awards_path_check_guards(chain, &rates, guards).unwrap_or_else(|check| panic!("{guards:?}: refused by {check}"));
+            assert_eq!((derived.cents, derived.lots), (229_519_500, 2), "{guards:?}");
+            assert_eq!(derived.path, vouched, "{guards:?}");
+        }
+        for guards in [R10Guards::SINGLE, R10Guards::BOTH] {
+            assert_eq!(awards_path_check_guards(chain, &rates, guards).map(|d| d.cents), Err("R10"), "{guards:?}");
+        }
+        // G-single counts the TOTAL's notice's round, not a summed award's: a keyless closed result
+        // beside 20747457's LOT-2 gives it two LotResults, while S's awards still come from
+        // one-result rounds (21528648, 21049685), so every guard ships it, vouched by 20747457.
+        let mut two = v.clone();
+        two.rounds[1].lot_results.push(b6_result("RES-2", None, None, "clos-nw", &[], None));
+        assert_eq!((super::round_results(&two, 20_747_457), super::round_results(&two, 21_528_648), super::round_results(&two, 21_049_685)), (2, 1, 1));
+        for guards in R10Guards::ALL {
+            let derived = awards_path_check_guards(std::slice::from_ref(&two), &rates, guards).unwrap_or_else(|check| panic!("{guards:?}: refused by {check}"));
+            assert_eq!((derived.cents, derived.lots), (229_519_500, 2), "{guards:?}");
+            assert_eq!(derived.path, vouched, "{guards:?}");
+        }
+    }
+
+    /// Issue 551 B6: an identity vouch (7749755's shape, B5's neutral) ships under every guard:
+    /// 23353167 awards exactly the three summed lots (LOT-1 EUR 990.00, LOT-6 EUR 1,452.00, LOT-9
+    /// EUR 1,682.60) and states their EUR 4,124.60, with three LotResults; two more awards sit on
+    /// keyless rows (23354748, 23429800, each stating its own award) and 23279468 closes LOT-4, 7
+    /// and 8 with no winner.
+    #[test]
+    fn an_identity_vouch_ships_under_every_guard() {
+        use super::StatedTotalKind::Award;
+        use super::{DerivationPath, R10Guards, VouchingTotal, awards_path_check_guards};
+        let rates = crate::rates::RatesLookup::default();
+        let closed = |key: &str, lot: &str| b6_result(key, Some(lot), None, "clos-nw", &[], Some(lot.trim_start_matches("LOT-")));
+        let v = TenderVersion {
+            caused_by_notice_id: 23_444_244,
+            lots: (1..=9).map(|i| v2_lot(&format!("LOT-{i}"), Vec::new())).collect(),
+            rounds: vec![
+                v2_round(23_279_468, vec![closed("RES-1", "LOT-4"), closed("RES-2", "LOT-7"), closed("RES-3", "LOT-8")], Vec::new()),
+                v2_round(23_354_748, vec![b6_result("RES-1", None, Some(92_000), "selec-w", &[21_667_672], None)], Vec::new()),
+                v2_round(
+                    23_353_167,
+                    vec![
+                        b6_result("RES-1", Some("LOT-1"), Some(99_000), "selec-w", &[11_565_824], Some("1")),
+                        b6_result("RES-2", Some("LOT-6"), Some(145_200), "selec-w", &[21_667_672], Some("6")),
+                        b6_result("RES-3", Some("LOT-9"), Some(168_260), "selec-w", &[21_667_672], Some("9")),
+                    ],
+                    Vec::new(),
+                ),
+                v2_round(23_429_800, vec![b6_result("RES-1", None, Some(322_940), "selec-w", &[11_565_823], None)], Vec::new()),
+                v2_round(23_444_244, vec![b6_result("RES-1", None, None, "clos-nw", &[], None)], Vec::new()),
+            ],
+            stated_totals: vec![
+                v2_total(23_354_748, "TED-VAL_TOTAL", Award, 92_000),
+                v2_total(23_353_167, "TED-VAL_TOTAL", Award, 412_460),
+                v2_total(23_429_800, "TED-VAL_TOTAL", Award, 322_940),
+            ],
+            ..head(vec![v2_eur("result_value", 322_940)], Vec::new())
+        };
+        let chain = std::slice::from_ref(&v);
+        for guards in R10Guards::ALL {
+            let derived = awards_path_check_guards(chain, &rates, guards).unwrap_or_else(|check| panic!("{guards:?}: refused by {check}"));
+            assert_eq!((derived.cents, derived.lots), (412_460, 3), "{guards:?}");
+            assert_eq!(
+                derived.path,
+                DerivationPath::Awards { vouched_by: VouchingTotal { field: "TED-VAL_TOTAL".into(), notice_id: 23_353_167, cents: 412_460 } },
+                "{guards:?}"
+            );
+        }
+    }
+
+    /// Issue 551 B6: G-cover reads a Range total (TED-LOW / TED-HIGH, decision A2) as it reads an
+    /// Award: 8426318's TED-HIGH, from the notice that awards all seven summed lots, keeps GBP
+    /// 3,000,000,000.00 under every guard (the pin); the same range ends stated by a notice with
+    /// no round in the version name no summed key, so G-cover (and the pair) refuse at R10 while
+    /// G-single (0 results, not 1) keeps them. The same figures as Estimate totals are never
+    /// removed by G-cover.
+    #[test]
+    fn a_range_vouches_only_from_a_notice_naming_a_summed_lot() {
+        use super::{DerivationPath, R10Guards, StatedTotalKind, VouchingTotal, awards_path_check_guards};
+        let fx = super::lot_sum_551_v2_fixtures::fixture(8426318);
+        let (chain, rates) = (fx.versions(), fx.rates());
+        let vouched = |notice_id: i64, field: &str| DerivationPath::Awards { vouched_by: VouchingTotal { field: field.into(), notice_id, cents: 300_000_000_000 } };
+        for guards in R10Guards::ALL {
+            let derived = awards_path_check_guards(&chain, &rates, guards).unwrap_or_else(|check| panic!("{guards:?}: refused by {check}"));
+            assert_eq!((derived.cents, derived.currency.as_str(), derived.lots), (300_000_000_000, "GBP", 7), "{guards:?}");
+            assert_eq!(derived.path, vouched(20_083_570, "TED-HIGH"), "{guards:?}");
+        }
+        // The range ends restated by 20083569, a notice with no round in the version.
+        let mut elsewhere = chain.clone();
+        for t in &mut elsewhere.last_mut().expect("a head").stated_totals {
+            t.notice_id = 20_083_569;
+        }
+        for guards in [R10Guards::NONE, R10Guards::SINGLE] {
+            let derived = awards_path_check_guards(&elsewhere, &rates, guards).unwrap_or_else(|check| panic!("{guards:?}: refused by {check}"));
+            assert_eq!(derived.path, vouched(20_083_569, "TED-HIGH"), "{guards:?}");
+        }
+        for guards in [R10Guards::COVER, R10Guards::BOTH] {
+            assert_eq!(awards_path_check_guards(&elsewhere, &rates, guards).map(|d| d.cents), Err("R10"), "{guards:?}");
+        }
+        // As estimates, the same figures from the same notice vouch under every guard.
+        let mut estimated = elsewhere.clone();
+        for t in &mut estimated.last_mut().expect("a head").stated_totals {
+            t.kind = StatedTotalKind::Estimate;
+            t.field = "TED-VAL_ESTIMATED_TOTAL".into();
+        }
+        for guards in R10Guards::ALL {
+            let derived = awards_path_check_guards(&estimated, &rates, guards).unwrap_or_else(|check| panic!("{guards:?}: refused by {check}"));
+            assert_eq!(derived.path, vouched(20_083_569, "TED-VAL_ESTIMATED_TOTAL"), "{guards:?}");
+        }
+    }
+
+    /// Issue 551 B6: neither guard moves a pin, a path-V head or the Lyon-Turin trio. The three
+    /// vouched pins (585917 EUR 250,000.00 BT-118, 5995030 PLN 1,549,511.60 TED-VAL_TOTAL, 8426318
+    /// GBP 3,000,000,000.00 TED-HIGH) ship with the same S and `vouched_by` under all four
+    /// combinations (the port's T5), and production (path W off) keeps their max election; the 16
+    /// path-V pins serve the same in production and under every guard; the trio states no total
+    /// and keeps EUR 1,660,661,682.94 under every guard, refused at R10.
+    #[test]
+    fn the_r10_guards_move_no_pin() {
+        use super::{
+            DerivationPath, HeadValue, R10Guards, VouchingTotal, awards_path_check_guards, head_value, head_value_with_awards_path_guards,
+            head_value_without_awards_path, max_election_eur_cents,
+        };
+        let served: [(i64, i64, &str, usize, (&str, i64, i64)); 3] = [
+            (585917, 25_000_000, "EUR", 2, ("BT-118-NoticeResult", 25416405, 25_000_000)),
+            (5995030, 154_951_160, "PLN", 35, ("TED-VAL_TOTAL", 19612533, 154_639_000)),
+            (8426318, 300_000_000_000, "GBP", 7, ("TED-HIGH", 20083570, 300_000_000_000)),
+        ];
+        for (id, sum, currency, lots, (field, notice_id, cents)) in served {
+            let fx = super::lot_sum_551_v2_fixtures::fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            for guards in R10Guards::ALL {
+                let derived = awards_path_check_guards(&chain, &rates, guards).unwrap_or_else(|check| panic!("{id} {guards:?}: refused by {check}"));
+                assert_eq!((derived.cents, derived.currency.as_str(), derived.lots), (sum, currency, lots), "{id} {guards:?}");
+                assert_eq!(derived.path, DerivationPath::Awards { vouched_by: VouchingTotal { field: field.into(), notice_id, cents } }, "{id} {guards:?}");
+            }
+            let production = head_value(&chain, &rates);
+            assert_eq!(production, HeadValue { eur_cents: max_election_eur_cents(&chain, &rates), derived: None }, "{id}: production keeps the max election");
+            assert_eq!(production, head_value_without_awards_path(&chain, &rates), "{id}");
+        }
+        for id in [251619, 369057, 380921, 392980, 425446, 706887, 1024214, 5779108, 5943121, 6342034, 6921980, 7044132, 7427765, 7829010, 8514592, 928196] {
+            let fx = super::lot_sum_551_fixtures::fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            let production = head_value(&chain, &rates);
+            assert!(matches!(production.derived.as_ref().map(|d| &d.path), Some(DerivationPath::Vouched { .. })), "{id}: path V serves in production");
+            for guards in R10Guards::ALL {
+                assert_eq!(head_value_with_awards_path_guards(&chain, &rates, guards), production, "{id} {guards:?}: path V never reads R10");
+            }
+        }
+        for id in [6450467, 6450469, 6450473] {
+            let fx = super::lot_sum_551_v2_fixtures::fixture(id);
+            let (chain, rates) = (fx.versions(), fx.rates());
+            assert_eq!(head_value(&chain, &rates), HeadValue { eur_cents: Some(166_066_168_294), derived: None }, "{id}: production");
+            for guards in R10Guards::ALL {
+                assert_eq!(awards_path_check_guards(&chain, &rates, guards).map(|d| d.cents), Err("R10"), "{id} {guards:?}");
+                assert_eq!(head_value_with_awards_path_guards(&chain, &rates, guards), HeadValue { eur_cents: Some(166_066_168_294), derived: None }, "{id} {guards:?}");
+            }
+        }
     }
 
     /// Tender 179732's head (issue 551 B5's one cohort-parity disagreement), with `facts` as its
