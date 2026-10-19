@@ -1269,3 +1269,24 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   Among the 70 self-test ids: single refuses {6465510, 6595330}, cover refuses {6465510}.
 - The small fetch (70 tenders, 372 notices) completed: 0 misses, 0 404s.
 
+## B6 U3 (build part) — Rust guards built (2026-10-19, workflow wf_a98740e3-e1d; commit below, gate pending)
+
+- canonical.rs: `r10_g_single_refuses` (`round_results(head, notice) == 1`, where `round_results` counts
+  `AwardsView::results(head)` of that notice: every LotResultState of the version's rounds, keyless included — what
+  `write_round` stores one `tender_version_lot_results` row for, so it equals the port's served-row count) and
+  `r10_g_cover_refuses` (Award or Range kind and `names_a_summed_key` false, on R3's `view.on_lot`), applied as filters in
+  `r10_vouching_total`; with none left R10 refuses under its own name; a guard can shift `vouched_by` to the next total
+  (amendment A4). Switches `R10_G_SINGLE` / `R10_G_COVER` = true in code; **path W stays off**, so nothing served moves; the
+  flip commit sets them from U4's adoption result. Test-only twins `head_value_with_awards_path_guards` /
+  `awards_path_check_guards` evaluate NONE / SINGLE / COVER / BOTH. No projection facts or schema added.
+- Tests: 6465510 hand-built from its served rows (v2 ships EUR 162,020.92; single/cover/both refuse at R10, today's EUR
+  70,340.42 kept); 6595330's shape (single refuses, cover keeps; plus a variant proving G-single reads the total's own
+  notice); identity vouch kept; Range kept only from a notice naming a summed lot; the pins unchanged. v2's own check tests run
+  with guards off (`v2_check` → `R10Guards::NONE`); each guard has its own assertions. Focused `canonical::` 73/73.
+- **Deviation from point 4, recorded before any U2 result:** the end-to-end unit test from real contents (`NoticeState::read`
+  → fold → twin) is not built — there is no content-JSON → `Parsed` loader in crates and the twin is store-private. Its risk
+  (the real fold projecting 6465510's keyless rows differently from the served rows the fixture copies) is covered on the
+  real store instead: **6465510 is in drain stage 1 and must not fire (D1, tolerance 0)**, and the U3 harness compares Rust
+  with the port on fixtures built from the served rows of all 3,502. If stage 1 shows a divergence, the switch-off route
+  applies.
+
