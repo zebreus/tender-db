@@ -1,0 +1,22 @@
+seq-less tender 'changed' rows in range: 102 (distinct tenders 102)
+TED-caused seq-carrying tender rows on Tenders with a DOE notice: 713 (distinct tenders 701)
+
+(1) flip rows: 102; distinct flipped tenders: 102; prepended (seq=1): 0
+    flip rows by op: {'changed': 102}
+    tenders with >1 flip row: {}
+    flipped tenders' current source: {'ted': 102}
+
+(2) flip rows with a later same-changed_at seq-less tender 'changed' row: 102 of 102; tenders 102 of 102
+
+(3) seq-less tender rows whose Tender is not a flip: 0
+    classes: {}
+
+Every Tender with a TED-caused row on a DOE chain, by class and seq-less row present:
+    ('TED-first', False) 305
+    ('co-minted', False) 1
+    ('co-minted (TED lowest id)', False) 293
+    ('flip', True) 102
+
+head lots of the 102 relabelled tenders (current_seq): 156 ; seq-less lot 'changed' rows in range: see sum (156)
+seq-less rows with no paired seq-carrying row (unchanged-chain early return): 0
+seq-less tender rows by current source/kind: {('ted', 'procedure'): 102}

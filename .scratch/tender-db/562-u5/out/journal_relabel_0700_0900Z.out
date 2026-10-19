@@ -1,0 +1,4 @@
+2026-10-19T09:36:55+02:00 tender-db server[2735737]: [project] group step links union: 0.0s (120 key(s) to relabel, largest component 35 key(s); admitted: previous-notice 148 (cross-source 25), logical-notice 10, matched 0; refused: not-earlier 0, shared-kind 287, buyer-disjoint 40, pin-fan-in 123, fan-in 0, not-one-to-one 0, keyed-weld 0, oversized 0; deferred 0)
+2026-10-19T09:36:55+02:00 tender-db server[2735737]: [project] group step links relabel: 0.1s (238 batch(es))
+2026-10-19T09:41:47+02:00 tender-db server[2741790]: [project] group step links union: 0.0s (11 key(s) to relabel, largest component 5 key(s); admitted: previous-notice 13 (cross-source 1), logical-notice 0, matched 0; refused: not-earlier 0, shared-kind 25, buyer-disjoint 33, pin-fan-in 0, fan-in 0, not-one-to-one 0, keyed-weld 0, oversized 0; deferred 0)
+2026-10-19T09:41:47+02:00 tender-db server[2741790]: [project] group step links relabel: 0.0s (237 batch(es))

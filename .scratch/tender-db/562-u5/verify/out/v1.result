@@ -1,0 +1,2 @@
+correction sets checked: 102; contiguous rule-T + exactly head_lots seq-less lot rows owned by the Tender: 102; bad: 0; lot rows owned: 156
+rows after each set: Counter({('tender', False, 'added'): 54, ('tender', False, 'changed'): 48})

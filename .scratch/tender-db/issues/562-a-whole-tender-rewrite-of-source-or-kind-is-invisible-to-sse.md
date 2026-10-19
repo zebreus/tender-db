@@ -1,6 +1,6 @@
 # 562 — a whole-Tender rewrite of `source` or `kind` (a DÖE Tender turning `ted`) is invisible to an SSE subscription on it
 
-Status: ready-for-agent — units 2–4 BUILT, reviewed (wf_250ada72-32e), GATED (900efeb) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 560 and 551 unit 4a. NEXT: unit 5 — the paired read over the next Monday/Tuesday DÖE→TED flips (2026-10-19/20 daily folds) against the fold line's `relabelled` count; then close.
+Status: ready-for-agent — unit 5 FIRST HALF PASSED 2026-10-19 (the 10-19 daily fold, project 2645: 102 flips = 102 announced = relabelled 102; TED-first 0; co-minted 0; kind 0; wf_c31642a7-759, verified). NEXT: the second half on the 10-20 daily fold (same read), then close. Was: ready-for-agent — units 2–4 BUILT, reviewed (wf_250ada72-32e), GATED (900efeb) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 560 and 551 unit 4a. NEXT: unit 5 — the paired read over the next Monday/Tuesday DÖE→TED flips (2026-10-19/20 daily folds) against the fold line's `relabelled` count; then close.
 read, or a seq-less tender `changed` when the label flips), then build.
 Kind: correctness (SSE `added`/`removed` on `source` and `kind`)
 Relates to:
@@ -236,3 +236,22 @@ Built in the tree beside issue 560's uncommitted change (they share `apply_tende
 - **docs/operations.md** "Reading a `project` job's `counts` line": the template gains `, <r> relabelled (issue
   562)`, with what it counts (B's announcements: ordinary folds, the unchanged-chain early return, Off/Shadow stale
   refolds) and what it does not (an `on` refold's label moves count under the compare's `corrected`).
+
+## Unit 5 — first half: the 2026-10-19 daily fold (PASSED; workflow wf_c31642a7-759)
+
+`.scratch/tender-db/562-u5/` (SQL from gen.py, plans, raw outputs, result.md; verify-1019.md). Project 2645 (07:35Z daily
+fold: 4,644 notices → 4,427 Tenders, 4,070 written, 357 verified unchanged, **102 relabelled**; the counts line read from
+`/admin/jobs` by the orchestrator). Change rows (958810037, 958848408]: 38,371 rows, all changed_at 07:35:55Z (the
+rederive-eur-recent and reveal-recheck jobs of the chain wrote none; the 551 zero-drift probe after it wrote none). 26
+bounded SELECTs (≤ 5,000 change rows each), every plan read first on a copy of v551/plan.db: 216 plan lines, 0 SCAN.
+- **(1) Flips (q1 notice-id form): 102** on 102 Tenders (all seq 2 = current_seq; prepends 0; every Tender minted 10-18 by a
+  DÖE notice, its TED twin ingested 10-19 — the weekend pattern).
+- **(2) Announced: 102 of 102** — each has a seq-less tender `changed` row, same changed_at, 2–15 cursors later; their head
+  lots total 156 = the 156 seq-less lot `changed` rows in the range.
+- **(3) Not flips: 0** — TED-first 0 rows (305 TED-first Tenders in the fold, none got one); co-minted 0 rows (8851169 and
+  8851990 correctly none).
+- **(4) Log: 102 seq-less tender rows = relabelled 102**, all flips; the early-return, Off/Shadow and D3 paths wrote none;
+  kind moves 0 (no prepends, so no fold-first change).
+- Verifier (2 confirmation reads): criterion = q1 exactly; pairing and bounds right; recount from the notice side gives the
+  same 102. **PASS.**
+
