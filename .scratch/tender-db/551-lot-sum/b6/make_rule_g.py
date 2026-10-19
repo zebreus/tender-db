@@ -2,7 +2,7 @@
 b3/rule_v2_b3.py is evidence and is never edited. Every edit is an exact, asserted, single-occurrence replacement,
 listed in EDITS below; `diff ../b3/rule_v2_b3.py rule_v2_g.py` shows them all.
 
-    python3 -I -B make_rule_g.py
+    python3 -I -B make_rule_g.py [--check | --write]     (--check, the default, writes nothing)
 """
 import hashlib
 import os
@@ -47,6 +47,8 @@ EDITS = [
      "                Estimate totals are unchanged.\n"
      "      Both only filter R10's candidate list (facts()['vouch_candidates']); the refusal name stays R10. Each emits a\n"
      "      diagnostic (g_single_removed / g_cover_removed, and their union g_removed). R1..R9 and R3 are unchanged.\n"
+     "      Each candidate's kind, round_results, names_summed_keys, g_single and g_cover come from the pure function\n"
+     "      cand_flags() (kind from guard_kind(): Range by field, decision A2), which the self-tests call directly.\n"
      "  (c) the switch: decide(tender_id, guards=frozenset() | {'single'} | {'cover'} | {'single', 'cover'}) and\n"
      "      decide_facts(f, guards) / decide_all(f), so v2, v2+single, v2+cover and v2+both come from the same facts.\n"
      "      guards=frozenset() is v2 exactly (v2_decision, unchanged).\n"
@@ -148,26 +150,54 @@ EDITS_2 = [
     # (6) R10: the candidates carry the facts both guards read; R10 itself (v2) is unchanged
     ("    f['vouches'] = [(t['field'], t['notice_id'], t['cents']) for t in vouch]\n",
      "    f['vouches'] = [(t['field'], t['notice_id'], t['cents']) for t in vouch]\n"
-     "    # B6 (b): the facts G-single and G-cover read, per R10 candidate (in the v2 candidate order).\n"
-     "    #   round_results: the served lot_results rows of the candidate's notice, keyed or not (G-single: == 1)\n"
-     "    #   names_summed_keys: the summed keys for which R3's test holds -- results_by_lot[key] holds a row of that\n"
-     "    #                      notice (keyless results excluded: a None or '' key is never a summed key here);\n"
-     "    #                      G-cover removes an award or range candidate when this list is empty\n"
-     "    summed_keys = [s['key'] for s in summed if s['key'] not in (None, '')]\n"
-     "    round_n = collections.Counter(lr.get('notice_id') for lr in x.get('lot_results', []))\n"
-     "    cands = []\n"
-     "    for t in vouch:\n"
-     "        nid = t['notice_id']\n"
-     "        kind = 'range' if t['field'] in ('TED-LOW', 'TED-HIGH') else \\\n"
-     "            ('award' if t['r3_kind'] == 'award' else ('estimate' if t['r3_kind'] == 'estimate' else None))\n"
-     "        names = [k for k in summed_keys if any(lr['notice_id'] == nid for i, lr in results_by_lot.get(k, []))]\n"
-     "        c = {'field': t['field'], 'notice_id': nid, 'cents': t['cents'], 'kind': kind, 'form': t.get('form'),\n"
-     "             'round_results': round_n.get(nid, 0), 'content_lot_results': len(NF[nid]['results']),\n"
-     "             'names_summed_keys': names}\n"
-     "        c['g_single'] = c['round_results'] == 1\n"
-     "        c['g_cover'] = kind in ('award', 'range') and not names\n"
-     "        cands.append(c)\n"
-     "    f['vouch_candidates'] = cands\n"),
+     "    # B6 (b): the facts G-single and G-cover read, per R10 candidate (in the v2 candidate order), from the pure\n"
+     "    # function cand_flags() (defined above facts(); the self-tests call it directly on real-shaped inputs).\n"
+     "    summed_keys = summed_keys_of(summed)\n"
+     "    round_n = round_counts(x.get('lot_results', []))\n"
+     "    f['vouch_candidates'] = [cand_flags(t, summed_keys, results_by_lot, round_n, len(NF[t['notice_id']]['results']))\n"
+     "                             for t in vouch]\n"),
+    # (6b) the pure per-candidate derivation, before facts()
+    ("def facts(tender_id, refresh=False):\n",
+     "# ---------------------------------------------------------------- B6 (b): the per-candidate guard facts (pure)\n"
+     "def summed_keys_of(summed):\n"
+     "    \"\"\"The summed keys G-cover may count: keyless results excluded (a None or '' key is never a summed key).\"\"\"\n"
+     "    return [s['key'] for s in summed if s['key'] not in (None, '')]\n"
+     "\n"
+     "\n"
+     "def round_counts(lot_results):\n"
+     "    \"\"\"{notice_id: number of this version's served lot_results rows with that notice_id, keyed or not}.\"\"\"\n"
+     "    return collections.Counter(lr.get('notice_id') for lr in lot_results)\n"
+     "\n"
+     "\n"
+     "def guard_kind(field, r3_kind):\n"
+     "    \"\"\"G-cover's kind (decision A2): Range by FIELD (TED-LOW / TED-HIGH carry r3_kind None in the port), Award\n"
+     "    by r3_kind == 'award' (BT-161, BT-118, BT-1118, TED-VAL_TOTAL on a CAN-type form), Estimate by r3_kind.\"\"\"\n"
+     "    if field in ('TED-LOW', 'TED-HIGH'):\n"
+     "        return 'range'\n"
+     "    return r3_kind if r3_kind in ('award', 'estimate') else None\n"
+     "\n"
+     "\n"
+     "def cand_flags(t, summed_keys, results_by_lot, round_n, content_lot_results=None):\n"
+     "    \"\"\"One R10 candidate `t` (a usable total: field, notice_id, cents, r3_kind, form) -> its guard facts.\n"
+     "      round_results:     round_n[notice_id], the served lot_results rows of that notice, keyed or not\n"
+     "      names_summed_keys: the summed keys for which R3's test holds -- results_by_lot[key] (a list of (i, row))\n"
+     "                         holds a row of that notice; only keys in `summed_keys` are tested, so a keyless row\n"
+     "                         never names a key\n"
+     "      g_single:          round_results == 1                (G-single removes it)\n"
+     "      g_cover:           kind in (award, range) and no key named   (G-cover removes it)\"\"\"\n"
+     "    nid = t['notice_id']\n"
+     "    kind = guard_kind(t['field'], t.get('r3_kind'))\n"
+     "    names = [k for k in summed_keys if k not in (None, '')\n"
+     "             and any(lr.get('notice_id') == nid for _i, lr in results_by_lot.get(k, []))]\n"
+     "    c = {'field': t['field'], 'notice_id': nid, 'cents': t['cents'], 'kind': kind, 'form': t.get('form'),\n"
+     "         'round_results': round_n.get(nid, 0), 'content_lot_results': content_lot_results,\n"
+     "         'names_summed_keys': names}\n"
+     "    c['g_single'] = c['round_results'] == 1\n"
+     "    c['g_cover'] = kind in ('award', 'range') and not names\n"
+     "    return c\n"
+     "\n"
+     "\n"
+     "def facts(tender_id, refresh=False):\n"),
     # (7) the guards and the switch, after v2_decision
     ("# ---------------------------------------------------------------- the M1 port check\n",
      "# ---------------------------------------------------------------- B6 (b) + (c): the guards and the switch\n"
@@ -268,7 +298,7 @@ EDITS_2 = [
 ]
 
 
-def main():
+def build():
     got = sha(SRC)
     assert got == SRC_SHA, f'{SRC} sha256 {got} is not the port of record {SRC_SHA}'
     with open(SRC, encoding='utf-8') as fh:
@@ -278,12 +308,34 @@ def main():
     src = patch(src, EDITS_2)
     for banned in ('_get(', '_wait_turn', 'urlopen('):
         assert banned not in src, banned
+    return src
+
+
+def main(argv=None):
+    """--check (the default): regenerate in memory and compare with rule_v2_g.py, writing nothing (exit 1 on a
+    difference). --write: replace rule_v2_g.py. Any other argument is refused (argparse, exit 2)."""
+    import argparse
+    import sys
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    g = ap.add_mutually_exclusive_group()
+    g.add_argument('--check', action='store_true', help='compare only (the default); writes nothing')
+    g.add_argument('--write', action='store_true', help='replace rule_v2_g.py with the regenerated port')
+    a = ap.parse_args(argv)
+    src = build()
+    new_sha = hashlib.sha256(src.encode('utf-8')).hexdigest()
+    if not a.write:
+        cur = sha(OUT) if os.path.exists(OUT) else None
+        same = cur == new_sha
+        print(f'{"MATCH" if same else "DIFFER"}: regenerated {new_sha} vs {OUT} {cur}')
+        return 0 if same else 1
     tmp = OUT + '.tmp'
     with open(tmp, 'w', encoding='utf-8') as fh:
         fh.write(src)
     os.replace(tmp, OUT)
     print(f'{OUT} sha256 {sha(OUT)} (from {SRC_SHA[:12]}...)')
+    return 0
 
 
 if __name__ == '__main__':
-    main()
+    import sys
+    sys.exit(main())

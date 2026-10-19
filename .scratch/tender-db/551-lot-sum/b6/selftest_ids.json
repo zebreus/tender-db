@@ -1,5 +1,5 @@
 {
- "what": "B6 U1 self-test ids: the 61 (b5/investigate/served) + the three pins + the four partial sums + 5816379 (8 extra, <= 15)",
+ "what": "B6 U1 self-test ids: the 61 (b5/investigate/served) + the three pins + the four partial sums + 5816379 + 6595330 (the guard-separating fixture; 9 extra, <= 15)",
  "ids61": [
   42392,
   193717,
@@ -71,7 +71,8 @@
   7153588,
   7398935,
   7722197,
-  5816379
+  5816379,
+  6595330
  ],
  "ids": [
   42392,
@@ -142,6 +143,7 @@
   7153588,
   7398935,
   7722197,
-  5816379
+  5816379,
+  6595330
  ]
 }

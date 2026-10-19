@@ -26,6 +26,8 @@ Changes, each an asserted replacement (make_rule_g.py EDITS):
                 Estimate totals are unchanged.
       Both only filter R10's candidate list (facts()['vouch_candidates']); the refusal name stays R10. Each emits a
       diagnostic (g_single_removed / g_cover_removed, and their union g_removed). R1..R9 and R3 are unchanged.
+      Each candidate's kind, round_results, names_summed_keys, g_single and g_cover come from the pure function
+      cand_flags() (kind from guard_kind(): Range by field, decision A2), which the self-tests call directly.
   (c) the switch: decide(tender_id, guards=frozenset() | {'single'} | {'cover'} | {'single', 'cover'}) and
       decide_facts(f, guards) / decide_all(f), so v2, v2+single, v2+cover and v2+both come from the same facts.
       guards=frozenset() is v2 exactly (v2_decision, unchanged).
@@ -659,6 +661,45 @@ def version_notice_ids(x):
     return out
 
 
+# ---------------------------------------------------------------- B6 (b): the per-candidate guard facts (pure)
+def summed_keys_of(summed):
+    """The summed keys G-cover may count: keyless results excluded (a None or '' key is never a summed key)."""
+    return [s['key'] for s in summed if s['key'] not in (None, '')]
+
+
+def round_counts(lot_results):
+    """{notice_id: number of this version's served lot_results rows with that notice_id, keyed or not}."""
+    return collections.Counter(lr.get('notice_id') for lr in lot_results)
+
+
+def guard_kind(field, r3_kind):
+    """G-cover's kind (decision A2): Range by FIELD (TED-LOW / TED-HIGH carry r3_kind None in the port), Award
+    by r3_kind == 'award' (BT-161, BT-118, BT-1118, TED-VAL_TOTAL on a CAN-type form), Estimate by r3_kind."""
+    if field in ('TED-LOW', 'TED-HIGH'):
+        return 'range'
+    return r3_kind if r3_kind in ('award', 'estimate') else None
+
+
+def cand_flags(t, summed_keys, results_by_lot, round_n, content_lot_results=None):
+    """One R10 candidate `t` (a usable total: field, notice_id, cents, r3_kind, form) -> its guard facts.
+      round_results:     round_n[notice_id], the served lot_results rows of that notice, keyed or not
+      names_summed_keys: the summed keys for which R3's test holds -- results_by_lot[key] (a list of (i, row))
+                         holds a row of that notice; only keys in `summed_keys` are tested, so a keyless row
+                         never names a key
+      g_single:          round_results == 1                (G-single removes it)
+      g_cover:           kind in (award, range) and no key named   (G-cover removes it)"""
+    nid = t['notice_id']
+    kind = guard_kind(t['field'], t.get('r3_kind'))
+    names = [k for k in summed_keys if k not in (None, '')
+             and any(lr.get('notice_id') == nid for _i, lr in results_by_lot.get(k, []))]
+    c = {'field': t['field'], 'notice_id': nid, 'cents': t['cents'], 'kind': kind, 'form': t.get('form'),
+         'round_results': round_n.get(nid, 0), 'content_lot_results': content_lot_results,
+         'names_summed_keys': names}
+    c['g_single'] = c['round_results'] == 1
+    c['g_cover'] = kind in ('award', 'range') and not names
+    return c
+
+
 def facts(tender_id, refresh=False):
     x = tender_detail(tender_id, refresh=refresh)
     contents = {nid: notice_content(nid) for nid in version_notice_ids(x)}
@@ -900,26 +941,12 @@ def facts_from(x, contents, v1):
     f['vouched_by'] = ({'field': vouch[0]['field'], 'notice_id': vouch[0]['notice_id'], 'cents': vouch[0]['cents']}
                        if vouch else None)
     f['vouches'] = [(t['field'], t['notice_id'], t['cents']) for t in vouch]
-    # B6 (b): the facts G-single and G-cover read, per R10 candidate (in the v2 candidate order).
-    #   round_results: the served lot_results rows of the candidate's notice, keyed or not (G-single: == 1)
-    #   names_summed_keys: the summed keys for which R3's test holds -- results_by_lot[key] holds a row of that
-    #                      notice (keyless results excluded: a None or '' key is never a summed key here);
-    #                      G-cover removes an award or range candidate when this list is empty
-    summed_keys = [s['key'] for s in summed if s['key'] not in (None, '')]
-    round_n = collections.Counter(lr.get('notice_id') for lr in x.get('lot_results', []))
-    cands = []
-    for t in vouch:
-        nid = t['notice_id']
-        kind = 'range' if t['field'] in ('TED-LOW', 'TED-HIGH') else \
-            ('award' if t['r3_kind'] == 'award' else ('estimate' if t['r3_kind'] == 'estimate' else None))
-        names = [k for k in summed_keys if any(lr['notice_id'] == nid for i, lr in results_by_lot.get(k, []))]
-        c = {'field': t['field'], 'notice_id': nid, 'cents': t['cents'], 'kind': kind, 'form': t.get('form'),
-             'round_results': round_n.get(nid, 0), 'content_lot_results': len(NF[nid]['results']),
-             'names_summed_keys': names}
-        c['g_single'] = c['round_results'] == 1
-        c['g_cover'] = kind in ('award', 'range') and not names
-        cands.append(c)
-    f['vouch_candidates'] = cands
+    # B6 (b): the facts G-single and G-cover read, per R10 candidate (in the v2 candidate order), from the pure
+    # function cand_flags() (defined above facts(); the self-tests call it directly on real-shaped inputs).
+    summed_keys = summed_keys_of(summed)
+    round_n = round_counts(x.get('lot_results', []))
+    f['vouch_candidates'] = [cand_flags(t, summed_keys, results_by_lot, round_n, len(NF[t['notice_id']]['results']))
+                             for t in vouch]
     P['R10'] = s_eur is not None and s_eur >= R10_MIN_EUR_CENTS and not vouch
     f['pred'] = P
     f['bids_by_summed_notice'] = {s['key']: len([b for b in bids_by_lot.get(s['key'], []) if b['notice_id'] == s['notice_id']])
