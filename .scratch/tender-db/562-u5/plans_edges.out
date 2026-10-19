@@ -1,0 +1,2 @@
+PLAN	edge_lo	SEARCH changes USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	edge_hi	SEARCH changes USING INTEGER PRIMARY KEY (rowid=?)

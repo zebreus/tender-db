@@ -1,0 +1,216 @@
+PLAN	sum_0	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_0	USE SORTER FOR GROUP BY
+PLAN	sum_0	USE HASH TABLE FOR count(DISTINCT)
+PLAN	sum_0	USE SORTER FOR ORDER BY
+PLAN	seqless_0	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_0	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_0	CORRELATED SCALAR SUBQUERY 1
+PLAN	seqless_0	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_0	CORRELATED SCALAR SUBQUERY 2
+PLAN	seqless_0	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_0	CORRELATED SCALAR SUBQUERY 3
+PLAN	seqless_0	  SEARCH l USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN	ted_0	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_0	SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_0	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_0	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_0	SEARCH v3 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_0	SEARCH n3 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_0	CORRELATED SCALAR SUBQUERY 2
+PLAN	ted_0	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_0	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_0	CORRELATED SCALAR SUBQUERY 3
+PLAN	ted_0	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	ted_0	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_0	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_0	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_0	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_1	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_1	USE SORTER FOR GROUP BY
+PLAN	sum_1	USE HASH TABLE FOR count(DISTINCT)
+PLAN	sum_1	USE SORTER FOR ORDER BY
+PLAN	seqless_1	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_1	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_1	CORRELATED SCALAR SUBQUERY 1
+PLAN	seqless_1	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_1	CORRELATED SCALAR SUBQUERY 2
+PLAN	seqless_1	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_1	CORRELATED SCALAR SUBQUERY 3
+PLAN	seqless_1	  SEARCH l USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN	ted_1	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_1	SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_1	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_1	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_1	SEARCH v3 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_1	SEARCH n3 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_1	CORRELATED SCALAR SUBQUERY 2
+PLAN	ted_1	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_1	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_1	CORRELATED SCALAR SUBQUERY 3
+PLAN	ted_1	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	ted_1	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_1	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_1	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_1	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_2	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_2	USE SORTER FOR GROUP BY
+PLAN	sum_2	USE HASH TABLE FOR count(DISTINCT)
+PLAN	sum_2	USE SORTER FOR ORDER BY
+PLAN	seqless_2	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_2	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_2	CORRELATED SCALAR SUBQUERY 1
+PLAN	seqless_2	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_2	CORRELATED SCALAR SUBQUERY 2
+PLAN	seqless_2	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_2	CORRELATED SCALAR SUBQUERY 3
+PLAN	seqless_2	  SEARCH l USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN	ted_2	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_2	SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_2	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_2	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_2	SEARCH v3 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_2	SEARCH n3 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_2	CORRELATED SCALAR SUBQUERY 2
+PLAN	ted_2	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_2	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_2	CORRELATED SCALAR SUBQUERY 3
+PLAN	ted_2	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	ted_2	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_2	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_2	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_2	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_3	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_3	USE SORTER FOR GROUP BY
+PLAN	sum_3	USE HASH TABLE FOR count(DISTINCT)
+PLAN	sum_3	USE SORTER FOR ORDER BY
+PLAN	seqless_3	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_3	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_3	CORRELATED SCALAR SUBQUERY 1
+PLAN	seqless_3	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_3	CORRELATED SCALAR SUBQUERY 2
+PLAN	seqless_3	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_3	CORRELATED SCALAR SUBQUERY 3
+PLAN	seqless_3	  SEARCH l USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN	ted_3	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_3	SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_3	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_3	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_3	SEARCH v3 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_3	SEARCH n3 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_3	CORRELATED SCALAR SUBQUERY 2
+PLAN	ted_3	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_3	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_3	CORRELATED SCALAR SUBQUERY 3
+PLAN	ted_3	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	ted_3	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_3	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_3	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_3	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_4	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_4	USE SORTER FOR GROUP BY
+PLAN	sum_4	USE HASH TABLE FOR count(DISTINCT)
+PLAN	sum_4	USE SORTER FOR ORDER BY
+PLAN	seqless_4	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_4	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_4	CORRELATED SCALAR SUBQUERY 1
+PLAN	seqless_4	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_4	CORRELATED SCALAR SUBQUERY 2
+PLAN	seqless_4	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_4	CORRELATED SCALAR SUBQUERY 3
+PLAN	seqless_4	  SEARCH l USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN	ted_4	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_4	SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_4	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_4	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_4	SEARCH v3 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_4	SEARCH n3 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_4	CORRELATED SCALAR SUBQUERY 2
+PLAN	ted_4	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_4	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_4	CORRELATED SCALAR SUBQUERY 3
+PLAN	ted_4	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	ted_4	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_4	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_4	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_4	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_5	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_5	USE SORTER FOR GROUP BY
+PLAN	sum_5	USE HASH TABLE FOR count(DISTINCT)
+PLAN	sum_5	USE SORTER FOR ORDER BY
+PLAN	seqless_5	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_5	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_5	CORRELATED SCALAR SUBQUERY 1
+PLAN	seqless_5	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_5	CORRELATED SCALAR SUBQUERY 2
+PLAN	seqless_5	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_5	CORRELATED SCALAR SUBQUERY 3
+PLAN	seqless_5	  SEARCH l USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN	ted_5	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_5	SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_5	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_5	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_5	SEARCH v3 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_5	SEARCH n3 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_5	CORRELATED SCALAR SUBQUERY 2
+PLAN	ted_5	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_5	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_5	CORRELATED SCALAR SUBQUERY 3
+PLAN	ted_5	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	ted_5	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_5	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_5	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_5	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_6	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_6	USE SORTER FOR GROUP BY
+PLAN	sum_6	USE HASH TABLE FOR count(DISTINCT)
+PLAN	sum_6	USE SORTER FOR ORDER BY
+PLAN	seqless_6	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_6	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_6	CORRELATED SCALAR SUBQUERY 1
+PLAN	seqless_6	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_6	CORRELATED SCALAR SUBQUERY 2
+PLAN	seqless_6	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_6	CORRELATED SCALAR SUBQUERY 3
+PLAN	seqless_6	  SEARCH l USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN	ted_6	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_6	SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_6	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_6	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_6	SEARCH v3 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_6	SEARCH n3 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_6	CORRELATED SCALAR SUBQUERY 2
+PLAN	ted_6	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_6	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_6	CORRELATED SCALAR SUBQUERY 3
+PLAN	ted_6	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	ted_6	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_6	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_6	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_6	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_7	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	sum_7	USE SORTER FOR GROUP BY
+PLAN	sum_7	USE HASH TABLE FOR count(DISTINCT)
+PLAN	sum_7	USE SORTER FOR ORDER BY
+PLAN	seqless_7	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_7	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	seqless_7	CORRELATED SCALAR SUBQUERY 1
+PLAN	seqless_7	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_7	CORRELATED SCALAR SUBQUERY 2
+PLAN	seqless_7	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	seqless_7	CORRELATED SCALAR SUBQUERY 3
+PLAN	seqless_7	  SEARCH l USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN	ted_7	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_7	SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_7	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_7	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_7	SEARCH v3 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_7	SEARCH n3 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_7	CORRELATED SCALAR SUBQUERY 2
+PLAN	ted_7	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_7	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_7	CORRELATED SCALAR SUBQUERY 3
+PLAN	ted_7	  SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	ted_7	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_7	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	ted_7	SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	ted_7	SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
