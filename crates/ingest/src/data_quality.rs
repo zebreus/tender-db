@@ -242,11 +242,26 @@ fn result_section_probe(notice: &str) -> String {
 /// its `UNIQUE(tender_id, notice_id, result_key)` index — so it stays an indexed
 /// seek. Driving from `lot_results` by `notice_id` would not: that column has no
 /// index, which is why the two halves are measured separately at all.
-pub const SECTIONS_WITH_SQL: &str = "SELECT n.profile, COUNT(*) AS with_results \
-       FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
-      WHERE EXISTS(SELECT 1 FROM lot_results lr \
-                    WHERE lr.tender_id = tv.tender_id AND lr.notice_id = tv.caused_by_notice_id) \
-      GROUP BY n.profile";
+///
+/// **Only versions [`sections_can_sql`] counts** (issue 541). A T02 award writes its
+/// result from the notice's own section, with no result section, so without the probe
+/// its versions sat in this numerator and not in the denominator: a subset rate that
+/// could read above 100 %, or mask as many real misses.
+pub fn sections_with_sql() -> String {
+    sections_with_template("")
+}
+
+fn sections_with_template(win: &str) -> String {
+    format!(
+        "SELECT n.profile, COUNT(*) AS with_results \
+           FROM tender_versions tv JOIN notices n ON n.id = tv.caused_by_notice_id \
+          WHERE {win}EXISTS(SELECT 1 FROM lot_results lr \
+                        WHERE lr.tender_id = tv.tender_id AND lr.notice_id = tv.caused_by_notice_id) \
+            AND ({probe}) \
+          GROUP BY n.profile",
+        probe = result_section_probe("tv.caused_by_notice_id"),
+    )
+}
 
 // ------------------------------------------- the published document type
 
@@ -506,6 +521,10 @@ fn award_predicate() -> String {
 /// without it invites exactly the wrong conclusion, which is the mistake issue 242
 /// opened with.
 ///
+/// A version that wrote a row is never barren (issue 541): a T02 award writes its result
+/// from the notice's own section with no result block, and counted in both `with_results`
+/// and `no_award_content` it was subtracted twice, hiding as many real shortfalls.
+///
 /// **What that column does NOT say** (issue 244, from the first full-corpus run): it
 /// is a statement about the PARSE, not about the publisher. The r2.0.8 rows really did
 /// publish nothing extractable. The text era's 1,306,514 did publish their awards —
@@ -537,6 +556,9 @@ fn awards_template(win: &str) -> String {
                                         AND lr.notice_id = tv.caused_by_notice_id) \
                          THEN 1 ELSE 0 END) AS with_results, \
                 SUM(CASE WHEN NOT ({result_section}) \
+                          AND NOT EXISTS(SELECT 1 FROM lot_results lr \
+                                          WHERE lr.tender_id = tv.tender_id \
+                                            AND lr.notice_id = tv.caused_by_notice_id) \
                          THEN 1 ELSE 0 END) AS no_award_content, \
                 SUM(CASE WHEN EXISTS(SELECT 1 FROM tender_version_result_winners w \
                                       WHERE w.tender_id = tv.tender_id AND w.seq = tv.seq) \
@@ -1822,7 +1844,7 @@ pub fn queries() -> Vec<(String, String)> {
     // The section→row invariant, under its own name (issue 235): worth keeping,
     // just not a density.
     out.push(("sections_can".to_owned(), sections_can_sql()));
-    out.push(("sections_with".to_owned(), SECTIONS_WITH_SQL.to_owned()));
+    out.push(("sections_with".to_owned(), sections_with_sql()));
     out.push(("merge".to_owned(), MERGE_SQL.to_owned()));
     // The VAT basis of what the projection wrote (issue 251).
     out.push(("amount_basis".to_owned(), amount_basis_sql()));
@@ -1856,7 +1878,7 @@ pub fn queries() -> Vec<(String, String)> {
 ///   (awards, unchained) are additive over disjoint Tender sets.
 /// - `density_can` counts award-notice versions; `density_with` counts the subset
 ///   whose notice materialised `lot_results`. Both are version counts (see
-///   [`SECTIONS_WITH_SQL`] — making them share a unit is what let the numerator be
+///   [`sections_with_sql`] — making them share a unit is what let the numerator be
 ///   windowed at all).
 /// - `merge` counts DÖE-touching Tenders and the merged subset. Its inner `SELECT
 ///   DISTINCT v.tender_id` is windowed, and since Tender ids are disjoint across
@@ -1929,7 +1951,8 @@ pub fn windowed_queries() -> Vec<WindowedQuery> {
     });
     out.push(WindowedQuery {
         label: "sections_with".to_owned(),
-        template: SECTIONS_WITH_SQL.replace("WHERE EXISTS(", "WHERE {window} AND EXISTS("),
+        // Built by the same template as the catalog form, like `sections_can` above.
+        template: sections_with_template("{window} AND "),
         column: "tv.tender_id".to_owned(),
     });
     // The document-type queries build their windowed form from the SAME builder as the

@@ -7313,6 +7313,8 @@ fn read_legacy_results(
         }
     }
     if raw.lot_results.is_empty() {
+        // Issue 541: a T02 award has no result section; its section V is read off the notice.
+        raw.lot_results.extend(read_move_award(sections, parsed, dropped));
         return raw;
     }
 
@@ -7444,23 +7446,103 @@ fn read_legacy_results(
     // the real winners — the text says a winner exists, so `selec-w` with none bound, where
     // a dateless block would otherwise read `clos-nw` against the publisher. A blank slot
     // (`N/A`, `néant`) carries no marker: the rule below decides as if it were empty.
-    for r in &mut raw.lot_results {
-        r.direct_winners.sort();
-        r.direct_winners.dedup();
-        if r.decision.is_none() {
-            if !r.direct_winners.is_empty() || r.withheld_winner {
-                r.decision = Some("selec-w".to_owned());
-            } else if r.void_lot {
-                r.decision = Some("clos-nw".to_owned());
-            } else if r.direct_cents.is_some() {
-                r.decision = Some("selec-w".to_owned());
-            } else if r.decided.is_none() && !r.awarded_marker {
-                // Issue 550: an `AWARDED_CONTRACT` block is award evidence even undated.
-                r.decision = Some("clos-nw".to_owned());
-            }
+    raw.lot_results.iter_mut().for_each(decide_legacy_result);
+    raw
+}
+
+/// The legacy decision rule [`read_legacy_results`] documents, for one award block: its winners
+/// sorted and deduplicated, and its decision, where the block states none, read from its evidence.
+/// Issue 541: shared with the T02 award [`read_move_award`] writes, so the one rule decides both.
+fn decide_legacy_result(r: &mut RawLotResult) {
+    r.direct_winners.sort();
+    r.direct_winners.dedup();
+    if r.decision.is_none() {
+        if !r.direct_winners.is_empty() || r.withheld_winner {
+            r.decision = Some("selec-w".to_owned());
+        } else if r.void_lot {
+            r.decision = Some("clos-nw".to_owned());
+        } else if r.direct_cents.is_some() {
+            r.decision = Some("selec-w".to_owned());
+        } else if r.decided.is_none() && !r.awarded_marker {
+            // Issue 550: an `AWARDED_CONTRACT` block is award evidence even undated.
+            r.decision = Some("clos-nw".to_owned());
         }
     }
-    raw
+}
+
+/// Issue 541: the TED form code of the R2.0.8 MOVE contract award notice (Regulation 1370/2007
+/// public-transport contracts), whose section V is no result section ([`read_move_award`]).
+const MOVE_AWARD_FORM: &str = "T02";
+/// Issue 541: the key of the one result [`read_move_award`] writes. The legacy walkers mint section
+/// ids `<prefix>-<n>` with a numeric `n` (`LOT-1`, `RES-2`, `ORG-3`; r209's `Kind::prefix`), so a
+/// T02's own sections never carry it, and it is the same on every refold of the notice.
+const MOVE_AWARD_RESULT_KEY: &str = "RES-T02";
+/// Issue 541: the T02's section V.2, the selected operator — already the `winner` role
+/// (`CONTACT_DATA_WRAPPERS`); its sibling V.3 `PARTY_NAME_ADDRESS` (the operator's owners, issue
+/// 534) is refused there and never read here.
+const MOVE_OPERATOR_FIELD: &str = "TED-ECONOMIC_OPERATOR_NAME_ADDRESS";
+
+/// Issue 541: a T02 award's section V as one lot result. `AWARD_CONTRACT_MOVE` is a Group, not a
+/// result section, so its children land in the notice's own `Notice` section (`PROCEDURE`) and no
+/// `LotResult` exists for [`read_legacy_results`] to read: the operator showed as a `winner` party
+/// while `lot_results` stayed empty and `?winner=` (issue 531) missed it.
+///
+/// Read only on a notice whose `TED-FORM` is `T02` and that has no `LotResult` section (the caller's
+/// branch), and only from values directly on a `Notice` section. The standard forms name their
+/// contractor with the same `ECONOMIC_OPERATOR_NAME_ADDRESS` inside a real award block (~970,980
+/// notices) and keep that path; T01, the MOVE prior information, names the operator the buyer
+/// intends to award and writes nothing; an R2.0.9 T02 puts its award in `AWARD_CONTRACT`, a
+/// `LotResult`, so the caller never reaches here for it.
+///
+/// - **Winner**: each section V.2 operator reference, through the legacy reader's `dropped` rule
+///   (a void lot, a placeholder, a blank slot: issues 510 and 511). No other reference of the
+///   section is read: the buyer (`CA_CE_CONCESSIONAIRE_PROFILE`) and the owners sit beside it.
+/// - **Date**: V.1 `CONTRACT_AWARD_DATE`, the decision date (issue 255's destination).
+/// - **Value**: none. A T02's amounts land in the same `Notice` section with no form section
+///   recorded: 382248-2016 carries 2,186,477.00 and 2,186,477.47 EUR twice over, under `TED-VALUE`
+///   and `TED-VALUE_COST` (ordinals 0 and 1 each), typed by ordinal by `TED-VALUES.TYPE` `GLOBAL` /
+///   `CONTRACT`, and no `VAL_TOTAL`; 427137-2016 publishes `UNKNOWN_VALUE`. `CONTRACT` is a type,
+///   not a section, so no stored field is confirmed as section V's awarded value.
+///
+/// `None` when the section names no operator at all: there is nothing to write. A named slot,
+/// dropped or not, is the award block, and [`decide_legacy_result`] decides it as it would a
+/// `RES-n`.
+fn read_move_award(
+    sections: &HashMap<&str, &store::Section>,
+    parsed: &Parsed,
+    dropped: &BTreeMap<String, NotAName>,
+) -> Option<RawLotResult> {
+    if !first_code(parsed, "TED-FORM").is_some_and(|form| form.trim().eq_ignore_ascii_case(MOVE_AWARD_FORM)) {
+        return None;
+    }
+    let mut r = RawLotResult { key: MOVE_AWARD_RESULT_KEY.to_owned(), ..RawLotResult::default() };
+    let mut operator = false;
+    for value in &parsed.values {
+        if sections.get(value.section_id.as_str()).is_none_or(|s| s.kind != "Notice") {
+            continue;
+        }
+        match (value.field_id.as_str(), &value.value) {
+            (MOVE_OPERATOR_FIELD, NoticeValue::Id { value: org, is_ref: true, .. }) => {
+                operator = true;
+                // The legacy reader's rule for a winner slot (issues 510 and 511).
+                match dropped.get(org) {
+                    Some(NotAName::VoidLot) => r.void_lot = true,
+                    Some(NotAName::Placeholder) => r.withheld_winner = true,
+                    Some(_) => {}
+                    None => r.direct_winners.push(org.clone()),
+                }
+            }
+            (LEGACY_AWARD_DATE_FIELD, NoticeValue::Date { utc_seconds, offset_minutes, has_time }) => {
+                r.decided = Some((*utc_seconds, *offset_minutes, *has_time));
+            }
+            _ => {}
+        }
+    }
+    if !operator {
+        return None;
+    }
+    decide_legacy_result(&mut r);
+    Some(r)
 }
 
 /// Issue 567: a legacy notice's published lot numbers, read from its lot sections, and the lot an
@@ -19551,6 +19633,280 @@ mod tests {
         };
         let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
         assert_eq!(read_results(&sections, &parsed, true, false, &BTreeMap::new()).lot_results[0].decision, None);
+    }
+
+    // ---- Issue 541: a T02 award's section V, stored on the notice, is one lot result ----
+
+    /// 21 September 2016, 382248-2016's `CONTRACT_AWARD_DATE`.
+    const T02_AWARD_DATE: NoticeValue = NoticeValue::Date { utc_seconds: 1_474_416_000, offset_minutes: 0, has_time: false };
+
+    fn t02_ref(section: &str, field: &str, ordinal: i64, org: &str) -> store::ValueRow {
+        store::ValueRow {
+            section_id: section.into(),
+            field_id: field.into(),
+            ordinal,
+            value: NoticeValue::Id { scheme: None, value: org.into(), is_ref: true },
+        }
+    }
+
+    /// Notice 18999280 (tender 5782055, 382248-2016) as stored, its award-relevant values on the
+    /// `PROCEDURE` Notice section (its texts left out): the buyer ORG-1, the operator ORG-2
+    /// (Barnimer Busgesellschaft mbH) under `ECONOMIC_OPERATOR_NAME_ADDRESS`, its two public owners
+    /// ORG-3 and ORG-4 under `PARTY_NAME_ADDRESS`, the award date, and both amounts under both
+    /// `VALUE` and `VALUE_COST` with their `VALUES.TYPE` `GLOBAL` / `CONTRACT`. `form` is the
+    /// notice's `TED-FORM`; `operator` the operator's published name.
+    fn t02_notice(form: &str, operator: &str) -> Parsed {
+        b1_parsed(
+            &[
+                ("PROCEDURE", "Notice"),
+                ("ORG-1", "Organization"),
+                ("ORG-2", "Organization"),
+                ("ORG-3", "Organization"),
+                ("ORG-4", "Organization"),
+            ],
+            vec![
+                b1_form(form),
+                b1_value("PROCEDURE", "TED-TD_DOCUMENT_TYPE", NoticeValue::Code { list: None, code: "7".into() }),
+                b1_value("PROCEDURE", "TED-DIRECTIVE", NoticeValue::Code { list: None, code: "1370/2007".into() }),
+                t02_ref("PROCEDURE", "TED-CA_CE_CONCESSIONAIRE_PROFILE", 0, "ORG-1"),
+                b1_value("PROCEDURE", LEGACY_AWARD_DATE_FIELD, T02_AWARD_DATE),
+                t02_ref("PROCEDURE", "TED-ECONOMIC_OPERATOR_NAME_ADDRESS", 0, "ORG-2"),
+                t02_ref("PROCEDURE", "TED-PARTY_NAME_ADDRESS", 0, "ORG-3"),
+                t02_ref("PROCEDURE", "TED-PARTY_NAME_ADDRESS", 1, "ORG-4"),
+                store::ValueRow { ordinal: 0, ..b1_amount("PROCEDURE", "TED-VALUE", 218_647_700, "EUR") },
+                store::ValueRow { ordinal: 1, ..b1_amount("PROCEDURE", "TED-VALUE", 218_647_747, "EUR") },
+                b1_value("PROCEDURE", "TED-VALUES.TYPE", NoticeValue::Code { list: None, code: "GLOBAL".into() }),
+                store::ValueRow {
+                    ordinal: 1,
+                    ..b1_value("PROCEDURE", "TED-VALUES.TYPE", NoticeValue::Code { list: None, code: "CONTRACT".into() })
+                },
+                store::ValueRow { ordinal: 0, ..b1_amount("PROCEDURE", "TED-VALUE_COST", 218_647_700, "EUR") },
+                store::ValueRow { ordinal: 1, ..b1_amount("PROCEDURE", "TED-VALUE_COST", 218_647_747, "EUR") },
+                text_value("ORG-1", "TED-OFFICIALNAME", 0, Some("DE"), "Landkreis Barnim und Landkreis Mäkisch-Oderland als Gruppe von Behörden"),
+                text_value("ORG-2", "TED-OFFICIALNAME", 0, Some("DE"), operator),
+                text_value("ORG-3", "TED-OFFICIALNAME", 0, Some("DE"), "Landkreis Barnim"),
+                text_value("ORG-4", "TED-OFFICIALNAME", 0, Some("DE"), "Landkreis Märkisch-Oderland"),
+            ],
+        )
+    }
+
+    /// `read_results` on the legacy path, with the `dropped` verdicts given.
+    fn t02_read(parsed: &Parsed, dropped: &[(&str, NotAName)]) -> RawResults {
+        let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+        let dropped: BTreeMap<String, NotAName> = dropped.iter().map(|(s, c)| ((*s).to_owned(), *c)).collect();
+        read_results(&sections, parsed, true, false, &dropped)
+    }
+
+    /// The bound parties of `role`, by section: `bind_organizations` has already moved
+    /// `state.roles` into these facts, tender- and lot-scoped.
+    fn t02_parties<'a>(state: &'a NoticeState, role: &str) -> Vec<&'a str> {
+        state
+            .facts
+            .iter()
+            .chain(state.lots.iter().flat_map(|l| l.facts.iter()))
+            .filter_map(|f| match f {
+                Fact::Party { role: r, section_id, .. } if r == role => Some(section_id.as_str()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// `(key, winners, decision, decided, value, lot)` per result.
+    #[allow(clippy::type_complexity)]
+    fn t02_results(raw: &RawResults) -> Vec<(&str, Vec<&str>, Option<&str>, Option<(i64, i64, bool)>, Option<i64>, Option<&str>)> {
+        raw.lot_results
+            .iter()
+            .map(|r| {
+                (
+                    r.key.as_str(),
+                    r.direct_winners.iter().map(String::as_str).collect(),
+                    r.decision.as_deref(),
+                    r.decided,
+                    r.direct_cents,
+                    r.lot_key.as_deref(),
+                )
+            })
+            .collect()
+    }
+
+    /// (a) The 18999280 shape writes one result: the operator its winner, `selec-w`, the award date,
+    /// no lot (the notice has none), and no value. Through the whole read it binds ORG-2's
+    /// organization, the one the `winner` role already names, so `?winner=` finds it.
+    #[test]
+    fn a_t02_award_writes_its_operator_as_the_result_winner() {
+        let parsed = t02_notice("T02", "Barnimer Busgesellschaft mbH");
+        let decided = Some((1_474_416_000, 0, false));
+        assert_eq!(
+            t02_results(&t02_read(&parsed, &[])),
+            vec![(MOVE_AWARD_RESULT_KEY, vec!["ORG-2"], Some("selec-w"), decided, None, None)]
+        );
+        assert!(
+            !parsed.sections.iter().any(|s| s.id == MOVE_AWARD_RESULT_KEY),
+            "the result's key names no section of the notice"
+        );
+
+        let state = b1_bound(&b1_notice(18_999_280, "ted", "ted-export-r208"), &parsed);
+        let round = state.round.as_ref().expect("the T02 binds a round");
+        let [result] = &round.lot_results[..] else { panic!("one result: {:?}", round.lot_results.len()) };
+        assert_eq!(result.key, MOVE_AWARD_RESULT_KEY);
+        assert_eq!(result.lot_key, None);
+        assert_eq!(result.decision.as_deref(), Some("selec-w"));
+        assert_eq!(result.decided, decided);
+        assert_eq!(result.winners, vec![1_002], "the operator, never the buyer or its owners");
+        assert_eq!((result.awarded_cents, result.awarded_currency.as_deref()), (None, None), "no value is confirmed as section V's");
+        assert!(round.bids.is_empty() && round.contracts.is_empty());
+        assert_eq!(t02_parties(&state, "winner"), vec!["ORG-2"], "the role the result now agrees with");
+        // Issue 534: the owners keep their refused verbatim role beside a real operator.
+        assert_eq!(t02_parties(&state, "PARTY_NAME_ADDRESS"), vec!["ORG-3", "ORG-4"]);
+
+        // The same notice read twice keys the same result: a refold rewrites, never adds.
+        let again = b1_bound(&b1_notice(18_999_280, "ted", "ted-export-r208"), &parsed);
+        assert_eq!(b1_results(&again), b1_results(&state));
+        // The form code as published, trimmed and in either case.
+        for form in [" T02 ", "t02"] {
+            assert_eq!(t02_read(&t02_notice(form, "Barnimer Busgesellschaft mbH"), &[]).lot_results.len(), 1, "{form:?}");
+        }
+    }
+
+    /// (a) A T02 naming two operators (a joint award) binds both, in one result; with no award date
+    /// the named operator still decides `selec-w`.
+    #[test]
+    fn a_t02_award_binds_every_operator_it_names() {
+        let mut parsed = t02_notice("T02", "Barnimer Busgesellschaft mbH");
+        parsed.values.retain(|v| v.field_id != LEGACY_AWARD_DATE_FIELD);
+        parsed.values.push(t02_ref("PROCEDURE", "TED-ECONOMIC_OPERATOR_NAME_ADDRESS", 1, "ORG-5"));
+        parsed.sections.push(store::Section { id: "ORG-5".into(), kind: "Organization".into(), parent: Some("PROCEDURE".into()) });
+        assert_eq!(
+            t02_results(&t02_read(&parsed, &[])),
+            vec![(MOVE_AWARD_RESULT_KEY, vec!["ORG-2", "ORG-5"], Some("selec-w"), None, None, None)]
+        );
+    }
+
+    /// (b) T01, the MOVE prior information (the operator the buyer intends to award), and every
+    /// other form with the same fields write nothing: the predicate is the T02 form alone.
+    #[test]
+    fn only_a_t02_writes_a_result_from_its_notice_section() {
+        for form in ["T01", "F03", "F06", "3", "T2", "T020", ""] {
+            let raw = t02_read(&t02_notice(form, "Barnimer Busgesellschaft mbH"), &[]);
+            assert!(raw.lot_results.is_empty(), "{form:?}: {:?}", t02_results(&raw));
+            let state = b1_bound(&b1_notice(1, "ted", "ted-export-r208"), &t02_notice(form, "Barnimer Busgesellschaft mbH"));
+            assert!(state.round.is_none(), "{form:?}");
+        }
+        // No form code at all: nothing either.
+        let mut parsed = t02_notice("T02", "Barnimer Busgesellschaft mbH");
+        parsed.values.retain(|v| v.field_id != "TED-FORM");
+        assert!(t02_read(&parsed, &[]).lot_results.is_empty());
+        // An eForms or sdk-0.1 parse never takes the legacy path at all.
+        let parsed = t02_notice("T02", "Barnimer Busgesellschaft mbH");
+        let sections: HashMap<&str, &store::Section> = parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
+        assert!(read_results(&sections, &parsed, false, false, &BTreeMap::new()).lot_results.is_empty());
+    }
+
+    /// (c) An award with a real result section keeps the legacy reader's path: a standard-form F03
+    /// whose contractor sits under `ECONOMIC_OPERATOR_NAME_ADDRESS` in `RES-1`, and a T02 that
+    /// carries a `LotResult` (R2.0.9's `AWARD_CONTRACT`) — one result each, `RES-1`, read as before,
+    /// and no second result from the notice section's references.
+    #[test]
+    fn an_award_with_a_result_section_is_read_as_before() {
+        for form in ["F03", "T02"] {
+            let parsed = b1_parsed(
+                &[("PROCEDURE", "Notice"), ("RES-1", "LotResult"), ("ORG-1", "Organization"), ("ORG-2", "Organization")],
+                vec![
+                    b1_form(form),
+                    t02_ref("PROCEDURE", "TED-CA_CE_CONCESSIONAIRE_PROFILE", 0, "ORG-1"),
+                    // A stray operator reference on the notice section: never read beside a block.
+                    t02_ref("PROCEDURE", "TED-ECONOMIC_OPERATOR_NAME_ADDRESS", 0, "ORG-1"),
+                    t02_ref("RES-1", "TED-ECONOMIC_OPERATOR_NAME_ADDRESS", 0, "ORG-2"),
+                    b1_value("RES-1", LEGACY_AWARD_DATE_FIELD, T02_AWARD_DATE),
+                    b1_amount("RES-1", "TED-VALUE_COST", 12_000_000, "EUR"),
+                ],
+            );
+            assert_eq!(
+                t02_results(&t02_read(&parsed, &[])),
+                vec![("RES-1", vec!["ORG-2"], Some("selec-w"), Some((1_474_416_000, 0, false)), Some(12_000_000), None)],
+                "{form}"
+            );
+        }
+    }
+
+    /// (d) `PARTY_NAME_ADDRESS` (the operator's owners, refused in issue 534) is never a winner:
+    /// beside the operator it binds nothing, and a T02 naming only owners (or only its buyer) names
+    /// no operator, so no result is written.
+    #[test]
+    fn a_t02_owner_is_never_a_winner() {
+        let raw = t02_read(&t02_notice("T02", "Barnimer Busgesellschaft mbH"), &[]);
+        let winners: Vec<&str> = raw.lot_results.iter().flat_map(|r| r.direct_winners.iter().map(String::as_str)).collect();
+        assert_eq!(winners, vec!["ORG-2"]);
+
+        let mut owners_only = t02_notice("T02", "Barnimer Busgesellschaft mbH");
+        owners_only.values.retain(|v| v.field_id != "TED-ECONOMIC_OPERATOR_NAME_ADDRESS");
+        assert!(t02_read(&owners_only, &[]).lot_results.is_empty(), "no operator, nothing to write");
+        let state = b1_bound(&b1_notice(2, "ted", "ted-export-r208"), &owners_only);
+        assert!(state.round.is_none());
+        assert!(t02_parties(&state, "winner").is_empty(), "and no owner becomes a winner party");
+        assert_eq!(t02_parties(&state, "PARTY_NAME_ADDRESS"), vec!["ORG-3", "ORG-4"], "issue 534's refused role");
+
+        // An operator reference held as a plain id (no ref) names no party either.
+        let mut unresolved = t02_notice("T02", "Barnimer Busgesellschaft mbH");
+        for v in &mut unresolved.values {
+            if v.field_id == "TED-ECONOMIC_OPERATOR_NAME_ADDRESS" {
+                v.value = NoticeValue::Id { scheme: None, value: "ORG-2".into(), is_ref: false };
+            }
+        }
+        assert!(t02_read(&unresolved, &[]).lot_results.is_empty());
+    }
+
+    /// (e) A dropped operator (issues 510 and 511) decides the T02's result exactly as the legacy
+    /// reader decides a `RES-n` block with the same slot and date: a void lot closes it, a
+    /// placeholder is `selec-w` with no winner bound, a blank slot leaves the date to decide (NULL
+    /// with one, `clos-nw` without). The result is still written: the slot was published.
+    #[test]
+    fn a_t02_dropped_operator_decides_as_a_legacy_block_would() {
+        for class in [NotAName::VoidLot, NotAName::Placeholder, NotAName::Blank, NotAName::AwardSummary] {
+            for dated in [true, false] {
+                let mut t02 = t02_notice("T02", "Barnimer Busgesellschaft mbH");
+                if !dated {
+                    t02.values.retain(|v| v.field_id != LEGACY_AWARD_DATE_FIELD);
+                }
+                let mut block = vec![b1_form("F06"), t02_ref("RES-1", "TED-ECONOMIC_OPERATOR_NAME_ADDRESS", 0, "ORG-2")];
+                if dated {
+                    block.push(b1_value("RES-1", LEGACY_AWARD_DATE_FIELD, T02_AWARD_DATE));
+                }
+                let legacy = b1_parsed(&[("PROCEDURE", "Notice"), ("RES-1", "LotResult"), ("ORG-2", "Organization")], block);
+                let dropped = [("ORG-2", class)];
+                let (t02, legacy) = (t02_read(&t02, &dropped), t02_read(&legacy, &dropped));
+                // Everything but the key, which is each reader's own.
+                let shape = |raw: &RawResults| {
+                    t02_results(raw)
+                        .into_iter()
+                        .map(|(_, winners, decision, decided, cents, lot)| {
+                            let winners: Vec<String> = winners.into_iter().map(str::to_owned).collect();
+                            (winners, decision.map(str::to_owned), decided, cents, lot.map(str::to_owned))
+                        })
+                        .collect::<Vec<_>>()
+                };
+                assert_eq!(t02.lot_results.len(), 1, "{class:?} dated={dated}");
+                assert_eq!(shape(&t02), shape(&legacy), "{class:?} dated={dated}");
+                assert_eq!(
+                    (t02.lot_results[0].void_lot, t02.lot_results[0].withheld_winner),
+                    (legacy.lot_results[0].void_lot, legacy.lot_results[0].withheld_winner),
+                    "{class:?} dated={dated}"
+                );
+            }
+        }
+        // Pinned outright for the two marker classes, dated as 382248-2016 is.
+        let read = |class: NotAName| t02_results(&t02_read(&t02_notice("T02", "x"), &[("ORG-2", class)]))[0].2.map(str::to_owned);
+        assert_eq!(read(NotAName::VoidLot).as_deref(), Some("clos-nw"));
+        assert_eq!(read(NotAName::Placeholder).as_deref(), Some("selec-w"));
+        assert_eq!(read(NotAName::Blank), None);
+
+        // Through the whole read, the fold's own verdict on the operator's name drops it.
+        for (name, decision) in [("Infructueux", Some("clos-nw")), ("Withheld", Some("selec-w"))] {
+            let state = b1_bound(&b1_notice(3, "ted", "ted-export-r208"), &t02_notice("T02", name));
+            let round = state.round.as_ref().expect("the slot was published: a round");
+            let [result] = &round.lot_results[..] else { panic!("one result") };
+            assert_eq!((result.decision.as_deref(), result.winners.as_slice()), (decision, &[][..]), "{name}");
+        }
     }
 
     // ---- Issue 567: a legacy award block resolves to the lot its own LOT_NO names ----
