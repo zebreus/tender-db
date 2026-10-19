@@ -1,6 +1,6 @@
 # 573 — a mojibake (dropped-accent) head has no path to its repaired spelling: every hold that could release it is blocked
 
-Status: needs-triage — filed 2026-10-19 from issue 548 (U1 and U2 routed it to "its own unit"). Next: triage — size the class
+Status: ready-for-agent — unit 1 SIZED and unit 2 DECIDED 2026-10-19 (`.scratch/tender-db/573-triage/size.md`, size.py): plan 2653 holds 17 hits — 15 dropped-accent heads (14 head_current + the exhibit 22435268 under review_body; all French courts or committees printed 2024-01-22..02-19, one batch) and 2 R2 mojibake heads — read 16 R / 1 N / 0 W (15/15 R on the dropped-accent arm); a lower bound (keeps are not listed; their uniform samples read 0 of 30). Decided: a narrow R0d (char-level dropped-accent head of another cluster's spelling, unique top passing R1's bars, asked only of the bind guards, no marker arm, R0d accepted by exclude_rules but not in the runbook's filter). Teaching the unfit test ships 0 (exclude_released unfit); waiting ships 14 unread in 2027-01/02 and never the exhibit. NEXT: unit 3 build as a new head-election epoch (low urgency), re-plan expecting exactly these 15 R0d changes. Was: needs-triage — filed 2026-10-19 from issue 548 (U1 and U2 routed it to "its own unit"). Next: triage — size the class
 (how many held/kept heads carry a dropped-accent or mojibake shape the unfit test misses), then decide between an R0-style
 "defective head" path and teaching the unfit test the shape plus a release the wet filters admit.
 Kind: data quality (served organization names)
@@ -37,3 +37,23 @@ bytes rather than garbling them). The election wants the right spelling, and fou
 2. **Decide (S).** R0d (defective head → the top cluster's fit spelling, never held by recency/serve holds, asked of the bind
    guards) vs teaching the unfit test and adding a narrow release the filters admit. Record the bar (0 wrong on the read).
 3. **Build** as a new head-election epoch, re-plan, re-judge, wet through 524's runbook.
+
+
+## Unit 1 — sized; Unit 2 — decided (2026-10-19, wf_7d4abf7a-699)
+
+- **Hits (plan 2653, held 11,515 + planned 1,693):** 17. hold:head_current 14 (dropped-accent; 2 of them, 22399787/22399788
+  `Pointe--Pitre`, need the char-level test because a whole `à` and its no-break space were dropped), hold:review_body 1 (the
+  exhibit), change:R2 2 (22504462 `Ã©`, already `unfit` mojibake; 22678565 U+FFFD, read `control`; both held back by the R2 filter).
+- **Read:** 16 R, 1 N (22678565), 0 W; the dropped-accent arm 15/15 R. Pointe-à-Pitre would serve `Pointe-à -Pitre` (a space for
+  the no-break space): cosmetic.
+- **Exhibit 22435268:** R1, V/T/H 21/18/3, head_newest 2024-02-09; the elected spelling `Comité consultatif interrégional du
+  règlement amiable` (18/21). review_body holds it because the broken head folds to no review phrase or stem; fixing that alone
+  meets head_current until 2027-02-08, and an unfit release is filtered on wet runs.
+- **Unit 2 decision: R0d.** Trigger: the head equals, case-folded with whitespace collapsed, a spelling S of ANOTHER cluster with
+  every non-ASCII character deleted, at least one word that keeps an ASCII letter lost a letter, and no deleted word was made only
+  of 2+ non-ASCII letters (excludes the 2 Greek-word omissions 11221362, 22751177). Elect S's cluster only when it is the unique
+  top and passes R1's bars (T·20 ≥ V·11, T ≥ 3, T ≥ 2H; all 15 pass, tightest 22499321/22499322 at T 4, H 2, V 6); serve its
+  display spelling with today's twin rule; ask only the bind guards (as R0n), never the window, residue, serve holds,
+  head_current, top_stale or initialism. No marker arm (it would sweep in issue 552's control-only heads). `exclude_rules` accepts
+  R0d; the runbook's filters stay ["R2","R0w"]. Bar: 0 wrong on the read (met). Unit 3's re-plan must produce exactly these 15
+  R0d changes; any other R0d item is read before a wet run.

@@ -1,0 +1,492 @@
+{
+ "rows": [
+  {
+   "org_id": 6769473,
+   "verdict": "W",
+   "why": "Medium-low confidence, skeptic should check first. The 9-digit GB id 618184140 is printed by Capita Group Plc (head, 1 vote, 2015-06-30), Capita Business Services Ltd (3 votes, 2015-12-15) and Care and Custody (Health) Ltd (7 votes, top, newest 2018-04-07). That looks like a group-level number, so the change would serve one member's name for the group. The 2018 procedures could not be opened (no list endpoint). Becomes R if 618184140 is Care and Custody's own number.",
+   "final": "W",
+   "skeptic": "Member for the group, or another entity. 618184140 is a valid GB VAT number (mod-97 check passes). Two separate Capita companies print it in 2015: the parent Capita Group Plc (the head) and Capita Business Services Ltd (Capita Transformation), so it reads as Capita's VAT group number. Care and Custody (Health) Ltd already has its own org, 11504910, under CH 05881801 (live: 2 mentions). Its name also matches Mitie's custody brand (11621025, Mitie Care and Custody Limited). If it was a Capita member, the change names one member for the group's number. If it was a Mitie company carrying Capita's number by mistake, the change names another entity. Either way, 4 of the 11 Capita mentions would show under a custody-health company. It is R only if 618184140 is Care and Custody's own VAT number, and that would make both 2015 Capita clusters strays. The 7 top votes may come from one or two notices. Not a REVERT, because 2018 is newer than 2015. The best name would be Capita plc, which is not the change on offer. Written up in /home/user/tender-db/.scratch/tender-db/574-triage/skeptic_1.md. 2 new GETs, both rc=200."
+  },
+  {
+   "org_id": 8121787,
+   "verdict": "R",
+   "why": "The head is a 2016 consortium sentence naming the old trading name CSM Bessac. The top (Bessac / BESSAC / SASU Bessac, 5 of 8 votes, newest 2024-05-10) is the SIREN 301589347 holder under its current name. The rival (2022-09-16) is older than the top.",
+   "final": "R"
+  },
+  {
+   "org_id": 8500491,
+   "verdict": "R",
+   "why": "Low confidence. The DE id 2016002480 is printed by Vattenfall Europe Windkraft GmbH (head, 2016-08-19), the DanTysk Sandbank JV (rival, 2019-04-09) and Vattenfall AB (4 of 6 votes, newest 2020-05-18). The id behaves like a buyer-side group number, so the parent covers every mention and is the freshest print. Becomes W if the id is the GmbH's own register or tax number (parent served for a subsidiary).",
+   "final": "R"
+  },
+  {
+   "org_id": 8729140,
+   "verdict": "R",
+   "why": "DB Netz AG has 27 of 30 votes (newest 2021-02-02). The DB ProjektBau GmbH head (2016-09-20) is a stray print by the agent that ran procurements for DB Netz until it was dissolved in 2016. The rival is a contract title parsed as a name. Caveat: DB Netz has been DB InfraGO AG since 2024, but the org has no print after 2021.",
+   "final": "R"
+  },
+  {
+   "org_id": 8752693,
+   "verdict": "R",
+   "why": "The SIREN 738205269 is Canon France SAS. The top is Canon France 4 + Canon France SAS 3 (newest 2018-10-05). The fresher rival (2020-09-07) is the 1-vote typo 'Cacnon France'. The change drops the 'mandataire solidaire du groupement' role annotation.",
+   "final": "R"
+  },
+  {
+   "org_id": 8821225,
+   "verdict": "R",
+   "why": "Close to N. SIREN 130021629 is the GCS's own number (CHU Toulouse is 263100125). The fresher CHU de Toulouse rival prints (newest 2022-04-15) are a member hospital, another entity. The new name is the same denomination with the 'sante' accent fixed, without 'La' and without the spelled-out legal form. Nearest precedent is the U1c neutral 15497200.",
+   "final": "R"
+  },
+  {
+   "org_id": 9134952,
+   "verdict": "R",
+   "why": "KBO 0428364866 is Ordina Belgium NV. The 2016 head carries the '(as consortium member)' annotation. The top (NV Ordina Belgium / Ordina Belgium NV / Ordina Belgium, 6 of 8 votes, newest 2024-02-29) is the holder alone. The rival has the same date as the head. Not a revert.",
+   "final": "R"
+  },
+  {
+   "org_id": 9930896,
+   "verdict": "R",
+   "why": "The top is ingemetrie / INGEMETRIE / Ingemetrie SAS (7 of 9 votes, newest 2025-06-26). The fresher rival (2026-02-19) is the 1-vote consortium sentence 'INGEMETRIE (mandataire) / BETEM ...', the same firm inside a wrapper. The change drops '(Mandataire)' and the office label; same legal entity.",
+   "final": "R"
+  },
+  {
+   "org_id": 9943888,
+   "verdict": "R",
+   "why": "The top has 9 of 13 votes (newest 2024-06-13); the rival is older (2021-02-22). GET /v1/tenders/6207300 (2019-01-08) prints 'CEREG Ing\u00e9nierie' as LOT-1 co-winner on this org. Dropping 'sas' along with the role marker follows the U3 Accenture precedent.",
+   "final": "R"
+  },
+  {
+   "org_id": 10142430,
+   "verdict": "R",
+   "why": "Dated read of the 2019 SITCO award (notice 20680957): BE0667692570 is printed as 'Trasys International EEIG' (Rue d'Arlon 53), never 'Tratos'. So the number belongs to the EEIG, and the change names that holder instead of the consortium it leads. The fresher rival (2020-04-14) is the same firm with a '(leader)' marker. Top is 6 of 10 votes.",
+   "final": "R"
+  },
+  {
+   "org_id": 10653142,
+   "verdict": "R",
+   "why": "The 2017 head is mandataire Eiffage G\u00e9nie Civil R\u00e9seaux plus co-contractor '/SAT'. The top (4 of 7, newest 2024-09-09) is the newest print of all, so EGCR is the current name for this SIRET and the older 'Eiffage travaux publics r\u00e9seaux' print is not a revert target. The change drops the role marker and the partner.",
+   "final": "R"
+  },
+  {
+   "org_id": 10658772,
+   "verdict": "R",
+   "why": "TSO is 14 of 17 votes and fresh (2026-06-17). The change only drops '(Mandataire)'. The rival is 'TSO CHELLES (Mandataire)', the same firm. Held head_current; it lapses 2028-07-24 (head_newest 2025-07-25 + 1095 days).",
+   "final": "R"
+  },
+  {
+   "org_id": 10808017,
+   "verdict": "R",
+   "why": "The head is a 2017 groupement sentence and the SIRET belongs to its first-named member, Bonglet. The top is 'Bonglet' (6 of 9). The fresher rival (2020-10-13) is 'Bonglet SA', the same firm with its legal form, not a different current name.",
+   "final": "R"
+  },
+  {
+   "org_id": 11099325,
+   "verdict": "R",
+   "why": "Same brand on both sides; the change drops '(Mandataire du groupement conjoint)'. The top is 4 of 7, newest 2025-07-24, fresher than the rival (2024-03-27; 'Antea France (mandataire)', the legal name with a role marker, or an unlisted 1-vote spelling). Same entity.",
+   "final": "R"
+  },
+  {
+   "org_id": 13183959,
+   "verdict": "R",
+   "why": "Family sas on both sides. The top is 7 of 9 (Cogite SAS / COGITE variants), newest 2025-04-29, and the 1-vote rival (2021) is older. The change drops '(mandataire du groupement)'.",
+   "final": "R"
+  },
+  {
+   "org_id": 13230085,
+   "verdict": "R",
+   "why": "Medium confidence. Same firm (KBO 0428.304.785, European Service Network). The change drops '(leader Consortium Lumiere)'. The new casing, 'EUROPEAN SERVICE NETWORK sa', is worse but readable; the 548 U1c skim filed a far worse casing ('mANDROIT') as neutral. N is the fallback if casing is weighted above removing the annotation.",
+   "final": "R"
+  },
+  {
+   "org_id": 13340328,
+   "verdict": "R",
+   "why": "The head is a 3-party award sentence. The SIRET cannot be KPMG's (KPMG SA's SIREN is 775726417), so it is the mandataire, Groupe Sirius. The top is 5 of 7, newest 2025-03-20. The rival 'sirius D\u00e9partement IAMTE' (2021) is the same firm.",
+   "final": "R"
+  },
+  {
+   "org_id": 13396243,
+   "verdict": "R",
+   "why": "The change drops '(mandataire)'. The top is 6 of 10, newest 2024-08-13, fresher than the short-form rival 'STUDIO 02' (2024-08-08). The mixed case 'studio 02 ARCHITECTES' is the 5-vote majority print, which reads as the firm's own styling.",
+   "final": "R"
+  },
+  {
+   "org_id": 13824614,
+   "verdict": "R",
+   "why": "SIRET 38238763700053. The head is a 2019 consortium sentence with Forma 6 as mandataire; the new name is the holder alone. The top FORMA 6 has 3 of 5 votes (newest 2025-10-03). The only fresher print is FORMA6 (2026-04-27), the same name. It passes the token-subset test. Held top_stale; ships only if the top is printed again.",
+   "final": "R"
+  },
+  {
+   "org_id": 14983077,
+   "verdict": "R",
+   "why": "CIF B18967729 is the S.L. member (a UTE would have a U NIF). The top has 12 of 16 votes across three spellings of the full S.L. name, last printed 2025-07-10, after the UTE head (2020-03-17) and after the rival 'Greening, S. L.' (2020-08-05). The change drops the UTE wrapper and the partner 'pk. 28'.",
+   "final": "R"
+  },
+  {
+   "org_id": 15774943,
+   "verdict": "R",
+   "why": "SIREN 342227030 is Sogea Martinique. The top (SOGEA MARTINIQUE 3, plus the SAS form 1) was last printed 2025-09-29. The rivals are older and worse: a 'Groupement SOGEA/AGENOV/ACB' sentence and the bare brand 'SOGEA'. The change drops the 'Mandataire:' prefix and the legal form (Canon France precedent).",
+   "final": "R"
+  },
+  {
+   "org_id": 15783942,
+   "verdict": "R",
+   "why": "FN223804Z is an Austrian Firmenbuch number, so it names the Austrian member of the head's consortium. The top 'Kontron Transportation GmbH' (3 of 5 votes, newest 2024-12-16) comes after the AG rival (2021-02-01): an AG-to-GmbH conversion or rename on the same FN. A Bulgarian buyer's print on this FN also reads Kontron Transportation GmbH (issue 357 slice 5). This is the cross-guard row; held top_stale.",
+   "final": "R"
+  },
+  {
+   "org_id": 17915448,
+   "verdict": "W",
+   "why": "The new name is the consortium sentence 'RTI COSTITUENDO MASNATA CHIMICI S.P.A. + CHIMICA SARDA S.R.L. (DATI MANDATARIA)', replacing the clean name ECO CENTRO SARDEGNA SRL. The top has 8 votes plus a 2-vote cluster of the same sentence, all dated 2022-02-28, so likely one procedure. Whoever holds the P.IVA (office code 091, Nuoro), it is another entity or a group name with an annotation, which is clearly worse (548 U1b 'Partner konsorcjum' W). At best N. Released by the family H<=1 release; no guard catches an added consortium marker. Held top_stale (stale since 2023), so it ships only if printed again. High confidence.",
+   "final": "W",
+   "skeptic": "Kept W; could not argue it up to R or N. R is impossible: a 'RTI costituendo' (temporary grouping still being formed) has no legal personality and no P.IVA, so 01301570915 belongs to one company, and the new name names two firms plus the annotation '(DATI MANDATARIA)'. N works only if the P.IVA is Masnata Chimici S.p.A.'s, which would make the old name a stray print of another firm (wrong for wrong). That reading is the weaker one. (1) The 10 RTI votes come from one date, 2022-02-28, so one procedure and one buyer's record, against one separate 2021 procedure printing ECO CENTRO SARDEGNA SRL: 1 to 1 by procedure, not 10 to 1. (2) Office code 091 is Nuoro, while Masnata Chimici is, as far as I know, a Cagliari-area firm (092); unconfirmed. (3) A Nuoro SRL holder (Eco Centro Sardegna or Chimica Sarda, maybe renamed) explains both prints, and either way the change is W. (4) Even in the Masnata case the new name is a group for a member with an annotation, which 548 labelled W (9168556, 3728305, 10037554, RTI rival 429451). Not a revert: the new name is the newer print. 0 new GETs: no tender or notice id exists for this org and the allowed endpoints cannot list its tenders. 548's role-added lexicon has no Italian RTI marker (rti, ati, costituendo, mandataria). Notes in /home/user/tender-db/.scratch/tender-db/574-triage/skeptic_3.md"
+  },
+  {
+   "org_id": 19426241,
+   "verdict": "R",
+   "why": "SIREN 489626135 is INGEROP Conseil et Ing\u00e9nierie. The top has 19 of 26 votes, newest 2026-09-15. The head is the '(Mandataire du Groupement)' role print (4 votes, newest 2023-11-13). The change drops the role marker and gives proper case and accents. head_current lapses after 2026-11-12.",
+   "final": "R"
+  },
+  {
+   "org_id": 21555937,
+   "verdict": "R",
+   "why": "SIREN 402250427 is Inddigo SAS. The top (INDDIGO SAS 2, INDDIGO 1) was last printed 2025-09-23. The rival is the typo INDIGGO SAS (2024-12-11). The change only drops '(Mandataire)'.",
+   "final": "R"
+  },
+  {
+   "org_id": 22048766,
+   "verdict": "R",
+   "why": "All six prints name Bouygues B\u00e2timent Ile-de-France, on SIREN 433900834 (passes Luhn). The top has 4 of 6 votes, newest 2025-11-24, after the head (2023-10-24). The change only drops '(mandataire)'. This is the earliest row to ship: head_current lapses after about 2026-10-23, and top_stale fires from 2026-11-24.",
+   "final": "R"
+  },
+  {
+   "org_id": 22140242,
+   "verdict": "R",
+   "why": "P.IVA 04585551007 (Roma). The top has 3 of 4 votes (SAREP S.p.A. 2, S.A.R.E.P. SRL 1), newest 2026-07-03. The head is 'S.A.R.E.P. SRL (Mandante)' from 2023-11-07. The change drops the role marker and takes the newer srl-to-S.p.A. form (548 precedent 16674633). Medium confidence: the S.p.A. votes may come from one notice; if that form is a buyer error the verdict is N. head_current lapses after 2026-11-06, and top_stale never fires (2 clusters).",
+   "final": "R"
+  },
+  {
+   "org_id": 22239725,
+   "verdict": "R",
+   "why": "P.IVA 05394801004 (Roma, check digit passes) belongs to Acea S.p.A. 48 of 49 votes print that name in five casings, newest 2026-08-07. The head is a single 2023 RTI print naming the subsidiary Acea Ambiente Srl with Refecta. The new name is the holder. With 2 clusters it ships after 2026-11-28.",
+   "final": "R"
+  },
+  {
+   "org_id": 22243890,
+   "verdict": "R",
+   "why": "UID CHE-105.901.715 (check passes). JPF Construction SA alone has 6 of 8 votes. Both group prints, the 2023 head consortium sentence and the fresher 2024-12-23 c/o rival, name JPF first. The rival is not a better current name. The top is stale with 3 clusters, so after 2026-11-09 the row goes to top_stale and does not ship.",
+   "final": "R"
+  },
+  {
+   "org_id": 22298985,
+   "verdict": "R",
+   "why": "VAT DE114170628. The top is 5 of 9 votes for INTEGRATION International Management Consultants GmbH, newest 2026-01-19. The head (ARGE ... (Lead)) and the rival (Consortium INTEGRATION ...) are 2023-12-07 consortium sentences led by the same firm. The new name keeps the firm's own capitalisation.",
+   "final": "R"
+  },
+  {
+   "org_id": 22378401,
+   "verdict": "R",
+   "why": "VAT DE150516887. 'LSS GmbH' has 17 of 21 votes, newest 2026-07-14. The head is a 2023 stage-lighting ARGE (LSS + Zeiler-Technik). The 2-vote rival 'LSS Licht-, Steuer- und Schaltanlagenbau GmbH' is the same firm's fuller legal name. The new name is a short form of the holder, not another entity. Medium confidence: N at worst.",
+   "final": "R"
+  },
+  {
+   "org_id": 22496469,
+   "verdict": "R",
+   "why": "SIRET 82329934200076 (Luhn passes). The top cluster (8 of 12) spells Terid\u00e9al Atlantique, the mandataire named first in the 2024 'Groupement TERIDEAL ATLANTIQUE/TERIDEAL SIREV' head, newest 2026-08-11. The rival is the older bare brand TERIDEAL. The displayed spelling 'SAS TERIDEAL - ATLANTIQUE' is noisy but names the right entity. Medium confidence.",
+   "final": "R"
+  },
+  {
+   "org_id": 22516776,
+   "verdict": "R",
+   "why": "VAT DE217539751. Regierungsbaumeister Schlegel GmbH & Co. KG alone has 10 of 16 votes. The head is a 2024 three-firm ARGE. The fresher rival (2026-08-14) is a 'BG Schlegel / p2m berlin' consortium led by the same firm, not a renamed holder. The top is stale with 4 clusters, so the row goes to top_stale after 2027-02-18.",
+   "final": "R"
+  },
+  {
+   "org_id": 22522314,
+   "verdict": "R",
+   "why": "HRA4169 (Handelsregister A, matching a GmbH & Co. KG). ECO Consult GmbH & Co KG has 18 of 20 votes, last printed 2026-10-14. The head is a 2024 ARGE with SustaiNet Group Ltd. The change drops the partner. High confidence.",
+   "final": "R"
+  },
+  {
+   "org_id": 22524929,
+   "verdict": "R",
+   "why": "SIRET 38345880900027 (Luhn passes). Villa Battesti Architectes et associ\u00e9s alone has 3 of 4 votes, newest 2025-03-05. The head is a 2024 six-firm groupement with Villa Battesti first, as mandataire. The identifier is the practice's own, so this is not member-for-group.",
+   "final": "R"
+  },
+  {
+   "org_id": 22534692,
+   "verdict": "R",
+   "why": "Dated read. The head is tender 901151 (2024-03-13, Bavarian prisons food, LOT-0010), a Bietergemeinschaft print. Notices 24514828 (2025-01-08) and 26865565 (2026-02-02) print EDEKA Foodservice Stiftung & Co. KG alone with BT-501 DE815728669 and EDEKA contact data. Issue 311's batch verdict reached the same answer. High confidence.",
+   "final": "R"
+  },
+  {
+   "org_id": 22542189,
+   "verdict": "R",
+   "why": "Groupement ACOPAD/LE CANA/AECD/ACPM -> ACOPAD. Every print names ACOPAD first, and the only bare print is ACOPAD (top 4/6, newest 2025-10-22). The newer rival (2026-07-10) is another groupement led by ACOPAD. Passes the subset test. Top turns stale 2026-10-22, so it ships only if ACOPAD is printed again after head_current lapses (2027-03-15).",
+   "final": "R"
+  },
+  {
+   "org_id": 22553939,
+   "verdict": "R",
+   "why": "Drops the role sentence 'mandataire du groupement NOUVETRA-SERPOLLET'. Top NOUVETRA/NOUVETRA SAS holds 6/7 votes, newest 2025-09-15. SIRET passes Luhn. 2 clusters; earliest of the nine to ship, after 2027-03-04.",
+   "final": "R"
+  },
+  {
+   "org_id": 22564157,
+   "verdict": "R",
+   "why": "Drops '(mandataire)'. All 5 prints are MOBILINK (top MOBILINK 2 + Mobilink 1). The Mobilink casing is a minority spelling within the top cluster. Top stale since 2025-12-09, so it ships only on a fresh print after 2027-04-08.",
+   "final": "R"
+  },
+  {
+   "org_id": 22570322,
+   "verdict": "R",
+   "why": "srl -> S.p.A. Benefit on the same P.IVA 05648090826 (valid, office 082): a conversion. Top holds 5/7 votes across three spellings, newest 2026-09-15. Precedents 16674633 and read_3 row 26. Medium-high confidence: an srl rival dated 2025-10-06 is newer than the head; the worst case is N.",
+   "final": "R"
+  },
+  {
+   "org_id": 22572466,
+   "verdict": "R",
+   "why": "Drops 'Groupement solidaire conduit par'. Top PARTNER FINE ART holds 3/4 votes, newest 2026-09-28. Passes the subset test. Ships after 2027-04-03.",
+   "final": "R"
+  },
+  {
+   "org_id": 22585173,
+   "verdict": "R",
+   "why": "GROUPEMENT ARBONIS CCL -> ARBONIS. Top holds 4/5 bare ARBONIS prints, newest 2026-02-02, and no print names CCL alone on this SIRET. Drops the wrapper and the partner. Ships after 2027-04-23.",
+   "final": "R"
+  },
+  {
+   "org_id": 22596745,
+   "verdict": "R",
+   "why": "The head itself marks FAURIE as mandataire and EHTP as co-traitant. Top FAURIE SAS/FAURIE holds 6/7 votes, newest 2026-05-21. Serves the mandataire's own name. Ships after 2027-05-08.",
+   "final": "R"
+  },
+  {
+   "org_id": 22597727,
+   "verdict": "R",
+   "why": "Drops 'als 2. Mitglied der Bietergemeinschaft'. Top holds 8/12 bare prints, newest 2026-10-08. Issue 311's biege review read it as member-row-mislabelled, single company. Live notice 26874419 (2026-02-11) pairs BT-500 'Bursch Medizintechnik GmbH' with DE247989569, and the check digit is valid. High confidence.",
+   "final": "R"
+  },
+  {
+   "org_id": 22609154,
+   "verdict": "R",
+   "why": "Drops 'bevollmaechtigter Vertreter der Bietergemeinschaft'. Top 'GVS-Service GmbH' holds 14/22 votes. Issue 311 read it as GVS's own VAT, with the Dr. Butze prints as mis-copied. Live notice 26868822 (2026-02-04) pairs BT-500 'GVS-Service GmbH' with DE300491024. The hyphenated form is the company's own spelling. Top turns stale 2027-02-06, so it ships only on a fresh print after 2028-03-24.",
+   "final": "R"
+  },
+  {
+   "org_id": 22609164,
+   "verdict": "R",
+   "why": "Drops 'bevollm\u00e4chtigter Vertreter der Bietergemeinschaft'; 6/8 bare prints on DE356317230 (VAT check valid); issue 311 biege-batch review high-confidence single-company row; live notice 26398148 (2024-07-10) prints bare Topserv Vertriebs GmbH with this VAT 3x. 2 clusters: ships after 2027-05-30.",
+   "final": "R"
+  },
+  {
+   "org_id": 22618129,
+   "verdict": "R",
+   "why": "Drops 'ARGE RSW c/o' wrapper; 3/4 prints bind UID CHE105587665 (check valid) to bare RS Suter AG, top 2024-10-15 newer than head 2024-05-17. Medium-high: residual risk the UID is the ARGE's own (would be W); no notice id reachable. 2 clusters: ships after 2027-05-17 (earliest of the nine).",
+   "final": "R"
+  },
+  {
+   "org_id": 22619950,
+   "verdict": "R",
+   "why": "Drops 'Groupement ... associ\u00e9 \u00e0 ACTION HABITAT'; top CHAUVIER 5 + CHAUVIER SAS 2 = 7/8, newest 2026-06-22; served the majority spelling (form dropped, same company). 2 clusters: ships after 2027-05-21.",
+   "final": "R"
+  },
+  {
+   "org_id": 22628426,
+   "verdict": "R",
+   "why": "Drops groupement with Automobile de Bourgogne; 12/17 bare LEASYS France prints in 3 spellings; rival is another groupement with LEASYS as mandataire; 3 unseen 1-vote clusters cannot outweigh. Top stale since 2026-10-02: ships after 2027-06-11 only on a fresh print.",
+   "final": "R"
+  },
+  {
+   "org_id": 22638904,
+   "verdict": "R",
+   "why": "Drops '(Mandataire)'; all 6 prints are GTM Sud-Ouest TP GC; served mixed-case is a casing choice within the top cluster (Mobilink precedent). 3 clusters: ships 2027-06-26..2027-09-08 unless top reprinted.",
+   "final": "R"
+  },
+  {
+   "org_id": 22658782,
+   "verdict": "R",
+   "why": "Drops 5-member groupement sentence; head itself marks ADG ENERGY mandataire; top ADG ENERGY 4/5, newest 2025-07-21; token-subset. 2 clusters: ships after 2027-07-09.",
+   "final": "R"
+  },
+  {
+   "org_id": 22667236,
+   "verdict": "R",
+   "why": "Drops 'GROUPEMENT ... (Mandataire) - SINTEGRA (cotraitant)'; top GEOFIT 6 + G\u00e9ofit 1; rival 'GEOFIT (FIT)' (2026-08-14, newer than top) is the same company, not a competing name; accented form is a display choice. Top stale 2027-02-02: ships after 2027-07-29 only if reprinted.",
+   "final": "R"
+  },
+  {
+   "org_id": 22696968,
+   "verdict": "R",
+   "why": "Drops '(Architecte mandataire)'; all 6 prints are Atelier MIMA; new name is a tied top spelling, token-subset. Top stale 2027-03-25: ships after 2027-08-23 only if reprinted.",
+   "final": "R"
+  },
+  {
+   "org_id": 22729641,
+   "verdict": "R",
+   "why": "Drops 'GROUPEMENT ... / SETEC ALS'; both consortium prints lead with SETEC INTERNATIONAL, only bare prints name it (3/5); SETEC ALS/GETEC never alone on this SIRET. Top stale 2026-12-01: ships after 2027-09-25 only if reprinted.",
+   "final": "R"
+  },
+  {
+   "org_id": 22741977,
+   "verdict": "R",
+   "why": "Drops the 'GROUPEMENT ... ET DEGRE CELSIUS SERVICES' wrapper. The SIRET (Luhn ok) is Rougnon's: 6 of 7 votes are ROUGNON/Rougnon, newest 2026-10-05. Serving 'Rougnon' rather than 'ROUGNON' is only a casing choice. Leaves head_current after 2027-09-30.",
+   "final": "R"
+  },
+  {
+   "org_id": 22755534,
+   "verdict": "R",
+   "why": "Drops the Balthazar/Greenflex groupement wrapper (high confidence). Saved tenders 832931 (2024-12) and 430805 (2026-02-18, = top_newest) print the bare COLOMBUS CONSULTING / Colombus Consulting on this org. Leaves head_current after 2027-10-10.",
+   "final": "R"
+  },
+  {
+   "org_id": 22778540,
+   "verdict": "R",
+   "why": "Medium confidence. The head is an RTI sentence naming its capogruppo, Ares Line SpA. Three later spellings of Decima srl (newest 2026-04-22) sit on this P.IVA (office 028, Padova; check digit ok), so the P.IVA is Decima's. It would be W only if the P.IVA were Ares Line's, which the office code and n=4 argue against. Leaves head_current after 2027-10-07.",
+   "final": "R"
+  },
+  {
+   "org_id": 22781837,
+   "verdict": "R",
+   "why": "Drops the 'GROUPEMENT SAS KUBA / LA BANQUE POSTALE' wrapper. SIREN 383693975 is not La Banque Postale's. KUBA plus KUBA SASU hold 3 of 4 votes, newest 2026-09-11. Leaves head_current after 2027-10-08.",
+   "final": "R"
+  },
+  {
+   "org_id": 22824583,
+   "verdict": "R",
+   "why": "Low-medium confidence. The head 'Biosensor Italia srl' is a truncated spelling; the new name is the full company name on the same Milano P.IVA. The served S.p.A. form is doubtful: 4 top votes say S.R.L. and 2 say S.p.A. Worst case is a form slip on the same entity (N), never another entity. Leaves head_current after 2027-11-15.",
+   "final": "R"
+  },
+  {
+   "org_id": 22857451,
+   "verdict": "N",
+   "why": "The identifier U09983099 is the UTE's own U NIF (CIF valid), so the joint venture is the entity and the old name names it exactly. The new name keeps both members and adds accents, but drops 'UTE' and title-cases the forms (Sl/Sau). Same entity, neither name clearly better. Leaves head_current after 2028-05-06.",
+   "final": "N"
+  },
+  {
+   "org_id": 22876648,
+   "verdict": "R",
+   "why": "Drops the SETHA (mandataire) / GTIE INFI / SADE groupement and serves SETHA's full registry-style legal name. That spelling holds 3 of 4 votes, newest 2026-09-11, on SIREN 301291738 (Luhn ok). Leaves head_current after 2027-12-20.",
+   "final": "R"
+  },
+  {
+   "org_id": 22915652,
+   "verdict": "R",
+   "why": "High confidence. RELYENS SPS is the current name of Sofaxis. Live org 8909987 'Sofaxis' carries the same SIRET 33517109600035, and saved tender 393107 (2026-02) prints RELYENS SPS on that org. The change drops the two group insurers. Side note: two orgs share this SIRET. Leaves head_current after 2028-01-03.",
+   "final": "R"
+  },
+  {
+   "org_id": 22958521,
+   "verdict": "R",
+   "why": "Drops the 'Groupement PARIN CLAIDIERE - PETER MARCEL - MARISOL - COTE PEINT' wrapper. PARIN CLAIDIERE holds 4 of 5 votes, newest 2026-01-05, and the SIRET passes Luhn. Token-subset holds. Leaves head_current after 2028-01-08.",
+   "final": "R"
+  },
+  {
+   "org_id": 22968488,
+   "verdict": "R",
+   "why": "Brunner &amp; Leiter srl -> Brunner & Leiter GmbH: the change fixes the HTML-escaped head and serves the German half of a South Tyrol bilingual name. The P.IVA office code is 021 (Bolzano), and the top has GmbH 3 + Srl 2 with the same tokens. Same class as 18179679. Medium-high confidence. Ships after 2028-01-21.",
+   "final": "R"
+  },
+  {
+   "org_id": 22970973,
+   "verdict": "R",
+   "why": "Drops '-Mandataire groupement' and serves the exact top spelling (5/8). The FRS/IFRI groupement print names FRS first, and IFRI never appears alone. The rival 2026-03-12 is older than the top 2026-06-18. Ships only if the top is printed again (top stale after 2027-06-18, head ages out after 2028-02-19).",
+   "final": "R"
+  },
+  {
+   "org_id": 23025749,
+   "verdict": "R",
+   "why": "Drops the coordinator-of-groupement-de-commandes sentence. The 200-prefix SIREN 200067874 is the CA de Haguenau's own, and 3 of 4 prints are bare. Ships after 2028-03-16.",
+   "final": "R"
+  },
+  {
+   "org_id": 23131602,
+   "verdict": "R",
+   "why": "Drops the 'mandataire au nom et pour le compte de' sentence. The company-range SIREN 529458366 is the SPL's, not Ales Agglomeration's or the Ville d'Ales'. 6 of 9 prints are bare, and the rival is another SPL mandate print (2025-09-22). Ships only if the top is printed again (top stale after 2027-09-07, head ages out after 2029-04-09).",
+   "final": "R"
+  },
+  {
+   "org_id": 23139907,
+   "verdict": "R",
+   "why": "Groupement SIGNAUX GIROD/SIGNAUX GIROD NORD -> SIGNAUX GIROD. A groupement has no SIREN of its own, and the 4 bare prints on SIREN 646050476 all name the lead. NORD never appears alone. Ships after 2028-05-20.",
+   "final": "R"
+  },
+  {
+   "org_id": 23224838,
+   "verdict": "R",
+   "why": "GPT CONJOINT AXES INGENIERIE (MANDATAIRE)/STOA -> AXES INGENIERIE. The head itself marks AXES as mandataire, 5 of 6 prints are bare, and STOA never appears alone. Ships after 2028-08-25.",
+   "final": "R"
+  },
+  {
+   "org_id": 23312263,
+   "verdict": "R",
+   "why": "Drops '(mandataire du groupement)'. 4 of 5 prints are bare, and the top is newest 2026-10-15. Ships after 2028-08-31.",
+   "final": "R"
+  },
+  {
+   "org_id": 23330965,
+   "verdict": "R",
+   "why": "SEDA S.P.A. -> Mediberg S.r.l.: 7 of 8 prints name Mediberg in 5 spellings, including the Registro Imprese spelled-out form. The P.IVA office code is 016 (Bergamo), where Mediberg is based. The single SEDA print (2025-10-28) has Mediberg prints on both sides of it, so SEDA is a stray, not a rename (stray precedents 20957059/20861533/19852879). Medium-high confidence. Ships only if Mediberg is printed again (top stale after 2027-08-13, head ages out after 2028-10-27).",
+   "final": "R"
+  },
+  {
+   "org_id": 23410461,
+   "verdict": "R",
+   "why": "Drops '(mandataire)' and serves ARTELIA, 3 of 4 votes, SIREN 444523526. Ships after 2028-11-10.",
+   "final": "R"
+  },
+  {
+   "org_id": 23458031,
+   "verdict": "R",
+   "why": "Groupement d'entreprises SEKATOL/MENUISERIE STANOISE -> SEKATOL. A groupement has no SIREN of its own; the 3 bare prints on this SIRET, all after the head (newest 2026-09-17, head 2025-12-30), name Sekatol. Passes the token-subset test. Ships after 2028-12-29 (2 clusters).",
+   "final": "R"
+  },
+  {
+   "org_id": 23525636,
+   "verdict": "R",
+   "why": "Groupement dont LECONTE ELAGAGE est mandataire -> LECONTE ELAGAGE. Every spelling on the SIRET names Leconte Elagage, including the rival 'Entreprise LECONTE ELAGAGE'. High confidence. Has 3 clusters and the top was last printed 2026-03-20, so top_stale fires from 2027-03-20, long before the head lapses on 2029-02-17. It likely never ships unless the bare name is printed again.",
+   "final": "R"
+  },
+  {
+   "org_id": 23587877,
+   "verdict": "R",
+   "why": "ARGE S2 / Klaehne Bung -> S2 -architekten und ingenieure PartGmbB, medium-high confidence. 6 bare S2 votes on DE293551738 against the 2-vote ARGE (1 procedure). A DE29.. number predates a 2026 ARGE. The odd 'S2 -architekten' spacing is the majority spelling (4 vs 2). Ships after 2029-03-23.",
+   "final": "R"
+  },
+  {
+   "org_id": 23600961,
+   "verdict": "R",
+   "why": "Bietergemeinschaft Terhalle/Beton- und Monierbau -> Terhalle Holzbau GmbH, high confidence. Dated read: head notice 26893135 (Solingen, 2026-03-05) gives the BG the VAT DE 123 772 598 with terhalle.de, erbacher@terhalle.de and Terhalle's Ahaus address. A 1993-era DE12.. number is not a 2025 GbR's. 4 later bare Terhalle prints. Ships after 2029-03-08.",
+   "final": "R"
+  },
+  {
+   "org_id": 30934047,
+   "verdict": "R",
+   "why": "Groupement de commandes coordinated by La Poste -> La Poste, on SIREN 356000000 (La Poste's own; 21 of 27 votes, newest 2026-10-15). A buyers' groupement de commandes has no legal personality. The rivals are other La Poste-led groupement sentences. 7 clusters: ships after 2028-06-05 only if La Poste is printed again (top_stale from 2027-10-15).",
+   "final": "R"
+  },
+  {
+   "org_id": 30937468,
+   "verdict": "R",
+   "why": "'Grand Paris Amenagement au nom et pour le compte du groupement de commandes GPA/ORSA/SPLAIN' -> 'Grand Paris Amenagement'. This is the coordinator's own name on its SIRET, 6 of 7 votes with the newest on 2026-10-01; the head was 2025-06-13. High confidence. Ships after 2028-06-12.",
+   "final": "R"
+  },
+  {
+   "org_id": 30939728,
+   "verdict": "R",
+   "why": "GROUPEMENT EGIS RAIL (mandataire) + 3 co-contractors -> EGIS RAIL, high confidence. Live org 9255307 (Egis Rail, SIREN 968502559, 149 mentions) carries this same SIRET 96850255900105 as a merged identifier. Side note: two orgs share the SIRET. Ships after 2028-06-15.",
+   "final": "R"
+  },
+  {
+   "org_id": 31534713,
+   "verdict": "R",
+   "why": "Cirrus Consortium c/o Coastline Housing Limited -> COASTLINE HOUSING LIMITED, high confidence. CH 03284666 has 24 of 26 votes in register-style capitals. Cirrus is a purchasing consortium that Coastline hosts ('c/o'), so the identifier holder's name is served. The head is still current (2026-09-28), so it ships after 2029-09-27 at the earliest.",
+   "final": "R"
+  },
+  {
+   "org_id": 31576946,
+   "verdict": "R",
+   "why": "INNECTO PEOPLE CONSULTING LIMITED (04741738) - a Personal Group Holdings Plc Company -> INNECTO PEOPLE CONSULTING LIMITED, high confidence. Dated read: head notice 46828995 (ESPO 3S_26 framework award, 2026-06-11) shows the head is the supplier's self-declared name with its company number and parent tagline. gb_family fired only on the tagline's 'Plc'. Ships after 2029-06-10.",
+   "final": "R"
+  }
+ ]
+}

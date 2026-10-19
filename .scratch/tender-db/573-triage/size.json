@@ -1,0 +1,888 @@
+{
+ "summary": {
+  "plan": {
+   "job": 2653,
+   "epoch": "524u2-v13",
+   "rev": "dc86e8efced43ac6d543a3636dd2bcab59fcec43",
+   "as_of_date": "2026-10-19",
+   "held": 11515,
+   "planned": 1693
+  },
+  "hits": 17,
+  "by_verdict_reason": {
+   "hold:head_current": 14,
+   "change:R2": 2,
+   "hold:review_body": 1
+  },
+  "by_shape": {
+   "dropped_accent:literal": 13,
+   "dropped_accent:char_level": 2,
+   "mojibake_marker:marker": 2
+  },
+  "by_verdict_reason_shape": {
+   "change:R2 mojibake_marker": 2,
+   "hold:head_current dropped_accent": 14,
+   "hold:review_body dropped_accent": 1
+  },
+  "unfit_today_on_hits": {
+   "None": 15,
+   "mojibake": 1,
+   "control": 1
+  },
+  "new_is_match": {
+   "True": 15
+  },
+  "a_R0d": {
+   "yes": 15,
+   "only if R0d also fires on a marker head: yes": 2
+  },
+  "b_unfit": {
+   "no": 17
+  },
+  "b2_admitted_release": {
+   "yes": 14,
+   "no": 3
+  },
+  "read": {
+   "R": 16,
+   "N": 1
+  },
+  "keep_probe": {
+   "keep:S1": {
+    "sampled": 30,
+    "hits": [],
+    "class_orgs": 523538
+   },
+   "keep:bar": {
+    "sampled": 30,
+    "hits": [],
+    "class_orgs": 16996
+   },
+   "keep:D4": {
+    "sampled": 30,
+    "hits": [],
+    "class_orgs": 1733
+   },
+   "keep:E1": {
+    "sampled": 30,
+    "hits": [],
+    "class_orgs": 1547191
+   }
+  },
+  "canary_hits": [],
+  "loose_only_partial_drops": [],
+  "salted_30": null,
+  "salted_30_note": "not drawn: 17 hits <= 60; the full listing is the read",
+  "lower_bound": "keep entries (S1 523538, bar 16996, D4 1733 orgs) are not listed in the plan; its uniform keep samples read 0/30 for S1, bar and D4 and the 59 canaries 0; each entry lists only its top 5 spellings. So 17 is a lower bound.",
+  "near_misses": {
+   "greek_word_omitted_excluded": [
+    11221362,
+    22751177
+   ],
+   "legit_A_tilde_or_circumflex_not_markers": [
+    5770,
+    11109,
+    22783706
+   ],
+   "question_mark_replacement": 0
+  },
+  "recommendation": "Unit 2: decide (a) R0d, narrow. Trigger: the head is the char-level dropped-accent form of a spelling S of another cluster (S with every non-ASCII char deleted, whitespace collapsed, equals the head case-folded; a word that keeps an ASCII letter lost one; no whole word of 2+ non-ASCII letters deleted). Elect S's cluster only when it is the unique top and passes R1's bars (T*20 >= V*11, T >= 3, T >= 2H); serve its display spelling; ask only the bind guards, never the window, residue, serve, head_current, top_stale or initialism holds; not in exclude_rules. No marker arm (unfit(head, head) would reopen 552). Ships 15/15 now incl. 22435268; (b) ships 0; an admitted release ships 14, not the exhibit; waiting ships 14 unread 2027-01-21..2027-02-18 and never the exhibit. Bar 0 wrong: this read 15 R on the dropped-accent arm (16 R / 1 N / 0 W over all 17)."
+ },
+ "hits": [
+  {
+   "org_id": 22397161,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "506435",
+   "old_name": "Comit consultatif interrgional des litiges en matire de marchs publics",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Comité consultatif interrégional des litiges en matière de marchés publics",
+   "matched_count": 58,
+   "matched_words_differing": 4,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Comité consultatif interrégional des litiges en matière de marchés publics",
+   "new_is_match": true,
+   "V": 59,
+   "T": 58,
+   "H": 1,
+   "clusters": 2,
+   "head_newest": "2024-01-23",
+   "top_newest": "2024-09-12",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-01-22",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Comité consultatif interrégional des litiges en matière de marchés publics",
+     58
+    ],
+    [
+     "Comit consultatif interrgional des litiges en matire de marchs publics",
+     1
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22399787,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "582261",
+   "old_name": "Tribunal judiciaire de Pointe--Pitre",
+   "shape": "dropped_accent",
+   "test": "char_level",
+   "matched_spelling": "Tribunal judiciaire de Pointe-à -Pitre",
+   "matched_count": 19,
+   "matched_words_differing": null,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal judiciaire de Pointe-à -Pitre",
+   "new_is_match": true,
+   "V": 22,
+   "T": 19,
+   "H": 3,
+   "clusters": 2,
+   "head_newest": "2024-02-05",
+   "top_newest": "2024-09-11",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-04",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal judiciaire de Pointe-à -Pitre",
+     19
+    ],
+    [
+     "Tribunal judiciaire de Pointe--Pitre",
+     3
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "restores `à`; the cluster prints `Pointe-à\\xa0-Pitre`, so the served display reads `Pointe-à -Pitre` (a space where the NBSP was): cosmetic, not wrong"
+  },
+  {
+   "org_id": 22399788,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "582260",
+   "old_name": "Tribunal judiciaire de Pointe--Pitre",
+   "shape": "dropped_accent",
+   "test": "char_level",
+   "matched_spelling": "Tribunal judiciaire de Pointe-à -Pitre",
+   "matched_count": 19,
+   "matched_words_differing": null,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal judiciaire de Pointe-à -Pitre",
+   "new_is_match": true,
+   "V": 22,
+   "T": 19,
+   "H": 3,
+   "clusters": 2,
+   "head_newest": "2024-02-05",
+   "top_newest": "2024-09-11",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-04",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal judiciaire de Pointe-à -Pitre",
+     19
+    ],
+    [
+     "Tribunal judiciaire de Pointe--Pitre",
+     3
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "as 22399787: the same two spellings and counts on a neighbouring org"
+  },
+  {
+   "org_id": 22433242,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "403175",
+   "old_name": "Tribunal administratif de Nmes",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal administratif de Nîmes",
+   "matched_count": 36,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal administratif de Nîmes",
+   "new_is_match": true,
+   "V": 40,
+   "T": 36,
+   "H": 4,
+   "clusters": 2,
+   "head_newest": "2024-01-22",
+   "top_newest": "2024-09-12",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-01-21",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal administratif de Nîmes",
+     36
+    ],
+    [
+     "Tribunal administratif de Nmes",
+     4
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22435268,
+   "section": "held",
+   "verdict_reason": "hold:review_body",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "919277",
+   "old_name": "Comit consultatif interrgional du rglement amiable",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Comité consultatif interrégional du règlement amiable",
+   "matched_count": 18,
+   "matched_words_differing": 3,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Comité consultatif interrégional du règlement amiable",
+   "new_is_match": true,
+   "V": 21,
+   "T": 18,
+   "H": 3,
+   "clusters": 2,
+   "head_newest": "2024-02-09",
+   "top_newest": "2024-09-10",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-08",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Comité consultatif interrégional du règlement amiable",
+     18
+    ],
+    [
+     "Comit consultatif interrgional du rglement amiable",
+     3
+    ]
+   ],
+   "blocked_by": "review_body",
+   "then": [
+    "head_current"
+   ],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: review_body never asks the junk exemption, the hold stands",
+   "b2_admitted_release": "no: review_body never asks the junk exemption, the hold stands",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22441088,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "1107949",
+   "old_name": "Tribunal administratif d'Orlans",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal administratif d'Orléans",
+   "matched_count": 9,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal administratif d'Orléans",
+   "new_is_match": true,
+   "V": 11,
+   "T": 9,
+   "H": 2,
+   "clusters": 2,
+   "head_newest": "2024-02-19",
+   "top_newest": "2024-09-09",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-18",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal administratif d'Orléans",
+     9
+    ],
+    [
+     "Tribunal administratif d'Orlans",
+     2
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22441089,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "1107948",
+   "old_name": "Tribunal administratif d'Orlans",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal administratif d'Orléans",
+   "matched_count": 9,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal administratif d'Orléans",
+   "new_is_match": true,
+   "V": 11,
+   "T": 9,
+   "H": 2,
+   "clusters": 2,
+   "head_newest": "2024-02-19",
+   "top_newest": "2024-09-09",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-18",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal administratif d'Orléans",
+     9
+    ],
+    [
+     "Tribunal administratif d'Orlans",
+     2
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22460863,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "699491",
+   "old_name": "Tribunal judiciaire de Crteil",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal judiciaire de Créteil",
+   "matched_count": 9,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal judiciaire de Créteil",
+   "new_is_match": true,
+   "V": 11,
+   "T": 9,
+   "H": 2,
+   "clusters": 2,
+   "head_newest": "2024-02-06",
+   "top_newest": "2024-07-05",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-05",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal judiciaire de Créteil",
+     9
+    ],
+    [
+     "Tribunal judiciaire de Crteil",
+     2
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22466820,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "949579",
+   "old_name": "Tribunal administratif d'Orlans",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal administratif d'Orléans",
+   "matched_count": 23,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal administratif d'Orléans",
+   "new_is_match": true,
+   "V": 25,
+   "T": 23,
+   "H": 2,
+   "clusters": 2,
+   "head_newest": "2024-02-02",
+   "top_newest": "2024-08-14",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-01",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal administratif d'Orléans",
+     23
+    ],
+    [
+     "Tribunal administratif d'Orlans",
+     2
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22466821,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "949578",
+   "old_name": "Tribunal administratif d'Orlans",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal administratif d'Orléans",
+   "matched_count": 23,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal administratif d'Orléans",
+   "new_is_match": true,
+   "V": 25,
+   "T": 23,
+   "H": 2,
+   "clusters": 2,
+   "head_newest": "2024-02-02",
+   "top_newest": "2024-08-14",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-01",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal administratif d'Orléans",
+     23
+    ],
+    [
+     "Tribunal administratif d'Orlans",
+     2
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22488363,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "1122576",
+   "old_name": "Tribunal administratif d'Orlans",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal administratif d'Orléans",
+   "matched_count": 17,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal administratif d'Orléans",
+   "new_is_match": true,
+   "V": 19,
+   "T": 17,
+   "H": 2,
+   "clusters": 2,
+   "head_newest": "2024-02-05",
+   "top_newest": "2024-09-10",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-04",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal administratif d'Orléans",
+     17
+    ],
+    [
+     "Tribunal administratif d'Orlans",
+     2
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22499321,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "628524",
+   "old_name": "Tribunal administratif d'Orlans",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal administratif d'Orléans",
+   "matched_count": 4,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal administratif d'Orléans",
+   "new_is_match": true,
+   "V": 6,
+   "T": 4,
+   "H": 2,
+   "clusters": 2,
+   "head_newest": "2024-02-05",
+   "top_newest": "2024-05-24",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-04",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal administratif d'Orléans",
+     4
+    ],
+    [
+     "Tribunal administratif d'Orlans",
+     2
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22499322,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "628523",
+   "old_name": "Tribunal administratif d'Orlans",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal administratif d'Orléans",
+   "matched_count": 4,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal administratif d'Orléans",
+   "new_is_match": true,
+   "V": 6,
+   "T": 4,
+   "H": 2,
+   "clusters": 2,
+   "head_newest": "2024-02-05",
+   "top_newest": "2024-05-24",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-04",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal administratif d'Orléans",
+     4
+    ],
+    [
+     "Tribunal administratif d'Orlans",
+     2
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22527505,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "680375",
+   "old_name": "Tribunal Judiciaire de Chambry",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal Judiciaire de Chambéry",
+   "matched_count": 8,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal Judiciaire de Chambéry",
+   "new_is_match": true,
+   "V": 9,
+   "T": 8,
+   "H": 1,
+   "clusters": 2,
+   "head_newest": "2024-02-07",
+   "top_newest": "2024-09-09",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-06",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal Judiciaire de Chambéry",
+     8
+    ],
+    [
+     "Tribunal Judiciaire de Chambry",
+     1
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22527506,
+   "section": "held",
+   "verdict_reason": "hold:head_current",
+   "rule": "R1",
+   "country": "FR",
+   "identifier": "680374",
+   "old_name": "Tribunal Judiciaire de Chambry",
+   "shape": "dropped_accent",
+   "test": "literal",
+   "matched_spelling": "Tribunal Judiciaire de Chambéry",
+   "matched_count": 8,
+   "matched_words_differing": 1,
+   "markers": [],
+   "unfit_today": null,
+   "new_name": "Tribunal Judiciaire de Chambéry",
+   "new_is_match": true,
+   "V": 9,
+   "T": 8,
+   "H": 1,
+   "clusters": 2,
+   "head_newest": "2024-02-07",
+   "top_newest": "2024-09-09",
+   "rival_newest": null,
+   "head_current_lifts_after": "2027-02-06",
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "Tribunal Judiciaire de Chambéry",
+     8
+    ],
+    [
+     "Tribunal Judiciaire de Chambry",
+     1
+    ]
+   ],
+   "blocked_by": "head_current",
+   "then": [],
+   "a_R0d": "yes (bind guards already passed)",
+   "b_unfit": "no: released `unfit`, then dropped by exclude_released unfit on every wet run",
+   "b2_admitted_release": "yes",
+   "read": "R",
+   "read_note": "the head is the top spelling with its accented letters dropped; the change restores them"
+  },
+  {
+   "org_id": 22504462,
+   "section": "planned",
+   "verdict_reason": "change:R2",
+   "rule": "R2",
+   "country": "FR",
+   "identifier": "441663689",
+   "old_name": "MarchÃ©s sÃ©curisÃ©s - Atline Services",
+   "shape": "mojibake_marker",
+   "test": "marker",
+   "matched_spelling": null,
+   "matched_count": null,
+   "matched_words_differing": null,
+   "markers": [
+    "Ã©"
+   ],
+   "unfit_today": "mojibake",
+   "new_name": "Atline Services",
+   "new_is_match": false,
+   "V": 9,
+   "T": 4,
+   "H": 1,
+   "clusters": 4,
+   "head_newest": "2024-02-28",
+   "top_newest": "2026-09-03",
+   "rival_newest": "2026-09-01",
+   "head_current_lifts_after": null,
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "ATLINE Marchés sécurisés",
+     3
+    ],
+    [
+     "ATLINE SERVICES",
+     2
+    ],
+    [
+     "Atline Services",
+     2
+    ],
+    [
+     "ATLINE",
+     1
+    ],
+    [
+     "MarchÃ©s sÃ©curisÃ©s - Atline Services",
+     1
+    ]
+   ],
+   "blocked_by": "exclude_rules R2 (wet filter; the plan changes it)",
+   "then": [],
+   "a_R0d": "only if R0d also fires on a marker head: yes (bind guards already passed)",
+   "b_unfit": "no: exclude_rules R2 (wet filter; the plan changes it)",
+   "b2_admitted_release": "no: exclude_rules R2 (wet filter; the plan changes it)",
+   "read": "R",
+   "read_note": "head = Atline's platform name `Marchés sécurisés` (garbled) + the company; the company's own spellings top (`Atline Services`); the cp1252 repair of the head is no listed spelling"
+  },
+  {
+   "org_id": 22678565,
+   "section": "planned",
+   "verdict_reason": "change:R2",
+   "rule": "R2",
+   "country": "IT",
+   "identifier": "96442090583",
+   "old_name": "COMANDO LOGISTICO AM - SERVIZIO INFRASTRUTTURE - 3� REPARTO GENIO BARI PALESE",
+   "shape": "mojibake_marker",
+   "test": "marker",
+   "matched_spelling": null,
+   "matched_count": null,
+   "matched_words_differing": null,
+   "markers": [
+    "U+FFFD"
+   ],
+   "unfit_today": "control",
+   "new_name": "COMANDO LOGISTICO SERVIZIO INFRASTRUTTURE ROMA - 3° REPARTO GENIO A.M. BARI PALESE",
+   "new_is_match": false,
+   "V": 10,
+   "T": 4,
+   "H": 1,
+   "clusters": 5,
+   "head_newest": "2024-07-10",
+   "top_newest": "2026-04-21",
+   "rival_newest": "2026-10-15",
+   "head_current_lifts_after": null,
+   "recent_released": null,
+   "release_withheld": null,
+   "spellings": [
+    [
+     "COMANDO LOGISTICO AERONAUTICA MILITARE",
+     1
+    ],
+    [
+     "COMANDO LOGISTICO AM - SERVIZIO INFRASTRUTTURE - 3� REPARTO GENIO BARI PALESE",
+     1
+    ],
+    [
+     "COMANDO LOGISTICO SERVIZIO INFRASTRUTTURE -3 REPARTO GENIO A.M. DI PALESE MACCHIE",
+     1
+    ],
+    [
+     "COMANDO LOGISTICO SERVIZIO INFRASTRUTTURE ROMA - 3° REPARTO GENIO A.M. BARI PALESE",
+     1
+    ],
+    [
+     "COMANDO LOGISTICO SERVIZIO INFRASTRUTTURE ROMA - 3°REPARTO GENIO A.M. BARI PALESE",
+     1
+    ]
+   ],
+   "blocked_by": "exclude_rules R2 (wet filter; the plan changes it)",
+   "then": [],
+   "a_R0d": "only if R0d also fires on a marker head: yes (bind guards already passed)",
+   "b_unfit": "no: exclude_rules R2 (wet filter; the plan changes it)",
+   "b2_admitted_release": "no: exclude_rules R2 (wet filter; the plan changes it)",
+   "read": "N",
+   "read_note": "R2 at T=4 of V=10 over 5 clusters; the new name is the same unit (3° Reparto Genio A.M. Bari Palese) with `ROMA` added — not wrong, not clearly better than a repaired head"
+  }
+ ]
+}
