@@ -1,0 +1,2658 @@
+[
+ {
+  "clusters": 2,
+  "country": null,
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2013-02-01",
+  "head_procs": 1,
+  "identifier": "37822478600020",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "SPL Euralille",
+  "new_name_norm": "spl euralille",
+  "newest_is_head": false,
+  "old_name": "SPL Euralille agissant au nom et pour le compte de Lille m\u00e9tropole communaut\u00e9 urbaine, coordonnateur du groupement de commandes Lille m\u00e9tropole communaut\u00e9 urbaine et ville de Lille",
+  "old_name_norm": "spl euralille agissant au nom et pour le compte de lille m\u00e9tropole communaut\u00e9 urbaine, coordonnateur du groupement de commandes lille m\u00e9tropole communaut\u00e9 urbaine et ville de lille",
+  "org_id": 3229862,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "SPL Euralille",
+    4
+   ],
+   [
+    "SPL Euralille agissant au nom et pour le compte de Lille m\u00e9tropole communaut\u00e9 urbaine, coordonnateur du groupement de commandes Lille m\u00e9tropole communaut\u00e9 urbaine et ville de Lille",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2013-06-21",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 5,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 21,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-07-27",
+  "head_procs": 1,
+  "identifier": "81866077100028",
+  "in_population": true,
+  "merged": false,
+  "n": 116,
+  "new_name": "ACL Courtage",
+  "new_name_norm": "acl courtage",
+  "newest_is_head": false,
+  "old_name": "Acl courtage (mandataire du groupement)",
+  "old_name_norm": "acl courtage (mandataire du groupement)",
+  "org_id": 8387450,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-06-25",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "ACL COURTAGE",
+    52
+   ],
+   [
+    "ACL Courtage",
+    17
+   ],
+   [
+    "acl courtage",
+    15
+   ],
+   [
+    "acl Courtage",
+    5
+   ],
+   [
+    "ACL COURTAGE SARL",
+    3
+   ]
+  ],
+  "top": 96,
+  "top_newest": "2026-08-14",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 116,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 35,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-07-27",
+  "head_procs": 1,
+  "identifier": "30157314300023",
+  "in_population": true,
+  "merged": false,
+  "n": 257,
+  "new_name": "Sarre et Moselle",
+  "new_name_norm": "sarre et moselle",
+  "newest_is_head": false,
+  "old_name": "Sarre et Moselle (mandataire du groupement)",
+  "old_name_norm": "sarre et moselle (mandataire du groupement)",
+  "org_id": 8387452,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-06-25",
+  "rule": "R1",
+  "second": 16,
+  "spellings": [
+   [
+    "SARRE ET MOSELLE",
+    118
+   ],
+   [
+    "Sarre et Moselle",
+    35
+   ],
+   [
+    "sarre et moselle",
+    14
+   ],
+   [
+    "SARRE ET MOSELLE SAS",
+    13
+   ],
+   [
+    "SARRE & MOSELLE",
+    5
+   ]
+  ],
+  "top": 197,
+  "top_newest": "2026-10-13",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 257,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-08-05",
+  "head_procs": 1,
+  "identifier": "41848046300011",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "331 CORNICHE ARCHITECTES",
+  "new_name_norm": "331 corniche architectes",
+  "newest_is_head": false,
+  "old_name": "le Groupement 331 corniche architectes (mandataire)",
+  "old_name_norm": "le groupement 331 corniche architectes (mandataire)",
+  "org_id": 8560943,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "331 CORNICHE ARCHITECTES",
+    3
+   ],
+   [
+    "le Groupement 331 corniche architectes (mandataire)",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2024-11-08",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 4,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 6,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-08-20",
+  "head_procs": 1,
+  "identifier": "44885130300033",
+  "in_population": true,
+  "merged": false,
+  "n": 13,
+  "new_name": "Alenium consultants",
+  "new_name_norm": "alenium consultants",
+  "newest_is_head": false,
+  "old_name": "Alenium Consultants (mandataire)",
+  "old_name_norm": "alenium consultants (mandataire)",
+  "org_id": 8594004,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2024-08-23",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "ALENIUM CONSULTANTS",
+    3
+   ],
+   [
+    "Alenium consultants",
+    3
+   ],
+   [
+    "ALENUIM CONSULTANTS",
+    1
+   ],
+   [
+    "Alenium Consultants",
+    1
+   ],
+   [
+    "Alenium Consultants (mandataire)",
+    1
+   ]
+  ],
+  "top": 8,
+  "top_newest": "2025-12-18",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 13,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 11,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sas",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-12-31",
+  "head_procs": 1,
+  "identifier": "73207531200122",
+  "in_population": true,
+  "merged": false,
+  "n": 43,
+  "new_name": "Accenture",
+  "new_name_norm": "accenture",
+  "newest_is_head": false,
+  "old_name": "Accenture sas, mandataire du groupement",
+  "old_name_norm": "accenture sas, mandataire du groupement",
+  "org_id": 9056889,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-02-05",
+  "rule": "R1",
+  "second": 3,
+  "spellings": [
+   [
+    "ACCENTURE",
+    11
+   ],
+   [
+    "accenture sas",
+    5
+   ],
+   [
+    "ACCENTURE SAS",
+    4
+   ],
+   [
+    "Accenture",
+    4
+   ],
+   [
+    "accenture",
+    4
+   ]
+  ],
+  "top": 30,
+  "top_newest": "2026-08-28",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 43,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-12-23",
+  "head_procs": 1,
+  "identifier": "78453764900021",
+  "in_population": true,
+  "merged": false,
+  "n": 11,
+  "new_name": "Cr\u00e9doc",
+  "new_name_norm": "cr\u00e9doc",
+  "newest_is_head": false,
+  "old_name": "Credoc \u2014 mandataire",
+  "old_name_norm": "credoc \u2014 mandataire",
+  "org_id": 9122340,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-03-12",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "CREDOC",
+    5
+   ],
+   [
+    "Credoc",
+    2
+   ],
+   [
+    "CO-traitant CREDOC",
+    1
+   ],
+   [
+    "Credoc \u2014 mandataire",
+    1
+   ],
+   [
+    "Cr\u00e9doc",
+    1
+   ]
+  ],
+  "top": 9,
+  "top_newest": "2026-10-07",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 11,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 6,
+  "country": "LU",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2016-12-02",
+  "head_procs": 1,
+  "identifier": "B92986",
+  "in_population": true,
+  "merged": false,
+  "n": 19,
+  "new_name": "ARHS Developments S.A",
+  "new_name_norm": "arhs developments s.a",
+  "newest_is_head": false,
+  "old_name": "Arhs Developments S.A. (as consortium leader)",
+  "old_name_norm": "arhs developments s.a. (as consortium leader)",
+  "org_id": 9134954,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-09-12",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "ARHS Developments S.A",
+    4
+   ],
+   [
+    "ARHS Developments S.A.",
+    4
+   ],
+   [
+    "ARHS DEVELOPMENTS SA",
+    2
+   ],
+   [
+    "Arhs Developments S.A. (as consortium leader)",
+    2
+   ],
+   [
+    "AHRS Developments SA",
+    1
+   ]
+  ],
+  "top": 12,
+  "top_newest": "2026-04-13",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 19,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 5,
+  "country": "LU",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-12-02",
+  "head_procs": 1,
+  "identifier": "B71238",
+  "in_population": true,
+  "merged": false,
+  "n": 21,
+  "new_name": "Sword Technologies S.A.",
+  "new_name_norm": "sword technologies s.a",
+  "newest_is_head": false,
+  "old_name": "Sword Technologies S.A. (as consortium member)",
+  "old_name_norm": "sword technologies s.a. (as consortium member)",
+  "org_id": 9134956,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2024-11-22",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Sword Technologies S.A.",
+    10
+   ],
+   [
+    "Sword Technologies SA",
+    6
+   ],
+   [
+    "GIS4EURO Consortium \u2014 Sword Technologies S.A.",
+    1
+   ],
+   [
+    "GIS4EURO consortium \u2014 SWORD Technologies S.A.",
+    1
+   ],
+   [
+    "Sword Technologies",
+    1
+   ]
+  ],
+  "top": 16,
+  "top_newest": "2026-01-12",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 21,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "BE",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2016-12-02",
+  "head_procs": 1,
+  "identifier": "0825811478",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "Everis Spain SLU, Succursale en Belgique",
+  "new_name_norm": "everis spain slu, succursale en belgique",
+  "newest_is_head": false,
+  "old_name": "Everis Spain, S.L.U., succursale en Belgique (as consortium leader)",
+  "old_name_norm": "everis spain, s.l.u., succursale en belgique (as consortium leader)",
+  "org_id": 9134957,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Everis Spain SLU, Succursale en Belgique",
+    2
+   ],
+   [
+    "everis Spain S.L.U., succursale en Belgique",
+    2
+   ],
+   [
+    "Everis Spain S.L.U., succursale en Belgique",
+    1
+   ],
+   [
+    "Everis Spain, S.L.U., succursale en Belgique (as consortium leader)",
+    1
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2019-04-05",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 6,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 9,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-03-11",
+  "head_procs": 1,
+  "identifier": "43407420900017",
+  "in_population": true,
+  "merged": false,
+  "n": 26,
+  "new_name": "OPSIA M\u00e9diterran\u00e9e",
+  "new_name_norm": "opsia m\u00e9diterran\u00e9e",
+  "newest_is_head": false,
+  "old_name": "OPSIA M\u00e9diterran\u00e9e (mandataire)",
+  "old_name_norm": "opsia m\u00e9diterran\u00e9e (mandataire)",
+  "org_id": 9467375,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-06-18",
+  "rule": "R1",
+  "second": 3,
+  "spellings": [
+   [
+    "OPSIA MEDITERRANEE",
+    6
+   ],
+   [
+    "opsia mediterranee",
+    3
+   ],
+   [
+    "OPSIA MEDITERRANEE SELAFA",
+    2
+   ],
+   [
+    "OPSIA M\u00e9diterran\u00e9e",
+    2
+   ],
+   [
+    "Opsia M\u00e9diterran\u00e9e",
+    2
+   ]
+  ],
+  "top": 15,
+  "top_newest": "2026-01-26",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 26,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 6,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-03-31",
+  "head_procs": 1,
+  "identifier": "41317960700226",
+  "in_population": true,
+  "merged": false,
+  "n": 18,
+  "new_name": "TP Spada",
+  "new_name_norm": "tp spada",
+  "newest_is_head": false,
+  "old_name": "Groupement TP Spada NGE g\u00e9nie civil",
+  "old_name_norm": "groupement tp spada nge g\u00e9nie civil",
+  "org_id": 9553896,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-03-10",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "TP SPADA",
+    7
+   ],
+   [
+    "TP Spada",
+    2
+   ],
+   [
+    "tp spada",
+    2
+   ],
+   [
+    "Entreprise TP SPADA SAS",
+    1
+   ],
+   [
+    "GROUPEMENT TP SPADA",
+    1
+   ]
+  ],
+  "top": 13,
+  "top_newest": "2026-09-10",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 18,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 5,
+  "country": "ES",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2017-05-03",
+  "head_procs": 1,
+  "identifier": "B80595747",
+  "in_population": true,
+  "merged": false,
+  "n": 31,
+  "new_name": "Gesein, S.L.",
+  "new_name_norm": "gesein, s.l",
+  "newest_is_head": false,
+  "old_name": "UTE Gesein, S.L.- Altran Innovaci\u00f3n S.L.- Tecnocom Espa\u00f1a Solutions, S.L.U.",
+  "old_name_norm": "ute gesein, s.l.- altran innovaci\u00f3n s.l.- tecnocom espa\u00f1a solutions, s.l.u.",
+  "org_id": 9699686,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2020-08-24",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Gesein, S.L.",
+    10
+   ],
+   [
+    "GESEIN S.L.",
+    9
+   ],
+   [
+    "GESEIN, S.L.",
+    2
+   ],
+   [
+    "Gesein, S. L.",
+    2
+   ],
+   [
+    "UTE Altia \u2014 Gesein \u2014 Getronics",
+    2
+   ]
+  ],
+  "top": 24,
+  "top_newest": "2026-09-23",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 31,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": "sas",
+  "family_old": "sas",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-05-19",
+  "head_procs": 1,
+  "identifier": "40134697800018",
+  "in_population": true,
+  "merged": false,
+  "n": 15,
+  "new_name": "SAS MAG PRIM",
+  "new_name_norm": "sas mag prim",
+  "newest_is_head": false,
+  "old_name": "SAS MAG PRIM \u2014 mandataire du groupement solidaire MAG PRIM \u2014 GROUP MAG",
+  "old_name_norm": "sas mag prim \u2014 mandataire du groupement solidaire mag prim \u2014 group mag",
+  "org_id": 9741944,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2022-12-23",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "SAS MAG PRIM",
+    6
+   ],
+   [
+    "MAG PRIM",
+    3
+   ],
+   [
+    "sas mag prim",
+    2
+   ],
+   [
+    "MAG PRIM SAS",
+    1
+   ],
+   [
+    "SAS MAG PRIM \u2014 mandataire du groupement solidaire MAG PRIM \u2014 GROUP MAG",
+    1
+   ]
+  ],
+  "top": 13,
+  "top_newest": "2026-03-31",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 15,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-05-27",
+  "head_procs": 1,
+  "identifier": "44086377700023",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "AGRI Compost 70",
+  "new_name_norm": "agri compost 70",
+  "newest_is_head": false,
+  "old_name": "Groupement Agri Compost 70",
+  "old_name_norm": "groupement agri compost 70",
+  "org_id": 9795935,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2023-12-06",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "AGRI COMPOST 70",
+    3
+   ],
+   [
+    "AGRI Compost 70",
+    1
+   ],
+   [
+    "Agri Compost 70",
+    1
+   ],
+   [
+    "Groupement Agri Compost 70",
+    1
+   ],
+   [
+    "agricompost 70",
+    1
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2026-03-17",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 7,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-06-24",
+  "head_procs": 1,
+  "identifier": "86320018400092",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "DUMEZ AUVERGNE",
+  "new_name_norm": "dumez auvergne",
+  "newest_is_head": false,
+  "old_name": "Groupement Dumez Auvergne",
+  "old_name_norm": "groupement dumez auvergne",
+  "org_id": 9930423,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "DUMEZ AUVERGNE",
+    5
+   ],
+   [
+    "dumez auvergne",
+    2
+   ],
+   [
+    "Groupement Dumez Auvergne",
+    1
+   ]
+  ],
+  "top": 7,
+  "top_newest": "2026-05-18",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 8,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 13,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-06-28",
+  "head_procs": 1,
+  "identifier": "54202182900107",
+  "in_population": true,
+  "merged": false,
+  "n": 44,
+  "new_name": "Saf\u00e8ge",
+  "new_name_norm": "saf\u00e8ge",
+  "newest_is_head": false,
+  "old_name": "Agence Saf\u00e8ge Bureau d'etudes VRD (Mandataire)",
+  "old_name_norm": "agence saf\u00e8ge bureau d'etudes vrd (mandataire)",
+  "org_id": 9945607,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-07-07",
+  "rule": "R1",
+  "second": 3,
+  "spellings": [
+   [
+    "SAFEGE",
+    9
+   ],
+   [
+    "Safege",
+    5
+   ],
+   [
+    "safege",
+    5
+   ],
+   [
+    "Safege SAS",
+    3
+   ],
+   [
+    "SAFEGE SAS",
+    2
+   ]
+  ],
+  "top": 26,
+  "top_newest": "2026-05-26",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 44,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 5,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sarl",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-09-27",
+  "head_procs": 1,
+  "identifier": "48953305900122",
+  "in_population": true,
+  "merged": false,
+  "n": 22,
+  "new_name": "Alliance environnement exploitation",
+  "new_name_norm": "alliance environnement exploitation",
+  "newest_is_head": false,
+  "old_name": "Groupement alliance environnement exploitation / SARL Patrick Tubert",
+  "old_name_norm": "groupement alliance environnement exploitation / sarl patrick tubert",
+  "org_id": 10387870,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-03-13",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "ALLIANCE ENVIRONNEMENT EXPLOITATION",
+    8
+   ],
+   [
+    "SAS ALLIANCE ENVIRONNEMENT EXPLOITATION",
+    3
+   ],
+   [
+    "Alliance environnement exploitation",
+    2
+   ],
+   [
+    "alliance environnement exploitation s.a.s",
+    2
+   ],
+   [
+    "ALLIANCE ENVIRONNEMENT/HYDRIAD EAU",
+    1
+   ]
+  ],
+  "top": 18,
+  "top_newest": "2026-10-12",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 22,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sas",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-10-20",
+  "head_procs": 1,
+  "identifier": "41312760600023",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "ST Groupe",
+  "new_name_norm": "st groupe",
+  "newest_is_head": false,
+  "old_name": "groupement st groupe sas / eurovia",
+  "old_name_norm": "groupement st groupe sas / eurovia",
+  "org_id": 10442507,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "ST GROUPE",
+    2
+   ],
+   [
+    "st groupe",
+    2
+   ],
+   [
+    "ST Groupe",
+    1
+   ],
+   [
+    "groupement st groupe sas / eurovia",
+    1
+   ]
+  ],
+  "top": 5,
+  "top_newest": "2026-04-14",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 6,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "PT",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-10-05",
+  "head_procs": 1,
+  "identifier": "PT500074372",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "AXIANSEU - Digital Solutions, S. A.",
+  "new_name_norm": "axianseu - digital solutions, s. a",
+  "newest_is_head": false,
+  "old_name": "Consortium ARNI (leading organisation: Axianseu Digital Solutions S.A.) (second contractor in the cascade)",
+  "old_name_norm": "consortium arni (leading organisation: axianseu digital solutions s.a.) (second contractor in the cascade)",
+  "org_id": 10463751,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-05-26",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "AXIANSEU - DIGITAL SOLUTIONS, S.A.",
+    3
+   ],
+   [
+    "AXIANS",
+    1
+   ],
+   [
+    "AXIANSEU - DIGITAL SOLUTIONS, SA",
+    1
+   ],
+   [
+    "AXIANSEU - Digital Solutions, S. A.",
+    1
+   ],
+   [
+    "Axianseu Digital Solutions, SA",
+    1
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2026-09-03",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 8,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-10-11",
+  "head_procs": 1,
+  "identifier": "43408539500342",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "Spie Citynetworks",
+  "new_name_norm": "spie citynetworks",
+  "newest_is_head": false,
+  "old_name": "Groupement Spie Citynetworks",
+  "old_name_norm": "groupement spie citynetworks",
+  "org_id": 10490568,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Groupement Spie Citynetworks",
+    1
+   ],
+   [
+    "SPIE CITYNETWORKS",
+    1
+   ],
+   [
+    "Spie Citynetworks",
+    1
+   ],
+   [
+    "spie citynetworks sas",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2026-02-05",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 4,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-11-15",
+  "head_procs": 1,
+  "identifier": "44763334800092",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "Sitetudes",
+  "new_name_norm": "sitetudes",
+  "newest_is_head": false,
+  "old_name": "Groupement Sit\u00e9tudes / Citec / Traverses",
+  "old_name_norm": "groupement sit\u00e9tudes / citec / traverses",
+  "org_id": 10629424,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Sitetudes",
+    3
+   ],
+   [
+    "Groupement Sit\u00e9tudes / Citec / Traverses",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2019-01-08",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 4,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 8,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2017-11-22",
+  "head_procs": 1,
+  "identifier": "341539815",
+  "in_population": true,
+  "merged": false,
+  "n": 24,
+  "new_name": "Paris nord assurances services",
+  "new_name_norm": "paris nord assurances services",
+  "newest_is_head": false,
+  "old_name": "Paris Nord Assurances Services (courtier Mandataire)",
+  "old_name_norm": "paris nord assurances services (courtier mandataire)",
+  "org_id": 10664296,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-12-16",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "PARIS NORD ASSURANCES SERVICES",
+    13
+   ],
+   [
+    "PARIS NORD ASSURANCES",
+    2
+   ],
+   [
+    "Paris Nord Assurances Services (courtier Mandataire)",
+    2
+   ],
+   [
+    "*pnas*",
+    1
+   ],
+   [
+    "PARIS NORD ASSUSRANCES SERVICE",
+    1
+   ]
+  ],
+  "top": 15,
+  "top_newest": "2026-02-06",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 24,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 9,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-11-22",
+  "head_procs": 1,
+  "identifier": "301573143",
+  "in_population": true,
+  "merged": false,
+  "n": 26,
+  "new_name": "Sarre et Moselle",
+  "new_name_norm": "sarre et moselle",
+  "newest_is_head": false,
+  "old_name": "Sarre et Moselle (Courtier Mandataire)",
+  "old_name_norm": "sarre et moselle (courtier mandataire)",
+  "org_id": 10664298,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-01-07",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "SARRE ET MOSELLE",
+    12
+   ],
+   [
+    "Sarre et Moselle",
+    3
+   ],
+   [
+    "Hiscox/Sarre et Moselle",
+    2
+   ],
+   [
+    "sarre et LORRAINE",
+    2
+   ],
+   [
+    "Groupement SARRE & MOSELLE/ BERKSHIRE HATHAWAY SPECIALTY INSURANCE",
+    1
+   ]
+  ],
+  "top": 16,
+  "top_newest": "2026-02-06",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 26,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 5,
+  "country": "ES",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-11-22",
+  "head_procs": 1,
+  "identifier": "A95113361",
+  "in_population": true,
+  "merged": false,
+  "n": 60,
+  "new_name": "Acciona Agua, S. A.",
+  "new_name_norm": "acciona agua, s. a",
+  "newest_is_head": false,
+  "old_name": "UTE Acciona Agua, S.A., FCC Aqualia, S.A.",
+  "old_name_norm": "ute acciona agua, s.a., fcc aqualia, s.a.",
+  "org_id": 10664560,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-04-03",
+  "rule": "R1",
+  "second": 3,
+  "spellings": [
+   [
+    "ACCIONA AGUA, S.A.",
+    35
+   ],
+   [
+    "Acciona Agua, S. A.",
+    9
+   ],
+   [
+    "ACCIONA AGUA, S.A",
+    4
+   ],
+   [
+    "ACCIONA AGUA, S.A. Unipersonal",
+    3
+   ],
+   [
+    "ACCIONA AGUA S.A.",
+    2
+   ]
+  ],
+  "top": 53,
+  "top_newest": "2026-10-05",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 60,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2017-11-25",
+  "head_procs": 1,
+  "identifier": "44452352600051",
+  "in_population": true,
+  "merged": false,
+  "n": 9,
+  "new_name": "ARTELIA",
+  "new_name_norm": "artelia",
+  "newest_is_head": false,
+  "old_name": "Artelia Ville et Transport (mandataire)",
+  "old_name_norm": "artelia ville et transport (mandataire)",
+  "org_id": 10688250,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2018-12-14",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "artelia",
+    3
+   ],
+   [
+    "ARTELIA",
+    2
+   ],
+   [
+    "ARTELIA SAS",
+    1
+   ],
+   [
+    "Artelia VT",
+    1
+   ],
+   [
+    "Artelia Ville et Transport (mandataire)",
+    1
+   ]
+  ],
+  "top": 7,
+  "top_newest": "2026-08-03",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 9,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 8,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2017-11-30",
+  "head_procs": 1,
+  "identifier": "35203391400040",
+  "in_population": true,
+  "merged": false,
+  "n": 37,
+  "new_name": "MC2i",
+  "new_name_norm": "mc2i",
+  "newest_is_head": false,
+  "old_name": "soci\u00e9t\u00e9 Mc2i mandataire du groupement compos\u00e9 \u00e9galement des soci\u00e9t\u00e9s temesis, atalan et oceane consulting",
+  "old_name_norm": "soci\u00e9t\u00e9 mc2i mandataire du groupement compos\u00e9 \u00e9galement des soci\u00e9t\u00e9s temesis, atalan et oceane consulting",
+  "org_id": 10704476,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-02-03",
+  "rule": "R1",
+  "second": 4,
+  "spellings": [
+   [
+    "MC2I",
+    14
+   ],
+   [
+    "mc2i",
+    6
+   ],
+   [
+    "MC2i",
+    4
+   ],
+   [
+    "MC2I Groupe",
+    3
+   ],
+   [
+    "soci\u00e9t\u00e9 Mc2i mandataire du groupement compos\u00e9 \u00e9galement des soci\u00e9t\u00e9s temesis, atalan et oceane consulting",
+    2
+   ]
+  ],
+  "top": 26,
+  "top_newest": "2026-10-16",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 37,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2018-03-09",
+  "head_procs": 1,
+  "identifier": "34094705000050",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "EURO FLANDRES TP",
+  "new_name_norm": "euro flandres tp",
+  "newest_is_head": false,
+  "old_name": "Scop Euro Flandres TP (mandataire du groupement)",
+  "old_name_norm": "scop euro flandres tp (mandataire du groupement)",
+  "org_id": 11226363,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2020-12-15",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "EURO FLANDRES TP",
+    3
+   ],
+   [
+    "SCOP Euro Flandres TP",
+    1
+   ],
+   [
+    "Scop Euro Flandres TP (mandataire du groupement)",
+    1
+   ],
+   [
+    "euro flandres tp",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-09-11",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 6,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "PT",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2018-08-11",
+  "head_procs": 1,
+  "identifier": "505760215",
+  "in_population": true,
+  "merged": false,
+  "n": 14,
+  "new_name": "Ilumina\u00e7\u00f5es Teixeira Couto, Lda.",
+  "new_name_norm": "ilumina\u00e7\u00f5es teixeira couto, lda",
+  "newest_is_head": false,
+  "old_name": "Agrupamento \u201cCons\u00f3rcio Teixeira Couto\u201d \u2014 Liderado por Ilumina\u00e7\u00f5es \u2014 Teixeira Couto, Lda.",
+  "old_name_norm": "agrupamento \u201ccons\u00f3rcio teixeira couto\u201d \u2014 liderado por ilumina\u00e7\u00f5es \u2014 teixeira couto, lda.",
+  "org_id": 12055155,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2024-10-25",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Ilumina\u00e7\u00f5es Teixeira Couto, Lda.",
+    3
+   ],
+   [
+    "Agrupamento \u201cCons\u00f3rcio Teixeira Couto\u201d \u2014 Liderado por Ilumina\u00e7\u00f5es \u2014 Teixeira Couto, Lda.",
+    2
+   ],
+   [
+    "ILUMINA\u00c7\u00d5ES - TEIXEIRA COUTO, LDA",
+    2
+   ],
+   [
+    "Ilumina\u00e7\u00f5es - Teixeira Couto, Lda.",
+    2
+   ],
+   [
+    "ILUMINA\u00c7\u00d5ES - TEIXEIRA COUTO, LDA.",
+    1
+   ]
+  ],
+  "top": 11,
+  "top_newest": "2026-08-31",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 14,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2018-12-01",
+  "head_procs": 1,
+  "identifier": "413824319",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "AVENIR DECONSTRUCTION",
+  "new_name_norm": "avenir deconstruction",
+  "newest_is_head": false,
+  "old_name": "Avenir Deconstruction (mandataire)",
+  "old_name_norm": "avenir deconstruction (mandataire)",
+  "org_id": 12622564,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "AVENIR DECONSTRUCTION",
+    3
+   ],
+   [
+    "Avenir Deconstruction (mandataire)",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2026-09-23",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 4,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sarl",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2019-09-26",
+  "head_procs": 1,
+  "identifier": "32161684900022",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "Bouchet Francis et Fils",
+  "new_name_norm": "bouchet francis et fils",
+  "newest_is_head": false,
+  "old_name": "SARL Bouchet Francis et Fils (mandataire)",
+  "old_name_norm": "sarl bouchet francis et fils (mandataire)",
+  "org_id": 14043573,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Bouchet Francis et Fils",
+    2
+   ],
+   [
+    "SARL BOUCHET FRANCIS ET FILS",
+    1
+   ],
+   [
+    "SARL Bouchet Francis et Fils (mandataire)",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2025-12-04",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 4,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "AT",
+  "eng": null,
+  "family_new": "gmbh",
+  "family_old": "gmbh",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2019-10-30",
+  "head_procs": 1,
+  "identifier": "9110016732015",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "Josef Feuerstein GmbH & Co KG",
+  "new_name_norm": "josef feuerstein gmbh & co kg",
+  "newest_is_head": false,
+  "old_name": "ARGE Feuerstein Josef GmbH & Co KG \u2014 Johann Huter & S\u00f6hne",
+  "old_name_norm": "arge feuerstein josef gmbh & co kg \u2014 johann huter & s\u00f6hne",
+  "org_id": 14103011,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "Josef Feuerstein GmbH & Co KG",
+    6
+   ],
+   [
+    "ARGE Feuerstein Josef GmbH & Co KG \u2014 Johann Huter & S\u00f6hne",
+    1
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2025-11-25",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 7,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": "sas",
+  "family_old": "sas",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2019-11-25",
+  "head_procs": 1,
+  "identifier": "44775408600075",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "Guintoli SAS",
+  "new_name_norm": "guintoli sas",
+  "newest_is_head": false,
+  "old_name": "SAS Guintoli (groupe NGE), mandataire",
+  "old_name_norm": "sas guintoli (groupe nge), mandataire",
+  "org_id": 14394565,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "GUINTOLI",
+    2
+   ],
+   [
+    "GUINTOLI SAS",
+    1
+   ],
+   [
+    "Guintoli SAS",
+    1
+   ],
+   [
+    "SAS Guintoli (groupe NGE), mandataire",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-07-23",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 5,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sas",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2019-11-25",
+  "head_procs": 1,
+  "identifier": "38468875000023",
+  "in_population": true,
+  "merged": false,
+  "n": 6,
+  "new_name": "ESPACES VERTS DU DAUPHINE",
+  "new_name_norm": "espaces verts du dauphine",
+  "newest_is_head": false,
+  "old_name": "SAS Espaces verts du dauphine (EVD), mandataire",
+  "old_name_norm": "sas espaces verts du dauphine (evd), mandataire",
+  "org_id": 14395645,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2024-12-06",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "ESPACES VERTS DU DAUPHINE",
+    2
+   ],
+   [
+    "SAS ESPACES VERTS DU DAUPHINE",
+    2
+   ],
+   [
+    "ESPACES VERTS DU DAUPHINE  (co-traitant n\u00b0 4)",
+    1
+   ],
+   [
+    "SAS Espaces verts du dauphine (EVD), mandataire",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-10-15",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 6,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 4,
+  "country": "PT",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2020-02-04",
+  "head_procs": 1,
+  "identifier": "513600728",
+  "in_population": true,
+  "merged": false,
+  "n": 25,
+  "new_name": "WWS - Consultoria Inform\u00e1tica, Lda.",
+  "new_name_norm": "wws - consultoria inform\u00e1tica, lda",
+  "newest_is_head": false,
+  "old_name": "WWS/Informantem em cons\u00f3rcio \u2014 WWS, Consultoria Inform\u00e1tica, Lda.",
+  "old_name_norm": "wws/informantem em cons\u00f3rcio \u2014 wws, consultoria inform\u00e1tica, lda.",
+  "org_id": 14873976,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-10-01",
+  "rule": "R1",
+  "second": 3,
+  "spellings": [
+   [
+    "WWS - Consultoria Inform\u00e1tica, Lda.",
+    5
+   ],
+   [
+    "WWS - CONSULTORIA INFORM\u00c1TICA, LDA",
+    4
+   ],
+   [
+    "WWS - Consultoria Inform\u00e1tica, Lda",
+    4
+   ],
+   [
+    "WWS - Consultadoria Inform\u00e1tica, Lda",
+    2
+   ],
+   [
+    "WWS \u2014 Consultoria Inform\u00e1tica, Lda.",
+    2
+   ]
+  ],
+  "top": 20,
+  "top_newest": "2026-08-28",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 25,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 7,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2020-02-10",
+  "head_procs": 1,
+  "identifier": "47976680000060",
+  "in_population": true,
+  "merged": false,
+  "n": 26,
+  "new_name": "Capgemini Consulting",
+  "new_name_norm": "capgemini consulting",
+  "newest_is_head": false,
+  "old_name": "Rang 2 \u2014 Capgemini Consulting (mandataire)",
+  "old_name_norm": "rang 2 \u2014 capgemini consulting (mandataire)",
+  "org_id": 14892786,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-10-16",
+  "rule": "R1",
+  "second": 3,
+  "spellings": [
+   [
+    "CAPGEMINI CONSULTING",
+    7
+   ],
+   [
+    "Capgemini Consulting",
+    4
+   ],
+   [
+    "CAPGEMINI",
+    3
+   ],
+   [
+    "CAP GEMINI INVENT",
+    2
+   ],
+   [
+    "CAPGEMINI INVENT",
+    2
+   ]
+  ],
+  "top": 15,
+  "top_newest": "2026-09-30",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 26,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2020-09-15",
+  "head_procs": 1,
+  "identifier": "52517618600019",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "GETEC Sud Ouest",
+  "new_name_norm": "getec sud ouest",
+  "newest_is_head": false,
+  "old_name": "Groupement Getec Sud-Ouest/sixense Engineering",
+  "old_name_norm": "groupement getec sud-ouest/sixense engineering",
+  "org_id": 15782290,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "GETEC SUD OUEST",
+    2
+   ],
+   [
+    "GETEC SUD-OUEST",
+    2
+   ],
+   [
+    "GETEC Sud Ouest",
+    1
+   ],
+   [
+    "GETEC Sud-Ouest",
+    1
+   ],
+   [
+    "Groupement Getec Sud-Ouest/sixense Engineering",
+    1
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2026-07-07",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 7,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sarl",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2021-04-21",
+  "head_procs": 1,
+  "identifier": "39907079600020",
+  "in_population": true,
+  "merged": false,
+  "n": 7,
+  "new_name": "emch & BERGER",
+  "new_name_norm": "emch & berger",
+  "newest_is_head": false,
+  "old_name": "EMCH + Berger SARL (mandataire)",
+  "old_name_norm": "emch + berger sarl (mandataire)",
+  "org_id": 16993161,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2025-07-30",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "EMCH & BERGER",
+    2
+   ],
+   [
+    "EMCH ET BERGER",
+    2
+   ],
+   [
+    "emch & BERGER",
+    2
+   ],
+   [
+    "EMCH + Berger SARL (mandataire)",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-02-24",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 7,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "DK",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2021-06-11",
+  "head_procs": 1,
+  "identifier": "14451234",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "SUEZ Water A/S",
+  "new_name_norm": "suez water a/s",
+  "newest_is_head": false,
+  "old_name": "Suez Water A/S (part of consortium \u2018Suez-MTH\u2019)",
+  "old_name_norm": "suez water a/s (part of consortium \u2018suez-mth\u2019)",
+  "org_id": 17311886,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "SUEZ Water A/S",
+    2
+   ],
+   [
+    "Suez Water A/S",
+    2
+   ],
+   [
+    "Suez Water A/S (part of consortium \u2018Suez-MTH\u2019)",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-07-16",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 5,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": "sas",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2021-12-31",
+  "head_procs": 1,
+  "identifier": "81086989100038",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "lyde Conseil",
+  "new_name_norm": "lyde conseil",
+  "newest_is_head": false,
+  "old_name": "lyde conseil sas (co-traitant d'un groupement dont MEJA sarl est mandataire)",
+  "old_name_norm": "lyde conseil sas (co-traitant d'un groupement dont meja sarl est mandataire)",
+  "org_id": 18263464,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "LYDE CONSEIL",
+    2
+   ],
+   [
+    "lyde Conseil",
+    1
+   ],
+   [
+    "lyde conseil sas (co-traitant d'un groupement dont MEJA sarl est mandataire)",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2025-02-24",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 4,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "LU",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2022-04-13",
+  "head_procs": 1,
+  "identifier": "LU21747447",
+  "in_population": true,
+  "merged": false,
+  "n": 14,
+  "new_name": "CGI Luxembourg S.A.",
+  "new_name_norm": "cgi luxembourg s.a",
+  "newest_is_head": false,
+  "old_name": "Groupement CuREA \u2013 Chef de file CGI Luxembourg SA",
+  "old_name_norm": "groupement curea \u2013 chef de file cgi luxembourg sa",
+  "org_id": 18874640,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2024-01-31",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "CGI Luxembourg S.A.",
+    5
+   ],
+   [
+    "CGI Luxembourg SA",
+    4
+   ],
+   [
+    "CGI LUXEMBOURG SA",
+    3
+   ],
+   [
+    "CGI Luxembourg",
+    1
+   ],
+   [
+    "Groupement CuREA \u2013 Chef de file CGI Luxembourg SA",
+    1
+   ]
+  ],
+  "top": 12,
+  "top_newest": "2026-08-06",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 14,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "AT",
+  "eng": null,
+  "family_new": "gmbh",
+  "family_old": "gmbh",
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2022-08-31",
+  "head_procs": 1,
+  "identifier": "9110028958557",
+  "in_population": true,
+  "merged": false,
+  "n": 10,
+  "new_name": "B2M Baumanagement GmbH",
+  "new_name_norm": "b2m baumanagement gmbh",
+  "newest_is_head": false,
+  "old_name": "ARGE B2M Baumanagement GmbH / Hirm & Partner ZT GmbH",
+  "old_name_norm": "arge b2m baumanagement gmbh / hirm & partner zt gmbh",
+  "org_id": 19603409,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2022-09-16",
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "B2M Baumanagement GmbH",
+    8
+   ],
+   [
+    "ARGE B2M Baumanagement GmbH / Hirm & Partner ZT GmbH",
+    1
+   ],
+   [
+    "B2M Baumanagement GmbH / Hirm & Partner GmbH",
+    1
+   ]
+  ],
+  "top": 8,
+  "top_newest": "2026-10-15",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 10,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 8,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2022-11-11",
+  "head_procs": 1,
+  "identifier": "38113350300049",
+  "in_population": true,
+  "merged": false,
+  "n": 24,
+  "new_name": "Cabinet MADELAINE BRISSET",
+  "new_name_norm": "cabinet madelaine brisset",
+  "newest_is_head": false,
+  "old_name": "cabinet madelaine brisset (mandataire du groupement)",
+  "old_name_norm": "cabinet madelaine brisset (mandataire du groupement)",
+  "org_id": 20073092,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": "2026-02-05",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "CABINET MADELAINE BRISSET",
+    7
+   ],
+   [
+    "Cabinet MADELAINE BRISSET",
+    2
+   ],
+   [
+    "Cabinet Madelaine BRISSET",
+    2
+   ],
+   [
+    "cabinet madelaine brisset",
+    2
+   ],
+   [
+    "BRISSET /CFDP",
+    1
+   ]
+  ],
+  "top": 15,
+  "top_newest": "2026-01-06",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 24,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2022-12-21",
+  "head_procs": 1,
+  "identifier": "81939414900036",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "Co-S",
+  "new_name_norm": "co-s",
+  "newest_is_head": false,
+  "old_name": "co-s (mandataire d'un des 4 groupements titulaires)",
+  "old_name_norm": "co-s (mandataire d'un des 4 groupements titulaires)",
+  "org_id": 20363598,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "CO-S",
+    2
+   ],
+   [
+    "Co-S",
+    1
+   ],
+   [
+    "co-s (mandataire d'un des 4 groupements titulaires)",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2024-09-09",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 4,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2023-04-05",
+  "head_procs": 1,
+  "identifier": "48028153400036",
+  "in_population": true,
+  "merged": false,
+  "n": 12,
+  "new_name": "Etudes et Synergies",
+  "new_name_norm": "etudes et synergies",
+  "newest_is_head": false,
+  "old_name": "etudes et synergies (mandataire)",
+  "old_name_norm": "etudes et synergies (mandataire)",
+  "org_id": 21029204,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": null,
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "ETUDES ET SYNERGIES",
+    9
+   ],
+   [
+    "Etudes et Synergies",
+    2
+   ],
+   [
+    "etudes et synergies (mandataire)",
+    1
+   ]
+  ],
+  "top": 11,
+  "top_newest": "2026-07-22",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 12,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "DE",
+  "eng": null,
+  "family_new": "gmbh",
+  "family_old": "gmbh",
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2024-03-13",
+  "head_procs": 1,
+  "identifier": "DE361508840",
+  "in_population": true,
+  "merged": false,
+  "n": 22,
+  "new_name": "Troiber GmbH & Co. KG",
+  "new_name_norm": "troiber gmbh & co. kg",
+  "newest_is_head": false,
+  "old_name": "Troiber GmbH & Co. KG (Bietergemeinschaft mit Bauer GmbH & Co.KG, R\u00f6dental; Nu\u00dfbaumer GmbH & Co.KG, K\u00fcrnach; Omega Sorg GmbH, Rednitzhembach; Fr\u00fcchte Jork GmbH, Isny; Rittner Food Service GmbH & Co.KG, Unterschlei\u00dfheim)",
+  "old_name_norm": "troiber gmbh & co. kg (bietergemeinschaft mit bauer gmbh & co.kg, r\u00f6dental; nu\u00dfbaumer gmbh & co.kg, k\u00fcrnach; omega sorg gmbh, rednitzhembach; fr\u00fcchte jork gmbh, isny; rittner food service gmbh & co.kg, unterschlei\u00dfheim)",
+  "org_id": 22534691,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": "unfit",
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "Troiber GmbH & Co. KG",
+    20
+   ],
+   [
+    "Troiber GmbH & Co. KG (Bietergemeinschaft mit Bauer GmbH & Co.KG, R\u00f6dental; Nu\u00dfbaumer GmbH & Co.KG, K\u00fcrnach; Omega Sorg GmbH, Rednitzhembach; Fr\u00fcchte Jork GmbH, Isny; Rittner Food Service GmbH & Co.KG, Unterschlei\u00dfheim)",
+    2
+   ]
+  ],
+  "top": 20,
+  "top_newest": "2026-08-07",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 22,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2024-04-08",
+  "head_procs": 1,
+  "identifier": "45066958500025",
+  "in_population": true,
+  "merged": false,
+  "n": 10,
+  "new_name": "CUADRA",
+  "new_name_norm": "cuadra",
+  "newest_is_head": false,
+  "old_name": "CUADRA (mandataire) \ncotraitant ACDe\ncotraitant B3E\ncotraitant CDB ACOUSTIQUE \ncotraitant PLANTAGO",
+  "old_name_norm": "cuadra (mandataire) \ncotraitant acde\ncotraitant b3e\ncotraitant cdb acoustique \ncotraitant plantago",
+  "org_id": 22564460,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": "unfit",
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "CUADRA",
+    9
+   ],
+   [
+    "CUADRA (mandataire) \ncotraitant ACDe\ncotraitant B3E\ncotraitant CDB ACOUSTIQUE \ncotraitant PLANTAGO",
+    1
+   ]
+  ],
+  "top": 9,
+  "top_newest": "2026-06-01",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 10,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2024-04-30",
+  "head_procs": 1,
+  "identifier": "91236214200024",
+  "in_population": true,
+  "merged": false,
+  "n": 5,
+  "new_name": "SOLVHA",
+  "new_name_norm": "solvha",
+  "newest_is_head": false,
+  "old_name": "Titulaire 1: SOLVHA (mandataire) / MEOTEC (co-traitant)\nTitulaire 2: KLB GROUP \nTitulaire 3: VISIATIV",
+  "old_name_norm": "titulaire 1: solvha (mandataire) / meotec (co-traitant)\ntitulaire 2: klb group \ntitulaire 3: visiativ",
+  "org_id": 22590748,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": "unfit",
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "SOLVHA",
+    4
+   ],
+   [
+    "Titulaire 1: SOLVHA (mandataire) / MEOTEC (co-traitant)\nTitulaire 2: KLB GROUP \nTitulaire 3: VISIATIV",
+    1
+   ]
+  ],
+  "top": 4,
+  "top_newest": "2026-02-12",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 5,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 3,
+  "country": "DE",
+  "eng": null,
+  "family_new": "gmbh",
+  "family_old": "gmbh",
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2024-06-10",
+  "head_procs": 1,
+  "identifier": "DE138773422",
+  "in_population": true,
+  "merged": false,
+  "n": 10,
+  "new_name": "ARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+  "new_name_norm": "arcus planung + beratung bauplanungsgesellschaft mbh",
+  "newest_is_head": false,
+  "old_name": "ARGE ARCUS + DEGAT\nARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+  "old_name_norm": "arge arcus + degat\narcus planung + beratung bauplanungsgesellschaft mbh",
+  "org_id": 22648040,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": "unfit",
+  "release_withheld": null,
+  "rival_newest": "2025-10-20",
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "ARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+    6
+   ],
+   [
+    "ARCUS Planung + Beratungs Bauplanungsgesellschaft",
+    2
+   ],
+   [
+    "ARGE ARCUS + DEGAT\nARCUS Planung + Beratung Bauplanungsgesellschaft mbH",
+    2
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2025-12-23",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 10,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 1,
+  "head_in_window": 0,
+  "head_newest": "2024-09-17",
+  "head_procs": 1,
+  "identifier": "48046024500024",
+  "in_population": true,
+  "merged": false,
+  "n": 4,
+  "new_name": "COLAS DURAND Architectes",
+  "new_name_norm": "colas durand architectes",
+  "newest_is_head": false,
+  "old_name": "COLAS DURAND ARCHITECTES (MANDATAIRE)\nCOTRAITANTS\nBSO/OPRYME/EICE/ACCOUSTIBEL",
+  "old_name_norm": "colas durand architectes (mandataire)\ncotraitants\nbso/opryme/eice/accoustibel",
+  "org_id": 22715315,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": "unfit",
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 1,
+  "spellings": [
+   [
+    "COLAS DURAND Architectes",
+    2
+   ],
+   [
+    "COLAS DURAND ARCHITECTES",
+    1
+   ],
+   [
+    "COLAS DURAND ARCHITECTES (MANDATAIRE)\nCOTRAITANTS\nBSO/OPRYME/EICE/ACCOUSTIBEL",
+    1
+   ]
+  ],
+  "top": 3,
+  "top_newest": "2026-08-05",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 4,
+  "v12_hold": "consortium_removed"
+ },
+ {
+  "clusters": 2,
+  "country": "FR",
+  "eng": null,
+  "family_new": null,
+  "family_old": null,
+  "head": 2,
+  "head_in_window": 0,
+  "head_newest": "2025-03-26",
+  "head_procs": 2,
+  "identifier": "21710230000019",
+  "in_population": true,
+  "merged": false,
+  "n": 8,
+  "new_name": "Ville de Gueugnon",
+  "new_name_norm": "ville de gueugnon",
+  "newest_is_head": false,
+  "old_name": "Ville de Gueugnon\nCoordonnateur du groupement de commande Ville de Gueugnon / Communaut\u00e9 de Communes Entre Arroux, Loire et Somme",
+  "old_name_norm": "ville de gueugnon\ncoordonnateur du groupement de commande ville de gueugnon / communaut\u00e9 de communes entre arroux, loire et somme",
+  "org_id": 22838635,
+  "provisional": false,
+  "reason": "R1",
+  "recent_released": "unfit",
+  "release_withheld": null,
+  "rival_newest": null,
+  "rule": "R1",
+  "second": 2,
+  "spellings": [
+   [
+    "VILLE DE GUEUGNON",
+    3
+   ],
+   [
+    "Ville de Gueugnon",
+    3
+   ],
+   [
+    "Ville de Gueugnon\nCoordonnateur du groupement de commande Ville de Gueugnon / Communaut\u00e9 de Communes Entre Arroux, Loire et Somme",
+    1
+   ],
+   [
+    "Ville de Gueugnon Coordonnateur du groupement de commande Ville de Gueugnon / Communaut\u00e9 de Communes Entre Arroux, Loire et Somme",
+    1
+   ]
+  ],
+  "top": 6,
+  "top_newest": "2026-10-07",
+  "undated_mentions": 0,
+  "verdict": "change",
+  "voting": 8,
+  "v12_hold": "consortium_removed"
+ }
+]
