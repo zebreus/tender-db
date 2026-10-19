@@ -315,3 +315,17 @@ reads every ORG mention of a notice through `gated_identifier` with the gate's c
   95 % bound ~4.6 % (13.9 % on the 20 alone). Drawn as 20 independent planned rows at salt 541337, no pick within 5 ids of the 120 rows read
   (`530-triage/r2c_picks.json`; their stored mentions `r2c/q1.out.json`, one bounded seek), bar 0 W.
 
+
+## Build 2 — wet-run steps the review fixed (2026-10-19)
+
+- **Before Build 2's deploy, read the max notice id** (`SELECT id FROM notices ORDER BY id DESC LIMIT 1` through
+  `/v1/sql`, bounded) and keep it: it is A1's boundary. The wet run now REQUIRES it (`gate_since_notice_id`, refused at
+  enqueue and at run time when missing, and refused above the dry plan's `notice_max_id`); there is no estimate — the dry
+  plan's start is post-deploy, so any later value would hide the twin copies the gate refused in between.
+- The wet run also refuses while A1's **reverse drift** since that boundary is non-zero (a KEEP-add or unsafe-name commit
+  deployed since it); `{"kind":"dissolve-guid-twins","restore":true,"since_notice_id":<boundary>}` restores it. After every
+  deployed KEEP-add or `GUID_TWIN_UNSAFE_NAMES` commit: recurrence arm, restore, recurrence arm (0 drift).
+- A12's second half is a read, not `r3.skipped`: after `project` ends ok, `COUNT(projection_epoch = 0)` over the union of
+  the wet jobs' `manifest.refold_tenders_this_run` must be 0 before the census re-run.
+- A10's Verify list is `verify.goettingen_surviving_ids` (kept ∪ partial) plus ids above `verify.wet_max_org_id`.
+- Runbook: `docs/operations.md`, "The GUID twin dissolve (issue 530 Build 2)", steps 1–6.

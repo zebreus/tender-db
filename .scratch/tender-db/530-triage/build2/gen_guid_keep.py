@@ -53,7 +53,10 @@ def main(src: str, dst: str) -> None:
         "# columns: country, value, org_id (the GUID row at freeze), mentions, tenders, reason (stable,",
         "#   multi_tender, merged, joined by +); an empty cell is NULL.",
         "# changes: values are only ever ADDED (rows kept in value order), by a reviewed commit that adds what",
-        "#   the dissolve-guid-twins recurrence arm or a dry re-plan's keep_add_commit lists; never removed.",
+        "#   the dissolve-guid-twins recurrence arm or a dry re-plan's keep_add_commit lists; never removed. An add",
+        "#   is complete only after its deploy: run the recurrence arm with since_notice_id = the pre-deploy",
+        "#   boundary, restore its reverse drift ({\"kind\":\"dissolve-guid-twins\",\"restore\":true,...}), and re-run",
+        "#   the arm until reverse_drift_mentions reads 0 (docs/operations.md, the GUID twin dissolve, step 6).",
         f"# counts: {len(rows)} values: multi_tender {EXPECT['multi_tender']}, stable+multi_tender "
         f"{EXPECT['stable+multi_tender']}, stable {EXPECT['stable']}, merged 0.",
     ]
