@@ -170,3 +170,12 @@ Accepted costs:
 - The measurement is per notice, but served `country` is per tender (head version after supersede). The '1.3-1.9M corrections' figure multiplies notice-level fractions by about 4.5M r209 notices. Corrections are counted per tender, so label it an upper-bound order of magnitude. The issue itself said a legacy refold covers about 7M tenders; the U4 dry-run cohort count is what settles it.
 - U3(d) test wording. drop_place_country_beside_nuts (project.rs:6945) still suppresses an eForms place_country beside a carried legacy PERFORMANCE nuts row. So the '532 D7 interaction gone' test must use a legacy CN with ONLY buyer/address NUTS (an F12/F14 shape), not 'a legacy CN with buyer NUTS'. Claim 5 of D1 should say it holds only for buyer-only carriers.
 - Minor point on U4. refold-fields TED-CA_CE_NUTS,TED-TENDERER_NUTS selects by those two fields only, so a notice with ORG-section TED-NUTS and no CA_CE/TENDERER row would fall outside it. The sample shows 100% containment, and the ted-export-r209 profile fallback covers the rest. Keep the expect guard and the cohort-vs-profile comparison as written.
+
+## Scheduling constraint (2026-10-19)
+
+Unit 4's refold (~4.5M r209 notices) writes `country`/`place` change rows on a large share of legacy Tenders. Issue 551's B6
+flip enumerates its id list from every tender change row after cursor 958787061 (B6 decision points 5 and 9), under a
+5,000-id cap per run; a 546 drain before that flip would swamp the list. So **unit 4 waits until 551 B6's flip and its
+U8 verification are done** (no earlier than the 10-21 post-chain gap). Unit 3 (the build) can land and deploy before then:
+it changes only Tenders folded afterwards.
+
