@@ -1,6 +1,6 @@
 # 539 — DÖE `published_at` is the buyer's requested publication date; on a share of sdk-0.1 notices it predates the export that published them by weeks to 586 days, so the IssueDate lands after it
 
-Status: ready-for-agent — unit 1 MEASURED and unit 2 DECIDED 2026-10-19: (a) for source doe, published_at = the latest of every publication-date candidate present and the IssueDate's civil day (= max(requested, IssueDate day) whenever a requested date exists), date-only rendering kept; the OpenAPI/docs dispatched_at sentence corrected in the same unit. Measured across all 135 DÖE fetches (.scratch/tender-db/539-triage/, adversarially re-derived): 2+-day staleness always carries an IssueDate (sdk-0.1: mostly change-notice versions inheriting version 1's requested date; de-*: a stale stamped OPP-012 / DE1-Publication-PublicationDate); (a) re-dates 16,344 notices and fixes 8,292 of 8,296 sdk-0.1 rows 2+ days stale and 5,343 of 5,669 regular rows 30+ days stale; about 23.5% of re-dated versions change order (~3,800, extrapolated). NEXT: unit 3 build (resolver + test on 26044864 / 26411995 / 27077227, docs), then the drain (repair-notice-instants → repair-version-instants → project) AFTER issue 551 B6's flip and U8 and off the 10-20/10-21 D5 mornings. Was: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, measure `published_at` against the delivering export's period per DÖE profile (S, in-process read).
+Status: ready-for-agent — unit 1 MEASURED and unit 2 DECIDED 2026-10-19: (a) for source doe, published_at = the latest of every publication-date candidate present and the IssueDate's civil day (= max(requested, IssueDate day) whenever a requested date exists), date-only rendering kept; the OpenAPI/docs dispatched_at sentence corrected in the same unit. Measured across all 135 DÖE fetches (.scratch/tender-db/539-triage/, adversarially re-derived): 2+-day staleness always carries an IssueDate (sdk-0.1: mostly change-notice versions inheriting version 1's requested date; de-*: a stale stamped OPP-012 / DE1-Publication-PublicationDate); (a) re-dates 16,344 notices and fixes 8,292 of 8,296 sdk-0.1 rows 2+ days stale and 5,343 of 5,669 regular rows 30+ days stale; about 23.5% of re-dated versions change order (~3,800, extrapolated). NEXT: unit 3 build (resolver + test on 26044864 / 26411995 / 27077227, docs), then the drain (repair-notice-instants → an ADR-0017 R3 `refold` of the DÖE profiles that re-date, whose trailing project re-sorts the chains and writes the D3 rows; NOT repair-version-instants, see Unit 3's drain bullet) AFTER issue 551 B6's flip and U8 and off the 10-20/10-21 D5 mornings. Was: ready-for-agent — filed 2026-10-14 from an external data review (verified: verifier + adversarial refute). Next: unit 1, measure `published_at` against the delivering export's period per DÖE profile (S, in-process read).
 Kind: data quality (dates) / API contract (`published_at`, `dispatched_at`)
 Relates to:
 - 18 (resolved 2026-07-20): chose BT-738 / `SDK01-RequestedPublicationDate` as the DÖE publication date ("the DÖE
@@ -119,7 +119,8 @@ same semantics, and shows the same multi-day shape at 1.0%.
 3. **Build (S/M).**
    - Under (a)/(b): change the resolver (`notice_instants` / `notice_stamps`) and keep the 367/418 rendering (a
      date-only value stays date-only). Pin it with a test on 26044864's three dates. Drain with
-     `repair-notice-instants`, then 418's `repair-version-instants`, then `project`.
+     `repair-notice-instants`, then 418's `repair-version-instants`, then `project`. (Corrected in unit 3's review: that
+     route announces nothing and re-sorts nothing; see Unit 3's drain bullet.)
    - Under (c): edit crates/app/data/openapi.json:971 and docs.rs, and gate the served sentence (the 370 class).
    - Either way, the OpenAPI sentence is false today for the multi-day rows. Correct it in the same unit, even
      under (a)/(b), until the drain lands.
@@ -303,7 +304,8 @@ offset. A date-only result stays date-only (367/418 rendering). No other source 
   usually runs 1–3 days before the export day; `Tender.dispatched_at` "earlier than published_at" is false today for 16,344 DÖE notices
   (until the drain) and stays qualified for DÖE afterwards only where a candidate is later than the IssueDate (none measured).
 - Exposure: about 23.5% of re-dated versions change order within their tender (~3,800 extrapolated from 4 fetches, 322 of 1,368 measured).
-  The 495 compare engine announces each as a D5 correction. Unit 3's dry run counts it exactly before the wet drain.
+  The 495 compare engine announces each (a D3 row) when the drain's R3 refold re-folds its Tender (Unit 3's drain bullet); the
+  dry repair counts the re-dated notices exactly, and the refold's own corrections count the reorders.
 
 ## Unit 3 — proposed build
 
@@ -313,5 +315,28 @@ offset. A date-only result stays date-only (367/418 rendering). No other source 
   (de-1.1: stamped 2023-12-19, requested 2024-07-25, IssueDate 2024-07-25 → 2024-07-25), 27077227 (de-2.1: OPP-012 2025-07-14, BT-738
   2026-07-22, IssueDate 2026-07-22 → 2026-07-22), an sdk-1.x notice (unchanged), a TED notice (unchanged).
 - Docs: openapi.json `Tender.dispatched_at` (~971), /docs dates list (docs.rs ~838), a CHANGELOG entry; gate the served sentence.
-- Drain after 551 B6's flip and U8, not on a D5 morning that 560 U-d reads: `repair-notice-instants` (doe) → `repair-version-instants`
-  → `project`; dry-run counts first (expect ~16,344 notices re-stamped).
+- Drain after 551 B6's flip and U8, not on a D5 morning that 560 U-d reads (route corrected in unit 3's review, 2026-10-19):
+  1. `repair-notice-instants` (doe): dry first, review the by-profile counts (expect ~16,344 plus the inversions ingested
+     before the deploy), then wet with the reviewed `expect_rows`. It re-stamps notice rows only: no change rows, and it
+     leaves `projected` alone.
+  2. An ADR-0017 R3 refold through the existing `refold` kind, with the profiles that re-date and a reviewed `expect`:
+     eforms:eforms-sdk-0.1, -de-1.0, -de-1.1, -de-1.2, -de-2.0, -de-2.1 (sdk-1.x already serves the IssueDate). It
+     re-queues, stamps the Tenders epoch-stale and queues the trailing `project rebuild=false`, so the compare engine
+     re-sorts each chain and writes a D3 row for every Tender with a re-dated version (up to ~16,344 versions, ~3,800
+     of them reordered). Cost: a verify-dominated refold over ~1.16M DÖE notices. A tighter scope needs a new
+     Tender-id or notice-id stale-stamp step: the stored dry plan keeps only 400 ids (PLAN_CAP) and `refold-notices`
+     caps at 1,000 (REFOLD_NOTICES_CAP).
+  - **Not `repair-version-instants`.** It rewrites `tender_versions.published_at` / `tenders.current_published_at` in
+    place with no change row and never re-sorts `seq`: for 539 that is a silent move of a served date (ADR-0017 D5). Run
+    BEFORE the refold it also hides the date moves from the compare (stored == re-derived), leaving only the reorders
+    announced. At most run it after the refold, dry, as a check that should report 0 moved.
+  - **The pre-drain window.** The fold re-derives every instant from the parse and never reads `notices.published_at`,
+    so from the deploy on any fold of a DÖE Tender (a daily incremental, or a refold for another issue) re-dates its
+    versions and announces them, while `/v1/notices` keeps the old stamp until step 1 (CHANGELOG and /docs say so).
+    The Tender renderers pair the VERSION's instant with the causing NOTICE's stored offset / has_time (store
+    read.rs list and detail rows), so in that window a refolded version whose old winner was TIMED renders the new
+    day's 00:00Z in the old offset as a time (e.g. `2026-07-22T02:00:00+02:00`); where the old winner was date-only
+    (the sdk-0.1 request) it renders the right day. Step 1 clears it, so it runs first.
+  - **551.** No deploy hold: the B6 cohort carries 54 Tenders with 104 DÖE versions and the rule changes 0 of them
+    (measured on the B6 U2 layer). If 539 deploys before the B6 flip, list it in B6's code-drift ledger (point 5) and
+    re-run the zero-drift probe (refold-lot-sum on the 3,502; expect 0 corrected) before U6.
