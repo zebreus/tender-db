@@ -125,3 +125,6 @@
 2026-10-19T20:49:06.969Z GET /v1/notices/24311385/content rc=200 bytes=31547 reader=rand2b attempt=1
 2026-10-19T20:49:09.730Z GET /v1/notices/24334190/content rc=200 bytes=57363 reader=rand2b attempt=1
 2026-10-19T20:49:12.737Z GET /v1/notices/24254583/content rc=200 bytes=34737 reader=rand2b attempt=1
+2026-10-19T20:49:37.391Z GET /v1/notices/24275668/content rc=200 bytes=37369 reader=rand1 attempt=1
+2026-10-19T20:49:39.442Z GET /v1/notices/24331610/content rc=200 bytes=23060 reader=rand1 attempt=1
+2026-10-19T20:49:41.492Z GET /v1/notices/24331367/content rc=200 bytes=31602 reader=rand1 attempt=1
