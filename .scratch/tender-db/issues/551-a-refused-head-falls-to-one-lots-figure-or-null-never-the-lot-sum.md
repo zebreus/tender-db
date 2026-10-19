@@ -1,6 +1,6 @@
 # 551 — when the election refuses a head, it falls to one lot's figure (or to null), never to the sum of the lots
 
-Status: ready-for-agent — path W v2 OFF since 2026-10-19 03:33Z (B5's stop rule; drained back, verified). **Investigation read DONE** (wf_eecbe1b7-bc7, 61 heads, reader + skeptic agreed on all): pre-registered confirm bar PASS at its limit (28 right / 1 neutral / 1 wrong of 30), band bar PASS (9/9 new band heads right), never-measured population 29/30 right. The wrong (6465510) is a guard gap: an award-type vouching total from a notice that awards none of the summed lots (proposed G-cover). NEXT: the re-enable decision (panel) — as-is with a re-based window, or G-cover first. Was: ready-for-agent — **path W v2 SWITCHED OFF again 2026-10-19** (B5's stop rule: 3,504 corrections vs window 835–3,338): 36ca974 gated (1,297 s) and deployed 03:33Z, drained back by `refold-lot-sum` tender_ids 2628/2629 + project 2630 (3,502 written, 3,502 corrected), verified (0 of the 3,503 ids and 0 of 35,121 band rows serve `lot-sum-awards`; pins back to pre-551; path V unchanged). Investigation running (wf_eecbe1b7-bc7: the pre-registered confirm 30 + the 9 new band heads + 22 never-measured fires, M2 protocol). Next: the read's result → re-base the projection → decide whether v2 goes back on (and with what window). Was: ready-for-agent — **B5 STOP RULE TRIPPED 2026-10-19 02:35Z**: corpus drain project 2627 corrected 3,429 (+ the cohort drains' 75 = 3,504; window 835–3,338), every correction a `lot-sum-awards` fire; the band holds the 20 plus 9 new heads. Per runbook step 7: path W switched OFF again (code wf_91677ed3-a17 → gate → deploy → `refold-lot-sum` by tender_ids over the 3,502 served heads), then the investigation (pre-registered confirm read of 30 + the 9 band rows, plus 30 from the never-measured population). Pins 31/31 as expected. Was: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; DEPLOYED 86f2745 2026-10-17 23:00Z — nothing served changes). **B3 PASSED 2026-10-18** (wf_643ad3a2-3ba, after 567/568/570 drained: Rust = remap-aware port on 5,307 rows, projection parity clean, v2 ⊆ v1; `551-lot-sum/b3/B3-result.md`). The drains moved the port's own outcomes: 18 NEW ships, 0 lost; the ≥ EUR 100 m band is now 20 (M2's 15 + 6569442, 6603588, 6679375, 7139761, 7542368). **The 18 READ 2026-10-18** (wf_24a65e6a-e63, reader + skeptic on every head): 18/18 right, band 5/5 right, 0 wrong → reference band set for B5 = **20**. NEXT: B4 (served text) + B5 (flip, cohort drain, corpus drain, confirm; stop window 835–3,338) — and **no lot-key drain may land before B5's band seek** (read18 note 2: 4 partial-sum heads, 6679375 a band head, would leave R10's vouch if their lot-null rows were keyed). Port of record: `b3/rule_v2_b3.py`.
+Status: ready-for-agent — path W v2 OFF since 2026-10-19 03:33Z (B5's stop rule; drained back, verified). Investigation read done (confirm 28R/1N/1W PASS no margin, band 9/9, never-measured 29/30). **B6 DECIDED 2026-10-19** (wf_834aaac1-932, panel unanimous + critic; `551-lot-sum/b6/decision-b6.md`): v2 + G (G-single / G-cover, each adopted by a fixed read rule), flipped from an exact predicted set P by tender_ids, no earlier than the 10-21 post-chain gap. NEXT: B6 U1 (port rule_v2_g.py + fetcher) and U2 (fresh public-API facts for the 3,502, ~8 h). Was: ready-for-agent — path W v2 OFF since 2026-10-19 03:33Z (B5's stop rule; drained back, verified). **Investigation read DONE** (wf_eecbe1b7-bc7, 61 heads, reader + skeptic agreed on all): pre-registered confirm bar PASS at its limit (28 right / 1 neutral / 1 wrong of 30), band bar PASS (9/9 new band heads right), never-measured population 29/30 right. The wrong (6465510) is a guard gap: an award-type vouching total from a notice that awards none of the summed lots (proposed G-cover). NEXT: the re-enable decision (panel) — as-is with a re-based window, or G-cover first. Was: ready-for-agent — **path W v2 SWITCHED OFF again 2026-10-19** (B5's stop rule: 3,504 corrections vs window 835–3,338): 36ca974 gated (1,297 s) and deployed 03:33Z, drained back by `refold-lot-sum` tender_ids 2628/2629 + project 2630 (3,502 written, 3,502 corrected), verified (0 of the 3,503 ids and 0 of 35,121 band rows serve `lot-sum-awards`; pins back to pre-551; path V unchanged). Investigation running (wf_eecbe1b7-bc7: the pre-registered confirm 30 + the 9 new band heads + 22 never-measured fires, M2 protocol). Next: the read's result → re-base the projection → decide whether v2 goes back on (and with what window). Was: ready-for-agent — **B5 STOP RULE TRIPPED 2026-10-19 02:35Z**: corpus drain project 2627 corrected 3,429 (+ the cohort drains' 75 = 3,504; window 835–3,338), every correction a `lot-sum-awards` fire; the band holds the 20 plus 9 new heads. Per runbook step 7: path W switched OFF again (code wf_91677ed3-a17 → gate → deploy → `refold-lot-sum` by tender_ids over the 3,502 served heads), then the investigation (pre-registered confirm read of 30 + the 9 band rows, plus 30 from the never-measured population). Pins 31/31 as expected. Was: ready-for-agent — path V LIVE; path W withdrawn (4a done). Unit 4b M1 DONE; M2 FAILED (27 right / 3 wrong); fallback "vouched everywhere" PASSED 2026-10-17 (29 right / 1 wrong of 30, band 15/15, projected fires ≈ 1,669). **B1 DONE** (3c81386) and **B2 DONE** (d4b8d76, wf_6743eeff-da0, gate green 1366 s; path W still off; DEPLOYED 86f2745 2026-10-17 23:00Z — nothing served changes). **B3 PASSED 2026-10-18** (wf_643ad3a2-3ba, after 567/568/570 drained: Rust = remap-aware port on 5,307 rows, projection parity clean, v2 ⊆ v1; `551-lot-sum/b3/B3-result.md`). The drains moved the port's own outcomes: 18 NEW ships, 0 lost; the ≥ EUR 100 m band is now 20 (M2's 15 + 6569442, 6603588, 6679375, 7139761, 7542368). **The 18 READ 2026-10-18** (wf_24a65e6a-e63, reader + skeptic on every head): 18/18 right, band 5/5 right, 0 wrong → reference band set for B5 = **20**. NEXT: B4 (served text) + B5 (flip, cohort drain, corpus drain, confirm; stop window 835–3,338) — and **no lot-key drain may land before B5's band seek** (read18 note 2: 4 partial-sum heads, 6679375 a band head, would leave R10's vouch if their lot-null rows were keyed). Port of record: `b3/rule_v2_b3.py`.
 Kind: data quality (amount election: `head_value_eur_cents_with`)
 Relates to:
 - 537 (decided 2026-10-16): its scale rule refuses 22 heads ≥ €1 bn. 6 fall to null, and 10 fall to ONE lot's
@@ -1182,3 +1182,65 @@ reader + adversarial skeptic; they agreed on all 61 (no third reader).
   awards outside S: 6779279, 6850401, 7698260 right, 7749755 neutral) is better fixed by placement + disjoint-total vouching
   than by a refusal (a refusal costs 3 rights for 1 neutral). 6908248 is right only while 22266591's RES-2..10 stay lot =
   null (a future lot-key drain would make it a double count R3 should catch: pin it before any such drain).
+
+## B6 — decision (2026-10-19, workflow wf_834aaac1-932; recorded BEFORE any new fetch or read)
+
+Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value-first, process-integrity — all chose
+**g-cover-first**; the synthesis; the critic's amendments, all adopted). Binding points:
+
+1. **Why the stop rule tripped: our process error.** B3 had recorded 41 ships of 277 walked after the lot-key drains (M1:
+   30), and the window was never re-based (15,300 × 41/277 ≈ 2,265 vs 2,348 seen inside 2575's population). From now on any
+   B3-type rate change re-registers the window. **confirm30 stands as recorded (28/1/1, PASS no margin)** and is never
+   re-scored under a new guard; outside30 is an investigation measure only; G gets no credit on the 61.
+2. **Two candidate guards, wording fixed now, no rewording after seeing their sizes:**
+   - **G-single** (the repair of R10's existing "not a single-lot notice's own award" clause): a stated total from a notice
+     whose round in this version has exactly ONE LotResult (keyed or not) does not vouch.
+   - **G-cover**: a total of kind Award (BT-161, BT-118, BT-1118, TED-VAL_TOTAL on a CAN-type form) or Range (TED-LOW,
+     TED-HIGH) vouches only if its notice names at least one summed key — on R3's own accessor (`view.on_lot(key)` holds a
+     row of that notice; port: R3's `results_by_lot`), keyless results excluded. Estimate totals unchanged. Port kinds:
+     Range = `field in ('TED-LOW','TED-HIGH')`, Award = `r3_kind == 'award'`.
+   - Both only filter R10's candidates (refusal name stays R10; harness-only diagnostic `g_removed`). v2+G ⊆ v2 ⊆ v1.
+3. **Adoption rule (monotone, one rule for any size).** R_single = the ships G-single refuses; R_excess = the ships G-cover
+   refuses beyond G-single. For each set: read min(|R|, 30) under M2's protocol (salt `sha256('551-b6-gcost-'+id)`
+   ascending; ids already read keep their recorded verdicts); adopt the guard iff **≥ 10 % of its read set is non-right**
+   (wrong or neutral; ≥ 3 of 30, ≈ 3× the 2/61 background). Otherwise reject it and flip without it.
+4. **Measurement, both sides with parity.** U1 `b6/rule_v2_g.py` (from `b3/rule_v2_b3.py`) + a fetcher (from
+   `b5/cohort_parity.py`); tenders read ONLY from a fresh U2 layer, notices from U2 then the M1/B3/bundle layers; rates
+   refreshed and their sha256 recorded. U2 fetches the 3,502. **v2 parity:** the port's v2 must reproduce
+   `served_lsa_rows.json` (ship, S, currency, n; `vouched_by` by membership in the port's vouch list) on every id outside the
+   provisional L_changed (ids with a change row from 958787061 to that id's own fetch time, or a notice folded since
+   2026-10-18 20:30Z — fixed per id at fetch time, before comparing). U3 Rust v2+G vs the port on B3's 5,307 rows, the 563
+   cohort, the 61 and fixtures of the 3,502: 0 disagreements, plus projection parity; an end-to-end test that real contents
+   of 6465510 refuse at R10 through `NoticeState::read` → fold → `head_value_with_awards_path`.
+5. **Code drift.** Every commit touching crates/ingest or crates/store between the deployed 9529345 and the flip rev is
+   listed in this issue. **571 unit 2 (21b2537) changes result winners (R1/R5.1/R5.12/R6 inputs): its drain lands before U6
+   and its whole refolded id set joins L_changed.** A projection-only change (stated_totals, published_lot_no, group,
+   unserved rounds) writes no change row: if one lands, the id list is incomplete and the corpus walk is required.
+6. **Zero-drift probe.** After U3's W=false deploy: `refold-lot-sum` with the 3,502 tender_ids, wet, expect corrected = 0;
+   any correction is drift, explained before U6.
+7. **P and the fresh read (B-fresh, sequential).** P = the port's v2+G ships among the 3,502 (exact ids with S, currency, n,
+   vouched_by; re-predicted on refetched facts for L_changed ∩ 3,502 at U6). 30 from P minus every read id (salt
+   `551-b6-fresh-`): 0 wrong → go; exactly 1 → 30 more in the same order with 0 wrong; ≥ 2 → keep off, re-decide. Readers
+   get the port-predicted S, summed keys and notice ids, n and the G-filtered vouched_by, plus the live head. Estimate vouches
+   from a single-lot-section CN whose lot is not in S are recorded in U2 and flagged to readers (the estimate twin of
+   6465510).
+8. **B-band.** Re-read any of the 29 band heads whose predicted S, n or vouched_by changed, and every band row from L_changed
+   or the delta (0 wrong of any class). D4: an id within 2 % of EUR 100 m that differs from B_P is stop-and-explain, not a
+   switch-off.
+9. **Drain, staged, by id list (no corpus walk).** Stage 1: the 61, the pins, 7511890, every id in Rg, a salted 300 of P;
+   check D1–D4; stage 2: the rest; then L_changed runs. D1/D2 are measured on a PK-snapshot diff of the named ids (the job's
+   `corrected` = |P| + probe drift); a fire in the touched expansion is judged under D5/D6. D5 = PK-read every id in the
+   project's change-row range. Stop rules D1–D7 as in the record (exact set, tolerance 0; pins; band; scope; L_changed
+   rate max(2 × proj, proj + 10); time).
+10. **Timing.** Flip no earlier than the 10-21 post-chain gap (10-20 only if 560 records U-d PASS and closed on the 10-20
+    morning and 562 unit 5 has its cursor ranges). Never clock-driven; a missed bar waits for the next gap.
+11. **Switch-off route** = a pre-gated W=false twin on the currently deployed base (re-gated before each gap) + `refold-lot-sum`
+    by tender_ids over drain ids ∪ every id with a change row since the flip cursor that serves lot-sum-awards.
+12. **14-day watch** after the flip (band rows read; daily count vs the L_changed-observed rate on the chain's folded Tenders;
+    day-7 salted read `551-b6-daily-`) and the standing rule: no drain or deploy that changes path-W inputs (lot keys, winners,
+    org merges, rounds, stated totals, published lot numbers) while W is on without re-running the port diff on the served set
+    first (pins: 6908248, the partial sums 6679375, 7153588, 7398935, 7722197, 6779279, 6850401, 7698260).
+13. **Accepted residuals:** 5816379's superseded-vouch shape (~1 in 60, ~1.5× errors) stays unguarded and is filed; partial
+    sums stay; subscribers see the |P| heads' third correction (on, off, on) — noted in CHANGELOG/operations.md at the flip.
+14. **Salts:** `551-b6-gcost-` (guard cost reads), `551-b6-fresh-` (pre-flip read), `551-b6-delta-` (new fires after the
+    drain), `551-b6-daily-` (day-7 read of daily-derived heads).
