@@ -1244,3 +1244,8 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
     sums stay; subscribers see the |P| heads' third correction (on, off, on) — noted in CHANGELOG/operations.md at the flip.
 14. **Salts:** `551-b6-gcost-` (guard cost reads), `551-b6-fresh-` (pre-flip read), `551-b6-delta-` (new fires after the
     drain), `551-b6-daily-` (day-7 read of daily-derived heads).
+- **B6 code-drift ledger (point 5), as of 2026-10-19 05:55Z:** deployed 9529345 → 3f32b59 adds **21b2537** (571 unit 2,
+  result winners: served data). Its drain 2635/2636 is done (66 corrected, ids in `b6/l_changed_571_ids.json`, cursor
+  958809905 → 958810037); it changes served winners only, so its corrected set is its whole fact-changed set. 541 unit 2
+  (923172d) shipped before the switch-off deploy; its 2632 corrections (cursor 958809778 → 958809905) also join L_changed.
+

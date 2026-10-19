@@ -1,6 +1,6 @@
 # 571 — an R2.0.9 T02 award's operator owners (`ADDRESS_PARTY`) become `lot_results` winners
 
-Status: ready-for-agent — **unit 1 SIZED 2026-10-19**: `refold-fields` 2633 (`TED-ADDRESS_PARTY` in notice_ids, `expect: 1`, 04:49–04:57Z) aborted with **67** carriers, nothing written. Unit 2 (the guard + a 67-notice drain) in progress. Was: ready-for-agent — filed 2026-10-19 from issue 541 unit 2's review (wf_a8f42aac-9fa, scope lens, confirmed by an
+Status: **DONE 2026-10-19** — unit 2 (21b2537, gate green 1,392 s) deployed 05:45Z (rev 3f32b59) and drained: refold-fields 2635 (67 TED-ADDRESS_PARTY carriers) + project 2636 (67 written: 66 corrected, 1 verified); 15/15 salted corrections serve result winners = their winner parties, owners only under ADDRESS_PARTY. Was: ready-for-agent — **unit 1 SIZED 2026-10-19**: `refold-fields` 2633 (`TED-ADDRESS_PARTY` in notice_ids, `expect: 1`, 04:49–04:57Z) aborted with **67** carriers, nothing written. Unit 2 (the guard + a 67-notice drain) in progress. Was: ready-for-agent — filed 2026-10-19 from issue 541 unit 2's review (wf_a8f42aac-9fa, scope lens, confirmed by an
 adversarial verifier; pre-existing, not introduced by 541). Prevalence unknown: no fixture or census has shown an R2.0.9
 T02 with owners yet. Next: size it (unit 1), then the guard (unit 2).
 Kind: correctness (legacy results: a non-winner bound as a winner)
@@ -45,3 +45,16 @@ never reaches the results reader).
 the field (the sweep took ~8 min; project 2634 ran 0 notices). `ADDRESS_PARTY` is a MOVE-only element in R2.0.9, so these
 are the R2.0.9 T02 awards that name owners. No bounded way to list them without the field index; the drain's corrections
 (unit 2) name them.
+
+## RESOLVED-VERIFIED (2026-10-19)
+
+- **Unit 2** (21b2537): `LEGACY_NON_WINNER_REFS = ["TED-ADDRESS_PARTY"]` guards read_legacy_results' winner arm (the only
+  non-winner Org element that can sit inside a LotResult, checked against r209/rules.rs and the refused-role list); tests pin
+  the R2.0.9 T02 contractor-plus-owners block, an owners-only block (bare: clos-nw; with AWARDED_CONTRACT: NULL), every
+  R2.0.8/R2.0.9 contractor field including R2.0.9 F13's nested WINNER > ADDRESS_WINNER, and the issue-384 guard. Built by
+  wf_32e39867-ef0 (two review nits fixed). Gate green 1,392 s; deployed 05:45Z.
+- **Drain:** refold-fields 2635 (`{"profiles":["TED-ADDRESS_PARTY"],"tables":["notice_ids"],"expect":67}`) + project 2636:
+  67 written, **66 corrected**, 1 verified (D7 complete). `/v1/changes` 958809905 → 958810037: 66 tender changed rows
+  (`551-lot-sum/b6/l_changed_571_ids.json`: these join issue 551 B6's L_changed, since winners feed path W's R1/R5/R6).
+- **Verify:** 15 salted corrections (salt `571-`): each serves its owners only under the refused `ADDRESS_PARTY` role, and its
+  `lot_results` winners equal its `winner` parties (e.g. 6386700 → 3302058 Trenitalia; 6874627 → 1189921 + 22396754).
