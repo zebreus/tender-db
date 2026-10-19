@@ -1,0 +1,831 @@
+{
+ "issue": 530,
+ "step": "R2c: independent top-up (20 planned rows, salt 541337) of the post-Build-1b R2 re-read, on dry plan job 2660",
+ "date": "2026-10-19",
+ "plan_report": ".scratch/tender-db/530-triage/guid_twin_plan_2660.json",
+ "build": "Build 1b, deployed 8e9222c",
+ "salt": 541337,
+ "picks_file": ".scratch/tender-db/530-triage/r2c_picks.json",
+ "stored_mentions": ".scratch/tender-db/530-triage/r2c/q1.out.json",
+ "reads": [
+  ".scratch/tender-db/530-triage/r2c/read_c1.md (picks 0-9)",
+  ".scratch/tender-db/530-triage/r2c/read_c2.md (picks 10-19)"
+ ],
+ "pass": true,
+ "bar": "top-up 20: 0 W",
+ "tally": {
+  "r2c_topup": {
+   "picks": 20,
+   "R": 20,
+   "N": 0,
+   "W": 0,
+   "R_conditional_on_mint": [],
+   "pass": true
+  },
+  "by_stratum": {
+   "buyer": {
+    "picks": 8,
+    "R": 8,
+    "N": 0,
+    "W": 0,
+    "indices": [
+     2,
+     3,
+     7,
+     8,
+     9,
+     12,
+     16,
+     17
+    ]
+   },
+   "review_or_info": {
+    "picks": 12,
+    "R": 12,
+    "N": 0,
+    "W": 0,
+    "indices": [
+     0,
+     1,
+     4,
+     5,
+     6,
+     10,
+     11,
+     13,
+     14,
+     15,
+     18,
+     19
+    ]
+   },
+   "other_or_tenderer": {
+    "picks": 0
+   }
+  },
+  "stratum_basis": "the row's section role under the plan's convention (Procedure-Buyer -> buyer; every Lot- role, AddInfo and TenderReceipt included -> review_or_info, as R2b items 32/33/39/40 were classed); the draw itself is unstratified",
+  "by_reader": {
+   "c1": {
+    "picks": 10,
+    "R": 10
+   },
+   "c2": {
+    "picks": 10,
+    "R": 10
+   }
+  }
+ },
+ "independence": {
+  "draw_recomputed": "smallest ((org_id XOR 541337) * 2654435761) mod 2^32 over planned_row_ids, excluding ids within 5 of the 120 rows R2/R2b read (391 planned rows excluded): reproduces r2c_picks.json exactly",
+  "min_id_distance_to_read_rows": 21,
+  "min_id_distance_pair": [
+   22824021,
+   22824042
+  ],
+  "notices_shared_with_r2_r2b_reads": 0,
+  "notices_checked_against": [
+   "r2/read_*.md",
+   "r2b/read_*.md",
+   "r2/r2-result.json",
+   "r2b/r2b-result.json",
+   "r2/bodies",
+   "r2b/bodies"
+  ],
+  "notices_shared_between_picks": 0,
+  "salt_xor": {
+   "vs_530002": 21707,
+   "vs_530003": 21706,
+   "note": ">= 256 as R2b advised: a pick's XOR image sits >= 11,321 ids away, in another notice"
+  },
+  "xor_images_of_read_rows": [
+   {
+    "pick": 22890922,
+    "read_row": [
+     22879585,
+     22879584
+    ],
+    "note": "VBG pair read by R2/R2b; other notice, other target"
+   },
+   {
+    "pick": 22904876,
+    "read_row": [
+     22926566
+    ],
+    "note": "LVwA Sachsen-Anhalt (R2b #37); other notice, other target"
+   }
+  ],
+  "xor_images_note": "hash-order coupling only, no shared notice, group or target: not a content dependence",
+  "targets_read_before_at_target_level": [
+   622,
+   2443792,
+   2251109,
+   3233,
+   3856,
+   15234277,
+   1405749,
+   1222044,
+   7615,
+   1168329,
+   17012302,
+   1203308
+  ],
+  "targets_new": [
+   1547849,
+   13200890,
+   4307071,
+   8437842,
+   1460530,
+   18261510,
+   7473
+  ],
+  "distinct_targets": 19,
+  "correlated_pair": {
+   "indices": [
+    17,
+    18
+   ],
+   "note": "same buyer (Neubrandenburger Wohnungsgesellschaft), different notices, rows and targets"
+  },
+  "independent_picks": 20
+ },
+ "bound95_one_sided": {
+  "formula": "0 of n: 1 - 0.05^(1/n)",
+  "planned_rows": 10995,
+  "r2c_alone": {
+   "picks": 20,
+   "W": 0,
+   "bound95": 0.1391,
+   "rows": 1529
+  },
+  "combined_independent_after_build_1b": {
+   "definition": "R2b's 43 independent picks (its 60 minus the 17 same-group twins of R2 picks) + R2c's 20",
+   "picks": 63,
+   "W": 0,
+   "N": 0,
+   "R_conditional_on_mint": 1,
+   "bound95": 0.0464,
+   "rows": 511,
+   "by_stratum": {
+    "buyer": {
+     "picks": 28,
+     "planned_rows": 2731,
+     "bound95": 0.1015,
+     "rows": 277
+    },
+    "review_or_info": {
+     "picks": 25,
+     "planned_rows": 8063,
+     "bound95": 0.1129,
+     "rows": 911
+    },
+    "other_or_tenderer": {
+     "picks": 10,
+     "planned_rows": 201,
+     "bound95": 0.2589,
+     "rows": 52
+    }
+   }
+  },
+  "combined_strict_notice_level": {
+   "definition": "as above, also dropping R2b items 26, 31, 44, 45, 46, which share a notice (other group, other target) with an R2 pick",
+   "picks": 58,
+   "W": 0,
+   "bound95": 0.0503,
+   "rows": 553
+  },
+  "pooled_indicative": {
+   "r2_picks_still_planned": 59,
+   "r2b_independent": 43,
+   "r2c": 20,
+   "distinct_folds": 122,
+   "W": 0,
+   "bound95": 0.0243,
+   "rows": 267,
+   "note": "union of three hash-ordered draws (R2's on plan 2659, before Build 1b), not one simple random sample; not the bar"
+  }
+ },
+ "w_shapes": {
+  "umbrella_chamber_target": "none: chamber targets 622 and 3856 (the federal chambers at the Bundeskartellamt), 3233 Westfalen (pinned safe), 7615 and 7473 (the one Köln chamber), 1168329 Brandenburg and 18261510 MV (plural official designation, one seat, one e-mail) each name one body",
+  "review_slot_prints_other_body": "none: in every pick's group all sections print one street, one city and one e-mail (re-checked mechanically from the 20 TED bodies); no group mixes a buyer-side role with Lot-ReviewOrg and no group holds a Tenderer",
+  "stable_key": "none: each pick's GUID sits on one section in both copies of one notice (2 mentions); twin partners carry other fresh v4 values",
+  "group_composition": {
+   "buyer_addinfo_tenderreceipt": 12,
+   "buyer_triple_plus_own_reviewinfo": [
+    3
+   ],
+   "reviewinfo_revieworg_mediator": [
+    0,
+    4,
+    5,
+    10,
+    15,
+    18,
+    19
+   ]
+  }
+ },
+ "w_findings": [],
+ "fixes": {
+  "required": "none: 0 W, so no new unsafe name, no guard change"
+ },
+ "caveats_R": {
+  "target_own_mentions_not_read": [
+   1547849,
+   13200890,
+   4307071,
+   8437842,
+   7473
+  ],
+  "target_read_via_sibling_planned_notice": {
+   "1547849": 24332037,
+   "1460530": 24253163,
+   "18261510": 24253163
+  },
+  "city_flagged_target": {
+   "7615": "flag b is the postcode 50667 typed as a city"
+  },
+  "template_street": {
+   "3856": "Bundeskanzlerplatz 2 with the Bundeskartellamt phone, fax and e-mail (VBG template)"
+  },
+  "reader_claim_corrected": "read_c2 says every target was re-read by /v1/organizations/{id}; 4307071, 8437842 and 7473 were confirmed from the name_prefix listing rows instead (identifier NULL, provisional, DE, exact name, mentions) - same fields, no effect on the verdicts",
+  "asides_out_of_scope": [
+   "22695299: Samtgemeinde Bothel phone number T4942669831500 taken as a national key (6 mentions)",
+   "Köln chamber phone numbers taken as national keys (22318808, 22539480/81, 22575782, 22717048, 22785935)"
+  ]
+ },
+ "missing_targets": {
+  "in_sample": 0,
+  "plan_wide": {
+   "keys": 52,
+   "rows": 312,
+   "mentions": 636,
+   "decision": "mint in Build 2 (unchanged)"
+  }
+ },
+ "tally_checks": [
+  "all 20 picks in planned_row_ids",
+  "draw recomputed from the plan",
+  "q1: 2 mentions per pick, same section, name and raw BT-501 in both copies",
+  "each pick section carries its raw BT-501 in the TED body",
+  "group composition, roles, street, city and e-mail re-extracted from the 20 TED bodies",
+  "19 targets: identifier NULL, provisional, DE, exact name (org bodies or name_prefix rows)",
+  "city.flagged complete (36/36); only 7615 among the targets",
+  "10 targets are in r2_top_targets",
+  "GET log re-counted"
+ ],
+ "gets": {
+  "logged": 86,
+  "notice_content": 42,
+  "organizations": 36,
+  "organizations_name_prefix": 8,
+  "status_200": 86,
+  "status_408": 0,
+  "retries": 0,
+  "duplicate_paths": 0,
+  "min_gap_s": 2.05,
+  "window": "2026-10-19T21:18:48.862Z..21:25:09.464Z",
+  "by_reader": {
+   "c1": 42,
+   "c2": 44
+  },
+  "bodies": 86,
+  "log": ".scratch/tender-db/530-triage/r2c/api_requests.log",
+  "tally_gets": 0,
+  "not_used": [
+   "/v1/sql",
+   "ssh",
+   "POST",
+   "git",
+   "cargo"
+  ]
+ },
+ "next": "R2 stays passed: Build 2 may ship as decided (KEEP file, gate wired, wet path, recurrence arm A1, mint of the 52 missing keys); R3 after the wet run",
+ "items": [
+  {
+   "index": 0,
+   "reader": "c1",
+   "org_id": 22815410,
+   "name": "Vergabekammer des Bundes",
+   "section": "ORG-0003",
+   "role": "Lot-ReviewInfo",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": null,
+   "target": 622,
+   "target_mentions": 111305,
+   "missing_target": false,
+   "notice_ids": [
+    24339102,
+    26516806
+   ],
+   "mentions": 2,
+   "raw_bt501": "166dae2a-7139-4d53-84f9-a3520658dfb0",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top2 #19, read_office #2",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "Knappschaftskrankenhaus Bottrop cn 2024-11-27 (TED 24339102 / DÖE 26516806). ReviewInfo + ReviewOrg + Mediator all print Vergabekammer des Bundes, Villemombler Str. 76, Bonn, vk@bundeskartellamt.bund.de. The group is review-family only. Target 622 (111,305 mentions, city set {bonn}) is the federal chambers, one institution; its newest mention has the same address. Stable row 255 is spared by KEEP."
+  },
+  {
+   "index": 1,
+   "reader": "c1",
+   "org_id": 22890922,
+   "name": "Bau- und Liegenschaftsbetrieb NRW Aachen",
+   "section": "ORG-0005",
+   "role": "Lot-TenderReceipt",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": null,
+   "target": 2443792,
+   "target_mentions": 573,
+   "missing_target": false,
+   "notice_ids": [
+    24435144,
+    26539238
+   ],
+   "mentions": 2,
+   "raw_bt501": "4014fe4a-9d5b-4389-8d59-3c339016ff42",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top2 #17; R2b read_rand1 #9",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "BLB NRW AC (Bund) locksmith lot cn 2024-12-20 (24435144 / 26539238). Buyer + AddInfo + TenderReceipt all print Mies-van-der-Rohe-Str. 10, Aachen, AC.Einkauf@blb.nrw.de. The federal chamber is printed under its own name. Target 2443792 (573) is the same Aachen branch (2008 notice, Aachen)."
+  },
+  {
+   "index": 2,
+   "reader": "c1",
+   "org_id": 22840477,
+   "name": "RWTH Aachen University",
+   "section": "ORG-0001",
+   "role": "Procedure-Buyer",
+   "stratum": "buyer",
+   "twin_partners_in_group": [
+    22840478,
+    22840481
+   ],
+   "target": 1547849,
+   "target_mentions": 469,
+   "missing_target": false,
+   "notice_ids": [
+    24370980,
+    26503061
+   ],
+   "mentions": 2,
+   "raw_bt501": "7cde69c5-98ec-478f-a873-71cd081c05ef",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": null,
+   "target_evidence": "sibling planned notice 24332037 (planned_mention_keys) + name_prefix listing; own mentions not read",
+   "verdict": "R",
+   "why": "RWTH '153 - Schüttler und Fermenter' cn 2024-11-12 (24370980 / 26503061). Buyer + AddInfo + TenderReceipt all print Abt. 7.3 Zentraleinkauf, Wüllnerstr. 5, Aachen. The target is identified via planned_mention_keys of sibling notice 24332037 (same shape) and is the only identifier-NULL 'RWTH Aachen University' DE row (469). It is not city-flagged. The identified row 1807 stays apart (300 §10). One university. No target-held notice was readable."
+  },
+  {
+   "index": 3,
+   "reader": "c1",
+   "org_id": 22824021,
+   "name": "Stadt Münster",
+   "section": "ORG-0001",
+   "role": "Procedure-Buyer",
+   "stratum": "buyer",
+   "twin_partners_in_group": null,
+   "target": 2251109,
+   "target_mentions": 192,
+   "missing_target": false,
+   "notice_ids": [
+    24349889,
+    26509803
+   ],
+   "mentions": 2,
+   "raw_bt501": "06741c77-3cad-45bb-ac9e-52caf543d731",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 top30; R2b #6",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "Stadt Münster screed works cn 2024-11-19 (24349889 / 26509803). Buyer + AddInfo + own ReviewInfo + TenderReceipt all print Zentrales Vergabemanagement, Klemensstr. 10, vergaben@stadt-muenster.de. The ReviewOrg is VK Westfalen under its own name, so there is no ReviewOrg mix. Target 2251109 (192, {munster}) is the same city."
+  },
+  {
+   "index": 4,
+   "reader": "c1",
+   "org_id": 22843623,
+   "name": "Vergabekammer Westfalen",
+   "section": "ORG-0005",
+   "role": "Lot-ReviewOrg",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": null,
+   "target": 3233,
+   "target_mentions": 37696,
+   "missing_target": false,
+   "notice_ids": [
+    24375366,
+    26516135
+   ],
+   "mentions": 2,
+   "raw_bt501": "338386c7-9bbc-4e18-84bc-57e5e71dd889",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top2 #16",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "DMT Bochum cn 2024-11-26 (24375366 / 26516135). ReviewInfo + ReviewOrg + Mediator all print VK Westfalen, Albrecht-Thaer-Str. 9, Münster, vergabekammer@bezreg-muenster.nrw.de. The group is review-family only. Target 3233 (37,696, {munster}): 'Westfalen' pins one chamber (pinned safe in Build 1b), so it is not the VK NRW umbrella shape."
+  },
+  {
+   "index": 5,
+   "reader": "c1",
+   "org_id": 22904876,
+   "name": "Vergabekammern des Bundes",
+   "section": "ORG-0003",
+   "role": "Lot-ReviewInfo",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": null,
+   "target": 3856,
+   "target_mentions": 17642,
+   "missing_target": false,
+   "notice_ids": [
+    24453623,
+    26521991
+   ],
+   "mentions": 2,
+   "raw_bt501": "cb94fbdc-5d8c-4e55-9aa0-a89212fe230a",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top2 #21",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "VBG award 2024-12-04 (24453623 / 26521991). ReviewInfo + ReviewOrg + Mediator all print Vergabekammern des Bundes at Bundeskanzlerplatz 2, Bonn, with the Bundeskartellamt's phone, fax and e-mail (vk@bundeskartellamt.bund.de). It is the same federal chambers under a template street. Target 3856 (17,642, {bonn}) is one institution."
+  },
+  {
+   "index": 6,
+   "reader": "c1",
+   "org_id": 22775107,
+   "name": "Bundesstadt Bonn - Referat Vergabedienste",
+   "section": "ORG-0002",
+   "role": "Lot-AddInfo",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": null,
+   "target": 15234277,
+   "target_mentions": 376,
+   "missing_target": false,
+   "notice_ids": [
+    24283696,
+    26486969
+   ],
+   "mentions": 2,
+   "raw_bt501": "37371690-c523-479c-8d55-11d2eb2650d7",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top1 #2; R2b #2",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "Bonn Beethovenhalle mural restoration award 2024-10-23 (24283696 / 26486969). Buyer + AddInfo both print Bertha-von-Suttner-Platz 2-4, referatvergabedienste@bonn.de. VK Rheinland is printed under its own name. Target 15234277 (376) has the same address and e-mail in its 2023 notice."
+  },
+  {
+   "index": 7,
+   "reader": "c1",
+   "org_id": 22949668,
+   "name": "JVA Castrop-Rauxel Zentralstelle für das Beschaffungswesen im Justizvollzug",
+   "section": "ORG-0001",
+   "role": "Procedure-Buyer",
+   "stratum": "buyer",
+   "twin_partners_in_group": [
+    22949669
+   ],
+   "target": 13200890,
+   "target_mentions": 315,
+   "missing_target": false,
+   "notice_ids": [
+    24509994,
+    26555175
+   ],
+   "mentions": 2,
+   "raw_bt501": "ee292884-7407-4c48-ad20-cc210e68fabf",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": null,
+   "target_evidence": "name_prefix listing; own mentions not read",
+   "verdict": "R",
+   "why": "NRW prison mattresses award 2025-01-21 (24509994 / 26555175). Buyer (awarding CPB) + AddInfo (row 22949669) both print Lerchenstraße, Castrop-Rauxel, zentralebeschaffung@jva-castrop-rauxel.nrw.de. Per name_prefix, 13200890 (315) is the only identifier-NULL row with the exact name; the other exact-name rows are per-notice GUID pairs. It is not city-flagged. One office. No target-held notice was readable."
+  },
+  {
+   "index": 8,
+   "reader": "c1",
+   "org_id": 22874677,
+   "name": "HIL Heeresinstandsetzungslogistik GmbH",
+   "section": "ORG-0001",
+   "role": "Procedure-Buyer",
+   "stratum": "buyer",
+   "twin_partners_in_group": null,
+   "target": 1405749,
+   "target_mentions": 2076,
+   "missing_target": false,
+   "notice_ids": [
+    24414612,
+    26533931
+   ],
+   "mentions": 2,
+   "raw_bt501": "63050a66-de65-4576-a952-22882ebfbf90",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top1 #6; R2b #19",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "HIL GTK Boxer axle repair award 2024-12-17 (24414612 / 26533931). Buyer + AddInfo both print Josef-Wirmer-Str. 2-8, Bonn, vergabe@hilgmbh.de. VK Bund is printed under its own name. Target 1405749 (2,076, {bonn}) shows the same company and address in 23972531."
+  },
+  {
+   "index": 9,
+   "reader": "c1",
+   "org_id": 22827487,
+   "name": "Bau- und Liegenschaftsbetrieb NRW Münster",
+   "section": "ORG-0001",
+   "role": "Procedure-Buyer",
+   "stratum": "buyer",
+   "twin_partners_in_group": null,
+   "target": 1222044,
+   "target_mentions": 261,
+   "missing_target": false,
+   "notice_ids": [
+    24354265,
+    26502152
+   ],
+   "mentions": 2,
+   "raw_bt501": "939657ca-8a4d-4011-b657-29ad6897da4d",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top2 #23",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "BLB NRW Münster Hüfferstiftung roofing award 2024-11-11 (24354265 / 26502152). Buyer + AddInfo both print Hohenzollernring 80, Münster, BLBVergabe@blb.nrw.de. VK Westfalen is printed under its own name. Target 1222044 (261, {munster}) already holds this branch's per-role duplicates (44550117)."
+  },
+  {
+   "index": 10,
+   "reader": "c2",
+   "org_id": 22917421,
+   "name": "Vergabekammer Rheinland",
+   "section": "ORG-0002",
+   "role": "Lot-ReviewInfo",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": [
+    22917422
+   ],
+   "target": 7615,
+   "target_mentions": 29617,
+   "missing_target": false,
+   "notice_ids": [
+    24470203,
+    26549290
+   ],
+   "mentions": 2,
+   "raw_bt501": "dbd007b6-e66b-46b3-aa8f-e133a9a7d32f",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top1 #0; R2b #30/34/42/43",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "NDR notice 24470203/26549290: both twin sections print the VK Rheinland Köln office (Zeughausstr. 2-10, VKRheinland@bezreg-koeln). The group has no buyer-side role. Target is the one Köln chamber; R2 read_top1 item 0 read it R, and its 2nd 'city' is the postcode 50667. Shares no notice with R2/R2b; the target was read before."
+  },
+  {
+   "index": 11,
+   "reader": "c2",
+   "org_id": 22923417,
+   "name": "Bau- und Liegenschaftsbetrieb NRW Aachen",
+   "section": "ORG-0002",
+   "role": "Lot-AddInfo",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": [
+    22923416
+   ],
+   "target": 2443792,
+   "target_mentions": 573,
+   "missing_target": false,
+   "notice_ids": [
+    24477699,
+    26558255
+   ],
+   "mentions": 2,
+   "raw_bt501": "7bbcdca1-38a8-40f0-9563-5b64b3158844",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top2; R2b read_rand1 #9",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "Notice 24477699/26558255: both sections print the same BLB Aachen procurement office (Mies-van-der-Rohe-Str. 10, AC.Einkauf@blb.nrw.de). The VK Rheinland c/o triple is a separate group. Target read R by R2 read_top2 and R2b rand1 item 9 at target level only; no shared notice."
+  },
+  {
+   "index": 12,
+   "reader": "c2",
+   "org_id": 22840850,
+   "name": "Stadt Ahlen",
+   "section": "ORG-0001",
+   "role": "Procedure-Buyer",
+   "stratum": "buyer",
+   "twin_partners_in_group": [
+    22840851,
+    22840853
+   ],
+   "target": 4307071,
+   "target_mentions": 177,
+   "missing_target": false,
+   "notice_ids": [
+    24371501,
+    26502917
+   ],
+   "mentions": 2,
+   "raw_bt501": "e959faf2-2ecb-40e4-a768-f9aa9f310b2b",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": null,
+   "target_evidence": "name_prefix listing; own mentions not read",
+   "verdict": "R",
+   "why": "Notice 24371501/26502917: all three sections print Zentrale Vergabestelle, Westenmauer 10, Ahlen; the ReviewOrg is VK Westfalen under its own name. There are 18 other 2-mention GUID rows of the name. The Leitweg-ID and VAT rows are not targets. One Stadt Ahlen in DE; not city-flagged."
+  },
+  {
+   "index": 13,
+   "reader": "c2",
+   "org_id": 22845049,
+   "name": "Samtgemeinde Bothel",
+   "section": "ORG-0003",
+   "role": "Lot-AddInfo",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": [
+    22845047
+   ],
+   "target": 8437842,
+   "target_mentions": 9,
+   "missing_target": false,
+   "notice_ids": [
+    24376805,
+    26510749
+   ],
+   "mentions": 2,
+   "raw_bt501": "4dd4b515-d98e-4d0a-889e-0f935f32cdc9",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": null,
+   "target_evidence": "name_prefix listing; own mentions not read",
+   "verdict": "R",
+   "why": "Fire-engine award 24376805/26510749: both sections print Horstweg 17, Bothel, samtgemeinde@bothel.de; the ReviewOrg is VK Niedersachsen. Unique name, not city-flagged. Aside: row 22695299 carries the phone number T4942669831500 as a 'national' key; it is not a target."
+  },
+  {
+   "index": 14,
+   "reader": "c2",
+   "org_id": 22853395,
+   "name": "SBO Servicebetriebe Oberhausen - Eigenbetrieb der Stadt Oberhausen",
+   "section": "ORG-0002",
+   "role": "Lot-AddInfo",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": [
+    22853394
+   ],
+   "target": 17012302,
+   "target_mentions": 80,
+   "missing_target": false,
+   "notice_ids": [
+    24387352,
+    26504764
+   ],
+   "mentions": 2,
+   "raw_bt501": "a582b9f7-896f-4bdb-b338-97e077627225",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2b read_rand1 #11",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "Theater Oberhausen notice 24387352/26504764: both sections print Bahnhofstr. 66, Oberhausen, vergabe-bm@sbo. Target read R by R2b rand1 item 11; its sibling notice 24331367 shows the same block. No shared notice."
+  },
+  {
+   "index": 15,
+   "reader": "c2",
+   "org_id": 22997423,
+   "name": "Vergabekammer des Landes Brandenburg",
+   "section": "ORG-0004",
+   "role": "Lot-ReviewOrg",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": [
+    22997422
+   ],
+   "target": 1168329,
+   "target_mentions": 10598,
+   "missing_target": false,
+   "notice_ids": [
+    24573186,
+    26570320
+   ],
+   "mentions": 2,
+   "raw_bt501": "72b3d21b-9f9b-4c3d-b85b-aa457694371b",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_top1 #11",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "LFB Brandenburg PSA framework 24573186/26570320: both sections print Heinrich-Mann-Allee 107, Potsdam, vergabekammer@MWAE. The buyer triple and the MLUK mediator are under their own names. Target read R by R2 top1 item 11; its newest mention 47414536 is the same Potsdam chamber."
+  },
+  {
+   "index": 16,
+   "reader": "c2",
+   "org_id": 22922428,
+   "name": "Bau- und Liegenschaftsbetrieb NRW Bielefeld",
+   "section": "ORG-0001",
+   "role": "Procedure-Buyer",
+   "stratum": "buyer",
+   "twin_partners_in_group": [
+    22922429
+   ],
+   "target": 1203308,
+   "target_mentions": 796,
+   "missing_target": false,
+   "notice_ids": [
+    24476563,
+    26558176
+   ],
+   "mentions": 2,
+   "raw_bt501": "73c91731-4f6b-412d-ba46-702a462b10ee",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": "R2 read_rand1 #0; R2b read_rand3 #33",
+   "target_evidence": "target org body + newest/listed mentions (r2/bodies) or plan list",
+   "verdict": "R",
+   "why": "Finanzamt Bielefeld Freianlagen 24476563/26558176: both sections print August-Bebel-Str. 91, Bielefeld, BLBVergabe@blb.nrw.de; the ReviewOrg is VK Westfalen. Target read R by R2 rand1 item 0 and R2b rand3 item 33 at target level; no shared notice."
+  },
+  {
+   "index": 17,
+   "reader": "c2",
+   "org_id": 22782551,
+   "name": "Neubrandenburger Wohnungsgesellschaft mbH",
+   "section": "ORG-0001",
+   "role": "Procedure-Buyer",
+   "stratum": "buyer",
+   "twin_partners_in_group": [
+    22782552
+   ],
+   "target": 1460530,
+   "target_mentions": 186,
+   "missing_target": false,
+   "notice_ids": [
+    24293938,
+    26485121
+   ],
+   "mentions": 2,
+   "raw_bt501": "9484e607-8fc4-4a88-b943-c97dea423cac",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": null,
+   "target_evidence": "sibling planned notice 24253163",
+   "verdict": "R",
+   "why": "Vehicle-leasing notice 24293938/26485121: both sections print Heidenstr. 6, Neubrandenburg, ausschreibung@neuwoges. 45 two-mention GUID rows carry the name; the VAT row is not a target. Sibling planned notice 24253163 shows the target gets only the WG's own slots. Not city-flagged. Same buyer as pick 18 (different notice and target)."
+  },
+  {
+   "index": 18,
+   "reader": "c2",
+   "org_id": 22753860,
+   "name": "Vergabekammern des Landes Mecklenburg-Vorpommern bei dem Ministerium für Wirtschaft, Infrastruktur, Tourismus und Arbeit",
+   "section": "ORG-0003",
+   "role": "Lot-ReviewInfo",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": [
+    22753861
+   ],
+   "target": 18261510,
+   "target_mentions": 620,
+   "missing_target": false,
+   "notice_ids": [
+    24255388,
+    26482768
+   ],
+   "mentions": 2,
+   "raw_bt501": "2dcf9761-a12d-4e0e-b2c4-57d86b14f1aa",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": null,
+   "target_evidence": "sibling planned notice 24253163",
+   "verdict": "R",
+   "why": "WG notice 24255388/26482768: both sections print Johannes-Stelling-Str. 14, Schwerin, vergabekammer@wm.mv-regierung. The plural is MV's official designation for its chambers: one office, address and e-mail. That is not R2's VK NRW shape (two seats). Not city-flagged; sibling rows in 24253163 print the same office. Correlated with pick 17 (same buyer)."
+  },
+  {
+   "index": 19,
+   "reader": "c2",
+   "org_id": 22938395,
+   "name": "Vergabekammer Rheinland bei der Bezirksregierung Köln",
+   "section": "ORG-0003",
+   "role": "Lot-ReviewOrg",
+   "stratum": "review_or_info",
+   "twin_partners_in_group": [
+    22938394
+   ],
+   "target": 7473,
+   "target_mentions": 6101,
+   "missing_target": false,
+   "notice_ids": [
+    24496663,
+    26557085
+   ],
+   "mentions": 2,
+   "raw_bt501": "266c50cc-7833-42db-960b-3062e8868c93",
+   "independent": true,
+   "shares_notice_with_r2_or_r2b_read": false,
+   "target_read_before": null,
+   "target_evidence": "name_prefix listing (2 pages); own mentions not read",
+   "verdict": "R",
+   "why": "UK Köln notice 24496663/26557085: both sections print Geschäftsstelle VK Rheinland, Zeughausstr. 2-10, Köln, VKRheinland@bezreg-koeln; the buyer is under its own name. 170+ two-mention GUID rows of the name (per-notice split). The Düsseldorf Spruchkörper name and bare 'VK Rheinland' are separate keys. Not city-flagged."
+  }
+ ]
+}
