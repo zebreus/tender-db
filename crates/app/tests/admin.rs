@@ -302,7 +302,8 @@ async fn admin_api_drives_ingestion_end_to_end() {
 
     // --- issue 551 unit 4b (B5): `tender_ids` scopes refold-lot-sum alone ----------
     // The JSON field reaches the job (a dry run over the named Tenders, writing nothing), and
-    // every other kind refuses it at enqueue rather than run unscoped.
+    // every other kind refuses it at enqueue rather than run unscoped. Since B5's stop rule switched
+    // path W off again (2026-10-19), the same scoped run is the drain back (the heads B5 corrected).
     let scoped = h.enqueue(Some(SECRET), json!({"kind":"refold-lot-sum","tender_ids":[1, 2]})).await;
     assert_eq!(scoped.status().as_u16(), 202, "refold-lot-sum takes tender_ids");
     let state = h.drain(5).await;

@@ -1106,7 +1106,10 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          figure vouches for (that figure is exactly 10^k times the sum); 'lot-sum-awards' when it is \
          the lots' latest awards added up on a head with no procedure figure, vouched by a total the \
          buyer stated within 1% of the sum (issue 551 unit 4b; unit 4a had withdrawn the unvouched \
-         first design, and refold-lot-sum re-elects the heads either setting moves). The four \
+         first design, and refold-lot-sum re-elects the heads either setting moves), written only \
+         while lot-sum-awards is switched on: it is switched off again since 2026-10-19 (B5's stop rule, \
+         pending an investigation), so no fold writes 'lot-sum-awards' now and refold-lot-sum \
+         re-elects the heads that carry it. The four \
          current_value_* derivation columns are written and cleared together by the fold; a head \
          not folded since issue 551 deployed reads NULL until its refold (refold-lot-sum).",
     ),
@@ -1128,7 +1131,8 @@ const COLUMN_NOTES: &[(&str, &str, &str)] = &[
          (awards, BT-27-Lot or BT-271-Lot), lots, and for lot-sum-vouched the rule (the deciding \
          issue: 537, 471 or 492), its exponent and the refused figure {field, value {cents, \
          currency}}; and vouched_by {field, notice_id, cents} for 'lot-sum-awards' (the stated total \
-         that vouches for the sum, in its currency; issue 551 unit 4b). NULL on every elected head.",
+         that vouches for the sum, in its currency; issue 551 unit 4b; written only while \
+         lot-sum-awards is switched on, off since 2026-10-19). NULL on every elected head.",
     ),
     (
         "tenders",
