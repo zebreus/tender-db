@@ -505,6 +505,10 @@ enum Spec {
     /// Issue 524 unit 1: whether each organization's served head (written at mint, never again) still
     /// names what its mentions say, with issue 456 unit 1's stray buckets. Read-only.
     OrgHeadDrift { min_mentions: u64, samples: usize },
+    /// Issue 530 unit 1: the v4-GUID identifier class sized by the distinct Tenders each row's mentions
+    /// span, with the within-notice twin and cross-notice signals unit 2 weighs and the stable-platform
+    /// rows as their own population. Read-only.
+    GuidCensus { stable_mentions: u64, samples: usize },
     /// Issue 524 unit 2a: re-elect each identifier-bearing organization's served head from its mentions
     /// (`store::elect_head`, ADR-0013's 2026-10-15 amendment) and store what a wet run would change,
     /// hold and keep as `org-name-refresh-plan`. Always dry: since unit 2b a `dry_run: false` request
@@ -1293,8 +1297,14 @@ pub struct JobRequest {
     /// `org-head-drift` only: the samples listed per bucket and flag. Omitted, 30; clamped to 1 to
     /// [`ORG_HEAD_DRIFT_SAMPLES_MAX`]. Also `refresh-org-names` (issue 524 unit 2a): the uniform samples
     /// listed per rule and per reason, the same default and clamp; `min_mentions` reads as there too.
-    /// `revert-org-name-refresh` refuses it (it restores the whole job).
+    /// `revert-org-name-refresh` refuses it (it restores the whole job). Also `guid-census` (issue 530
+    /// unit 1): the samples per list, the same default and clamp.
     pub samples: Option<u64>,
+    /// `guid-census` only (issue 530 unit 1): a GUID row with at least this many mentions joins the
+    /// stable-platform population beside [`GUID_CENSUS_STABLE_IDS`]. Omitted,
+    /// [`GUID_CENSUS_STABLE_MENTIONS`]; at or under [`store::GUID_CENSUS_FEW_MENTIONS`] is refused (a
+    /// single-use TED+DÖE pair would count as stable).
+    pub stable_mentions: Option<u64>,
     /// `refresh-org-names` only (issue 524 unit 2a): plan only these organizations instead of walking
     /// every one (a merge campaign's keeps, the canaries). 1 to [`ORG_NAME_REFRESH_ORG_IDS_MAX`] ids,
     /// each positive. On a wet run (unit 2b), rename only these of the stored plan's planned ids.
@@ -1337,6 +1347,34 @@ const ORG_HEAD_DRIFT_SAMPLES_MAX: u64 = 200;
 /// (the University of Sheffield served as `Sheffield Hallam University`), 22713056 (a review chamber
 /// served as `s.o.`) and 30914328 (`Withheld Section94 Supplier`, issue 522's fix).
 const ORG_HEAD_DRIFT_CANARIES: &[i64] = &[31_558_903, 22_713_056, 30_914_328];
+
+/// Issue 530 unit 1: the stable platform keys the issue names — 254 DB InfraGO AG (Fahrweg), 255
+/// Vergabekammer des Bundes and 8378 LEONHARD WEISS — in `guid-census`'s stable population whatever
+/// their mentions (its Verify control).
+const GUID_CENSUS_STABLE_IDS: &[i64] = &[254, 255, 8_378];
+/// Issue 530 unit 1: `guid-census`'s default `stable_mentions`: a GUID row with this many mentions is a
+/// stable platform key, sized apart from the class (items 4 and 5).
+const GUID_CENSUS_STABLE_MENTIONS: u64 = 100;
+/// Issue 530 unit 1: the exhibits `guid-census` always reports — the stable controls (254, 255, 8378,
+/// and 30530641, one key across three TED notices at 6 mentions), the Göttingen award's buyer twins
+/// and winner (22759261, 22759262, 22759265), Südbayern's per-notice rows (30971684, 30971734,
+/// 30971757) and Immobilien Bremen's (30532145, 30532147).
+const GUID_CENSUS_CANARIES: &[i64] = &[
+    254,
+    255,
+    8_378,
+    30_530_641,
+    22_759_261,
+    22_759_262,
+    22_759_265,
+    30_971_684,
+    30_971_734,
+    30_971_757,
+    30_532_145,
+    30_532_147,
+];
+/// Issue 530 unit 1: the report `guid-census` stores.
+const GUID_CENSUS_REPORT: &str = "guid-census";
 
 /// Issue 524 unit 2a: the most `org_ids` one `refresh-org-names` takes — the plan's listing cap, so a
 /// scoped plan can never be truncated.
@@ -2372,6 +2410,188 @@ fn org_head_drift_summary(r: &store::OrgHeadDriftReport) -> String {
     )
 }
 
+/// Issue 530 unit 1: a party role's class for `guid-census`. eForms roles are their OPT-300/301 suffix
+/// (`Procedure-Buyer`, `Lot-ReviewOrg`; `ingest::project`'s `role_name`), legacy ones the canonical names
+/// of [`ingest::project::LEGACY_PARTY_ROLES`]. The buyer and the purchasing body are `buyer`; a tenderer,
+/// its main or subcontractor, and a legacy winner are `tenderer_winner` (the census adds bid parties and
+/// lot-result winners itself); every `Lot-`/`Part-` role and every other legacy body (review, mediation,
+/// information, tender receipt, specifications, legislation) is `review_or_info`; the service provider
+/// (the eSender), the contract signatory and the paying and financing parties are `other`.
+fn guid_role_class(role: &str) -> &'static str {
+    match role {
+        "Procedure-Buyer" | "buyer" | "purchasing-body" => store::GUID_ROLE_BUYER,
+        "Tenderer" | "Tenderer-MainCont" | "Tenderer-SubCont" | "winner" => store::GUID_ROLE_TENDERER,
+        "review-body"
+        | "mediation-body"
+        | "tender-receipt"
+        | "further-information"
+        | "specifications-provider"
+        | "appeal-information"
+        | "tax-legislation-information"
+        | "environmental-legislation-information"
+        | "employment-legislation-information" => store::GUID_ROLE_REVIEW_INFO,
+        role if role.starts_with("Lot-") || role.starts_with("Part-") => store::GUID_ROLE_REVIEW_INFO,
+        _ => store::GUID_ROLE_OTHER,
+    }
+}
+
+/// Issue 530 unit 1: `guid-census` as stored — the report as serialised, with what it was read with: the
+/// class predicate, the Tender basis, the role mapping, the platform key and the canary ids. A sync free
+/// fn, so its temporaries stay off the boxed arm's poll frame (issue 467's lesson).
+fn guid_census_json(r: &store::GuidCensusReport) -> Result<String, String> {
+    let mut body = serde_json::to_value(r).map_err(|e| e.to_string())?;
+    if let Some(all) = body.as_object_mut() {
+        all.insert(
+            "class".to_owned(),
+            "ingest::idgate::uuid_v4 over organizations.identifier (stored undashed upper case): 32 hex digits \
+             once dashes are dropped, any case, version nibble 4 (13th digit) and variant nibble 8-b (17th); \
+             `nibble_only` counts the 32-hex values with the version nibble and another variant"
+                .into(),
+        );
+        all.insert(
+            "tender_basis".to_owned(),
+            "each mention's notice -> the Tenders it is a version of (tender_versions.caused_by_notice_id); a \
+             row's tenders are the distinct ones over its mentions, so a notice's TED and DÖE copies count once"
+                .into(),
+        );
+        all.insert(
+            "role_basis".to_owned(),
+            "the row's tender_version_parties roles through guid_role_class (Procedure-Buyer/buyer/purchasing-body \
+             buyer; Tenderer, its contractors, winner tenderer_winner; Lot-*/Part-* and the legacy review, \
+             information and receipt bodies review_or_info; the rest other), plus tenderer_winner for a \
+             tender_version_bid_parties or tender_version_result_winners row; several classes take the first \
+             of buyer, tenderer_winner, review_or_info, other; none is no_role"
+                .into(),
+        );
+        all.insert(
+            "platform_basis".to_owned(),
+            "notices.source of the row's notices (doe, ted, ...) joined by +, and the published BT-501 formatting \
+             of its mentions' raw_identifier (dashed/plain, lower/upper/mixed case; other; none). The eSender \
+             party and the submission URL are not read (`not_measured`)"
+                .into(),
+        );
+        all.insert("canary_ids".to_owned(), serde_json::json!(GUID_CENSUS_CANARIES));
+    }
+    Ok(body.to_string())
+}
+
+/// Issue 530 unit 1: `guid-census`'s job summary, every item of the issue's unit 1 in one line.
+fn guid_census_summary(r: &store::GuidCensusReport) -> String {
+    let pct = |n: u64, d: u64| if d == 0 { "-".to_owned() } else { format!("{:.1}%", n as f64 * 100.0 / d as f64) };
+    // Rows with a mention: the denominator of every span share.
+    let named = |t: &store::GuidTally| t.rows - t.no_mentions;
+    let spans = |t: &store::GuidTally| {
+        format!(
+            "{} row(s), {} mention(s): more than one notice {}, more than one tender {}",
+            t.rows,
+            t.mentions,
+            pct(t.multi_notice, named(t)),
+            pct(t.multi_tender, named(t))
+        )
+    };
+    let top = |by: &std::collections::BTreeMap<String, store::GuidTally>, n: usize| {
+        let mut keys: Vec<(&String, &store::GuidTally)> = by.iter().collect();
+        keys.sort_by(|a, b| b.1.rows.cmp(&a.1.rows).then(a.0.cmp(b.0)));
+        let listed: Vec<String> = keys
+            .iter()
+            .take(n)
+            .map(|(key, t)| format!("{key} {}/{} single-use", t.one_tender, t.rows))
+            .collect();
+        if listed.is_empty() { "none".to_owned() } else { listed.join(", ") }
+    };
+    let roles = store::GUID_ROLE_CLASSES
+        .iter()
+        .chain(std::iter::once(&store::GUID_ROLE_NONE))
+        .map(|class| {
+            let t = r.by_role.get(class).copied().unwrap_or_default();
+            format!("{class} {}/{}", t.one_tender, t.rows)
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    let canaries = GUID_CENSUS_CANARIES
+        .iter()
+        .map(|id| match r.canaries.iter().find(|c| c.org_id == *id) {
+            Some(c) => format!(
+                "{id} {} mention(s) {} notice(s) {} tender(s){}{}{}",
+                c.mentions,
+                c.notices,
+                c.tenders,
+                if c.stable { " stable" } else { "" },
+                if c.twin {
+                    " twin"
+                } else if c.twin_notice {
+                    " twin-notice"
+                } else {
+                    ""
+                },
+                c.cross_with.map(|s| format!(" cross<-{s}")).unwrap_or_default()
+            ),
+            None => format!("{id} not a GUID row"),
+        })
+        .collect::<Vec<_>>()
+        .join("; ");
+    let one = r.all.one_tender;
+    format!(
+        "guid-census (issue 530 unit 1): {} GUID row(s) (idgate::uuid_v4; {} nibble-only value(s) left out) of {} \
+         candidate(s) in {} window(s) up to org id {}, {} mention(s){}. (1) ONE distinct tender: {} of {} row(s) \
+         with a mention ({}); several {}; none {}; no mention {}. (2) within-notice twin: {} notice(s), {} \
+         group(s), {} row(s), reaching {} single-use ({}); {} stable; notice-scoped (every GUID row of a twin \
+         notice) {} row(s), reaching {} single-use ({}); {} stable. (3) cross-notice (an earlier GUID row of \
+         <= {} mentions under the same name_norm+country): {} row(s) under {} name(s), {} single-use ({}); either \
+         signal {} ({}), neither {}; with the twin notice-scoped, either {} ({}), neither {}. (4) cross names \
+         also holding a stable row: {} of {}, {} row(s) reached under them ({} single-use), {} STABLE row(s) \
+         reached. (5) all: {}; stable (ids {:?} + {}+ mentions): {}; the rest: {}. By country: {}. By role \
+         (single-use/rows): {roles}; {} mixed. Platforms: {}. Canaries: {canaries}. NOTHING IS WRITTEN.",
+        r.all.rows,
+        r.nibble_only,
+        r.candidates,
+        r.windows,
+        r.max_id,
+        r.mentions_walked,
+        if r.mention_ceiling_hit { "; MENTION CEILING HIT, the twin counts are a lower bound" } else { "" },
+        one,
+        named(&r.all),
+        pct(one, named(&r.all)),
+        r.all.multi_tender,
+        r.all.no_tender,
+        r.all.no_mentions,
+        r.twin.notices,
+        r.twin.groups,
+        r.twin.rows,
+        r.twin.one_tender_rows,
+        pct(r.twin.one_tender_rows, one),
+        r.twin.stable_rows,
+        r.twin.notice_rows,
+        r.twin.notice_one_tender_rows,
+        pct(r.twin.notice_one_tender_rows, one),
+        r.twin.notice_stable_rows,
+        r.few_mentions,
+        r.cross.rows,
+        r.cross.names,
+        r.cross.one_tender_rows,
+        pct(r.cross.one_tender_rows, one),
+        r.all.one_tender_either,
+        pct(r.all.one_tender_either, one),
+        one - r.all.one_tender_either,
+        r.all.one_tender_either_notice,
+        pct(r.all.one_tender_either_notice, one),
+        one - r.all.one_tender_either_notice,
+        r.cross.names_with_stable,
+        r.cross.names,
+        r.cross.rows_in_stable_names,
+        r.cross.one_tender_rows_in_stable_names,
+        r.cross.stable_rows,
+        spans(&r.all),
+        r.stable_ids,
+        r.stable_mentions,
+        spans(&r.stable),
+        spans(&r.not_stable),
+        top(&r.by_country, 6),
+        r.role_mixed,
+        top(&r.by_platform, 6),
+    )
+}
+
 impl Supervisor {
     /// The store handle, for read-only operator surfaces that need it (the stored
     /// report reader, issue 230). An accessor rather than a public field on purpose:
@@ -3154,6 +3374,30 @@ impl Supervisor {
                         "org-head-drift",
                         format!("org-head-drift min_mentions={min_mentions} samples={samples}"),
                         Spec::OrgHeadDrift { min_mentions, samples },
+                    )
+                    .await,
+                ])
+            }
+            "guid-census" => {
+                // Issue 530 unit 1: read-only, so `dry_run: false` names a job that does not exist and is
+                // refused, not ignored (the nhs-body-canary precedent).
+                if req.dry_run == Some(false) {
+                    return Err("guid-census is read-only: `dry_run: false` is refused".to_owned());
+                }
+                let few = store::GUID_CENSUS_FEW_MENTIONS;
+                let stable_mentions = req.stable_mentions.unwrap_or(GUID_CENSUS_STABLE_MENTIONS);
+                if stable_mentions <= few {
+                    return Err(format!(
+                        "guid-census needs `stable_mentions` above {few}, got {stable_mentions}: a single-use row \
+                         (a notice's TED+DÖE pair) would count as a stable platform key"
+                    ));
+                }
+                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
+                Ok(vec![
+                    self.push(
+                        "guid-census",
+                        format!("guid-census dry stable_mentions={stable_mentions} samples={samples}"),
+                        Spec::GuidCensus { stable_mentions, samples },
                     )
                     .await,
                 ])
@@ -5636,6 +5880,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // Issue 524 unit 1: read before every page of the organization walk; a stopped run stores no
     // report.
     "org-head-drift",
+    // Issue 530 unit 1: read before every window of the walk and every batch of its reads; a stopped
+    // run stores no report.
+    "guid-census",
     // Issue 524 unit 2a: `plan_org_name_refresh` reads it before every page (and every scoped id
     // chunk); a stopped run stores no plan. Unit 2b: the wet run reads it before every rename
     // window, and the committed windows stand.
@@ -8099,6 +8346,7 @@ impl Supervisor {
             | Spec::NamePollutionCensus
             | Spec::NamePhraseCensus { .. }
             | Spec::OrgHeadDrift { .. }
+            | Spec::GuidCensus { .. }
             | Spec::RefreshOrgNames { .. }
             | Spec::ProvisionalEchoCensus { .. }
             | Spec::DuplicateIdentityCensus
@@ -14782,6 +15030,37 @@ impl Supervisor {
                 self.db.put_report("org-head-drift", &body, store::now_unix()).await.map_err(|e| e.to_string())?;
                 Ok(org_head_drift_summary(&r))
             }).await,
+            Spec::GuidCensus { stable_mentions, samples } => Box::pin(async move {
+                // BOXED, as every census arm here (CLAUDE.md: `run_spec`'s arms share one future), and the
+                // store future boxed inside it, so neither this family's future nor its poll frame grows
+                // with the walk. The stored body and the summary are built by sync free fns, off this frame.
+                let job_id = job.id;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 530: reading GUID-keyed organizations".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                let r = Box::pin(self.db.guid_census(store::GuidCensusArgs {
+                    is_guid: ingest::idgate::uuid_v4,
+                    role_class: guid_role_class,
+                    stable_ids: GUID_CENSUS_STABLE_IDS,
+                    stable_mentions: *stable_mentions,
+                    samples: *samples,
+                    window: store::GUID_CENSUS_WINDOW,
+                    batch: store::GUID_CENSUS_BATCH,
+                    canaries: GUID_CENSUS_CANARIES,
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("guid-census STOPPED by cancel — no report stored".to_owned());
+                }
+                let body = guid_census_json(&r)?;
+                self.db.put_report(GUID_CENSUS_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+                Ok(guid_census_summary(&r))
+            }).await,
             Spec::RefreshOrgNames { dry_run, min_mentions, samples, org_ids } => Box::pin(async move {
                 // BOXED, as every census arm here, and the store future boxed inside it, so neither this
                 // family's future nor its poll frame grows with the planner (issue 467's budgets). The
@@ -17796,6 +18075,7 @@ const LIGHT_KINDS: &[(&str, &str)] = &[
     ("generic-statistic-census", "report only: `genericness_statistic_census` reads on the pool"),
     ("generic-wall-census", "report only: `generic_wall_inflation_census` reads on the pool"),
     ("ghost-census", "report only: `ghost_census` reads notice-id slices on the pool"),
+    ("guid-census", "report only: `guid_census` reads org-id windows and IN chunks on the pool"),
     ("member-twin-census", "report only: `member_twin_census` reads index batches on the pool"),
     ("name-attribution-probe", "report only: `name_attribution_probe` reads on the pool"),
     ("name-phrase-census", "report only: `name_phrase_census` reads on the pool"),
@@ -18690,6 +18970,7 @@ mod tests {
                 "name-pollution-census",
                 "name-phrase-census",
                 "org-head-drift",
+                "guid-census",
                 // Issue 524 unit 2b: `apply_org_name_refresh` and `revert_org_name_refresh` read the
                 // flag before every window; the committed windows stand.
                 "refresh-org-names",
@@ -22657,6 +22938,182 @@ mod tests {
         assert_eq!(queued[2].params, "org-head-drift min_mentions=3 samples=200");
         assert!(!heavy_write_kind("org-head-drift"), "read-only: coverage keeps refreshing");
         assert!(stoppable("org-head-drift", &queued[0].params), "a cancel reaches the walk between pages");
+    }
+
+    /// Issue 530 unit 1: the role mapping covers both vocabularies — every canonical legacy role and the
+    /// eForms suffixes the census meets — and leaves only the eSender, signatory and payer as `other`.
+    #[test]
+    fn guid_role_class_maps_the_legacy_and_eforms_roles() {
+        for role in ingest::project::LEGACY_PARTY_ROLES {
+            assert_ne!(guid_role_class(role), store::GUID_ROLE_OTHER, "{role}");
+        }
+        for (role, class) in [
+            ("Procedure-Buyer", store::GUID_ROLE_BUYER),
+            ("buyer", store::GUID_ROLE_BUYER),
+            ("Tenderer", store::GUID_ROLE_TENDERER),
+            ("winner", store::GUID_ROLE_TENDERER),
+            ("Lot-ReviewOrg", store::GUID_ROLE_REVIEW_INFO),
+            ("Lot-ReviewInfo", store::GUID_ROLE_REVIEW_INFO),
+            ("Lot-AddInfo", store::GUID_ROLE_REVIEW_INFO),
+            ("Lot-TenderReceipt", store::GUID_ROLE_REVIEW_INFO),
+            ("review-body", store::GUID_ROLE_REVIEW_INFO),
+            ("Procedure-SProvider", store::GUID_ROLE_OTHER),
+            ("Contract-Signatory", store::GUID_ROLE_OTHER),
+        ] {
+            assert_eq!(guid_role_class(role), class, "{role}");
+            assert!(store::GUID_ROLE_CLASSES.contains(&class));
+        }
+    }
+
+    /// Issue 530 unit 1: `guid-census` enqueues dry (its params say so), refuses `dry_run: false` (it
+    /// writes nothing, so a wet run names no job) and a `stable_mentions` a single-use pair would meet,
+    /// clamps `samples` like the head-drift census, and is light and stoppable.
+    #[tokio::test]
+    async fn guid_census_enqueues_dry_and_refuses_a_wet_run() {
+        let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
+        let ask = |dry_run: Option<bool>, stable_mentions: Option<u64>, samples: Option<u64>| JobRequest {
+            kind: "guid-census".into(),
+            dry_run,
+            stable_mentions,
+            samples,
+            ..Default::default()
+        };
+        let err = sup.enqueue_request(&ask(Some(false), None, None)).await.expect_err("read-only");
+        assert!(err.contains("read-only") && err.contains("dry_run: false"), "{err}");
+        for low in [0, 1, 2] {
+            let err = sup.enqueue_request(&ask(None, Some(low), None)).await.expect_err("a pair is not stable");
+            assert!(err.contains("stable_mentions") && err.contains("above 2"), "{err}");
+        }
+        sup.enqueue_request(&ask(None, None, None)).await.expect("the defaults");
+        sup.enqueue_request(&ask(Some(true), Some(3), Some(0))).await.expect("dry asked, samples clamp up");
+        sup.enqueue_request(&ask(None, Some(500), Some(10_000))).await.expect("samples clamp down");
+        let queued = sup.queued();
+        assert_eq!(queued.len(), 3, "the refused asks queued nothing");
+        assert_eq!(queued[0].kind, "guid-census");
+        assert_eq!(queued[0].params, "guid-census dry stable_mentions=100 samples=30");
+        assert_eq!(queued[1].params, "guid-census dry stable_mentions=3 samples=1");
+        assert_eq!(queued[2].params, "guid-census dry stable_mentions=500 samples=200");
+        assert!(matches!(
+            sup.queue.lock().expect("queue lock")[0].spec,
+            Spec::GuidCensus { stable_mentions: 100, samples: 30 }
+        ));
+        assert!(!heavy_write_kind("guid-census"), "read-only: coverage keeps refreshing");
+        assert!(stoppable("guid-census", &queued[0].params), "a cancel reaches the walk between windows");
+    }
+
+    /// Issue 530 unit 1: the job wired to the REAL `idgate::uuid_v4` and `guid_role_class`. Without the
+    /// deferred role index it refuses and stores nothing; with it, it stores `guid-census` (the
+    /// Göttingen twin: one notice, one name, two GUID rows, one tender) and answers a one-line summary;
+    /// a cancelled run stores none.
+    #[tokio::test]
+    async fn the_guid_census_job_refuses_without_its_indexes_and_stores_its_report() {
+        use store::turso::Value;
+        let path = format!("/tmp/tender-db-sup-530-{}-{}.db", std::process::id(), store::now_unix());
+        let _ = std::fs::remove_file(&path);
+        let db = Arc::new(store::Db::open(&path).await.unwrap());
+        let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
+        let conn = raw.connect().unwrap();
+        conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
+                                  published_at, parse_state)
+             VALUES (26483825, 'doe', 'd', 'h', 'eforms:eforms-de-1.2', 1, 'm', 0, 1717200000, 'parsed')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (948285, 1, 26483825, 1717200000, 'd')",
+            (),
+        )
+        .await
+        .unwrap();
+        for (org, section, guid, role) in [
+            (22_759_261i64, "ORG-0001", "037c1508-d945-4e73-9d6e-65099a79bec1", "Procedure-Buyer"),
+            (22_759_262, "ORG-0002", "5b1c2d3e-4f5a-4b6c-8d7e-8f9a0b1c2d3e", "Lot-AddInfo"),
+        ] {
+            conn.execute(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, 'DE', 'national', ?, 'Landkreis Göttingen', 'landkreis göttingen', 0, 0)",
+                (Value::Integer(org), Value::Text(guid.replace('-', "").to_uppercase())),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+                 VALUES (26483825, ?, ?, 'Landkreis Göttingen', 'DEU', ?)",
+                (Value::Text(section.into()), Value::Integer(org), Value::Text(guid.into())),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO tender_version_parties (tender_id, seq, lot_id, role, organization_id, mention_notice_id,
+                                                     mention_section_id)
+                 VALUES (948285, 1, NULL, ?, ?, 26483825, ?)",
+                (Value::Text(role.into()), Value::Integer(org), Value::Text(section.into())),
+            )
+            .await
+            .unwrap();
+        }
+        // The buyer is also its own tender-receipt body: buyer + review_or_info, which `guid_role_class` and
+        // the precedence (buyer first) class as buyer, one mixed row.
+        conn.execute(
+            "INSERT INTO tender_version_parties (tender_id, seq, lot_id, role, organization_id, mention_notice_id,
+                                                 mention_section_id)
+             VALUES (948285, 1, NULL, 'Lot-TenderReceipt', 22759261, 26483825, 'ORG-0001')",
+            (),
+        )
+        .await
+        .unwrap();
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let job = |id: u64| Job {
+            id,
+            kind: "guid-census".into(),
+            params: String::new(),
+            spec: Spec::GuidCensus { stable_mentions: GUID_CENSUS_STABLE_MENTIONS, samples: 30 },
+            resume_after: None,
+        };
+        let err = sup.run_spec(&job(1)).await.expect_err("the deferred role index is absent");
+        assert!(err.contains("guid-census refused") && err.contains("tender_version_parties_org_role"), "{err}");
+        assert!(db.latest_report(GUID_CENSUS_REPORT).await.unwrap().is_none(), "a refusal stores nothing");
+
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let msg = sup.run_spec(&job(2)).await.expect("census");
+        assert!(msg.starts_with("guid-census (issue 530 unit 1): 2 GUID row(s)"), "{msg}");
+        assert!(msg.contains("(1) ONE distinct tender: 2 of 2 row(s)"), "{msg}");
+        assert!(msg.contains("(2) within-notice twin: 1 notice(s), 1 group(s), 2 row(s), reaching 2 single-use"), "{msg}");
+        assert!(msg.contains("notice-scoped (every GUID row of a twin notice) 2 row(s), reaching 2 single-use"), "{msg}");
+        assert!(msg.contains("with the twin notice-scoped, either 2 (100.0%), neither 0"), "{msg}");
+        assert!(msg.contains("buyer 1/1, tenderer_winner 0/0, review_or_info 1/1") && msg.contains("; 1 mixed."), "{msg}");
+        assert!(msg.contains("22759262 1 mention(s) 1 notice(s) 1 tender(s) twin cross<-22759261"), "{msg}");
+        assert!(msg.contains("254 not a GUID row") && msg.ends_with("NOTHING IS WRITTEN."), "{msg}");
+        let (body, _) = db.latest_report(GUID_CENSUS_REPORT).await.unwrap().expect("report");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["all"]["one_tender"], 2, "{body}");
+        assert_eq!(report["twin"]["notices"], 1, "{body}");
+        assert_eq!(report["cross"]["rows"], 1, "{body}");
+        assert_eq!(report["by_role"]["buyer"]["rows"], 1, "{body}");
+        assert_eq!(report["by_role"]["review_or_info"]["rows"], 1, "{body}");
+        assert_eq!(report["role_mixed"], 1, "{body}");
+        assert_eq!(report["twin"]["notice_rows"], 2, "{body}");
+        assert_eq!(report["all"]["one_tender_either_notice"], 2, "{body}");
+        assert_eq!(report["by_platform"]["doe dashed-lower"]["rows"], 2, "{body}");
+        assert_eq!(report["canary_ids"][0], 254, "{body}");
+        assert!(report["class"].as_str().unwrap().contains("uuid_v4"), "{body}");
+
+        // A cancelled run stores nothing over the report.
+        db.put_report(GUID_CENSUS_REPORT, "{\"marker\":1}", store::now_unix()).await.unwrap();
+        sup.cancel_running.store(3, Ordering::Relaxed);
+        let msg = sup.run_spec(&job(3)).await.expect("stopped census");
+        assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
+        let (body, _) = db.latest_report(GUID_CENSUS_REPORT).await.unwrap().expect("report");
+        assert_eq!(body, "{\"marker\":1}", "a stopped census stores nothing");
+        drop(conn);
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
     }
 
     /// Issue 524 unit 2a: `refresh-org-names` takes the census's `min_mentions` and `samples` rules and

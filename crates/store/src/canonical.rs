@@ -11286,7 +11286,7 @@ fn days_from_civil(y: i64, m: i64, d: i64) -> i64 {
 /// The UTC year of a unix instant (Hinnant's `civil_from_days`, the year only). A
 /// date-only publication is its civil day's LOCAL midnight (issue 367), so a notice of 1
 /// January published east of UTC reads as the year before; the census accepts that.
-fn unix_year(at: i64) -> i64 {
+pub(crate) fn unix_year(at: i64) -> i64 {
     let z = at.div_euclid(86_400) + 719_468;
     let era = (if z >= 0 { z } else { z - 146_096 }) / 146_097;
     let doe = z - era * 146_097;
@@ -15499,7 +15499,7 @@ pub type NamedOrg = (i64, String, Option<String>, Option<String>);
 /// [`Db::party_role_counts_of_orgs`]' statement for `n` ids — one place, so the plan guard
 /// (`the_placeholder_plan_readers_seek_the_org_role_index_at_the_chunk_width`) EXPLAINs
 /// exactly what runs, at [`IN_CHUNK`] ids (issue 511's plan-width rule).
-fn party_role_counts_sql(n: usize) -> String {
+pub(crate) fn party_role_counts_sql(n: usize) -> String {
     format!(
         "SELECT organization_id, role, COUNT(*) FROM tender_version_parties \
           WHERE organization_id IN ({}) GROUP BY organization_id, role",

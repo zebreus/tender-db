@@ -10,6 +10,7 @@ pub mod accounts;
 pub mod analyze;
 pub mod canonical;
 pub mod checkpoint;
+pub mod guid_census;
 pub mod head_election;
 mod inplace;
 pub mod jobs;
@@ -100,6 +101,12 @@ pub use head_election::{
     OrgNameRefreshReverted, OrgNameRefreshRevertArgs, OrgNameRefreshTarget, elect_head, elect_head_counted,
     head_control_only, head_line_wrap, head_lines_guard, head_top_stale, head_top_stale_date, head_wraps,
     org_name_refresh_drift_limit,
+};
+pub use guid_census::{
+    GUID_CENSUS_BATCH, GUID_CENSUS_FEW_MENTIONS, GUID_CENSUS_INDEXES, GUID_CENSUS_KEYS_MAX, GUID_CENSUS_MENTION_CEILING,
+    GUID_CENSUS_REST, GUID_CENSUS_SAMPLE_IDS, GUID_CENSUS_WINDOW, GUID_ROLE_BUYER, GUID_ROLE_CLASSES, GUID_ROLE_NONE,
+    GUID_ROLE_OTHER, GUID_ROLE_REVIEW_INFO, GUID_ROLE_TENDERER, GuidCensusArgs, GuidCensusReport, GuidCrossSignal,
+    GuidRowSample, GuidSamples, GuidTally, GuidTwinSample, GuidTwinSignal,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;
