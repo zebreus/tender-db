@@ -185,6 +185,8 @@ out = {
                      "Ginger Energy (an A agent) as second Procedure-Buyer; reviewer: 'V-or-A, holder's own number'",
          'counted_in_A': False, 'mentions': 1},
     ],
+    'notice_sources': dict(Counter((r['source'], r['profile']) for r in rows_of('q7_sources.out.json')).most_common()) and
+                      {f"{a}|{b}": n for (a, b), n in Counter((r['source'], r['profile']) for r in rows_of('q7_sources.out.json')).items()},
     'role_carried': {
         'source_fts_exemplars': {'procuringEntity_party': sum(e['source_has_procuringEntity'] for e in exemplars),
                                  'buyer_only': sum(not e['source_has_procuringEntity'] for e in exemplars), 'read': len(exemplars)},

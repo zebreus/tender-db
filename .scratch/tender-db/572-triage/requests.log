@@ -53,3 +53,15 @@
 2026-10-19T20:10:10Z api GET /v1/organizations/30913763 rc=200
 2026-10-19T20:10:13Z api GET /v1/organizations/30916821 rc=200
 2026-10-19T20:14:00Z sql q6_current rc=0 secs=1.624680424 bytes=10351
+2026-10-19T20:17:12Z sql q7_sources rc=0 secs=1.742871011 bytes=6160
+2026-10-19T20:22:36Z api GET /v1/tenders?buyer=30914393&limit=1000 rc=200 (572 user-value judge)
+2026-10-19T20:22:40Z api GET /v1/tenders?buyer=30914707&limit=1000 rc=200 (572 user-value judge)
+2026-10-19T20:22:42Z api GET /v1/tenders?buyer=30953692&limit=1000 rc=200 (572 user-value judge)
+2026-10-19T20:22:45Z api GET /v1/tenders?buyer=30926960&limit=1000 rc=200 (572 user-value judge)
+2026-10-19T20:22:48Z api GET /v1/tenders?buyer=30917275&limit=1000 rc=200 (572 user-value judge)
+2026-10-19T20:24:49Z api GET /v1/notices/46754741/content rc=200 (572 user-value judge)
+2026-10-19T20:24:52Z api GET /v1/notices/46828235/content rc=200 (572 user-value judge)
+2026-10-19T20:24:54Z api GET /v1/notices/46808676/content rc=200 (572 user-value judge)
+2026-10-19T20:24:57Z api GET /v1/notices/46803631/content rc=200 (572 user-value judge)
+2026-10-19T20:32:13Z api GET /v1/organizations?name_prefix=birmingham%20city%20council&limit=50 rc=200 (572 operations judge, stdout only)
+2026-10-19T20:32:27Z api GET /v1/organizations?name_prefix=hywel%20dda&limit=30 rc=200 (572 operations judge, stdout only)

@@ -3,7 +3,7 @@
  "unit": "1 MEASURE",
  "date": "2026-10-19",
  "requests": {
-  "sql": 6,
+  "sql": 7,
   "api_get": 35,
   "fts_get": 13,
   "local_copy": 1,
@@ -937,6 +937,9 @@
    "mentions": 1
   }
  ],
+ "notice_sources": {
+  "fts|fts:ocds-1.1": 190
+ },
  "role_carried": {
   "source_fts_exemplars": {
    "procuringEntity_party": 7,

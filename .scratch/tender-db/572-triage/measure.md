@@ -1,6 +1,6 @@
 # 572 unit 1 — measure: a buying agent's identifier and the bodies it buys for (2026-10-19)
 
-Read-only. 6 `/v1/sql` reads (budget 60), 35 public API GETs (budget 150), 13 GETs of Find a Tender's own
+Read-only. 7 `/v1/sql` reads (budget 60), 35 public API GETs (budget 150), 13 GETs of Find a Tender's own
 published OCDS packages (public, OGL; the source, not the box), 0 non-200, 0 408, no retries. Every join was
 plan-probed locally first (python sqlite3 and turso `plan-probe` on 545 u2b's `plan.db`, which carries the prod
 schema and the two prod org indexes); every step is a SEARCH, none a SCAN (`q*.plan.txt`). Every request is
@@ -14,9 +14,11 @@ in `requests.log`. No repo file outside this directory was touched; no git, no a
 - **Direction.** 153 of the 191 mentions (70 keys) print the **principal's name under the agent's identifier**
   ("P@A"). Northern Housing Consortium alone accounts for 97 mentions (52 member bodies), NWSSP for 41. The other
   38 (15 keys) print the **agent's name under a principal's identifier** ("A@P"). 33 of those 38 sit on the
-  actual buyer's own identifier, so only the printed name is wrong. 3 sit on the agent's host council: Star on
+  actual buyer's own identifier, so only the printed name is wrong (3 read, 30 presumed from the same
+  agent/holder pairs). 3 sit on the agent's host council: Star on
   Trafford, Ardal on Cardiff. 2 sit on an unrelated body: Pagabo on CNTW's PPON.
-- **Every one is an FTS notice, and every one binds as `Procedure-Buyer`.** The exceptions are 2 Tenderer slips.
+- **Every one is an FTS notice** (`q7_sources`: 190 of 190 notices are `fts:ocds-1.1`), **and every one binds as
+  `Procedure-Buyer`**. The exceptions are 2 Tenderer slips.
 - **The source carries the agent role sometimes; tender-db never does.**
   - In the source: Find a Tender publishes the agent as a separate `procuringEntity` party, with a
     `roleDetails` "on behalf of" sentence, on **7 of the 13** exemplar notices. The other 6 have a buyer party
@@ -71,7 +73,7 @@ Method:
   31,486 GBCOH orgs.
 - Excluded:
   - the agent's own spelling variants;
-  - NWSSP's legal host, Velindre (×46 on NWSSP's PPON, U);
+  - NWSSP's legal host, Velindre (×47 on NWSSP's PPON, U: Velindre ×46 and Welsh Blood Service ×1);
   - one framework title on NHC's PPON ("Stairlifts and Lifting Equipment Framework 2026" ×4, T);
   - namesake companies (Welland House Care Centre, TMT First, PALS Ltd, other Invictus/Gingerbread companies).
 - Re-read live with role references in `q4_class_refs`; the totals match the slices exactly.
@@ -169,8 +171,8 @@ There are 13 notices, one or more per top agent:
 What the exemplars show:
 1. **The mechanism is the publishing account's PPON.**
    - In the P@A shape, FTS's `buyer` party carries the agent's PPON (the account that published) under the
-     principal's typed name. Its `details` also describe the principal: the url is the principal's site, and
-     UK_CA_TYPE is the principal's type.
+     principal's typed name. Its `details` often describe the principal: the url is the principal's site in E3,
+     E9 and E13, though NWSSP's in E5. UK_CA_TYPE is filled for the buyer party only.
    - Whether the agent appears too, as `procuringEntity`, depends on the publisher. RPJ3, Ginger and NWSSP add
      it. NHC, Welland and Gibbs do not.
 2. **In the A@P shape, the agent sits in the `procuringEntity` slot, keyed by a principal or host PPON.**
@@ -238,8 +240,8 @@ The totals agree.
 
 | org | identifier | mentions | agent's own name | principal names (count) |
 |---|---|---|---|---|
-| 30953692 Northern Housing Consortium Ltd | GBPPONPJXZ4423NDBT | 124 | 23 | **97 over 52 bodies**: Darlington 5, Solihull Community Housing 5, Rochdale 4, Stockton-on-Tees 4, East Suffolk 3, Newcastle 3, North Northamptonshire 3; 25 councils at 2 each (Birmingham … Wigan); 20 bodies at 1 each (Arches, Believe, Bernicia, Blackpool Coastal, Gateshead, Housing 21, Islington & Shoreditch, Karbon/54North, L&Q, Moat, One Manchester, One Vision, Onward, Orbit, Ongo, Riverside, St Leger, South Lakes, Guinness, Pioneer). Plus the framework title ×4 |
-| 30913738 NWSSP-Procurement Services | GBPPONPXWV6492CGMN | 1,170 | 1,048 (+35 variants the pattern misses, "NHS Wales" ×10) | 41: Hywel Dda 12, Cardiff and Vale 10, Public Health Wales NHS Trust 9, HEIW 6, Betsi 2, ABUHB 1, NWJCC 1. Host: Velindre ×46 |
+| 30953692 Northern Housing Consortium Ltd | GBPPONPJXZ4423NDBT | 124 | 23 | **97 over 52 bodies**: Darlington 5, Solihull Community Housing 5, Rochdale 4, Stockton-on-Tees 4, East Suffolk 3, Newcastle 3, North Northamptonshire 3; 24 councils and LIVIN Housing at 2 each (Birmingham … Wigan); 20 bodies at 1 each (Arches, Believe, Bernicia, Blackpool Coastal, Gateshead, Housing 21, Islington & Shoreditch, Karbon/54North, L&Q, Moat, One Manchester, One Vision, Onward, Orbit, Ongo, Riverside, St Leger, South Lakes, Guinness, Pioneer). Plus the framework title ×4 |
+| 30913738 NWSSP-Procurement Services | GBPPONPXWV6492CGMN | 1,170 | 1,048 (+32 own variants the pattern misses, including "NHS Wales" ×10; "NHS" ×2) | 41: Hywel Dda 12, Cardiff and Vale 10, Public Health Wales NHS Trust 9, HEIW 6, Betsi 2, ABUHB 1, NWJCC 1. Host: Velindre ×46, Welsh Blood Service ×1 |
 | 30913798 Welland Procurement | GBPPONPVMQ1845NYPP | 287 | 286 | Rutland County Council 1 |
 | 30913722 Gibbs Laidler Consulting LLP | GBCOHOC322760 (+ merged GBPPONPGJB3773RCMH) | 163 | 155 | English Rural HA 3, Hull Churches HA 2, YMCA Saint Pauls 2, Newlon 1 |
 | 30930308 Invictus Partnership | GBPPONPGGP8622HHRX | 56 | 54 | CORE Education Trust 1, William Farr C of E School 1 |
@@ -287,7 +289,7 @@ Several provisional rows print the relation in the name itself:
 | `measure.json` | the structured result |
 | `measure_a.py` | part 1 and part 2 sizing |
 | `a_rows.json`, `a_exhaustive.json`, `a_stats.txt` | sizing outputs |
-| `q1_exemplars.sql`, `q2_roles.sql`, `q3_agent_orgs.sql`, `q4_class_refs.sql`, `q5_principal_orgs.sql`, `q6_current.sql` | the 6 reads, each with `.plan.txt` and `.out.json` |
+| `q1_exemplars.sql`, `q2_roles.sql`, `q3_agent_orgs.sql`, `q4_class_refs.sql`, `q5_principal_orgs.sql`, `q6_current.sql`, `q7_sources.sql` | the 7 reads, each with `.plan.txt` and `.out.json` |
 | `analyze_q4.py`, `analyze_q6.py` | analysis, with their `.summary.json` outputs |
 | `q2_roles.txt` | readable form of `q2_roles` |
 | `build_measure.py` | assembles `measure.json` |
