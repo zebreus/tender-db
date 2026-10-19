@@ -1315,3 +1315,21 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   `scratchpad/b6/notices`. Log: `scratchpad/b6_fetch_u2.log`.
 - Next, running: U2 parity (port v2 vs served_lsa_rows outside the provisional L_changed; P, R_single, R_excess for U4) as
   wf_6fc422ac-117 with an adversarial re-derivation; U3's Rust harness waits for the 530 gate to leave the tree.
+
+## B6 U2 — parity measured (2026-10-19, wf_6fc422ac-117; adversarial re-run byte-identical)
+
+- B6 U2 — measured (2026-10-19, wf_6fc422ac-117; the adversarial re-run reproduces all 9 outputs byte for byte). Port b6/rule_v2_g.py sha256 23cbd8508a3a…, matching SHA256SUMS; rates are the m551 10-17 set, not refreshed (8e925cef1572… / 47e941270ac4… / 48e2c9f17ae7…). Fresh layer: 3,502 tenders fetched 05:47:56Z–07:41:30Z (460 of them inside the 07:35Z chain window, a deviation with no effect, since no chain row touches the 3,502). 15,537 notices: 15,246 from b6 and 291 from the M1 cache; none needed rb8; 0 port errors. Provisional L_changed ∩ 3,502 = 0 under the operative reading, which excludes switch-off drain-back 2630's 3,502 version-null rows stamped 03:34:07Z, cursor 958787062–958809773; the literal reading would exempt all 3,502 and compare nothing. The same 2630-excluded reading must be fixed for U6. Feed 958787061 → 958848784 (8,573 tender rows): no other row touches the 3,502. Newest named notice 47406725 was ingested 2026-10-16T07:35:45Z. None of the 3,502's notices is a 541 (TED-COST_PARAMETERS/T02) or 571 (TED-ADDRESS_PARTY) refold carrier, and none of 545's 48 is among them. v2 parity: 3,502 compared, 3,502 agree, 0 disagree (ship/S/currency/n; the served vouched_by is the port's first vouch on all). Guard sets, all ⊆ v2 (3,502): v2+single P = 3,468 (R_single = 34, including 6465510 and 6595330; every removed vouch is an award total from a one-result notice); v2+cover P = 3,489 (13 refused, 12 of them in R_single); v2+both P = 3,467; R_excess = {7202436}; no surviving ship's vouched_by moved. B_P = the 29 read band heads under every set; within 2 % of EUR 100 m: 899272, 5842187. Estimate-twin flags: 0. 5816379 shape (U2's own test, record only): 286 under both guards (144 lot-less). Final P is fixed by U4's adoption. Next: U4 reads 30 of R_single's 34 and R_excess's 1 in sha256('551-b6-gcost-'+id) order under M2's protocol; U3 Rust harness; before U6, add 0787596 to the code-drift ledger and use the whole refolded sets (541: 753/820, 571: 67, 545: 48).
+- **Checker corrections, adopted:** (1) the provisional L_changed ∩ 3,502 is **0** under the operative reading (2630's own
+  3,502 head-revert rows excluded, as the decision's complement wording does), not "239" (that was the three hand sets outside
+  the population); (2) **the 2630-excluded reading binds U6 too** (read literally, every id has a 2630 row and U6 would refetch all
+  3,502); the notice criterion means "first ingested since 2026-10-18 20:30Z" (every notice was re-folded by 2627/2630/2648);
+  (3) the 541/571/545 sets in the ledger are corrected-only; U6 uses the whole refolded sets (541: 2631 stamped 753 / folded 820;
+  571: 2636 wrote 67; 545: 2651/2652 48) — for U2 none of the 3,502's notices is a 541/571 carrier and none of 545's 48 is among
+  them; (4) 460 of the 3,502 were fetched inside the 10-19 07:35Z chain window (no pause flag): a recorded deviation with no
+  effect (no chain row touches the 3,502); (5) P stays per guard set until U4: v2 3,502 / +single 3,468 / +cover 3,489 / +both
+  3,467; (6) 0787596 (530 U1: guid-census, a read-only census; crates/store gains `guid_census.rs` and two `pub(crate)`s, no fold
+  input) joins the code-drift ledger.
+- **Adoption-rule gap, closed BEFORE any U4 read:** G-cover refuses 13, 12 of them in R_single. If U4 REJECTS G-single and the
+  read would adopt G-cover, G-cover is judged on ALL its refusals (the 12 overlap keep their R_single verdicts, plus 7202436): adopt
+  iff ≥ 10 % of that 13-read set is non-right. If both are adopted, P = v2+both (3,467); single only, P = v2+single (3,468);
+  cover only, P = v2+cover (3,489); neither, P = v2 (3,502).
