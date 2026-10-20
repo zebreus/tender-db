@@ -1423,3 +1423,11 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   rederive; U7 with ≥ 2 h before the next 07:35Z).
 - Before U6: zero-drift probe re-run on d617a78 after 530's drain + project (expect 0); the flip patch re-gated on d617a78;
   the switch-off twin = the deployed d617a78 (gated, marker c27c8bf); rates refreshed (A5) with sha256.
+- **Flip re-gated on the deployed base (2026-10-20):** the held f0e58cf re-applied on d617a78 (CHANGELOG merged newest-first) as
+  9f01a5e on local `hold/551-b6-flip-v2`, **gate green at 9f01a5e (1,572 s)**; patch `551-lot-sum/b6/flip-9f01a5e.patch`
+  (`git apply --check` clean on main d617a78). The switch-off twin is the deployed d617a78 (its marker was c27c8bf; a switch-off
+  redeploy re-gates it).
+- **530's wet run is blocked on a permission decision** (its enqueue was refused by the session's permission classifier). Until it
+  is allowed and lands, the C1/C9 order is open: either the flip waits for it, or the flip goes first and 530's drain later needs
+  the port-diff re-run on the served set (U9's standing rule). The zero-drift probe re-run waits for that choice.
+
