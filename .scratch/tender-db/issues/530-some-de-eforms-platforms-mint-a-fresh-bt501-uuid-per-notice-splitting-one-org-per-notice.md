@@ -369,3 +369,14 @@ reads every ORG mention of a notice through `gated_identifier` with the gate's c
   ungated published_mentions). **Wet plan: 18 windows** (≤ 2,000 mentions or ~120k re-read each; largest 1,998 mentions in window 2;
   7615 in window 15; heaviest by re-read window 8, ~114,363, its biggest target 1163241 "FR tribunal administratif de lyon", 46,473).
 
+
+## Schedule amendment (2026-10-20 08:2xZ): the wet run goes BEFORE 551's flip, in today's gap
+
+The decision's "Schedule" put the wet run "in a queue gap after 551's flip". 551's binding standing rule (B6 decision point 12
+and critic C9) forbids, while path W is on, any drain or deploy that changes path-W inputs — org merges feed its R1 and R6 —
+unless the port diff over the served `lot-sum-awards` set is re-run first (a fresh-fact refetch of hours), and its C1 lets such
+a drain land BEFORE U6 with its whole refolded id set added to L_changed (re-predicted in U6). The two records are consistent
+only with the wet run before the flip. So: wet run today (10-20, a gap with ~23 h to the next chain, 560's mornings over), then
+`project`, R3; the campaign manifest's `refold_tenders` and every Tender a moved row touched (`tender changed`) join 551's
+L_changed; 551's zero-drift probe is re-run after this drain; 551 flips at the 10-21 post-chain gap. 560's drain-free mornings
+no longer bind (560 DONE); 473 is not draining.

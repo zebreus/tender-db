@@ -1409,3 +1409,17 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   ops/check.sh NOT run: the commit is re-gated on the final base when it ships (530 Build 1b lands on main first).
 - Local branch `hold/551-b6-flip` (f0e58cf); `git apply --check` clean on 3df8748. The held 546 patch (`546-triage/
   u3-42cc601.patch`) applies on top of the flip with a 3-way merge; only CHANGELOG.md conflicts (top-of-file entry order).
+
+## Pre-U6 state (2026-10-20 08:2xZ): code drift, 530's drain, timing
+
+- **Code-drift ledger (point 5 / C1), continued:** 530 Build 2 — bf645ed + c27c8bf (crates/ingest, crates/store), deployed
+  d617a78 2026-10-20 08:1xZ. It wires rule 530-T into `mentions_and_dropped` (new twin notices bind by name) and refactors 440's
+  `dissolve_condemned` onto a shared `Db::dissolve_org_mentions` (effects unchanged). It changes no fold output for stored
+  mentions (`RecordedMention::publishes`; pinned by a test) — the zero-drift probe re-run below measures that on the 3,502.
+  Its stock drain (the wet `dissolve-guid-twins`, ~10,995 orgs, org identity = R1/R6 input) runs TODAY, before U6, and its whole
+  touched Tender set (`tender changed` rows + the manifest's `refold_tenders`) joins L_changed (C1/C9).
+- 560 U-d PASSED and 560 closed on the 10-20 morning; 562 unit 5 PASSED with its cursor ranges — point 10's 10-20 condition
+  holds, but the 530 drain uses today's gap, so the flip stays at the **10-21 post-chain gap** (U6 after that chain's
+  rederive; U7 with ≥ 2 h before the next 07:35Z).
+- Before U6: zero-drift probe re-run on d617a78 after 530's drain + project (expect 0); the flip patch re-gated on d617a78;
+  the switch-off twin = the deployed d617a78 (gated, marker c27c8bf); rates refreshed (A5) with sha256.
