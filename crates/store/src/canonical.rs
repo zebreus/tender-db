@@ -558,6 +558,11 @@ pub(crate) const SCHEMA: &str = "
     -- org_merge_log precedent): the rows are history, and a dissolved org no longer exists.
     -- `gate_since_notice_id` is A1's boundary the wet run was given (one value for the whole of 530:
     -- the wet run, the recurrence arm and the restore refuse any other once a row records it).
+    -- Two secondary indexes, each with a seek: by job (the reconcile, the resume, the manifest) and by
+    -- org (the planner's absent controls). Nothing seeks `target_id`: the recurrence arm reads the
+    -- targets by a whole-table scan (`GUID_TWIN_LOG_ALL_SQL`), so no target index is kept (530 review
+    -- round 3, F14: it was one more write per logged mention inside the window). A from-archive rebuild
+    -- deletes every row (`strip_organization_indexes`: it renumbers org_id and target_id).
     CREATE TABLE IF NOT EXISTS guid_twin_dissolve_log (
         job_id        INTEGER NOT NULL,
         at            INTEGER NOT NULL, -- unix seconds
@@ -576,7 +581,6 @@ pub(crate) const SCHEMA: &str = "
         PRIMARY KEY (notice_id, section_id, job_id)
     ) STRICT;
     CREATE INDEX IF NOT EXISTS guid_twin_dissolve_log_job ON guid_twin_dissolve_log(job_id);
-    CREATE INDEX IF NOT EXISTS guid_twin_dissolve_log_target ON guid_twin_dissolve_log(target_id);
     -- The dry planner reads a control absent from its walk by org (a fresh plan after a wet window).
     CREATE INDEX IF NOT EXISTS guid_twin_dissolve_log_org ON guid_twin_dissolve_log(org_id);
 
@@ -17538,6 +17542,15 @@ impl Db {
         // binds it straight to the company-number org, so no merge re-runs);
         // the backfill job refuses every pre-rebuild ledger row (its era floor).
         conn.execute("DELETE FROM organization_merged_identifiers", ()).await?;
+        // Issue 530 (review round 3, F10): the GUID twin dissolve log names orgs by id twice — the
+        // dissolved row (`org_id`) and the row each mention landed on (`target_id`) — and the rebuild
+        // re-mints both, so the recurrence arm would read unrelated rebuilt rows as targets. The rebuild
+        // also runs rule 530-T over EVERY notice, so no pre-boundary stock is left for the log to
+        // describe and its recorded `gate_since_notice_id` stops meaning anything (the runbook: after a
+        // rebuild the recurrence arm and the restore pass `since_notice_id: 1`). The campaign's record
+        // survives in the `guid-twin-dissolve` and `guid-twin-recurrence` reports, which are not
+        // id-addressed.
+        conn.execute("DELETE FROM guid_twin_dissolve_log", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_names", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organization_mentions", ()).await?;
         conn.execute("DROP TABLE IF EXISTS organizations", ()).await?;

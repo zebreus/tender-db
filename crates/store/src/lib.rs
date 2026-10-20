@@ -124,6 +124,8 @@ pub use guid_twins::{
     GuidTwinWindowDone, guid_keep_line, guid_twin_reconcile, guid_twin_windows,
     // A1's reverse drift and its restore.
     GuidTwinDriftValue, GuidTwinGatedV4, GuidTwinRestoreArgs, GuidTwinRestoreDone,
+    // Review round 3: the re-read budget (F1), per-value Tenders (F4).
+    GUID_TWIN_WET_WINDOW_REREAD, GuidTwinMultiRowValue, guid_twin_rebound_estimate, guid_twin_windows_within,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;

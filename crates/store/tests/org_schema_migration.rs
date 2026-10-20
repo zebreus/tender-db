@@ -115,9 +115,28 @@ async fn existing_inline_unique_db_is_reconciled_by_a_rebuild() {
         "precondition: the simulated existing DB carries the old inline UNIQUE"
     );
 
+    // Issue 530 (review round 3, F10): a GUID twin dissolve log row names org ids the rebuild re-mints.
+    db.execute_for_test(
+        "INSERT INTO guid_twin_dissolve_log (job_id, at, window_no, gate_since_notice_id, org_id, org_country, org_kind, \
+         org_value, org_name, whole, notice_id, section_id, target_id, target_minted) \
+         VALUES (7, 0, 1, 26483824, 22759262, 'DE', 'national', 'V', 'Landkreis Göttingen', 1, 26483825, 'ORG-0002', 2294259, 0)",
+    )
+    .await
+    .unwrap();
+
     // One rebuild cycle: recreate bare, then build the indexes once.
     db.strip_organization_indexes().await.unwrap();
     db.build_organization_indexes().await.unwrap();
+
+    assert!(
+        matches!(db.scalar("SELECT COUNT(*) FROM guid_twin_dissolve_log").await.unwrap(), Some(turso::Value::Integer(0))),
+        "a from-archive rebuild renumbers the log's org and target ids: the rows go with the layer (F10)"
+    );
+    assert!(
+        !index_exists(&db, "guid_twin_dissolve_log_target").await,
+        "no target index: nothing seeks target_id (F14)"
+    );
+    assert!(index_exists(&db, "guid_twin_dissolve_log_org").await && index_exists(&db, "guid_twin_dissolve_log_job").await);
 
     assert!(
         !table_sql(&db, "organizations").await.to_uppercase().contains("UNIQUE"),

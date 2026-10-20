@@ -5895,9 +5895,14 @@ impl NoticeState {
 
     /// Issue 530 Build 2: [`Self::mentions`] WITHOUT rule 530-T's gate — every mention's identifier as
     /// the notice published it (`gated_identifier` alone). Only the buyer side of the plan row reads it
-    /// ([`buyer_side_mentions`]: issue 369's `buyer_key` and 481's `buyer_tokens`), so the gate's deploy
-    /// moves no Tender's key or link guard (the decision's "the deploy causes no churn"); the dry plan
-    /// counts the copies whose buyer the gate refuses (`refused_buyer_copies`).
+    /// ([`buyer_side_mentions`]: issue 369's `buyer_key` and 481's parsed-side `buyer_tokens`), so the
+    /// gate's deploy moves no Tender's key (the decision's "the deploy causes no churn"); the dry plan
+    /// counts the copies whose buyer the gate refuses (`refused_buyer_copies`). The resolved-organization
+    /// token `o:<id>` ([`add_buyer_org_tokens`]) follows the gated binding instead: before the wet run
+    /// only for notices first resolved after the deploy (a recorded mention keeps its organization under
+    /// `publishes`), after it for every rehomed notice when its stamped Tender re-projects — an `o:<GUID
+    /// row>` dropped loses no overlap (the published identifier and `r:` tokens cover that single-Tender
+    /// row's notices), an `o:<name row>` added can only widen it (review round 3, F6).
     fn published_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Vec<Mention> {
         Self::mentions_and_dropped_gated(sdk01, notice_id, parsed, false).0
     }
@@ -10363,7 +10368,11 @@ fn buyer_side_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<sto
         return (Vec::new(), Vec::new());
     }
     // Issue 530 Build 2: the PUBLISHED identities, not the gated ones — rule 530-T changes a mention's
-    // binding, never the plan row's buyer key or link-guard tokens (pinned by
+    // binding, never the plan row's buyer key or its PARSED-side link-guard tokens (`buyer_tokens_of`
+    // over these). The resolved-organization token `o:<id>` (`add_buyer_org_tokens`) does follow the
+    // binding (a refused buyer gets the name-keyed row): dropping `o:<GUID row>` loses no overlap, the
+    // published identifier and `r:` tokens cover it on every notice of that single-Tender row, and
+    // adding `o:<name row>` can only widen overlap (review round 3, F6; pinned by
     // `the_guid_twin_gate_leaves_the_buyer_key_and_tokens_alone`).
     let mentions = NoticeState::published_mentions(sdk01, notice_id, parsed);
     // Issue 483 unit 2: the buyer side the projection serves, not the raw buyer slot — a

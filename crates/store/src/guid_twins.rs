@@ -43,6 +43,14 @@
 //! identifier-NULL rows the current rule binds); [`Db::restore_guid_twin_value`] moves one drifted value
 //! onto the row a rebuild binds it to. A dry plan records the log's high-water mark, and reads a control
 //! absent from its walk against the log, so a fresh plan after a wet window passes R1.
+//!
+//! **Review round 3.** Windows close on an estimated re-read budget too ([`GUID_TWIN_WET_WINDOW_REREAD`],
+//! [`guid_twin_rebound_estimate`]: 542's re-derivation re-reads every mention of every re-bound row under
+//! the lock, F1). A mention a reviewed rehoming verdict placed is neither planned (`verdict_kept`) nor
+//! drift in either direction, and a window refuses one recorded after its re-plan (F3). "Spans >= 2
+//! Tenders" is counted per VALUE over all of its GUID rows, in the planner and in A1 (F4). A1 admits a
+//! target mention by the gate's own candidate test (F5) and reports the highest pre-gate notice above a
+//! too-low boundary (F9).
 
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::time::Instant;
@@ -479,6 +487,11 @@ pub struct GuidTwinPlanArgs<'a> {
     /// among them trips `tripwire_under_review` (its delete would leave a verdict without a referent).
     /// `None`: not checked (reported as such).
     pub under_review: Option<&'a HashSet<i64>>,
+    /// Review round 3 (F3): every `(notice_id, section_id)` a reviewed rehoming verdict names
+    /// (`org_mention_rehoming`, [`Db::guid_twin_rehomed_keys`]): a person put that mention where it sits,
+    /// so a refused one is neither planned nor counted toward its row being whole or partial (it trips no
+    /// tripwire); it is reported as `verdict_kept`. `None`: not read (the planner's structural tests).
+    pub rehomed: Option<&'a HashSet<(i64, String)>>,
     /// A7's notice-reference role mapping: `ingest::project::guid_twin::guid_twin_role_ref`, the one
     /// the gate's `guid_twin_section_roles` reads the parsed copy with.
     pub role_ref: GuidTwinRoleRef,
@@ -771,8 +784,9 @@ pub struct GuidTwinBars {
     /// Planned rows (whole or partial) with a partner off GUID rows (reported, read in R2, not compared).
     pub planned_rows_off_guid_partner: u64,
     /// The decision's tripwires over planned rows (whole or partial), each must be 0: spanning 2 or
-    /// more Tenders; stable at R1's fixed threshold ([`GUID_TWIN_R1_STABLE_MENTIONS`] mentions, or a
-    /// stable id) whatever the run's knob; a value in KEEP.
+    /// more Tenders (review round 3, F4: the row's VALUE over all of its GUID rows); stable at R1's fixed
+    /// threshold ([`GUID_TWIN_R1_STABLE_MENTIONS`] mentions, or a stable id) whatever the run's knob; a
+    /// value in KEEP.
     pub tripwire_multi_tender: u64,
     pub tripwire_stable: u64,
     pub tripwire_keep: u64,
@@ -798,7 +812,8 @@ pub struct GuidTwinBars {
     /// (reported, not a bar).
     pub target_country_unchecked: u64,
     /// A3 iii: (census twin ∧ ≥ 2 Tenders) ∪ stable values missing from KEEP — against the COMPILED file
-    /// since Build 2 (tautological for the walk's in-memory KEEP). Any entry fails `pass`.
+    /// since Build 2 (tautological for the walk's in-memory KEEP); per VALUE over all of its GUID rows
+    /// since review round 3 (F4), each value once. Any entry fails `pass`.
     pub keep_self_check_missing: Vec<String>,
     /// Build 2: whole planned rows that hold a merged identifier (a merge survivor: deleting it would
     /// strand `organization_merged_identifiers`), and whole planned rows a review table names (deleting
@@ -943,6 +958,17 @@ pub struct GuidTwinPlan {
     /// planner's own read of the twin copies' references): the copies whose buyer the gate rebinds while
     /// the plan row's buyer key keeps the published identity.
     pub refused_buyer_copies: u64,
+    /// Review round 3 (F3): refused mentions a reviewed rehoming verdict names
+    /// ([`GuidTwinPlanArgs::rehomed`]) — left where the verdict put them, neither planned nor off-GUID —
+    /// and the first `samples` of them (`kind` `guid_row` or `off_guid`; `target` unset).
+    pub verdict_kept: u64,
+    pub verdict_kept_samples: Vec<GuidTwinOffGuidSample>,
+    /// Review round 3 (F4): values on two or more GUID rows (a DE + AT pair, issue 62's duplicate triple),
+    /// each with its rows, their Tender counts and the union — "spans >= 2 Tenders" (the KEEP candidates,
+    /// the several-Tenders tripwire, the compiled self-check) is counted per VALUE over all of its rows,
+    /// as A1's recurrence arm counts it. The first [`GUID_TWIN_LIST_CAP`], and how many.
+    pub multi_row_values: Vec<GuidTwinMultiRowValue>,
+    pub multi_row_value_count: u64,
     /// Every planned mention, uncapped, for the wet run ([`guid_twin_windows`]); not serialized.
     #[serde(skip)]
     pub wet_mentions: Vec<GuidTwinWetMention>,
@@ -966,6 +992,25 @@ pub struct GuidTwinWetMention {
     pub target: Option<i64>,
     pub mint_name: String,
     pub whole: bool,
+    /// Review round 3 (F1): the target row's existing mentions when the plan read it (0 for a missing
+    /// key): 542's re-derivation re-reads every one of them inside the window that re-binds the target,
+    /// however few mentions the window moves there — the window's cost driver.
+    pub target_mentions: u64,
+    /// The mentions the row KEEPS (0 for a whole row, which is deleted): a rehomed row is re-bound too, so
+    /// its kept mentions are re-read by the same re-derivation.
+    pub row_kept_mentions: u64,
+}
+
+/// Review round 3 (F4): one value held by two or more GUID rows ([`GuidTwinPlan::multi_row_values`]).
+#[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
+pub struct GuidTwinMultiRowValue {
+    /// The undashed upper-case value ([`GuidKeep::key`]).
+    pub value: String,
+    /// Its GUID rows by id, and each row's own distinct Tenders.
+    pub rows: Vec<i64>,
+    pub row_tenders: Vec<u64>,
+    /// The distinct Tenders over every row's mentions: what the tripwire and the self-check read.
+    pub tenders: u64,
 }
 
 #[derive(Debug, Default, Clone, PartialEq, Eq, Serialize)]
@@ -1076,9 +1121,39 @@ struct Walk {
     groups: Vec<RefusedGroup>,
     targets: Vec<Target>,
     target_at: HashMap<(String, Option<String>), u32>,
+    /// Review round 3 (F4): each value's ([`GuidKeep::key`]) distinct Tenders over EVERY GUID row holding
+    /// it, and those rows (walk indexes, by id): "spans >= 2 Tenders" is counted per value.
+    value_tenders: HashMap<String, BTreeSet<i64>>,
+    value_rows: HashMap<String, Vec<u32>>,
 }
 
 impl Walk {
+    /// One row's distinct Tenders: its notices' versions.
+    fn row_tenders(&self, row: &Row) -> BTreeSet<i64> {
+        row.notices
+            .iter()
+            .filter_map(|n| self.notices.get(n))
+            .flat_map(|info| info.versions.iter().map(|(t, _)| *t))
+            .collect()
+    }
+
+    /// Fills [`Walk::value_tenders`] and [`Walk::value_rows`] once every row and its notices are read.
+    fn index_values(&mut self) {
+        let mut tenders: HashMap<String, BTreeSet<i64>> = HashMap::new();
+        let mut rows: HashMap<String, Vec<u32>> = HashMap::new();
+        for (i, row) in self.rows.iter().enumerate() {
+            let key = GuidKeep::key(&row.identifier);
+            tenders.entry(key.clone()).or_default().extend(self.row_tenders(row));
+            rows.entry(key).or_default().push(i as u32);
+        }
+        self.value_tenders = tenders;
+        self.value_rows = rows;
+    }
+
+    /// A row's value's distinct Tenders over all of its GUID rows (F4).
+    fn value_tender_count(&self, row: &Row) -> u64 {
+        self.value_tenders.get(&GuidKeep::key(&row.identifier)).map_or(row.tenders, |t| t.len() as u64)
+    }
     fn source(&mut self, source: &str) -> u32 {
         if let Some(&id) = self.source_at.get(source) {
             return id;
@@ -1301,6 +1376,8 @@ impl Db {
         plan.guid_rows = walk.rows.len() as u64;
         plan.distinct_values = walk.rows.iter().map(|r| r.identifier.as_str()).collect::<HashSet<_>>().len() as u64;
         plan.guid_mentions = walk.rows.iter().map(|r| r.mentions).sum();
+        // Review round 3 (F4): each value's Tenders over all of its GUID rows.
+        walk.index_values();
 
         // 2. The merged v4 values, then KEEP.
         let mut merged: Vec<(String, Option<String>, i64)> = Vec::new();
@@ -1329,11 +1406,13 @@ impl Db {
         }
         let mut candidates: BTreeMap<String, GuidKeepCandidate> = BTreeMap::new();
         for row in &walk.rows {
+            // F4: a value's Tenders over all of its GUID rows, as the self-check and A1 count them.
+            let value_tenders = walk.value_tender_count(row);
             let mut reasons = Vec::new();
             if row.stable {
                 reasons.push("stable");
             }
-            if row.tenders >= 2 {
+            if value_tenders >= 2 {
                 reasons.push("multi_tender");
             }
             if reasons.is_empty() {
@@ -1345,7 +1424,7 @@ impl Db {
                 value,
                 org_id: row.id,
                 mentions: Some(row.mentions),
-                tenders: Some(row.tenders),
+                tenders: Some(value_tenders),
                 reason: String::new(),
             });
             for reason in reasons {
@@ -1924,6 +2003,22 @@ fn guid_twin_notice(
                 // A missing key's name in the report (a found target's row name replaces it in 4b).
                 walk.targets[target as usize].name = mention.map(|m| m.name.clone()).unwrap_or_default();
             }
+            // F3: a reviewed rehoming verdict put this mention where it sits — never planned, never counted
+            // toward its row being whole or partial.
+            if args.rehomed.is_some_and(|set| set.contains(&(notice, section.clone()))) {
+                plan.verdict_kept += 1;
+                if plan.verdict_kept_samples.len() < args.samples {
+                    plan.verdict_kept_samples.push(GuidTwinOffGuidSample {
+                        notice_id: notice,
+                        section_id: section.clone(),
+                        org_id: org,
+                        kind: if walk.row_at.contains_key(&org) { "guid_row" } else { "off_guid" },
+                        value: value.clone(),
+                        target: None,
+                    });
+                }
+                continue;
+            }
             match walk.row_at.get(&org).copied() {
                 Some(r) => {
                     let row = &mut walk.rows[r as usize];
@@ -1969,7 +2064,8 @@ fn guid_twin_notice(
             }
         }
     }
-    // The census twin over GUID-bound mentions (no country in the key), now and after the plan.
+    // The census twin over GUID-bound mentions (no country in the key), now and after the plan (a
+    // verdict-kept mention stays where it is, F3).
     let mut by_norm: HashMap<String, Vec<(u32, bool)>> = HashMap::new();
     for m in mentions {
         let Some(&r) = walk.row_at.get(&m.org) else { continue };
@@ -1977,7 +2073,9 @@ fn guid_twin_notice(
         if norm.is_empty() {
             continue;
         }
-        by_norm.entry(norm).or_default().push((r, decision.refused.contains(&m.section)));
+        let moves = decision.refused.contains(&m.section)
+            && !args.rehomed.is_some_and(|set| set.contains(&(notice, m.section.clone())));
+        by_norm.entry(norm).or_default().push((r, moves));
     }
     for members in by_norm.values() {
         let before: BTreeSet<u32> = members.iter().map(|(r, _)| *r).collect();
@@ -2310,6 +2408,26 @@ fn guid_twin_finish(
     let mut r2_rows: Vec<(&'static str, i64)> = Vec::new();
     let mut r2_at: Vec<u32> = Vec::new();
     let mut exhibits: BTreeMap<String, GuidTwinExhibit> = BTreeMap::new();
+    // F4: per VALUE over all of its GUID rows — the Tenders (`walk.value_tenders`), whether any of its
+    // rows is a census twin or stable, and its rows by id (the lowest names its KEEP line).
+    let value_twin: HashSet<String> =
+        walk.rows.iter().filter(|r| r.twin).map(|r| GuidKeep::key(&r.identifier)).collect();
+    let value_stable: HashSet<String> =
+        walk.rows.iter().filter(|r| r.stable).map(|r| GuidKeep::key(&r.identifier)).collect();
+    let mut multi_rows: Vec<(&String, &Vec<u32>)> = walk.value_rows.iter().filter(|(_, rows)| rows.len() >= 2).collect();
+    multi_rows.sort();
+    plan.multi_row_value_count = multi_rows.len() as u64;
+    for (value, rows) in multi_rows.into_iter().take(GUID_TWIN_LIST_CAP) {
+        let mut rows: Vec<&Row> = rows.iter().map(|&r| &walk.rows[r as usize]).collect();
+        rows.sort_by_key(|r| r.id);
+        plan.multi_row_values.push(GuidTwinMultiRowValue {
+            value: value.clone(),
+            rows: rows.iter().map(|r| r.id).collect(),
+            row_tenders: rows.iter().map(|r| r.tenders).collect(),
+            tenders: walk.value_tenders.get(value).map_or(0, |t| t.len() as u64),
+        });
+    }
+    let mut self_checked: HashSet<String> = HashSet::new();
     for (i, row) in walk.rows.iter().enumerate() {
         // Whole when every mention is refused (`>=`: a mention recorded between the two reads of the
         // walk cannot make a whole row read partial the wrong way round).
@@ -2346,19 +2464,29 @@ fn guid_twin_finish(
             plan.post_state.twin_multi_tender_rows_after += u64::from(row.tenders >= 2);
         }
         // A3 iii's self-check: against the COMPILED file since Build 2 (a tautology for the walk's KEEP).
-        if ((row.twin && row.tenders >= 2) || row.stable) && !keep.contains(&row.identifier) {
-            plan.bars.keep_self_check_missing.push(GuidKeep::key(&row.identifier));
-            let reason = match (row.stable, row.tenders >= 2) {
+        // F4: per VALUE — (any of its rows a census twin ∧ its rows span >= 2 Tenders) ∨ any of its rows
+        // stable — listed once, on its lowest-id row (the walk reads rows in id order).
+        let value = GuidKeep::key(&row.identifier);
+        let value_tenders = walk.value_tender_count(row);
+        let stable_v = value_stable.contains(&value);
+        if ((value_twin.contains(&value) && value_tenders >= 2) || stable_v)
+            && !keep.contains(&row.identifier)
+            && self_checked.insert(value.clone())
+        {
+            let first = walk.value_rows.get(&value).and_then(|rows| rows.iter().map(|&r| &walk.rows[r as usize]).min_by_key(|r| r.id));
+            let first = first.unwrap_or(row);
+            plan.bars.keep_self_check_missing.push(value.clone());
+            let reason = match (stable_v, value_tenders >= 2) {
                 (true, true) => "stable+multi_tender",
                 (true, false) => "stable",
                 _ => "multi_tender",
             };
             plan.keep_add_commit.push(guid_keep_line(&GuidKeepCandidate {
-                country: row.country.clone(),
-                value: GuidKeep::key(&row.identifier),
-                org_id: row.id,
-                mentions: Some(row.mentions),
-                tenders: Some(row.tenders),
+                country: first.country.clone(),
+                value: value.clone(),
+                org_id: first.id,
+                mentions: Some(first.mentions),
+                tenders: Some(value_tenders),
                 reason: reason.to_owned(),
             }));
         }
@@ -2366,8 +2494,10 @@ fn guid_twin_finish(
             continue;
         }
         // The tripwires, over every planned row. The stable one reads R1's fixed threshold, never the
-        // run's knob (`row.stable`), so a raised knob cannot hide a 100-mention row from it.
-        let multi = row.tenders >= 2;
+        // run's knob (`row.stable`), so a raised knob cannot hide a 100-mention row from it. F4: the
+        // several-Tenders one reads the row's VALUE over all of its GUID rows (a value split over two
+        // single-Tender rows in two Tenders already links two Tenders); the no-Tender one stays per row.
+        let multi = value_tenders >= 2;
         let none = row.tenders == 0;
         let stable = stable_ids.contains(&row.id) || row.mentions >= GUID_TWIN_R1_STABLE_MENTIONS;
         let kept = keep.contains(&row.identifier);
@@ -2477,6 +2607,8 @@ fn guid_twin_finish(
             target: t.id,
             mint_name: mint_at.get(&p.target).map(|m| m.2.to_owned()).unwrap_or_default(),
             whole: row.refused >= row.mentions,
+            target_mentions: if t.id.is_some() { t.mentions } else { 0 },
+            row_kept_mentions: row.mentions.saturating_sub(row.refused),
         });
     }
     for p in &walk.planned {
@@ -2573,6 +2705,13 @@ fn guid_twin_finish(
 /// one window, so 542's re-derivation reads that row once, not once per org-id window).
 pub const GUID_TWIN_WET_WINDOW_MENTIONS: usize = 2_000;
 
+/// Review round 3 (F1): the re-read budget of one wet window — the existing mentions 542's
+/// re-derivation re-reads under the lock ([`guid_twin_rebound_estimate`]). Planned mentions alone
+/// misjudge the cost: plan 2660's `vergabekammer …` run fits under the 2,000-mention cap with about 330k
+/// re-read mentions (target 622 alone holds 111k). A component over the budget sits alone in its window
+/// (622 is the floor).
+pub const GUID_TWIN_WET_WINDOW_REREAD: u64 = 120_000;
+
 /// Build 2: one wet window — the target keys `(org_name_norm, register country)` it owns, its whole
 /// and partial rows (sorted), and its planned mentions (by notice, section). Keys never span two
 /// windows, and neither do rows: a row whose mentions go to two keys ties them into one component.
@@ -2582,13 +2721,44 @@ pub struct GuidTwinWindow {
     pub whole: Vec<i64>,
     pub partial: Vec<i64>,
     pub mentions: Vec<GuidTwinWetMention>,
+    /// Review round 3 (F1): the mentions 542's re-derivation is estimated to re-read inside this window
+    /// ([`guid_twin_rebound_estimate`]); the applied window reports what it read
+    /// (`GuidTwinWindowDone::rebound_target_mentions`).
+    pub rebound_estimate: u64,
+}
+
+/// Review round 3 (F1): what 542's re-derivation re-reads when `mentions` are applied — every mention of
+/// every re-bound row once the moves are done: each distinct target key's existing mentions
+/// ([`GuidTwinWetMention::target_mentions`]) plus the planned mentions it receives, and each distinct
+/// partial row's kept mentions ([`GuidTwinWetMention::row_kept_mentions`]). Keys and rows never span two
+/// windows, so a window's estimate is the sum of its components'.
+pub fn guid_twin_rebound_estimate(mentions: &[GuidTwinWetMention]) -> u64 {
+    let mut keys: BTreeMap<(&str, Option<&str>), (u64, u64)> = BTreeMap::new();
+    let mut partial: BTreeMap<i64, u64> = BTreeMap::new();
+    for m in mentions {
+        let k = keys.entry((m.key_name_norm.as_str(), m.key_country.as_deref())).or_default();
+        k.0 = k.0.max(m.target_mentions);
+        k.1 += 1;
+        if !m.whole {
+            partial.insert(m.org_id, m.row_kept_mentions);
+        }
+    }
+    keys.values().map(|(existing, planned)| existing + planned).sum::<u64>() + partial.values().sum::<u64>()
 }
 
 /// Build 2 (decision "Windows go by target key"): the wet run's windows, PURE. A union-find over the
 /// target keys and the GUID rows (a mention joins its key and its row) gives atomic components; they
-/// are ordered by their smallest key and packed greedily up to `max` planned mentions, a component
-/// larger than `max` alone in its window. Deterministic for one plan.
+/// are ordered by their smallest key and packed greedily up to `max` planned mentions and (review round
+/// 3, F1) [`GUID_TWIN_WET_WINDOW_REREAD`] estimated re-read mentions, a component over either alone in
+/// its window. Deterministic for one plan.
 pub fn guid_twin_windows(wet: &[GuidTwinWetMention], max: usize) -> Vec<GuidTwinWindow> {
+    guid_twin_windows_within(wet, max, GUID_TWIN_WET_WINDOW_REREAD)
+}
+
+/// [`guid_twin_windows`] under an explicit re-read budget (`reread`, clamped to at least 1): before a
+/// component joins the current window, the window closes when the component would take it past `max`
+/// planned mentions or past `reread` estimated re-read mentions ([`guid_twin_rebound_estimate`]).
+pub fn guid_twin_windows_within(wet: &[GuidTwinWetMention], max: usize, reread: u64) -> Vec<GuidTwinWindow> {
     fn find(parent: &mut [usize], mut x: usize) -> usize {
         while parent[x] != x {
             parent[x] = parent[parent[x]];
@@ -2644,15 +2814,23 @@ pub fn guid_twin_windows(wet: &[GuidTwinWetMention], max: usize) -> Vec<GuidTwin
         let partial: BTreeSet<i64> = w.mentions.iter().filter(|m| !m.whole).map(|m| m.org_id).collect();
         w.whole = whole.into_iter().collect();
         w.partial = partial.into_iter().collect();
+        w.rebound_estimate = guid_twin_rebound_estimate(&w.mentions);
         out.push(w);
     };
+    let (max, reread) = (max.max(1), reread.max(1));
+    let mut current_reread = 0u64;
     for root in order {
         let mentions = comp_mentions.remove(&root).unwrap_or_default();
-        if !current.mentions.is_empty() && current.mentions.len() + mentions.len() > max.max(1) {
+        let cost = guid_twin_rebound_estimate(&mentions);
+        if !current.mentions.is_empty()
+            && (current.mentions.len() + mentions.len() > max || current_reread.saturating_add(cost) > reread)
+        {
             close(&mut current, &mut out);
+            current_reread = 0;
         }
         current.keys.extend(comp_keys.remove(&root).unwrap_or_default());
         current.mentions.extend(mentions);
+        current_reread = current_reread.saturating_add(cost);
     }
     close(&mut current, &mut out);
     out
@@ -2704,6 +2882,9 @@ pub struct GuidTwinWindowDone {
     pub wait_ms: u64,
     pub hold_ms: u64,
     pub rebound_target_mentions: u64,
+    /// Review round 3 (F1): the window's estimate of that re-read ([`GuidTwinWindow::rebound_estimate`]),
+    /// beside the measured `rebound_target_mentions`.
+    pub rebound_estimate: u64,
 }
 
 /// One row of `guid_twin_dissolve_log` (the restore manifest).
@@ -2812,6 +2993,15 @@ impl Db {
                     return Err(wet_refused(format!(
                         "window {}: mention ({}, {}) sits on {here:?}, the plan has it on {}",
                         args.window_no, m.notice_id, m.section_id, m.org_id
+                    )));
+                }
+                // F3: a rehoming verdict on a planned mention, recorded after the re-plan (the re-plan
+                // leaves a verdict's mention unplanned): a person placed it, so no window moves it.
+                if guid_twin_has_verdict(&conn, m.notice_id, &m.section_id).await? {
+                    return Err(wet_refused(format!(
+                        "window {}: mention ({}, {}) has a rehoming verdict (org_mention_rehoming) recorded after the \
+                         re-plan; a person placed it — re-run the dry plan",
+                        args.window_no, m.notice_id, m.section_id
                     )));
                 }
                 by_row.entry(m.org_id).or_default().insert((m.notice_id, m.section_id.clone()));
@@ -2927,6 +3117,7 @@ impl Db {
                     )));
                 }
             }
+            done.rebound_estimate = w.rebound_estimate;
             // 4. Tier 5's pair, 542's variants, the log, the change rows.
             if !refold.is_empty() {
                 let ids: Vec<i64> = refold.iter().copied().collect();
@@ -3166,8 +3357,11 @@ pub struct GuidTwinRecurrenceValue {
     pub value: String,
     pub tenders: u64,
     pub refused_mentions: u64,
-    /// The value's own GUID row (an `organizations.identifier` seek), and its mentions.
+    /// The value's own GUID row (an `organizations.identifier` seek): the lowest id, which names the
+    /// value's KEEP line; `own_rows` (review round 3, F4) is every row holding the value, by id, and
+    /// `own_row_mentions` their mentions together — `tenders` counts the Tenders of all of them.
     pub own_row: Option<i64>,
+    pub own_rows: Vec<i64>,
     pub own_row_mentions: u64,
     /// `(notice_id, section_id, target_id)` of every refused mention, uncapped: the restore list.
     pub cohort: Vec<(i64, String, i64)>,
@@ -3216,8 +3410,10 @@ pub struct GuidTwinRecurrence {
     pub anomalies: Vec<GuidTwinOffGuidSample>,
     pub targets: u64,
     pub target_mentions_read: u64,
-    /// Target mentions whose raw value passes uuid_v4, the copies they sit in, and those the rule
-    /// refuses (re-decided per copy with the compiled statics).
+    /// Target mentions the gate's candidate test admits (review round 3, F5: [`GuidTwinGatedV4`] over the
+    /// stored raw value, scheme and country — the gated identifier is a national uuid_v4 key, exactly as
+    /// the gate and the planner read it), the copies they sit in, and those the rule refuses (re-decided
+    /// per copy with the compiled statics).
     pub guid_mentions: u64,
     pub notices_decided: u64,
     pub refused_mentions: u64,
@@ -3244,8 +3440,10 @@ pub struct GuidTwinRecurrence {
     /// a rebuild binds them through the 234 arm — where they already sit — so they are NO drift and no
     /// restore moves them. Reported only; never in `reverse_drift_mentions` or `pass`.
     pub reverse_drift_stock_ungated: u64,
-    /// `since` mentions a reviewed rehoming verdict names (`org_mention_rehoming`, by its primary key):
-    /// a person put them where they sit, so they are no drift and a restore never moves them.
+    /// Mentions a reviewed rehoming verdict names (`org_mention_rehoming`, by its primary key), in either
+    /// half (`since`, and since review round 3, F3, `stock` — a `keep` verdict on a logged mention still
+    /// on its logged target): a person put them where they sit, so they are no drift and a restore never
+    /// moves them.
     pub reverse_drift_verdict_skipped: u64,
     pub reverse_drift_values: u64,
     pub reverse_drift: Vec<GuidTwinDriftValue>,
@@ -3259,15 +3457,36 @@ pub struct GuidTwinRecurrence {
     pub forward_drift_stock: u64,
     pub forward_drift_since: u64,
     pub forward_drift: Vec<GuidTwinOffGuidSample>,
+    /// Review round 3 (F3): refused mentions on a GUID row that a reviewed rehoming verdict names (a
+    /// Risk-2 wrong fold the reviewer rehomed onto the body's GUID row): no forward drift, never in
+    /// `pass`, never planned (the planner reads the same verdicts).
+    pub forward_drift_verdict_skipped: u64,
+    /// Review round 3 (F9): the highest notice id among `forward_drift_since`'s copies that look folded
+    /// BEFORE the gate — every refused section on an identified row, none on an identifier-NULL row
+    /// unless a verdict placed it there. Before any wet window such a post-boundary copy means the
+    /// boundary is below the deploy (the wet run and the restore refuse naming it, and it is the value to
+    /// pass). A refresh residue — the copy's re-resolved refused sibling on the name-keyed row, its
+    /// unchanged one on its GUID row — is excluded: it is counted in `forward_drift_since` and
+    /// `forward_drift_since_residue` only.
+    pub forward_drift_since_max_notice: Option<i64>,
+    /// `forward_drift_since`'s mentions in a refresh residue's copy (a refused section of the same copy
+    /// sits on an identifier-NULL row no verdict placed): real drift, remedied by a wet run, never read as
+    /// a pre-gate fold.
+    pub forward_drift_since_residue: u64,
+    /// `forward_drift_since`'s GUID rows outside a residue's copy, each with the highest notice id of its
+    /// drifted mentions (the wet run checks them against its re-plan's rows). Not serialized.
+    #[serde(skip)]
+    pub forward_drift_since_rows: BTreeMap<i64, i64>,
     pub pass: bool,
     pub runtime_ms: u64,
     pub stopped: bool,
 }
 
-/// The mentions of `n` target orgs with their raw values, through `organization_mentions_org`.
+/// The mentions of `n` target orgs with their raw values, schemes and countries (the gate's candidate
+/// test reads all three, F5), through `organization_mentions_org`.
 pub(crate) fn guid_twin_target_mentions_sql(n: usize) -> String {
     format!(
-        "SELECT organization_id, notice_id, section_id, raw_identifier FROM organization_mentions \
+        "SELECT organization_id, notice_id, section_id, raw_identifier, scheme, country FROM organization_mentions \
           WHERE organization_id IN ({})",
         placeholders(n)
     )
@@ -3278,8 +3497,9 @@ pub(crate) const GUID_TWIN_SINCE_MENTIONS_SQL: &str = "SELECT notice_id, section
      raw_identifier, scheme FROM organization_mentions WHERE notice_id > ? AND notice_id <= ? \
      AND section_id >= 'ORG-' AND section_id < 'ORG.'";
 
-/// A value's own GUID row, through `organizations_identifier_id`.
-pub(crate) const GUID_TWIN_OWN_ROW_SQL: &str = "SELECT id FROM organizations WHERE identifier = ? ORDER BY id LIMIT 1";
+/// A value's own GUID rows, every one by id (review round 3, F4: a value on two rows — DE and AT, or
+/// issue 62's duplicate triple — counts the Tenders of both), through `organizations_identifier_id`.
+pub(crate) const GUID_TWIN_OWN_ROW_SQL: &str = "SELECT id FROM organizations WHERE identifier = ? ORDER BY id";
 /// A row's mention notices, through `organization_mentions_org`.
 pub(crate) const GUID_TWIN_ROW_NOTICES_SQL: &str = "SELECT notice_id FROM organization_mentions WHERE organization_id = ?";
 /// A reviewed rehoming verdict on one mention, by `org_mention_rehoming`'s primary key.
@@ -3293,6 +3513,32 @@ pub(crate) const GUID_TWIN_IDENTITY_ROW_SQL: &str = "SELECT id FROM organization
      AND identifier_kind = 'national' AND country IS ? ORDER BY id LIMIT 1";
 pub(crate) const GUID_TWIN_IDENTITY_MERGED_SQL: &str = "SELECT org_id FROM organization_merged_identifiers \
      WHERE identifier = ? AND identifier_kind = 'national' AND country IS ? LIMIT 1";
+
+/// Every `(notice_id, section_id)` a rehoming verdict names, whatever its action (F3: the planner's
+/// [`GuidTwinPlanArgs::rehomed`]). A hand-review sized table, read whole once.
+pub(crate) const GUID_TWIN_REHOMED_KEYS_SQL: &str = "SELECT notice_id, section_id FROM org_mention_rehoming";
+
+/// Whether a reviewed rehoming verdict names `(notice, section)` ([`GUID_TWIN_REHOMING_VERDICT_SQL`], the
+/// table's primary key): a person put that mention where it sits, so no drift read counts it and no
+/// window moves it (F3).
+async fn guid_twin_has_verdict(conn: &turso::Connection, notice: i64, section: &str) -> turso::Result<bool> {
+    let mut rows = conn.query(GUID_TWIN_REHOMING_VERDICT_SQL, (Value::Integer(notice), Value::Text(section.to_owned()))).await?;
+    Ok(rows.next().await?.is_some())
+}
+
+impl Db {
+    /// Review round 3 (F3): every `(notice_id, section_id)` a rehoming verdict names — the planner's
+    /// [`GuidTwinPlanArgs::rehomed`] (one read of a hand-review sized table).
+    pub async fn guid_twin_rehomed_keys(&self) -> turso::Result<HashSet<(i64, String)>> {
+        let reader = self.reader().await?;
+        let mut rows = reader.query(GUID_TWIN_REHOMED_KEYS_SQL, ()).await?;
+        let mut out = HashSet::new();
+        while let Some(row) = rows.next().await? {
+            out.insert((int(&row, 0), text(&row, 1)));
+        }
+        Ok(out)
+    }
+}
 
 /// The row [`GUID_TWIN_IDENTITY_ROW_SQL`] / [`GUID_TWIN_IDENTITY_MERGED_SQL`] give `(value, country)`.
 async fn guid_twin_identity_row(conn: &turso::Connection, value: &str, country: Option<&str>) -> turso::Result<Option<i64>> {
@@ -3367,17 +3613,19 @@ impl Db {
     ///    refused section bound to an identified row is an anomaly). In the same walk, every copy's
     ///    unrefused section whose gated identifier is a national v4 key and that is bound to an
     ///    identifier-NULL row is reverse drift (`since`).
-    /// 2. The targets' mentions (`organization_mentions_org`, IN chunks) whose raw value passes
-    ///    `is_guid`; each such copy re-decided whole with the compiled statics, keeping the refused ones
-    ///    — a logged mention still on its logged target whose gated identifier is still a national v4
-    ///    key and that the rule no longer refuses is reverse drift (`stock`; a logged mention a later
-    ///    merge or verdict moved off its target is not read), and a refused section of such a copy that
-    ///    sits on a GUID row is forward drift (`stock`).
-    /// 3. Per refused value: the distinct Tenders over its refused mentions plus the mentions of its own
-    ///    GUID row (an `organizations_identifier_id` seek). A value at two or more Tenders outside KEEP is
-    ///    a KEEP-add candidate, listed with its whole restore cohort. Per drifted value: its whole
-    ///    cohort and its restore target (the identity's row, else a mint). Pass means no candidate and
-    ///    no drift.
+    /// 2. The targets' mentions (`organization_mentions_org`, IN chunks) that the gate's candidate test
+    ///    admits (`args.gated_v4` over the stored raw value, scheme and country — the gated identifier a
+    ///    national uuid_v4 key, keyed by that gated value; review round 3, F5); each such copy re-decided
+    ///    whole with the compiled statics, keeping the refused ones — a logged mention still on its
+    ///    logged target whose gated identifier is still a national v4 key and that the rule no longer
+    ///    refuses is reverse drift (`stock`; a logged mention a later merge or verdict moved off its
+    ///    target is not read), and a refused section of such a copy that sits on a GUID row is forward
+    ///    drift (`stock`). Either half skips a mention a reviewed rehoming verdict names (F3).
+    /// 3. Per refused value: the distinct Tenders over its refused mentions plus the mentions of EVERY
+    ///    GUID row holding it (an `organizations_identifier_id` seek; F4). A value at two or more Tenders
+    ///    outside KEEP is a KEEP-add candidate, listed with its whole restore cohort. Per drifted value:
+    ///    its whole cohort and its restore target (the identity's row, else a mint). Pass means no
+    ///    candidate and no drift.
     ///
     /// Read-only. Refused before any read while one of [`GUID_TWIN_INDEXES`] or
     /// `organizations_identifier_id` (the own-row and identity seeks) is absent. The stop flag is read
@@ -3439,6 +3687,7 @@ impl Db {
             let mut lo = since;
             let mut from_since: BTreeSet<i64> = BTreeSet::new();
             let mut since_candidates: Vec<(i64, String, DriftMention)> = Vec::new();
+            let mut since_guid_rows: Vec<(i64, String, i64, GuidTwinOffGuidSample)> = Vec::new();
             while lo < out.notice_max_id {
                 if (args.stop)() {
                     return Ok(stopped());
@@ -3480,6 +3729,9 @@ impl Db {
                     }
                 }
                 let orgs: Vec<i64> = bound.keys().chain(unrefused.keys()).copied().collect::<BTreeSet<_>>().into_iter().collect();
+                // Each copy's refused sections bound to an identifier-NULL row (the gate's name-keyed
+                // binding), by notice: a copy carrying one is a refresh residue, not a pre-gate fold.
+                let mut name_keyed: BTreeMap<i64, Vec<String>> = BTreeMap::new();
                 for chunk in orgs.chunks(IN_CHUNK) {
                     let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
                     let mut rows = reader.query(&guid_twin_orgs_sql(chunk.len()), params).await?;
@@ -3487,8 +3739,11 @@ impl Db {
                         let org = int(&row, 0);
                         match opt_text_of(&row, 1) {
                             None => {
-                                if bound.contains_key(&org) {
+                                if let Some(refused_here) = bound.get(&org) {
                                     from_since.insert(org);
+                                    for (n, s, _) in refused_here {
+                                        name_keyed.entry(*n).or_default().push(s.clone());
+                                    }
                                 }
                                 for (n, s, value, country, name) in unrefused.get(&org).into_iter().flatten() {
                                     since_candidates.push((*n, s.clone(), DriftMention {
@@ -3512,10 +3767,7 @@ impl Db {
                                         target: None,
                                     };
                                     if guid_row {
-                                        out.forward_drift_since += 1;
-                                        if out.forward_drift.len() < args.samples {
-                                            out.forward_drift.push(sample.clone());
-                                        }
+                                        since_guid_rows.push((*n, s.clone(), org, sample.clone()));
                                     }
                                     if out.anomalies.len() < args.samples {
                                         out.anomalies.push(sample);
@@ -3525,12 +3777,47 @@ impl Db {
                         }
                     }
                 }
+                // Forward drift (since): a refused section on a GUID row — unless a reviewed rehoming
+                // verdict put it there (F3). F9: each drifted row with its highest notice — only from a
+                // copy that looks folded BEFORE the gate: every refused section of a pre-gate fold sits on
+                // an identified row, while a refresh residue (a re-parse turned the copy into a twin after
+                // the gate) carries its re-resolved sibling on the name-keyed row (one no verdict placed).
+                // A residue is real drift whose remedy is a wet run, never evidence of a low boundary.
+                let mut residue_of: BTreeMap<i64, bool> = BTreeMap::new();
+                for (n, s, org, sample) in since_guid_rows.drain(..) {
+                    if guid_twin_has_verdict(&reader, n, &s).await? {
+                        out.forward_drift_verdict_skipped += 1;
+                        continue;
+                    }
+                    out.forward_drift_since += 1;
+                    let residue = match residue_of.get(&n) {
+                        Some(&known) => known,
+                        None => {
+                            let mut found = false;
+                            for keyed in name_keyed.get(&n).into_iter().flatten() {
+                                if !guid_twin_has_verdict(&reader, n, keyed).await? {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            residue_of.insert(n, found);
+                            found
+                        }
+                    };
+                    if residue {
+                        out.forward_drift_since_residue += 1;
+                    } else {
+                        out.forward_drift_since_max_notice = out.forward_drift_since_max_notice.max(Some(n));
+                        let top = out.forward_drift_since_rows.entry(org).or_insert(n);
+                        *top = (*top).max(n);
+                    }
+                    if out.forward_drift.len() < args.samples {
+                        out.forward_drift.push(sample);
+                    }
+                }
                 // A mention a reviewed rehoming verdict placed is no drift.
                 for (n, s, m) in since_candidates.drain(..) {
-                    let mut rows = reader.query(GUID_TWIN_REHOMING_VERDICT_SQL, (Value::Integer(n), Value::Text(s.clone()))).await?;
-                    let reviewed = rows.next().await?.is_some();
-                    drop(rows);
-                    if reviewed {
+                    if guid_twin_has_verdict(&reader, n, &s).await? {
                         out.reverse_drift_verdict_skipped += 1;
                         continue;
                     }
@@ -3545,7 +3832,11 @@ impl Db {
         }
         out.targets = targets.len() as u64;
 
-        // 2. The targets' GUID-raw mentions, and their copies re-decided.
+        // 2. The targets' mentions the gate's candidate test admits, and their copies re-decided. F5: the
+        // gate's own test (`gated_v4`: the identifier gated under the mention's scheme and country is a
+        // national uuid_v4 key), never `is_guid` on the raw value — a raw BT-501 wrapping the UUID in
+        // braces, whitespace or other punctuation is a candidate to the gate and the planner alike — and
+        // the GATED value keys it, the identifier a rebuild stores.
         let target_list: Vec<i64> = targets.into_iter().collect();
         let mut on_target: HashMap<(i64, String), (i64, String)> = HashMap::new();
         for chunk in target_list.chunks(IN_CHUNK) {
@@ -3556,12 +3847,14 @@ impl Db {
             let mut rows = reader.query(&guid_twin_target_mentions_sql(chunk.len()), params).await?;
             while let Some(row) = rows.next().await? {
                 out.target_mentions_read += 1;
-                let Some(raw) = opt_text_of(&row, 3) else { continue };
-                if !(args.is_guid)(&raw) {
+                let raw = opt_text_of(&row, 3);
+                let Some((value, _)) =
+                    (args.gated_v4)(raw.as_deref(), opt_text_of(&row, 4).as_deref(), opt_text_of(&row, 5).as_deref())
+                else {
                     continue;
-                }
+                };
                 out.guid_mentions += 1;
-                on_target.insert((int(&row, 1), text(&row, 2)), (int(&row, 0), GuidKeep::key(&raw)));
+                on_target.insert((int(&row, 1), text(&row, 2)), (int(&row, 0), value));
             }
         }
         let notices: Vec<i64> = on_target.keys().map(|(n, _)| *n).collect::<BTreeSet<_>>().into_iter().collect();
@@ -3598,6 +3891,7 @@ impl Db {
                 }
             }
             let off_orgs: Vec<i64> = off_target.keys().copied().collect();
+            let mut on_guid_rows: Vec<(i64, String, i64, String)> = Vec::new();
             for chunk in off_orgs.chunks(IN_CHUNK) {
                 let params: Vec<Value> = chunk.iter().map(|&id| Value::Integer(id)).collect();
                 let mut rows = reader.query(&guid_twin_orgs_sql(chunk.len()), params).await?;
@@ -3608,24 +3902,34 @@ impl Db {
                         continue;
                     }
                     for (n, s, raw) in off_target.get(&org).into_iter().flatten() {
-                        out.forward_drift_stock += 1;
-                        if out.forward_drift.len() < args.samples {
-                            out.forward_drift.push(GuidTwinOffGuidSample {
-                                notice_id: *n,
-                                section_id: s.clone(),
-                                org_id: org,
-                                kind: "guid_row",
-                                value: GuidKeep::key(raw),
-                                target: None,
-                            });
-                        }
+                        on_guid_rows.push((*n, s.clone(), org, raw.clone()));
                     }
+                }
+            }
+            // F3: a refused mention a reviewed rehoming verdict put on a GUID row is no forward drift.
+            for (n, s, org, raw) in on_guid_rows {
+                if guid_twin_has_verdict(&reader, n, &s).await? {
+                    out.forward_drift_verdict_skipped += 1;
+                    continue;
+                }
+                out.forward_drift_stock += 1;
+                if out.forward_drift.len() < args.samples {
+                    out.forward_drift.push(GuidTwinOffGuidSample {
+                        notice_id: n,
+                        section_id: s,
+                        org_id: org,
+                        kind: "guid_row",
+                        value: GuidKeep::key(&raw),
+                        target: None,
+                    });
                 }
             }
             // The stock half of the reverse drift: a logged mention still on its logged target whose gated
             // identifier is still a national v4 key and that the current rule no longer refuses. One the
             // gate no longer admits as a v4 identity (a condemn, a refused scheme, a re-parsed raw) is no
-            // drift: a rebuild binds it through the 234 arm, where it sits.
+            // drift: a rebuild binds it through the 234 arm, where it sits. F3: nor is one a reviewed
+            // rehoming verdict names (a `keep` verdict on its logged target) — a person put it there.
+            let mut stock: Vec<((i64, String), DriftMention)> = Vec::new();
             for (n, ms) in &by_notice {
                 for m in ms {
                     let key = (*n, m.section.clone());
@@ -3638,9 +3942,16 @@ impl Db {
                         out.reverse_drift_stock_ungated += 1;
                         continue;
                     };
-                    out.reverse_drift_stock += 1;
-                    drift.insert(key, DriftMention { row: m.org, value, country, name: m.name.clone() });
+                    stock.push((key, DriftMention { row: m.org, value, country, name: m.name.clone() }));
                 }
+            }
+            for (key, m) in stock {
+                if guid_twin_has_verdict(&reader, key.0, &key.1).await? {
+                    out.reverse_drift_verdict_skipped += 1;
+                    continue;
+                }
+                out.reverse_drift_stock += 1;
+                drift.insert(key, m);
             }
         }
 
@@ -3648,27 +3959,31 @@ impl Db {
         out.values = by_value.len() as u64;
         let mut tenders_of_notice: HashMap<i64, Vec<i64>> = HashMap::new();
         let mut want: BTreeSet<i64> = by_value.values().flatten().map(|(n, _, _)| *n).collect();
-        let mut own: BTreeMap<String, (i64, Vec<i64>)> = BTreeMap::new();
+        // value -> (its GUID rows by id, every mention notice of them): F4, every row holding the value.
+        let mut own: BTreeMap<String, (Vec<i64>, Vec<i64>)> = BTreeMap::new();
         for (k, value) in by_value.keys().enumerate() {
             if k % 64 == 0 && (args.stop)() {
                 return Ok(stopped());
             }
             let mut rows = reader.query(GUID_TWIN_OWN_ROW_SQL, vec![Value::Text(value.clone())]).await?;
-            let row_id = match rows.next().await? {
-                Some(row) => Some(int(&row, 0)),
-                None => None,
-            };
+            let mut row_ids: Vec<i64> = Vec::new();
+            while let Some(row) = rows.next().await? {
+                row_ids.push(int(&row, 0));
+            }
             drop(rows);
-            if let Some(id) = row_id {
-                let mut notices: Vec<i64> = Vec::new();
+            if row_ids.is_empty() {
+                continue;
+            }
+            let mut notices: Vec<i64> = Vec::new();
+            for &id in &row_ids {
                 let mut rows = reader.query(GUID_TWIN_ROW_NOTICES_SQL, vec![Value::Integer(id)]).await?;
                 while let Some(row) = rows.next().await? {
                     notices.push(int(&row, 0));
                 }
                 drop(rows);
-                want.extend(notices.iter().copied());
-                own.insert(value.clone(), (id, notices));
             }
+            want.extend(notices.iter().copied());
+            own.insert(value.clone(), (row_ids, notices));
         }
         let want: Vec<i64> = want.into_iter().collect();
         for chunk in want.chunks(IN_CHUNK) {
@@ -3686,14 +4001,14 @@ impl Db {
             for (n, _, _) in &cohort {
                 tenders.extend(tenders_of_notice.get(n).into_iter().flatten().copied());
             }
-            let (own_row, own_mentions) = match own.get(&value) {
-                Some((id, notices)) => {
+            let (own_row, own_rows, own_mentions) = match own.get(&value) {
+                Some((ids, notices)) => {
                     for n in notices {
                         tenders.extend(tenders_of_notice.get(n).into_iter().flatten().copied());
                     }
-                    (Some(*id), notices.len() as u64)
+                    (ids.first().copied(), ids.clone(), notices.len() as u64)
                 }
-                None => (None, 0),
+                None => (None, Vec::new(), 0),
             };
             if tenders.len() < 2 {
                 out.single_tender_values += 1;
@@ -3706,6 +4021,7 @@ impl Db {
                     tenders: tenders.len() as u64,
                     refused_mentions: cohort.len() as u64,
                     own_row,
+                    own_rows,
                     own_row_mentions: own_mentions,
                     cohort,
                 });
@@ -4077,6 +4393,7 @@ mod tests {
             keep_version: "walk",
             unsafe_names: &[],
             under_review: None,
+            rehomed: None,
             role_ref,
             role_class,
             stable_ids: &[254, 255, 8_378],
@@ -4759,6 +5076,8 @@ mod tests {
             target,
             mint_name: key.to_owned(),
             whole,
+            target_mentions: 0,
+            row_kept_mentions: 0,
         }
     }
 
@@ -4794,6 +5113,47 @@ mod tests {
         assert_eq!(one.len(), 1, "everything fits one window");
         assert_eq!(one[0].mentions.iter().map(|m| m.notice_id).collect::<Vec<_>>(), vec![1, 1, 2, 3, 3, 4, 5, 5, 6]);
         assert!(guid_twin_windows(&[], 10).is_empty());
+    }
+
+    /// Review round 3 (F1): windows close on the RE-READ budget too, not only on planned mentions — the
+    /// plan-2660 shape: a run of keys with few planned mentions but heavy targets (622 at 111k, 2217 at
+    /// 90k) fits one 2,000-mention window, so 542's re-derivation re-read every target's existing mentions
+    /// under one hold. Each window's estimate is its distinct targets' existing mentions plus what they
+    /// receive, plus each partial row's kept mentions; a component over the budget alone sits alone; the
+    /// packing stays deterministic. Without the budget (the old packing) the three heavy keys share a
+    /// window.
+    #[test]
+    fn wet_windows_close_on_the_reread_budget() {
+        let heavy = |notice: i64, org: i64, key: &str, target: i64, existing: u64| GuidTwinWetMention {
+            target_mentions: existing,
+            ..wet(notice, "ORG-0001", org, key, Some(target), true)
+        };
+        let partial =
+            GuidTwinWetMention { target_mentions: 49_000, row_kept_mentions: 7, ..wet(4, "ORG-0002", 13, "c", Some(3), false) };
+        let mentions = vec![
+            heavy(1, 10, "a", 1, 90_000),
+            heavy(1, 11, "a", 1, 90_000),
+            heavy(2, 12, "b", 2, 111_000),
+            heavy(4, 14, "c", 3, 49_000),
+            partial,
+        ];
+        assert_eq!(guid_twin_rebound_estimate(&mentions[..2]), 90_002, "one key: its existing mentions plus the two it takes");
+        assert_eq!(guid_twin_rebound_estimate(&mentions[3..]), 49_002 + 7, "a partial row's kept mentions are re-read too");
+        let old = guid_twin_windows_within(&mentions, GUID_TWIN_WET_WINDOW_MENTIONS, u64::MAX);
+        assert_eq!(old.len(), 1, "planned mentions alone: one window re-reading ~250k");
+        assert_eq!(old[0].rebound_estimate, 90_002 + 111_001 + 49_009);
+        let windows = guid_twin_windows(&mentions, GUID_TWIN_WET_WINDOW_MENTIONS);
+        let keys: Vec<Vec<&str>> = windows.iter().map(|w| w.keys.iter().map(|(k, _)| k.as_str()).collect()).collect();
+        assert_eq!(keys, vec![vec!["a"], vec!["b"], vec!["c"]], "a+b and b+c are each over {GUID_TWIN_WET_WINDOW_REREAD}");
+        assert_eq!(windows.iter().map(|w| w.rebound_estimate).collect::<Vec<_>>(), vec![90_002, 111_001, 49_009]);
+        // One component over the budget alone sits alone, between light ones that pack together.
+        let light = vec![heavy(1, 10, "a", 1, 10), heavy(2, 12, "b", 2, 150_000), heavy(4, 14, "c", 3, 10), heavy(5, 15, "d", 4, 10)];
+        let windows = guid_twin_windows(&light, GUID_TWIN_WET_WINDOW_MENTIONS);
+        let keys: Vec<Vec<&str>> = windows.iter().map(|w| w.keys.iter().map(|(k, _)| k.as_str()).collect()).collect();
+        assert_eq!(keys, vec![vec!["a"], vec!["b"], vec!["c", "d"]], "the over-budget key alone; c and d share one");
+        let mut reversed = light.clone();
+        reversed.reverse();
+        assert_eq!(guid_twin_windows(&reversed, GUID_TWIN_WET_WINDOW_MENTIONS), windows, "deterministic");
     }
 
     /// Build 2's tuple reconcile: the dry plan's (row, whole) set is the re-plan's (at or under its max)
@@ -4938,6 +5298,10 @@ mod tests {
         assert_eq!((exhibit.planned, exhibit.partial, exhibit.partial_ids.clone(), exhibit.kept), (1, 1, vec![22_759_261], 0));
         let amt = plan.wet_mentions.iter().find(|m| m.org_id == 104).unwrap();
         assert_eq!((amt.target, amt.mint_name.as_str(), amt.key_name_norm.as_str()), (None, "Amt 66", "amt 66"));
+        // F1: the re-read inputs — a missing key has no existing mentions; the partial row keeps its TED one.
+        assert_eq!((amt.target_mentions, amt.row_kept_mentions), (0, 0));
+        let rehome = plan.wet_mentions.iter().find(|m| m.org_id == 22_759_261).unwrap();
+        assert_eq!((rehome.target_mentions, rehome.row_kept_mentions), (0, 1), "2294259 holds no mention yet");
         let dry: BTreeSet<(i64, bool)> =
             plan.planned_row_ids.iter().map(|&id| (id, true)).chain(plan.partial_row_ids.iter().map(|&id| (id, false))).collect();
         let windows = guid_twin_windows(&plan.wet_mentions, 2);
@@ -5042,6 +5406,7 @@ mod tests {
         assert!(rec.pass);
         // The window's timings and its cost driver are recorded.
         assert!(w2.rebound_target_mentions >= 3, "2294259's two moved mentions and 22759261's kept one: {w2:?}");
+        assert_eq!((w2.rebound_estimate, w2.rebound_target_mentions), (3, 3), "F1: the window's estimate is what it re-read");
         drop(conn);
         cleanup(&path);
     }
@@ -5100,7 +5465,7 @@ mod tests {
             mint_name: SDIS.into(),
             ..wet(70, "ORG-0001", 62, SDIS, target, true)
         };
-        let window = |m: GuidTwinWetMention| GuidTwinWindow { keys: vec![], whole: vec![62], partial: vec![], mentions: vec![m] };
+        let window = |m: GuidTwinWetMention| GuidTwinWindow { keys: vec![], whole: vec![62], partial: vec![], mentions: vec![m], ..Default::default() };
         let err = db
             .dissolve_guid_twin_window(GuidTwinWindowArgs { window: &window(mention("RE", Some(60))), job_id: 9, window_no: 1, gate_since_notice_id: None, fields: &[], normalize: lang })
             .await
@@ -5458,7 +5823,7 @@ mod tests {
         party_row(&conn, (310, 1), "Procedure-Buyer", 200, 300, "ORG-0001").await;
         winner_row(&conn, (20, 310, 300), (310, 1), 200, None).await;
         let m = |section: &str, key: &str| GuidTwinWetMention { org_value: GuidKeep::key(V7), ..wet(300, section, 200, key, None, true) };
-        let window = GuidTwinWindow { keys: vec![], whole: vec![200], partial: vec![], mentions: vec![m("ORG-0001", "amt 67"), m("ORG-0002", "amt 68")] };
+        let window = GuidTwinWindow { keys: vec![], whole: vec![200], partial: vec![], mentions: vec![m("ORG-0001", "amt 67"), m("ORG-0002", "amt 68")], ..Default::default() };
         let w = db
             .dissolve_guid_twin_window(GuidTwinWindowArgs { window: &window, job_id: 15, window_no: 1, gate_since_notice_id: None, fields: &[], normalize: lang })
             .await
@@ -5539,7 +5904,7 @@ mod tests {
         mention_row(&conn, 320, "ORG-0001", 210, "Amt 69", "DE", Some(V8)).await;
         mention_row(&conn, 320, "ORG-0002", 211, "Amt 69", "DE", Some(V9)).await;
         let m = |section: &str, org: i64, value: &str| GuidTwinWetMention { org_value: GuidKeep::key(value), ..wet(320, section, org, "amt 69", None, true) };
-        let window = GuidTwinWindow { keys: vec![], whole: vec![210, 211], partial: vec![], mentions: vec![m("ORG-0001", 210, V8), m("ORG-0002", 211, V9)] };
+        let window = GuidTwinWindow { keys: vec![], whole: vec![210, 211], partial: vec![], mentions: vec![m("ORG-0001", 210, V8), m("ORG-0002", 211, V9)], ..Default::default() };
         let apply = |w: GuidTwinWindow| {
             let db = &db;
             async move { db.dissolve_guid_twin_window(GuidTwinWindowArgs { window: &w, job_id: 17, window_no: 1, gate_since_notice_id: None, fields: &[], normalize: lang }).await }
@@ -5550,7 +5915,7 @@ mod tests {
         exec(&conn, "UPDATE organizations SET identifier = ? WHERE id = 211", vec![Value::Text(GuidKeep::key(V9))]).await;
         // A planned row that is gone (its mention still points at it): refused.
         mention_row(&conn, 320, "ORG-0003", 999, "Amt 69", "DE", Some(V10)).await;
-        let gone = GuidTwinWindow { keys: vec![], whole: vec![999], partial: vec![], mentions: vec![m("ORG-0003", 999, V10)] };
+        let gone = GuidTwinWindow { keys: vec![], whole: vec![999], partial: vec![], mentions: vec![m("ORG-0003", 999, V10)], ..Default::default() };
         let err = apply(gone).await.expect_err("gone");
         assert!(err.to_string().contains("planned row 999 no longer exists"), "{err}");
         exec(&conn, "DELETE FROM organization_mentions WHERE section_id = 'ORG-0003'", vec![]).await;
@@ -5705,9 +6070,18 @@ mod tests {
 
     /// Every window of a fresh plan (no controls), applied under `job`.
     async fn wet_all(db: &crate::Db, job: i64) -> Vec<GuidTwinWindowDone> {
+        wet_all_with(db, job, None).await
+    }
+
+    /// [`wet_all`] under a given KEEP (`None`: the walk's), the bars not read — a fixture whose value
+    /// spans two Tenders over two GUID rows (F4: the walk's KEEP holds it) is applied under an empty one.
+    async fn wet_all_with(db: &crate::Db, job: i64, keep: Option<&GuidKeep>) -> Vec<GuidTwinWindowDone> {
         let stop = || false;
         let progress = |_: u64, _: &str| {};
-        let plan = db.plan_guid_twins(GuidTwinPlanArgs { not_planned: &[], planned: &[], ..args(&stop, &progress) }).await.unwrap();
+        let plan = db
+            .plan_guid_twins(GuidTwinPlanArgs { not_planned: &[], planned: &[], keep, ..args(&stop, &progress) })
+            .await
+            .unwrap();
         let mut done = Vec::new();
         for (k, w) in guid_twin_windows(&plan.wet_mentions, GUID_TWIN_WET_WINDOW_MENTIONS).iter().enumerate() {
             done.push(
@@ -5905,7 +6279,9 @@ mod tests {
         notice_row(&conn, 361, Some(371)).await;
         mention_row(&conn, 361, "ORG-0001", 152, "Stadt Drei", "AT", Some(V10)).await;
         mention_row(&conn, 361, "ORG-0002", 153, "Stadt Drei", "AT", Some(V6)).await;
-        let windows = wet_all(&db, 25).await;
+        // V10 sits on two GUID rows in two Tenders: the walk's KEEP holds it since F4 (per value), so the
+        // stock is dissolved under an empty KEEP — the value refused, as before its KEEP add.
+        let windows = wet_all_with(&db, 25, Some(&GuidKeep::default())).await;
         assert_eq!(windows.iter().map(|w| w.counts.dissolved).sum::<u64>(), 4);
         let grown: GuidKeep = [V10].into_iter().collect();
         let r = recur(&db, &grown, None).await;
@@ -5995,7 +6371,7 @@ mod tests {
         mention_row(&conn, 380, "ORG-0002", 161, "Andere Stelle", "DE", None).await;
         party_row(&conn, (390, 1), "Tenderer", 160, 380, "ORG-0002").await;
         let m = |section: &str| GuidTwinWetMention { org_value: GuidKeep::key(V7), ..wet(380, section, 160, "amt 80", None, true) };
-        let window = GuidTwinWindow { keys: vec![], whole: vec![160], partial: vec![], mentions: vec![m("ORG-0001"), m("ORG-0003")] };
+        let window = GuidTwinWindow { keys: vec![], whole: vec![160], partial: vec![], mentions: vec![m("ORG-0001"), m("ORG-0003")], ..Default::default() };
         let apply = || {
             let db = &db;
             let w = window.clone();
@@ -6029,6 +6405,321 @@ mod tests {
         untouched().await;
         assert_eq!(rows_of(&conn, "SELECT organization_id FROM tender_version_result_winners").await, vec![vec![Value::Integer(160)]]);
         assert_eq!(rows_of(&conn, "SELECT COUNT(*) FROM tender_version_result_winners WHERE organization_id = 0").await[0][0], Value::Integer(0));
+        drop(conn);
+        cleanup(&path);
+    }
+
+    // ---- Review round 3: rehoming verdicts (F3), per-value Tenders (F4), A1's lower bound (F9) ----
+
+    /// A reviewed rehoming verdict on `(notice, section)`, as `apply-rehoming` leaves it.
+    async fn verdict_row(conn: &turso::Connection, case: i64, notice: i64, section: &str, action: &str, target: Option<i64>) {
+        exec(
+            conn,
+            "INSERT INTO org_mention_rehoming (case_org_id, notice_id, section_id, cohort, action, target_org_id, rationale,
+                                               confidence, reviewed_at, applied_at) VALUES (?, ?, ?, 'c', ?, ?, 'r', 'high', 0, 0)",
+            vec![Value::Integer(case), Value::Integer(notice), Value::Text(section.into()), Value::Text(action.into()), target.map_or(Value::Null, Value::Integer)],
+        )
+        .await;
+    }
+
+    /// F3: after the wet run, a Risk-2 review rehomes one refused mention from its target onto the body's
+    /// GUID row R. The copy still refuses it, and it now sits on a GUID row — yet a person put it there:
+    /// the recurrence arm counts it `forward_drift_verdict_skipped`, not forward drift (pass holds), and a
+    /// dry plan that reads the verdicts plans nothing (`verdict_kept` 1), where one blind to them plans R
+    /// partial and would move the mention back. With R in ANOTHER Tender the blind plan trips the
+    /// several-Tenders tripwire (every later wet run refused); the verdict-reading plan passes.
+    #[tokio::test]
+    async fn a_rehoming_verdicts_mention_is_neither_forward_drift_nor_planned() {
+        let (db, conn, path) = open("wet-verdict", true).await;
+        db.set_foreign_keys(false).await.unwrap();
+        wet_seed(&conn).await;
+        wet_all(&db, 27).await;
+        let none = GuidKeep::default();
+        assert!(recur(&db, &none, None).await.pass, "the campaign leaves no drift");
+        // R = 22759261 (single-Tender, its TED mention kept): the reviewer rehomes (26483825, ORG-0002) onto it.
+        verdict_row(&conn, 2_294_259, 26_483_825, "ORG-0002", "rehome", Some(22_759_261)).await;
+        exec(&conn, "UPDATE organization_mentions SET organization_id = 22759261 WHERE notice_id = 26483825 AND section_id = 'ORG-0002'", vec![]).await;
+        let r = recur(&db, &none, None).await;
+        assert_eq!((r.forward_drift_stock, r.forward_drift_verdict_skipped), (0, 1), "{r:?}");
+        assert!(r.pass, "{r:?}");
+        let rehomed = db.guid_twin_rehomed_keys().await.unwrap();
+        assert_eq!(rehomed, [(26_483_825, "ORG-0002".to_owned())].into_iter().collect::<HashSet<_>>());
+        let stop = || false;
+        let progress = |_: u64, _: &str| {};
+        let plan_with = |rehomed: Option<&HashSet<(i64, String)>>| {
+            let db = &db;
+            let (stop, progress) = (&stop, &progress);
+            let rehomed = rehomed.cloned();
+            async move {
+                db.plan_guid_twins(GuidTwinPlanArgs { not_planned: &[], planned: &[], rehomed: rehomed.as_ref(), ..args(stop, progress) })
+                    .await
+                    .unwrap()
+            }
+        };
+        let blind = plan_with(None).await;
+        assert_eq!(blind.partial_row_ids, vec![22_759_261], "blind to the verdict, R is planned and the review undone");
+        let plan = plan_with(Some(&rehomed)).await;
+        assert!(plan.planned_row_ids.is_empty() && plan.partial_row_ids.is_empty(), "{:?}", plan.partial_row_ids);
+        assert_eq!(plan.verdict_kept, 1);
+        assert_eq!(
+            (plan.verdict_kept_samples[0].notice_id, plan.verdict_kept_samples[0].org_id, plan.verdict_kept_samples[0].kind),
+            (26_483_825, 22_759_261, "guid_row")
+        );
+        assert!(plan.bars.pass, "{:#?}", plan.bars);
+        // R from another Tender: row 170, named once by notice 400 (Tender 410).
+        org_row(&conn, 170, Some("national"), Some(V7), "Landkreis Göttingen", "DE").await;
+        notice_row(&conn, 400, Some(410)).await;
+        mention_row(&conn, 400, "ORG-0001", 170, "Landkreis Göttingen", "DE", Some(V7)).await;
+        exec(&conn, "UPDATE org_mention_rehoming SET target_org_id = 170", vec![]).await;
+        exec(&conn, "UPDATE organization_mentions SET organization_id = 170 WHERE notice_id = 26483825 AND section_id = 'ORG-0002'", vec![]).await;
+        let blind = plan_with(None).await;
+        assert_eq!((blind.bars.tripwire_multi_tender, blind.bars.pass), (1, false), "blind: R spans two Tenders");
+        let plan = plan_with(Some(&rehomed)).await;
+        assert_eq!((plan.bars.tripwire_multi_tender, plan.verdict_kept), (0, 1));
+        assert!(plan.bars.pass && plan.partial_row_ids.is_empty(), "{:#?}", plan.bars);
+        let r = recur(&db, &none, None).await;
+        assert_eq!((r.forward_drift_stock, r.forward_drift_verdict_skipped), (0, 1), "{r:?}");
+        assert!(r.pass, "{r:?}");
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// F3, the window: a rehoming verdict recorded between the re-plan and a window on one of the window's
+    /// planned mentions refuses the window — rolled back whole, nothing logged — and without it the window
+    /// applies. The verdict is on the PARTIAL row's mention (a `keep` on 22759261's DÖE mention): the
+    /// review keep-set re-read inside the window guards whole rows only, so before this check the window
+    /// moved the reviewed mention to the target and undid the review.
+    #[tokio::test]
+    async fn a_verdict_on_a_planned_mention_after_the_re_plan_refuses_its_window() {
+        let (db, conn, path) = open("wet-verdict-window", true).await;
+        db.set_foreign_keys(false).await.unwrap();
+        wet_seed(&conn).await;
+        let stop = || false;
+        let progress = |_: u64, _: &str| {};
+        let plan = db.plan_guid_twins(GuidTwinPlanArgs { not_planned: &[], planned: &[], ..args(&stop, &progress) }).await.unwrap();
+        let windows = guid_twin_windows(&plan.wet_mentions, 2);
+        assert_eq!(windows[1].keys, vec![("landkreis göttingen".to_owned(), Some("DE".to_owned()))]);
+        assert_eq!((windows[1].whole.clone(), windows[1].partial.clone()), (vec![22_759_262], vec![22_759_261]));
+        let apply = || {
+            let db = &db;
+            let w = windows[1].clone();
+            async move { db.dissolve_guid_twin_window(GuidTwinWindowArgs { window: &w, job_id: 28, window_no: 1, gate_since_notice_id: None, fields: &[], normalize: lang }).await }
+        };
+        verdict_row(&conn, 22_759_261, 26_483_825, "ORG-0001", "keep", None).await;
+        let err = apply().await.expect_err("a verdict after the re-plan");
+        assert!(err.to_string().contains("(26483825, ORG-0001) has a rehoming verdict") && err.to_string().contains("after the re-plan"), "{err}");
+        let on = rows_of(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 26483825 ORDER BY section_id").await;
+        assert_eq!(on, vec![vec![Value::Integer(22_759_261)], vec![Value::Integer(22_759_262)]], "rolled back: nothing moved");
+        assert!(db.guid_twin_log(28).await.unwrap().is_empty());
+        exec(&conn, "DELETE FROM org_mention_rehoming", vec![]).await;
+        apply().await.expect("no verdict: the window applies");
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// F3, the stock half of reverse drift: a `keep` verdict a reviewer recorded for a logged mention on
+    /// its logged target is no drift after a later KEEP add (the `since` half already skipped such a
+    /// mention), so no restore moves it away.
+    #[tokio::test]
+    async fn a_keep_verdict_on_a_logged_mention_is_no_stock_reverse_drift() {
+        let (db, conn, path) = open("wet-verdict-stock", true).await;
+        db.set_foreign_keys(false).await.unwrap();
+        wet_seed(&conn).await;
+        wet_all(&db, 29).await;
+        let grown: GuidKeep = [V3].into_iter().collect();
+        let r = recur(&db, &grown, None).await;
+        assert_eq!((r.reverse_drift_stock, r.reverse_drift_verdict_skipped), (1, 0), "{r:?}");
+        let on = i(&rows_of(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 1 AND section_id = 'ORG-0001'").await[0][0]);
+        verdict_row(&conn, on, 1, "ORG-0001", "keep", None).await;
+        let r = recur(&db, &grown, None).await;
+        assert_eq!((r.reverse_drift_stock, r.reverse_drift_verdict_skipped, r.reverse_drift_mentions), (0, 1, 0), "{r:?}");
+        assert!(r.pass, "{r:?}");
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// F4: one value on two GUID rows — issue 62's duplicate triple (two DE rows), and a DE row beside an AT
+    /// row — each whole-refused in a twin copy of a DIFFERENT Tender. Per row each is single-Tender, but the
+    /// value links two Tenders: the several-Tenders tripwire counts both rows, the compiled self-check lists
+    /// the value ONCE (its lowest-id row's line, the union's Tenders), `multi_row_values` names it, and the
+    /// walk's KEEP candidates hold it (so a walk-KEEP plan plans neither row); with the value in KEEP neither
+    /// row is planned and the plan passes. When the lower-id row is untouched (named once) and only the
+    /// higher one is planned, in another Tender, the tripwire still fires.
+    #[tokio::test]
+    async fn a_value_on_two_guid_rows_counts_its_tenders_per_value() {
+        for second_country in ["DE", "AT"] {
+            let (db, conn, path) = open(&format!("multi-row-{second_country}"), true).await;
+            db.set_foreign_keys(false).await.unwrap();
+            org_row(&conn, 180, Some("national"), Some(V7), "Stadt Eins", "DE").await;
+            org_row(&conn, 181, Some("national"), Some(V7), "Stadt Eins", second_country).await;
+            org_row(&conn, 182, Some("national"), Some(V8), "Stadt Eins", "DE").await;
+            org_row(&conn, 183, Some("national"), Some(V9), "Stadt Eins", second_country).await;
+            notice_row(&conn, 700, Some(710)).await;
+            mention_row(&conn, 700, "ORG-0001", 180, "Stadt Eins", "DE", Some(V7)).await;
+            mention_row(&conn, 700, "ORG-0002", 182, "Stadt Eins", "DE", Some(V8)).await;
+            notice_row(&conn, 701, Some(711)).await;
+            mention_row(&conn, 701, "ORG-0001", 181, "Stadt Eins", second_country, Some(V7)).await;
+            mention_row(&conn, 701, "ORG-0002", 183, "Stadt Eins", second_country, Some(V9)).await;
+            let stop = || false;
+            let progress = |_: u64, _: &str| {};
+            let plan = |keep: Option<GuidKeep>| {
+                let db = &db;
+                let (stop, progress) = (&stop, &progress);
+                async move {
+                    db.plan_guid_twins(GuidTwinPlanArgs {
+                        keep: keep.as_ref(),
+                        keep_version: "keep-test",
+                        not_planned: &[],
+                        planned: &[],
+                        exhibits: &[],
+                        ..args(stop, progress)
+                    })
+                    .await
+                    .unwrap()
+                }
+            };
+            let empty = plan(Some(GuidKeep::default())).await;
+            assert_eq!(empty.planned_row_ids, vec![180, 181, 182, 183], "{second_country}");
+            assert_eq!(empty.bars.tripwire_multi_tender, 2, "{second_country}: both rows of the value");
+            assert_eq!(empty.bars.keep_self_check_missing, vec![GuidKeep::key(V7)], "{second_country}: listed once");
+            assert_eq!(empty.keep_add_commit, vec![format!("DE\t{}\t180\t1\t2\tmulti_tender", GuidKeep::key(V7))], "{second_country}");
+            assert_eq!(
+                empty.multi_row_values,
+                vec![GuidTwinMultiRowValue { value: GuidKeep::key(V7), rows: vec![180, 181], row_tenders: vec![1, 1], tenders: 2 }],
+                "{second_country}"
+            );
+            assert_eq!(empty.multi_row_value_count, 1);
+            assert!(!empty.bars.pass, "{second_country}");
+            let walk = plan(None).await;
+            assert_eq!(walk.planned_row_ids, vec![182, 183], "{second_country}: the walk's KEEP holds the value");
+            let candidate = walk.keep_candidates.iter().find(|c| c.value == GuidKeep::key(V7)).expect("a walk candidate");
+            assert_eq!((candidate.org_id, candidate.tenders, candidate.reason.as_str()), (180, Some(2), "multi_tender"));
+            let kept = plan(Some([V7].into_iter().collect())).await;
+            assert_eq!(kept.planned_row_ids, vec![182, 183], "{second_country}");
+            assert_eq!((kept.bars.tripwire_multi_tender, kept.bars.keep_self_check_missing.len()), (0, 0));
+            assert!(kept.bars.pass, "{second_country}: {:#?}", kept.bars);
+            drop(conn);
+            cleanup(&path);
+        }
+        // The lower-id row untouched (named once, Tender 730), the higher one planned in Tender 731.
+        let (db, conn, path) = open("multi-row-untouched", true).await;
+        db.set_foreign_keys(false).await.unwrap();
+        org_row(&conn, 190, Some("national"), Some(V10), "Stadt Zwei", "DE").await;
+        org_row(&conn, 191, Some("national"), Some(V10), "Stadt Zwei", "DE").await;
+        org_row(&conn, 192, Some("national"), Some(V11), "Stadt Zwei", "DE").await;
+        notice_row(&conn, 720, Some(730)).await;
+        mention_row(&conn, 720, "ORG-0001", 190, "Stadt Zwei", "DE", Some(V10)).await;
+        notice_row(&conn, 721, Some(731)).await;
+        mention_row(&conn, 721, "ORG-0001", 191, "Stadt Zwei", "DE", Some(V10)).await;
+        mention_row(&conn, 721, "ORG-0002", 192, "Stadt Zwei", "DE", Some(V11)).await;
+        let stop = || false;
+        let progress = |_: u64, _: &str| {};
+        let empty = GuidKeep::default();
+        let plan = db
+            .plan_guid_twins(GuidTwinPlanArgs { keep: Some(&empty), keep_version: "keep-test", not_planned: &[], planned: &[], exhibits: &[], ..args(&stop, &progress) })
+            .await
+            .unwrap();
+        assert_eq!(plan.planned_row_ids, vec![191, 192]);
+        assert_eq!(plan.bars.tripwire_multi_tender, 1, "the planned row's value already links Tender 730");
+        assert_eq!(plan.bars.tripwire_rows, vec![191]);
+        assert_eq!(plan.keep_add_commit, vec![format!("DE\t{}\t190\t1\t2\tmulti_tender", GuidKeep::key(V10))], "the lowest-id row's line");
+        assert!(!plan.bars.pass);
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// F4 at A1: a refused value's Tenders count EVERY GUID row holding it — its lowest-id row shares the
+    /// refused mention's Tender, its second row adds another, so the value is a KEEP-add candidate (with
+    /// the lowest row as `own_row` and both in `own_rows`); reading the lowest row alone it was not.
+    #[tokio::test]
+    async fn the_recurrence_arm_counts_every_guid_row_of_a_value() {
+        let (db, conn, path) = open("wet-a1-rows", true).await;
+        db.set_foreign_keys(false).await.unwrap();
+        org_row(&conn, 900, None, None, "Stadt Musterhausen", "DE").await;
+        notice_row(&conn, 500, Some(50)).await;
+        mention_row(&conn, 500, "ORG-0001", 900, "Stadt Musterhausen", "DE", Some(V1)).await;
+        mention_row(&conn, 500, "ORG-0002", 900, "Stadt Musterhausen", "DE", Some(V2)).await;
+        org_row(&conn, 960, Some("national"), Some(V2), "Stadt Beispielhausen", "DE").await;
+        org_row(&conn, 961, Some("national"), Some(V2), "Stadt Beispielhausen", "AT").await;
+        notice_row(&conn, 505, None).await;
+        version_row(&conn, 50, 2, 505).await;
+        mention_row(&conn, 505, "ORG-0001", 960, "Stadt Beispielhausen", "DE", Some(V2)).await;
+        notice_row(&conn, 506, Some(54)).await;
+        mention_row(&conn, 506, "ORG-0001", 961, "Stadt Beispielhausen", "AT", Some(V2)).await;
+        let r = recur(&db, &GuidKeep::default(), Some(499)).await;
+        assert_eq!(r.candidate_count, 1, "{r:?}");
+        let c = &r.candidates[0];
+        assert_eq!(
+            (c.value.as_str(), c.tenders, c.own_row, c.own_rows.clone(), c.own_row_mentions),
+            (GuidKeep::key(V2).as_str(), 2, Some(960), vec![960, 961], 2)
+        );
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// F9: before any wet window, a post-boundary copy whose refused section sits on a GUID row was folded
+    /// before the gate. The recurrence arm reports the highest such notice and each such row, and skips a
+    /// verdict-placed one.
+    #[tokio::test]
+    async fn a_post_boundary_copy_on_guid_rows_names_its_highest_notice() {
+        let (db, conn, path) = open("wet-a1-low", true).await;
+        db.set_foreign_keys(false).await.unwrap();
+        wet_seed(&conn).await;
+        let none = GuidKeep::default();
+        let stop = || false;
+        let progress = |_: u64, _: &str| {};
+        let read = || {
+            db.guid_twin_recurrence(GuidTwinRecurrenceArgs {
+                is_guid: uuid_v4,
+                gated_v4,
+                rule,
+                role_ref,
+                keep: &none,
+                since_notice_id: Some(0),
+                window: 100_000_000,
+                samples: 10,
+                stop: &stop,
+                progress: &progress,
+            })
+        };
+        let r = read().await.unwrap();
+        assert_eq!((r.forward_drift_since, r.forward_drift_since_max_notice), (6, Some(26_483_825)), "{r:?}");
+        assert_eq!(r.forward_drift_since_rows.keys().copied().collect::<Vec<_>>(), vec![101, 102, 103, 104, 22_759_261, 22_759_262]);
+        assert_eq!((r.forward_drift_since_rows[&101], r.forward_drift_since_rows[&22_759_261]), (1, 26_483_825));
+        verdict_row(&conn, 22_759_262, 26_483_825, "ORG-0002", "keep", None).await;
+        let r = read().await.unwrap();
+        assert_eq!((r.forward_drift_since, r.forward_drift_verdict_skipped), (5, 1), "{r:?}");
+        assert!(!r.forward_drift_since_rows.contains_key(&22_759_262));
+        assert_eq!(r.forward_drift_since_residue, 0, "a pre-gate fold carries no name-keyed sibling: {r:?}");
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// F9, checked against a refresh residue: a post-boundary copy a re-parse turned into a twin AFTER the
+    /// gate — its changed sibling re-resolved onto the name-keyed row, its unchanged one kept on its GUID
+    /// row — is forward drift (counted, `forward_drift_since_residue`), never a pre-gate fold: no row and no
+    /// highest notice for the low-boundary check. A name-keyed sibling a rehoming verdict placed is no
+    /// gate binding, so the copy reads as folded before the gate again.
+    #[tokio::test]
+    async fn a_refresh_residue_is_forward_drift_but_no_pre_gate_fold() {
+        let (db, conn, path) = open("wet-a1-residue", true).await;
+        db.set_foreign_keys(false).await.unwrap();
+        org_row(&conn, 900, None, None, "Stadt Musterhausen", "DE").await;
+        org_row(&conn, 960, Some("national"), Some(V2), "Stadt Musterhausen", "DE").await;
+        notice_row(&conn, 500, Some(50)).await;
+        mention_row(&conn, 500, "ORG-0001", 900, "Stadt Musterhausen", "DE", Some(V1)).await;
+        mention_row(&conn, 500, "ORG-0002", 960, "Stadt Musterhausen", "DE", Some(V2)).await;
+        let none = GuidKeep::default();
+        let r = recur(&db, &none, Some(0)).await;
+        assert_eq!((r.forward_drift_since, r.forward_drift_since_residue), (1, 1), "{r:?}");
+        assert_eq!(r.forward_drift_since_max_notice, None, "{r:?}");
+        assert!(r.forward_drift_since_rows.is_empty(), "{r:?}");
+        assert_eq!(r.forward_drift[0].org_id, 960, "still sampled as forward drift");
+        assert!(!r.pass, "the residue is real drift: {r:?}");
+        verdict_row(&conn, 900, 500, "ORG-0001", "keep", None).await;
+        let r = recur(&db, &none, Some(0)).await;
+        assert_eq!((r.forward_drift_since, r.forward_drift_since_residue, r.forward_drift_since_max_notice), (1, 0, Some(500)), "{r:?}");
+        assert_eq!(r.forward_drift_since_rows.get(&960), Some(&500));
         drop(conn);
         cleanup(&path);
     }

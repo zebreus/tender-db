@@ -37,8 +37,14 @@
 //! never a run's `extra_unsafe_names` — and the ORG sections alone (`ORG-…`, the range the dry planner
 //! reads, so the stock plan and the gate see one section set). The dry and wet `dissolve-guid-twins`
 //! runs pass the same statics to the planner (A3 iii), so the plan, the gate and any rebuild decide with
-//! one ruler. The buyer side of the plan row (issue 369's `buyer_key`, 481's `buyer_tokens`) keeps the
-//! published, ungated identity (`NoticeState::published_mentions`): the deploy moves no Tender key.
+//! one ruler. The buyer key and the parsed-side link-guard tokens (issue 369's `buyer_key`, 481's
+//! `buyer_tokens_of` over `NoticeState::published_mentions`) keep the published identity: the deploy
+//! moves no Tender key. The resolved-organization token `o:<id>` (`add_buyer_org_tokens`) follows the
+//! binding — a refused buyer gets the name-keyed row; before the wet run that touches only notices first
+//! resolved after the deploy (recorded mentions keep their organization under `publishes`), after it
+//! every rehomed notice when its stamped Tender re-projects. Dropping `o:<GUID row>` loses no overlap
+//! (the published identifier and `r:` tokens cover it on every notice of that single-Tender row);
+//! adding `o:<name row>` can only widen overlap, so no link the guard admitted before is refused.
 //!
 //! **Identity is now contextual.** A tool that rebuilds a mention's identity from its stored row alone
 //! ([`super::gated_identifier`]'s callers: 513's nhs-body canary, 511's guard 3) sees a GUID where the
@@ -1390,6 +1396,7 @@ mod tests {
                 keep_version: if keep.is_some() { GUID_KEEP_530_VERSION } else { "walk" },
                 unsafe_names: GUID_TWIN_UNSAFE_NAMES,
                 under_review: None,
+                rehomed: None,
                 role_ref: guid_twin_role_ref,
                 role_class,
                 stable_ids: &[254, 255, 8_378],
@@ -2272,8 +2279,12 @@ mod tests {
         assert_eq!(guid_twin_gated_v4(None, None, Some("DEU")), None);
     }
 
-    /// OQ1: the gate changes a mention's binding, never the plan row's buyer side — issue 369's
-    /// `buyer_key` and 481's buyer tokens read the PUBLISHED identity, so the deploy moves no Tender's key.
+    /// OQ1: the gate changes a mention's binding, never the plan row's buyer key or its parsed-side
+    /// link-guard tokens — issue 369's `buyer_key` and 481's `buyer_tokens_of` read the PUBLISHED identity,
+    /// so the deploy moves no Tender's key. The resolved-organization token `o:<id>` (`add_org_tokens`,
+    /// review round 3, F6) DOES follow the binding: the gated binding (the name-keyed 2294259) and the
+    /// ungated one (the GUID row 22759261) differ by exactly those two `o:` tokens, and the published
+    /// identifier's token stays in both sets (so dropping `o:<GUID row>` loses no overlap).
     #[test]
     fn the_guid_twin_gate_leaves_the_buyer_key_and_tokens_alone() {
         let refs = [("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"), ("LOT-0001", "OPT-301-Lot-AddInfo", "ORG-0002")];
@@ -2285,7 +2296,26 @@ mod tests {
         assert_eq!(buyers.len(), 1);
         assert!(buyers[0].identifier.is_some(), "the buyer side keeps the published key");
         let published = NoticeState::published_mentions(false, 9, &p);
-        assert_eq!(super::super::buyer_tokens_of(&buyers), super::super::buyer_tokens_of(&published[..1]));
+        let parsed_side = super::super::buyer_tokens_of(&buyers);
+        assert_eq!(parsed_side, super::super::buyer_tokens_of(&published[..1]));
+        // The resolved-organization token follows the binding.
+        let sections = vec!["ORG-0001".to_owned()];
+        let mut with_gated = parsed_side.clone();
+        let mut with_ungated = parsed_side.clone();
+        let gated_orgs: std::collections::HashMap<String, i64> = [("ORG-0001".to_owned(), 2_294_259)].into_iter().collect();
+        let ungated_orgs: std::collections::HashMap<String, i64> = [("ORG-0001".to_owned(), 22_759_261)].into_iter().collect();
+        super::super::add_org_tokens(&mut with_gated, &sections, Some(&gated_orgs));
+        super::super::add_org_tokens(&mut with_ungated, &sections, Some(&ungated_orgs));
+        let (name_row, guid_row) = (store::buyer_token("o:2294259"), store::buyer_token("o:22759261"));
+        let only_gated: Vec<u32> = with_gated.iter().copied().filter(|t| !with_ungated.contains(t)).collect();
+        let only_ungated: Vec<u32> = with_ungated.iter().copied().filter(|t| !with_gated.contains(t)).collect();
+        assert_eq!((only_gated, only_ungated), (vec![name_row], vec![guid_row]), "the sets differ by exactly the two o: tokens");
+        let identifier_tokens: Vec<u32> = super::super::buyer_guard_tokens(&buyers[0]).iter().map(|t| store::buyer_token(t)).collect();
+        assert!(!identifier_tokens.is_empty(), "premise: the published identifier gives guard tokens");
+        assert!(
+            identifier_tokens.iter().all(|t| with_gated.contains(t) && with_ungated.contains(t)),
+            "the published identifier's tokens stay in both sets"
+        );
     }
 
     async fn org_no_country(conn: &store::turso::Connection, id: i64, name: &str) {
@@ -2340,6 +2370,175 @@ mod tests {
             drop(conn);
             cleanup(&path);
         }
+    }
+
+    /// Review round 3 (F7): the deploy moves nothing. decision.md "Afterwards" ("the deploy itself causes no
+    /// churn") and operations.md ("the stock moves with the wet run, once") rest on one fact: a RECORDED
+    /// mention whose four published facts (name, country, raw identifier, scheme) are unchanged keeps its
+    /// organization under the gated fold (`RecordedMention::publishes` never compares the identifier the
+    /// gate clears, nor the resolver's answer). The Göttingen award's mentions recorded on their GUID rows
+    /// stay there when the gated fold re-resolves the copy — although the resolver's own answer for the
+    /// refused four is the name-keyed 2294259 — with no refresh, no rebind, no new row. The control: a
+    /// changed stored name re-resolves that one mention onto 2294259 (a rebind), the others stay put.
+    #[tokio::test]
+    async fn a_recorded_guid_twin_mention_stays_put_under_the_gated_fold() {
+        let (db, conn, path) = fixture("recorded-stays").await;
+        db.set_foreign_keys(false).await.unwrap();
+        let orgs = goettingen();
+        let raw_of = |section: &str| orgs.iter().find(|o| o.0 == section).and_then(|o| o.3).unwrap();
+        org(&conn, 22_759_261, Some(raw_of("ORG-0001")), GOETTINGEN).await;
+        org(&conn, 22_759_262, Some(raw_of("ORG-0002")), GOETTINGEN).await;
+        org(&conn, 23_014_306, Some(raw_of("ORG-0003")), CHAMBER).await;
+        org(&conn, 23_014_307, Some(raw_of("ORG-0004")), CHAMBER).await;
+        org(&conn, 22_759_265, Some(raw_of("ORG-0005")), ROMMEL).await;
+        // The name-keyed row the resolver's own answer would be: the test is not vacuous.
+        org(&conn, 2_294_259, None, GOETTINGEN).await;
+        org(&conn, 2_300_000, None, "Deutsches Ausschreibungsblatt GmbH").await;
+        let ms = mentions(26_483_825, &orgs);
+        for m in &ms[..4] {
+            assert!(m.identifier.is_none() && m.raw_identifier.is_some(), "premise: the gate refuses {}", m.section_id);
+        }
+        assert!(ms[4].identifier.is_some(), "premise: Rommel, named once, keeps its key");
+        // Recorded as the ungated fold bound them, each row copying its Mention's four facts verbatim.
+        let bound = [22_759_261i64, 22_759_262, 23_014_306, 23_014_307, 22_759_265, 2_300_000];
+        for (m, org_id) in ms.iter().zip(bound) {
+            exec(
+                &conn,
+                "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier, scheme)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)",
+                vec![
+                    Value::Integer(m.notice_id),
+                    txt(&m.section_id),
+                    Value::Integer(org_id),
+                    txt(&m.name),
+                    m.country.as_deref().map_or(Value::Null, txt),
+                    m.raw_identifier.as_deref().map_or(Value::Null, txt),
+                    m.scheme.as_deref().map_or(Value::Null, txt),
+                ],
+            )
+            .await;
+        }
+        let count = |sql: &'static str| {
+            let conn = &conn;
+            async move {
+                let mut rows = conn.query(sql, ()).await.unwrap();
+                match rows.next().await.unwrap().unwrap().get_value(0).unwrap() {
+                    Value::Integer(n) => n,
+                    other => panic!("{other:?}"),
+                }
+            }
+        };
+        let orgs_before = count("SELECT COUNT(*) FROM organizations").await;
+        let mut r = db.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
+        let ids = db.resolve_mentions(&mut r, &ms, 100).await.unwrap();
+        let refresh = store::Db::mention_refresh(&r);
+        db.finish_mention_resolver(r).await.unwrap();
+        assert_eq!(ids, bound.to_vec(), "every recorded mention keeps its organization");
+        assert!(ids[..4].iter().all(|&id| id != 2_294_259), "never the resolver's own answer");
+        assert_eq!(
+            refresh,
+            store::MentionRefresh { refreshed: 0, rebound: 0, retired: 0, retire_corrections: 0, tenders_stamped: 0 }
+        );
+        assert_eq!(count("SELECT COUNT(*) FROM organizations").await, orgs_before, "no row minted");
+        let mut rows = conn.query("SELECT organization_id FROM organization_mentions ORDER BY section_id", ()).await.unwrap();
+        let mut stored = Vec::new();
+        while let Some(row) = rows.next().await.unwrap() {
+            if let Value::Integer(n) = row.get_value(0).unwrap() {
+                stored.push(n);
+            }
+        }
+        drop(rows);
+        assert_eq!(stored, bound.to_vec(), "every organization_mentions row unchanged");
+        // The control: a changed published fact re-resolves that mention under the gate.
+        exec(&conn, "UPDATE organization_mentions SET name = 'Landkreis Goettingen (alt)' WHERE notice_id = 26483825 AND section_id = 'ORG-0002'", vec![])
+            .await;
+        let mut r = db.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
+        let ids = db.resolve_mentions(&mut r, &ms, 100).await.unwrap();
+        let refresh = store::Db::mention_refresh(&r);
+        db.finish_mention_resolver(r).await.unwrap();
+        assert_eq!((ids[0], ids[1]), (22_759_261, 2_294_259), "only the changed mention moves, onto the name-keyed row");
+        assert_eq!((refresh.refreshed, refresh.rebound), (1, 1));
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// Review round 3 (F5): A1's recurrence arm admits a target mention by the GATE's candidate test
+    /// (`guid_twin_gated_v4` over raw, scheme and country), never by `uuid_v4` on the raw value. A BT-501
+    /// that wraps the UUID in braces is refused by the gate, planned and logged by the wet run — and must
+    /// count: both braced mentions are refused values (one value in two Tenders: a KEEP-add candidate with
+    /// its two-mention cohort), and after that value joins KEEP each is STOCK reverse drift, also where the
+    /// braced mention is its copy's only target mention (its plain partner rehomed elsewhere).
+    #[tokio::test]
+    async fn the_recurrence_arm_reads_a_target_mention_by_the_gates_candidate_test() {
+        const BRACED: &str = "{037c1508-d945-4e73-9d6e-65099a79bec1}";
+        assert!(!crate::idgate::uuid_v4(BRACED), "premise: uuid_v4 on the raw value refuses the braces");
+        assert_eq!(guid_twin_gated_v4(Some(BRACED), None, Some("DE")), Some((GuidKeep::key(A), Some("DE".to_owned()))), "premise");
+        let (db, conn, path) = fixture("recur-braced").await;
+        db.set_foreign_keys(false).await.unwrap();
+        org(&conn, 22_759_261, Some(A), GOETTINGEN).await;
+        org(&conn, 22_759_262, Some(B), GOETTINGEN).await;
+        org(&conn, 22_800_001, Some(P), GOETTINGEN).await;
+        org(&conn, 2_294_259, None, GOETTINGEN).await;
+        org(&conn, 2_300_000, None, "Landkreis Göttingen Altkreis Duderstadt").await;
+        for (n, tender, partner, raw) in [(26_483_825i64, 948_285i64, 22_759_262i64, B), (26_483_900, 948_300, 22_800_001, P)] {
+            notice(&conn, n, "doe", tender, 1).await;
+            mention(&conn, n, "ORG-0001", 22_759_261, GOETTINGEN, Some(BRACED), "", (tender, 1), None).await;
+            mention(&conn, n, "ORG-0002", partner, GOETTINGEN, Some(raw), "", (tender, 1), None).await;
+        }
+        let empty = GuidKeep::default();
+        let plan = run_plan_with(&db, Some(&empty), &[], &[]).await;
+        assert_eq!(plan.planned_row_ids, vec![22_759_261, 22_759_262, 22_800_001], "the planner reads the gated value");
+        for (k, w) in store::guid_twin_windows(&plan.wet_mentions, store::GUID_TWIN_WET_WINDOW_MENTIONS).iter().enumerate() {
+            db.dissolve_guid_twin_window(store::GuidTwinWindowArgs {
+                window: w,
+                job_id: 1,
+                window_no: k as u64 + 1,
+                gate_since_notice_id: Some(26_483_824),
+                fields: super::super::ORG_NAME_FIELD_IDS,
+                normalize: super::super::normalize_lang,
+            })
+            .await
+            .unwrap();
+        }
+        assert_eq!(db.guid_twin_log(1).await.unwrap().len(), 4, "every refused mention logged onto 2294259");
+        let recur = |keep: GuidKeep| {
+            let db = &db;
+            async move {
+                let stop = || false;
+                let progress = |_: u64, _: &str| {};
+                db.guid_twin_recurrence(store::GuidTwinRecurrenceArgs {
+                    is_guid: crate::idgate::uuid_v4,
+                    gated_v4: guid_twin_gated_v4,
+                    rule: guid_twin_decide,
+                    role_ref: guid_twin_role_ref,
+                    keep: &keep,
+                    since_notice_id: None,
+                    window: 1_000,
+                    samples: 10,
+                    stop: &stop,
+                    progress: &progress,
+                })
+                .await
+                .unwrap()
+            }
+        };
+        let r = recur(GuidKeep::default()).await;
+        assert_eq!((r.guid_mentions, r.refused_mentions), (4, 4), "the braced mentions count: {r:?}");
+        assert_eq!(r.candidate_count, 1, "{r:?}");
+        let c = &r.candidates[0];
+        assert_eq!((c.value.clone(), c.tenders), (GuidKeep::key(A), 2));
+        assert_eq!(c.cohort, vec![(26_483_825, "ORG-0001".to_owned(), 2_294_259), (26_483_900, "ORG-0001".to_owned(), 2_294_259)]);
+        // A reviewed rehome moved copy 26483825's plain partner off the target: its braced mention is the
+        // copy's only target mention. The value joins KEEP: both braced mentions are stock reverse drift.
+        exec(&conn, "UPDATE organization_mentions SET organization_id = 2300000 WHERE notice_id = 26483825 AND section_id = 'ORG-0002'", vec![])
+            .await;
+        let r = recur([A].into_iter().collect()).await;
+        assert_eq!(r.reverse_drift_stock, 2, "{r:?}");
+        let cohort: Vec<(i64, String)> = r.reverse_drift.iter().flat_map(|v| v.cohort.iter().map(|(n, s, _)| (*n, s.clone()))).collect();
+        assert_eq!(cohort, vec![(26_483_825, "ORG-0001".to_owned()), (26_483_900, "ORG-0001".to_owned())]);
+        assert_eq!(r.reverse_drift[0].value, GuidKeep::key(A), "keyed by the gated value, the identifier a rebuild stores");
+        drop(conn);
+        cleanup(&path);
     }
 
     // The real KEEP values the compiled-constant fixtures publish (dashed lower case).
