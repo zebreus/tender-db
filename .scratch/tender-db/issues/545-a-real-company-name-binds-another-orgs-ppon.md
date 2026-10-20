@@ -375,3 +375,7 @@ Files are in /home/user/tender-db/.scratch/tender-db/545-triage/u2b/: notes.md, 
 - **Guard G-A (572's class-A triage rule):** stray reviews (545 / 456 / 524) skip the names on the two frozen, dated lists in
   `572-triage/triage_frozen_lists.json` (70 principal keys / 151 mentions + 10 non-principal names; 11 proven A@P pairs); any
   other name gets normal review and lands in monitor M's "unreviewed key" bucket.
+
+**Persistence read-back after the 10-20 daily fold (2026-10-20 08:0xZ):** the same 11 tenders as U4's read-back
+(`545-triage/u3/readback_1020.json`) still serve each rehomed mention on its target org (11/11; holder roles empty), so the
+first daily fold after cohort 2651 (project 2669) moved none of them back.

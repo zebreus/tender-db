@@ -500,3 +500,7 @@ Budget: 42 public GETs (at least 2.0 s apart by the log, no 408s), 2 of 12 /v1/s
   reverts** — PASS. Undo, if ever needed: `{"kind":"revert-org-name-refresh","job":2654}`.
 - **Step 6 (full).** The capped run already covered every R1 change in scope (127 < 500); v12's filters stand (its re-judge
   stays FAILED), so a full run has nothing more to ship.
+
+**Persistence read-back after the 10-20 daily fold (2026-10-20 08:0xZ):** 8 salted samples (seed 5482) of job 2654's v13
+renames (11628199, 14259882, 22081870, 19798627, 10664560, 16432719, 14043573, 10685648) still serve their new name after
+project 2669: 8/8.
