@@ -163,6 +163,14 @@ pub struct Supervisor {
     /// The isolated runtime a job's heavy body runs on (issue 61), kept off the
     /// main API/SSE/dashboard runtime so blocking turso preads never starve it.
     worker_runtime: tokio::runtime::Handle,
+    /// Issue 530 Build 2, tests only: the wet twin dissolve's window size (production packs
+    /// [`store::GUID_TWIN_WET_WINDOW_MENTIONS`]), so a fixture splits into several windows.
+    #[cfg(test)]
+    guid_twin_window_mentions: std::sync::atomic::AtomicUsize,
+    /// Issue 530 Build 2, tests only: cancel the running wet twin dissolve once it committed this many
+    /// windows this run (0: never), so the stop checkpoint BETWEEN windows is reached.
+    #[cfg(test)]
+    guid_twin_cancel_after_windows: AtomicU64,
 }
 
 /// A queued unit of work: a display identity plus what to do.
@@ -509,16 +517,60 @@ enum Spec {
     /// span, with the within-notice twin and cross-notice signals unit 2 weighs and the stable-platform
     /// rows as their own population. Read-only.
     GuidCensus { stable_mentions: u64, samples: usize },
-    /// Issue 530 unit 3 (Build 1): the DRY `dissolve-guid-twins` plan — rule 530-T
-    /// (`ingest::project::guid_twin`) over every ORG mention of each notice with a mention on a v4-GUID
-    /// row, planned per mention, KEEP computed in memory. Read-only: stores `guid-twin-plan`. A
-    /// `dry_run: false` is refused at enqueue and here (the wet path is Build 2).
+    /// Issue 530 unit 3: the DRY `dissolve-guid-twins` plan — rule 530-T (`ingest::project::guid_twin`)
+    /// over every ORG mention of each notice with a mention on a v4-GUID row, planned per mention; since
+    /// Build 2 with the COMPILED KEEP and unsafe names the gate reads (A3 iii; the walk's KEEP candidates
+    /// reported beside them). Read-only: stores `guid-twin-plan`. Always dry: a `dry_run: false` request
+    /// enqueues [`Spec::DissolveGuidTwinsWet`] under the same kind, and this arm refuses `false`.
     DissolveGuidTwins {
         dry_run: bool,
         stable_mentions: u64,
         samples: usize,
         #[serde(default)]
         extra_unsafe_names: Vec<String>,
+    },
+    /// Issue 530 Build 2: the WET `dissolve-guid-twins` (kind `dissolve-guid-twins`, params `… wet …`).
+    /// Refused unless the stored `guid-twin-plan` passed R1 on this binary's compiled KEEP and names;
+    /// re-plans, refuses on any bar or tripwire, reconciles the re-plan with the dry plan by
+    /// `(row, whole)` tuples (and this job's logged rows), then applies the re-plan in windows by target
+    /// key (`store::Db::dissolve_guid_twin_window`), stoppable between windows; `max_windows` caps a job
+    /// (the staged first run is 1; a restarted job counts the windows it already committed).
+    /// `gate_since_notice_id` is REQUIRED (refused at enqueue and, for a queued Spec without it, at run
+    /// time): A1's boundary, the highest notice id at or below which every parsed notice was projected
+    /// before Build 2's deploy (docs/operations.md, the GUID twin dissolve, step 1), never above the dry
+    /// plan's `notice_max_id`, and once a window logged one, that value only; recorded on every logged
+    /// row. The run also refuses while A1's reverse drift since it is non-zero, and while a KEEP-add
+    /// candidate's own GUID row is in the re-plan. Stores `guid-twin-dissolve` (the restore manifest from
+    /// `guid_twin_dissolve_log`, the campaign on the dry plan read).
+    DissolveGuidTwinsWet {
+        #[serde(default)]
+        max_windows: Option<u64>,
+        #[serde(default)]
+        gate_since_notice_id: Option<i64>,
+    },
+    /// Issue 530 Build 2, A1: the refused-value recurrence arm of `dissolve-guid-twins` (params `…
+    /// recurrence …`) — the refused v4 values on the wet runs' targets (and, with `since_notice_id`, the
+    /// targets of twin copies above it) at two or more Tenders outside KEEP, and the REVERSE drift (the
+    /// mentions an add-only constant change left on identifier-NULL rows although the rule binds them).
+    /// Read-only: stores `guid-twin-recurrence`. `since_notice_id` must be A1's boundary the wet run
+    /// recorded, and defaults to it. R3 runs it once (expect 0 and 0); after that it is queued BY HAND
+    /// monthly (no scheduler arm) and after every deployed KEEP-add or unsafe-name commit.
+    GuidTwinRecurrence {
+        #[serde(default)]
+        since_notice_id: Option<i64>,
+        samples: usize,
+    },
+    /// Issue 530 Build 2, A1: restore the recurrence arm's REVERSE drift (params `… restore …`) — the
+    /// mentions a KEEP or unsafe-name add left on identifier-NULL rows although the current rule binds
+    /// them — each value onto the row a rebuild binds it to (`store::Db::restore_guid_twin_value`: its
+    /// identity's row, a merged identifier's survivor, or one minted), stoppable between values. Stores
+    /// `guid-twin-restore`. `since_notice_id` (required at enqueue) is A1's boundary: refused unless it is
+    /// the one the wet run recorded (before any wet window: not above the stored dry plan's
+    /// `notice_max_id`, below the newest notice). Refused without the org FK indexes and the indexes the
+    /// recurrence read seeks.
+    GuidTwinRestore {
+        #[serde(default)]
+        since_notice_id: Option<i64>,
     },
     /// Issue 524 unit 2a: re-elect each identifier-bearing organization's served head from its mentions
     /// (`store::elect_head`, ADR-0013's 2026-10-15 amendment) and store what a wet run would change,
@@ -1319,8 +1371,26 @@ pub struct JobRequest {
     pub stable_mentions: Option<u64>,
     /// `dissolve-guid-twins` only (issue 530 unit 3): names the run also treats as unsafe twin keys (an
     /// R2 finding, re-run without a deploy), folded as rule 530-T folds a name. 1 to
-    /// [`GUID_TWIN_EXTRA_MAX`] distinct non-blank names. Every other kind refuses it at enqueue.
+    /// [`GUID_TWIN_EXTRA_MAX`] distinct non-blank names. Every other kind refuses it at enqueue, and
+    /// (Build 2, A3 iii) so do a wet run and the recurrence arm: they read the compiled list only.
     pub extra_unsafe_names: Option<Vec<String>>,
+    /// `dissolve-guid-twins` only (issue 530 Build 2, A1): `true` runs the refused-value recurrence arm
+    /// (read-only, report `guid-twin-recurrence`) instead of the plan. Every other kind refuses it.
+    pub recurrence: Option<bool>,
+    /// The recurrence arm and the restore only: also walk the copies of notices above this id (the
+    /// wet run's recorded deploy-time max notice id); the restore requires it. Every other kind and mode
+    /// refuses it.
+    pub since_notice_id: Option<i64>,
+    /// `dissolve-guid-twins` only (issue 530 Build 2, A1): `true` restores the recurrence arm's reverse
+    /// drift (a write, report `guid-twin-restore`), with `since_notice_id`. Every other kind refuses it.
+    pub restore: Option<bool>,
+    /// A WET `dissolve-guid-twins` only (issue 530 Build 2): stop after this many committed windows
+    /// (≥ 1; the staged first run is 1). Every other kind and mode refuses it.
+    pub max_windows: Option<u64>,
+    /// A WET `dissolve-guid-twins` only, and REQUIRED there: the max notice id read right before Build
+    /// 2's deploy (A1), the recurrence arm's boundary, recorded in the report. It must not exceed the dry
+    /// plan's `notice_max_id` (a post-deploy plan's start). Every other kind and mode refuses it.
+    pub gate_since_notice_id: Option<i64>,
     /// `refresh-org-names` only (issue 524 unit 2a): plan only these organizations instead of walking
     /// every one (a merge campaign's keeps, the canaries). 1 to [`ORG_NAME_REFRESH_ORG_IDS_MAX`] ids,
     /// each positive. On a wet run (unit 2b), rename only these of the stored plan's planned ids.
@@ -1445,6 +1515,14 @@ const GUID_TWIN_EXPECTED: &[(i64, Option<i64>)] = &[
 const GUID_TWIN_EXHIBITS: &[(&str, &str)] = &[("DE", "landkreis göttingen")];
 /// Issue 530 unit 3: the most `extra_unsafe_names` one run takes.
 const GUID_TWIN_EXTRA_MAX: usize = 50;
+/// Issue 530 Build 2: the report the wet `dissolve-guid-twins` stores (the restore manifest).
+const GUID_TWIN_DISSOLVE_REPORT: &str = "guid-twin-dissolve";
+/// Issue 530 Build 2, A1: the report the recurrence arm stores.
+const GUID_TWIN_RECURRENCE_REPORT: &str = "guid-twin-recurrence";
+/// Issue 530 Build 2, A1: the report the restore of the reverse drift stores.
+const GUID_TWIN_RESTORE_REPORT: &str = "guid-twin-restore";
+/// Issue 530 Build 2, A1: notice ids per window of the recurrence arm's post-deploy walk.
+const GUID_TWIN_RECURRENCE_WINDOW: i64 = 20_000;
 
 /// Issue 524 unit 2a: the most `org_ids` one `refresh-org-names` takes — the plan's listing cap, so a
 /// scoped plan can never be truncated.
@@ -2707,8 +2785,10 @@ fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
              Vergabekammern — or a polity umbrella, extra_unsafe_names), the group has no country, or (Build 1b, \
              A7) the group's roles by the notice copy's own OPT-300/OPT-301 references are role-incoherent \
              (role_mix: Lot-/Part-ReviewOrg beside Procedure-Buyer, Procedure-SProvider, Lot-/Part-AddInfo or \
-             Lot-/Part-TenderReceipt, or a Tenderer/Tenderer-MainCont/Tenderer-SubCont beside another role). The \
-             gate is NOT wired (Build 1b): production ingest is unchanged"
+             Lot-/Part-TenderReceipt, or a Tenderer/Tenderer-MainCont/Tenderer-SubCont beside another role). Build 2: \
+             the gate is WIRED (NoticeState::mentions_and_dropped, ORG sections) and reads the same compiled KEEP \
+             (keep_version, keep_size) and GUID_TWIN_UNSAFE_NAMES (unsafe_names) this plan read; extra_unsafe_names is \
+             a measurement only (a wet run refuses a plan read with them)"
                 .into(),
         );
         all.insert(
@@ -2730,10 +2810,14 @@ fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
         );
         all.insert(
             "keep_basis".to_owned(),
-            "computed in memory from this walk (Build 1): every uuid_v4 row spanning >= 2 distinct Tenders, the \
-             stable rows (254, 255, 8378 and every uuid_v4 row with stable_mentions+ mentions), and every uuid_v4 \
-             value in organization_merged_identifiers; value-keyed (undashed upper case), country ignored. Build \
-             2 commits keep_candidates as guid-keep-530.tsv"
+            "Build 2 (A3 iii): the rule reads the COMPILED KEEP (keep_source compiled: crates/ingest/sdk/guid-keep-530.tsv, \
+             job 2660's keep_candidates, keep_version, keep_size values), value-keyed (undashed upper case), country \
+             ignored. keep_candidates is still computed from this walk (every uuid_v4 row spanning >= 2 distinct \
+             Tenders, the stable rows — 254, 255, 8378 and every uuid_v4 row with stable_mentions+ mentions — and \
+             every uuid_v4 value in organization_merged_identifiers) and reported; bars.keep_self_check_missing is the \
+             walk's (twin and >= 2 Tenders) or stable values absent from the compiled file (fails the plan; \
+             keep_add_commit holds their file lines), keep_candidates_not_in_file the other candidates absent from it \
+             (advisory)"
                 .into(),
         );
         all.insert(
@@ -2765,8 +2849,11 @@ fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
              by construction); the KEEP self-check; 0 refused groups whose notice-reference roles (the planner's own \
              notice_ids read, not the rule's echo) are role-incoherent (tripwire_role_mix, Build 1b: the rule binds \
              them, so one is a rule without A7's guard); 0 groups whose rule roles differ from that read \
-             (role_ref_disagree). Reported, not bars: no-Tender rows (tripwire_no_tender) and mentions whose \
-             country A11 cannot read (target_country_unchecked)"
+             (role_ref_disagree); Build 2: the compiled KEEP self-check, 0 whole planned rows that are merge survivors \
+             (tripwire_merge_survivor) or that a review table names (tripwire_under_review). Not R1 bars: no-Tender \
+             rows (tripwire_no_tender — the wet re-plan refuses on it: the Dissolve plan's exactly-1-Tender tripwire, \
+             the Wet run's every tripwire re-checked) and mentions whose country A11 cannot read \
+             (target_country_unchecked, reported)"
                 .into(),
         );
         all.insert(
@@ -2791,6 +2878,8 @@ fn guid_twin_plan_json(r: &store::GuidTwinPlan) -> Result<String, String> {
         );
         all.insert("not_planned_ids".to_owned(), serde_json::json!(GUID_TWIN_NOT_PLANNED));
         all.insert("planned_ids".to_owned(), serde_json::json!(GUID_TWIN_PLANNED));
+        // Build 2: the wet run's windows over this plan (what the staged first run extrapolates from).
+        all.insert("wet_windows".to_owned(), guid_twin_wet_window_stats(r, store::GUID_TWIN_WET_WINDOW_MENTIONS));
     }
     Ok(body.to_string())
 }
@@ -2847,14 +2936,25 @@ fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
         .map(|(name, e)| format!("{name}: {} GUID row(s), {} planned, {} partial, {} kept", e.guid_rows, e.planned, e.partial, e.kept))
         .collect::<Vec<_>>()
         .join("; ");
+    let wet = guid_twin_wet_window_stats(r, store::GUID_TWIN_WET_WINDOW_MENTIONS);
+    let wet_windows = format!(
+        "{} wet window(s) of up to {} mention(s) (largest {} mention(s), window {}; the largest target's window {})",
+        wet["wet_windows"],
+        store::GUID_TWIN_WET_WINDOW_MENTIONS,
+        wet["largest_window_mentions"],
+        wet["largest_window_no"],
+        wet["largest_target_window"]["window_no"]
+    );
     let b = &r.bars;
     format!(
-        "dissolve-guid-twins (issue 530 unit 3, Build 1, DRY): {} GUID row(s) ({} distinct value(s)) to org id {} in {} \
-         window(s); {} candidate notice(s) (with a GUID-row mention), {} ORG mention(s) read, {} v4 candidate(s) ({} \
-         unnamed). KEEP {} value(s) ({keep}). Rule 530-T: {} twin group(s), {} refused, {} mention(s) refused. PLAN: \
+        "dissolve-guid-twins (issue 530, DRY): {} GUID row(s) ({} distinct value(s)) to org id {} in {} \
+         window(s), notices to id {}; {} candidate notice(s) (with a GUID-row mention), {} ORG mention(s) read, {} v4 \
+         candidate(s) ({} unnamed). KEEP {} {:?}: {} value(s) (walk candidates {keep}; {} not in the file, advisory); \
+         compiled unsafe names {}. Rule 530-T: {} twin group(s), {} refused, {} mention(s) refused ({} copy(ies) with a \
+         refused buyer). PLAN: \
          {} row(s) whole ({} mention(s)), {} partial ({} rehome(s); copies disagreeing: {:?}); {} refused mention(s) \
          off GUID rows in candidate notices, a lower bound ({off_kinds}; {} already on target). Targets: {} key(s), \
-         {} with an identifier-NULL row; {} planned mention(s) of {} row(s) have none; largest {largest}. Guard \
+         {} with an identifier-NULL row; {} planned mention(s) of {} row(s) have none; largest {largest}; {wet_windows}. Guard \
          exclusions (groups/mentions): {guards}; KEEP partners {}; KEEP spares {} mention(s) on {} row(s). City \
          screen: {} planned mention(s) with a city, {} without; {} absent from the target's cities ({} row(s), {} \
          target(s)); {} multi-city target(s); {} key(s) whose planned mentions show 2+ cities ({} mention(s), {} \
@@ -2863,23 +2963,29 @@ fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
          buyer+ReviewOrg, {} tenderer-mixed of {}. Census twin \
          rows after the plan: {} -> {} (stable {} -> {}, several Tenders {} -> {}). R1 BARS {}: comparable planned \
          rows (whole + partial) {} (whole {}) <= {} {}; above the census max {}; partner off GUID rows {}; \
-         tripwires several-Tenders {}, stable (>= {} mentions) {}, KEEP {}, role-mix refused {}; rule/planner \
-         role disagreements {}; stable_mentions {} {}; not-planned misses {:?}; planned misses {:?}; \
-         target-country mismatches {}; KEEP self-check missing {}; reported: no-Tender rows {}, country unchecked \
-         {}. Controls: {controls}. {exhibits}. R2 random: {} row(s) at salt {}, {} planned row(s) R2 already read \
-         skipped. {} ms. NOTHING IS WRITTEN.",
+         tripwires several-Tenders {}, stable (>= {} mentions) {}, KEEP {}, role-mix refused {}, merge survivor {}, \
+         under review {}{}; rule/planner role disagreements {}; stable_mentions {} {}; not-planned misses {:?}; planned \
+         misses {:?}; target-country mismatches {}; compiled KEEP self-check missing {} (keep_add_commit {} line(s)); \
+         reported: no-Tender rows {}, country unchecked {}. Controls: {controls}. {exhibits}. R2 random: {} row(s) at \
+         salt {}, {} planned row(s) R2 already read skipped. {} ms. NOTHING IS WRITTEN.",
         r.guid_rows,
         r.distinct_values,
         r.max_id,
         r.windows,
+        r.notice_max_id,
         r.candidate_notices,
         r.org_mentions_read,
         r.candidate_mentions,
         r.unnamed_candidates,
+        r.keep_source,
+        r.keep_version,
         r.keep_size,
+        r.keep_candidates_not_in_file,
+        r.unsafe_names.len(),
         r.twin_groups,
         r.refused_groups,
         r.refused_mentions,
+        r.refused_buyer_copies,
         r.planned.rows,
         r.planned.mentions,
         r.planned_partial.rows,
@@ -2929,6 +3035,9 @@ fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
         b.tripwire_stable,
         b.tripwire_keep,
         b.tripwire_role_mix,
+        b.tripwire_merge_survivor,
+        b.tripwire_under_review,
+        if b.under_review_checked { "" } else { " (not read)" },
         b.role_ref_disagree,
         r.stable_mentions,
         if b.stable_mentions_is_decision { "ok" } else { "NOT THE DECISION'S" },
@@ -2936,12 +3045,759 @@ fn guid_twin_plan_summary(r: &store::GuidTwinPlan) -> String {
         b.planned_failed,
         b.target_country_mismatch,
         b.keep_self_check_missing.len(),
+        r.keep_add_commit.len(),
         b.tripwire_no_tender,
         b.target_country_unchecked,
         r.r2_random.len(),
         r.salt,
         r.r2_random_excluded,
         r.runtime_ms,
+    )
+}
+
+/// Issue 530 Build 2: what the wet `dissolve-guid-twins` read and did, for its report and job line.
+#[derive(Debug, Default)]
+struct GuidTwinWetRun {
+    job_id: i64,
+    max_windows: Option<u64>,
+    dry_computed_at: Option<i64>,
+    /// The stored dry plan's `log_high_water`: the campaign on that plan is every row logged above it.
+    dry_log_high_water: Option<i64>,
+    /// A1's boundary (required): the highest notice id at or below which every parsed notice was projected
+    /// before Build 2's deploy; once a window logged it, the only value accepted.
+    gate_since_notice_id: Option<i64>,
+    /// The re-plan (its `wet_mentions` are what the windows applied).
+    replan: Option<store::GuidTwinPlan>,
+    reconcile: Option<store::GuidTwinReconcile>,
+    /// A1's reverse-drift read since the boundary (the recurrence arm, read-only, before any window).
+    drift: Option<store::GuidTwinRecurrence>,
+    windows_planned: u64,
+    /// Windows this job id committed in earlier attempts (a restart): `max_windows` counts them.
+    windows_before: u64,
+    windows: Vec<store::GuidTwinWindowDone>,
+    /// `(country, name_norm)` of the missing keys among the applied windows' mentions (R3: the minted
+    /// rows must be exactly these, one per key).
+    applied_missing_keys: std::collections::BTreeSet<(String, String)>,
+    /// Stopped by cancel (between windows, or during the re-plan); capped by `max_windows`.
+    stopped: bool,
+    capped: bool,
+    window_error: Option<String>,
+    /// A refusal before any write of this attempt (or an error before the windows).
+    refusal: Option<String>,
+    wet_max_org_id: Option<i64>,
+    /// The manifest: every row the wet runs on the stored dry plan logged (the campaign: a staged first
+    /// run, this job, a restart), or this job's own rows when no dry plan was read.
+    log: Vec<store::GuidTwinLogRow>,
+    /// The minted targets' `(country, name_norm, name)`, read by id (a staged run's earlier mints too).
+    minted_rows: std::collections::BTreeMap<i64, (Option<String>, String, String)>,
+    log_error: Option<String>,
+}
+
+/// Issue 530 Build 2: the stored dry plan's fields the wet run checks.
+#[derive(Debug, Default)]
+struct GuidTwinStoredDry {
+    pass: bool,
+    stopped: bool,
+    extra_unsafe_names: Vec<String>,
+    keep_source: String,
+    keep_version: String,
+    keep_size: u64,
+    unsafe_names: Vec<String>,
+    max_id: i64,
+    notice_max_id: i64,
+    log_high_water: Option<i64>,
+    /// `(row, whole)` of every planned row.
+    rows: std::collections::BTreeSet<(i64, bool)>,
+}
+
+/// Issue 530 Build 2: the stored `guid-twin-plan` body, read for the wet run's checks.
+fn guid_twin_stored_dry(body: &str) -> Result<GuidTwinStoredDry, String> {
+    let v: serde_json::Value = serde_json::from_str(body).map_err(|e| format!("the stored guid-twin-plan is not JSON ({e})"))?;
+    let strings = |key: &str| -> Vec<String> {
+        v.get(key).and_then(|a| a.as_array()).map_or_else(Vec::new, |a| a.iter().filter_map(|x| x.as_str().map(str::to_owned)).collect())
+    };
+    let ids = |key: &str| -> Vec<i64> { v.get(key).and_then(|a| a.as_array()).map_or_else(Vec::new, |a| a.iter().filter_map(|x| x.as_i64()).collect()) };
+    let mut rows: std::collections::BTreeSet<(i64, bool)> = ids("planned_row_ids").into_iter().map(|id| (id, true)).collect();
+    rows.extend(ids("partial_row_ids").into_iter().map(|id| (id, false)));
+    Ok(GuidTwinStoredDry {
+        pass: v.pointer("/bars/pass").and_then(|b| b.as_bool()).unwrap_or(false),
+        stopped: v.get("stopped").and_then(|b| b.as_bool()).unwrap_or(false),
+        extra_unsafe_names: strings("extra_unsafe_names"),
+        keep_source: v.get("keep_source").and_then(|s| s.as_str()).unwrap_or("").to_owned(),
+        keep_version: v.get("keep_version").and_then(|s| s.as_str()).unwrap_or("").to_owned(),
+        keep_size: v.get("keep_size").and_then(|n| n.as_u64()).unwrap_or(0),
+        unsafe_names: strings("unsafe_names"),
+        max_id: v.get("max_id").and_then(|n| n.as_i64()).unwrap_or(0),
+        notice_max_id: v.get("notice_max_id").and_then(|n| n.as_i64()).unwrap_or(0),
+        log_high_water: v.get("log_high_water").and_then(|n| n.as_i64()),
+        rows,
+    })
+}
+
+/// Issue 530 Build 2: the stored dry plan must be this binary's (its compiled KEEP, version and size,
+/// unsafe-name list and the dissolve log's high-water mark), read with no extra names, finished, and
+/// passing R1. A Build 1b plan (no `keep_version`) is refused the same way.
+fn guid_twin_check_dry(dry: &GuidTwinStoredDry) -> Result<(), String> {
+    let compiled: Vec<String> = ingest::project::guid_twin::GUID_TWIN_UNSAFE_NAMES.iter().map(|n| (*n).to_owned()).collect();
+    let keep = ingest::project::guid_twin::keep_530();
+    let version = ingest::project::guid_twin::GUID_KEEP_530_VERSION;
+    let mut why: Vec<String> = Vec::new();
+    if dry.stopped {
+        why.push("it was stopped".to_owned());
+    }
+    if dry.keep_source != "compiled" || dry.keep_version != version || dry.keep_size != keep.len() as u64 {
+        why.push(format!(
+            "it was read under KEEP {:?} {:?} of {} value(s), this binary compiles {version:?} of {} (run the dry plan on this \
+             binary)",
+            dry.keep_source,
+            dry.keep_version,
+            dry.keep_size,
+            keep.len()
+        ));
+    }
+    if dry.unsafe_names != compiled {
+        why.push("it was read under another GUID_TWIN_UNSAFE_NAMES (run the dry plan on this binary)".to_owned());
+    }
+    if dry.log_high_water.is_none() {
+        why.push("it carries no log_high_water, so the rows a wet run on it logged cannot be told apart (run the dry plan on \
+                  this binary)"
+            .to_owned());
+    }
+    if !dry.extra_unsafe_names.is_empty() {
+        why.push(format!("it was read with extra_unsafe_names {:?} (A3 iii: compile them, then re-plan)", dry.extra_unsafe_names));
+    }
+    if !dry.pass {
+        why.push("it did not pass R1 (bars.pass is false)".to_owned());
+    }
+    if why.is_empty() { Ok(()) } else { Err(format!("the stored guid-twin-plan cannot drive a wet run: {}", why.join("; "))) }
+}
+
+/// Issue 530 Build 2: every bar and tripwire the wet run's re-plan must meet, by name; empty is a pass.
+/// Each of R1's bars (`bars.pass`'s every term) spelled out — the census bar, each tripwire, the knobs,
+/// the compiled KEEP self-check (with the KEEP-add commit it asks for) and the controls (a planned control
+/// a wet run on this plan already dissolved is met by the planner itself: it reads the dissolve log) —
+/// plus the Dissolve plan's exactly-1-Tender tripwire, which is no R1 bar: the wet run is stricter than R1
+/// there (decision "Dissolve plan": a planned row that fails a tripwire aborts the run; "Wet run": every
+/// tripwire is re-checked).
+fn guid_twin_replan_failures(plan: &store::GuidTwinPlan) -> Vec<String> {
+    let b = &plan.bars;
+    let mut out: Vec<String> = Vec::new();
+    for (name, n) in [
+        ("several-Tenders tripwire", b.tripwire_multi_tender),
+        ("no-Tender tripwire (Dissolve plan: exactly 1 distinct Tender)", b.tripwire_no_tender),
+        ("stable tripwire", b.tripwire_stable),
+        ("KEEP tripwire", b.tripwire_keep),
+        ("role-mix tripwire", b.tripwire_role_mix),
+        ("rule/planner role disagreements", b.role_ref_disagree),
+        ("target-country mismatches", b.target_country_mismatch),
+        ("merge-survivor tripwire", b.tripwire_merge_survivor),
+        ("under-review tripwire", b.tripwire_under_review),
+    ] {
+        if n > 0 {
+            out.push(format!("{name} {n}"));
+        }
+    }
+    if !b.keep_self_check_missing.is_empty() {
+        out.push(format!(
+            "the compiled KEEP self-check: {} value(s) of (twin and >= 2 Tenders) or stable missing from guid-keep-530.tsv \
+             — commit keep_add_commit's lines, then re-plan",
+            b.keep_self_check_missing.len()
+        ));
+    }
+    if !b.not_planned_failed.is_empty() || !b.planned_failed.is_empty() {
+        out.push(format!("controls: not-planned misses {:?}, planned misses {:?}", b.not_planned_failed, b.planned_failed));
+    }
+    if !b.within_census_bar {
+        out.push(format!("comparable planned rows {} over the census bar {}", b.planned_rows_comparable, b.census_bar));
+    }
+    if !b.stable_mentions_is_decision || !b.under_review_checked {
+        out.push("the re-plan ran off the decision's knobs".to_owned());
+    }
+    out
+}
+
+/// Issue 530 Build 2 (A10): the exhibit A10's Verify reads, keyed as the plan keys `GUID_TWIN_EXHIBITS`
+/// (so the plan's map and this read cannot drift apart).
+fn guid_twin_goettingen_key() -> String {
+    let (country, name) = GUID_TWIN_EXHIBITS[0];
+    format!("{country} {name}")
+}
+
+/// Issue 530 Build 2: the wet windows of a plan (its uncapped `wet_mentions`) at a window size, with the
+/// largest window and the window holding the largest target — what a staged first run extrapolates
+/// from (each window holds the single writer from `BEGIN IMMEDIATE` to COMMIT).
+fn guid_twin_wet_window_stats(r: &store::GuidTwinPlan, max: usize) -> serde_json::Value {
+    let windows = store::guid_twin_windows(&r.wet_mentions, max);
+    let largest = windows.iter().enumerate().max_by_key(|(k, w)| (w.mentions.len(), std::cmp::Reverse(*k)));
+    let target_window = r.largest_target.as_ref().and_then(|t| {
+        windows
+            .iter()
+            .enumerate()
+            .find(|(_, w)| w.keys.iter().any(|(n, c)| n == &t.name_norm && c == &t.country))
+            .map(|(k, w)| {
+                serde_json::json!({
+                    "window_no": k + 1,
+                    "keys": w.keys.len(),
+                    "mentions": w.mentions.len(),
+                    "target_id": t.target_id,
+                    "target_existing_mentions": t.mentions,
+                })
+            })
+    });
+    serde_json::json!({
+        "window_mentions": max,
+        "wet_windows": windows.len(),
+        "largest_window_no": largest.map(|(k, _)| k + 1),
+        "largest_window_mentions": largest.map_or(0, |(_, w)| w.mentions.len()),
+        "largest_target_window": target_window,
+    })
+}
+
+/// Issue 530 Build 2: the wet run's report, `guid-twin-dissolve` — the restore manifest built from
+/// `guid_twin_dissolve_log` (the campaign on the dry plan read), the re-plan's bars and expected
+/// post-state (A9), the reconcile, A1's reverse-drift read, the windows with their writer timings, A10's
+/// Verify ids and R3's checks. A sync free fn (issue 467's lesson).
+fn guid_twin_wet_json(r: &GuidTwinWetRun) -> Result<String, String> {
+    use serde_json::json;
+    use std::collections::{BTreeMap, BTreeSet};
+    let mut counts = store::OrgDissolve::default();
+    let mut minted_named: BTreeMap<i64, (Option<String>, String, String)> = r.minted_rows.clone();
+    for w in &r.windows {
+        let c = &w.counts;
+        counts.dissolved += c.dissolved;
+        counts.mentions += c.mentions;
+        counts.fresh += c.fresh;
+        counts.reused += c.reused;
+        counts.parties += c.parties;
+        counts.bid_parties += c.bid_parties;
+        counts.winners += c.winners;
+        counts.winner_dups += c.winner_dups;
+        counts.winners_deleted += c.winners_deleted;
+        counts.refold_tenders += c.refold_tenders;
+        counts.refold_notices += c.refold_notices;
+        counts.tender_changes += c.tender_changes;
+        counts.variant_orgs += c.variant_orgs;
+        counts.variants_written += c.variants_written;
+        counts.skipped += c.skipped;
+        for m in &w.minted {
+            minted_named.insert(m.target_id, (Some(m.country.clone()), m.name_norm.clone(), m.name.clone()));
+        }
+    }
+    let mentions_moved: u64 = r.windows.iter().map(|w| w.mentions_moved).sum();
+    // The manifest, by org, from the campaign's log.
+    let mut orgs: BTreeMap<i64, (bool, Vec<&store::GuidTwinLogRow>)> = BTreeMap::new();
+    let mut minted: BTreeMap<i64, u64> = BTreeMap::new();
+    let mut reused: BTreeSet<i64> = Default::default();
+    for row in &r.log {
+        orgs.entry(row.org_id).or_insert((row.whole, Vec::new())).1.push(row);
+        if row.target_minted {
+            *minted.entry(row.target_id).or_default() += 1;
+        } else {
+            reused.insert(row.target_id);
+        }
+    }
+    let org_json = |id: i64, rows: &[&store::GuidTwinLogRow]| {
+        let first = rows[0];
+        json!({
+            "org_id": id,
+            "country": first.org_country,
+            "identifier_kind": first.org_kind,
+            "value": first.org_value,
+            "name": first.org_name,
+            "mentions": rows.iter().map(|m| json!({
+                "job_id": m.job_id, "window_no": m.window_no, "notice_id": m.notice_id, "section_id": m.section_id,
+                "target_id": m.target_id, "minted": m.target_minted,
+            })).collect::<Vec<_>>(),
+        })
+    };
+    let dissolved: Vec<serde_json::Value> = orgs.iter().filter(|(_, (w, _))| *w).map(|(id, (_, rows))| org_json(*id, rows)).collect();
+    let rehomed: Vec<serde_json::Value> = orgs.iter().filter(|(_, (w, _))| !*w).map(|(id, (_, rows))| org_json(*id, rows)).collect();
+    let minted_json: Vec<serde_json::Value> = minted
+        .iter()
+        .map(|(id, n)| match minted_named.get(id) {
+            Some((country, name_norm, name)) => {
+                json!({"target_id": id, "country": country, "name_norm": name_norm, "name": name, "mentions": n})
+            }
+            None => json!({"target_id": id, "mentions": n}),
+        })
+        .collect();
+    let minted_keys: BTreeSet<(String, String)> =
+        r.windows.iter().flat_map(|w| w.minted.iter().map(|m| (m.country.clone(), m.name_norm.clone()))).collect();
+    let refold: BTreeSet<i64> = r.windows.iter().flat_map(|w| w.refold_tenders.iter().copied()).collect();
+    // R3's per-window equality: each window this run applied logged exactly the mentions it moved.
+    let window_log_mismatch: Vec<serde_json::Value> = r
+        .windows
+        .iter()
+        .filter_map(|w| {
+            let logged = r.log.iter().filter(|l| l.job_id == r.job_id && l.window_no == w.window_no as i64).count() as u64;
+            (logged != w.mentions_moved).then(|| json!({"window_no": w.window_no, "logged": logged, "moved": w.mentions_moved}))
+        })
+        .collect();
+    let replan = r.replan.as_ref().map(|p| {
+        json!({
+            "computed_rows": p.guid_rows,
+            "max_id": p.max_id,
+            "notice_max_id": p.notice_max_id,
+            "log_high_water": p.log_high_water,
+            "bars": p.bars,
+            "planned": p.planned,
+            "planned_partial": p.planned_partial,
+            "planned_row_ids": p.planned_row_ids.len(),
+            "partial_row_ids": p.partial_row_ids,
+            "wet_mentions": p.wet_mentions.len(),
+            "missing_targets": p.missing_targets,
+            "post_state": p.post_state,
+            "controls": p.controls,
+            "exhibits": p.exhibits,
+            "keep_add_commit": p.keep_add_commit,
+            "keep_size": p.keep_size,
+            "keep_version": p.keep_version,
+            "refused_buyer_copies": p.refused_buyer_copies,
+            "runtime_ms": p.runtime_ms,
+        })
+    });
+    let goettingen = r.replan.as_ref().and_then(|p| p.exhibits.get(&guid_twin_goettingen_key()));
+    let kept_ids = goettingen.map(|e| e.kept_ids.clone()).unwrap_or_default();
+    let partial_ids = goettingen.map(|e| e.partial_ids.clone()).unwrap_or_default();
+    let surviving: BTreeSet<i64> = kept_ids.iter().chain(&partial_ids).copied().collect();
+    let stable_rows: Vec<serde_json::Value> = r
+        .replan
+        .as_ref()
+        .map(|p| {
+            p.keep_candidates
+                .iter()
+                .filter(|c| c.reason.split('+').any(|x| x == "stable"))
+                .map(|c| json!({"org_id": c.org_id, "value": c.value, "mentions": c.mentions}))
+                .collect()
+        })
+        .unwrap_or_default();
+    let outcome = if r.refusal.is_some() {
+        "refused"
+    } else if r.window_error.is_some() {
+        "window_error"
+    } else if r.log_error.is_some() {
+        "manifest_unread"
+    } else if r.stopped {
+        "stopped"
+    } else if r.capped {
+        "capped"
+    } else {
+        "applied"
+    };
+    let manifest = match &r.log_error {
+        Some(e) => json!({ "unread": e, "job_id": r.job_id }),
+        None => json!({
+            "scope": if r.dry_log_high_water.is_some() {
+                "every row the wet runs on the stored dry plan logged (guid_twin_dissolve_log rowid above its log_high_water)"
+            } else {
+                "this job's rows (no dry plan was read)"
+            },
+            "dissolved": dissolved,
+            "rehomed": rehomed,
+            "minted": minted_json,
+            "reused_targets": reused,
+        }),
+    };
+    let verify = json!({
+        "goettingen_kept_ids": kept_ids,
+        "goettingen_partial_ids": partial_ids,
+        "goettingen_surviving_ids": surviving,
+        "goettingen_basis": "A10: done when the Landkreis Göttingen GUID row ids equal goettingen_surviving_ids (kept ∪ \
+                             partial: a rehome keeps its row and identifier) plus ids above wet_max_org_id",
+        "wet_max_org_id": r.wet_max_org_id,
+        "stable_rows": stable_rows,
+    });
+    let r3 = json!({
+        "manifest_mentions_campaign": r.log.len(),
+        "manifest_mentions_this_job": r.log.iter().filter(|l| l.job_id == r.job_id).count(),
+        "mentions_moved_this_run": mentions_moved,
+        "window_log_mismatch": window_log_mismatch,
+        "windows_log_equal": window_log_mismatch.is_empty() && r.log_error.is_none(),
+        "missing_keys_this_run": r.applied_missing_keys,
+        "minted_keys_this_run": minted_keys,
+        "minted_keys_equal_missing_keys_this_run": minted_keys == r.applied_missing_keys,
+        "skipped": counts.skipped,
+        "skipped_basis": "structural: OrgDissolve.skipped — since tier 5 (issue 309) no shape skips an org, a would-be \
+                          skip is a window error that rolls the window back; A12's tripwire, must read 0",
+        "refold_tenders": refold.len(),
+        "refold_check": "A12's second half, after `project` ends ok (a stopped project is re-run): a bounded /v1/sql \
+                         read SELECT COUNT(*) FROM tenders WHERE id IN (<refold_tenders_this_run, unioned over every \
+                         wet job on this dry plan, chunks of <= 500>) AND projection_epoch = 0 sums to 0 before the \
+                         census re-run; project's compare (verified + corrected) is at least the DISTINCT union's size, \
+                         never the summed per-window counts (a Tender stamped in two windows is folded once). A job \
+                         killed mid-run stores no report: its committed windows' stamps are re-projected by project \
+                         but not in this list",
+    });
+    let max_hold = r.windows.iter().max_by_key(|w| w.hold_ms);
+    let timings = json!({
+        "wait_ms_total": r.windows.iter().map(|w| w.wait_ms).sum::<u64>(),
+        "hold_ms_total": r.windows.iter().map(|w| w.hold_ms).sum::<u64>(),
+        "hold_ms_max": max_hold.map_or(0, |w| w.hold_ms),
+        "hold_ms_max_window": max_hold.map(|w| w.window_no),
+        "rebound_target_mentions_max": r.windows.iter().map(|w| w.rebound_target_mentions).max().unwrap_or(0),
+        "re_plan_ms": r.replan.as_ref().map(|p| p.runtime_ms),
+        "drift_read_ms": r.drift.as_ref().map(|d| d.runtime_ms),
+    });
+    let drift = r.drift.as_ref().map(|d| {
+        json!({
+            "since_notice_id": d.since_notice_id,
+            "reverse_drift_mentions": d.reverse_drift_mentions,
+            "reverse_drift_stock": d.reverse_drift_stock,
+            "reverse_drift_since": d.reverse_drift_since,
+            "reverse_drift_stock_ungated": d.reverse_drift_stock_ungated,
+            "reverse_drift_values": d.reverse_drift_values,
+            "reverse_drift": d.reverse_drift,
+            "candidate_count": d.candidate_count,
+            "candidates": d.candidates,
+            "candidates_basis": "KEEP-add candidates (A1): one whose own GUID row the re-plan holds refuses the run; \
+                                 the others are handled at R3 / step 6 (a reviewed KEEP-add commit)",
+            "forward_drift_stock": d.forward_drift_stock,
+            "forward_drift_since": d.forward_drift_since,
+            "since_notices_read": d.since_notices_read,
+        })
+    });
+    let mut body = serde_json::Map::new();
+    let mut put = |key: &str, value: serde_json::Value| {
+        body.insert(key.to_owned(), value);
+    };
+    put("job_id", json!(r.job_id));
+    put("outcome", json!(outcome));
+    put("refusal", json!(r.refusal));
+    put("window_error", json!(r.window_error));
+    put("log_error", json!(r.log_error));
+    put("max_windows", json!(r.max_windows));
+    put("dry_plan_computed_at", json!(r.dry_computed_at));
+    put("dry_plan_log_high_water", json!(r.dry_log_high_water));
+    put("keep_version", json!(ingest::project::guid_twin::GUID_KEEP_530_VERSION));
+    put("keep_size", json!(ingest::project::guid_twin::keep_530().len()));
+    put("unsafe_names", json!(ingest::project::guid_twin::GUID_TWIN_UNSAFE_NAMES));
+    put("gate_since_notice_id", json!(r.gate_since_notice_id));
+    put("wet_max_org_id", json!(r.wet_max_org_id));
+    put("replan", replan.unwrap_or(serde_json::Value::Null));
+    put("reconcile", serde_json::to_value(&r.reconcile).map_err(|e| e.to_string())?);
+    put("reverse_drift", drift.unwrap_or(serde_json::Value::Null));
+    put("windows_planned", json!(r.windows_planned));
+    put("windows_before", json!(r.windows_before));
+    put("windows_applied", json!(r.windows.len()));
+    put("windows", serde_json::to_value(&r.windows).map_err(|e| e.to_string())?);
+    put("timings", timings);
+    put("counts", serde_json::to_value(&counts).map_err(|e| e.to_string())?);
+    put("mentions_moved", json!(mentions_moved));
+    // Out of `manifest` on purpose: built from this run's windows, not the log, so it survives an unread
+    // manifest (A12's refold read takes it from every wet job's report).
+    put("refold_tenders_this_run", json!(refold));
+    put("manifest", manifest);
+    put("verify", verify);
+    put("r3", r3);
+    put(
+        "basis",
+        json!(
+            "issue 530 Build 2: each window one BEGIN IMMEDIATE over the target keys it owns (store::guid_twin_windows); \
+             every planned row's pre-image re-read and the review keep-set re-read inside it; whole rows dissolved \
+             through 440's id-set dissolve, partial rows rehomed mention by mention (Db::dissolve_org_mentions), the \
+             target the issue-234 resolver arm's (org_name_norm, register_jurisdiction(country)) row ORDER BY id LIMIT \
+             1, or one row minted per key; parties and bid parties follow the mention key, winners the 309 origin tier \
+             (a tier-3 chain mixing moved and kept mentions is unresolved); each moved mention logged in \
+             guid_twin_dissolve_log (the manifest: the campaign on the dry plan read). Restore of a dissolved org: \
+             re-mint it from its manifest entry and re-home its (notice, section) list. Restore of A1's reverse drift: \
+             {\"kind\":\"dissolve-guid-twins\",\"restore\":true,\"since_notice_id\":<boundary>}."
+        ),
+    );
+    let body = serde_json::Value::Object(body);
+    serde_json::to_string(&body).map_err(|e| e.to_string())
+}
+
+/// Issue 530 Build 2: the wet run's job line.
+fn guid_twin_wet_summary(r: &GuidTwinWetRun) -> String {
+    let moved: u64 = r.windows.iter().map(|w| w.mentions_moved).sum();
+    let dissolved: u64 = r.windows.iter().map(|w| w.counts.dissolved).sum();
+    let minted: usize = r.windows.iter().map(|w| w.minted.len()).sum();
+    let refold: u64 = r.windows.iter().map(|w| w.counts.refold_tenders).sum();
+    let tenders: u64 = r.windows.iter().map(|w| w.counts.tender_changes).sum();
+    let rehomed: u64 = r.windows.iter().map(|w| w.partial).sum();
+    let mut head = match (&r.refusal, &r.window_error) {
+        (Some(why), _) => why.clone(),
+        (None, Some(e)) => format!("dissolve-guid-twins wet STOPPED ON AN ERROR after {} committed window(s): {e}", r.windows.len()),
+        (None, None) if r.stopped => format!("dissolve-guid-twins wet STOPPED by cancel after {} window(s) (they stand)", r.windows.len()),
+        (None, None) if r.capped => format!("dissolve-guid-twins wet PARTIAL: max_windows {:?} reached", r.max_windows),
+        _ => "dissolve-guid-twins wet (issue 530 Build 2) APPLIED".to_owned(),
+    };
+    if let Some(e) = &r.log_error {
+        head.push_str(&format!(
+            " -- BUT the restore manifest could not be read ({e}); the moved rows stand in guid_twin_dissolve_log \
+             job_id={}, which /v1/sql cannot read: re-queue the same wet job on the same dry plan (before any new dry \
+             plan) to store the campaign manifest; this report's refold_tenders_this_run and windows[] feed step 4 and R3",
+            r.job_id
+        ));
+    }
+    let reconcile = r.reconcile.as_ref().map_or_else(
+        || "not reached".to_owned(),
+        |c| {
+            format!(
+                "{} (dry {}, re-plan {}, logged {}, minted since {} (+{} logged), dropped {}, added {}, re-planned+logged {})",
+                if c.ok { "ok" } else { "DIFF" },
+                c.dry_rows,
+                c.replan_rows,
+                c.logged_rows,
+                c.minted_since.len(),
+                c.logged_minted_since.len(),
+                c.dropped.len(),
+                c.added.len(),
+                c.replanned_logged.len()
+            )
+        },
+    );
+    let replan = r.replan.as_ref().map_or_else(
+        || "not reached".to_owned(),
+        |p| {
+            format!(
+                "{} whole ({} mention(s)), {} partial ({} rehome(s)), bars {}, no-Tender {}, KEEP self-check missing {}",
+                p.planned.rows,
+                p.planned.mentions,
+                p.planned_partial.rows,
+                p.planned_partial.mentions,
+                if p.bars.pass { "PASS" } else { "FAIL" },
+                p.bars.tripwire_no_tender,
+                p.bars.keep_self_check_missing.len()
+            )
+        },
+    );
+    let drift = r.drift.as_ref().map_or_else(
+        || "not reached".to_owned(),
+        |d| {
+            format!(
+                "{} mention(s) of {} value(s) since notice {:?}; {} KEEP-add candidate(s){}",
+                d.reverse_drift_mentions,
+                d.reverse_drift_values,
+                d.since_notice_id,
+                d.candidate_count,
+                if d.candidates.is_empty() {
+                    String::new()
+                } else {
+                    format!(
+                        " ({}; reverse_drift.candidates)",
+                        d.candidates.iter().take(10).map(|c| c.value.as_str()).collect::<Vec<_>>().join(", ")
+                    )
+                }
+            )
+        },
+    );
+    let manifest = if r.log_error.is_some() {
+        "UNREAD".to_owned()
+    } else {
+        format!(
+            "{} logged mention(s) on this dry plan ({} by job {})",
+            r.log.len(),
+            r.log.iter().filter(|l| l.job_id == r.job_id).count(),
+            r.job_id
+        )
+    };
+    let max_hold = r.windows.iter().max_by_key(|w| w.hold_ms);
+    let hold = format!(
+        "writer hold {} ms in all, at most {} ms (window {:?}), wait {} ms",
+        r.windows.iter().map(|w| w.hold_ms).sum::<u64>(),
+        max_hold.map_or(0, |w| w.hold_ms),
+        max_hold.map(|w| w.window_no),
+        r.windows.iter().map(|w| w.wait_ms).sum::<u64>()
+    );
+    format!(
+        "{head}. Re-plan: {replan}. Reconcile: {reconcile}. Reverse drift (A1): {drift}. Windows: {} of {} applied this run \
+         ({} earlier by this job); {moved} mention(s) moved, {dissolved} row(s) dissolved (organization removed), {rehomed} \
+         rehomed, {minted} row(s) minted (organization added), {tenders} Tender(s) changed, {refold} stamped stale for the \
+         refold (run `project`, then read the refold Tenders' projection_epoch); {hold}. Manifest: {manifest}. Gate \
+         boundary: {:?}. Max org id after: {:?}. Report guid-twin-dissolve.",
+        r.windows.len(),
+        r.windows_planned,
+        r.windows_before,
+        r.gate_since_notice_id,
+        r.wet_max_org_id,
+    )
+}
+
+/// Issue 530 Build 2 (A1): the boundary a recurrence read or a restore used, and where it came from.
+#[derive(Debug, Default, Clone)]
+struct GuidTwinAnchor {
+    /// The `since_notice_id` read (the recorded boundary when none was passed).
+    since: Option<i64>,
+    /// The boundary the wet windows logged, if any.
+    recorded: Option<i64>,
+    source: &'static str,
+}
+
+impl GuidTwinAnchor {
+    fn json(&self) -> serde_json::Value {
+        serde_json::json!({
+            "since_notice_id": self.since,
+            "recorded": self.recorded,
+            "source": self.source,
+            "matches_recorded": self.recorded.map(|b| Some(b) == self.since),
+        })
+    }
+}
+
+/// Issue 530 Build 2, A1: the recurrence arm's report body.
+fn guid_twin_recurrence_json(r: &store::GuidTwinRecurrence, anchor: Option<&GuidTwinAnchor>) -> Result<String, String> {
+    let mut body = serde_json::to_value(r).map_err(|e| e.to_string())?;
+    if let Some(all) = body.as_object_mut() {
+        all.insert(
+            "basis".to_owned(),
+            "issue 530 A1: the targets are every guid_twin_dissolve_log target_id, plus (since_notice_id: A1's boundary, \
+             the one the wet windows logged and the default) the identifier-NULL rows bound by the sections rule 530-T \
+             refuses in twin copies of later notices; each target mention whose raw value passes uuid_v4 is re-decided \
+             with its whole copy (the compiled KEEP and names, the copy's own role references); per refused value, the \
+             distinct Tenders over its refused mentions plus its own GUID row's mentions. A value at >= 2 Tenders \
+             outside KEEP is a KEEP-add candidate (its whole cohort is the restore list). Reverse drift: a logged \
+             mention still on its logged target whose gated identifier is still a national v4 key and that the \
+             current rule no longer refuses (reverse_drift_stock_ungated counts the ones the gate no longer admits: no \
+             drift), or a post-since mention whose gated identifier is a national v4 key bound to an identifier-NULL \
+             row that the rule does not refuse — a KEEP or unsafe-name add left it where the gate or a wet run put it, \
+             and a rebuild would bind it by identifier; restore it with \
+             {\"kind\":\"dissolve-guid-twins\",\"restore\":true,\"since_notice_id\":<boundary>}. Forward drift, \
+             its mirror: a refused mention still on a GUID row (a re-parse rebinds a changed sibling alone); a dry \
+             plan plans it and a wet run moves it. Pass: 0 candidates, 0 reverse drift, 0 forward drift. R3 runs it \
+             once; after that it is queued by hand monthly (no scheduler arm) and after every deployed KEEP-add or \
+             GUID_TWIN_UNSAFE_NAMES commit, always at the recorded boundary — without one (before any wet window) it \
+             reads only the dissolve-log targets"
+                .into(),
+        );
+        all.insert("keep_version".to_owned(), ingest::project::guid_twin::GUID_KEEP_530_VERSION.into());
+        if let Some(a) = anchor {
+            all.insert("boundary".to_owned(), a.json());
+        }
+    }
+    Ok(body.to_string())
+}
+
+/// Issue 530 Build 2, A1: the recurrence arm's job line.
+fn guid_twin_recurrence_summary(r: &store::GuidTwinRecurrence) -> String {
+    let firsts = r.candidates.iter().take(10).map(|c| format!("{} ({} Tenders)", c.value, c.tenders)).collect::<Vec<_>>().join(", ");
+    let drifted = r
+        .reverse_drift
+        .iter()
+        .take(10)
+        .map(|v| format!("{} {} ({} mention(s), {})", v.value, v.country.as_deref().unwrap_or("-"), v.cohort.len(), v.restore))
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!(
+        "dissolve-guid-twins recurrence (issue 530 A1) {}: {} target(s) ({} from the manifest, {} from twin copies above notice \
+         {:?}{}: {} copies read, {} twin, {} refused section(s), {} anomaly(ies) on identified rows); {} target mention(s) read, \
+         {} with a v4 raw value in {} copies, {} refused; {} refused value(s): {} at one Tender, {} KEEP-add \
+         candidate(s){}; reverse drift {} mention(s) of {} value(s) (stock {}, since {}){}; {} logged mention(s) the gate no \
+         longer admits (no drift); forward drift {} (stock {}, a lower bound; since {}). {} ms. Report \
+         guid-twin-recurrence.",
+        if r.reverse_drift_mentions > 0 {
+            "REVERSE DRIFT"
+        } else if r.forward_drift_stock + r.forward_drift_since > 0 {
+            "FORWARD DRIFT"
+        } else if r.pass {
+            "PASS"
+        } else {
+            "CANDIDATES"
+        },
+        r.targets,
+        r.targets_from_log,
+        r.targets_from_since,
+        r.since_notice_id,
+        if r.since_notice_id.is_none() { " — NO since_notice_id: the dissolve-log targets only, not A1's monitor" } else { "" },
+        r.since_notices_read,
+        r.since_twin_copies,
+        r.since_refused_mentions,
+        r.anomaly_count,
+        r.target_mentions_read,
+        r.guid_mentions,
+        r.notices_decided,
+        r.refused_mentions,
+        r.values,
+        r.single_tender_values,
+        r.candidate_count,
+        if firsts.is_empty() { String::new() } else { format!(": {firsts}") },
+        r.reverse_drift_mentions,
+        r.reverse_drift_values,
+        r.reverse_drift_stock,
+        r.reverse_drift_since,
+        if drifted.is_empty() { String::new() } else { format!(": {drifted}") },
+        r.reverse_drift_stock_ungated,
+        r.forward_drift_stock + r.forward_drift_since,
+        r.forward_drift_stock,
+        r.forward_drift_since,
+        r.runtime_ms,
+    )
+}
+
+/// Issue 530 Build 2, A1: what the restore read and did, for its report and job line.
+#[derive(Debug, Default)]
+struct GuidTwinRestoreRun {
+    since_notice_id: Option<i64>,
+    anchor: Option<GuidTwinAnchor>,
+    drift: Option<store::GuidTwinRecurrence>,
+    restored: Vec<store::GuidTwinRestoreDone>,
+    stopped: bool,
+    error: Option<String>,
+}
+
+/// Issue 530 Build 2, A1: the restore's report body (`guid-twin-restore`).
+fn guid_twin_restore_json(r: &GuidTwinRestoreRun) -> Result<String, String> {
+    use serde_json::json;
+    let outcome = if r.error.is_some() {
+        "error"
+    } else if r.stopped {
+        "stopped"
+    } else {
+        "restored"
+    };
+    let body = json!({
+        "outcome": outcome,
+        "since_notice_id": r.since_notice_id,
+        "error": r.error,
+        "drift_before": r.drift.as_ref().map(|d| json!({
+            "reverse_drift_mentions": d.reverse_drift_mentions,
+            "reverse_drift_values": d.reverse_drift_values,
+            "reverse_drift": d.reverse_drift,
+        })),
+        "boundary": r.anchor.as_ref().map(GuidTwinAnchor::json),
+        "drift_before_stock_ungated": r.drift.as_ref().map(|d| d.reverse_drift_stock_ungated),
+        "restored_values": r.restored.len(),
+        "restored_mentions": r.restored.iter().map(|d| d.moved.len()).sum::<usize>(),
+        "minted": r.restored.iter().filter(|d| d.minted).count(),
+        "removed": r.restored.iter().flat_map(|d| d.removed.iter().copied()).collect::<Vec<_>>(),
+        "emptied_kept": r.restored.iter().flat_map(|d| d.emptied_kept.iter().copied()).collect::<Vec<_>>(),
+        "restored": r.restored,
+        "keep_version": ingest::project::guid_twin::GUID_KEEP_530_VERSION,
+        "basis": "issue 530 A1: each reverse-drifted value restored in one BEGIN IMMEDIATE — its cohort's mentions \
+                  must still sit where the read found them; the target is the identity (country, national, value)'s \
+                  row, else a merged identifier's survivor, else one row minted as the resolver mints an identified \
+                  one (organization added); each current row rehomes exactly its drifted mentions onto it \
+                  (Db::dissolve_org_mentions: parties and bid parties by the mention key, winners by the 309 tier, \
+                  tier 5's Tenders stamped stale for `project`); a row the rehome emptied is deleted as the 443 sweep \
+                  deletes one (`removed`: org_sweep_log pre-image, organization removed) unless something still names \
+                  it or a review protects it (`emptied_kept`: run sweep-orphan-orgs); organization changed / tender \
+                  changed announced. One entry per (value, register country). Re-run the recurrence arm after it: \
+                  expect 0 reverse drift; compare the manifest's (notice, section) list with restored[].moved",
+    });
+    serde_json::to_string(&body).map_err(|e| e.to_string())
+}
+
+/// Issue 530 Build 2, A1: the restore's job line.
+fn guid_twin_restore_summary(r: &GuidTwinRestoreRun) -> String {
+    let (mentions, values) = r.drift.as_ref().map_or((0, 0), |d| (d.reverse_drift_mentions, d.reverse_drift_values));
+    let moved: usize = r.restored.iter().map(|d| d.moved.len()).sum();
+    let minted = r.restored.iter().filter(|d| d.minted).count();
+    let refold: usize = r.restored.iter().map(|d| d.refold_tenders.len()).sum();
+    let removed: usize = r.restored.iter().map(|d| d.removed.len()).sum();
+    let kept: usize = r.restored.iter().map(|d| d.emptied_kept.len()).sum();
+    let head = match (&r.error, r.stopped) {
+        (Some(e), _) => format!("dissolve-guid-twins restore STOPPED ON AN ERROR after {} value(s): {e}", r.restored.len()),
+        (None, true) => format!("dissolve-guid-twins restore STOPPED by cancel after {} value(s) (they stand)", r.restored.len()),
+        (None, false) => "dissolve-guid-twins restore (issue 530 A1) DONE".to_owned(),
+    };
+    format!(
+        "{head}: reverse drift read {mentions} mention(s) of {values} value(s) since notice {:?}; {} value(s) restored, \
+         {moved} mention(s) moved onto their identified row ({minted} minted: organization added), {removed} emptied \
+         row(s) removed{}, {refold} Tender(s) stamped stale (run `project`). Re-run the recurrence arm (expect 0 reverse \
+         drift). Report guid-twin-restore.",
+        r.since_notice_id,
+        r.restored.len(),
+        if kept > 0 { format!(", {kept} emptied row(s) still referenced or protected (run `sweep-orphan-orgs`)") } else { String::new() },
     )
 }
 
@@ -2988,6 +3844,10 @@ impl Supervisor {
             next_id: AtomicU64::new(1),
             current: RwLock::new(None),
             cancel_running: AtomicU64::new(0),
+            #[cfg(test)]
+            guid_twin_window_mentions: std::sync::atomic::AtomicUsize::new(store::GUID_TWIN_WET_WINDOW_MENTIONS),
+            #[cfg(test)]
+            guid_twin_cancel_after_windows: AtomicU64::new(0),
             jobs_completed: AtomicU64::new(0),
             worker_runtime: spawn_worker_runtime(),
         }
@@ -3109,12 +3969,24 @@ impl Supervisor {
                 req.kind
             ));
         }
-        // Issue 530 unit 3: likewise `extra_unsafe_names`, which only the twin plan reads.
-        if req.extra_unsafe_names.is_some() && req.kind != "dissolve-guid-twins" {
-            return Err(format!(
-                "{} refuses `extra_unsafe_names`: only dissolve-guid-twins takes it (issue 530 unit 3)",
-                req.kind
-            ));
+        // Issue 530 unit 3: likewise `extra_unsafe_names`, which only the twin plan reads — and Build 2's
+        // `recurrence`, `restore`, `since_notice_id`, `max_windows` and `gate_since_notice_id`.
+        if req.kind != "dissolve-guid-twins" {
+            for (field, given) in [
+                ("extra_unsafe_names", req.extra_unsafe_names.is_some()),
+                ("recurrence", req.recurrence.is_some()),
+                ("restore", req.restore.is_some()),
+                ("since_notice_id", req.since_notice_id.is_some()),
+                ("max_windows", req.max_windows.is_some()),
+                ("gate_since_notice_id", req.gate_since_notice_id.is_some()),
+            ] {
+                if given {
+                    return Err(format!(
+                        "{} refuses `{field}`: only dissolve-guid-twins takes it (issue 530 unit 3 / Build 2)",
+                        req.kind
+                    ));
+                }
+            }
         }
         match req.kind.as_str() {
             "fetch" => {
@@ -3763,11 +4635,125 @@ impl Supervisor {
                 ])
             }
             "dissolve-guid-twins" => {
-                // Issue 530 unit 3, Build 1: dry only. The wet path (KEEP committed, the gate wired, the
-                // id-set dissolve) is Build 2, so `dry_run: false` names a job that does not exist yet.
-                if req.dry_run == Some(false) {
-                    return Err("dissolve-guid-twins is dry in Build 1 (issue 530 unit 3): `dry_run: false` is \
-                                refused until Build 2 commits KEEP and wires the gate"
+                // Issue 530 Build 2: three modes under one kind — the dry plan (default), the wet run
+                // (`dry_run: false`, `Spec::DissolveGuidTwinsWet`) and A1's recurrence arm
+                // (`recurrence: true`, read-only). Each refuses the others' fields.
+                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
+                let wet = req.dry_run == Some(false);
+                if req.restore == Some(true) {
+                    // A1's restore: a write with its own read (the recurrence arm's reverse drift).
+                    if req.dry_run.is_some()
+                        || req.extra_unsafe_names.is_some()
+                        || req.stable_mentions.is_some()
+                        || req.recurrence.is_some()
+                        || req.max_windows.is_some()
+                        || req.gate_since_notice_id.is_some()
+                    {
+                        return Err("dissolve-guid-twins restore (issue 530 A1) reads the compiled KEEP and names and \
+                                    restores what the recurrence arm reads: it refuses `dry_run`, `extra_unsafe_names`, \
+                                    `stable_mentions`, `recurrence`, `max_windows` and `gate_since_notice_id`"
+                            .to_owned());
+                    }
+                    let Some(since) = req.since_notice_id else {
+                        return Err("dissolve-guid-twins restore needs `since_notice_id`: A1's boundary, the highest \
+                                    notice id at or below which every parsed notice was projected before Build 2's \
+                                    deploy, as the wet run recorded it (without it the post-deploy drift is not read)"
+                            .to_owned());
+                    };
+                    if since <= 0 {
+                        return Err(format!("dissolve-guid-twins restore refuses `since_notice_id` {since}: notice ids are positive"));
+                    }
+                    return Ok(vec![
+                        self.push(
+                            "dissolve-guid-twins",
+                            format!("dissolve-guid-twins restore since_notice_id={since}"),
+                            Spec::GuidTwinRestore { since_notice_id: Some(since) },
+                        )
+                        .await,
+                    ]);
+                }
+                if req.restore.is_some() {
+                    return Err("dissolve-guid-twins refuses `restore: false`: omit it".to_owned());
+                }
+                if req.recurrence == Some(true) {
+                    if req.dry_run.is_some() || req.extra_unsafe_names.is_some() || req.stable_mentions.is_some() {
+                        return Err("dissolve-guid-twins recurrence (issue 530 A1) is read-only and reads the compiled \
+                                    KEEP and names: it refuses `dry_run`, `extra_unsafe_names` and `stable_mentions`"
+                            .to_owned());
+                    }
+                    if req.max_windows.is_some() || req.gate_since_notice_id.is_some() {
+                        return Err("dissolve-guid-twins recurrence refuses `max_windows` and `gate_since_notice_id`: \
+                                    they belong to the wet run"
+                            .to_owned());
+                    }
+                    if let Some(bad) = req.since_notice_id.filter(|&n| n < 0) {
+                        return Err(format!("dissolve-guid-twins recurrence refuses `since_notice_id` {bad}: notice ids are positive"));
+                    }
+                    let since = req.since_notice_id.map(|n| format!(" since_notice_id={n}")).unwrap_or_default();
+                    return Ok(vec![
+                        self.push(
+                            "dissolve-guid-twins",
+                            format!("dissolve-guid-twins recurrence samples={samples}{since}"),
+                            Spec::GuidTwinRecurrence { since_notice_id: req.since_notice_id, samples },
+                        )
+                        .await,
+                    ]);
+                }
+                if req.recurrence.is_some() || req.since_notice_id.is_some() {
+                    return Err("dissolve-guid-twins refuses `recurrence: false` and `since_notice_id` outside the \
+                                recurrence arm (`\"recurrence\": true`)"
+                        .to_owned());
+                }
+                if wet {
+                    // A3 iii: the wet run reads the compiled KEEP and names alone, at R1's fixed stable bar.
+                    if req.extra_unsafe_names.is_some() {
+                        return Err("dissolve-guid-twins wet refuses `extra_unsafe_names` (issue 530 A3 iii): it reads \
+                                    the compiled GUID_TWIN_UNSAFE_NAMES only — an R2 finding ships as a compiled name"
+                            .to_owned());
+                    }
+                    if let Some(n) = req.stable_mentions.filter(|&n| n != store::GUID_TWIN_R1_STABLE_MENTIONS) {
+                        return Err(format!(
+                            "dissolve-guid-twins wet refuses `stable_mentions` {n}: R1's stable bar is fixed at {}",
+                            store::GUID_TWIN_R1_STABLE_MENTIONS
+                        ));
+                    }
+                    if req.max_windows == Some(0) {
+                        return Err("dissolve-guid-twins wet refuses `max_windows: 0`: a run that may apply nothing; \
+                                    omit it to apply every window"
+                            .to_owned());
+                    }
+                    // A1's boundary is required: a later value (the dry plan's start) would hide the twin copies
+                    // the gate refused between the deploy and the plan from the recurrence arm.
+                    let Some(gate_since) = req.gate_since_notice_id else {
+                        return Err("dissolve-guid-twins wet needs `gate_since_notice_id`: A1's boundary, the highest \
+                                    notice id at or below which every parsed notice was projected before Build 2's \
+                                    deploy (docs/operations.md, the GUID twin dissolve, step 1: read in a queue gap after \
+                                    a `project` that ended ok, with the `notices_unprojected` probe)"
+                            .to_owned());
+                    };
+                    if gate_since <= 0 {
+                        return Err(format!("dissolve-guid-twins wet refuses `gate_since_notice_id` {gate_since}: notice ids are positive"));
+                    }
+                    let params = format!(
+                        "dissolve-guid-twins wet{}{}",
+                        req.max_windows.map(|n| format!(" max_windows={n}")).unwrap_or_default(),
+                        req.gate_since_notice_id.map(|n| format!(" gate_since_notice_id={n}")).unwrap_or_default(),
+                    );
+                    return Ok(vec![
+                        self.push(
+                            "dissolve-guid-twins",
+                            params,
+                            Spec::DissolveGuidTwinsWet {
+                                max_windows: req.max_windows,
+                                gate_since_notice_id: req.gate_since_notice_id,
+                            },
+                        )
+                        .await,
+                    ]);
+                }
+                if req.max_windows.is_some() || req.gate_since_notice_id.is_some() {
+                    return Err("dissolve-guid-twins refuses `max_windows` and `gate_since_notice_id` on a dry plan: \
+                                they belong to the wet run (`dry_run: false`)"
                         .to_owned());
                 }
                 let few = store::GUID_CENSUS_FEW_MENTIONS;
@@ -3778,7 +4764,6 @@ impl Supervisor {
                          single-use row (a notice's TED+DÖE pair) would join KEEP as stable"
                     ));
                 }
-                let samples = req.samples.unwrap_or(ORG_HEAD_DRIFT_SAMPLES).clamp(1, ORG_HEAD_DRIFT_SAMPLES_MAX) as usize;
                 let extra_unsafe_names = guid_twin_extra_names(req.extra_unsafe_names.as_deref())?;
                 let extra = if extra_unsafe_names.is_empty() {
                     String::new()
@@ -6276,7 +7261,9 @@ const STOPPABLE_KINDS: &[&str] = &[
     // run stores no report.
     "guid-census",
     // Issue 530 unit 3: read before every window, batch and IN chunk of the plan's reads, and every 64
-    // target seeks; a stopped run stores no report.
+    // target seeks; a stopped run stores no report. Build 2: the wet run reads it during its re-plan and
+    // before every window (the committed windows stand, the report is stored), the recurrence arm before
+    // every window, chunk and 64 seeks.
     "dissolve-guid-twins",
     // Issue 524 unit 2a: `plan_org_name_refresh` reads it before every page (and every scoped id
     // chunk); a stopped run stores no plan. Unit 2b: the wet run reads it before every rename
@@ -8733,6 +9720,11 @@ impl Supervisor {
             Spec::RefreshOrgNamesWet { .. } | Spec::RevertOrgNameRefresh { .. } => {
                 off_frame(|| self.run_org_name_refresh_spec(job)).await
             }
+            // Issue 530 Build 2: the wet twin dissolve, its own family (the census family stays
+            // read-only, and its poll frame stays so).
+            Spec::DissolveGuidTwinsWet { .. } | Spec::GuidTwinRestore { .. } => {
+                off_frame(|| self.run_guid_twin_wet_spec(job)).await
+            }
             Spec::CountryClusterCensus
             | Spec::DiskCensus
             | Spec::NameAttributionProbe
@@ -8743,6 +9735,7 @@ impl Supervisor {
             | Spec::OrgHeadDrift { .. }
             | Spec::GuidCensus { .. }
             | Spec::DissolveGuidTwins { .. }
+            | Spec::GuidTwinRecurrence { .. }
             | Spec::RefreshOrgNames { .. }
             | Spec::ProvisionalEchoCensus { .. }
             | Spec::DuplicateIdentityCensus
@@ -13707,6 +14700,483 @@ impl Supervisor {
         }
     }
 
+    /// `run_spec`'s family of issue 530 Build 2's writes: the wet `dissolve-guid-twins` and A1's restore.
+    /// Issue 467: reached through `off_frame`, each arm boxed and every store future boxed inside it, so
+    /// neither this fn's future nor its poll frame grows with the re-plan or the windows. The report is
+    /// stored before the job's outcome is returned, whatever happened (a refusal, a stop, a window error).
+    async fn run_guid_twin_wet_spec(&self, job: &Job) -> Result<String, String> {
+        match &job.spec {
+            Spec::DissolveGuidTwinsWet { max_windows, gate_since_notice_id } => Box::pin(async move {
+                let mut run = GuidTwinWetRun { job_id: job.id as i64, max_windows: *max_windows, ..Default::default() };
+                let outcome = Box::pin(self.guid_twin_wet(job, &mut run, *gate_since_notice_id)).await;
+                if let Err(e) = outcome {
+                    run.refusal = Some(e);
+                }
+                // The manifest is the log's: every row the wet runs on the stored dry plan logged (the
+                // campaign: a staged first run, a restart, this job), or this job's rows when no dry plan
+                // was read. One bounded read, retried before it is recorded as unread.
+                let mut last_error = None;
+                for attempt in 0..3 {
+                    let read = match run.dry_log_high_water {
+                        Some(high_water) => Box::pin(self.db.guid_twin_log_after(high_water)).await,
+                        None => Box::pin(self.db.guid_twin_log(job.id as i64)).await,
+                    };
+                    match read {
+                        Ok(log) => {
+                            run.log = log;
+                            last_error = None;
+                            break;
+                        }
+                        Err(e) => {
+                            eprintln!("supervisor: dissolve-guid-twins manifest read, attempt {}: {e}", attempt + 1);
+                            last_error = Some(e.to_string());
+                        }
+                    }
+                }
+                run.log_error = last_error;
+                if run.log_error.is_none() {
+                    let named: std::collections::BTreeSet<i64> =
+                        run.windows.iter().flat_map(|w| w.minted.iter().map(|m| m.target_id)).collect();
+                    let unnamed: Vec<i64> = run
+                        .log
+                        .iter()
+                        .filter(|l| l.target_minted && !named.contains(&l.target_id))
+                        .map(|l| l.target_id)
+                        .collect::<std::collections::BTreeSet<_>>()
+                        .into_iter()
+                        .collect();
+                    if !unnamed.is_empty() {
+                        match Box::pin(self.db.guid_twin_rows_named(&unnamed)).await {
+                            Ok(rows) => run.minted_rows = rows,
+                            Err(e) => eprintln!("supervisor: dissolve-guid-twins minted-row names: {e}"),
+                        }
+                    }
+                }
+                let summary = guid_twin_wet_summary(&run);
+                let body = guid_twin_wet_json(&run)
+                    .map_err(|e| format!("{summary} -- BUT the guid-twin-dissolve report did not serialise ({e})"))?;
+                Box::pin(self.db.put_report(GUID_TWIN_DISSOLVE_REPORT, &body, store::now_unix())).await.map_err(|e| {
+                    format!("{summary} -- BUT storing guid-twin-dissolve failed ({e}); this line is the run's record")
+                })?;
+                if run.refusal.is_some() || run.window_error.is_some() || run.stopped || run.log_error.is_some() {
+                    Err(summary)
+                } else {
+                    Ok(summary)
+                }
+            })
+            .await,
+            Spec::GuidTwinRestore { since_notice_id } => Box::pin(async move {
+                let job_id = job.id;
+                let mut run = GuidTwinRestoreRun { since_notice_id: *since_notice_id, ..Default::default() };
+                let Some(since) = *since_notice_id else {
+                    return Err("dissolve-guid-twins restore REFUSED: no since_notice_id (A1's boundary). Nothing was \
+                                read or written"
+                        .to_owned());
+                };
+                // The restore writes on the single writer through `organization_id` reads (440's body, 542's
+                // variants): refused, before any read, without the indexes they seek (the recurrence read
+                // refuses without its own).
+                Box::pin(self.refuse_without_org_fk_indexes("dissolve-guid-twins restore")).await?;
+                let anchor = Box::pin(self.guid_twin_anchor("restore", Some(since))).await?;
+                run.anchor = Some(anchor);
+                let stop = || self.cancelled(job_id);
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("reading", Some(done), None, detail.to_owned());
+                };
+                self.set_phase("reading", None, None, "issue 530 A1: reading the reverse drift".to_owned());
+                let drift = Box::pin(self.db.guid_twin_recurrence(store::GuidTwinRecurrenceArgs {
+                    is_guid: ingest::idgate::uuid_v4,
+                    gated_v4: ingest::project::guid_twin::guid_twin_gated_v4,
+                    rule: ingest::project::guid_twin::guid_twin_decide,
+                    role_ref: ingest::project::guid_twin::guid_twin_role_ref,
+                    keep: ingest::project::guid_twin::keep_530(),
+                    since_notice_id: Some(since),
+                    window: GUID_TWIN_RECURRENCE_WINDOW,
+                    samples: ORG_HEAD_DRIFT_SAMPLES as usize,
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| format!("dissolve-guid-twins restore: the drift read failed ({e}); nothing was written"))?;
+                if drift.stopped {
+                    return Ok("dissolve-guid-twins restore STOPPED by cancel during the drift read; nothing was written, \
+                               no report stored"
+                        .to_owned());
+                }
+                let total = drift.reverse_drift.len() as u64;
+                for (k, value) in drift.reverse_drift.iter().enumerate() {
+                    if self.cancelled(job_id) {
+                        run.stopped = true;
+                        break;
+                    }
+                    self.set_phase(
+                        "restoring",
+                        Some(k as u64),
+                        Some(total),
+                        format!("issue 530 A1: value {} ({} mention(s), {})", value.value, value.cohort.len(), value.restore),
+                    );
+                    match Box::pin(self.db.restore_guid_twin_value(store::GuidTwinRestoreArgs {
+                        value,
+                        fields: ingest::project::ORG_NAME_FIELD_IDS,
+                        normalize: ingest::project::normalize_lang,
+                    }))
+                    .await
+                    {
+                        Ok(done) => run.restored.push(done),
+                        Err(e) => {
+                            run.error = Some(format!("value {}: {e}", value.value));
+                            break;
+                        }
+                    }
+                    if let Err(e) = Box::pin(self.db.checkpoint(store::CheckpointMode::Truncate)).await {
+                        eprintln!("supervisor: checkpoint after dissolve-guid-twins restore: {e}");
+                    }
+                }
+                run.drift = Some(drift);
+                let summary = guid_twin_restore_summary(&run);
+                let body = guid_twin_restore_json(&run)
+                    .map_err(|e| format!("{summary} -- BUT the guid-twin-restore report did not serialise ({e})"))?;
+                Box::pin(self.db.put_report(GUID_TWIN_RESTORE_REPORT, &body, store::now_unix())).await.map_err(|e| {
+                    format!("{summary} -- BUT storing guid-twin-restore failed ({e}); this line is the run's record")
+                })?;
+                if run.error.is_some() || run.stopped { Err(summary) } else { Ok(summary) }
+            })
+            .await,
+            _ => Err(misrouted(job, "run_guid_twin_wet_spec")),
+        }
+    }
+
+    /// Issue 530 Build 2 (A1): anchor the recurrence arm's or the restore's `since_notice_id` to the
+    /// boundary the wet windows recorded (`guid_twin_dissolve_log`). Once one is recorded, a different
+    /// value is refused (a later one would hide post-deploy drift, an earlier one walk old notices) and a
+    /// missing one defaults to it. Before any wet window: a value above the stored dry plan's
+    /// `notice_max_id` (every post-deploy plan starts at or after the boundary) or at or above the newest
+    /// notice (an empty walk) is refused. Reads only; nothing is written either way.
+    async fn guid_twin_anchor(&self, kind: &str, since: Option<i64>) -> Result<GuidTwinAnchor, String> {
+        let refused = |why: String| format!("dissolve-guid-twins {kind} REFUSED (issue 530 A1): {why}. Nothing was read or written");
+        let recorded = Box::pin(self.db.guid_twin_recorded_boundary()).await.map_err(|e| e.to_string())?;
+        match (since, recorded) {
+            (Some(s), Some(b)) if s != b => Err(refused(format!(
+                "since_notice_id {s} is not A1's boundary {b}, which the wet windows logged (guid_twin_dissolve_log); pass {b}"
+            ))),
+            (Some(s), Some(_)) => Ok(GuidTwinAnchor { since: Some(s), recorded, source: "passed, equal to the recorded boundary" }),
+            (None, Some(b)) => Ok(GuidTwinAnchor { since: Some(b), recorded, source: "the recorded boundary (none passed)" }),
+            (Some(s), None) => {
+                if let Some((body, _)) = Box::pin(self.db.latest_report(GUID_TWIN_REPORT)).await.map_err(|e| e.to_string())? {
+                    let plan_max = guid_twin_stored_dry(&body).map(|d| d.notice_max_id).unwrap_or(0);
+                    if plan_max > 0 && s > plan_max {
+                        return Err(refused(format!(
+                            "since_notice_id {s} is above the stored dry plan's notice_max_id {plan_max}: a boundary read \
+                             before the deploy cannot exceed a post-deploy plan's start"
+                        )));
+                    }
+                }
+                let newest = match Box::pin(self.db.scalar("SELECT id FROM notices ORDER BY id DESC LIMIT 1")).await {
+                    Ok(Some(turso::Value::Integer(id))) => id,
+                    Ok(_) => 0,
+                    Err(e) => return Err(e.to_string()),
+                };
+                if s >= newest {
+                    return Err(refused(format!(
+                        "since_notice_id {s} is at or above the newest notice {newest}: the post-boundary walk would read \
+                         nothing"
+                    )));
+                }
+                Ok(GuidTwinAnchor { since: Some(s), recorded, source: "passed (no wet window recorded a boundary yet)" })
+            }
+            (None, None) => Ok(GuidTwinAnchor { since: None, recorded, source: "none (no wet window recorded a boundary)" }),
+        }
+    }
+
+    /// Issue 530 Build 2: the wet window size — the production constant, or a test's override.
+    fn guid_twin_window_mentions(&self) -> usize {
+        #[cfg(test)]
+        {
+            self.guid_twin_window_mentions.load(Ordering::Relaxed).max(1)
+        }
+        #[cfg(not(test))]
+        {
+            store::GUID_TWIN_WET_WINDOW_MENTIONS
+        }
+    }
+
+    /// Issue 530 Build 2: the wet run's sequence, writing nothing until every check passed — A1's boundary
+    /// (required, and the one the log recorded once a window logged one), the stored dry plan (this
+    /// binary's KEEP, names and log high-water mark, R1 passed, its `notice_max_id` not below the
+    /// boundary), the org FK indexes, the re-plan (every bar and tripwire), the tuple reconcile (with every
+    /// row the wet runs on that dry plan already logged), A1's reverse drift since the boundary (0) and its
+    /// KEEP-add candidates (none whose own GUID row the re-plan holds, the list uncapped) — then the
+    /// windows, each logging the boundary. `Err` is a refusal (nothing written by this attempt); a window
+    /// error is recorded in `run` and ends the windows.
+    async fn guid_twin_wet(&self, job: &Job, run: &mut GuidTwinWetRun, gate_since: Option<i64>) -> Result<(), String> {
+        let job_id = job.id;
+        let refused = |why: String| format!("dissolve-guid-twins wet REFUSED (issue 530 Build 2): {why}. Nothing was written");
+        // 0. A1's boundary: required (a queued Spec without it deserialises to None). A later value — the
+        // dry plan's start — would hide the twin copies the gate refused between the deploy and the plan.
+        let Some(gate_since) = gate_since.filter(|&n| n > 0) else {
+            return Err(refused(
+                "no gate_since_notice_id: pass A1's boundary, the highest notice id at or below which every parsed notice \
+                 was projected before Build 2's deploy (docs/operations.md, the GUID twin dissolve, step 1)"
+                    .to_owned(),
+            ));
+        };
+        run.gate_since_notice_id = Some(gate_since);
+        // A1's boundary is one value for the whole of 530: once a window logged one, no other.
+        let recorded = Box::pin(self.db.guid_twin_recorded_boundary()).await.map_err(|e| e.to_string())?;
+        if let Some(b) = recorded.filter(|&b| b != gate_since) {
+            return Err(refused(format!(
+                "gate_since_notice_id {gate_since} is not A1's boundary {b}, which the wet windows already logged \
+                 (guid_twin_dissolve_log): pass {b}"
+            )));
+        }
+        // 1. The stored dry plan, read on this binary.
+        let Some((body, computed_at)) =
+            Box::pin(self.db.latest_report(GUID_TWIN_REPORT)).await.map_err(|e| e.to_string())?
+        else {
+            return Err(refused(
+                "no guid-twin-plan is stored; run the dry plan (`{\"kind\":\"dissolve-guid-twins\"}`) on this binary first"
+                    .to_owned(),
+            ));
+        };
+        let dry = guid_twin_stored_dry(&body).map_err(&refused)?;
+        drop(body);
+        run.dry_computed_at = Some(computed_at);
+        guid_twin_check_dry(&dry).map_err(&refused)?;
+        run.dry_log_high_water = dry.log_high_water;
+        if gate_since > dry.notice_max_id {
+            return Err(refused(format!(
+                "gate_since_notice_id {gate_since} is above the stored dry plan's notice_max_id {}: a boundary read before \
+                 the deploy cannot exceed a post-deploy plan's start (a typo would hide notices from A1)",
+                dry.notice_max_id
+            )));
+        }
+        // 2. The org FK indexes the dissolve's deletes need (and the planner refuses without its own).
+        let missing = Box::pin(self.db.org_fk_missing_indexes()).await.map_err(|e| e.to_string())?;
+        if !missing.is_empty() {
+            return Err(refused(format!("the org FK index(es) {missing:?} are absent (a rebuild?); run `reindex` first")));
+        }
+        // 3. The re-plan, with the compiled statics the gate reads.
+        let under_review = Box::pin(self.db.org_ids_under_review()).await.map_err(|e| e.to_string())?;
+        let stop = || self.cancelled(job_id);
+        self.set_phase("re-planning", None, None, "issue 530: re-planning before the wet dissolve".to_owned());
+        let progress = |done: u64, detail: &str| {
+            self.set_phase("re-planning", Some(done), None, detail.to_owned());
+        };
+        let plan = Box::pin(self.db.plan_guid_twins(store::GuidTwinPlanArgs {
+            is_guid: ingest::idgate::uuid_v4,
+            rule: ingest::project::guid_twin::guid_twin_decide,
+            keep: Some(ingest::project::guid_twin::keep_530()),
+            keep_version: ingest::project::guid_twin::GUID_KEEP_530_VERSION,
+            unsafe_names: ingest::project::guid_twin::GUID_TWIN_UNSAFE_NAMES,
+            under_review: Some(&under_review),
+            role_ref: ingest::project::guid_twin::guid_twin_role_ref,
+            role_class: guid_role_class,
+            stable_ids: GUID_CENSUS_STABLE_IDS,
+            stable_mentions: store::GUID_TWIN_R1_STABLE_MENTIONS,
+            extra_unsafe_names: &[],
+            samples: ORG_HEAD_DRIFT_SAMPLES as usize,
+            window: store::GUID_TWIN_WINDOW,
+            batch: store::GUID_TWIN_BATCH,
+            not_planned: GUID_TWIN_NOT_PLANNED,
+            planned: GUID_TWIN_PLANNED,
+            expected: GUID_TWIN_EXPECTED,
+            exhibits: GUID_TWIN_EXHIBITS,
+            stop: &stop,
+            progress: &progress,
+        }))
+        .await
+        .map_err(|e| e.to_string())?;
+        drop(under_review);
+        if plan.stopped {
+            run.stopped = true;
+            return Ok(());
+        }
+        // The rows the wet runs on THIS dry plan already committed (logged above its high-water mark: a
+        // staged first run, a restarted job): the reconcile adds them back. Window numbers continue this
+        // job's, and `max_windows` counts the windows this job already committed.
+        let high_water = dry.log_high_water.unwrap_or(0);
+        let log = Box::pin(self.db.guid_twin_log_after(high_water)).await.map_err(|e| e.to_string())?;
+        let logged: std::collections::BTreeSet<(i64, bool)> = log.iter().map(|r| (r.org_id, r.whole)).collect();
+        run.windows_before = log
+            .iter()
+            .filter(|r| r.job_id == job_id as i64)
+            .map(|r| r.window_no)
+            .collect::<std::collections::BTreeSet<_>>()
+            .len() as u64;
+        drop(log);
+        let first_window = Box::pin(self.db.guid_twin_log(job_id as i64))
+            .await
+            .map_err(|e| e.to_string())?
+            .iter()
+            .map(|r| r.window_no + 1)
+            .max()
+            .unwrap_or(1)
+            .max(1) as u64;
+        // 4. Every bar and tripwire of the re-plan.
+        let failed = guid_twin_replan_failures(&plan);
+        run.replan = Some(plan);
+        if !failed.is_empty() {
+            return Err(refused(format!("the re-plan fails {}", failed.join("; "))));
+        }
+        // 5. The tuple reconcile against the dry plan and the rows logged on it.
+        let plan = run.replan.as_ref().expect("stored above");
+        let replan: std::collections::BTreeSet<(i64, bool)> = plan
+            .planned_row_ids
+            .iter()
+            .map(|&id| (id, true))
+            .chain(plan.partial_row_ids.iter().map(|&id| (id, false)))
+            .collect();
+        let reconcile = store::guid_twin_reconcile(&dry.rows, dry.max_id, &replan, &logged);
+        let ok = reconcile.ok;
+        run.reconcile = Some(reconcile);
+        if !ok {
+            return Err(refused("the re-plan does not reconcile with the stored dry plan by (row, whole) tuples (see \
+                                reconcile: dropped / added / replanned_logged); re-run the dry plan and read it"
+                .to_owned()));
+        }
+        // 5b. A1's reverse drift since the boundary must be 0: a KEEP-add (or unsafe-name) commit deployed
+        // since the boundary leaves the mentions the gate already refused on identifier-NULL rows, and the
+        // stock dissolve must not run ahead of their restore.
+        self.set_phase("re-planning", None, None, "issue 530 A1: reading the reverse drift".to_owned());
+        let drift = Box::pin(self.db.guid_twin_recurrence(store::GuidTwinRecurrenceArgs {
+            is_guid: ingest::idgate::uuid_v4,
+            gated_v4: ingest::project::guid_twin::guid_twin_gated_v4,
+            rule: ingest::project::guid_twin::guid_twin_decide,
+            role_ref: ingest::project::guid_twin::guid_twin_role_ref,
+            keep: ingest::project::guid_twin::keep_530(),
+            since_notice_id: Some(gate_since),
+            window: GUID_TWIN_RECURRENCE_WINDOW,
+            samples: ORG_HEAD_DRIFT_SAMPLES as usize,
+            stop: &stop,
+            progress: &progress,
+        }))
+        .await
+        .map_err(|e| e.to_string())?;
+        if drift.stopped {
+            run.stopped = true;
+            return Ok(());
+        }
+        let drifted = drift.reverse_drift_mentions;
+        // A3 iii through A1: a KEEP-add candidate (a value the gate already refused in a second Tender since
+        // the boundary) whose own GUID row the re-plan would dissolve is a value doing real linking — refusing
+        // now avoids a dissolve and a re-mint under a new id. A candidate whose row is untouched waits for R3.
+        let plan = run.replan.as_ref().expect("stored above");
+        let touched: std::collections::BTreeSet<i64> =
+            plan.planned_row_ids.iter().chain(&plan.partial_row_ids).copied().collect();
+        let keep_lines: Vec<String> = drift
+            .candidates
+            .iter()
+            .filter_map(|c| {
+                let own = c.own_row.filter(|r| touched.contains(r))?;
+                let country = plan.wet_mentions.iter().find(|m| m.org_id == own).and_then(|m| m.org_country.clone());
+                Some(store::guid_keep_line(&store::GuidKeepCandidate {
+                    country,
+                    value: c.value.clone(),
+                    org_id: own,
+                    mentions: Some(c.own_row_mentions),
+                    tenders: Some(c.tenders),
+                    reason: "multi_tender".to_owned(),
+                }))
+            })
+            .collect();
+        let unlisted = drift.candidate_count.saturating_sub(drift.candidates.len() as u64);
+        run.drift = Some(drift);
+        if drifted > 0 {
+            return Err(refused(format!(
+                "{drifted} mention(s) in reverse drift since notice {gate_since} (A1: a KEEP or unsafe-name add left \
+                 mentions the gate refused on identifier-NULL rows); restore them first \
+                 (`{{\"kind\":\"dissolve-guid-twins\",\"restore\":true,\"since_notice_id\":{gate_since}}}`), then re-run"
+            )));
+        }
+        if unlisted > 0 {
+            return Err(refused(format!(
+                "the recurrence read lists only {} of its KEEP-add candidates ({unlisted} more), so their overlap with the \
+                 re-plan's rows cannot be checked; read guid-twin-dissolve's reverse_drift.candidates and commit them first",
+                store::GUID_TWIN_LIST_CAP
+            )));
+        }
+        if !keep_lines.is_empty() {
+            return Err(refused(format!(
+                "{} KEEP-add candidate(s) whose own GUID row the re-plan would dissolve (A1: refused in a second Tender \
+                 since notice {gate_since}): commit these line(s) to crates/ingest/sdk/guid-keep-530.tsv, gate, deploy, run \
+                 step 6 (recurrence, restore, recurrence until 0 reverse drift), re-run the dry plan, then the wet run: {}",
+                keep_lines.len(),
+                keep_lines.join(" | ")
+            )));
+        }
+        // 6. The windows, by target key.
+        let plan = run.replan.as_ref().expect("stored above");
+        let windows = store::guid_twin_windows(&plan.wet_mentions, self.guid_twin_window_mentions());
+        run.windows_planned = windows.len() as u64;
+        for (k, w) in windows.iter().enumerate() {
+            if self.cancelled(job_id) {
+                run.stopped = true;
+                break;
+            }
+            if run.max_windows.is_some_and(|max| run.windows_before + run.windows.len() as u64 >= max) {
+                run.capped = true;
+                break;
+            }
+            let window_no = first_window + k as u64;
+            self.set_phase(
+                "dissolving",
+                Some(k as u64),
+                Some(windows.len() as u64),
+                format!("issue 530: window {window_no} ({} key(s), {} mention(s))", w.keys.len(), w.mentions.len()),
+            );
+            match Box::pin(self.db.dissolve_guid_twin_window(store::GuidTwinWindowArgs {
+                window: w,
+                job_id: job_id as i64,
+                window_no,
+                gate_since_notice_id: Some(gate_since),
+                fields: ingest::project::ORG_NAME_FIELD_IDS,
+                normalize: ingest::project::normalize_lang,
+            }))
+            .await
+            {
+                Ok(done) => {
+                    // The journal keeps the window's cost even if storing the report fails.
+                    eprintln!(
+                        "supervisor: dissolve-guid-twins job {job_id} window {window_no}: {} key(s), {} mention(s), hold {} ms, \
+                         wait {} ms, {} re-bound target mention(s) re-read",
+                        w.keys.len(),
+                        done.mentions_moved,
+                        done.hold_ms,
+                        done.wait_ms,
+                        done.rebound_target_mentions
+                    );
+                    run.applied_missing_keys.extend(
+                        w.mentions
+                            .iter()
+                            .filter(|m| m.target.is_none())
+                            .filter_map(|m| m.key_country.clone().map(|c| (c, m.key_name_norm.clone()))),
+                    );
+                    run.windows.push(done);
+                }
+                Err(e) => {
+                    run.window_error = Some(format!("window {window_no}: {e}"));
+                    break;
+                }
+            }
+            if let Err(e) = Box::pin(self.db.checkpoint(store::CheckpointMode::Truncate)).await {
+                eprintln!("supervisor: checkpoint after dissolve-guid-twins window: {e}");
+            }
+            #[cfg(test)]
+            {
+                let after = self.guid_twin_cancel_after_windows.load(Ordering::Relaxed);
+                if after > 0 && after == run.windows.len() as u64 {
+                    self.cancel_running.store(job_id, Ordering::Relaxed);
+                }
+            }
+        }
+        if let Ok(Some(turso::Value::Integer(id))) =
+            Box::pin(self.db.scalar("SELECT id FROM organizations ORDER BY id DESC LIMIT 1")).await
+        {
+            run.wet_max_org_id = Some(id);
+        }
+        Ok(())
+    }
+
     /// `run_spec`'s family of the country folds and verdicts, the rehoming, and their review
     /// packets. Issue 467: one family per fn, reached through `off_frame`, so its poll frame
     /// holds only these arms' locals.
@@ -15461,8 +16931,11 @@ impl Supervisor {
                 // BOXED, as every census arm here (CLAUDE.md: `run_spec`'s arms share one future), and the
                 // store future boxed inside it. The stored body and the summary are sync free fns.
                 if !*dry_run {
-                    // Unreachable from the queue: enqueue refuses `dry_run: false` in Build 1.
-                    return Err("dissolve-guid-twins is dry in Build 1 (issue 530 unit 3): the wet path is Build 2".to_owned());
+                    // Unreachable from the queue: a `dry_run: false` request enqueues
+                    // `Spec::DissolveGuidTwinsWet` (issue 530 Build 2).
+                    return Err("dissolve-guid-twins REFUSED: this arm plans only; a wet run is \
+                                `Spec::DissolveGuidTwinsWet` (issue 530 Build 2). Nothing was read or written"
+                        .to_owned());
                 }
                 let job_id = job.id;
                 let stop = || self.cancelled(job_id);
@@ -15470,9 +16943,16 @@ impl Supervisor {
                 let progress = |done: u64, detail: &str| {
                     self.set_phase("walking", Some(done), None, detail.to_owned());
                 };
+                // Build 2: the review keep-set, for the under-review tripwire (a whole row a verdict names).
+                let under_review = Box::pin(self.db.org_ids_under_review()).await.map_err(|e| e.to_string())?;
                 let r = Box::pin(self.db.plan_guid_twins(store::GuidTwinPlanArgs {
                     is_guid: ingest::idgate::uuid_v4,
                     rule: ingest::project::guid_twin::guid_twin_decide,
+                    // Build 2 (A3 iii): the compiled statics the gate reads.
+                    keep: Some(ingest::project::guid_twin::keep_530()),
+                    keep_version: ingest::project::guid_twin::GUID_KEEP_530_VERSION,
+                    unsafe_names: ingest::project::guid_twin::GUID_TWIN_UNSAFE_NAMES,
+                    under_review: Some(&under_review),
                     role_ref: ingest::project::guid_twin::guid_twin_role_ref,
                     role_class: guid_role_class,
                     stable_ids: GUID_CENSUS_STABLE_IDS,
@@ -15496,6 +16976,37 @@ impl Supervisor {
                 let body = guid_twin_plan_json(&r)?;
                 self.db.put_report(GUID_TWIN_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
                 Ok(guid_twin_plan_summary(&r))
+            }).await,
+            Spec::GuidTwinRecurrence { since_notice_id, samples } => Box::pin(async move {
+                // Issue 530 Build 2, A1: read-only, BOXED with its store future (CLAUDE.md).
+                let job_id = job.id;
+                let anchor = Box::pin(self.guid_twin_anchor("recurrence", *since_notice_id)).await?;
+                let since_notice_id = &anchor.since;
+                let stop = || self.cancelled(job_id);
+                self.set_phase("walking", None, None, "issue 530 A1: the refused-value recurrence arm".to_owned());
+                let progress = |done: u64, detail: &str| {
+                    self.set_phase("walking", Some(done), None, detail.to_owned());
+                };
+                let r = Box::pin(self.db.guid_twin_recurrence(store::GuidTwinRecurrenceArgs {
+                    is_guid: ingest::idgate::uuid_v4,
+                    gated_v4: ingest::project::guid_twin::guid_twin_gated_v4,
+                    rule: ingest::project::guid_twin::guid_twin_decide,
+                    role_ref: ingest::project::guid_twin::guid_twin_role_ref,
+                    keep: ingest::project::guid_twin::keep_530(),
+                    since_notice_id: *since_notice_id,
+                    window: GUID_TWIN_RECURRENCE_WINDOW,
+                    samples: *samples,
+                    stop: &stop,
+                    progress: &progress,
+                }))
+                .await
+                .map_err(|e| e.to_string())?;
+                if r.stopped {
+                    return Ok("dissolve-guid-twins recurrence STOPPED by cancel — no report stored".to_owned());
+                }
+                let body = guid_twin_recurrence_json(&r, Some(&anchor))?;
+                self.db.put_report(GUID_TWIN_RECURRENCE_REPORT, &body, store::now_unix()).await.map_err(|e| e.to_string())?;
+                Ok(guid_twin_recurrence_summary(&r))
             }).await,
             Spec::RefreshOrgNames { dry_run, min_mentions, samples, org_ids } => Box::pin(async move {
                 // BOXED, as every census arm here, and the store future boxed inside it, so neither this
@@ -18477,6 +19988,10 @@ fn heavy_write_kind(kind: &str) -> bool {
             // skipped coverage refresh per plan, the cheap side of this list.
             | "refresh-org-names"
             | "revert-org-name-refresh"
+            // Issue 530 Build 2: the wet run's windows (one `BEGIN IMMEDIATE` per target-key window, a
+            // `checkpoint(Truncate)` after each). The kind's dry plan and recurrence arm are read-only
+            // and ride along: one skipped coverage refresh per run.
+            | "dissolve-guid-twins"
     )
 }
 
@@ -18512,7 +20027,6 @@ const LIGHT_KINDS: &[(&str, &str)] = &[
     ("generic-wall-census", "report only: `generic_wall_inflation_census` reads on the pool"),
     ("ghost-census", "report only: `ghost_census` reads notice-id slices on the pool"),
     ("guid-census", "report only: `guid_census` reads org-id windows and IN chunks on the pool"),
-    ("dissolve-guid-twins", "report only (dry, Build 1): `plan_guid_twins` reads windows and IN chunks on the pool"),
     ("member-twin-census", "report only: `member_twin_census` reads index batches on the pool"),
     ("name-attribution-probe", "report only: `name_attribution_probe` reads on the pool"),
     ("name-phrase-census", "report only: `name_phrase_census` reads on the pool"),
@@ -23554,12 +25068,17 @@ mod tests {
         }
     }
 
-    /// Issue 530 unit 3 (Build 1): `dissolve-guid-twins` enqueues DRY (its params say so) and refuses
-    /// `dry_run: false` (the wet path is Build 2), a `stable_mentions` a single-use pair would meet, and
-    /// a bad `extra_unsafe_names` (empty, blank, `|`); every other kind refuses `extra_unsafe_names`;
-    /// names are whitespace-collapsed and deduplicated; the kind is light and stoppable.
+    /// Issue 530 (Build 1, Build 2): `dissolve-guid-twins` has three modes under one kind. The DRY plan
+    /// (default) refuses a `stable_mentions` a single-use pair would meet and a bad `extra_unsafe_names`
+    /// (empty, blank, `|`), folds and dedups names, and refuses the wet run's fields. `dry_run: false`
+    /// queues `Spec::DissolveGuidTwinsWet` (params `… wet …`), refusing `extra_unsafe_names` (A3 iii), a
+    /// `stable_mentions` other than R1's 100, `max_windows: 0`, a missing `gate_since_notice_id` (A1's
+    /// boundary is required) and a non-positive one. `recurrence: true` queues A1's arm (read-only), and
+    /// `restore: true` A1's restore (which requires `since_notice_id`), each refusing the others' fields.
+    /// Every other kind refuses each of these fields. The kind is a heavy writer now and stays stoppable;
+    /// an old Spec JSON still reads.
     #[tokio::test]
-    async fn dissolve_guid_twins_enqueues_dry_and_refuses_a_wet_run() {
+    async fn dissolve_guid_twins_enqueues_dry_wet_and_recurrence() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
         let ask = |dry_run: Option<bool>, stable_mentions: Option<u64>, extra: Option<Vec<&str>>| JobRequest {
             kind: "dissolve-guid-twins".into(),
@@ -23568,45 +25087,341 @@ mod tests {
             extra_unsafe_names: extra.map(|names| names.into_iter().map(str::to_owned).collect()),
             ..Default::default()
         };
-        let err = sup.enqueue_request(&ask(Some(false), None, None)).await.expect_err("dry in Build 1");
-        assert!(err.contains("dry in Build 1") && err.contains("dry_run: false"), "{err}");
         let err = sup.enqueue_request(&ask(None, Some(2), None)).await.expect_err("a pair is not stable");
         assert!(err.contains("stable_mentions") && err.contains("above 2"), "{err}");
         for bad in [vec![], vec!["  "], vec!["Stadt|Neustadt"]] {
             let err = sup.enqueue_request(&ask(None, None, Some(bad.clone()))).await.expect_err("bad names");
             assert!(err.contains("extra_unsafe_names"), "{bad:?}: {err}");
         }
-        let other = JobRequest {
-            kind: "guid-census".into(),
-            extra_unsafe_names: Some(vec!["Stadt Neustadt".into()]),
+        // The wet run's refusals.
+        let err = sup.enqueue_request(&ask(Some(false), None, Some(vec!["Stadt Neustadt"]))).await.expect_err("A3 iii");
+        assert!(err.contains("wet refuses `extra_unsafe_names`") && err.contains("compiled"), "{err}");
+        let err = sup.enqueue_request(&ask(Some(false), Some(150), None)).await.expect_err("R1's 100");
+        assert!(err.contains("wet refuses `stable_mentions` 150"), "{err}");
+        let zero = JobRequest { max_windows: Some(0), ..ask(Some(false), None, None) };
+        assert!(sup.enqueue_request(&zero).await.expect_err("nothing to apply").contains("max_windows"));
+        let neg = JobRequest { gate_since_notice_id: Some(0), ..ask(Some(false), None, None) };
+        assert!(sup.enqueue_request(&neg).await.expect_err("id 0").contains("gate_since_notice_id"));
+        let err = sup.enqueue_request(&ask(Some(false), None, None)).await.expect_err("A1's boundary is required");
+        assert!(err.contains("wet needs `gate_since_notice_id`") && err.contains("step 1"), "{err}");
+        // A1's restore: it needs the boundary and refuses every other mode's field.
+        let restore = |since: Option<i64>| JobRequest {
+            kind: "dissolve-guid-twins".into(),
+            restore: Some(true),
+            since_notice_id: since,
             ..Default::default()
         };
-        let err = sup.enqueue_request(&other).await.expect_err("only the twin plan reads it");
-        assert!(err.contains("guid-census refuses `extra_unsafe_names`"), "{err}");
+        assert!(sup.enqueue_request(&restore(None)).await.expect_err("no boundary").contains("needs `since_notice_id`"));
+        for bad in [
+            JobRequest { dry_run: Some(false), ..restore(Some(5)) },
+            JobRequest { recurrence: Some(true), ..restore(Some(5)) },
+            JobRequest { gate_since_notice_id: Some(5), ..restore(Some(5)) },
+            JobRequest { since_notice_id: Some(-1), ..restore(None) },
+        ] {
+            assert!(sup.enqueue_request(&bad).await.is_err(), "{bad:?}");
+        }
+        // A dry plan refuses the wet run's fields; the recurrence arm refuses the others'.
+        let dry_cap = JobRequest { max_windows: Some(1), ..ask(None, None, None) };
+        assert!(sup.enqueue_request(&dry_cap).await.expect_err("dry, capped").contains("max_windows"));
+        let recur = |since: Option<i64>| JobRequest {
+            kind: "dissolve-guid-twins".into(),
+            recurrence: Some(true),
+            since_notice_id: since,
+            ..Default::default()
+        };
+        for bad in [
+            JobRequest { dry_run: Some(false), ..recur(None) },
+            JobRequest { extra_unsafe_names: Some(vec!["Amt 66".into()]), ..recur(None) },
+            JobRequest { max_windows: Some(1), ..recur(None) },
+            JobRequest { since_notice_id: Some(-5), ..recur(None) },
+        ] {
+            assert!(sup.enqueue_request(&bad).await.is_err(), "{bad:?}");
+        }
+        let stray = JobRequest { since_notice_id: Some(5), ..ask(None, None, None) };
+        assert!(sup.enqueue_request(&stray).await.expect_err("since outside the arm").contains("since_notice_id"));
+        // Every other kind refuses every one of the fields.
+        for (field, other) in [
+            ("extra_unsafe_names", JobRequest { extra_unsafe_names: Some(vec!["Stadt Neustadt".into()]), ..Default::default() }),
+            ("recurrence", JobRequest { recurrence: Some(true), ..Default::default() }),
+            ("restore", JobRequest { restore: Some(true), ..Default::default() }),
+            ("since_notice_id", JobRequest { since_notice_id: Some(5), ..Default::default() }),
+            ("max_windows", JobRequest { max_windows: Some(1), ..Default::default() }),
+            ("gate_since_notice_id", JobRequest { gate_since_notice_id: Some(5), ..Default::default() }),
+        ] {
+            let other = JobRequest { kind: "guid-census".into(), ..other };
+            let err = sup.enqueue_request(&other).await.expect_err(field);
+            assert!(err.contains(&format!("guid-census refuses `{field}`")), "{err}");
+        }
         sup.enqueue_request(&ask(None, None, None)).await.expect("the defaults");
         sup.enqueue_request(&ask(Some(true), Some(3), Some(vec![" Stadt   Neustadt ", "Stadt Neustadt", "Amt 66"])))
             .await
             .expect("dry asked, names folded");
+        let every = JobRequest { gate_since_notice_id: Some(26_700_000), ..ask(Some(false), None, None) };
+        sup.enqueue_request(&every).await.expect("wet, every window");
+        let staged = JobRequest { max_windows: Some(1), gate_since_notice_id: Some(26_700_000), ..ask(Some(false), Some(100), None) };
+        sup.enqueue_request(&staged).await.expect("wet, staged");
+        sup.enqueue_request(&recur(Some(26_700_000))).await.expect("recurrence");
+        sup.enqueue_request(&restore(Some(26_700_000))).await.expect("restore");
         let queued = sup.queued();
-        assert_eq!(queued.len(), 2, "the refused asks queued nothing");
-        assert_eq!(queued[0].kind, "dissolve-guid-twins");
+        assert_eq!(queued.len(), 6, "the refused asks queued nothing");
+        assert!(queued.iter().all(|q| q.kind == "dissolve-guid-twins"));
         assert_eq!(queued[0].params, "dissolve-guid-twins dry stable_mentions=100 samples=30");
         assert_eq!(
             queued[1].params,
             "dissolve-guid-twins dry stable_mentions=3 samples=30 extra_unsafe_names=Stadt Neustadt|Amt 66"
         );
-        assert!(matches!(
-            &sup.queue.lock().expect("queue lock")[1].spec,
-            Spec::DissolveGuidTwins { dry_run: true, stable_mentions: 3, samples: 30, extra_unsafe_names }
-                if extra_unsafe_names == &vec!["Stadt Neustadt".to_owned(), "Amt 66".to_owned()]
-        ));
-        assert!(!heavy_write_kind("dissolve-guid-twins"), "read-only in Build 1");
-        assert!(stoppable("dissolve-guid-twins", &queued[0].params), "a cancel reaches the plan between chunks");
+        assert_eq!(queued[2].params, "dissolve-guid-twins wet gate_since_notice_id=26700000");
+        assert_eq!(queued[3].params, "dissolve-guid-twins wet max_windows=1 gate_since_notice_id=26700000");
+        assert_eq!(queued[4].params, "dissolve-guid-twins recurrence samples=30 since_notice_id=26700000");
+        assert_eq!(queued[5].params, "dissolve-guid-twins restore since_notice_id=26700000");
+        {
+            let queue = sup.queue.lock().expect("queue lock");
+            assert!(matches!(
+                &queue[1].spec,
+                Spec::DissolveGuidTwins { dry_run: true, stable_mentions: 3, samples: 30, extra_unsafe_names }
+                    if extra_unsafe_names == &vec!["Stadt Neustadt".to_owned(), "Amt 66".to_owned()]
+            ));
+            assert!(matches!(&queue[2].spec, Spec::DissolveGuidTwinsWet { max_windows: None, gate_since_notice_id: Some(26_700_000) }));
+            assert!(matches!(
+                &queue[3].spec,
+                Spec::DissolveGuidTwinsWet { max_windows: Some(1), gate_since_notice_id: Some(26_700_000) }
+            ));
+            assert!(matches!(&queue[4].spec, Spec::GuidTwinRecurrence { since_notice_id: Some(26_700_000), samples: 30 }));
+            assert!(matches!(&queue[5].spec, Spec::GuidTwinRestore { since_notice_id: Some(26_700_000) }));
+        }
+        assert!(heavy_write_kind("dissolve-guid-twins"), "Build 2: the wet windows checkpoint between them");
+        for q in &queued {
+            assert!(stoppable("dissolve-guid-twins", &q.params), "{}: a cancel reaches every mode", q.params);
+        }
         assert_eq!(
             GUID_CENSUS_STABLE_MENTIONS,
             store::GUID_TWIN_R1_STABLE_MENTIONS,
             "the job's default knob is R1's fixed threshold, so a default run can pass R1"
         );
+        // A Build 1 Spec JSON (no Build 2 fields) still reads; the new Specs read with defaults.
+        let old: Spec = serde_json::from_str(
+            r#"{"DissolveGuidTwins":{"dry_run":true,"stable_mentions":100,"samples":30}}"#,
+        )
+        .unwrap();
+        assert!(matches!(old, Spec::DissolveGuidTwins { dry_run: true, .. }));
+        let wet: Spec = serde_json::from_str(r#"{"DissolveGuidTwinsWet":{}}"#).unwrap();
+        assert!(matches!(wet, Spec::DissolveGuidTwinsWet { max_windows: None, gate_since_notice_id: None }), "it reads, and its run refuses");
+        let restore: Spec = serde_json::from_str(r#"{"GuidTwinRestore":{}}"#).unwrap();
+        assert!(matches!(restore, Spec::GuidTwinRestore { since_notice_id: None }));
+    }
+
+    /// Issue 530 Build 2: the wet arm refuses before any write — with no `gate_since_notice_id` (A1's
+    /// boundary, required: a queued Spec without it still reads), with no stored plan, with a stored plan
+    /// read under another KEEP (a Build 1b plan: no compiled `keep_version`, no `log_high_water`), with
+    /// extra names or a failed R1, and with a boundary above the plan's `notice_max_id` (a post-deploy
+    /// plan's start: a typo would hide notices) — and stores its `guid-twin-dissolve` report naming the
+    /// refusal, the job failing with that line.
+    #[tokio::test]
+    async fn the_wet_twin_dissolve_refuses_without_this_binarys_dry_plan() {
+        let db = scratch().await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let unbounded = job(Spec::DissolveGuidTwinsWet { max_windows: None, gate_since_notice_id: None });
+        let err = sup.run_spec(&unbounded).await.expect_err("no boundary");
+        assert!(err.contains("REFUSED") && err.contains("no gate_since_notice_id") && err.contains("step 1"), "{err}");
+        let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("the report is stored first");
+        let body: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(body["outcome"], "refused", "{body}");
+        let wet = job(Spec::DissolveGuidTwinsWet { max_windows: None, gate_since_notice_id: Some(26_000_000) });
+        let err = sup.run_spec(&wet).await.expect_err("no plan");
+        assert!(err.contains("REFUSED") && err.contains("no guid-twin-plan is stored"), "{err}");
+        let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("the report is stored first");
+        let body: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(body["outcome"], "refused", "{body}");
+        assert!(body["refusal"].as_str().unwrap().contains("no guid-twin-plan"), "{body}");
+        assert_eq!(body["gate_since_notice_id"], 26_000_000, "{body}");
+        // A Build 1b plan: passed R1, but read under the walk's KEEP, with no log high-water mark.
+        let stale = serde_json::json!({
+            "bars": {"pass": true}, "stopped": false, "extra_unsafe_names": [], "keep_source": "walk",
+            "keep_version": "", "keep_size": 7312, "unsafe_names": [], "max_id": 31_970_152,
+            "planned_row_ids": [22_759_261], "partial_row_ids": [],
+        });
+        db.put_report(GUID_TWIN_REPORT, &stale.to_string(), store::now_unix()).await.unwrap();
+        let err = sup.run_spec(&wet).await.expect_err("another KEEP");
+        assert!(err.contains("this binary compiles") && err.contains(ingest::project::guid_twin::GUID_KEEP_530_VERSION), "{err}");
+        assert!(err.contains("another GUID_TWIN_UNSAFE_NAMES") && err.contains("no log_high_water"), "{err}");
+        // This binary's plan, but read with extra names and failing R1.
+        let names: Vec<&str> = ingest::project::guid_twin::GUID_TWIN_UNSAFE_NAMES.to_vec();
+        let plan = |pass: bool, extra: Vec<&str>, notice_max_id: i64| {
+            serde_json::json!({
+                "bars": {"pass": pass}, "stopped": false, "extra_unsafe_names": extra, "keep_source": "compiled",
+                "keep_version": ingest::project::guid_twin::GUID_KEEP_530_VERSION,
+                "keep_size": ingest::project::guid_twin::keep_530().len(), "unsafe_names": names.clone(), "max_id": 1,
+                "notice_max_id": notice_max_id, "log_high_water": 0, "planned_row_ids": [], "partial_row_ids": [],
+            })
+        };
+        db.put_report(GUID_TWIN_REPORT, &plan(false, vec!["Amt 66"], 30_000_000).to_string(), store::now_unix()).await.unwrap();
+        let err = sup.run_spec(&wet).await.expect_err("extra names, R1 failed");
+        assert!(err.contains("extra_unsafe_names") && err.contains("did not pass R1"), "{err}");
+        assert!(!err.contains("this binary compiles") && !err.contains("log_high_water"), "{err}");
+        // A passing plan whose start is BELOW the boundary: the boundary cannot be a pre-deploy read.
+        db.put_report(GUID_TWIN_REPORT, &plan(true, vec![], 25_000_000).to_string(), store::now_unix()).await.unwrap();
+        let err = sup.run_spec(&wet).await.expect_err("a boundary above the plan's start");
+        assert!(err.contains("gate_since_notice_id 26000000 is above the stored dry plan's notice_max_id 25000000"), "{err}");
+    }
+
+    /// Issue 530 Build 2: the re-plan's failures are named (each tripwire, the compiled self-check with
+    /// its KEEP-add commit, the controls); a passing plan has none — and the wet guard is STRICTER than
+    /// R1 on the Dissolve plan's exactly-1-Tender tripwire: a planned row spanning no Tender refuses the
+    /// wet run while `bars.pass` (R1) holds.
+    #[test]
+    fn the_wet_replan_names_every_failed_bar() {
+        let mut plan = store::GuidTwinPlan {
+            bars: store::GuidTwinBars {
+                pass: true,
+                within_census_bar: true,
+                stable_mentions_is_decision: true,
+                under_review_checked: true,
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        assert!(guid_twin_replan_failures(&plan).is_empty());
+        plan.bars.tripwire_no_tender = 1;
+        let failed = guid_twin_replan_failures(&plan).join("; ");
+        assert!(plan.bars.pass, "premise: R1 holds");
+        assert!(failed.contains("no-Tender tripwire (Dissolve plan: exactly 1 distinct Tender) 1"), "{failed}");
+        plan.bars.tripwire_no_tender = 0;
+        plan.bars.tripwire_merge_survivor = 1;
+        plan.bars.tripwire_under_review = 2;
+        plan.bars.keep_self_check_missing = vec!["FB197F94757846738A574642AE120532".into()];
+        plan.bars.planned_failed = vec![22_759_261];
+        plan.bars.pass = false;
+        let failed = guid_twin_replan_failures(&plan).join("; ");
+        assert!(failed.contains("merge-survivor tripwire 1") && failed.contains("under-review tripwire 2"), "{failed}");
+        assert!(failed.contains("compiled KEEP self-check: 1 value(s)") && failed.contains("keep_add_commit"), "{failed}");
+        assert!(failed.contains("planned misses [22759261]"), "{failed}");
+        assert!(!failed.contains("no-Tender"), "{failed}");
+    }
+
+    /// Issue 530 Build 2: the wet report is built from the campaign's log — dissolved and rehomed orgs
+    /// with their moved mentions and their OWN identifier kind, the minted rows (named from the window, or
+    /// read by id for an earlier stage), the reused targets, the tier-5 Tenders — and R3's checks: the
+    /// per-window log equality, the minted keys, the structural `skipped` tripwire carried from the
+    /// windows, A12's refold check; A10's Verify ids are kept ∪ partial; the writer timings are summed; a
+    /// manifest that could not be read makes the outcome `manifest_unread`, never `applied`.
+    #[test]
+    fn the_wet_report_builds_the_manifest_from_the_log() {
+        let row = |job: i64, window: i64, org: i64, whole: bool, notice: i64, target: i64, minted: bool| store::GuidTwinLogRow {
+            job_id: job,
+            window_no: window,
+            org_id: org,
+            org_country: Some("DE".into()),
+            org_kind: Some(if org == 30 { "vat" } else { "national" }.into()),
+            org_value: format!("V{org}"),
+            org_name: "Landkreis Göttingen".into(),
+            whole,
+            notice_id: notice,
+            section_id: "ORG-0001".into(),
+            target_id: target,
+            target_minted: minted,
+        };
+        let window = store::GuidTwinWindowDone {
+            window_no: 2,
+            mentions_moved: 3,
+            minted: vec![store::GuidTwinMinted {
+                target_id: 900,
+                country: "DE".into(),
+                name_norm: "amt 66".into(),
+                name: "Amt 66".into(),
+                mentions: 1,
+            }],
+            refold_tenders: vec![948_285],
+            counts: store::OrgDissolve { winners_deleted: 1, refold_tenders: 1, skipped: 1, ..Default::default() },
+            hold_ms: 40,
+            wait_ms: 2,
+            rebound_target_mentions: 29_617,
+            ..Default::default()
+        };
+        let mut exhibits = std::collections::BTreeMap::new();
+        exhibits.insert(
+            guid_twin_goettingen_key(),
+            store::GuidTwinExhibit { guid_rows: 3, planned: 1, partial: 1, partial_ids: vec![23_014_306], kept: 1, kept_ids: vec![23_014_305] },
+        );
+        let run = GuidTwinWetRun {
+            job_id: 7,
+            gate_since_notice_id: Some(26_700_000),
+            dry_log_high_water: Some(0),
+            windows: vec![window],
+            windows_planned: 2,
+            windows_before: 1,
+            applied_missing_keys: [("DE".to_owned(), "amt 66".to_owned())].into_iter().collect(),
+            replan: Some(store::GuidTwinPlan { exhibits, ..Default::default() }),
+            log: vec![
+                // A staged first job's window (job 6), then this job's window 2.
+                row(6, 1, 40, true, 11, 901, true),
+                row(7, 2, 22_759_261, true, 24_262_502, 2_294_259, false),
+                row(7, 2, 22_759_261, true, 26_483_825, 2_294_259, false),
+                row(7, 2, 30, false, 5, 900, true),
+            ],
+            minted_rows: [(901, (Some("DE".to_owned()), "amt 70".to_owned(), "Amt 70".to_owned()))].into_iter().collect(),
+            ..Default::default()
+        };
+        let body: serde_json::Value = serde_json::from_str(&guid_twin_wet_json(&run).unwrap()).unwrap();
+        assert_eq!(body["outcome"], "applied");
+        let dissolved = body["manifest"]["dissolved"].as_array().unwrap();
+        assert_eq!(dissolved.iter().map(|d| d["org_id"].as_i64().unwrap()).collect::<Vec<_>>(), vec![40, 22_759_261], "the campaign's");
+        assert_eq!(dissolved[1]["mentions"].as_array().unwrap().len(), 2);
+        assert_eq!(body["manifest"]["rehomed"][0]["org_id"], 30);
+        assert_eq!(body["manifest"]["rehomed"][0]["identifier_kind"], "vat", "the row's own kind");
+        let minted = body["manifest"]["minted"].as_array().unwrap();
+        assert_eq!((minted[0]["name"].as_str(), minted[1]["name"].as_str()), (Some("Amt 66"), Some("Amt 70")), "an earlier stage's mint, read by id");
+        assert_eq!(body["manifest"]["reused_targets"], serde_json::json!([2_294_259]));
+        assert_eq!(body["refold_tenders_this_run"], serde_json::json!([948_285]), "outside the manifest: it survives an unread one");
+        assert_eq!(body["counts"]["winners_deleted"], 1);
+        assert_eq!(body["r3"]["manifest_mentions_campaign"], 4);
+        assert_eq!(body["r3"]["manifest_mentions_this_job"], 3);
+        assert_eq!(body["r3"]["windows_log_equal"], true, "window 2 moved 3 and logged 3");
+        assert_eq!(body["r3"]["minted_keys_equal_missing_keys_this_run"], true);
+        assert_eq!(body["r3"]["skipped"], 1, "carried from the windows, not a default");
+        assert!(body["r3"]["skipped_basis"].as_str().unwrap().contains("structural"));
+        assert_eq!(body["r3"]["refold_tenders"], 1);
+        assert!(body["r3"]["refold_check"].as_str().unwrap().contains("projection_epoch = 0"));
+        assert_eq!(body["verify"]["goettingen_kept_ids"], serde_json::json!([23_014_305]));
+        assert_eq!(body["verify"]["goettingen_partial_ids"], serde_json::json!([23_014_306]));
+        assert_eq!(body["verify"]["goettingen_surviving_ids"], serde_json::json!([23_014_305, 23_014_306]));
+        assert_eq!(body["timings"]["hold_ms_max"], 40);
+        assert_eq!(body["timings"]["rebound_target_mentions_max"], 29_617);
+        assert_eq!(body["gate_since_notice_id"], 26_700_000);
+        let line = guid_twin_wet_summary(&run);
+        assert!(line.contains("APPLIED") && line.contains("1 of 2 applied this run (1 earlier by this job)"), "{line}");
+        assert!(line.contains("3 mention(s) moved") && line.contains("at most 40 ms (window Some(2))"), "{line}");
+        assert!(line.contains("Manifest: 4 logged mention(s) on this dry plan (3 by job 7)"), "{line}");
+        let capped = GuidTwinWetRun { capped: true, max_windows: Some(1), ..run };
+        assert!(guid_twin_wet_summary(&capped).contains("PARTIAL: max_windows Some(1)"));
+        let body: serde_json::Value = serde_json::from_str(&guid_twin_wet_json(&capped).unwrap()).unwrap();
+        assert_eq!(body["outcome"], "capped");
+        // A manifest that could not be read: never `applied`, and every head says so.
+        let unread = GuidTwinWetRun { log_error: Some("database is locked".into()), log: Vec::new(), ..capped };
+        let body: serde_json::Value = serde_json::from_str(&guid_twin_wet_json(&unread).unwrap()).unwrap();
+        assert_eq!(body["outcome"], "manifest_unread", "{body}");
+        assert_eq!(body["manifest"]["unread"], "database is locked");
+        assert_eq!(body["r3"]["windows_log_equal"], false);
+        let line = guid_twin_wet_summary(&unread);
+        assert!(line.contains("restore manifest could not be read") && line.contains("Manifest: UNREAD"), "{line}");
+        // A1's report and line.
+        let rec = store::GuidTwinRecurrence { targets: 3, pass: true, ..Default::default() };
+        assert!(guid_twin_recurrence_summary(&rec).contains("recurrence (issue 530 A1) PASS"));
+        let body: serde_json::Value = serde_json::from_str(&guid_twin_recurrence_json(&rec, None).unwrap()).unwrap();
+        assert!(body["basis"].as_str().unwrap().contains("KEEP-add candidate") && body["basis"].as_str().unwrap().contains("Reverse drift"), "{body}");
+        let drifted = store::GuidTwinRecurrence {
+            reverse_drift_mentions: 2,
+            reverse_drift_values: 1,
+            reverse_drift_stock: 2,
+            reverse_drift: vec![store::GuidTwinDriftValue {
+                value: "V1".into(),
+                restore: "mint",
+                cohort: vec![(1, "ORG-0001".into(), 9), (2, "ORG-0001".into(), 9)],
+                ..Default::default()
+            }],
+            ..Default::default()
+        };
+        let line = guid_twin_recurrence_summary(&drifted);
+        assert!(line.contains("REVERSE DRIFT") && line.contains("reverse drift 2 mention(s) of 1 value(s) (stock 2, since 0): V1 - (2 mention(s), mint)"), "{line}");
     }
 
     /// Issue 530 unit 3 (Build 1): a plan that misses R1 says so — the summary reads `R1 BARS FAIL`, the
@@ -23658,7 +25473,7 @@ mod tests {
         assert!(msg.contains("role_mix 2/6"), "{msg}");
         assert!(msg.contains("bound {buyer_review_org 2/6}"), "{msg}");
         assert!(msg.contains("references read for 3 twin copy(ies), 15 row(s), 12 (section, role) pair(s)"), "{msg}");
-        assert!(msg.contains("role-mix refused 1; rule/planner role disagreements 2"), "{msg}");
+        assert!(msg.contains("role-mix refused 1, merge survivor 0, under review 0 (not read); rule/planner role disagreements 2"), "{msg}");
         assert!(msg.contains("R2 random: 0 row(s) at salt 530003, 7 planned row(s) R2 already read skipped"), "{msg}");
         let body: serde_json::Value = serde_json::from_str(&guid_twin_plan_json(&plan).unwrap()).unwrap();
         assert!(body["role_basis"].as_str().unwrap().contains("never tender_version_parties"), "{body}");
@@ -23672,45 +25487,45 @@ mod tests {
         }
     }
 
-    /// Issue 530 unit 3 (Build 1): the job wired to the REAL `idgate::uuid_v4`, rule 530-T
-    /// (`ingest::project::guid_twin::guid_twin_decide`), `guid_role_class` and (Build 1b) A7's role
-    /// mapping `ingest::project::guid_twin::guid_twin_role_ref`. Without a deferred index it refuses and
-    /// stores nothing; with them it stores `guid-twin-plan` — the Göttingen award's DÖE copy names the
-    /// buyer under two GUIDs, both rows are planned whole onto the DE identifier-NULL row 2294259 (never
-    /// the VAT row) and R1's bars pass — and answers a one-line summary; nothing is written but the
-    /// report, and a cancelled run stores none. The R1 control is planned under its OWN role references,
-    /// stored as the DÖE copy holds them (DE-1.x ids, the buyer's unflagged as before issue 98's
-    /// inventory fix): Procedure-Buyer on ORG-0001 and Lot-AddInfo on ORG-0002, no review slot on its
-    /// name, so A7's guard reads both and binds nothing (a stub mapping would read 0 references).
-    #[tokio::test]
-    async fn the_dissolve_guid_twins_job_refuses_without_its_indexes_and_stores_its_plan() {
+    /// Issue 530: the Göttingen award as the dissolve-guid-twins job tests hold it — the DÖE copy 26483825
+    /// (Tender 948285) naming the buyer under two GUIDs (22759261 ORG-0001 Procedure-Buyer, 22759262
+    /// ORG-0002 Lot-AddInfo, with the copy's own DE-1.x role references), its DE identifier-NULL row
+    /// 2294259 and the VAT row 22183653 — plus (A10) the no-twin Göttingen GUID row 23014305, named once
+    /// by its own notice 26483900 (Tender 948300): a not-planned control the plan keeps. No deferred index
+    /// is built; foreign keys are off on the returned connection.
+    async fn guid_twin_job_fixture(tag: &str) -> (Arc<store::Db>, store::turso::Connection, String) {
         use store::turso::Value;
-        let path = format!("/tmp/tender-db-sup-530u3-{}-{}.db", std::process::id(), store::now_unix());
-        let _ = std::fs::remove_file(&path);
+        let path = format!("/tmp/tender-db-sup-530-{tag}-{}-{}.db", std::process::id(), store::now_unix());
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
         let db = Arc::new(store::Db::open(&path).await.unwrap());
         let raw = store::turso::Builder::new_local(&path).build().await.unwrap();
         let conn = raw.connect().unwrap();
         conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
-        conn.execute(
-            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
-                                  published_at, parse_state)
-             VALUES (26483825, 'doe', 'd', 'h', 'eforms:eforms-de-1.2', 1, 'm', 0, 1717200000, 'parsed')",
-            (),
-        )
-        .await
-        .unwrap();
-        conn.execute(
-            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
-             VALUES (948285, 1, 26483825, 1717200000, 'd')",
-            (),
-        )
-        .await
-        .unwrap();
+        for (notice, tender) in [(26_483_825i64, 948_285i64), (26_483_900, 948_300)] {
+            conn.execute(
+                "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
+                                      published_at, parse_state)
+                 VALUES (?, 'doe', ?, 'h', 'eforms:eforms-de-1.2', 1, 'm', 0, 1717200000, 'parsed')",
+                (Value::Integer(notice), Value::Text(format!("d{notice}"))),
+            )
+            .await
+            .unwrap();
+            conn.execute(
+                "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+                 VALUES (?, 1, ?, 1717200000, 'd')",
+                (Value::Integer(tender), Value::Integer(notice)),
+            )
+            .await
+            .unwrap();
+        }
         for (id, identifier, kind) in [
             (2_294_259i64, None, None),
             (22_183_653, Some("DE308703297"), Some("vat")),
             (22_759_261, Some("037C1508D9454E739D6E65099A79BEC1"), Some("national")),
             (22_759_262, Some("5B1C2D3E4F5A4B6C8D7E8F9A0B1C2D3E"), Some("national")),
+            (23_014_305, Some("7A1B2C3D4E5F4A6B8C7D9E0F1A2B3C4D"), Some("national")),
         ] {
             conn.execute(
                 "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
@@ -23724,22 +25539,23 @@ mod tests {
             .await
             .unwrap();
         }
-        for (org, section, guid, role) in [
-            (22_759_261i64, "ORG-0001", "037c1508-d945-4e73-9d6e-65099a79bec1", "Procedure-Buyer"),
-            (22_759_262, "ORG-0002", "5b1c2d3e-4f5a-4b6c-8d7e-8f9a0b1c2d3e", "Lot-AddInfo"),
+        for (notice, tender, org, section, guid, role) in [
+            (26_483_825i64, 948_285i64, 22_759_261i64, "ORG-0001", "037c1508-d945-4e73-9d6e-65099a79bec1", "Procedure-Buyer"),
+            (26_483_825, 948_285, 22_759_262, "ORG-0002", "5b1c2d3e-4f5a-4b6c-8d7e-8f9a0b1c2d3e", "Lot-AddInfo"),
+            (26_483_900, 948_300, 23_014_305, "ORG-0001", "7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d", "Procedure-Buyer"),
         ] {
             conn.execute(
                 "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
-                 VALUES (26483825, ?, ?, 'Landkreis Göttingen', 'DE', ?)",
-                (Value::Text(section.into()), Value::Integer(org), Value::Text(guid.into())),
+                 VALUES (?, ?, ?, 'Landkreis Göttingen', 'DE', ?)",
+                (Value::Integer(notice), Value::Text(section.into()), Value::Integer(org), Value::Text(guid.into())),
             )
             .await
             .unwrap();
             conn.execute(
                 "INSERT INTO tender_version_parties (tender_id, seq, lot_id, role, organization_id, mention_notice_id,
                                                      mention_section_id)
-                 VALUES (948285, 1, NULL, ?, ?, 26483825, ?)",
-                (Value::Text(role.into()), Value::Integer(org), Value::Text(section.into())),
+                 VALUES (?, 1, NULL, ?, ?, ?, ?)",
+                (Value::Integer(tender), Value::Text(role.into()), Value::Integer(org), Value::Integer(notice), Value::Text(section.into())),
             )
             .await
             .unwrap();
@@ -23759,6 +25575,44 @@ mod tests {
             .await
             .unwrap();
         }
+        (db, conn, path)
+    }
+
+    fn guid_twin_cleanup(path: &str) {
+        for suffix in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        }
+    }
+
+    /// One row-count read on a test connection.
+    async fn count_of(conn: &store::turso::Connection, sql: &str) -> i64 {
+        let mut rows = conn.query(sql, ()).await.unwrap();
+        match rows.next().await.unwrap().unwrap().get_value(0).unwrap() {
+            store::turso::Value::Integer(n) => n,
+            other => panic!("{sql}: {other:?}"),
+        }
+    }
+
+    /// Issue 530 unit 3 (Build 1): the job wired to the REAL `idgate::uuid_v4`, rule 530-T
+    /// (`ingest::project::guid_twin::guid_twin_decide`), `guid_role_class` and (Build 1b) A7's role
+    /// mapping `ingest::project::guid_twin::guid_twin_role_ref`. Without a deferred index it refuses and
+    /// stores nothing; with them it stores `guid-twin-plan` — the Göttingen award's DÖE copy names the
+    /// buyer under two GUIDs, both rows are planned whole onto the DE identifier-NULL row 2294259 (never
+    /// the VAT row) and R1's bars pass — and answers a one-line summary; nothing is written but the
+    /// report, and a cancelled run stores none. The R1 control is planned under its OWN role references,
+    /// stored as the DÖE copy holds them (DE-1.x ids, the buyer's unflagged as before issue 98's
+    /// inventory fix): Procedure-Buyer on ORG-0001 and Lot-AddInfo on ORG-0002, no review slot on its
+    /// name, so A7's guard reads both and binds nothing (a stub mapping would read 0 references).
+    /// Build 2: the wet run refuses — before any write — on a re-plan that trips a tripwire (a verdict on
+    /// a planned row) and on a reconcile that disagrees with the stored plan; applies on a fresh plan,
+    /// records A1's boundary and A10's Verify ids (the kept no-twin row 23014305, the max org id after);
+    /// the recurrence arm then passes; a restart and a staged second job find nothing left; and a FRESH
+    /// dry plan after the dissolve passes R1 (the controls it dissolved are met through the log), so a
+    /// later wet run is not wedged.
+    #[tokio::test]
+    async fn the_dissolve_guid_twins_job_refuses_without_its_indexes_and_stores_its_plan() {
+        use store::turso::Value;
+        let (db, conn, path) = guid_twin_job_fixture("u3").await;
         let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
         let job = |id: u64| Job {
             id,
@@ -23779,14 +25633,29 @@ mod tests {
         db.build_organization_indexes().await.unwrap();
         db.build_tender_indexes().await.unwrap();
         let msg = sup.run_spec(&job(2)).await.expect("plan");
-        assert!(msg.starts_with("dissolve-guid-twins (issue 530 unit 3, Build 1, DRY): 2 GUID row(s)"), "{msg}");
+        assert!(msg.starts_with("dissolve-guid-twins (issue 530, DRY): 3 GUID row(s)"), "{msg}");
+        // Build 2 (A3 iii): the compiled KEEP and names, the newest notice, the new tripwires read.
+        assert!(
+            msg.contains(&format!(
+                "KEEP compiled \"{}\": {} value(s)",
+                ingest::project::guid_twin::GUID_KEEP_530_VERSION,
+                ingest::project::guid_twin::keep_530().len()
+            )),
+            "{msg}"
+        );
+        // OQ1's exposure: the twin copy's refused ORG-0001 is its Procedure-Buyer (the DE-1.x alias mapped).
+        assert!(msg.contains("(1 copy(ies) with a refused buyer)"), "{msg}");
+        assert!(msg.contains("notices to id 26483900"), "{msg}");
         assert!(msg.contains("PLAN: 2 row(s) whole (2 mention(s)), 0 partial (0 rehome(s)"), "{msg}");
         assert!(msg.contains("Targets: 1 key(s), 1 with an identifier-NULL row"), "{msg}");
+        assert!(msg.contains("1 wet window(s) of up to 2000 mention(s) (largest 2 mention(s), window 1; the largest target's window 1)"), "{msg}");
         assert!(msg.contains("R1 BARS PASS"), "{msg}");
         assert!(msg.contains("22759261 planned whole") && msg.contains("254 not_planned not a GUID row"), "{msg}");
-        assert!(msg.contains("DE landkreis göttingen: 2 GUID row(s), 2 planned, 0 partial, 0 kept"), "{msg}");
+        assert!(msg.contains("23014305 not_planned no"), "the no-twin row is found and kept: {msg}");
+        assert!(msg.contains("DE landkreis göttingen: 3 GUID row(s), 2 planned, 0 partial, 1 kept"), "{msg}");
         assert!(msg.contains("references read for 1 twin copy(ies), 2 row(s), 2 (section, role) pair(s)"), "{msg}");
-        assert!(msg.contains("role-mix refused 0; rule/planner role disagreements 0"), "{msg}");
+        assert!(msg.contains("role-mix refused 0, merge survivor 0, under review 0; rule/planner role disagreements 0"), "{msg}");
+        assert!(msg.contains("compiled KEEP self-check missing 0 (keep_add_commit 0 line(s))"), "{msg}");
         assert!(msg.ends_with("NOTHING IS WRITTEN."), "{msg}");
         let (body, _) = db.latest_report(GUID_TWIN_REPORT).await.unwrap().expect("report");
         let report: serde_json::Value = serde_json::from_str(&body).unwrap();
@@ -23806,15 +25675,20 @@ mod tests {
         assert_eq!(refused.as_array().map(Vec::len), Some(0), "{body}");
         assert_eq!(report["salt"], 530_003, "{body}");
         assert_eq!(report["not_planned_ids"][0], 254, "{body}");
-        assert!(report["rule"].as_str().unwrap().contains("NOT wired"), "{body}");
+        assert!(report["rule"].as_str().unwrap().contains("the gate is WIRED"), "{body}");
+        assert_eq!(report["keep_source"], "compiled", "{body}");
+        assert_eq!(report["keep_version"], ingest::project::guid_twin::GUID_KEEP_530_VERSION, "{body}");
+        assert_eq!(report["keep_size"], ingest::project::guid_twin::keep_530().len(), "{body}");
+        assert_eq!(report["refused_buyer_copies"], 1, "{body}");
+        assert_eq!(report["notice_max_id"], 26_483_900, "{body}");
+        assert_eq!(report["log_high_water"], 0, "{body}");
+        assert_eq!(report["wet_windows"]["wet_windows"], 1, "{body}");
+        assert_eq!(report["exhibits"]["DE landkreis göttingen"]["kept_ids"], serde_json::json!([23_014_305]), "{body}");
+        assert_eq!(report["bars"]["under_review_checked"], true, "{body}");
+        assert!(report.get("wet_mentions").is_none(), "the wet list is not serialized");
         // Read-only: the GUID rows and their mentions stand as they were.
-        let mut rows = conn
-            .query("SELECT COUNT(*) FROM organization_mentions WHERE organization_id IN (22759261, 22759262)", ())
-            .await
-            .unwrap();
-        let still = rows.next().await.unwrap().unwrap().get_value(0).unwrap();
-        assert_eq!(still, Value::Integer(2), "a dry plan moves nothing");
-        drop(rows);
+        let still = count_of(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id IN (22759261, 22759262)").await;
+        assert_eq!(still, 2, "a dry plan moves nothing");
 
         // A cancelled run stores nothing over the plan.
         db.put_report(GUID_TWIN_REPORT, "{\"marker\":1}", store::now_unix()).await.unwrap();
@@ -23823,10 +25697,502 @@ mod tests {
         assert!(msg.contains("STOPPED by cancel") && msg.contains("no report stored"), "{msg}");
         let (body, _) = db.latest_report(GUID_TWIN_REPORT).await.unwrap().expect("report");
         assert_eq!(body, "{\"marker\":1}", "a stopped plan stores nothing");
+
+        // Build 2: the WET run on this binary's fresh plan.
+        sup.run_spec(&job(4)).await.expect("the plan again");
+        db.set_foreign_keys(false).await.unwrap();
+        // A1's boundary: the max notice id read before the deploy (here, just below the twin copy).
+        let gate = 26_483_824;
+        let wet = |id: u64| Job {
+            id,
+            kind: "dissolve-guid-twins".into(),
+            params: String::new(),
+            spec: Spec::DissolveGuidTwinsWet { max_windows: Some(1), gate_since_notice_id: Some(gate) },
+            resume_after: None,
+        };
+        let untouched = || async {
+            assert_eq!(count_of(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (22759261, 22759262)").await, 2, "nothing dissolved");
+            assert_eq!(
+                count_of(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id IN (22759261, 22759262)").await,
+                2,
+                "nothing moved"
+            );
+        };
+        // (a) The re-plan trips a tripwire: a case review recorded for planned row 22759261 since the plan.
+        conn.execute(
+            "INSERT INTO org_case_reviews (case_org_id, cohort, verdict, diagnosis, handling, rationale, confidence, reviewed_at)
+             VALUES (22759261, 'c', 'v', 'd', 'h', 'r', 'high', 0)",
+            (),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&wet(9)).await.expect_err("the re-plan fails");
+        assert!(err.contains("the re-plan fails") && err.contains("under-review tripwire 1"), "{err}");
+        let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((report["outcome"].as_str(), report["replan"]["bars"]["tripwire_under_review"].as_u64()), (Some("refused"), Some(1)), "{body}");
+        assert!(report["reconcile"].is_null(), "step 5 is never reached: {body}");
+        assert!(db.guid_twin_log(9).await.unwrap().is_empty());
+        untouched().await;
+        conn.execute("DELETE FROM org_case_reviews", ()).await.unwrap();
+        // (b) The reconcile disagrees: the stored plan holds 22759262 PARTIAL, the re-plan whole — every
+        // bar still passes, so only the tuple reconcile can refuse it.
+        let (body, computed_at) = db.latest_report(GUID_TWIN_REPORT).await.unwrap().expect("plan");
+        let mut doctored: serde_json::Value = serde_json::from_str(&body).unwrap();
+        doctored["planned_row_ids"] = serde_json::json!([22_759_261]);
+        doctored["partial_row_ids"] = serde_json::json!([22_759_262]);
+        db.put_report(GUID_TWIN_REPORT, &doctored.to_string(), computed_at).await.unwrap();
+        let err = sup.run_spec(&wet(10)).await.expect_err("no reconcile");
+        assert!(err.contains("does not reconcile") && !err.contains("the re-plan fails"), "{err}");
+        let (rbody, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored");
+        let report: serde_json::Value = serde_json::from_str(&rbody).unwrap();
+        assert_eq!(report["outcome"], "refused", "{rbody}");
+        assert_eq!(report["reconcile"]["ok"], false, "{rbody}");
+        assert_eq!(report["reconcile"]["dropped"], serde_json::json!([[22_759_262, false]]), "{rbody}");
+        assert_eq!(report["reconcile"]["added"], serde_json::json!([[22_759_262, true]]), "{rbody}");
+        assert!(db.guid_twin_log(10).await.unwrap().is_empty());
+        untouched().await;
+        db.put_report(GUID_TWIN_REPORT, &body, computed_at).await.unwrap();
+
+        // Applied: the re-plan reconciles, one window (one target key) dissolves both rows onto 2294259,
+        // the manifest is stored.
+        let msg = sup.run_spec(&wet(5)).await.expect("applied");
+        assert!(msg.starts_with("dissolve-guid-twins wet (issue 530 Build 2) APPLIED"), "{msg}");
+        assert!(msg.contains("Windows: 1 of 1 applied this run (0 earlier by this job); 2 mention(s) moved, 2 row(s) dissolved"), "{msg}");
+        assert!(msg.contains("Reverse drift (A1): 0 mention(s) of 0 value(s) since notice Some(26483824)"), "{msg}");
+        let mut rows = conn
+            .query("SELECT DISTINCT organization_id FROM organization_mentions WHERE notice_id = 26483825", ())
+            .await
+            .unwrap();
+        assert_eq!(rows.next().await.unwrap().unwrap().get_value(0).unwrap(), Value::Integer(2_294_259));
+        assert!(rows.next().await.unwrap().is_none());
+        drop(rows);
+        assert_eq!(count_of(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (22759261, 22759262)").await, 0);
+        let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("the manifest");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["outcome"], "applied", "{body}");
+        assert_eq!(report["manifest"]["dissolved"].as_array().map(Vec::len), Some(2), "{body}");
+        assert_eq!(report["manifest"]["reused_targets"], serde_json::json!([2_294_259]), "{body}");
+        assert_eq!(report["reconcile"]["ok"], true, "{body}");
+        assert_eq!(report["gate_since_notice_id"], 26_483_824, "the passed boundary, recorded: {body}");
+        assert_eq!(report["reverse_drift"]["reverse_drift_mentions"], 0, "{body}");
+        // A10: the kept no-twin row is the surviving list; the max org id is read AFTER the windows.
+        let max_after = count_of(&conn, "SELECT MAX(id) FROM organizations").await;
+        assert_eq!(max_after, 23_014_305, "the dissolved rows are gone");
+        assert_eq!(report["verify"]["goettingen_kept_ids"], serde_json::json!([23_014_305]), "{body}");
+        assert_eq!(report["verify"]["goettingen_surviving_ids"], serde_json::json!([23_014_305]), "{body}");
+        assert_eq!(report["verify"]["wet_max_org_id"], max_after, "{body}");
+        assert_eq!(report["wet_max_org_id"], max_after, "{body}");
+        assert!(msg.contains("Max org id after: Some(23014305)"), "{msg}");
+        assert_eq!(report["r3"]["manifest_mentions_campaign"], 2, "{body}");
+        assert_eq!(report["r3"]["windows_log_equal"], true, "{body}");
+        assert!(report["windows"][0]["hold_ms"].is_u64(), "{body}");
+        // A1's recurrence arm, wired to the compiled statics: the manifest's one target, no candidate.
+        let recur = Job {
+            id: 11,
+            kind: "dissolve-guid-twins".into(),
+            params: String::new(),
+            spec: Spec::GuidTwinRecurrence { since_notice_id: None, samples: 10 },
+            resume_after: None,
+        };
+        let msg = sup.run_spec(&recur).await.expect("recurrence");
+        assert!(msg.contains("recurrence (issue 530 A1) PASS"), "{msg}");
+        let (rbody, _) = db.latest_report(GUID_TWIN_RECURRENCE_REPORT).await.unwrap().expect("stored");
+        let rec: serde_json::Value = serde_json::from_str(&rbody).unwrap();
+        assert_eq!((rec["targets_from_log"].as_u64(), rec["candidate_count"].as_u64(), rec["pass"].as_bool()), (Some(1), Some(0), Some(true)), "{rbody}");
+        assert_eq!(rec["refused_mentions"], 2, "the two moved mentions, refused by the compiled rule: {rbody}");
+        // The same job again (a restart): its logged rows close the reconcile, nothing is left to apply,
+        // and its window counts against max_windows.
+        let msg = sup.run_spec(&wet(5)).await.expect("a resumed job finds nothing left");
+        assert!(msg.contains("Windows: 0 of 0 applied this run (1 earlier by this job)"), "{msg}");
+        assert!(msg.contains("Manifest: 2 logged mention(s) on this dry plan (2 by job 5)"), "{msg}");
+        // Another job on the same dry plan (a staged second run): the rows logged since the plan close the
+        // reconcile and meet the controls; nothing is left; its manifest is the campaign's.
+        let msg = sup.run_spec(&wet(6)).await.expect("a staged second run");
+        assert!(msg.contains("Windows: 0 of 0 applied") && msg.contains("Manifest: 2 logged mention(s) on this dry plan (0 by job 6)"), "{msg}");
+        let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["manifest"]["dissolved"].as_array().map(Vec::len), Some(2), "the campaign's manifest survives the later job: {body}");
+        // A FRESH dry plan after the dissolve passes R1: its planned controls are gone, but the log shows a
+        // wet run dissolved them whole onto 2294259. A wet run on it is accepted (nothing is left).
+        let msg = sup.run_spec(&job(7)).await.expect("the plan after");
+        assert!(msg.contains("R1 BARS PASS"), "{msg}");
+        let (body, _) = db.latest_report(GUID_TWIN_REPORT).await.unwrap().expect("plan");
+        let fresh = guid_twin_stored_dry(&body).unwrap();
+        assert_eq!(fresh.log_high_water, Some(2));
+        assert!(guid_twin_check_dry(&fresh).is_ok());
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        let control = report["controls"].as_array().unwrap().iter().find(|c| c["org_id"] == 22_759_261).unwrap().clone();
+        assert_eq!((control["dissolved_by_wet"].as_bool(), control["ok"].as_bool()), (Some(true), Some(true)), "{control}");
+        let msg = sup.run_spec(&wet(8)).await.expect("not wedged");
+        assert!(msg.contains("APPLIED") && msg.contains("Windows: 0 of 0 applied") && msg.contains("Manifest: 0 logged mention(s)"), "{msg}");
         drop(conn);
-        for suffix in ["", "-wal", "-shm"] {
-            let _ = std::fs::remove_file(format!("{path}{suffix}"));
+        guid_twin_cleanup(&path);
+    }
+
+    /// A second twin beside the job fixture's Göttingen award: `Landkreis Musterhausen` named under two
+    /// GUIDs by notice 26483850 (Tender 948290), both rows planned whole onto its DE identifier-NULL row
+    /// 2400000 — an independent target key, so a small window size splits the plan into two windows.
+    async fn guid_twin_second_twin(conn: &store::turso::Connection) {
+        use store::turso::Value;
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
+                                  published_at, parse_state)
+             VALUES (26483850, 'doe', 'd26483850', 'h', 'eforms:eforms-de-1.2', 1, 'm', 0, 1717200000, 'parsed')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (948290, 1, 26483850, 1717200000, 'd')",
+            (),
+        )
+        .await
+        .unwrap();
+        for (id, identifier) in [
+            (2_400_000i64, None),
+            (22_800_001, Some("1C2D3E4F5A6B4C7D8E9F0A1B2C3D4E5F")),
+            (22_800_002, Some("2D3E4F5A6B7C4D8E9F0A1B2C3D4E5F60")),
+        ] {
+            conn.execute(
+                "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+                 VALUES (?, 'DE', ?, ?, 'Landkreis Musterhausen', 'landkreis musterhausen', 0, 0)",
+                (
+                    Value::Integer(id),
+                    identifier.map_or(Value::Null, |_| Value::Text("national".into())),
+                    identifier.map_or(Value::Null, |i: &str| Value::Text(i.into())),
+                ),
+            )
+            .await
+            .unwrap();
         }
+        for (org, section, guid) in [
+            (22_800_001i64, "ORG-0001", "1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f"),
+            (22_800_002, "ORG-0002", "2d3e4f5a-6b7c-4d8e-9f0a-1b2c3d4e5f60"),
+        ] {
+            conn.execute(
+                "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+                 VALUES (26483850, ?, ?, 'Landkreis Musterhausen', 'DE', ?)",
+                (Value::Text(section.into()), Value::Integer(org), Value::Text(guid.into())),
+            )
+            .await
+            .unwrap();
+        }
+    }
+
+    /// Issue 530 Build 2: the `max_windows` cap and the stop checkpoint BETWEEN windows (543) on a real
+    /// job with several windows — two independent target keys at a window size of 2. A `max_windows: 1`
+    /// job applies exactly one window (PARTIAL, outcome `capped`) and logs it; the same job restarted
+    /// applies none (its committed window counts against its cap); a second job on the same dry plan
+    /// applies the rest, numbering its window as its own (1), the reconcile closing with the first job's
+    /// rows, and the manifest is the campaign's. On a fresh fixture a cancel after window 1 stops the job
+    /// between windows: the report is stored `stopped`, window 1 stands, window 2 is not applied, and the
+    /// job fails.
+    #[tokio::test]
+    async fn the_wet_twin_dissolve_caps_stages_and_stops_between_windows() {
+        for cancel in [false, true] {
+            let tag = if cancel { "530w-stop" } else { "530w-cap" };
+            let (db, conn, path) = guid_twin_job_fixture(tag).await;
+            guid_twin_second_twin(&conn).await;
+            db.build_organization_indexes().await.unwrap();
+            db.build_tender_indexes().await.unwrap();
+            let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+            sup.guid_twin_window_mentions.store(2, Ordering::Relaxed);
+            let dry = Job {
+                id: 1,
+                kind: "dissolve-guid-twins".into(),
+                params: String::new(),
+                spec: Spec::DissolveGuidTwins {
+                    dry_run: true,
+                    stable_mentions: GUID_CENSUS_STABLE_MENTIONS,
+                    samples: 30,
+                    extra_unsafe_names: Vec::new(),
+                },
+                resume_after: None,
+            };
+            let msg = sup.run_spec(&dry).await.expect("plan");
+            assert!(msg.contains("PLAN: 4 row(s) whole") && msg.contains("R1 BARS PASS"), "{msg}");
+            db.set_foreign_keys(false).await.unwrap();
+            let wet = |id: u64, max_windows: Option<u64>| Job {
+                id,
+                kind: "dissolve-guid-twins".into(),
+                params: String::new(),
+                spec: Spec::DissolveGuidTwinsWet { max_windows, gate_since_notice_id: Some(26_483_824) },
+                resume_after: None,
+            };
+            let windows_of = |job: i64| {
+                let db = db.clone();
+                async move { db.guid_twin_log(job).await.unwrap().iter().map(|r| r.window_no).collect::<std::collections::BTreeSet<_>>() }
+            };
+            let musterhausen = || count_of(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (22800001, 22800002)");
+            if !cancel {
+                let msg = sup.run_spec(&wet(2, Some(1))).await.expect("a capped run is a partial success");
+                assert!(msg.contains("PARTIAL: max_windows Some(1)") && msg.contains("Windows: 1 of 2 applied this run"), "{msg}");
+                let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored");
+                let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+                assert_eq!((report["outcome"].as_str(), report["windows_applied"].as_u64(), report["windows_planned"].as_u64()), (Some("capped"), Some(1), Some(2)), "{body}");
+                assert_eq!(windows_of(2).await, [1].into_iter().collect(), "window 1 (Göttingen, the smaller key) only");
+                assert_eq!(musterhausen().await, 2, "the second key untouched");
+                // The same job restarted: its committed window counts against its cap.
+                let msg = sup.run_spec(&wet(2, Some(1))).await.expect("restart");
+                assert!(msg.contains("PARTIAL") && msg.contains("Windows: 0 of 1 applied this run (1 earlier by this job)"), "{msg}");
+                assert_eq!(musterhausen().await, 2);
+                // A second job on the same dry plan applies the rest.
+                let msg = sup.run_spec(&wet(3, None)).await.expect("the rest");
+                assert!(msg.contains("APPLIED") && msg.contains("Windows: 1 of 1 applied this run (0 earlier by this job)"), "{msg}");
+                assert!(msg.contains("Reconcile: ok"), "{msg}");
+                assert_eq!(windows_of(3).await, [1].into_iter().collect(), "window numbers are per job");
+                assert_eq!(musterhausen().await, 0);
+                let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored");
+                let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+                let dissolved: Vec<i64> =
+                    report["manifest"]["dissolved"].as_array().unwrap().iter().map(|d| d["org_id"].as_i64().unwrap()).collect();
+                assert_eq!(dissolved, vec![22_759_261, 22_759_262, 22_800_001, 22_800_002], "both jobs' rows: {body}");
+                assert_eq!(report["r3"]["manifest_mentions_this_job"], 2, "{body}");
+                assert_eq!(report["r3"]["windows_log_equal"], true, "{body}");
+            } else {
+                sup.guid_twin_cancel_after_windows.store(1, Ordering::Relaxed);
+                let err = sup.run_spec(&wet(4, None)).await.expect_err("stopped between windows");
+                assert!(err.contains("STOPPED by cancel after 1 window(s)"), "{err}");
+                let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored before the job fails");
+                let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+                assert_eq!((report["outcome"].as_str(), report["windows_applied"].as_u64()), (Some("stopped"), Some(1)), "{body}");
+                assert_eq!(windows_of(4).await, [1].into_iter().collect(), "window 1 stands");
+                assert_eq!(count_of(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (22759261, 22759262)").await, 0);
+                assert_eq!(musterhausen().await, 2, "window 2 not applied");
+            }
+            drop(conn);
+            guid_twin_cleanup(&path);
+        }
+    }
+
+    /// Issue 530 Build 2, A1 at job level: a compiled-KEEP value refused before it joined KEEP — its
+    /// mention on an identifier-NULL row although the compiled rule binds it — is REVERSE DRIFT. The wet
+    /// run refuses while it stands (nothing written), the recurrence arm reads it, the restore arm moves
+    /// it onto ONE minted identified row (as a rebuild binds it; `guid-twin-restore`), and the wet run
+    /// then applies.
+    #[tokio::test]
+    async fn the_reverse_drift_refuses_the_wet_run_until_the_restore_arm_moves_it() {
+        use store::turso::Value;
+        // The committed KEEP file's first value, as a platform publishes it, and a fresh v4 value.
+        const K: &str = "0000bb8f-e88c-4f63-ac7b-4f7567774c1f";
+        const F: &str = "9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d";
+        assert!(ingest::project::guid_twin::keep_530().contains(K), "premise: K is in the compiled KEEP");
+        let (db, conn, path) = guid_twin_job_fixture("530-drift").await;
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
+                                  published_at, parse_state)
+             VALUES (26483950, 'doe', 'd26483950', 'h', 'eforms:eforms-de-1.2', 1, 'm', 0, 1717200000, 'parsed')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (948310, 1, 26483950, 1717200000, 'd')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (2500000, 'DE', NULL, NULL, 'Landkreis Kassel', 'landkreis kassel', 1, 0)",
+            (),
+        )
+        .await
+        .unwrap();
+        for (section, raw) in [("ORG-0001", K), ("ORG-0002", F)] {
+            conn.execute(
+                "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+                 VALUES (26483950, ?, 2500000, 'Landkreis Kassel', 'DE', ?)",
+                (Value::Text(section.into()), Value::Text(raw.into())),
+            )
+            .await
+            .unwrap();
+        }
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let run = |id: u64, spec: Spec| Job { id, kind: "dissolve-guid-twins".into(), params: String::new(), spec, resume_after: None };
+        let dry = Spec::DissolveGuidTwins { dry_run: true, stable_mentions: GUID_CENSUS_STABLE_MENTIONS, samples: 30, extra_unsafe_names: Vec::new() };
+        assert!(sup.run_spec(&run(1, dry)).await.expect("plan").contains("R1 BARS PASS"));
+        db.set_foreign_keys(false).await.unwrap();
+        let gate = Some(26_483_824);
+        let wet = || Spec::DissolveGuidTwinsWet { max_windows: None, gate_since_notice_id: gate };
+        let err = sup.run_spec(&run(2, wet())).await.expect_err("drift refuses");
+        assert!(err.contains("1 mention(s) in reverse drift since notice 26483824") && err.contains("\"restore\":true"), "{err}");
+        let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["reverse_drift"]["reverse_drift_mentions"], 1, "{body}");
+        assert_eq!(report["reverse_drift"]["reverse_drift"][0]["restore"], "mint", "{body}");
+        assert_eq!(count_of(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (22759261, 22759262)").await, 2, "nothing written");
+        let msg = sup.run_spec(&run(3, Spec::GuidTwinRecurrence { since_notice_id: gate, samples: 10 })).await.expect("recurrence");
+        assert!(msg.contains("REVERSE DRIFT") && msg.contains("reverse drift 1 mention(s) of 1 value(s) (stock 0, since 1)"), "{msg}");
+        let msg = sup.run_spec(&run(4, Spec::GuidTwinRestore { since_notice_id: gate })).await.expect("restore");
+        assert!(msg.contains("restore (issue 530 A1) DONE") && msg.contains("1 value(s) restored, 1 mention(s) moved") && msg.contains("1 minted"), "{msg}");
+        let (body, _) = db.latest_report(GUID_TWIN_RESTORE_REPORT).await.unwrap().expect("stored");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((report["outcome"].as_str(), report["restored"][0]["minted"].as_bool()), (Some("restored"), Some(true)), "{body}");
+        let mut rows = conn
+            .query(
+                "SELECT m.section_id, o.identifier, o.identifier_kind, o.country FROM organization_mentions m \
+                   JOIN organizations o ON o.id = m.organization_id WHERE m.notice_id = 26483950 ORDER BY 1",
+                (),
+            )
+            .await
+            .unwrap();
+        let k = rows.next().await.unwrap().unwrap();
+        assert_eq!(
+            (k.get_value(1).unwrap(), k.get_value(2).unwrap(), k.get_value(3).unwrap()),
+            (Value::Text("0000BB8FE88C4F63AC7B4F7567774C1F".into()), Value::Text("national".into()), Value::Text("DE".into())),
+            "K sits on its identified row, as a rebuild binds it"
+        );
+        let f = rows.next().await.unwrap().unwrap();
+        assert_eq!(f.get_value(1).unwrap(), Value::Null, "F, refused, stays on the name-keyed row");
+        drop(rows);
+        let msg = sup.run_spec(&run(5, wet())).await.expect("the drift restored, the wet run applies");
+        assert!(msg.contains("APPLIED") && msg.contains("Reverse drift (A1): 0 mention(s)"), "{msg}");
+        assert_eq!(count_of(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (22759261, 22759262)").await, 0);
+        drop(conn);
+        guid_twin_cleanup(&path);
+    }
+
+    /// Issue 530 Build 2 (review round 2): the restore refuses — before any read, storing nothing — without
+    /// the org FK indexes; A1's boundary is anchored: before any wet window a `since_notice_id` at or above
+    /// the newest notice, or above the stored dry plan's `notice_max_id`, is refused; from the first window
+    /// on the boundary it logged is the only value the wet run, the recurrence arm and the restore accept,
+    /// and the recurrence arm defaults to it (its report says where its boundary came from).
+    #[tokio::test]
+    async fn the_restore_and_recurrence_arms_are_anchored_to_the_recorded_boundary() {
+        use store::turso::Value;
+        let (db, conn, path) = guid_twin_job_fixture("530-anchor").await;
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let run = |id: u64, spec: Spec| Job { id, kind: "dissolve-guid-twins".into(), params: String::new(), spec, resume_after: None };
+        let gate = 26_483_824;
+        let err = sup.run_spec(&run(1, Spec::GuidTwinRestore { since_notice_id: Some(gate) })).await.expect_err("no indexes");
+        assert!(err.contains("dissolve-guid-twins restore refused: missing") && err.contains("organization_names_org"), "{err}");
+        assert!(db.latest_report(GUID_TWIN_RESTORE_REPORT).await.unwrap().is_none(), "a refusal stores nothing");
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let dry = Spec::DissolveGuidTwins { dry_run: true, stable_mentions: GUID_CENSUS_STABLE_MENTIONS, samples: 30, extra_unsafe_names: Vec::new() };
+        assert!(sup.run_spec(&run(2, dry)).await.expect("plan").contains("R1 BARS PASS"));
+        let err = sup.run_spec(&run(3, Spec::GuidTwinRestore { since_notice_id: Some(26_483_900) })).await.expect_err("an empty walk");
+        assert!(err.contains("at or above the newest notice 26483900"), "{err}");
+        // A notice newer than the plan: a boundary between the plan's start and it is a typo.
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
+                                  published_at, parse_state)
+             VALUES (26483999, 'doe', 'd26483999', 'h', 'eforms:eforms-de-1.2', 1, 'm', 0, 1717200000, 'parsed')",
+            (),
+        )
+        .await
+        .unwrap();
+        let err = sup.run_spec(&run(4, Spec::GuidTwinRecurrence { since_notice_id: Some(26_483_950), samples: 10 })).await.expect_err("past the plan");
+        assert!(err.contains("above the stored dry plan's notice_max_id 26483900"), "{err}");
+        assert!(db.latest_report(GUID_TWIN_RECURRENCE_REPORT).await.unwrap().is_none());
+        // The wet run logs the boundary it was given.
+        db.set_foreign_keys(false).await.unwrap();
+        let wet = |since: i64| Spec::DissolveGuidTwinsWet { max_windows: None, gate_since_notice_id: Some(since) };
+        assert!(sup.run_spec(&run(5, wet(gate))).await.expect("applied").contains("APPLIED"));
+        assert_eq!(db.guid_twin_recorded_boundary().await.unwrap(), Some(gate));
+        let mut rows = conn.query("SELECT DISTINCT gate_since_notice_id FROM guid_twin_dissolve_log", ()).await.unwrap();
+        assert_eq!(rows.next().await.unwrap().unwrap().get_value(0).unwrap(), Value::Integer(gate));
+        assert!(rows.next().await.unwrap().is_none());
+        drop(rows);
+        // From now on, only that value.
+        let err = sup.run_spec(&run(6, wet(gate - 1))).await.expect_err("another boundary");
+        assert!(err.contains(&format!("is not A1's boundary {gate}")), "{err}");
+        let err = sup.run_spec(&run(7, Spec::GuidTwinRestore { since_notice_id: Some(gate + 1) })).await.expect_err("restore off the boundary");
+        assert!(err.contains(&format!("since_notice_id {} is not A1's boundary {gate}", gate + 1)) && err.contains("Nothing was read or written"), "{err}");
+        assert!(db.latest_report(GUID_TWIN_RESTORE_REPORT).await.unwrap().is_none());
+        let err = sup
+            .run_spec(&run(8, Spec::GuidTwinRecurrence { since_notice_id: Some(gate + 1), samples: 10 }))
+            .await
+            .expect_err("recurrence off the boundary");
+        assert!(err.contains("is not A1's boundary"), "{err}");
+        // The recurrence arm defaults to the recorded boundary, and says so.
+        let msg = sup.run_spec(&run(9, Spec::GuidTwinRecurrence { since_notice_id: None, samples: 10 })).await.expect("recurrence");
+        assert!(msg.contains("PASS") && msg.contains(&format!("above notice Some({gate})")), "{msg}");
+        let (body, _) = db.latest_report(GUID_TWIN_RECURRENCE_REPORT).await.unwrap().expect("stored");
+        let rec: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((rec["since_notice_id"].as_i64(), rec["boundary"]["recorded"].as_i64()), (Some(gate), Some(gate)), "{body}");
+        assert_eq!(rec["boundary"]["source"], "the recorded boundary (none passed)", "{body}");
+        let msg = sup.run_spec(&run(10, Spec::GuidTwinRestore { since_notice_id: Some(gate) })).await.expect("restore on the boundary");
+        assert!(msg.contains("restore (issue 530 A1) DONE") && msg.contains("0 value(s) restored"), "{msg}");
+        let (body, _) = db.latest_report(GUID_TWIN_RESTORE_REPORT).await.unwrap().expect("stored");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!(report["boundary"]["matches_recorded"], true, "{body}");
+        drop(conn);
+        guid_twin_cleanup(&path);
+    }
+
+    /// Issue 530 Build 2 (review round 2, A1 + A3 iii): a KEEP-add candidate the wet run's own drift read
+    /// finds — a value the gate already refused in a SECOND Tender since the boundary — whose own GUID row
+    /// the re-plan would dissolve refuses the run before any write, naming its KEEP file line; one whose
+    /// own row the re-plan does not hold does not refuse, and the report lists it for R3.
+    #[tokio::test]
+    async fn the_wet_run_refuses_a_keep_add_candidate_it_would_dissolve() {
+        use store::turso::Value;
+        let (db, conn, path) = guid_twin_job_fixture("530-cand").await;
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id, member_path, ingested_at,
+                                  published_at, parse_state)
+             VALUES (26483960, 'doe', 'd26483960', 'h', 'eforms:eforms-de-1.2', 1, 'm', 0, 1717200000, 'parsed')",
+            (),
+        )
+        .await
+        .unwrap();
+        conn.execute(
+            "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, published_at, publication_id)
+             VALUES (948320, 1, 26483960, 1717200000, 'd')",
+            (),
+        )
+        .await
+        .unwrap();
+        // A twin copy after the boundary: the gate refused 22759261's value and a fresh one onto 2294259.
+        for (section, raw) in [("ORG-0001", "037c1508-d945-4e73-9d6e-65099a79bec1"), ("ORG-0002", "9a8b7c6d-5e4f-4a3b-9c2d-1e0f9a8b7c6d")] {
+            conn.execute(
+                "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country, raw_identifier)
+                 VALUES (26483960, ?, 2294259, 'Landkreis Göttingen', 'DE', ?)",
+                (Value::Text(section.into()), Value::Text(raw.into())),
+            )
+            .await
+            .unwrap();
+        }
+        db.build_organization_indexes().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let sup = Supervisor::new(db.clone(), "archive".into(), reqwest::Client::new());
+        let run = |id: u64, spec: Spec| Job { id, kind: "dissolve-guid-twins".into(), params: String::new(), spec, resume_after: None };
+        let dry = || Spec::DissolveGuidTwins { dry_run: true, stable_mentions: GUID_CENSUS_STABLE_MENTIONS, samples: 30, extra_unsafe_names: Vec::new() };
+        assert!(sup.run_spec(&run(1, dry())).await.expect("plan").contains("R1 BARS PASS"));
+        db.set_foreign_keys(false).await.unwrap();
+        let wet = || Spec::DissolveGuidTwinsWet { max_windows: None, gate_since_notice_id: Some(26_483_824) };
+        let err = sup.run_spec(&run(2, wet())).await.expect_err("a candidate on a planned row");
+        assert!(err.contains("1 KEEP-add candidate(s) whose own GUID row the re-plan would dissolve"), "{err}");
+        assert!(err.contains("DE\t037C1508D9454E739D6E65099A79BEC1\t22759261\t1\t2\tmulti_tender"), "the KEEP file line: {err}");
+        assert_eq!(count_of(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (22759261, 22759262)").await, 2, "nothing written");
+        let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((report["outcome"].as_str(), report["reverse_drift"]["candidates"][0]["own_row"].as_i64()), (Some("refused"), Some(22_759_261)), "{body}");
+        // The same copy naming the kept no-twin row's value instead: its row is outside the re-plan, so the
+        // run applies and lists the candidate for R3.
+        conn.execute(
+            "UPDATE organization_mentions SET raw_identifier = '7a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d' \
+              WHERE notice_id = 26483960 AND section_id = 'ORG-0001'",
+            (),
+        )
+        .await
+        .unwrap();
+        let msg = sup.run_spec(&run(3, wet())).await.expect("applied");
+        assert!(msg.contains("APPLIED") && msg.contains("1 KEEP-add candidate(s) (7A1B2C3D4E5F4A6B8C7D9E0F1A2B3C4D"), "{msg}");
+        let (body, _) = db.latest_report(GUID_TWIN_DISSOLVE_REPORT).await.unwrap().expect("stored");
+        let report: serde_json::Value = serde_json::from_str(&body).unwrap();
+        assert_eq!((report["outcome"].as_str(), report["reverse_drift"]["candidate_count"].as_u64()), (Some("applied"), Some(1)), "{body}");
+        assert_eq!(report["reverse_drift"]["candidates"][0]["own_row"], 23_014_305, "{body}");
+        assert_eq!(count_of(&conn, "SELECT COUNT(*) FROM organizations WHERE id IN (22759261, 22759262)").await, 0);
+        drop(conn);
+        guid_twin_cleanup(&path);
     }
 
     /// Issue 524 unit 2a: `refresh-org-names` takes the census's `min_mentions` and `samples` rules and
@@ -27768,6 +30134,8 @@ mod tests {
         // Issue 524 unit 2b: the wet head refresh and its revert, a family of two boxed arms
         // (32 bytes measured 2026-10-15: each arm holds one box).
         gauge("run_org_name_refresh_spec", std::mem::size_of_val(&sup.run_org_name_refresh_spec(&j)), 128);
+        // Issue 530 Build 2: the wet twin dissolve, one boxed arm.
+        gauge("run_guid_twin_wet_spec", std::mem::size_of_val(&sup.run_guid_twin_wet_spec(&j)), 128);
         gauge("run_country_spec", std::mem::size_of_val(&sup.run_country_spec(&j)), 2_688);
         gauge("run_identity_census_spec", std::mem::size_of_val(&sup.run_identity_census_spec(&j)), 1_792);
         gauge("run_census_spec", std::mem::size_of_val(&sup.run_census_spec(&j)), 1_792);
@@ -27796,6 +30164,7 @@ mod tests {
         poll_once_within("run_match_identifiers_spec", 71 * 1024, || sup.run_match_identifiers_spec(&refused));
         poll_once_within("run_nhs_body_canary", 39 * 1024, || sup.run_nhs_body_canary(&refused));
         poll_once_within("run_org_name_refresh_spec", 39 * 1024, || sup.run_org_name_refresh_spec(&refused));
+        poll_once_within("run_guid_twin_wet_spec", 39 * 1024, || sup.run_guid_twin_wet_spec(&refused));
         poll_once_within("run_country_spec", 63 * 1024, || sup.run_country_spec(&refused));
         poll_once_within("run_identity_census_spec", 56 * 1024, || sup.run_identity_census_spec(&refused));
         poll_once_within("run_census_spec", 69 * 1024, || sup.run_census_spec(&refused));

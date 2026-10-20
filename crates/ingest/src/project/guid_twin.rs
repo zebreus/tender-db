@@ -1,5 +1,6 @@
-//! Issue 530 unit 3, Build 1: rule 530-T, the within-notice GUID twin, as a PURE function of one notice
-//! copy ([`guid_twin_decide`], [`guid_twin_refusals`]), and its name guard.
+//! Issue 530 unit 3: rule 530-T, the within-notice GUID twin, as a PURE function of one notice copy
+//! ([`guid_twin_decide`], [`guid_twin_refusals`]), its name guard, and (Build 2) the gate that applies
+//! it in the projection ([`guid_twin_gate`]) with the frozen KEEP_530 ([`keep_530`]).
 //!
 //! Some German eForms platforms mint a fresh BT-501 UUID per ORG section per notice, so one body is a
 //! row per notice. When ONE notice copy prints one name-safe name under two or more distinct v4 values,
@@ -28,26 +29,21 @@
 //!   shape): it trades those folds — the rows stay split as today, under (c) — for never attaching a
 //!   review body's role to the buyer's row.
 //!
-//! The gate (Build 2) will call [`guid_twin_section_roles`] on the parsed copy in
-//! `mentions_and_dropped`; the dry planner folds the copy's stored `notice_ids` references with the same
-//! fold ([`store::guid_twin_fold_roles`]) and mapping ([`guid_twin_role_ref`], passed as a fn pointer),
-//! so both read one section → roles map.
+//! **Build 2: the gate is WIRED.** `NoticeState::mentions_and_dropped` calls [`guid_twin_gate`] right
+//! after it sets each mention's gated identifier and before its `extracted` loop (so `ExtractedWinners`
+//! sees the final identity): a refused section's `identifier` becomes `None`, its `raw_identifier` and
+//! `scheme` stay as published. The gate reads the COMPILED statics only — [`keep_530`] (the committed
+//! `crates/ingest/sdk/guid-keep-530.tsv`, [`GUID_KEEP_530_VERSION`]) and [`GUID_TWIN_UNSAFE_NAMES`],
+//! never a run's `extra_unsafe_names` — and the ORG sections alone (`ORG-…`, the range the dry planner
+//! reads, so the stock plan and the gate see one section set). The dry and wet `dissolve-guid-twins`
+//! runs pass the same statics to the planner (A3 iii), so the plan, the gate and any rebuild decide with
+//! one ruler. The buyer side of the plan row (issue 369's `buyer_key`, 481's `buyer_tokens`) keeps the
+//! published, ungated identity (`NoticeState::published_mentions`): the deploy moves no Tender key.
 //!
-//! It sits beside `idgate::condemns`, not inside it: `condemns` sees one value, this rule needs the
-//! whole notice. `condemns` and `idgate::uuid_v4` are unchanged. It lives under `project` because the
-//! name guard is the projection's own (`guard_name_words`, `content_words`, `generic_body_name`), and
-//! the gate (Build 2) runs in `NoticeState::mentions_and_dropped`.
-//!
-//! **Build 1 does not wire the gate.** Production ingest is unchanged: `mentions_and_dropped` still
-//! binds every GUID (pinned by `production_ingest_still_binds_a_twin_notices_guids`). The gate cannot be
-//! wired before the KEEP file exists, or it would refuse the SBH, GMH and Nürnberg pairs. The dry
-//! `dissolve-guid-twins` planner (`store::Db::plan_guid_twins`) calls [`guid_twin_decide`] through a fn
-//! pointer, so the plan, the gate and any rebuild decide with one ruler.
-//!
-//! **Identity becomes contextual once the gate is wired.** A tool that rebuilds a mention's identity
-//! from its stored row alone ([`super::gated_identifier`]'s callers: 513's nhs-body canary, 511's guard
-//! 3) sees a GUID where the fold refused one. None of them reads DE GUID mentions today; a future reader
-//! re-derives the twin from the notice's stored mentions, as the planner does.
+//! **Identity is now contextual.** A tool that rebuilds a mention's identity from its stored row alone
+//! ([`super::gated_identifier`]'s callers: 513's nhs-body canary, 511's guard 3) sees a GUID where the
+//! fold refused one. None of them reads DE GUID mentions today; a reader that must agree with the fold
+//! re-derives the twin from the notice's stored mentions, as the planner and the recurrence arm do.
 
 use std::collections::{BTreeMap, BTreeSet, HashSet};
 use std::sync::OnceLock;
@@ -64,8 +60,11 @@ use super::{
 /// change the head and prefix tokens of 481's buyer guard, a different feature. Seeded with the
 /// decision's generics (the precision judge's GETs: `Zentrale Vergabestelle`, `Tribunal administratif`;
 /// the one-word office names, which the content-word test already binds, listed so the list reads
-/// whole), the polity umbrellas and the person placeholders of A8; R2 convictions are added here
-/// (between deploys, through the job's `extra_unsafe_names`).
+/// whole), the polity umbrellas and the person placeholders of A8; R2 convictions are added here.
+/// Build 2: COMPILED is the only way in — the gate never reads a run's `extra_unsafe_names`, and a wet
+/// `dissolve-guid-twins` refuses them (A3 iii), so a dry re-run with extra names is a measurement and an
+/// R2 finding ships as a name on this list (the R2 re-read at salt 530003, `530-triage/r2b`, read
+/// 60 R / 0 N / 0 W: nothing added).
 pub const GUID_TWIN_UNSAFE_NAMES: &[&str] = &[
     // The decision's generic office and body names.
     "Vergabekammer",
@@ -329,10 +328,162 @@ pub fn guid_twin_decide(sections: &[TwinView<'_>], keep: &GuidKeep, extra_unsafe
     decision
 }
 
+/// Rule 530-T's candidate test on ONE stored mention, the gate's own path ([`guid_twin_decide`]'s
+/// step 1): `Some((value, register country))` when its gated identifier ([`gated_identifier`] under the
+/// canonical country) has kind `national` and passes `idgate::uuid_v4` — the identity a rebuild binds
+/// the mention to when the rule does not refuse it. The recurrence arm's reverse-drift half and its
+/// restore read it (`store::GuidTwinGatedV4`).
+pub fn guid_twin_gated_v4(raw: Option<&str>, scheme: Option<&str>, country: Option<&str>) -> Option<(String, Option<String>)> {
+    let country = country.map(canonical_country);
+    let id = gated_identifier(raw, scheme, country.as_deref())?;
+    (id.kind == "national" && crate::idgate::uuid_v4(&id.value)).then_some((id.value, id.country))
+}
+
 /// The section ids whose identifier rule 530-T refuses in one notice copy ([`guid_twin_decide`]'s
 /// `refused`): what the gate (Build 2) sets to `identifier = None`.
 pub fn guid_twin_refusals(sections: &[TwinView<'_>], keep: &GuidKeep, extra_unsafe_names: &[String]) -> BTreeSet<String> {
     guid_twin_decide(sections, keep, extra_unsafe_names).refused
+}
+
+// ---- Build 2: the frozen KEEP_530 and the gate ----
+
+/// Build 2: the version of the committed KEEP file, pinned to its `# version:` header
+/// (`keep_530_file_is_frozen_as_decided`). A KEEP-add commit bumps both together (`keep-530-job2660`
+/// is job 2660's freeze, unappended). The dry plan reports it and the wet run refuses a stored plan read
+/// under any other `keep_version` or `keep_size`, so a KEEP-add commit forces a fresh dry plan either way.
+pub const GUID_KEEP_530_VERSION: &str = "keep-530-job2660";
+
+/// The committed KEEP_530 (`530-triage/decision.md` "KEEP_530", 513's `nhs-ods.tsv` precedent): job
+/// 2660's `keep_candidates`, generated by `530-triage/build2/gen_guid_keep.py`.
+const GUID_KEEP_530_TSV: &str = include_str!("../../sdk/guid-keep-530.tsv");
+
+/// One row of the KEEP file: the decision's columns (country, value, org id at freeze, mentions,
+/// tenders, reason); an empty cell is `None`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GuidKeep530Row {
+    pub country: Option<String>,
+    /// The `GuidKeep::key` form (undashed, upper case).
+    pub value: String,
+    pub org_id: i64,
+    pub mentions: Option<u64>,
+    pub tenders: Option<u64>,
+    pub reason: String,
+}
+
+/// The KEEP file's rows, parsed once. A malformed line PANICS (the `nhs_ods::parse` idiom): the file
+/// is compiled in, so a bad commit fails every test that touches the gate, never a fold in production.
+pub fn keep_530_rows() -> &'static [GuidKeep530Row] {
+    static ROWS: OnceLock<Vec<GuidKeep530Row>> = OnceLock::new();
+    ROWS.get_or_init(|| parse_keep_530(GUID_KEEP_530_TSV))
+}
+
+/// The `# version:` header of a KEEP file.
+pub fn keep_530_file_version(tsv: &str) -> Option<&str> {
+    tsv.lines().filter_map(|l| l.strip_prefix("# version:")).map(str::trim).next()
+}
+
+/// The committed file's text (its header and rows), for the frozen-file test and the report.
+pub fn keep_530_tsv() -> &'static str {
+    GUID_KEEP_530_TSV
+}
+
+fn parse_keep_530(tsv: &str) -> Vec<GuidKeep530Row> {
+    let opt = |s: &str| (!s.is_empty()).then(|| s.to_owned());
+    let num = |s: &str, line: &str| -> Option<u64> {
+        (!s.is_empty()).then(|| s.parse().unwrap_or_else(|_| panic!("guid-keep-530.tsv: a bad count {s:?} in {line:?}")))
+    };
+    tsv.lines()
+        .filter(|l| !l.is_empty() && !l.starts_with('#'))
+        .map(|line| {
+            let f: Vec<&str> = line.split('\t').collect();
+            if f.len() != 6 {
+                panic!("guid-keep-530.tsv: a row without six fields: {line:?}");
+            }
+            GuidKeep530Row {
+                country: opt(f[0]),
+                value: f[1].to_owned(),
+                org_id: f[2].parse().unwrap_or_else(|_| panic!("guid-keep-530.tsv: a bad org id in {line:?}")),
+                mentions: num(f[3], line),
+                tenders: num(f[4], line),
+                reason: f[5].to_owned(),
+            }
+        })
+        .collect()
+}
+
+/// KEEP_530 as the gate and the planner read it: the committed file's values, value-keyed (A4:
+/// `GuidKeep` normalises a published dashed lower-case value to the stored key, the country ignored),
+/// built once.
+pub fn keep_530() -> &'static GuidKeep {
+    static KEEP: OnceLock<GuidKeep> = OnceLock::new();
+    KEEP.get_or_init(|| keep_530_rows().iter().map(|r| r.value.as_str()).collect())
+}
+
+/// The section range rule 530-T reads in the projection: ORG sections (`ORG-…`), exactly the range the
+/// dry planner reads back from `organization_mentions` (`section_id >= 'ORG-' AND section_id <
+/// 'ORG.'`), so the gate and the stock plan see one section set. Legacy parties are `ORG-<n>` sections
+/// (the r209, text and FTS parsers mint them), so both the gate and the planner cover them; only
+/// sdk-0.1 parties fall outside the range, and they carry no identifier. An eForms copy whose
+/// publisher-supplied org ids fall outside `ORG-…` is read by neither.
+pub fn guid_twin_org_section(section_id: &str) -> bool {
+    section_id >= "ORG-" && section_id < "ORG."
+}
+
+/// The gate's views of one parsed copy: its ORG-section mentions ([`guid_twin_org_section`]), each
+/// with the roles the copy's own references give it (`roles`, from [`guid_twin_section_roles`]).
+pub fn guid_twin_gate_views<'a>(mentions: &'a [store::Mention], roles: &'a GuidTwinSectionRoles) -> Vec<TwinView<'a>> {
+    mentions
+        .iter()
+        .filter(|m| guid_twin_org_section(&m.section_id))
+        .map(|m| TwinView {
+            section_id: &m.section_id,
+            name: &m.name,
+            country: m.country.as_deref(),
+            raw_identifier: m.raw_identifier.as_deref(),
+            scheme: m.scheme.as_deref(),
+            roles: roles.get(m.section_id.as_str()).map_or(&[], Vec::as_slice),
+        })
+        .collect()
+}
+
+/// Build 2: rule 530-T applied to one notice copy's mentions in the projection, with the COMPILED
+/// statics ([`keep_530`], [`GUID_TWIN_UNSAFE_NAMES`], no extra names): every section the rule refuses
+/// gets `identifier = None` (`raw_identifier` and `scheme` stay as published), so the resolver binds it
+/// through the issue-234 identifier-NULL arm — the `(org_name_norm, register_jurisdiction(country))`
+/// row, `ORDER BY id LIMIT 1`, or one minted. Returns how many it refused. See [`guid_twin_gate_with`].
+pub fn guid_twin_gate(parsed: &Parsed, mentions: &mut [store::Mention]) -> usize {
+    guid_twin_gate_with(parsed, mentions, keep_530())
+}
+
+/// [`guid_twin_gate`] with an explicit KEEP (tests). Cheap on the common path: it returns before any
+/// work unless two ORG mentions carry a national `uuid_v4` identifier (nearly every notice; sdk-0.1
+/// never sets one), and reads the copy's role references only when the rule finds a twin group (the
+/// group set depends on neither the roles nor KEEP, as the planner's `guid_twin_has_group` reads it).
+pub fn guid_twin_gate_with(parsed: &Parsed, mentions: &mut [store::Mention], keep: &GuidKeep) -> usize {
+    let candidates = mentions
+        .iter()
+        .filter(|m| {
+            guid_twin_org_section(&m.section_id)
+                && m.identifier.as_ref().is_some_and(|i| i.kind == "national" && crate::idgate::uuid_v4(&i.value))
+        })
+        .count();
+    if candidates < 2 {
+        return 0;
+    }
+    let refused = {
+        let none = GuidTwinSectionRoles::new();
+        if guid_twin_decide(&guid_twin_gate_views(mentions, &none), keep, &[]).groups.is_empty() {
+            return 0;
+        }
+        let roles = guid_twin_section_roles(parsed);
+        guid_twin_refusals(&guid_twin_gate_views(mentions, &roles), keep, &[])
+    };
+    let mut n = 0;
+    for m in mentions.iter_mut().filter(|m| refused.contains(&m.section_id)) {
+        m.identifier = None;
+        n += 1;
+    }
+    n
 }
 
 #[cfg(test)]
@@ -491,35 +642,65 @@ mod tests {
         assert!(!chamber.office_two_words, "a long specific name is no two-word office key");
     }
 
-    /// The gate is NOT wired in Build 1: production ingest of a twin notice is unchanged — every GUID
-    /// still binds as the national identifier it always did, and the raw value stays as published.
+    /// Build 2: the gate IS wired — production ingest of the Göttingen award refuses the buyer's and the
+    /// chamber's twinned values (`identifier = None`, the raw value and scheme kept as published), and
+    /// leaves Rommel (named once) and DÖE's ORG-0006 (no BT-501) as they were. (Build 1 pinned the
+    /// opposite: every GUID still bound.)
     #[test]
-    fn production_ingest_still_binds_a_twin_notices_guids() {
+    fn production_ingest_refuses_a_twin_notices_guids() {
         let m = mentions(26_483_825, &goettingen());
-        assert!(!guid_twin_refusals(&views(&m), &none(), &[]).is_empty(), "the rule would refuse here");
-        let ids: Vec<(&str, Option<(&str, &str, &str)>)> = m
+        let ids: Vec<(&str, Option<(&str, &str, &str)>, Option<&str>)> = m
             .iter()
             .map(|m| {
                 (
                     m.section_id.as_str(),
                     m.identifier.as_ref().map(|i| (i.country.as_deref().unwrap_or(""), i.kind.as_str(), i.value.as_str())),
+                    m.raw_identifier.as_deref(),
                 )
             })
             .collect();
         assert_eq!(
             ids,
             vec![
-                ("ORG-0001", Some(("DE", "national", "037C1508D9454E739D6E65099A79BEC1"))),
-                ("ORG-0002", Some(("DE", "national", "5B1C2D3E4F5A4B6C8D7E8F9A0B1C2D3E"))),
-                ("ORG-0003", Some(("DE", "national", "6A1B2C3D4E5F4A6B9C7D8E9F0A1B2C3D"))),
-                ("ORG-0004", Some(("DE", "national", "7B2C3D4E5F6A4B7CAD8E9F0A1B2C3D4E"))),
-                ("ORG-0005", Some(("DE", "national", "6C2D3E4F5A6B4C7D9E8F9A0B1C2D3E4F"))),
-                ("ORG-0006", None),
+                ("ORG-0001", None, Some("037c1508-d945-4e73-9d6e-65099a79bec1")),
+                ("ORG-0002", None, Some("5b1c2d3e-4f5a-4b6c-8d7e-8f9a0b1c2d3e")),
+                ("ORG-0003", None, Some("6a1b2c3d-4e5f-4a6b-9c7d-8e9f0a1b2c3d")),
+                ("ORG-0004", None, Some("7b2c3d4e-5f6a-4b7c-ad8e-9f0a1b2c3d4e")),
+                (
+                    "ORG-0005",
+                    Some(("DE", "national", "6C2D3E4F5A6B4C7D9E8F9A0B1C2D3E4F")),
+                    Some("6c2d3e4f-5a6b-4c7d-9e8f-9a0b1c2d3e4f")
+                ),
+                ("ORG-0006", None, None),
             ],
-            "mentions_and_dropped binds every GUID: Build 1 changes no identity"
+            "mentions_and_dropped runs rule 530-T: the twinned keys are refused, raw values kept"
         );
-        assert_eq!(m[0].raw_identifier.as_deref(), Some("037c1508-d945-4e73-9d6e-65099a79bec1"));
         assert_eq!(m[0].country.as_deref(), Some("DE"));
+        // The ungated path (the plan row's buyer side) still binds every GUID as published.
+        let published = NoticeState::published_mentions(false, 26_483_825, &parsed(&goettingen()));
+        assert!(published[..5].iter().all(|m| m.identifier.as_ref().is_some_and(|i| i.kind == "national")));
+        // Rule 530-T step 4: the gate touches `identifier` ONLY. `RecordedMention::publishes` compares name,
+        // country, raw and scheme, so clearing or rewriting any of them on a refused section would make every
+        // recorded twin mention re-resolve on its next refold, outside the manifest ("the deploy causes no
+        // churn"). The same copy with an admitted scheme on every BT-501 (`DENIED_SCHEMES` is empty, so each
+        // value is still a national v4 candidate and the same four sections are refused).
+        let mut p = parsed(&goettingen());
+        for v in p.values.iter_mut().filter(|v| v.field_id == ORG_IDENTIFIER_FIELD) {
+            if let NoticeValue::Id { scheme, .. } = &mut v.value {
+                *scheme = Some("ORG-REG".into());
+            }
+        }
+        let gated = NoticeState::mentions_and_dropped(false, 26_483_825, &p).0;
+        let published = NoticeState::published_mentions(false, 26_483_825, &p);
+        assert_eq!(published[0].scheme.as_deref(), Some("ORG-REG"), "premise: the scheme is published");
+        assert_eq!(gated.len(), published.len());
+        for (k, (g, p)) in gated.iter().zip(&published).enumerate() {
+            if k < 4 {
+                assert_eq!(*g, Mention { identifier: None, ..p.clone() }, "{k}: a refused section keeps every other field");
+            } else {
+                assert_eq!(g, p, "{k}: an unrefused section is untouched");
+            }
+        }
     }
 
     /// R0: the Südbayern three-notice shape (one GUID per notice, no twin) binds — and so would the
@@ -1187,14 +1368,28 @@ mod tests {
     }
 
     /// The dry plan with the real `uuid_v4` and rule 530-T, the decision's stable ids and knob, and the
-    /// given R1 controls.
+    /// given R1 controls, over the walk's in-memory KEEP (Build 1's; [`run_plan_with`] passes a KEEP).
     async fn run_plan(db: &store::Db, not_planned: &[i64], planned: &[(i64, i64)]) -> store::GuidTwinPlan {
+        run_plan_with(db, None, not_planned, planned).await
+    }
+
+    /// [`run_plan`] with an explicit KEEP (Build 2: `Some(keep_530())`, the compiled file the job reads).
+    async fn run_plan_with(
+        db: &store::Db,
+        keep: Option<&GuidKeep>,
+        not_planned: &[i64],
+        planned: &[(i64, i64)],
+    ) -> store::GuidTwinPlan {
         let stop = || false;
         let progress = |_: u64, _: &str| {};
         let plan = db
             .plan_guid_twins(store::GuidTwinPlanArgs {
                 is_guid: crate::idgate::uuid_v4,
                 rule: guid_twin_decide,
+                keep,
+                keep_version: if keep.is_some() { GUID_KEEP_530_VERSION } else { "walk" },
+                unsafe_names: GUID_TWIN_UNSAFE_NAMES,
+                under_review: None,
                 role_ref: guid_twin_role_ref,
                 role_class,
                 stable_ids: &[254, 255, 8_378],
@@ -1222,8 +1417,18 @@ mod tests {
     /// over the copy as the projection loads it (`parsed_by_ids`), normalised as the projection
     /// normalises it (`normalise_de1`). Returns the planner's set.
     async fn assert_parity(db: &store::Db, conn: &store::turso::Connection, plan: &store::GuidTwinPlan) -> BTreeSet<(i64, String)> {
-        assert!(!plan.planned_mention_keys_truncated);
         let keep: GuidKeep = plan.keep_candidates.iter().map(|c| c.value.clone()).collect();
+        assert_parity_with(db, conn, plan, &keep).await
+    }
+
+    /// [`assert_parity`] with the KEEP the plan read (Build 2: the compiled one, passed by hand).
+    async fn assert_parity_with(
+        db: &store::Db,
+        conn: &store::turso::Connection,
+        plan: &store::GuidTwinPlan,
+        keep: &GuidKeep,
+    ) -> BTreeSet<(i64, String)> {
+        assert!(!plan.planned_mention_keys_truncated);
         let mut planned: BTreeSet<(i64, String)> =
             plan.planned_mention_keys.iter().map(|k| (k.notice_id, k.section_id.clone())).collect();
         planned.extend(plan.off_guid.samples.iter().map(|o| (o.notice_id, o.section_id.clone())));
@@ -1261,7 +1466,7 @@ mod tests {
                     roles: section_roles.get(sec).map_or(&[], Vec::as_slice),
                 })
                 .collect();
-            by_rule.extend(guid_twin_refusals(&views, &keep, &[]).into_iter().map(|s| (*n, s)));
+            by_rule.extend(guid_twin_refusals(&views, keep, &[]).into_iter().map(|s| (*n, s)));
         }
         assert_eq!(planned, by_rule, "the planner plans exactly the rule's refusals");
         planned
@@ -1551,6 +1756,7 @@ mod tests {
         let exhibit = &plan.exhibits["DE landkreis göttingen"];
         assert_eq!((exhibit.guid_rows, exhibit.planned, exhibit.partial, exhibit.kept), (4, 3, 0, 1));
         assert_eq!(exhibit.kept_ids, vec![23_014_305]);
+        assert!(exhibit.partial_ids.is_empty(), "no partial Göttingen row in this fixture");
         assert_eq!((plan.guid_rows, plan.distinct_values), (18, 18));
         assert_eq!(plan.candidate_notices, 12);
         assert_eq!(plan.planned_mention_keys.len(), 13);
@@ -1918,5 +2124,473 @@ mod tests {
         assert_eq!(gate.groups[0].roles, aok_roles);
         drop(conn);
         cleanup(&path);
+    }
+
+    // ---- Build 2: the frozen KEEP, the wired gate, the resolver, rebuild parity ----
+
+    /// The committed KEEP_530: its header pins [`GUID_KEEP_530_VERSION`] and names job 2660; job 2660's
+    /// 7,312 rows are a FLOOR (KEEP is add-only: a reviewed append from the recurrence arm or a dry plan's
+    /// `keep_add_commit` passes, a removal does not), every row six fields, strictly sorted by value (no
+    /// duplicate key), every value the 32-hex key form passing `uuid_v4`, every row with a country and a
+    /// decided reason (each of job 2660's reason counts a floor); the decision's pinned values are in it by
+    /// value, and a published dashed lower-case value finds its key (A4).
+    #[test]
+    fn keep_530_file_is_frozen_as_decided() {
+        let tsv = keep_530_tsv();
+        assert_eq!(keep_530_file_version(tsv), Some(GUID_KEEP_530_VERSION));
+        assert!(tsv.contains("queue job 2660") && tsv.contains("body.keep_candidates"), "the header names its source");
+        assert!(tsv.lines().filter(|l| !l.starts_with('#')).all(|l| l.split('\t').count() == 6));
+        let rows = keep_530_rows();
+        assert!(rows.len() >= 7_312, "job 2660's freeze is a floor: {}", rows.len());
+        assert_eq!(keep_530().len(), rows.len(), "distinct values");
+        assert!(rows.windows(2).all(|w| w[0].value < w[1].value), "strictly sorted by value");
+        let mut reasons: BTreeMap<&str, usize> = BTreeMap::new();
+        for r in rows {
+            assert!(r.value.len() == 32 && r.value.chars().all(|c| c.is_ascii_digit() || ('A'..='F').contains(&c)), "{r:?}");
+            assert!(crate::idgate::uuid_v4(&r.value), "{r:?}");
+            assert_eq!(GuidKeep::key(&r.value), r.value, "the GuidKeep key form");
+            assert!(r.country.is_some() && r.org_id > 0, "{r:?}");
+            assert!(r.reason.split('+').all(|x| ["stable", "multi_tender", "merged"].contains(&x)), "{r:?}");
+            *reasons.entry(r.reason.as_str()).or_default() += 1;
+        }
+        for (reason, floor) in [("multi_tender", 6_967), ("stable", 13), ("stable+multi_tender", 332)] {
+            assert!(reasons.get(reason).copied().unwrap_or(0) >= floor, "{reason}: {reasons:?}");
+        }
+        for (org, value) in [
+            (254, "FB197F94757846738A574642AE120532"),
+            (255, "0A9EA48008E44AB6BF12D722D0AD54B6"),
+            (8_378, "9A9357BC0F794735BAE87CD270AEBE9E"),
+            (3_866, "62F0F0AF9431411A8F96BE7B21DAAFB8"),
+            (3_868, "85B322A2FC6745D7B38D202DD3DDDEC4"),
+            (2_529, "5359C289128E40CF80A26E8B2148C363"),
+            (2_530, "5EC2681225144A6685C58F38C0D0BDC6"),
+            (21_983_972, "FD9B6FCE0B6847A99D6695761A9D5F0C"),
+            (21_983_973, "9CC94E7110D04DE18AD5B4F807FB5D76"),
+            (21_987_063, "0A2212A7F7EB4653B89E224ECA3ACA27"),
+        ] {
+            assert!(keep_530().contains(value), "{org}: {value} must be on KEEP");
+            assert_eq!(rows.iter().find(|r| r.value == value).map(|r| r.org_id), Some(org), "{value}");
+        }
+        assert!(keep_530().contains("fb197f94-7578-4673-8a57-4642ae120532"), "published dashed lower case");
+        assert!(!keep_530().contains("037c1508-d945-4e73-9d6e-65099a79bec1"), "Göttingen's per-notice key is no KEEP value");
+    }
+
+    /// A4 through the REAL path: `mentions_and_dropped` with the compiled KEEP, values published dashed
+    /// lower case — SBH 3866/3868 twinned bind; 3866 beside a fresh value refuses only the fresh one;
+    /// 255 published under AUT beside a fresh value keeps 255 and refuses the fresh one. Without KEEP
+    /// the SBH pair would be refused.
+    #[test]
+    fn the_gate_reads_the_compiled_keep_through_the_real_path() {
+        const SBH_3866: &str = "62f0f0af-9431-411a-8f96-be7b21daafb8";
+        const SBH_3868: &str = "85b322a2-fc67-45d7-b38d-202dd3dddec4";
+        const FRESH: &str = "5a7e9c1d-3f4b-4c8d-ae2f-a3b4c5d6e7f8";
+        let ids = |orgs: &[Org<'_>]| -> Vec<Option<String>> {
+            mentions(9, orgs).into_iter().map(|m| m.identifier.map(|i| i.value)).collect()
+        };
+        let pair = [("ORG-0001", SBH, Some("DEU"), Some(SBH_3866)), ("ORG-0002", SBH, Some("DEU"), Some(SBH_3868))];
+        assert_eq!(ids(&pair), vec![Some(GuidKeep::key(SBH_3866)), Some(GuidKeep::key(SBH_3868))], "a KEEP pair binds");
+        let beside = [("ORG-0001", SBH, Some("DEU"), Some(SBH_3866)), ("ORG-0002", SBH, Some("DEU"), Some(FRESH))];
+        assert_eq!(ids(&beside), vec![Some(GuidKeep::key(SBH_3866)), None]);
+        const VK: &str = "Vergabekammer des Bundes";
+        let bund = [("ORG-0001", VK, Some("AUT"), Some(BUND_RAW)), ("ORG-0002", VK, Some("AUT"), Some(FRESH))];
+        assert_eq!(ids(&bund), vec![Some(BUND.to_owned()), None], "255 kept under another country");
+        let p = parsed(&pair);
+        let mut published = NoticeState::published_mentions(false, 9, &p);
+        assert_eq!(guid_twin_gate_with(&p, &mut published, &GuidKeep::default()), 2, "without KEEP: refused");
+        assert_eq!(guid_twin_gate(&p, &mut NoticeState::published_mentions(false, 9, &p)), 0);
+    }
+
+    /// R0's shapes, decided by the WIRED gate in `mentions_and_dropped`: the Göttingen twin refuses the
+    /// buyer's and the chamber's keys; a bare `Vergabekammer`, `Zentrale Vergabestelle`, `Stadtwerke
+    /// GmbH` and `Freistaat Bayern` twin binds; a twin with no country binds; the Südbayern shape (no
+    /// twin) and a DB-platform key named once bind; the TED copy (named once) binds beside a DÖE copy
+    /// that refuses; the AOK role mix binds by the copy's own references.
+    #[test]
+    fn the_gate_decides_the_r0_shapes_in_mentions_and_dropped() {
+        let refused = |p: &Parsed| -> Vec<String> {
+            NoticeState::mentions_and_dropped(false, 9, p)
+                .0
+                .into_iter()
+                .filter(|m| m.identifier.is_none() && m.raw_identifier.is_some())
+                .map(|m| m.section_id)
+                .collect()
+        };
+        let twin = |name: &'static str, country: Option<&'static str>| -> Parsed {
+            parsed(&[
+                ("ORG-0001", name, country, Some("1f2e3d4c-5b6a-4978-8a9b-0c1d2e3f4a5b")),
+                ("ORG-0002", name, country, Some("2a3b4c5d-6e7f-4089-9b0c-1d2e3f4a5b6c")),
+            ])
+        };
+        assert_eq!(refused(&parsed(&goettingen())), vec!["ORG-0001", "ORG-0002", "ORG-0003", "ORG-0004"]);
+        for name in ["Vergabekammer", "Zentrale Vergabestelle", "Stadtwerke GmbH", "Freistaat Bayern"] {
+            assert!(refused(&twin(name, Some("DEU"))).is_empty(), "{name} binds");
+        }
+        assert!(refused(&twin(GOETTINGEN, None)).is_empty(), "no country binds");
+        assert_eq!(refused(&twin(GOETTINGEN, Some("DEU"))).len(), 2, "the same twin with a country refuses");
+        let suedbayern = parsed(&[
+            ("ORG-0001", "Staatliches Bauamt Rosenheim", Some("DEU"), Some("4d5e6f7a-8b9c-43a4-b526-d7e8f9a0b1c2")),
+            ("ORG-0004", "Regierung von Oberbayern - Vergabekammer Südbayern", Some("DEU"), Some("1a2b3c4d-5e6f-4071-8293-a4b5c6d7e8f9")),
+        ]);
+        assert!(refused(&suedbayern).is_empty());
+        let db_platform = parsed(&[
+            ("ORG-0001", "DB InfraGO AG – Geschäftsbereich Fahrweg (Bukr 16)", Some("DEU"), Some("fb197f94-7578-4673-8a57-4642ae120532")),
+            ("ORG-0002", "Vergabekammer des Bundes", Some("DEU"), Some(BUND_RAW)),
+        ]);
+        assert!(refused(&db_platform).is_empty());
+        let ted = parsed(&[
+            ("ORG-0001", GOETTINGEN, Some("DEU"), Some("037c1508-d945-4e73-9d6e-65099a79bec1")),
+            ("ORG-0005", ROMMEL, Some("DEU"), Some("6c2d3e4f-5a6b-4c7d-9e8f-9a0b1c2d3e4f")),
+        ]);
+        assert!(refused(&ted).is_empty(), "the TED copy names the buyer once");
+        assert_eq!(refused(&parsed_with(&aok(), &AOK_REFS)), Vec::<String>::new(), "the AOK role mix binds");
+        assert_eq!(refused(&parsed(&aok())).len(), 3, "without references the same copy refuses");
+        // The gate's section scope is the planner's (`ORG-` up to `ORG.`): the same refusing twin under ids
+        // just outside the range binds, whatever KEEP holds — so neither the gate nor the stock plan sees
+        // it, and the two never disagree; the legacy parsers' short `ORG-<n>` ids are inside the range.
+        let v4a = "1f2e3d4c-5b6a-4978-8a9b-0c1d2e3f4a5b";
+        let v4b = "2a3b4c5d-6e7f-4089-9b0c-1d2e3f4a5b6c";
+        let outside = parsed(&[("ORG0001", GOETTINGEN, Some("DEU"), Some(v4a)), ("ORG.0002", GOETTINGEN, Some("DEU"), Some(v4b))]);
+        assert!(refused(&outside).is_empty(), "outside the ORG- range: never decided");
+        let mut published = NoticeState::published_mentions(false, 9, &outside);
+        assert_eq!(guid_twin_gate_with(&outside, &mut published, &GuidKeep::default()), 0, "not even under an empty KEEP");
+        assert!(published.iter().all(|m| m.identifier.is_some()), "both keep their keys");
+        let legacy = parsed(&[("ORG-1", GOETTINGEN, Some("DEU"), Some(v4a)), ("ORG-2", GOETTINGEN, Some("DEU"), Some(v4b))]);
+        assert_eq!(refused(&legacy).len(), 2, "the legacy ORG-<n> shape is in range");
+    }
+
+    /// The gate's candidate test on a stored mention (the recurrence arm's reverse-drift half and its
+    /// restore): a dashed lower-case v4 raw under `DEU` is the national key a rebuild binds, under the
+    /// register country; a VAT-shaped value, a non-v4 hex value and no value are none.
+    #[test]
+    fn the_gated_v4_test_returns_the_identity_a_rebuild_binds() {
+        assert_eq!(
+            guid_twin_gated_v4(Some("037c1508-d945-4e73-9d6e-65099a79bec1"), None, Some("DEU")),
+            Some(("037C1508D9454E739D6E65099A79BEC1".to_owned(), Some("DE".to_owned())))
+        );
+        assert_eq!(guid_twin_gated_v4(Some("DE308703297"), None, Some("DEU")), None);
+        assert_eq!(guid_twin_gated_v4(Some("037c1508-d945-1e73-9d6e-65099a79bec1"), None, Some("DEU")), None, "version nibble 1");
+        assert_eq!(guid_twin_gated_v4(None, None, Some("DEU")), None);
+    }
+
+    /// OQ1: the gate changes a mention's binding, never the plan row's buyer side — issue 369's
+    /// `buyer_key` and 481's buyer tokens read the PUBLISHED identity, so the deploy moves no Tender's key.
+    #[test]
+    fn the_guid_twin_gate_leaves_the_buyer_key_and_tokens_alone() {
+        let refs = [("ND-ContractingParty#0", "OPT-300-Procedure-Buyer", "ORG-0001"), ("LOT-0001", "OPT-301-Lot-AddInfo", "ORG-0002")];
+        let p = parsed_with(&goettingen(), &refs);
+        let gated = NoticeState::mentions_and_dropped(false, 9, &p).0;
+        assert!(gated[0].identifier.is_none(), "premise: the gate refuses the buyer's key");
+        assert_eq!(super::super::buyer_key(false, 9, &p).as_deref(), Some("DE:national:037C1508D9454E739D6E65099A79BEC1"));
+        let buyers = super::super::buyer_mentions(false, 9, &p);
+        assert_eq!(buyers.len(), 1);
+        assert!(buyers[0].identifier.is_some(), "the buyer side keeps the published key");
+        let published = NoticeState::published_mentions(false, 9, &p);
+        assert_eq!(super::super::buyer_tokens_of(&buyers), super::super::buyer_tokens_of(&published[..1]));
+    }
+
+    async fn org_no_country(conn: &store::turso::Connection, id: i64, name: &str) {
+        exec(
+            conn,
+            "INSERT INTO organizations (id, country, identifier_kind, identifier, name, name_norm, provisional, created_at)
+             VALUES (?, NULL, NULL, NULL, ?, ?, 1, 0)",
+            vec![Value::Integer(id), txt(name), txt(&store::org_name_norm(name))],
+        )
+        .await;
+    }
+
+    /// R0's last line, through the resolver: the gated Göttingen award resolves both buyer mentions onto
+    /// the DE identifier-NULL row, never the VAT row of the same name nor the country-NULL row; without
+    /// that row, exactly one row is minted for both (DE, identifier NULL, provisional). The chamber's two
+    /// mentions share one row too; Rommel keeps its key.
+    #[tokio::test]
+    async fn the_resolver_lands_a_gated_twin_on_the_name_keyed_row() {
+        for with_row in [true, false] {
+            let (db, conn, path) = fixture(if with_row { "resolve-row" } else { "resolve-mint" }).await;
+            db.set_foreign_keys(false).await.unwrap();
+            org(&conn, 22_183_653, None, GOETTINGEN).await;
+            exec(&conn, "UPDATE organizations SET identifier_kind = 'vat', identifier = 'DE308703297', provisional = 0 WHERE id = 22183653", vec![]).await;
+            org_no_country(&conn, 16_393, GOETTINGEN).await;
+            if with_row {
+                org(&conn, 2_294_259, None, GOETTINGEN).await;
+            }
+            let ms = mentions(26_483_825, &goettingen());
+            let mut resolver = db.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
+            let ids = db.resolve_mentions(&mut resolver, &ms, 100).await.unwrap();
+            db.finish_mention_resolver(resolver).await.unwrap();
+            assert_eq!(ids.len(), 6);
+            assert_eq!(ids[0], ids[1], "both buyer mentions on one row");
+            assert!(ids[0] != 22_183_653 && ids[0] != 16_393, "never the VAT row or the country-NULL row");
+            if with_row {
+                assert_eq!(ids[0], 2_294_259);
+            } else {
+                let mut rows = conn
+                    .query("SELECT id, country, identifier, provisional FROM organizations WHERE name_norm = 'landkreis göttingen' AND identifier IS NULL AND country = 'DE'", ())
+                    .await
+                    .unwrap();
+                let row = rows.next().await.unwrap().expect("one minted row");
+                assert_eq!(row.get_value(0).unwrap(), Value::Integer(ids[0]));
+                assert_eq!(row.get_value(3).unwrap(), Value::Integer(1), "provisional");
+                assert!(rows.next().await.unwrap().is_none(), "exactly one");
+            }
+            assert_eq!(ids[2], ids[3], "the chamber's two mentions share one row");
+            let mut rows = conn.query("SELECT identifier FROM organizations WHERE id = ?", vec![Value::Integer(ids[4])]).await.unwrap();
+            let rommel = rows.next().await.unwrap().unwrap().get_value(0).unwrap();
+            assert_eq!(rommel, txt("6C2D3E4F5A6B4C7D9E8F9A0B1C2D3E4F"), "Rommel keeps its key");
+            drop(rows);
+            drop(conn);
+            cleanup(&path);
+        }
+    }
+
+    // The real KEEP values the compiled-constant fixtures publish (dashed lower case).
+    const SBH_3866_RAW: &str = "62f0f0af-9431-411a-8f96-be7b21daafb8";
+    const SBH_3868_RAW: &str = "85b322a2-fc67-45d7-b38d-202dd3dddec4";
+
+    /// PARITY on the COMPILED constants (A3 iii): over an ungated stock — the Göttingen award in both
+    /// copies, the real SBH 3866/3868 pair, 3866 beside a fresh value, 254 beside a fresh value — the
+    /// planner run with `keep_530()` refuses exactly what the gate refuses: the rule over the stored copies
+    /// with the same KEEP, and `mentions_and_dropped` over the parsed copies (identifier refused, raw a v4
+    /// national key), with no KEEP handed to the gate. A KEEP without 254's value fails the compiled
+    /// self-check, which names the value and its KEEP-add line.
+    #[tokio::test]
+    async fn the_planner_and_the_gate_agree_on_the_compiled_constants() {
+        let (db, conn, path) = fixture("compiled").await;
+        org(&conn, 254, Some(DB), "DB InfraGO AG").await;
+        org(&conn, 2_294_259, None, GOETTINGEN).await;
+        org(&conn, 22_759_261, Some(A), GOETTINGEN).await;
+        org(&conn, 22_759_262, Some(B), GOETTINGEN).await;
+        org(&conn, 22_759_265, Some(C), ROMMEL).await;
+        org(&conn, 23_014_306, Some(D), CHAMBER).await;
+        org(&conn, 23_014_307, Some(E), CHAMBER).await;
+        org(&conn, 3_866, Some(SBH_3866_RAW), SBH).await;
+        org(&conn, 3_868, Some(SBH_3868_RAW), SBH).await;
+        org(&conn, 30_000_110, Some(N), SBH).await;
+        org(&conn, 30_000_111, Some(R), "DB InfraGO AG").await;
+        let copies: Vec<(i64, &str, i64, Vec<Org<'static>>)> = vec![
+            (
+                24_262_502,
+                "ted",
+                1,
+                vec![
+                    ("ORG-0001", GOETTINGEN, Some("DEU"), Some(A)),
+                    ("ORG-0002", GOETTINGEN, Some("DEU"), Some(B)),
+                    ("ORG-0003", CHAMBER, Some("DEU"), Some(D)),
+                    ("ORG-0005", ROMMEL, Some("DEU"), Some(C)),
+                ],
+            ),
+            (
+                26_483_825,
+                "doe",
+                2,
+                vec![
+                    ("ORG-0001", GOETTINGEN, Some("DEU"), Some(A)),
+                    ("ORG-0002", GOETTINGEN, Some("DEU"), Some(B)),
+                    ("ORG-0003", CHAMBER, Some("DEU"), Some(D)),
+                    ("ORG-0004", CHAMBER, Some("DEU"), Some(E)),
+                    ("ORG-0005", ROMMEL, Some("DEU"), Some(C)),
+                ],
+            ),
+            (40_000_005, "ted", 1, vec![("ORG-0001", SBH, Some("DEU"), Some(SBH_3866_RAW)), ("ORG-0002", SBH, Some("DEU"), Some(SBH_3868_RAW))]),
+            (40_000_006, "ted", 1, vec![("ORG-0001", SBH, Some("DEU"), Some(SBH_3866_RAW)), ("ORG-0002", SBH, Some("DEU"), Some(N))]),
+            (40_000_008, "ted", 1, vec![("ORG-0001", "DB InfraGO AG", Some("DEU"), Some(DB))]),
+            (40_000_009, "ted", 1, vec![("ORG-0001", "DB InfraGO AG", Some("DEU"), Some(DB)), ("ORG-0002", "DB InfraGO AG", Some("DEU"), Some(R))]),
+        ];
+        let org_of = |raw: &str| -> i64 {
+            match raw {
+                A => 22_759_261,
+                B => 22_759_262,
+                C => 22_759_265,
+                D => 23_014_306,
+                E => 23_014_307,
+                SBH_3866_RAW => 3_866,
+                SBH_3868_RAW => 3_868,
+                N => 30_000_110,
+                R => 30_000_111,
+                DB => 254,
+                other => panic!("{other}"),
+            }
+        };
+        for (n, source, seq, orgs) in &copies {
+            let tender = if *n < 30_000_000 { 948_285 } else { *n - 39_010_000 };
+            notice(&conn, *n, source, tender, *seq).await;
+            for (section, name, _, raw) in orgs {
+                mention(&conn, *n, section, org_of(raw.unwrap()), name, *raw, "", (tender, *seq), None).await;
+            }
+        }
+        let keep = keep_530();
+        let plan = run_plan_with(&db, Some(keep), &[254, 3_866, 3_868, 22_759_265], &[(22_759_261, 2_294_259), (22_759_262, 2_294_259)]).await;
+        assert_eq!((plan.keep_source, plan.keep_size, plan.keep_version.as_str()), ("compiled", keep_530().len() as u64, GUID_KEEP_530_VERSION));
+        assert_eq!(plan.planned_row_ids, vec![22_759_261, 22_759_262, 23_014_307, 30_000_110, 30_000_111]);
+        assert_eq!(plan.partial_row_ids, vec![23_014_306]);
+        assert!(plan.bars.keep_self_check_missing.is_empty() && plan.keep_add_commit.is_empty());
+        assert!(plan.bars.pass, "{:#?}", plan.bars);
+        let planned = assert_parity_with(&db, &conn, &plan, keep).await;
+        // The gate's side: the parsed copies through mentions_and_dropped, the compiled KEEP inside it.
+        let mut by_gate: BTreeSet<(i64, String)> = BTreeSet::new();
+        for (n, _, _, orgs) in &copies {
+            for m in mentions(*n, orgs) {
+                let v4 = gated_identifier(m.raw_identifier.as_deref(), m.scheme.as_deref(), m.country.as_deref())
+                    .is_some_and(|i| i.kind == "national" && crate::idgate::uuid_v4(&i.value));
+                if m.identifier.is_none() && v4 {
+                    by_gate.insert((*n, m.section_id));
+                }
+            }
+        }
+        assert_eq!(planned, by_gate, "the planner on the compiled constants refuses exactly what the gate refuses");
+        // A KEEP without 254's value: the self-check (254 is stable) names it and its line.
+        let db_key = GuidKeep::key(DB);
+        let without: GuidKeep = keep_530_rows().iter().map(|r| r.value.as_str()).filter(|v| *v != db_key).collect();
+        let failing = run_plan_with(&db, Some(&without), &[254], &[]).await;
+        assert_eq!(failing.bars.keep_self_check_missing, vec![db_key.clone()]);
+        assert_eq!(failing.keep_add_commit, vec![format!("DE\t{db_key}\t254\t2\t2\tstable+multi_tender")]);
+        assert!(!failing.bars.pass);
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// The identity a (notice, section) is bound to: an identified row's key, or a name-keyed row's
+    /// (country, name_norm).
+    async fn identity_of(conn: &store::turso::Connection, notice: i64, section: &str) -> (i64, String) {
+        let mut rows = conn
+            .query(
+                "SELECT o.id, o.identifier, o.country, o.name_norm FROM organization_mentions m JOIN organizations o \
+                   ON o.id = m.organization_id WHERE m.notice_id = ? AND m.section_id = ?",
+                vec![Value::Integer(notice), txt(section)],
+            )
+            .await
+            .unwrap();
+        let row = rows.next().await.unwrap().unwrap_or_else(|| panic!("({notice}, {section}) is bound"));
+        let s = |i: usize| row.get_value(i).ok().and_then(|v| v.as_text().cloned());
+        let id = match row.get_value(0).unwrap() {
+            Value::Integer(n) => n,
+            _ => unreachable!(),
+        };
+        let class = match s(1) {
+            Some(identifier) => format!("identified {identifier}"),
+            None => format!("name-keyed {} {}", s(2).unwrap_or_default(), s(3).unwrap_or_default()),
+        };
+        (id, class)
+    }
+
+    /// A2's parity, and the MINT decision's: the stock — the ungated fold of a DÖE copy naming the
+    /// Göttingen buyer under A and B and its TED copy naming it once under A (so A is PARTIAL, B whole),
+    /// plus an `Amt 66` twin in two notices with no identifier-NULL row — planned with the compiled KEEP
+    /// and dissolved by the wet windows, equals a fresh projection of the same copies under the gate: per
+    /// (notice, section) the same identity class, and the same partition of the mentions into rows. Both
+    /// with the Göttingen identifier-NULL row present on both sides (the same row) and with none (each
+    /// side mints one; the missing key is minted ONCE across its two notices on each side).
+    #[tokio::test]
+    async fn a_two_copy_stock_dissolve_equals_a_rebuild_under_the_gate() {
+        const AMT: [&str; 4] = [
+            "10a1b2c3-d4e5-4f60-8a1b-2c3d4e5f6071",
+            "20a1b2c3-d4e5-4f60-9a1b-2c3d4e5f6072",
+            "30a1b2c3-d4e5-4f60-aa1b-2c3d4e5f6073",
+            "40a1b2c3-d4e5-4f60-ba1b-2c3d4e5f6074",
+        ];
+        let copies: Vec<(i64, &str, i64, i64, Vec<Org<'static>>)> = vec![
+            (1, "doe", 11, 1, vec![("ORG-0001", "Amt 66", Some("DEU"), Some(AMT[0])), ("ORG-0002", "Amt 66", Some("DEU"), Some(AMT[1]))]),
+            (2, "doe", 12, 1, vec![("ORG-0001", "Amt 66", Some("DEU"), Some(AMT[2])), ("ORG-0002", "Amt 66", Some("DEU"), Some(AMT[3]))]),
+            (
+                24_262_502,
+                "ted",
+                948_285,
+                1,
+                vec![("ORG-0001", GOETTINGEN, Some("DEU"), Some(A)), ("ORG-0005", ROMMEL, Some("DEU"), Some(C))],
+            ),
+            (
+                26_483_825,
+                "doe",
+                948_285,
+                2,
+                vec![
+                    ("ORG-0001", GOETTINGEN, Some("DEU"), Some(A)),
+                    ("ORG-0002", GOETTINGEN, Some("DEU"), Some(B)),
+                    ("ORG-0005", ROMMEL, Some("DEU"), Some(C)),
+                ],
+            ),
+        ];
+        let role = |section: &str| match section {
+            "ORG-0001" => "Procedure-Buyer",
+            "ORG-0002" => "Lot-AddInfo",
+            _ => "bid:tenderer",
+        };
+        for with_row in [true, false] {
+            let tag = if with_row { "row" } else { "mint" };
+            // The stock: the ungated fold, as production holds it before the dissolve.
+            let (stock, conn, path) = fixture(&format!("a2-stock-{tag}")).await;
+            stock.set_foreign_keys(false).await.unwrap();
+            if with_row {
+                org(&conn, 2_294_259, None, GOETTINGEN).await;
+            }
+            let rows: [(i64, &str, &str); 7] = [
+                (22_759_261, A, GOETTINGEN),
+                (22_759_262, B, GOETTINGEN),
+                (22_759_265, C, ROMMEL),
+                (101, AMT[0], "Amt 66"),
+                (102, AMT[1], "Amt 66"),
+                (103, AMT[2], "Amt 66"),
+                (104, AMT[3], "Amt 66"),
+            ];
+            for (id, raw, name) in rows {
+                org(&conn, id, Some(raw), name).await;
+            }
+            for (n, source, tender, seq, orgs) in &copies {
+                notice(&conn, *n, source, *tender, *seq).await;
+                for (section, name, _, raw) in orgs {
+                    let id = rows.iter().find(|r| Some(r.1) == *raw).unwrap().0;
+                    mention(&conn, *n, section, id, name, *raw, role(section), (*tender, *seq), None).await;
+                }
+            }
+            let plan = run_plan_with(&stock, Some(keep_530()), &[], &[]).await;
+            assert_eq!(plan.planned_row_ids, vec![101, 102, 103, 104, 22_759_262], "{tag}");
+            assert_eq!(plan.partial_row_ids, vec![22_759_261], "{tag}: A is partial (its TED mention is kept)");
+            for (k, w) in store::guid_twin_windows(&plan.wet_mentions, store::GUID_TWIN_WET_WINDOW_MENTIONS).iter().enumerate() {
+                stock
+                    .dissolve_guid_twin_window(store::GuidTwinWindowArgs {
+                        window: w,
+                        job_id: 1,
+                        window_no: k as u64 + 1,
+                        gate_since_notice_id: None,
+                        fields: super::super::ORG_NAME_FIELD_IDS,
+                        normalize: super::super::normalize_lang,
+                    })
+                    .await
+                    .unwrap();
+            }
+            // The rebuild: a fresh store resolving the same copies' gated mentions, in notice order.
+            let (fresh, fconn, fpath) = fixture(&format!("a2-fresh-{tag}")).await;
+            fresh.set_foreign_keys(false).await.unwrap();
+            if with_row {
+                org(&fconn, 2_294_259, None, GOETTINGEN).await;
+            }
+            let mut resolver = fresh.mention_resolver(None, None, None, None, None, None, 0).await.unwrap();
+            for (n, _, _, _, orgs) in &copies {
+                fresh.resolve_mentions(&mut resolver, &mentions(*n, orgs), 100).await.unwrap();
+            }
+            fresh.finish_mention_resolver(resolver).await.unwrap();
+            // Per (notice, section): the identity class, and the partition into rows.
+            let mut stock_rows: BTreeMap<i64, BTreeSet<(i64, String)>> = BTreeMap::new();
+            let mut fresh_rows: BTreeMap<i64, BTreeSet<(i64, String)>> = BTreeMap::new();
+            for (n, _, _, _, orgs) in &copies {
+                for (section, ..) in orgs {
+                    let (sid, sclass) = identity_of(&conn, *n, section).await;
+                    let (fid, fclass) = identity_of(&fconn, *n, section).await;
+                    assert_eq!(sclass, fclass, "{tag}: ({n}, {section}) has one identity class in the stock and the rebuild");
+                    stock_rows.entry(sid).or_default().insert((*n, (*section).to_owned()));
+                    fresh_rows.entry(fid).or_default().insert((*n, (*section).to_owned()));
+                    if with_row && *n == 26_483_825 && *section != "ORG-0005" {
+                        assert_eq!((sid, fid), (2_294_259, 2_294_259), "{tag}: the same identifier-NULL row");
+                    }
+                }
+            }
+            let partition = |m: BTreeMap<i64, BTreeSet<(i64, String)>>| m.into_values().collect::<BTreeSet<_>>();
+            assert_eq!(partition(stock_rows), partition(fresh_rows), "{tag}: the same partition into rows");
+            let amt = identity_of(&conn, 1, "ORG-0001").await.0;
+            assert_eq!(identity_of(&conn, 2, "ORG-0002").await.0, amt, "{tag}: the missing key minted once across two notices");
+            drop(conn);
+            drop(fconn);
+            cleanup(&path);
+            cleanup(&fpath);
+        }
     }
 }

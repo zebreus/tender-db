@@ -876,9 +876,12 @@ pub mod role_census;
 /// Issue 538 unit 3: the publisher's extra escapes, decoded in served titles and descriptions.
 pub mod escapes;
 
-/// Issue 530 unit 3 (Build 1): rule 530-T, the within-notice GUID twin, as a pure function of one notice
-/// copy, and its name guard. NOT wired into `NoticeState::mentions_and_dropped` yet (Build 2): the dry
-/// `dissolve-guid-twins` planner is its only caller.
+/// Issue 530 unit 3: rule 530-T, the within-notice GUID twin, as a pure function of one notice copy, its
+/// name guard, the frozen KEEP_530 and (Build 2) the gate `NoticeState::mentions_and_dropped` runs
+/// ([`guid_twin::guid_twin_gate`]). Identity is contextual since Build 2: a refused GUID mention binds by
+/// its name, so a reader rebuilding a mention's identity from its stored row alone (513's canary, 511's
+/// guard 3) sees a GUID the fold refused. The buyer side of the plan row keeps the published identity
+/// ([`NoticeState::published_mentions`]).
 pub mod guid_twin;
 
 /// Issue 570 unit 3: the cached legacy chains the lot-remap tests fold (test data only).
@@ -5887,6 +5890,25 @@ impl NoticeState {
         notice_id: i64,
         parsed: &Parsed,
     ) -> (Vec<Mention>, Vec<String>, DroppedParties, ExtractedWinners) {
+        Self::mentions_and_dropped_gated(sdk01, notice_id, parsed, true)
+    }
+
+    /// Issue 530 Build 2: [`Self::mentions`] WITHOUT rule 530-T's gate — every mention's identifier as
+    /// the notice published it (`gated_identifier` alone). Only the buyer side of the plan row reads it
+    /// ([`buyer_side_mentions`]: issue 369's `buyer_key` and 481's `buyer_tokens`), so the gate's deploy
+    /// moves no Tender's key or link guard (the decision's "the deploy causes no churn"); the dry plan
+    /// counts the copies whose buyer the gate refuses (`refused_buyer_copies`).
+    fn published_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> Vec<Mention> {
+        Self::mentions_and_dropped_gated(sdk01, notice_id, parsed, false).0
+    }
+
+    /// [`Self::mentions_and_dropped`]'s body; `gate` runs rule 530-T ([`guid_twin::guid_twin_gate`]).
+    fn mentions_and_dropped_gated(
+        sdk01: bool,
+        notice_id: i64,
+        parsed: &Parsed,
+        gate: bool,
+    ) -> (Vec<Mention>, Vec<String>, DroppedParties, ExtractedWinners) {
         let sections: HashMap<&str, &store::Section> =
             parsed.sections.iter().map(|s| (s.id.as_str(), s)).collect();
 
@@ -6047,6 +6069,15 @@ impl NoticeState {
                 m
             })
             .collect();
+        // Issue 530 Build 2: rule 530-T, the within-notice GUID twin — one notice copy naming one
+        // name-safe body under two or more v4 platform keys refuses the keys outside the frozen KEEP_530
+        // (`identifier = None`, the raw value kept), so the mention binds the body's name-keyed row. Here,
+        // after every identifier is set and before the `extracted` loop, so `ExtractedWinners` sees the
+        // final identity. Pure: compiled KEEP and names, no DB read (`guid_twin` module doc).
+        let mut mentions = mentions;
+        if gate {
+            guid_twin::guid_twin_gate(parsed, &mut mentions);
+        }
         let mut extracted = ExtractedWinners::default();
         for (section, published, winner) in &renamed_heads {
             if mentions.iter().any(|m| m.section_id == *section && m.identifier.is_none()) {
@@ -10331,7 +10362,10 @@ fn buyer_side_mentions(sdk01: bool, notice_id: i64, parsed: &Parsed) -> (Vec<sto
     if sections.is_empty() {
         return (Vec::new(), Vec::new());
     }
-    let mentions = NoticeState::mentions(sdk01, notice_id, parsed);
+    // Issue 530 Build 2: the PUBLISHED identities, not the gated ones — rule 530-T changes a mention's
+    // binding, never the plan row's buyer key or link-guard tokens (pinned by
+    // `the_guid_twin_gate_leaves_the_buyer_key_and_tokens_alone`).
+    let mentions = NoticeState::published_mentions(sdk01, notice_id, parsed);
     // Issue 483 unit 2: the buyer side the projection serves, not the raw buyer slot — a
     // review body or platform vendor the census flags decisively is no buyer of the guards
     // either (481's tokens, 482's hub key, 369's election), and a promoted real buyer is.
@@ -19721,6 +19755,37 @@ mod tests {
         // Guard 3 keeps a blank party with a gated identifier: the walk says so.
         let identified = eforms(&[("Procedure-Buyer", "Morsø Kommune", "DNK", ""), ("Tenderer", "0", "DNK", "38160540")], Some("DAN"));
         assert_eq!(kept(fold_parties("eforms:eforms-sdk-1.10", &identified).verdict("ORG-2")), "party kept: 0/1 names void, a gated identifier");
+    }
+
+    /// Issue 530 Build 2: `ExtractedWinners` sees rule 530-T's verdict. A legacy award names its winner
+    /// in a void-net summary (`… Attribué à Léo Lagrange`, renamed to the winner) and again under that
+    /// name, each under its own v4 key: after the rename the copy prints one name under two keys, the
+    /// gate refuses both, so the renamed head binds by its name and IS counted as extracted; the
+    /// ungated path (the plan row's buyer side) keeps the key and counts nothing.
+    #[test]
+    fn extracted_winners_see_the_guid_twin_gate() {
+        use placeholder_511::*;
+        const LAGRANGE: &str = "Pas d'offre. Relancé en procédure 35.ii.3 sous le numéro 2015_20403_0016 Attribué à Léo Lagrange";
+        let mut parsed = multilingual(
+            &[("ORG-1", &[(Some("FR"), LAGRANGE)]), ("ORG-2", &[(Some("FR"), "Léo Lagrange")])],
+            &["ORG-1", "ORG-2"],
+        );
+        for (section, raw) in [("ORG-1", "1f2e3d4c-5b6a-4978-8a9b-0c1d2e3f4a5b"), ("ORG-2", "2a3b4c5d-6e7f-4089-9b0c-1d2e3f4a5b6c")] {
+            parsed.values.push(code(section, ORG_COUNTRY_FIELDS[0], "FR"));
+            parsed.values.push(id_val(section, ORG_NATIONALID_FIELD, raw));
+        }
+        let (mentions, _, _, extracted) = NoticeState::mentions_and_dropped(false, 9, &parsed);
+        let lagrange: Vec<(&str, &str, bool)> = mentions
+            .iter()
+            .filter(|m| m.section_id != "ORG-9")
+            .map(|m| (m.section_id.as_str(), m.name.as_str(), m.identifier.is_some()))
+            .collect();
+        assert_eq!(lagrange, vec![("ORG-1", "Léo Lagrange", false), ("ORG-2", "Léo Lagrange", false)], "both keys refused");
+        assert_eq!(extracted.count, 1, "the renamed head binds by its name: extracted");
+        assert_eq!(extracted.sample, vec![(9, "ORG-1".into(), LAGRANGE.into(), "Léo Lagrange".into())]);
+        let (published, _, _, ungated) = NoticeState::mentions_and_dropped_gated(false, 9, &parsed, false);
+        assert!(published.iter().filter(|m| m.section_id != "ORG-9").all(|m| m.identifier.is_some()));
+        assert_eq!(ungated.count, 0, "an identified head is no extraction");
     }
 
     /// Issue 520 U4 (unit-1 decision §4.2, §5; 7791767 and 7151483, App. B): a party the fold keeps

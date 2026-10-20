@@ -118,6 +118,12 @@ pub use guid_twins::{
     GuidTwinPostState, GuidTwinRoleRef, GuidTwinRoles, GuidTwinRowSample, GuidTwinRule, GuidTwinSectionRoles,
     GuidTwinTargetSample, TwinBind, TwinDecision, TwinGroup, TwinView, guid_twin_city_fold, guid_twin_fold_roles,
     guid_twin_r2_read, guid_twin_role_after_scope, guid_twin_role_mix, guid_twin_sample_key,
+    // Issue 530 Build 2: the wet run, its manifest and A1's recurrence arm.
+    GUID_TWIN_WET_WINDOW_MENTIONS, GuidTwinLogRow, GuidTwinMinted, GuidTwinReconcile, GuidTwinRecurrence,
+    GuidTwinRecurrenceArgs, GuidTwinRecurrenceValue, GuidTwinWetMention, GuidTwinWindow, GuidTwinWindowArgs,
+    GuidTwinWindowDone, guid_keep_line, guid_twin_reconcile, guid_twin_windows,
+    // A1's reverse drift and its restore.
+    GuidTwinDriftValue, GuidTwinGatedV4, GuidTwinRestoreArgs, GuidTwinRestoreDone,
 };
 pub use jobs::QueuedJobRow;
 pub use publication_audit::PublicationAudit;

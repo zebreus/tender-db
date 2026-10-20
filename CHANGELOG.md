@@ -4,6 +4,37 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 530) — a body one notice names twice under two per-notice platform keys binds by its name
+
+A v4 UUID in `identifier` (`identifier_kind: "national"`) is a submission platform's record key, not a register
+number, and some German platforms mint a fresh one per ORG section per notice: one body (a buyer and its information
+desk, a review chamber in both review slots) became a row per notice with one or two mentions each. Landkreis
+Göttingen read as 52 GUID-keyed organizations.
+- From the deploy on, when ONE notice copy (a TED and a DÖE copy are each read alone) names one body — the same
+  normalised name in the same register country — under two or more distinct v4 keys, those keys are dropped from its
+  mentions (the published value stays in the notice) and the mentions join the body's name-keyed organization (the
+  identifier-NULL row of that name and country, or a new one). Exceptions, which keep binding as before: the 7,312 keys
+  on a frozen keep-list (every key whose organization already spans two or more Tenders and the stable platform keys
+  such as 254 DB InfraGO and 255 Vergabekammer des Bundes, as of the list's cut; the list is only added to by a reviewed
+  commit, and a key merged later is not added to it), names that are not safe as a fallback key (fewer than two content
+  words, generic body names such as `Vergabekammer` or `Zentrale Vergabestelle`, polity umbrellas such as `Freistaat
+  Bayern`), groups whose sections the notice's own role references give a review body beside a buyer-side role, or a
+  bidder (`Tenderer`, `Tenderer-MainCont`, `Tenderer-SubCont`) beside a role that is not a bidder's, and mentions with no
+  country. A body a notice copy names under one key only (once, or more than once under the same key) is untouched: the
+  Südbayern and Bremen per-notice keys, one per notice, stay split.
+- The stock moves once, with the wet `dissolve-guid-twins` run after the deploy: about **10,995** single-Tender GUID
+  organizations are dissolved — each answers `/v1/organizations/{id}` with 404, no redirect, as in issues 440, 510
+  and 522 — and their mentions join the name-keyed rows (about 52 of those are new). The change feed carries about
+  10,995 `organization removed`, about 52 `organization added`, `organization changed` for each name-keyed row that
+  took mentions (and each row that kept some), and about 10k `tender changed`. E.g. Göttingen's 22759261 and
+  22759262 answer 404 and their mentions read on 2294259 (`Landkreis Göttingen`, identifier NULL).
+- `?identifier=` with the key of an organization the wet run dissolved answers an empty page (the notice still
+  publishes the key). The key is dropped only from the twinned notice copy's mentions: where it still binds elsewhere —
+  another notice, or the other (TED/DÖE) copy, naming the body under it once, or an organization that kept some of its
+  mentions (a partial row) — `?identifier=` keeps answering that GUID organization, which no longer carries the twin
+  copy's mentions. Until the wet run, every pre-deploy GUID organization still answers its key.
+- Until the wet run, only twin notices ingested after the deploy bind this way.
+
 ## Unreleased (issue 539) — a DÖE notice's `published_at` is raised to its IssueDate's day when that is later
 
 DÖE publishes no journal date. A DÖE notice's `published_at` was the publication date the buyer requested (BT-738 /
