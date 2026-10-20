@@ -1,6 +1,6 @@
 # 560 — a version that moves only the Tender's value writes no lot change row, so a `/v1/lots` value-bound subscriber keeps a lot its bound now excludes
 
-Status: ready-for-agent — U-b + U-c BUILT, reviewed (wf_250ada72-32e, 10 findings fixed), GATED (900efeb, 1441 s) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 562 and 551 unit 4a. NEXT: U-d — the coverage read crediting D5's seq-less rows against the ~257-lot pre-deploy baseline (decision's amendment), on the first WEEKDAY publication day folded entirely after the deploy whose D5 morning (the next morning's rederive) has no refold or drain running: 2026-10-18's daily fold carried Saturday's near-empty package, so the earliest is Monday 10-19's TED package (D5 morning 10-20 or 10-21). The combined 568/570 refold must not overlap that morning. Then close.
+Status: DONE 2026-10-20 — U-d PASSED (wf_d44820c4-5dc, verified): for publication day 2026-10-19 (D5 morning 10-20, no refold/drain) the lots neither a seq row nor D5 covers are 0 in every segment (TED EUR-only 0/376, TED non-EUR 0/3,035 — 11 silent lots all covered by rederive 2668's D5 rows, FTS 0/216) against the 10-14 pre-deploy baseline of 257 (122/32/103); the 2 silent versions (878700 seq 360, 1139127 seq 3, CZK) keep their elected figure at fold-time rates — a D5 case under amendment (c), not a stop. Was: ready-for-agent — U-b + U-c BUILT, reviewed (wf_250ada72-32e, 10 findings fixed), GATED (900efeb, 1441 s) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 562 and 551 unit 4a. NEXT: U-d — the coverage read crediting D5's seq-less rows against the ~257-lot pre-deploy baseline (decision's amendment), on the first WEEKDAY publication day folded entirely after the deploy whose D5 morning (the next morning's rederive) has no refold or drain running: 2026-10-18's daily fold carried Saturday's near-empty package, so the earliest is Monday 10-19's TED package (D5 morning 10-20 or 10-21). The combined 568/570 refold must not overlap that morning. Then close.
 over a real SSE socket). Next: decide between emitting lot `changed` rows on a Tender head-value move (533's closure-flip
 shape) and documenting the gap as permanent; measure the extra rows first.
 Kind: correctness (SSE `added`/`removed` on `/v1/lots`)
@@ -186,3 +186,17 @@ The build review's confirmed findings, each fixed minimally in the tree:
 - **Still open, pre-existing, not built:** the review's probe found that a chain cut back to its prefix ([n1 EUR 1M,
   n2 EUR 400k] → [n1]) moves the head with no version written and so no change row at all, the Tender's own included (outside 560's scope:
   every head column moves there, not only the value).
+
+## U-d — coverage read PASSED (2026-10-20, workflow wf_d44820c4-5dc; `.scratch/tender-db/560-triage/ud/`) — issue DONE
+
+- Query `q_ud_1019.sql` = the 10-14 baseline `q_adv.sql` with only its timestamps moved (publication day 2026-10-19
+  [1792368000, 1792454400), D5 window 10-20); plan-probed (all seeks), ran once on the box (6.7 s); 8 requests in all.
+- | segment | me pairs | lots both sides | seq-row covered | D5 covered | residue | 10-14 baseline residue |
+  | TED EUR-only | 137 | 376 | 376 | 0 | **0** | 122 |
+  | TED non-EUR | 623 | 3,035 | 3,024 | 11 of 11 | **0** | 32 |
+  | FTS (GBP) | 126 | 216 | 216 | 0 (D5 never moves FTS) | **0** | 103 |
+  Silent lots behind a moved proxy: 1,268 on 10-14 → 11 on 10-19 (~1 %), all covered by rederive 2668 alone (07:41:23–25Z).
+- (c) The two silent versions are TED CZK heads with plain max election: 878700 seq 360 (lot 2394899's 6,701,675,175 CZK on both
+  sides: 275,528,314 EUR cents at the 10-16 fold-time rate on both, moved only by the 10-20 rederive to 275,301,942) and 1139127
+  seq 3 (129,116,301 → 129,010,221 likewise) — D5 cases, not stops. (d) The chain range holds only the rederive's 4,824 and the
+  project's 6,070 seq-less rows; no drain. **PASS** (verifier re-derived every number). U-a (565) re-baselines on these numbers.

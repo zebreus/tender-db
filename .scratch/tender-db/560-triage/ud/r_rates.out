@@ -1,0 +1,2 @@
+{"columns":["currency","rate_date","rate_to_eur","source"],"row_count":6,"rows":[["CZK","2026-10-12",24.391,"ecb"],["CZK","2026-10-13",24.368,"ecb"],["CZK","2026-10-14",24.357,"ecb"],["CZK","2026-10-15",24.353,"ecb"],["CZK","2026-10-16",24.323,"ecb"],["CZK","2026-10-19",24.343,"ecb"]],"truncated":false}EXIT=0
+wall=3.556895495

@@ -1,0 +1,1 @@
+{"columns":["cursor","entity_kind","entity_id","version_seq","op","changed_at"],"row_count":2,"rows":[[958848344,"tender",8852015,1,"added",1792395355],[958854910,"tender",8852015,null,"removed",1792482087]],"truncated":false}

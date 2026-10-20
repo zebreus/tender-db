@@ -1,0 +1,1 @@
+SELECT c.cursor, c.entity_id, c.op, c.changed_at, t.id AS t_id, t.source, t.island_notice_id, t.procedure_key, t.created_at, t.current_seq FROM changes c LEFT JOIN tenders t ON t.id = c.entity_id WHERE c.cursor > 958853608 AND c.cursor <= 958858608 AND +c.entity_kind = 'tender' AND c.version_seq IS NULL AND +c.op = 'removed' ORDER BY c.cursor LIMIT 50

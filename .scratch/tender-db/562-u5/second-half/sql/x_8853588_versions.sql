@@ -1,0 +1,1 @@
+SELECT v.seq, v.caused_by_notice_id AS nid, n.source AS n_source, n.ingested_at, n.published_at, n.parse_state, n.projected, t.created_at, t.source, t.kind, t.current_seq, t.island_notice_id, t.procedure_key FROM tenders t CROSS JOIN tender_versions v ON v.tender_id = t.id CROSS JOIN notices n ON n.id = v.caused_by_notice_id WHERE t.id = 8853588 ORDER BY v.seq LIMIT 20

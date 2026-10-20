@@ -1,0 +1,12 @@
+PLAN	v2	SCAN w
+PLAN	v2	  SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	v2	  SEARCH v USING INDEX tender_versions_notice (caused_by_notice_id=?)
+PLAN	v2	  SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	v2	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	v2	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	v2	  SEARCH v2 USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN	v2	  SEARCH n2 USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	v2	  SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	v2	  SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	v2	USE SORTER FOR GROUP BY
+PLAN	v2	USE HASH TABLE FOR count(DISTINCT)

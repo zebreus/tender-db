@@ -1,6 +1,6 @@
 # 562 — a whole-Tender rewrite of `source` or `kind` (a DÖE Tender turning `ted`) is invisible to an SSE subscription on it
 
-Status: ready-for-agent — unit 5 FIRST HALF PASSED 2026-10-19 (the 10-19 daily fold, project 2645: 102 flips = 102 announced = relabelled 102; TED-first 0; co-minted 0; kind 0; wf_c31642a7-759, verified). NEXT: the second half on the 10-20 daily fold (same read), then close. Was: ready-for-agent — units 2–4 BUILT, reviewed (wf_250ada72-32e), GATED (900efeb) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 560 and 551 unit 4a. NEXT: unit 5 — the paired read over the next Monday/Tuesday DÖE→TED flips (2026-10-19/20 daily folds) against the fold line's `relabelled` count; then close.
+Status: DONE 2026-10-20 — unit 5 PASSED both halves (10-19: project 2645, 102 flips = 102 announced = relabelled 102; 10-20: project 2669, 57 flips = 57 announced = relabelled 57; TED-first 0, co-minted 0, kind moves 0 on both days; wf_c31642a7-759 and wf_d44820c4-5dc, each adversarially verified). Was: ready-for-agent — unit 5 FIRST HALF PASSED 2026-10-19 (the 10-19 daily fold, project 2645: 102 flips = 102 announced = relabelled 102; TED-first 0; co-minted 0; kind 0; wf_c31642a7-759, verified). NEXT: the second half on the 10-20 daily fold (same read), then close. Was: ready-for-agent — units 2–4 BUILT, reviewed (wf_250ada72-32e), GATED (900efeb) and DEPLOYED 2026-10-17 10:50 UTC as `900efeb` with 560 and 551 unit 4a. NEXT: unit 5 — the paired read over the next Monday/Tuesday DÖE→TED flips (2026-10-19/20 daily folds) against the fold line's `relabelled` count; then close.
 read, or a seq-less tender `changed` when the label flips), then build.
 Kind: correctness (SSE `added`/`removed` on `source` and `kind`)
 Relates to:
@@ -255,3 +255,17 @@ bounded SELECTs (≤ 5,000 change rows each), every plan read first on a copy of
 - Verifier (2 confirmation reads): criterion = q1 exactly; pairing and bounds right; recount from the notice side gives the
   same 102. **PASS.**
 
+## Unit 5 — second half: the 2026-10-20 daily fold (PASSED; workflow wf_d44820c4-5dc) — issue DONE
+
+`.scratch/tender-db/562-u5/second-half/` (gen.py, 41 SQL, plans 344 lines 0 SCAN, raw outputs, result.md, verify.md).
+- Chain range (958848784, 958904203], 55,419 rows (dense): rederive-eur-recent 2668's D5 rows first (958848785..958853608: 913
+  tender + 3,911 lot = 4,824 = its job line), then project 2669's rows (958853609..958904203, all changed_at 1792482087);
+  reveal-recheck 2670 wrote 0. The paired read ran over the project sub-range only.
+- **(1) Flips (q1 notice-id form): 57** on 57 Tenders, all seq 2 = current_seq, 0 prepends, none D5-stamped (minted by the 10-19
+  fold from DÖE notices 47414726..47414807; TED twins 47415000..47418535).
+- **(2) Announced: 57 of 57** (same changed_at, 2–15 cursors later).
+- **(3) Not flips:** TED-first 0 (353 TED-first Tenders, none got a row); co-minted 0 rows (8853588, a re-minted island, correctly none).
+  The other 897 seq-less tender rows are ADR-0017 D3's compare-On refold of the 913 D5-stamped Tenders (`corrected` 897).
+- **(4) Log:** 57 seq-less tender rows on non-D5 Tenders = relabelled 57; lots 101 (flips) + 3,712 (D3) = 3,813 = every seq-less
+  lot row in the range; kind moves 0.
+- Verifier (1 confirmation read, notice side): same 57. **PASS.** Both halves passed, so the issue is done.

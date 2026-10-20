@@ -1,0 +1,1 @@
+SELECT c.changed_at AS at, c.entity_kind AS kind, c.version_seq IS NULL AS seqless, c.op AS op, COUNT(*) AS n, MIN(c.cursor) AS lo, MAX(c.cursor) AS hi FROM changes c WHERE c.cursor > 958858784 AND c.cursor <= 958863784 GROUP BY +c.changed_at, +c.entity_kind, c.version_seq IS NULL, +c.op ORDER BY 1, 2, 3, 4 LIMIT 400

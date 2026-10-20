@@ -1,0 +1,39 @@
+
+running 1 test
+PLAN-BEGIN
+PLAN 1 | 0 | 0 | SCAN (subquery-0)
+PLAN 1 | 0 | 0 | SEARCH b USING INDEX tender_versions_published (published_at>=? AND published_at<?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 1
+PLAN 1 | 0 | 0 | SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN 1 | 0 | 0 | SEARCH y USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 3
+PLAN 1 | 0 | 0 | SEARCH x USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 4
+PLAN 1 | 0 | 0 | SEARCH x USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 5
+PLAN 1 | 0 | 0 | SEARCH lb USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | SEARCH la USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=? AND lot_id=?)
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | USE SORTER FOR GROUP BY
+PLAN-END
+PLAN-BEGIN
+PLAN 1 | 0 | 0 | SEARCH (subquery-0) USING INDEX ephemeral_subquery_t20 (enc>=?)
+PLAN 1 | 0 | 0 | SEARCH b USING INDEX tender_versions_published (published_at>=? AND published_at<?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 1
+PLAN 1 | 0 | 0 | SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN 1 | 0 | 0 | SEARCH y USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 3
+PLAN 1 | 0 | 0 | SEARCH x USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 4
+PLAN 1 | 0 | 0 | SEARCH x USING INDEX tender_version_amounts_version (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 5
+PLAN 1 | 0 | 0 | SEARCH lb USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | SEARCH la USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=? AND lot_id=?)
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | SEARCH c2 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | SEARCH c3 USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN-END
+test tests::local_eqp_probe ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 326 filtered out; finished in 2.70s
+

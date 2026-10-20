@@ -1,0 +1,22 @@
+
+running 1 test
+PLAN-BEGIN
+PLAN 1 | 0 | 0 | SEARCH currency_rates USING INDEX sqlite_autoindex_currency_rates_1 (currency=? AND rate_date>=? AND rate_date<=?)
+PLAN-END
+PLAN-BEGIN
+PLAN 1 | 0 | 0 | COMPOUND QUERY
+PLAN 1 | 0 | 0 | LEFT-MOST SUBQUERY
+PLAN 1 | 0 | 0 | SEARCH lb USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SEARCH lb USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN-END
+test tests::local_eqp_probe ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 326 filtered out; finished in 2.99s
+

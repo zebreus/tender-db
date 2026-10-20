@@ -1,0 +1,2 @@
+sqlite3 EXPLAIN QUERY PLAN on d56x/adv/plan.db (python sqlite3):
+SEARCH changes USING INTEGER PRIMARY KEY (rowid>? AND rowid<?)  [both arms]

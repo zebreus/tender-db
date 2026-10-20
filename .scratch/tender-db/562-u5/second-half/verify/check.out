@@ -1,0 +1,31 @@
+total 55419 expect 55419 max sum rows 19
+by changed_at [(1792482078, 123), (1792482079, 121), (1792482080, 448), (1792482081, 220), (1792482082, 727), (1792482083, 607), (1792482084, 216), (1792482085, 861), (1792482086, 1501), (1792482087, 50595)]
+d5 {('lot', 1, 'changed'): 3911, ('tender', 1, 'changed'): 913} 4824
+proj total 50595
+  proj ('bid', 0, 'added') 11679
+  proj ('contract', 0, 'added') 8752
+  proj ('lot', 0, 'added') 4436
+  proj ('lot', 0, 'changed') 9300
+  proj ('lot', 1, 'changed') 3813
+  proj ('lot', 1, 'removed') 25
+  proj ('lot_result', 0, 'added') 6134
+  proj ('organization', 1, 'added') 1264
+  proj ('tender', 0, 'added') 1883
+  proj ('tender', 0, 'changed') 2341
+  proj ('tender', 1, 'changed') 954
+  proj ('tender', 1, 'removed') 14
+seqless rows 954 distinct 954 ats {1792482087}
+ted rows 411 distinct 411
+flips 57 57 seqs Counter({2: 57}) d5 Counter({0: 57})
+announced 57 gaps 2 15
+ann cursor in S 57
+TED-first rows 353 tenders 353 with seqless in S 0
+co-minted rows 1 with seqless in S 0 [(8853588, 1, 0)]
+B 57 D3 897 B==flips True
+B paired Counter({(1, 2, 2): 57})
+B head lots 101 D3 head lots 3712
+D3 paired Counter({False: 889, True: 8}) d5_rows dist Counter({1: 897})
+lot check 3813 3813
+B kinds Counter({('ted', 'procedure'): 57})
+non-flip TED rows with seqless pairing 0 Counter()
+TED rows with d5>0 0

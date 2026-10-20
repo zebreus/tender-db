@@ -1,0 +1,43 @@
+
+running 1 test
+PLAN-BEGIN
+PLAN 1 | 0 | 0 | COMPOUND QUERY
+PLAN 1 | 0 | 0 | LEFT-MOST SUBQUERY
+PLAN 1 | 0 | 0 | SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SEARCH v USING INDEX sqlite_autoindex_tender_versions_2 (tender_id=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN-END
+PLAN-BEGIN
+PLAN 1 | 0 | 0 | COMPOUND QUERY
+PLAN 1 | 0 | 0 | LEFT-MOST SUBQUERY
+PLAN 1 | 0 | 0 | SEARCH x USING INDEX tender_version_amounts_version (tender_id=? AND seq>=? AND seq<=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SEARCH x USING INDEX tender_version_amounts_version (tender_id=? AND seq>=? AND seq<=?)
+PLAN-END
+PLAN-BEGIN
+PLAN 1 | 0 | 0 | COMPOUND QUERY
+PLAN 1 | 0 | 0 | LEFT-MOST SUBQUERY
+PLAN 1 | 0 | 0 | SEARCH lb USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 1
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SEARCH lb USING INDEX sqlite_autoindex_tender_version_lots_1 (tender_id=? AND seq=?)
+PLAN 1 | 0 | 0 | CORRELATED SCALAR SUBQUERY 2
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SCALAR SUBQUERY 3
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | SCAN CONSTANT ROW
+PLAN 1 | 0 | 0 | UNION ALL
+PLAN 1 | 0 | 0 | SCALAR SUBQUERY 4
+PLAN 1 | 0 | 0 | SEARCH c USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN 1 | 0 | 0 | SCAN CONSTANT ROW
+PLAN-END
+test tests::local_eqp_probe ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 326 filtered out; finished in 4.07s
+

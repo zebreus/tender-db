@@ -1,0 +1,42 @@
+responses that were not answers: 0
+range rows 55419; D5 sub-range rows 4824; project sub-range rows 50595
+project sub-range: seq-less tender changed 954, seq-less lot changed 3813
+seq-less tender 'changed' rows read: 954 (distinct tenders 954); all changed_at 1792482087: True
+TED-caused seq-carrying tender rows on Tenders with a DOE notice: 411 (distinct tenders 411)
+
+(1) flip rows: 57; distinct flipped tenders: 57; prepended (seq=1): 0
+    flip rows by op: {'changed': 57}
+    flip rows seq == current_seq: 57
+    tenders with >1 flip row: {}
+    flipped tenders' current source: {'ted': 57}
+    flipped tenders stale-refolded (D5-stamped, d5_rows>0): 0
+    TED nid range: 47415000 47418535 ; DOE first nid range: 47414726 47414807
+    created_at range: 1792395355 1792395355 ; TED ingested_at range: 1792481702 1792481702
+
+(2) flip rows with a later same-changed_at seq-less tender 'changed' row: 57 of 57; tenders 57 of 57
+    cursor gap 2..15
+
+seq-less tender rows on D5-stamped (stale, compare On -> D3) Tenders: 897; on the others (B): 57
+    D3 rows with a paired seq row (versions appended past the prefix): 8; without: 889
+    D3 rows on flipped Tenders: 0
+
+(3) seq-less tender rows whose Tender is not a flip, by writer and class:
+    ('D3', 'no TED join in this fold') 897
+    D3 not-flip rows that are TED-first or co-minted (listed):
+
+Every Tender with a TED-caused row on a DOE chain, by class, D5-stamped, seq-less row present:
+    ('TED-first', False, False) 353
+    ('co-minted', False, False) 1
+    ('flip', False, True) 57
+co-minted Tenders with a lower-id DOE notice (all, listed):
+    8853588 no seqless row [{'seq': 2, 'op': 'changed', 'nid': 47416851, 'n_ingested_at': 1792481702, 'created_at': 1792482087, 'doe_min_nid': 47414783, 'd5_rows': 0, 'source': 'ted'}]
+
+(4) log cross-check
+    B seq-less tender rows (not D5-stamped): 57  vs relabelled 57
+    D3 seq-less tender rows (D5-stamped): 897  vs compare corrected 897
+    B head lots at current_seq: 101; D3 lot rows from the job line (4609 - 897): 3712; sum 3813 vs seq-less lot changed rows 3813
+    B rows with no paired seq row (unchanged-chain early return): 0
+    B rows: flips 57 ; paired min seq: {2: 57}
+    seq-less tender rows by current source/kind (B): {('ted', 'procedure'): 57}
+    seq-less tender rows by current source/kind (D3): {('ted', 'procedure'): 897}
+    flipped Tenders' kind: {'procedure': 57}

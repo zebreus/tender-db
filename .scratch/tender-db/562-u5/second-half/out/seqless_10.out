@@ -1,0 +1,1 @@
+{"columns":["cursor","tender_id","changed_at","source","kind","created_at","current_seq","paired_seq_rows","paired_min_seq","head_lots","d5_rows"],"row_count":1,"rows":[[958903822,8817444,1792482087,"ted","procedure",1791046188,3,0,null,3,1]],"truncated":false}

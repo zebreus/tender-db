@@ -1,0 +1,8 @@
+PLAN	x_8853588_versions	SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	x_8853588_versions	SEARCH v USING INDEX sqlite_autoindex_tender_versions_1 (tender_id=?)
+PLAN	x_8853588_versions	SEARCH n USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	x_8853588_versions	USE SORTER FOR ORDER BY
+PLAN	x_8853588_changes	SEARCH changes USING INDEX changes_entity (entity_kind=? AND entity_id=?)
+PLAN	x_removed_tenders	SEARCH c USING INTEGER PRIMARY KEY (rowid=?)
+PLAN	x_removed_tenders	SEARCH t USING INTEGER PRIMARY KEY (rowid=?) LEFT-JOIN
+PLAN	x_8852015_changes	SEARCH changes USING INDEX changes_entity (entity_kind=? AND entity_id=?)
