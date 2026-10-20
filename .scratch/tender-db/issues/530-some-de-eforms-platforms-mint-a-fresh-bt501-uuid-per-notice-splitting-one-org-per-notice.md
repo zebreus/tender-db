@@ -22,11 +22,14 @@ Relates to:
 
 ## Verify
 
-    curl -s -G https://tenders.zebreus.click/v1/organizations --data-urlencode "name_prefix=Landkreis Göttingen" --data-urlencode limit=200 | jq '[.items[] | select(.name == "Landkreis Göttingen" and ((.identifier // "") | test("^[0-9a-f]{12}4[0-9a-f]{19}$";"i")))] | length'; for id in 254 255; do curl -s https://tenders.zebreus.click/v1/organizations/$id | jq -c '[.id,.identifier,.mentions]'; done
+    curl -s -G https://tenders.zebreus.click/v1/organizations --data-urlencode "name_prefix=Landkreis Göttingen" --data-urlencode limit=200 | jq -c '[.items[] | select(.name == "Landkreis Göttingen" and ((.identifier // "") | test("^[0-9a-f]{12}4[0-9a-f]{19}$";"i")))] | map(.id) | sort'; for id in 254 255; do curl -s https://tenders.zebreus.click/v1/organizations/$id | jq -c '[.id,.identifier,.mentions]'; done; for id in 22759261 22759262; do curl -s -o /dev/null -w "%{http_code}\n" https://tenders.zebreus.click/v1/organizations/$id; done
 
-- **done**: line 1 reads `0`, or the count unit 2 records as deliberately kept, with its reason. Lines 2-3 are the
-  stable-platform control: both rows still GUID-keyed, mentions not lower than 24041 and 72723. If unit 2 declines, it
-  rewrites this block and records why.
+- **done** (A10, rewritten 2026-10-20 for Build 2): line 1's printed ids include every id in
+  `verify.goettingen_surviving_ids` of the latest `guid-twin-dissolve` report (kept ∪ partial: 23014305, 23055364,
+  23110616 per R1, kept for the reason unit 2 records), and every other printed id is greater than
+  `verify.wet_max_org_id` (a no-twin Göttingen GUID row minted after the wet run, correct under (c)). Lines 2-3 are the
+  stable-platform control: both rows still GUID-keyed, mentions not lower than 24041 and 72723. The last two lines print
+  `404` twice (22759261 and 22759262 dissolved, no redirect).
 - **open (2026-10-14)**: `52`, then `[254,"FB197F94757846738A574642AE120532",24041]` and
   `[255,"0A9EA48008E44AB6BF12D722D0AD54B6",72723]`.
 
@@ -318,14 +321,29 @@ reads every ORG mention of a notice through `gated_identifier` with the gate's c
 
 ## Build 2 — wet-run steps the review fixed (2026-10-19)
 
-- **Before Build 2's deploy, read the max notice id** (`SELECT id FROM notices ORDER BY id DESC LIMIT 1` through
-  `/v1/sql`, bounded) and keep it: it is A1's boundary. The wet run now REQUIRES it (`gate_since_notice_id`, refused at
-  enqueue and at run time when missing, and refused above the dry plan's `notice_max_id`); there is no estimate — the dry
-  plan's start is post-deploy, so any later value would hide the twin copies the gate refused in between.
+- **Before Build 2's deploy, read A1's boundary** — the highest notice id at or below which every parsed notice was
+  projected before the deploy (the gate runs at projection): in a queue gap after a `project` that ended ok, the bounded
+  probe `SELECT id FROM notices WHERE parse_state = 'parsed' AND projected = 0 ORDER BY id LIMIT 1` must return no row,
+  then `SELECT id FROM notices ORDER BY id DESC LIMIT 1` through `/v1/sql` (runbook step 1) — and keep it. The wet run
+  REQUIRES it (`gate_since_notice_id`, refused at enqueue and at run time when missing, and refused above the dry plan's
+  `notice_max_id`); there is no estimate — the dry plan's start is post-deploy, so any later value would hide the twin
+  copies the gate refused in between. From the first wet window on, `guid_twin_dissolve_log` records it, and every wet
+  run, recurrence arm and restore refuses another value (the recurrence arm defaults to it).
 - The wet run also refuses while A1's **reverse drift** since that boundary is non-zero (a KEEP-add or unsafe-name commit
   deployed since it); `{"kind":"dissolve-guid-twins","restore":true,"since_notice_id":<boundary>}` restores it. After every
   deployed KEEP-add or `GUID_TWIN_UNSAFE_NAMES` commit: recurrence arm, restore, recurrence arm (0 drift).
-- A12's second half is a read, not `r3.skipped`: after `project` ends ok, `COUNT(projection_epoch = 0)` over the union of
-  the wet jobs' `manifest.refold_tenders_this_run` must be 0 before the census re-run.
+- A12's second half is a read, not `r3.skipped`: after `project` ends ok, `COUNT(projection_epoch = 0)` over the DISTINCT
+  union of the wet jobs' `refold_tenders_this_run` (beside the manifest since round 2, so it survives an unread one) must
+  be 0 before the census re-run.
 - A10's Verify list is `verify.goettingen_surviving_ids` (kept ∪ partial) plus ids above `verify.wet_max_org_id`.
 - Runbook: `docs/operations.md`, "The GUID twin dissolve (issue 530 Build 2)", steps 1–6.
+- Review round 2 (2026-10-20): 440's factored body is not byte-identical in SQL as the plan promised — its tier-3 chain
+  read gained `ORDER BY m.notice_id, m.section_id` (no change in effect: one key, one target; the doc on
+  `dissolve_condemned` says so). 440's own lookup (raw country, bare `LIMIT 1`) is not the resolver's key: issue 578.
+  Open questions the decision left silent, settled in the build: OQ12, no age bound on the stored dry plan (the wet run
+  re-plans); OQ14, stored-mention vs re-parse drift accepted (R1's copy-disagreement and off-GUID counts monitor it; the
+  recurrence arm's forward drift reads its residue). KEEP is 7,312 values (about 460 KB, six columns); an add bumps the
+  file's `# version:` and `GUID_KEEP_530_VERSION` together. The rest are in `docs/operations.md`.
+- **Owned recurring item (after R3):** queue the recurrence arm (`since_notice_id` = the recorded boundary, its default)
+  and a dry plan (planned rows 0: forward drift) BY HAND monthly and after any refold or 434 refresh that re-parses
+  eForms notices; no scheduler arm queues them. A candidate is a reviewed KEEP-add commit, then runbook step 6.
