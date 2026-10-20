@@ -25,9 +25,13 @@ Relates to:
     curl -s -G https://tenders.zebreus.click/v1/organizations --data-urlencode "name_prefix=Landkreis Göttingen" --data-urlencode limit=200 | jq -c '[.items[] | select(.name == "Landkreis Göttingen" and ((.identifier // "") | test("^[0-9a-f]{12}4[0-9a-f]{19}$";"i")))] | map(.id) | sort'; for id in 254 255; do curl -s https://tenders.zebreus.click/v1/organizations/$id | jq -c '[.id,.identifier,.mentions]'; done; for id in 22759261 22759262; do curl -s -o /dev/null -w "%{http_code}\n" https://tenders.zebreus.click/v1/organizations/$id; done
 
 - **done** (A10, rewritten 2026-10-20 for Build 2): line 1's printed ids include every id in
-  `verify.goettingen_surviving_ids` of the latest `guid-twin-dissolve` report (kept ∪ partial: 23014305, 23055364,
-  23110616 per R1, kept for the reason unit 2 records), and every other printed id is greater than
-  `verify.wet_max_org_id` (a no-twin Göttingen GUID row minted after the wet run, correct under (c)). Lines 2-3 are the
+  `verify.goettingen_surviving_ids` of the campaign's wet report (job N, saved as
+  `530-triage/guid_twin_dissolve_N.json` when it landed — the last wet job on the campaign dry plan; never "the
+  latest" report, which a later remedy run or refused re-attempt replaces, with an empty `verify` and a null
+  `wet_max_org_id`) (kept ∪ partial: 23014305, 23055364, 23110616 per R1, kept for the reason unit 2 records),
+  and every other printed id is greater than `verify.wet_max_org_id` (a no-twin Göttingen GUID row minted after
+  the wet run, correct under (c)). R3 writes the job id and the literal `wet_max_org_id` here once it has read
+  them: wet job N = (pending), wet_max_org_id = (pending). Lines 2-3 are the
   stable-platform control: both rows still GUID-keyed, mentions not lower than 24041 and 72723. The last two lines print
   `404` twice (22759261 and 22759262 dissolved, no redirect).
 - **open (2026-10-14)**: `52`, then `[254,"FB197F94757846738A574642AE120532",24041]` and
