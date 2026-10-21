@@ -1,0 +1,11 @@
+[10:51:44] lc03: dry posted: POSTED {"enqueued":[2702]}
+[10:51:55] lc03: dry 2702 DONE-ok
+[10:51:55] lc03: make_wet exit 0: lc03: dry admitted 33 of 5000 (42 notices); wrote lc03_wet.json (expect 33)
+[10:51:56] lc03: CB=959026677
+[10:51:58] lc03: wet posted: POSTED {"enqueued":[2703,2704]}
+[10:52:09] lc03: wet 2703 DONE-ok project 2704 ok
+[10:52:10] lc03: CA=959026689
+[10:52:10] lc03: stamped=33 verified=30 corrected=3
+[10:52:29] lc03: read: lc03: reads done (exit 0); change rows 12 {'lot/changed': 9, 'tender/changed': 3}; retired in the range []
+[10:52:32] lc03: CHECK exit 0: lc03: PASS
+RUN-EXIT=0

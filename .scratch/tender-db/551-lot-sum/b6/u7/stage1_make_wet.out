@@ -1,0 +1,3 @@
+  start rule (D7): now 2026-10-21T10:26Z; next chain 2026-10-22T07:35Z; must finish by 2026-10-22T05:35Z; 6 run(s) left, estimate 3:05:00 (switch-off gate budgeted) -> 2026-10-21T13:31Z: GO; a switch-off must START by 2026-10-22T06:30Z (gate 35+deploy 10+drain_back_and_verify 20 min)
+  NOTE not admitted, outside the 3,502 (pins whose head no lot sum can reach): [4925871, 4930240, 5625591, 8822313]
+stage1: dry admitted 426 of 431 (1916 notices); wrote stage1_wet.json (expect 426)

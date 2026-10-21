@@ -1,0 +1,12 @@
+D1: PASS
+   note: 3100 predicted, 3100 fired as predicted; 0 Rg ids identical-checked; vouched_by equal to the port's first on 3100 of 3100
+D2: PASS
+   note: corrected 3100, expected 3100; named snapshot diff 3100; named ids with rows 3100
+D3: PASS
+D4: PASS
+   note: band route sql; band rows 29; expected so far 29 of B_P 29
+D5: PASS
+   note: 20081 change rows {'lot/changed': 16981, 'tender/changed': 3100}, 3100 live Tenders changed, 0 outside the named list (touched expansion): []
+D7: PASS
+   note: now 2026-10-21T10:39Z; next chain 2026-10-22T07:35Z; must finish by 2026-10-22T05:35Z; 4 run(s) left, estimate 2:25:00 (switch-off gate budgeted) -> 2026-10-21T13:04Z: GO; a switch-off must START by 2026-10-22T06:30Z (gate 35+deploy 10+drain_back_and_verify 20 min)
+stage2: PASS

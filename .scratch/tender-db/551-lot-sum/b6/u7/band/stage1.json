@@ -1,0 +1,336 @@
+{
+ "columns": [
+  "id",
+  "current_value_eur_cents",
+  "current_value_cents",
+  "current_value_currency",
+  "current_value_derivation_detail"
+ ],
+ "items_seen": 35177,
+ "page_log": [
+  {
+   "cursor": null,
+   "items": 1000,
+   "more": true,
+   "next": "139130"
+  },
+  {
+   "cursor": "139130",
+   "items": 1000,
+   "more": true,
+   "next": "274207"
+  },
+  {
+   "cursor": "274207",
+   "items": 1000,
+   "more": true,
+   "next": "406754"
+  },
+  {
+   "cursor": "406754",
+   "items": 1000,
+   "more": true,
+   "next": "539297"
+  },
+  {
+   "cursor": "539297",
+   "items": 1000,
+   "more": true,
+   "next": "685910"
+  },
+  {
+   "cursor": "685910",
+   "items": 1000,
+   "more": true,
+   "next": "825180"
+  },
+  {
+   "cursor": "825180",
+   "items": 1000,
+   "more": true,
+   "next": "957969"
+  },
+  {
+   "cursor": "957969",
+   "items": 1000,
+   "more": true,
+   "next": "1092636"
+  },
+  {
+   "cursor": "1092636",
+   "items": 907,
+   "more": true,
+   "next": "1592636"
+  },
+  {
+   "cursor": "1592636",
+   "items": 22,
+   "more": true,
+   "next": "2092636"
+  },
+  {
+   "cursor": "2092636",
+   "items": 40,
+   "more": true,
+   "next": "2592636"
+  },
+  {
+   "cursor": "2592636",
+   "items": 85,
+   "more": true,
+   "next": "3092636"
+  },
+  {
+   "cursor": "3092636",
+   "items": 429,
+   "more": true,
+   "next": "3592636"
+  },
+  {
+   "cursor": "3592636",
+   "items": 686,
+   "more": true,
+   "next": "4092636"
+  },
+  {
+   "cursor": "4092636",
+   "items": 830,
+   "more": true,
+   "next": "4592636"
+  },
+  {
+   "cursor": "4592636",
+   "items": 1000,
+   "more": true,
+   "next": "5024518"
+  },
+  {
+   "cursor": "5024518",
+   "items": 1000,
+   "more": true,
+   "next": "5484132"
+  },
+  {
+   "cursor": "5484132",
+   "items": 1000,
+   "more": true,
+   "next": "5756337"
+  },
+  {
+   "cursor": "5756337",
+   "items": 1000,
+   "more": true,
+   "next": "5967332"
+  },
+  {
+   "cursor": "5967332",
+   "items": 1000,
+   "more": true,
+   "next": "6161856"
+  },
+  {
+   "cursor": "6161856",
+   "items": 1000,
+   "more": true,
+   "next": "6354604"
+  },
+  {
+   "cursor": "6354604",
+   "items": 1000,
+   "more": true,
+   "next": "6526534"
+  },
+  {
+   "cursor": "6526534",
+   "items": 1000,
+   "more": true,
+   "next": "6700291"
+  },
+  {
+   "cursor": "6700291",
+   "items": 1000,
+   "more": true,
+   "next": "6861510"
+  },
+  {
+   "cursor": "6861510",
+   "items": 1000,
+   "more": true,
+   "next": "7011639"
+  },
+  {
+   "cursor": "7011639",
+   "items": 1000,
+   "more": true,
+   "next": "7236206"
+  },
+  {
+   "cursor": "7236206",
+   "items": 1000,
+   "more": true,
+   "next": "7423051"
+  },
+  {
+   "cursor": "7423051",
+   "items": 1000,
+   "more": true,
+   "next": "7598178"
+  },
+  {
+   "cursor": "7598178",
+   "items": 1000,
+   "more": true,
+   "next": "7777320"
+  },
+  {
+   "cursor": "7777320",
+   "items": 1000,
+   "more": true,
+   "next": "7931924"
+  },
+  {
+   "cursor": "7931924",
+   "items": 1000,
+   "more": true,
+   "next": "8252410"
+  },
+  {
+   "cursor": "8252410",
+   "items": 1000,
+   "more": true,
+   "next": "8408138"
+  },
+  {
+   "cursor": "8408138",
+   "items": 1000,
+   "more": true,
+   "next": "8467107"
+  },
+  {
+   "cursor": "8467107",
+   "items": 1000,
+   "more": true,
+   "next": "8582787"
+  },
+  {
+   "cursor": "8582787",
+   "items": 1000,
+   "more": true,
+   "next": "8639845"
+  },
+  {
+   "cursor": "8639845",
+   "items": 1000,
+   "more": true,
+   "next": "8693917"
+  },
+  {
+   "cursor": "8693917",
+   "items": 1000,
+   "more": true,
+   "next": "8729586"
+  },
+  {
+   "cursor": "8729586",
+   "items": 1000,
+   "more": true,
+   "next": "8771944"
+  },
+  {
+   "cursor": "8771944",
+   "items": 1000,
+   "more": true,
+   "next": "8825782"
+  },
+  {
+   "cursor": "8825782",
+   "items": 178,
+   "more": false,
+   "next": null
+  }
+ ],
+ "pages": 40,
+ "read_at": "2026-10-21T10:32:51Z",
+ "route": "api",
+ "row_count": 11,
+ "rows": [
+  [
+   5769515,
+   13167459000,
+   13167459000,
+   "EUR",
+   "{\"lots\": 4, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 13167459000, \"field\": \"TED-VAL_ESTIMATED_TOTAL\", \"notice_id\": 18974369}}"
+  ],
+  [
+   6435162,
+   10866649300,
+   10866649300,
+   "EUR",
+   "{\"lots\": 5, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 10866649300, \"field\": \"TED-VAL_TOTAL\", \"notice_id\": 20680957}}"
+  ],
+  [
+   6548237,
+   null,
+   8250000000000,
+   "HUF",
+   "{\"lots\": 15, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 8250000000000, \"field\": \"TED-VAL_ESTIMATED_TOTAL\", \"notice_id\": 20508422}}"
+  ],
+  [
+   6679375,
+   23850000000,
+   23850000000,
+   "EUR",
+   "{\"lots\": 3, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 23850000000, \"field\": \"TED-VAL_TOTAL\", \"notice_id\": 20928012}}"
+  ],
+  [
+   6718092,
+   99000000000,
+   99000000000,
+   "EUR",
+   "{\"lots\": 4, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 99000000000, \"field\": \"TED-VAL_ESTIMATED_TOTAL\", \"notice_id\": 20884376}}"
+  ],
+  [
+   7167278,
+   null,
+   34499889144400,
+   "HUF",
+   "{\"lots\": 2, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 34499889144400, \"field\": \"TED-VAL_TOTAL\", \"notice_id\": 22108220}}"
+  ],
+  [
+   7196993,
+   null,
+   4341088788600,
+   "HUF",
+   "{\"lots\": 2, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 4341088788600, \"field\": \"TED-VAL_TOTAL\", \"notice_id\": 22331647}}"
+  ],
+  [
+   7461921,
+   12261000000,
+   12261000000,
+   "EUR",
+   "{\"lots\": 2, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 12261000000, \"field\": \"TED-VAL_ESTIMATED_TOTAL\", \"notice_id\": 22581643}}"
+  ],
+  [
+   8407303,
+   113425196700,
+   113425196700,
+   "EUR",
+   "{\"lots\": 4, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 113425196700, \"field\": \"TED-VAL_TOTAL\", \"notice_id\": 19931200}}"
+  ],
+  [
+   8426318,
+   null,
+   300000000000,
+   "GBP",
+   "{\"lots\": 7, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 300000000000, \"field\": \"TED-HIGH\", \"notice_id\": 20083570}}"
+  ],
+  [
+   8460630,
+   40456874162,
+   40456874162,
+   "EUR",
+   "{\"lots\": 21, \"summed\": \"awards\", \"vouched_by\": {\"cents\": 40456874162, \"field\": \"TED-VAL_TOTAL\", \"notice_id\": 21675186}}"
+  ]
+ ],
+ "truncated": false
+}

@@ -59,3 +59,80 @@
 2026-10-21T10:19:42Z #59 pre_pk007 2.13s rows=2000 truncated=False sha256=3f96d83571ac6dda raw=0059_pre_pk007.json
 2026-10-21T10:19:46Z #60 pre_pk008 2.15s rows=2000 truncated=False sha256=c9382384672420d6 raw=0060_pre_pk008.json
 2026-10-21T10:19:51Z #61 pre_pk009 1.89s rows=904 truncated=False sha256=a563274972d97585 raw=0061_pre_pk009.json
+2026-10-21T10:28:17Z #62 changes_959004090_959006520 6.79s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0062_changes_959004090_959006520.json
+2026-10-21T10:28:29Z #63 health 6.54s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0063_health.json
+2026-10-21T10:28:40Z #64 health 6.09s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0064_health.json
+2026-10-21T10:28:47Z #65 health 1.62s rows=1 truncated=False sha256=ed70464b51489026 raw=0065_health.json
+2026-10-21T10:28:51Z #66 changes_959004090_959006520 1.96s rows=2430 truncated=False sha256=6d27ada6119dfc06 raw=0066_changes_959004090_959006520.json
+2026-10-21T10:28:56Z #67 stage1_named_pk000 2.25s rows=431 truncated=False sha256=61cc951d5de4bd34 raw=0067_stage1_named_pk000.json
+2026-10-21T10:29:00Z #68 stage1_pins_pk000 1.65s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0068_stage1_pins_pk000.json
+2026-10-21T10:29:05Z #69 stage1_d5_pk000 2.50s rows=367 truncated=False sha256=8b0e17522d394adc raw=0069_stage1_d5_pk000.json
+2026-10-21T10:29:14Z #70 stage1_band 6.07s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0070_stage1_band.json
+2026-10-21T10:33:26Z #71 health 1.82s rows=1 truncated=False sha256=ed70464b51489026 raw=0071_health.json
+2026-10-21T10:36:22Z #72 changes_959006520_959011520 2.09s rows=5000 truncated=False sha256=4e63d2e35e38f019 raw=0072_changes_959006520_959011520.json
+2026-10-21T10:36:26Z #73 changes_959011520_959016520 2.07s rows=5000 truncated=False sha256=aede95112868704e raw=0073_changes_959011520_959016520.json
+2026-10-21T10:36:31Z #74 changes_959016520_959021520 2.07s rows=5000 truncated=False sha256=e85811c03fa1a9af raw=0074_changes_959016520_959021520.json
+2026-10-21T10:36:39Z #75 changes_959021520_959026520 6.07s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0075_changes_959021520_959026520.json
+2026-10-21T10:36:44Z #76 health 1.79s rows=1 truncated=False sha256=ed70464b51489026 raw=0076_health.json
+2026-10-21T10:36:48Z #77 changes_959021520_959026520 2.15s rows=5000 truncated=False sha256=0a7914d25344258a raw=0077_changes_959021520_959026520.json
+2026-10-21T10:36:52Z #78 changes_959026520_959026601 1.65s rows=81 truncated=False sha256=c3e7f8b5611021c5 raw=0078_changes_959026520_959026601.json
+2026-10-21T10:36:57Z #79 stage2_named_pk000 2.36s rows=2000 truncated=False sha256=db45b61323012c80 raw=0079_stage2_named_pk000.json
+2026-10-21T10:37:02Z #80 stage2_named_pk001 2.10s rows=1100 truncated=False sha256=326bca4420967c06 raw=0080_stage2_named_pk001.json
+2026-10-21T10:37:10Z #81 stage2_pins_pk000 6.06s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0081_stage2_pins_pk000.json
+2026-10-21T10:37:17Z #82 health 3.83s rows=1 truncated=False sha256=ed70464b51489026 raw=0082_health.json
+2026-10-21T10:37:23Z #83 stage2_named_pk000 3.78s rows=2000 truncated=False sha256=db45b61323012c80 raw=0083_stage2_named_pk000.json
+2026-10-21T10:37:30Z #84 stage2_named_pk001 4.61s rows=1100 truncated=False sha256=326bca4420967c06 raw=0084_stage2_named_pk001.json
+2026-10-21T10:37:36Z #85 stage2_pins_pk000 3.65s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0085_stage2_pins_pk000.json
+2026-10-21T10:37:46Z #86 stage2_d5_pk000 6.96s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0086_stage2_d5_pk000.json
+2026-10-21T10:37:53Z #87 health 4.21s rows=1 truncated=False sha256=ed70464b51489026 raw=0087_health.json
+2026-10-21T10:38:00Z #88 stage2_named_pk000 4.83s rows=2000 truncated=False sha256=db45b61323012c80 raw=0088_stage2_named_pk000.json
+2026-10-21T10:38:07Z #89 stage2_named_pk001 4.77s rows=1100 truncated=False sha256=326bca4420967c06 raw=0089_stage2_named_pk001.json
+2026-10-21T10:38:16Z #90 stage2_pins_pk000 6.07s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0090_stage2_pins_pk000.json
+2026-10-21T10:38:20Z #91 health 1.65s rows=1 truncated=False sha256=ed70464b51489026 raw=0091_health.json
+2026-10-21T10:38:28Z #92 stage2_named_pk000 6.06s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0092_stage2_named_pk000.json
+2026-10-21T10:38:32Z #93 health 1.67s rows=1 truncated=False sha256=ed70464b51489026 raw=0093_health.json
+2026-10-21T10:39:30Z #94 health 0.39s rows=1 truncated=False sha256=ed70464b51489026 raw=0094_health.json
+2026-10-21T10:39:33Z #95 stage2_named_pk000 1.01s rows=2000 truncated=False sha256=db45b61323012c80 raw=0095_stage2_named_pk000.json
+2026-10-21T10:39:37Z #96 stage2_named_pk001 0.86s rows=1100 truncated=False sha256=326bca4420967c06 raw=0096_stage2_named_pk001.json
+2026-10-21T10:39:40Z #97 stage2_pins_pk000 0.38s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0097_stage2_pins_pk000.json
+2026-10-21T10:39:43Z #98 stage2_d5_pk000 1.00s rows=2000 truncated=False sha256=db45b61323012c80 raw=0098_stage2_d5_pk000.json
+2026-10-21T10:39:46Z #99 stage2_d5_pk001 0.88s rows=1100 truncated=False sha256=326bca4420967c06 raw=0099_stage2_d5_pk001.json
+2026-10-21T10:39:50Z #100 stage2_band 0.51s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0100_stage2_band.json
+2026-10-21T10:45:39Z #101 changes_959026601_959026677 0.40s rows=76 truncated=False sha256=c015682d2150a47a raw=0101_changes_959026601_959026677.json
+2026-10-21T10:45:42Z #102 lc01_named_pk000 0.96s rows=2000 truncated=False sha256=bae40843dcdc9381 raw=0102_lc01_named_pk000.json
+2026-10-21T10:45:45Z #103 lc01_named_pk001 0.95s rows=2000 truncated=False sha256=fed7519bf3a9bfc5 raw=0103_lc01_named_pk001.json
+2026-10-21T10:45:49Z #104 lc01_named_pk002 0.67s rows=1000 truncated=False sha256=e49aaab8e2b78c52 raw=0104_lc01_named_pk002.json
+2026-10-21T10:45:52Z #105 lc01_pins_pk000 0.39s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0105_lc01_pins_pk000.json
+2026-10-21T10:45:54Z #106 lc01_d5_pk000 0.39s rows=8 truncated=False sha256=b0768ae1b7ce195e raw=0106_lc01_d5_pk000.json
+2026-10-21T10:45:58Z #107 lc01_band 1.48s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0107_lc01_band.json
+2026-10-21T10:46:01Z #108 health 0.39s rows=1 truncated=False sha256=ed70464b51489026 raw=0108_health.json
+2026-10-21T10:51:26Z #109 lc02_named_pk000 0.98s rows=2000 truncated=False sha256=86829e285ed1744c raw=0109_lc02_named_pk000.json
+2026-10-21T10:51:29Z #110 lc02_named_pk001 0.86s rows=2000 truncated=False sha256=0dd24efcef31e47e raw=0110_lc02_named_pk001.json
+2026-10-21T10:51:33Z #111 lc02_named_pk002 0.61s rows=1000 truncated=False sha256=763b62c56e5dc724 raw=0111_lc02_named_pk002.json
+2026-10-21T10:51:36Z #112 lc02_pins_pk000 0.49s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0112_lc02_pins_pk000.json
+2026-10-21T10:51:39Z #113 lc02_band 1.17s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0113_lc02_band.json
+2026-10-21T10:51:42Z #114 health 0.40s rows=1 truncated=False sha256=ed70464b51489026 raw=0114_health.json
+2026-10-21T10:52:10Z #115 changes_959026677_959026689 0.38s rows=12 truncated=False sha256=7d79c4c751928a52 raw=0115_changes_959026677_959026689.json
+2026-10-21T10:52:14Z #116 lc03_named_pk000 0.94s rows=2000 truncated=False sha256=350dbe8b78c17667 raw=0116_lc03_named_pk000.json
+2026-10-21T10:52:17Z #117 lc03_named_pk001 0.86s rows=2000 truncated=False sha256=956a13bc60108112 raw=0117_lc03_named_pk001.json
+2026-10-21T10:52:20Z #118 lc03_named_pk002 0.65s rows=1000 truncated=False sha256=5ff3478c8cb77f78 raw=0118_lc03_named_pk002.json
+2026-10-21T10:52:23Z #119 lc03_pins_pk000 0.38s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0119_lc03_pins_pk000.json
+2026-10-21T10:52:26Z #120 lc03_d5_pk000 0.38s rows=3 truncated=False sha256=bc426315f5cd2d48 raw=0120_lc03_d5_pk000.json
+2026-10-21T10:52:29Z #121 lc03_band 0.47s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0121_lc03_band.json
+2026-10-21T10:52:32Z #122 health 0.39s rows=1 truncated=False sha256=ed70464b51489026 raw=0122_health.json
+2026-10-21T10:52:49Z #123 lc04_named_pk000 0.53s rows=373 truncated=False sha256=d03aed62dd342ac7 raw=0123_lc04_named_pk000.json
+2026-10-21T10:52:52Z #124 lc04_pins_pk000 0.39s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0124_lc04_pins_pk000.json
+2026-10-21T10:52:55Z #125 lc04_band 0.52s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0125_lc04_band.json
+2026-10-21T10:52:58Z #126 health 0.37s rows=1 truncated=False sha256=ed70464b51489026 raw=0126_health.json
+2026-10-21T10:53:25Z #127 health 0.38s rows=1 truncated=False sha256=ed70464b51489026 raw=0127_health.json
+2026-10-21T10:53:29Z #128 u8_post_all_pk000 0.89s rows=2000 truncated=False sha256=58e16e2b1f45ddb3 raw=0128_u8_post_all_pk000.json
+2026-10-21T10:53:32Z #129 u8_post_all_pk001 0.86s rows=2000 truncated=False sha256=172257082809b374 raw=0129_u8_post_all_pk001.json
+2026-10-21T10:53:36Z #130 u8_post_all_pk002 0.88s rows=2000 truncated=False sha256=ea1d6c7241f6aeeb raw=0130_u8_post_all_pk002.json
+2026-10-21T10:53:39Z #131 u8_post_all_pk003 0.98s rows=2000 truncated=False sha256=74e348c47e29057e raw=0131_u8_post_all_pk003.json
+2026-10-21T10:53:43Z #132 u8_post_all_pk004 0.99s rows=2000 truncated=False sha256=297425f55d91314d raw=0132_u8_post_all_pk004.json
+2026-10-21T10:53:46Z #133 u8_post_all_pk005 0.86s rows=2000 truncated=False sha256=30eb34e3c93ea9ce raw=0133_u8_post_all_pk005.json
+2026-10-21T10:53:49Z #134 u8_post_all_pk006 0.86s rows=2000 truncated=False sha256=c30f1a42f34ca2e3 raw=0134_u8_post_all_pk006.json
+2026-10-21T10:53:53Z #135 u8_post_all_pk007 0.86s rows=2000 truncated=False sha256=43b7f26c416fac06 raw=0135_u8_post_all_pk007.json
+2026-10-21T10:53:56Z #136 u8_post_all_pk008 0.88s rows=2000 truncated=False sha256=db6fa57fb7cf34e9 raw=0136_u8_post_all_pk008.json
+2026-10-21T10:53:59Z #137 u8_post_all_pk009 0.61s rows=904 truncated=False sha256=a563274972d97585 raw=0137_u8_post_all_pk009.json
+2026-10-21T10:54:02Z #138 u8_band 0.46s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0138_u8_band.json

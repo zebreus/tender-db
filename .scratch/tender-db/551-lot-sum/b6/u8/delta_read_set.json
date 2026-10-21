@@ -1,0 +1,171 @@
+{
+ "at": "2026-10-21T10:54:14Z",
+ "band_rows": [],
+ "bar": {
+  "band_rows": "every delta band row (served EUR value >= EUR 100 m) is read in full whether drawn or not, and must read 0 wrong of ANY class (neutral allowed), else SWITCH OFF (point 8 / B-band)",
+  "neutral": "neutral heads outside the band are allowed and counted",
+  "population_30_or_fewer": "every head is read; 0 wrong -> PASS; 1 or more wrong -> FAIL -> SWITCH OFF (no further heads exist to continue into: C8 \"fewer than 30: read all at 0 wrong\")",
+  "population_31_to_59": "as above; the continuation is every head that remains after the first 30 (fewer than 30)",
+  "population_over_30": "0 wrong of the first 30 (sha256(salt + id) ascending) -> PASS; exactly 1 wrong -> read the continuation (the next 30 in the same order, or every remaining head if fewer than 30 remain), which must hold 0 wrong (<= 1 of 60 in all); 2 or more wrong -> FAIL -> SWITCH OFF",
+  "protocol": "a reader + an adversarial skeptic per head, a third reader on disagreement (wf_dc85fa7e-c00's rubric); readers get the served head (S = current_value_cents, currency, n = detail.lots, vouched_by), the Tender and its notices; no port prediction exists for these heads"
+ },
+ "bar_applies": "population_30_or_fewer",
+ "continuation": [],
+ "drawn": [
+  214797,
+  235514,
+  511223,
+  598677,
+  792396,
+  8851505,
+  8854032,
+  8854105
+ ],
+ "items": [
+  {
+   "S": 84000000,
+   "band_row": false,
+   "bar": "U5 sequential bar",
+   "currency": "EUR",
+   "drawn": true,
+   "eur_cents": 84000000,
+   "id": 214797,
+   "n": 2,
+   "vouched_by": {
+    "cents": 84000000,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47410789
+   }
+  },
+  {
+   "S": 46000000,
+   "band_row": false,
+   "bar": "U5 sequential bar",
+   "currency": "EUR",
+   "drawn": true,
+   "eur_cents": 46000000,
+   "id": 235514,
+   "n": 3,
+   "vouched_by": {
+    "cents": 46000000,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47413863
+   }
+  },
+  {
+   "S": 627977800,
+   "band_row": false,
+   "bar": "U5 sequential bar",
+   "currency": "EUR",
+   "drawn": true,
+   "eur_cents": 627977800,
+   "id": 511223,
+   "n": 2,
+   "vouched_by": {
+    "cents": 627977800,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47421805
+   }
+  },
+  {
+   "S": 50897700,
+   "band_row": false,
+   "bar": "U5 sequential bar",
+   "currency": "EUR",
+   "drawn": true,
+   "eur_cents": 50897700,
+   "id": 598677,
+   "n": 3,
+   "vouched_by": {
+    "cents": 50897700,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47412330
+   }
+  },
+  {
+   "S": 7067378,
+   "band_row": false,
+   "bar": "U5 sequential bar",
+   "currency": "EUR",
+   "drawn": true,
+   "eur_cents": 7067378,
+   "id": 792396,
+   "n": 10,
+   "vouched_by": {
+    "cents": 7067400,
+    "field": "BT-1118-NoticeResult",
+    "notice_id": 47414586
+   }
+  },
+  {
+   "S": 490119800,
+   "band_row": false,
+   "bar": "U5 sequential bar",
+   "currency": "EUR",
+   "drawn": true,
+   "eur_cents": 490119800,
+   "id": 8851505,
+   "n": 5,
+   "vouched_by": {
+    "cents": 490119800,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47413801
+   }
+  },
+  {
+   "S": 13410346,
+   "band_row": false,
+   "bar": "U5 sequential bar",
+   "currency": "EUR",
+   "drawn": true,
+   "eur_cents": 13410346,
+   "id": 8854032,
+   "n": 2,
+   "vouched_by": {
+    "cents": 13410346,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47422607
+   }
+  },
+  {
+   "S": 800000000,
+   "band_row": false,
+   "bar": "U5 sequential bar",
+   "currency": "EUR",
+   "drawn": true,
+   "eur_cents": 800000000,
+   "id": 8854105,
+   "n": 2,
+   "vouched_by": {
+    "cents": 800000000,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47420887
+   }
+  }
+ ],
+ "mode": "all",
+ "order": [
+  598677,
+  792396,
+  214797,
+  8854105,
+  235514,
+  8851505,
+  511223,
+  8854032
+ ],
+ "population_ids_sha256": "ed24b402c1e72fc81f702c1009cb0b2c72da72cd4caf07b92daf1dfe830c20c6",
+ "population_n": 8,
+ "read": [
+  214797,
+  235514,
+  511223,
+  598677,
+  792396,
+  8851505,
+  8854032,
+  8854105
+ ],
+ "salt": "551-b6-delta-",
+ "what": "issue 551 B6 U8 delta read set"
+}

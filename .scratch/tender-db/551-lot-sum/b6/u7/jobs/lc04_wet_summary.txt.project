@@ -1,0 +1,2 @@
+job_id=2707 outcome=ok started=1792579957 finished=1792579960
+8 notices → 1 tenders (0 islands), 0 versions; 1 tenders written, 0 verified unchanged, 0 relabelled (issue 562); compare (issue 495): 1 tenders verified, 0 corrected; tables 73 skipped / 0 rewritten; rows 90062 skipped / 0 rewritten; 0 correction rows; 90062 stored rows of 8 versions read in 0.2s: 2.23 us per row, 25112.1 us per version; dropped parties (issue 511): 0 void, 1 placeholder (0 with an identifier), 0 blank; issue-479 procedure type: fts 4 folded / 0 unmapped / 4 none

@@ -1,0 +1,31 @@
+Connection closed by UNKNOWN port 65535
+Traceback (most recent call last):
+  File "<string>", line 3, in <module>
+  File "/usr/lib/python3.11/json/__init__.py", line 293, in load
+    return loads(fp.read(),
+           ^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+scp: Connection closed
+scp: Connection closed
+[10:33:59] stage2: dry posted: POSTED {"enqueued":[2693]}
+[10:34:12] stage2: dry 2693 DONE-ok
+[10:34:12] stage2: make_wet exit 0: stage2: dry admitted 3100 of 3100 (13687 notices); wrote stage2_wet.json (expect 3100)
+[10:34:13] stage2: CB=959006520
+[10:34:19] stage2: wet posted: POSTED {"enqueued":[2694,2695]}
+[10:36:18] stage2: wet 2694 DONE-ok project 2695 ok
+[10:36:19] stage2: CA=959026601
+[10:36:19] stage2: stamped=3100 verified=0 corrected=3100
+[10:36:39] stage2: read exit 3 (attempt 1): stage2: the change enumeration is incomplete (box_health, then re-run this read)
+[10:37:10] stage2: read exit 3 (attempt 2): stage2: reads done (exit 3); change rows 20081 {'lot/changed': 16981, 'tender/changed': 3100}; retired in the range []
+[10:37:47] stage2: read exit 3 (attempt 3): stage2: reads done (exit 3); change rows 20081 {'lot/changed': 16981, 'tender/changed': 3100}; retired in the range []
+[10:38:16] stage2: read exit 3 (attempt 4): stage2: reads done (exit 3); change rows 20081 {'lot/changed': 16981, 'tender/changed': 3100}; retired in the range []
+[10:38:28] stage2: read exit 3 (attempt 5): stage2: reads done (exit 3); change rows 20081 {'lot/changed': 16981, 'tender/changed': 3100}; retired in the range []
+RUN-EXIT=28

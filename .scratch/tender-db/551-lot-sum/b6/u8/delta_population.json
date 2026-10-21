@@ -1,0 +1,115 @@
+{
+ "at": "2026-10-21T10:54:07Z",
+ "band_rows": [],
+ "ids": [
+  214797,
+  235514,
+  511223,
+  598677,
+  792396,
+  8851505,
+  8854032,
+  8854105
+ ],
+ "ids_sha256": "ed24b402c1e72fc81f702c1009cb0b2c72da72cd4caf07b92daf1dfe830c20c6",
+ "n": 8,
+ "rows": {
+  "214797": {
+   "current_published_at": 1792368000,
+   "current_seq": 2,
+   "current_value_cents": 84000000,
+   "current_value_currency": "EUR",
+   "current_value_derivation": "lot-sum-awards",
+   "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47410789,\"cents\":84000000}}",
+   "current_value_eur_cents": 84000000,
+   "id": 214797,
+   "projection_epoch": 4,
+   "source": "ted"
+  },
+  "235514": {
+   "current_published_at": 1792368000,
+   "current_seq": 2,
+   "current_value_cents": 46000000,
+   "current_value_currency": "EUR",
+   "current_value_derivation": "lot-sum-awards",
+   "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":3,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47413863,\"cents\":46000000}}",
+   "current_value_eur_cents": 46000000,
+   "id": 235514,
+   "projection_epoch": 4,
+   "source": "ted"
+  },
+  "511223": {
+   "current_published_at": 1792540800,
+   "current_seq": 3,
+   "current_value_cents": 627977800,
+   "current_value_currency": "EUR",
+   "current_value_derivation": "lot-sum-awards",
+   "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47421805,\"cents\":627977800}}",
+   "current_value_eur_cents": 627977800,
+   "id": 511223,
+   "projection_epoch": 4,
+   "source": "ted"
+  },
+  "598677": {
+   "current_published_at": 1792368000,
+   "current_seq": 2,
+   "current_value_cents": 50897700,
+   "current_value_currency": "EUR",
+   "current_value_derivation": "lot-sum-awards",
+   "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":3,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47412330,\"cents\":50897700}}",
+   "current_value_eur_cents": 50897700,
+   "id": 598677,
+   "projection_epoch": 4,
+   "source": "ted"
+  },
+  "792396": {
+   "current_published_at": 1792368000,
+   "current_seq": 4,
+   "current_value_cents": 7067378,
+   "current_value_currency": "EUR",
+   "current_value_derivation": "lot-sum-awards",
+   "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":10,\"vouched_by\":{\"field\":\"BT-1118-NoticeResult\",\"notice_id\":47414586,\"cents\":7067400}}",
+   "current_value_eur_cents": 7067378,
+   "id": 792396,
+   "projection_epoch": 4,
+   "source": "ted"
+  },
+  "8851505": {
+   "current_published_at": 1792368000,
+   "current_seq": 1,
+   "current_value_cents": 490119800,
+   "current_value_currency": "EUR",
+   "current_value_derivation": "lot-sum-awards",
+   "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":5,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47413801,\"cents\":490119800}}",
+   "current_value_eur_cents": 490119800,
+   "id": 8851505,
+   "projection_epoch": 4,
+   "source": "ted"
+  },
+  "8854032": {
+   "current_published_at": 1792540800,
+   "current_seq": 1,
+   "current_value_cents": 13410346,
+   "current_value_currency": "EUR",
+   "current_value_derivation": "lot-sum-awards",
+   "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47422607,\"cents\":13410346}}",
+   "current_value_eur_cents": 13410346,
+   "id": 8854032,
+   "projection_epoch": 4,
+   "source": "ted"
+  },
+  "8854105": {
+   "current_published_at": 1792540800,
+   "current_seq": 1,
+   "current_value_cents": 800000000,
+   "current_value_currency": "EUR",
+   "current_value_derivation": "lot-sum-awards",
+   "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47420887,\"cents\":800000000}}",
+   "current_value_eur_cents": 800000000,
+   "id": 8854105,
+   "projection_epoch": 4,
+   "source": "ted"
+  }
+ },
+ "what": "issue 551 B6 U8: new lot-sum-awards fires in L_changed outside the 3,502 (the delta read population)"
+}

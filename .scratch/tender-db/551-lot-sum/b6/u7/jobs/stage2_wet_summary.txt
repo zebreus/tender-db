@@ -1,0 +1,1 @@
+refold-lot-sum (issue 551): 3100 of 3100 named Tender(s) whose head could serve a derived lot sum, 13687 notice(s); every named Tender is in the cohort; re-queued 13687, stamped 3100 epoch-stale — the `project` queued behind this job applies them

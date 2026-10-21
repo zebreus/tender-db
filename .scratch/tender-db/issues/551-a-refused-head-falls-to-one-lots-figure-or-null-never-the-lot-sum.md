@@ -1489,3 +1489,54 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   flip, then gate the W=false twin in this checkout — a revert commit of the flip, whose tree outside `.scratch` equals
   pre-flip main (fa96ee3 / 9d1b4ca: d617a78 + the user's `.claude/settings.local.json`) — so a switch-off is a push of that
   revert + a covered deploy (no gate inside the switch-off). Until that gate is green the start rule's 35-min gate budget stands.
+
+## B6 U7 — flip deployed and staged drain (2026-10-21)
+
+- **Flip deployed 10:24:45Z**: e718684 (84c5118 cherry-picked onto main d209375; `gate_deploy_step` = skip, tree equal to the
+  gated 84c5118). The first deploy attempt refused fail-closed (the queue probe's ssh hop dropped, "could not measure the queue");
+  the retry deployed. **C1 = 959004090 = C0**: no rows between U6 and the deploy (classify not needed).
+- The ssh hop (wstunnel) drops intermittently today ("Connection closed by UNKNOWN port 65535", no request reaches the box). Job
+  POSTs go through an idempotent helper (re-reads the job list and re-posts only when no newer job exists; an unreadable list
+  stops it); kit reads that drop are flagged and re-run only after box_health, never retried blind.
+- Switch-off twin: d569107 (revert of e718684, tree = d209375 outside `.scratch`) on local `hold/551-switchoff`, gating since
+  10:25Z in this checkout.
+- **stage1 — PASS** (10:25–10:32Z). Dry 2690: 426 of 431 admitted; not admitted 7511890 (expected) and four pins outside the
+  3,502 that no lot sum can reach (4925871, 4930240, 5625591, 8822313). Wet 2691 (expect 426: stamped 426, re-queued 1,916
+  notices) → project 2692: 59 verified, 367 corrected, 2,430 correction rows; cursor 959004090 → 959006520 (lot ~2,063, tender
+  ~367). D1 367/367 fired as predicted (vouched_by = the port's first on 367/367), Rg 35 identical; D2 corrected 367 = expected;
+  D3 pins PASS; D4 band (public-API route: the /v1/sql seek's ssh hop dropped) 11 = B_P ∩ stage1; D5 0 outside the named list;
+  D7 GO.
+- **stage2 — PASS** (10:34–10:39Z). Dry 2693: 3,100 of 3,100 admitted. Wet 2694 (expect 3,100, stamped 3,100) → project
+  2695: 0 verified, 3,100 corrected (0 tables rewritten: the head value columns only), 20,081 correction rows; cursor
+  959006520 → 959026601. D1 3,100/3,100 as predicted; D2 3,100 = expected; D3 PASS; **D4 band (sql) 29 = B_P**; D5 0 outside.
+  The read's first attempts lost statements to the ssh drops; with ssh connection multiplexing (one persistent tunnel,
+  ControlMaster) every later statement answered. **The 3,502 run is done: 3,467 = |P| fired exactly as predicted, Rg (35)
+  identical, nothing else fired.**
+- **L_changed runs — all PASS** (10:40–10:53Z; D6 cap max(2·proj, proj+10), proj = admitted × 3,502/251,526):
+  lc01 dry 2696 admitted 489/5,000 → wet 2697 → project 2698: 481 verified, 8 corrected; new fires 5 (214797, 235514, 511223,
+  598677, 792396; proj 6.81, cap 16.8). lc02 2699 → 2700/2701: 206 admitted, 206 verified, 0 fires. lc03 2702 → 2703/2704:
+  33 admitted, 30 verified, 3 corrected = 3 new fires (8851505, 8854032, 8854105; proj 0.46, cap 10.5). lc04 2705 →
+  2706/2707: 1 admitted, verified. D5 0 outside P ∪ L_changed on every run; D4 band 29 throughout.
+- **Three non-W corrections in lc01 (530 residue, not path W):** 497154, 675459, 780251 were corrected with no head-value
+  change (their snapshot columns identical; 8 tables / 376 rows rewritten at the head, so rule L announced every head lot:
+  34 / 6 / 8 lot rows). Their only change rows since 10-18 are 530's wet drain (01:29–01:32Z `tender changed`), and 530 did
+  not refold them (2673 stamped 0). So a refold of a 530-touched Tender rewrites head tables that 530's in-place rehome left
+  differently from a fresh projection — a 530 rebuild-parity gap, filed as issue 579. No value moved, so no 551 rule reads it.
+- **U7 done 10:53Z** (start rule GO throughout). **Switch-off twin gated green**: d569107, GATE-EXIT=0, marker
+  `gate-v2 d569107…`; its tree equals pre-flip d209375 outside `.scratch`, so a switch-off is now a push of a revert with
+  that tree + a covered deploy (no gate inside it).
+
+## B6 U8 — verify and delta read (2026-10-21)
+
+- **Verify (10:53–10:54Z): PASS.** `u8/verify.py read`: 18,904 ids by PK, expected-absent 0, band 29 (sql route). `check`:
+  V1 3,467/3,467 fired as predicted, vouched_by = the port's first on 3,467/3,467, Rg 35 identical; V2 nothing outside
+  P ∪ L_changed serves lot-sum-awards; V3 pins PASS; V4 band = B_P (29); V5 every run PASS. verify_result.json 79d9722c….
+- **U9 count baseline (C8): 8 new fires / 729 dry-admitted over the lc runs = 1.0974 %** (corpus figure 1.3923 %). U9 counts
+  each chain's new lot-sum-awards heads against this rate; > 3× means stop and read.
+- **Delta read — predraw recorded before the draw** (delta_predraw.json 4433a6fc…): population **8** (sha256 ed24b402c1e72fc8…),
+  band rows none; bar case **30 or fewer: every head read, 0 wrong → PASS, 1 or more wrong → FAIL → switch off** (no
+  continuation exists); neutral allowed and counted; protocol: reader + adversarial skeptic per head, a third reader on
+  disagreement, wf_dc85fa7e-c00's rubric (M2). Draw (mode all): 214797 (EUR 840,000.00, 2 lots), 235514 (EUR 460,000.00, 3),
+  511223 (EUR 6,279,778.00, 2), 598677 (EUR 508,977.00, 3), 792396 (EUR 70,673.78, 10; vouched BT-1118 70,674.00), 8851505
+  (EUR 4,901,198.00, 5), 8854032 (EUR 134,103.46, 2), 8854105 (EUR 8,000,000.00, 2); all vouched by a BT-118/BT-1118 notice
+  total. Bodies fetched (fetch_b6, 8 tenders + 16 notices). delta_read_set.json 825e5f61….

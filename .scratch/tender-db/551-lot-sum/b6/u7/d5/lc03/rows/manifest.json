@@ -1,0 +1,19 @@
+{
+ "absent_expected": [],
+ "at": "2026-10-21T10:52:26Z",
+ "chunks": [
+  {
+   "chunk": 0,
+   "n": 3,
+   "ok": true,
+   "rows": 3
+  }
+ ],
+ "complete": true,
+ "failures": [],
+ "ids_sha256": "7f1ff040558eb2770b42b36b11553040ab1124490f9d24025c464614696998c5",
+ "label": "lc03_d5",
+ "missing_ids": [],
+ "n_ids": 3,
+ "n_rows": 3
+}

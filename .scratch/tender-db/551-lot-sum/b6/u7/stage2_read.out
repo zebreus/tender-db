@@ -1,0 +1,7 @@
+2026-10-21T10:39:33Z #95 stage2_named_pk000 1.01s rows=2000 truncated=False sha256=db45b61323012c80 raw=0095_stage2_named_pk000.json
+2026-10-21T10:39:37Z #96 stage2_named_pk001 0.86s rows=1100 truncated=False sha256=326bca4420967c06 raw=0096_stage2_named_pk001.json
+2026-10-21T10:39:40Z #97 stage2_pins_pk000 0.38s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0097_stage2_pins_pk000.json
+2026-10-21T10:39:43Z #98 stage2_d5_pk000 1.00s rows=2000 truncated=False sha256=db45b61323012c80 raw=0098_stage2_d5_pk000.json
+2026-10-21T10:39:46Z #99 stage2_d5_pk001 0.88s rows=1100 truncated=False sha256=326bca4420967c06 raw=0099_stage2_d5_pk001.json
+2026-10-21T10:39:50Z #100 stage2_band 0.51s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0100_stage2_band.json
+stage2: reads done (exit 0); change rows 20081 {'lot/changed': 16981, 'tender/changed': 3100}; retired in the range []

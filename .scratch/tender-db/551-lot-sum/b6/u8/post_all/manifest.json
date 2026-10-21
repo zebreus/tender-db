@@ -1,0 +1,73 @@
+{
+ "absent_expected": [],
+ "at": "2026-10-21T10:53:59Z",
+ "chunks": [
+  {
+   "chunk": 0,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 1,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 2,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 3,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 4,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 5,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 6,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 7,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 8,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 9,
+   "n": 904,
+   "ok": true,
+   "rows": 904
+  }
+ ],
+ "complete": true,
+ "failures": [],
+ "ids_sha256": "503176885e3f26e04acb61d7458a097bd37177894c1c7d43add725fd1b08654b",
+ "label": "u8_post_all",
+ "missing_ids": [],
+ "n_ids": 18904,
+ "n_rows": 18904
+}

@@ -1,0 +1,1 @@
+refold-lot-sum (issue 551): 426 of 431 named Tender(s) whose head could serve a derived lot sum, 1916 notice(s); 5 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 4925871,4930240,5625591,7511890,8822313; re-queued 1916, stamped 426 epoch-stale — the `project` queued behind this job applies them

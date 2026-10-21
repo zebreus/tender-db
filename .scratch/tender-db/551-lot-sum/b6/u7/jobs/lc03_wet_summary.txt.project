@@ -1,0 +1,2 @@
+job_id=2704 outcome=ok started=1792579919 finished=1792579921
+42 notices → 33 tenders (0 islands), 0 versions; 33 tenders written, 0 verified unchanged, 0 relabelled (issue 562); compare (issue 495): 30 tenders verified, 3 corrected; tables 477 skipped / 0 rewritten; rows 7545 skipped / 0 rewritten; 12 correction rows; 7545 stored rows of 42 versions read in 0.1s: 6.78 us per row, 1218.5 us per version; issue-479 procedure type: eforms 29 folded / 0 unmapped / 13 none

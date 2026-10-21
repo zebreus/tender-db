@@ -1,0 +1,75 @@
+{
+ "at": "2026-10-21T10:54:07Z",
+ "code": 0,
+ "delta_band_rows": [],
+ "explained_file": null,
+ "explained_sha256": null,
+ "n_delta": 8,
+ "n_read": 18904,
+ "rules": [
+  {
+   "code": 0,
+   "lines": [
+    "note: 3467 predicted, 3467 fired as predicted; 35 Rg ids identical-checked; vouched_by equal to the port's first on 3467 of 3467"
+   ],
+   "rule": "V1 (D1 over the 3,502)",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "V2 (D5 over every id read)",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "V3 (D3)",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: band route sql; band rows 29; expected so far 29 of B_P 29"
+   ],
+   "rule": "V4 (D4)",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "V5 (runs)",
+   "verdict": "PASS"
+  }
+ ],
+ "u9_count_baseline": {
+  "corpus_rate_for_comparison": 0.013923013923013924,
+  "dry_admitted": 729,
+  "new_fires": 8,
+  "per_run": [
+   {
+    "dry_admitted": 489,
+    "new_fires": 5,
+    "run": "lc01"
+   },
+   {
+    "dry_admitted": 206,
+    "new_fires": 0,
+    "run": "lc02"
+   },
+   {
+    "dry_admitted": 33,
+    "new_fires": 3,
+    "run": "lc03"
+   },
+   {
+    "dry_admitted": 1,
+    "new_fires": 0,
+    "run": "lc04"
+   }
+  ],
+  "rate": 0.010973936899862825,
+  "what": "C8: the fire rate observed in the L_changed runs (daily-fold population), U9's count baseline"
+ },
+ "verdict": "PASS"
+}

@@ -1,0 +1,98 @@
+{
+ "214797": {
+  "current_published_at": 1792368000,
+  "current_seq": 2,
+  "current_value_cents": 84000000,
+  "current_value_currency": "EUR",
+  "current_value_derivation": "lot-sum-awards",
+  "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47410789,\"cents\":84000000}}",
+  "current_value_eur_cents": 84000000,
+  "id": 214797,
+  "projection_epoch": 4,
+  "source": "ted"
+ },
+ "235514": {
+  "current_published_at": 1792368000,
+  "current_seq": 2,
+  "current_value_cents": 46000000,
+  "current_value_currency": "EUR",
+  "current_value_derivation": "lot-sum-awards",
+  "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":3,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47413863,\"cents\":46000000}}",
+  "current_value_eur_cents": 46000000,
+  "id": 235514,
+  "projection_epoch": 4,
+  "source": "ted"
+ },
+ "497154": {
+  "current_published_at": 1781568000,
+  "current_seq": 4,
+  "current_value_cents": null,
+  "current_value_currency": null,
+  "current_value_derivation": null,
+  "current_value_derivation_detail": null,
+  "current_value_eur_cents": 4846678800,
+  "id": 497154,
+  "projection_epoch": 4,
+  "source": "ted"
+ },
+ "511223": {
+  "current_published_at": 1792540800,
+  "current_seq": 3,
+  "current_value_cents": 627977800,
+  "current_value_currency": "EUR",
+  "current_value_derivation": "lot-sum-awards",
+  "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":2,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47421805,\"cents\":627977800}}",
+  "current_value_eur_cents": 627977800,
+  "id": 511223,
+  "projection_epoch": 4,
+  "source": "ted"
+ },
+ "598677": {
+  "current_published_at": 1792368000,
+  "current_seq": 2,
+  "current_value_cents": 50897700,
+  "current_value_currency": "EUR",
+  "current_value_derivation": "lot-sum-awards",
+  "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":3,\"vouched_by\":{\"field\":\"BT-118-NoticeResult\",\"notice_id\":47412330,\"cents\":50897700}}",
+  "current_value_eur_cents": 50897700,
+  "id": 598677,
+  "projection_epoch": 4,
+  "source": "ted"
+ },
+ "675459": {
+  "current_published_at": 1753142400,
+  "current_seq": 8,
+  "current_value_cents": null,
+  "current_value_currency": null,
+  "current_value_derivation": null,
+  "current_value_derivation_detail": null,
+  "current_value_eur_cents": 584097052,
+  "id": 675459,
+  "projection_epoch": 4,
+  "source": "ted"
+ },
+ "780251": {
+  "current_published_at": 1730332800,
+  "current_seq": 4,
+  "current_value_cents": null,
+  "current_value_currency": null,
+  "current_value_derivation": null,
+  "current_value_derivation_detail": null,
+  "current_value_eur_cents": null,
+  "id": 780251,
+  "projection_epoch": 4,
+  "source": "ted"
+ },
+ "792396": {
+  "current_published_at": 1792368000,
+  "current_seq": 4,
+  "current_value_cents": 7067378,
+  "current_value_currency": "EUR",
+  "current_value_derivation": "lot-sum-awards",
+  "current_value_derivation_detail": "{\"summed\":\"awards\",\"lots\":10,\"vouched_by\":{\"field\":\"BT-1118-NoticeResult\",\"notice_id\":47414586,\"cents\":7067400}}",
+  "current_value_eur_cents": 7067378,
+  "id": 792396,
+  "projection_epoch": 4,
+  "source": "ted"
+ }
+}

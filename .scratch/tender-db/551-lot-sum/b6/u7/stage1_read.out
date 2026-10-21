@@ -1,0 +1,7 @@
+2026-10-21T10:28:51Z #66 changes_959004090_959006520 1.96s rows=2430 truncated=False sha256=6d27ada6119dfc06 raw=0066_changes_959004090_959006520.json
+2026-10-21T10:28:56Z #67 stage1_named_pk000 2.25s rows=431 truncated=False sha256=61cc951d5de4bd34 raw=0067_stage1_named_pk000.json
+2026-10-21T10:29:00Z #68 stage1_pins_pk000 1.65s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0068_stage1_pins_pk000.json
+2026-10-21T10:29:05Z #69 stage1_d5_pk000 2.50s rows=367 truncated=False sha256=8b0e17522d394adc raw=0069_stage1_d5_pk000.json
+2026-10-21T10:29:14Z #70 stage1_band 6.07s NON-JSON '' stderr='Connection closed by UNKNOWN port 65535\n' sha256=e3b0c44298fc1c14 raw=0070_stage1_band.json
+stage1_band: the /v1/sql band seek did not answer (box flag set; run box_health before the next box read); reading the band over the public API instead
+stage1: reads done (exit 0); change rows 2430 {'lot/changed': 2063, 'tender/changed': 367}; retired in the range []

@@ -1,0 +1,4 @@
+tenders 0/8 214797 200
+notices missing from every layer: 16
+notices 0/16 25692564 200
+{"tenders_ok": 3510, "tenders_404": 0, "tenders_other": 0, "notices_fetched_ok": 15262, "notices_404": 0, "notices_other": 0, "tenders_with_missing_notices_now": 0, "tenders_missing_now_not_computed": 0, "notices_missing_now": 0, "notice_phase_complete": true, "progress": {"run_ids": 8, "tenders_done": 8, "tenders_failed": 0, "tenders_not_attempted": 0, "ids_file": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6/fetch_ids_d6074b7d2697dec5.json"}}

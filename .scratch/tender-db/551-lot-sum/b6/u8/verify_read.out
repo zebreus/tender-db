@@ -1,0 +1,12 @@
+2026-10-21T10:53:29Z #128 u8_post_all_pk000 0.89s rows=2000 truncated=False sha256=58e16e2b1f45ddb3 raw=0128_u8_post_all_pk000.json
+2026-10-21T10:53:32Z #129 u8_post_all_pk001 0.86s rows=2000 truncated=False sha256=172257082809b374 raw=0129_u8_post_all_pk001.json
+2026-10-21T10:53:36Z #130 u8_post_all_pk002 0.88s rows=2000 truncated=False sha256=ea1d6c7241f6aeeb raw=0130_u8_post_all_pk002.json
+2026-10-21T10:53:39Z #131 u8_post_all_pk003 0.98s rows=2000 truncated=False sha256=74e348c47e29057e raw=0131_u8_post_all_pk003.json
+2026-10-21T10:53:43Z #132 u8_post_all_pk004 0.99s rows=2000 truncated=False sha256=297425f55d91314d raw=0132_u8_post_all_pk004.json
+2026-10-21T10:53:46Z #133 u8_post_all_pk005 0.86s rows=2000 truncated=False sha256=30eb34e3c93ea9ce raw=0133_u8_post_all_pk005.json
+2026-10-21T10:53:49Z #134 u8_post_all_pk006 0.86s rows=2000 truncated=False sha256=c30f1a42f34ca2e3 raw=0134_u8_post_all_pk006.json
+2026-10-21T10:53:53Z #135 u8_post_all_pk007 0.86s rows=2000 truncated=False sha256=43b7f26c416fac06 raw=0135_u8_post_all_pk007.json
+2026-10-21T10:53:56Z #136 u8_post_all_pk008 0.88s rows=2000 truncated=False sha256=db6fa57fb7cf34e9 raw=0136_u8_post_all_pk008.json
+2026-10-21T10:53:59Z #137 u8_post_all_pk009 0.61s rows=904 truncated=False sha256=a563274972d97585 raw=0137_u8_post_all_pk009.json
+2026-10-21T10:54:02Z #138 u8_band 0.46s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0138_u8_band.json
+u8: 18904 ids read (expected-absent 0); band rows 29 (route sql)

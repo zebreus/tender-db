@@ -1,0 +1,4 @@
+2026-10-21T10:52:49Z #123 lc04_named_pk000 0.53s rows=373 truncated=False sha256=d03aed62dd342ac7 raw=0123_lc04_named_pk000.json
+2026-10-21T10:52:52Z #124 lc04_pins_pk000 0.39s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0124_lc04_pins_pk000.json
+2026-10-21T10:52:55Z #125 lc04_band 0.52s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0125_lc04_band.json
+lc04: reads done (exit 0); change rows 0 {}; retired in the range []

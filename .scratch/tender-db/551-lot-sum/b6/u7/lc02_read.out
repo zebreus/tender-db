@@ -1,0 +1,6 @@
+2026-10-21T10:51:26Z #109 lc02_named_pk000 0.98s rows=2000 truncated=False sha256=86829e285ed1744c raw=0109_lc02_named_pk000.json
+2026-10-21T10:51:29Z #110 lc02_named_pk001 0.86s rows=2000 truncated=False sha256=0dd24efcef31e47e raw=0110_lc02_named_pk001.json
+2026-10-21T10:51:33Z #111 lc02_named_pk002 0.61s rows=1000 truncated=False sha256=763b62c56e5dc724 raw=0111_lc02_named_pk002.json
+2026-10-21T10:51:36Z #112 lc02_pins_pk000 0.49s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0112_lc02_pins_pk000.json
+2026-10-21T10:51:39Z #113 lc02_band 1.17s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0113_lc02_band.json
+lc02: reads done (exit 0); change rows 0 {}; retired in the range []

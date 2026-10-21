@@ -1,0 +1,25 @@
+{
+ "absent_expected": [],
+ "at": "2026-10-21T10:39:46Z",
+ "chunks": [
+  {
+   "chunk": 0,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 1,
+   "n": 1100,
+   "ok": true,
+   "rows": 1100
+  }
+ ],
+ "complete": true,
+ "failures": [],
+ "ids_sha256": "1ba8de71ca7b4760138304ad58e97a63b11be6eae0031154fd92b0f222c02145",
+ "label": "stage2_d5",
+ "missing_ids": [],
+ "n_ids": 3100,
+ "n_rows": 3100
+}

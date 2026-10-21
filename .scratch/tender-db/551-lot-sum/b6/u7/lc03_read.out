@@ -1,0 +1,8 @@
+2026-10-21T10:52:10Z #115 changes_959026677_959026689 0.38s rows=12 truncated=False sha256=7d79c4c751928a52 raw=0115_changes_959026677_959026689.json
+2026-10-21T10:52:14Z #116 lc03_named_pk000 0.94s rows=2000 truncated=False sha256=350dbe8b78c17667 raw=0116_lc03_named_pk000.json
+2026-10-21T10:52:17Z #117 lc03_named_pk001 0.86s rows=2000 truncated=False sha256=956a13bc60108112 raw=0117_lc03_named_pk001.json
+2026-10-21T10:52:20Z #118 lc03_named_pk002 0.65s rows=1000 truncated=False sha256=5ff3478c8cb77f78 raw=0118_lc03_named_pk002.json
+2026-10-21T10:52:23Z #119 lc03_pins_pk000 0.38s rows=40 truncated=False sha256=ae2098cc6d4110b3 raw=0119_lc03_pins_pk000.json
+2026-10-21T10:52:26Z #120 lc03_d5_pk000 0.38s rows=3 truncated=False sha256=bc426315f5cd2d48 raw=0120_lc03_d5_pk000.json
+2026-10-21T10:52:29Z #121 lc03_band 0.47s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0121_lc03_band.json
+lc03: reads done (exit 0); change rows 12 {'lot/changed': 9, 'tender/changed': 3}; retired in the range []

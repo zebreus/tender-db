@@ -1,0 +1,63 @@
+{
+ "at": "2026-10-21T10:51:42Z",
+ "code": 0,
+ "cursors": {
+  "at": "2026-10-21T10:51:39Z",
+  "cursor_after": 959026677,
+  "cursor_before": 959026677,
+  "retired_in_range": []
+ },
+ "dry_admitted": 206,
+ "expansion": [],
+ "job": {
+  "corrected": 0,
+  "drift": 0,
+  "stamped": 206,
+  "verified": 206
+ },
+ "new_fires": [],
+ "retired": [],
+ "rules": [
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "D3",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: dry admitted 206, projection 2.87, cap 12.9, new fires 0: []",
+    "note: corrected 0 vs 0 live Tenders with change rows in the range (0 named, 0 touched expansion)"
+   ],
+   "rule": "D6",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: band route sql; band rows 29; expected so far 29 of B_P 29"
+   ],
+   "rule": "D4",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: 0 change rows {}, 0 live Tenders changed, 0 outside the named list (touched expansion): []"
+   ],
+   "rule": "D5",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: now 2026-10-21T10:51Z; next chain 2026-10-22T07:35Z; must finish by 2026-10-22T05:35Z; 2 run(s) left, estimate 1:45:00 (switch-off gate budgeted) -> 2026-10-21T12:36Z: GO; a switch-off must START by 2026-10-22T06:30Z (gate 35+deploy 10+drain_back_and_verify 20 min)"
+   ],
+   "rule": "D7",
+   "verdict": "PASS"
+  }
+ ],
+ "run": "lc02",
+ "verdict": "PASS"
+}

@@ -1,0 +1,69 @@
+{
+ "at": "2026-10-21T10:46:01Z",
+ "code": 0,
+ "cursors": {
+  "at": "2026-10-21T10:45:58Z",
+  "cursor_after": 959026677,
+  "cursor_before": 959026601,
+  "retired_in_range": []
+ },
+ "dry_admitted": 489,
+ "expansion": [],
+ "job": {
+  "corrected": 8,
+  "drift": 0,
+  "stamped": 489,
+  "verified": 481
+ },
+ "new_fires": [
+  214797,
+  235514,
+  511223,
+  598677,
+  792396
+ ],
+ "retired": [],
+ "rules": [
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "D3",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: dry admitted 489, projection 6.81, cap 16.8, new fires 5: [214797, 235514, 511223, 598677, 792396]",
+    "note: corrected 8 vs 8 live Tenders with change rows in the range (8 named, 0 touched expansion)"
+   ],
+   "rule": "D6",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: band route sql; band rows 29; expected so far 29 of B_P 29"
+   ],
+   "rule": "D4",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: 76 change rows {'lot/changed': 68, 'tender/changed': 8}, 8 live Tenders changed, 0 outside the named list (touched expansion): []"
+   ],
+   "rule": "D5",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [
+    "note: now 2026-10-21T10:46Z; next chain 2026-10-22T07:35Z; must finish by 2026-10-22T05:35Z; 3 run(s) left, estimate 2:05:00 (switch-off gate budgeted) -> 2026-10-21T12:51Z: GO; a switch-off must START by 2026-10-22T06:30Z (gate 35+deploy 10+drain_back_and_verify 20 min)"
+   ],
+   "rule": "D7",
+   "verdict": "PASS"
+  }
+ ],
+ "run": "lc01",
+ "verdict": "PASS"
+}

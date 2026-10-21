@@ -1,0 +1,11 @@
+D3: PASS
+D6: PASS
+   note: dry admitted 489, projection 6.81, cap 16.8, new fires 5: [214797, 235514, 511223, 598677, 792396]
+   note: corrected 8 vs 8 live Tenders with change rows in the range (8 named, 0 touched expansion)
+D4: PASS
+   note: band route sql; band rows 29; expected so far 29 of B_P 29
+D5: PASS
+   note: 76 change rows {'lot/changed': 68, 'tender/changed': 8}, 8 live Tenders changed, 0 outside the named list (touched expansion): []
+D7: PASS
+   note: now 2026-10-21T10:46Z; next chain 2026-10-22T07:35Z; must finish by 2026-10-22T05:35Z; 3 run(s) left, estimate 2:05:00 (switch-off gate budgeted) -> 2026-10-21T12:51Z: GO; a switch-off must START by 2026-10-22T06:30Z (gate 35+deploy 10+drain_back_and_verify 20 min)
+lc01: PASS

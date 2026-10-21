@@ -1,0 +1,9 @@
+V1 (D1 over the 3,502): PASS
+   note: 3467 predicted, 3467 fired as predicted; 35 Rg ids identical-checked; vouched_by equal to the port's first on 3467 of 3467
+V2 (D5 over every id read): PASS
+V3 (D3): PASS
+V4 (D4): PASS
+   note: band route sql; band rows 29; expected so far 29 of B_P 29
+V5 (runs): PASS
+U9 count baseline (C8): 8 new fires / 729 dry-admitted over the lc runs = 1.0974% (corpus 1.3923%) -- record in 551 before the first U9 check
+u8 verify: PASS; delta population 8 (band rows [])
