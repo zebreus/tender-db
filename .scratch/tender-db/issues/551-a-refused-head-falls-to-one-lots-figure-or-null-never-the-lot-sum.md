@@ -1431,3 +1431,10 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   is allowed and lands, the C1/C9 order is open: either the flip waits for it, or the flip goes first and 530's drain later needs
   the port-diff re-run on the served set (U9's standing rule). The zero-drift probe re-run waits for that choice.
 
+- **530's stock drain landed before U6 (2026-10-21 01:2x–01:3xZ):** wet jobs 2672 + 2673 (10,995 GUID orgs dissolved, 22,056
+  mentions moved, 52 minted; change cursor 958904203 → 958919213; 0 Tenders stamped stale), project 2674 (0). Every Tender of
+  those `tender changed` rows joins L_changed (C1/C9); 530 is DONE.
+- **Zero-drift probe re-run on d617a78 after 530's drain (2026-10-21 ~01:5xZ): PASS.** refold-lot-sum tender_ids = the 3,502
+  (`served_lsa_rows.json` minus 179732; same set as 2656/2657): dry 2677 (3,502 in cohort, 15,537 notices) → wet 2678 (re-queued
+  15,537, stamped 3,502) → project 2679: **3,502 verified, 0 corrected, 0 correction rows, cursor unchanged (958919213)**. The
+  store is at the deployed code's fixed point for the whole set after 530's org moves; the flip's D1/D2 measure path W alone.
