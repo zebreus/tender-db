@@ -1,0 +1,74 @@
+[
+ {
+  "org": 22811975,
+  "notice": 24335209,
+  "section": "ORG-0005",
+  "target": 7615,
+  "tender": null,
+  "target_served": false,
+  "dissolved_absent": true
+ },
+ {
+  "org": 23031089,
+  "notice": 26596242,
+  "section": "ORG-0003",
+  "target": 11823847,
+  "tender": null,
+  "target_served": false,
+  "dissolved_absent": true
+ },
+ {
+  "org": 23016502,
+  "notice": 24600254,
+  "section": "ORG-0005",
+  "target": 8100,
+  "tender": null,
+  "target_served": false,
+  "dissolved_absent": true
+ },
+ {
+  "org": 22982609,
+  "notice": 26571584,
+  "section": "ORG-0004",
+  "target": 1172919,
+  "tender": null,
+  "target_served": false,
+  "dissolved_absent": true
+ },
+ {
+  "org": 22893152,
+  "notice": 26539289,
+  "section": "ORG-0003",
+  "target": 30899495,
+  "tender": null,
+  "target_served": false,
+  "dissolved_absent": true
+ },
+ {
+  "org": 23021942,
+  "notice": 24608214,
+  "section": "ORG-0003",
+  "target": 8100,
+  "tender": null,
+  "target_served": false,
+  "dissolved_absent": true
+ },
+ {
+  "org": 22855316,
+  "notice": 26494895,
+  "section": "ORG-0005",
+  "target": 11823847,
+  "tender": null,
+  "target_served": false,
+  "dissolved_absent": true
+ },
+ {
+  "org": 22822001,
+  "notice": 24347309,
+  "section": "ORG-0001",
+  "target": 1401506,
+  "tender": null,
+  "target_served": false,
+  "dissolved_absent": true
+ }
+]
