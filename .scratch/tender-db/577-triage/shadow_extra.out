@@ -1,0 +1,47 @@
+== EXTRA/direct entry shadows an inventory-declared field ==
+- BT-531-Lot (extra) over DE1-ProcurementProjectLot-ProcurementProject-ProcurementAdditionalType-ProcurementTypeCode at /cac:ProcurementProjectLot/cac:ProcurementProject/cac:ProcurementAdditionalType/cbc:ProcurementTypeCode :: eforms-de-1.x
+- BT-531-Procedure (extra) over DE1-ProcurementProject-ProcurementAdditionalType-ProcurementTypeCode at /cac:ProcurementProject/cac:ProcurementAdditionalType/cbc:ProcurementTypeCode :: eforms-de-1.x
+- BT-707-Lot (direct) over DE1-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-DocumentTypeCode at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:CallForTendersDocumentReference/cbc:DocumentTypeCode :: eforms-de-1.x
+- BT-745-Lot (direct) over DE1-ProcurementProjectLot-TenderingProcess-ProcessJustification-Description at /cac:ProcurementProjectLot/cac:TenderingProcess/cac:ProcessJustification/cbc:Description :: eforms-de-1.x
+- OPT-060-Lot (direct) over DE1-ProcurementProjectLot-TenderingTerms-ContractExecutionRequirement-ExecutionRequirementCode at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:ContractExecutionRequirement/cbc:ExecutionRequirementCode :: eforms-de-1.x
+- UBL-CompanyLegalForm (extra) over DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-CompanyLegalForm at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest/cbc:CompanyLegalForm :: eforms-de-1.x
+- UBL-CompanyLegalFormCode (extra) over DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-CompanyLegalFormCode at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest/cbc:CompanyLegalFormCode :: eforms-de-1.x
+- UBL-ContractExecutionDescription (extra) over DE1-ProcurementProjectLot-TenderingTerms-ContractExecutionRequirement-Description at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:ContractExecutionRequirement/cbc:Description :: eforms-de-1.x
+- UBL-ContractExecutionPermissionCode (extra) over DE1-ProcurementProjectLot-TenderingTerms-ContractExecutionRequirement-ExecutionRequirementCode at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:ContractExecutionRequirement/cbc:ExecutionRequirementCode :: eforms-de-1.x
+- UBL-ContractExecutionReservedCode (extra) over DE1-ProcurementProjectLot-TenderingTerms-ContractExecutionRequirement-ExecutionRequirementCode at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:ContractExecutionRequirement/cbc:ExecutionRequirementCode :: eforms-de-1.x
+- UBL-ContractingPartyTypeCode (extra) over DE1-ContractingParty-ContractingPartyType-PartyTypeCode at /cac:ContractingParty/cac:ContractingPartyType/cbc:PartyTypeCode :: eforms-de-1.x
+- UBL-DocumentLanguageID (extra) over DE1-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-LanguageID at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:CallForTendersDocumentReference/cbc:LanguageID :: eforms-de-1.x
+- UBL-DocumentStatusCode (extra) over DE1-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-DocumentStatusCode at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:CallForTendersDocumentReference/cbc:DocumentStatusCode :: eforms-de-1.x
+- UBL-ElectronicOrderUsage (extra) over DE1-ProcurementProjectLot-TenderingTerms-PostAwardProcess-ElectronicOrderUsageIndicator at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:PostAwardProcess/cbc:ElectronicOrderUsageIndicator :: eforms-de-1.x
+- UBL-ElectronicPaymentUsage (extra) over DE1-ProcurementProjectLot-TenderingTerms-PostAwardProcess-ElectronicPaymentUsageIndicator at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:PostAwardProcess/cbc:ElectronicPaymentUsageIndicator :: eforms-de-1.x
+- UBL-ProcessReason (extra) over DE1-ProcurementProjectLot-TenderingProcess-ProcessJustification-ProcessReason at /cac:ProcurementProjectLot/cac:TenderingProcess/cac:ProcessJustification/cbc:ProcessReason :: eforms-de-1.x
+- UBL-ProcurementAdditionalTypeCode (direct) over DE1-ProcurementProjectLot-ProcurementProject-ProcurementAdditionalType-ProcurementTypeCode at /cac:ProcurementProjectLot/cac:ProcurementProject/cac:ProcurementAdditionalType/cbc:ProcurementTypeCode :: eforms-de-1.x
+- UBL-ProcurementTypeLabel (extra) over DE1-ProcurementProjectLot-ProcurementProject-ProcurementAdditionalType-ProcurementType at /cac:ProcurementProjectLot/cac:ProcurementProject/cac:ProcurementAdditionalType/cbc:ProcurementType :: eforms-de-1.x
+- UBL-SelectionCriterionName (extra) over DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name at /cac:ProcurementProjectLot/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:Name :: eforms-de-1.x
+- UBL-SelectionCriterionType (extra) over DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-CriterionTypeCode at /cac:ProcurementProjectLot/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:CriterionTypeCode :: eforms-de-1.x
+- UBL-SelectionCriterionUsage (extra) over DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-CalculationExpressionCode at /cac:ProcurementProjectLot/cac:TenderingTerms/ext:UBLExtensions/ext:UBLExtension/ext:ExtensionContent/efext:EformsExtension/efac:SelectionCriteria/cbc:CalculationExpressionCode :: eforms-de-1.x
+- UBL-TendererRequirementDescription (extra) over DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest/cac:SpecificTendererRequirement/cbc:Description :: eforms-de-1.x
+- UBL-TendererRequirementTypeCode (extra) over DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-TendererRequirementTypeCode at /cac:ProcurementProjectLot/cac:TenderingTerms/cac:TendererQualificationRequest/cac:SpecificTendererRequirement/cbc:TendererRequirementTypeCode :: eforms-de-1.x
+- UBL-TerminatedIndicator (extra) over DE1-ProcurementProjectLot-TenderingProcess-TerminatedIndicator at /cac:ProcurementProjectLot/cac:TenderingProcess/cbc:TerminatedIndicator :: eforms-de-1.x
+24 rows
+
+== alias graft shadows an inventory-declared field: per version count ==
+eforms-de-1.x 112
+eforms-de-2.0 2
+eforms-de-2.1@eforms-sdk-1.13 2
+eforms-de-2.1@eforms-sdk-1.14 2
+eforms-sdk-1.0 2
+eforms-sdk-1.10 2
+eforms-sdk-1.11 2
+eforms-sdk-1.12 2
+eforms-sdk-1.13 2
+eforms-sdk-1.14 2
+eforms-sdk-1.15 2
+eforms-sdk-1.2 2
+eforms-sdk-1.3 2
+eforms-sdk-1.5 2
+eforms-sdk-1.6 2
+eforms-sdk-1.7 2
+eforms-sdk-1.8 2
+eforms-sdk-1.9 2
+115 distinct (winner, loser, path) rows

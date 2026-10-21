@@ -1,0 +1,194 @@
+[
+ {
+  "id": 214797,
+  "served_now": {
+   "S": 84000000,
+   "currency": "EUR",
+   "n": 2,
+   "eur_cents": 84000000,
+   "vouched_by": {
+    "cents": 84000000,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47410789
+   }
+  },
+  "detail": null,
+  "pre_flip_head": {
+   "current_value_cents": null,
+   "current_value_currency": null,
+   "current_value_eur_cents": null,
+   "current_value_derivation": null,
+   "current_value_derivation_detail": null,
+   "current_seq": 2,
+   "current_published_at": 1792368000
+  }
+ },
+ {
+  "id": 235514,
+  "served_now": {
+   "S": 46000000,
+   "currency": "EUR",
+   "n": 3,
+   "eur_cents": 46000000,
+   "vouched_by": {
+    "cents": 46000000,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47413863
+   }
+  },
+  "detail": null,
+  "pre_flip_head": {
+   "current_value_cents": null,
+   "current_value_currency": null,
+   "current_value_eur_cents": null,
+   "current_value_derivation": null,
+   "current_value_derivation_detail": null,
+   "current_seq": 2,
+   "current_published_at": 1792368000
+  }
+ },
+ {
+  "id": 511223,
+  "served_now": {
+   "S": 627977800,
+   "currency": "EUR",
+   "n": 2,
+   "eur_cents": 627977800,
+   "vouched_by": {
+    "cents": 627977800,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47421805
+   }
+  },
+  "detail": null,
+  "pre_flip_head": {
+   "current_value_cents": null,
+   "current_value_currency": null,
+   "current_value_eur_cents": null,
+   "current_value_derivation": null,
+   "current_value_derivation_detail": null,
+   "current_seq": 3,
+   "current_published_at": 1792540800
+  }
+ },
+ {
+  "id": 598677,
+  "served_now": {
+   "S": 50897700,
+   "currency": "EUR",
+   "n": 3,
+   "eur_cents": 50897700,
+   "vouched_by": {
+    "cents": 50897700,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47412330
+   }
+  },
+  "detail": null,
+  "pre_flip_head": {
+   "current_value_cents": null,
+   "current_value_currency": null,
+   "current_value_eur_cents": null,
+   "current_value_derivation": null,
+   "current_value_derivation_detail": null,
+   "current_seq": 2,
+   "current_published_at": 1792368000
+  }
+ },
+ {
+  "id": 792396,
+  "served_now": {
+   "S": 7067378,
+   "currency": "EUR",
+   "n": 10,
+   "eur_cents": 7067378,
+   "vouched_by": {
+    "cents": 7067400,
+    "field": "BT-1118-NoticeResult",
+    "notice_id": 47414586
+   }
+  },
+  "detail": null,
+  "pre_flip_head": {
+   "current_value_cents": null,
+   "current_value_currency": null,
+   "current_value_eur_cents": null,
+   "current_value_derivation": null,
+   "current_value_derivation_detail": null,
+   "current_seq": 4,
+   "current_published_at": 1792368000
+  }
+ },
+ {
+  "id": 8851505,
+  "served_now": {
+   "S": 490119800,
+   "currency": "EUR",
+   "n": 5,
+   "eur_cents": 490119800,
+   "vouched_by": {
+    "cents": 490119800,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47413801
+   }
+  },
+  "detail": null,
+  "pre_flip_head": {
+   "current_value_cents": null,
+   "current_value_currency": null,
+   "current_value_eur_cents": null,
+   "current_value_derivation": null,
+   "current_value_derivation_detail": null,
+   "current_seq": 1,
+   "current_published_at": 1792368000
+  }
+ },
+ {
+  "id": 8854032,
+  "served_now": {
+   "S": 13410346,
+   "currency": "EUR",
+   "n": 2,
+   "eur_cents": 13410346,
+   "vouched_by": {
+    "cents": 13410346,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47422607
+   }
+  },
+  "detail": null,
+  "pre_flip_head": {
+   "current_value_cents": null,
+   "current_value_currency": null,
+   "current_value_eur_cents": null,
+   "current_value_derivation": null,
+   "current_value_derivation_detail": null,
+   "current_seq": 1,
+   "current_published_at": 1792540800
+  }
+ },
+ {
+  "id": 8854105,
+  "served_now": {
+   "S": 800000000,
+   "currency": "EUR",
+   "n": 2,
+   "eur_cents": 800000000,
+   "vouched_by": {
+    "cents": 800000000,
+    "field": "BT-118-NoticeResult",
+    "notice_id": 47420887
+   }
+  },
+  "detail": null,
+  "pre_flip_head": {
+   "current_value_cents": null,
+   "current_value_currency": null,
+   "current_value_eur_cents": null,
+   "current_value_derivation": null,
+   "current_value_derivation_detail": null,
+   "current_seq": 1,
+   "current_published_at": 1792540800
+  }
+ }
+]

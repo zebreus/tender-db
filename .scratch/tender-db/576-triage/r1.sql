@@ -1,0 +1,1 @@
+SELECT r.field_id AS role, substr(r.value, 1, 4) AS tgt, count(*) AS refs, count(DISTINCT r.notice_id) AS notices FROM notice_ids r WHERE r.notice_id BETWEEN 47408000 AND 47415999 AND +r.is_ref = 1 AND +r.field_id LIKE 'OPT-30%' GROUP BY 1, 2 ORDER BY 1, 2

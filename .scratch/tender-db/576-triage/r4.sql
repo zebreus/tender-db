@@ -1,0 +1,1 @@
+SELECT id, country, identifier_kind, identifier, provisional, name, (SELECT count(*) FROM organization_mentions m WHERE m.organization_id = o.id) AS mentions FROM organizations o WHERE o.name_norm = 'tribunal administrativo central de recursos contractuales' ORDER BY id LIMIT 25

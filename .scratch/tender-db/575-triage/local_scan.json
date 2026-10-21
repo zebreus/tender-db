@@ -1,0 +1,262 @@
+{
+ "notices_scanned": 1800,
+ "org_rows_with_bt501": 5115,
+ "by_shape": {
+  "other": 3937,
+  "cf35": 13,
+  "rfc36": 1165
+ },
+ "cf35_rows": 13,
+ "cf35_notices": 4,
+ "cf35_v4_passes": 0,
+ "cf35_countries": {
+  "FRA": 13
+ },
+ "cf35_names": [
+  [
+   "Avenue-Web Systèmes",
+   4
+  ],
+  [
+   "Tribunal administratif de Toulouse",
+   4
+  ],
+  [
+   "Tribunal administratif de Paris",
+   2
+  ],
+  [
+   "Greffe du Tribunal Administratif de Paris",
+   2
+  ],
+  [
+   "TARN HABITAT",
+   1
+  ]
+ ],
+ "cf35_role_sets": [
+  [
+   "Procedure-SProvider",
+   4
+  ],
+  [
+   "Lot-ReviewOrg",
+   4
+  ],
+  [
+   "Lot-ReviewInfo",
+   3
+  ],
+  [
+   "Lot-AddInfo",
+   1
+  ],
+  [
+   "Lot-Mediator",
+   1
+  ]
+ ],
+ "cf35_buyer_rows": [],
+ "cf35_values_recurring": {},
+ "cf35_within_notice_twins": {
+  "24887461|tribunal administratif de toulouse": 3
+ },
+ "cf35_notice_shape_mix": {
+  "(('cf35', 3), ('other', 1))": 2,
+  "(('cf35', 4), ('other', 5))": 1,
+  "(('cf35', 3), ('other', 3))": 1
+ },
+ "buyer_shapes_in_cf35_notices": {
+  "other:eu": 4
+ },
+ "cf35_same_4hex_prefix_per_notice": {
+  "24690547": true,
+  "24887461": true,
+  "27863637": true,
+  "44493442": true
+ },
+ "cf35_rows_detail": [
+  {
+   "notice_id": 27863637,
+   "section": "ORG-0001",
+   "name": "Avenue-Web Systèmes",
+   "country": "FRA",
+   "city": "Seyssinet-Pariset",
+   "raw": "35FACF6C-D059-D7A3-05A47F8FE0814C3F",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Procedure-SProvider"
+   ]
+  },
+  {
+   "notice_id": 27863637,
+   "section": "ORG-0003",
+   "name": "Tribunal administratif de Paris",
+   "country": "FRA",
+   "city": "Paris",
+   "raw": "35FACF8B-0B78-7FCD-C7F2A436D4AC9FF5",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-ReviewOrg"
+   ]
+  },
+  {
+   "notice_id": 27863637,
+   "section": "ORG-0004",
+   "name": "Greffe du Tribunal Administratif de Paris",
+   "country": "FRA",
+   "city": "Paris",
+   "raw": "35FACF9C-DC8D-C6BE-119EFC26AE8B48D9",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-ReviewInfo"
+   ]
+  },
+  {
+   "notice_id": 44493442,
+   "section": "ORG-0001",
+   "name": "Avenue-Web Systèmes",
+   "country": "FRA",
+   "city": "Seyssinet-Pariset",
+   "raw": "54BD44A7-D622-B34E-82A4B5A82FF19036",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Procedure-SProvider"
+   ]
+  },
+  {
+   "notice_id": 44493442,
+   "section": "ORG-0003",
+   "name": "Tribunal administratif de Paris",
+   "country": "FRA",
+   "city": "Paris",
+   "raw": "54BD44C8-DC34-F9B6-3AAB8D8DE7FA0DA4",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-ReviewOrg"
+   ]
+  },
+  {
+   "notice_id": 44493442,
+   "section": "ORG-0004",
+   "name": "Greffe du Tribunal Administratif de Paris",
+   "country": "FRA",
+   "city": "Paris",
+   "raw": "54BD44DC-0C8D-CD98-6F485C277848677C",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-ReviewInfo"
+   ]
+  },
+  {
+   "notice_id": 24690547,
+   "section": "ORG-0001",
+   "name": "Avenue-Web Systèmes",
+   "country": "FRA",
+   "city": "Seyssinet-Pariset",
+   "raw": "45DD4EEE-991E-0F81-BF0D9F196B68DD69",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Procedure-SProvider"
+   ]
+  },
+  {
+   "notice_id": 24690547,
+   "section": "ORG-0003",
+   "name": "TARN HABITAT",
+   "country": "FRA",
+   "city": "Albi",
+   "raw": "45DD4F77-B7DC-C009-1CEBE6BCE5D85C95",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-AddInfo"
+   ]
+  },
+  {
+   "notice_id": 24690547,
+   "section": "ORG-0004",
+   "name": "Tribunal administratif de Toulouse",
+   "country": "FRA",
+   "city": "Toulouse",
+   "raw": "45DD4F87-C912-982F-DF5C5A1E6F6CF5F3",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-ReviewOrg"
+   ]
+  },
+  {
+   "notice_id": 24887461,
+   "section": "ORG-0001",
+   "name": "Avenue-Web Systèmes",
+   "country": "FRA",
+   "city": "Seyssinet-Pariset",
+   "raw": "F469B2AA-09CE-FED7-FF04655B586BD9BA",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Procedure-SProvider"
+   ]
+  },
+  {
+   "notice_id": 24887461,
+   "section": "ORG-0004",
+   "name": "Tribunal administratif de Toulouse",
+   "country": "FRA",
+   "city": "Toulouse",
+   "raw": "F469B2D8-0AE8-F91E-E7DF9C506D886070",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-ReviewOrg"
+   ]
+  },
+  {
+   "notice_id": 24887461,
+   "section": "ORG-0005",
+   "name": "Tribunal administratif de Toulouse",
+   "country": "FRA",
+   "city": "Toulouse",
+   "raw": "F469B2E7-0B6D-093A-A56552B3515590AF",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-Mediator"
+   ]
+  },
+  {
+   "notice_id": 24887461,
+   "section": "ORG-0006",
+   "name": "Tribunal administratif de Toulouse",
+   "country": "FRA",
+   "city": "Toulouse",
+   "raw": "F469B2F5-C317-94A5-F9F3CF1BF645BA5A",
+   "scheme": "eu",
+   "shape": "cf35",
+   "v4": false,
+   "roles": [
+    "Lot-ReviewInfo"
+   ]
+  }
+ ]
+}
