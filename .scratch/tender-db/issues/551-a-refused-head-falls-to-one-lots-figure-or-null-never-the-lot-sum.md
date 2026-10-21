@@ -1438,3 +1438,54 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   (`served_lsa_rows.json` minus 179732; same set as 2656/2657): dry 2677 (3,502 in cohort, 15,537 notices) → wet 2678 (re-queued
   15,537, stamped 3,502) → project 2679: **3,502 verified, 0 corrected, 0 correction rows, cursor unchanged (958919213)**. The
   store is at the deployed code's fixed point for the whole set after 530's org moves; the flip's D1/D2 measure path W alone.
+
+## B6 U6 — freeze (2026-10-21 10:13–10:20Z, kit `551-lot-sum/b6/u6/`, runbook `u6/RUNBOOK.md`)
+
+- **Preconditions held.** The 10-21 chain finished 07:49:16Z: probes/process 2680–2685 ok (DÖE "probed 2 day(s), 2 new" — the
+  10-20 504 on 2663 caught up), fetch-rates 2686, rederive-eur-recent 2687 (822 stamped), project 2688, reveal-recheck 2689; queue
+  empty. `git diff d617a78 fa96ee3 -- crates/` empty; /health rev d617a78; drift 0 (2677–2679); box_health OK; start rule GO.
+  Kit fix before use: `u6/health.py` read the cursor from a nested shape the public /health does not serve (it is flat:
+  `{"cursor":"…","ok":true,"rev":"…"}`) and printed `cursor=None`; now reads the top-level cursor (nested kept as fallback).
+- **C0 = 959004090.**
+- **Rates (A5):** `$SP/m551/rates-20261021T101342Z` — eurofxref-hist.zip 4599576d28c5f1ab…, newest fixing 2026-10-20 (7,118
+  rows); ecu-ert_bil 48e2c9f17ae7… and ecu-ert_h 47e941270ac4… unchanged. The old set is kept; `u6/rates.json` names both.
+- **L_changed = 15,374** (ids_sha256 c0d42241f8f0e7c1…; file 5e609807…), over change cursor (958787061, 959004090] = 217,029 rows
+  in 44 PK-range chunks, 2630-excluded. Per source (overlaps allowed): S1 tender rows 15,373; S2 lot rows 12,447; S3 541 126;
+  S4 571 66; S5 545 48 (whole); S6 rederive 1,720 (10-19 0 `[START, END)`, 10-20 913 and 10-21 822 `[START, END]`, all
+  confirmed); S7 530 2,742; S8 ingest 12,376 (N0 = 47410179 → NMAX 47424229, 14,045 notices, 0 unprojected). Rows by kind/op:
+  tender +6,584 / ~18,937 / −37, lot +15,043 / ~63,983 / −97, lot_result +18,263 / −70, bid +44,821 / −9,902, contract
+  +23,856 / −51, organization +3,672 / ~718 / −10,995 (530). **37 Tenders retired in the range** (taken out of L_changed, none
+  of the 3,502): 1166545 … 8852015 (`u6/l_changed.json` `retired`).
+- **L_changed ∩ 3,502 = {8534577}, a 2630 artefact.** Its only rows are 2630's own: the tender row at 958809773 (the recorded
+  range end) and its five lot rows at 958809774–958809778 with the same 03:34:07Z stamp and null version — the 2630 range
+  really ends at 958809778. The kit's anomaly rule includes them (conservative), so 8534577 was refetched (T_REF 10:18:15Z) and
+  re-predicted: unchanged.
+- **Deviations from binding text, recorded before the flip deploy (U6.6):**
+  (a) **C1/C3 "whole refolded sets" of 541 and 571** — only Tenders with a change row are enumerable: 541's 126 corrected
+  (found in (958809778, 958809905]) and 571's 66. 541's 627 verified + 67 touched and 571's 1 verified have no row and no
+  bounded enumeration (their carriers are a full notice_texts / notice_ids walk). Accepted because a verified Tender's served
+  output compared identical, 541/571 change served result rows / winners only, none of the 3,502's notices is a 541/571
+  carrier (U2), and a missed fire only loses a fix. D5 treats them as unchanged: a lot-sum-awards fire on one is a SWITCH OFF.
+  (b) **C3 "folded since" read as "first ingested since 2026-10-18 20:30Z"** (U2 correction (2)): S8 = tender_versions of
+  notices with id ≥ N0; a notice ingested earlier and first parsed later is invisible per notice, but any fold of one that moved
+  served facts wrote a change row (S1/S2).
+- **P (port of record 23cbd850…, v2+both, new rates) = 3,467, ids_sha256 a2619fd9e380d3d5…** (P_final.json 9f207e73…):
+  replaced 0, same as U2 3,501 (+ 8534577 re-decided identically), S_eur-only moves 0, errors 0. Rg 35 (= U2). **B_P = the 29
+  (= U2)**, band re-read set empty; near EUR 100 m within 2 %: 899272 (outside P, watch) and 5842187. Pins: as `u6/freeze.json`
+  `pins_expected` (585917 / 5995030 / 8426318 path-W with membership vouches, the Lyon-Turin trio, 16 path-V, 9 must-stay,
+  6465510 not lot-sum-awards); all 8 U9 partial-sum/double-count pins are in P. freeze.json 05f45870….
+- **L = 3,502 ∪ L_changed = 18,875** (L_ids.json b03cd5c3…). **PK snapshot (pre)**: 18,904 of 18,904 ids (L ∪ pins ∪ 7511890 ∪
+  the 61; snapshot_ids 50317688…), 10 statements, missing 0, **serving lot-sum-awards 0**; manifest 290976fc….
+- Box reads used so far: 61 (budget 300, ≤ 280/h).
+
+## B6 U7 — plan (2026-10-21 10:20Z, before the deploy)
+
+- **Stages** (`u7/stages.json` sha256 476cd4bc…; order stage1, stage2, lc01–lc04): stage1 431 ids (P 367, Rg 35, B_P 11, pins
+  40, the 61, 7511890; 29 outside the 3,502) with the salted 300 drawn from P minus the fixed ids (population 3,400, ids_sha256
+  c563c3c9…) by `sha256('551-b6-stage1-'+id)`, drawn-list sha256 35e9bd5a… (first: 6260678, 6663541, 30546, 7109997, 889869);
+  stage2 3,100 (all P, B_P 18); lc01–lc03 5,000 each, lc04 373 (none in the 3,502). Start rule at 10:20Z for 6 runs: GO, estimate
+  3 h 05 m → 13:25Z (switch-off gate budgeted), latest switch-off start 2026-10-22T06:30Z.
+- **Switch-off rev (§0.6):** the marker covers 84c5118 (the flip) only; `gate_deploy_step d617a78` = refuse-head. Plan: deploy the
+  flip, then gate the W=false twin in this checkout — a revert commit of the flip, whose tree outside `.scratch` equals
+  pre-flip main (fa96ee3 / 9d1b4ca: d617a78 + the user's `.claude/settings.local.json`) — so a switch-off is a push of that
+  revert + a covered deploy (no gate inside the switch-off). Until that gate is green the start rule's 35-min gate budget stands.

@@ -1,0 +1,10 @@
+{
+ "fetched_at": "2026-10-19T07:40:51.345Z",
+ "sent_at": "2026-10-19T07:40:50.375Z",
+ "path": "/v1/tenders/8534577",
+ "status": 200,
+ "bytes": 11854,
+ "sha256": "90708a16e97322992920f69d8ce3f8e4c6a9e49255b0e2c0f953a095b203f019",
+ "version": 2,
+ "n_versions": 2
+}

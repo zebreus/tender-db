@@ -1,0 +1,1 @@
+now 2026-10-21T10:20Z; next chain 2026-10-22T07:35Z; must finish by 2026-10-22T05:35Z; 6 run(s) left, estimate 3:05:00 (switch-off gate budgeted) -> 2026-10-21T13:25Z: GO; a switch-off must START by 2026-10-22T06:30Z (gate 35+deploy 10+drain_back_and_verify 20 min)

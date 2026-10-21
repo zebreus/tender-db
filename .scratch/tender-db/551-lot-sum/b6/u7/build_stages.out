@@ -1,0 +1,6 @@
+stage1: 431 ids (P 367, Rg 35, B_P 11, pins 40, outside the 3,502 29)
+stage2: 3100 ids (P 3100, Rg 0, B_P 18, pins 0, outside the 3,502 0)
+lc01: 5000 ids (P 0, Rg 0, B_P 0, pins 0, outside the 3,502 5000)
+lc02: 5000 ids (P 0, Rg 0, B_P 0, pins 0, outside the 3,502 5000)
+lc03: 5000 ids (P 0, Rg 0, B_P 0, pins 0, outside the 3,502 5000)
+lc04: 373 ids (P 0, Rg 0, B_P 0, pins 0, outside the 3,502 373)

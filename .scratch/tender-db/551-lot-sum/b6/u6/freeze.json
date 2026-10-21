@@ -1,0 +1,421 @@
+{
+ "B_P": [
+  683951,
+  707424,
+  726354,
+  1102571,
+  1147190,
+  1148297,
+  5278856,
+  5769515,
+  5842187,
+  6017838,
+  6057925,
+  6195903,
+  6370901,
+  6435162,
+  6548237,
+  6569442,
+  6603588,
+  6679375,
+  6718092,
+  7001924,
+  7011414,
+  7139761,
+  7167278,
+  7196993,
+  7461921,
+  7542368,
+  8407303,
+  8426318,
+  8460630
+ ],
+ "B_P_equals_u2": true,
+ "B_P_u2": [
+  683951,
+  707424,
+  726354,
+  1102571,
+  1147190,
+  1148297,
+  5278856,
+  5769515,
+  5842187,
+  6017838,
+  6057925,
+  6195903,
+  6370901,
+  6435162,
+  6548237,
+  6569442,
+  6603588,
+  6679375,
+  6718092,
+  7001924,
+  7011414,
+  7139761,
+  7167278,
+  7196993,
+  7461921,
+  7542368,
+  8407303,
+  8426318,
+  8460630
+ ],
+ "L": {
+  "ids_sha256": "f27f557c50ee16e53a660053a78127cf48adfa9680d130e07b7ce3c1e3654470",
+  "n": 18875,
+  "runs_of_5000": [
+   [
+    599,
+    801044,
+    5000
+   ],
+   [
+    801086,
+    7934017,
+    5000
+   ],
+   [
+    7934033,
+    8852474,
+    5000
+   ],
+   [
+    8852475,
+    8856349,
+    3875
+   ]
+  ]
+ },
+ "P": {
+  "P_final_sha256": "9f207e735a652cb035437008d9bf09e87e4df6b08eed758d38c431220020fe3a",
+  "ids_sha256": "a2619fd9e380d3d5672b3417d807e504b3a85965b8e5ea319425564e3cd21872",
+  "n": 3467,
+  "u2_ids_sha256": "a2619fd9e380d3d5672b3417d807e504b3a85965b8e5ea319425564e3cd21872",
+  "u2_n": 3467
+ },
+ "Rg": [
+  402503,
+  472292,
+  5581720,
+  5663701,
+  5884304,
+  6003114,
+  6234738,
+  6342738,
+  6356382,
+  6403567,
+  6465510,
+  6582856,
+  6595330,
+  6784258,
+  6815094,
+  6838776,
+  6852228,
+  6937514,
+  7014656,
+  7102361,
+  7163120,
+  7166738,
+  7179291,
+  7202436,
+  7348648,
+  7354861,
+  7380025,
+  7394272,
+  7423850,
+  7600895,
+  7605188,
+  7608791,
+  7651470,
+  7675062,
+  7785319
+ ],
+ "Rg_equals_u2": true,
+ "Rg_u2": [
+  402503,
+  472292,
+  5581720,
+  5663701,
+  5884304,
+  6003114,
+  6234738,
+  6342738,
+  6356382,
+  6403567,
+  6465510,
+  6582856,
+  6595330,
+  6784258,
+  6815094,
+  6838776,
+  6852228,
+  6937514,
+  7014656,
+  7102361,
+  7163120,
+  7166738,
+  7179291,
+  7202436,
+  7348648,
+  7354861,
+  7380025,
+  7394272,
+  7423850,
+  7600895,
+  7605188,
+  7608791,
+  7651470,
+  7675062,
+  7785319
+ ],
+ "band_reread": [],
+ "l_changed": {
+  "file_sha256": "5e609807594fc9d1dc5ddc2b71b8cfbf9026845580bad58289c0eaa6a2172ebc",
+  "ids_sha256": "c0d42241f8f0e7c19938786c8c524780e7f70a75ffefd1b4a07319be96fdbd9a",
+  "n": 15374,
+  "n_in_3502": 1
+ },
+ "n_B_P": 29,
+ "n_Rg": 35,
+ "near_eur100m_2pct": [
+  899272,
+  5842187
+ ],
+ "near_watch_outside_P": [],
+ "pins_expected": {
+  "must_stay": [
+   8440393,
+   7487018,
+   5316712,
+   6885102,
+   4930240,
+   8822313,
+   4925871,
+   175096,
+   5625591
+  ],
+  "not_lsa": [
+   6465510
+  ],
+  "path_v": {
+   "1024214": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 340000000,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "251619": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 2433875808,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "369057": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 6237873629,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "380921": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 724704000,
+    "currency": "PLN",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "392980": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 3574004272,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "425446": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 154900719,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "5779108": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 212000000,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "5943121": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 132157992,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "6342034": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 1083675445,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "6921980": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 2493033611,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "7044132": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 238599200,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "706887": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 7056079275,
+    "currency": "PLN",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "7427765": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 300000000,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "7829010": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 200000000,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "8514592": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 17924893700,
+    "currency": "DKK",
+    "derivation": "lot-sum-vouched",
+    "rule": 537
+   },
+   "928196": {
+    "byte_identical_to": "the pre snapshot",
+    "cents": 4679746035,
+    "currency": "EUR",
+    "derivation": "lot-sum-vouched",
+    "rule": 492
+   }
+  },
+  "path_w": {
+   "585917": {
+    "accepted_vouches": [
+     [
+      "BT-118-NoticeResult",
+      25416405,
+      25000000
+     ]
+    ],
+    "cents": 25000000,
+    "currency": "EUR",
+    "derivation": "lot-sum-awards",
+    "n": 2,
+    "vouched_by": {
+     "cents": 25000000,
+     "field": "BT-118-NoticeResult",
+     "notice_id": 25416405
+    }
+   },
+   "5995030": {
+    "accepted_vouches": [
+     [
+      "TED-VAL_TOTAL",
+      19612533,
+      154639000
+     ]
+    ],
+    "cents": 154951160,
+    "currency": "PLN",
+    "derivation": "lot-sum-awards",
+    "n": 35,
+    "vouched_by": {
+     "cents": 154639000,
+     "field": "TED-VAL_TOTAL",
+     "notice_id": 19612533
+    }
+   },
+   "8426318": {
+    "accepted_vouches": [
+     [
+      "TED-HIGH",
+      20083570,
+      300000000000
+     ],
+     [
+      "TED-HIGH",
+      20083570,
+      300000000000
+     ],
+     [
+      "TED-LOW",
+      20083570,
+      300000000000
+     ],
+     [
+      "TED-LOW",
+      20083570,
+      300000000000
+     ]
+    ],
+    "cents": 300000000000,
+    "currency": "GBP",
+    "derivation": "lot-sum-awards",
+    "n": 7,
+    "vouched_by": {
+     "cents": 300000000000,
+     "field": "TED-HIGH",
+     "notice_id": 20083570
+    }
+   }
+  },
+  "trio": {
+   "6450467": {
+    "currency": "EUR",
+    "derivation": null,
+    "eur_cents": 166066168294
+   },
+   "6450469": {
+    "currency": "EUR",
+    "derivation": null,
+    "eur_cents": 166066168294
+   },
+   "6450473": {
+    "currency": "EUR",
+    "derivation": null,
+    "eur_cents": 166066168294
+   }
+  }
+ },
+ "snapshot_ids": {
+  "ids_sha256": "503176885e3f26e04acb61d7458a097bd37177894c1c7d43add725fd1b08654b",
+  "n": 18904
+ },
+ "stops": [],
+ "u9_pins_in_P": {
+  "6679375": true,
+  "6779279": true,
+  "6850401": true,
+  "6908248": true,
+  "7153588": true,
+  "7398935": true,
+  "7698260": true,
+  "7722197": true
+ },
+ "what": "issue 551 B6 U6: the frozen prediction (written before the flip deploy; every U7/U8 checker reads it)"
+}

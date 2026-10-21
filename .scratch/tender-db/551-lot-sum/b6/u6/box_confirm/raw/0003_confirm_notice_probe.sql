@@ -1,0 +1,2 @@
+SELECT s.value AS probe, (SELECT n.id FROM notices n WHERE n.id >= s.value ORDER BY n.id LIMIT 1) AS nid, (SELECT n.ingested_at FROM notices n WHERE n.id >= s.value ORDER BY n.id LIMIT 1) AS ingested_at FROM generate_series(47400000, 47600000, 20000) s
+-- plan: SCAN generate_series AS s | CORRELATED SCALAR SUBQUERY 1 |   SEARCH n USING INTEGER PRIMARY KEY (rowid=?) | CORRELATED SCALAR SUBQUERY 2 |   SEARCH n USING INTEGER PRIMARY KEY (rowid=?)

@@ -1,0 +1,8 @@
+2026-10-21T10:17:22Z #46 notice_probe 1.81s rows=1001 truncated=False sha256=4041eabea564cc5d raw=0046_notice_probe.json
+2026-10-21T10:17:26Z #47 notice_boundary 1.83s rows=1000 truncated=False sha256=c99feee2e55b87f4 raw=0047_notice_boundary.json
+2026-10-21T10:17:30Z #48 notice_top 1.68s rows=505 truncated=False sha256=a31800df83ae465b raw=0048_notice_top.json
+2026-10-21T10:17:35Z #49 notice_tenders_47410179_47415179 2.20s rows=4998 truncated=False sha256=79b45d8b51505a5a raw=0049_notice_tenders_47410179_47415179.json
+2026-10-21T10:17:39Z #50 notice_tenders_47415179_47420179 2.20s rows=4996 truncated=False sha256=9d5d98df42838ca3 raw=0050_notice_tenders_47415179_47420179.json
+2026-10-21T10:17:44Z #51 notice_tenders_47420179_47424230 2.03s rows=4051 truncated=False sha256=e242143b102e4e3d raw=0051_notice_tenders_47420179_47424230.json
+N0=47410179 NMAX=47424229 chunks=3
+EXIT=0

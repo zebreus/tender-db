@@ -1,0 +1,31 @@
+{
+ "RULE_G_RATES_DIR": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/rates-20261021T101342Z",
+ "accepted_newer": false,
+ "deviation": null,
+ "download": {
+  "at": "2026-10-21T10:13:42Z",
+  "bytes": 641518,
+  "csv_rows": 7118,
+  "newest_fixing": "2026-10-20",
+  "sha256": "4599576d28c5f1ab52a01646c505e591e9bc5ffa943092873293493d7398e96c",
+  "url": "https://www.ecb.europa.eu/stats/eurofxref/eurofxref-hist.zip"
+ },
+ "new": {
+  "dir": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/rates-20261021T101342Z",
+  "sha256": {
+   "ecu-ert_bil_eur_d.csv": "48e2c9f17ae7219b2b145a66ace399aba7c306c88721b7ce8f7c76f4758e131b",
+   "ecu-ert_h_eur_d.csv": "47e941270ac4a0f0f22416bd4b41c9b427d43c3a4f430996f8457dca8f134e5c",
+   "eurofxref-hist.zip": "4599576d28c5f1ab52a01646c505e591e9bc5ffa943092873293493d7398e96c"
+  }
+ },
+ "old": {
+  "dir": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/m551/rates",
+  "sha256": {
+   "ecu-ert_bil_eur_d.csv": "48e2c9f17ae7219b2b145a66ace399aba7c306c88721b7ce8f7c76f4758e131b",
+   "ecu-ert_h_eur_d.csv": "47e941270ac4a0f0f22416bd4b41c9b427d43c3a4f430996f8457dca8f134e5c",
+   "eurofxref-hist.zip": "8e925cef1572f8df5c8743229a761b029180f3b5cd4aa2213592192964ebd793"
+  }
+ },
+ "store_loaded_up_to": "2026-10-20",
+ "what": "issue 551 B6 U6 step 0 (A5): the port rates set refreshed after the 10-21 chain fetch-rates"
+}

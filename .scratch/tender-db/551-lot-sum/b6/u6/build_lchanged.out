@@ -1,0 +1,20 @@
+L_changed 15374 (sha256 c0d42241f8f0e7c1), ∩ 3,502: 1, outside: 15373
+  S1_tender_rows: {'n': 15373, 'n_in_3502': 0, 'n_only_this_source': 0}
+  S2_lot_rows: {'n': 12447, 'n_in_3502': 1, 'n_only_this_source': 1}
+  S3_541: {'n': 126, 'n_in_3502': 0, 'n_only_this_source': 0}
+  S4_571: {'n': 66, 'n_in_3502': 0, 'n_only_this_source': 0}
+  S5_545: {'n': 48, 'n_in_3502': 0, 'n_only_this_source': 0}
+  S6_rederive: {'n': 1720, 'n_in_3502': 0, 'n_only_this_source': 0}
+  S7_530: {'n': 2742, 'n_in_3502': 0, 'n_only_this_source': 0}
+  S8_ingest: {'n': 12376, 'n_in_3502': 0, 'n_only_this_source': 0}
+  2630 excluded: 3502 tender + 19210 lot + 0 org rows + result rows {}
+  rows by kind/op: {'bid/added': 44821, 'bid/removed': 9902, 'contract/added': 23856, 'contract/removed': 51, 'lot/added': 15043, 'lot/changed': 63983, 'lot/removed': 97, 'lot_result/added': 18263, 'lot_result/removed': 70, 'organization/added': 3672, 'organization/changed': 718, 'organization/removed': 10995, 'tender/added': 6584, 'tender/changed': 18937, 'tender/removed': 37}
+  retired (out of L_changed): 37; unmapped lot rows {'removed': 97, 'gone_later': 6, 'bad': 0}
+  rederive 2026-10-19: moved 0 confirmed=True ([START, END))
+  rederive 2026-10-20: moved 913 confirmed=True ([START, END])
+  rederive 2026-10-21: moved 822 confirmed=True ([START, END])
+  DEVIATION (record in 551 before the flip deploy): C1/C3 whole refolded sets of 541 and 571
+  DEVIATION (record in 551 before the flip deploy): C3 "folded since" read as "first ingested since"
+  NOTE 97 removed lot rows (the lot row was deleted: orphan sweep or retirement) and 6 added/changed lot rows of a lot removed later in the range map to no Tender (expected: their Tender's own tender row carries it, or it was retired)
+  NOTE 37 Tenders retired in the range (last tender row `removed`: no tenders row, never PK-readable): taken out of L_changed and listed under "retired": [1166545, 1208644, 1209550, 1211273, 1211959, 1212943, 1214417, 1214531, 1215013, 1216169, 1216753, 1218043, 1219428, 1219473, 1739399, 1740086, 1744088, 7939455, 7945669, 7967007]
+  ANOMALY 5 version-null rows stamped 03:34:07Z OUTSIDE 958787062-958809773 are INCLUDED (cursors [958809774, 958809775, 958809776, 958809777, 958809778])

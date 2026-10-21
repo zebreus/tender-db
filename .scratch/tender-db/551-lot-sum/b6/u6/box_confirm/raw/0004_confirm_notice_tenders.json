@@ -1,0 +1,1 @@
+{"columns":["id","ingested_at","source","parse_state","projected","tender_id","seq"],"row_count":5,"rows":[[47420000,1792568103,"ted","parsed",0,null,null],[47420001,1792568103,"ted","parsed",0,null,null],[47420002,1792568103,"ted","parsed",0,null,null],[47420003,1792568103,"ted","parsed",0,null,null],[47420004,1792568103,"ted","parsed",0,null,null]],"truncated":false}

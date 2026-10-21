@@ -1,0 +1,12 @@
+2026-10-21T10:19:09Z #52 pre_pk000 2.29s rows=2000 truncated=False sha256=5e29b5d1a5c37733 raw=0052_pre_pk000.json
+2026-10-21T10:19:14Z #53 pre_pk001 2.15s rows=2000 truncated=False sha256=8b96ac709e581ee5 raw=0053_pre_pk001.json
+2026-10-21T10:19:18Z #54 pre_pk002 2.10s rows=2000 truncated=False sha256=d479ae971c6e4459 raw=0054_pre_pk002.json
+2026-10-21T10:19:23Z #55 pre_pk003 2.18s rows=2000 truncated=False sha256=0a09a796d1c57bb5 raw=0055_pre_pk003.json
+2026-10-21T10:19:28Z #56 pre_pk004 2.17s rows=2000 truncated=False sha256=ad054ea501f91d3b raw=0056_pre_pk004.json
+2026-10-21T10:19:32Z #57 pre_pk005 2.22s rows=2000 truncated=False sha256=f7a3a1d54980eee4 raw=0057_pre_pk005.json
+2026-10-21T10:19:37Z #58 pre_pk006 2.16s rows=2000 truncated=False sha256=dbd6b5554e9d4fa5 raw=0058_pre_pk006.json
+2026-10-21T10:19:42Z #59 pre_pk007 2.13s rows=2000 truncated=False sha256=3f96d83571ac6dda raw=0059_pre_pk007.json
+2026-10-21T10:19:46Z #60 pre_pk008 2.15s rows=2000 truncated=False sha256=c9382384672420d6 raw=0060_pre_pk008.json
+2026-10-21T10:19:51Z #61 pre_pk009 1.89s rows=904 truncated=False sha256=a563274972d97585 raw=0061_pre_pk009.json
+pre: 18904 of 18904 ids read; failures 0; missing 0
+  serving lot-sum-awards: 0 []  (the PRE snapshot must show 0: path W is off)
