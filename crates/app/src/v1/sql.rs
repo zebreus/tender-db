@@ -1042,7 +1042,10 @@ const CLASSIFICATION_SCHEME_NOTE: &str = "One of: cpv (WHAT is bought, the EU Co
     DPS marker; a later notice's 'none' never clears it. Complete since the 2026-10-16 fields \
     refold, jobs 2563/2564). Filter on \
     scheme explicitly: scheme <> 'cpv' is NOT the NUTS codes.";
-const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts), \
+const CLASSIFICATION_FIELD_NOTE: &str = "main / additional (cpv), place (nuts: the place of performance only, in \
+    every era; a legacy TED buyer or winner region is on notice_classifications as TED-CA_CE_NUTS / \
+    TED-TENDERER_NUTS, or as TED-NUTS in an Organization section (notice_sections), issue 546; a \
+    version folded before it may still carry one, issue-546 refold), \
     place_country (nuts: the level-0 code of a place published only as a country, only on a version \
     with no other nuts row; issue 532), \
     nature (nature), procedure (procedure), dps (dps) \u{2014} which published field the code came from.";

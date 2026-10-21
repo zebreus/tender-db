@@ -358,12 +358,15 @@ const CLASSIFICATIONS: &[(&str, &str)] = &[
     ("TED-ORIGINAL_CPV", "main"),
     ("TED-CURRENT_CPV", "main"),
     ("TED-CPV_ADDITIONAL", "additional"),
+    // `TED-NUTS` is the place of performance only OUTSIDE an Organization section
+    // (issue 546 D1: `NoticeState::read` skips it inside one, see
+    // [`LEGACY_SECTION_NUTS_FIELD`]); the buyer's and the winner's coded NUTS
+    // (`TED-CA_CE_NUTS`, `TED-TENDERER_NUTS`) are not mapped at all
+    // ([`LEGACY_ADDRESS_NUTS_FIELDS`]).
     ("TED-NUTS", "place"),
     ("TED-PERFORMANCE_NUTS", "place"),
     ("TED-ORIGINAL_NUTS", "place"),
-    ("TED-CA_CE_NUTS", "place"),
     ("TED-CURRENT_NUTS", "place"),
-    ("TED-TENDERER_NUTS", "place"),
     // text era
     ("TXT-PC", "main"),
     ("TXT-RC", "place"),
@@ -391,6 +394,27 @@ const CLASSIFICATIONS: &[(&str, &str)] = &[
         "additional",
     ),
 ];
+/// Issue 546 (decision D1): legacy TED's coded buyer and winner regions —
+/// `NOTICE_DATA/CA_CE_NUTS` and `TENDERER_NUTS` — are addresses, not the place of
+/// performance, so they are deliberately absent from [`CLASSIFICATIONS`]: they made
+/// a legacy tender's `country` the union of its performance place, its buyer's region
+/// and its winner's (8432519 served `[FRI12, FRK22]` for works in FRK22, and
+/// `?country=FRI` found it), while eForms and DÖE serve the performance place only.
+/// A third of the sampled r209 notices gained a `?country=` match that way. No
+/// fallback on empty: a version left with no performance place serves `[]`, as
+/// eForms does, and a later address-only notice (an F12/F13 design contest, an F14)
+/// no longer republishes the `place` key, so the earlier performance place carries.
+/// The rows stay on the notice layer (`notice_classifications`), and
+/// [`has_destination`] still answers `true` for both: read and deliberately skipped,
+/// so 368's sieve does not list them as unmapped.
+const LEGACY_ADDRESS_NUTS_FIELDS: &[&str] = &["TED-CA_CE_NUTS", "TED-TENDERER_NUTS"];
+/// Issue 546 (D1): legacy TED's `NUTS` element is the place of performance in a lot
+/// (`OBJECT_DESCR`) or the procedure, and an address region inside an `ADDRESS_*`
+/// block (`r209/rules.rs`' `Rule::Org`, an Organization section). The same id means
+/// both, so the skip is section-aware, the [`F14_DATE_FIELD`] precedent: inside an
+/// Organization section it folds nothing. Every sampled ORG-section code was restated
+/// by the notice's own [`LEGACY_ADDRESS_NUTS_FIELDS`] rows, so nothing unique is lost.
+const LEGACY_SECTION_NUTS_FIELD: &str = "TED-NUTS";
 /// The date/time pairs issue 03 stores as one instant, so `(d)` is the whole
 /// deadline and there is no `(t)` row to reunite here.
 const DATES: &[(&str, &str)] = &[
@@ -5561,7 +5585,12 @@ impl NoticeState {
             // fact per code, rather than through the one-fact match below. CPV goes
             // through `normalize_cpv`; NUTS is stored as published.
             if let NoticeValue::Classification { scheme, code } = &value.value {
-                if let Some(field) = canonical_name(CLASSIFICATIONS, field_id) {
+                // Issue 546 (D1): a legacy `NUTS` inside an address block (an
+                // Organization section, or one nested in it) is the party's region,
+                // not the place of performance — read, and deliberately skipped.
+                let address_nuts = field_id == LEGACY_SECTION_NUTS_FIELD
+                    && enclosing(&sections, &value.section_id, &[ORGANIZATION_KIND]).is_some();
+                if !address_nuts && let Some(field) = canonical_name(CLASSIFICATIONS, field_id) {
                     let codes = if scheme.eq_ignore_ascii_case("cpv") {
                         normalize_cpv(code)
                     } else {
@@ -9408,7 +9437,14 @@ pub fn has_destination(field_id: &str, channel: Channel) -> bool {
                 || RESULT_AMOUNT_STEMS.contains(&stem)
                 || field_id.ends_with(AMOUNT_ELEMENT)
         }
-        Channel::Classification => canonical_name(CLASSIFICATIONS, field_id).is_some(),
+        Channel::Classification => {
+            canonical_name(CLASSIFICATIONS, field_id).is_some()
+                // Issue 546 (D1): the legacy buyer and winner NUTS are read and
+                // deliberately skipped — addresses, not the place of performance.
+                // (`TED-NUTS` stays in `CLASSIFICATIONS`; its Organization-section
+                // skip is per row, which this field-level predicate cannot express.)
+                || LEGACY_ADDRESS_NUTS_FIELDS.contains(&field_id)
+        }
         Channel::Date => {
             canonical_name(DATES, field_id).is_some()
                 // Issue 385: read, but section-aware — its destination depends on
@@ -13801,6 +13837,170 @@ mod tests {
         );
     }
 
+    /// Issue 546 (D1): a legacy tender's `country` is its place of performance only.
+    /// The buyer's and the winner's coded NUTS (`TED-CA_CE_NUTS`, `TED-TENDERER_NUTS`)
+    /// and a `TED-NUTS` inside an address block (an Organization section, or one
+    /// nested in it) fold nothing; a `TED-NUTS` in a lot or the procedure, and
+    /// `TED-PERFORMANCE_NUTS`, still do. No fallback on empty.
+    #[test]
+    fn legacy_buyer_and_winner_nuts_are_no_place_of_performance() {
+        fn nuts(section: &str, field: &str, ordinal: i64, code: &str) -> store::ValueRow {
+            classification_value(section, field, ordinal, "nuts", code)
+        }
+        fn sections() -> Vec<store::Section> {
+            let section = |id: &str, kind: &str, parent: Option<&str>| store::Section {
+                id: id.into(),
+                kind: kind.into(),
+                parent: parent.map(str::to_owned),
+            };
+            vec![
+                section("PROCEDURE", "Notice", None),
+                section("LOT-1", "Lot", Some("PROCEDURE")),
+                // The buyer's ADDRESS_CONTRACTING_BODY.
+                section("ORG-1", ORGANIZATION_KIND, Some("PROCEDURE")),
+                // An award's WINNER, with its ADDRESS_WINNER nested inside (issue 259).
+                section("RES-1", "LotResult", Some("PROCEDURE")),
+                section("ORG-2", ORGANIZATION_KIND, Some("RES-1")),
+                section("ORG-3", ORGANIZATION_KIND, Some("ORG-2")),
+            ]
+        }
+        fn notice(id: i64, profile: &str, values: Vec<store::ValueRow>) -> NoticeState {
+            let parsed = Parsed { sections: sections(), values };
+            let notice = store::NoticeRef {
+                id,
+                source: "ted".into(),
+                publication_id: format!("{id:08}-2019"),
+                profile: profile.into(),
+            };
+            NoticeState::read(&notice, &parsed)
+        }
+        let legacy = |id: i64, values: Vec<store::ValueRow>| notice(id, "ted-export-r209", values);
+        /// What `country` serves: every `nuts` code on the version, Tender and lots.
+        fn served(v: &TenderVersion) -> Vec<String> {
+            let codes: BTreeSet<String> = v
+                .facts
+                .iter()
+                .chain(v.lots.iter().flat_map(|l| l.facts.iter()))
+                .filter_map(|f| match f {
+                    Fact::Classification { scheme, code, .. } if scheme == "nuts" => Some(code.clone()),
+                    _ => None,
+                })
+                .collect();
+            codes.into_iter().collect()
+        }
+        fn each(versions: &[TenderVersion]) -> Vec<Vec<String>> {
+            versions.iter().map(served).collect()
+        }
+        /// The same, split by scope — `(Tender, lots)` — so a lot-scope copy of a code
+        /// cannot mask a Tender-scope row going missing, or the reverse.
+        fn scoped(v: &TenderVersion) -> (Vec<String>, Vec<String>) {
+            fn codes<'f>(facts: impl Iterator<Item = &'f Fact>) -> Vec<String> {
+                let codes: BTreeSet<String> = facts
+                    .filter_map(|f| match f {
+                        Fact::Classification { scheme, code, .. } if scheme == "nuts" => Some(code.clone()),
+                        _ => None,
+                    })
+                    .collect();
+                codes.into_iter().collect()
+            }
+            (codes(v.facts.iter()), codes(v.lots.iter().flat_map(|l| l.facts.iter())))
+        }
+        let s = |codes: &[&str]| codes.iter().map(|c| (*c).to_owned()).collect::<Vec<_>>();
+        // The buyer's region, coded and in its address block: the F12/F14 shape when alone.
+        let buyer = |code: &str| vec![nuts("PROCEDURE", "TED-CA_CE_NUTS", 10, code), nuts("ORG-1", "TED-NUTS", 11, code)];
+        let perf = |code: &str| {
+            vec![nuts("PROCEDURE", "TED-PERFORMANCE_NUTS", 0, code), nuts("LOT-1", "TED-NUTS", 1, code)]
+        };
+
+        // (a) the 8432519 shape (notice 20298159): PROCEDURE PERFORMANCE_NUTS FRK22, LOT-1
+        // NUTS FRK22, ORG-1 NUTS FRI12, CA_CE_NUTS FRI12 serves [FRK22], not [FRI12, FRK22].
+        let a = legacy(1, [perf("FRK22"), buyer("FRI12")].concat());
+        assert_eq!(each(&fold(&[&a])), vec![s(&["FRK22"])], "(a) the performance place only");
+
+        // (b) an award: the winner's coded region and its nested ADDRESS_WINNER fold nothing.
+        let b = legacy(
+            1,
+            [
+                perf("DE212"),
+                vec![
+                    nuts("PROCEDURE", "TED-TENDERER_NUTS", 20, "DEA23"),
+                    nuts("ORG-2", "TED-NUTS", 21, "DEA23"),
+                    nuts("ORG-3", "TED-NUTS", 22, "DEA2"),
+                ],
+            ]
+            .concat(),
+        );
+        assert_eq!(each(&fold(&[&b])), vec![s(&["DE212"])], "(b) no winner region");
+
+        // (c) an F12 design contest publishes no performance place: [] — no fallback.
+        let c = legacy(1, buyer("PT17"));
+        assert_eq!(each(&fold(&[&c])), vec![s(&[])], "(c) an address-only notice serves []");
+
+        // (d) a later address-only notice (an F14 corrigendum) no longer republishes the
+        // `place` key, so the CN's performance place carries instead of being clobbered.
+        // The CN publishes PERFORMANCE_NUTS only, no lot NUTS: a carried lot-scope copy of
+        // the code would otherwise mask a Tender-scope clobber in the unioned list.
+        let cn = legacy(1, vec![nuts("PROCEDURE", "TED-PERFORMANCE_NUTS", 0, "FRK22")]);
+        let f14 = legacy(2, buyer("FRI12"));
+        let versions = fold(&[&cn, &f14]);
+        assert_eq!(each(&versions), vec![s(&["FRK22"]), s(&["FRK22"])], "(d) no clobber");
+        assert_eq!(scoped(&versions[1]), (s(&["FRK22"]), s(&[])), "(d) the Tender-scope place carries");
+
+        // (e) 532 D7's interaction is gone for a buyer-only carrier: a legacy F12/F14-shape
+        // notice with ONLY address NUTS, then an eForms country-only notice, serves the
+        // place country (before: the carried FRI12 suppressed it).
+        let eforms_country = notice(
+            2,
+            "eforms:eforms-sdk-1.13",
+            vec![store::ValueRow {
+                section_id: "PROCEDURE".into(),
+                field_id: "BT-5141-Procedure".into(),
+                ordinal: 0,
+                value: store::NoticeValue::Code { list: Some("country".into()), code: "FRA".into() },
+            }],
+        );
+        let carrier = legacy(1, buyer("FRI12"));
+        assert_eq!(each(&fold(&[&carrier, &eforms_country])), vec![s(&[]), s(&["FR"])], "(e) buyer-only carrier");
+        // ...and only for a buyer-only carrier: a carried legacy PERFORMANCE place still
+        // drops the country row ([`drop_place_country_beside_nuts`], 532 D4), a coarser
+        // restatement of a place already served.
+        let carrier = legacy(1, perf("FRK22"));
+        assert_eq!(
+            each(&fold(&[&carrier, &eforms_country])),
+            vec![s(&["FRK22"]), s(&["FRK22"])],
+            "(e) a performance carrier still wins"
+        );
+
+        // (f) `TED-ORIGINAL_NUTS` and `TED-CURRENT_NUTS` are untouched, and so is a
+        // `TED-NUTS` in the procedure itself (r208's LOCATION_NUTS shape lands there) and
+        // in a lot (`OBJECT_DESCR`) — the lot's code differs from every Tender-scope one,
+        // so its row is pinned at lot scope, not masked by a restated PERFORMANCE_NUTS.
+        let f = legacy(
+            1,
+            vec![
+                nuts("PROCEDURE", "TED-ORIGINAL_NUTS", 0, "AT1"),
+                nuts("PROCEDURE", "TED-CURRENT_NUTS", 1, "AT13"),
+                nuts("PROCEDURE", "TED-NUTS", 2, "AT130"),
+                nuts("LOT-1", "TED-NUTS", 3, "AT127"),
+            ],
+        );
+        let versions = fold(&[&f]);
+        assert_eq!(each(&versions), vec![s(&["AT1", "AT127", "AT13", "AT130"])], "(f) performance ids stay mapped");
+        assert_eq!(
+            scoped(&versions[0]),
+            (s(&["AT1", "AT13", "AT130"]), s(&["AT127"])),
+            "(f) the lot's NUTS lands on the lot"
+        );
+
+        // (g) read and deliberately skipped: 368's sieve does not list them as unmapped.
+        for id in ["TED-CA_CE_NUTS", "TED-TENDERER_NUTS", "TED-NUTS"] {
+            assert!(has_destination(id, Channel::Classification), "{id}");
+            assert!(table_reads("notice_classifications", id), "{id}");
+        }
+        assert_eq!(canonical_name(CLASSIFICATIONS, "TED-CA_CE_NUTS"), None);
+        assert_eq!(canonical_name(CLASSIFICATIONS, "TED-TENDERER_NUTS"), None);
+    }
+
     /// Issue 479: the procedure-type table, arm by arm — each era's own code onto
     /// eForms' `procurement-procedure-type`, the German extension kept verbatim, and
     /// everything off the closed table folding to nothing.
@@ -17555,7 +17755,10 @@ mod tests {
                 "MODIFIED_ADDRESS",
                 "F14 (R2.0.8.S02 eSender XSD): CA_CE_CONCESSIONAIRE_PROFILE, an Org of its own \
                  name, and MODIFIED_INTERNET. So per the schema the corrected block is a `buyer` \
-                 whichever address WHERE names; no F14 payload read (issue 534's review round)",
+                 whichever address WHERE names. No payload carries it: R2.0.8 corrigenda arrive as \
+                 OTH_NOT prose, 0 Change sections, 0 TED-FORM 14 and 0 CA_CE outside PROCEDURE/0 \
+                 on all 557,040 r208 notices above id 18,579,247, 0 r208 Change sections below it \
+                 (issue 540)",
             ),
         ];
         for (element, why) in NOT_CONTACT_DATA_WRAPPERS {

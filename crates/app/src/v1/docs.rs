@@ -167,7 +167,7 @@ meaningful to it (see <a href="#applies">which filters apply where</a> below):</
 <table>
   <tr><th>Param</th><th>Meaning</th></tr>
   <tr><td class="ep">source</td><td>Source key, e.g. <code>ted</code>.</td></tr>
-  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it. A tender whose notices give the place of performance only as a country (eForms BT-5141; D&Ouml;E's realized-location country), and whose version carries no NUTS place code, is served that country's <strong>NUTS level-0 code</strong>, so <code>LT</code> finds it and <code>LT0</code> does not (Greece <code>EL</code>, the United Kingdom <code>UK</code>). Only the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania, Montenegro, North Macedonia, Serbia and T&uuml;rkiye are served this way: a place in any other country, e.g. Egypt or the USA, carries none, and so does a place given as an overseas region's own ISO code (e.g. R&eacute;union, &Aring;land).</td></tr>
+  <tr><td class="ep">country</td><td>A <strong>NUTS place-code prefix</strong> matched against the tender's places. At the country level NUTS is ISO-3166 <strong>alpha-2</strong>, so Germany is <code>DE</code> (not <code>DEU</code>); a longer prefix narrows to a region, e.g. <code>DE1</code> (Baden-Württemberg) or <code>DEB35</code> (a specific place). <strong>NUTS is not ISO everywhere</strong>: Greece is <code>EL</code> and the United Kingdom is <code>UK</code> &mdash; <code>GB</code> is not a NUTS code at all and matches nothing, and <code>GR</code> is Greece's pre-2013 NUTS spelling, which the corpus still holds on notices published under it. A tender whose notices give the place of performance only as a country (eForms BT-5141; D&Ouml;E's realized-location country), and whose version carries no NUTS place code, is served that country's <strong>NUTS level-0 code</strong>, so <code>LT</code> finds it and <code>LT0</code> does not (Greece <code>EL</code>, the United Kingdom <code>UK</code>). Only the EU-27, the United Kingdom, Iceland, Liechtenstein, Norway, Switzerland, Albania, Montenegro, North Macedonia, Serbia and T&uuml;rkiye are served this way: a place in any other country, e.g. Egypt or the USA, carries none, and so does a place given as an overseas region's own ISO code (e.g. R&eacute;union, &Aring;land). The places are the <strong>place of performance</strong> only, in every era (issue 546): a legacy TED (r2.0.8, r2.0.9) notice's buyer and winner address regions are not a tender's places, and <code>?country=</code> does not match them. They stay on the notice layer, in <code>notice_classifications</code> under field ids <code>TED-CA_CE_NUTS</code> (buyer) and <code>TED-TENDERER_NUTS</code> (winner), and as <code>TED-NUTS</code> in the notice's address sections, readable through <code>/v1/sql</code>. A legacy tender none of whose notices publishes a place of performance (e.g. an F12/F13 design contest) serves none: no fallback to an address. A later notice that publishes only addresses (e.g. an F14 corrigendum) keeps the place an earlier one published. Until the issue-546 refold has run, a legacy tender folded before this change may still serve its buyer's or winner's region, and <code>?country=</code> may still find it by one.</td></tr>
   <tr><td class="ep">cpv</td><td>CPV code prefix, e.g. <code>45</code> (construction).</td></tr>
   <tr><td class="ep">buyer</td><td>Organization id that is the buyer.</td></tr>
   <tr><td class="ep">winner</td><td>Organization id that won at least one Lot &mdash; excluding awards where the winner is the tender's own buyer (<code>is_buyer</code>, see the <a href="#tender-detail-buyer">tender detail</a>).</td></tr>
@@ -2121,6 +2121,56 @@ mod tests {
                     "an overseas region's own iso code",
                 ],
             );
+        }
+    }
+
+    /// Issue 546 (D1): every served surface says `country` is the place of performance
+    /// only, in every era, and where a legacy buyer's or winner's region went
+    /// (`notice_classifications`, `TED-CA_CE_NUTS` / `TED-TENDERER_NUTS`). Read from the
+    /// `country` row, the openapi `country` parameter, `Tender.country` and the
+    /// classifications description, not the whole surface; the sql check reads the whole
+    /// served schema notes, as 532's test does. The row and the parameter get one phrase
+    /// per clause, read with `<strong>` / `**` stripped so "place of performance" itself is
+    /// pinned. Each surface carries the pre-refold caveat, tagged `issue-546 refold`: once
+    /// unit 4's refold and its Verify (8432519 serves `['FRK22']`) are done, remove all five
+    /// and retire the token through RETIRED.
+    #[test]
+    fn the_docs_say_country_is_the_place_of_performance_only_in_every_era() {
+        let start = PAGE.find("<td class=\"ep\">country</td>").expect("/docs has a country filter row");
+        let docs = &PAGE[start..start + PAGE[start..].find("</tr>").expect("row end")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let parameter = spec["components"]["parameters"]["country"]["description"]
+            .as_str()
+            .expect("the country parameter is described");
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", parameter)] {
+            let unbolded = text.replace("<strong>", "").replace("</strong>", "").replace("**", "");
+            assert_says(
+                &format!("{surface}'s country text"),
+                &unbolded,
+                &[
+                    "the places are the place of performance only, in every era (issue 546)",
+                    "and ?country= does not match them",
+                    "notice_classifications under field ids ted-ca_ce_nuts (buyer) and ted-tenderer_nuts (winner)",
+                    "serves none: no fallback to an address",
+                    "keeps the place an earlier one published",
+                    "until the issue-546 refold has run",
+                ],
+            );
+        }
+        let tender_country = spec["components"]["schemas"]["Tender"]["properties"]["country"]["description"]
+            .as_str()
+            .expect("Tender.country is described");
+        let classifications = spec["components"]["schemas"]["TenderDetail"]["allOf"][1]["properties"]["classifications"]
+            ["description"]
+            .as_str()
+            .expect("TenderDetail.classifications is described");
+        let schema = crate::v1::sql::served_schema_notes();
+        for (surface, text) in [
+            ("Tender.country", tender_country),
+            ("TenderDetail.classifications", classifications),
+            ("/v1/sql/schema", schema.as_str()),
+        ] {
+            assert_says(surface, text, &["the place of performance only", "ted-ca_ce_nuts", "issue-546 refold"]);
         }
     }
 

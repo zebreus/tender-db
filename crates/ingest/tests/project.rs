@@ -6880,6 +6880,109 @@ async fn an_sdk01_country_only_place_serves_its_level_0_code_at_both_scopes() {
     let _ = std::fs::remove_file(&path);
 }
 
+// --------------------------------- issue 546: legacy address NUTS are no place
+
+/// Issue 546 (D1): real legacy fixtures through dispatch, parse and the fold. A legacy
+/// tender's `country` is its place of performance only — `PERFORMANCE_NUTS`,
+/// `ORIGINAL_NUTS`, a lot's (`OBJECT_DESCR`) or the procedure's `NUTS` — and no longer
+/// the buyer's (`CA_CE_NUTS`, `ADDRESS_CONTRACTING_BODY/NUTS`) or the winner's
+/// (`TENDERER_NUTS`, `ADDRESS_CONTRACTOR/NUTS`, `ADDRESS_WINNER/NUTS`) region. Each
+/// expectation was read off the fixture; the address rows stay on the notice layer.
+/// R2.0.8 address blocks carry no NUTS, so every r208 fixture serves what it served.
+#[tokio::test]
+async fn a_legacy_tender_serves_its_place_of_performance_not_its_buyer_or_winner_region() {
+    let matrix: &[(&str, &[&str], usize)] = &[
+        // Performance MT00; the buyer's MT (coded and in its address) was served beside it.
+        ("r209/f02-000245-2019.xml", &["MT00"], 1),
+        // Performance UKG13, and the buyer and the winner are in UKG13 too: unchanged.
+        ("r209/f03-000988-2019.xml", &["UKG13"], 2),
+        // Performance BE2; the buyer's BE212 was served beside it.
+        ("r209/f05-001315-2019.xml", &["BE2"], 1),
+        // Performance BG421 (ORIGINAL_NUTS); the winner's BG411 was served beside it.
+        ("r209/f06-208243-2017.xml", &["BG421"], 2),
+        // F13 prize: performance PT; buyer and ADDRESS_WINNER (nested in WINNER) PT.
+        ("r209/f13-prize-winner-362996-2018.xml", &["PT"], 2),
+        // F14 corrigendum: performance UKM6, the buyer's UKM6.
+        ("r209/f14-001311-2019.xml", &["UKM6"], 1),
+        // F20: performance UK; the buyer's and the contractor's UKG was served beside it.
+        ("r209/f20-000591-2019.xml", &["UK"], 2),
+        // r208: no address NUTS at all — unchanged.
+        ("r208/f02-000333-2014.xml", &["UKE11"], 0),
+        ("r208/f03-099900-2018.xml", &["EL307"], 0),
+        ("r208/f03-annexd-neg-022211-2011.xml", &["NL322"], 0),
+        ("r208/oth-not-000030-2014.xml", &["PT182"], 0),
+        ("r208/f12-185289-2013.xml", &[], 0),
+    ];
+    for (i, &(fixture, expected, coded_address_rows)) in matrix.iter().enumerate() {
+        let (db, fetch_id, path) = scratch(&format!("legacy-place-{i}")).await;
+        ingest(&db, fetch_id, fixture).await;
+        let report = project::project(&db, false).await.expect("project");
+        assert_eq!(report.tenders, 1, "{fixture}: one tender");
+        assert_eq!(current_countries(&db).await, expected, "{fixture}: the served country");
+        assert_eq!(
+            scalar(
+                &db,
+                "SELECT COUNT(*) FROM notice_classifications WHERE field_id IN ('TED-CA_CE_NUTS', 'TED-TENDERER_NUTS')"
+            )
+            .await,
+            coded_address_rows as i64,
+            "{fixture}: the coded buyer/winner NUTS stay on the notice layer"
+        );
+        let _ = std::fs::remove_file(&path);
+    }
+}
+
+/// Issue 546 (D1): the Verify's shape (tender 8432519, notice 20298159) on the real F02:
+/// works in FRK22 (`PERFORMANCE_NUTS` and the lot's `NUTS`), a buyer in FRI12 (its
+/// `ADDRESS_CONTRACTING_BODY/NUTS` and `CA_CE_NUTS`). It served `[FRI12, FRK22]`, so
+/// `?country=FRI` found works in FRK22; it serves `[FRK22]`. With its performance place
+/// removed — the F12 design contest's shape, which publishes none — it serves `[]`:
+/// no fallback to the buyer's region.
+#[tokio::test]
+async fn the_8432519_shape_serves_frk22_and_an_address_only_notice_serves_nothing() {
+    let relative = "r209/f02-000245-2019.xml";
+    let xml = String::from_utf8(std::fs::read(format!("tests/fixtures/{relative}")).expect("fixture")).expect("utf-8");
+    let swaps = [
+        (r#"<n2016:PERFORMANCE_NUTS CODE="MT00">Malta</n2016:PERFORMANCE_NUTS>"#, r#"<n2016:PERFORMANCE_NUTS CODE="FRK22">Loire</n2016:PERFORMANCE_NUTS>"#),
+        (r#"<n2016:CA_CE_NUTS CODE="MT">MALTA</n2016:CA_CE_NUTS>"#, r#"<n2016:CA_CE_NUTS CODE="FRI12">Gironde</n2016:CA_CE_NUTS>"#),
+        (r#"<n2016:NUTS CODE="MT"/>"#, r#"<n2016:NUTS CODE="FRI12"/>"#),
+        (r#"<n2016:NUTS CODE="MT00"/>"#, r#"<n2016:NUTS CODE="FRK22"/>"#),
+    ];
+    let mut shaped = xml.clone();
+    for (from, to) in swaps {
+        assert_eq!(shaped.matches(from).count(), 1, "the fixture carries {from} once");
+        shaped = shaped.replacen(from, to, 1);
+    }
+    let (db, fetch_id, path) = scratch("legacy-place-8432519").await;
+    ingest_bytes(&db, fetch_id, SOURCE, relative, shaped.as_bytes()).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(current_countries(&db).await, ["FRK22"], "the performance place only");
+    assert_eq!(
+        query_text(
+            &db,
+            "SELECT group_concat(r, ' ') FROM (SELECT field_id || '=' || code AS r FROM notice_classifications
+              WHERE scheme = 'nuts' AND code = 'FRI12' ORDER BY r)",
+        )
+        .await
+        .as_deref(),
+        Some("TED-CA_CE_NUTS=FRI12 TED-NUTS=FRI12"),
+        "the buyer's region stays on the notice layer"
+    );
+    let _ = std::fs::remove_file(&path);
+
+    // The design contest's shape: only the buyer's region is published.
+    let mut address_only = xml;
+    for performance in [r#"<n2016:PERFORMANCE_NUTS CODE="MT00">Malta</n2016:PERFORMANCE_NUTS>"#, r#"<n2016:NUTS CODE="MT00"/>"#] {
+        assert_eq!(address_only.matches(performance).count(), 1, "the fixture carries {performance} once");
+        address_only = address_only.replacen(performance, "", 1);
+    }
+    let (db, fetch_id, path) = scratch("legacy-place-address-only").await;
+    ingest_bytes(&db, fetch_id, SOURCE, relative, address_only.as_bytes()).await;
+    project::project(&db, false).await.expect("project");
+    assert_eq!(current_countries(&db).await, Vec::<String>::new(), "no place of performance, no fallback");
+    let _ = std::fs::remove_file(&path);
+}
+
 // ------------------------------------------------------------------- issue 533
 
 /// The `dps` classifications the projection folded, as `(code, lot-scoped?)`, sorted.

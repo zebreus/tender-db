@@ -4,6 +4,27 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 546) — legacy TED `country` is the place of performance only; `?country=` no longer matches a buyer's or winner's region
+
+A legacy TED (r2.0.9) tender's `country` was the union of three things: its place of performance, its buyer's
+address region and its winner's. Tender 8432519, works in FRK22 by a buyer in FRI12, served `["FRI12", "FRK22"]`,
+so `?country=FRI` found it. eForms and DÖE serve the place of performance only, so `country` meant
+different things in different eras. In the sampled r209 notices, about a third gained a `?country=` region match
+this way, and about 1% a match in a wrong country.
+- `country`, `?country=` and the `nuts` rows of field `place` (`classifications[]`, `/v1/sql`) are the place of
+  performance only, in every era. 8432519 serves `["FRK22"]` once refolded (see the last point).
+- The buyer's and winner's regions are not deleted: they stay on the notice layer, `notice_classifications` on
+  `/v1/sql`, under field ids `TED-CA_CE_NUTS` (buyer) and `TED-TENDERER_NUTS` (winner), and as `TED-NUTS` in the
+  notice's address sections.
+- No fallback: a legacy tender none of whose notices publishes a place of performance (e.g. most F12/F13 design
+  contests, which publish only addresses) serves `country: []`, as eForms does. A later notice that publishes only
+  addresses (e.g. an F14 corrigendum) no longer replaces the place an earlier notice of the same procedure published.
+- The sampled r2.0.8 notices (2013, and the 2019 ones) carry no address regions and serve what they served; the
+  issue-546 refold's cohort count is the full check.
+- Stored tenders change only after the issue-546 refold. Until then a legacy tender folded before this change may
+  still serve its buyer's or winner's region. The refold announces each corrected tender as a `version: null`
+  `changed` row (ADR-0017 D3).
+
 ## Unreleased (issue 551 B6) — `lot-sum-awards` is served again, guarded by two vouching guards
 
 The B5 stop-rule entry below switched `lot-sum-awards` (path W v2) off on 2026-10-19: its drains changed about twice
@@ -140,6 +161,31 @@ after `published_at`.
   `Notice.published_at` say so: `Tender.dispatched_at` no longer promises "earlier than published_at" where a DÖE
   notice caused the current version (a `ted`-labelled Tender included): there a dispatch falls on or before
   `published_at`'s day, and days after it until the drain.
+
+## Unreleased (issue 571) — an R2.0.9 transport award's operator owners are no longer its result winners
+
+An R2.0.9 public-transport award (MOVE form T02) lists, inside its award block, the operator (`ADDRESS_CONTRACTOR`)
+and then the operator's owners (`ADDRESS_PARTY`, 0–100 public bodies). The results reader took every organization in
+the block as a winner, so the owners sat in `lot_results[].winners` beside the operator and `?winner=` found the
+Tender under an owner, while `parties[]` already refused them the `winner` role (issue 534).
+- `lot_results[].winners` (and `?winner=`, `/v1/lots?winner=`, `v_lot_results` on `/v1/sql`) name the operator only.
+  The owners stay as parties under the `ADDRESS_PARTY` role. Example: 6386700 serves winner 3302058 (Trenitalia).
+- An award block that names only owners writes no winner.
+- Measured: 67 notices carry `ADDRESS_PARTY`; their Tenders were refolded on 2026-10-19 (66 corrected), each announced
+  as a `version: null` `changed` row (ADR-0017 D3).
+
+## Unreleased (issue 541) — a 2016 public-transport award (T02) serves its operator as a `lot_results` winner
+
+An R2.0.8 public-transport award (MOVE form T02, Regulation 1370/2007) keeps its award in a group the results reader
+never opened. Its operator was served as a `winner` party, but `lot_results` was empty, so `?winner=` missed it.
+- A T02 notice with no result section now writes one result, key `RES-T02`: winners are the operators it names
+  (`ECONOMIC_OPERATOR_NAME_ADDRESS`), decided on its `CONTRACT_AWARD_DATE`, with no value (the form's figures are cost
+  parameters, not an award value). Example: 5782055 serves `RES-T02`, winner 1953406 (Barnimer Busgesellschaft mbH),
+  decided 2016-09-21.
+- The operator's owners (`PARTY_NAME_ADDRESS`) are not winners.
+- Measured: 753 notices carry the form's cost parameters (T01 and T02); their Tenders were refolded on 2026-10-19
+  (126 corrected), each announced as a `version: null` `changed` row (ADR-0017 D3).
+
 
 ## 2026-10-19 (issue 551 B5's stop rule) — `lot-sum-awards` is switched off again, pending an investigation
 
