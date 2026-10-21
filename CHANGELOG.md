@@ -4,6 +4,70 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 551 B6) — `lot-sum-awards` is served again, guarded by two vouching guards
+
+The B5 stop-rule entry below switched `lot-sum-awards` (path W v2) off on 2026-10-19: its drains changed about twice
+as many Tenders as projected. The projection was at fault, not the quality bars, which had passed. It was never
+re-based on the rate measured after the lot-key drains (41 ships of 277 walked, against M1's 30 of 276), and that
+rate predicts about 2,265 of the 2,348 fires seen inside the population the projection was built on. The other 1,154
+fires, a third of the 3,502, fell on Tenders outside that population: the cohort grew from 194,404 to 251,526 Tenders
+with the lot-key drains and new notices, and no read had sampled them before B5. A read of 61 of the sums it had
+served, against their notices, then found 59 right, 1 neutral and 1 wrong. The wrong one, tender 6465510, was
+vouched by a single-lot award notice's own total, for a lot the sum did not include. R10's "never one lot's own
+award" could not see it, because that award is stored without its lot or its value. B6 serves path W v2 again,
+with two guards on the total that vouches.
+- From the deploy on, `lot-sum-awards` is served again as the B4/B5 entry below describes it (v1's guards and
+  R1–R10; every sum vouched by a total the buyer stated within 1 %), with two guards that remove vouching totals.
+  **G-single**: a total from a notice whose round in the Tender's version has exactly one result, keyed or not,
+  does not vouch. **G-cover**: an award notice's total (BT-161, BT-118, BT-1118, or a CAN-type form's TED
+  `VAL_TOTAL`) or either end of a TED `VAL_RANGE_TOTAL` vouches only if its notice has a result on at least one of
+  the summed lots (one that closes the lot or awards nothing counts; a result with no lot does not); estimate totals
+  are unchanged. With no total left the sum is refused (R10), and the Tender keeps the value election's one figure
+  (an award's Tender-level copy, or `null`). `value_derivation.vouched_by` names the first total, in chain order,
+  that both guards keep. `lot-sum-vouched` is unchanged, byte for byte.
+- E.g. 585917 serves EUR 250,000.00 again (`null` while switched off; vouched by its BT-118-NoticeResult), 5995030
+  PLN 1,549,511.60 (its TED `VAL_TOTAL` reads PLN 1,546,390.00) and 8426318 GBP 3,000,000,000.00 (its TED
+  `VAL_RANGE_TOTAL` high end), as at B4/B5: neither guard moves them. 6465510 keeps EUR 70,340.42, not B5's
+  EUR 162,020.92: its only vouch, notice 20772908's TED `VAL_TOTAL` of EUR 161,290.32, comes from a notice with one
+  result, on none of the summed lots, and either guard removes it. 7202436 keeps EUR 26,981.20, not B5's
+  EUR 27,222.00: its only vouch, notice 22179136's EUR 26,981.20, comes from a notice with three results, none of
+  them on a summed lot, so G-single keeps it and G-cover removes it. The Lyon-Turin Tenders 6450467, 6450469 and
+  6450473 state no total and keep EUR 1,660,661,682.94.
+- What was measured before it was served, on fresh fetches of the 3,502 Tenders B5 had served:
+  - The port of record reproduced all 3,502 of B5's sums: S, currency, lot count and `vouched_by`.
+  - The two guards refuse 35 of them. So **3,467 of the 3,502** serve their sum again, each with the S, currency,
+    lot count and `vouched_by` B5 served.
+  - The Rust code agrees with the port on 37,732 (row, guard set) pairs, with 0 disagreements: 9,433 population
+    rows covering 8,731 distinct Tenders, each under the four guard sets.
+  - Each guard was adopted by a rule fixed before its read: adopt it if at least 10 % of the sums it refuses read
+    wrong or neutral. G-single: 3 of 30 read wrong (the first 30 of its 34 refusals), the 6465510 shape. G-cover:
+    1 of 1, tender 7202436, the one sum it refuses beyond G-single (it refuses 13 in all).
+  - A fresh sample of 30 of the 3,467 read right against their notices, all 30.
+- What subscribers see: each of the 3,467 Tenders takes its **third value correction since B5**. It went on with
+  B5's drain (2026-10-18/19), off with its drain back (2026-10-19), and goes on again with this drain. 2,334 of them
+  were also among the Tenders issue 551's first drain moved to `lot-sum-awards` and unit 4a's drain moved back (both
+  2026-10-17), so this is their fifth. Each move is announced like any value correction: a `version: null`
+  `changed` row (ADR-0017 D3), for the Tender and its lots.
+- Tenders already stored are refolded by one drain over an exact id set, never by walking the corpus.
+  - The drain is `refold-lot-sum` scoped by `tender_ids` to the 3,502 Tenders B5 served, in stages, and then the
+    Tenders that took a change row since.
+  - The runs over the 3,502 are expected to correct exactly the sums predicted for them (3,467 as measured;
+    re-predicted in the flip window for those of the 3,502 whose facts changed since) and to leave the sums the
+    guards refuse unchanged (35 as measured). Any other correction there switches it off. The later runs, over the
+    Tenders changed since, may newly derive sums (about 1.4 % of them). Above max(2 × their projection,
+    projection + 10) the drain stops for a read, and new sums that fail the sampled read switch it off.
+  - Until its refold, a Tender keeps the figure stored for it.
+  - A Tender folded after the deploy for another reason, such as a new notice in the daily `project`, has its sum
+    derived by that fold, before or without the drain, and announced the same way.
+- Accepted residuals:
+  - A sum vouched by a total that a later notice superseded (5816379's shape) stays unguarded. It is about 1 in 60
+    of the sums read, and the error is about 1.5x.
+  - A partial sum stays served. This is a sum that leaves out awards stored without their lot, so it covers part of
+    what was awarded. Of the eight read, seven read right and one neutral (tender 7749755).
+- A Tender with no convertible amount matches a value bound again when its lot awards are summed (`/docs`, the
+  filter table and the Amounts caveat; OpenAPI `min_value`). `/docs`, OpenAPI `value` and `value_derivation`
+  (`method`, `vouched_by`) and the `/v1/sql` notes say it is served, with both guards.
+
 ## Unreleased (issue 530) — a body one notice names twice under two per-notice platform keys binds by its name
 
 A v4 UUID in `identifier` (`identifier_kind: "national"`) is a submission platform's record key, not a register
@@ -93,6 +157,7 @@ rule, and the investigation (why 2.1x; the pre-registered confirmation read) fol
 - A Tender with no convertible amount matches no value bound again (`/docs`, the filter table and the Amounts caveat;
   OpenAPI `min_value`). `value_derivation.vouched_by` stays declared (OpenAPI, `/v1/sql`): it is written only while
   path W is switched on, and the guards R1–R10 below are what it is served under if it is switched back on.
+- Superseded by issue 551 B6 (above): served again, with two guards on the vouching total.
 
 ## Unreleased (issue 551 B4/B5) — `lot-sum-awards` is served again, only where a total the buyer stated vouches for the sum
 
@@ -129,7 +194,8 @@ more read right.
   election's one figure.
 - A Tender with no convertible amount matches a value bound again when its lot awards are summed (`/docs`, the
   filter table and the Amounts caveat; OpenAPI `min_value`).
-- Superseded by issue 551 B5's stop rule (above): switched off again on 2026-10-19, pending an investigation.
+- Superseded by issue 551 B5's stop rule (above): switched off again on 2026-10-19, pending an investigation; served
+  again by issue 551 B6 (above), with two guards on the vouching total.
 
 ## Unreleased (issue 568 unit 8) — an R2.0.8 award that names several lots, or another lot, stays on the Tender
 
@@ -274,7 +340,8 @@ stated total than the figure it replaced, a ×10^k award slip. Its guards do not
 - OpenAPI keeps `lot-sum-awards` in the `value_derivation.method` enum, described as withdrawn and not currently
   served; a redesign is open (issue 551 unit 4b). `/v1/sql`'s `current_value_derivation` note says the same.
 - Superseded by issue 551 B4/B5 (above): the redesign was served from 2026-10-18, every sum vouched by a buyer-stated
-  total, and switched off again on 2026-10-19 by B5's stop rule (above).
+  total, switched off again on 2026-10-19 by B5's stop rule, and served again by issue 551 B6 with two guards on
+  that total (both above).
 
 ## Unreleased (issue 562) — a Tender re-labelled `ted` (or re-kinded) reaches a `source` (or `kind`) subscription
 
@@ -345,7 +412,7 @@ the SUM of the current version's lots, in the lots' own currency:
   figure the election would serve without it. Pinned on unit 2's 15 adjudicated heads,
   e.g. 7427765 now serves EUR 3,000,000.00 (six awards of EUR 500,000.00) instead of EUR 500,000.00, 5943121
   EUR 1,321,579.92 instead of EUR 416,053.05, and 369057 EUR 62,378,736.29 instead of `null`.
-- **`lot-sum-awards`** (withdrawn by unit 4a, above; served again at B4/B5, vouched by a buyer-stated total; switched off again 2026-10-19 by B5's stop rule, above): the Tender has no procedure-level figure at all (only
+- **`lot-sum-awards`** (withdrawn by unit 4a, above; served again at B4/B5, vouched by a buyer-stated total; switched off again 2026-10-19 by B5's stop rule; served again by B6 with two guards on that total, above): the Tender has no procedure-level figure at all (only
   placeholders), its value was an award's copy or `null`, and each lot's latest award is added up, unless one figure repeats across the lots (a total
   printed on every award), one lot equals 1, 10, 100 or 1,000 times the others, an award is in another currency or
   names a lot the notice does not type, two awarded lots carry one lot number under two keys (a Tender re-keyed from

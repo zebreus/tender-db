@@ -751,15 +751,16 @@ row is the guard's keep.
 election serves the SUM of the head version's lots instead of one figure or null, on two paths
 (`canonical::derive_lot_sum`; decision and evidence: `.scratch/tender-db/551-lot-sum/`). Path W was
 withdrawn by unit 4a (2026-10-17, below), switched on again at unit 4b's B5 (2026-10-18) as v2: the v1 guards below
-plus R1–R10, every awards sum vouched by a buyer-stated total ("Path W v2", below), and is **off again since
-2026-10-19** (`canonical::LOT_SUM_AWARDS_PATH = false`): B5's pre-registered stop rule tripped ("B5's stop rule
-tripped", after B5's runbook), pending the investigation.
+plus R1–R10, every awards sum vouched by a buyer-stated total ("Path W v2", below), switched off again on 2026-10-19
+when B5's pre-registered stop rule tripped ("B5's stop rule tripped", after B5's runbook), and is **on again since
+issue 551 B6** (`canonical::LOT_SUM_AWARDS_PATH = true`) as v2 with two guards on R10's vouching total, G-single and
+G-cover ("Path W v2+G", after "B5's stop rule tripped").
 - **path V, `lot-sum-vouched`**: a procedure figure F that 537, 471 or 492 refused is 10ᵏ times an electable lot
   sum S (each Lot's latest award, else its largest BT-27 or BT-271; a partner-only BT-709/BT-660 match only names
   k), every refused F names the same S, S is not one figure repeated on every lot with F ≈ 10ʲ of it (V1),
   0 < S ≤ €100 bn, and S is above the figure the max election serves (V0, added at unit 3's review);
 - **path W, `lot-sum-awards`** (v1's guards; withdrawn by unit 4a, on as v2 at B5 with R1–R10 after G4, see "Path
-  W v2" below, off again since B5's stop rule tripped on 2026-10-19): every procedure figure is a sentinel or absent, today's head is an award copy or
+  W v2" below, off when B5's stop rule tripped on 2026-10-19, on again as v2+G since B6, see "Path W v2+G"): every procedure figure is a sentinel or absent, today's head is an award copy or
   null, and the lots' latest awards (one currency, two or more lots, every one a typed Lot) pass G0/G1'/G2/G3/G4/G5
   (no repeated total, no lot that totals the others, estimates within 10×, above today's figure, above €0.00 and
   under the cap) and G5' (no award copy a scale rule refused, and no summed award one refuses at its own lot, copy
@@ -806,13 +807,14 @@ tender id; no epoch bump):
   raised to its awards sum (the 2026-10-17 drain, project 2575: 15,352 corrected). Every other cohort Tender compares
   identical (`verified`). From the 4a deploy to B5's this job raised no path-W head (it re-elected them back: "Path W
   withdrawn" below); for a run after the B5 deploy the expected moves are those of "Path W v2" below; from the
-  stop-rule deploy (2026-10-19) on it again raises none ("B5's stop rule tripped", below).
+  stop-rule deploy (2026-10-19) to B6's it again raised none ("B5's stop rule tripped", below); from B6's deploy on,
+  the moves of "Path W v2+G" below (run by `tender_ids`, never the corpus walk).
 
 Verify, in order:
 - The wet message's `stamped N` equals the dry count; the `project` message's `compare: N verified, M corrected`
   sums to it (D7's completeness; more if other Tenders were pending). M is the expected moves above, give or take;
   for a run between unit 4a and B5, the M of "Path W withdrawn" below; after B5, the M of "Path W v2"; after the
-  stop-rule deploy, the M of "B5's stop rule tripped".
+  stop-rule deploy, the M of "B5's stop rule tripped"; after B6's, the M of "Path W v2+G" (|P| = 3,467 on the 3,502).
 - The done line: `/v1/tenders/7427765` serves EUR 3,000,000.00, 5943121 EUR 1,321,579.92 and 369057
   EUR 62,378,736.29, each with `value_derivation.method` = `lot-sum-vouched`, `rule` 537. The other path-V pins:
   251619 EUR 24,338,758.08, 380921 PLN 7,247,040.00, 392980 EUR 35,740,042.72, 425446 EUR 1,549,007.19, 706887
@@ -821,8 +823,9 @@ Verify, in order:
   DKK 179,248,937.00. Path W's six pins (6450467, 6450469 and 6450473 EUR 3,574,764,979.28, 8426318
   GBP 3,000,000,000.00, 585917 EUR 250,000.00, 5995030 PLN 1,549,511.60, `lot-sum-awards`) read right on
   2026-10-17 and were withdrawn with path W (unit 4a's refold, below). Under v2 (B5) three served again, vouched
-  (8426318, 585917, 5995030), and the Lyon-Turin trio states no total and keeps EUR 1,660,661,682.94; since B5's
-  stop rule the three fall back with the drain back (below) to their pre-551 figures.
+  (8426318, 585917, 5995030), and the Lyon-Turin trio states no total and keeps EUR 1,660,661,682.94; B5's stop
+  rule's drain back (below) returned the three to their pre-551 figures, and B6's drain serves their sums again, with
+  the same `vouched_by` (neither guard moves a pin: "Path W v2+G", D3).
 - Unchanged, with `value_derivation` null: 8440393, 7487018 (a total repeated on every award), 5316712 (one lot
   restates the framework), 6885102 (the sum is below its head), and the estimate-only heads 4930240, 8822313,
   4925871, 175096 and 5625591.
@@ -859,7 +862,8 @@ a redesign measured on the 279 labels, turns it back on only at ≤ 1 wrong in a
 €100 m band). The marker columns, the SSE At probe's lot legs and the cohort SQL stay. (Unit 4b's v2 met that bar
 under its "vouched everywhere" fallback and B5 switched it back on: "Path W v2", after this block. This block is
 also B5's route back if B5's confirmation fails, and B5's stop rule took it on 2026-10-19 with the drain scoped by
-`tender_ids`: "B5's stop rule tripped", after B5's runbook.)
+`tender_ids`: "B5's stop rule tripped", after B5's runbook. Issue 551 B6 switches path W on again with two guards:
+"Path W v2+G", after that.)
 
 The refold back is the same job and cohort as the drain (the cohort is path W's shape on stored rows, so it holds
 every stored `lot-sum-awards` head, the daily folds' since 4e5eaf7 included), after the 4a deploy, in a queue gap
@@ -890,7 +894,8 @@ Verify, in order:
 
 **Path W v2 (issue 551 unit 4b, B4/B5, 2026-10-18).** `canonical::LOT_SUM_AWARDS_PATH = true` from B5's deploy (54b9068)
 until **2026-10-19, when B5's stop rule switched it off again** (`false`; "B5's stop rule tripped", after B5's
-runbook; v2's code, R1–R10 and `vouched_by` stay, tested through `head_value_with_awards_path`): path W is v1's T', K
+runbook; v2's code, R1–R10 and `vouched_by` stayed, tested through `head_value_with_awards_path`), and `true` again
+since issue 551 B6, with two guards on R10's candidates ("Path W v2+G", after "B5's stop rule tripped"): path W is v1's T', K
 and G0–G8b unchanged, then ten refusal families R1–R10 (`canonical::awards_v2_check`, each a named pure function; the
 first refusing check is named in `rule_v2.py`'s vocabulary by `lot_sum_decision`). Every v2 fire is a v1 fire: nothing
 above is relaxed or re-keyed, and G8b stands. Any one refusal keeps today's head (an award copy, or null). A "summed
@@ -1076,6 +1081,85 @@ outside 2575's population; and the pre-registered confirmation read, step 6) fol
   pre-551 figures); the Lyon-Turin trio keeps EUR 1,660,661,682.94. A bounded seek of the value band (the plan-probed
   range seek of step 5) finds no `lot-sum-awards` row. The 16 path-V pins are unchanged (each `lot-sum-vouched`, the
   detail byte-identical), and the must-stay heads serve no derivation.
+- **Done** (2026-10-19 03:31–03:40Z): deployed 36ca974 (rev 9529345); dry 2628, wet 2629 and `project` 2630: 3,502
+  corrected, 0 `lot-sum-awards` left on the PK reads and the band. Switched on again by B6: next block.
+
+**Path W v2+G (issue 551 B6).** `canonical::LOT_SUM_AWARDS_PATH = true` again, with R10's two candidate guards both on
+(`R10_G_SINGLE = R10_G_COVER = true`, so `R10Guards::PRODUCTION` is both, pinned in `the_production_guard_set_is_both`).
+Decision and evidence: issue 551's "B6 — decision" (wf_834aaac1-932, recorded before any new fetch or read) and
+`.scratch/tender-db/551-lot-sum/b6/`. Why B5's stop rule tripped was our process: B3 had recorded 41 ships of 277
+walked after the 567/568/570 lot-key drains (M1: 30), and the window was never re-based on it (15,300 × 41/277 ≈
+2,265 against the 2,348 seen inside 2575's population). From now on any B3-type rate change re-registers the window.
+The investigation read (61 heads: 59 right, 1 neutral, 1 wrong) found one wrong, 6465510: a single-lot award notice's
+own TED-VAL_TOTAL vouching a sum it is no part of. R10's "not a single-lot notice's own award" clause compares the
+total with the stored award row, and that row is stored lot = null / awarded = null, so it could not see it.
+- **The guards** (`canonical::r10_g_single_refuses`, `r10_g_cover_refuses`): each only removes R10 candidates, so a
+  v2+G fire is a v2 fire, and with no candidate left R10 refuses under its own name. **G-single**: a stated total
+  from a notice whose round in the version has exactly ONE LotResult (keyed or not) does not vouch. **G-cover**: a
+  total of kind Award (BT-161, BT-118, BT-1118, a CAN-type form's TED-VAL_TOTAL) or Range (TED-LOW / TED-HIGH)
+  vouches only if its notice names at least one summed key on R3's accessor (keyless results excluded); estimate
+  totals are unchanged. A guard can move `vouched_by` to the next candidate in chain order. Path V is
+  byte-identical.
+- **Measured before the flip** (units U1–U5): the port of record `b6/rule_v2_g.py` (sha256 23cbd850…) on fresh
+  fetches of the 3,502 served heads reproduces B5's v2 on 3,502 / 3,502 (ship, S, currency, n, `vouched_by` by
+  membership). The guards refuse 35: v2+single 3,468, v2+cover 3,489, **v2+both P = 3,467** (`b6/u2/P.json`, ids
+  sha256 a2619fd9…). The Rust v2+G equals the port on 37,732 (row, guard set) pairs, with 0 disagreements and
+  projection parity clean. U4 adopted both guards by the rule fixed before the reads (adopt iff ≥ 10 % of the read
+  set is non-right): G-single 3 wrong of the first 30 of its 34 refusals (6465510, 6582856, 7179291; exactly the
+  bar), G-cover 1 of 1 beyond G-single (7202436). U5's fresh read of 30 from P (salt `551-b6-fresh-`, every read id
+  excluded) read 30 right (GO), and the B-band re-read set was empty. The zero-drift probe on 0787596
+  (`refold-lot-sum` over the 3,502: 3,502 verified, 0 corrected) puts the store at the switched-off code's fixed
+  point, so the drain's D1/D2 measure path W alone.
+- **Accepted residuals** (point 13): 5816379's superseded-vouch shape (about 1 in 60, errors about 1.5×) stays
+  unguarded and is filed; the partial sums (lot = null awards outside S: 6679375, 7153588, 7398935, 7722197 (read18)
+  and 6779279, 6850401, 7698260 right; 7749755 neutral) stay. **Subscribers see the |P| heads' third correction
+  since B5** (on at B5's drain, off at its drain back, on again at B6's). For the 2,334 of P inside project 2575's
+  15,300 corrected ids (`b6/u2/P.json` v2+both ∩ `b5/investigate/p2575_ids.json`), unit 3's drain (2575) and unit
+  4a's drain back (2586) make it the fifth. Each correction is a `version: null` `changed` row for the Tender and its
+  lots (ADR-0017 D3).
+- **Timing** (point 10): flip no earlier than the 10-21 post-chain gap (10-20 only if issue 560 records U-d PASS and
+  closed on the 10-20 morning and issue 562 unit 5 has its cursor ranges). Never clock-driven: a missed bar waits for
+  the next gap. Do not start unless everything can finish at least 2 h before the next 07:35 UTC chain (D7).
+- **Before the deploy** (U6, in the gap): re-run the zero-drift probe on the deployed rev (expect 0 corrected);
+  refresh the rates and record their sha256; enumerate L_changed (every Tender with a change row from 958787061 to
+  the cursor read right after the flip deploy, excluding 2630's own 3,502 head-revert rows, plus the whole refolded
+  sets of 541, 571 and 545), refetch L_changed ∩ 3,502 and re-predict them into P; record P's sha256, the band set
+  B_P and the pins; snapshot the served `value` and `value_derivation` of every listed id. The switch-off twin
+  (W = false) is built and gated on the currently deployed base before each gap.
+- **The drain** (point 9): `refold-lot-sum` by `tender_ids`, never the corpus walk, dry → wet (`expect`) → its
+  `project`, in runs of at most 5,000. Stage 1: the 61, the pins, 7511890, every id the guards refuse, and a salted
+  300 of P (one run); check D1–D4. Stage 2: the rest of the 3,502; check D1–D5. Then the L_changed runs; check D6.
+
+  ```sh
+  /root/aj.sh /admin/jobs '{"kind":"refold-lot-sum","tender_ids":[ID,…]}'                               # dry: "N of M named Tender(s) …"
+  /root/aj.sh /admin/jobs '{"kind":"refold-lot-sum","dry_run":false,"expect":N,"tender_ids":[ID,…]}'    # same list; queues project
+  ```
+
+- **Stop rules** (D1/D2 on a PK-snapshot diff of the named ids; a fire in the touched expansion is judged under
+  D5/D6). **D1** the ids corrected to `lot-sum-awards` equal P exactly, each with its predicted S, currency, n and
+  `vouched_by`; the 35 the guards refuse compare identical. An unpredicted fire or a different S: switch off. A
+  predicted id that does not fire: stop and explain within the gap, else switch off. **D2** corrected = |P| exactly
+  (tolerance 0). **D3** pins: 585917 EUR 250,000.00, 5995030 PLN 1,549,511.60, 8426318 GBP 3,000,000,000.00, each
+  `lot-sum-awards` with its recorded `vouched_by`; the Lyon-Turin trio keeps EUR 1,660,661,682.94 with no
+  derivation; the 16 path-V pins byte-identical; the 9 must-stay heads with no derivation; 6465510 does not serve
+  `lot-sum-awards`. Any one off: switch off. **D4** the plan-probed band seek (≥ EUR 100 m) equals B_P; a missing
+  head is a switch-off, an extra row is read at 0 wrong of any class (899272, within 2 % of EUR 100 m, is
+  stop-and-explain). **D5** any id serving `lot-sum-awards` outside P ∪ L_changed (PK-read every id in the project's
+  change-row range): switch off. **D6** L_changed runs: new fires above max(2 × projection, projection + 10), the
+  projection being dry-admitted × 3,502/251,526, stop and read; the delta read (all new fires if 30 or fewer, else a
+  salted 30, `551-b6-delta-`) uses U5's sequential bar, and failing it is a switch-off. **D7** time, as above.
+- **Switch-off route** (point 11): redeploy the pre-gated W = false twin, then `refold-lot-sum` with `tender_ids` =
+  the drain ids ∪ every id with a change row since the flip cursor that serves `lot-sum-awards` (PK-read; runs of at
+  most 5,000), then verify that the band seek and the PK reads show no `lot-sum-awards` row. The corpus walk
+  (about 5 h) is the alternative, in a gap away from 07:35 UTC.
+- **After the flip** (point 12): a 14-day watch after each 07:35 UTC chain: the band seek for new `lot-sum-awards`
+  rows ≥ EUR 100 m, each read at 0 wrong of any class, else switch off; the daily count of new heads against the
+  fire rate the L_changed runs observed on the chain's folded Tenders (more than 3× is stop and read); on day 7 a
+  salted 30 (`551-b6-daily-`) of heads first derived by a daily fold, at U5's bar. **Standing rule**: no drain or
+  deploy that changes path-W inputs (lot keys, winners, org merges, rounds, stated totals, published lot numbers)
+  while path W is on without re-running the port diff on the served set first. Pins: 6908248 (right only while
+  22266591's RES-2..10 stay lot = null) and the partial sums 6679375, 7153588, 7398935, 7722197, 6779279, 6850401,
+  7698260.
 
 **Result-level framework values as scale partners (issue 506, 2026-10-10).** An eForms award
 notice's framework maximum and re-estimate per lot result (BT-709, BT-660, and their eForms-DE 1.x
