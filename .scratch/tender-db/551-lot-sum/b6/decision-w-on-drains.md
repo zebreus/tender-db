@@ -680,3 +680,16 @@ the next tick and the next Sunday 03:10 Berlin tick. Costs are /v1/sql statement
 - `/home/user/tender-db/crates/store/src/canonical.rs` (head compare ~24370-24389; index 16205/18225)
 - `/home/user/tender-db/crates/app/src/supervisor.rs` (`next_berlin_tick` 20440, the 09:35 tick, `REPORT_TICK` 19687)
 - Issues 539, 546, 575, 576, 577, 578, 579 (`.scratch/tender-db/issues/`)
+
+## Owner amendment W13' (2026-10-23 ~20:40Z) — the disk precondition, re-based on measurement
+
+W13's "≥ 15 GB free before any gate" cannot be met in this container without `cargo clean`: the writable allowance is
+~38.5 GB, of which `target/` holds 16 GB (the incremental gate's own working set), the scratchpad 3.8 GB, `/root/.claude`
+2.7 GB, `/root/.cargo` 1.1 GB. A `cargo clean` to reach 15 GB would force the 35-min from-clean gate that W13 exists to
+avoid. Measured instead: the last four gates in this checkout — 84c5118 (10-21), d569107 (10-21), 1730d45 (10-23) and
+adcb7b0 (10-23) — each ran green (GATE-EXIT=0) starting from 4.5–5.3 GB free, because an incremental gate over a code-only
+diff reuses `target/` and the gate prunes superseded archives first. **W13' (replaces W13's threshold):** before any gate,
+(a) ≥ 4 GB free; (b) no build-input re-hash pending (Cargo.lock, a Cargo.toml, `[patch]`, a profile or the toolchain
+unchanged since the last green gate), so the gate's auto-clean cannot fire; (c) read GATE-EXIT from the log, and a
+non-zero exit (any cause, ENOSPC included) is W13's HOLD — the switch-off is uncovered, budget a from-clean gate. If (b)
+fails, the 15 GB rule stands for that gate (prune, or do not gate that day).
