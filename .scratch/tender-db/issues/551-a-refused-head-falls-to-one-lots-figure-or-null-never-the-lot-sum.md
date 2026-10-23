@@ -1592,3 +1592,7 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   before the 10-24 07:35Z chain). No writer runs meanwhile (no segment open). Main now holds undeployed gated code: a
   switch-off commit must carry adcb7b0's tree outside `.scratch` on top of main (commit-tree with that tree + main's
   `.scratch`), not a plain revert of e718684 on main.
+- **2026-10-23 ~23:35Z: the twin adcb7b0 re-gated green (GATE-EXIT=0); marker `gate-v2 adcb7b0…`, `gate_deploy_step
+  adcb7b0` = skip — a switch-off is covered again.** The W-on drain kit is committed (2c757e2; `u9/RUNBOOK-W.md`). Next,
+  10-24 after the 07:35Z chain: U9 chain segment (gd5 class chain), `registry.py init` + W12(b) replay, probe P0 on
+  512b297 (class D), then 539 step 1 (class Z) and step 2 (class W, runs a/b/c) — decision-w-on-drains order.
