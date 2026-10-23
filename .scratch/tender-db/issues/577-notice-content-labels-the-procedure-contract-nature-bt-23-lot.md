@@ -1,6 +1,6 @@
 # 577 — /v1/notices/{id}/content labels the procedure-level contract nature `BT-23-Lot` on SDK 1.13/1.14 notices
 
-Status: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 + 2 bounded /v1/sql
+Status: ready-for-agent — **unit 2 BUILT and GATED 2026-10-23** (wf build-578u2-579u4-577u2: implement, 3 review lenses, a skeptic per finding, 8 findings fixed; focused 693 passed; gate green at 406529a), on main, NOT deployed: it rides the batched deploy after 539's drain and the 10-28 day-7 fetch (decision-w-on-drains: one fold-changing commit per probe P1; 577 is parse-only, W7 overlap check first), then the twin re-gate. Unit 3 (re-parse, expected 0 corrected) after 546 U4. Was: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 + 2 bounded /v1/sql
 reads, 3 GETs; skeptic-corrected, `## Triage (2026-10-21 …)` below). Reproduced and widened. An alias graft whose path carries more
 predicates than the inventory's own declaration lands on a sibling branch that `Branch::matching` sorts first (index.rs:819,
 1288-1300, 1340; parse.rs:256), so 47414082's PROCEDURE serves BT-23-Lot: 2,193 of 2,201 recent eForms notices, 40/40 root rows on

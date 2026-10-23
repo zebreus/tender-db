@@ -1,6 +1,6 @@
 # 578 — repair-placeholder-orgs (issue 440) re-resolves a dissolved org's mentions on the raw country with a bare LIMIT 1, not the resolver's key
 
-Status: ready-for-agent — TRIAGED 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 2 + 2 bounded /v1/sql
+Status: ready-for-agent — **U2 BUILT and GATED 2026-10-23** (6e73ed0, `DissolveTarget::Parity`; `grep -c Legacy440 canonical.rs` = 0; gate green at 406529a), on main, NOT deployed: deploys in the batch after 539's drain (decision-w-on-drains), then the twin re-gate. U4 (file the 358 follow-up) still open. Was: ready-for-agent — TRIAGED 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 2 + 2 bounded /v1/sql
 reads answered, 2 more lost in SSH transport, 0 of 3 GETs answered, no 408/429; skeptic-corrected, `## Triage (2026-10-21 …)`
 below). Reproduced in code at HEAD 969afba: 440's own lookup (`DissolveTarget::Legacy440`, canonical.rs:41875-41939) is not the
 resolver's no-identifier branch (:23619-23834) in four shapes — it keys and mints on the RAW country (no `register_jurisdiction`),

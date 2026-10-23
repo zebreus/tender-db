@@ -1587,3 +1587,8 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
 - **579's 6 order-only Tenders (pre-registered, 579 U2/U3):** 408007, 413501, 454861, 179248, 340956, 823340 will read as
   corrected with no value move whenever a refold reaches them (539's step 2 does: all hold eforms-de versions). Not W drift.
   179248's v_awards representative buyer flips 23052423 → 13025902 at that refold (expected).
+- **2026-10-23 ~23:40Z: 578 U2 + 579 U4 + 577 unit 2 gated green at 406529a (on main, not deployed).** That gate moved the
+  marker to 406529a, so the deployed twin adcb7b0 is uncovered until it is re-gated (tonight, after the W-on kit commit;
+  before the 10-24 07:35Z chain). No writer runs meanwhile (no segment open). Main now holds undeployed gated code: a
+  switch-off commit must carry adcb7b0's tree outside `.scratch` on top of main (commit-tree with that tree + main's
+  `.scratch`), not a plain revert of e718684 on main.

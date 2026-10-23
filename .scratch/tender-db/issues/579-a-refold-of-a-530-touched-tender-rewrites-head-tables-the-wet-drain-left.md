@@ -1,6 +1,6 @@
 # 579 — a refold of a Tender issue 530's wet drain touched rewrites head tables the drain left in place
 
-Status: ready-for-agent — TRIAGED (wf triage-579: measurer + 2 adversarial skeptics; 6 of 6 bounded /v1/sql reads, no
+Status: ready-for-agent — **U4 BUILT and GATED 2026-10-23** (1fb7541: `dissolve_org_mentions` adds every touched Tender to `refold`, so the trailing project reconciles row order; wet-then-refold-rewrites-0-tables tests; gate green at 406529a), on main, NOT deployed: deploys in the batch after 539's drain, then the twin re-gate. U2/U3 done; U6 (file the merge-side follow-up) open; the 6 open Tenders heal at their next natural refold (539 step 2). Was: ready-for-agent — TRIAGED (wf triage-579: measurer + 2 adversarial skeptics; 6 of 6 bounded /v1/sql reads, no
 408, every one `truncated:false`; skeptic-corrected, `## Triage (2026-10-21, wf triage-579)` below). **Unit 1 DONE:** the
 difference is row ORDER, not bindings. `Db::dissolve_org_mentions` re-inserts each repointed winner at a fresh rowid
 (INSERT OR IGNORE + DELETE), and its in-place party / bid-party org-id UPDATE leaves a row where the old GUID id sorted; the
