@@ -1569,3 +1569,8 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   The three join the day-7 read population (10-28: fewer than 30 so far → read all).
 - The 546 gate (1730d45, green) overwrote the gate marker, so the W=false twin d569107 is NOT covered now: a switch-off
   today re-gates (start-rule budget). The twin is re-gated on top of 546 right after 546 deploys.
+- **2026-10-23 ~19:00Z: 546 unit 3 deployed (512b297 = 1730d45's tree, gate green) on top of the flip; the W=false twin
+  re-built on it and gated green: adcb7b0** (local `hold/551-switchoff-2`; revert of e718684 on 512b297, CHANGELOG kept as on
+  main; `LOT_SUM_AWARDS_PATH = false`, 546 kept). Marker `gate-v2 adcb7b0…` — a switch-off is again a covered deploy: commit a
+  revert whose tree equals adcb7b0 outside `.scratch` on top of main, push, `./deploy.sh` (`gate_deploy_step` = skip), then
+  `u7/switchoff.py build/verify` with C1 = 959004090. Every later code deploy must re-gate the twin the same way (C7).
