@@ -1,0 +1,33 @@
+{
+ "at": "2026-10-23T20:30:49Z",
+ "compare": {
+  "d_differs": [],
+  "ids_without_archived_row": [],
+  "n_archive": 283,
+  "n_d_differs": 0,
+  "n_e1": 283,
+  "only_archive": [],
+  "only_e1": [],
+  "tender_rows_equal": true
+ },
+ "hint_accepted": true,
+ "index_exists": true,
+ "plan_db": "/tmp/claude-0/-home-user-tender-db/3050fd14-5ca6-5dd7-8b63-f827e13fd8ce/scratchpad/b6u6kit/plan_w.db",
+ "plan_hint": [
+  "SEARCH c USING INDEX changes_entity_cursor (entity_kind=? AND cursor>? AND cursor<=?)",
+  "CORRELATED SCALAR SUBQUERY 1",
+  "  SEARCH t USING INTEGER PRIMARY KEY (rowid=?)"
+ ],
+ "plan_nohint": [
+  "SEARCH c USING INDEX changes_entity_cursor (entity_kind=? AND cursor>? AND cursor<=?)",
+  "CORRELATED SCALAR SUBQUERY 1",
+  "  SEARCH t USING INTEGER PRIMARY KEY (rowid=?)"
+ ],
+ "range": [
+  959179090,
+  959180852
+ ],
+ "statements": 1,
+ "verdict": "CONFIRMED: changes_entity_cursor exists on prod (INDEXED BY resolved), E1 answered and its tender rows equal the archived all-kind chunk",
+ "what": "issue 551 W-on kit: W12 (a) + one E1 confirmation (build time)"
+}

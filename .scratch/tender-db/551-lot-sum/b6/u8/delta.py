@@ -6,6 +6,16 @@
                                         any draw is shown; the same text goes into issue 551 before the draw
     python3 -I -B delta.py draw         refuses unless the predraw record exists and the population still matches it;
                                         writes u8/delta_read_set.json and u8/delta_fetch_ids.json (fetch_b6.py --ids)
+    python3 -I -B delta.py predraw|draw --population FILE --salt SALT --out DIR
+                                        E5 (W-on drains decision): the same predraw/draw for any population in
+                                        delta_population.json's shape ({ids, n, ids_sha256, band_rows, rows}) -- a
+                                        drain's NEW set (u9/segments/<seg>/new_population.json, salt
+                                        '551-b6-drain-<issue>-') or the day-7 populations (u9/day7/, salt
+                                        '551-b6-daily-'); DIR receives delta_predraw.json / delta_read_set.json /
+                                        delta_fetch_ids.json. The predraw record fixes the salt and the population's
+                                        sha256; the draw refuses if either changed (or if --salt differs). A
+                                        population that records its salt (gd5's new_population.json: the segment's
+                                        pre-registered salt; day7's populations) refuses any other --salt.
 
 The population: every Tender serving lot-sum-awards after the drain that is in L_changed and not among the 3,502 (a
 new fire the port never predicted). The draw:
@@ -52,14 +62,28 @@ BAR = {
 }
 
 
-def cmd_predraw(out=HERE):
-    pop = K.jload(os.path.join(out, 'delta_population.json'))
+def _pop_path(out, population):
+    return population or os.path.join(out, 'delta_population.json')
+
+
+def cmd_predraw(out=HERE, population=None, salt=None):
+    salt = salt or K.SALT_DELTA
+    os.makedirs(out, exist_ok=True)
+    pop = K.jload(_pop_path(out, population))
+    if K.ids_sha(pop['ids']) != pop['ids_sha256'] or len(pop['ids']) != pop['n']:
+        print('REFUSED: the population file\'s ids do not match its own n / ids_sha256')
+        return 2
+    if pop.get('salt') is not None and pop['salt'] != salt:
+        print(f'REFUSED: --salt {salt!r} is not the salt pre-registered with the population\'s segment '
+              f'({pop.get("seg") or "day 7"}: {pop["salt"]!r}; D.1)')
+        return 2
     pre = os.path.join(out, 'delta_predraw.json')
     if os.path.exists(pre):
         print(f'{pre} exists; a predraw record is written once')
         return 2
-    rec = {'what': 'issue 551 B6 U8 delta read: pre-draw record (written before the draw)', 'at': K.now_iso(),
-           'salt': K.SALT_DELTA, 'population_n': pop['n'], 'population_ids_sha256': pop['ids_sha256'],
+    rec = {'what': 'issue 551 B6 delta read: pre-draw record (written before the draw)', 'at': K.now_iso(),
+           'salt': salt, 'population_file': _pop_path(out, population),
+           'population_n': pop['n'], 'population_ids_sha256': pop['ids_sha256'],
            'rule': 'all if <= 30, else the first 30 by sha256(salt + id) ascending (+ the next 30 as continuation); '
                    'every delta band row read in full', 'bar': BAR,
            'bar_applies': 'population_30_or_fewer' if pop['n'] <= N_READ else
@@ -71,7 +95,7 @@ def cmd_predraw(out=HERE):
     return 0
 
 
-def cmd_draw(out=HERE):
+def cmd_draw(out=HERE, population=None, salt=None):
     pre_p = os.path.join(out, 'delta_predraw.json')
     if not os.path.exists(pre_p):
         print('REFUSED: write the predraw record first')
@@ -80,12 +104,14 @@ def cmd_draw(out=HERE):
     if not pre.get('bar'):
         print('REFUSED: the predraw record does not fix the bar (written by an older kit): a new record is needed')
         return 2
-    pop = K.jload(os.path.join(out, 'delta_population.json'))
-    if pop['ids_sha256'] != pre['population_ids_sha256'] or pre['salt'] != K.SALT_DELTA:
+    pop = K.jload(_pop_path(out, population))
+    salt = salt or K.SALT_DELTA
+    if pop['ids_sha256'] != pre['population_ids_sha256'] or K.ids_sha(pop['ids']) != pop['ids_sha256'] \
+            or pre['salt'] != salt:
         print('REFUSED: the population (or the salt) changed after the predraw record')
         return 2
     ids = pop['ids']
-    order = K.salted(ids, K.SALT_DELTA)
+    order = K.salted(ids, salt)
     if len(ids) <= N_READ:
         drawn, cont, mode = sorted(ids), [], 'all'
     else:
@@ -100,7 +126,7 @@ def cmd_draw(out=HERE):
                       'currency': r.get('current_value_currency'), 'eur_cents': r.get('current_value_eur_cents'),
                       'n': det.get('lots'), 'vouched_by': det.get('vouched_by'),
                       'bar': '0 wrong of any class (neutral allowed)' if i in band else 'U5 sequential bar'})
-    rs = {'what': 'issue 551 B6 U8 delta read set', 'at': K.now_iso(), 'mode': mode, 'salt': K.SALT_DELTA,
+    rs = {'what': 'issue 551 B6 delta read set', 'at': K.now_iso(), 'mode': mode, 'salt': salt,
           'population_n': len(ids), 'population_ids_sha256': pop['ids_sha256'], 'order': order, 'drawn': drawn,
           'continuation': cont, 'band_rows': band, 'read': read, 'items': items, 'bar': pre.get('bar'),
           'bar_applies': pre.get('bar_applies')}
@@ -115,8 +141,17 @@ def cmd_draw(out=HERE):
 def main(argv=None, out=HERE):
     ap = argparse.ArgumentParser()
     ap.add_argument('cmd', choices=['predraw', 'draw'])
+    ap.add_argument('--population', help='E5: a population file in delta_population.json\'s shape')
+    ap.add_argument('--salt', help='E5: the pre-registered salt (default 551-b6-delta-)')
+    ap.add_argument('--out', help='E5: the directory for the predraw record and the read set (default u8/)')
     a = ap.parse_args(argv)
-    return cmd_predraw(out) if a.cmd == 'predraw' else cmd_draw(out)
+    if (a.population or a.salt or a.out) and not (a.population and a.salt and a.out):
+        print('REFUSED: --population, --salt and --out go together (E5)')
+        return 2
+    out = a.out or out
+    if a.cmd == 'predraw':
+        return cmd_predraw(out, a.population, a.salt)
+    return cmd_draw(out, a.population, a.salt)
 
 
 if __name__ == '__main__':

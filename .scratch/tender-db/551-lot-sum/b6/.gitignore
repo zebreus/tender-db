@@ -1,0 +1,2 @@
+# the kit box lock (u6/kitlib.py BOX_LOCK): an empty flock file, never content
+.box.lock

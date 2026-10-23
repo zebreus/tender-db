@@ -189,3 +189,6 @@
 2026-10-23T18:51:52Z #189 off_changed_pk003 1.82s rows=2000 truncated=False sha256=d06c7dfe5274f45a raw=0189_off_changed_pk003.json
 2026-10-23T18:51:55Z #190 off_changed_pk004 1.14s rows=274 truncated=False sha256=5192f0019b4aeeb2 raw=0190_off_changed_pk004.json
 2026-10-23T18:52:46Z #191 u9_band_1023 1.34s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0191_u9_band_1023.json
+2026-10-23T20:45:11Z #192 579u3_q1 0.38s rows=107 truncated=False sha256=89e5bdd2b68ecc7e raw=0192_579u3_q1.json
+2026-10-23T20:45:14Z #193 579u3_q2 0.37s rows=2 truncated=False sha256=fa5a4eb62c854dce raw=0193_579u3_q2.json
+2026-10-23T20:45:16Z #194 579u3_q3 0.38s rows=32 truncated=False sha256=6a7d14befc49fd53 raw=0194_579u3_q3.json

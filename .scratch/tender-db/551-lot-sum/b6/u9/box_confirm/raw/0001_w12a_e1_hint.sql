@@ -1,0 +1,2 @@
+SELECT c.cursor, c.entity_id, c.op, (SELECT t.current_value_derivation FROM tenders t WHERE t.id = c.entity_id) AS d FROM changes c INDEXED BY changes_entity_cursor WHERE c.entity_kind = 'tender' AND c.cursor > 959179090 AND c.cursor <= 959180852 ORDER BY c.cursor LIMIT 5000
+-- plan: SEARCH c USING INDEX changes_entity_cursor (entity_kind=? AND cursor>? AND cursor<=?) | CORRELATED SCALAR SUBQUERY 1 |   SEARCH t USING INTEGER PRIMARY KEY (rowid=?)

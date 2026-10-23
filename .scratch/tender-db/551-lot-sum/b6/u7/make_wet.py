@@ -18,6 +18,11 @@ Start rule / D7 (decision U7): for a drain run (stage*, lc*), the wet JSON is wr
 for the runs still to do (stages.json order minus the runs u7/state/registry.json has checked, this one included);
 NO-GO refuses (exit 2, no wet JSON). A switch-off run (off*, or --jobs-dir under u7/switchoff) is never held by the
 start rule: switching off must always be possible. Writes jobs/<run>_wet.json and jobs/<run>_dry_result.json.
+W mode (W-on drains decision, E6; u9/RUNBOOK-W.md): `--runs-left N` (with --minutes-per-run, --read-minutes,
+--switchoff-gate covered|uncovered|from-clean or --switchoff-gate-minutes) evaluates the start rule for the W segment's
+own runs instead of U7's stages.json, and skips U7's registry check: a probe (P0/P1) or a drain run under u9/segments/.
+A run under u9/ (or any run not named stage*, lcNN, off*) WITHOUT --runs-left is a STOP: U7's stages.json would
+otherwise judge it (all six U7 runs are done, so it would say GO for 0 runs left).
 Exit 0; 2 STOP (read the output).
 """
 import argparse
@@ -35,6 +40,7 @@ import start_rule as SR  # noqa: E402
 
 RX = re.compile(r'DRY RUN\s*\S\s*nothing written: (\d+) of (\d+) named Tender\(s\) whose head could serve a derived lot '
                 r'sum, (\d+) notice\(s\)(.*?); run it with', re.S)
+U7_RUN_RX = re.compile(r'^(stage\d+|lc\d\d|off\d*)$')
 RX_LEFT = re.compile(r'(\d+) named Tender\(s\) not in the cohort \([^)]*\): ([0-9,…]+)')
 
 
@@ -69,6 +75,8 @@ def main(argv=None):
     ap.add_argument('--summary-file', required=True)
     ap.add_argument('--jobs-dir', default=os.path.join(HERE, 'jobs'))
     ap.add_argument('--now', help='test only: the clock the start rule reads')
+    ap.add_argument('--runs-left', type=int, help='W mode: the runs of this W segment still to do, this one included')
+    SR.add_args(ap)
     a = ap.parse_args(argv)
     run = K.jload(os.path.join(a.jobs_dir, f'{a.run}_ids.json'))
     with open(a.summary_file, encoding='utf-8') as fh:
@@ -103,7 +111,22 @@ def main(argv=None):
     if d['found'] + d['not_admitted_n'] != d['named']:
         stops.append('found + not admitted != named')
     switchoff = a.run.startswith('off') or os.path.abspath(a.jobs_dir).startswith(os.path.join(HERE, 'switchoff'))
-    if not switchoff:
+    w_run = (os.path.abspath(a.jobs_dir).startswith(os.path.join(os.path.dirname(HERE), 'u9') + os.sep)
+             or not U7_RUN_RX.match(a.run))
+    if not switchoff and w_run and a.runs_left is None:
+        stops.append(f'{a.run} is a W-mode run (jobs under u9/, or not a U7 stage*/lc*/off* run): W mode needs '
+                     '--runs-left (with --minutes-per-run, --read-minutes, --switchoff-gate); U7\'s stages.json is '
+                     'never its start rule')
+    elif not switchoff and a.runs_left is not None:
+        ev = SR.evaluate(a.runs_left, SR.parse_now(a.now), a.minutes_per_run, a.fixed_minutes, SR.gate_of(a),
+                         a.read_minutes, a.switchoff_read_statements)
+        print(f'  start rule (W mode, E6): {SR.line(ev, a.runs_left)}')
+        if not ev['go']:
+            stops.append(f'start rule NO-GO for the {a.runs_left} run(s) left of this W segment: do not post this wet '
+                         f'run (HOLD: it has not started, so it moves to the next gap, after the {ev["tick_kind"]} tick '
+                         f'{ev["tick"]:%Y-%m-%dT%H:%MZ} and its check; D7). A run already in flight is judged by '
+                         f'u9/registry.py status (SWITCH OFF only for an open run that cannot finish)')
+    elif not switchoff:
         left, done = runs_left()
         if a.run in done:
             stops.append(f'{a.run} was already checked (u7/state/registry.json): a wet run is posted once')
@@ -111,7 +134,7 @@ def main(argv=None):
         print(f'  start rule (D7): {SR.line(ev, len(left))}')
         if not ev['go']:
             stops.append(f'start rule NO-GO for the {len(left)} run(s) left {left}: do not post this wet run; if the '
-                         f'drain has begun, switch off (RUNBOOK §S) so it finishes before {ev["chain"]:%Y-%m-%dT%H:%MZ}')
+                         f'drain has begun, switch off (RUNBOOK §S) so it finishes before {ev["tick"]:%Y-%m-%dT%H:%MZ}')
     for n in notes:
         print(f'  NOTE {n}')
     K.jdump(os.path.join(a.jobs_dir, f'{a.run}_dry_result.json'), dict(d, run=a.run, summary=summary.strip(),

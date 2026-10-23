@@ -19,7 +19,10 @@ Conventions:
   gate's auto `cargo clean` cannot take it away mid-gap. Then the statement goes as one bare SELECT via
   `ssh root@zebreus.click /root/sq.sh`, at most one every 2.5 s, with a budget of 300 shared by U6–U8 and at most 280 in
   any hour. A body without `rows` and `columns` (a 408, a shed, an error) is saved, sets a flag, and is **never
-  retried**. After that, run `python3 -I -B u6/box_health.py` (`SELECT 1`). Only then re-run the command, which resumes.
+  retried**. After that, run `python3 -I -B u6/box_health.py` (`SELECT 1`). Only then re-run the command, which resumes:
+  after a transport failure or a shed the same statement may go out again; after a 408 / timeout ("capped") the
+  identical statement is refused for good and the resumable readers re-send that page or chunk HALVED (W-on kit,
+  u9/RUNBOOK-W.md §0; a capped statement of a non-resumable script is a refusal: hand it to the owner).
   Raw bodies and the log are in `u6/box/`.
 - **Public API**: only through fetch_b6's GET client on the shared stamp (at most one GET per 1.5 s across fetch_b6,
   confirm_draw and the kit). That covers `fetch_b6.py`, the API band reads and **every `/health` read**:

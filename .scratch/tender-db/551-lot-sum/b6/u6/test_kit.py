@@ -58,7 +58,7 @@ def build_sandbox():
     for f in ('rule_v2_g.py', 'SHA256SUMS', 'fetch_b6.py', 'l_changed_571_ids.json', 'l_changed_545_ids.json'):
         os.symlink(os.path.join(REAL_B6, f), os.path.join(SB_B6, f))
     os.symlink(os.path.join(REAL_B6, 'u2'), os.path.join(SB_B6, 'u2'))
-    for u in ('u6', 'u7', 'u8'):
+    for u in ('u6', 'u7', 'u8', 'u9'):
         os.makedirs(os.path.join(SB_B6, u))
         for f in os.listdir(os.path.join(REAL_B6, u)):
             if f.endswith('.py') or f == 'l_changed_545_whole.json':
@@ -74,8 +74,8 @@ class FakeBox:
         self.notice_ids = []       # sorted
         self.notices = {}          # id -> dict(ingested_at, source, parse_state, projected)
         self.tv = {}               # notice id -> [(tender_id, seq)]
-        self.fail_next = False
-        self.fail_on = None        # a substring: the next statement containing it gets a 408 body
+        self.fail_next = False     # the next statement fails in TRANSPORT (empty stdout + an ssh error): may be re-sent
+        self.fail_on = None        # a substring: the next statement containing it gets a 408 body (capped: never re-sent)
         self.sent = []
         self.api_calls = []
 
@@ -95,8 +95,11 @@ class FakeBox:
 
     def answer(self, sql):
         self.sent.append(sql)
-        if self.fail_next or (self.fail_on and self.fail_on in sql):
-            self.fail_next, self.fail_on = False, None
+        if self.fail_next:
+            self.fail_next = False
+            return '', 'Connection closed by UNKNOWN port 65535'
+        if self.fail_on and self.fail_on in sql:
+            self.fail_on = None
             return '{"error":"statement interrupted at the 15 s cap","status":408}'
         if sql.strip().upper() == 'SELECT 1':
             return self.body(['1'], [[1]])
@@ -361,13 +364,14 @@ def inside(quick):
     fb.fail_next = True
     rc = E.main(['fetch-notices', '--dir', os.path.join(SB, 'notices_fail')], fake=fb)
     st = K.jload(os.path.join(SB, 'box', 'state.json'))
-    ok(rc == 3 and st['flag'], 'a 408 body is recorded, flags the box, is not retried (exit 3: not a measurement)')
+    ok(rc == 3 and st['flag'] and 'transport' in st['flag'] and not st['capped'],
+       'a transport failure is recorded (class transport), flags the box, is not retried (exit 3: not a measurement)')
     try:
         E.main(['fetch-notices'], fake=fb)
         ok(False, 'the flag refuses the next read')
     except K.BoxRefused:
         ok(True, 'the flag refuses the next read')
-    ok(K.shared_box(fb).health() is not None, 'a good health clears the flag')
+    ok(K.shared_box(fb).health() is not None, 'a good health clears the flag (a transport failure may be re-sent)')
     rc = E.main(['fetch-notices'], fake=fb)
     nman = K.jload(os.path.join(K.U6, 'lchanged', 'notices', 'manifest.json'))
     ok(rc == 0 and nman['n0'] == 47_410_000 and nman['nmax'] == 47_427_999, f'N0 {nman["n0"]}, NMAX {nman["nmax"]}')
@@ -826,6 +830,15 @@ def inside(quick):
     ok(MW.main(['stage1', '--summary-file', sf]) == 2, 'a dry that named a different list -> STOP')
     ok(SR.main(['--runs-left', '4', '--now', '2026-10-21T10:00:00Z']) == 0, 'start rule: 10:00Z, 4 runs -> GO')
     ok(SR.main(['--runs-left', '4', '--now', '2026-10-22T04:00:00Z']) == 2, 'start rule: 04:00Z -> NO-GO')
+    # W-on drains decision W2/W3 (E6): the chain is 09:35 Europe/Berlin (zoneinfo) and the Sunday 03:10 Berlin weekly
+    # tick is a writer window; u9/test_w.py T0 pins the rest (730 days against supervisor.rs's EU-DST rule)
+    ok(SR.next_chain(SR.parse_now('2026-10-24T06:00:00Z')) == SR.parse_now('2026-10-24T07:35:00Z')
+       and SR.next_chain(SR.parse_now('2026-10-25T07:40:00Z')) == SR.parse_now('2026-10-25T08:35:00Z'),
+       'start rule: the chain is 07:35Z through 10-24 and 08:35Z from 10-25 (09:35 Berlin)')
+    ok(SR.main(['--runs-left', '1', '--now', '2026-10-25T07:40:00Z']) == 2,
+       'start rule: 10-25 07:40Z -> NO-GO (the hard-coded 07:35 UTC rule said GO against 10-26 07:35Z)')
+    ev = SR.evaluate(3, SR.parse_now('2026-10-24T20:30:00Z'), 60, 30, 0, 45)
+    ok(ev['tick_kind'] == 'weekly' and not ev['go'], 'start rule: the Sunday 02:10Z weekly tick binds on 10-24 evening')
 
     print('T12 switch-off route: id list, drain-back, verify')
     SO = importlib.import_module('switchoff')
@@ -850,9 +863,11 @@ def inside(quick):
         fb.add_change('tender', t, K.epoch_of('2026-10-22T08:10:00Z'))      # the drain-back's correction rows
     fb.fail_on = "current_value_derivation = 'lot-sum-awards'"              # the band statement 408s
     rc = SO.main(['verify', '--flip-cursor', str(flip_c1), '--cursor-now', str(fb.cursor())], fake=fb, http=fb)
-    ok(rc == 0 and K.jload(os.path.join(K.BOX_DIR, 'state.json'))['flag'],
-       'verify PASSES after the drain-back; the /v1/sql band 408 is not retried, the API band answers instead')
-    ok(K.shared_box(fb).health() is not None, 'box_health clears the flag the band statement set')
+    so_box = os.path.join(K.U7, 'switchoff', 'box', 'state.json')
+    ok(rc == 0 and K.jload(so_box)['flag'] and K.jload(so_box)['capped'],
+       'verify PASSES after the drain-back; the /v1/sql band 408 is capped, not retried, the API band answers instead '
+       '(through the switch-off\'s own box, u7/switchoff/box)')
+    ok(SO.off_box(fb).health() is not None, 'box_health clears the flag the band statement set')
     ok(SO.main(['verify', '--flip-cursor', str(flip_c1), '--cursor-now', str(fb.cursor()), '--band-route', 'api'],
                fake=fb, http=fb) == 0, 'verify --band-route api: PASS')
 
