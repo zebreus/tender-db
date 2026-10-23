@@ -1596,3 +1596,23 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   adcb7b0` = skip — a switch-off is covered again.** The W-on drain kit is committed (2c757e2; `u9/RUNBOOK-W.md`). Next,
   10-24 after the 07:35Z chain: U9 chain segment (gd5 class chain), `registry.py init` + W12(b) replay, probe P0 on
   512b297 (class D), then 539 step 1 (class Z) and step 2 (class W, runs a/b/c) — decision-w-on-drains order.
+
+## W-on drains — records before first use (decision-w-on-drains; 2026-10-23 23:4xZ)
+
+- **Kit:** `b6/u9/KIT_W_SHA256SUMS` (sha256 c90615bfdac90923…; 20 files incl. the gitignored `u9/plan/plan.db`) checked
+  live: `sha256sum -c` exit 0, 20 OK.
+- **R0 / K0:** `u9/registry.py init` — 3,478 entries {P 3,467, delta-U8 8, chain-2026-10-22 1, chain-2026-10-23 2};
+  ids_sha256 8845f0d03f91defccf46a7275a5ead4d13dc84a44a2501155202562365f3ae20; entries_sha256
+  269abd4ee4c682b89012511264acbe06f1ec87390b8a22d5a7795f5187973ddb; K0 959180852; B_R 29; watch 63.
+- **W12 (a)** (kit build, 20:30Z): E1 with `INDEXED BY changes_entity_cursor` accepted on prod (sqlite_master is not on
+  /v1/sql's allow-list) — CONFIRMED. **W12 (b) replay (23:44Z, 4 statements): PASS** — E1's tender rows over
+  (959004090, 959180852] = the archive's 18,216 exactly; E1's lot-sum-awards set = R0's 3,478 (lost 0). E1 is on. Calendar
+  note (runbook §K.5): W12 ran before the first chain read, overriding the decision's 10-24 order (W12: "before E1 is
+  used anywhere").
+- **Code-drift ledger (C1) — 512b297** (deployed 10-23 ~19:00Z): 546 unit 3 (legacy TED `country` = place of performance
+  only; no path-W input). Its W-on probe is P0.
+- **P0 pre-registration (class D, B4):** `refold-lot-sum` tender_ids = R ∪ Rg ∪ pins (3,541 at R0), one run; bar: 0 moves in
+  R's W columns (derivation, cents, currency, eur, detail.lots, vouched_by membership); NOTEs for seq/published_at moves and
+  for place/country on R's legacy r209 heads; NEW expected 0; an eur-only move on a re-dated head with its tender row is a
+  NOTE; path-W pin / partial sum off, or 6465510 serving lot-sum-awards = SWITCH OFF; 6908248 moving = stop and read. Twin
+  adcb7b0 covered (switch-off gate 0 min). Writer lock: "Writer: 551 p0" from its open until its advance.
