@@ -1,0 +1,2 @@
+-- name: r_combined
+SELECT 'sum', country, COUNT(*), SUM(created_at > 1788739200), MAX(id), SUM(identifier IS NOT NULL), MAX(created_at) FROM organizations WHERE country IN ('GP','MQ','GF','RE','YT','PM','BL','MF','WF','AX','GL','SJ') GROUP BY country UNION ALL SELECT 'row', o.country, o.id, o.created_at, (SELECT COUNT(*) FROM organization_mentions m WHERE m.organization_id = o.id), o.name_norm, o.identifier FROM organizations o WHERE o.country IN ('GP','MQ','GF','RE','YT','PM','BL','MF','WF','AX','GL','SJ') AND o.created_at > 1788739200 LIMIT 300

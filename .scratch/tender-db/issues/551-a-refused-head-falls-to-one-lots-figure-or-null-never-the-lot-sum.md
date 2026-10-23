@@ -1555,3 +1555,17 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   (org merges included: 579's refold, 578, 519 cohorts) until the port diff is re-run on the served lot-sum-awards set; the
   U9 pins (6908248, and the partial sums 6679375, 7153588, 7398935, 7722197, 6779279, 6850401, 7698260). Switch-off = push a
   revert whose tree equals d209375 outside `.scratch` + a covered deploy (marker d569107), then `u7/switchoff.py`.
+
+## B6 U9 — 14-day watch
+
+- **Days 1–2 (chains 2026-10-22 2708–2717 and 2026-10-23 2718–2727, both ok), read 2026-10-23 18:48–18:53Z: PASS.** Every
+  live Tender with a change row since the flip cursor (959004090 → 959180852: 13,453 Tenders) plus the 3,502 ∪ L_changed ∪
+  every fire ∪ the pins, by PK (`u7/switchoff.py build`, read-only; outputs moved to `b6/u9/20261023/`): **3,478 serve
+  lot-sum-awards = P's 3,467 (all at their predicted S and currency, 0 off) + the 8 delta heads + 3 new daily fires**:
+  97901 (HUF 23,916,180.00 ≈ EUR 65,268, 4 lots, vouched BT-161 HUF 23,868,000.00 on notice 47415952; an L_changed Tender
+  whose new notice arrived on 10-22), 8859070 (EUR 640,000.00, 2 lots, BT-118 on 47430483, new Tender 10-23) and 8859315
+  (EUR 400,000.00, 2 lots, BT-118 on 47430942, new 10-23). **Band (sql seek): 29 rows = B_P exactly**, no new band row.
+  Count: 3 new fires over two chains (~11,500 Tenders written) — far under 3× the 1.0974 % baseline on any cohort share.
+  The three join the day-7 read population (10-28: fewer than 30 so far → read all).
+- The 546 gate (1730d45, green) overwrote the gate marker, so the W=false twin d569107 is NOT covered now: a switch-off
+  today re-gates (start-rule budget). The twin is re-gated on top of 546 right after 546 deploys.
