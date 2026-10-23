@@ -3630,10 +3630,11 @@ fn guid_twin_wet_json(r: &GuidTwinWetRun) -> Result<String, String> {
              through 440's id-set dissolve, partial rows rehomed mention by mention (Db::dissolve_org_mentions), the \
              target the issue-234 resolver arm's (org_name_norm, register_jurisdiction(country)) row ORDER BY id LIMIT \
              1, or one row minted per key; parties and bid parties follow the mention key, winners the 309 origin tier \
-             (a tier-3 chain mixing moved and kept mentions is unresolved); each moved mention logged in \
-             guid_twin_dissolve_log (the manifest: the campaign on the dry plan read). Restore of a dissolved org: \
-             re-mint it from its manifest entry and re-home its (notice, section) list. Restore of A1's reverse drift: \
-             {\"kind\":\"dissolve-guid-twins\",\"restore\":true,\"since_notice_id\":<boundary>}."
+             (a tier-3 chain mixing moved and kept mentions is unresolved); every Tender a moved row touched stamped \
+             stale for `project` (issue 579: the moved rows sit where the fold would not write them); each moved \
+             mention logged in guid_twin_dissolve_log (the manifest: the campaign on the dry plan read). Restore of a \
+             dissolved org: re-mint it from its manifest entry and re-home its (notice, section) list. Restore of A1's \
+             reverse drift: {\"kind\":\"dissolve-guid-twins\",\"restore\":true,\"since_notice_id\":<boundary>}."
         ),
     );
     let body = serde_json::Value::Object(body);
@@ -3911,11 +3912,12 @@ fn guid_twin_restore_json(r: &GuidTwinRestoreRun) -> Result<String, String> {
                   row, else a merged identifier's survivor, else one row minted as the resolver mints an identified \
                   one (organization added); each current row rehomes exactly its drifted mentions onto it \
                   (Db::dissolve_org_mentions: parties and bid parties by the mention key, winners by the 309 tier, \
-                  tier 5's Tenders stamped stale for `project`); a row the rehome emptied is deleted as the 443 sweep \
-                  deletes one (`removed`: org_sweep_log pre-image, organization removed) unless something still names \
-                  it or a review protects it (`emptied_kept`: run sweep-orphan-orgs); organization changed / tender \
-                  changed announced. One entry per (value, register country). Re-run the recurrence arm after it: \
-                  expect 0 reverse drift; compare the manifest's (notice, section) list with restored[].moved",
+                  every touched Tender stamped stale for `project`, issue 579); a row the rehome emptied is deleted as \
+                  the 443 sweep deletes one (`removed`: org_sweep_log pre-image, organization removed) unless \
+                  something still names it or a review protects it (`emptied_kept`: run sweep-orphan-orgs); \
+                  organization changed / tender changed announced. One entry per (value, register country). Re-run \
+                  the recurrence arm after it: expect 0 reverse drift; compare the manifest's (notice, section) list \
+                  with restored[].moved",
     });
     serde_json::to_string(&body).map_err(|e| e.to_string())
 }
@@ -11411,9 +11413,10 @@ impl Supervisor {
                      {} condemned by the v2 gate, {} dissolved, {} skipped (unresolvable winner), \
                      {} mentions re-resolved ({} fresh provisionals, {} reused), \
                      {} party rows, {} bid-party rows, {} winner rows ({} duplicates removed), \
-                     {} ambiguous winner rows deleted for refold ({} tenders stamped epoch-stale, \
-                     {} notices re-queued — the next incremental fold re-derives their winner \
-                     sets), {} tenders touched{variants}",
+                     {} ambiguous winner rows deleted for refold, {} tenders stamped epoch-stale \
+                     and {} notices re-queued (every touched tender, issue 579 — the next \
+                     incremental fold re-derives the deleted winners and writes the moved rows \
+                     in the fold's own order), {} tenders touched{variants}",
                     if dry_run { " DRY RUN — nothing written" } else { "" },
                     totals.scanned,
                     totals.condemned,
@@ -25515,7 +25518,7 @@ mod tests {
 
     /// Issue 530 Build 2: the wet report is built from the campaign's log — dissolved and rehomed orgs
     /// with their moved mentions and their OWN identifier kind, the minted rows (named from the window, or
-    /// read by id for an earlier stage), the reused targets, the tier-5 Tenders — and R3's checks: the
+    /// read by id for an earlier stage), the reused targets, the refold Tenders — and R3's checks: the
     /// per-window log equality, the minted keys, the structural `skipped` tripwire carried from the
     /// windows, A12's refold check; A10's Verify ids are kept ∪ partial; the writer timings are summed; a
     /// manifest that could not be read makes the outcome `manifest_unread`, never `applied`.

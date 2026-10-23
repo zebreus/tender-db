@@ -8099,12 +8099,16 @@ pub struct OrgDissolve {
     /// guessed.
     pub winners_deleted: u64,
     /// Tenders stamped epoch-stale (`projection_epoch = 0`) so the next
-    /// incremental fold rewrites their winner sets from the re-bound mentions
-    /// (the issue-179 pair's stamp half).
+    /// incremental fold rewrites them from the re-bound mentions (the issue-179
+    /// pair's stamp half). Since issue 579 every touched tender, not only tier
+    /// 5's, so it equals `tender_changes`: the moved party, bid-party and winner
+    /// rows sit where the fold would not write them, and the refold compares
+    /// rows in order.
     pub refold_tenders: u64,
     /// Causing notices re-queued (`projected = 0`) so the delta planner pulls
     /// the stamped tenders' full chains (the pair's requeue half).
     pub refold_notices: u64,
+    /// Tenders a moved row touched, each announced `tender changed`.
     pub tender_changes: u64,
     /// Issue 542: the orgs the re-resolved mentions landed on, whose
     /// `organization_names` rows the window re-derived inside its own transaction.
@@ -41189,7 +41193,10 @@ impl Db {
     /// refold, no shape skips and `skipped` stays as a tripwire. A winner whose
     /// chosen mention is not the org's own, or anything still pointing at the org
     /// once its mentions moved, refuses the whole window (issue 578; each was a
-    /// foreign-key abort before). A dissolved org's
+    /// foreign-key abort before). Every tender a moved row touched is stamped
+    /// epoch-stale and its causing notices re-queued, tier 5's among them (issue
+    /// 579), so the next incremental fold writes it in the fold's own row order
+    /// and a later refold rewrites nothing. A dissolved org's
     /// satellite rows die with it. The window
     /// then re-derives the `organization_names` rows of every org its mentions
     /// landed on, from all of that org's recorded mentions and inside the same
@@ -41281,13 +41288,15 @@ impl Db {
             }
             report.tender_changes = touched.len() as u64;
             // Tier 5 (issue 309): the issue-179 pair for the tenders whose
-            // ambiguous winner rows were deleted — the requeue puts their
-            // chains in the next incremental fold's delta (the planner expands
-            // one unprojected notice to the tender's FULL notice set), and the
-            // epoch stamp makes that fold rewrite them (the requeue alone
-            // leaves chains identical and the fold early-returns). Runs inside
-            // the same transaction as the deletes, so the stamp and the
-            // deleted rows land together or not at all.
+            // ambiguous winner rows were deleted, and since issue 579 for every
+            // other tender the window touched (its moved rows sit where the fold
+            // would not write them) — the requeue puts their chains in the next
+            // incremental fold's delta (the planner expands one unprojected
+            // notice to the tender's FULL notice set), and the epoch stamp makes
+            // that fold rewrite them (the requeue alone leaves chains identical
+            // and the fold early-returns). Runs inside the same transaction as
+            // the deletes, so the stamp and the moved rows land together or not
+            // at all.
             report.refold_tenders = refold.len() as u64;
             if !refold.is_empty() {
                 let ids: Vec<i64> = refold.iter().copied().collect();
@@ -41488,9 +41497,11 @@ impl Db {
     ///   [`DissolveTarget::Fixed`] lands every moved mention on one given row (530
     ///   A1's restore; with a selector only — the caller announces the target).
     ///
-    /// `moved` gets `(notice, section, target)` per moved mention. Runs on the
-    /// caller's connection, inside its transaction; `dry_run` counts and writes
-    /// nothing.
+    /// `moved` gets `(notice, section, target)` per moved mention, and `refold`
+    /// every Tender in `touched` besides tier 5's (issue 579): the caller stamps
+    /// them stale and re-queues their notices, so its trailing `project` rewrites
+    /// them in the fold's own row order. Runs on the caller's connection, inside
+    /// its transaction; `dry_run` counts and writes nothing.
     #[allow(clippy::too_many_arguments)]
     pub(crate) async fn dissolve_org_mentions(
         &self,
@@ -41822,6 +41833,8 @@ impl Db {
 
             // Touched tenders, collected while rows still point at the loser. A
             // rehome (issue 530) collects only the Tenders of the rows it moves, below.
+            // `mine` holds this call's own; `touched` is the caller's whole window.
+            let mut mine: BTreeSet<i64> = BTreeSet::new();
             if only.is_none() {
                 for sql in [
                     "SELECT DISTINCT tender_id FROM tender_version_parties WHERE organization_id = ?",
@@ -41830,7 +41843,7 @@ impl Db {
                 ] {
                     let mut rows = conn.query(sql, (Value::Integer(loser),)).await?;
                     while let Some(row) = rows.next().await? {
-                        touched.insert(int(&row, 0));
+                        mine.insert(int(&row, 0));
                     }
                 }
             }
@@ -41920,7 +41933,7 @@ impl Db {
                             .query(sql, (Value::Integer(*notice), t(section), Value::Integer(loser)))
                             .await?;
                         while let Some(row) = rows.next().await? {
-                            touched.insert(int(&row, 0));
+                            mine.insert(int(&row, 0));
                             if dry_run {
                                 if slot == 0 {
                                     report.parties += 1;
@@ -41968,8 +41981,11 @@ impl Db {
             }
 
             // Winner rows: PK ends in organization_id, so a target row may
-            // already stand — insert-or-ignore then delete, counting dups
-            // (the repoint_org_references shape). Tier-5 rows (no resolved
+            // already stand — insert-or-ignore then delete, counting dups. Not
+            // the repoint_org_references shape (issue 579): that one deletes the
+            // keep's duplicates and UPDATEs in place, so the row keeps its
+            // rowid; this one re-inserts the moved row at a fresh rowid, after
+            // every other row of its version. Tier-5 rows (no resolved
             // section) are deleted outright and their tender queued for the
             // epoch-stale refold that re-derives the winner set.
             // Issue 530: a rehome's tier 5 reaches only the Tenders its moved
@@ -41992,7 +42008,7 @@ impl Db {
                         if !moved_tenders.contains(tender) {
                             continue;
                         }
-                        touched.insert(*tender);
+                        mine.insert(*tender);
                     }
                     report.winners_deleted += 1;
                     refold.insert(*tender);
@@ -42030,7 +42046,7 @@ impl Db {
                     }
                 };
                 if only.is_some() {
-                    touched.insert(*tender);
+                    mine.insert(*tender);
                 }
                 report.winners += 1;
                 if dry_run {
@@ -42096,6 +42112,16 @@ impl Db {
                 )
                 .await?;
             }
+            // Issue 579 (d): every Tender this org's moved rows touched joins tier
+            // 5's in `refold`, a rehome's included. The party and bid-party UPDATEs
+            // leave each row where the old id sorted and the winner repoint
+            // re-inserts it last, while the fold writes each group in org-id order
+            // and the refold's compare (issue 495) reads rows by position: left as
+            // written here, a Tender is rewritten and announced corrected at its
+            // next refold although nothing it binds moved. Stamped stale with tier
+            // 5's, it gets the fold's own order from the caller's trailing `project`.
+            touched.extend(&mine);
+            refold.extend(mine);
 
             if only.is_some() {
                 // A rehome: the org keeps its other mentions, so it stays,

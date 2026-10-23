@@ -2874,7 +2874,8 @@ pub struct GuidTwinWindowDone {
     pub minted: Vec<GuidTwinMinted>,
     /// Pre-existing identifier-NULL rows that took mentions (announced `organization changed`).
     pub reused_targets: Vec<i64>,
-    /// Tenders whose ambiguous winner rows went to tier 5 (deleted, stamped stale, notices re-queued).
+    /// Tenders stamped stale, their notices re-queued: every Tender a moved row touched (issue 579), tier 5's
+    /// (whose ambiguous winner rows were deleted) among them.
     pub refold_tenders: Vec<i64>,
     /// The window's cost on the single writer: the wait for the writer connection, the time it held it
     /// (`BEGIN IMMEDIATE` to COMMIT: every verdict POST waits that long), and the mentions 542's
@@ -2952,11 +2953,13 @@ impl Db {
     ///    (`DissolveTarget::Resolver`), a missing key's row minted ONCE under the plan's mint name;
     /// 3. A11: each moved mention must land on its planned target, or for a key the plan found no row
     ///    for, on the row the window resolved for that key;
-    /// 4. tier 5's Tenders are stamped stale and their notices re-queued (the issue-179 pair), the
-    ///    re-bound rows' name variants re-derived (542), every moved mention logged in
-    ///    `guid_twin_dissolve_log`, and the changes announced: `organization removed` (whole rows) and
-    ///    `added` (mints), inside the rebind; `organization changed` for reused targets and rehomed rows,
-    ///    `tender changed` for every Tender a moved row touched.
+    /// 4. every Tender a moved row touched is stamped stale and its notices re-queued (the issue-179 pair):
+    ///    tier 5's, and since issue 579 the rest, whose moved rows sit where the fold would not write them,
+    ///    so the trailing `project` gives them the fold's own row order; the re-bound rows' name variants
+    ///    re-derived (542), every moved mention logged in `guid_twin_dissolve_log`, and the changes
+    ///    announced: `organization removed` (whole rows) and `added` (mints), inside the rebind;
+    ///    `organization changed` for reused targets and rehomed rows, `tender changed` for every Tender a
+    ///    moved row touched.
     ///
     /// The change-feed doorbell rings after COMMIT, best-effort (the rederive-eur rule: a doorbell that
     /// fails to ring is logged, not returned — failing would report a committed window as not applied).
@@ -3118,7 +3121,7 @@ impl Db {
                 }
             }
             done.rebound_estimate = w.rebound_estimate;
-            // 4. Tier 5's pair, 542's variants, the log, the change rows.
+            // 4. The refold pair (every touched Tender since issue 579), 542's variants, the log, the change rows.
             if !refold.is_empty() {
                 let ids: Vec<i64> = refold.iter().copied().collect();
                 let notices = Self::notice_ids_of_tenders(&conn, &ids).await?;
@@ -4082,6 +4085,7 @@ pub struct GuidTwinRestoreDone {
     pub moved: Vec<(i64, String, i64)>,
     /// 440's counts (mentions, parties, bid parties, winners, tier 5, variants…).
     pub counts: crate::OrgDissolve,
+    /// Tenders stamped stale, their notices re-queued: every Tender a moved row touched (issue 579).
     pub refold_tenders: Vec<i64>,
     /// Rows the restore emptied and deleted as the 443 sweep deletes one (`org_sweep_log` pre-image,
     /// `organization removed`): a row a rebuild under the current constants never mints (a wet window's
@@ -4101,9 +4105,9 @@ impl Db {
     /// `national`, value, the lowest drifted mention's published name, not provisional; announced
     /// `organization added`); each current row then rehomes exactly its drifted mentions onto it through
     /// [`Db::dissolve_org_mentions`] (parties and bid parties by the mention key, winners by the 309
-    /// origin tier, tier 5's Tenders stamped stale and their notices re-queued); a row the rehome EMPTIED
-    /// is deleted as the 443 sweep deletes one when nothing else names it and no review protects it
-    /// (`removed`; else `emptied_kept`, for `sweep-orphan-orgs`); the re-bound rows' name variants
+    /// origin tier, every touched Tender stamped stale and its notices re-queued, issue 579); a row the
+    /// rehome EMPTIED is deleted as the 443 sweep deletes one when nothing else names it and no review
+    /// protects it (`removed`; else `emptied_kept`, for `sweep-orphan-orgs`); the re-bound rows' name variants
     /// re-derived (542), and the changes announced (`organization changed` for each row that gave
     /// mentions and stands and for a standing target, `organization removed` for a deleted one, `tender
     /// changed` for each Tender a moved row touched). The doorbell after COMMIT is best-effort.
@@ -5280,13 +5284,16 @@ mod tests {
     /// DÖE mention, with its party row, moves to 2294259 (`organization changed`, both); the missing key
     /// mints ONE row (DE, the lowest mention's published name, provisional, `organization added`) for its
     /// four mentions across two notices, and the winner follows its origin mention; every Tender a moved
-    /// row touched is `tender changed`; the manifest logs every moved mention, minted or not.
+    /// row touched is `tender changed` and stamped for the refold (issue 579), party rows alone included
+    /// (Tender 12, and window 2's 948285); the manifest logs every moved mention, minted or not.
     #[tokio::test]
     async fn the_wet_windows_dissolve_whole_rows_rehome_partial_ones_and_mint_once() {
         // The Db writer keeps production's `foreign_keys = ON` (only the seeding connection is FK-off):
         // the mint-then-repoint, the rehome and the whole-row delete run under the mode production uses.
         let (db, conn, path) = open("wet", true).await;
         wet_seed(&conn).await;
+        tender_row(&conn, 12).await;
+        exec(&conn, "UPDATE notices SET projected = 1 WHERE id = 2", vec![]).await;
         let stop = || false;
         let progress = |_: u64, _: &str| {};
         let plan = db.plan_guid_twins(GuidTwinPlanArgs { not_planned: &[], planned: &[], ..args(&stop, &progress) }).await.unwrap();
@@ -5316,6 +5323,9 @@ mod tests {
         let minted = w1.minted[0].clone();
         assert_eq!((minted.country.as_str(), minted.name_norm.as_str(), minted.name.as_str(), minted.mentions), ("DE", "amt 66", "Amt 66", 4));
         assert_eq!(w1.counts.winners, 1, "the winner follows its origin mention");
+        assert_eq!(w1.refold_tenders, vec![11, 12], "Tender 12 is touched only by org 103's party row");
+        assert_eq!(rows_of(&conn, "SELECT projection_epoch FROM tenders WHERE id = 12").await[0][0], Value::Integer(0));
+        assert_eq!(rows_of(&conn, "SELECT projected FROM notices WHERE id = 2").await[0][0], Value::Integer(0));
         let row = rows_of(&conn, &format!("SELECT country, name, provisional, identifier FROM organizations WHERE id = {}", minted.target_id)).await;
         assert_eq!(row[0], vec![Value::Text("DE".into()), Value::Text("Amt 66".into()), Value::Integer(1), Value::Null]);
         let on = rows_of(&conn, "SELECT DISTINCT organization_id FROM organization_mentions WHERE notice_id IN (1, 2)").await;
@@ -5346,6 +5356,7 @@ mod tests {
             .unwrap();
         assert_eq!((w2.mentions_moved, w2.counts.dissolved, w2.counts.reused, w2.counts.fresh), (2, 1, 2, 0));
         assert_eq!(w2.reused_targets, vec![2_294_259]);
+        assert_eq!(w2.refold_tenders, vec![948_285], "party rows only: the rehome's and 22759262's");
         let bound = rows_of(&conn, "SELECT notice_id, section_id, organization_id FROM organization_mentions WHERE notice_id > 100 ORDER BY 1, 2").await;
         assert_eq!(
             bound.iter().map(|r| (i(&r[0]), i(&r[2]))).collect::<Vec<_>>(),
@@ -5836,6 +5847,143 @@ mod tests {
         assert_eq!(rows_of(&conn, "SELECT projected FROM notices WHERE id = 300").await[0][0], Value::Integer(0));
         let changed = rows_of(&conn, "SELECT entity_id FROM changes WHERE entity_kind = 'tender'").await;
         assert_eq!(changed, vec![vec![Value::Integer(310)]]);
+        drop(conn);
+        cleanup(&path);
+    }
+
+    /// The award a fold writes for `notice`'s Tender with `moved` on its mention ORG-0001 beside the
+    /// sibling 200 on ORG-0002: both tender-scope winners, RES-1 won by `moved` and RES-2 by 200, and
+    /// one bid on LOT-1 by both, ordered as the projection orders them.
+    fn award_579(notice: i64, moved: i64) -> crate::canonical::TenderProjection {
+        use crate::canonical::{BidParty, BidState, Fact, LotResultState, LotState, Round, TenderProjection, TenderVersion};
+        let party = |org: i64, section: &str| Fact::Party {
+            role: "winner".into(),
+            organization_id: org,
+            notice_id: notice,
+            section_id: section.into(),
+        };
+        let result = |key: &str, lot: &str, org: i64| LotResultState {
+            key: key.into(),
+            lot_key: Some(lot.into()),
+            decision: None,
+            reason: None,
+            awarded_cents: None,
+            awarded_currency: None,
+            decided: None,
+            winners: vec![org],
+            buyer_winners: Vec::new(),
+            statistics: Vec::new(),
+            published_lot_no: None,
+            group: false,
+        };
+        let lot = |key: &str| LotState { key: key.into(), kind: "Lot".into(), facts: BTreeSet::new(), published_lot_no: None };
+        let mut bidders = vec![
+            BidParty { role: "tenderer".into(), organization_id: moved, section_id: "ORG-0001".into() },
+            BidParty { role: "tenderer".into(), organization_id: 200, section_id: "ORG-0002".into() },
+        ];
+        bidders.sort();
+        TenderProjection {
+            source: "doe".into(),
+            procedure_key: Some(format!("pk-579-{notice}")),
+            island_notice_id: None,
+            kind: "procedure".into(),
+            versions: vec![TenderVersion {
+                caused_by_notice_id: notice,
+                published_at: 1_717_200_000,
+                dispatched_at: None,
+                notice_subtype: None,
+                original_lang: None,
+                publication_id: format!("{notice}"),
+                facts: [party(moved, "ORG-0001"), party(200, "ORG-0002")].into_iter().collect(),
+                lots: vec![lot("LOT-1"), lot("LOT-2")],
+                rounds: vec![Round {
+                    notice_id: notice,
+                    logical_notice_id: None,
+                    lot_results: vec![result("RES-1", "LOT-1", moved), result("RES-2", "LOT-2", 200)],
+                    bids: vec![BidState {
+                        key: "TEN-1".into(),
+                        lot_key: Some("LOT-1".into()),
+                        cents: None,
+                        currency: None,
+                        quality: None,
+                        parties: bidders,
+                    }],
+                    contracts: Vec::new(),
+                }],
+                group_members: Vec::new(),
+                stated_totals: Vec::new(),
+            }],
+        }
+    }
+
+    /// Issue 579 (d) through the wet window: the whole row 100 (its key minted, after the sibling 200)
+    /// and the partial row 300's moved mention (onto the identifier-NULL 50, before it; its other mention
+    /// kept) each leave their Tender's moved party, bid-party and winner rows where the fold would not
+    /// write them, and the refold's compare reads rows in order. The window stamps both Tenders and
+    /// re-queues their notices though no tier 5 ran, the rehome's Tender included; the trailing fold puts
+    /// the six tables in its own order, and a later refold with the compare on rewrites none.
+    #[tokio::test]
+    async fn a_wet_window_then_a_refold_rewrites_no_table() {
+        let (db, conn, path) = open("wet-579", true).await;
+        db.set_refold_compare(crate::RefoldCompare::On);
+        org_row(&conn, 50, None, None, "Amt 88", "DE").await;
+        org_row(&conn, 100, Some("national"), Some(V3), "Amt 77", "DE").await;
+        org_row(&conn, 200, Some("national"), Some("DE811128135"), "Werk GmbH", "DE").await;
+        org_row(&conn, 300, Some("national"), Some(V5), "Amt 88", "DE").await;
+        for n in [900, 901, 950] {
+            notice_row(&conn, n, None).await;
+        }
+        exec(&conn, "UPDATE notices SET projected = 1", vec![]).await;
+        mention_row(&conn, 900, "ORG-0001", 100, "Amt 77", "DE", Some(V3)).await;
+        mention_row(&conn, 900, "ORG-0002", 200, "Werk GmbH", "DE", Some("DE811128135")).await;
+        mention_row(&conn, 901, "ORG-0001", 300, "Amt 88", "DE", Some(V5)).await;
+        mention_row(&conn, 901, "ORG-0002", 200, "Werk GmbH", "DE", Some("DE811128135")).await;
+        mention_row(&conn, 950, "ORG-0001", 300, "Amt 88", "DE", Some(V5)).await;
+        db.apply_tenders(&[award_579(900, 100), award_579(901, 300)], 1_717_300_000, false).await.unwrap();
+
+        let window = GuidTwinWindow {
+            keys: vec![("amt 77".into(), Some("DE".into())), ("amt 88".into(), Some("DE".into()))],
+            whole: vec![100],
+            partial: vec![300],
+            mentions: vec![
+                GuidTwinWetMention { org_value: GuidKeep::key(V3), ..wet(900, "ORG-0001", 100, "amt 77", None, true) },
+                GuidTwinWetMention { org_value: GuidKeep::key(V5), ..wet(901, "ORG-0001", 300, "amt 88", Some(50), false) },
+            ],
+            ..Default::default()
+        };
+        let w = db
+            .dissolve_guid_twin_window(GuidTwinWindowArgs { window: &window, job_id: 16, window_no: 1, gate_since_notice_id: None, fields: &[], normalize: lang })
+            .await
+            .unwrap();
+        let minted = w.minted[0].target_id;
+        assert!(minted > 300, "{minted}");
+        assert_eq!((w.counts.parties, w.counts.bid_parties, w.counts.winners, w.counts.winners_deleted), (2, 2, 2, 0), "{:?}", w.counts);
+        let tenders = rows_of(&conn, "SELECT id FROM tenders WHERE procedure_key LIKE 'pk-579-%' ORDER BY id").await;
+        assert_eq!(w.refold_tenders, tenders.iter().map(|r| i(&r[0])).collect::<Vec<_>>(), "both Tenders, with no tier 5");
+        assert_eq!((w.counts.refold_tenders, w.counts.tender_changes, w.counts.refold_notices), (2, 2, 2), "{:?}", w.counts);
+        let stamped = rows_of(&conn, "SELECT projection_epoch FROM tenders WHERE procedure_key LIKE 'pk-579-%'").await;
+        assert!(stamped.iter().all(|r| i(&r[0]) == 0), "{stamped:?}");
+        let projected = rows_of(&conn, "SELECT id, projected FROM notices ORDER BY 1").await;
+        assert_eq!(
+            projected.iter().map(|r| (i(&r[0]), i(&r[1]))).collect::<Vec<_>>(),
+            vec![(900, 0), (901, 0), (950, 1)],
+            "the kept mention's notice causes no version"
+        );
+
+        // The trailing fold binds the moved mentions where they now sit.
+        let trailing = db.apply_tenders(&[award_579(900, minted), award_579(901, 50)], 1_717_300_000, false).await.unwrap();
+        assert_eq!(
+            (trailing.tenders_corrected, trailing.tables_rewritten),
+            (2, 6),
+            "each Tender's parties, bid parties and winners put in the fold's order: {trailing:?}"
+        );
+        db.set_projection_epoch_for_test(-1).await.unwrap();
+        let refold = db.apply_tenders(&[award_579(900, minted), award_579(901, 50)], 1_717_300_000, false).await.unwrap();
+        assert_eq!(
+            (refold.tenders_verified, refold.tenders_corrected, refold.tables_rewritten),
+            (2, 0, 0),
+            "the fold's fixed point: {refold:?}"
+        );
         drop(conn);
         cleanup(&path);
     }

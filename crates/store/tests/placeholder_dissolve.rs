@@ -9,9 +9,13 @@
 //! tier resolves goes to tier 5 (issue 309): the row is deleted, its tender
 //! stamped epoch-stale and its causing notices re-queued, so the next
 //! incremental fold re-derives the winner set from the re-bound mentions.
+//! Since issue 579 every touched tender is stamped and re-queued the same
+//! way, so that fold also writes the moved rows in its own order and a later
+//! refold rewrites no table.
 //! Dry-run counts and writes nothing; a second wet run finds nothing
 //! (dissolved orgs left scope).
 
+use store::canonical::{BidParty, BidState, Fact, LotResultState, LotState, Round, TenderProjection, TenderVersion};
 use store::turso::Value;
 
 fn bad(_country: Option<&str>, _kind: &str, value: &str) -> bool {
@@ -336,8 +340,9 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     assert_eq!((dry.fresh, dry.reused), (13, 1), "all named fresh but Alpha City reuses 60");
     assert_eq!(
         (dry.winners_deleted, dry.refold_tenders, dry.refold_notices),
-        (1, 1, 1),
-        "tier 5 previews the ambiguous row, its tender, and the requeue"
+        (1, 7, 1),
+        "tier 5 previews the ambiguous row; issue 579: every touched tender (1-7) goes to the \
+         refold, and the requeue reaches the one notice this seed records"
     );
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 50").await, 1);
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 9, "dry run minted nothing");
@@ -357,8 +362,8 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     assert_eq!(wet.winner_dups, 1, "lot_result 11 already stood on org 60");
     assert_eq!(
         (wet.winners_deleted, wet.refold_tenders, wet.refold_notices),
-        (1, 1, 1),
-        "preview-exact: the wet tier-5 counts match the dry ones"
+        (1, 7, 1),
+        "preview-exact: the wet tier-5 and refold counts match the dry ones"
     );
     assert_eq!(wet.tender_changes, 7, "tenders 1-7 all touched — 2 via the tier-5 delete");
     assert_eq!(wet.variant_orgs, 14, "issue 542: 60 plus the 13 fresh provisionals");
@@ -976,6 +981,157 @@ async fn a_winner_following_a_foreign_party_row_refuses_the_window_and_keeps_not
         untouched().await;
     }
     assert_eq!(count(&conn, "SELECT organization_id FROM tender_version_result_winners").await, 51);
+    drop(conn);
+    drop(db);
+    cleanup(path);
+}
+
+// ---- Issue 579: a wet dissolve leaves its Tenders where the next refold verifies them ----
+
+/// The fold's `now`, after the award's publication.
+const NOW: i64 = 1_767_441_600;
+
+/// The award a fold writes for notice 900 with `winner` on its mention ORG-2 beside the
+/// sibling 30 on ORG-3: both are winners, and RES-1 is `winner`'s.
+fn award(winner: i64) -> TenderProjection {
+    projection(900, "pk-579", "winner", winner, winner)
+}
+
+/// Notice 901's Tender, where `org` is only a party and a bidder: both results are the
+/// sibling 30's, so no winner row names `org`.
+fn party_only(org: i64) -> TenderProjection {
+    projection(901, "pk-579-b", "tenderer", org, 30)
+}
+
+/// The Tender a fold writes for `notice` with `org` on its mention ORG-2 beside the sibling
+/// 30 on ORG-3: tender-scope parties (the buyer 20, then both under `role`), RES-1 won by
+/// `res1` and RES-2 by 30, and one bid on LOT-1 by both, ordered as the projection orders
+/// them (the parties a `BTreeSet<Fact>`, each bid's parties sorted).
+fn projection(notice: i64, procedure_key: &str, role: &str, org: i64, res1: i64) -> TenderProjection {
+    let party = |role: &str, org: i64, section: &str| Fact::Party {
+        role: role.into(),
+        organization_id: org,
+        notice_id: notice,
+        section_id: section.into(),
+    };
+    let result = |key: &str, lot: &str, org: i64| LotResultState {
+        key: key.into(),
+        lot_key: Some(lot.into()),
+        decision: None,
+        reason: None,
+        awarded_cents: None,
+        awarded_currency: None,
+        decided: None,
+        winners: vec![org],
+        buyer_winners: Vec::new(),
+        statistics: Vec::new(),
+        published_lot_no: None,
+        group: false,
+    };
+    let lot = |key: &str| LotState { key: key.into(), kind: "Lot".into(), facts: Default::default(), published_lot_no: None };
+    let mut bidders = vec![
+        BidParty { role: "tenderer".into(), organization_id: org, section_id: "ORG-2".into() },
+        BidParty { role: "tenderer".into(), organization_id: 30, section_id: "ORG-3".into() },
+    ];
+    bidders.sort();
+    TenderProjection {
+        source: "ted".into(),
+        procedure_key: Some(procedure_key.into()),
+        island_notice_id: None,
+        kind: "procedure".into(),
+        versions: vec![TenderVersion {
+            caused_by_notice_id: notice,
+            published_at: NOW - 86_400,
+            dispatched_at: None,
+            notice_subtype: None,
+            original_lang: None,
+            publication_id: format!("{notice}-2026"),
+            facts: [party("buyer", 20, "ORG-1"), party(role, org, "ORG-2"), party(role, 30, "ORG-3")]
+                .into_iter()
+                .collect(),
+            lots: vec![lot("LOT-1"), lot("LOT-2")],
+            rounds: vec![Round {
+                notice_id: notice,
+                logical_notice_id: None,
+                lot_results: vec![result("RES-1", "LOT-1", res1), result("RES-2", "LOT-2", 30)],
+                bids: vec![BidState {
+                    key: "TEN-1".into(),
+                    lot_key: Some("LOT-1".into()),
+                    cents: None,
+                    currency: None,
+                    quality: None,
+                    parties: bidders,
+                }],
+                contracts: Vec::new(),
+            }],
+            group_members: Vec::new(),
+            stated_totals: Vec::new(),
+        }],
+    }
+}
+
+/// Issue 579 (d): the dissolve's moved rows sit where the fold would not write them — the
+/// party and bid-party rows where the condemned 10 sorted (before the sibling 30, its mint
+/// after), the winner re-inserted after RES-2's — and the refold's compare reads rows in
+/// order. So the window stamps every Tender it touched, not only tier 5's (none here), a
+/// Tender it touched through party and bid-party rows alone (notice 901's) included: the
+/// trailing fold rewrites the award's three tables and the other's two in its own order,
+/// and a later refold with the compare on rewrites none. Unstamped, the trailing fold
+/// skipped both Tenders and that refold rewrote all five, announcing corrections that moved
+/// nothing.
+#[tokio::test]
+async fn a_wet_dissolve_then_a_refold_rewrites_no_table() {
+    let path = "test-dissolve-579-parity.db";
+    let (db, conn) = open(path).await;
+    db.set_refold_compare(store::RefoldCompare::On);
+    // The compare refuses to run without the by-version indexes.
+    db.build_tender_indexes().await.unwrap();
+    org(&conn, 10, Some("CZ"), Some("BAD"), "Placeholder Merger").await;
+    org(&conn, 20, Some("CZ"), None, "Buyer Office").await;
+    org(&conn, 30, Some("CZ"), Some("49371185"), "Sibling Works").await;
+    for notice in [900, 901] {
+        conn.execute(
+            "INSERT INTO notices (id, source, publication_id, content_hash, profile, fetch_id,
+                                  member_path, ingested_at, parse_state, projected)
+             VALUES (?, 'ted', ?, ?, 'eforms:test', 1, 'p', 0, 'parsed', 1)",
+            (Value::Integer(notice), Value::Text(format!("{notice}-2026")), Value::Text(format!("h{notice}"))),
+        )
+        .await
+        .unwrap();
+        mention(&conn, notice, "ORG-1", 20, "Buyer Office", Some("CZ")).await;
+        mention(&conn, notice, "ORG-2", 10, "Gamma Works", Some("CZ")).await;
+        mention(&conn, notice, "ORG-3", 30, "Sibling Works", Some("CZ")).await;
+    }
+    db.apply_tenders(&[award(10), party_only(10)], NOW, false).await.unwrap();
+
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect("wet");
+    assert_eq!((wet.dissolved, wet.parties, wet.bid_parties, wet.winners, wet.winners_deleted), (1, 2, 2, 1, 0), "{wet:?}");
+    assert_eq!((wet.mentions, wet.fresh), (2, 1), "both mentions on one mint");
+    assert_eq!(
+        (wet.tender_changes, wet.refold_tenders, wet.refold_notices),
+        (2, 2, 2),
+        "both touched Tenders are stamped and their notices re-queued, with no tier 5"
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM tenders WHERE projection_epoch = 0").await, 2);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM notices WHERE id IN (900, 901) AND projected = 0").await, 2);
+    let gamma = count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 900 AND section_id = 'ORG-2'").await;
+    assert!(gamma > 30, "Gamma Works minted after the sibling ({gamma})");
+
+    // The trailing fold binds ORG-2 to the mint, as the mentions now say.
+    let trailing = db.apply_tenders(&[award(gamma), party_only(gamma)], NOW, false).await.unwrap();
+    assert_eq!(
+        (trailing.tenders_corrected, trailing.tables_rewritten),
+        (2, 5),
+        "the award's parties, bid parties and winners, and the other's parties and bid parties, put in the \
+         fold's order: {trailing:?}"
+    );
+    db.set_projection_epoch_for_test(-1).await.unwrap();
+    let refold = db.apply_tenders(&[award(gamma), party_only(gamma)], NOW, false).await.unwrap();
+    assert_eq!(
+        (refold.tenders_verified, refold.tenders_corrected, refold.tables_rewritten),
+        (2, 0, 0),
+        "the fold's fixed point: {refold:?}"
+    );
     drop(conn);
     drop(db);
     cleanup(path);
