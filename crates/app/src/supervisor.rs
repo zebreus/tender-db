@@ -11343,6 +11343,10 @@ impl Supervisor {
                             ingest::idgate::condemns,
                             ingest::project::ORG_NAME_FIELD_IDS,
                             ingest::project::normalize_lang,
+                            // Issue 578: the fold's issue-351 wall, so a country-less
+                            // mention lands where the resolver binds it.
+                            ingest::project::match_norm,
+                            ingest::idgate::STOPLIST_CAP,
                             BACKFILL_BATCH,
                             watermark,
                             dry_run,

@@ -41171,10 +41171,11 @@ impl Db {
     /// whose identifier the injected v2 gate condemns (placeholder lexicon,
     /// suspicious runs, short VAT stubs, HARD-checksum failures) are 1→N
     /// SPLITS — the one direction `repoint_org_references` cannot do. Each
-    /// recorded mention of a condemned org re-resolves through 440's own
-    /// identifier-NULL lookup ((name_norm, raw country) reuse, a bare LIMIT 1 —
-    /// not the resolver's `register_jurisdiction` key, issue 578; nameless or
-    /// country-less mentions mint fresh rows), its binding is rewritten, and its
+    /// recorded mention of a condemned org re-resolves through the resolver's
+    /// no-identifier branch ([`DissolveTarget::Parity`], issue 578: the
+    /// register's country, the lowest id, one row per key; a named country-less
+    /// mention through the issue-351 wall; a nameless one mints), so it lands
+    /// where a fresh fold or a rebuild binds it; its binding is rewritten, and its
     /// party/bid-party rows follow it exactly via their
     /// (mention_notice_id, mention_section_id) columns. Winner rows carry no
     /// mention link, so they follow their version's `caused_by_notice_id` —
@@ -41185,21 +41186,29 @@ impl Db {
     /// would be SKIPPED WHOLE
     /// (counted, untouched — the 259 guard discipline: fully dissolved or
     /// not at all, never half); since tier 5 (issue 309) deletes such rows for the
-    /// refold, no shape skips and `skipped` stays as a tripwire. A dissolved org's
+    /// refold, no shape skips and `skipped` stays as a tripwire. A winner whose
+    /// chosen mention is not the org's own, or anything still pointing at the org
+    /// once its mentions moved, refuses the whole window (issue 578; each was a
+    /// foreign-key abort before). A dissolved org's
     /// satellite rows die with it. The window
     /// then re-derives the `organization_names` rows of every org its mentions
     /// landed on, from all of that org's recorded mentions and inside the same
     /// transaction (issue 542, [`OrgDissolve::variant_orgs`]), so no whole-corpus
     /// `backfill-org-name-variants` walk has to follow. `fields` and `normalize` are
-    /// that walk's name-field list and language normaliser; both live in ingest. This deliberate
+    /// that walk's name-field list and language normaliser; `norm` and
+    /// `stoplist_cap` are the fold's resolver's issue-351 N2 key and wall
+    /// (`ingest::project::match_norm`, `ingest::idgate::STOPLIST_CAP`); all four live in ingest. This deliberate
     /// binding rewrite is a REPAIR under the 259 precedent — merges never
     /// re-route mentions. Dissolved orgs leave the scan's scope, so a rerun
     /// redoes nothing. `dry_run` counts and writes nothing.
+    #[allow(clippy::too_many_arguments)]
     pub async fn repair_placeholder_orgs_batch(
         &self,
         condemns: fn(Option<&str>, &str, &str) -> bool,
         fields: &[&str],
         normalize: fn(Option<&str>) -> Option<String>,
+        norm: fn(&str) -> String,
+        stoplist_cap: usize,
         batch: i64,
         after: i64,
         dry_run: bool,
@@ -41249,6 +41258,7 @@ impl Db {
                 .dissolve_condemned(
                     &conn,
                     &condemned,
+                    ParityTargets::new(norm, stoplist_cap),
                     now,
                     dry_run,
                     &mut report,
@@ -41404,21 +41414,22 @@ impl Db {
 
     /// The per-org half of [`Self::repair_placeholder_orgs_batch`], separated
     /// so the caller can ROLLBACK on any error. Since issue 530 Build 2 a loop
-    /// over [`Self::dissolve_org_mentions`] with no mention selector and 440's
-    /// own target lookup ([`DissolveTarget::Legacy440`]): the same statements in
-    /// the same order as before the factoring (the `placeholder_dissolve` tests),
-    /// except that the tier-3 chain read now ends in `ORDER BY m.notice_id,
-    /// m.section_id` (issue 530's deterministic carrier). That changes no effect:
-    /// `pick` fires only when every candidate shares one (org_name_norm, raw
-    /// country) key, and Legacy440's lookup resolves one key to one row inside
-    /// the transaction (the hit, or the row the first mention mints; in a dry
-    /// run the same id or 0). The plan is unchanged: the `organization_mentions_org`
-    /// seek plus a sorter over the chain's few rows.
+    /// over [`Self::dissolve_org_mentions`] with no mention selector; since issue
+    /// 578 every org of the window shares one [`DissolveTarget::Parity`] lookup,
+    /// `targets`, so a key a mention mints is the key's row for the rest of the
+    /// window (and a dry run counts it `fresh` once, as the wet run mints it).
+    /// The tier-3 chain read ends in `ORDER BY m.notice_id, m.section_id` (issue
+    /// 530's deterministic carrier); `pick` fires only when every candidate
+    /// shares one (org_name_norm, raw country) key, and so one register key,
+    /// which the lookup resolves to one row inside the transaction (the hit, or
+    /// the row the first mention mints; in a dry run the same id or 0). The plan
+    /// is the `organization_mentions_org` seek plus a sorter over the chain's few rows.
     #[allow(clippy::too_many_arguments)]
     async fn dissolve_condemned(
         &self,
         conn: &Connection,
         condemned: &[i64],
+        mut targets: ParityTargets,
         now: i64,
         dry_run: bool,
         report: &mut OrgDissolve,
@@ -41433,7 +41444,7 @@ impl Db {
                 conn,
                 loser,
                 None,
-                &mut DissolveTarget::Legacy440,
+                &mut DissolveTarget::Parity(&mut targets),
                 now,
                 dry_run,
                 report,
@@ -41464,14 +41475,16 @@ impl Db {
     ///   the Tenders of rows that moved, and the org SURVIVES — it joins `rebound`
     ///   (its name variants re-derived from what it keeps) and `changed_targets`
     ///   (announced `organization changed`). Every listed mention must be on the org.
-    /// - `key` finds each mention's target: [`DissolveTarget::Legacy440`] is 440's
-    ///   own lookup (the mention's raw country, a bare `LIMIT 1`, a fresh row per
-    ///   unkeyed mention); [`DissolveTarget::Resolver`] reproduces the issue-234
+    /// - `key` finds each mention's target: [`DissolveTarget::Parity`] is the
+    ///   resolver's whole no-identifier branch (440's lookup, issue 578): the
+    ///   issue-234 key below, a named country-less mention through the issue-351
+    ///   wall, a nameless one minted under the register's country;
+    ///   [`DissolveTarget::Resolver`] reproduces the issue-234
     ///   resolver arm exactly — `(org_name_norm(name), register_jurisdiction(country))`,
     ///   `ORDER BY id LIMIT 1`, else ONE row minted per key (country the register's,
     ///   provisional, announced `organization added`), a mention with no name or no
-    ///   country refused — and, before a whole row's delete, seeks every
-    ///   `organization_id` index and refuses if anything still points at it;
+    ///   country refused. Both, before a whole row's delete, seek every
+    ///   `organization_id` index and refuse if anything still points at it;
     ///   [`DissolveTarget::Fixed`] lands every moved mention on one given row (530
     ///   A1's restore; with a selector only — the caller announces the target).
     ///
@@ -41844,98 +41857,43 @@ impl Db {
                 }
             }
 
-            // Re-resolve each mention through the post-234 provisional path
-            // and move its rows. `section_target` feeds the winner repoint.
+            // Re-resolve each mention through the resolver's no-identifier branch
+            // (or one of 530's arms) and move its rows. `section_target` feeds the
+            // winner repoint.
             let mut section_target: std::collections::HashMap<(i64, String), i64> =
                 std::collections::HashMap::new();
             for (notice, section, name, country) in
                 mentions.iter().filter(|m| only.is_none_or(|set| set.contains(&(m.0, m.1.clone()))))
             {
-                // The resolver's name key (issue 432). Only `Resolver` (and the
-                // `Fixed` restore) land a mention where a fresh fold would put it:
-                // `Legacy440` keys on the raw country with a bare LIMIT 1 (issue 578).
-                let name_norm = org_name_norm(name);
-                // Issue 530: the resolver arm's key, or 440's own (below, as it was).
-                let target: i64 = if let DissolveTarget::Fixed(id) = &*key {
-                    *id
-                } else if let DissolveTarget::Resolver(r) = &mut *key {
-                    Box::pin(Self::resolver_target(
-                        conn,
-                        r,
-                        loser,
-                        (*notice, section),
-                        name,
-                        country.as_deref(),
-                        now,
-                        dry_run,
-                        report,
-                        changed_targets,
-                    ))
-                    .await?
-                } else if !name_norm.is_empty() && country.is_some() {
-                    let c = country.clone().unwrap_or_default();
-                    let mut rows = conn
-                        .query(
-                            "SELECT id FROM organizations \
-                              WHERE name_norm = ? AND country = ? AND identifier IS NULL \
-                              LIMIT 1",
-                            (Value::Text(name_norm.clone()), t(&c)),
-                        )
-                        .await?;
-                    let hit = match rows.next().await? {
-                        Some(row) => Some(int(&row, 0)),
-                        None => None,
-                    };
-                    drop(rows);
-                    match hit {
-                        Some(id) => {
-                            report.reused += 1;
-                            changed_targets.insert(id);
-                            id
-                        }
-                        None => {
-                            report.fresh += 1;
-                            if dry_run {
-                                0
-                            } else {
-                                conn.execute(
-                                    "INSERT INTO organizations(country, identifier_kind, identifier, name,
-                                         name_norm, provisional, created_at)
-                                     VALUES(?, NULL, NULL, ?, ?, 1, ?)",
-                                    (
-                                        opt_text(country.as_deref()),
-                                        t(name),
-                                        Value::Text(name_norm),
-                                        Value::Integer(now),
-                                    ),
-                                )
-                                .await?;
-                                let id = last_insert_rowid(conn).await?;
-                                append_change(conn, "organization", id, None, "added", now).await?;
-                                id
-                            }
-                        }
+                let target: i64 = match &mut *key {
+                    DissolveTarget::Fixed(id) => *id,
+                    DissolveTarget::Resolver(r) => {
+                        Box::pin(Self::resolver_target(
+                            conn,
+                            r,
+                            loser,
+                            (*notice, section),
+                            name,
+                            country.as_deref(),
+                            now,
+                            dry_run,
+                            report,
+                            changed_targets,
+                        ))
+                        .await?
                     }
-                } else {
-                    report.fresh += 1;
-                    if dry_run {
-                        0
-                    } else {
-                        conn.execute(
-                            "INSERT INTO organizations(country, identifier_kind, identifier, name,
-                                 name_norm, provisional, created_at)
-                             VALUES(?, NULL, NULL, ?, ?, 1, ?)",
-                            (
-                                opt_text(country.as_deref()),
-                                t(name),
-                                Value::Text(name_norm),
-                                Value::Integer(now),
-                            ),
-                        )
-                        .await?;
-                        let id = last_insert_rowid(conn).await?;
-                        append_change(conn, "organization", id, None, "added", now).await?;
-                        id
+                    DissolveTarget::Parity(p) => {
+                        Box::pin(self.parity_target(
+                            conn,
+                            p,
+                            name,
+                            country.as_deref(),
+                            now,
+                            dry_run,
+                            report,
+                            changed_targets,
+                        ))
+                        .await?
                     }
                 };
                 section_target.insert((*notice, section.clone()), target);
@@ -42058,13 +42016,14 @@ impl Db {
                     Some(target) => target,
                     // A rehome leaves the winner of a mention it keeps where it is.
                     None if only.is_some() => continue,
-                    None if matches!(key, DissolveTarget::Legacy440) => 0,
                     // Issue 530: a whole row's winner whose chosen mention is not one of
                     // its own (a party row of another org's mention picked it) has no
-                    // target: a clear refusal, never a winner repointed onto id 0.
+                    // target: a clear refusal, never a winner repointed onto id 0. 440's
+                    // too since issue 578 (it repointed onto 0, and the foreign key
+                    // aborted its wet window).
                     None => {
                         return Err(turso::Error::Error(format!(
-                            "dissolve-guid-twins: organization {loser}'s winner row ({tender}, {seq}, {lot_result}) \
+                            "dissolve: organization {loser}'s winner row ({tender}, {seq}, {lot_result}) \
                              follows mention ({notice}, {section}), which is not one of its mentions; nothing of \
                              this window is kept"
                         )));
@@ -42145,15 +42104,15 @@ impl Db {
                 rebound.insert(loser);
                 return Ok(());
             }
-            if !dry_run && matches!(key, DissolveTarget::Resolver(_)) {
-                // Issue 530: nothing may still point at a row about to be deleted
-                // (a nested-alias party row, a winner of another mention): a clear
-                // refusal instead of a foreign-key error mid-window.
+            if !dry_run && matches!(key, DissolveTarget::Resolver(_) | DissolveTarget::Parity(_)) {
+                // Issue 530 (and 578 for 440's runs): nothing may still point at a row
+                // about to be deleted (a nested-alias party row, a winner of another
+                // mention): a clear refusal instead of a foreign-key error mid-window.
                 for sql in std::iter::once(GUID_TWIN_MENTION_RESIDUE_SQL).chain(ORPHAN_SWEEP_REFERENCE_SQL) {
                     let mut rows = conn.query(sql, (Value::Integer(loser),)).await?;
                     if rows.next().await?.is_some() {
                         return Err(turso::Error::Error(format!(
-                            "dissolve-guid-twins: organization {loser} is still referenced after its mentions moved \
+                            "dissolve: organization {loser} is still referenced after its mentions moved \
                              ({sql}); nothing of this window is kept"
                         )));
                     }
@@ -42247,6 +42206,126 @@ impl Db {
             }
         };
         r.cache.insert(k, id);
+        Ok(id)
+    }
+
+    /// [`DissolveTarget::Parity`]'s lookup for one mention: `resolve_one_mention`'s
+    /// `(None, None)` arm without its 513 U4 nhs-body alias. The key is
+    /// `(org_name_norm(name), register_jurisdiction(country))` (issues 432, 358),
+    /// cached per key for the window; a hit is the lowest-id identifier-NULL row
+    /// (issue 439, counted `reused`, announced changed), a miss mints ONE row per
+    /// key under the register's country (counted `fresh`, announced added). A
+    /// named country-less mention goes through the issue-351 gate first: a name it
+    /// refuses mints a NULL-country row per mention, a name it admits reuses its
+    /// standing row ([`ORG_COUNTRYLESS_NAME_PROBE_SQL`]) or mints one per name. A
+    /// FAILED gate probe mints, the resolver's safe failure, unless turso ended
+    /// the window's transaction under it (issue 501): then the error returns. A
+    /// nameless mention is a distinct unknown party (issue 234) and mints.
+    #[allow(clippy::too_many_arguments)]
+    async fn parity_target(
+        &self,
+        conn: &Connection,
+        p: &mut ParityTargets,
+        name: &str,
+        country: Option<&str>,
+        now: i64,
+        dry_run: bool,
+        report: &mut OrgDissolve,
+        changed_targets: &mut BTreeSet<i64>,
+    ) -> turso::Result<i64> {
+        let name_norm = org_name_norm(name);
+        // The org row's country is the register's; the mention keeps the code the
+        // notice published.
+        let country = country.map(register_jurisdiction);
+        let key = if name_norm.is_empty() {
+            None
+        } else if let Some(c) = country {
+            Some((name_norm.clone(), c.to_owned()))
+        } else {
+            let in_tx = in_transaction(conn);
+            let generic = match p.country_less_memo.get(&name_norm).copied() {
+                Some(known) => known,
+                None => match echo_tier_on(conn, &name_norm, &(p.norm)(name), p.stoplist_cap).await {
+                    Ok(tier) => {
+                        let g = !tier.admits();
+                        p.country_less_memo.insert(name_norm.clone(), g);
+                        g
+                    }
+                    Err(e) => {
+                        if transaction_ended_under(conn, in_tx) {
+                            return Err(e);
+                        }
+                        self.log_diag(&format!(
+                            "[issue 578] tier probe failed, minting a country-less provisional as the \
+                             resolver does: {e}"
+                        ));
+                        true
+                    }
+                },
+            };
+            // The country slot is the empty string, as in the resolver's cache: a
+            // real country code is never empty.
+            (!generic).then(|| (name_norm.clone(), String::new()))
+        };
+        if let Some(k) = &key
+            && let Some(&id) = p.cache.get(k)
+        {
+            if id != 0 && !p.minted.contains(&id) {
+                report.reused += 1;
+                changed_targets.insert(id);
+            }
+            return Ok(id);
+        }
+        let hit = match &key {
+            None => None,
+            Some((norm, c)) => {
+                let mut rows = if c.is_empty() {
+                    conn.query(ORG_COUNTRYLESS_NAME_PROBE_SQL, (t(norm),)).await?
+                } else {
+                    conn.query(
+                        "SELECT id FROM organizations \
+                          WHERE name_norm = ? AND country = ? AND identifier IS NULL \
+                          ORDER BY id LIMIT 1",
+                        (t(norm), t(c)),
+                    )
+                    .await?
+                };
+                let hit = match rows.next().await? {
+                    Some(row) => Some(int(&row, 0)),
+                    None => None,
+                };
+                drop(rows);
+                hit
+            }
+        };
+        let id = match hit {
+            Some(id) => {
+                report.reused += 1;
+                changed_targets.insert(id);
+                id
+            }
+            None => {
+                report.fresh += 1;
+                if dry_run {
+                    0
+                } else {
+                    conn.execute(
+                        "INSERT INTO organizations(country, identifier_kind, identifier, name,
+                             name_norm, provisional, created_at)
+                         VALUES(?, NULL, NULL, ?, ?, 1, ?)",
+                        (opt_text(country), t(name), Value::Text(name_norm), Value::Integer(now)),
+                    )
+                    .await?;
+                    let id = last_insert_rowid(conn).await?;
+                    append_change(conn, "organization", id, None, "added", now).await?;
+                    p.minted.insert(id);
+                    id
+                }
+            }
+        };
+        if let Some(k) = key {
+            p.cache.insert(k, id);
+        }
         Ok(id)
     }
 
@@ -45164,11 +45243,14 @@ const GUID_TWIN_MENTION_RESIDUE_SQL: &str = "SELECT 1 FROM organization_mentions
 /// Issue 530 Build 2: how [`Db::dissolve_org_mentions`] finds a moved mention's
 /// target.
 pub(crate) enum DissolveTarget<'a> {
-    /// Issue 440's own lookup, unchanged: the mention's raw country, a bare
-    /// `LIMIT 1`, a fresh row per mention with no name or no country. It is NOT
-    /// the resolver's key (no `register_jurisdiction`, no `ORDER BY id`), so a
-    /// 440 dissolve can land a mention where a rebuild would not (issue 578).
-    Legacy440,
+    /// Issue 578: 440's lookup, the resolver's whole no-identifier branch
+    /// (`resolve_one_mention`'s `(None, None)` arm; see [`Db::parity_target`]), so
+    /// a 440 dissolve lands each mention where a fresh fold or a rebuild binds it.
+    /// It replaced 440's own lookup (the raw country, a bare `LIMIT 1`, a fresh
+    /// row per mention with no name or no country). Not reproduced: the 513 U4
+    /// nhs-body alias, which needs the resolver's ledger state (GB body spellings
+    /// only).
+    Parity(&'a mut ParityTargets),
     /// The issue-234 resolver arm, exactly (see [`ResolverTargets`]).
     Resolver(&'a mut ResolverTargets),
     /// Issue 530 A1's restore: every moved mention lands on this one row (the
@@ -45186,6 +45268,32 @@ pub(crate) struct ResolverTargets {
     pub cache: std::collections::HashMap<(String, String), i64>,
     pub mint_names: std::collections::HashMap<(String, String), String>,
     pub minted: std::collections::BTreeMap<i64, (String, String, String)>,
+}
+
+/// Issue 578: the parity lookup's state for one window — the resolver's
+/// issue-351 inputs (`norm`, the N2 key the wall is keyed by, and `stoplist_cap`,
+/// the wall), the target per key `(org_name_norm, register_jurisdiction(country))`
+/// (`(name_norm, "")` for a country-less name the gate admits), the gate's answer
+/// per country-less name (`true`: generic), and the rows the window minted.
+#[derive(Debug)]
+pub(crate) struct ParityTargets {
+    norm: fn(&str) -> String,
+    stoplist_cap: usize,
+    cache: std::collections::HashMap<(String, String), i64>,
+    country_less_memo: std::collections::HashMap<String, bool>,
+    minted: std::collections::HashSet<i64>,
+}
+
+impl ParityTargets {
+    pub(crate) fn new(norm: fn(&str) -> String, stoplist_cap: usize) -> Self {
+        Self {
+            norm,
+            stoplist_cap,
+            cache: Default::default(),
+            country_less_memo: Default::default(),
+            minted: Default::default(),
+        }
+    }
 }
 
 /// The derived rows that still name an org the mentions have left: a seek per

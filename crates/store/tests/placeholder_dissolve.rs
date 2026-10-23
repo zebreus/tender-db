@@ -1,6 +1,8 @@
 //! Issue 300 Stage 1, the repair half: `repair_placeholder_orgs_batch`
 //! dissolves orgs whose identifier the injected predicate condemns —
-//! re-resolving each mention through the post-234 provisional path, moving
+//! re-resolving each mention through the resolver's no-identifier branch
+//! (issue 578: the register's country, the lowest id, one row per key, the
+//! issue-351 wall for a country-less name), moving
 //! party/bid-party rows by their exact (mention_notice_id,
 //! mention_section_id), repointing winner rows via caused_by_notice_id with
 //! the one-mention-per-notice guard, and deleting the org. A winner row no
@@ -26,6 +28,13 @@ fn normalize(lang: Option<&str>) -> Option<String> {
         other => Some(other.to_owned()),
     }
 }
+
+/// The resolver's issue-351 inputs the job passes from ingest (issue 578): an N2-shaped
+/// key, and a wall low enough that three carriers make a name generic.
+fn n2(name: &str) -> String {
+    name.to_lowercase().chars().filter(char::is_ascii_alphanumeric).collect()
+}
+const CAP: usize = 2;
 
 async fn seed(path: &str) -> (store::Db, store::turso::Connection) {
     for s in ["", "-wal", "-shm"] {
@@ -313,7 +322,7 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     let (db, conn) = seed("test-dissolve.db").await;
 
     // Dry-run: full preview, nothing written.
-    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, true).await.expect("dry");
+    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, true).await.expect("dry");
     assert_eq!((dry.scanned, dry.condemned), (8, 7), "50, 51, 53-57 condemned, 52 clean");
     assert_eq!((dry.parties, dry.bid_parties), (5, 1), "dry run previews the blast radius");
     assert_eq!(
@@ -340,7 +349,7 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     );
 
     // Wet run.
-    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, false).await.expect("wet");
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect("wet");
     assert_eq!((wet.dissolved, wet.skipped), (7, 0));
     assert_eq!((wet.fresh, wet.reused), (13, 1));
     assert_eq!((wet.parties, wet.bid_parties), (5, 1));
@@ -496,7 +505,7 @@ async fn the_dissolve_splits_condemned_orgs_and_queues_ambiguous_winners_for_ref
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 57").await, 0);
 
     // A rerun finds every dissolved org gone: only clean 52 stays in scope.
-    let (again, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, false).await.expect("rerun");
+    let (again, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect("rerun");
     assert_eq!((again.condemned, again.dissolved, again.skipped), (0, 0, 0));
 }
 
@@ -591,7 +600,7 @@ async fn the_dissolve_rederives_the_name_variants_of_the_orgs_it_rebinds() {
         .unwrap();
     }
 
-    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, true).await.expect("dry");
+    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, true).await.expect("dry");
     assert_eq!((dry.condemned, dry.mentions, dry.fresh, dry.reused), (1, 2, 1, 1));
     assert_eq!((dry.variant_orgs, dry.variants_written), (2, 0), "80 reused + one fresh mint, nothing written");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_names").await, 4, "dry run wrote nothing");
@@ -606,7 +615,7 @@ async fn the_dissolve_rederives_the_name_variants_of_the_orgs_it_rebinds() {
     )
     .await
     .unwrap();
-    let err = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, false).await.expect_err("refused");
+    let err = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect_err("refused");
     assert!(err.to_string().contains("fixture: the change feed refuses"), "{err}");
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 3, "70 still stands, nothing minted");
     assert_eq!(
@@ -617,7 +626,7 @@ async fn the_dissolve_rederives_the_name_variants_of_the_orgs_it_rebinds() {
     assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_names").await, 4);
     conn.execute("DROP TRIGGER t542", ()).await.unwrap();
 
-    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, 10_000, 0, false).await.expect("wet");
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect("wet");
     assert_eq!((wet.dissolved, wet.mentions), (1, 2));
     assert_eq!((wet.variant_orgs, wet.variants_written), (2, 2), "80's DEU and Beta's FRA");
     let beta = count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 101").await;
@@ -685,4 +694,289 @@ async fn the_name_variant_rederivation_seeks_both_indexes() {
     for s in ["", "-wal", "-shm"] {
         let _ = std::fs::remove_file(format!("test-dissolve-plan.db{s}"));
     }
+}
+
+// ---- Issue 578: the dissolve binds a mention where the resolver's no-identifier branch does ----
+
+/// A fresh file with the Db open, and a raw connection that seeds with foreign keys off.
+async fn open(path: &str) -> (store::Db, store::turso::Connection) {
+    cleanup(path);
+    let db = store::Db::open(path).await.unwrap();
+    let raw = store::turso::Builder::new_local(path).build().await.unwrap();
+    let conn = raw.connect().unwrap();
+    conn.execute("PRAGMA foreign_keys = OFF", ()).await.unwrap();
+    (db, conn)
+}
+
+fn cleanup(path: &str) {
+    for s in ["", "-wal", "-shm"] {
+        let _ = std::fs::remove_file(format!("{path}{s}"));
+    }
+}
+
+fn opt(s: Option<&str>) -> Value {
+    s.map_or(Value::Null, |s| Value::Text(s.into()))
+}
+
+async fn org(conn: &store::turso::Connection, id: i64, country: Option<&str>, identifier: Option<&str>, name: &str) {
+    conn.execute(
+        "INSERT INTO organizations (id, country, name, name_norm, provisional, identifier_kind, identifier, created_at)
+         VALUES (?, ?, ?, ?, ?, CASE WHEN ? IS NULL THEN NULL ELSE 'national' END, ?, 0)",
+        (
+            Value::Integer(id),
+            opt(country),
+            Value::Text(name.into()),
+            Value::Text(name.to_lowercase()),
+            Value::Integer(identifier.is_none() as i64),
+            opt(identifier),
+            opt(identifier),
+        ),
+    )
+    .await
+    .unwrap();
+}
+
+async fn mention(conn: &store::turso::Connection, notice: i64, section: &str, org: i64, name: &str, country: Option<&str>) {
+    conn.execute(
+        "INSERT INTO organization_mentions (notice_id, section_id, organization_id, name, country) VALUES (?, ?, ?, ?, ?)",
+        (Value::Integer(notice), Value::Text(section.into()), Value::Integer(org), Value::Text(name.into()), opt(country)),
+    )
+    .await
+    .unwrap();
+}
+
+async fn text_of(conn: &store::turso::Connection, sql: &str) -> Option<String> {
+    let mut rows = conn.query(sql, ()).await.unwrap();
+    match rows.next().await.unwrap().unwrap().get_value(0).unwrap() {
+        Value::Text(s) => Some(s),
+        Value::Null => None,
+        other => panic!("text: {other:?}"),
+    }
+}
+
+/// An overseas mention binds the register country's lowest-id identifier-NULL row, as a
+/// fold or a rebuild does: never the pre-358 row under the published code (440's shape
+/// before the fix: 30920766, MQ, beside the FR row 2660729), nor the identified twin.
+#[tokio::test]
+async fn an_overseas_mention_binds_the_lowest_id_register_row() {
+    let path = "test-dissolve-578-register.db";
+    let (db, conn) = open(path).await;
+    org(&conn, 50, Some("MQ"), Some("BAD"), "Rectorat de Martinique").await;
+    // The SIRET twin sorts first on purpose: only `identifier IS NULL` keeps the mention off it.
+    org(&conn, 69, Some("FR"), Some("17972430700030"), "Rectorat de Martinique").await;
+    org(&conn, 70, Some("MQ"), None, "Rectorat de Martinique").await;
+    org(&conn, 71, Some("FR"), None, "Rectorat de Martinique").await;
+    org(&conn, 72, Some("FR"), None, "Rectorat de Martinique").await;
+    mention(&conn, 100, "ORG-1", 50, "rectorat de Martinique", Some("MQ")).await;
+
+    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, true).await.expect("dry");
+    assert_eq!((dry.condemned, dry.dissolved, dry.fresh, dry.reused), (1, 1, 0, 1));
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect("wet");
+    assert_eq!((wet.dissolved, wet.fresh, wet.reused), (1, 0, 1));
+    assert_eq!(count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 100").await, 71);
+    assert_eq!(
+        text_of(&conn, "SELECT country FROM organization_mentions WHERE notice_id = 100").await.as_deref(),
+        Some("MQ"),
+        "the mention keeps the code the notice published"
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 4, "50 gone, nothing minted");
+    assert_eq!(
+        count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND entity_id = 71 AND op = 'changed'").await,
+        1
+    );
+    drop(conn);
+    drop(db);
+    cleanup(path);
+}
+
+/// Overseas mentions with no register-country row mint ONE row under the register's
+/// country for the window, across orgs; the pre-358 row under the published code stays
+/// unused, a nameless overseas mention mints under the register's country too, and the
+/// dry run counts exactly what the wet run mints.
+#[tokio::test]
+async fn overseas_mentions_mint_one_register_row_per_key_dry_and_wet_alike() {
+    let path = "test-dissolve-578-mint.db";
+    let (db, conn) = open(path).await;
+    org(&conn, 50, Some("RE"), Some("BAD"), "Merger A").await;
+    org(&conn, 51, Some("RE"), Some("BAD"), "Merger B").await;
+    org(&conn, 70, Some("RE"), None, "Region Reunion").await;
+    mention(&conn, 100, "ORG-1", 50, "Region Reunion", Some("RE")).await;
+    mention(&conn, 101, "ORG-1", 50, "Region Reunion", Some("RE")).await;
+    mention(&conn, 102, "ORG-1", 50, "", Some("RE")).await;
+    mention(&conn, 103, "ORG-1", 51, "Region Reunion", Some("RE")).await;
+
+    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, true).await.expect("dry");
+    assert_eq!((dry.dissolved, dry.mentions), (2, 4));
+    assert_eq!((dry.fresh, dry.reused), (2, 0), "one mint for the key, one for the nameless mention");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 3, "dry run minted nothing");
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect("wet");
+    assert_eq!((wet.dissolved, wet.mentions, wet.fresh, wet.reused), (2, 4, 2, 0), "the dry counts were the wet run's");
+    assert_eq!(wet.variant_orgs, dry.variant_orgs, "the dry preview of the re-bound orgs is exact");
+
+    let region = count(
+        &conn,
+        "SELECT id FROM organizations WHERE name_norm = 'region reunion' AND country = 'FR' AND identifier IS NULL AND provisional = 1",
+    )
+    .await;
+    assert_eq!(
+        count(&conn, &format!("SELECT COUNT(*) FROM organization_mentions WHERE organization_id = {region}")).await,
+        3,
+        "both orgs' named mentions on the one FR row"
+    );
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 70").await, 0, "the RE row stays unused");
+    let nameless = count(&conn, "SELECT organization_id FROM organization_mentions WHERE notice_id = 102").await;
+    assert!(nameless != region && nameless > 70, "the nameless mention minted its own row ({nameless})");
+    assert_eq!(text_of(&conn, &format!("SELECT country FROM organizations WHERE id = {nameless}")).await.as_deref(), Some("FR"));
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND op = 'added'").await, 2);
+    drop(conn);
+    drop(db);
+    cleanup(path);
+}
+
+/// A named country-less mention goes through the issue-351 wall: a name under it reuses its
+/// standing NULL-country row, or mints one row per name; a generic name (over the wall,
+/// nothing identified) mints a row per mention, never reusing a standing row of that name.
+#[tokio::test]
+async fn a_country_less_name_reuses_its_standing_row_under_the_wall_and_mints_over_it() {
+    let path = "test-dissolve-578-countryless.db";
+    let (db, conn) = open(path).await;
+    org(&conn, 50, None, Some("BAD"), "Merger").await;
+    org(&conn, 80, None, None, "Stadt Burghausen").await;
+    // "gemeindetaufkirchen" is carried by three rows: over a cap of 2, none identified.
+    for id in [9001, 9002, 9003] {
+        org(&conn, id, None, None, "Gemeinde Taufkirchen").await;
+        conn.execute(
+            "INSERT INTO org_match_keys (org_id, key_kind, key) VALUES (?, 'n2', 'gemeindetaufkirchen')",
+            (Value::Integer(id),),
+        )
+        .await
+        .unwrap();
+    }
+    for (notice, name) in [
+        (100, "Stadt Burghausen"),
+        (101, "Stadt Burghausen"),
+        (102, "Gemeinde Taufkirchen"),
+        (103, "Gemeinde Taufkirchen"),
+        (104, "Markt Neu"),
+        (105, "Markt Neu"),
+    ] {
+        mention(&conn, notice, "ORG-1", 50, name, None).await;
+    }
+
+    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, true).await.expect("dry");
+    assert_eq!((dry.mentions, dry.fresh, dry.reused), (6, 3, 2), "Taufkirchen twice, Markt Neu once; Burghausen reused twice");
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect("wet");
+    assert_eq!((wet.dissolved, wet.mentions, wet.fresh, wet.reused), (1, 6, 3, 2));
+
+    let on = |notice: i64| format!("SELECT organization_id FROM organization_mentions WHERE notice_id = {notice}");
+    assert_eq!(count(&conn, &on(100)).await, 80, "under the wall: the standing row");
+    assert_eq!(count(&conn, &on(101)).await, 80);
+    let (t1, t2) = (count(&conn, &on(102)).await, count(&conn, &on(103)).await);
+    assert!(t1 > 9003 && t2 > 9003 && t1 != t2, "generic: a fresh row per mention ({t1}, {t2})");
+    assert_eq!(count(&conn, &on(104)).await, count(&conn, &on(105)).await, "under the wall, no standing row: one mint per name");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'markt neu' AND country IS NULL").await, 1);
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE name_norm = 'gemeinde taufkirchen'").await, 5);
+    drop(conn);
+    drop(db);
+    cleanup(path);
+}
+
+/// A country-less name whose issue-351 probe FAILS (here at prepare, which ends no
+/// transaction) mints, the resolver's safe failure: it reads as generic, a fresh NULL-country
+/// row per mention and never the standing row, and the window commits.
+#[tokio::test]
+async fn a_failed_country_less_probe_mints_and_the_window_commits() {
+    let path = "test-dissolve-578-probe-failed.db";
+    let (db, conn) = open(path).await;
+    org(&conn, 50, None, Some("BAD"), "Merger").await;
+    org(&conn, 80, None, None, "Stadt Burghausen").await;
+    mention(&conn, 100, "ORG-1", 50, "Stadt Burghausen", None).await;
+    mention(&conn, 101, "ORG-1", 50, "Stadt Burghausen", None).await;
+    // The wall's carrier read then fails; nothing else the dissolve runs reads this table.
+    conn.execute("DROP TABLE org_match_keys", ()).await.unwrap();
+
+    let (dry, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, true).await.expect("dry");
+    assert_eq!((dry.fresh, dry.reused), (2, 0));
+    let (wet, _) = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect("wet");
+    assert_eq!((wet.dissolved, wet.mentions, wet.fresh, wet.reused), (1, 2, 2, 0));
+
+    let on = |notice: i64| format!("SELECT organization_id FROM organization_mentions WHERE notice_id = {notice}");
+    let (a, b) = (count(&conn, &on(100)).await, count(&conn, &on(101)).await);
+    assert!(a > 80 && b > 80 && a != b, "a fresh row per mention, not one per name ({a}, {b})");
+    for id in [a, b] {
+        assert_eq!(text_of(&conn, &format!("SELECT country FROM organizations WHERE id = {id}")).await, None);
+    }
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations WHERE id = 50").await, 0, "the window committed");
+    assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'organization' AND op = 'added'").await, 2);
+    drop(conn);
+    drop(db);
+    cleanup(path);
+}
+
+/// A whole org something still names after its mentions moved refuses its window, and
+/// nothing of the window is kept, the org dissolved before it included: (a) a party row
+/// keyed to another org's mention is the residue refusal; (b) a winner whose tier-2 pick is
+/// that party row has no target, a clear refusal in the dry run and the wet run alike
+/// (before issue 578, a winner repointed onto id 0 and a foreign-key abort).
+#[tokio::test]
+async fn a_winner_following_a_foreign_party_row_refuses_the_window_and_keeps_nothing() {
+    let path = "test-dissolve-578-refusal.db";
+    let (db, conn) = open(path).await;
+    org(&conn, 50, Some("CZ"), Some("BAD"), "Clean Merger").await;
+    org(&conn, 51, Some("CZ"), Some("BAD"), "Foreign Pick").await;
+    org(&conn, 61, Some("CZ"), None, "Other Body").await;
+    mention(&conn, 100, "ORG-1", 50, "Alpha", Some("CZ")).await;
+    mention(&conn, 300, "ORG-1", 51, "Buyer X", Some("CZ")).await;
+    mention(&conn, 300, "ORG-2", 51, "Bidder Y", Some("CZ")).await;
+    mention(&conn, 300, "ORG-3", 61, "Other Body", Some("CZ")).await;
+    conn.execute(
+        "INSERT INTO tender_versions (tender_id, seq, caused_by_notice_id, publication_id, published_at)
+         VALUES (3, 1, 300, 'pub-3-1', 0)",
+        (),
+    )
+    .await
+    .unwrap();
+    // A non-buyer party row on 51, keyed to 61's mention: it follows no mention 51 moves.
+    conn.execute(
+        "INSERT INTO tender_version_parties (tender_id, seq, role, organization_id, mention_notice_id, mention_section_id)
+         VALUES (3, 1, 'winner', 51, 300, 'ORG-3')",
+        (),
+    )
+    .await
+    .unwrap();
+    let untouched = || async {
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM organizations").await, 3, "50 and 51 stand, no mint survives");
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 50").await, 1);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM organization_mentions WHERE organization_id = 51").await, 2);
+        assert_eq!(count(&conn, "SELECT organization_id FROM tender_version_parties").await, 51);
+        assert_eq!(count(&conn, "SELECT COUNT(*) FROM changes").await, 0);
+    };
+
+    let err = db.repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, false).await.expect_err("residue");
+    assert!(err.to_string().contains("is still referenced after its mentions moved"), "{err}");
+    untouched().await;
+
+    // The winner originates on a notice that names neither of 51's mentions, so the causing
+    // notice's two mentions go to tier 2, and its one non-buyer party row picks ORG-3.
+    conn.execute("INSERT INTO lot_results (id, tender_id, notice_id, result_key) VALUES (13, 3, 299, 'RES-1')", ())
+        .await
+        .unwrap();
+    conn.execute(
+        "INSERT INTO tender_version_result_winners (tender_id, seq, lot_result_id, organization_id) VALUES (3, 1, 13, 51)",
+        (),
+    )
+    .await
+    .unwrap();
+    for dry_run in [true, false] {
+        let err = db
+            .repair_placeholder_orgs_batch(bad, FIELDS, normalize, n2, CAP, 10_000, 0, dry_run)
+            .await
+            .expect_err("a winner of another org's mention");
+        assert!(err.to_string().contains("follows mention (300, ORG-3), which is not one of its mentions"), "{err}");
+        untouched().await;
+    }
+    assert_eq!(count(&conn, "SELECT organization_id FROM tender_version_result_winners").await, 51);
+    drop(conn);
+    drop(db);
+    cleanup(path);
 }
