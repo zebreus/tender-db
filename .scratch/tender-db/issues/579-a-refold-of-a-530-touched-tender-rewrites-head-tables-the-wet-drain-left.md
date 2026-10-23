@@ -9,7 +9,7 @@ rewrites the table and announces its lots. Values, row sets and org ids already 
 code; not measured). Size: 9 of 530's 2,742 touched Tenders; 3 healed by lc01 (497154, 675459, 780251), **6 open**
 (408007, 413501, 454861, 179248, 340956, 823340). Served: only the head `parties[]` order of 413501 (and its
 `bids[].parties`) and 179248; whether 179248's v_awards representative buyer flips is unchecked (U3). Severity low.
-NEXT: U2 pre-register the 6 (551 U9 notes, 546 U4 expectations); U3 one bounded read; U4 dissolve-path parity (stamp
+NEXT: U2 and U3 DONE 2026-10-23 (179248 v_awards buyer flips at a refold; 546 does not reach the 6, 539 does); U4 dissolve-path parity (stamp
 touched Tenders stale + a wet-then-refold-rewrites-0-tables test) on 578 U2's gate and deploy as its own unit; U6 file the
 merge-side follow-up (`repoint_org_references` leaves the same order drift). **No explicit refold of the 6 until 551
 records an exemption from its W-on standing rule (which names "579's refold") or re-runs the port diff.** Was:
@@ -344,3 +344,28 @@ before 576/577" and "S7 ∩ DÖE before 539" are dropped. The exemption the Stat
 naturally inside any drain's gd5. An explicit refold of them would be class W, small, with the discharge "outside the cohort
 (lc01 admitted none), and the cohort SQL reads no org id", predicting 0 NEW and 0 served moves. No such refold is scheduled.
 **Next step:** unchanged (U2, U3, U4). U3's read stays off U9 check mornings and inside the 150/h budget.
+
+## U3 — read (2026-10-23 20:45Z, reads #192–194 through the kit Box; plans: version-index MULTI-INDEX OR seeks and a
+## PK lookup, no SCAN; raw in `551-lot-sum/b6/u6/box/raw/0192–0194_579u3_*`)
+
+- **179248's v_awards buyer DOES flip at a refold.** Head seq 2 holds 2 `tender_version_lot_results` rows. Its
+  `%uyer%` parties in rowid order: 675677913 Procedure-Buyer org 23052423 (ORG-0001), then 675677914 Procedure-Buyer org
+  13025902 (ORG-0002, 530's target "Kreis Coesfeld, Abteilung 30"). v_awards' scalar `… LIMIT 1` (canonical.rs:1293-1302)
+  serves 23052423 today; the fold writes the (procedure scope, Procedure-Buyer) group sorted by organization_id, so after a
+  refold 13025902 comes first and both award rows' `buyer_organization_id` / `buyer_name` change. Pre-530 the GUID row
+  sorted after 23052423, so today's buyer is the pre-530 choice; the refold's is the fresh-projection choice (rebuild
+  parity's canonical one). A served change, but of an arbitrary representative among two real buyers: low severity.
+- **413501: no flip** — one `%uyer%` row at head seq 4 (684935705, org 22942463); it has 14 lot results.
+- **546 does not reach the 6.** All 32 versions of the 6 chains are eForms: `eforms-sdk-1.7/1.10/1.12` and
+  `eforms-de-1.1/1.2/2.0`; no r208/r209 notice, so 546 U3/U4 (legacy TED place) changes nothing on them.
+- **539 does reach all 6:** each chain holds `eforms-de-*` versions (DÖE copies), which 539's step 2 R3 refold re-dates and
+  re-sorts. So 539's drain refolds them, and their order-only corrections (U2 below) appear in 539's segment.
+
+## U2 — pre-registration (2026-10-23)
+
+Expected non-W, order-only corrections when anything refolds them (539 step 2 will): **408007** (winners, seq 3-4),
+**413501** (winners seq 3-4 + parties seq 3-4 + bid parties; served `parties[]` / `bids[].parties` order), **454861**
+(winners, seq 1-2), **179248** (parties seq 1-2; served `parties[]` order and **v_awards buyer 23052423 → 13025902 on 2
+award rows**), **340956** (parties seq 1-2; nothing served), **823340** (parties seq 3-14; nothing served). None serves
+lot-sum-awards (R ∩ S7 = ∅); a refold must move no value column on them. Recorded in 551's U9 notes and 539's protocol
+line; 546 U4 is not affected (no r209).

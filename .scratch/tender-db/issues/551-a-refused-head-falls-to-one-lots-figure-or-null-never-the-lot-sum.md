@@ -1584,3 +1584,6 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   579 U4; 577 U2 only if W7 is empty) + P1 → 576 U3 → 546 U4 (if E1 is proven) → 577 U3. After 11-04, under C9': the
   class-I writers (358, 440/473, 519 M6), 575 U3/U4, 561 U4 and any lot-key drain. 579 is not a drain. Amendment: for
   post-U8 drains, a fire on a 541/571 residual (U6 deviation (a)) is read as an enumeration miss, not a switch-off.
+- **579's 6 order-only Tenders (pre-registered, 579 U2/U3):** 408007, 413501, 454861, 179248, 340956, 823340 will read as
+  corrected with no value move whenever a refold reaches them (539's step 2 does: all hold eforms-de versions). Not W drift.
+  179248's v_awards representative buyer flips 23052423 → 13025902 at that refold (expected).

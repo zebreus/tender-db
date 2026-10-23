@@ -361,3 +361,6 @@ the port on refetched facts; wrong, or unexplained by the end of the gap, means 
 EUR-only re-date moves are explained (899272 and 5842187 under the 2 % rule). Cost: about 13–21 statements plus 4–12 dry jobs,
 about 3–4 h. **Next step:** besides 551 U8, the drain now waits for 551's kit (E1–E6 and the start_rule DST/weekly-tick fix),
 that morning's U9 check and P0. 579 needs nothing from it.
+- **579's pre-registration applies to step 2:** 408007, 413501, 454861, 179248, 340956, 823340 (all hold eforms-de versions)
+  are expected to read corrected with order-only changes and no value move; 179248's v_awards buyer flips 23052423 →
+  13025902 (579 U3). Not a fire, not a STOP.
