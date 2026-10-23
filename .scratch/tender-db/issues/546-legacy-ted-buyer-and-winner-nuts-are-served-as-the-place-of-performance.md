@@ -193,3 +193,16 @@ it changes only Tenders folded afterwards.
   `546-triage/u3-42cc601.patch`, because the 551 B6 flip (U6/U7, ≥ 10-21) is a deploy whose exact-set drain must show
   path W's changes alone (D1/D2 tolerance 0): a deployed 546 would re-place every legacy tender that drain re-projects.
 - After the flip and U8: `git apply` the patch (resolve any drift), re-gate, deploy, then unit 4.
+
+**551 W-on drain protocol (2026-10-23, `551-lot-sum/b6/decision-w-on-drains.md`).** Unit 4 is class N at corpus scale (about
+0.75–1.9M corrected Tenders; place/country only, no path-W input). It runs after 539's drain, after the batched U2 deploy and
+its probe P1, and after 576 U3. It runs BEFORE 577 U3 (recorder's check R1). It needs ONE gap of about 10–12 h: job and
+project ≥ 8 h at 550's measured rate, E1 1–2.5 h, then the reads. That gap may fall in U9 days 8–14 only if four conditions
+hold: E1 plan-probes as a SEARCH; E1 passed its replay and ran with parity on ≥ 2 segments; the registry switch-off (E4) is in
+place; and the day-7 read passed. Otherwise unit 4 runs after 11-04. Before the run: P0 serves as its code probe; take the dry
+cohort count and a reviewed expect; run start_rule with the upper-bound minutes; register 579's 6 as order-only NOTEs; salt
+`551-b6-drain-546-`; write a writer-lock line. The check is gd5 class N over (K, CA] after the project. Never cancel the
+project: on overrun the chain queues behind it, and CA is read before the chain's first job. Expected: NEW = MOVED = LOST =
+SILENT = 0. Any NEW is a STOP and is read as an enumeration miss (all if ≤ 30, otherwise a salted 30 under U5's bar). Place
+moves on served legacy heads are NOTEs. Cost: about 150–380 statements. The fallback reader adds 375–950, which moves unit 4
+to after 11-04 over two gaps. **Next step:** unit 3 is deployed (512b297), so next is unit 4 under this protocol in that slot.

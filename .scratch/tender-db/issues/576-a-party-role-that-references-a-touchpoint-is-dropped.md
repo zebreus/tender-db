@@ -289,3 +289,15 @@ Alternatives weighed:
   BT-514 fallback and BT-16 handling were added.
 - **Dropped as unconfirmed:** skeptic 1's note that DE-1.x touchpoints are a differently spelled section kind outside the cursor.
   k2's 0 rows in the window stand.
+
+**551 W-on drain protocol (2026-10-23, `551-lot-sum/b6/decision-w-on-drains.md`).** Unit 2 deploys in one batch with 578 U2
+and 579 U4, and 577 U2 joins only if 551's W7 check is empty. Unit 2 is the batch's only fold-changing commit. The batch runs
+after 539's drain and the 10-28 day-7 fetch, and needs ≥ 15 GB free before each gate. It ships only if the gate, the deploy,
+the twin re-gated last and P1 all fit before the gap's latest switch-off start. Unit 3 is class N, mid-scale. It runs after
+P1 passes and the day-7 read is recorded PASS (about 10-29), and before 546 U4 and 577 U3. It never runs between a chain and
+its U9 check, and the job and its checks end ≥ 2 h before the next 09:35 Berlin tick (08:35Z from 10-25). Before it: the
+bounded Touchpoint COUNT, expected NEW = MOVED = LOST = 0, salt `551-b6-drain-576-`, a writer-lock line. The check is gd5
+class N. Any NEW is a STOP and every one is read. More than 30 means the class premise is broken: read a salted 30 under U5's
+bar and stop the programme. MOVED or SILENT is a STOP, and switch off if it is unexplained at the end of the gap. 546 place
+moves on mixed legacy/eForms chains are NOTEs. Cost: about 25–40 statements, 1.5–2.5 h. **Next step:** unit 2's deploy waits
+for the batch slot, and unit 3 also waits for P1 and the day-7 PASS.

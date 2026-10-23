@@ -409,3 +409,17 @@ sdk-0.1 rationale (914-918). (b) is a pure scope-suffix fix. (c) applies only wh
   - `reparse` has no dry mode (the triage assumed a "dry plan"), so unit 3 sizes with bounded counts instead.
   - Same-term matching must not reuse `stem()`, because of the BT-195 forms.
   - The 1.3–1.7 BT-772 rule (c) is new here, with R6 as its evidence.
+
+**551 W-on drain protocol (2026-10-23, `551-lot-sum/b6/decision-w-on-drains.md`).** Unit 2's deploy joins the batch only if
+551's static check W7 is empty. W7 intersects this issue's full shadow/overlap pair list (the 4,811 unreviewed pairs
+included) with every field id or stem the fold reads: Amount, LotResult, StatedTotal incl. BT-27-Procedure, published lot
+numbers, winners, tenderer refs. It costs 0 statements and is recorded in 551. If the intersection is not empty, unit 2's
+deploy and unit 3 wait until after 11-04. Unit 3 is class Z (bar: 0 corrected) and runs in slices. The first slice is
+packages-capped to time the rate, and each slice ends ≥ 2 h before the next tick. Unit 3 runs after 539's drain, after 576 U3
+AND after 546 U4. That last condition is recorder's check R1: an undrained 546 U3 re-places mixed legacy/eForms chains in the
+paired project and would trip the 0 bar. If 546 U4 slides past 11-04, unit 3 either waits behind it, or runs as class N per
+slice with this bar read as "0 corrections outside the place-only and order-only NOTE classes", recorded here before the
+first slice. A slice passes when corrected = 0, the cursor is unchanged (or one E1 statement shows no tender row), and only
+its own jobs ran. Any correction triggers this issue's own stop, then gd5 class N on that slice, with every NEW/MOVED read and
+its ids registered in 551's R. Cost: 0–1 statement per clean slice. **Next step:** unit 3 is now also blocked by 576 U3, 546
+U4 and W7.

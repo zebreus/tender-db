@@ -347,3 +347,17 @@ offset. A date-only result stays date-only (367/418 rendering). No other source 
 (expected: the stored date moves only with the pending drain — repair-notice-instants dry/wet, then the DÖE R3 refold, after
 551 U8); line 2 now reads "earlier than published_at, except where a DÖE notice caused the current version … raised to the day
 of the notice's IssueDate when that is later (issue 539)" — the served description half of `done` holds.
+
+**551 W-on drain protocol (2026-10-23, `551-lot-sum/b6/decision-w-on-drains.md`).** 539 drains first, from the 10-24 gap,
+after that morning's U9 check and the probe P0. Step 1 is class Z. Run it dry, review expect_rows, then run it wet. It passes
+when the cursor is unchanged (or one E1 statement shows no tender row) and /admin/jobs lists only its own job. Step 2 is class
+W, in three runs with a STOP point between them: (a) sdk-0.1, (b) de-1.0–1.2, (c) de-2.0–2.1. start_rule must say GO for each
+run. All three close before the 10-25 02:10Z weekly tick; otherwise run c moves to 10-25. Never run between the 10-28 chain
+and the day-7 fetch. Before the runs, record the C9' discharge: R is at 539's fixed point (probes 2656–2658 and 2677–2679,
+then P0), so 0 served moves are predicted. Also record the cap max(2·A·1.0974 %, A·1.0974 % + 10), the salt
+`551-b6-drain-539-` and a writer-lock line. Per run: gd5 class W, plus A from a dry refold-lot-sum. NEW heads are read in full
+if ≤ 30, otherwise a salted 30 under U5's sequential bar; over the cap is a STOP. MOVED, LOST or SILENT is a STOP, followed by
+the port on refetched facts; wrong, or unexplained by the end of the gap, means switch off. seq/published_at moves are NOTEs;
+EUR-only re-date moves are explained (899272 and 5842187 under the 2 % rule). Cost: about 13–21 statements plus 4–12 dry jobs,
+about 3–4 h. **Next step:** besides 551 U8, the drain now waits for 551's kit (E1–E6 and the start_rule DST/weekly-tick fix),
+that morning's U9 check and P0. 579 needs nothing from it.

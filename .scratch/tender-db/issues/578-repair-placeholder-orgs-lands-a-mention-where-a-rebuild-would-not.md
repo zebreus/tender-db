@@ -288,3 +288,14 @@ Alternatives:
 - **Dropped, not confirmed by the code**: skeptic 2's "send a winner with no target to tier 5 instead of refusing". Such a
   winner's section comes from a party or bid-party row on the loser whose mention is elsewhere; that row follows no moved mention,
   so the org's DELETE fails its FK regardless. Tier 5 cannot unstick the window, so the refusal stays.
+
+**551 W-on drain protocol (2026-10-23, `551-lot-sum/b6/decision-w-on-drains.md`).** U2 is class D (no fold change). It ships
+in the batched deploy, with 579 U4 as its own commit beside it, one twin re-gate (last) and P1. The batch runs after 539's
+drain and the 10-28 day-7 fetch. It ships only if it fits before that gap's latest switch-off start, and only with ≥ 15 GB
+free before each gate (4.5 GB on 10-23). The 358 follow-up (5,076 frozen rows; 30920766 → 2660729), every 440/473 run and
+519 M6 are class I: in-place W-input writers, since org identity feeds R1/R6. They wait until after 11-04. Each then runs
+under 551's C9': an offline per-id port prediction on R ∩ touched (the dry plan's moves on cached facts, port 23cbd850); a
+refold-lot-sum of the touched cohort Tenders in the same segment (built in once 579 U4 ships); and gd5 class I with D1
+semantics at tolerance 0. An unpredicted fire, or a wrong S, currency, n or vouched_by, means switch off. Cost: U2 adds
+nothing beyond P1; each follow-up costs about 10–20 statements and under 1 h. **Next step:** U2's deploy waits for the batch
+slot, not only for 539's drain. U4's filed issue carries `Blocked by: 551 C9' (after 11-04)`.

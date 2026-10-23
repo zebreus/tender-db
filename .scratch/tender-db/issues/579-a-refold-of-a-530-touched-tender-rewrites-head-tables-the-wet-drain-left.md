@@ -334,3 +334,13 @@ Rejected:
 - **The dissolve body's comment at :42012-42014 misnames its shape.**
 - **Row-set parity is reasoned from code, not measured,** and is stated so. **lc01's 2 unattributed tables** remain a
   stated limit.
+
+**551 W-on drain protocol (2026-10-23, `551-lot-sum/b6/decision-w-on-drains.md`).** 579 is NOT a drain (amendment W1):
+Decisions 2-3 stand, so nothing refolds S7 and nothing explicitly refolds the 6. U2 registers the 6 as order-only `tender
+changed` NOTEs in 551's gd5 check and in 546 U4's expectations. U4 rides the batched deploy (576 U2 + 578 U2 + …) as its own
+commit, with an entry in 551's code-drift ledger. It is not a fold change, so P1 covers it. Once U4 is in, every later
+dissolve run refolds its touched Tenders; such runs are class I under 551's C9' and wait until after 11-04. The orderings "579
+before 576/577" and "S7 ∩ DÖE before 539" are dropped. The exemption the Status asked for is now in 551's C9': the 6 heal
+naturally inside any drain's gd5. An explicit refold of them would be class W, small, with the discharge "outside the cohort
+(lc01 admitted none), and the cohort SQL reads no org id", predicting 0 NEW and 0 served moves. No such refold is scheduled.
+**Next step:** unchanged (U2, U3, U4). U3's read stays off U9 check mornings and inside the 150/h budget.

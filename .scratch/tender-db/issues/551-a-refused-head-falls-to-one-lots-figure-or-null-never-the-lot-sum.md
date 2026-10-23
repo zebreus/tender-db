@@ -1574,3 +1574,13 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   main; `LOT_SUM_AWARDS_PATH = false`, 546 kept). Marker `gate-v2 adcb7b0…` — a switch-off is again a covered deploy: commit a
   revert whose tree equals adcb7b0 outside `.scratch` on top of main, push, `./deploy.sh` (`gate_deploy_step` = skip), then
   `u7/switchoff.py build/verify` with C1 = 959004090. Every later code deploy must re-gate the twin the same way (C7).
+- **2026-10-23 ~21Z: W-on drain protocol DECIDED** (`b6/decision-w-on-drains.md`; three judges, a synthesis, critic W1–W15
+  adopted, O1–O3 optional, recorder's check R1). Each writer is a single-writer segment, closed by gd5 against registry R
+  before the next writer starts. R0 = `u9/20261023/switchoff.json` (3,478 ids, 8845f0d0…), K0 = 959180852. From 10-24 the
+  U9 check is gd5 class chain over (K, chain end], with A_d (the 3× rule on dry-admitted). It starts when /admin/jobs shows
+  the chain done, never by the clock. The tick is 09:35 Berlin, which is 08:35Z from 10-25. The weekly tick (Sundays 02:10Z,
+  10-25 and 11-01) is a writer window. The day-7 population stays as C8 defined it; chain-MOVED R heads are read separately.
+  Order: kit E1–E6 and the start_rule fix → P0 (512b297) → 539 step 1 → 539 step 2 (3 runs) → day 7 → batch (576/578 U2 +
+  579 U4; 577 U2 only if W7 is empty) + P1 → 576 U3 → 546 U4 (if E1 is proven) → 577 U3. After 11-04, under C9': the
+  class-I writers (358, 440/473, 519 M6), 575 U3/U4, 561 U4 and any lot-key drain. 579 is not a drain. Amendment: for
+  post-U8 drains, a fire on a 541/571 residual (U6 deviation (a)) is read as an enumeration miss, not a switch-off.
