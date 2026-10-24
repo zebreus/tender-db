@@ -1,0 +1,62 @@
+# plan-copy+prod-indexes
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 1
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 2
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 3
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 4
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 5
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 6
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 7
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 8
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 9
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 10
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 11
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 12
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)

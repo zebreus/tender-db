@@ -1,0 +1,61 @@
+{
+ "used": 6,
+ "stop": null,
+ "last": 1792870497.7106738,
+ "log": [
+  {
+   "name": "s1_mentions",
+   "sha256": "dbbed702894e8024",
+   "sent_at": "2026-10-24T19:26:44Z",
+   "secs": 0.62,
+   "ok": true,
+   "rows": 175,
+   "truncated": false
+  },
+  {
+   "name": "s2_parties",
+   "sha256": "b7ecec6520bc295b",
+   "sent_at": "2026-10-24T19:27:12Z",
+   "secs": 0.51,
+   "ok": true,
+   "rows": 99,
+   "truncated": false
+  },
+  {
+   "name": "s3_candidates",
+   "sha256": "c02abb9716dbd533",
+   "sent_at": "2026-10-24T19:28:34Z",
+   "secs": 0.56,
+   "ok": true,
+   "rows": 253,
+   "truncated": false
+  },
+  {
+   "name": "s4_candidates2",
+   "sha256": "03e1f6f429a0d4ce",
+   "sent_at": "2026-10-24T19:29:48Z",
+   "secs": 0.4,
+   "ok": true,
+   "rows": 83,
+   "truncated": false
+  },
+  {
+   "name": "s5_identifiers",
+   "sha256": "99f0a06cb14587a2",
+   "sent_at": "2026-10-24T19:32:18Z",
+   "secs": 0.51,
+   "ok": true,
+   "rows": 33,
+   "truncated": false
+  },
+  {
+   "name": "s6_names",
+   "sha256": "44bd3abf07b06555",
+   "sent_at": "2026-10-24T19:34:57Z",
+   "secs": 0.37,
+   "ok": true,
+   "rows": 14,
+   "truncated": false
+  }
+ ]
+}

@@ -1,0 +1,116 @@
+# plan-copy+prod-indexes
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)
+    SEARCH o USING INTEGER PRIMARY KEY (rowid=?)

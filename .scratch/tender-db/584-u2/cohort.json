@@ -1,0 +1,385 @@
+{
+ "cohort": "584-2026-10-24",
+ "verdicts": [
+  {
+   "org_id": 49,
+   "notice_id": 23540012,
+   "section_id": "ORG-0002",
+   "action": "rehome",
+   "target_org_id": 848,
+   "target_name": "Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.",
+   "rationale": "Notice 23540012 prints 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akcyjna, Plac Starynkiewicza 5, 02 – 015 Warszawa,' alone in ORG-0002 with KIO/UZP's NIP 5262239325, bound buyer-side (Procedure-Buyer) as co-buyer beside GDDKiA (ORG-0001, its own NIP 1132097244) on tender 997224; the review body has no part in that section, so it moves to 848 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.', the org holding the body's own NIP 5250005662 (1645 mentions; KRS 0000146138 confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 23580677,
+   "section_id": "ORG-0002",
+   "action": "rehome",
+   "target_org_id": 848,
+   "target_name": "Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.",
+   "rationale": "Notice 23580677 prints 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akcyjna, Plac Starynkiewicza 5, 02 – 015 Warszawa,' alone in ORG-0002 with KIO/UZP's NIP 5262239325, bound buyer-side (Procedure-Buyer) as co-buyer beside GDDKiA (ORG-0001, its own NIP 1132097244) on tender 997224; the review body has no part in that section, so it moves to 848 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.', the org holding the body's own NIP 5250005662 (1645 mentions; KRS 0000146138 confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 23620337,
+   "section_id": "ORG-0002",
+   "action": "rehome",
+   "target_org_id": 848,
+   "target_name": "Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.",
+   "rationale": "Notice 23620337 prints 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akcyjna, Plac Starynkiewicza 5, 02 – 015 Warszawa,' alone in ORG-0002 with KIO/UZP's NIP 5262239325, bound buyer-side (Procedure-Buyer) as co-buyer beside GDDKiA (ORG-0001, its own NIP 1132097244) on tender 997224; the review body has no part in that section, so it moves to 848 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.', the org holding the body's own NIP 5250005662 (1645 mentions; KRS 0000146138 confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 23661303,
+   "section_id": "ORG-0002",
+   "action": "rehome",
+   "target_org_id": 848,
+   "target_name": "Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.",
+   "rationale": "Notice 23661303 prints 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akcyjna, Plac Starynkiewicza 5, 02 – 015 Warszawa,' alone in ORG-0002 with KIO/UZP's NIP 5262239325, bound buyer-side (Procedure-Buyer) as co-buyer beside GDDKiA (ORG-0001, its own NIP 1132097244) on tender 997224; the review body has no part in that section, so it moves to 848 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.', the org holding the body's own NIP 5250005662 (1645 mentions; KRS 0000146138 confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24300743,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 10689264,
+   "target_name": "Powszechna Kasa Oszczędności Bank Polski S.A.",
+   "rationale": "Notice 24300743 prints 'Powszechna Kasa Oszczędności Bank Polski Spółka Akcyjna' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer on tender 136020; the review body has no part in that section, so it moves to 10689264 'Powszechna Kasa Oszczędności Bank Polski S.A.', the org holding the body's own NIP 5250007738 (139 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24368074,
+   "section_id": "ORG-0002",
+   "action": "rehome",
+   "target_org_id": 848,
+   "target_name": "Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.",
+   "rationale": "Notice 24368074 prints 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akcyjna, Plac Starynkiewicza 5, 02 – 015 Warszawa,' alone in ORG-0002 with KIO/UZP's NIP 5262239325, bound buyer-side (Procedure-Buyer) as co-buyer beside GDDKiA (ORG-0001, its own NIP 1132097244) on tender 997224; the review body has no part in that section, so it moves to 848 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.', the org holding the body's own NIP 5250005662 (1645 mentions; KRS 0000146138 confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24425302,
+   "section_id": "ORG-0002",
+   "action": "rehome",
+   "target_org_id": 18347269,
+   "target_name": "Ireneusz Malewicz J&M Engineers (Lider)",
+   "rationale": "Notice 24425302 prints 'Ireneusz Malewicz J&M Engineers (Lider)' alone in ORG-0002 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 241175; the review body has no part in that section, so it moves to 18347269 'Ireneusz Malewicz J&M Engineers (Lider)', the only PL row carrying exactly the printed name (provisional, 1 mention; no identified row exists).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24532293,
+   "section_id": "ORG-0006",
+   "action": "keep",
+   "target_org_id": null,
+   "target_name": null,
+   "rationale": "Notice 24532293 prints 'Urząd Zamóweń Publicznych' in ORG-0006 with NIP 5262239325 as Lot-ReviewInfo, Lot-ReviewOrg on tender 924958: a one-letter misspelling of Urząd Zamówień Publicznych, which is the NIP's own holder (MF white list: 5262239325 = UZP, REGON 010828091; KIO sits inside UZP), in Lot-ReviewOrg + Lot-ReviewInfo roles, so the mention is the identifier's own body and stays on org 49.",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24766144,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 14553663,
+   "target_name": "Terra Mota",
+   "rationale": "Notice 24766144 prints 'Terra Mota Sp. z o.o.' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 134851; the review body has no part in that section, so it moves to 14553663 'Terra Mota', the org holding the body's own NIP 7382070551 (2 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24820243,
+   "section_id": "ORG-0004",
+   "action": "rehome",
+   "target_org_id": 14553663,
+   "target_name": "Terra Mota",
+   "rationale": "Notice 24820243 prints 'Terra Mota Sp. z o.o.' alone in ORG-0004 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 614155; the review body has no part in that section, so it moves to 14553663 'Terra Mota', the org holding the body's own NIP 7382070551 (2 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24831057,
+   "section_id": "ORG-0002",
+   "action": "keep",
+   "target_org_id": null,
+   "target_name": null,
+   "rationale": "Notice 24831057 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 320481: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24865719,
+   "section_id": "ORG-0005",
+   "action": "rehome",
+   "target_org_id": 23202450,
+   "target_name": "ARCHITEKTURA PLUS DESIGN STUDIO MICHAŁ MARCZAK",
+   "rationale": "Notice 24865719 prints 'ARCHITEKTURA PLUS DESIGN STUDIO MICHAŁ MARCZAK' alone in ORG-0005 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 313839; the review body has no part in that section, so it moves to 23202450 'ARCHITEKTURA PLUS DESIGN STUDIO MICHAŁ MARCZAK', the org holding the body's own NIP 6871892878 (2 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24906332,
+   "section_id": "ORG-0002",
+   "action": "keep",
+   "target_org_id": null,
+   "target_name": null,
+   "rationale": "Notice 24906332 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 24993174,
+   "section_id": "ORG-0002",
+   "action": "keep",
+   "target_org_id": null,
+   "target_name": null,
+   "rationale": "Notice 24993174 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25117974,
+   "section_id": "ORG-0002",
+   "action": "keep",
+   "target_org_id": null,
+   "target_name": null,
+   "rationale": "Notice 25117974 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 320481: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25374444,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 15146954,
+   "target_name": "Remondis Bydgoszcz Sp. z o.o.",
+   "rationale": "Notice 25374444 prints 'REMONDIS Bydgoszcz  S.A.' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 572868; the review body has no part in that section, so it moves to 15146954 'Remondis Bydgoszcz Sp. z o.o.', the org holding the body's own NIP 5540312757 (78 mentions; KRS 0001015725 confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25398003,
+   "section_id": "ORG-0002",
+   "action": "keep",
+   "target_org_id": null,
+   "target_name": null,
+   "rationale": "Notice 25398003 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-Mediator, Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25511030,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25511030 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt, Procedure-Buyer) on tender 306091; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25522748,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 20111694,
+   "target_name": "Digitex Sp. z o.o.sp.k.",
+   "rationale": "Notice 25522748 prints 'Digitex Sp.z o.o Sp. k.' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 418730; the review body has no part in that section, so it moves to 20111694 'Digitex Sp. z o.o.sp.k.', the org holding the body's own NIP 5851476863 (6 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25564521,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 8998814,
+   "target_name": "NOVUM S.A.",
+   "rationale": "Notice 25564521 prints 'NOVUM S.A.' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 1092955; the review body has no part in that section, so it moves to 8998814 'NOVUM S.A.', the org holding the body's own NIP 9491924705 (18 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25576610,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25576610 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt, Procedure-Buyer) on tender 306091; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25591527,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25591527 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt, Procedure-Buyer) on tender 990702; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25592320,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25592320 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt, Procedure-Buyer) on tender 445071; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25608668,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25608668 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt, Procedure-Buyer) on tender 990702; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25636957,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 13575097,
+   "target_name": "WTU Sp. z o.o.",
+   "rationale": "Notice 25636957 prints 'WTU Spółka z o.o.' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 914542; the review body has no part in that section, so it moves to 13575097 'WTU Sp. z o.o.', the org holding the body's own NIP 8992680461 (13 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25643080,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25643080 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt, Procedure-Buyer) on tender 445071; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25643735,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25643735 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt, Procedure-Buyer) on tender 990702; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25649705,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 18389587,
+   "target_name": "PZU Zdrowie Spółka Akcyjna",
+   "rationale": "Notice 25649705 prints 'PZU ZDROWIE S.A. Odział Centra Medyczne w Gdańsku' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 78715; the review body has no part in that section, so it moves to 18389587 'PZU Zdrowie Spółka Akcyjna', the org holding the body's own NIP 5272663852 (22 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25664005,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25664005 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Lot-TenderEval, Lot-TenderReceipt, Procedure-Buyer) on tender 990702; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25678097,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25678097 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Procedure-Buyer) on tender 990702; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25710042,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25710042 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Procedure-Buyer) on tender 306091; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25767621,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25767621 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Procedure-Buyer) on tender 445071; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25791501,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25791501 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Procedure-Buyer) on tender 990702; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25791954,
+   "section_id": "ORG-0004",
+   "action": "rehome",
+   "target_org_id": 20491831,
+   "target_name": "EVALU Sp. z o.o.",
+   "rationale": "Notice 25791954 prints 'Evalu Sp. z o.o.' alone in ORG-0004 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 497408; the review body has no part in that section, so it moves to 20491831 'EVALU Sp. z o.o.', the org holding the body's own NIP 5262825916 (15 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25800438,
+   "section_id": "ORG-0001",
+   "action": "rehome",
+   "target_org_id": 7788,
+   "target_name": "Uniwersytet Warszawski",
+   "rationale": "Notice 25800438 prints 'Uniwersytet Warszawski' alone in ORG-0001 with KIO/UZP's NIP 5262239325, bound buyer-side (Lot-DocProvider, Procedure-Buyer) on tender 445071; the review body has no part in that section, so it moves to 7788 'Uniwersytet Warszawski', the org holding the body's own NIP 5250011266 (1463 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 25867833,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 976,
+   "target_name": "ZARYS INTERNATIONAL GROUP SP .Z O.O.",
+   "rationale": "Notice 25867833 prints 'Zarys International Sp. z o.o.' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 174615; the review body has no part in that section, so it moves to 976 'ZARYS INTERNATIONAL GROUP SP .Z O.O.', the org holding the body's own NIP 6481997718 (4380 mentions; KRS 0001213002 confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 29173048,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 22583689,
+   "target_name": "Gminny Zakład Gospodarki Komunalnej spółka z o.o.",
+   "rationale": "Notice 29173048 prints 'Gminny Zakład Gospodarki Komunalnej Sp. z o.o.' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 655893; the review body has no part in that section, so it moves to 22583689 'Gminny Zakład Gospodarki Komunalnej spółka z o.o.', the org holding the body's own REGON 061423397 (1 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  },
+  {
+   "org_id": 49,
+   "notice_id": 29920705,
+   "section_id": "ORG-0003",
+   "action": "rehome",
+   "target_org_id": 22456216,
+   "target_name": "Pro 3Ds Paweł Krawczyk",
+   "rationale": "Notice 29920705 prints 'Pro3Ds Paweł Krawczyk' alone in ORG-0003 with KIO/UZP's NIP 5262239325, bound Tenderer and winner on tender 824617; the review body has no part in that section, so it moves to 22456216 'Pro 3Ds Paweł Krawczyk', the org holding the body's own NIP 7123245197 (3 mentions; MF white list confirms the number).",
+   "confidence": "high"
+  }
+ ]
+}

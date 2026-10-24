@@ -1,0 +1,213 @@
+=== notice 23540012
+  01 3889      raw='NIP 113 20 97 244'      | 'Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ' || 'Generalna Dyrekcja Dróg Krajowych i Au' 1132097244
+**02 49        raw='NIP: 5262239325'        | 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. ' || 'Krajowa Izba Odwoławcza' 5262239325
+  03 49        raw='NIP5262239325'          | 'Prezes Krajowej Izby Odwoławczej' || 'Krajowa Izba Odwoławcza' 5262239325
+  04 49        raw='NIP5262239325'          | 'Urząd Zamówień Publicznych - Biuro Odwołań' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 23580677
+  01 3889      raw='NIP 113 20 97 244'      | 'Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ' || 'Generalna Dyrekcja Dróg Krajowych i Au' 1132097244
+**02 49        raw='NIP: 5262239325'        | 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. ' || 'Krajowa Izba Odwoławcza' 5262239325
+  03 49        raw='NIP5262239325'          | 'Prezes Krajowej Izby Odwoławczej' || 'Krajowa Izba Odwoławcza' 5262239325
+  04 49        raw='NIP5262239325'          | 'Urząd Zamówień Publicznych - Biuro Odwołań' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 23620337
+  01 3889      raw='NIP 113 20 97 244'      | 'Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ' || 'Generalna Dyrekcja Dróg Krajowych i Au' 1132097244
+**02 49        raw='NIP: 5262239325'        | 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. ' || 'Krajowa Izba Odwoławcza' 5262239325
+  03 49        raw='NIP5262239325'          | 'Prezes Krajowej Izby Odwoławczej' || 'Krajowa Izba Odwoławcza' 5262239325
+  04 36        raw='5262239325'             | 'Urząd Zamówień Publicznych - Biuro Odwołań' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 23661303
+  01 3889      raw='NIP 113 20 97 244'      | 'Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ' || 'Generalna Dyrekcja Dróg Krajowych i Au' 1132097244
+**02 49        raw='NIP: 5262239325'        | 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. ' || 'Krajowa Izba Odwoławcza' 5262239325
+  03 49        raw='NIP5262239325'          | 'Prezes Krajowej Izby Odwoławczej' || 'Krajowa Izba Odwoławcza' 5262239325
+  04 49        raw='NIP5262239325'          | 'Urząd Zamówień Publicznych - Biuro Odwołań' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24300743
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 22738877  raw='REGON: 531412190'       | 'POWIAT GŁUBCZYCKI' || 'POWIAT GŁUBCZYCKI' 531412190
+  02 11293239  raw='NIP: 525-00-12-372'     | 'Krajowa Izba Odwoławcza' || 'Bank Gospodarstwa Krajowego' 5250012372
+**03 49        raw='NIP 5262239325'         | 'Powszechna Kasa Oszczędności Bank Polski Spółka Akcyjna' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24368074
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 3889      raw='NIP 113 20 97 244'      | 'Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ' || 'Generalna Dyrekcja Dróg Krajowych i Au' 1132097244
+**02 49        raw='NIP: 5262239325'        | 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. ' || 'Krajowa Izba Odwoławcza' 5262239325
+  03 49        raw='NIP5262239325'          | 'Prezes Krajowej Izby Odwoławczej' || 'Krajowa Izba Odwoławcza' 5262239325
+  04 36        raw='5262239325'             | 'Urząd Zamówień Publicznych - Biuro Odwołań' || 'Krajowa Izba Odwoławcza' 5262239325
+  05 13716288  raw='5840203328'             | 'Transprojekt Gdański  Spółka z ograniczoną odpowiedzialności' || 'Transprojekt Gdański Sp. z o.o.' 5840203328
+  06 22838352  raw='5240303547'             | 'Biuro Projektowo-Badawcze Dróg i Mostów Transprojekt – Warsz' || 'Biuro Projektowo-Badawcze Dróg i Mostó' 5240303547
+=== notice 24425302
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 3889      raw='NIP:113-20-97-244'      | 'Skarb Państwa - Generalny Dyrektor Dróg Krajowych i Autostra' || 'Generalna Dyrekcja Dróg Krajowych i Au' 1132097244
+**02 49        raw='NIP 526 223 9325'       | 'Ireneusz Malewicz J&M Engineers (Lider)' || 'Krajowa Izba Odwoławcza' 5262239325
+  03 15949738  raw='NIP:5242815027'         | 'BICO GROUP Spółka z ograniczoną odpowiedzialnością (Partner)' || 'Bico Group Sp. z o.o.' 5242815027
+  04 36        raw='526-223-93-25'          | 'Prezes Krajowej Izby Odwoławczej' || 'Krajowa Izba Odwoławcza' 5262239325
+  05 36        raw='5262239325'             | 'Urząd Zamówień Publicznych – Biuro Odwołań' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24532293
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 6784      raw='8951897962'             | '2. Wojskowy Oddział Gospodarczy' || 'Skarb Państwa - 2. Wojskowy Oddział Go' 8951897962
+  02 19993945  raw='NIP: 9121637913'        | 'AUTO-MATUNIN Sp. z o.o.' || 'AUTO-MATUNIN Sp. z o.o.' 9121637913
+  03 19680324  raw='NIP: 9120002710'        | 'PRZEDSIĘBIORSTWO KOMUNIKACJI SAMOCHODOWEJ W OŁAWIE S.A.' || 'Przedsiębiorstwo Komunikacji Samochodo' 9120002710
+  04 22966916  raw='NIP: 7471652326'        | 'PRZEDSIĘBIORSTWO KOMUNIKACJI SAMOCHODOWEJ Sp. z o.o.' || 'PRZEDSIĘBIORSTWO KOMUNIKACJI SAMOCHODO' 7471652326
+**06 49        raw='NIP: 5262239325'        | 'Urząd Zamóweń Publicznych' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24766144
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 14548603  raw='NIP 9131289968'         | 'Zakład Usług Komunalnych sp. z o.o.' || 'Zakład Usług Komunalnych Sp. z o.o.' 9131289968
+  02 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP 5262239325'         | 'Terra Mota Sp. z o.o.' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24820243
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 14548603  raw='NIP 9131289968'         | 'Zakład Usług Komunalnych sp. z o.o.' || 'Zakład Usług Komunalnych Sp. z o.o.' 9131289968
+  02 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+  03 21707440  raw='NIP 6681967484'         | 'BUD-AN Sp. z o.o.' || 'BUD - AN   Sp z o.o.' 6681967484
+**04 49        raw='NIP 5262239325'         | 'Terra Mota Sp. z o.o.' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24831057
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 4216814   raw='NIP: 669-050-51-68'     | 'Politechnika Koszalińska (Koszalin University of Technology)' || 'Politechnika Koszalińska' 6690505168
+**02 49        raw='NIP: 526-223-93-25'     | 'National Appeals Chamber' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24865719
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 2615      raw='NIP 8981816856'         | 'UNIWERSYTECKI SZPITAL KLINICZNY IM JANA MIKULICZA - RADECKIE' || 'UNIWERSYTECKI SZPITAL KLINICZNY IM. JA' 8981816856
+  02 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**05 49        raw='NIP 5262239325'         | 'ARCHITEKTURA PLUS DESIGN STUDIO MICHAŁ MARCZAK' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24906332
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 4216814   raw='NIP: 669-050-51-68'     | 'Politechnika Koszalińska (Koszalin University of Technology)' || 'Politechnika Koszalińska' 6690505168
+**02 49        raw='NIP: 526-223-93-25'     | 'National Appeals Chamber' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 24993174
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 4216814   raw='NIP: 669-050-51-68'     | 'Politechnika Koszalińska (Koszalin University of Technology)' || 'Politechnika Koszalińska' 6690505168
+**02 49        raw='NIP: 526-223-93-25'     | 'National Appeals Chamber' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 25117974
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 4216814   raw='NIP: 669-050-51-68'     | 'Politechnika Koszalińska (Koszalin University of Technology)' || 'Politechnika Koszalińska' 6690505168
+**02 49        raw='NIP: 526-223-93-25'     | 'National Appeals Chamber' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 25374444
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 15807969  raw='5581723233'             | 'Gmina Szubin' || 'Gmina Szubin' 5581723233
+  02 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP 5262239325'         | 'REMONDIS Bydgoszcz  S.A.' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 25398003
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 4216814   raw='NIP: 669-050-51-68'     | 'Politechnika Koszalińska (Koszalin University of Technology)' || 'Politechnika Koszalińska' 6690505168
+**02 49        raw='NIP: 526-223-93-25'     | 'National Appeals Chamber' || 'Krajowa Izba Odwoławcza' 5262239325
+  03 23434334  raw='NIP: DK 17264095'       | 'Cadpeople A/S' || 'Cadpeople A/S' DK17264095
+=== notice 25511030
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25522748
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 19271507  raw='REGON 000514213'        | 'Podlaski Urząd Wojewódzki w Białymstoku' || 'Podlaski Urząd Wojewódzki w Białymstok' 000514213
+  02 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP 5262239325'         | 'Digitex Sp.z o.o Sp. k.' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 25564521
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 17574596  raw='NIP: 739-020-66-11'     | 'KOMENDA WOJEWÓDZKA POLICJI W OLSZTYNIE' || 'KOMENDA WOJEWÓDZKA POLICJI W OLSZTYNIE' 7390206611
+  02 49        raw='NIP: 5262239325'        | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP: 5262239325'        | 'NOVUM S.A.' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 25576610
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25591527
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25592320
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25608668
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25636957
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 22397548  raw='NIP: 5530102780'        | 'Skarb Państwa Państwowe Gospodarstwo Leśne Lasy Państwowe Na' || 'Państwowe Gospodarstwo Leśne Lasy Pańs' 5530102780
+  02 49        raw='NIP: 5262239325'        | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP: 5262239325'        | 'WTU Spółka z o.o.' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 25643080
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25643735
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25649705
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 22310060  raw='NIP 9521818707'         | 'Skarb Państwa - Jednostka Wojskowa Nr 2305' || 'Skarb Państwa - Jednostka Wojskowa Nr ' 9521818707
+  02 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP 5262239325'         | 'PZU ZDROWIE S.A. Odział Centra Medyczne w Gdańsku' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 25664005
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25678097
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25710042
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  02 12541865  raw='NIP 929-195-21-57'      | 'Simedu Sp. z o. o.' || 'SIMEDU sp. z o.o.' 9291952157
+  03 23299566  raw='NIP 986 026 59 03'      | 'FANTOM-FW A. Miętkiewicz Spółka Komandytowa' || 'FANTOM-FW A. Miętkiewicz Spółka Komand' 9860265903
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25767621
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  02 9715      raw='NIP 521-29-83-607'      | 'Viridian Polska Sp. z o. o.' || 'Viridian Polska Sp z o.o.' 5212983607
+  03 23679444  raw='NIP 7123475934'         | 'MSCD Sp. z o. o.' || 'MSCD Sp. z o. o.' 7123475934
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25791501
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  02 9513972   raw='5272685925'             | 'Famed Żywiec Sp. z o.o.' || 'Famed Żywiec Sp. z o.o' 5272685925
+  03 23694269  raw='55920551694'            | 'PRESTIGE – MED S.C. ANNA LEWANDOWSKA, PRESTIGE – MED S.C. JA' || 'PRESTIGE – MED S.C. ANNA LEWANDOWSKA, ' 55920551694
+  04 3772      raw='9532286409'             | 'Zakład Techniki Medycznej "TECH-MED" Sp. z o.o.' || 'Zakład Techniki Medycznej "TECH-MED" S' 9532286409
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25791954
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 12478950  raw='5262501444'             | 'Polska Agencja Rozwoju Przedsiębiorczości' || 'Polska Agencja Rozwoju Przedsiębiorczo' 5262501444
+  03 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**04 49        raw='NIP 5262239325'         | 'Evalu Sp. z o.o.' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 25800438
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+**01 49        raw='NIP 5262239325'         | 'Uniwersytet Warszawski' || 'Krajowa Izba Odwoławcza' 5262239325
+  01 1617      raw=''                       | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' None
+  02 11005609  raw=''                       | 'Prokuratoria Generalna Rzeczpospolitej Polskiej' || 'Prokuratoria Generalna Rzeczpospolitej' None
+=== notice 25867833
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 2527      raw='NIP: 9542274017'        | 'Uniwersyteckie Centrum Kliniczne im. prof. K. Gibińskiego \nŚ' || 'Uniwersyteckie Centrum Kliniczne im. p' 9542274017
+  02 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP 5262239325'         | 'Zarys International Sp. z o.o.' || 'Krajowa Izba Odwoławcza' 5262239325
+  04 19731869  raw='388247889'              | 'ICR Sp. z o.o.' || 'ICR Sp. z o.o.' 388247889
+  05 18247236  raw='1231284133'             | 'Neomed Polska Sp.z o.o.' || 'Neomed Polska Sp. z o.o.' 1231284133
+  06 18385461  raw='NIP 625-245-50-22'      | 'Citonet Śląski Sp. z o.o.' || 'Citonet Śląski Sp. z o.o.' 6252455022
+  07 9437456   raw='NIP 526-28-25-537'      | 'Smith & Nephew Sp. z o.o.' || 'Smith&Nephew Sp. z o.o.' 5262825537
+  08 10507506  raw='NIP: 6351831468'        | 'Hurtownia Farmaceutyczna MEDIFARM Sp. z o.o.' || 'Hurtownia Farmaceutyczna MEDIFARM Sp. ' 6351831468
+  09 5294      raw='NIP: PL5252914245'      | 'Solventum Poland Sp. z o.o.' || 'Solventum Poland Sp. z o.o.' 5252914245
+  10 21976243  raw='NIP:1231371234'         | 'Neoset Profi Sp. z o.o.' || 'Neoset Profi sp.zo.o.' 1231371234
+  11 13990823  raw='NIP:9562273104'         | 'Promedica Toruń Sp. z o.o.' || 'Promedica Toruń Spółka z ograniczoną o' 9562273104
+  12 17931508  raw='NIP:9570902721'         | 'OSS Spółka z o.o.' || 'OSS Sp. z o.o.' 9570902721
+=== notice 29173048
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 18518322  raw='NIP: 7122904545'        | 'Zarząd Dróg Wojewódzkich w Lublinie Rejon Dróg Wojewódzkich ' || 'Zarząd Dróg Wojewódzkich w Lublinie Re' 7122904545
+  02 49        raw='NIP: 5262239325'        | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP: 5262239325'        | 'Gminny Zakład Gospodarki Komunalnej Sp. z o.o.' || 'Krajowa Izba Odwoławcza' 5262239325
+=== notice 29920705
+  00 12        raw='PUBL'                   | 'Publications Office of the European Union' || 'Publications Office of the European Un' None
+  01 23037898  raw='NIP 9461814082'         | 'Okręgowy Inspektorat Służby Więziennej w Lublinie' || 'Okręgowy Inspektorat Służby Więziennej' 9461814082
+  02 49        raw='NIP 5262239325'         | 'Krajowa Izba Odwoławcza' || 'Krajowa Izba Odwoławcza' 5262239325
+**03 49        raw='NIP 5262239325'         | 'Pro3Ds Paweł Krawczyk' || 'Krajowa Izba Odwoławcza' 5262239325
+  04 17437262  raw='NIP 8880200355'         | 'Polska Grupa SW Przedsiębiorstwo Państwowe' || 'Pepebe Włocławek Przedsiębiorstwo Pańs' 8880200355
+  05 17450535  raw='NIP 5781017184'         | 'EUR Consulting Sp. z o.o.' || 'EUR Consulting Sp. z o.o.' 5781017184
+  06 12605574  raw='NIP 7120104912'         | 'Zakład Doskonalenia Zawodowego w Lublinie' || 'Zakład Doskonalenia Zawodowego w Lubli' 7120104912

@@ -1,0 +1,253 @@
+uw 7788 PL national 5250011266 0 'Uniwersytet Warszawski' 1463
+uw 11785 PL national 000001258 0 'Uniwersytet Warszawski' 351
+uw 1188351 PL None None 1 'Uniwersytet Warszawski' 2255
+uw 9873878 PL national 52500011266 0 'Uniwersytet Warszawski' 4
+uw 12921797 PL national REGON00001258NIP5250011266 0 'Uniwersytet Warszawski' 1
+uw 13890195 PL national DZP361802019 0 'Uniwersytet Warszawski' 4
+uw 13921422 PL national DZP361702019 0 'Uniwersytet Warszawski' 2
+uw 13945563 PL national DZP361112019 0 'Uniwersytet Warszawski' 1
+uw 17647983 PL national DZP361432021 0 'Uniwersytet Warszawski' 2
+uw 17697808 PL national DZP361802021 0 'Uniwersytet Warszawski' 2
+uw 17869443 PL national DZP3611042021 0 'Uniwersytet Warszawski' 7
+uw 22201016 PL national POUZ3613662023DZP 0 'Uniwersytet Warszawski' 3
+uw 24642966 None None None 1 'UNIWERSYTET WARSZAWSKI' 11
+uw 7416267 PL None None 1 'Uniwersytet Warszawski (Interdyscyplinarne Centrum Modelowania Matematycznego)' 1
+uw 24934404 None None None 1 'Uniwersytet Warszawski (lider) Uniwersytet Gdański' 5
+uw 10858878 PL None None 1 'Uniwersytet Warszawski - Centrum Nowych Technologii' 70
+uw 29396475 None None None 1 'Uniwersytet Warszawski - Centrum Otwartej i Multimedialnej Edukacji' 1
+uw 20819388 PL None None 1 'Uniwersytet Warszawski - ICM' 2
+uw 5798231 PL None None 1 'Uniwersytet Warszawski / Interdyscyplinarne Centrum Modelowania Matematycznego i' 1
+uw 1259391 PL None None 1 'Uniwersytet Warszawski Biblioteka Uniwersytecka w Warszawie' 24
+uw 31838818 None None None 1 'Uniwersytet Warszawski Centrum Europejskich Studiów Regionalnych i Lokalnych' 2
+uw 9368795 PL None None 1 'Uniwersytet Warszawski Dział Zamówień Publicznych' 1
+uw 31282693 PL None None 1 'UNIWERSYTET WARSZAWSKI INTERDYSCYPILNARNE CENTRUM MODELOWANIA MATEMATYCZNEGO I K' 2
+uw 2437628 PL None None 1 'Uniwersytet Warszawski Interdyscyplinarne Centrum Modelowania Matematycznego i K' 24
+uw 12209609 PL None None 1 'Uniwersytet Warszawski Interdyscyplinarne Centrum Modelowania Matematycznego i K' 2
+uw 12241492 PL None None 1 'Uniwersytet Warszawski Interdyscyplinarne Centrum Modelowania Matematycznego i K' 1
+uw 10281604 PL None None 1 'Uniwersytet Warszawski Interdyscyplinarne Centrum Modelowania Matematycznego i K' 1
+uw 10248034 PL None None 1 'Uniwersytet Warszawski Interdyscyplinarne Centrum Modelowania Matematycznego i K' 6
+uw 10248035 PL None None 1 'Uniwersytet Warszawski Interdyscyplinarne Centrum Modelowania Matematycznego i K' 6
+uw 10290483 PL None None 1 'Uniwersytet Warszawski Interdyscyplinarne Centrum Modelowania Matematycznego i K' 1
+uw 6623822 PL None None 1 'Uniwersytet Warszawski Krakowskie Przedmieście 26/28' 1
+uw 8945350 PL None None 1 'Uniwersytet Warszawski ul. Krakowskie Przedmieście 26/28' 3
+uw 10127536 PL None None 1 'Uniwersytet Warszawski ul. Krakowskie Przedmieście 26/28 00-927 Warszawa' 2
+uw 3951781 PL None None 1 'Uniwersytet Warszawski Warszawa Krakowskie Przedmieście 26/28' 1
+uw 31196562 PL None None 1 'UNIWERSYTET WARSZAWSKI WYDZIAL CHEMII' 9
+uw 31212694 PL None None 1 'UNIWERSYTET WARSZAWSKI WYDZIAL FIZYKI' 22
+uw 31207548 PL None None 1 'UNIWERSYTET WARSZAWSKI WYDZIAL GEOLOGII' 3
+uw 31291007 PL None None 1 'UNIWERSYTET WARSZAWSKI WYDZIAL ZARZADZANIA' 4
+uw 6360326 PL None None 1 'Uniwersytet Warszawski Wydział Biologii' 1
+uw 31390660 PL None None 1 'Uniwersytet Warszawski Wydział Dziennikarstwa i Nauk Politycznych' 3
+mpwik 10384803 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m st. Warszawie S.A.' 1
+mpwik 5909194 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m st. Warszawie SA' 1
+mpwik 31352501 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M. ST. WARSZAWIE S. A.' 6
+mpwik 31814869 None None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S. A.' 1
+mpwik 3878511 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S. A. zare' 13
+mpwik 31364068 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M. ST. WARSZAWIE S. A. ZARE' 2
+mpwik 31365427 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M. ST. WARSZAWIE S. A. ZARE' 1
+mpwik 31363964 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M. ST. WARSZAWIE S. A. ZARE' 1
+mpwik 5507546 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S. A. zare' 7
+mpwik 31364477 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M. ST. WARSZAWIE S. A. ZARE' 1
+mpwik 1191583 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.' 1035
+mpwik 29584880 None None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.' 2
+mpwik 848 PL national 5250005662 0 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A.' 1645
+mpwik 8947060 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A. sala ' 6
+mpwik 3944309 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A. zarej' 86
+mpwik 31369537 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M. ST. WARSZAWIE S.A. ZAREJ' 1
+mpwik 6613122 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie S.A. zarej' 4
+mpwik 31355875 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M. ST. WARSZAWIE S.A. ZAREJ' 3
+mpwik 31365466 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M. ST. WARSZAWIE S.A.ZAREJE' 1
+mpwik 8085850 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie SA' 6
+mpwik 6241184 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie SA zarejes' 1
+mpwik 31843256 None None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Sp. Akcyjn' 1
+mpwik 2590209 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akc' 18
+mpwik 29521969 None None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akc' 1
+mpwik 22014758 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akc' 1
+mpwik 5555896 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie, S.A.' 1
+mpwik 5725574 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszwie S.A.' 1
+mpwik 4360974 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st Warszawie S.A.' 1
+mpwik 10379651 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawa S.A.' 3
+mpwik 9536465 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawa Spółka Akcyj' 3
+mpwik 4781988 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawie' 6
+mpwik 25296366 None None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawie' 1
+mpwik 11921567 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawie S A. zareje' 1
+mpwik 31353433 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M.ST. WARSZAWIE S. A.' 9
+mpwik 1202821 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawie S. A. zarej' 13
+mpwik 1862965 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawie S. A. zarej' 1
+mpwik 1191582 PL None None 1 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawie S. A. zarej' 1197
+mpwik 1240504 PL national 0000146138 0 'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m.st. Warszawie S. A. zarej' 22
+mpwik 31357414 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M.ST. WARSZAWIE S. A. ZAREJ' 15
+mpwik 31357183 PL None None 1 'MIEJSKIE PRZEDSIĘBIORSTWO WODOCIĄGÓW I KANALIZACJI W M.ST. WARSZAWIE S. A. ZAREJ' 1
+terra 14553663 PL national 7382070551 0 'Terra Mota' 2
+pko1 3203129 PL None None 1 'Powszechna Kasa Oszczędności' 2
+pko1 25040482 None None None 1 'Powszechna Kasa Oszczędności' 7
+pko1 2700488 PL None None 1 'Powszechna Kasa Oszczędności Bank Państwowy Spółka Akcyjna' 1
+pko1 2599070 PL None None 1 'Powszechna Kasa Oszczędności Bank Polki Spółka Akcyjna' 1
+pko1 3879080 PL None None 1 'Powszechna Kasa Oszczędności Bank Polska S.A.' 1
+pko1 7555909 PL None None 1 'Powszechna Kasa Oszczędności Bank Polska S.A. Regionalne Centrum Korporacyjne w ' 1
+pko1 31469250 PL None None 1 'Powszechna Kasa Oszczędności Bank Polska S.A. Regionalny Oddział Korporacyjny' 1
+pko1 7178742 PL None None 1 'Powszechna Kasa Oszczędności Bank Polska SA' 1
+pko1 31813228 None None None 1 'Powszechna Kasa Oszczędności Bank Polska SA Regionalny Oddzial Korporacyjny w Sz' 1
+pko1 15919798 PL None None 1 'Powszechna Kasa Oszczędności Bank Polska Spółka Akcyjna' 1
+pko1 1575855 PL None None 1 'Powszechna Kasa Oszczędności Bank Polska Spółka Akcyjna II Regionalny Oddział Ko' 1
+pko1 2905075 PL None None 1 'Powszechna Kasa Oszczędności Bank Polska Spółka Akcyjna II Regionalny Oddział Ko' 1
+pko1 18381710 PL None None 1 'Powszechna Kasa Oszczędności Bank Polski' 2
+pko1 2098407 PL None None 1 'Powszechna Kasa Oszczędności Bank Polski Centrum Korporacyjne w Rzeszowie' 1
+pko1 30278512 None None None 1 'Powszechna Kasa Oszczędności Bank Polski Centrum Korporacyjne w Suwałkach' 1
+pko1 31823840 None None None 1 'Powszechna Kasa Oszczędności Bank Polski Oddział Korporacyjny w Siedlcach' 1
+pko1 16589858 PL None None 1 'Powszechna Kasa Oszczędności Bank Polski Południowo-Zachodni Regionalny, Oddział' 1
+pko1 25398262 None None None 1 'Powszechna Kasa Oszczędności Bank Polski Regionalny Oddział Korporacyjny' 3
+pko1 29532959 None None None 1 'Powszechna Kasa Oszczędności Bank Polski Regionalny Oddział Korporacyjny w Lubli' 1
+pko1 2634778 PL None None 1 'Powszechna Kasa Oszczędności Bank Polski Regionalny Oddział Korporacyjny w Lubli' 1
+pko2 2149123 PL None None 1 'PKO Bank Polski' 2
+pko2 29668737 None None None 1 'PKO Bank Polski' 2
+pko2 1517732 PL None None 1 'PKO Bank Polski Centrum Korporacyjne w Piotrkowie Tryb.' 1
+pko2 15240261 PL None None 1 'PKO Bank Polski Północny Regionalny Oddział Korporacyjny w Gdyni Regionalne Cent' 1
+pko2 4066280 None None None 1 'PKO Bank Polski Regionalne Centrum Korporacyjne w Kielcach' 1
+pko2 29532976 None None None 1 'PKO Bank Polski Regionalny Oddział Korporacyjny w Lublinie Centrum Korporacyjne ' 1
+pko2 2711799 PL None None 1 'PKO Bank Polski S.A.' 7
+pko2 24918789 None None None 1 'PKO Bank Polski S.A' 8
+pko2 31818297 None None None 1 'PKO Bank Polski S.A Centrum Korporacyjne w Nowym Sączu' 1
+pko2 3140365 PL None None 1 'PKO BANK POLSKI S.A Regionalny Oddział Korporacyjny w Białymstoku Centrum Korpor' 1
+pko2 24947065 None None None 1 'PKO BANK POLSKI S.A. Centrum Korporacyjne W Piotrkowie Tryb' 1
+pko2 31489307 PL None None 1 'PKO Bank Polski S.A. Centrum Korporacyjne w Stargardzie Szczecińskim' 1
+pko2 24856218 None None None 1 'PKO Bank Polski S.A. I Regionalny Oddział Korporacyjny w Warszawie' 1
+pko2 25208733 None None None 1 'PKO Bank Polski S.A. I Regionalny Oddział Korporacyjny w Warszawie II Centrum Ko' 1
+pko2 4260547 PL None None 1 'PKO Bank Polski S.A. II Regionalne Centrum Korporacyjne w Poznaniu' 1
+pko2 25159678 None None None 1 'PKO Bank Polski S.A. II Regionalny Oddział' 1
+pko2 31374422 PL None None 1 'PKO Bank Polski S.A. II Regionalny Oddział Korporacyjny w Warszawie' 1
+pko2 25493223 None None None 1 'PKO Bank Polski S.A. Oddział Centrum w Ostrowcu Świętokrzyskim' 1
+pko2 24822906 None None None 1 'PKO Bank Polski S.A. Oddział Korporacyjny w Warszawie I Centrum Korporacyjne w W' 1
+pko2 6969779 PL None None 1 'PKO Bank Polski S.A. Południowo – Wschodni Regionalny Oddział Korporacyjny w Lub' 1
+jm1 18347269 PL None None 1 'Ireneusz Malewicz J&M Engineers (Lider)' 1
+jm1 20534059 PL None None 1 'Ireneusz Malewicz prowadzący działalność gospodarczą pod firmą I&M ENGINEERS z s' 1
+arch 23202450 PL national 6871892878 0 'ARCHITEKTURA PLUS DESIGN STUDIO MICHAŁ MARCZAK' 2
+remondis 20376473 PL national 090484404 0 'REMONDIS Bydgoszcz S.A.' 20
+remondis 22053675 PL None None 1 'REMONDIS Bydgoszcz  S.A.' 6
+remondis 22459167 PL national 55440312757 0 'REMONDIS Bydgoszcz S.A.' 1
+remondis 22463097 PL national 0900484404 0 'REMONDIS Bydgoszcz S.A.' 1
+remondis 25006876 None None None 1 'Remondis Bydgoszcz Sp. z .o.o' 2
+remondis 18251260 PL None None 1 'Remondis Bydgoszcz Sp. z o. o.' 1
+remondis 1977971 PL None None 1 'Remondis Bydgoszcz Sp. z o.o.' 74
+remondis 24918694 None None None 1 'Remondis Bydgoszcz Sp. z o.o' 18
+remondis 15146954 PL national 5540312757 0 'Remondis Bydgoszcz Sp. z o.o.' 78
+remondis 11668146 PL None None 1 'Remondis Bydgoszcz Sp. z.o.o.' 1
+remondis 10930098 PL None None 1 'Remondis Bydgoszcz Sp. zo.o.' 1
+remondis 20798693 PL national 0001015725 0 'REMONDIS Bydgoszcz Spółka Akcyjna' 3
+remondis 21430274 PL None None 1 'REMONDIS Bydgoszcz Spółka Akcyjna' 3
+remondis 28258998 None None None 1 'Remondis Bydgoszcz Spółka z o o' 3
+remondis 21845452 PL None None 1 'Remondis Bydgoszcz Spółka z o.o.' 1
+remondis 29736728 None None None 1 'Remondis Bydgoszcz Spółka z o.o.' 2
+remondis 1393908 PL None None 1 'Remondis Bydgoszcz Spółka z ograniczoną odpowiedzialnością' 2
+digitex 22592409 ES national B81957946 0 'DIGITEX BUSINESS PROCESS OUTSOURCING, S.L.U.' 3
+digitex 25802472 None None None 1 'Digitex Informática' 3
+digitex 23575464 ES national B84430024 0 'DIGITEX INFORMÁTICA INTERNACIONAL, S.L.U.' 1
+digitex 28366417 None None None 1 'Digitex Informática S.L.' 1
+digitex 25645460 None None None 1 'Digitex Informática SA' 1
+digitex 8371123 None None None 1 'Digitex Informática, S.L.' 1
+digitex 14024352 EE national 10955214 0 'Digitex Meedia OÜ' 2
+digitex 19005947 PL national 366410177 0 'Digitex Sp. z o.o.' 18
+digitex 12041231 PL None None 1 'Digitex Sp. z o.o. Sp. k.' 1
+digitex 10248431 PL None None 1 'DIGITEX Sp. z o.o. Sp.k.' 6
+digitex 16922331 PL national 5851469863 0 'Digitex Sp. z o.o. Sp.k.' 1
+digitex 20111694 PL national 5851476863 0 'Digitex Sp. z o.o.sp.k.' 6
+digitex 1425748 DE None None 1 'DIGITEXX Gesellschaft für digitale Bürosysteme mbH' 4
+digitex 5693314 DE None None 1 'Digitexx GmbH' 2
+digitex 1529768 DE None None 1 'Digitexx, Gesellschaft für digitale Bürosystem mbH' 1
+novum 8095000 PL None None 1 'Novum' 1
+novum 31759857 PL national 093213663 0 'NOVUM - MED SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ W WIĘCBORKU' 1
+novum 5588297 PL None None 1 'Novum - Servis Sp. z o.o.' 1
+novum 22285371 PL national 50400008967 0 'NOVUM -MED Sp. z o.o.' 1
+novum 11939606 DE None None 1 'NOVUM Akademiehotel Kiel (Die Auftragserteilung erfolgt unter dem Vorbehalt der ' 1
+novum 18077923 PL national 1251388226 0 'NOVUM Anna Bączek Andrzej Bączek' 3
+novum 23720554 DE national 178909780 0 'Novum Bau' 2
+novum 3814375 None None None 1 'Novum Care AB' 4
+novum 6120357 SE None None 1 'Novum Care AB' 3
+novum 17147437 PL None None 1 'Novum centrum techniki grzewczej' 1
+novum 1414928 PL None None 1 'Novum Centrum Techniki Grzewczej i Sanitarnej Markiewicz Stanisław' 2
+novum 6646660 PL None None 1 'Novum Centrum Techniki Grzewczej i Sanitarnej Stanisław Markiewicz' 5
+novum 22472719 PL None None 1 'NOVUM Centrum Techniki Grzewczej i Sanitarnej Stanisław Markiewicz w spadku' 1
+novum 23219919 HU national 27466881213 0 'Novum Clean Korlátolt Felelősségű Társaság' 1
+novum 13308025 CZ national 25709488 0 'Novum CZech, s.r.o.' 16
+novum 10441146 DE None None 1 'Novum Deutschland GmbH' 1
+novum 20128020 VG national N0245789C 0 'NOVUM ENERGY TRADING CORP' 2
+novum 9474186 HU None None 1 'Novum Forum Bt.' 4
+novum 24504814 HU national 21402483113 0 'Novum Forum Tanácsadó és Szolgáltató Betéti Társaság' 5
+novum 4580021 NL None None 1 'Novum Foto BV' 2
+novum 17663829 CZ national 14893126 0 'Novum Global, a.s.' 1
+novum 30787635 None None None 1 'Novum Grafiska AB' 2
+novum 9417897 HU None None 1 'Novum Guard Kft.' 1
+novum 13430832 HU national EKRSZ88980146 0 'Novum Guard Szolgáltató Korlátolt Felelősségű Társaság' 41
+novum 18828683 HU national 25444744241 0 'Novum Guard Szolgáltató Korlátolt Felelősségű Társaság' 10
+novum 31534496 GB None None 1 'Novum Health Partnership' 2
+novum 31545171 GB None None 1 'Novum Health Partnership    (Baring Road)' 1
+novum 31545168 GB None None 1 'Novum Health Partnership  (Rushey Green)' 1
+novum 22835049 DE national HRA117705 0 'Novum Hotels Berlin Central GmbH' 2
+novum 23289245 DE None None 1 'Novum Hotels Berlin Central GmbH' 2
+wtu 12549311 DE None None 1 'WTU GmbH' 14
+wtu 30490518 None None None 1 'WTU GmbH' 1
+wtu 21653707 DE None None 1 'WTU GmbH Weischlitz' 2
+wtu 1629934 PL None None 1 'WTU Sp. z o.o.' 16
+wtu 9713424 PL national 021065730 0 'WTU Sp. z o.o.' 4
+wtu 13575097 PL national 8992680461 0 'WTU Sp. z o.o.' 13
+wtu 23500261 PL national NIP8992680461KRS0000340110 0 'WTU Sp. z o.o.' 1
+wtu 10405282 PL None None 1 'WTU Sp. z o.o. – pełnomocnik konsorcjum' 1
+wtu 1629936 PL None None 1 'WTU Sp. z.o.o' 1
+wtu 1629933 PL None None 1 'WTU Sp.z o.o.' 1
+wtu 31441984 PL None None 1 'WTU Sp.z.o.o.' 2
+wtu 12783031 PL None None 1 'WTU spółka z ograniczoną odpowiedzialnością' 1
+wtu 24794011 None None None 1 'WTU Weischlitzer Tiefbau und Umweltschutz GmbH' 1
+wtu 29312791 None None None 1 'WTU Wärmetechnik und Umweltschutz GmbH' 1
+pzu 16967817 PL None None 1 'PZU Zdrowie S.A.' 1
+pzu 14416611 PL national 0000395215 0 'PZU Zdrowie S.A.' 1
+pzu 18997068 PL None None 1 'PZU Zdrowie S.A. Oddział Centra medyczne w Radomiu' 1
+pzu 16301740 PL None None 1 'PZU Zdrowie S.A., Oddział Centra Medyczne FCM w Warszawie' 2
+pzu 14775289 PL None None 1 'PZU Zdrowie SA' 1
+pzu 18389587 PL national 5272663852 0 'PZU Zdrowie Spółka Akcyjna' 22
+pzu 20008293 PL national 143343166 0 'PZU ZDROWIE Spółka Akcyjna' 3
+pzu 21543341 PL None None 1 'PZU ZDROWIE SPÓŁKA AKCYJNA' 1
+pzu 10846780 PL None None 1 'Pzu Zdrowie Spółką Akcyjną Oddział Centrum Medyczne NASZE ZDROWIE w Warszawie' 1
+evalu 10196614 PL None None 1 'EVALU sp. z o. o.' 1
+evalu 10008177 PL None None 1 'Evalu Sp. z o.o.' 19
+evalu 18436807 PL national 015891042 0 'EVALU Sp. z o.o.' 2
+evalu 20491831 PL national 5262825916 0 'EVALU Sp. z o.o.' 15
+evalu 10105391 PL None None 1 'Evalu Sp. z o.o. (lider konsorcjum)' 1
+evalu 20077230 PL None None 1 'EVALU Sp. z o.o. - lider konsorcjum' 1
+evalu 12408411 PL None None 1 'Evalu Sp. zo.o. (Lider konsorcjum)' 1
+evalu 31584611 GB national GBPPONPHVR6677ZLPP 0 'EVALU-8 SOFTWARE LIMITED' 2
+evalu 28646965 None None None 1 'EVALU8D' 1
+evalu 31467883 GB None None 1 'Evalu8ed Ltd' 1
+evalu 3396130 FR None None 1 'Evalua' 1
+evalu 7614378 None None None 1 'Evalua' 1
+evalu 20147529 ES None None 1 'EVALUA 360 E INNOVACIÓN HUMANA CONSULTORES Y ASOCIADOS SL' 1
+evalu 23165785 ES national U21836564 0 'EVALUA 360, S.L. E INNOVACIÓN HUMANA CONSULTORES Y ASOCIADOS.L.UNION TEMPORAL DE' 2
+evalu 20309316 ES None None 1 'EVALUACION AMBIENTAL, S.L.' 3
+evalu 2685470 ES None None 1 'Evaluacion de Recursos Naturales SA (EVREN)' 1
+evalu 29885406 None None None 1 'Evaluación Ambiental' 2
+evalu 31377087 None None None 1 'Evaluación ambiental, S.L. (B19189331)' 1
+evalu 27142905 None None None 1 'Evaluación de Recursos Naturales' 1
+evalu 6594933 ES None None 1 'Evaluación de Recursos Naturales, S.A.' 1
+zarys 16239252 PL None None 1 'ZARYS INTERNATIONAL' 9
+zarys 13411523 PL None None 1 'ZARYS International Croup Sp. z o.o., Sp.k. ul. Pod borem 18,41-808 Zabrze' 1
+zarys 10862674 None None None 1 'ZARYS International Croup Sp. z o.o., Sp.k., ul. Pod borem 18,41-808 Zabrze' 4
+zarys 14920194 PL None None 1 'Zarys International Gorup Sp. z o. o. Sp. K.' 1
+zarys 10783095 PL None None 1 'Zarys International Goup Sp. z o.o. SP. K.' 1
+zarys 12223712 PL None None 1 'ZARYS International Goup Sp. z o.o. Sp.k.' 1
+zarys 21045310 PL None None 1 'ZARYS International Gr. Sp. z o. o. Sp. k.' 4
+zarys 15097674 PL None None 1 'Zarys International Graup Sp. z o.o. Sp. k.' 2
+zarys 7245648 PL None None 1 'ZARYS INTERNATIONAL GRIOUP SP. Z O.O. S.K.' 1
+zarys 12223580 PL None None 1 'Zarys International Grop Sp. z o. o.' 1
+zarys 21476980 PL None None 1 'ZARYS International Grop Sp. z o.o., S.K.,' 3
+zarys 20323296 PL None None 1 'Zarys International Grop Sp. zo.o. Sp.K' 1
+zarys 8198853 PL None None 1 'Zarys International Gropu Sp. z o. o.' 1
+zarys 7668983 PL None None 1 'Zarys International Gropu Sp. z o. o. S.k.' 1
+zarys 13769822 PL None None 1 'Zarys International Gropu Sp. z o. o. Sp. k.' 1
+zarys 10138628 PL None None 1 'Zarys International Gropu Sp. z o.o.' 4
+zarys 8265988 PL None None 1 'ZARYS International Gropu sp. z o.o. sp. k.' 7
+zarys 12679454 PL None None 1 'ZARYS International Gropu Sp. z o.o. SP.K.' 4
+zarys 12725342 PL None None 1 'Zarys International gropu Sp. z o.o., Sp.k.' 2
+zarys 22210038 PL None None 1 'Zarys International Gropu Sp. z o.o.Sp. k.' 1
+gzgk 2199877 PL None None 1 'Gminny Zakład Gospodarki Komunalnej Sp. z o.o.' 34
+gzgk 22583689 PL national 061423397 0 'Gminny Zakład Gospodarki Komunalnej spółka z o.o.' 1
+id_uw 7788 PL national 5250011266 0 'Uniwersytet Warszawski' 1463
+id_pko 10689264 PL national 5250007738 0 'Powszechna Kasa Oszczędności Bank Polski S.A.' 139

@@ -1,0 +1,18 @@
+# plan-copy+prod-indexes
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH organization_names USING INDEX sqlite_autoindex_organization_names_1 (org_id=?)
+  UNION ALL
+    SEARCH notice_texts USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=?)
+  UNION ALL
+    SEARCH notice_texts USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=?)
+  UNION ALL
+    SEARCH notice_texts USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=?)
+  UNION ALL
+    SEARCH notice_texts USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=?)
+  UNION ALL
+    SEARCH notice_texts USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=?)
+  UNION ALL
+    SEARCH notice_texts USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=?)
+  UNION ALL
+    SEARCH notice_texts USING INDEX sqlite_autoindex_notice_texts_1 (notice_id=? AND section_id=? AND field_id=?)

@@ -1,0 +1,83 @@
+novum 10433844 None None None 1 'Novum S. A.' 1
+novum 10741182 PL None None 1 'Novum S. A.' 1
+novum 6334556 PL None None 1 'Novum S.A.' 94
+novum 7285801 None None None 1 'Novum S.A.' 3
+novum 8998814 PL national 9491924705 0 'NOVUM S.A.' 18
+novum 9838675 PL None None 1 'NOVUM S.A. ul. Racławicka 146, 02-117 Warszawa' 1
+novum 8771609 None None None 1 'NOVUM S.A. z siedzibą w Warszawie' 1
+novum 7226390 None None None 1 'Novum S.A., 02-117 Warszawa, ul. Racławicka 146' 1
+novum 22595790 PL national 140562778 0 'Novum s.c. Anna Bączek, Andrzej Bączek' 1
+novum 18442400 PL national 5670000080 0 'Novum S.C. Anna Bączek, Andrzej Bączek - Lider Konsorcjum' 1
+novum 7823029 PL None None 1 'Novum SA' 5
+novum 6763406 PL None None 1 'Novum Servis Sp. z o.o.' 4
+novum 24137878 None None None 1 'Novum Sozial gGmbH' 7
+novum 6479443 PL None None 1 'NOVUM Sp. Akcyjna' 1
+novum 28409600 None None None 1 'Novum Sp. z o.o.' 1
+novum 18860629 PL national 7451847179 0 'Novum sp. z o.o.' 5
+novum 15625803 PL None None 1 'Novum Sp. z o.o. Sp. k.' 1
+novum 16876580 PL None None 1 'Novum Sp. z o.o. Sp.k.' 1
+novum 6527655 PL None None 1 'Novum Spółka Akcyjna' 33
+novum 6581672 None None None 1 'Novum Spółka Akcyjna' 1
+novum 23169433 PL national 152185875 0 'NOVUM SPÓŁKA AKCYJNA' 2
+novum 23275087 PL national 280250174 0 'NOVUM Spółka z ograniczoną odpowiedzialnością' 2
+novum 16440784 PL national 365105992 0 'Novum Spółka z ograniczoną odpowiedzialnością spółka komandytowa' 1
+novum 10512870 PL None None 1 'Novum Stone Expres Spółka z o.o. Sp. zk.' 1
+novum 25035607 None None None 1 'NOVUM Stowarzyszenie na Rzecz Kształcenia i Doskonalenia Zawodowego' 1
+novum 24966698 None None None 1 'NOVUM Stowarzyszenie na rzecz kształcenia i doskonalenia zawodowego pielęgniarek i położny' 2
+novum 28460886 None None None 1 'NOVUM Structures GmbH' 3
+novum 31610123 GB None None 1 'Novum Structures Ltd' 1
+novum 31537307 GB national GBCOH06133379 0 'NOVUM STRUCTURES UK LIMITED' 1
+novum 31600670 GB None None 1 'Novum Structures UK Limited' 1
+zarys_g 828 RO vat RO45028265 0 'ZARYS INTERNATIONAL GROUP' 2236
+zarys_g 6717939 PL None None 1 'Zarys International Group' 190
+zarys_g 8730363 None None None 1 'ZARYS International Group' 12
+zarys_g 20712814 PL national 648199718 0 'ZARYS International Group  Sp. z o.o. Sp. K,  Ul. Pod Borem 18' 2
+zarys_g 17634417 PL national 64819997718 0 'ZARYS INTERNATIONAL GROUP  Sp. z o.o. sp. k.' 1
+zarys_g 22971106 PL national 66481997718 0 'ZARYS International Group  Sp. z o.o., Sp.K.' 2
+zarys_g 14996243 PL None None 1 'Zarys International Group 41 -808 Zabrze, ul. Pod Borem 18' 1
+zarys_g 20831302 PL None None 1 'ZARYS INTERNATIONAL GROUP AP Z O. O. SP.K.' 1
+zarys_g 22717592 HU national 32440577241 0 'ZARYS International Group Korlátolt Felelősségű Társaság' 16
+zarys_g 6213659 PL None None 1 'Zarys International Group Polska Sp. z o.o. Sp. k.' 3
+zarys_g 6213662 PL None None 1 'Zarys International Group Polska Sp. z o.o. Sp.k.' 4
+zarys_g 7790823 PL None None 1 'Zarys International Group Polska Spółka z ograniczoną odpowiedzialnością Spółka Komandytow' 1
+zarys_g 22647590 PT national 517635640 0 'Zarys International Group Portugal Unipessoal, Lda' 26
+zarys_g 7905750 PL None None 1 'ZARYS International Group półka z ograniczoną odpowiedzialnością spółka komandytowa' 1
+zarys_g 11706987 PL None None 1 'Zarys international Group S. z o. o. Sp.k.' 1
+zarys_g 8982955 PL None None 1 'Zarys international Group S. z o.o. sp.k.' 1
+zarys_g 18062811 PL None None 1 'Zarys International Group S. z o.o., Sp. K.' 1
+zarys_g 11771871 PL None None 1 'ZARYS International Group S. z o.o., Sp.k.' 2
+zarys_g 18467939 CZ national 9637737 0 'Zarys International Group s.r.o.' 1
+zarys_g 11935861 PL None None 1 'Zarys International Group S[. z o.o. S.K.' 1
+zarys_g 22206021 PL None None 1 'ZARYS International Group So. Z O.O. Spółka Komandytowa' 4
+zarys_g 7383928 PL None None 1 'ZARYS International Group So. z o.o.,Sp. Komandytowa' 1
+zarys_g 976 PL national 6481997718 0 'ZARYS INTERNATIONAL GROUP SP .Z O.O.' 4380
+zarys_g 12566568 PL None None 1 'Zarys International Group sp .z o.o. SK' 1
+zarys_g 11626631 PL None None 1 'Zarys International Group sp z o o' 4
+zarys_g 19194806 PL None None 1 'Zarys International Group sp z o o s k' 1
+zarys_g 8187110 PL None None 1 'Zarys International Group sp z o o sp k' 18
+zarys_g 17066077 PL None None 1 'Zarys International Group sp z o o sp zk' 1
+zarys_g 14204538 PL None None 1 'ZARYS INTERNATIONAL GROUP SP Z O O SPÓŁKA KOMANDYTOWA' 2
+zarys_g 11282230 PL None None 1 'Zarys International Group Sp z o o., S.k.' 19
+zarys_g 13129134 PL None None 1 'Zarys International Group Sp z o o., S.k. ul. Pod Borem 18, 41-808 Zabrze' 1
+zarys_g 7563750 None None None 1 'Zarys International Group Sp z o o., SK,' 1
+zarys_g 7563752 None None None 1 'Zarys International Group Sp z o o., SK' 1
+zarys_g 8187839 None None None 1 'Zarys International Group Sp z o o., SK' 1
+zarys_g 8187841 None None None 1 'Zarys International Group Sp z o o., SK' 1
+zarys_g 8187849 None None None 1 'Zarys International Group Sp z o o., SK' 1
+zarys_g 8580871 None None None 1 'Zarys International Group Sp z o o., SK' 1
+zarys_g 10568465 PL None None 1 'Zarys International Group Sp z o o., SK,' 3
+zarys_g 20510612 PL None None 1 'ZARYS INTERNATIONAL GROUP SP Z O. O.' 1
+zarys_g 7553800 PL None None 1 'Zarys International Group Sp z o. o. Sp. K.' 8
+zarys_sp 9189305 PL None None 1 'Zarys International Sp z o.o.' 1
+zarys_sp 10144518 PL None None 1 'ZARYS International Sp z o.o. sp.k' 29
+zarys_sp 18306733 PL None None 1 'Zarys International Sp z o.o. Sp.k., Pod borem 18, 41-808 Zabrze' 2
+zarys_sp 16005178 PL None None 1 'ZARYS INTERNATIONAL Sp. kom.' 2
+zarys_sp 23719024 PL national 0001213002 0 'Zarys International Sp. z  o.o.' 2
+zarys_sp 17965751 PL None None 1 'Zarys International Sp. z o. o.' 2
+zarys_sp 18069548 PL None None 1 'Zarys International Sp. z o. o. Sp. k.' 1
+zarys_sp 16950494 PL None None 1 'Zarys International Sp. z o. o. sp.k' 1
+zarys_sp 7594253 PL None None 1 'Zarys International Sp. z o. o., Sp. k.' 1
+zarys_sp 6545028 PL None None 1 'Zarys International sp. z o.o.' 31
+jm_mal 1848056 PL None None 1 'Malewicz Edyta' 1
+jm_mal 3424388 PL None None 1 'Malewicz Jacek' 2
+pro3d_a 22456216 PL national 7123245197 0 'Pro 3Ds Paweł Krawczyk' 3

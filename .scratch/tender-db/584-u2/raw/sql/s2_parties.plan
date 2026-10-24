@@ -1,0 +1,202 @@
+# plan-copy+prod-indexes
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_mention_key (mention_notice_id=? AND mention_section_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH b USING INDEX tender_version_bid_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH w USING INDEX tender_version_result_winners_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)

@@ -1,0 +1,35 @@
+2026-10-24T19:26:44Z SQL #1 s1_mentions sha256:dbbed702894e8024 secs=0.62 ok=True rows=175 truncated=False sql=raw/sql/s1_mentions.sql
+2026-10-24T19:27:12Z SQL #2 s2_parties sha256:b7ecec6520bc295b secs=0.51 ok=True rows=99 truncated=False sql=raw/sql/s2_parties.sql
+2026-10-24T19:28:34Z SQL #3 s3_candidates sha256:c02abb9716dbd533 secs=0.56 ok=True rows=253 truncated=False sql=raw/sql/s3_candidates.sql
+2026-10-24T19:29:48Z SQL #4 s4_candidates2 sha256:03e1f6f429a0d4ce secs=0.4 ok=True rows=83 truncated=False sql=raw/sql/s4_candidates2.sql
+2026-10-24T19:30:33Z EXT WebFetch https://rejestr.io/krs/146138 -> 403 (blocked; not retried)
+2026-10-24T19:30:33Z EXT WebFetch https://api-krs.ms.gov.pl/api/krs/OdpisAktualny/0000146138?rejestr=P&format=json -> MPWiK m.st. Warszawie S.A., NIP 5250005662, Plac Starynkiewicza 5
+2026-10-24T19:30:51Z EXT WebFetch https://api-krs.ms.gov.pl/api/krs/OdpisAktualny/0001213002?rejestr=P&format=json -> ZARYS INTERNATIONAL Sp. z o.o., NIP 6481997718, REGON 273295877, transformed 2025-11-14 from ZARYS INTERNATIONAL GROUP sp. z o.o. sp.k. (KRS 0000540772, same NIP/REGON)
+2026-10-24T19:31:04Z EXT WebFetch https://api-krs.ms.gov.pl/api/krs/OdpisAktualny/0001015725?rejestr=P&format=json -> REMONDIS BYDGOSZCZ S.A., NIP 5540312757, REGON 090484404, transformed 2023 from REMONDIS BYDGOSZCZ Sp. z o.o. (KRS 0000037763, same NIP/REGON)
+2026-10-24T19:31:37Z EXT WebFetch https://wl-api.mf.gov.pl/api/search/nips/7382070551,5851469863,5851476863,9491924705,8992680461,5272663852,5262825916,7123245197,6871892878,5250011266,5250007738?date=2026-10-23 -> 11 subjects (MF white list; see prep.md register table)
+2026-10-24T19:31:53Z EXT WebFetch https://wl-api.mf.gov.pl/api/search/regon/061423397?date=2026-10-23 -> GMINNY ZAKŁAD GOSPODARKI KOMUNALNEJ Sp. z o.o., NIP 8250003819, KRS 0000423839, Kościelna 46, 21-411 Wojcieszków
+2026-10-24T19:31:54Z GET #1 /v1/notices/29173048/content -> 200 rc=0 bytes=38953
+2026-10-24T19:32:18Z SQL #5 s5_identifiers sha256:99f0a06cb14587a2 secs=0.51 ok=True rows=33 truncated=False sql=raw/sql/s5_identifiers.sql
+2026-10-24T19:34:57Z SQL #6 s6_names sha256:44bd3abf07b06555 secs=0.37 ok=True rows=14 truncated=False sql=raw/sql/s6_names.sql
+2026-10-24T19:36:15Z EXT WebFetch https://wl-api.mf.gov.pl/api/search/nip/5262239325?date=2026-10-23 -> URZĄD ZAMÓWIEŃ PUBLICZNYCH, NIP 5262239325, REGON 010828091, Postępu 17A Warszawa
+2026-10-24T19:36:15Z GET #2 /v1/organizations/7788 -> 200 rc=0 bytes=266
+2026-10-24T19:36:19Z GET #3 /v1/organizations/848 -> 200 rc=0 bytes=252
+2026-10-24T19:36:22Z GET #4 /v1/organizations/976 -> 200 rc=0 bytes=279
+2026-10-24T19:36:26Z GET #5 /v1/organizations/15146954 -> 200 rc=0 bytes=207
+2026-10-24T19:36:29Z GET #6 /v1/organizations/18347269 -> 200 rc=0 bytes=201
+2026-10-24T19:36:33Z GET #7 /v1/tenders/306091 -> 200 rc=0 bytes=21044
+2026-10-24T19:47:47Z GET #8 (challenger) /v1/organizations/36 -> 200 rc=0 bytes=268
+2026-10-24T19:47:51Z GET #9 (challenger) /v1/notices/24766144/content -> 200 rc=0 bytes=28030
+2026-10-24T19:47:54Z GET #10 (challenger) /v1/notices/24865719/content -> 200 rc=0 bytes=22323
+2026-10-24T19:47:58Z GET #11 (challenger) /v1/notices/25374444/content -> 200 rc=0 bytes=37529
+2026-10-24T19:48:02Z GET #12 (challenger) /v1/notices/25522748/content -> 200 rc=0 bytes=29657
+2026-10-24T19:48:05Z GET #13 (challenger) /v1/notices/25564521/content -> 200 rc=0 bytes=29147
+2026-10-24T19:48:09Z GET #14 (challenger) /v1/notices/25636957/content -> 200 rc=0 bytes=114232
+2026-10-24T19:48:13Z GET #15 (challenger) /v1/notices/25649705/content -> 200 rc=0 bytes=20518
+2026-10-24T19:48:22Z GET #16 (challenger) /v1/notices/25791954/content -> 200 rc=0 bytes=27586
+2026-10-24T19:48:25Z GET #17 (challenger) /v1/notices/25867833/content -> 200 rc=0 bytes=146007
+2026-10-24T19:48:29Z GET #18 (challenger) /v1/notices/29920705/content -> 200 rc=0 bytes=101570
+2026-10-24T19:48:33Z GET #19 (challenger) /v1/notices/24425302/content -> 200 rc=0 bytes=29501
+2026-10-24T19:48:36Z GET #20 (challenger) /v1/notices/24300743/content -> 200 rc=0 bytes=26959
+2026-10-24T19:48:40Z GET #21 (challenger) /v1/notices/23540012/content -> 200 rc=0 bytes=44555
+2026-10-24T19:48:44Z GET #22 (challenger) /v1/notices/25592320/content -> 200 rc=0 bytes=129221
