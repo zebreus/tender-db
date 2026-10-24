@@ -348,7 +348,9 @@ They also differ for a bad one: a party binds to an organization by its official
 identifier before its name, so a notice that published another organization's identifier
 on a party puts that party &mdash; and its <code>organization_id</code> &mdash; on the
 other organization, whose head then names it. <code>mention_name</code> still says what
-the notice said (issue 456). For an organization with an identifier the head is
+the notice said (issue 456). A buying agent that publishes for a member body under its own
+account is one systematic case (see <a href="#caveats">caveats &rarr; Codes and
+identities</a>). For an organization with an identifier the head is
 <em>elected</em> from the names its notice mentions published (issue 524): the operator's
 <code>refresh-org-names</code> job serves a fit spelling of the winning cluster, its
 whitespace collapsed (trimmed, every run one space). The votes are the mentions that
@@ -1203,6 +1205,31 @@ rates and the quarantine resolution ledger.</p>
   <code>"related_entity"</code> and is treated the same way until the organization is
   re-keyed onto its own number. Null means no review found a problem, not that the
   number was checked.</li>
+  <li><strong>A buying agent's identifier can stand for the body it buys for.</strong> On
+  Find a Tender a buyer party can carry the identifier of the account that published the
+  notice instead of its own. When a buying agent, consortium or shared procurement service
+  publishes for a member body, the notice can print the member's name with the agent's
+  identifier. Northern Housing Consortium does this regularly for its member councils and
+  housing associations; NHS Wales Shared Services Partnership (for health boards), Welland
+  Procurement, Gibbs Laidler Consulting and some school and energy brokers do it
+  occasionally. Such a party binds by the published identifier (issue 456):
+  <code>organization_id</code> and <code>organization_name</code> are the agent's, and the
+  printed name stays in <code>mention_name</code>, so read <code>mention_name</code> for
+  display. <code>?buyer=</code> with the agent's id returns these Tenders; with the member's
+  own organization it does not, and for a smaller member body (a housing association, a
+  school trust, a Welsh health board) they can be a tenth or more of what its own list
+  shows. Over <a href="#sql">/v1/sql</a>, <code>v_tender_buyers</code> and
+  <code>v_awards</code> name the agent too (<code>buyer_name</code> is the organization's
+  head); the printed name is <code>organization_mentions.name</code> at the party's
+  <code>mention_notice_id</code> and <code>mention_section_id</code> in
+  <code>tender_version_parties</code>. The reverse also occurs. An agent printed under the
+  buyer's own identifier binds to that buyer, usually the right organization. An agent
+  printed under its host council's identifier binds to the host, so the host appears as
+  buyer of another body's procurement (STAR Procurement under Trafford Council). Find a
+  Tender's <code>procuringEntity</code> party is served as <code>Procedure-Buyer</code>
+  beside the buyer, and its free-text <code>roleDetails</code> ("on behalf of &hellip;") is
+  not kept. Measured on 2026-10-19: about 186 party mentions on 185 Find a Tender notices,
+  from 14 agents (issue 572).</li>
 </ul>
 
 <p class="muted">Ingestion is strict by design: a notice the parser cannot fully and
@@ -1911,6 +1938,39 @@ mod tests {
                 assert!(text.contains(needle), "{surface}'s parties text must name {needle:?}:\n{text}");
             }
         }
+    }
+
+    /// Issue 572 (Rule 572-L): a buying agent's identifier binds the member body it
+    /// publishes for, and the agent printed under its buyer's or host's identifier binds
+    /// that holder. Both directions are left as published (456 design 3), so the caveat
+    /// is the ship: what binds, what to read for display, what `?buyer=` and the SQL
+    /// views answer, the host case, and FTS's `procuringEntity` / `roleDetails` drop.
+    /// Read from the Codes and identities list only, so a mention elsewhere cannot
+    /// satisfy it; the detail section's 456 paragraph points there.
+    #[test]
+    fn the_docs_say_a_buying_agents_identifier_binds_its_member_bodies() {
+        let start = PAGE.find("<h3>Codes and identities</h3>").expect("/docs has the Codes and identities caveats");
+        let list = &PAGE[start..start + PAGE[start..].find("</ul>").expect("the list ends")];
+        let list = squash(list);
+        for needle in [
+            "buying agent",
+            "mention_name",
+            "buyer=",
+            "v_tender_buyers",
+            "host",
+            "procuringEntity",
+            "Procedure-Buyer",
+            "roleDetails",
+            "issue 572",
+        ] {
+            assert!(list.contains(needle), "/docs' Codes and identities caveats must name {needle:?}:\n{list}");
+        }
+        let start = PAGE.find("<h2 id=\"detail\">").expect("/docs has a Tender-detail section");
+        let detail = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows the detail")];
+        assert!(
+            squash(detail).contains("buying agent"),
+            "/docs' Tender detail must point the 456 paragraph at the buying-agent caveat"
+        );
     }
 
     /// Issue 576 unit 2 (g): a role whose eForms reference names a touchpoint is served (D576-1) — as

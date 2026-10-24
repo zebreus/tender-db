@@ -48,7 +48,8 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("parties", Mapped("one Organization section per party — see the leaves")),
     ("parties[].id", Mapped("the Organization section id (`ORG-<id>`), which every role and supplier reference points at")),
     ("parties[].name", Mapped("BT-500-Organization-Company")),
-    ("parties[].roles", Mapped("OPT-300-Procedure-Buyer / OPT-300-Procedure-CPB / OPT-301-Lot-ReviewOrg / OPT-301-Lot-Mediator; suppliers and tenderers are reached through the results graph instead")),
+    ("parties[].roles", Mapped("OPT-300-Procedure-Buyer — from both `buyer` and `procuringEntity`, so an agent acting for the buyer is served as a second buyer (issue 572) / OPT-300-Procedure-CPB / OPT-301-Lot-ReviewOrg / OPT-301-Lot-Mediator; suppliers and tenderers are reached through the results graph instead")),
+    ("parties[].roleDetails", Ignored("owed: free-text 'on behalf of' prose beside a procuringEntity or buyer role; not read — the agent relation it states is not modelled yet (issue 572)")),
     ("parties[].identifier", Mapped("BT-501-Organization-Company as `<scheme>-<id>`, the form the crosswalk's GB arm reads")),
     ("parties[].identifier.legalName", Ignored("restates `parties[].name`")),
     ("parties[].identifier.noIdentifierRationale", Ignored("prose explaining a missing identifier; the absence itself is what the resolver sees")),
@@ -60,7 +61,8 @@ pub const CHECKLIST: &[(&str, Disposition)] = &[
     ("parties[].address.postalCode", Ignored("owed: address lines (BT-512 postcode) are not folded for FTS")),
     ("parties[].address.streetAddress", Ignored("owed: address lines (BT-510 street) are not folded for FTS")),
     ("parties[].contactPoint", Ignored("owed: contact details (BT-502/503/506) are not folded for FTS; the eForms profile stores them as UBL- values")),
-    ("parties[].details", Ignored("party metadata — activity classifications (UVDB and friends), scale, vcse, url — outside the canonical model")),
+    ("parties[].details", Ignored("party metadata — scale, vcse, url — outside the canonical model; its classifications have an entry of their own")),
+    ("parties[].details.classifications", Ignored("owed: the party's classifications, whatever the scheme — on a Procurement Act release UK_CA_TYPE (the buyer's contracting-authority type, the BT-11 analogue the eForms profile stores) and UK_CA_DEVOLVED_REGULATIONS; under the 2014 directives TED_CA_TYPE with COFOG, or TED_CE_ACTIVITY (the buyer's type and main activity); other schemes too, such as a qualification system's UVDB activity codes (issue 386); not folded for FTS (issue 572)")),
     // ----------------------------------------------------------------- tender
     ("tender", Mapped("the procedure block — see the leaves")),
     ("tender.id", Ignored("the release-local tender id; identity is the ocid")),
@@ -246,6 +248,40 @@ mod tests {
         assert_ne!(disposition("tender.lotsGroup"), disposition("tender.lots"));
         assert_eq!(disposition("somethingNew"), None);
         assert_eq!(disposition("tenderers"), None);
+    }
+
+    /// Issue 572 (U2b): FTS's free-text `roleDetails` ("on behalf of …") and the
+    /// buyer's classifications are dropped on record, as owed, and the roles entry
+    /// says that `procuringEntity` is served as Procedure-Buyer. No fixture publishes
+    /// `roleDetails`, so the census in `tests/fts.rs` never reaches that entry: this
+    /// is its pin.
+    #[test]
+    fn the_agent_relation_and_the_buyer_classifications_are_owed_on_record() {
+        assert!(matches!(disposition("parties[].roleDetails"), Some(Ignored(r)) if r.starts_with("owed")));
+        let Some(Mapped(roles)) = disposition("parties[].roles") else { panic!("parties[].roles is mapped") };
+        assert!(roles.contains("procuringEntity"), "{roles}");
+        // The longer path wins over `parties[].details`, leaf for leaf; the rest of
+        // `details` keeps its "outside the canonical model" reason. The reason covers
+        // every scheme that leaf can carry, not only the fixtures' (UK_CA_DEVOLVED_REGULATIONS
+        // is in the 572 exemplars, UVDB on issue 386's utilities release).
+        let schemes = ["UK_CA_TYPE", "UK_CA_DEVOLVED_REGULATIONS", "TED_CA_TYPE", "COFOG", "TED_CE_ACTIVITY", "UVDB"];
+        for path in [
+            "parties[].details.classifications",
+            "parties[].details.classifications[].scheme",
+            "parties[].details.classifications[].id",
+        ] {
+            assert!(
+                matches!(disposition(path), Some(Ignored(r)) if r.starts_with("owed") && schemes.iter().all(|s| r.contains(s))),
+                "{path}: {:?}",
+                disposition(path)
+            );
+        }
+        assert_ne!(disposition("parties[].details.classifications"), disposition("parties[].details"));
+        assert_eq!(disposition("parties[].details.scale"), disposition("parties[].details"));
+        // Every classification leaf now falls to its own entry, so the `details` reason
+        // must not still claim them.
+        let Some(Ignored(details)) = disposition("parties[].details") else { panic!("parties[].details is ignored") };
+        assert!(!details.contains("UVDB") && !details.contains("activity classification"), "{details}");
     }
 
     /// Every ordinal-map field is a checklist entry of its own, mapped: the census

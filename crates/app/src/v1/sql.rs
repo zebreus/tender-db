@@ -973,7 +973,10 @@ const TABLE_NOTES: &[(&str, &str)] = &[
       FILTERABLE (issue 239); read `tenders t CROSS JOIN tender_version_parties p ON \
       p.tender_id = t.id AND p.seq = t.current_seq AND p.role LIKE '%uyer%'`, then \
       `organizations`. CROSS JOIN, not JOIN: with a plain JOIN turso scans the parties table \
-      first and a range of 2,000 Tenders exceeds the time limit (issue 421; 0.06 s this way)."),
+      first and a range of 2,000 Tenders exceeds the time limit (issue 421; 0.06 s this way). \
+      `buyer_name` is the bound organization's head; when a buying agent published under its own \
+      identifier for a member body (issue 572), the printed name is `organization_mentions.name` at \
+      the party's `(mention_notice_id, mention_section_id)` in `tender_version_parties`."),
     ("v_awards", "Current award decisions with their winner and a representative buyer — \
       keeps v_lot_results' one-row-per-winner grain (does not multiply by buyer count). \
       winner_is_buyer as v_lot_results: supplier statistics filter `winner_is_buyer IS NULL`. \
@@ -2930,6 +2933,10 @@ mod tests {
             let note = table_note(view).expect("described");
             assert!(note.contains("CROSS JOIN"), "{view} must recommend the CROSS JOIN form: {note}");
         }
+        // Issue 572 (critic S3): the buyer view's note also says where a buying agent's
+        // member body is printed, since `buyer_name` names the agent.
+        let note = table_note("v_tender_buyers").expect("described");
+        assert!(note.contains("issue 572"), "v_tender_buyers must say where the printed name is: {note}");
 
         let path = format!("/tmp/tender-db-421-plans-{}.db", std::process::id());
         for suffix in ["", "-wal", "-shm"] {

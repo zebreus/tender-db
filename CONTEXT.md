@@ -42,6 +42,9 @@ _Avoid_: company, authority (those are roles/kinds of Organization, not separate
 **OrganizationMention**:
 One appearance of an organization in one Notice (the eForms ORG- entity, whose ID is notice-local) — the immutable evidence canonical Organizations are built from.
 
+**Buying agent**:
+An Organization that publishes a Notice for another, its principal (member body): a consortium, a shared procurement service or a broker; FTS `procuringEntity` (served as Procedure-Buyer), eForms OPT-300-Procedure-SProvider when it is a procurement service provider (not an eSender, a buyer sending its own notices). A notice can print its principal's name under the agent's identifier, and the mention binds the agent; one with no legal personality of its own binds to its host where the notice prints the host's identifier (issues 545, 572).
+
 ## Relationships
 
 - A **Tender** has one or more **Lots**. Lot identifiers are stable across a
