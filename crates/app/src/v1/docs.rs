@@ -1305,8 +1305,8 @@ statement of each source you use.</p>
   <tr><td class="ep"><span class="method">GET</span>/_source</td><td>AGPL §13 corresponding-source offer for the running revision.</td></tr>
 </table>
 <p>While known issues or maintenance are in progress, an <strong>operator notice</strong> may appear: as a
-<code>notice</code> string on <code>/v1</code> and <code>/health</code>, and as a banner at the top of the dashboard and
-of this page. The field is absent when no notice is set. (It is a message from the operator, not a procurement
+<code>notice</code> string on <code>GET /v1</code> (the index, not every <code>/v1</code> response) and <code>GET /health</code>, and as a banner
+at the top of the dashboard and of this page. The field is absent when no notice is set. (It is a message from the operator, not a procurement
 Notice.)</p>
 <p>Browse and try the API interactively in
 <a href="https://petstore.swagger.io/?url=https%3A%2F%2Ftenders.zebreus.click%2Fv1%2Fopenapi.json">Swagger UI</a>
@@ -3121,6 +3121,6 @@ mod tests {
         assert!(!page.contains("<b>lot values</b>"), "the notice's text never becomes markup");
         assert_eq!(page.replacen(&banner.replace("<div class=\"wrap\">\n", ""), "<header class=\"top\">", 1), PAGE);
         // The sentence that tells a client the field exists.
-        assert!(PAGE.contains("<code>notice</code> string on <code>/v1</code> and <code>/health</code>"));
+        assert!(PAGE.contains("<code>notice</code> string on <code>GET /v1</code> (the index, not every <code>/v1</code> response) and <code>GET /health</code>"));
     }
 }
