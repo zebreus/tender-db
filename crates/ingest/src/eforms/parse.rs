@@ -12,7 +12,7 @@ use std::collections::HashMap;
 
 use store::{NoticeValue, Parsed, Section, ValueRow};
 
-use super::index::{self, Branch, FieldInfo};
+use super::index::{self, Branch, FieldInfo, Index};
 use super::sdk::Decision;
 use super::value;
 
@@ -156,10 +156,11 @@ pub fn parse(xml: &str, customization: &str) -> Result<Parsed, Rejected> {
         },
         ordinals: HashMap::new(),
         anonymous: HashMap::new(),
+        index,
     };
     let root = doc.root_element();
-    walk.claim_attributes(root, &[index], "/")?;
-    walk.children(root, &[index], ROOT_SECTION, "")?;
+    walk.claim_attributes(root, &[&index.root], "/")?;
+    walk.children(root, &[&index.root], ROOT_SECTION, "")?;
     Ok(walk.parsed)
 }
 
@@ -169,6 +170,9 @@ struct Walk {
     ordinals: HashMap<(String, String), i64>,
     /// Instance counter per SDK node id, for sections the notice does not name.
     anonymous: HashMap<String, usize>,
+    /// Which of a matched element's fields binds is the index's call
+    /// ([`Index::bind`], issue 577).
+    index: &'static Index,
 }
 
 impl Walk {
@@ -253,7 +257,7 @@ impl Walk {
             None => section.to_owned(),
         };
 
-        if let Some(field) = branches.iter().find_map(|b| b.field.as_ref()) {
+        if let Some(field) = self.index.bind(branches.iter().filter_map(|b| b.field.as_ref())) {
             // Under a relaxed claim the candidates may name different business
             // terms for the same element — exactly the ambiguity the missing
             // discriminator caused. Storing either would be a guess, so the
@@ -307,7 +311,7 @@ impl Walk {
         // so the pair is recognised by UBL's own naming convention instead:
         // `IssueDate`/`IssueTime`, `EndDate`/`EndTime`, `StartDate`/`StartTime`.
         // The date claims the time; the time then emits no row of its own.
-        let paired = counterpart(element, parent_branches, field);
+        let paired = counterpart(element, parent_branches, field, self.index);
         let text = element.text().unwrap_or_default();
         if field.kind == "time" {
             if let Some((date_field, date)) = paired {
@@ -393,11 +397,13 @@ impl Walk {
 /// The field and text of the element pairing with this one under UBL's
 /// `…Date`/`…Time` naming, when both are fields of the matching SDK type.
 /// The field travels with the text so the time half can ask whether its
-/// DATE's field is soft (issue 433).
+/// DATE's field is soft (issue 433). Among the sibling's fields of that type,
+/// [`Index::bind`] picks the one it binds, as for the element itself.
 fn counterpart<'a, 'b>(
     element: roxmltree::Node<'a, '_>,
     parent_branches: &[&'b Branch],
     field: &FieldInfo,
+    index: &Index,
 ) -> Option<(&'b FieldInfo, &'a str)> {
     let (own, other) = match field.kind.as_str() {
         "date" => ("Date", "Time"),
@@ -411,12 +417,12 @@ fn counterpart<'a, 'b>(
         .children()
         .filter(|c| c.is_element() && c.tag_name().name() == wanted)
         .find_map(|c| {
-            parent_branches
+            let fields = parent_branches
                 .iter()
                 .flat_map(|b| b.select(c))
                 .filter_map(|b| b.field.as_ref())
-                .find(|f| f.kind == other.to_lowercase())
-                .map(|f| (c, f))
+                .filter(|f| f.kind == other.to_lowercase());
+            index.bind(fields).map(|f| (c, f))
         })?;
     Some((sibling_field, sibling.text()?))
 }
@@ -437,7 +443,7 @@ mod tests {
     use super::*;
 
     fn field(id: &str, decision: Decision, kind: &str) -> FieldInfo {
-        FieldInfo { id: id.into(), decision, kind: kind.into(), code_list: None }
+        FieldInfo { id: id.into(), decision, kind: kind.into(), code_list: None, declared: true, negated_only: false }
     }
 
     /// Issue 433's STRICT/SOFT split, pinned per class: every integer,

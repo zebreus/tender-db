@@ -332,6 +332,20 @@ const TEXTS: &[(&str, &str)] = &[
     ("UBL-SelectionCriterionName", "selection_criterion"),
     ("UBL-TendererRequirementDescription", "tenderer_requirement"),
     ("UBL-AppealTermsDescription", "appeal_terms"),
+    // Issue 577: the ids the parser binds where the two UBL- entries above used
+    // to shadow or replace a declared field (decision D577-1), so the facts do
+    // not move. eForms-DE 1.x's own lot spellings — lot ids only: the
+    // procedure-level `DE1-TenderingTerms-…-SpecificTendererRequirement-Description`
+    // always bound its own id unmapped, and mapping it would ADD facts — and SDK
+    // 1.0–1.11's BT-749-Lot (stem), which the UBL-SelectionCriterionName EXTRA
+    // entry replaced at its own xpath (and only there: the fold reads it in its
+    // SelectionCriteria section alone).
+    (
+        "DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description",
+        "tenderer_requirement",
+    ),
+    ("DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name", "selection_criterion"),
+    ("BT-749", "selection_criterion"),
 ];
 const AMOUNTS: &[(&str, &str)] = &[
     ("BT-27", "estimated_value"),
@@ -5743,6 +5757,22 @@ impl NoticeState {
                         // nothing is lost by not filing this one anywhere.
                         .filter(|field| {
                             field != "title" || enclosing(&sections, &value.section_id, RESULT_KINDS).is_none()
+                        })
+                        // Issue 577: SDK 1.0–1.11's BT-749-Lot reads as a selection
+                        // criterion only in its own SelectionCriteria section — the
+                        // Lot TenderingTerms anchor, the one xpath where the
+                        // UBL-SelectionCriterionName EXTRA entry used to replace it.
+                        // At every alias mount (the lot's TenderingProcess, the Part
+                        // and LotsGroup, the procedure TenderingTerms, issue 195's
+                        // AppealTerms) BT-749-Lot took the branch first and bound
+                        // unmapped before 577; no node is aliased, so none of those
+                        // opens a SelectionCriteria section, and this keeps them
+                        // folding to nothing.
+                        .filter(|_| {
+                            stem(field_id) != "BT-749"
+                                || sections
+                                    .get(value.section_id.as_str())
+                                    .is_some_and(|s| s.kind == "SelectionCriteria")
                         })
                         .map(|field| Fact::Text {
                             // Issue 538: a title or description decoded of the publisher's
@@ -13904,6 +13934,148 @@ mod tests {
             era,
             vec![pair("description", "Fourniture \"clé en main\""), pair("title", "Livraison de chariots O&K")]
         );
+    }
+
+    /// One committed eForms fixture as the projection reads it (through
+    /// [`normalise_de1`]), after an optional one-shot `(from, to)` edit of its
+    /// bytes for a shape no committed notice publishes.
+    fn edited_fixture(relative: &str, edit: Option<(&str, &str)>) -> (Parsed, NoticeState) {
+        let mut bytes = std::fs::read(format!("tests/fixtures/{relative}")).expect("fixture");
+        if let Some((from, to)) = edit {
+            let text = String::from_utf8(bytes).expect("a UTF-8 fixture");
+            assert!(text.contains(from), "{relative}: the edit's anchor is gone");
+            bytes = text.replacen(from, to, 1).into_bytes();
+        }
+        let crate::profile::Disposition::Records(records) = crate::profile::dispatch(relative, &bytes) else {
+            panic!("dispatch skipped {relative}");
+        };
+        let [crate::profile::Record::Notice(record)] = &records[..] else {
+            panic!("{relative}: expected one notice record");
+        };
+        let store::Parse::Parsed(parsed) = crate::eforms::parse_payload(&record.profile, &bytes) else {
+            panic!("{relative} must parse");
+        };
+        let notice = store::NoticeRef {
+            id: 1,
+            source: "ted".into(),
+            publication_id: record.publication_id.clone(),
+            profile: record.profile.clone(),
+        };
+        let mut chunk = vec![(notice, parsed)];
+        normalise_de1(&mut chunk);
+        let (notice, parsed) = chunk.remove(0);
+        let state = NoticeState::read(&notice, &parsed);
+        (parsed, state)
+    }
+
+    /// The `name` texts among one scope's facts.
+    fn texts_named(facts: &BTreeSet<Fact>, name: &str) -> BTreeSet<String> {
+        facts
+            .iter()
+            .filter_map(|f| match f {
+                Fact::Text { field, value, .. } if field == name => Some(value.clone()),
+                _ => None,
+            })
+            .collect()
+    }
+
+    /// The lot `key`'s facts.
+    fn lot_facts<'a>(state: &'a NoticeState, key: &str) -> &'a BTreeSet<Fact> {
+        &state.lots.iter().find(|l| l.key == key).expect("the lot").facts
+    }
+
+    /// The field id and section kind the text `value` was parsed under.
+    fn bound_text<'a>(parsed: &'a Parsed, value: &str) -> (&'a str, &'a str) {
+        let row = parsed
+            .values
+            .iter()
+            .find(|row| matches!(&row.value, NoticeValue::Text { value: text, .. } if text == value))
+            .expect("the text is parsed");
+        let section = parsed.sections.iter().find(|s| s.id == row.section_id).expect("its section");
+        (row.field_id.as_str(), section.kind.as_str())
+    }
+
+    /// Issue 577: where decision D577-1 binds a declared id in place of a patch
+    /// id, [`TEXTS`] reads it as the same fact. An sdk-1.7 lot's
+    /// selection-criterion names bind BT-749-Lot now that the
+    /// UBL-SelectionCriterionName EXTRA entry no longer replaces it; an
+    /// eForms-DE 1.x lot's tenderer requirement and selection-criterion name
+    /// bind their DE1 lot ids now that the UBL-TendererRequirementDescription
+    /// and UBL-SelectionCriterionName twins no longer shadow them (the first is
+    /// the golden's project_apply.snapshot:143; no committed DE-1.x notice
+    /// names a criterion, so the second is edited in).
+    #[test]
+    fn a_declared_lot_id_folds_to_the_fact_its_patch_twin_gave() {
+        let (parsed, eu) = edited_fixture("eforms/cn-selc-param-00228777-2024.xml", None);
+        assert_eq!(bound_text(&parsed, "Eignung zur Berufsausübung"), ("BT-749-Lot", "SelectionCriteria"));
+        assert_eq!(
+            texts_named(lot_facts(&eu, "LOT-0001"), "selection_criterion"),
+            BTreeSet::from(
+                [
+                    "Eignung zur Berufsausübung",
+                    "Wirtschftliche und finanzielle Leistungsfähigkeit",
+                    "Technische und berufliche Leistungsfähigkeit",
+                ]
+                .map(String::from)
+            )
+        );
+
+        let code = r#"<cbc:CriterionTypeCode listName="selection-criterion">sui-act</cbc:CriterionTypeCode>"#;
+        let named = format!(r#"{code}<cbc:Name languageID="DEU">Befähigung zur Berufsausübung</cbc:Name>"#);
+        let (parsed, de1) = edited_fixture("doe/eforms-de-1.1-cn-7d69b0f7.xml", Some((code, &named)));
+        assert_eq!(
+            bound_text(&parsed, "Befähigung zur Berufsausübung"),
+            ("DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name", "SelectionCriteria")
+        );
+        let lot = lot_facts(&de1, "LOT-0000");
+        assert_eq!(
+            texts_named(lot, "selection_criterion"),
+            BTreeSet::from(["Befähigung zur Berufsausübung".to_owned()])
+        );
+        assert_eq!(texts_named(lot, "tenderer_requirement"), BTreeSet::from(["siehe Formblatt 216".to_owned()]));
+    }
+
+    /// Issue 577: BT-749-Lot folds to `selection_criterion` in its own
+    /// SelectionCriteria section only. SDK 1.0–1.11 also bind it at every alias
+    /// mount of that block (it takes the branch before the aliased
+    /// UBL-SelectionCriterionName), where it was unmapped before 577 and so
+    /// produced no fact; mapping its stem must not make those mounts start
+    /// producing one. The three mounts below are issue 195's lot
+    /// TenderingProcess eSender shape (sdk-1.8), its DÖE AppealTerms shape
+    /// (sdk-1.0, at Tender scope) and a Part (sdk-1.7), each given a criterion
+    /// name the committed notice leaves out.
+    #[test]
+    fn a_bt_749_value_off_its_selection_criteria_section_folds_to_nothing() {
+        let tendering_process = concat!(
+            "<cac:TenderingProcess><ext:UBLExtensions><ext:UBLExtension><ext:ExtensionContent>",
+            "<efext:EformsExtension><efac:SelectionCriteria>",
+        );
+        let (parsed, tp) = edited_fixture(
+            "eforms/cn-selc-tp-00157944-2024.xml",
+            Some((tendering_process, &format!(r#"{tendering_process}<cbc:Name languageID="NLD">Omzet</cbc:Name>"#))),
+        );
+        assert_eq!(bound_text(&parsed, "Omzet"), ("BT-749-Lot", "Lot"));
+        assert_eq!(texts_named(lot_facts(&tp, "LOT-0001"), "selection_criterion"), BTreeSet::new());
+
+        let code = r#"<cbc:CriterionTypeCode listName="selection-criterion">sui-act</cbc:CriterionTypeCode>"#;
+        let (parsed, appeal) = edited_fixture(
+            "eforms/doe-sdk10-selc-appealterms.xml",
+            Some((code, &format!(r#"{code}<cbc:Name languageID="DEU">Befähigung</cbc:Name>"#))),
+        );
+        assert_eq!(bound_text(&parsed, "Befähigung").0, "BT-749-Lot");
+        assert_eq!(texts_named(&appeal.facts, "selection_criterion"), BTreeSet::new());
+
+        let part = r#"<cbc:ID schemeName="Part">PAR-0000</cbc:ID><cac:TenderingTerms>"#;
+        let criteria = concat!(
+            "<ext:UBLExtensions><ext:UBLExtension><ext:ExtensionContent><efext:EformsExtension>",
+            r#"<efac:SelectionCriteria><cbc:CriterionTypeCode listName="selection-criterion">sui-act</cbc:CriterionTypeCode>"#,
+            r#"<cbc:Name languageID="LAV">Piemērotība</cbc:Name></efac:SelectionCriteria>"#,
+            "</efext:EformsExtension></ext:ExtensionContent></ext:UBLExtension></ext:UBLExtensions>",
+        );
+        let (parsed, pin) =
+            edited_fixture("eforms/pin-part-rl-00679774-2023.xml", Some((part, &format!("{part}{criteria}"))));
+        assert_eq!(bound_text(&parsed, "Piemērotība"), ("BT-749-Lot", "Part"));
+        assert_eq!(texts_named(lot_facts(&pin, "PAR-0000"), "selection_criterion"), BTreeSet::new());
     }
 
     /// Issue 394 (unit 2): the CPV normaliser's four published shapes and its

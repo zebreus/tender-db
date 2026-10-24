@@ -6,6 +6,10 @@
 //! ADR-0002: every field id of every vendored SDK version has a recorded
 //! mapping decision — the completeness harness.
 
+use std::collections::BTreeSet;
+
+use ingest::eforms::index::{Branch, FieldInfo};
+use ingest::eforms::xpath::{Pred, Step};
 use ingest::eforms::{self, sdk};
 use ingest::profile::{self, Disposition, Record};
 use store::{NoticeValue, Parse, Parsed};
@@ -1997,6 +2001,218 @@ fn unlisted_procurement_additional_type_codes_are_claimed() {
     );
 }
 
+// ------------------------------------------------------- bound ids (issue 577)
+
+/// (section, field id) of every value published as `published` — a text, a
+/// code or an identifier — in document order: which id each element carrying
+/// it bound.
+fn bound_to<'a>(parsed: &'a Parsed, published: &str) -> Vec<(&'a str, &'a str)> {
+    parsed
+        .values
+        .iter()
+        .filter(|v| match &v.value {
+            NoticeValue::Text { value, .. } | NoticeValue::Id { value, .. } => value == published,
+            NoticeValue::Code { code, .. } => code == published,
+            _ => false,
+        })
+        .map(|v| (v.section_id.as_str(), v.field_id.as_str()))
+        .collect()
+}
+
+/// A minimal notice: `body` under a ContractNotice root declaring
+/// `customization`, parsed through the payload entry point.
+fn parse_minimal(customization: &str, body: &str) -> Parsed {
+    let xml = format!(
+        r#"<?xml version="1.0"?>
+<ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2"
+    xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2"
+    xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2">
+  <cbc:CustomizationID>{customization}</cbc:CustomizationID>
+{body}
+</ContractNotice>"#
+    );
+    match eforms::parse_payload(&format!("eforms:{customization}"), xml.as_bytes()) {
+        Parse::Parsed(parsed) => parsed,
+        other => panic!("{customization}: the minimal notice must parse, got {other:?}"),
+    }
+}
+
+/// Issue 577 (a): the root contract nature binds BT-23-Procedure. The Lot
+/// ProcurementProject → procedure alias grafted BT-23-Lot onto a new
+/// `[@listName='contract-nature']` sibling of the root's predicate-free
+/// declaration, select sorts the predicated branch first, and the root of
+/// 2,193 of 2,201 recent eForms notices served BT-23-Lot. Same business term,
+/// so the declared id binds (D577-1 (b)); a Lot and a Part keep their own.
+#[test]
+fn the_root_contract_nature_binds_bt23_procedure() {
+    // A subtype-4 PIN whose lots are Parts: as published (sdk-1.14, 47414082's
+    // shape) and declaring sdk-1.13 (47413608's).
+    for customization in ["eforms-sdk-1.14", "eforms-sdk-1.13"] {
+        let pin = parsed_mutated(
+            "eforms/pin-4-00496860-2026.xml",
+            "<cbc:CustomizationID>eforms-sdk-1.14<",
+            &format!("<cbc:CustomizationID>{customization}<"),
+        );
+        assert_eq!(
+            bound_to(&pin, "supplies"),
+            [("PROCEDURE", "BT-23-Procedure"), ("PAR-0000", "BT-23-Part")],
+            "{customization}"
+        );
+    }
+    let cn = parse_fixture("eforms/cn-16-00494343-2026.xml");
+    assert_eq!(bound_to(&cn, "works"), [("PROCEDURE", "BT-23-Procedure"), ("LOT-0001", "BT-23-Lot")]);
+}
+
+/// Issue 577 (c): a graft that names its own term keeps binding where no
+/// declared field competes — BT-01(c)-Procedure on a lot's legislation
+/// reference (the docs page's example) over the UBL- leaf beside it, the id
+/// the procedure's own reference binds.
+#[test]
+fn a_lot_legislation_reference_keeps_bt01c() {
+    let cn = parse_fixture("eforms/cn-fma-root-00660539-2023.xml");
+    assert_eq!(
+        bound_to(&cn, "vgv"),
+        [("ND-LocalLegalBasisWithID#0", "BT-01(c)-Procedure"), ("LOT-0001", "BT-01(c)-Procedure")]
+    );
+}
+
+/// Issue 577 (d): a graft that sorts first on a positive discriminator names
+/// its own business term, and keeps binding over the declared field beside it.
+#[test]
+fn a_graft_with_a_positive_discriminator_keeps_its_id() {
+    // A lot's direct-award justification: BT-1252-Procedure over 1.12's
+    // declared predicate-free BT-745-Lot (and over the gap-filled one on 1.10).
+    let justification = r#"  <cac:ProcurementProjectLot>
+    <cbc:ID schemeName="Lot">LOT-0001</cbc:ID>
+    <cac:TenderingProcess>
+      <cac:ProcessJustification>
+        <cbc:ProcessReasonCode listName="direct-award-justification">extr-urgent</cbc:ProcessReasonCode>
+        <cbc:Description languageID="ENG">Unforeseeable extreme urgency</cbc:Description>
+      </cac:ProcessJustification>
+    </cac:TenderingProcess>
+  </cac:ProcurementProjectLot>"#;
+    for customization in ["eforms-sdk-1.12", "eforms-sdk-1.10"] {
+        let parsed = parse_minimal(customization, justification);
+        let ids: Vec<&str> =
+            bound_to(&parsed, "Unforeseeable extreme urgency").into_iter().map(|(_, id)| id).collect();
+        assert_eq!(ids, ["BT-1252-Procedure"], "{customization}");
+    }
+
+    // A procedure TQR holding an exclusion ground AND a missing-info
+    // requirement (1.12): each description binds its own term.
+    let mixed = parse_minimal(
+        "eforms-sdk-1.12",
+        r#"  <cac:TenderingTerms>
+    <cac:TendererQualificationRequest>
+      <cac:SpecificTendererRequirement>
+        <cbc:TendererRequirementTypeCode listName="exclusion-ground">crime-org</cbc:TendererRequirementTypeCode>
+        <cbc:Description languageID="ENG">Participation in a criminal organisation</cbc:Description>
+      </cac:SpecificTendererRequirement>
+      <cac:SpecificTendererRequirement>
+        <cbc:TendererRequirementTypeCode listName="missing-info-submission">late-all</cbc:TendererRequirementTypeCode>
+        <cbc:Description languageID="ENG">Missing documents may follow</cbc:Description>
+      </cac:SpecificTendererRequirement>
+    </cac:TendererQualificationRequest>
+  </cac:TenderingTerms>"#,
+    );
+    let id = |published: &str| bound_to(&mixed, published).into_iter().map(|(_, id)| id).collect::<Vec<_>>();
+    assert_eq!(id("Participation in a criminal organisation"), ["BT-67(b)-Procedure"]);
+    assert_eq!(id("Missing documents may follow"), ["BT-772-Lot"]);
+
+    // A procedure strategic-procurement code (1.5): BT-06-Lot over the
+    // declared BT-531-Procedure's `[not(@listName='transport-service')]` leaf.
+    let strategic = parse_minimal(
+        "eforms-sdk-1.5",
+        r#"  <cac:ProcurementProject>
+    <cac:ProcurementAdditionalType>
+      <cbc:ProcurementTypeCode listName="strategic-procurement">inn-pur</cbc:ProcurementTypeCode>
+    </cac:ProcurementAdditionalType>
+  </cac:ProcurementProject>"#,
+    );
+    assert_eq!(bound_to(&strategic, "inn-pur"), [("PROCEDURE", "BT-06-Lot")]);
+}
+
+/// Issue 577 (e): on 1.3–1.7 the BT-772-Lot graft onto the procedure TQR
+/// carries only negations (`[not(cbc:CompanyLegalFormCode)]`,
+/// `[not(…reserved-procurement…)]`), so it sorted first on predicate count
+/// alone and every procedure exclusion-ground description read as a "late
+/// missing-info" one (136 of 136 sampled sections). D577-1 (c) binds the
+/// declared BT-67(b)-Procedure; 1.8's graft carries a positive missing-info
+/// discriminator and keeps BT-772-Lot on a missing-info requirement.
+#[test]
+fn a_procedure_exclusion_ground_description_binds_bt67b() {
+    let requirement = |code: &str, list: &str| {
+        format!(
+            r#"  <cac:TenderingTerms>
+    <cac:TendererQualificationRequest>
+      <cac:SpecificTendererRequirement>
+        <cbc:TendererRequirementTypeCode listName="{list}">{code}</cbc:TendererRequirementTypeCode>
+        <cbc:Description languageID="ENG">The requirement's own text</cbc:Description>
+      </cac:SpecificTendererRequirement>
+    </cac:TendererQualificationRequest>
+  </cac:TenderingTerms>"#
+        )
+    };
+    let id = |parsed: &Parsed| -> Vec<String> {
+        bound_to(parsed, "The requirement's own text").into_iter().map(|(_, id)| id.to_owned()).collect()
+    };
+    for customization in ["eforms-sdk-1.3", "eforms-sdk-1.5", "eforms-sdk-1.7"] {
+        let parsed = parse_minimal(customization, &requirement("crime-org", "exclusion-ground"));
+        assert_eq!(id(&parsed), ["BT-67(b)-Procedure"], "{customization}");
+    }
+    let late = parse_minimal("eforms-sdk-1.8", &requirement("late-all", "missing-info-submission"));
+    assert_eq!(id(&late), ["BT-772-Lot"]);
+
+    // Real 1.6 and 1.7 notices: every procedure exclusion-ground description.
+    for relative in ["eforms/cn-bt707-16-00042304-2024.xml", "eforms/cn-renewals-00660164-2023.xml"] {
+        let parsed = parse_fixture(relative);
+        let ids: BTreeSet<&str> = parsed
+            .values
+            .iter()
+            .filter(|v| v.section_id.starts_with("ND-ExclusionGrounds#") && matches!(v.value, NoticeValue::Text { .. }))
+            .map(|v| v.field_id.as_str())
+            .collect();
+        assert_eq!(ids, BTreeSet::from(["BT-67(b)-Procedure"]), "{relative}");
+    }
+}
+
+/// Issue 577 (f): the top-level EXTRA insert is gap-only, so the four entries
+/// that sit on an xpath an inventory declares no longer replace the declared
+/// field — here on one sdk-1.7 lot: BT-92-Lot and BT-93-Lot (were
+/// UBL-ElectronicOrderUsage/-PaymentUsage), BT-749-Lot (was
+/// UBL-SelectionCriterionName, 1.0–1.11) and OPT-050-Lot (was
+/// UBL-DocumentStatusCode, 1.0–1.8). The fold's half is project.rs's.
+#[test]
+fn a_declared_lot_field_is_not_replaced_by_an_extra_entry() {
+    let cn = parse_fixture("eforms/cn-selc-param-00228777-2024.xml");
+    for (declared, extra) in [("BT-92-Lot", "UBL-ElectronicOrderUsage"), ("BT-93-Lot", "UBL-ElectronicPaymentUsage")] {
+        assert_eq!(value(&cn, "LOT-0001", declared), &NoticeValue::Integer(1), "{declared}");
+        assert!(values(&cn, "LOT-0001", extra).is_empty(), "{extra} replaced {declared}");
+    }
+    let id = |published: &str| bound_to(&cn, published).into_iter().map(|(_, id)| id).collect::<Vec<_>>();
+    assert_eq!(id("Eignung zur Berufsausübung"), ["BT-749-Lot"]);
+    assert_eq!(id("official"), ["OPT-050-Lot"]);
+
+    // ...and BT-749-Lot on sdk-1.10, inside its 1.0–1.11 range.
+    let criteria = parse_minimal(
+        "eforms-sdk-1.10",
+        r#"  <cac:ProcurementProjectLot>
+    <cbc:ID schemeName="Lot">LOT-0001</cbc:ID>
+    <cac:TenderingTerms>
+      <ext:UBLExtensions xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2"
+          xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1"
+          xmlns:efac="http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1">
+        <ext:UBLExtension><ext:ExtensionContent><efext:EformsExtension>
+          <efac:SelectionCriteria><cbc:Name languageID="ENG">Minimum yearly turnover</cbc:Name></efac:SelectionCriteria>
+        </efext:EformsExtension></ext:ExtensionContent></ext:UBLExtension>
+      </ext:UBLExtensions>
+    </cac:TenderingTerms>
+  </cac:ProcurementProjectLot>"#,
+    );
+    let ids: Vec<&str> = bound_to(&criteria, "Minimum yearly turnover").into_iter().map(|(_, id)| id).collect();
+    assert_eq!(ids, ["BT-749-Lot"]);
+}
+
 // -------------------------------------------------------------- completeness
 
 /// ADR-0002's harness: walk the vendored `fields.json` of every accepted SDK
@@ -2034,6 +2250,176 @@ fn every_sdk_xpath_folds_into_the_match_index() {
         let sdk = sdk::load(customization).expect("vendored SDK");
         eforms::index::build(sdk).unwrap_or_else(|e| panic!("{customization}: {e}"));
     }
+}
+
+/// [`Branch::select`]'s order, copied: most predicates first, ties in
+/// insertion order.
+fn select_order(branch: &Branch) -> Vec<&Branch> {
+    let mut children: Vec<&Branch> = branch.children().iter().collect();
+    children.sort_by_key(|b| std::cmp::Reverse(b.step.as_ref().map_or(0, |s| s.preds.len())));
+    children
+}
+
+/// Whether one element can match both steps. Deliberately generous: only a
+/// predicate beside its own negation, or two disjoint values of one attribute
+/// of the element itself (`[@listName='a']`, `[@listName='b']`) or of its one
+/// `cbc:ID` (`[cbc:ID/@schemeName='Lot']`, `…='Part'`), rule a pair out — any
+/// other child a predicate reads may repeat.
+fn co_match(a: &Step, b: &Step) -> bool {
+    let single = |path: &eforms::xpath::Path| match &path.steps[..] {
+        [] => true,
+        [id] => id.local == "ID" && id.preds.is_empty(),
+        _ => false,
+    };
+    let excludes = |p: &Pred, q: &Pred| match (p, q) {
+        (Pred::Not(negated), q) => **negated == *q,
+        (Pred::AttrEq { path, attr, values }, Pred::AttrEq { path: q_path, attr: q_attr, values: q_values }) => {
+            single(path)
+                && path == q_path
+                && attr == q_attr
+                && !values.is_empty()
+                && !q_values.is_empty()
+                && values.iter().all(|v| !q_values.contains(v))
+        }
+        _ => false,
+    };
+    a.ns == b.ns
+        && a.local == b.local
+        && !a.preds.iter().any(|p| b.preds.iter().any(|q| excludes(p, q) || excludes(q, p)))
+}
+
+/// Every pair of fields one element can carry at once through two different
+/// branches, the first sorting ahead of the second in select order.
+fn co_bound<'a>(branch: &'a Branch, out: &mut Vec<(&'a FieldInfo, &'a FieldInfo)>) {
+    fn step(branch: &Branch) -> &Step {
+        branch.step.as_ref().expect("only the root has no step")
+    }
+    fn down<'a>(first: &'a Branch, other: &'a Branch, out: &mut Vec<(&'a FieldInfo, &'a FieldInfo)>) {
+        if let (Some(f), Some(d)) = (&first.field, &other.field) {
+            out.push((f, d));
+        }
+        for a in first.children() {
+            for b in other.children() {
+                if co_match(step(a), step(b)) {
+                    down(a, b, out);
+                }
+            }
+        }
+    }
+    let order = select_order(branch);
+    for (i, first) in order.iter().enumerate() {
+        for other in &order[i + 1..] {
+            if co_match(step(first), step(other)) {
+                down(first, other, out);
+            }
+        }
+        co_bound(first, out);
+    }
+}
+
+/// Issue 577 (g): decision D577-1 over every accepted inventory. Every pair of
+/// fields one element can carry through two branches goes to
+/// [`eforms::index::Index::bind`] in select order — copied above, not predicate
+/// subsets: the non-nested co-matches are where a blanket "declared wins" would
+/// have bound the wrong term — and the pairs whose bound id moves are pinned.
+/// SDK-shaped: the root contract nature everywhere, 1.3–1.7's procedure
+/// exclusion-ground description, and on 1.0–1.7 a Part's PAT holding both
+/// contract-nature listNames (one element with two codes: theory). On
+/// eforms-de-1.x, 118 patch twins of 113 declared ids, 110 of them lot ids.
+#[test]
+fn a_declared_field_binds_over_a_patch_only_where_d577_1_says() {
+    const BT_531_PART: &[&str] =
+        &["eforms-sdk-1.0", "eforms-sdk-1.2", "eforms-sdk-1.3", "eforms-sdk-1.5", "eforms-sdk-1.6", "eforms-sdk-1.7"];
+    const BT_67B: &[&str] = &["eforms-sdk-1.3", "eforms-sdk-1.5", "eforms-sdk-1.6", "eforms-sdk-1.7"];
+    for &(customization, _) in sdk::ACCEPTED {
+        let sdk = sdk::load(customization).expect("vendored SDK");
+        let index = eforms::index::build(sdk).unwrap_or_else(|e| panic!("{customization}: {e}"));
+        let mut pairs = Vec::new();
+        co_bound(&index.root, &mut pairs);
+        let moved: BTreeSet<(&str, &str)> = pairs
+            .into_iter()
+            .filter(|&(first, other)| index.bind([first, other].into_iter()).is_some_and(|f| f.id != first.id))
+            .map(|(first, other)| (first.id.as_str(), other.id.as_str()))
+            .collect();
+        match customization {
+            // No patch tables: every field is declared.
+            "eforms-sdk-0.1" => assert!(moved.is_empty(), "{customization}: {moved:?}"),
+            "eforms-de-1.x" => {
+                let declared: BTreeSet<&str> = moved.iter().map(|&(_, d)| d).collect();
+                assert_eq!((moved.len(), declared.len()), (118, 113), "{customization}: {moved:?}");
+                let beyond_lots: Vec<&str> =
+                    declared.into_iter().filter(|d| !d.starts_with("DE1-ProcurementProjectLot-")).collect();
+                assert_eq!(
+                    beyond_lots,
+                    [
+                        "DE1-ContractingParty-ContractingPartyType-PartyTypeCode",
+                        "DE1-ProcurementProject-ProcurementAdditionalType-ProcurementTypeCode",
+                        "DE1-TenderingTerms-ContractExecutionRequirement-ExecutionRequirementCode",
+                    ]
+                );
+                for pair in [
+                    ("DE1-ProcurementProject-Name", "DE1-ProcurementProjectLot-ProcurementProject-Name"),
+                    (
+                        "UBL-TendererRequirementDescription",
+                        "DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description",
+                    ),
+                    ("UBL-SelectionCriterionName", "DE1-ProcurementProjectLot-TenderingTerms-SelectionCriteria-Name"),
+                    (
+                        "UBL-DocumentLanguageID",
+                        "DE1-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-LanguageID",
+                    ),
+                ] {
+                    assert!(moved.contains(&pair), "{customization}: {pair:?} does not move");
+                }
+            }
+            _ => {
+                let mut expected = BTreeSet::from([("BT-23-Lot", "BT-23-Procedure")]);
+                if BT_531_PART.contains(&customization) {
+                    expected.insert(("BT-531-Lot", "BT-531-Part"));
+                }
+                if BT_67B.contains(&customization) {
+                    expected.insert(("BT-772-Lot", "BT-67(b)-Procedure"));
+                }
+                assert_eq!(moved, expected, "{customization}");
+            }
+        }
+    }
+}
+
+/// Issue 577, the second mechanism: the top-level [`eforms::index::EXTRA`]
+/// insert is gap-only, so no entry replaces a field the inventory declares at
+/// the very same xpath. It used to: four entries sit on such an xpath, and
+/// each one's id stood in for the declared field.
+#[test]
+fn an_extra_entry_never_replaces_a_declared_field() {
+    let mut shared = BTreeSet::new();
+    // sdk-0.1 runs no patch table at all.
+    for &(customization, _) in sdk::ACCEPTED.iter().filter(|&&(c, _)| c != "eforms-sdk-0.1") {
+        let sdk = sdk::load(customization).expect("vendored SDK");
+        let index = eforms::index::build(sdk).unwrap_or_else(|e| panic!("{customization}: {e}"));
+        for &(xpath, extra, _) in eforms::index::EXTRA {
+            let Some(declared) = sdk.fields.iter().find(|f| f.xpath == xpath && f.attribute_of.is_none()) else {
+                continue;
+            };
+            let steps = eforms::xpath::parse_absolute(xpath).expect("an EXTRA xpath parses").steps;
+            let field = steps
+                .iter()
+                .try_fold(&index.root, |branch, step| branch.children().iter().find(|b| b.step.as_ref() == Some(step)))
+                .and_then(|branch| branch.field.as_ref())
+                .unwrap_or_else(|| panic!("{customization}: no field at {}'s xpath", declared.id));
+            assert!(field.declared && field.id == declared.id, "{customization}: {extra} replaced {}", declared.id);
+            shared.insert((extra, declared.id.as_str()));
+        }
+    }
+    assert_eq!(
+        shared,
+        BTreeSet::from([
+            ("UBL-DocumentStatusCode", "OPT-050-Lot"),
+            ("UBL-ElectronicOrderUsage", "BT-92-Lot"),
+            ("UBL-ElectronicPaymentUsage", "BT-93-Lot"),
+            ("UBL-SelectionCriterionName", "BT-749-Lot"),
+        ])
+    );
 }
 
 /// The pinned versions this issue vendored, recorded so a bump is deliberate.

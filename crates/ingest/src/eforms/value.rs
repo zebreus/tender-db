@@ -285,6 +285,8 @@ mod tests {
             decision: Decision::Integers,
             kind: "integer".into(),
             code_list: None,
+            declared: true,
+            negated_only: false,
         };
         let int = |text: &str| convert(&field, text, |_| None);
         for (text, want) in [

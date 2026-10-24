@@ -489,7 +489,12 @@ was fixed, and is fully served &mdash; its content is right here. Only
 not integers, and <code>kind</code> is the parser&rsquo;s section vocabulary
 (<code>Notice</code>, <code>Lot</code>, <code>Organization</code>&hellip;);
 <code>lang</code> is the source&rsquo;s own tag, uppercase ISO 639-2/T for
-eForms. The <code>notice_id</code> above is illustrative: entity ids are scoped
+eForms. A value&rsquo;s scope is its section, not its field id&rsquo;s suffix:
+a business term the notice&rsquo;s SDK names only at another mount is claimed
+under that mount&rsquo;s id &mdash; <code>BT-01(c)-Procedure</code> in a
+<code>LOT</code> above, <code>BT-1252-Procedure</code> on a lot&rsquo;s
+direct-award justification.
+The <code>notice_id</code> above is illustrative: entity ids are scoped
 to the feed&rsquo;s <code>generation</code> and are reissued by a rebuild (and a
 Tender id can also be retired within one: see <a href="#retired">retired Tender ids</a>), so
 take one from <code>/v1/notices</code> rather than copying a literal.</p>
