@@ -1,5 +1,17 @@
 # Issue 551: drains while path W v2+G is on (decision, 2026-10-23)
 
+> **OWNER RULING, 2026-10-24 ~11:00Z (Lennart): velocity first. This overrides every hold in this file.**
+> Development velocity is the #1 priority. Waiting days, or even hours, is never acceptable, and "there is no reason to
+> delay things in general". There are no active users yet, so prod may carry an issue for a while **if a banner is up**.
+> Never let a protocol block work.
+> - Every calendar hold here is VOID: "after the day-7 read", "days 8–14", "after 11-04", "one fold-changing commit per
+>   probe", W14's fit-before-gap, W7 as a deploy blocker, C9' as a writer blocker.
+> - Checks (gd5, P1, read-backs, verifies) still run, but alongside the work: they inform, never gate. A failed check
+>   means a banner, then a fix, not a freeze.
+> - Mechanical constraints that stay: one writer on the box at a time (the job queue serializes); a green gate on the
+>   deployed tree (deploy.sh enforces it); no edits outside .scratch while a gate runs; /v1/sql ≤ 300 req/h.
+
+
 Panel: three judges (risk-first, throughput-first, measurement-first); a synthesis that checked each judge's claims against
 the records and code on 2026-10-23 ~20Z (nothing run on the box); an adversarial critic. **Adopted: the synthesis as amended
 by every non-optional critic amendment (W1–W15, folded in below), plus one recorder's check (R1, section 4).** The optional

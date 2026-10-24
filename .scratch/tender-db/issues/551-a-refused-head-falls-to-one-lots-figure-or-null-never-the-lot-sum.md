@@ -1697,3 +1697,9 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
 
 - **2026-10-24 09:36–10:00Z: 572 U2 gated green at 3fb8803; main = 70804a8.** 10:23–10:51Z: twin adcb7b0 re-gated green
   (1,650 s); COVERS, skip. The 10-28 batch adds 572 U2 (docs, a sql.rs note, and checklist metadata).
+- **2026-10-24 ~11:00Z: OWNER RULING (Lennart), velocity first.** Every calendar hold in decision-w-on-drains is void;
+  checks run alongside the work and never gate it. Prod may carry an issue for a while under a banner. Now: deploy the
+  batch as soon as main's gate is green, P1 right after it, the twin 111f1a7 (hold/551-switchoff-3) gated in parallel,
+  then the drains back-to-back (576 U3, 546 U4, 577 U2 re-applied + U3, then 581/582/583/519 M6/575/561/573 as they are
+  built). A banner mechanism is being built (none exists).
+
