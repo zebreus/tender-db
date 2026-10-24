@@ -1,6 +1,6 @@
 # 572 — a buying agent's or consortium's identifier binds the member bodies it buys for (and vice versa)
 
-Status: ready-for-agent — **unit 2 BUILT 2026-10-24** (wf_9f0ea8c2-9c7). Read bars first: R1 40 R / 0 W / 0 N and R2 6 of 6, re-scored independently (1 SQL, 54 GETs; `572-triage/u2/`). Then U2a: the /docs caveat, the sql.rs v_tender_buyers note, the test and the CONTEXT.md "Buying agent" entry. U2b: checklist.rs owes roleDetails and details.classifications, rewords parties[].roles, and adds a unit test; metadata only, 0 notices re-queued, and 551's C1 code-drift ledger records it. Review confirmed 3 findings, all fixed. One commit, gate pending. NEXT: deploy with 551's 10-28 batch (docs.rs and sql.rs are flip files; U2b touches crates/ingest, which P1 covers), then R3 (the /docs bullet GET, 0 notices re-queued) and monitor M0, then done. Was: ready-for-agent — unit 1 MEASURED and DECIDED 2026-10-19 (rule 572-L: leave as published under 456 design 3, so a buying agent's identifier keeps binding the member body printed beside it, and document that; 5 545-F-shaped mentions move to 545's follow-up cohort; adopted after the critic's amendments, harm re-measured per principal; .scratch/tender-db/572-triage/decision.md). NEXT: unit 2 — U2a the /docs caveat, the `v_tender_buyers` note in sql.rs and their test (crates/app, any deploy), U2b the FTS checklist's two "owed" entries and the `parties[].roles` reword (crates/ingest, after 551's flip or held as a gated patch), U2c the tracker edits DONE 2026-10-19 (545's cohort of 5 plus guard G-A, 456, the 513/519/473/524 side notes appended), then read bars R1–R3 and monitor M0. Was: ready-for-agent — filed 2026-10-19 from issue 545 unit 2a (wf_fde95594-dbf: `.scratch/tender-db/545-triage/u2a/`, class "A", 52 kept rows / 53 keys / 79 mentions in the GB-PPON half alone). Next: unit 1, measure the class and decide its semantics (it is NOT 545's one-off copy-paste class, so 545's reviewed rehoming does not apply).
+Status: **DONE 2026-10-24** — unit 2 is closed against its bars (`572-triage/u2/close.md`, 1 SQL and 4 GETs, no 408 or retry; an adversarial check re-scored M0 and added 1 GET of `/health`). R3: the /docs "Codes and identities" bullet and the clause in "A party names its organization twice" are live. Verify line 2 reads 1, and line 1 is unchanged (`[[30953692,"Northern Housing Consortium Ltd","Birmingham City Council"]]`). 3fb8803 gated green on its own, then inside the 11:32Z batch deploy a63cf23 (ed3e2d5), deploy #2 (05313fa) and deploy #3 (eac7067, prod 6cb4408; `/health` rev re-read), and it is on origin/main. U2b is metadata only: 0 notices re-queued, no job. Monitor M0: the 8 identifiers resolve as listed and all 8 heads are the agents' (RPJ3's is known, 524). P@A on the agent accounts 154 (153 plus Cardiff and Vale, 47428982; trigger 306). NHC members 97 over 52 bodies, unchanged (trigger 194). Velindre 49 (was 47). 1 unreviewed key: COMMUNITY GATEWAY ASSOCIATION LIMITED on NHC, 47418946. No reopen trigger fired. F1 is filed as 589. 545's NEXT line now names the 5 F-shaped mentions. Monitor M continues quarterly from 2027-01-19, with the q6 shape added; issue 590 carries it (filed 2026-10-24; the hourly audit reads the board). Was: ready-for-agent — **unit 2 BUILT 2026-10-24** (wf_9f0ea8c2-9c7). Read bars first: R1 40 R / 0 W / 0 N and R2 6 of 6, re-scored independently (1 SQL, 54 GETs; `572-triage/u2/`). Then U2a: the /docs caveat, the sql.rs v_tender_buyers note, the test and the CONTEXT.md "Buying agent" entry. U2b: checklist.rs owes roleDetails and details.classifications, rewords parties[].roles, and adds a unit test; metadata only, 0 notices re-queued, and 551's C1 code-drift ledger records it. Review confirmed 3 findings, all fixed. One commit, gate pending. NEXT: deploy with 551's 10-28 batch (docs.rs and sql.rs are flip files; U2b touches crates/ingest, which P1 covers), then R3 (the /docs bullet GET, 0 notices re-queued) and monitor M0, then done. Was: ready-for-agent — unit 1 MEASURED and DECIDED 2026-10-19 (rule 572-L: leave as published under 456 design 3, so a buying agent's identifier keeps binding the member body printed beside it, and document that; 5 545-F-shaped mentions move to 545's follow-up cohort; adopted after the critic's amendments, harm re-measured per principal; .scratch/tender-db/572-triage/decision.md). NEXT: unit 2 — U2a the /docs caveat, the `v_tender_buyers` note in sql.rs and their test (crates/app, any deploy), U2b the FTS checklist's two "owed" entries and the `parties[].roles` reword (crates/ingest, after 551's flip or held as a gated patch), U2c the tracker edits DONE 2026-10-19 (545's cohort of 5 plus guard G-A, 456, the 513/519/473/524 side notes appended), then read bars R1–R3 and monitor M0. Was: ready-for-agent — filed 2026-10-19 from issue 545 unit 2a (wf_fde95594-dbf: `.scratch/tender-db/545-triage/u2a/`, class "A", 52 kept rows / 53 keys / 79 mentions in the GB-PPON half alone). Next: unit 1, measure the class and decide its semantics (it is NOT 545's one-off copy-paste class, so 545's reviewed rehoming does not apply).
 Kind: data quality (organization identity, buyer side)
 Relates to:
 - 545 (the GB-identifier-names-another-organization class; 2a split this pattern out as "A", agent and principal);
@@ -185,8 +185,9 @@ The old reopen trigger "5 or more principals above 10%" was already met on the d
 
 ### Follow-up
 
-F1 is a new issue to file with unit 2: "Find a Tender's `procuringEntity` is served as Procedure-Buyer, and its
-`roleDetails` is dropped". Its first step is to measure with a census over the archived FTS releases, then decide
+F1 is **filed as issue 589** (2026-10-24, at 572 unit 2's close, needs-triage:
+`.scratch/tender-db/issues/589-find-a-tenders-procuringentity-is-served-as-procedure-buyer-and-its-roledetails-is-dropped.md`),
+"Find a Tender's `procuringEntity` is served as Procedure-Buyer, and its `roleDetails` is dropped". Its first step is to measure with a census over the archived FTS releases, then decide
 whether `procuringEntity` gets a distinct role. It also owns the host-case role (STAR on Trafford) and Gleeds'
 duplicate College of Policing party.
 
@@ -219,4 +220,62 @@ patch. Then R1–R3 and M0, then close 572 against the Verify above.
     `parties[].details` no longer claims them.
 - **Tests.** Focused runs: 150 passed, then checklist 3 and the census 1, all EXIT=0.
 - **Budget left for unit 2:** 2 SQL statements and 21 GETs, for M0 and R3.
+
+## RESOLVED-VERIFIED (2026-10-24)
+
+Write-up: `572-triage/u2/close.md`. Spent 1 of the 2 SQL statements and 4 of the 21 GETs; the adversarial check added 1
+GET of `/health` (rev 6cb4408030f3…, 200), so 5 of 21. Every request was logged
+`(572 u2 close …)` in `572-triage/requests.log`, and every one returned 200 (SQL rc=0). There was no 408 and no retry.
+GETs were at least 6 s apart. The SQL was plan-probed first with sqlite and turso `plan-probe`: SEARCH only.
+
+- **R3 PASS.**
+  - **The /docs bullet.** One GET of `/docs`. The "Codes and identities" list carries "**A buying agent's identifier
+    can stand for the body it buys for.** On Find a Tender a buyer party can carry the identifier of the account that
+    published the notice instead of its own. … (issue 572)", with all 9 needles of the docs test. The detail section
+    carries "A buying agent that publishes for a member body under its own account is one systematic case (see
+    caveats → Codes and identities)."
+  - **`GATE-EXIT=0` for the commit.** The gate was not re-run. 3fb8803 gated green on its own (551 log, 09:36–10:00Z),
+    and it is an ancestor of the 11:32Z batch deploy a63cf23's gated ed3e2d5 (where it first went live), of deploy #2's
+    gated 05313fa and of deploy #3's gated eac7067. Prod 6cb4408 differs from
+    eac7067 only in `.scratch/`. 3fb8803 is also on origin/main af959ff.
+  - **U2b re-queues 0 notices.** `CHECKLIST` is metadata that the parser does not read, so no reparse, refold or
+    project job was posted. 551's C1 ledger says the same.
+  - **M0 recorded** (below).
+- **Verify PASS.**
+  - Line 1 is unchanged: `[[30953692,"Northern Housing Consortium Ltd","Birmingham City Council"]]`.
+  - Line 2 reads `1`.
+  - R1 is 40 R / 0 W and R2 is 6 of 6 (unit 2, above). U2b is on main.
+  - The 5 F-shaped mentions are in 545's follow-up cohort, through its "From 572 unit 1" section. 545's Status NEXT
+    line named only Wyre Forest beside them (U2c had added the body section, not the NEXT line); the adversarial check
+    added the 5 to that line on 2026-10-24, so the bar now holds as written.
+- **Monitor M0** (1 `/v1/sql`, `572-triage/u2/m0_monitor.sql`, keyed on the 8 identifiers through an
+  `IN (SELECT id … WHERE identifier IN …)`; scored by `m0_score.py` against the frozen lists):
+
+  | line | 2026-10-19 | M0 2026-10-24 | trigger |
+  |---|---|---|---|
+  | identifiers resolving to the listed org; heads still the agent's | — | 8 of 8; 8 of 8 (RPJ3 known, 524); GJB PPON arm 0 rows | — |
+  | P@A on the agent accounts (list (a) plus the 2 slips) | 153 | **154** (71 keys; +1 Cardiff and Vale 47428982) | 306 |
+  | NHC member mentions under GB-PPON-PJXZ-4423-NDBT | 97 / 52 | **97 / 52** (98 / 53 with the unreviewed key) | 194 |
+  | Velindre on NWSSP's PPON | 47 | **49** | own line |
+  | unreviewed keys | — | **1**: COMMUNITY GATEWAY ASSOCIATION LIMITED on NHC (47418946) | review |
+  | current P@A buyer-role rows (q8, the same morning) | 95 | 97 | 190 |
+
+  - All 70 list (a) keys are still present.
+  - Both Tenderer slips (Riverside 46798381, Hywel Dda 46776118) are still bound and still owed to 545.
+  - The principal-share triggers were not re-read: M does not carry them. The 2 new routed rows bound them at most at 17
+    principals above 10% (trigger 32), and add nothing above 30% on a list of 20 or more.
+  - A new NWSSP spelling, notice 47434180, reads "Velindre University NHS Trust - Please note NHS Wales Shared Services
+    Partnership … will manage this procurement on behalf of the contracting authority. Due to having the same
+    identifiers, we're unable to reflect this in the notice options." The agent pattern counts it as an own name (the
+    rule as decided), so Velindre reads 49; by substance it is a Velindre mention (50). It is the publisher stating the
+    572 mechanism in its own words. It changes no trigger.
+  - **No reopen trigger fired.**
+- **F1 filed as 589** (needs-triage).
+- **Still running: monitor M,** quarterly from 2027-01-19, with the q6 shape added for current P@A rows. The unreviewed
+  key waits for a stray review (guard G-A).
+  - **Gaps (adversarial check).** `ops/board-verify.sh` reads DONE as closed, and nothing else schedules the
+    2027-01-19 run (it appears only here and in `decision.md`), so a scheduled task or a carrier issue has to hold it.
+    The two principal-share triggers (32 above 10%; a list of 20 or more above 30%) are on no scheduled read, because M
+    carries neither: the quarterly run should add the q9 shape (`q9a` + `q9b`), or bound them from the routed-row delta
+    as M0 did. **Closed 2026-10-24: issue 590 carries the quarterly run, with q6 and the q9 triggers in its steps.**
 

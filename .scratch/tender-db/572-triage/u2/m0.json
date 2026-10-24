@@ -1,0 +1,1720 @@
+{
+ "read": "2026-10-24 u2/m0_monitor.sql (1 /v1/sql, rc=0, 159 rows, not truncated)",
+ "heads": [
+  {
+   "identifier": "GBPPONPJXZ4423NDBT",
+   "agent": "NHC",
+   "expected": 30953692,
+   "resolved": [
+    30953692
+   ],
+   "head": "Northern Housing Consortium Ltd",
+   "provisional": [
+    0
+   ],
+   "id_ok": true,
+   "head_ok": true,
+   "note": ""
+  },
+  {
+   "identifier": "GBPPONPXWV6492CGMN",
+   "agent": "NWSSP",
+   "expected": 30913738,
+   "resolved": [
+    30913738
+   ],
+   "head": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+   "provisional": [
+    0
+   ],
+   "id_ok": true,
+   "head_ok": true,
+   "note": ""
+  },
+  {
+   "identifier": "GBPPONPVMQ1845NYPP",
+   "agent": "WELLAND",
+   "expected": 30913798,
+   "resolved": [
+    30913798
+   ],
+   "head": "Welland Procurement",
+   "provisional": [
+    0
+   ],
+   "id_ok": true,
+   "head_ok": true,
+   "note": ""
+  },
+  {
+   "identifier": "GBCOHOC322760",
+   "agent": "GIBBS",
+   "expected": 30913722,
+   "resolved": [
+    30913722
+   ],
+   "head": "GIBBS LAIDLER CONSULTING LLP",
+   "provisional": [
+    0
+   ],
+   "id_ok": true,
+   "head_ok": true,
+   "note": ""
+  },
+  {
+   "identifier": "GBPPONPGGP8622HHRX",
+   "agent": "INVICTUS",
+   "expected": 30930308,
+   "resolved": [
+    30930308
+   ],
+   "head": "INVICTUS PARTNERSHIP LTD (13647652)",
+   "provisional": [
+    0
+   ],
+   "id_ok": true,
+   "head_ok": true,
+   "note": ""
+  },
+  {
+   "identifier": "GBPPONPLMN9829JXLV",
+   "agent": "GINGER",
+   "expected": 30968739,
+   "resolved": [
+    30968739
+   ],
+   "head": "Ginger energy",
+   "provisional": [
+    0
+   ],
+   "id_ok": true,
+   "head_ok": true,
+   "note": ""
+  },
+  {
+   "identifier": "GBPPONPRYY6263NQHG",
+   "agent": "RPJ3",
+   "expected": 30914820,
+   "resolved": [
+    30914820
+   ],
+   "head": "RPJ3 Group Limited on Behalf of Aspirational Futures MAT",
+   "provisional": [
+    0
+   ],
+   "id_ok": true,
+   "head_ok": true,
+   "note": "known (524): head names a principal"
+  },
+  {
+   "identifier": "GBPPONPBWD3998QHRQ",
+   "agent": "NHSLCH",
+   "expected": 30916628,
+   "resolved": [
+    30916628
+   ],
+   "head": "NHS LONDON COMMERCIAL HUB",
+   "provisional": [
+    0
+   ],
+   "id_ok": true,
+   "head_ok": true,
+   "note": ""
+  }
+ ],
+ "gibbs_ppon_arm": [],
+ "total_mentions": 1916,
+ "per_org_total": {
+  "30913722": 164,
+  "30913738": 1196,
+  "30913798": 293,
+  "30914820": 24,
+  "30916628": 26,
+  "30930308": 57,
+  "30953692": 125,
+  "30968739": 31
+ },
+ "pa_on_agent_accounts": 154,
+ "pa_keys": 71,
+ "pa_list_a_only": 153,
+ "nhc_member_mentions": 97,
+ "nhc_member_bodies": 52,
+ "velindre_on_nwssp": 49,
+ "unreviewed": [
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "COMMUNITY GATEWAY ASSOCIATION LIMITED",
+   "n": 1,
+   "lo": 47418946,
+   "hi": 47418946,
+   "cls": "UNREVIEWED",
+   "frozen_mentions": null
+  }
+ ],
+ "unreviewed_mentions": 1,
+ "own": 1669,
+ "non_principal": 43,
+ "by_agent_class": {
+  "GIBBS/P@A": 8,
+  "GIBBS/own": 156,
+  "GINGER/P@A": 2,
+  "GINGER/own": 29,
+  "INVICTUS/P@A": 2,
+  "INVICTUS/own": 55,
+  "NHC/P@A": 96,
+  "NHC/P@A-slip": 1,
+  "NHC/UNREVIEWED": 1,
+  "NHC/non-principal": 4,
+  "NHC/own": 23,
+  "NHSLCH/P@A": 1,
+  "NHSLCH/own": 25,
+  "NWSSP/P@A": 42,
+  "NWSSP/non-principal": 39,
+  "NWSSP/own": 1066,
+  "NWSSP/velindre": 49,
+  "RPJ3/P@A": 1,
+  "RPJ3/own": 23,
+  "WELLAND/P@A": 1,
+  "WELLAND/own": 292
+ },
+ "list_a_keys_changed": [
+  {
+   "org": 30913738,
+   "name": "Cardiff and Vale University Health Board\t",
+   "now": 1,
+   "frozen": 9
+  },
+  {
+   "org": 30913738,
+   "name": "Hywel Dda University Health Board",
+   "now": 10,
+   "frozen": 11
+  },
+  {
+   "org": 30913738,
+   "name": "Hywel Dda University Health Board ",
+   "now": 1,
+   "frozen": 11
+  },
+  {
+   "org": 30913738,
+   "name": "Hywel Dda University Health Board  ",
+   "now": 1,
+   "frozen": 11
+  }
+ ],
+ "list_a_keys_missing": [],
+ "rows": [
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "English Rural Housing Association",
+   "n": 3,
+   "lo": 46757368,
+   "hi": 47209610,
+   "cls": "P@A",
+   "frozen_mentions": 3
+  },
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "GIBBS LAIDLER CONSULTING LLP",
+   "n": 14,
+   "lo": 30805783,
+   "hi": 47376801,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "Gibbs Laidler",
+   "n": 5,
+   "lo": 46747336,
+   "hi": 47366300,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "Gibbs Laidler Consulting",
+   "n": 2,
+   "lo": 46744375,
+   "hi": 46746013,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "Gibbs Laidler Consulting LLP",
+   "n": 133,
+   "lo": 30807607,
+   "hi": 47435458,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "Gibbslaidler",
+   "n": 2,
+   "lo": 46816876,
+   "hi": 47366318,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "Hull Churches Housing Association",
+   "n": 2,
+   "lo": 46755465,
+   "hi": 46868795,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "Newlon Housing Trust",
+   "n": 1,
+   "lo": 47205050,
+   "hi": 47205050,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30913722,
+   "agent": "GIBBS",
+   "name": "YMCA Saint Pauls Group",
+   "n": 2,
+   "lo": 46775006,
+   "hi": 46801228,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": " NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)",
+   "n": 2,
+   "lo": 46759259,
+   "hi": 46760509,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Aneurin Bevan University Bevan Health Board",
+   "n": 1,
+   "lo": 46819472,
+   "hi": 46819472,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Betsi Cadwaladr University Health Board",
+   "n": 2,
+   "lo": 46773193,
+   "hi": 46842199,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Cardiff & Vale University Health Board",
+   "n": 1,
+   "lo": 46873054,
+   "hi": 46873054,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Cardiff and Vale University Health Board",
+   "n": 9,
+   "lo": 46731877,
+   "hi": 47428982,
+   "cls": "P@A",
+   "frozen_mentions": 9
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Cardiff and Vale University Health Board\t",
+   "n": 1,
+   "lo": 46870532,
+   "hi": 46870532,
+   "cls": "P@A",
+   "frozen_mentions": 9
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Health Education and Improvement Wales (HEIW)",
+   "n": 6,
+   "lo": 46787268,
+   "hi": 46886792,
+   "cls": "P@A",
+   "frozen_mentions": 6
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Hywel Dda University Health Board",
+   "n": 10,
+   "lo": 46750901,
+   "hi": 46883773,
+   "cls": "P@A",
+   "frozen_mentions": 11
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Hywel Dda University Health Board ",
+   "n": 1,
+   "lo": 46744066,
+   "hi": 46744066,
+   "cls": "P@A",
+   "frozen_mentions": 11
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Hywel Dda University Health Board  ",
+   "n": 1,
+   "lo": 46746021,
+   "hi": 46746021,
+   "cls": "P@A",
+   "frozen_mentions": 11
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS ",
+   "n": 2,
+   "lo": 46786675,
+   "hi": 46788783,
+   "cls": "non-principal",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Shared Services Partnership",
+   "n": 1,
+   "lo": 46733706,
+   "hi": 46733706,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS WALES SHARED SERVICES PARTNERSHIP",
+   "n": 12,
+   "lo": 46775045,
+   "hi": 46829330,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales",
+   "n": 11,
+   "lo": 46698028,
+   "hi": 47423896,
+   "cls": "non-principal",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Joint Commissioning Committee (NWJCC) hosted by Cwm Taf Morgannwg University Health Board ",
+   "n": 1,
+   "lo": 46132639,
+   "hi": 46132639,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Service Partnership",
+   "n": 13,
+   "lo": 46786034,
+   "hi": 47397713,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Service Partnership (Hosted by Velindre University NHS Trust)",
+   "n": 1,
+   "lo": 46830804,
+   "hi": 46830804,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Service Partnership-Procurement Services (hosted by Velindre University NHS Trust) ",
+   "n": 1,
+   "lo": 47397596,
+   "hi": 47397596,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services",
+   "n": 5,
+   "lo": 46381427,
+   "hi": 47435934,
+   "cls": "non-principal",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services (Hosted by Velindre University NHS Trust)",
+   "n": 1,
+   "lo": 46832222,
+   "hi": 46832222,
+   "cls": "non-principal",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partership",
+   "n": 8,
+   "lo": 31499770,
+   "hi": 47429195,
+   "cls": "non-principal",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership",
+   "n": 81,
+   "lo": 30976960,
+   "hi": 47434336,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership ",
+   "n": 1,
+   "lo": 46735983,
+   "hi": 46735983,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (Hosted by Velindre NHS Trust)",
+   "n": 1,
+   "lo": 46753598,
+   "hi": 46753598,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (NWSSP)",
+   "n": 8,
+   "lo": 46718001,
+   "hi": 47423947,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (NWSSP), hosted by Velindre University NHS Trust",
+   "n": 1,
+   "lo": 46749550,
+   "hi": 46749550,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust",
+   "n": 4,
+   "lo": 46748272,
+   "hi": 46827904,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)",
+   "n": 255,
+   "lo": 30812555,
+   "hi": 47435933,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)\t",
+   "n": 1,
+   "lo": 46758719,
+   "hi": 46758719,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust)  ",
+   "n": 6,
+   "lo": 46761989,
+   "hi": 47296545,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust) Organisation details",
+   "n": 2,
+   "lo": 30810997,
+   "hi": 46726841,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust) role in NWSSP",
+   "n": 1,
+   "lo": 46767411,
+   "hi": 46767411,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership (hosted by Velindre University NHS)",
+   "n": 4,
+   "lo": 46829415,
+   "hi": 47392351,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership - Procurement Services",
+   "n": 1,
+   "lo": 46874633,
+   "hi": 46874633,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership - Procurement Services (hosted by Velindre NHS Trust)",
+   "n": 2,
+   "lo": 31499706,
+   "hi": 46841703,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership - Procurement Services, Woodlands House",
+   "n": 1,
+   "lo": 46844487,
+   "hi": 46844487,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership hosted by Velindre University NHS Trust",
+   "n": 1,
+   "lo": 46817945,
+   "hi": 46817945,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services",
+   "n": 3,
+   "lo": 31146328,
+   "hi": 46885083,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services ",
+   "n": 4,
+   "lo": 46732962,
+   "hi": 46886509,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust",
+   "n": 1,
+   "lo": 46840995,
+   "hi": 46840995,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)",
+   "n": 632,
+   "lo": 30805795,
+   "hi": 47429049,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust)  ",
+   "n": 1,
+   "lo": 47429022,
+   "hi": 47429022,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services (hosted by Velindre University NHS Trust) Undertaking the procurement on behalf of the contracting authorities",
+   "n": 1,
+   "lo": 46757685,
+   "hi": 46757685,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnership-Procurement Services - Velindre University NHS Trust",
+   "n": 1,
+   "lo": 46745235,
+   "hi": 46745235,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Partnerships",
+   "n": 11,
+   "lo": 46818494,
+   "hi": 46854434,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services Procurement Partnership",
+   "n": 1,
+   "lo": 46774076,
+   "hi": 46774076,
+   "cls": "non-principal",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales Shared Services and Partnership",
+   "n": 11,
+   "lo": 31146475,
+   "hi": 47157695,
+   "cls": "non-principal",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales shared service partnership (hosted by Velindre)",
+   "n": 1,
+   "lo": 46746014,
+   "hi": 46746014,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales shared service partnership hosted by Velindre university NHS",
+   "n": 1,
+   "lo": 46741781,
+   "hi": 46741781,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS Wales shared service partnership hosted by Velindre university NHS ",
+   "n": 1,
+   "lo": 46739388,
+   "hi": 46739388,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NHS wales shared service partnership (hosted by Velindre) ",
+   "n": 1,
+   "lo": 46742484,
+   "hi": 46742484,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NWSSP",
+   "n": 1,
+   "lo": 46718064,
+   "hi": 46718064,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NWSSP- Procurement Services",
+   "n": 2,
+   "lo": 46752000,
+   "hi": 46756097,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "NWSSP- Procurement Sevices",
+   "n": 1,
+   "lo": 46748839,
+   "hi": 46748839,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Nhs Wales Shared Services Partnership",
+   "n": 1,
+   "lo": 45650907,
+   "hi": 45650907,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "North Wales Shared Services Partnership (Hosted by Velindre University NHS Trust)",
+   "n": 1,
+   "lo": 31320712,
+   "hi": 31320712,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "North Wales Shared services Partnership",
+   "n": 1,
+   "lo": 31723915,
+   "hi": 31723915,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Public Health Wales NHS Trust",
+   "n": 9,
+   "lo": 30807073,
+   "hi": 47402805,
+   "cls": "P@A",
+   "frozen_mentions": 9
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Velindre University NHS Trust",
+   "n": 42,
+   "lo": 30806282,
+   "hi": 47434325,
+   "cls": "velindre",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Velindre University NHS Trust\t",
+   "n": 1,
+   "lo": 46886965,
+   "hi": 46886965,
+   "cls": "velindre",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Velindre University NHS Trust ",
+   "n": 5,
+   "lo": 45650869,
+   "hi": 47382163,
+   "cls": "velindre",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Velindre University NHS Trust - Please note NHS Wales Shared Services Partnership (hosted by Velindre University NHS Trust) will manage this procurement on behalf of the contracting authority. Due to having the same identifiers, we're unable to reflect this in the notice options.",
+   "n": 1,
+   "lo": 47434180,
+   "hi": 47434180,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913738,
+   "agent": "NWSSP",
+   "name": "Welsh Blood Service (Velindre University NHS Trust)",
+   "n": 1,
+   "lo": 46856148,
+   "hi": 46856148,
+   "cls": "velindre",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30913798,
+   "agent": "WELLAND",
+   "name": "Rutland County Council",
+   "n": 1,
+   "lo": 46845134,
+   "hi": 46845134,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30913798,
+   "agent": "WELLAND",
+   "name": "Welland Procurement",
+   "n": 292,
+   "lo": 30805872,
+   "hi": 47435542,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30914820,
+   "agent": "RPJ3",
+   "name": "RPJ3 Group",
+   "n": 18,
+   "lo": 31146244,
+   "hi": 47158976,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30914820,
+   "agent": "RPJ3",
+   "name": "RPJ3 Group - On behalf of Thornleigh Salesian College",
+   "n": 1,
+   "lo": 46739189,
+   "hi": 46739189,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30914820,
+   "agent": "RPJ3",
+   "name": "RPJ3 Group Limited on Behalf of Aspirational Futures MAT",
+   "n": 1,
+   "lo": 30807128,
+   "hi": 30807128,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30914820,
+   "agent": "RPJ3",
+   "name": "RPJ3 Group Limited on Behalf of Cidari MAT",
+   "n": 1,
+   "lo": 46875107,
+   "hi": 46875107,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30914820,
+   "agent": "RPJ3",
+   "name": "RPJ3 Group Limited on Behalf of the Barnsley Collaborative Primary School Group",
+   "n": 1,
+   "lo": 30812350,
+   "hi": 30812350,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30914820,
+   "agent": "RPJ3",
+   "name": "RPJ3 Group on Behalf of Fylde Coast Academy Trust",
+   "n": 1,
+   "lo": 46793487,
+   "hi": 46793487,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30914820,
+   "agent": "RPJ3",
+   "name": "Remarkable Autism",
+   "n": 1,
+   "lo": 46869370,
+   "hi": 46869370,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30916628,
+   "agent": "NHSLCH",
+   "name": "NHS LONDON COMMERCIAL HUB",
+   "n": 22,
+   "lo": 30809670,
+   "hi": 47158634,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30916628,
+   "agent": "NHSLCH",
+   "name": "NHS London Commercial Hub (hosted by NHS North East London ICB)",
+   "n": 3,
+   "lo": 30809831,
+   "hi": 46762902,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30916628,
+   "agent": "NHSLCH",
+   "name": "NHS NORTH CENTRAL LONDON INTEGRATED CARE BOARD",
+   "n": 1,
+   "lo": 47271894,
+   "hi": 47271894,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30930308,
+   "agent": "INVICTUS",
+   "name": "CORE Education Trust",
+   "n": 1,
+   "lo": 46888222,
+   "hi": 46888222,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30930308,
+   "agent": "INVICTUS",
+   "name": "INVICTUS PARTNERSHIP LTD (13647652)",
+   "n": 2,
+   "lo": 31723897,
+   "hi": 46852175,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30930308,
+   "agent": "INVICTUS",
+   "name": "Invictus Partnership Limited",
+   "n": 53,
+   "lo": 46750250,
+   "hi": 47418945,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30930308,
+   "agent": "INVICTUS",
+   "name": "William Farr C of E Comprehensive School",
+   "n": 1,
+   "lo": 46879845,
+   "hi": 46879845,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "ARCHES HOUSING LIMITED",
+   "n": 1,
+   "lo": 47159393,
+   "hi": 47159393,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "BELIEVE HOUSING LIMITED",
+   "n": 1,
+   "lo": 46848740,
+   "hi": 46848740,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "BLACKPOOL COASTAL HOUSING LIMITED",
+   "n": 1,
+   "lo": 46829517,
+   "hi": 46829517,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Bernicia Group",
+   "n": 1,
+   "lo": 47366075,
+   "hi": 47366075,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Birmingham City Council",
+   "n": 2,
+   "lo": 46793765,
+   "hi": 46795453,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Bristol City Council",
+   "n": 2,
+   "lo": 46840987,
+   "hi": 46841024,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "COMMUNITY GATEWAY ASSOCIATION LIMITED",
+   "n": 1,
+   "lo": 47418946,
+   "hi": 47418946,
+   "cls": "UNREVIEWED",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Carmarthenshire County Council",
+   "n": 2,
+   "lo": 46849921,
+   "hi": 46850020,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "City of Lincoln Council",
+   "n": 2,
+   "lo": 46841342,
+   "hi": 46841445,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "City of York Council",
+   "n": 2,
+   "lo": 46820519,
+   "hi": 46820619,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Darlington Borough Council",
+   "n": 5,
+   "lo": 46789522,
+   "hi": 47288592,
+   "cls": "P@A",
+   "frozen_mentions": 5
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "East Riding of Yorkshire Council",
+   "n": 2,
+   "lo": 46809388,
+   "hi": 47310073,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "East Suffolk Council",
+   "n": 3,
+   "lo": 46796013,
+   "hi": 47296537,
+   "cls": "P@A",
+   "frozen_mentions": 3
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Gateshead Borough Council",
+   "n": 1,
+   "lo": 46793788,
+   "hi": 46793788,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "HOUSING 21",
+   "n": 1,
+   "lo": 46843775,
+   "hi": 46843775,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "High Peak Borough Council",
+   "n": 2,
+   "lo": 46834849,
+   "hi": 46834922,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "ISLINGTON & SHOREDITCH HOUSING ASSOCIATION LIMITED",
+   "n": 1,
+   "lo": 46823485,
+   "hi": 46823485,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Karbon Homes (54North Homes)",
+   "n": 1,
+   "lo": 46794092,
+   "hi": 46794092,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "LIVIN HOUSING LIMITED",
+   "n": 2,
+   "lo": 46790691,
+   "hi": 47289502,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "LONDON & QUADRANT HOUSING TRUST",
+   "n": 1,
+   "lo": 46831455,
+   "hi": 46831455,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Lancaster City Council",
+   "n": 2,
+   "lo": 46806840,
+   "hi": 46806856,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Leeds City Council",
+   "n": 2,
+   "lo": 46819799,
+   "hi": 46820183,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "London Borough of Newham",
+   "n": 2,
+   "lo": 46814470,
+   "hi": 46814746,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Metropolitan borough of Bury",
+   "n": 2,
+   "lo": 46825974,
+   "hi": 46825981,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Moat Homes Limited",
+   "n": 1,
+   "lo": 46823501,
+   "hi": 46823501,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Newark And Sherwood District Council",
+   "n": 2,
+   "lo": 46794436,
+   "hi": 46794555,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Newcastle City Council",
+   "n": 3,
+   "lo": 46789542,
+   "hi": 46793638,
+   "cls": "P@A",
+   "frozen_mentions": 3
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "North Northamptonshire Council",
+   "n": 3,
+   "lo": 46790550,
+   "hi": 47289467,
+   "cls": "P@A",
+   "frozen_mentions": 3
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "North Tyneside Borough Council",
+   "n": 2,
+   "lo": 46790515,
+   "hi": 46790638,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Northern Housing Consortium",
+   "n": 2,
+   "lo": 46869265,
+   "hi": 46881602,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Northern Housing Consortium Ltd",
+   "n": 21,
+   "lo": 45650855,
+   "hi": 47232405,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "ONE MANCHESTER LIMITED",
+   "n": 1,
+   "lo": 47159646,
+   "hi": 47159646,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "ONE VISION HOUSING LIMITED",
+   "n": 1,
+   "lo": 46381429,
+   "hi": 46381429,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "ONWARD HOMES LIMITED",
+   "n": 1,
+   "lo": 46844733,
+   "hi": 46844733,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "ORBIT GROUP LIMITED",
+   "n": 1,
+   "lo": 47159495,
+   "hi": 47159495,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Ongo Homes Limited",
+   "n": 1,
+   "lo": 46848785,
+   "hi": 46848785,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Powys County Council",
+   "n": 2,
+   "lo": 46800777,
+   "hi": 46801009,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Riverside Group Limited",
+   "n": 1,
+   "lo": 46798381,
+   "hi": 46798381,
+   "cls": "P@A-slip",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Rochdale Borough Council",
+   "n": 4,
+   "lo": 46857373,
+   "hi": 46857436,
+   "cls": "P@A",
+   "frozen_mentions": 4
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Royal Borough of Kensington and Chelsea",
+   "n": 2,
+   "lo": 46830406,
+   "hi": 46830445,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "ST LEGER HOMES OF DONCASTER LIMITED",
+   "n": 1,
+   "lo": 46702998,
+   "hi": 46702998,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Sandwell Metropolitan Borough Council",
+   "n": 2,
+   "lo": 46792477,
+   "hi": 46793812,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Solihull Community Housing Limited",
+   "n": 5,
+   "lo": 46132719,
+   "hi": 47382041,
+   "cls": "P@A",
+   "frozen_mentions": 5
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "South Derbyshire District Council",
+   "n": 2,
+   "lo": 47392453,
+   "hi": 47392508,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "South Lakes Housing",
+   "n": 1,
+   "lo": 46809696,
+   "hi": 46809696,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "South Tyneside Borough Council",
+   "n": 2,
+   "lo": 46792688,
+   "hi": 46794621,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Stairlifts and Lifting Equipment Framework 2026",
+   "n": 4,
+   "lo": 46739561,
+   "hi": 46817180,
+   "cls": "non-principal",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Stockton on Tees Borough Council",
+   "n": 4,
+   "lo": 46842011,
+   "hi": 46842261,
+   "cls": "P@A",
+   "frozen_mentions": 4
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Stoke on Trent City Council",
+   "n": 2,
+   "lo": 46697881,
+   "hi": 46697938,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "THE GUINNESS PARTNERSHIP LIMITED",
+   "n": 1,
+   "lo": 46818155,
+   "hi": 46818155,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Tamworth Borough Council",
+   "n": 2,
+   "lo": 46857614,
+   "hi": 46966759,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "The Council of the Borough of Kirklees",
+   "n": 2,
+   "lo": 46793832,
+   "hi": 46794121,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "The Pioneer Housing and Community Group Limited",
+   "n": 1,
+   "lo": 46832659,
+   "hi": 46832659,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Thurrock Council",
+   "n": 2,
+   "lo": 46790512,
+   "hi": 46790786,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Warwick District Council",
+   "n": 2,
+   "lo": 46812990,
+   "hi": 46813040,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30953692,
+   "agent": "NHC",
+   "name": "Wigan Council",
+   "n": 2,
+   "lo": 46793950,
+   "hi": 46796157,
+   "cls": "P@A",
+   "frozen_mentions": 2
+  },
+  {
+   "org": 30968739,
+   "agent": "GINGER",
+   "name": "Ginger Energy",
+   "n": 6,
+   "lo": 46732256,
+   "hi": 47158709,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30968739,
+   "agent": "GINGER",
+   "name": "Ginger Energy Limited",
+   "n": 8,
+   "lo": 46829189,
+   "hi": 46855190,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30968739,
+   "agent": "GINGER",
+   "name": "Ginger Energy Limited ",
+   "n": 1,
+   "lo": 47158633,
+   "hi": 47158633,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30968739,
+   "agent": "GINGER",
+   "name": "Ginger Energy Ltd",
+   "n": 1,
+   "lo": 46818800,
+   "hi": 46818800,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30968739,
+   "agent": "GINGER",
+   "name": "Ginger energy",
+   "n": 13,
+   "lo": 46381316,
+   "hi": 47397877,
+   "cls": "own",
+   "frozen_mentions": null
+  },
+  {
+   "org": 30968739,
+   "agent": "GINGER",
+   "name": "The Howard Partnership Trust",
+   "n": 1,
+   "lo": 46737636,
+   "hi": 46737636,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  },
+  {
+   "org": 30968739,
+   "agent": "GINGER",
+   "name": "The Keys Academy Trust",
+   "n": 1,
+   "lo": 46785018,
+   "hi": 46785018,
+   "cls": "P@A",
+   "frozen_mentions": 1
+  }
+ ]
+}

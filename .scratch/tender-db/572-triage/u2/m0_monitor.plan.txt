@@ -1,0 +1,50 @@
+-- EXPLAIN QUERY PLAN, python sqlite3 3.45.1 on a private copy of 572-triage/plan.db (prod schema + prod org indexes)
+(1, 0, 0, 'COMPOUND QUERY')
+(2, 1, 0, 'LEFT-MOST SUBQUERY')
+(5, 2, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(19, 1, 0, 'UNION ALL')
+(22, 19, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(36, 1, 0, 'UNION ALL')
+(39, 36, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(53, 1, 0, 'UNION ALL')
+(56, 53, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(70, 1, 0, 'UNION ALL')
+(73, 70, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(87, 1, 0, 'UNION ALL')
+(90, 87, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(104, 1, 0, 'UNION ALL')
+(107, 104, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(121, 1, 0, 'UNION ALL')
+(124, 121, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(138, 1, 0, 'UNION ALL')
+(141, 138, 0, 'SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)')
+(155, 1, 0, 'UNION ALL')
+(162, 155, 0, 'SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)')
+(166, 155, 0, 'LIST SUBQUERY 10')
+(168, 166, 0, 'SEARCH organizations USING COVERING INDEX organizations_identifier_id (identifier=?)')
+(217, 155, 0, 'USE TEMP B-TREE FOR GROUP BY')
+-- turso plan-probe (target/debug/plan-probe plan, rc=0)
+PLAN	m0_monitor	COMPOUND QUERY
+PLAN	m0_monitor	  LEFT-MOST SUBQUERY
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	  UNION ALL
+PLAN	m0_monitor	    LIST SUBQUERY 1
+PLAN	m0_monitor	      SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+PLAN	m0_monitor	    SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+PLAN	m0_monitor	    USE SORTER FOR GROUP BY
