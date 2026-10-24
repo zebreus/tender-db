@@ -100,7 +100,7 @@ pub use head_election::{
     ORG_NAME_REFRESH_LISTING_CAP, ORG_NAME_REFRESH_SPELLINGS, ORG_NAME_REFRESH_WINDOW, OrgNameRefreshApplied,
     OrgNameRefreshApplyArgs, OrgNameRefreshArgs, OrgNameRefreshDrift, OrgNameRefreshPlan, OrgNameRefreshRename,
     OrgNameRefreshReverted, OrgNameRefreshRevertArgs, OrgNameRefreshTarget, elect_head, elect_head_counted,
-    head_control_only, head_line_wrap, head_lines_guard, head_top_stale, head_top_stale_date, head_wraps,
+    head_control_only, head_dropped_accent, head_line_wrap, head_lines_guard, head_top_stale, head_top_stale_date, head_wraps,
     org_name_refresh_drift_limit,
 };
 pub use guid_census::{

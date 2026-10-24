@@ -1321,7 +1321,12 @@ const ORGANIZATION_NAME_NOTE: &str = "\
     least 3 votes and at least twice the head's; or when the head's own cluster holds at most 1 vote and \
     a unique top cluster holds at least 3 votes and at least 25%; or when the head is empty or not a \
     name (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script that \
-    name is written in. Even then it stays when the change would swap one legal-form family for another \
+    name is written in. A head that is the winning cluster's spelling with its accented letters dropped \
+    (a broken decoder's `Tribunal administratif d'Orlans` for `Tribunal administratif d'Orléans`) \
+    changes whenever that cluster holds at least 55% of the votes, at least 3 votes and at least twice \
+    the head's; of the checks below, only the legal-form, consortium, NHS, placeholder, fit-spelling, \
+    review-verdict and script checks apply to it. Even then it stays when the change would swap one \
+    legal-form family for another \
     (`AG` to `Sàrl`) while the head's own cluster holds at least 2 votes, drop a consortium mark unless \
     the new name keeps a word besides its legal forms and every such word is a word of the head, fail \
     the NHS ODS name check \

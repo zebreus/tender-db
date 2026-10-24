@@ -336,6 +336,31 @@ Decided:
    +64, top_stale +23 (holds 11,652 → 11,517); R1 changes up to +106. Accepted limit: 34 of the 56
    subset-matched heads now held `head_current` lapse out of it within a year and would then ship
    unread; they are to be re-read before they do.
+
+   **A head with its accented letters dropped is repaired to its top spelling (rule `524u2-v14`, issue 573's
+   decision of 2026-10-19 in `573-triage/size.md`).**
+
+   Plan 2653 held 15 heads that are a spelling of the winning cluster with every accented letter deleted, left by a
+   decoder that dropped the bytes it could not read: 22435268 `Comit consultatif interrgional du rglement amiable`
+   for `Comité consultatif interrégional du règlement amiable`. 14 were held `head_current` (printed 2024-01-22 to
+   02-19, one batch). The exhibit was held `review_body`: its broken head no longer reads as review-like. The read
+   was 15 of 15 right. Teaching the unfit test the shape would ship none: its `unfit` release is dropped by every
+   wet run's `exclude_released: ["unfit"]`, and `review_body` never asks it. Waiting would ship 14 unread as
+   `head_current` lapses in 2027-01/02, and never the exhibit.
+
+   So a (b) election (a unique top, at least 55%, at least 3, at least 2H) whose head is a DROPPED-ACCENT form of a
+   spelling S of the elected cluster is rule `R0d`. All three must hold:
+   - S with every non-ASCII character deleted equals the head, whitespace collapsed and ASCII case aside;
+   - some word lost a letter and kept an ASCII one;
+   - no word of 2 or more non-ASCII letters and no ASCII letter was left out. 11221362 omits a Greek legal-form word,
+     so it is no drop.
+
+   R0d serves the elected cluster's display spelling. Only the bind guards are asked (a reason holds it, as for
+   (a)). The window, residue, `undated`, serve, `head_current` and `top_stale` holds are not asked: their reasons
+   are about a real rename. D4 is asked before it and cannot fire on an all-ASCII head with a Latin top. There is no
+   marker arm: R0d on `unfit(head, head)` would sweep in issue 552's control-only heads. `R0d` joins the excludable
+   rules, and the wet filters stay `exclude_rules: ["R2", "R0w"]`, `exclude_released: ["unfit"]`. The written head
+   is its top cluster's spelling, so the next plan keeps it `S1`.
 4. **D4's ENG-or-original survives as a guard.** A head whose dominant script differs from the elected
    spelling's (TED's Latin rendering over Cyrillic or Greek mentions) is kept: it is the ENG head. The
    guard does not apply to an empty or non-name head (3 (a)): a placeholder is no rendering of

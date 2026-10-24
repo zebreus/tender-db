@@ -590,7 +590,7 @@ enum Spec {
     /// (`store::Db::apply_org_name_refresh`). Refused without a plan, on a truncated one, or on one
     /// elected under another epoch or binary. `org_ids` scopes it to those planned ids; `max_groups`
     /// caps the renames (the first by org id). Rule v9: `exclude_rules` (`R0e` `R0n` `R1` `R2`; rule v12
-    /// adds `R0w`, the wrap collapse) and
+    /// adds `R0w`, the wrap collapse; rule v14 `R0d`, the dropped-accent repair) and
     /// `exclude_released` (`digits` `unfit`) drop the planned changes of those classes before the
     /// pre-pass (empty: none), so a class the dated re-judge failed is not applied, with no re-plan.
     /// Rule v11: `exclude_stale_top` (off unless the v11 re-judge's gate (a) fails) drops the planned
@@ -1409,7 +1409,7 @@ pub struct JobRequest {
     pub org_ids: Option<Vec<i64>>,
     /// A WET `refresh-org-names` only (issue 524 rule v9, the per-class filters): drop the stored plan's
     /// planned changes elected by these rules (`R0e`, `R0n`, `R1`, `R2` and, since rule v12, `R0w`, the wrap
-    /// collapse) before the pre-pass — the
+    /// collapse, since rule v14, `R0d`) before the pre-pass — the
     /// pre-committed fallback when the dated re-judge's change:R2 list fails (`["R2"]`). Refused on a
     /// dry run, empty, with an unknown rule, or naming every rule; `revert-org-name-refresh` refuses
     /// it; every other kind ignores it.
@@ -1952,10 +1952,17 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
         r0w.orgs,
         r0w.mentions,
     );
+    // Rule v14 (issue 573): the dropped-accent repairs, named at zero too.
+    let r0d = plan.by_rule.get(store::HeadRule::R0d.label()).copied().unwrap_or_default();
+    let v14 = format!(
+        "Rule v14: R0d dropped-accent repairs (the head is the winning spelling with its accented letters \
+         dropped): {} ({} mentions).",
+        r0d.orgs, r0d.mentions,
+    );
     format!(
         "refresh-org-names DRY (issue 524 unit 2a, rule {}): {} organization(s) and {} mention row(s) walked{}; \
          {} elected ({}+ mention rows; {} below), {} with an empty head. CHANGES {} ({} mentions; {} on merge \
-         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. {dated} {v9} {v10} {v11} {v12} \
+         survivors): {}. HOLDS {}: {} (R2's initialism hold: {}). Keeps {}: {}. {dated} {v9} {v10} {v11} {v12} {v14} \
          Listed {} planned{} and {} held{}. Family moves of the changes: {}. D4 keeps' ENG satellites: {}. \
          {} identifier-verdict probe(s). Canaries ({unexpected} unexpected): {}. NOTHING IS WRITTEN — a wet \
          run (`dry_run: false`, issue 524 unit 2b) applies this plan.",
@@ -1989,8 +1996,9 @@ fn org_name_refresh_summary(plan: &store::OrgNameRefreshPlan, scope: Option<&[i6
 
 /// Issue 524 rule v9: the change rules a wet `refresh-org-names` may exclude (`exclude_rules`). Rule
 /// v12 (issue 552) adds `R0w`, the wrap collapse: every wet run passes `"exclude_rules":["R2","R0w"]`
-/// until its re-judge passes.
-const ORG_NAME_REFRESH_EXCLUDABLE_RULES: [&str; 5] = ["R0e", "R0n", "R0w", "R1", "R2"];
+/// until its re-judge passes. Rule v14 (issue 573) adds `R0d`, the dropped-accent repair, which the
+/// runbook's filters do not name.
+const ORG_NAME_REFRESH_EXCLUDABLE_RULES: [&str; 6] = ["R0d", "R0e", "R0n", "R0w", "R1", "R2"];
 
 /// Issue 524 rule v9: the junk releases a wet `refresh-org-names` may exclude (`exclude_released`, a
 /// planned entry's `recent_released`).
@@ -26798,7 +26806,7 @@ mod tests {
             (strings(&["R3"]), None, "`exclude_rules` value \"R3\""),
             (strings(&["r2"]), None, "`exclude_rules` value \"r2\""),
             (None, strings(&["lowercase"]), "`exclude_released` value \"lowercase\""),
-            (strings(&["R0e", "R0n", "R0w", "R1", "R2", "R2"]), None, "names every rule"),
+            (strings(&["R0d", "R0e", "R0n", "R0w", "R1", "R2", "R2"]), None, "names every rule"),
         ] {
             let err = sup.enqueue_request(&ask(Some(false), rules, released)).await.expect_err(needle);
             assert!(err.contains(needle), "{needle}: {err}");
@@ -27092,7 +27100,7 @@ mod tests {
         assert!(plan["planned"][0]["top_newest"].is_null(), "{}", plan["planned"][0]);
         let msg = sup.run_spec(&wet_stale(5, &["R2"], &[], true)).await.expect("stale top and R2 filtered");
         for needle in [
-            "refresh-org-names WET (issue 524 unit 2b, rule 524u2-v13, job 5): 0 of the plan's 2 planned change(s) in scope.",
+            "refresh-org-names WET (issue 524 unit 2b, rule 524u2-v14, job 5): 0 of the plan's 2 planned change(s) in scope.",
             "Filters (rule v9, v11): exclude_rules=R2 exclude_stale_top=true — 2 planned change(s) in scope dropped before the pre-pass (1 by rule, 0 by junk release, 1 by stale top).",
             "RENAMED 0 head(s)",
         ] {
@@ -28458,11 +28466,11 @@ mod tests {
             ),
             "{line}"
         );
-        assert_eq!(ORG_NAME_REFRESH_EXCLUDABLE_RULES, ["R0e", "R0n", "R0w", "R1", "R2"]);
+        assert_eq!(ORG_NAME_REFRESH_EXCLUDABLE_RULES, ["R0d", "R0e", "R0n", "R0w", "R1", "R2"]);
     }
 
     /// Issue 524 rule v12 at enqueue: a wet run takes `R0w` in `exclude_rules` (sorted onto the params
-    /// line); naming all five rules is refused.
+    /// line); naming all six rules (rule v14 adds `R0d`) is refused.
     #[tokio::test]
     async fn refresh_org_names_takes_r0w_in_exclude_rules() {
         let sup = Supervisor::new(scratch().await, "archive".into(), reqwest::Client::new());
@@ -28476,11 +28484,31 @@ mod tests {
         sup.enqueue_request(&ask).await.expect("the v12 wet filters");
         assert_eq!(sup.queued()[0].params, "refresh-org-names wet exclude_rules=R0w,R2 exclude_released=unfit");
         let every = JobRequest {
-            exclude_rules: Some(["R0e", "R0n", "R0w", "R1", "R2"].iter().map(|s| (*s).to_owned()).collect()),
+            exclude_rules: Some(["R0d", "R0e", "R0n", "R0w", "R1", "R2"].iter().map(|s| (*s).to_owned()).collect()),
             ..ask
         };
         let err = sup.enqueue_request(&every).await.expect_err("every rule");
         assert!(err.contains("names every rule"), "{err}");
+    }
+
+    /// Issue 573 (rule v14): the summary names the R0d dropped-accent repairs, at zero too, and `R0d` is a rule
+    /// a wet run may exclude (the runbook's filters do not name it).
+    #[test]
+    fn the_v14_summary_names_r0d_at_zero_too() {
+        let zero = org_name_refresh_summary(&store::OrgNameRefreshPlan::default(), None);
+        assert!(
+            zero.contains(
+                "Rule v14: R0d dropped-accent repairs (the head is the winning spelling with its accented letters \
+                 dropped): 0 (0 mentions)."
+            ),
+            "{zero}"
+        );
+        let mut plan = store::OrgNameRefreshPlan::default();
+        plan.by_rule.insert("R0d", store::HeadDriftCount { orgs: 15, mentions: 296 });
+        let line = org_name_refresh_summary(&plan, None);
+        assert!(line.contains("accented letters dropped): 15 (296 mentions)."), "{line}");
+        assert!(line.contains("CHANGES 0 (0 mentions; 0 on merge survivors): R0d 15 (296 mentions)."), "{line}");
+        assert_eq!(ORG_NAME_REFRESH_EXCLUDABLE_RULES, ["R0d", "R0e", "R0n", "R0w", "R1", "R2"]);
     }
 
     /// Issue 58 v2, step 3: `refold-notices` takes a NAMED list, and its guard is a

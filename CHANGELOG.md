@@ -765,7 +765,11 @@ name, a blank one or a non-name one does not vote), clustered as one name across
 legal form. The head changes only when a cluster other than its own holds at least 55% of the votes, at least 3
 votes and at least twice the head's; or when the head's own cluster holds at most 1 vote and a unique top cluster
 holds at least 3 votes and at least 25%; or when the head is empty or not a name (a placeholder, a blank, a
-void-lot phrase) and some mention's name votes, whatever script that name is written in. Even then it stays when
+void-lot phrase) and some mention's name votes, whatever script that name is written in. A head that is the winning
+cluster's spelling with its accented letters dropped (a broken decoder's `Tribunal administratif d'Orlans` for
+`Tribunal administratif d'Orléans`) changes whenever that cluster holds at least 55% of the votes, at least 3 votes
+and at least twice the head's; of the checks below, only the legal-form, consortium, NHS, placeholder, fit-spelling,
+review-verdict and script checks apply to it. Even then it stays when
 the change would swap one legal-form family for another (`AG` to `Sàrl`) while the head's own cluster holds at least
 2 votes, drop a consortium mark unless the new name keeps a word besides its legal forms and every such word is a
 word of the head, fail the NHS ODS name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when the identifier is a
@@ -841,6 +845,20 @@ longer holds a change that cuts a group's name down to words the group's name al
 1 neutral and none wrong. A change that brings in a word the head does not print still waits (`CONSORTIUM DES
 PEINTURES ET REVETEMENTS` to `SARL CPR`, where `Consortium` is the firm's own name), and so does a new name made of
 legal forms alone. Every other hold above is unchanged.
+
+Rule v14 (2026-10-24, issue 573) repairs a head printed with its accented letters dropped. Fifteen French courts
+and committees, all first printed in January and February 2024, were served under a broken decoder's print that
+had deleted every accented letter (`Comit consultatif interrgional du rglement amiable`,
+`Tribunal administratif d'Orlans`, `Tribunal judiciaire de Pointe--Pitre`), while most of their notices print
+the right spelling. The 3-year hold kept each of those heads, and for one the review-body check did too, because
+the broken head no longer reads as a review body's name. Such a head now changes to the winning spelling whenever
+the winning cluster holds at least 55% of the votes, at least 3 votes and at least twice the head's; the
+legal-form, consortium, NHS, placeholder, fit-spelling, review-verdict and script checks still apply. A head
+counts as dropped when deleting every non-ASCII character from one of the winning cluster's spellings gives the
+head (case and spacing aside), at least one word lost a letter but kept an ASCII one, and no whole word of two or
+more non-ASCII letters was left out (`Johnson & Johnson Hellas` against `JOHNSON & JOHNSON HELLAS ΑΕΒΕ` leaves out
+a Greek legal form: not a drop). Pointe-à-Pitre's winning spelling prints a no-break space, which the served
+name shows as a plain space (`Tribunal judiciaire de Pointe-à -Pitre`).
 
 - A rename arrives as `organization changed` on `/v1/changes`, the SSE streams and webhooks. No `tender
   changed` is published: the parties join the organization when read, so every tender it is on shows the new

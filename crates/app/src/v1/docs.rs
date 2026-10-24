@@ -397,7 +397,12 @@ only when a cluster other than its own holds at least 55% of the votes, at least
 at least twice the head's; or when the head's own cluster holds at most 1 vote and a unique
 top cluster holds at least 3 votes and at least 25%; or when the head is empty or not a name
 (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script
-that name is written in. Even then it stays when the change would swap one legal-form family
+that name is written in. A head that is the winning cluster's spelling with its accented letters
+dropped (a broken decoder's <code>Tribunal administratif d'Orlans</code> for
+<code>Tribunal administratif d'Orléans</code>) changes whenever that cluster holds at least 55% of
+the votes, at least 3 votes and at least twice the head's; of the checks below, only the
+legal-form, consortium, NHS, placeholder, fit-spelling, review-verdict and script checks apply to
+it. Even then it stays when the change would swap one legal-form family
 for another (<code>AG</code> to <code>Sàrl</code>) while the head's own cluster holds at least
 2 votes, drop a consortium mark unless the new name keeps a word besides its legal forms and
 every such word is a word of the head, fail the NHS ODS
@@ -2158,6 +2163,30 @@ mod tests {
                 &[
                     "swap one legal-form family for another (ag to sàrl) while the head's own cluster holds at least 2 votes",
                     "drop a consortium mark unless the new name keeps a word besides its legal forms and every such word is a word of the head",
+                ],
+            );
+        }
+    }
+
+    /// Issue 573 (issue 524 rule v14): the served head-name rule says on all three surfaces that a head printed
+    /// with its accented letters dropped changes to the winning spelling past the recency and served-name holds
+    /// (the CHANGELOG repeats it, unserved).
+    #[test]
+    fn the_docs_say_a_dropped_accent_head_is_repaired() {
+        let start = PAGE.find("<h2 id=\"detail\">").expect("/docs has a Tender-detail section");
+        let docs = &PAGE[start..start + 4 + PAGE[start + 4..].find("<h2").expect("a section follows the detail")];
+        let spec: serde_json::Value = serde_json::from_str(SPEC).expect("openapi.json is valid JSON");
+        let openapi = spec["components"]["schemas"]["Organization"]["properties"]["name"]["description"]
+            .as_str()
+            .expect("Organization.name is described");
+        let schema = crate::v1::sql::served_schema_notes();
+        for (surface, text) in [("/docs", docs), ("/v1/openapi.json", openapi), ("/v1/sql/schema", schema.as_str())] {
+            assert_says(
+                &format!("{surface}'s head-name rule"),
+                text,
+                &[
+                    "a head that is the winning cluster's spelling with its accented letters dropped (a broken decoder's tribunal administratif d'orlans for tribunal administratif d'orléans) changes whenever that cluster holds at least 55% of the votes, at least 3 votes and at least twice the head's",
+                    "of the checks below, only the legal-form, consortium, nhs, placeholder, fit-spelling, review-verdict and script checks apply to it",
                 ],
             );
         }

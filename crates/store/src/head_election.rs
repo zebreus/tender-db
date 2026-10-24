@@ -88,7 +88,14 @@ use crate::{Db, int, opt_int_of, opt_text_of, text};
 /// 29 right, 1 neutral, 0 wrong).
 /// Every other hold is v12's: the serve holds, `head_current`, `top_stale`, `nhs_check`,
 /// `placeholder_id`, R2's initialism hold; wet runs still exclude R2 and R0w.
-pub const HEAD_ELECTION_EPOCH: &str = "524u2-v13";
+/// `v14` (issue 573 `## Unit 1 — sized; Unit 2 — decided`, `573-triage/size.md`, after the sizing of v13 plan
+/// 2653's held listing: 15 heads that are a top spelling with every accented letter dropped, 14 held
+/// `head_current` and the exhibit 22435268 `review_body`, read 15 of 15 right): an election that clears R1's bars
+/// and whose head is a DROPPED-ACCENT form of a spelling of the elected cluster ([`head_dropped_accent`]) is rule
+/// [`HeadRule::R0d`] — the cluster's display spelling, asked only of the bind guards, never the window, residue,
+/// `undated`, serve, `head_current` or `top_stale` holds. Every other verdict is v13's; wet runs still exclude R2
+/// and R0w.
+pub const HEAD_ELECTION_EPOCH: &str = "524u2-v14";
 
 /// Issue 524 unit 2: the fewest votes a cluster must hold to replace a real name (R1 and R2) — no
 /// cluster of one or two mentions ever moves a head.
@@ -348,6 +355,36 @@ pub fn head_wraps(head: &str, fns: &HeadElectFns) -> bool {
     lines.len() >= 2 && lines.windows(2).all(|pair| head_line_wrap(pair[0], pair[1], fns))
 }
 
+/// Issue 573 (rule `v14`): whether `head` is `spelling` with its accented letters DROPPED — what a decoder
+/// that deletes the bytes it cannot read leaves (22435268 `Comit consultatif interrgional du rglement amiable`
+/// for `Comité consultatif interrégional du règlement amiable`). All three hold:
+/// - `spelling` with every non-ASCII character deleted (letters, marks, a no-break space, typographic
+///   punctuation) equals `head`, both whitespace-collapsed ([`collapse_whitespace`]) and compared ASCII
+///   case-insensitively — so a head with any non-ASCII character never matches;
+/// - some word of `spelling` (split on whitespace) lost a letter and kept an ASCII one: a partial drop
+///   (22399787 `Pointe--Pitre` from `Pointe-à\u{a0}-Pitre`: the `à` and its no-break space went);
+/// - no word of `spelling` is 2 or more non-ASCII letters with no ASCII letter: that is an omitted word, not a
+///   dropped accent (11221362 `Johnson & Johnson Hellas` against `… HELLAS ΑΕΒΕ`).
+///
+/// A letter is [`char::is_alphabetic`]. A decomposed accent (a combining mark) is not one: a head that lost
+/// only marks is the diacritic-folded spelling, which the vote key already joins to it.
+pub fn head_dropped_accent(head: &str, spelling: &str) -> bool {
+    let stripped: String = spelling.chars().filter(char::is_ascii).collect();
+    if !collapse_whitespace(&stripped).eq_ignore_ascii_case(&collapse_whitespace(head)) {
+        return false;
+    }
+    let mut partial = false;
+    for word in spelling.split_whitespace() {
+        let lost = word.chars().filter(|c| !c.is_ascii() && c.is_alphabetic()).count();
+        let kept = word.chars().any(|c| c.is_ascii_alphabetic());
+        if lost >= 2 && !kept {
+            return false;
+        }
+        partial |= lost >= 1 && kept;
+    }
+    partial
+}
+
 /// Issue 524 rule `v7`: the fewest head procedures (k) the window fires at. At 2 the 2/3 bar means
 /// both newest items are the head's (2.2% by chance among 10 items, against 18% for 2 of 3).
 pub const HEAD_RECENT_MIN_PROCEDURES: u64 = 2;
@@ -427,6 +464,13 @@ pub enum HeadRule {
     /// the elected key lacks, v8's `digits`), so the holds that protected it keep standing on later
     /// plans. Otherwise the `lines` hold stands.
     R0w,
+    /// Rule `v14` (issue 573): the DROPPED-ACCENT repair — an election that clears R1's bars (a unique top,
+    /// T × 20 ≥ V × 11, T ≥ [`HEAD_ELECT_TOP_MIN`], T ≥ 2H) whose head is a spelling of the elected cluster with
+    /// its accented letters deleted ([`head_dropped_accent`]: `Tribunal administratif d'Orlans` for
+    /// `… d'Orléans`) serves that cluster's display spelling, unless a bind guard ([`HeadElectFns::hold`]) names a
+    /// reason, which holds it as for R0n. No recency, residue, `undated`, serve, `head_current` or `top_stale`
+    /// hold is asked: their reasons are about a real rename, and the head is a byte-dropped copy of the top.
+    R0d,
 }
 
 impl HeadRule {
@@ -437,6 +481,7 @@ impl HeadRule {
             HeadRule::R1 => "R1",
             HeadRule::R2 => "R2",
             HeadRule::R0w => "R0w",
+            HeadRule::R0d => "R0d",
         }
     }
 }
@@ -487,6 +532,7 @@ pub enum HeadVerdict {
     /// [`HEAD_HOLD_CURRENT`], or for R1 (rule `v11`) [`HEAD_HOLD_TOP_STALE`] — with the spelling it would
     /// have served. Rule `v11`'s bind guard [`HEAD_HOLD_PLACEHOLDER_ID`] is one of [`HeadElectFns::hold`]'s.
     /// Rule `v12`: a bind guard's reason on an [`HeadRule::R0w`] wrap collapse, with the collapsed head.
+    /// Rule `v14`: a bind guard's reason on an [`HeadRule::R0d`] repair, with the spelling it would serve.
     Hold { reason: &'static str, rule: HeadRule, new: Option<String> },
     Change { rule: HeadRule, new: String },
 }
@@ -668,6 +714,8 @@ struct Cluster<'a> {
 ///      départemental …`), not a different wording (9814 drops the owner and the street). A release
 ///      either test stops is WITHHELD: the hold stands, read `release_withheld` (`glue` |
 ///      `junk_only`).
+///    Rule `v14`: an R1 election whose head is a dropped-accent form of a spelling of the elected cluster is
+///    [`HeadRule::R0d`] instead (below).
 /// 6. **R2**: H ≤ 1, the top is unique, T ≥ [`HEAD_ELECT_TOP_MIN`], and T × 4 ≥ V (25%).
 /// 7. Otherwise KEEP (`bar`).
 ///
@@ -709,6 +757,13 @@ struct Cluster<'a> {
 /// head (it must stay held on later plans): then it CHANGES to itself with its whitespace collapsed,
 /// rule [`HeadRule::R0w`] (a bind guard's reason holds that change, as for R0n), and no later hold
 /// (`head_current`, `top_stale`) or serve hold is asked. Every other unfit head releases as before.
+///
+/// **The dropped-accent repair** (rule `v14`, issue 573): an election that clears R1's bars whose head is a
+/// spelling of the elected cluster with its accented letters deleted ([`head_dropped_accent`]) CHANGES by rule
+/// [`HeadRule::R0d`] to that cluster's display spelling, unless a bind guard names a reason (a hold with rule
+/// R0d). No window, residue, `undated`, serve, `head_current` or `top_stale` hold is asked, and the junk
+/// exemption is not asked either (no `released` is read). The written head is the top cluster's spelling, so
+/// the next plan keeps it `S1`.
 ///
 /// The elected cluster serves its DISPLAY spelling: among the fit spellings only
 /// ([`HeadElectFns::unfit`], read on each spelling as published and on its collapsed form), each with
@@ -802,8 +857,9 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
                 // Rule v9: the serve holds, for R1 and R2 only — R0's defective head always changes.
                 .or_else(|| match rule {
                     HeadRule::R1 | HeadRule::R2 => (fns.serve_hold)(org.head, &new, rule == HeadRule::R2),
-                    // R0w never reaches `serve` (`wrap_collapse` decides it).
-                    HeadRule::R0e | HeadRule::R0n | HeadRule::R0w => None,
+                    // R0w never reaches `serve` (`wrap_collapse` decides it); R0d (rule v14), like R0, is
+                    // never asked the serve holds.
+                    HeadRule::R0e | HeadRule::R0n | HeadRule::R0w | HeadRule::R0d => None,
                 });
             match held {
                 Some(reason) => HeadVerdict::Hold { reason, rule, new: Some(new) },
@@ -862,6 +918,13 @@ pub fn elect_head_counted(votes: &[(&str, u64)], org: &HeadElectOrg<'_>, fns: &H
     } else {
         return counted(HeadVerdict::Keep(HeadKeep::Bar), reading);
     };
+    // Rule v14 (issue 573): R0d — the head is a spelling of the elected (top) cluster with its accented
+    // letters dropped. On R1's bars it serves that cluster's display spelling, asked only of the bind guards
+    // (inside `serve`), as R0n is: never the window, residue, `undated`, serve, `head_current` or `top_stale`
+    // hold. `elected` is `clusters[tied[0]]` here (S1 returned above), never the head's own cluster.
+    if rule == HeadRule::R1 && elected.spellings.keys().any(|spelling| head_dropped_accent(org.head, spelling)) {
+        return counted(serve(HeadRule::R0d, elected), reading);
+    }
     let mut reading = reading;
     // Rule v7: R1's window, only when the head's own cluster holds 2 or more votes (R2's H ≤ 1 never
     // reads it).
@@ -1306,7 +1369,7 @@ pub struct HeadRefreshEntry {
     /// `keep` | `hold` | `change`.
     pub verdict: &'static str,
     /// The keep reason (`E1` `E2` `E3` `D4` `S1` `bar`), the hold reason, or the change's rule (`R0e`
-    /// `R0n` `R1` `R2`, rule `v12`'s `R0w`).
+    /// `R0n` `R1` `R2`, rule `v12`'s `R0w`, rule `v14`'s `R0d`).
     pub reason: &'static str,
     /// The rule of a change or a hold.
     pub rule: Option<&'static str>,
@@ -1467,8 +1530,9 @@ pub struct OrgNameRefreshPlan {
 pub const ORG_NAME_REFRESH_RELEASED_LISTED: usize = 500;
 
 /// Issue 524 rule `v9`: the uniform samples' salt — the low 32 bits of FNV-1a 64 of
-/// [`HEAD_ELECTION_EPOCH`] (`524u2-v13`: 2,780,006,834; v12's `524u2-v12` was 2,780,007,269, v11's
-/// `524u2-v11` 2,780,005,964, v10's `524u2-v10` 2,780,006,399 and v9's `524u2-v9` 460,574,797). The
+/// [`HEAD_ELECTION_EPOCH`] (`524u2-v14`: 2,780,004,659; v13's `524u2-v13` was 2,780,006,834, v12's
+/// `524u2-v12` 2,780,007,269, v11's `524u2-v11` 2,780,005,964, v10's `524u2-v10` 2,780,006,399 and v9's
+/// `524u2-v9` 460,574,797). The
 /// protocol's dated re-judge reads "fresh" samples, and an unsalted hash makes every plan's class
 /// sample the same first ids: plan 2526's panel read the next 30 of each list ahead. Salted, each epoch draws anew, and a plan's samples stay
 /// reproducible from its epoch.
@@ -2037,7 +2101,8 @@ pub fn org_name_refresh_drift_limit(targets_read: u64) -> u64 {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct OrgNameRefreshTarget {
     pub org_id: i64,
-    /// `R0e` | `R0n` | `R1` | `R2` | (rule `v12`) `R0w`: the rule the plan elected the change by.
+    /// `R0e` | `R0n` | `R1` | `R2` | (rule `v12`) `R0w` | (rule `v14`) `R0d`: the rule the plan elected the
+    /// change by.
     pub rule: String,
     /// The pre-image the plan read: the compare-and-set's guard.
     pub old_name: String,
@@ -3355,30 +3420,32 @@ mod tests {
 
     /// Rule v9 changed these values on purpose: the key is Knuth's hash of the id XOR the epoch's salt
     /// (FNV-1a 64 of the epoch, low 32 bits), so the dated re-judge's "fresh" samples are not the last
-    /// plan's predictable next 30. Rule v13's epoch `524u2-v13` draws anew (salt 2,780,006,834); v12's
-    /// `524u2-v12` salt was 2,780,007,269, its first three keys 411,149,348, 4,079,489,335 and
+    /// plan's predictable next 30. Rule v14's epoch `524u2-v14` draws anew (salt 2,780,004,659); v13's
+    /// `524u2-v13` salt was 2,780,006,834, its first three keys 2,091,700,163, 2,718,327,472 and 4,119,508,615;
+    /// v12's `524u2-v12` salt was 2,780,007,269, its first three keys 411,149,348, 4,079,489,335 and
     /// 2,678,308,192; v11's `524u2-v11` salt was 2,780,005,964, its first three keys 3,424,993,341, 1,784,461,806 and
     /// 1,397,184,889; v10's `524u2-v10` was 2,780,006,399 (keys 1,744,442,526, 3,384,974,061 and
     /// 4,011,601,370); v9's `524u2-v9` was 460,574,797 (keys 1,624,961,164, 998,333,855 and
     /// 3,892,120,008). Unsalted (v2–v8) they read 2,654,435,761, 1,013,904,226 and 387,276,917.
     #[test]
     fn the_sample_key_is_knuths_hash_of_the_salted_id_mod_two_to_the_32() {
-        assert_eq!(super::HEAD_ELECTION_EPOCH, "524u2-v13");
-        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_006_834);
-        assert_eq!(super::epoch_salt("524u2-v13"), 2_780_006_834);
+        assert_eq!(super::HEAD_ELECTION_EPOCH, "524u2-v14");
+        assert_eq!(super::ORG_NAME_REFRESH_SAMPLE_SALT, 2_780_004_659);
+        assert_eq!(super::epoch_salt("524u2-v14"), 2_780_004_659);
+        assert_eq!(super::epoch_salt("524u2-v13"), 2_780_006_834, "v13's salt, as plan 2653 (2026-10-19) drew it");
         assert_eq!(super::epoch_salt("524u2-v12"), 2_780_007_269, "v12's salt, as plan 2569 (2026-10-16) drew it");
         assert_eq!(super::epoch_salt("524u2-v11"), 2_780_005_964, "v11's salt, as plans 2562 and 2566 drew it");
         assert_eq!(super::epoch_salt("524u2-v10"), 2_780_006_399, "v10's salt, as plan 2543 drew it");
         assert_eq!(super::epoch_salt("524u2-v9"), 460_574_797, "v9's salt, as plan 2527 drew it");
-        let salts = ["524u2-v9", "524u2-v10", "524u2-v11", "524u2-v12", "524u2-v13"].map(super::epoch_salt);
+        let salts = ["524u2-v9", "524u2-v10", "524u2-v11", "524u2-v12", "524u2-v13", "524u2-v14"].map(super::epoch_salt);
         for (at, salt) in salts.iter().enumerate() {
             assert!(!salts[..at].contains(salt), "each epoch its own draw: {salts:?}");
         }
-        assert_eq!(sample_key(1), (2_091_700_163, 1));
-        assert_eq!(sample_key(2), (2_718_327_472, 2));
-        assert_eq!(sample_key(5), (4_119_508_615, 5));
-        assert_eq!(sample_key(31_558_903), (419_840_437, 31_558_903));
-        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_006_834) * 2_654_435_761) % (1 << 32));
+        assert_eq!(sample_key(1), (116_061_586, 1));
+        assert_eq!(sample_key(2), (1_756_593_121, 2));
+        assert_eq!(sample_key(5), (2_143_870_038, 5));
+        assert_eq!(sample_key(31_558_903), (1_381_574_788, 31_558_903));
+        assert_eq!(sample_key(31_558_903).0, ((31_558_903u64 ^ 2_780_004_659) * 2_654_435_761) % (1 << 32));
     }
 
     // ---- Rule v7: the R1 recency hold (the recency decision's tests 1-12).
@@ -4527,5 +4594,110 @@ mod tests {
         let e = dated_at(&forward(head, elected), head, 20 * DAY);
         assert_eq!(e.verdict, r0w(collapsed));
         assert_eq!(dated_at(&forward(head, elected), collapsed, 20 * DAY).verdict, current(elected));
+    }
+
+    // ---- Rule v14 (issue 573): the dropped-accent repair.
+
+    fn r0d(new: &str) -> HeadVerdict {
+        HeadVerdict::Change { rule: HeadRule::R0d, new: new.into() }
+    }
+
+    /// The trigger on plan 2653's shapes and the near misses: the spelling with every non-ASCII character
+    /// deleted is the head (case and spacing aside), some word lost a letter and kept an ASCII one, and no
+    /// whole word of 2+ non-ASCII letters was left out.
+    #[test]
+    fn head_dropped_accent_is_the_spelling_with_its_non_ascii_letters_deleted() {
+        use super::head_dropped_accent as dropped;
+        // Plan 2653's shapes: every accented letter gone (22435268, 22441088); `à` and its no-break space gone
+        // whole (22399787: only the char-level test sees it).
+        assert!(dropped("Comit consultatif interrgional du rglement amiable", "Comité consultatif interrégional du règlement amiable"));
+        assert!(dropped("Tribunal administratif d'Orlans", "Tribunal administratif d'Orléans"));
+        assert!(dropped("Tribunal judiciaire de Pointe--Pitre", "Tribunal judiciaire de Pointe-à\u{a0}-Pitre"));
+        // ASCII case and whitespace runs aside.
+        assert!(dropped("TRIBUNAL ADMINISTRATIF DE NMES", "Tribunal administratif de Nîmes"));
+        assert!(dropped(" Tribunal  administratif de Nmes", "Tribunal administratif de Nîmes"));
+        // Not a drop: the folded spelling, the spelling itself, an ASCII name, a dropped dash, a dropped one-letter word.
+        assert!(!dropped("Tribunal administratif d'Orleans", "Tribunal administratif d'Orléans"));
+        assert!(!dropped("Tribunal administratif d'Orléans", "Tribunal administratif d'Orléans"));
+        assert!(!dropped("Acme Group", "Acme Group"));
+        assert!(!dropped("Acme Group", "Acme – Group"));
+        assert!(!dropped("Rendez-vous Paris", "Rendez-vous à Paris"));
+        // A whole word of 2+ non-ASCII letters left out is an omitted word (11221362, 22751177), even beside a drop.
+        assert!(!dropped("Johnson & Johnson Hellas", "JOHNSON & JOHNSON HELLAS ΑΕΒΕ"));
+        assert!(!dropped("ABBOTT MEDICAL", "ABBOTT MEDICAL ΕΛΛΑΣ ΕΠΕ"));
+        assert!(!dropped("Socit Hellas", "Société Hellas ΑΕ"));
+    }
+
+    /// R0d skips every hold R1 would meet past the bind guards — `head_current` (14 of plan 2653's 15), a serve
+    /// hold (the exhibit's `review_body`), the window, `undated`, the residue holdout and `top_stale` — with
+    /// an ordinary rename of the same shape as the control. In the `key` stand-in `é` folds to `e`, so the
+    /// head keys `… d orlans` and the top `… d orleans`: two clusters.
+    #[test]
+    fn a_dropped_accent_head_changes_r0d_where_r1_would_hold() {
+        let (head, elected) = ("Tribunal administratif d'Orlans", "Tribunal administratif d'Orléans");
+        assert_ne!(key(head), key(elected), "the drop puts the head in a cluster of its own");
+        // head_current (14 of plan 2653's 15): the head printed within 3 years of the plan.
+        let e = dated_at(&forward(head, elected), head, 20 * DAY);
+        assert_eq!(e.verdict, r0d(elected));
+        assert_eq!(e.verdict.label(), "change:R0d");
+        assert_eq!((e.voting, e.top, e.head_votes), (7, 5, 2));
+        assert_eq!(e.recent.map(|r| (r.released, r.release_withheld)), Some((None, None)), "no junk exemption asked");
+        assert_eq!(dated_at(&forward("Acme Works", "Acme Group"), "Acme Works", 20 * DAY).verdict, current("Acme Group"));
+        // A serve hold (the exhibit 22435268's review_body) is not asked; an ordinary R1 change is held by it.
+        let review = HeadElectFns { serve_hold: |_, _, _| Some(super::HEAD_HOLD_REVIEW_BODY), ..FNS };
+        assert_eq!(elect_head(&[(head, 1), (elected, 8)], &org(head), &review), r0d(elected));
+        assert_eq!(
+            elect_head(&[("Acme Works", 1), ("Acme Group", 8)], &org("Acme Works"), &review),
+            HeadVerdict::Hold { reason: super::HEAD_HOLD_REVIEW_BODY, rule: HeadRule::R1, new: Some("Acme Group".into()) }
+        );
+        // The window (the head owns the newest procedures), undated (H = 2, no dates), residue (the head is
+        // the newest item): each would hold R1.
+        let rename = [items(elected, 1, 1, 8), items(head, 101, 100, 3)].concat();
+        assert_eq!(dated(&rename, head).verdict, r0d(elected));
+        assert_eq!(elect_head(&[(head, 2), (elected, 5)], &org(head), &FNS), r0d(elected));
+        let stray = [items(elected, 1, 1, 5), items(head, 100, 100, 1)].concat();
+        assert_eq!(dated(&stray, head).verdict, r0d(elected));
+        // top_stale: a rival cluster and a top more than a year before as_of, the head no longer current.
+        let nantes = "Cour administrative d'appel de Nantes";
+        let rival = [items(head, 1, 1, 2), items(elected, 100, 10, 5), items(nantes, 200, 5, 1)].concat();
+        assert_eq!(dated_at(&rival, head, 2_000 * DAY).verdict, r0d(elected));
+        let acme = [items("Acme Works", 1, 1, 2), items("Acme Group", 100, 10, 5), items("Acme Rival", 200, 5, 1)].concat();
+        assert_eq!(
+            dated_at(&acme, "Acme Works", 2_000 * DAY).verdict,
+            HeadVerdict::Hold { reason: super::HEAD_HOLD_TOP_STALE, rule: HeadRule::R1, new: Some("Acme Group".into()) }
+        );
+    }
+
+    /// R0d asks the bind guards (a reason holds it, as for R0n, with the spelling it would serve) and needs
+    /// R1's bars on a spelling of the TOP cluster: an S1 head, an R2-only election, an accented spelling of a
+    /// cluster that is not the top, and an omitted Greek word are each what they were under v13.
+    #[test]
+    fn r0d_asks_the_bind_guards_and_needs_r1s_bars_on_a_top_spelling() {
+        let (head, elected) = ("Tribunal administratif d'Orlans", "Tribunal administratif d'Orléans");
+        let nantes = "Cour administrative d'appel de Nantes";
+        // A bind guard's reason holds it, as for R0n, with the spelling it would serve.
+        let placeholder = HeadElectFns {
+            hold: |_, _, _, identifier, _| (identifier == Some("KEINEANGABE")).then_some(super::HEAD_HOLD_PLACEHOLDER_ID),
+            ..FNS
+        };
+        let keine = HeadElectOrg { identifier: Some("KEINEANGABE"), ..org(head) };
+        assert_eq!(
+            elect_head(&[(head, 2), (elected, 5)], &keine, &placeholder),
+            HeadVerdict::Hold { reason: super::HEAD_HOLD_PLACEHOLDER_ID, rule: HeadRule::R0d, new: Some(elected.into()) }
+        );
+        // The head's own cluster on top: S1, never a flip toward a minority accented spelling.
+        assert_eq!(elect_head(&[(head, 5), (elected, 3)], &org(head), &FNS), HeadVerdict::Keep(HeadKeep::S1));
+        // Under the 55% bar: no R0d; the 25% arm elects R2 as before (every wet run excludes R2).
+        assert_eq!(
+            elect_head(&[(head, 1), (elected, 4), (nantes, 3)], &org(head), &FNS),
+            HeadVerdict::Change { rule: HeadRule::R2, new: elected.into() }
+        );
+        // The accented spelling not the top's: an ordinary R1 election of the top (here held top_stale, undated).
+        let other = elect_head(&[(head, 1), (elected, 2), (nantes, 6)], &org(head), &FNS);
+        assert_eq!((other.rule(), other.new_name()), (Some(HeadRule::R1), Some(nantes)));
+        // A Greek legal-form word left out is no drop (11221362's shape): R1.
+        let greek = elect_head(&[("Johnson Hellas", 1), ("JOHNSON HELLAS ΑΕΒΕ", 5)], &org("Johnson Hellas"), &FNS);
+        assert_eq!(greek.rule(), Some(HeadRule::R1));
+        assert_eq!(HeadRule::R0d.label(), "R0d");
     }
 }
