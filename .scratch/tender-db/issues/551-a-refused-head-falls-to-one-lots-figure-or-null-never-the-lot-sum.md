@@ -1736,3 +1736,4 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
 - **17:11Z: DEPLOY #3, 6cb4408** (code = eac7067, gate c green 153 suites): 581, 583, 573 U3 (R0d, v14), 575 U1 (hex-census),
   576 U5, 586 U2, plus the review fixes. Posted: refold-notices 2766/2767 [12400937] (576 U5 buyer cohort) and refold-sections
   Touchpoint 2768/2769 (576 U5 + 586 U3). Twin-5 (hold/551-switchoff-5 = 9622bd0, +/- lines exact vs twin-3) gating.
+- **17:39Z: twin-5 gated green** (hold/551-switchoff-5 = 9622bd0 on deploy #3's eac7067; 153 suites, marker gate-v2 9622bd0). C7 holds for deployed 6cb4408. Switch-off = `./deploy.sh 9622bd0` (by sha).
