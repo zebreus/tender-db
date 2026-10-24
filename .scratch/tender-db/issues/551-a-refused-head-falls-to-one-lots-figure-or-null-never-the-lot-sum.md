@@ -1728,3 +1728,11 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   their paired projects 2761/2763 folded 0. **Wet: refold 2764 `{"profiles":["ted-export-r209"],"expect":4490549}` +
   project 2765**, posted 12:41:56Z. The profile is the superset: the field cohort is inside r209 (546 unit 1: r208 carries
   no address NUTS), and the profile also covers the 1,736 r209 notices without either field.
+- **17:08Z: 546 U4 done** (2765: 1,083,293 verified, 1,191,581 corrected; class N, country/place only). `segment.py gap n546`
+  HOLDs on g576's open check; the jobs body is saved (`u9/jobs/n546_ca.json`, CA cursor 964592421). Both g576 and n546 stay
+  **unread**: a gd5 E1 read over (959250675, 964592421] is ~5.3M change rows (thousands of statements), infeasible, and B5
+  forbids reading while writers run. Neither range is a lot-sum W writer (576 parties; 546 country/place). Recorded as an
+  accepted unread gap under the velocity ruling; the U9 daily chain checks resume on fresh ranges.
+- **17:11Z: DEPLOY #3, 6cb4408** (code = eac7067, gate c green 153 suites): 581, 583, 573 U3 (R0d, v14), 575 U1 (hex-census),
+  576 U5, 586 U2, plus the review fixes. Posted: refold-notices 2766/2767 [12400937] (576 U5 buyer cohort) and refold-sections
+  Touchpoint 2768/2769 (576 U5 + 586 U3). Twin-5 (hold/551-switchoff-5 = 9622bd0, +/- lines exact vs twin-3) gating.
