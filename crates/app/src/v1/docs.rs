@@ -7,12 +7,38 @@
 //! never spends a caller's API budget. Kept in step with the code by hand — the
 //! same discipline the `/v1/sql/schema` notes and the dashboard copy follow.
 
+use super::AppState;
+use axum::extract::State;
 use axum::http::header;
 use axum::response::{IntoResponse, Response};
+use std::borrow::Cow;
 
-/// Render the docs page. No state, no arguments: the content is a constant.
-pub async fn page() -> Response {
-    ([(header::CONTENT_TYPE, "text/html; charset=utf-8")], PAGE).into_response()
+/// Render the docs page: a constant, with the operator notice ([`crate::notice`])
+/// as a banner at the top while one is set.
+pub async fn page(State(state): State<AppState>) -> Response {
+    let body = match state.notice.current() {
+        Some(text) => Cow::Owned(with_banner(PAGE, &text)),
+        None => Cow::Borrowed(PAGE),
+    };
+    ([(header::CONTENT_TYPE, "text/html; charset=utf-8")], body).into_response()
+}
+
+/// Where the banner goes: the first thing inside the content column.
+const BANNER_ANCHOR: &str = "<div class=\"wrap\">\n";
+
+/// `page` with `text` as an escaped banner at the top of its content column.
+fn with_banner(page: &str, text: &str) -> String {
+    let Some(at) = page.find(BANNER_ANCHOR).map(|i| i + BANNER_ANCHOR.len()) else {
+        // Unreachable for PAGE (`a_notice_is_an_escaped_banner_atop_the_page`
+        // pins the anchor); never put markup before the doctype.
+        return page.to_owned();
+    };
+    format!(
+        "{}<div class=\"notice\" role=\"status\">{}</div>\n{}",
+        &page[..at],
+        crate::notice::escape_html(text),
+        &page[at..]
+    )
 }
 
 const PAGE: &str = r####"<!doctype html>
@@ -26,11 +52,13 @@ const PAGE: &str = r####"<!doctype html>
     color-scheme: light dark;
     --bg: #ffffff; --fg: #1a1a1a; --muted: #5a5a5a; --line: #e2e2e2;
     --card: #f7f7f8; --code-bg: #f0f0f2; --accent: #1f5fbf; --pill: #eef2fb;
+    --warn: #7a5200; --warn-bg: #fdf3dc;
   }
   @media (prefers-color-scheme: dark) {
     :root {
       --bg: #16171a; --fg: #e8e8ea; --muted: #9a9aa2; --line: #2c2d31;
       --card: #1e1f23; --code-bg: #24252a; --accent: #6ea8fe; --pill: #23293a;
+      --warn: #e6c581; --warn-bg: #2c2313;
     }
   }
   * { box-sizing: border-box; }
@@ -65,6 +93,7 @@ const PAGE: &str = r####"<!doctype html>
   th, td { text-align: left; padding: .4rem .6rem; border-bottom: 1px solid var(--line); vertical-align: top; }
   th { color: var(--muted); font-weight: 600; }
   .card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: .3rem 1rem; margin: 1rem 0; }
+  .notice { background: var(--warn-bg); color: var(--warn); border-radius: 8px; padding: .7rem 1rem; margin: 0 0 1.5rem; white-space: pre-line; }
   .toc { columns: 2; column-gap: 2rem; font-size: .92rem; }
   @media (max-width: 34rem) { .toc { columns: 1; } }
   footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--line); font-size: .88rem; color: var(--muted); }
@@ -1262,6 +1291,10 @@ statement of each source you use.</p>
   <tr><td class="ep"><span class="method">GET</span>/metrics</td><td>Operational gauges in Prometheus text format (cursor, RSS, disk/WAL, per-job durations, quarantine counts). An operator surface, not part of the data API.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/_source</td><td>AGPL §13 corresponding-source offer for the running revision.</td></tr>
 </table>
+<p>While known issues or maintenance are in progress, an <strong>operator notice</strong> may appear: as a
+<code>notice</code> string on <code>/v1</code> and <code>/health</code>, and as a banner at the top of the dashboard and
+of this page. The field is absent when no notice is set. (It is a message from the operator, not a procurement
+Notice.)</p>
 <p>Browse and try the API interactively in
 <a href="https://petstore.swagger.io/?url=https%3A%2F%2Ftenders.zebreus.click%2Fv1%2Fopenapi.json">Swagger UI</a>
 or <a href="https://redocly.github.io/redoc/?url=https%3A%2F%2Ftenders.zebreus.click%2Fv1%2Fopenapi.json">Redoc</a>
@@ -2997,5 +3030,21 @@ mod tests {
             ],
         );
         assert!(!plain(sse).contains("the one exception is"), "/docs's live feed intro still names one exception");
+    }
+
+    /// The operator notice (owner ruling 2026-10-24) is the first thing in the
+    /// content column, escaped — the file on the box is text, never markup — and
+    /// the page is untouched around it.
+    #[test]
+    fn a_notice_is_an_escaped_banner_atop_the_page() {
+        let page = super::with_banner(PAGE, "Known issue: <b>lot values</b> & \"awards\" are being re-derived.");
+        let banner = r#"<div class="wrap">
+<div class="notice" role="status">Known issue: &lt;b&gt;lot values&lt;/b&gt; &amp; &quot;awards&quot; are being re-derived.</div>
+<header class="top">"#;
+        assert!(page.contains(banner), "the banner leads the content column");
+        assert!(!page.contains("<b>lot values</b>"), "the notice's text never becomes markup");
+        assert_eq!(page.replacen(&banner.replace("<div class=\"wrap\">\n", ""), "<header class=\"top\">", 1), PAGE);
+        // The sentence that tells a client the field exists.
+        assert!(PAGE.contains("<code>notice</code> string on <code>/v1</code> and <code>/health</code>"));
     }
 }

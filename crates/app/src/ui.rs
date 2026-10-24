@@ -56,6 +56,33 @@ where
     Ok(latest().unwrap_or_else(|| seed().unwrap()))
 }
 
+// ------------------------------------------------------------------- notice
+
+/// The operator notice ([`tender_db::notice`]): a banner above every page while
+/// the file on the box holds text, nothing otherwise. Polled like the panels, so
+/// a page left open picks up a new notice, or drops a cleared one, within a
+/// refresh.
+#[component]
+pub fn NoticeBanner() -> Element {
+    let notice = use_polled(Duration::from_secs(REFRESH_SECONDS), api::notice)?;
+    match notice {
+        Ok(Some(text)) => rsx! { Banner { text } },
+        // No notice, or the server could not say: either way, no banner.
+        _ => rsx! {},
+    }
+}
+
+/// The banner itself. The text goes in as a text node, which rsx escapes, so the
+/// file's contents can never become markup.
+#[component]
+fn Banner(text: String) -> Element {
+    rsx! {
+        div { class: "notice", role: "status",
+            p { "{text}" }
+        }
+    }
+}
+
 // ---------------------------------------------------------------- dashboard
 
 #[component]
@@ -1585,6 +1612,19 @@ fn age(seconds: Option<i64>) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// The operator notice renders as the page's status banner with its text
+    /// escaped: what the server render puts at the top of `/`.
+    #[cfg(feature = "server")]
+    #[test]
+    fn the_notice_banner_is_an_escaped_status_block() {
+        let text = "Known issue: <b>lot values</b> & awards are being re-derived.".to_owned();
+        let html = dioxus::ssr::render_element(rsx! { Banner { text } });
+        assert!(html.contains(r#"class="notice""#) && html.contains(r#"role="status""#), "{html}");
+        // dioxus-ssr escapes with numeric references: `&#60;` is `<`, `&#38;` is `&`.
+        assert!(html.contains("Known issue: &#60;b&#62;lot values&#60;/b&#62; &#38; awards"), "{html}");
+        assert!(!html.contains("<b>"), "the notice's text never becomes markup: {html}");
+    }
 
     #[test]
     fn numbers_group_and_ages_coarsen() {

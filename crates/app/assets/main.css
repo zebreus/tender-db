@@ -68,6 +68,23 @@ footer {
     color: var(--color-muted);
 }
 
+/* The operator notice (tender_db::notice): a full-width strip above every
+   page, its text kept to the content column. pre-line keeps the file's line
+   breaks. */
+.notice {
+    background: var(--color-warn-bg);
+    color: var(--color-warn);
+    border-bottom: 1px solid var(--color-line);
+}
+
+.notice p {
+    max-width: 56rem;
+    margin: 0 auto;
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
+    white-space: pre-line;
+}
+
 /* ------------------------------------------------------------------ panels */
 
 .panel {

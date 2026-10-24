@@ -286,6 +286,39 @@ leave the files owned by `tenderdb`, or the service loses access:
 chown -R tenderdb:tenderdb /data/db /data/archive
 ```
 
+## Operator notice (banner)
+
+A site-wide notice for known issues or maintenance, set and cleared on the box with **no deploy and no restart**
+(owner ruling 2026-10-24: prod may carry known issues while a banner says so). Its text shows as a banner at the top
+of every page (`/`, `/account`, `/tenders` and `/docs`) and as `"notice": "<text>"` on `GET /v1` and `GET /health`; with no notice
+set, the field is absent and the pages show no banner.
+
+The source is one plain-text file, `/data/db/notice.txt` on the box: `TENDER_DB_NOTICE_FILE` when the unit sets it,
+else `notice.txt` beside the database (`TENDER_DB`'s directory; `crates/app/src/notice.rs`). The startup log names
+the path it reads (`notice: banner text is read from …`). The service only reads it, and `/data/db` is already in
+its `ReadWritePaths`, so the default needs no unit edit.
+
+```sh
+# set (or replace) — shows within ~10 s. /data/db is owned by tenderdb, so never `echo > notice.txt` or `chmod` it
+# as root: both follow a symlink the service user could plant there. mktemp (O_EXCL) + a rename replace the link,
+# never its target.
+t=$(mktemp /data/db/.notice.XXXXXX) && printf '%s\n' 'Known issue: lot values are being re-derived; figures may be stale until 18:00 CET.' > "$t" \
+  && chmod 644 "$t" && mv -fT "$t" /data/db/notice.txt     # 644: the service runs as tenderdb and must read it
+curl -s localhost:8080/health | jq .notice
+
+# clear — gone within ~10 s (rm removes a link, never follows it)
+rm -f /data/db/notice.txt
+```
+
+- **Within ~10 s, not at once:** the server caches the text for 10 s (`notice::TTL`), so under any load the file is
+  read once a TTL, never per request. Pages left open in a browser poll it with the dashboard's refresh (15 s).
+- **What counts as no notice:** a missing file, or one holding only whitespace. The text is trimmed, served as plain
+  text (escaped on the pages; line breaks kept) and cut to 2,000 bytes with a trailing `…`.
+- **An unreadable file is no notice, never an error:** a request does not fail on it; the journal says
+  `notice: cannot read <path>: <error> — serving no notice until it reads` once, until a read succeeds again.
+  A file written under a `umask 077` shell (mode 0600, root-owned) is the usual cause: `chmod 644` it.
+- The rename is also atomic: a read never sees a half-written file.
+
 ## Ingestion
 
 Ingestion runs **inside the server process** (ADR-0005, issue 16): the
@@ -4274,7 +4307,8 @@ Root-disk reclaim: `nix store gc` deletes unreferenced store paths — **includi
 old bundles you might want for a rollback**, so switch the symlink to the bundle
 you want to keep before running it, or verify the current one is safe.
 
-Note that nothing outside the service writes to `/data/db`: turso is
+Note that nothing outside the service writes the database files in `/data/db` (the operator notice, `notice.txt`, is the
+one root-written file there): turso is
 single-process, so the running server holds the database open exclusively (see
 the Ingestion rule above). A scratch `*.db` may appear here from earlier
 dev/verification work — harmless, but never point a CLI at the production file.

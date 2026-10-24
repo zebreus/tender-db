@@ -46,6 +46,14 @@ pub async fn quality() -> ServerFnResult<QualityHistory> {
     }
 }
 
+/// The operator notice ([`tender_db::notice`]) while one is set — the banner every
+/// page shows above its content. Served from the notice's short cache, so a page
+/// poll never reads the file.
+#[get("/api/notice")]
+pub async fn notice() -> ServerFnResult<Option<String>> {
+    Ok(tender_db::notice::global().current())
+}
+
 /// The ingestion Supervisor's live state — current job + queue + recent runs.
 /// A read-only view: admin *actions* are API-only (the dashboard is public and
 /// must never carry the operator secret). When the supervisor has not started

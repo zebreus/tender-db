@@ -161,6 +161,10 @@ pub struct AppState {
     /// that serves the API without an ingestion worker; the gauges are then
     /// absent, not zero, same rule as every other unmeasured source there.
     pub jobs: Option<Arc<crate::supervisor::Supervisor>>,
+    /// The operator notice ([`crate::notice`]) that `/v1`, `/health` and `/docs`
+    /// serve while one is set. The process-wide one in production; a test points
+    /// its own at a scratch file.
+    pub notice: Arc<crate::notice::Notice>,
     streams: Arc<Mutex<HashMap<String, usize>>>,
 }
 
@@ -206,6 +210,7 @@ impl AppState {
             snapshot_page: sse::SNAPSHOT_PAGE,
             fallback_band: store::read::DEFAULT_FALLBACK_BAND,
             jobs: None,
+            notice: crate::notice::global(),
             streams: Arc::new(Mutex::new(HashMap::new())),
         }
     }
@@ -2292,7 +2297,7 @@ async fn me(AuthUser(user): AuthUser) -> ApiResult {
 /// The API root, which is also where AGPL §13's source offer lives.
 async fn root(State(state): State<AppState>) -> ApiResult {
     let reader = state.readers.get().await?;
-    Ok(axum::Json(json!({
+    let mut body = json!({
         "service": "tender-db",
         "version": env!("CARGO_PKG_VERSION"),
         "source": rev(),
@@ -2325,8 +2330,18 @@ async fn root(State(state): State<AppState>) -> ApiResult {
             "/v1/openapi.json",
         ],
         "live": "send Accept: text/event-stream to any collection endpoint",
-    }))
-    .into_response())
+    });
+    with_notice(&mut body, &state);
+    Ok(axum::Json(body).into_response())
+}
+
+/// Add the operator notice ([`crate::notice`]) to a JSON body as `notice` while
+/// one is set. Absent otherwise — never `null` — so a body without a notice is
+/// exactly the body it was before notices existed.
+fn with_notice(body: &mut Value, state: &AppState) {
+    if let Some(text) = state.notice.current() {
+        body["notice"] = Value::String(text);
+    }
 }
 
 /// AGPL §13's "Corresponding Source" offer for the running version.
@@ -2362,11 +2377,14 @@ async fn health(State(state): State<AppState>) -> Response {
     // queried; the DB-answering check lives in `/health/deep`. This probe has no
     // failing path, so it does not pretend to (the old `is_some()`/`unavailable`/
     // `503` scaffolding was dead code over an infallible read — issue 213).
-    let body = json!({
+    let mut body = json!({
         "ok": true,
         "rev": rev(),
         "cursor": state.db.current_cursor().to_string(),
     });
+    // From the notice's cache: a small file read once a TTL at most, never a
+    // database query, so the probe stays instant.
+    with_notice(&mut body, &state);
     (StatusCode::OK, axum::Json(body)).into_response()
 }
 

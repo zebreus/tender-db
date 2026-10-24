@@ -76,6 +76,11 @@ fn main() {
         } else {
             println!("admin: /admin API disabled (TENDER_ADMIN_SECRET unset → 404)");
         }
+        // Where the operator writes a banner without a deploy (docs/operations.md).
+        println!(
+            "notice: banner text is read from {} (TENDER_DB_NOTICE_FILE); absent or empty → no banner",
+            tender_db::notice::global().path().display()
+        );
 
         Ok(dioxus::server::router(App)
             .merge(tender_db::v1::router(api))
@@ -98,11 +103,13 @@ enum Route {
 fn App() -> Element {
     rsx! {
         document::Stylesheet { href: MAIN_CSS }
+        // The operator notice, above whichever page the router picks.
+        NoticeBanner {}
         Router::<Route> {}
     }
 }
 
-use ui::{AccountPage, DashboardPage};
+use ui::{AccountPage, DashboardPage, NoticeBanner};
 
 #[component]
 fn Tenders() -> Element {

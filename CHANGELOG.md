@@ -4,6 +4,15 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased — an operator notice can appear on the pages, /v1 and /health
+
+While known issues or maintenance are in progress, the operator can set a notice without a deploy. While one is set,
+`GET /v1` and `GET /health` carry it as a `notice` string, and the dashboard and /docs show it as a banner at the top
+of the page. When none is set the field is absent (never `null`), so those bodies are exactly what they were before.
+A client that shows service state can surface `notice` as is; it is plain text, at most 2,000 bytes, and can hold
+line breaks. It is a message from the operator, not a procurement Notice. Where: /docs (Service & licence) and
+OpenAPI (the `/v1` and `/health` response schemas).
+
 ## Unreleased (issue 580) — a Tender id can be retired within a generation: the docs now say so, and how to follow its notices
 
 Nothing changed in how a request answers; the docs now say what was already happening. A Tender is the group its

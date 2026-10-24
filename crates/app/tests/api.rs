@@ -390,6 +390,68 @@ async fn the_service_root_and_health_answer() {
     assert!(sources.iter().all(|s| s["license_url"].as_str().is_some_and(|u| u.starts_with("https://"))));
 }
 
+/// The operator notice (owner ruling 2026-10-24): while its file holds text, `/v1`
+/// and `/health` carry it as `notice` and `/docs` shows it as an escaped banner.
+/// Without the file the field is absent, not `null`, and the page has no banner, so
+/// a body without a notice is the body it always was. One server throughout: the
+/// notice is set and cleared on the box, not by a deploy or a restart.
+#[tokio::test]
+async fn the_operator_notice_shows_while_its_file_holds_text() {
+    let path = format!("/tmp/tender-db-api-notice-{}.db", std::process::id());
+    let file = format!("/tmp/tender-db-api-notice-{}.txt", std::process::id());
+    let _ = std::fs::remove_file(&path);
+    let _ = std::fs::remove_file(&file);
+    let db = Arc::new(Db::open(&path).await.expect("open scratch db"));
+    let mut state = v1::AppState::new(db.clone(), db.readers(2).expect("readers"));
+    // TTL zero: every request re-reads, so a write shows on the next one.
+    state.notice = Arc::new(tender_db::notice::Notice::with_ttl(&file, Duration::ZERO));
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.expect("bind");
+    let base = format!("http://127.0.0.1:{}", listener.local_addr().expect("addr").port());
+    tokio::spawn(async move {
+        let _ = axum::serve(listener, v1::router(state)).await;
+    });
+    let http = reqwest::Client::new();
+    let json = async |p: &str| -> Value {
+        let response = http.get(format!("{base}{p}")).send().await.expect("request");
+        assert!(response.status().is_success(), "GET {p} → {}", response.status());
+        response.json().await.expect("json body")
+    };
+    let docs = async || -> String {
+        http.get(format!("{base}/docs")).send().await.expect("request").text().await.expect("html")
+    };
+
+    for p in ["/v1", "/health"] {
+        let body = json(p).await;
+        assert!(body.get("notice").is_none(), "{p} carries no notice while none is set: {body}");
+    }
+    assert!(!docs().await.contains(r#"role="status""#), "/docs has no banner while none is set");
+
+    std::fs::write(&file, "  Known issue: <b>lot values</b> & awards are being re-derived.\n").expect("write");
+    let text = "Known issue: <b>lot values</b> & awards are being re-derived.";
+    for p in ["/v1", "/health"] {
+        assert_eq!(json(p).await["notice"], text, "{p} serves the notice, trimmed");
+    }
+    let page = docs().await;
+    assert!(
+        page.contains(
+            r#"<div class="notice" role="status">Known issue: &lt;b&gt;lot values&lt;/b&gt; &amp; awards are being re-derived.</div>"#
+        ),
+        "/docs shows the notice escaped, as a status banner"
+    );
+    assert!(!page.contains("<b>lot values</b>"), "the notice's text never becomes markup");
+
+    // Cleared on the box: gone from every surface on the next request.
+    std::fs::remove_file(&file).expect("remove");
+    for p in ["/v1", "/health"] {
+        let body = json(p).await;
+        assert!(body.get("notice").is_none(), "{p} drops a cleared notice: {body}");
+    }
+    assert!(!docs().await.contains("Known issue"), "/docs drops a cleared notice");
+
+    drop(db);
+    let _ = std::fs::remove_file(&path);
+}
+
 /// `/health/deep`'s verdict is exactly the conjunction of its per-check verdicts,
 /// and the status code is `200` iff that verdict is healthy — the contract the
 /// external pinger relies on, since it alerts on the status alone.
