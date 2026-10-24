@@ -1,0 +1,67 @@
+P1, the 3,751 new orgs: final tier (orgs / their touchpoint mentions)
+  A       182    743
+  C0        9     46
+  C1      455   1778
+  C2       71    258
+  C3      145    526
+  C3r       4      5
+  C4        1      1
+  None   2884  21307
+  tier A 182 / 743; tier C 685 / 2614
+  changed against fold.py: 1
+    (31975799, None, 'C4', 'Alcaldia -Presidencia', 'Alcaldía del Ayuntamiento de Noja')
+P1 gate (rows that do not alias): 92 orgs / 3491 mentions
+  against gate.py: no longer hit []; newly hit []
+P1 still minted: 2792 orgs / 17816 mentions
+P2 03-t3_window_a.json: 2081 mentions; alias by (side, tier): {('old', 'A'): 3, ('old', 'C4'): 7, ('old', 'C'): 140, ('new', 'C'): 16, ('new', 'A'): 7}
+   C4 (1, 1166995, 'Junta de Gobierno Local', 'Junta de Gobierno del Ayuntamiento de La Nucía')
+   C4 (4, 1689043, 'Ayuntamiento', 'Alcaldía del Ayuntamiento de Valverde de Leganés')
+   C4 (2, 18945275, 'Rectorado', 'Rectorado de la Universidad Politécnica de Madrid')
+   gate drops: 24 mentions
+    old-row drop (1, 1180214, 'old', 'Registro General', [('BARE', 'registro general')])
+    old-row drop (2, 13863806, 'old', 'En los lugares establecidos en el artículo 16.4 de la LEY 39/2015 de Procedimiento Administrativo Común de las Administraciones públicas y en el registro del órgano de contratación.', [('PROSE', 'en los lugares'), ('PROSE', 'lugares establecidos'), ('LEGALREF', 'artículo 1')])
+    old-row drop (1, 17553080, 'old', 'Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos 44 y siguientes de la Ley 9/2017, de 8 de noviembre, de Contratos del Sector Público', [('PROSE', 'procede recurso'), ('LEGALREF', 'artículos 4')])
+P2 05-t5_window_b.json: 904 mentions; alias by (side, tier): {('old', 'C'): 55, ('old', 'C4'): 3, ('old', 'A'): 4, ('new', 'C'): 9, ('new', 'A'): 3}
+   C4 (2, 1733704, 'Junta Gobierno Local', 'Junta de Gobierno del Ayuntamiento de León')
+   C4 (1, 2130626, 'Pleno', 'Pleno de la Diputación Provincial de Huelva')
+   gate drops: 16 mentions
+    old-row drop (1, 1246716, 'old', 'Secretaría General', [('BARE', 'secretaria general')])
+    old-row drop (1, 18120239, 'old', 'Sede del Tribunal Administrativo Central (TACRC) o Registro General del Ayuntamiento de Siero o Lugares habilitados en el artículo 16 de la Ley 39/2015', [('PROSE', 'lugares habilitados')])
+R3 top 60: 0 hits []
+G2 organ/registry stem hits by population: {('NEW', 'Alcaldia -Presidencia'): 1, ('WIN-A', 'Junta de Gobierno Local'): 1, ('WIN-A', 'Registro General'): 1, ('WIN-A', 'Ayuntamiento'): 4, ('WIN-A', 'Rectorado'): 2, ('WIN-B', 'Secretaría General'): 1, ('WIN-B', 'Junta Gobierno Local'): 2, ('WIN-B', 'Pleno'): 1, ('PRE', 'Ayuntamiento'): 125}
+real organization names: 7060; final stem hits 10
+   [('WHOLE', 'ayuntamiento'), ('BARE', 'ayuntamiento')] Ayuntamiento
+   [('PROSE', 'en los lugares'), ('PROSE', 'lugares establecidos'), ('LEGALREF', 'artículo 1')] En los lugares establecidos en el artículo 16.4 de la LEY 39/2015 de Procedimiento Administrativo Común de las
+   [('BARE', 'junta gobierno local')] Junta Gobierno Local
+   [('BARE', 'junta gobierno local')] Junta de Gobierno Local
+   [('BARE', 'pleno')] Pleno
+   [('PROSE', 'procede recurso'), ('LEGALREF', 'artículos 4')] Procede recurso especial en materia de contratación, de acuerdo con lo establecido en los artículos 44 y sigui
+   [('BARE', 'rectorado')] Rectorado
+   [('BARE', 'registro general')] Registro General
+   [('BARE', 'secretaria general')] Secretaría General
+   [('PROSE', 'lugares habilitados')] Sede del Tribunal Administrativo Central (TACRC) o Registro General del Ayuntamiento de Siero o Lugares habili
+synthetic keep list (want kept):
+   HIT Frau Holle Kindergarten e.V. [('HONORIFIC', 'Frau')]
+   HIT Madame Tussauds [('HONORIFIC', 'Madame')]
+   HIT Monsieur Bricolage [('HONORIFIC', 'Monsieur')]
+   HIT Mr. Wash [('HONORIFIC', 'Mr.')]
+   HIT Mr Bean Foundation [('HONORIFIC', 'Mr')]
+   HIT M. Pons Construcciones [('HONORIFIC', 'M.')]
+   HIT Sig. Rossi Costruzioni [('HONORIFIC', 'Sig.')]
+   HIT Dott. Rossi & Partners Studio Associato [('HONORIFIC', 'Dott.')]
+   HIT Mme Figaro Edition [('HONORIFIC', 'Mme')]
+   HIT Herr der Ringe Stiftung [('HONORIFIC', 'Herr')]
+   HIT Ms. Ware Software [('HONORIFIC', 'Ms.')]
+   HIT Logintrade S.A. [('PLATFORM', 'logintrade')]
+   HIT Tuttogare S.r.l. [('PLATFORM', 'tuttogare')]
+   HIT Studio Amica TUTTOGARE [('PLATFORM', 'tuttogare')]
+   HIT Plataforma Electrónica de Contratación S.L. [('PLATFORM', 'plataforma electronica de contratacion')]
+   HIT Centro de Recursos Ver Apartado [('PROSE', 'ver apartado')]
+   HIT Asociación En los Lugares [('PROSE', 'en los lugares')]
+   HIT Biuro e Zamówienia Sp. z o.o. [('PLATFORM', 'e zamowienia')]
+   HIT Principal [('WHOLE', 'principal')]
+   HIT Contact [('WHOLE', 'contact')]
+   HIT Recursos [('WHOLE', 'recursos')]
+   HIT Ayuntamiento [('WHOLE', 'ayuntamiento'), ('BARE', 'ayuntamiento')]
+MUST_KEEP hits: []
+MUST_DROP misses: []
