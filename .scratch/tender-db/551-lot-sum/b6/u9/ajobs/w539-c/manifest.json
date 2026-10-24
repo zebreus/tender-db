@@ -1,0 +1,13 @@
+{
+ "at": "2026-10-24T02:34:56Z",
+ "ids_sha256": "4f7d9eb68c1e62904c30e711f8370ecf14cb6e8583909847fa1a722d8758e7cf",
+ "jobs": [
+  {
+   "job": "A01",
+   "n": 2289
+  }
+ ],
+ "n": 2289,
+ "name": "w539-c",
+ "source": "gd5 read of w539-c: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-c/read/changed_live_ids.json"
+}

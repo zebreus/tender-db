@@ -1,0 +1,41 @@
+{
+ "absent_expected": [],
+ "at": "2026-10-24T02:34:46Z",
+ "chunks": [
+  {
+   "chunk": 0,
+   "n": 2000,
+   "ok": true,
+   "rows": 2000
+  },
+  {
+   "chunk": 1,
+   "n": 289,
+   "ok": true,
+   "rows": 289
+  }
+ ],
+ "complete": true,
+ "failures": [],
+ "ids_sha256": "4f7d9eb68c1e62904c30e711f8370ecf14cb6e8583909847fa1a722d8758e7cf",
+ "label": "w539-c_new",
+ "missing_ids": [],
+ "n_ids": 2289,
+ "n_rows": 2289,
+ "parts": {
+  "1016_8553585_2000": {
+   "at": "2026-10-24T02:34:43Z",
+   "n": 2000,
+   "ok": true,
+   "rows": 2000,
+   "sha256": "939dfd6c03d5f7096140a5d3c1045614f6e867dbb712c3e74780332fd0b424f6"
+  },
+  "8553673_8861041_289": {
+   "at": "2026-10-24T02:34:46Z",
+   "n": 289,
+   "ok": true,
+   "rows": 289,
+   "sha256": "69342c9a1cd803be965c9e4e47abc5a3ae68f9a194085fcb6de5cfbd7625bde1"
+  }
+ }
+}

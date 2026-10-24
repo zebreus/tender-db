@@ -1,0 +1,8 @@
+2026-10-24T02:34:36Z #30 changes_959215522_959220522 0.86s rows=5000 truncated=False sha256=095a1b35289a1698 raw=0030_changes_959215522_959220522.json
+2026-10-24T02:34:39Z #31 changes_959220522_959223268 0.79s rows=2746 truncated=False sha256=f88263e8ceea1ed3 raw=0031_changes_959220522_959223268.json
+2026-10-24T02:34:43Z #32 w539-c_new_pk000 0.85s rows=2000 truncated=False sha256=dd0fa391b7c3da17 raw=0032_w539-c_new_pk000.json
+2026-10-24T02:34:46Z #33 w539-c_new_pk001_n289 0.49s rows=289 truncated=False sha256=b3317895084ec302 raw=0033_w539-c_new_pk001_n289.json
+2026-10-24T02:34:49Z #34 w539-c_r_pk000 1.01s rows=2000 truncated=False sha256=2636b35ab631aeec raw=0034_w539-c_r_pk000.json
+2026-10-24T02:34:53Z #35 w539-c_r_pk001_n1541 1.03s rows=1541 truncated=False sha256=441c88df392025e7 raw=0035_w539-c_r_pk001_n1541.json
+2026-10-24T02:34:56Z #36 w539-c_band 1.06s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0036_w539-c_band.json
+w539-c: reads complete over (959215522, 959223268] (route all): 2382 Tenders with tender rows, 2289 live changed, 93 retired; 2289 NEW candidates PK-read; R ∪ Rg ∪ pins 3541; band sql; 7 statements; changed live ids for A: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-c/read/changed_live_ids.json (1 dry job(s): ajobs.py build w539-c --from-seg w539-c)

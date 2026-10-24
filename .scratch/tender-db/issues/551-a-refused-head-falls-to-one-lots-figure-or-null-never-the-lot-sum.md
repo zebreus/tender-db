@@ -1636,3 +1636,16 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
 - **Writer: 551 w539-a until 2026-10-24T02:30Z** (539 step 2 run a, refold eforms-sdk-0.1, class W; opened 00:05Z at CB = K = 959192253).
 - **Writer: 551 w539-b until 2026-10-24T03:00Z** (539 step 2 run b, refold eforms-de-1.0/1.1/1.2, class W; run a PASS: NEW 0, 0 R moves, A 6).
 - **Writer: 551 w539-c until 2026-10-24T03:45Z** (539 step 2 run c, refold eforms-de-2.0/2.1, class W; run b PASS: NEW 0, 0 R moves, A 5, 579's 6 refolded).
+- **539 step 2 run a PASS (w539-a, 00:05–00:41Z):** refold 2733 (687,796 notices) → project 2734 (9,117 corrected) over
+  (959192253, 959211183]. gd5 class W, E1 all-kind. A 6 (dry refold-lot-sum over the 9,117), cap 10.07, NEW 0, R
+  MOVED/LOST/SILENT 0, pins PASS, band 29. K → 959211183.
+- **539 step 2 run b PASS (w539-b, 00:43–01:37Z):** refold 2737 (218,876) → project 2738 (2,211 corrected) over
+  (959211183, 959215522]. A 5 (of 2,212), cap 10.05, NEW 0, R moves 0, band 29. 579's six were refolded, order only.
+  K → 959215522.
+- **539 step 2 run c PASS (w539-c, 01:38–02:35Z):** refold 2740 (255,165) → project 2741 (2,196 corrected) over
+  (959215522, 959223268]. A 12 (of 2,289), cap 10.13, NEW 0, R moves 0, band 29. 93 non-R Tenders were retired
+  (`tender/removed`). K → **959223268**, open_segment none. D7 advisory: GO, all runs closed before the 07:35Z chain
+  and the 10-25 02:10Z tick. Writer released.
+- **539 drain complete** (the 539 issue has the table). R stayed at 539's fixed point, as predicted by C9': 0 R moves
+  across 4 class-W/D segments. Next W-on users: the U9 class-chain check after the 10-24 07:35Z chain (RUNBOOK-W §2); the
+  10-25 02:10Z weekly tick (§6); 546 U4.

@@ -1,0 +1,2 @@
+SELECT c.cursor, c.entity_kind, c.entity_id, c.version_seq, c.op, c.changed_at, CASE WHEN c.entity_kind = 'lot' THEN (SELECT l.tender_id FROM lots l WHERE l.id = c.entity_id) END AS lot_tender_id FROM changes c WHERE c.cursor > 959215522 AND c.cursor <= 959220522 ORDER BY c.cursor
+-- plan: SEARCH c USING INTEGER PRIMARY KEY (rowid=?) | CORRELATED SCALAR SUBQUERY 1 |   SEARCH l USING INTEGER PRIMARY KEY (rowid=?)

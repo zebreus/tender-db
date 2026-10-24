@@ -1,0 +1,24 @@
+{
+ "A": 12,
+ "at": "2026-10-24T02:35:15Z",
+ "cap_W": 10.131687242798353,
+ "complete": true,
+ "expected_fires": 0.13168724279835392,
+ "ids_sha256": "4f7d9eb68c1e62904c30e711f8370ecf14cb6e8583909847fa1a722d8758e7cf",
+ "n": 2289,
+ "n_named": 2289,
+ "name": "w539-c",
+ "per_job": [
+  {
+   "found": 12,
+   "job": "A01",
+   "n": 2289,
+   "not_admitted": 2277,
+   "notices": 30,
+   "problems": [],
+   "summary_sha256": "c093fa87f03ce14364b6bda19c98fbf835fb062f27eb2852e482ec203ec2078d"
+  }
+ ],
+ "source": "gd5 read of w539-c: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/w539-c/read/changed_live_ids.json",
+ "three_x": 0.39506172839506176
+}
