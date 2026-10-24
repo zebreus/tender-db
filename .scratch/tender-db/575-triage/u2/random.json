@@ -1,0 +1,1447 @@
+{
+ "source": "hex-census job 2770, samples.r2_random (salt 575001)",
+ "standard": "530 decision §A5 R2 (W = the target name denotes more than one body, or the target holds another body); §A6",
+ "rows": [
+  {
+   "n": 1,
+   "org_id": 23102802,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 24728556,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "the eSender itself (ORG-0001, Procedure-SProvider); target 8301019 is Avenue-Web's own NULL row (1 mention); all 71,601 cf35 mentions under the key plan one city, Seyssinet-Pariset (AWS's seat)"
+  },
+  {
+   "n": 2,
+   "org_id": 23211831,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 24885078,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 3,
+   "org_id": 30958411,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 45861497,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 4,
+   "org_id": 23092950,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 24714733,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 5,
+   "org_id": 24492642,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 27021747,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 6,
+   "org_id": 23602212,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 25643583,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 7,
+   "org_id": 30907215,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 29634854,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 8,
+   "org_id": 23720408,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 25833447,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 9,
+   "org_id": 23433211,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 25396242,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 10,
+   "org_id": 23538140,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 25548092,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 11,
+   "org_id": 22778782,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 24288931,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 12,
+   "org_id": 30966703,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 46080761,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 13,
+   "org_id": 24500934,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 27145845,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 14,
+   "org_id": 23010753,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 24591948,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 15,
+   "org_id": 23436334,
+   "name": "Avenue-Web Systèmes",
+   "stratum": "sprovider",
+   "role": "Procedure-SProvider",
+   "notice_id": 25401077,
+   "section_id": "ORG-0001",
+   "twin": false,
+   "target_id": 8301019,
+   "target_name_norm": "avenue-web systèmes",
+   "target_mentions": 1,
+   "target_cities": [],
+   "planned_cities": [
+    "seyssinet pariset"
+   ],
+   "lists": [
+    "top#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 1 (Avenue-Web Systèmes, ORG-0001, target 8301019)"
+  },
+  {
+   "n": 16,
+   "org_id": 23589489,
+   "name": "Tribunal Judiciaire d'Albertville",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 25624722,
+   "section_id": "ORG-0004",
+   "twin": true,
+   "target_id": 15213555,
+   "target_name_norm": "tribunal judiciaire d'albertville",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named court (one TJ d'Albertville); key not city-flagged (one planned city at most, no clash)"
+  },
+  {
+   "n": 17,
+   "org_id": 23075815,
+   "name": "Tribunal administratif de Montpellier",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 24688994,
+   "section_id": "ORG-0003",
+   "twin": true,
+   "target_id": 1163864,
+   "target_name_norm": "tribunal administratif de montpellier",
+   "target_mentions": 27265,
+   "target_cities": [],
+   "planned_cities": [
+    "montpellier",
+    "montpelllier"
+   ],
+   "lists": [
+    "top#5",
+    "city_flagged#3"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned montpellier / montpelllier (typo); top#5, judged R"
+  },
+  {
+   "n": 18,
+   "org_id": 22879449,
+   "name": "Greffe du Tribunal administratif de TOULON",
+   "stratum": "review",
+   "role": "Lot-ReviewInfo",
+   "notice_id": 24421029,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 1166302,
+   "target_name_norm": "greffe du tribunal administratif de toulon",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "the registry of TA Toulon, target is that registry's own name; key not city-flagged"
+  },
+  {
+   "n": 19,
+   "org_id": 30912986,
+   "name": "Tribunal administratif de Toulouse",
+   "stratum": "review",
+   "role": "Lot-ReviewInfo",
+   "notice_id": 30765346,
+   "section_id": "ORG-0004",
+   "twin": true,
+   "target_id": 1163070,
+   "target_name_norm": "tribunal administratif de toulouse",
+   "target_mentions": 32677,
+   "target_cities": [],
+   "planned_cities": [
+    "toulouse"
+   ],
+   "lists": [
+    "top#4"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned toulouse only; top#4"
+  },
+  {
+   "n": 20,
+   "org_id": 23150318,
+   "name": "Tribunal administratif de Lille",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 24799705,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 1163457,
+   "target_name_norm": "tribunal administratif de lille",
+   "target_mentions": 52385,
+   "target_cities": [],
+   "planned_cities": [
+    "lille",
+    "lille cedex"
+   ],
+   "lists": [
+    "top#10",
+    "city_flagged#5"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned lille / lille cedex"
+  },
+  {
+   "n": 21,
+   "org_id": 23197083,
+   "name": "Tribunal administratif de Nîmes",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 24863857,
+   "section_id": "ORG-0003",
+   "twin": true,
+   "target_id": 1163138,
+   "target_name_norm": "tribunal administratif de nîmes",
+   "target_mentions": 14493,
+   "target_cities": [
+    "nimes",
+    "nimes cedex"
+   ],
+   "planned_cities": [
+    "nimes"
+   ],
+   "lists": [
+    "top#22",
+    "city_flagged#11"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; target nimes / nimes cedex, planned nimes"
+  },
+  {
+   "n": 22,
+   "org_id": 23410971,
+   "name": "Tribunal administratif de Rennes",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 25364842,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 1163090,
+   "target_name_norm": "tribunal administratif de rennes",
+   "target_mentions": 34410,
+   "target_cities": [],
+   "planned_cities": [
+    "rennes"
+   ],
+   "lists": [
+    "top#31"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned rennes only"
+  },
+  {
+   "n": 23,
+   "org_id": 24502510,
+   "name": "Tribunal administratif de Melun",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 27148238,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1165479,
+   "target_name_norm": "tribunal administratif de melun",
+   "target_mentions": 34275,
+   "target_cities": [],
+   "planned_cities": [
+    "melun"
+   ],
+   "lists": [
+    "top#19"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned melun only"
+  },
+  {
+   "n": 24,
+   "org_id": 23292090,
+   "name": "Tribunal administratif de Lyon",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 25034916,
+   "section_id": "ORG-0003",
+   "twin": true,
+   "target_id": 1163241,
+   "target_name_norm": "tribunal administratif de lyon",
+   "target_mentions": 46596,
+   "target_cities": [],
+   "planned_cities": [
+    "lyon",
+    "lyon france"
+   ],
+   "lists": [
+    "top#3",
+    "city_flagged#2"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned lyon / lyon france"
+  },
+  {
+   "n": 25,
+   "org_id": 23757948,
+   "name": "Tribunal administratif de Rennes",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 25892011,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1163090,
+   "target_name_norm": "tribunal administratif de rennes",
+   "target_mentions": 34410,
+   "target_cities": [],
+   "planned_cities": [
+    "rennes"
+   ],
+   "lists": [
+    "top#31"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned rennes only"
+  },
+  {
+   "n": 26,
+   "org_id": 23437910,
+   "name": "Tribunal administratif de Grenoble",
+   "stratum": "review",
+   "role": "Lot-ReviewInfo",
+   "notice_id": 25403380,
+   "section_id": "ORG-0005",
+   "twin": true,
+   "target_id": 1163404,
+   "target_name_norm": "tribunal administratif de grenoble",
+   "target_mentions": 40316,
+   "target_cities": [
+    "grenoble cedex"
+   ],
+   "planned_cities": [
+    "grenible",
+    "grenoble",
+    "grenoble cedex"
+   ],
+   "lists": [
+    "top#2",
+    "city_flagged#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; city_absent 10,005 is spelling (target 'grenoble cedex' vs grenoble / grenible)"
+  },
+  {
+   "n": 27,
+   "org_id": 22812165,
+   "name": "Tribunal administratif d'Orléans",
+   "stratum": "review",
+   "role": "Lot-ReviewInfo",
+   "notice_id": 24335436,
+   "section_id": "ORG-0005",
+   "twin": true,
+   "target_id": 1163223,
+   "target_name_norm": "tribunal administratif d'orléans",
+   "target_mentions": 26883,
+   "target_cities": [],
+   "planned_cities": [
+    "orleans"
+   ],
+   "lists": [
+    "top#7"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned orleans only; target row name is the clean spelling (not the 573 mojibake head)"
+  },
+  {
+   "n": 28,
+   "org_id": 23584738,
+   "name": "Tribunal administratif de Marseille",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 25617821,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1162955,
+   "target_name_norm": "tribunal administratif de marseille",
+   "target_mentions": 35999,
+   "target_cities": [],
+   "planned_cities": [
+    "marseille"
+   ],
+   "lists": [
+    "top#6"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned marseille only"
+  },
+  {
+   "n": 29,
+   "org_id": 22784493,
+   "name": "Tribunal administratif de Bordeaux",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 24296446,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1163131,
+   "target_name_norm": "tribunal administratif de bordeaux",
+   "target_mentions": 30364,
+   "target_cities": [],
+   "planned_cities": [
+    "bordeaux",
+    "bordeaux cedex"
+   ],
+   "lists": [
+    "top#11",
+    "city_flagged#6"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned bordeaux / bordeaux cedex"
+  },
+  {
+   "n": 30,
+   "org_id": 23390448,
+   "name": "Tribunal administratif d'Orléans",
+   "stratum": "review",
+   "role": "Lot-ReviewOrg",
+   "notice_id": 25290540,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1163223,
+   "target_name_norm": "tribunal administratif d'orléans",
+   "target_mentions": 26883,
+   "target_cities": [],
+   "planned_cities": [
+    "orleans"
+   ],
+   "lists": [
+    "top#7"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named TA; planned orleans only"
+  },
+  {
+   "n": 31,
+   "org_id": 23045043,
+   "name": "Comité Consultatif Interrégional pour le règlement amiable des marchés publics",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24642842,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 1167628,
+   "target_name_norm": "comité consultatif interrégional pour le règlement amiable des marchés publics",
+   "target_mentions": 1119,
+   "target_cities": [
+    "nantes"
+   ],
+   "planned_cities": [
+    "nantes"
+   ],
+   "lists": [
+    "top#50",
+    "ccira#2"
+   ],
+   "verdict": "W",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "kept (prefix)",
+   "reason": "placeless CCIRA spelling: the name denotes all the committees (530 R2: W). Evidence today is Nantes only (target newest 50 and all 355 planned), so this mention is Nantes'; the target's older 1,069 mentions are unread"
+  },
+  {
+   "n": 32,
+   "org_id": 23517621,
+   "name": "CCIRAL",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 25518196,
+   "section_id": "ORG-0005",
+   "twin": false,
+   "target_id": 1179658,
+   "target_name_norm": "cciral",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "W",
+   "verdict_evidence_only": "N",
+   "guard_i_list": "NOT kept",
+   "reason": "bare acronym 'CCIRAL' (comité consultatif interrégional de règlement amiable des litiges): names any committee, no seat. Key not city-flagged, so its own mentions show at most one city; still placeless. The 575 prefix does not bind it and the compiled list has `ccira`, not `cciral`"
+  },
+  {
+   "n": 33,
+   "org_id": 22976247,
+   "name": "Comité consultatif interdépartemental de règlement amiable des litiges",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24544109,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 1163657,
+   "target_name_norm": "comité consultatif interdépartemental de règlement amiable des litiges",
+   "target_mentions": 1323,
+   "target_cities": [],
+   "planned_cities": [
+    "marseille",
+    "paris"
+   ],
+   "lists": [
+    "city_flagged#25"
+   ],
+   "verdict": "W",
+   "verdict_evidence_only": "W",
+   "guard_i_list": "kept (exact #2)",
+   "reason": "placeless; the key's cf35 mentions plan Marseille AND Paris (multi_city_planned): two committees under one key, the target (1,323 mentions, no city in its newest 50) pools them"
+  },
+  {
+   "n": 34,
+   "org_id": 22928785,
+   "name": "Comité consultatif interrégional de réglement amiable des différends ou litiges relatifs aux marchés publics",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24484531,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 1196898,
+   "target_name_norm": "comité consultatif interrégional de réglement amiable des différends ou litiges relatifs aux marchés publics",
+   "target_mentions": 82,
+   "target_cities": [],
+   "planned_cities": [
+    "paris"
+   ],
+   "lists": [
+    "ccira#5"
+   ],
+   "verdict": "W",
+   "verdict_evidence_only": "N",
+   "guard_i_list": "kept (prefix)",
+   "reason": "the fixture's long CCIRA form, placeless; target 82 mentions with no city in its newest 50; planned paris only (206)"
+  },
+  {
+   "n": 35,
+   "org_id": 23224318,
+   "name": "LE COMITE CONSULTATIF INTERREGIONAL DE REGLEMENT AMIABLE DES DIFFERENDS RELATIFS AUX MARCHES PUBLICS DE MARSEILLE",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24902764,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 21298621,
+   "target_name_norm": "le comite consultatif interregional de reglement amiable des differends relatifs aux marches publics de marseille",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "refused (no prefix match: 'le …')",
+   "reason": "names its seat (… DE MARSEILLE); seat-named target; key not city-flagged"
+  },
+  {
+   "n": 36,
+   "org_id": 23340599,
+   "name": "Comité consultatif interrégional de règlement amiable des différends ou Litiges relatifs aux marchés publics préfecture de la région Provence - alpes - côte d'azur",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 25201333,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 16701687,
+   "target_name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics préfecture de la région provence - alpes - côte d'azur",
+   "target_mentions": 32,
+   "target_cities": [],
+   "planned_cities": [
+    "marseille"
+   ],
+   "lists": [
+    "ccira#17"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "kept (prefix; R spared)",
+   "reason": "names its seat (préfecture de la région PACA = Marseille's committee); planned marseille"
+  },
+  {
+   "n": 37,
+   "org_id": 22956020,
+   "name": "CCIRAL - Comité consultatif interrégional de règlement amiable des litiges",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24518390,
+   "section_id": "ORG-0005",
+   "twin": false,
+   "target_id": 12932404,
+   "target_name_norm": "cciral - comité consultatif interrégional de règlement amiable des litiges",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "W",
+   "verdict_evidence_only": "N",
+   "guard_i_list": "NOT kept",
+   "reason": "'CCIRAL - comité consultatif interrégional …', placeless: names any committee. Key not city-flagged. Its fold starts with 'cciral', so the CCIRA prefix misses it (absent from the census's own ccira list)"
+  },
+  {
+   "n": 38,
+   "org_id": 23490717,
+   "name": "Comité Consultatif Interrégional de Réglement",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 25479694,
+   "section_id": "ORG-0005",
+   "twin": false,
+   "target_id": 2585842,
+   "target_name_norm": "comité consultatif interrégional de réglement",
+   "target_mentions": 448,
+   "target_cities": [
+    "lyon"
+   ],
+   "planned_cities": [
+    "lyon"
+   ],
+   "lists": [
+    "top#43",
+    "ccira#1"
+   ],
+   "verdict": "W",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "kept (prefix)",
+   "reason": "truncated placeless CCIRA spelling, names any committee (530 R2: W). Evidence today is Lyon only (target newest 50 and all 472 planned)"
+  },
+  {
+   "n": 39,
+   "org_id": 23268715,
+   "name": "Greffe du Tribunal Judiciaire de Lille",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24993820,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 14638458,
+   "target_name_norm": "greffe du tribunal judiciaire de lille",
+   "target_mentions": 881,
+   "target_cities": [],
+   "planned_cities": [
+    "lille"
+   ],
+   "lists": [
+    "top#49"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named registry (greffe du TJ de Lille) printed as Lot-Mediator; target is the same registry, planned lille"
+  },
+  {
+   "n": 40,
+   "org_id": 23277613,
+   "name": "Comité Consultatif Interdépartemental de Règlement Amiable des Litiges",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 25013749,
+   "section_id": "ORG-0005",
+   "twin": false,
+   "target_id": 1163657,
+   "target_name_norm": "comité consultatif interdépartemental de règlement amiable des litiges",
+   "target_mentions": 1323,
+   "target_cities": [],
+   "planned_cities": [
+    "marseille",
+    "paris"
+   ],
+   "lists": [
+    "city_flagged#25"
+   ],
+   "verdict": "W",
+   "verdict_evidence_only": "W",
+   "guard_i_list": "kept (exact #2)",
+   "reason": "same key as row 33: planned Marseille + Paris under one placeless name"
+  },
+  {
+   "n": 41,
+   "org_id": 30957997,
+   "name": "Tribunal administratif de Grenoble",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 45860298,
+   "section_id": "ORG-0004",
+   "twin": true,
+   "target_id": 1163404,
+   "target_name_norm": "tribunal administratif de grenoble",
+   "target_mentions": 40316,
+   "target_cities": [
+    "grenoble cedex"
+   ],
+   "planned_cities": [
+    "grenible",
+    "grenoble",
+    "grenoble cedex"
+   ],
+   "lists": [
+    "top#2",
+    "city_flagged#1"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "TA Grenoble printed as Lot-Mediator (twin in its notice); the target is the same TA, role mislabel only"
+  },
+  {
+   "n": 42,
+   "org_id": 23029050,
+   "name": "CCIRA de Bordeaux",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24619164,
+   "section_id": "ORG-0005",
+   "twin": false,
+   "target_id": 1176664,
+   "target_name_norm": "ccira de bordeaux",
+   "target_mentions": 5619,
+   "target_cities": [
+    "bordeaux",
+    "bordeaux cedex",
+    "merignac"
+   ],
+   "planned_cities": [
+    "bordeaux",
+    "bordeaux cedex",
+    "merignac"
+   ],
+   "lists": [
+    "top#26",
+    "city_flagged#13"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "seat-named (CCIRA de Bordeaux); target bordeaux / bordeaux cedex / merignac are its address variants"
+  },
+  {
+   "n": 43,
+   "org_id": 23252407,
+   "name": "CCIRA de Bordeaux",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24972355,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 1176664,
+   "target_name_norm": "ccira de bordeaux",
+   "target_mentions": 5619,
+   "target_cities": [
+    "bordeaux",
+    "bordeaux cedex",
+    "merignac"
+   ],
+   "planned_cities": [
+    "bordeaux",
+    "bordeaux cedex",
+    "merignac"
+   ],
+   "lists": [
+    "top#26",
+    "city_flagged#13"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 42"
+  },
+  {
+   "n": 44,
+   "org_id": 23493336,
+   "name": "CCIRA de Bordeaux",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 25483357,
+   "section_id": "ORG-0004",
+   "twin": false,
+   "target_id": 1176664,
+   "target_name_norm": "ccira de bordeaux",
+   "target_mentions": 5619,
+   "target_cities": [
+    "bordeaux",
+    "bordeaux cedex",
+    "merignac"
+   ],
+   "planned_cities": [
+    "bordeaux",
+    "bordeaux cedex",
+    "merignac"
+   ],
+   "lists": [
+    "top#26",
+    "city_flagged#13"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 42"
+  },
+  {
+   "n": 45,
+   "org_id": 23232732,
+   "name": "Comité consultatif Inter-régional de Règlement Amiable des Litiges (CCIRAL)",
+   "stratum": "mediator",
+   "role": "Lot-Mediator",
+   "notice_id": 24915486,
+   "section_id": "ORG-0005",
+   "twin": false,
+   "target_id": 3227980,
+   "target_name_norm": "comité consultatif inter-régional de règlement amiable des litiges (cciral)",
+   "target_mentions": 88,
+   "target_cities": [],
+   "planned_cities": [
+    "marseille"
+   ],
+   "lists": [
+    "top#42"
+   ],
+   "verdict": "W",
+   "verdict_evidence_only": "N",
+   "guard_i_list": "NOT kept",
+   "reason": "placeless ('… inter-régional … (CCIRAL)'); target 88 mentions with no city in its newest 50, planned marseille (490). The hyphen folds to 'inter regional', so the CCIRA prefix misses it (absent from ccira list)"
+  },
+  {
+   "n": 46,
+   "org_id": 23107001,
+   "name": "CH PIERRE OUDOT",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24734761,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 15049351,
+   "target_name_norm": "ch pierre oudot",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "proper name (Centre hospitalier Pierre Oudot, one hospital); key not city-flagged"
+  },
+  {
+   "n": 47,
+   "org_id": 23456108,
+   "name": "SIMACUR",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 25429548,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 4382715,
+   "target_name_norm": "simacur",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "distinctive syndicate acronym; key not city-flagged"
+  },
+  {
+   "n": 48,
+   "org_id": 22857366,
+   "name": "Département de Loire-Atlantique",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24392965,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 2411587,
+   "target_name_norm": "département de loire-atlantique",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one département; key not city-flagged"
+  },
+  {
+   "n": 49,
+   "org_id": 23454532,
+   "name": "CA du Pays de Dreux",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 25427148,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 22650131,
+   "target_name_norm": "ca du pays de dreux",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one agglomeration community (Pays de Dreux); key not city-flagged"
+  },
+  {
+   "n": 50,
+   "org_id": 31534291,
+   "name": "NANTES MÉTROPOLE HABITAT Office Public de l'Habitat de la Métropole Nantaise",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 46717229,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 9180838,
+   "target_name_norm": "nantes métropole habitat office public de l'habitat de la métropole nantaise",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one OPH (Nantes Métropole Habitat), full legal name"
+  },
+  {
+   "n": 51,
+   "org_id": 22744492,
+   "name": "Metz Métropole",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24240996,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 10845771,
+   "target_name_norm": "metz métropole",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one metropolis"
+  },
+  {
+   "n": 52,
+   "org_id": 23170061,
+   "name": "Eaux de Vienne - SIVEER",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24826395,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 8759339,
+   "target_name_norm": "eaux de vienne - siveer",
+   "target_mentions": 54,
+   "target_cities": [
+    "poitiers",
+    "poitiers cedex"
+   ],
+   "planned_cities": [
+    "poitiers",
+    "poitiers cedex"
+   ],
+   "lists": [
+    "city_flagged#82"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one syndicate; target and planned poitiers / poitiers cedex"
+  },
+  {
+   "n": 53,
+   "org_id": 23132521,
+   "name": "Département de la Manche",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24773798,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1190509,
+   "target_name_norm": "département de la manche",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one département; key not city-flagged"
+  },
+  {
+   "n": 54,
+   "org_id": 22832998,
+   "name": "Tours métropole Val de Loire",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24361442,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 9685765,
+   "target_name_norm": "tours métropole val de loire",
+   "target_mentions": 445,
+   "target_cities": [
+    "tours"
+   ],
+   "planned_cities": [
+    "tours",
+    "tours cedex 3"
+   ],
+   "lists": [
+    "city_flagged#44"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one metropolis; city_absent 43 is 'tours cedex 3' vs 'tours'"
+  },
+  {
+   "n": 55,
+   "org_id": 23036283,
+   "name": "Atlantique Habitations",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24629607,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1249377,
+   "target_name_norm": "atlantique habitations",
+   "target_mentions": 494,
+   "target_cities": [
+    "saint herlbain"
+   ],
+   "planned_cities": [
+    "herbleain",
+    "saint hebrlain",
+    "saint herblain",
+    "saint herlbain"
+   ],
+   "lists": [
+    "city_flagged#92"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one ESH; planned cities are misspellings of Saint-Herblain"
+  },
+  {
+   "n": 56,
+   "org_id": 31626938,
+   "name": "CA du Pays de Dreux",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 46963040,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 22650131,
+   "target_name_norm": "ca du pays de dreux",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "as row 49"
+  },
+  {
+   "n": 57,
+   "org_id": 23159756,
+   "name": "Département de la Haute-Savoie",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24811874,
+   "section_id": "ORG-0003",
+   "twin": true,
+   "target_id": 1177949,
+   "target_name_norm": "département de la haute-savoie",
+   "target_mentions": 3277,
+   "target_cities": [],
+   "planned_cities": [
+    "annecy",
+    "annecy cedex"
+   ],
+   "lists": [
+    "top#37",
+    "city_flagged#16"
+   ],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one département; planned annecy / annecy cedex (AddInfo twin in its notice)"
+  },
+  {
+   "n": 58,
+   "org_id": 23589075,
+   "name": "Eau du Grand Lyon - La Régie",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 25624076,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 19458556,
+   "target_name_norm": "eau du grand lyon - la régie",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one régie (Eau du Grand Lyon)"
+  },
+  {
+   "n": 59,
+   "org_id": 30956421,
+   "name": "Ville de Bastia",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 45855056,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1289614,
+   "target_name_norm": "ville de bastia",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one commune (Bastia, a unique name)"
+  },
+  {
+   "n": 60,
+   "org_id": 22805349,
+   "name": "Ville du Bouscat",
+   "stratum": "add_info",
+   "role": "Lot-AddInfo",
+   "notice_id": 24326926,
+   "section_id": "ORG-0003",
+   "twin": false,
+   "target_id": 1201411,
+   "target_name_norm": "ville du bouscat",
+   "target_mentions": null,
+   "target_cities": null,
+   "planned_cities": null,
+   "lists": [],
+   "verdict": "R",
+   "verdict_evidence_only": "R",
+   "guard_i_list": "-",
+   "reason": "one commune (Le Bouscat, a unique name)"
+  }
+ ]
+}

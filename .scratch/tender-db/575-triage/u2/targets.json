@@ -1,0 +1,7783 @@
+{
+ "source": "hex-census job 2770 (.scratch/tender-db/575-triage/hex_census_2770.json), targets.top[:30], targets.ccira (52), targets.city_flagged (436)",
+ "standard": "530 decision §A5 (top targets bar 0 W) and §A6 (a target that already holds two bodies scores W; a name that denotes more than one body scores W; a W name goes on the unsafe list)",
+ "verdict_basis": {
+  "evidence": "target or planned cities, or a public GET",
+  "name": "the name denotes more than one body (placeless kind-of-body name, homonym)",
+  "agreement": "place-bearing name whose target and planned cities agree up to spelling / cedex / member commune"
+ },
+ "judged": [
+  {
+   "name_norm": "avenue-web systèmes",
+   "id": 8301019,
+   "cf35_mentions": 71601,
+   "verdict": "R",
+   "reason": "the eSender itself; target 8301019 is the platform's own NULL row (1 mention), planned city Seyssinet-Pariset = AWS head office",
+   "basis": "evidence",
+   "lists": [
+    "top#1"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "tribunal administratif de grenoble",
+   "id": 1163404,
+   "cf35_mentions": 10076,
+   "verdict": "R",
+   "reason": "one tribunal; city_absent 10,005 is spelling only (target 'grenoble cedex' vs planned grenoble / grenible / grenoble cedex)",
+   "basis": "agreement",
+   "lists": [
+    "top#2",
+    "city_flagged#1"
+   ],
+   "target_mentions": 40316
+  },
+  {
+   "name_norm": "tribunal administratif de lyon",
+   "id": 1163241,
+   "cf35_mentions": 6777,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#3",
+    "city_flagged#2"
+   ],
+   "target_mentions": 46596
+  },
+  {
+   "name_norm": "tribunal administratif de toulouse",
+   "id": 1163070,
+   "cf35_mentions": 5728,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#4"
+   ],
+   "target_mentions": 32677
+  },
+  {
+   "name_norm": "tribunal administratif de montpellier",
+   "id": 1163864,
+   "cf35_mentions": 5553,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#5",
+    "city_flagged#3"
+   ],
+   "target_mentions": 27265
+  },
+  {
+   "name_norm": "tribunal administratif de marseille",
+   "id": 1162955,
+   "cf35_mentions": 4886,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#6"
+   ],
+   "target_mentions": 35999
+  },
+  {
+   "name_norm": "tribunal administratif d'orléans",
+   "id": 1163223,
+   "cf35_mentions": 4510,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#7"
+   ],
+   "target_mentions": 26883
+  },
+  {
+   "name_norm": "tribunal administratif de rouen",
+   "id": 1163582,
+   "cf35_mentions": 4442,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#8"
+   ],
+   "target_mentions": 23256
+  },
+  {
+   "name_norm": "tribunal administratif de nantes",
+   "id": 1163502,
+   "cf35_mentions": 4431,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#9",
+    "city_flagged#4"
+   ],
+   "target_mentions": 47816
+  },
+  {
+   "name_norm": "tribunal administratif de lille",
+   "id": 1163457,
+   "cf35_mentions": 4338,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#10",
+    "city_flagged#5"
+   ],
+   "target_mentions": 52385
+  },
+  {
+   "name_norm": "tribunal administratif de bordeaux",
+   "id": 1163131,
+   "cf35_mentions": 4223,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#11",
+    "city_flagged#6"
+   ],
+   "target_mentions": 30364
+  },
+  {
+   "name_norm": "tribunal administratif de strasbourg",
+   "id": 1163701,
+   "cf35_mentions": 4119,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#12"
+   ],
+   "target_mentions": 29128
+  },
+  {
+   "name_norm": "tribunal administratif de versailles",
+   "id": 1163158,
+   "cf35_mentions": 3445,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#13",
+    "city_flagged#7"
+   ],
+   "target_mentions": 36248
+  },
+  {
+   "name_norm": "tribunal administratif de caen",
+   "id": 1166355,
+   "cf35_mentions": 3409,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#14"
+   ],
+   "target_mentions": 14538
+  },
+  {
+   "name_norm": "tribunal administratif de cergy-pontoise",
+   "id": 1163111,
+   "cf35_mentions": 3288,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#15",
+    "city_flagged#8"
+   ],
+   "target_mentions": 35546
+  },
+  {
+   "name_norm": "tribunal judiciaire de paris",
+   "id": 8835,
+   "cf35_mentions": 2722,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#16"
+   ],
+   "target_mentions": 11764
+  },
+  {
+   "name_norm": "tribunal administratif de pau",
+   "id": 1163196,
+   "cf35_mentions": 2443,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#17",
+    "city_flagged#9"
+   ],
+   "target_mentions": 18015
+  },
+  {
+   "name_norm": "tribunal administratif de poitiers",
+   "id": 1165316,
+   "cf35_mentions": 2377,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#18"
+   ],
+   "target_mentions": 14287
+  },
+  {
+   "name_norm": "tribunal administratif de melun",
+   "id": 1165479,
+   "cf35_mentions": 2140,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#19"
+   ],
+   "target_mentions": 34275
+  },
+  {
+   "name_norm": "tribunal administratif de clermont-ferrand",
+   "id": 1163465,
+   "cf35_mentions": 1787,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#20"
+   ],
+   "target_mentions": 10395
+  },
+  {
+   "name_norm": "tribunal administratif de toulon",
+   "id": 1163191,
+   "cf35_mentions": 1726,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#21",
+    "city_flagged#10"
+   ],
+   "target_mentions": 22310
+  },
+  {
+   "name_norm": "tribunal administratif de nîmes",
+   "id": 1163138,
+   "cf35_mentions": 1679,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#22",
+    "city_flagged#11"
+   ],
+   "target_mentions": 14493
+  },
+  {
+   "name_norm": "tribunal administratif de paris",
+   "id": 1163143,
+   "cf35_mentions": 1675,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#23"
+   ],
+   "target_mentions": 94831
+  },
+  {
+   "name_norm": "tribunal administratif de saint-denis",
+   "id": 1164108,
+   "cf35_mentions": 1642,
+   "verdict": "R",
+   "reason": "the only TA named Saint-Denis is La Réunion's (Seine-Saint-Denis is TA Montreuil); 'saint denis' vs 'saint denis de la reunion' is one city",
+   "basis": "agreement",
+   "lists": [
+    "top#24",
+    "city_flagged#12"
+   ],
+   "target_mentions": 5922
+  },
+  {
+   "name_norm": "tribunal administratif d'amiens",
+   "id": 1164778,
+   "cf35_mentions": 1608,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#25"
+   ],
+   "target_mentions": 17436
+  },
+  {
+   "name_norm": "ccira de bordeaux",
+   "id": 1176664,
+   "cf35_mentions": 1562,
+   "verdict": "R",
+   "reason": "one committee; Mérignac / Bordeaux cedex are its own address variants",
+   "basis": "agreement",
+   "lists": [
+    "top#26",
+    "city_flagged#13"
+   ],
+   "target_mentions": 5619
+  },
+  {
+   "name_norm": "tribunal judiciaire de marseille",
+   "id": 14658291,
+   "cf35_mentions": 1542,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#27"
+   ],
+   "target_mentions": 2248
+  },
+  {
+   "name_norm": "tribunal administratif de bastia",
+   "id": 1163175,
+   "cf35_mentions": 1523,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#28"
+   ],
+   "target_mentions": 10110
+  },
+  {
+   "name_norm": "tribunal administratif de besançon",
+   "id": 1165058,
+   "cf35_mentions": 1494,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#29"
+   ],
+   "target_mentions": 10852
+  },
+  {
+   "name_norm": "tribunal administratif de montreuil",
+   "id": 1164672,
+   "cf35_mentions": 1330,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "top#30"
+   ],
+   "target_mentions": 26965
+  },
+  {
+   "name_norm": "comité consultatif interrégional de réglement",
+   "id": 2585842,
+   "cf35_mentions": 472,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; truncated name, denotes any committee; Lyon-only evidence today (448-mention target)",
+   "basis": "name",
+   "lists": [
+    "ccira#1"
+   ],
+   "target_mentions": 448
+  },
+  {
+   "name_norm": "comité consultatif interrégional pour le règlement amiable des marchés publics",
+   "id": 1167628,
+   "cf35_mentions": 355,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; nantes-only evidence today (1119-mention target, older cities unread)",
+   "basis": "name",
+   "lists": [
+    "ccira#2"
+   ],
+   "target_mentions": 1119
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics",
+   "id": 1169310,
+   "cf35_mentions": 279,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; the official long name of all seven committees; 4,732-mention target (newest 50 Nantes, older mentions unread)",
+   "basis": "name",
+   "lists": [
+    "ccira#3",
+    "city_flagged#24"
+   ],
+   "target_mentions": 4732
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiables des litiges",
+   "id": 1196158,
+   "cf35_mentions": 220,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; nantes-only evidence today (662-mention target, older cities unread)",
+   "basis": "name",
+   "lists": [
+    "ccira#4"
+   ],
+   "target_mentions": 662
+  },
+  {
+   "name_norm": "comité consultatif interrégional de réglement amiable des différends ou litiges relatifs aux marchés publics",
+   "id": 1196898,
+   "cf35_mentions": 206,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; the fixture's long form (é typo); denotes any committee; Paris-only evidence today",
+   "basis": "name",
+   "lists": [
+    "ccira#5"
+   ],
+   "target_mentions": 82
+  },
+  {
+   "name_norm": "comité consultatif interrégional de paris, règlement amiable des litiges",
+   "id": 1952935,
+   "cf35_mentions": 186,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#6"
+   ],
+   "target_mentions": 488
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges",
+   "id": 1169609,
+   "cf35_mentions": 178,
+   "verdict": "W",
+   "reason": "placeless CCIRA name; planned bordeaux, marseille, nantes, paris",
+   "basis": "evidence",
+   "lists": [
+    "ccira#7",
+    "city_flagged#34"
+   ],
+   "target_mentions": 4979
+  },
+  {
+   "name_norm": "comité consultatif interrégional - prefecture de région sgar",
+   "id": 19913046,
+   "cf35_mentions": 122,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; a SGAR sits in every region; Marseille-only evidence today; the 56 SGAR one-mention rows of the triage GET fold here",
+   "basis": "name",
+   "lists": [
+    "ccira#8"
+   ],
+   "target_mentions": 81
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable de nancy",
+   "id": 1240088,
+   "cf35_mentions": 112,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#9"
+   ],
+   "target_mentions": 678
+  },
+  {
+   "name_norm": "comité consultatif interrégional des litiges en matière de marchés publics",
+   "id": 4867485,
+   "cf35_mentions": 110,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; lyon cedex-only evidence today (423-mention target, older cities unread)",
+   "basis": "name",
+   "lists": [
+    "ccira#10"
+   ],
+   "target_mentions": 423
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics de marseille",
+   "id": 8152284,
+   "cf35_mentions": 98,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#11"
+   ],
+   "target_mentions": 166
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges des marchés publics",
+   "id": 1307171,
+   "cf35_mentions": 97,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; paris-only evidence today (611-mention target, older cities unread)",
+   "basis": "name",
+   "lists": [
+    "ccira#12"
+   ],
+   "target_mentions": 611
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges relatifs aux marchés publics",
+   "id": 1163197,
+   "cf35_mentions": 90,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; placeless; 2,636-mention target (cities unread); planned Ajaccio",
+   "basis": "name",
+   "lists": [
+    "ccira#13"
+   ],
+   "target_mentions": 2636
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différents relatifs aux marchés publics de marseille (ccira de marseille)",
+   "id": 21482118,
+   "cf35_mentions": 85,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#14"
+   ],
+   "target_mentions": 18
+  },
+  {
+   "name_norm": "comité consultatif interrégional du règlement amiable",
+   "id": 1446562,
+   "cf35_mentions": 70,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; lyon-only evidence today (310-mention target, older cities unread)",
+   "basis": "name",
+   "lists": [
+    "ccira#15"
+   ],
+   "target_mentions": 310
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatif aux marchés publics de paris",
+   "id": 10581604,
+   "cf35_mentions": 67,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#16"
+   ],
+   "target_mentions": 190
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics préfecture de la région provence - alpes - côte d'azur",
+   "id": 16701687,
+   "cf35_mentions": 63,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#17"
+   ],
+   "target_mentions": 32
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends relatifs aux marchés publics de marseille (cciral)",
+   "id": 17544562,
+   "cf35_mentions": 63,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#18"
+   ],
+   "target_mentions": 66
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics - préfecture de meurthe et moselle",
+   "id": 13190471,
+   "cf35_mentions": 60,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#19"
+   ],
+   "target_mentions": 61
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics de lyon",
+   "id": 1184505,
+   "cf35_mentions": 58,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#20"
+   ],
+   "target_mentions": 757
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges relatifs aux marchés publics (ccira)",
+   "id": 1614631,
+   "cf35_mentions": 57,
+   "verdict": "W",
+   "reason": "target city Nancy (Nancy's committee), planned Bordeaux cedex: a different committee",
+   "basis": "evidence",
+   "lists": [
+    "ccira#21",
+    "city_flagged#68"
+   ],
+   "target_mentions": 78
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends relatifs aux marchés publics de lyon",
+   "id": 13400922,
+   "cf35_mentions": 56,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#22",
+    "city_flagged#70"
+   ],
+   "target_mentions": 231
+  },
+  {
+   "name_norm": "comité consultatif interrégional du règlement amiable des litiges",
+   "id": 1247936,
+   "cf35_mentions": 56,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; nancy-only evidence today (851-mention target, older cities unread)",
+   "basis": "name",
+   "lists": [
+    "ccira#23"
+   ],
+   "target_mentions": 851
+  },
+  {
+   "name_norm": "comité consultatif interrégional de réglement amiable des différends ou litiges relatifs aux marchés publics de lyon",
+   "id": 1483978,
+   "cf35_mentions": 54,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#24"
+   ],
+   "target_mentions": 49
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics de versailles",
+   "id": 9894992,
+   "cf35_mentions": 43,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex (Versailles committee seated in Paris 15)",
+   "basis": "agreement",
+   "lists": [
+    "ccira#25"
+   ],
+   "target_mentions": 42
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement des différents de paris",
+   "id": 14986738,
+   "cf35_mentions": 38,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#26"
+   ],
+   "target_mentions": 29
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics de paris",
+   "id": 1502440,
+   "cf35_mentions": 36,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#27"
+   ],
+   "target_mentions": 1309
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable de lyon",
+   "id": 14242692,
+   "cf35_mentions": 35,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#28"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "comité consultatif interrégional de réglement amiable des litiges de bordeaux",
+   "id": 14959705,
+   "cf35_mentions": 35,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex (Bordeaux committee, Mérignac address)",
+   "basis": "agreement",
+   "lists": [
+    "ccira#29"
+   ],
+   "target_mentions": 28
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges relatifs aux marchés publics de nantes",
+   "id": 1224999,
+   "cf35_mentions": 20,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#30"
+   ],
+   "target_mentions": 219
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges relatif aux marchés publics",
+   "id": 2432686,
+   "cf35_mentions": 19,
+   "verdict": "W",
+   "reason": "placeless CCIRA name; target cities Paris + Saint-Denis already",
+   "basis": "evidence",
+   "lists": [
+    "ccira#31",
+    "city_flagged#148"
+   ],
+   "target_mentions": 45
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différents ou litiges relatifs aux marchés publics de lyon",
+   "id": 1450776,
+   "cf35_mentions": 16,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#32"
+   ],
+   "target_mentions": 80
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges (cciral)",
+   "id": 1227238,
+   "cf35_mentions": 16,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; placeless (CCIRAL is an acronym, not a seat; Marseille's committee uses it); 405-mention target",
+   "basis": "name",
+   "lists": [
+    "ccira#33"
+   ],
+   "target_mentions": 405
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges relatifs aux marchés publics de bordeaux",
+   "id": 1168993,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#34"
+   ],
+   "target_mentions": 1430
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics de bordeaux",
+   "id": 2103651,
+   "cf35_mentions": 13,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#35",
+    "city_flagged#182"
+   ],
+   "target_mentions": 299
+  },
+  {
+   "name_norm": "comité consultatif interrégional de nancy de règlement amiable des litiges relatifs aux marchés publics",
+   "id": 16078359,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#36"
+   ],
+   "target_mentions": 35
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges de bordeaux",
+   "id": 8254035,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#37"
+   ],
+   "target_mentions": 76
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends relatifs aux marchés publics",
+   "id": 8866068,
+   "cf35_mentions": 10,
+   "verdict": "W",
+   "reason": "placeless CCIRA name; planned Lyon + Nantes",
+   "basis": "evidence",
+   "lists": [
+    "ccira#38",
+    "city_flagged#217"
+   ],
+   "target_mentions": 340
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des diffférends et litiges relatif aux marchés publics",
+   "id": null,
+   "cf35_mentions": 8,
+   "verdict": "N",
+   "reason": "placeless CCIRA spelling; missing target would be minted for one city (marseille) today",
+   "basis": "name",
+   "lists": [
+    "ccira#39"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges en matière de marchés publics de la région rhône-alpes",
+   "id": 12570830,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#40",
+    "city_flagged#239"
+   ],
+   "target_mentions": 69
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des litiges relatifs marches publics de lyon",
+   "id": null,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#41"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "comite consultatif interregional de reglement amiable des litiges relatifs aux marches publics de lyon",
+   "id": 2398700,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#42"
+   ],
+   "target_mentions": 5
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends et litiges relatifs aux marchés publics (ccira) de nantes",
+   "id": 8997820,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#43"
+   ],
+   "target_mentions": 13
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics de marseille, secrétariat général pour les affaires régionales, cciral",
+   "id": 9633473,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#44"
+   ],
+   "target_mentions": 62
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends et litiges en matière de marchés publics de marseille ( c.c.i.r.a.l)",
+   "id": 18836122,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#45"
+   ],
+   "target_mentions": 5
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends relatifs aux marchés publics demarseille",
+   "id": null,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#46"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement des litiges en matière de marchés publics",
+   "id": 1318162,
+   "cf35_mentions": 4,
+   "verdict": "W",
+   "reason": "placeless CCIRA name denotes all seven committees; marseille-only evidence today (71-mention target, older cities unread)",
+   "basis": "name",
+   "lists": [
+    "ccira#47"
+   ],
+   "target_mentions": 71
+  },
+  {
+   "name_norm": "comité consultatif interrégional de paris",
+   "id": 1166008,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#48"
+   ],
+   "target_mentions": 105
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends relatifs aux marchés publics de paris. préfecture de la région île-de-france - préfecture de paris direction des affaires juridiques",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#49"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics de nantes",
+   "id": 1169171,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#50"
+   ],
+   "target_mentions": 134
+  },
+  {
+   "name_norm": "comité consultatif interrégional de règlement des litiges en matière de marchés publics, préfecture de la région provence - alpes - côte d'azur",
+   "id": null,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "names its seat; target/planned cities agree up to cedex",
+   "basis": "agreement",
+   "lists": [
+    "ccira#51"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "comité consultatif interrégionalde règlement amiable des diférents ou litige relatifs aux marchés publics",
+   "id": null,
+   "cf35_mentions": 1,
+   "verdict": "N",
+   "reason": "placeless CCIRA spelling; missing target would be minted for one city (lyon) today",
+   "basis": "name",
+   "lists": [
+    "ccira#52"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "tribunal judiciaire de nanterre",
+   "id": 14609486,
+   "cf35_mentions": 1119,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#14"
+   ],
+   "target_mentions": 5425
+  },
+  {
+   "name_norm": "tribunal administratif de nice",
+   "id": 1163597,
+   "cf35_mentions": 983,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#15"
+   ],
+   "target_mentions": 20672
+  },
+  {
+   "name_norm": "département de la haute-savoie",
+   "id": 1177949,
+   "cf35_mentions": 642,
+   "verdict": "R",
+   "reason": "one département (Annecy)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#16"
+   ],
+   "target_mentions": 3277
+  },
+  {
+   "name_norm": "tribunal judiciaire de lyon",
+   "id": 14610123,
+   "cf35_mentions": 590,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#17"
+   ],
+   "target_mentions": 2368
+  },
+  {
+   "name_norm": "tribunal administratif de nancy",
+   "id": 1163795,
+   "cf35_mentions": 570,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#18"
+   ],
+   "target_mentions": 14378
+  },
+  {
+   "name_norm": "greffe du tribunal administratif de lyon",
+   "id": 1163242,
+   "cf35_mentions": 528,
+   "verdict": "R",
+   "reason": "TA Lyon's registry; city_absent 528 is 'lyon' vs 'lyon cedex 3'",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#19"
+   ],
+   "target_mentions": 5248
+  },
+  {
+   "name_norm": "comité consultatif interdépartemental de versailles de règlement amiable des litiges relatifs aux marchés publics",
+   "id": 1165581,
+   "cf35_mentions": 413,
+   "verdict": "R",
+   "reason": "the Versailles committee sits at the Île-de-France prefecture, 5 rue Leblanc, Paris 15: target cities are that address",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#20"
+   ],
+   "target_mentions": 2796
+  },
+  {
+   "name_norm": "département de la vendée",
+   "id": 1640823,
+   "cf35_mentions": 304,
+   "verdict": "R",
+   "reason": "one département; Les Sables-d'Olonne / Luçon are its local sites",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#21"
+   ],
+   "target_mentions": 43
+  },
+  {
+   "name_norm": "médiation des entreprises",
+   "id": 8204036,
+   "cf35_mentions": 288,
+   "verdict": "R",
+   "reason": "one national service (Médiateur des entreprises); 'nantes' vs 'nantes cedex 1'",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#22"
+   ],
+   "target_mentions": 47
+  },
+  {
+   "name_norm": "tribunal administratif",
+   "id": 1163218,
+   "cf35_mentions": 281,
+   "verdict": "W",
+   "reason": "bare name of every TA: target 1163218 (99,159 mentions) and planned Bastia, Clermont-Ferrand, Grenoble, Montpellier, Saint-Denis; already on 530 GUID_TWIN_UNSAFE_NAMES",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#23"
+   ],
+   "target_mentions": 99159
+  },
+  {
+   "name_norm": "comité consultatif interdépartemental de règlement amiable des litiges",
+   "id": 1163657,
+   "cf35_mentions": 278,
+   "verdict": "W",
+   "reason": "placeless; planned Marseille + Paris: two committees under one key (1,323-mention target)",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#25"
+   ],
+   "target_mentions": 1323
+  },
+  {
+   "name_norm": "tribunal judiciaire de rennes",
+   "id": 14590372,
+   "cf35_mentions": 264,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#26"
+   ],
+   "target_mentions": 1317
+  },
+  {
+   "name_norm": "tribunal administratif de fort-de-france",
+   "id": 1175105,
+   "cf35_mentions": 250,
+   "verdict": "R",
+   "reason": "TA de la Martinique sits in Schoelcher (Fort-de-France agglomeration); one tribunal",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#27"
+   ],
+   "target_mentions": 1922
+  },
+  {
+   "name_norm": "tribunal judiciaire de toulouse",
+   "id": 14932995,
+   "cf35_mentions": 235,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#28"
+   ],
+   "target_mentions": 298
+  },
+  {
+   "name_norm": "ccira de marseille",
+   "id": 8064428,
+   "cf35_mentions": 223,
+   "verdict": "R",
+   "reason": "one committee; 'marseille' vs 'marseille cedex 06'",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#29"
+   ],
+   "target_mentions": 380
+  },
+  {
+   "name_norm": "tribunal judiciaire de metz",
+   "id": 15762268,
+   "cf35_mentions": 211,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#30"
+   ],
+   "target_mentions": 657
+  },
+  {
+   "name_norm": "eurométropole de strasbourg",
+   "id": 6174352,
+   "cf35_mentions": 205,
+   "verdict": "R",
+   "reason": "one body; strasbourg vs strasbourg cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#31"
+   ],
+   "target_mentions": 926
+  },
+  {
+   "name_norm": "ville de strasbourg",
+   "id": 1174297,
+   "cf35_mentions": 204,
+   "verdict": "R",
+   "reason": "one commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#32"
+   ],
+   "target_mentions": 2681
+  },
+  {
+   "name_norm": "greffe du tribunal judiciaire de paris",
+   "id": 14596190,
+   "cf35_mentions": 186,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#33"
+   ],
+   "target_mentions": 3356
+  },
+  {
+   "name_norm": "tribunal de grande instance de bordeaux",
+   "id": 1163888,
+   "cf35_mentions": 160,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#35"
+   ],
+   "target_mentions": 2078
+  },
+  {
+   "name_norm": "ville de limoges - service de la commande publique",
+   "id": 1192068,
+   "cf35_mentions": 153,
+   "verdict": "R",
+   "reason": "Limoges named; cedex variant",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#36"
+   ],
+   "target_mentions": 260
+  },
+  {
+   "name_norm": "conseil départemental du nord",
+   "id": 6710430,
+   "cf35_mentions": 150,
+   "verdict": "R",
+   "reason": "one département (Lille)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#37"
+   ],
+   "target_mentions": 457
+  },
+  {
+   "name_norm": "tribunal judiciaire",
+   "id": 10082662,
+   "cf35_mentions": 148,
+   "verdict": "W",
+   "reason": "bare name of every TJ; planned Lille + Lyon; 5,327-mention target",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#38"
+   ],
+   "target_mentions": 5327
+  },
+  {
+   "name_norm": "tribunal judiciaire d'annecy",
+   "id": 14834187,
+   "cf35_mentions": 146,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#39"
+   ],
+   "target_mentions": 72
+  },
+  {
+   "name_norm": "comité consultatif de règlement amiable des litiges",
+   "id": 1171446,
+   "cf35_mentions": 134,
+   "verdict": "W",
+   "reason": "placeless; target city Nancy, planned Lyon + Nantes",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#40"
+   ],
+   "target_mentions": 1896
+  },
+  {
+   "name_norm": "tribunal de grande instance de nanterre",
+   "id": 1180450,
+   "cf35_mentions": 131,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#41"
+   ],
+   "target_mentions": 8484
+  },
+  {
+   "name_norm": "ccas",
+   "id": 1206088,
+   "cf35_mentions": 121,
+   "verdict": "W",
+   "reason": "placeless; planned 35 cities; GET: target 1206088 already pools CCAS / communes of Besançon, Châtellerault, Saint-Rémy-de-Provence ...",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#42"
+   ],
+   "target_mentions": 852
+  },
+  {
+   "name_norm": "oph var habitat",
+   "id": 1327327,
+   "cf35_mentions": 119,
+   "verdict": "R",
+   "reason": "one OPH (Toulon; La Valette-du-Var is adjacent)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#43"
+   ],
+   "target_mentions": 430
+  },
+  {
+   "name_norm": "tours métropole val de loire",
+   "id": 9685765,
+   "cf35_mentions": 117,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#44"
+   ],
+   "target_mentions": 445
+  },
+  {
+   "name_norm": "région grand est",
+   "id": 8151783,
+   "cf35_mentions": 110,
+   "verdict": "R",
+   "reason": "one region with three seats (Strasbourg, Metz, Châlons)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#45"
+   ],
+   "target_mentions": 984
+  },
+  {
+   "name_norm": "saint-etienne metropole",
+   "id": 19715094,
+   "cf35_mentions": 107,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#46"
+   ],
+   "target_mentions": 78
+  },
+  {
+   "name_norm": "bordeaux métropole",
+   "id": 6336369,
+   "cf35_mentions": 97,
+   "verdict": "R",
+   "reason": "one body (Pessac is a member site)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#47"
+   ],
+   "target_mentions": 2048
+  },
+  {
+   "name_norm": "service de la commande publique",
+   "id": 3443,
+   "cf35_mentions": 97,
+   "verdict": "W",
+   "reason": "generic department label (587); target cities Argentan, Hazebrouck, Les Mureaux, Val-de-Reuil; planned 12 more cities",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#48"
+   ],
+   "target_mentions": 1026
+  },
+  {
+   "name_norm": "métropole rouen normandie",
+   "id": 6128976,
+   "cf35_mentions": 94,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#49"
+   ],
+   "target_mentions": 620
+  },
+  {
+   "name_norm": "centre communal d'action sociale",
+   "id": 1174257,
+   "cf35_mentions": 93,
+   "verdict": "W",
+   "reason": "placeless; target cities Levallois + Versailles, planned 18 cities",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#50"
+   ],
+   "target_mentions": 2565
+  },
+  {
+   "name_norm": "ville de montpellier",
+   "id": 1207939,
+   "cf35_mentions": 92,
+   "verdict": "R",
+   "reason": "one commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#51"
+   ],
+   "target_mentions": 1395
+  },
+  {
+   "name_norm": "conseil départemental du val-d'oise",
+   "id": 7980854,
+   "cf35_mentions": 91,
+   "verdict": "R",
+   "reason": "one département (Cergy)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#52"
+   ],
+   "target_mentions": 12
+  },
+  {
+   "name_norm": "département des yvelines",
+   "id": 1303178,
+   "cf35_mentions": 90,
+   "verdict": "R",
+   "reason": "one département",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#53"
+   ],
+   "target_mentions": 142
+  },
+  {
+   "name_norm": "sytral mobilités",
+   "id": 20357836,
+   "cf35_mentions": 85,
+   "verdict": "R",
+   "reason": "one body (Lyon)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#54"
+   ],
+   "target_mentions": 14
+  },
+  {
+   "name_norm": "tribunal administratif de la réunion",
+   "id": 1190585,
+   "cf35_mentions": 84,
+   "verdict": "R",
+   "reason": "one tribunal (Saint-Denis de La Réunion)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#55"
+   ],
+   "target_mentions": 2298
+  },
+  {
+   "name_norm": "conseil départemental de l'essonne",
+   "id": 6891187,
+   "cf35_mentions": 81,
+   "verdict": "R",
+   "reason": "one département (Évry)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#56"
+   ],
+   "target_mentions": 110
+  },
+  {
+   "name_norm": "ville de limoges",
+   "id": 1190852,
+   "cf35_mentions": 81,
+   "verdict": "R",
+   "reason": "one commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#57"
+   ],
+   "target_mentions": 1243
+  },
+  {
+   "name_norm": "gpmm",
+   "id": 1383923,
+   "cf35_mentions": 76,
+   "verdict": "R",
+   "reason": "Grand Port Maritime de Marseille; Port-Saint-Louis-du-Rhône is its western basin",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#58"
+   ],
+   "target_mentions": 19
+  },
+  {
+   "name_norm": "département des hauts-de-seine",
+   "id": 1192140,
+   "cf35_mentions": 74,
+   "verdict": "R",
+   "reason": "one département (Nanterre)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#59"
+   ],
+   "target_mentions": 170
+  },
+  {
+   "name_norm": "mairie d'annecy",
+   "id": 12719408,
+   "cf35_mentions": 72,
+   "verdict": "R",
+   "reason": "one commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#60"
+   ],
+   "target_mentions": 23
+  },
+  {
+   "name_norm": "centre hospitalier de cayenne",
+   "id": 1405548,
+   "cf35_mentions": 70,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#61"
+   ],
+   "target_mentions": 320
+  },
+  {
+   "name_norm": "ville de montauban",
+   "id": 1175472,
+   "cf35_mentions": 68,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#62"
+   ],
+   "target_mentions": 1066
+  },
+  {
+   "name_norm": "régie immobilière ville de paris",
+   "id": 17096451,
+   "cf35_mentions": 65,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#63"
+   ],
+   "target_mentions": 51
+  },
+  {
+   "name_norm": "mairie",
+   "id": 1163705,
+   "cf35_mentions": 64,
+   "verdict": "W",
+   "reason": "placeless; planned 37 communes; 1,722-mention target",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#64"
+   ],
+   "target_mentions": 1722
+  },
+  {
+   "name_norm": "département du nord",
+   "id": 4039622,
+   "cf35_mentions": 63,
+   "verdict": "R",
+   "reason": "one département (Lille)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#65"
+   ],
+   "target_mentions": 50
+  },
+  {
+   "name_norm": "brgm",
+   "id": 1166409,
+   "cf35_mentions": 59,
+   "verdict": "R",
+   "reason": "one national body (Orléans head office, regional sites)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#66"
+   ],
+   "target_mentions": 472
+  },
+  {
+   "name_norm": "haute-savoie habitat",
+   "id": 2456177,
+   "cf35_mentions": 58,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#67"
+   ],
+   "target_mentions": 167
+  },
+  {
+   "name_norm": "direction de la commande publique",
+   "id": 1166638,
+   "cf35_mentions": 57,
+   "verdict": "W",
+   "reason": "587 example row 1166638; target cities Levallois, Lyon, Saint-Denis, Saint-Tropez, Sainte-Clotilde",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#69"
+   ],
+   "target_mentions": 1356
+  },
+  {
+   "name_norm": "grand annecy",
+   "id": 21179068,
+   "cf35_mentions": 55,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#71"
+   ],
+   "target_mentions": 6
+  },
+  {
+   "name_norm": "eau de paris",
+   "id": 1246448,
+   "cf35_mentions": 51,
+   "verdict": "R",
+   "reason": "one régie; Montigny-sur-Loing / Montreuil are its sites",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#72"
+   ],
+   "target_mentions": 630
+  },
+  {
+   "name_norm": "métropole de lyon",
+   "id": 6202537,
+   "cf35_mentions": 51,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#73"
+   ],
+   "target_mentions": 2321
+  },
+  {
+   "name_norm": "ville de bègles",
+   "id": 1227111,
+   "cf35_mentions": 51,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#74"
+   ],
+   "target_mentions": 163
+  },
+  {
+   "name_norm": "centre hospitalier de kourou",
+   "id": 19113595,
+   "cf35_mentions": 50,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#75"
+   ],
+   "target_mentions": 42
+  },
+  {
+   "name_norm": "conseil départemental de la dordogne",
+   "id": 22504965,
+   "cf35_mentions": 50,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#76"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "region grand est",
+   "id": 9095418,
+   "cf35_mentions": 50,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#77"
+   ],
+   "target_mentions": 642
+  },
+  {
+   "name_norm": "ville de saint-nazaire",
+   "id": 1551255,
+   "cf35_mentions": 50,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#78"
+   ],
+   "target_mentions": 215
+  },
+  {
+   "name_norm": "conseil departemental",
+   "id": 8168454,
+   "cf35_mentions": 49,
+   "verdict": "W",
+   "reason": "placeless; target Angoulême + Arras, planned Aurillac, Valence ...",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#79"
+   ],
+   "target_mentions": 18
+  },
+  {
+   "name_norm": "centre hospitalier universitaire de bordeaux",
+   "id": 8237204,
+   "cf35_mentions": 47,
+   "verdict": "R",
+   "reason": "CHU Bordeaux (Talence site)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#80"
+   ],
+   "target_mentions": 340
+  },
+  {
+   "name_norm": "département de la moselle",
+   "id": 1232798,
+   "cf35_mentions": 46,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#81"
+   ],
+   "target_mentions": 249
+  },
+  {
+   "name_norm": "eaux de vienne - siveer",
+   "id": 8759339,
+   "cf35_mentions": 46,
+   "verdict": "R",
+   "reason": "one syndicate (Poitiers)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#82"
+   ],
+   "target_mentions": 54
+  },
+  {
+   "name_norm": "loire forez agglomération",
+   "id": 14800,
+   "cf35_mentions": 46,
+   "verdict": "R",
+   "reason": "one body (Montbrison)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#83"
+   ],
+   "target_mentions": 98
+  },
+  {
+   "name_norm": "département de la sarthe",
+   "id": 4734519,
+   "cf35_mentions": 44,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#84"
+   ],
+   "target_mentions": 165
+  },
+  {
+   "name_norm": "erilia",
+   "id": 1882308,
+   "cf35_mentions": 43,
+   "verdict": "R",
+   "reason": "one ESH (Marseille)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#85"
+   ],
+   "target_mentions": 151
+  },
+  {
+   "name_norm": "centre hospitalier de l'ouest guyanais",
+   "id": 1892648,
+   "cf35_mentions": 42,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#86"
+   ],
+   "target_mentions": 43
+  },
+  {
+   "name_norm": "communauté urbaine le havre seine métropole",
+   "id": 12853130,
+   "cf35_mentions": 42,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#87"
+   ],
+   "target_mentions": 43
+  },
+  {
+   "name_norm": "ville de colmar",
+   "id": 1192106,
+   "cf35_mentions": 42,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#88"
+   ],
+   "target_mentions": 810
+  },
+  {
+   "name_norm": "comité consultatif inter-départemental de règlement amiable des différends ou litiges",
+   "id": 8223723,
+   "cf35_mentions": 41,
+   "verdict": "N",
+   "reason": "'interdépartemental' names the Versailles committee (seated in Paris), planned Paris only; but 1163657 shows notices also misname others so; 71-mention target, cities unknown",
+   "basis": "name",
+   "lists": [
+    "city_flagged#89"
+   ],
+   "target_mentions": 71
+  },
+  {
+   "name_norm": "grand besançon métropole",
+   "id": 13803966,
+   "cf35_mentions": 41,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#90"
+   ],
+   "target_mentions": 216
+  },
+  {
+   "name_norm": "service commande publique",
+   "id": 1229850,
+   "cf35_mentions": 41,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; target and planned span 16+ towns",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#91"
+   ],
+   "target_mentions": 416
+  },
+  {
+   "name_norm": "atlantique habitations",
+   "id": 1249377,
+   "cf35_mentions": 38,
+   "verdict": "R",
+   "reason": "one ESH (Saint-Herblain, misspellings)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#92"
+   ],
+   "target_mentions": 494
+  },
+  {
+   "name_norm": "saint-nazaire agglomération - la carene",
+   "id": 22399706,
+   "cf35_mentions": 38,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#93"
+   ],
+   "target_mentions": 12
+  },
+  {
+   "name_norm": "communauté d'agglomération bourges plus",
+   "id": 8147036,
+   "cf35_mentions": 36,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#94"
+   ],
+   "target_mentions": 71
+  },
+  {
+   "name_norm": "departement de la haute-savoie",
+   "id": 1579563,
+   "cf35_mentions": 35,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#95"
+   ],
+   "target_mentions": 688
+  },
+  {
+   "name_norm": "caisse des ecoles",
+   "id": 1201208,
+   "cf35_mentions": 34,
+   "verdict": "W",
+   "reason": "placeless; planned Deuil-la-Barre, Évreux, Levallois, Saint-Denis, Septèmes, Le Tampon",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#96"
+   ],
+   "target_mentions": 301
+  },
+  {
+   "name_norm": "communauté d'agglomération cannes-pays de lérins",
+   "id": 9718349,
+   "cf35_mentions": 34,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#97"
+   ],
+   "target_mentions": 15
+  },
+  {
+   "name_norm": "grand montauban communauté d'agglomération",
+   "id": 1173273,
+   "cf35_mentions": 34,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#98"
+   ],
+   "target_mentions": 186
+  },
+  {
+   "name_norm": "grand port maritime guadeloupe",
+   "id": 22694497,
+   "cf35_mentions": 34,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#99"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "spl arac occitanie",
+   "id": 15990990,
+   "cf35_mentions": 34,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#100"
+   ],
+   "target_mentions": 6
+  },
+  {
+   "name_norm": "tarn et garonne habitat",
+   "id": 1228264,
+   "cf35_mentions": 34,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#101"
+   ],
+   "target_mentions": 67
+  },
+  {
+   "name_norm": "tribunal de grande instance de metz",
+   "id": 1202255,
+   "cf35_mentions": 34,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#102"
+   ],
+   "target_mentions": 672
+  },
+  {
+   "name_norm": "colmar agglomération (coordonnateur)",
+   "id": null,
+   "cf35_mentions": 33,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#103"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "société du canal de provence et d'aménagement de la région provençale",
+   "id": 1167768,
+   "cf35_mentions": 33,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#104"
+   ],
+   "target_mentions": 24
+  },
+  {
+   "name_norm": "batigere habitats solidaires",
+   "id": 20732731,
+   "cf35_mentions": 32,
+   "verdict": "R",
+   "reason": "one ESH (Metz head office, Paris office)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#105"
+   ],
+   "target_mentions": 14
+  },
+  {
+   "name_norm": "igesa",
+   "id": 1406921,
+   "cf35_mentions": 32,
+   "verdict": "R",
+   "reason": "one national body (Bastia)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#106"
+   ],
+   "target_mentions": 459
+  },
+  {
+   "name_norm": "sarthe habitat",
+   "id": 1260914,
+   "cf35_mentions": 32,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#107"
+   ],
+   "target_mentions": 273
+  },
+  {
+   "name_norm": "ville de rouen",
+   "id": 1164348,
+   "cf35_mentions": 32,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#108"
+   ],
+   "target_mentions": 1288
+  },
+  {
+   "name_norm": "hôtel de ville",
+   "id": 1163279,
+   "cf35_mentions": 31,
+   "verdict": "W",
+   "reason": "placeless; target Manosque + Villefontaine, planned 14 communes",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#109"
+   ],
+   "target_mentions": 789
+  },
+  {
+   "name_norm": "communauté d'agglomération seine eure",
+   "id": 2111424,
+   "cf35_mentions": 30,
+   "verdict": "R",
+   "reason": "one body (Louviers)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#110"
+   ],
+   "target_mentions": 34
+  },
+  {
+   "name_norm": "http://marches-publics.info",
+   "id": 22125969,
+   "cf35_mentions": 30,
+   "verdict": "N",
+   "reason": "the platform's URL as a name: one platform, the planned cities are the buyers'",
+   "basis": "name",
+   "lists": [
+    "city_flagged#111"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "dijon metropole",
+   "id": 14074961,
+   "cf35_mentions": 29,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#112"
+   ],
+   "target_mentions": 52
+  },
+  {
+   "name_norm": "odyssi",
+   "id": 12838335,
+   "cf35_mentions": 29,
+   "verdict": "R",
+   "reason": "one body (Fort-de-France)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#113"
+   ],
+   "target_mentions": 75
+  },
+  {
+   "name_norm": "saint-lo agglo",
+   "id": 13274341,
+   "cf35_mentions": 29,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#114"
+   ],
+   "target_mentions": 9
+  },
+  {
+   "name_norm": "ville du havre",
+   "id": 1198364,
+   "cf35_mentions": 29,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#115"
+   ],
+   "target_mentions": 1551
+  },
+  {
+   "name_norm": "tribunal de grande instance de paris",
+   "id": 1162930,
+   "cf35_mentions": 28,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#116"
+   ],
+   "target_mentions": 34404
+  },
+  {
+   "name_norm": "ville de saint-quentin",
+   "id": 1168312,
+   "cf35_mentions": 28,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#117"
+   ],
+   "target_mentions": 490
+  },
+  {
+   "name_norm": "ville narbonne",
+   "id": 17992576,
+   "cf35_mentions": 28,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#118"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "colmar agglomération",
+   "id": 7207805,
+   "cf35_mentions": 27,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#119"
+   ],
+   "target_mentions": 93
+  },
+  {
+   "name_norm": "groupement hospitalier de territoire d'eure-et-loir",
+   "id": 11825193,
+   "cf35_mentions": 27,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#120"
+   ],
+   "target_mentions": 29
+  },
+  {
+   "name_norm": "ville de saint nazaire",
+   "id": null,
+   "cf35_mentions": 27,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#121"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "logemloiret",
+   "id": 1185967,
+   "cf35_mentions": 26,
+   "verdict": "R",
+   "reason": "one OPH (Orléans)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#122"
+   ],
+   "target_mentions": 335
+  },
+  {
+   "name_norm": "port autonome de strasbourg",
+   "id": 1218882,
+   "cf35_mentions": 26,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#123"
+   ],
+   "target_mentions": 556
+  },
+  {
+   "name_norm": "thonon agglomeration",
+   "id": 19377205,
+   "cf35_mentions": 26,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#124"
+   ],
+   "target_mentions": 80
+  },
+  {
+   "name_norm": "centre communal d&apos;action sociale",
+   "id": null,
+   "cf35_mentions": 25,
+   "verdict": "W",
+   "reason": "entity-escaped CCAS; missing target would be minted for Bourges, Castres, Limoges, Montauban, Saint-Étienne, Saint-Quentin",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#125"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "communauté d&apos;agglomération cannes-pays de lérins",
+   "id": null,
+   "cf35_mentions": 25,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#126"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "région occitanie",
+   "id": 8817678,
+   "cf35_mentions": 25,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#127"
+   ],
+   "target_mentions": 907
+  },
+  {
+   "name_norm": "hôtel du département",
+   "id": 1185018,
+   "cf35_mentions": 24,
+   "verdict": "W",
+   "reason": "placeless; target Guéret + Nanterre, planned 9 départements",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#128"
+   ],
+   "target_mentions": 132
+  },
+  {
+   "name_norm": "mairie de brive",
+   "id": 1298500,
+   "cf35_mentions": 23,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#129"
+   ],
+   "target_mentions": 131
+  },
+  {
+   "name_norm": "université d'artois",
+   "id": 1250228,
+   "cf35_mentions": 23,
+   "verdict": "R",
+   "reason": "one university (Arras)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#130"
+   ],
+   "target_mentions": 342
+  },
+  {
+   "name_norm": "ville de chambéry",
+   "id": 1300728,
+   "cf35_mentions": 23,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#131"
+   ],
+   "target_mentions": 321
+  },
+  {
+   "name_norm": "carcassonne agglo",
+   "id": 1290791,
+   "cf35_mentions": 22,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#132"
+   ],
+   "target_mentions": 280
+  },
+  {
+   "name_norm": "communauté urbaine d'alençon",
+   "id": 1256170,
+   "cf35_mentions": 22,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#133"
+   ],
+   "target_mentions": 133
+  },
+  {
+   "name_norm": "evreux portes de normandie",
+   "id": 10112482,
+   "cf35_mentions": 22,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#134"
+   ],
+   "target_mentions": 29
+  },
+  {
+   "name_norm": "université côte d'azur",
+   "id": 14916635,
+   "cf35_mentions": 22,
+   "verdict": "R",
+   "reason": "one university (Nice)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#135"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "ville de belfort",
+   "id": 1257548,
+   "cf35_mentions": 22,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#136"
+   ],
+   "target_mentions": 349
+  },
+  {
+   "name_norm": "centre hospitalier de dieppe",
+   "id": 1191859,
+   "cf35_mentions": 21,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#137"
+   ],
+   "target_mentions": 244
+  },
+  {
+   "name_norm": "conseil départemental des hauts-de-seine",
+   "id": 8135361,
+   "cf35_mentions": 21,
+   "verdict": "R",
+   "reason": "one département",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#138"
+   ],
+   "target_mentions": 576
+  },
+  {
+   "name_norm": "in'li",
+   "id": 11816350,
+   "cf35_mentions": 21,
+   "verdict": "R",
+   "reason": "one company (La Défense / Puteaux)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#139"
+   ],
+   "target_mentions": 57
+  },
+  {
+   "name_norm": "mfla",
+   "id": 19230791,
+   "cf35_mentions": 21,
+   "verdict": "N",
+   "reason": "acronym; planned Saint-Herblain spellings only; 2-mention target",
+   "basis": "name",
+   "lists": [
+    "city_flagged#140"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "saint nazaire agglomeration - la carene",
+   "id": null,
+   "cf35_mentions": 21,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#141"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "tribunal administratif de martinique",
+   "id": 8084700,
+   "cf35_mentions": 21,
+   "verdict": "R",
+   "reason": "one tribunal (Schoelcher)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#142"
+   ],
+   "target_mentions": 1392
+  },
+  {
+   "name_norm": "communaute d'agglomeration de la rochelle",
+   "id": 1637076,
+   "cf35_mentions": 20,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#143"
+   ],
+   "target_mentions": 227
+  },
+  {
+   "name_norm": "communauté d'agglomération lisieux normandie",
+   "id": 9988956,
+   "cf35_mentions": 20,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#144"
+   ],
+   "target_mentions": 42
+  },
+  {
+   "name_norm": "communauté de communes de la vallée du garon",
+   "id": 4360809,
+   "cf35_mentions": 20,
+   "verdict": "R",
+   "reason": "named body (Brignais); one Belleville mention is address noise",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#145"
+   ],
+   "target_mentions": 14
+  },
+  {
+   "name_norm": "commune d'évry-courcouronnes",
+   "id": 13456036,
+   "cf35_mentions": 20,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#146"
+   ],
+   "target_mentions": 5
+  },
+  {
+   "name_norm": "etablissement public foncier paca",
+   "id": 1224110,
+   "cf35_mentions": 20,
+   "verdict": "R",
+   "reason": "one body (Marseille)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#147"
+   ],
+   "target_mentions": 51
+  },
+  {
+   "name_norm": "haropa port | paris",
+   "id": null,
+   "cf35_mentions": 19,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#149"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "communauté de communes du genevois",
+   "id": 1858706,
+   "cf35_mentions": 18,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#150"
+   ],
+   "target_mentions": 68
+  },
+  {
+   "name_norm": "haropa port | le havre",
+   "id": null,
+   "cf35_mentions": 18,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#151"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "tarn habitat",
+   "id": 1392468,
+   "cf35_mentions": 18,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#152"
+   ],
+   "target_mentions": 344
+  },
+  {
+   "name_norm": "tribunal de grande instance d'annecy",
+   "id": 1578940,
+   "cf35_mentions": 18,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#153"
+   ],
+   "target_mentions": 372
+  },
+  {
+   "name_norm": "agglomeration d'agen",
+   "id": 7128722,
+   "cf35_mentions": 17,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#154"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "casc",
+   "id": 1646259,
+   "cf35_mentions": 17,
+   "verdict": "R",
+   "reason": "one agglomeration (Sarreguemines)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#155"
+   ],
+   "target_mentions": 17
+  },
+  {
+   "name_norm": "grand chambéry",
+   "id": 15919766,
+   "cf35_mentions": 17,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#156"
+   ],
+   "target_mentions": 6
+  },
+  {
+   "name_norm": "hotel de ville",
+   "id": 1228976,
+   "cf35_mentions": 17,
+   "verdict": "W",
+   "reason": "placeless; planned 8 communes",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#157"
+   ],
+   "target_mentions": 372
+  },
+  {
+   "name_norm": "ville de lyon",
+   "id": 1163238,
+   "cf35_mentions": 17,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#158"
+   ],
+   "target_mentions": 3174
+  },
+  {
+   "name_norm": "camg",
+   "id": 9095469,
+   "cf35_mentions": 16,
+   "verdict": "R",
+   "reason": "CA Marne et Gondoire (Bussy-Saint-Martin)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#159"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "centre hospitalier d&apos;agen-nerac",
+   "id": null,
+   "cf35_mentions": 16,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#160"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "conseil départemental",
+   "id": 6879005,
+   "cf35_mentions": 16,
+   "verdict": "W",
+   "reason": "placeless; target Arras, Toulouse, Tours; planned Aurillac, Cergy, Lille ...",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#161"
+   ],
+   "target_mentions": 57
+  },
+  {
+   "name_norm": "département de seine-saint-denis",
+   "id": 1339272,
+   "cf35_mentions": 16,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#162"
+   ],
+   "target_mentions": 22
+  },
+  {
+   "name_norm": "livie",
+   "id": 14630961,
+   "cf35_mentions": 16,
+   "verdict": "N",
+   "reason": "brand name; Levallois / Paris; cannot tell",
+   "basis": "name",
+   "lists": [
+    "city_flagged#163"
+   ],
+   "target_mentions": 22
+  },
+  {
+   "name_norm": "t2c - régie des transports urbains de l'agglomération clermontoise",
+   "id": 3190860,
+   "cf35_mentions": 16,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#164"
+   ],
+   "target_mentions": 10
+  },
+  {
+   "name_norm": "ville de pessac",
+   "id": 1394268,
+   "cf35_mentions": 16,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#165"
+   ],
+   "target_mentions": 449
+  },
+  {
+   "name_norm": "ville de valence",
+   "id": 1175137,
+   "cf35_mentions": 16,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#166"
+   ],
+   "target_mentions": 474
+  },
+  {
+   "name_norm": "centre hospitalier de l&apos;ouest guyanais",
+   "id": null,
+   "cf35_mentions": 15,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#167"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "cnfpt",
+   "id": 1163448,
+   "cf35_mentions": 15,
+   "verdict": "R",
+   "reason": "one national établissement (delegations are part of it)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#168"
+   ],
+   "target_mentions": 685
+  },
+  {
+   "name_norm": "commune d'istres",
+   "id": 12487329,
+   "cf35_mentions": 15,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#169"
+   ],
+   "target_mentions": 10
+  },
+  {
+   "name_norm": "conseil départemental du cantal",
+   "id": 6980437,
+   "cf35_mentions": 15,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#170"
+   ],
+   "target_mentions": 180
+  },
+  {
+   "name_norm": "haropa port le havre",
+   "id": null,
+   "cf35_mentions": 15,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#171"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "carcassonne agglo solidarité",
+   "id": 10948359,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#172"
+   ],
+   "target_mentions": 26
+  },
+  {
+   "name_norm": "cd57",
+   "id": null,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "Moselle (Metz)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#173"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "centre hospitalier de mont de marsan",
+   "id": 1367058,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#174"
+   ],
+   "target_mentions": 62
+  },
+  {
+   "name_norm": "collectivité européenne d'alsace",
+   "id": 16490606,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#175"
+   ],
+   "target_mentions": 449
+  },
+  {
+   "name_norm": "epcic",
+   "id": null,
+   "cf35_mentions": 14,
+   "verdict": "N",
+   "reason": "acronym; Bastia only; minted target",
+   "basis": "name",
+   "lists": [
+    "city_flagged#176"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "ports de normandie",
+   "id": 16436567,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#177"
+   ],
+   "target_mentions": 21
+  },
+  {
+   "name_norm": "rennes métropole",
+   "id": 1224470,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#178"
+   ],
+   "target_mentions": 915
+  },
+  {
+   "name_norm": "saint-louis agglomération",
+   "id": 9882863,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#179"
+   ],
+   "target_mentions": 68
+  },
+  {
+   "name_norm": "ville d'alençon",
+   "id": 1805646,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#180"
+   ],
+   "target_mentions": 101
+  },
+  {
+   "name_norm": "ville de villeurbanne",
+   "id": 1166637,
+   "cf35_mentions": 14,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#181"
+   ],
+   "target_mentions": 593
+  },
+  {
+   "name_norm": "communauté d'agglomération seine-eure",
+   "id": 1225493,
+   "cf35_mentions": 13,
+   "verdict": "R",
+   "reason": "one body (Louviers)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#183"
+   ],
+   "target_mentions": 276
+  },
+  {
+   "name_norm": "commune de colmar",
+   "id": 17934513,
+   "cf35_mentions": 13,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#184"
+   ],
+   "target_mentions": 16
+  },
+  {
+   "name_norm": "commune du tampon",
+   "id": 1195046,
+   "cf35_mentions": 13,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#185"
+   ],
+   "target_mentions": 1028
+  },
+  {
+   "name_norm": "cté d'agglomération de cergy pontoise",
+   "id": 22078850,
+   "cf35_mentions": 13,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#186"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "direction commande publique mutualisée",
+   "id": 22569106,
+   "cf35_mentions": 13,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Frontignan / Sète today",
+   "basis": "name",
+   "lists": [
+    "city_flagged#187"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "département du cher",
+   "id": null,
+   "cf35_mentions": 13,
+   "verdict": "R",
+   "reason": "one département (Bourges)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#188"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "mairie d'agen",
+   "id": 1912221,
+   "cf35_mentions": 13,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#189"
+   ],
+   "target_mentions": 33
+  },
+  {
+   "name_norm": "solendi expansion",
+   "id": 1187287,
+   "cf35_mentions": 13,
+   "verdict": "R",
+   "reason": "one company",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#190"
+   ],
+   "target_mentions": 13
+  },
+  {
+   "name_norm": "apec",
+   "id": 1579843,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "one national body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#191"
+   ],
+   "target_mentions": 123
+  },
+  {
+   "name_norm": "communauté d'agglomération de cergy-pontoise",
+   "id": 9186711,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#192"
+   ],
+   "target_mentions": 61
+  },
+  {
+   "name_norm": "communauté d'agglomération du cotentin",
+   "id": 9638367,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#193"
+   ],
+   "target_mentions": 155
+  },
+  {
+   "name_norm": "communauté d'agglomération du grand villeneuvois",
+   "id": 1959164,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "one body (Villeneuve-sur-Lot)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#194"
+   ],
+   "target_mentions": 33
+  },
+  {
+   "name_norm": "conseil départemental d'ille et vilaine",
+   "id": 7032335,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#195"
+   ],
+   "target_mentions": 7
+  },
+  {
+   "name_norm": "département de l'ardèche",
+   "id": 1168144,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#196"
+   ],
+   "target_mentions": 698
+  },
+  {
+   "name_norm": "grand port fluvio-maritime de l'axe seine, direction territoriale du havre",
+   "id": null,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#197"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "mairie de perpignan",
+   "id": 2387601,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#198"
+   ],
+   "target_mentions": 330
+  },
+  {
+   "name_norm": "mont de marsan agglomération",
+   "id": 7942386,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#199"
+   ],
+   "target_mentions": 9
+  },
+  {
+   "name_norm": "sdea alsace moselle",
+   "id": 5456808,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "one syndicate (Schiltigheim, Strasbourg suburb)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#200"
+   ],
+   "target_mentions": 436
+  },
+  {
+   "name_norm": "société canal de provence",
+   "id": 2891932,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#201"
+   ],
+   "target_mentions": 46
+  },
+  {
+   "name_norm": "sybert",
+   "id": 1228720,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "one syndicate (Besançon)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#202"
+   ],
+   "target_mentions": 186
+  },
+  {
+   "name_norm": "tribunal judiciaire de nice",
+   "id": 18153443,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#203"
+   ],
+   "target_mentions": 45
+  },
+  {
+   "name_norm": "ville de mont de marsan",
+   "id": 1181384,
+   "cf35_mentions": 12,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#204"
+   ],
+   "target_mentions": 76
+  },
+  {
+   "name_norm": "ccas de rouen",
+   "id": 2488366,
+   "cf35_mentions": 11,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#205"
+   ],
+   "target_mentions": 29
+  },
+  {
+   "name_norm": "cda de la rochelle",
+   "id": 8785854,
+   "cf35_mentions": 11,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#206"
+   ],
+   "target_mentions": 7
+  },
+  {
+   "name_norm": "communaute d'agglomeration de marne et gondoire",
+   "id": 22566618,
+   "cf35_mentions": 11,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#207"
+   ],
+   "target_mentions": 24
+  },
+  {
+   "name_norm": "communauté d'agglomération pays basque",
+   "id": 9856662,
+   "cf35_mentions": 11,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#208"
+   ],
+   "target_mentions": 27
+  },
+  {
+   "name_norm": "département de la réunion",
+   "id": 1184070,
+   "cf35_mentions": 11,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#209"
+   ],
+   "target_mentions": 517
+  },
+  {
+   "name_norm": "mairie de villemomble",
+   "id": 2046932,
+   "cf35_mentions": 11,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#210"
+   ],
+   "target_mentions": 47
+  },
+  {
+   "name_norm": "promologis",
+   "id": 1240163,
+   "cf35_mentions": 11,
+   "verdict": "R",
+   "reason": "one ESH (Toulouse)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#211"
+   ],
+   "target_mentions": 414
+  },
+  {
+   "name_norm": "sdec energie",
+   "id": 2858484,
+   "cf35_mentions": 11,
+   "verdict": "R",
+   "reason": "one syndicate (Caen)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#212"
+   ],
+   "target_mentions": 32
+  },
+  {
+   "name_norm": "service des marchés",
+   "id": 1363144,
+   "cf35_mentions": 11,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Aurillac, Montpellier, Six-Fours",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#213"
+   ],
+   "target_mentions": 83
+  },
+  {
+   "name_norm": "alceane",
+   "id": 9197802,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "one OPH (Le Havre)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#214"
+   ],
+   "target_mentions": 21
+  },
+  {
+   "name_norm": "cap atlantique",
+   "id": 1302420,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "one body (La Baule)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#215"
+   ],
+   "target_mentions": 183
+  },
+  {
+   "name_norm": "cd34",
+   "id": null,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "Hérault (Montpellier; Gignac site)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#216"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "communauté d'agglomération de versailles grand parc",
+   "id": 2439140,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#218"
+   ],
+   "target_mentions": 15
+  },
+  {
+   "name_norm": "dcamg",
+   "id": null,
+   "cf35_mentions": 10,
+   "verdict": "N",
+   "reason": "acronym; Valence only; minted target",
+   "basis": "name",
+   "lists": [
+    "city_flagged#219"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "hôtel de ville de romans-sur-isère",
+   "id": null,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#220"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "mairie de vallauris golfe-juan",
+   "id": 22681397,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#221"
+   ],
+   "target_mentions": 5
+  },
+  {
+   "name_norm": "plateforme aws",
+   "id": 17943570,
+   "cf35_mentions": 10,
+   "verdict": "N",
+   "reason": "the platform (AWS-Achat); the planned cities are the buyers'",
+   "basis": "name",
+   "lists": [
+    "city_flagged#222"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "pour obtenir tous renseignements complémentaires qui leur seraient nécessaires au cours de leur étude, les candidats font parvenir au plus tard 10 jours avant la date limite de remise des offres, une demande écrite à l'adresse : https://marchespublics.met",
+   "id": null,
+   "cf35_mentions": 10,
+   "verdict": "W",
+   "reason": "boilerplate sentence, not a body; a minted row would pool Dijon and Fontaine-lès-Dijon buyers (better refused as a non-name by 586/587)",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#223"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "smdea",
+   "id": 1428476,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "one syndicate (Saint-Paul-de-Jarrat)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#224"
+   ],
+   "target_mentions": 120
+  },
+  {
+   "name_norm": "valence romans habitat",
+   "id": 9376641,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#225"
+   ],
+   "target_mentions": 182
+  },
+  {
+   "name_norm": "ville de louviers",
+   "id": 1721083,
+   "cf35_mentions": 10,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#226"
+   ],
+   "target_mentions": 67
+  },
+  {
+   "name_norm": "abri",
+   "id": null,
+   "cf35_mentions": 9,
+   "verdict": "N",
+   "reason": "short name; Livry-Gargan only; minted target",
+   "basis": "name",
+   "lists": [
+    "city_flagged#227"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "caen la mer",
+   "id": 22387389,
+   "cf35_mentions": 9,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#228"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "communauté d'agglomération riom limagne et volcans",
+   "id": 11452016,
+   "cf35_mentions": 9,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#229"
+   ],
+   "target_mentions": 15
+  },
+  {
+   "name_norm": "communauté de communes porte de drômardèche",
+   "id": 9939007,
+   "cf35_mentions": 9,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#230"
+   ],
+   "target_mentions": 27
+  },
+  {
+   "name_norm": "conseil départemental d'eure-et-loir",
+   "id": 9309479,
+   "cf35_mentions": 9,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#231"
+   ],
+   "target_mentions": 7
+  },
+  {
+   "name_norm": "département de la dordogne",
+   "id": null,
+   "cf35_mentions": 9,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#232"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "département de la seine-saint-denis",
+   "id": 1418521,
+   "cf35_mentions": 9,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#233"
+   ],
+   "target_mentions": 37
+  },
+  {
+   "name_norm": "epci de corse",
+   "id": null,
+   "cf35_mentions": 9,
+   "verdict": "N",
+   "reason": "label for any Corsican EPCI; Bastia only today; minted target",
+   "basis": "name",
+   "lists": [
+    "city_flagged#234"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "haropa port",
+   "id": null,
+   "cf35_mentions": 9,
+   "verdict": "R",
+   "reason": "one établissement since 2021 (Le Havre, Rouen, Paris)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#235"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "spl les eaux du sage",
+   "id": 20949940,
+   "cf35_mentions": 9,
+   "verdict": "R",
+   "reason": "one SPL (Roques)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#236"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "arac occitanie",
+   "id": 20666337,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#237"
+   ],
+   "target_mentions": 3
+  },
+  {
+   "name_norm": "cd93",
+   "id": null,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "Seine-Saint-Denis (Bobigny)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#238"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "communauté d'agglomération cannes pays de lérins",
+   "id": 8999044,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#240"
+   ],
+   "target_mentions": 41
+  },
+  {
+   "name_norm": "communauté d'agglomération du puy-en-velay",
+   "id": 1215418,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#241"
+   ],
+   "target_mentions": 215
+  },
+  {
+   "name_norm": "commune",
+   "id": 1228180,
+   "cf35_mentions": 8,
+   "verdict": "W",
+   "reason": "placeless; planned 6 communes",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#242"
+   ],
+   "target_mentions": 332
+  },
+  {
+   "name_norm": "direction des services techniques",
+   "id": 1251437,
+   "cf35_mentions": 8,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Rognac + Val-d'Isère",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#243"
+   ],
+   "target_mentions": 119
+  },
+  {
+   "name_norm": "epms la vergnière",
+   "id": null,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "one establishment (Foix)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#244"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "hotel du département",
+   "id": 8262162,
+   "cf35_mentions": 8,
+   "verdict": "W",
+   "reason": "placeless; target Albi + Nanterre; planned Bobigny, La Roche-sur-Yon",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#245"
+   ],
+   "target_mentions": 8
+  },
+  {
+   "name_norm": "mairie de corte",
+   "id": 2503448,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#246"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "mairie de valence",
+   "id": 1499784,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#247"
+   ],
+   "target_mentions": 101
+  },
+  {
+   "name_norm": "norevie",
+   "id": 2191990,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "one ESH (Douai)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#248"
+   ],
+   "target_mentions": 141
+  },
+  {
+   "name_norm": "sdis de la mayenne",
+   "id": 1233115,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#249"
+   ],
+   "target_mentions": 69
+  },
+  {
+   "name_norm": "semag",
+   "id": 1279835,
+   "cf35_mentions": 8,
+   "verdict": "W",
+   "reason": "GET: target 1279835 already holds Gardanne, Abymes (Guadeloupe) and Gennevilliers buyers; planned Les Abymes",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#250"
+   ],
+   "target_mentions": 203
+  },
+  {
+   "name_norm": "service achats",
+   "id": 1163276,
+   "cf35_mentions": 8,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; target Sarcelles + Valence; planned Les Abymes",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#251"
+   ],
+   "target_mentions": 106
+  },
+  {
+   "name_norm": "service départemental incendie et secours 66 (sdis 66)",
+   "id": 21997876,
+   "cf35_mentions": 8,
+   "verdict": "R",
+   "reason": "SDIS 66 (Perpignan)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#252"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "batigere developpement",
+   "id": 17604765,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "one company (Levallois)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#253"
+   ],
+   "target_mentions": 9
+  },
+  {
+   "name_norm": "c.c.a.s",
+   "id": 3574992,
+   "cf35_mentions": 7,
+   "verdict": "W",
+   "reason": "folds to ccas; target Saint-Gervais, planned Grenoble",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#254"
+   ],
+   "target_mentions": 16
+  },
+  {
+   "name_norm": "caisse des ecoles de levallois",
+   "id": null,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#255"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "communauté urbaine",
+   "id": 2102005,
+   "cf35_mentions": 7,
+   "verdict": "W",
+   "reason": "placeless; planned Caen + Le Havre",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#256"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "commune de mougins",
+   "id": 4643989,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#257"
+   ],
+   "target_mentions": 11
+  },
+  {
+   "name_norm": "dajap",
+   "id": 11493242,
+   "cf35_mentions": 7,
+   "verdict": "N",
+   "reason": "acronym; Lille only",
+   "basis": "name",
+   "lists": [
+    "city_flagged#258"
+   ],
+   "target_mentions": 6
+  },
+  {
+   "name_norm": "departement de la sarthe",
+   "id": 19344860,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#259"
+   ],
+   "target_mentions": 11
+  },
+  {
+   "name_norm": "ideis",
+   "id": 3966668,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "one body (Annecy)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#260"
+   ],
+   "target_mentions": 19
+  },
+  {
+   "name_norm": "noalis",
+   "id": 14020207,
+   "cf35_mentions": 7,
+   "verdict": "N",
+   "reason": "one ESH most likely; Angoulême vs Limoges cannot be told from the report",
+   "basis": "name",
+   "lists": [
+    "city_flagged#261"
+   ],
+   "target_mentions": 14
+  },
+  {
+   "name_norm": "presqu'île habitat",
+   "id": 1166385,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "one OPH (Cherbourg)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#262"
+   ],
+   "target_mentions": 134
+  },
+  {
+   "name_norm": "saint-nazaire agglomeration - la carene",
+   "id": null,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#263"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "sccv le clos tolosan",
+   "id": 22187588,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#264"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "sdis cantal",
+   "id": 12190707,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#265"
+   ],
+   "target_mentions": 7
+  },
+  {
+   "name_norm": "service marchés",
+   "id": 1179591,
+   "cf35_mentions": 7,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; target Quimper, planned Brignais, Lyon, Marseille",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#266"
+   ],
+   "target_mentions": 404
+  },
+  {
+   "name_norm": "service marchés publics",
+   "id": 1163277,
+   "cf35_mentions": 7,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; 9 towns",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#267"
+   ],
+   "target_mentions": 493
+  },
+  {
+   "name_norm": "thionville fensch agglomération",
+   "id": null,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "one body (Yutz)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#268"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "ville de narbonne",
+   "id": 8176971,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#269"
+   ],
+   "target_mentions": 179
+  },
+  {
+   "name_norm": "ville de vannes",
+   "id": 1233174,
+   "cf35_mentions": 7,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#270"
+   ],
+   "target_mentions": 561
+  },
+  {
+   "name_norm": "capbp",
+   "id": null,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "CA Pau Béarn Pyrénées",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#271"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "ccira",
+   "id": 1222149,
+   "cf35_mentions": 6,
+   "verdict": "W",
+   "reason": "bare acronym of every committee; target 1222149 (2,941 mentions) city Nantes, planned Nancy",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#272"
+   ],
+   "target_mentions": 2941
+  },
+  {
+   "name_norm": "centre communal d'action sociale (ccas)",
+   "id": 1896679,
+   "cf35_mentions": 6,
+   "verdict": "W",
+   "reason": "placeless; planned Arles + Noyon",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#273"
+   ],
+   "target_mentions": 138
+  },
+  {
+   "name_norm": "centre hospitalier de blois",
+   "id": 1223543,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#274"
+   ],
+   "target_mentions": 618
+  },
+  {
+   "name_norm": "centre hospitalier intercommunal aix-pertuis",
+   "id": 17724482,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#275"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "chu de la reunion-direction des travaux et des services techniques",
+   "id": null,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#276"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "communauté de communes entre bièvre et rhône",
+   "id": 21009898,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#277"
+   ],
+   "target_mentions": 6
+  },
+  {
+   "name_norm": "conseil departemental de la creuse",
+   "id": null,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "one département (Guéret)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#278"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "conseil département du nord",
+   "id": null,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "one département (Lille)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#279"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "departement du lot",
+   "id": 11493892,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "one département (Cahors)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#280"
+   ],
+   "target_mentions": 324
+  },
+  {
+   "name_norm": "direction de l'achat public",
+   "id": 9224696,
+   "cf35_mentions": 6,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Sainte-Clotilde only today",
+   "basis": "name",
+   "lists": [
+    "city_flagged#281"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "département de le haute-savoie",
+   "id": 1494174,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#282"
+   ],
+   "target_mentions": 36
+  },
+  {
+   "name_norm": "fondation de madame amicie lebaudy",
+   "id": null,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "one foundation",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#283"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "gcs achats du centre",
+   "id": 1790002,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "one GCS (Blois)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#284"
+   ],
+   "target_mentions": 208
+  },
+  {
+   "name_norm": "la région grand est",
+   "id": 9138318,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#285"
+   ],
+   "target_mentions": 12
+  },
+  {
+   "name_norm": "le centre communal d'action sociale de vendôme",
+   "id": null,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#286"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "logelia",
+   "id": 22695348,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "one ESH (Angoulême)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#287"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "mairie de la plagne tarentaise",
+   "id": 8502134,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name names the commune; Aime-la-Plagne city on the 2-mention target is address noise",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#288"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "mairie de marignane",
+   "id": 7255776,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#289"
+   ],
+   "target_mentions": 39
+  },
+  {
+   "name_norm": "mairie de thuir",
+   "id": null,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#290"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "paris saclay cancer cluster",
+   "id": null,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#291"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "région grand-est",
+   "id": 9141905,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#292"
+   ],
+   "target_mentions": 11
+  },
+  {
+   "name_norm": "sdis de l'ardèche",
+   "id": 1233047,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#293"
+   ],
+   "target_mentions": 94
+  },
+  {
+   "name_norm": "service achats/marchés",
+   "id": 31975711,
+   "cf35_mentions": 6,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Avoine + Mitry-Mory",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#294"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "service juridique et commande publique",
+   "id": 1419596,
+   "cf35_mentions": 6,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Le Mans + Publier",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#295"
+   ],
+   "target_mentions": 21
+  },
+  {
+   "name_norm": "ville de poitiers",
+   "id": 1204130,
+   "cf35_mentions": 6,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#296"
+   ],
+   "target_mentions": 522
+  },
+  {
+   "name_norm": "centre hospitalier du centre bretagne",
+   "id": 1986123,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#297"
+   ],
+   "target_mentions": 92
+  },
+  {
+   "name_norm": "communauté de communes entre juine et renarde",
+   "id": 11354021,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one body (Étréchy)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#298"
+   ],
+   "target_mentions": 7
+  },
+  {
+   "name_norm": "communauté de communes marche et combraille en aquitaine",
+   "id": 23363705,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#299"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "communauté de communes rumilly terre de savoie",
+   "id": 12096604,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#300"
+   ],
+   "target_mentions": 8
+  },
+  {
+   "name_norm": "commune de saint-denis de la réunion 26 rue lislet geoffroy",
+   "id": null,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#301"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "fonds de garantie des assurances obligatoires de dommages",
+   "id": 15341181,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one national fund (Vincennes)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#302"
+   ],
+   "target_mentions": 3
+  },
+  {
+   "name_norm": "greenalp",
+   "id": 13370846,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one company (Grenoble)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#303"
+   ],
+   "target_mentions": 21
+  },
+  {
+   "name_norm": "habitat 44",
+   "id": 1173370,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one OPH (Loire-Atlantique)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#304"
+   ],
+   "target_mentions": 82
+  },
+  {
+   "name_norm": "logelia charente",
+   "id": 1906946,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#305"
+   ],
+   "target_mentions": 100
+  },
+  {
+   "name_norm": "mairie de la baule-escoublac",
+   "id": 21614995,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#306"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "mairie de voiron",
+   "id": 21193177,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#307"
+   ],
+   "target_mentions": 8
+  },
+  {
+   "name_norm": "mairie du puy-en-velay",
+   "id": 13293082,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#308"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "métropole de lyon - délégation ressources humaines et moyens généraux - direction ressources",
+   "id": null,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#309"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "oph31",
+   "id": 2097247,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one OPH (Balma)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#310"
+   ],
+   "target_mentions": 12
+  },
+  {
+   "name_norm": "résidence autonomie les floralies",
+   "id": null,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one residence (Le Pontet)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#311"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "savoisienne habitat",
+   "id": 1958768,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one ESH (Chambéry)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#312"
+   ],
+   "target_mentions": 46
+  },
+  {
+   "name_norm": "sdis53",
+   "id": 18203293,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "SDIS Mayenne",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#313"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "sem4v",
+   "id": 3538757,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one SEM (Albertville)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#314"
+   ],
+   "target_mentions": 6
+  },
+  {
+   "name_norm": "spl hauts-de-france amenagement",
+   "id": null,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one SPL",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#315"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "tribunal judiciaire d'evry",
+   "id": 17578241,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#316"
+   ],
+   "target_mentions": 34
+  },
+  {
+   "name_norm": "vichy communauté",
+   "id": 9187999,
+   "cf35_mentions": 5,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#317"
+   ],
+   "target_mentions": 178
+  },
+  {
+   "name_norm": "arche agglo",
+   "id": 13180030,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#318"
+   ],
+   "target_mentions": 55
+  },
+  {
+   "name_norm": "ccas de castanet-tolosan",
+   "id": 3719682,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#319"
+   ],
+   "target_mentions": 10
+  },
+  {
+   "name_norm": "ccas de la ville de limoges",
+   "id": 4952451,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#320"
+   ],
+   "target_mentions": 12
+  },
+  {
+   "name_norm": "centre hospitalier rochefort",
+   "id": 2409878,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#321"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "commune de belleville-en-beaujolais",
+   "id": 20078845,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#322"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "dalkia",
+   "id": 1176034,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "one company; its target cities are its sites",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#323"
+   ],
+   "target_mentions": 2173
+  },
+  {
+   "name_norm": "departement de la charente",
+   "id": 2257611,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#324"
+   ],
+   "target_mentions": 42
+  },
+  {
+   "name_norm": "département de la seine saint denis",
+   "id": 11106374,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#325"
+   ],
+   "target_mentions": 5
+  },
+  {
+   "name_norm": "emmaus habitat",
+   "id": 1309535,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "one ESH (Clichy)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#326"
+   ],
+   "target_mentions": 102
+  },
+  {
+   "name_norm": "gcspa",
+   "id": 20636467,
+   "cf35_mentions": 4,
+   "verdict": "N",
+   "reason": "acronym; Aix-en-Provence area only",
+   "basis": "name",
+   "lists": [
+    "city_flagged#327"
+   ],
+   "target_mentions": 3
+  },
+  {
+   "name_norm": "gip un ete au havre",
+   "id": null,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#328"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "hôtel de la communauté urbaine le havre seine métropole",
+   "id": 17469021,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#329"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "jaxed",
+   "id": null,
+   "cf35_mentions": 4,
+   "verdict": "N",
+   "reason": "short name; Angers area only; minted target",
+   "basis": "name",
+   "lists": [
+    "city_flagged#330"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "mairie de castanet-tolosan",
+   "id": 4762340,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#331"
+   ],
+   "target_mentions": 29
+  },
+  {
+   "name_norm": "mairie de crolles",
+   "id": 31137104,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#332"
+   ],
+   "target_mentions": 9
+  },
+  {
+   "name_norm": "mairie de saint denis",
+   "id": 31429325,
+   "cf35_mentions": 4,
+   "verdict": "W",
+   "reason": "homonym: GET name_prefix shows both Saint-Denis (93) and Saint-Denis (Réunion) publishing as 'Mairie de Saint-Denis'; planned are Réunion (Sainte-Clotilde)",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#333"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "midi habitat groupe",
+   "id": 9797718,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "one group",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#334"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "métropole de lyon - drhmg - unité marchés",
+   "id": null,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#335"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "pays de montbéliard agglomération",
+   "id": 1278751,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#336"
+   ],
+   "target_mentions": 122
+  },
+  {
+   "name_norm": "sdeg 16",
+   "id": 2877841,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "one syndicate (Angoulême)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#337"
+   ],
+   "target_mentions": 5
+  },
+  {
+   "name_norm": "service des marchés publics",
+   "id": 1181455,
+   "cf35_mentions": 4,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Noisy-le-Sec, Saint-Raphaël, Six-Fours",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#338"
+   ],
+   "target_mentions": 852
+  },
+  {
+   "name_norm": "service départemental d'incendie et de secours",
+   "id": 1299400,
+   "cf35_mentions": 4,
+   "verdict": "W",
+   "reason": "placeless; GET: target 1299400 is SDIS 71 (Sancé); planned Cahors + Digne-les-Bains",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#339"
+   ],
+   "target_mentions": 318
+  },
+  {
+   "name_norm": "service marches publics",
+   "id": 1298079,
+   "cf35_mentions": 4,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Brive, La Grande-Motte, Saint-Laurent-Blangy",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#340"
+   ],
+   "target_mentions": 15
+  },
+  {
+   "name_norm": "ville d'agen",
+   "id": 1384134,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#341"
+   ],
+   "target_mentions": 82
+  },
+  {
+   "name_norm": "ville de châteaudun",
+   "id": 1237760,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#342"
+   ],
+   "target_mentions": 32
+  },
+  {
+   "name_norm": "ville de firminy",
+   "id": 1244100,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#343"
+   ],
+   "target_mentions": 86
+  },
+  {
+   "name_norm": "ville de lattes",
+   "id": 22738346,
+   "cf35_mentions": 4,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#344"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "bordeaux metropole pto",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#345"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "ccsb",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "W",
+   "reason": "acronym of two bodies: Belleville-en-Beaujolais (CC Saône-Beaujolais) and Lazer (CC Sisteronais-Buëch)",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#346"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "centre hospitalier de haguenau",
+   "id": 1201604,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#347"
+   ],
+   "target_mentions": 325
+  },
+  {
+   "name_norm": "centre hospitalier de sarrebourg",
+   "id": 2081492,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#348"
+   ],
+   "target_mentions": 66
+  },
+  {
+   "name_norm": "centre intercommunal d'action sociale",
+   "id": 1244397,
+   "cf35_mentions": 3,
+   "verdict": "W",
+   "reason": "placeless; target Saint-Maixent-l'École, planned Alençon",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#349"
+   ],
+   "target_mentions": 130
+  },
+  {
+   "name_norm": "collège george sand",
+   "id": 3490748,
+   "cf35_mentions": 3,
+   "verdict": "W",
+   "reason": "GET: target 3490748 already holds FR82 (PACA) and FRI34 tenders; planned Avord + Toulon: two colleges",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#350"
+   ],
+   "target_mentions": 18
+  },
+  {
+   "name_norm": "commande publique",
+   "id": 1186120,
+   "cf35_mentions": 3,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; target Buxerolles, Les Mureaux, Saint-André; planned Dijon, Sainte-Clotilde",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#351"
+   ],
+   "target_mentions": 163
+  },
+  {
+   "name_norm": "communauté de communes albères côte vermeille illibéris",
+   "id": 16343857,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#352"
+   ],
+   "target_mentions": 5
+  },
+  {
+   "name_norm": "commune d'ancenis-saint-géréon",
+   "id": 20086685,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#353"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "commune d'eybens",
+   "id": 2088342,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#354"
+   ],
+   "target_mentions": 13
+  },
+  {
+   "name_norm": "conseil departemental de la haute-loire",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "one département",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#355"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "dajap - pap",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "N",
+   "reason": "acronym; Lille only; minted target",
+   "basis": "name",
+   "lists": [
+    "city_flagged#356"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "epdahaa",
+   "id": 6328439,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "one body (Arras)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#357"
+   ],
+   "target_mentions": 113
+  },
+  {
+   "name_norm": "ght d'eure et loir",
+   "id": 21379406,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#358"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "gpfmas",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "N",
+   "reason": "acronym; Rouen area only; minted target",
+   "basis": "name",
+   "lists": [
+    "city_flagged#359"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "grand auch coeur de gascogne",
+   "id": 9188753,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#360"
+   ],
+   "target_mentions": 33
+  },
+  {
+   "name_norm": "grand besancon metropole",
+   "id": 17580465,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#361"
+   ],
+   "target_mentions": 18
+  },
+  {
+   "name_norm": "hlm solidarite et logement",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "one body (Meudon)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#362"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "https://marches.megalis.bretagne.bzh",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "N",
+   "reason": "platform URL as a name (Mégalis Bretagne)",
+   "basis": "name",
+   "lists": [
+    "city_flagged#363"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "mairie de beziers",
+   "id": 19203575,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#364"
+   ],
+   "target_mentions": 10
+  },
+  {
+   "name_norm": "mairie de saint jean de la ruelle",
+   "id": 17953119,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#365"
+   ],
+   "target_mentions": 3
+  },
+  {
+   "name_norm": "mairie de toulouse",
+   "id": 1675905,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#366"
+   ],
+   "target_mentions": 2058
+  },
+  {
+   "name_norm": "mairie de voreppe",
+   "id": 30922265,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#367"
+   ],
+   "target_mentions": 19
+  },
+  {
+   "name_norm": "mairie des lilas",
+   "id": 13843709,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#368"
+   ],
+   "target_mentions": 17
+  },
+  {
+   "name_norm": "méribel tourisme",
+   "id": 19262445,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#369"
+   ],
+   "target_mentions": 8
+  },
+  {
+   "name_norm": "opera de limoges",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#370"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "ophis du puy de dome",
+   "id": 31287264,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "one OPH",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#371"
+   ],
+   "target_mentions": 52
+  },
+  {
+   "name_norm": "roannaise de l'eau",
+   "id": 1226304,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "one body (Roanne)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#372"
+   ],
+   "target_mentions": 60
+  },
+  {
+   "name_norm": "régie départementale du train du montenvers",
+   "id": 30921298,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "one régie (Chamonix)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#373"
+   ],
+   "target_mentions": 7
+  },
+  {
+   "name_norm": "scic de la haute garonne",
+   "id": 22187585,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#374"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "sdis du loiret",
+   "id": 1213346,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#375"
+   ],
+   "target_mentions": 120
+  },
+  {
+   "name_norm": "service technique de la ville",
+   "id": null,
+   "cf35_mentions": 3,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; Blanquefort + Le Taillan-Médoc",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#376"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "val touraine habitat",
+   "id": 1173221,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "one OPH (Tours)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#377"
+   ],
+   "target_mentions": 209
+  },
+  {
+   "name_norm": "ville de la rochelle",
+   "id": 1186789,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#378"
+   ],
+   "target_mentions": 329
+  },
+  {
+   "name_norm": "ville de voiron",
+   "id": 1895,
+   "cf35_mentions": 3,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#379"
+   ],
+   "target_mentions": 35
+  },
+  {
+   "name_norm": "aws",
+   "id": 1400495,
+   "cf35_mentions": 2,
+   "verdict": "W",
+   "reason": "acronym; target city Poitiers, planned Le Tholonet (Société du Canal de Provence's address)",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#380"
+   ],
+   "target_mentions": 13
+  },
+  {
+   "name_norm": "cdc",
+   "id": 1549719,
+   "cf35_mentions": 2,
+   "verdict": "W",
+   "reason": "acronym; GET: target 1549719 is a Donzy (Nièvre) buyer; planned Corse",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#381"
+   ],
+   "target_mentions": 10
+  },
+  {
+   "name_norm": "centre de gestion de la fonction publique territoriale",
+   "id": 2560557,
+   "cf35_mentions": 2,
+   "verdict": "W",
+   "reason": "GET: target 2560557 already holds Saint-Grégoire, Belfort, Aix, Luisant, Pau, Gap CDGs; planned Annecy",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#382"
+   ],
+   "target_mentions": 26
+  },
+  {
+   "name_norm": "cirad",
+   "id": 1228237,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one national body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#383"
+   ],
+   "target_mentions": 86
+  },
+  {
+   "name_norm": "communauté d'agglomération de la région dieppoise",
+   "id": 1433484,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#384"
+   ],
+   "target_mentions": 39
+  },
+  {
+   "name_norm": "communauté de communes cluses arve et montagnes",
+   "id": 4412488,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#385"
+   ],
+   "target_mentions": 29
+  },
+  {
+   "name_norm": "communauté de communes du frontonnais",
+   "id": 4195795,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one body",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#386"
+   ],
+   "target_mentions": 21
+  },
+  {
+   "name_norm": "communauté de communes pyrénées haut garonnaises",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#387"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "communauté de communes saône beaujolais",
+   "id": 6443462,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#388"
+   ],
+   "target_mentions": 22
+  },
+  {
+   "name_norm": "commune de bourg saint maurice",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#389"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "commune des allues",
+   "id": 22564282,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#390"
+   ],
+   "target_mentions": 20
+  },
+  {
+   "name_norm": "commune et ccas",
+   "id": 31140454,
+   "cf35_mentions": 2,
+   "verdict": "W",
+   "reason": "placeless; Brie-Comte-Robert + Chevry-Cossigny: two communes",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#391"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "departement de la haute-loire",
+   "id": 10117206,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one département",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#392"
+   ],
+   "target_mentions": 38
+  },
+  {
+   "name_norm": "direction commande publique",
+   "id": 3426182,
+   "cf35_mentions": 2,
+   "verdict": "W",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; target Saint-Malo, planned Avignon",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#393"
+   ],
+   "target_mentions": 114
+  },
+  {
+   "name_norm": "direction de l'achat public de la région grand est",
+   "id": 22657503,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "Région Grand Est (Metz / Châlons seats)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#394"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "département de la drôme",
+   "id": 2358745,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#395"
+   ],
+   "target_mentions": 82
+  },
+  {
+   "name_norm": "ehpad",
+   "id": 1338203,
+   "cf35_mentions": 2,
+   "verdict": "W",
+   "reason": "GET: target 1338203 already holds EHPADs of Moutiers-Saint-Jean, Effiat, Hondschoote, Lezay ...; planned Ajain + Boussac",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#396"
+   ],
+   "target_mentions": 277
+  },
+  {
+   "name_norm": "epfl 73",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one EPF (Savoie)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#397"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "eppdcsi - universcience",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one établissement",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#398"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "fondation amicie lebaudy",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one foundation",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#399"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "greffe du tribunal administratif de bordeaux",
+   "id": 1165328,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one tribunal; target and planned cities agree up to spelling / cedex",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#400"
+   ],
+   "target_mentions": 2583
+  },
+  {
+   "name_norm": "grenoble alpes métropole",
+   "id": 1163592,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#401"
+   ],
+   "target_mentions": 606
+  },
+  {
+   "name_norm": "logélia",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one ESH (Angoulême)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#402"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "mairie d'aix-en-provence",
+   "id": 1394721,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#403"
+   ],
+   "target_mentions": 86
+  },
+  {
+   "name_norm": "mairie de saint- gervais",
+   "id": 22680256,
+   "cf35_mentions": 2,
+   "verdict": "N",
+   "reason": "several communes are Saint-Gervais; target and planned both read Saint-Gervais(-les-Bains); 2 mentions",
+   "basis": "name",
+   "lists": [
+    "city_flagged#404"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "montlucon communaute",
+   "id": 22710360,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#405"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "odarc - etablissement public à caractère industriel et commercial",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one office (Corsica)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#406"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "office de tourisme de marne et gondoire",
+   "id": 15638333,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#407"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "orange",
+   "id": 1194048,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "one company",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#408"
+   ],
+   "target_mentions": 1372
+  },
+  {
+   "name_norm": "restaurant scolaire",
+   "id": 3457028,
+   "cf35_mentions": 2,
+   "verdict": "W",
+   "reason": "placeless; Commentry + Luc-sur-Mer",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#409"
+   ],
+   "target_mentions": 3
+  },
+  {
+   "name_norm": "sdis 45 loiret",
+   "id": 22634584,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#410"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "service commande publique et achat responsable",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "N",
+   "reason": "generic department / service label (587 class): names a kind of unit every buyer has; one body (Métropole de Lyon) today and a missing target, so the minted row would hold one buyer",
+   "basis": "name",
+   "lists": [
+    "city_flagged#411"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "syndicat mixte ouvert - seine et yvelines voirie",
+   "id": null,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#412"
+   ],
+   "target_mentions": 0
+  },
+  {
+   "name_norm": "ville de mauguio",
+   "id": 1174274,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#413"
+   ],
+   "target_mentions": 27
+  },
+  {
+   "name_norm": "ville de romans-sur-isère",
+   "id": 1263986,
+   "cf35_mentions": 2,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#414"
+   ],
+   "target_mentions": 72
+  },
+  {
+   "name_norm": "centre communal d action sociale",
+   "id": 8939560,
+   "cf35_mentions": 1,
+   "verdict": "W",
+   "reason": "CCAS variant; target Coutances, planned Saint-Étienne",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#415"
+   ],
+   "target_mentions": 54
+  },
+  {
+   "name_norm": "centre communal d' action sociale",
+   "id": 2817853,
+   "cf35_mentions": 1,
+   "verdict": "W",
+   "reason": "CCAS variant; target Carentan, planned Limoges",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#416"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "centre technique municipal",
+   "id": 1179286,
+   "cf35_mentions": 1,
+   "verdict": "W",
+   "reason": "placeless; target Les Gets, planned Arles",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#417"
+   ],
+   "target_mentions": 107
+  },
+  {
+   "name_norm": "comité consultatif de règlement amiable des litiges relatifs aux marchés publics",
+   "id": 1201220,
+   "cf35_mentions": 1,
+   "verdict": "W",
+   "reason": "placeless committee name; target city Paris, planned Nantes",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#418"
+   ],
+   "target_mentions": 1653
+  },
+  {
+   "name_norm": "conseil départemental du val d'oise",
+   "id": 7960288,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "one département",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#419"
+   ],
+   "target_mentions": 35
+  },
+  {
+   "name_norm": "ept paris terres d'envol",
+   "id": 22577992,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "one EPT (Aulnay)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#420"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "groupe hospitalier bretagne sud",
+   "id": 11018308,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#421"
+   ],
+   "target_mentions": 145
+  },
+  {
+   "name_norm": "groupement de commande",
+   "id": 3416016,
+   "cf35_mentions": 1,
+   "verdict": "W",
+   "reason": "not a body; target Prades, planned Aix-les-Bains",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#422"
+   ],
+   "target_mentions": 21
+  },
+  {
+   "name_norm": "habitat76",
+   "id": 1488606,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "one OPH (Rouen)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#423"
+   ],
+   "target_mentions": 43
+  },
+  {
+   "name_norm": "habitats de haute-alsace",
+   "id": 1173236,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#424"
+   ],
+   "target_mentions": 188
+  },
+  {
+   "name_norm": "http://agysoft.marches-publics.info",
+   "id": 13197923,
+   "cf35_mentions": 1,
+   "verdict": "N",
+   "reason": "platform URL as a name; the cities are buyers'",
+   "basis": "name",
+   "lists": [
+    "city_flagged#425"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "leman habitat",
+   "id": 10299286,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "one OPH (Thonon)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#426"
+   ],
+   "target_mentions": 6
+  },
+  {
+   "name_norm": "mairie de saverdun",
+   "id": 30923319,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "name names Saverdun; the one Pamiers city is address noise",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#427"
+   ],
+   "target_mentions": 4
+  },
+  {
+   "name_norm": "profil acheteur",
+   "id": 1728706,
+   "cf35_mentions": 1,
+   "verdict": "W",
+   "reason": "not a body; target Audun-le-Tiche + Dreux, planned Marseille",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#428"
+   ],
+   "target_mentions": 39
+  },
+  {
+   "name_norm": "sa hlm irp",
+   "id": 1249611,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "one ESH (Meudon)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#429"
+   ],
+   "target_mentions": 70
+  },
+  {
+   "name_norm": "safer reunion",
+   "id": 16333730,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#430"
+   ],
+   "target_mentions": 2
+  },
+  {
+   "name_norm": "sccv chartreuse de parme",
+   "id": 30923207,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "one SCCV",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#431"
+   ],
+   "target_mentions": 1
+  },
+  {
+   "name_norm": "sce departemental incendie et secours",
+   "id": 9485683,
+   "cf35_mentions": 1,
+   "verdict": "W",
+   "reason": "placeless SDIS; target Vailhauquès (SDIS 34), planned Saint-Brieuc (SDIS 22)",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#432"
+   ],
+   "target_mentions": 239
+  },
+  {
+   "name_norm": "société d'habitation des alpes",
+   "id": 1180987,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "one ESH (Voiron)",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#433"
+   ],
+   "target_mentions": 119
+  },
+  {
+   "name_norm": "syndicat mixte des eaux de la bombarde",
+   "id": 22897725,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "one syndicate",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#434"
+   ],
+   "target_mentions": 3
+  },
+  {
+   "name_norm": "tribunal de grande instance",
+   "id": 1163205,
+   "cf35_mentions": 1,
+   "verdict": "W",
+   "reason": "bare name of every TGI; target Boulogne-sur-Mer + Rennes, planned Chambéry",
+   "basis": "evidence",
+   "lists": [
+    "city_flagged#435"
+   ],
+   "target_mentions": 20431
+  },
+  {
+   "name_norm": "ville de granville",
+   "id": 1532854,
+   "cf35_mentions": 1,
+   "verdict": "R",
+   "reason": "name carries its place; target and planned cities agree up to spelling / cedex / member commune",
+   "basis": "agreement",
+   "lists": [
+    "city_flagged#436"
+   ],
+   "target_mentions": 127
+  }
+ ],
+ "unsafe_list": [
+  {
+   "kind": "prefix",
+   "match": "comite consultatif interregional",
+   "fold": "guid_twin_city_fold(name).starts_with",
+   "constant": "store::HEX_CENSUS_CCIRA_PREFIX",
+   "keys": 52,
+   "cf35_mentions": 3594,
+   "verdicts": {
+    "W": 17,
+    "R": 33,
+    "N": 2
+   }
+  },
+  {
+   "kind": "exact",
+   "match": "tribunal administratif",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "tribunal administratif"
+   ],
+   "target_ids": [
+    1163218
+   ],
+   "cf35_mentions": 281,
+   "already_caught_by": [
+    "GUID_TWIN_UNSAFE_NAMES (530)"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "comite consultatif interdepartemental de reglement amiable des litiges",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "comité consultatif interdépartemental de règlement amiable des litiges"
+   ],
+   "target_ids": [
+    1163657
+   ],
+   "cf35_mentions": 278,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "tribunal judiciaire",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "tribunal judiciaire"
+   ],
+   "target_ids": [
+    10082662
+   ],
+   "cf35_mentions": 148,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "comite consultatif de reglement amiable des litiges",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "comité consultatif de règlement amiable des litiges"
+   ],
+   "target_ids": [
+    1171446
+   ],
+   "cf35_mentions": 134,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "ccas",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "c.c.a.s",
+    "ccas"
+   ],
+   "target_ids": [
+    1206088,
+    3574992
+   ],
+   "cf35_mentions": 128,
+   "already_caught_by": [
+    "content_words<2"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "service de la commande publique",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service de la commande publique"
+   ],
+   "target_ids": [
+    3443
+   ],
+   "cf35_mentions": 97,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "centre communal d action sociale",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "centre communal d action sociale",
+    "centre communal d' action sociale",
+    "centre communal d'action sociale"
+   ],
+   "target_ids": [
+    1174257,
+    8939560,
+    2817853
+   ],
+   "cf35_mentions": 95,
+   "already_caught_by": [
+    "generic_body_name"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "conseil departemental",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "conseil departemental",
+    "conseil départemental"
+   ],
+   "target_ids": [
+    8168454,
+    6879005
+   ],
+   "cf35_mentions": 65,
+   "already_caught_by": [
+    "generic_body_name"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "mairie",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "mairie"
+   ],
+   "target_ids": [
+    1163705
+   ],
+   "cf35_mentions": 64,
+   "already_caught_by": [
+    "content_words<2",
+    "generic_body_name"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "direction de la commande publique",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "direction de la commande publique"
+   ],
+   "target_ids": [
+    1166638
+   ],
+   "cf35_mentions": 57,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "hotel de ville",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "hotel de ville",
+    "hôtel de ville"
+   ],
+   "target_ids": [
+    1163279,
+    1228976
+   ],
+   "cf35_mentions": 48,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service commande publique",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service commande publique"
+   ],
+   "target_ids": [
+    1229850
+   ],
+   "cf35_mentions": 41,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "caisse des ecoles",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "caisse des ecoles"
+   ],
+   "target_ids": [
+    1201208
+   ],
+   "cf35_mentions": 34,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "hotel du departement",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "hotel du département",
+    "hôtel du département"
+   ],
+   "target_ids": [
+    1185018,
+    8262162
+   ],
+   "cf35_mentions": 32,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "centre communal d apos action sociale",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "centre communal d&apos;action sociale"
+   ],
+   "target_ids": [
+    null
+   ],
+   "cf35_mentions": 25,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "direction commande publique mutualisee",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "direction commande publique mutualisée"
+   ],
+   "target_ids": [
+    22569106
+   ],
+   "cf35_mentions": 13,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service des marches",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service des marchés"
+   ],
+   "target_ids": [
+    1363144
+   ],
+   "cf35_mentions": 11,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service marches publics",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service marches publics",
+    "service marchés publics"
+   ],
+   "target_ids": [
+    1163277,
+    1298079
+   ],
+   "cf35_mentions": 11,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "pour obtenir tous renseignements complementaires qui leur seraient necessaires au cours de leur etude les candidats font parvenir au plus tard 10 jours avant la date limite de remise des offres une demande ecrite al adresse https marchespublics met",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "pour obtenir tous renseignements complémentaires qui leur seraient nécessaires au cours de leur étude, les candidats font parvenir au plus tard 10 jours avant la date limite de remise des offres, une demande écrite à l'adresse : https://marchespublics.met"
+   ],
+   "target_ids": [
+    null
+   ],
+   "cf35_mentions": 10,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "commune",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "commune"
+   ],
+   "target_ids": [
+    1228180
+   ],
+   "cf35_mentions": 8,
+   "already_caught_by": [
+    "content_words<2",
+    "generic_body_name"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "direction des services techniques",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "direction des services techniques"
+   ],
+   "target_ids": [
+    1251437
+   ],
+   "cf35_mentions": 8,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "semag",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "semag"
+   ],
+   "target_ids": [
+    1279835
+   ],
+   "cf35_mentions": 8,
+   "already_caught_by": [
+    "content_words<2"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "service achats",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service achats"
+   ],
+   "target_ids": [
+    1163276
+   ],
+   "cf35_mentions": 8,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "communaute urbaine",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "communauté urbaine"
+   ],
+   "target_ids": [
+    2102005
+   ],
+   "cf35_mentions": 7,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service marches",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service marchés"
+   ],
+   "target_ids": [
+    1179591
+   ],
+   "cf35_mentions": 7,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "ccira",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "ccira"
+   ],
+   "target_ids": [
+    1222149
+   ],
+   "cf35_mentions": 6,
+   "already_caught_by": [
+    "content_words<2"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "centre communal d action sociale ccas",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "centre communal d'action sociale (ccas)"
+   ],
+   "target_ids": [
+    1896679
+   ],
+   "cf35_mentions": 6,
+   "already_caught_by": [
+    "generic_body_name"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "direction de l achat public",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "direction de l'achat public"
+   ],
+   "target_ids": [
+    9224696
+   ],
+   "cf35_mentions": 6,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service achats marches",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service achats/marchés"
+   ],
+   "target_ids": [
+    31975711
+   ],
+   "cf35_mentions": 6,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service juridique et commande publique",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service juridique et commande publique"
+   ],
+   "target_ids": [
+    1419596
+   ],
+   "cf35_mentions": 6,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "mairie de saint denis",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "mairie de saint denis"
+   ],
+   "target_ids": [
+    31429325
+   ],
+   "cf35_mentions": 4,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service des marches publics",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service des marchés publics"
+   ],
+   "target_ids": [
+    1181455
+   ],
+   "cf35_mentions": 4,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service departemental d incendie et de secours",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service départemental d'incendie et de secours"
+   ],
+   "target_ids": [
+    1299400
+   ],
+   "cf35_mentions": 4,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "ccsb",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "ccsb"
+   ],
+   "target_ids": [
+    null
+   ],
+   "cf35_mentions": 3,
+   "already_caught_by": [
+    "content_words<2"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "centre intercommunal d action sociale",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "centre intercommunal d'action sociale"
+   ],
+   "target_ids": [
+    1244397
+   ],
+   "cf35_mentions": 3,
+   "already_caught_by": [
+    "generic_body_name"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "college george sand",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "collège george sand"
+   ],
+   "target_ids": [
+    3490748
+   ],
+   "cf35_mentions": 3,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "commande publique",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "commande publique"
+   ],
+   "target_ids": [
+    1186120
+   ],
+   "cf35_mentions": 3,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "service technique de la ville",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "service technique de la ville"
+   ],
+   "target_ids": [
+    null
+   ],
+   "cf35_mentions": 3,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "aws",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "aws"
+   ],
+   "target_ids": [
+    1400495
+   ],
+   "cf35_mentions": 2,
+   "already_caught_by": [
+    "content_words<2"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "cdc",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "cdc"
+   ],
+   "target_ids": [
+    1549719
+   ],
+   "cf35_mentions": 2,
+   "already_caught_by": [
+    "content_words<2"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "centre de gestion de la fonction publique territoriale",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "centre de gestion de la fonction publique territoriale"
+   ],
+   "target_ids": [
+    2560557
+   ],
+   "cf35_mentions": 2,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "commune et ccas",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "commune et ccas"
+   ],
+   "target_ids": [
+    31140454
+   ],
+   "cf35_mentions": 2,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "direction commande publique",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "direction commande publique"
+   ],
+   "target_ids": [
+    3426182
+   ],
+   "cf35_mentions": 2,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "ehpad",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "ehpad"
+   ],
+   "target_ids": [
+    1338203
+   ],
+   "cf35_mentions": 2,
+   "already_caught_by": [
+    "content_words<2"
+   ]
+  },
+  {
+   "kind": "exact",
+   "match": "restaurant scolaire",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "restaurant scolaire"
+   ],
+   "target_ids": [
+    3457028
+   ],
+   "cf35_mentions": 2,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "centre technique municipal",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "centre technique municipal"
+   ],
+   "target_ids": [
+    1179286
+   ],
+   "cf35_mentions": 1,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "comite consultatif de reglement amiable des litiges relatifs aux marches publics",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "comité consultatif de règlement amiable des litiges relatifs aux marchés publics"
+   ],
+   "target_ids": [
+    1201220
+   ],
+   "cf35_mentions": 1,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "groupement de commande",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "groupement de commande"
+   ],
+   "target_ids": [
+    3416016
+   ],
+   "cf35_mentions": 1,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "profil acheteur",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "profil acheteur"
+   ],
+   "target_ids": [
+    1728706
+   ],
+   "cf35_mentions": 1,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "sce departemental incendie et secours",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "sce departemental incendie et secours"
+   ],
+   "target_ids": [
+    9485683
+   ],
+   "cf35_mentions": 1,
+   "already_caught_by": []
+  },
+  {
+   "kind": "exact",
+   "match": "tribunal de grande instance",
+   "fold": "guid_twin_name_words(name).join(\" \")",
+   "spellings": [
+    "tribunal de grande instance"
+   ],
+   "target_ids": [
+    1163205
+   ],
+   "cf35_mentions": 1,
+   "already_caught_by": []
+  }
+ ],
+ "unsafe_list_detail": {
+  "rule": "keep the cf35 key (do not refuse) when the mention name, folded as guid_twin_name_words folds it, equals an entry of exact[], or when guid_twin_city_fold(name) starts with prefix",
+  "prefix": {
+   "prefix": "comite consultatif interregional",
+   "constant": "store::HEX_CENSUS_CCIRA_PREFIX (already the census list ruler)",
+   "keys": 52,
+   "verdicts": {
+    "W": 17,
+    "R": 33,
+    "N": 2
+   },
+   "mentions_by_verdict": {
+    "W": 2361,
+    "R": 1224,
+    "N": 9
+   },
+   "mentions": 3594,
+   "ccira_list_total": 3594,
+   "binds_fixture_long_form": true,
+   "why_prefix_not_exact": "52 spellings for 7 committees (typos: interrégionalde, diffférends, demarseille, réglement); an exact list misses the next spelling and the fixture form is just one of them; a string prefix also binds the run-together typo",
+   "seat_exempt_variant": {
+    "keeps_only_seatless": 19,
+    "kept_mentions": 2370,
+    "recovered_R_folds_mentions": 1224,
+    "seats": [
+     "bordeaux",
+     "lyon",
+     "marseille",
+     "nancy",
+     "nantes",
+     "paris",
+     "versailles",
+     "rhone alpes",
+     "provence",
+     "meurthe",
+     "ile de france"
+    ],
+    "note": "keeps the key only when the CCIRA name names no seat; recovers the seat-bearing R folds at the cost of a seat word list in the gate"
+   },
+   "broader_prefix_variant": {
+    "prefix": "comite consultatif",
+    "extra_keys": [
+     [
+      "comité consultatif interdépartemental de versailles de règlement amiable des litiges relatifs aux marchés publics",
+      1165581,
+      "R",
+      413
+     ],
+     [
+      "comité consultatif interdépartemental de règlement amiable des litiges",
+      1163657,
+      "W",
+      278
+     ],
+     [
+      "comité consultatif de règlement amiable des litiges",
+      1171446,
+      "W",
+      134
+     ],
+     [
+      "comité consultatif inter-départemental de règlement amiable des différends ou litiges",
+      8223723,
+      "N",
+      41
+     ],
+     [
+      "comité consultatif de règlement amiable des litiges relatifs aux marchés publics",
+      1201220,
+      "W",
+      1
+     ]
+    ],
+    "note": "would also keep the R Versailles interdepartmental committee (413) and the N inter-départemental key; the W ones are listed exactly instead"
+   }
+  },
+  "exact": [
+   {
+    "folded": "tribunal administratif",
+    "spellings": [
+     "tribunal administratif"
+    ],
+    "target_ids": [
+     1163218
+    ],
+    "cf35_mentions": 281,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "GUID_TWIN_UNSAFE_NAMES (530)"
+    ]
+   },
+   {
+    "folded": "comite consultatif interdepartemental de reglement amiable des litiges",
+    "spellings": [
+     "comité consultatif interdépartemental de règlement amiable des litiges"
+    ],
+    "target_ids": [
+     1163657
+    ],
+    "cf35_mentions": 278,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "tribunal judiciaire",
+    "spellings": [
+     "tribunal judiciaire"
+    ],
+    "target_ids": [
+     10082662
+    ],
+    "cf35_mentions": 148,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "comite consultatif de reglement amiable des litiges",
+    "spellings": [
+     "comité consultatif de règlement amiable des litiges"
+    ],
+    "target_ids": [
+     1171446
+    ],
+    "cf35_mentions": 134,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "ccas",
+    "spellings": [
+     "c.c.a.s",
+     "ccas"
+    ],
+    "target_ids": [
+     1206088,
+     3574992
+    ],
+    "cf35_mentions": 128,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2"
+    ]
+   },
+   {
+    "folded": "service de la commande publique",
+    "spellings": [
+     "service de la commande publique"
+    ],
+    "target_ids": [
+     3443
+    ],
+    "cf35_mentions": 97,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "centre communal d action sociale",
+    "spellings": [
+     "centre communal d action sociale",
+     "centre communal d' action sociale",
+     "centre communal d'action sociale"
+    ],
+    "target_ids": [
+     1174257,
+     8939560,
+     2817853
+    ],
+    "cf35_mentions": 95,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "generic_body_name"
+    ]
+   },
+   {
+    "folded": "conseil departemental",
+    "spellings": [
+     "conseil departemental",
+     "conseil départemental"
+    ],
+    "target_ids": [
+     8168454,
+     6879005
+    ],
+    "cf35_mentions": 65,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "generic_body_name"
+    ]
+   },
+   {
+    "folded": "mairie",
+    "spellings": [
+     "mairie"
+    ],
+    "target_ids": [
+     1163705
+    ],
+    "cf35_mentions": 64,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2",
+     "generic_body_name"
+    ]
+   },
+   {
+    "folded": "direction de la commande publique",
+    "spellings": [
+     "direction de la commande publique"
+    ],
+    "target_ids": [
+     1166638
+    ],
+    "cf35_mentions": 57,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "hotel de ville",
+    "spellings": [
+     "hotel de ville",
+     "hôtel de ville"
+    ],
+    "target_ids": [
+     1163279,
+     1228976
+    ],
+    "cf35_mentions": 48,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service commande publique",
+    "spellings": [
+     "service commande publique"
+    ],
+    "target_ids": [
+     1229850
+    ],
+    "cf35_mentions": 41,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "caisse des ecoles",
+    "spellings": [
+     "caisse des ecoles"
+    ],
+    "target_ids": [
+     1201208
+    ],
+    "cf35_mentions": 34,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "hotel du departement",
+    "spellings": [
+     "hotel du département",
+     "hôtel du département"
+    ],
+    "target_ids": [
+     1185018,
+     8262162
+    ],
+    "cf35_mentions": 32,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "centre communal d apos action sociale",
+    "spellings": [
+     "centre communal d&apos;action sociale"
+    ],
+    "target_ids": [
+     null
+    ],
+    "cf35_mentions": 25,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "direction commande publique mutualisee",
+    "spellings": [
+     "direction commande publique mutualisée"
+    ],
+    "target_ids": [
+     22569106
+    ],
+    "cf35_mentions": 13,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service des marches",
+    "spellings": [
+     "service des marchés"
+    ],
+    "target_ids": [
+     1363144
+    ],
+    "cf35_mentions": 11,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service marches publics",
+    "spellings": [
+     "service marches publics",
+     "service marchés publics"
+    ],
+    "target_ids": [
+     1163277,
+     1298079
+    ],
+    "cf35_mentions": 11,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "pour obtenir tous renseignements complementaires qui leur seraient necessaires au cours de leur etude les candidats font parvenir au plus tard 10 jours avant la date limite de remise des offres une demande ecrite al adresse https marchespublics met",
+    "spellings": [
+     "pour obtenir tous renseignements complémentaires qui leur seraient nécessaires au cours de leur étude, les candidats font parvenir au plus tard 10 jours avant la date limite de remise des offres, une demande écrite à l'adresse : https://marchespublics.met"
+    ],
+    "target_ids": [
+     null
+    ],
+    "cf35_mentions": 10,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "commune",
+    "spellings": [
+     "commune"
+    ],
+    "target_ids": [
+     1228180
+    ],
+    "cf35_mentions": 8,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2",
+     "generic_body_name"
+    ]
+   },
+   {
+    "folded": "direction des services techniques",
+    "spellings": [
+     "direction des services techniques"
+    ],
+    "target_ids": [
+     1251437
+    ],
+    "cf35_mentions": 8,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "semag",
+    "spellings": [
+     "semag"
+    ],
+    "target_ids": [
+     1279835
+    ],
+    "cf35_mentions": 8,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2"
+    ]
+   },
+   {
+    "folded": "service achats",
+    "spellings": [
+     "service achats"
+    ],
+    "target_ids": [
+     1163276
+    ],
+    "cf35_mentions": 8,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "communaute urbaine",
+    "spellings": [
+     "communauté urbaine"
+    ],
+    "target_ids": [
+     2102005
+    ],
+    "cf35_mentions": 7,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service marches",
+    "spellings": [
+     "service marchés"
+    ],
+    "target_ids": [
+     1179591
+    ],
+    "cf35_mentions": 7,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "ccira",
+    "spellings": [
+     "ccira"
+    ],
+    "target_ids": [
+     1222149
+    ],
+    "cf35_mentions": 6,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2"
+    ]
+   },
+   {
+    "folded": "centre communal d action sociale ccas",
+    "spellings": [
+     "centre communal d'action sociale (ccas)"
+    ],
+    "target_ids": [
+     1896679
+    ],
+    "cf35_mentions": 6,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "generic_body_name"
+    ]
+   },
+   {
+    "folded": "direction de l achat public",
+    "spellings": [
+     "direction de l'achat public"
+    ],
+    "target_ids": [
+     9224696
+    ],
+    "cf35_mentions": 6,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service achats marches",
+    "spellings": [
+     "service achats/marchés"
+    ],
+    "target_ids": [
+     31975711
+    ],
+    "cf35_mentions": 6,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service juridique et commande publique",
+    "spellings": [
+     "service juridique et commande publique"
+    ],
+    "target_ids": [
+     1419596
+    ],
+    "cf35_mentions": 6,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "mairie de saint denis",
+    "spellings": [
+     "mairie de saint denis"
+    ],
+    "target_ids": [
+     31429325
+    ],
+    "cf35_mentions": 4,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service des marches publics",
+    "spellings": [
+     "service des marchés publics"
+    ],
+    "target_ids": [
+     1181455
+    ],
+    "cf35_mentions": 4,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service departemental d incendie et de secours",
+    "spellings": [
+     "service départemental d'incendie et de secours"
+    ],
+    "target_ids": [
+     1299400
+    ],
+    "cf35_mentions": 4,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "ccsb",
+    "spellings": [
+     "ccsb"
+    ],
+    "target_ids": [
+     null
+    ],
+    "cf35_mentions": 3,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2"
+    ]
+   },
+   {
+    "folded": "centre intercommunal d action sociale",
+    "spellings": [
+     "centre intercommunal d'action sociale"
+    ],
+    "target_ids": [
+     1244397
+    ],
+    "cf35_mentions": 3,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "generic_body_name"
+    ]
+   },
+   {
+    "folded": "college george sand",
+    "spellings": [
+     "collège george sand"
+    ],
+    "target_ids": [
+     3490748
+    ],
+    "cf35_mentions": 3,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "commande publique",
+    "spellings": [
+     "commande publique"
+    ],
+    "target_ids": [
+     1186120
+    ],
+    "cf35_mentions": 3,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "service technique de la ville",
+    "spellings": [
+     "service technique de la ville"
+    ],
+    "target_ids": [
+     null
+    ],
+    "cf35_mentions": 3,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "aws",
+    "spellings": [
+     "aws"
+    ],
+    "target_ids": [
+     1400495
+    ],
+    "cf35_mentions": 2,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2"
+    ]
+   },
+   {
+    "folded": "cdc",
+    "spellings": [
+     "cdc"
+    ],
+    "target_ids": [
+     1549719
+    ],
+    "cf35_mentions": 2,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2"
+    ]
+   },
+   {
+    "folded": "centre de gestion de la fonction publique territoriale",
+    "spellings": [
+     "centre de gestion de la fonction publique territoriale"
+    ],
+    "target_ids": [
+     2560557
+    ],
+    "cf35_mentions": 2,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "commune et ccas",
+    "spellings": [
+     "commune et ccas"
+    ],
+    "target_ids": [
+     31140454
+    ],
+    "cf35_mentions": 2,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "direction commande publique",
+    "spellings": [
+     "direction commande publique"
+    ],
+    "target_ids": [
+     3426182
+    ],
+    "cf35_mentions": 2,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "ehpad",
+    "spellings": [
+     "ehpad"
+    ],
+    "target_ids": [
+     1338203
+    ],
+    "cf35_mentions": 2,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": [
+     "content_words<2"
+    ]
+   },
+   {
+    "folded": "restaurant scolaire",
+    "spellings": [
+     "restaurant scolaire"
+    ],
+    "target_ids": [
+     3457028
+    ],
+    "cf35_mentions": 2,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "centre technique municipal",
+    "spellings": [
+     "centre technique municipal"
+    ],
+    "target_ids": [
+     1179286
+    ],
+    "cf35_mentions": 1,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "comite consultatif de reglement amiable des litiges relatifs aux marches publics",
+    "spellings": [
+     "comité consultatif de règlement amiable des litiges relatifs aux marchés publics"
+    ],
+    "target_ids": [
+     1201220
+    ],
+    "cf35_mentions": 1,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "groupement de commande",
+    "spellings": [
+     "groupement de commande"
+    ],
+    "target_ids": [
+     3416016
+    ],
+    "cf35_mentions": 1,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "profil acheteur",
+    "spellings": [
+     "profil acheteur"
+    ],
+    "target_ids": [
+     1728706
+    ],
+    "cf35_mentions": 1,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "sce departemental incendie et secours",
+    "spellings": [
+     "sce departemental incendie et secours"
+    ],
+    "target_ids": [
+     9485683
+    ],
+    "cf35_mentions": 1,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   },
+   {
+    "folded": "tribunal de grande instance",
+    "spellings": [
+     "tribunal de grande instance"
+    ],
+    "target_ids": [
+     1163205
+    ],
+    "cf35_mentions": 1,
+    "verdicts": [
+     "W"
+    ],
+    "already_caught_by": []
+   }
+  ],
+  "exact_mentions": 1695,
+  "exact_W_mentions": 1695,
+  "spared_total": 5289,
+  "spared_share_of_class": 2.35,
+  "reuse_530_structural_tests": {
+   "content_words_lt_2_cost": {
+    "keys": 42,
+    "mentions": 577,
+    "names": [
+     "abri",
+     "alceane",
+     "apec",
+     "brgm",
+     "camg",
+     "capbp",
+     "casc",
+     "cd34",
+     "cd57",
+     "cd93",
+     "cirad",
+     "cnfpt",
+     "dajap",
+     "dalkia",
+     "dcamg",
+     "epcic",
+     "epdahaa",
+     "erilia",
+     "gcspa",
+     "gpfmas",
+     "gpmm",
+     "greenalp",
+     "habitat76",
+     "ideis",
+     "igesa",
+     "in'li",
+     "jaxed",
+     "livie",
+     "logelia",
+     "logemloiret",
+     "logélia",
+     "mfla",
+     "noalis",
+     "norevie",
+     "odyssi",
+     "oph31",
+     "orange",
+     "promologis",
+     "sdis53",
+     "sem4v",
+     "smdea",
+     "sybert"
+    ]
+   },
+   "note": "530 guards with content_words<2 and generic_body_name too; reusing content_words<2 here would also keep the R/N one-word names above (acronyms of single bodies) split. generic_body_name costs nothing on the judged keys. The exact list stands alone either way; already_caught_by says which entries the reused tests would catch."
+  },
+  "limits": [
+   "only the targets the report lists (top 50, the 436 city-flagged, the 52 CCIRA keys) were screened; a placeless generic name whose cf35 mentions all print ONE city and whose target shows no other city is in no list (e.g. a bare greffe); U3/U4 should run the guard over all 4,847 keys and list placeless names it does not catch",
+   "target cities come from the newest 50 mentions only (report not_measured); many big targets read cities=[] (pre-eForms mentions), so W-by-name verdicts stand in for unreadable older mentions",
+   "centre communal d&apos;action sociale is an HTML-escaped spelling: listed as folded (d apos action); decoding entities before the fold would make the plain entry cover it",
+   "the boilerplate sentence entry is a junk name better refused by a non-name gate (586/587) than listed"
+  ],
+  "homonym_candidates_not_judged": [
+   {
+    "name": "mairie de saint andré",
+    "id": 7359863,
+    "why": "several communes Saint-André (incl. La Réunion); buyer sample only"
+   },
+   {
+    "name": "mairie de saint marcel",
+    "id": 9475285,
+    "why": "several communes Saint-Marcel; buyer sample only"
+   },
+   {
+    "name": "commune de saint-just",
+    "id": null,
+    "why": "several communes Saint-Just; buyer sample only"
+   },
+   {
+    "name": "montfaucon / gennes / saône / venise (bare commune names as buyer names)",
+    "id": null,
+    "why": "homonymous communes (Gennes: Doubs and Maine-et-Loire; Montfaucon: several); buyer-role, the buyer judge's area"
+   },
+   {
+    "name": "cciral",
+    "id": 1179658,
+    "why": "bare acronym (r2_random); like ccira it can name more than one committee"
+   },
+   {
+    "name": "profil d'acheteur :",
+    "id": 20566048,
+    "why": "label, not a body (buyer sample, 7 mentions); same class as profil acheteur"
+   }
+  ]
+ },
+ "counts": {
+  "top30": {
+   "R": 30,
+   "N": 0,
+   "W": 0,
+   "mentions": {
+    "R": 168076,
+    "N": 0,
+    "W": 0
+   },
+   "W_names": []
+  },
+  "ccira": {
+   "R": 33,
+   "N": 2,
+   "W": 17,
+   "mentions": {
+    "R": 1224,
+    "N": 9,
+    "W": 2361
+   },
+   "W_names": [
+    "comité consultatif interrégional de réglement",
+    "comité consultatif interrégional pour le règlement amiable des marchés publics",
+    "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics",
+    "comité consultatif interrégional de règlement amiables des litiges",
+    "comité consultatif interrégional de réglement amiable des différends ou litiges relatifs aux marchés publics",
+    "comité consultatif interrégional de règlement amiable des litiges",
+    "comité consultatif interrégional - prefecture de région sgar",
+    "comité consultatif interrégional des litiges en matière de marchés publics",
+    "comité consultatif interrégional de règlement amiable des litiges des marchés publics",
+    "comité consultatif interrégional de règlement amiable des litiges relatifs aux marchés publics",
+    "comité consultatif interrégional du règlement amiable",
+    "comité consultatif interrégional de règlement amiable des litiges relatifs aux marchés publics (ccira)",
+    "comité consultatif interrégional du règlement amiable des litiges",
+    "comité consultatif interrégional de règlement amiable des litiges relatif aux marchés publics",
+    "comité consultatif interrégional de règlement amiable des litiges (cciral)",
+    "comité consultatif interrégional de règlement amiable des différends relatifs aux marchés publics",
+    "comité consultatif interrégional de règlement des litiges en matière de marchés publics"
+   ]
+  },
+  "city_flagged": {
+   "R": 354,
+   "N": 19,
+   "W": 63,
+   "mentions": {
+    "R": 64873,
+    "N": 196,
+    "W": 2238
+   },
+   "W_names": [
+    "comité consultatif interrégional de règlement amiable des différends ou litiges relatifs aux marchés publics",
+    "comité consultatif interrégional de règlement amiable des litiges",
+    "comité consultatif interrégional de règlement amiable des litiges relatifs aux marchés publics (ccira)",
+    "comité consultatif interrégional de règlement amiable des litiges relatif aux marchés publics",
+    "comité consultatif interrégional de règlement amiable des différends relatifs aux marchés publics",
+    "tribunal administratif",
+    "comité consultatif interdépartemental de règlement amiable des litiges",
+    "tribunal judiciaire",
+    "comité consultatif de règlement amiable des litiges",
+    "ccas",
+    "service de la commande publique",
+    "centre communal d'action sociale",
+    "mairie",
+    "direction de la commande publique",
+    "conseil departemental",
+    "service commande publique",
+    "caisse des ecoles",
+    "hôtel de ville",
+    "centre communal d&apos;action sociale",
+    "hôtel du département",
+    "hotel de ville",
+    "conseil départemental",
+    "direction commande publique mutualisée",
+    "service des marchés",
+    "pour obtenir tous renseignements complémentaires qui leur seraient nécessaires au cours de leur étude, les candidats font parvenir au plus tard 10 jours avant la date limite de remise des offres, une demande écrite à l'adresse : https://marchespublics.met",
+    "commune",
+    "direction des services techniques",
+    "hotel du département",
+    "semag",
+    "service achats",
+    "c.c.a.s",
+    "communauté urbaine",
+    "service marchés",
+    "service marchés publics",
+    "ccira",
+    "centre communal d'action sociale (ccas)",
+    "direction de l'achat public",
+    "service achats/marchés",
+    "service juridique et commande publique",
+    "mairie de saint denis",
+    "service des marchés publics",
+    "service départemental d'incendie et de secours",
+    "service marches publics",
+    "ccsb",
+    "centre intercommunal d'action sociale",
+    "collège george sand",
+    "commande publique",
+    "service technique de la ville",
+    "aws",
+    "cdc",
+    "centre de gestion de la fonction publique territoriale",
+    "commune et ccas",
+    "direction commande publique",
+    "ehpad",
+    "restaurant scolaire",
+    "centre communal d action sociale",
+    "centre communal d' action sociale",
+    "centre technique municipal",
+    "comité consultatif de règlement amiable des litiges relatifs aux marchés publics",
+    "groupement de commande",
+    "profil acheteur",
+    "sce departemental incendie et secours",
+    "tribunal de grande instance"
+   ]
+  },
+  "city_flagged_reading": {
+   "total": 436,
+   "individually_judged": 241,
+   "judged_by_place_agreement": 195,
+   "skipped": 0,
+   "note": "all 436 read; the top 60 by cf35_mentions and every entry whose name carries no place word of its own cities (164) were judged one by one; the other 195 place-bearing entries were read in one pass and scored R by name-place / city agreement, with 5 overrides (hôtel de ville W, mairie de saint denis W, mairie de saint- gervais N, epci de corse N, the megalis URL N)"
+  },
+  "unique_keys": {
+   "total": 497,
+   "R": 401,
+   "N": 21,
+   "W": 75,
+   "W_mentions": 4056,
+   "N_mentions": 205,
+   "R_mentions": 182913
+  },
+  "class_mentions": 224611,
+  "gets_used": 15
+ }
+}
