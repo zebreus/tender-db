@@ -315,7 +315,7 @@
       "get": {
         "tags": ["collections"],
         "summary": "A Notice's parsed content",
-        "description": "The notice's whole parsed payload: the section tree (repeatable-node instances, `PROCEDURE` for the root) and every typed field value, verbatim from the parse layer — field ids in the source's own vocabulary (eForms BT/OPT ids, TED export field ids; the notice's `profile` names which). A value's scope is its section, not its field id's suffix: a business term the notice's SDK names only at another mount is claimed under that mount's id (`BT-01(c)-Procedure` in a `LOT` section, `BT-1252-Procedure` on a lot's direct-award justification). This is the pre-projection reading: every business term of the notice is here even before (or without) earning a canonical field. A quarantined notice has zero sections — its payload is held whole; see the notice detail's `quarantine` field for why.",
+        "description": "The notice's whole parsed payload: the section tree (repeatable-node instances, `PROCEDURE` for the root) and every typed field value, verbatim from the parse layer — field ids in the source's own vocabulary (eForms BT/OPT ids, TED export field ids; the notice's `profile` names which). This is the pre-projection reading: every business term of the notice is here even before (or without) earning a canonical field. A quarantined notice has zero sections — its payload is held whole; see the notice detail's `quarantine` field for why.",
         "operationId": "getNoticeContent",
         "parameters": [{ "$ref": "#/components/parameters/id" }],
         "responses": {

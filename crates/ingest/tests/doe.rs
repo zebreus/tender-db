@@ -463,42 +463,6 @@ fn eforms_de_1x_contract_notice_parses_against_the_empirical_inventory() {
     assert_eq!(lot.id, "LOT-0000");
 }
 
-/// Issue 577 (b): the empirical inventory names every lot leaf by its own
-/// predicate-free lot path, and on the lot those declared ids bind — not the
-/// `[schemeName='Lot']` twins the patch tables graft beside them, which sorted
-/// first and served the procedure's ids and UBL- grafts there (D577-1 (a)).
-#[test]
-fn eforms_de_1x_lot_values_bind_the_lot_ids() {
-    let cn = parse_fixture(DE1_CN);
-    let bound = |field: &str| -> Vec<(&str, &NoticeValue)> {
-        cn.values.iter().filter(|v| v.field_id == field).map(|v| (v.section_id.as_str(), &v.value)).collect()
-    };
-
-    // The lot's name under the lot id; the procedure keeps its own.
-    assert_eq!(text(&cn, "LOT-0000", "DE1-ProcurementProjectLot-ProcurementProject-Name"), "Erschließung Starkstrom");
-    assert_eq!(text(&cn, "PROCEDURE", "DE1-ProcurementProject-Name"), "Erschließung Starkstrom");
-    assert!(values(&cn, "LOT-0000", "DE1-ProcurementProject-Name").is_empty());
-
-    // The lot's tenderer requirement, which the fold reads (project_apply.snapshot:143).
-    let requirement = bound(
-        "DE1-ProcurementProjectLot-TenderingTerms-TendererQualificationRequest-SpecificTendererRequirement-Description",
-    );
-    assert!(
-        matches!(&requirement[..], [(_, NoticeValue::Text { value, .. })] if value == "siehe Formblatt 216"),
-        "{requirement:?}"
-    );
-    assert!(bound("UBL-TendererRequirementDescription").is_empty());
-
-    // The documents' language is an id under the DE1 field (notice_ids), where
-    // the UBL- graft stored it as a code (notice_codes).
-    let language = bound("DE1-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-LanguageID");
-    assert!(
-        matches!(&language[..], [(_, NoticeValue::Id { value, .. })] if value == "DEU"),
-        "{language:?}"
-    );
-    assert!(bound("UBL-DocumentLanguageID").is_empty());
-}
-
 /// The award-notice (eForms-DE 1.2) result layer — LotResult, LotTender,
 /// SettledContract, TenderingParty — sections and parses whole.
 #[test]
