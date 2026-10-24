@@ -154,7 +154,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
 <table>
   <tr><th>Endpoint</th><th>Returns</th></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/tenders</td><td>Tenders (current version of each), ascending id by default — see <a href="#ordering">ordering</a> for newest-first and closes-soon.</td></tr>
-  <tr><td class="ep"><span class="method">GET</span>/v1/tenders/{id}</td><td>One Tender in full — see <a href="#detail">detail</a>. A Tender id can be retired within a generation and then answers <code>308</code> to the Tender that holds its notices, or <code>410</code> naming several or none — see <a href="#retired">retired Tender ids</a>.</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/tenders/{id}</td><td>One Tender in full — see <a href="#detail">detail</a>. A Tender id can be retired within a generation and then answers <code>308</code> to the one Tender that holds any of its notices, or <code>410</code> naming several or none — see <a href="#retired">retired Tender ids</a>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/lots</td><td>Lots (subdivisions of Tenders).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations</td><td>Canonical Organizations (buyers, bidders, winners).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations/{id}</td><td>One Organization by id — the counterpart of a detail's <code>parties[].organization_id</code>. An id that a merge folded into another organization answers <code>308</code> to the survivor.</td></tr>
@@ -341,13 +341,13 @@ is kept) retires a Tender it leaves with no notice. The <code>generation</code> 
 for either.
 A retired Tender id answers where its notices are now, from then on within that generation:
 <code>308</code> with <code>Location</code> and <code>successors</code> naming the one Tender
-that holds any of them (others may sit in no Tender; after a repair, the Tender of the kept
-twin), or <code>410</code> with
+that holds any of them (others may sit in no Tender; for an id a repair retired, the Tender of the
+kept twin), or <code>410</code> with
 <code>successors</code> naming several, lowest id first, or none (<code>[]</code>) while none of
-its notices is in a Tender (for a moment during a fold, or for good while they are held or after
-a repair deleted them as duplicates).
+its notices is in a Tender (for a moment during a fold, or for good while they are held or once
+a later repair deleted them as duplicates).
 Successors are read when you ask, so an id whose successor was itself retired later answers the
-newest one directly (unless a repair deleted the id's notices as duplicates), and both answers
+newest one directly (unless a later repair deleted, as duplicates, the notices recorded for it), and both answers
 are sent with <code>Cache-Control: no-store</code>. A
 Tender id retired before these records began (October 2026) answers <code>410</code> with
 <code>"successors": null</code>: follow it by its notices, below.
@@ -401,7 +401,7 @@ at least twice the head's; or when the head's own cluster holds at most 1 vote a
 top cluster holds at least 3 votes and at least 25%; or when the head is empty or not a name
 (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script
 that name is written in. A head that is one of the winning cluster's spellings with its accented
-letters dropped (every non-ASCII character deleted, case and spacing aside, where some word of that
+letters dropped (every non-ASCII character deleted, case aside, whitespace runs collapsed, where some word of that
 spelling has both an ASCII and a non-ASCII letter and none has two or more letters, all non-ASCII:
 a broken decoder's <code>Tribunal administratif d'Orlans</code> for
 <code>Tribunal administratif d'Orléans</code>) changes whenever that cluster holds at least 55% of
@@ -2191,7 +2191,7 @@ mod tests {
                 text,
                 &[
                     "a head that is one of the winning cluster's spellings with its accented letters dropped (every \
-                     non-ascii character deleted, case and spacing aside, where some word of that spelling has both an \
+                     non-ascii character deleted, case aside, whitespace runs collapsed, where some word of that spelling has both an \
                      ascii and a non-ascii letter and none has two or more letters, all non-ascii: a broken decoder's \
                      tribunal administratif d'orlans for tribunal administratif d'orléans) changes whenever that \
                      cluster holds at least 55% of the votes, at least 3 votes and at least twice the head's",
@@ -2316,12 +2316,12 @@ mod tests {
                     "the generation does not move for either",
                     "a retired tender id answers where its notices are now, from then on within that generation",
                     "308 with location and successors naming the one tender that holds any of them (others may sit \
-                     in no tender; after a repair, the tender of the kept twin)",
+                     in no tender; for an id a repair retired, the tender of the kept twin)",
                     "or 410 with successors naming several, lowest id first, or none ([]) while none of its notices \
-                     is in a tender (for a moment during a fold, or for good while they are held or after a repair \
-                     deleted them as duplicates)",
+                     is in a tender (for a moment during a fold, or for good while they are held or once a later \
+                     repair deleted them as duplicates)",
                     "successors are read when you ask, so an id whose successor was itself retired later answers the \
-                     newest one directly (unless a repair deleted the id's notices as duplicates)",
+                     newest one directly (unless a later repair deleted, as duplicates, the notices recorded for it)",
                     "both answers are sent with cache-control: no-store",
                     "a tender id retired before these records began (october 2026) answers 410",
                     "/v1/notices?tender= on a retired id answers 404, and the id is never issued again within a generation",
@@ -2394,6 +2394,24 @@ mod tests {
             serde_json::Value::Bool(true),
             "the 410's successors can be null"
         );
+        // The successors descriptions say "any of", as the resolver sends 308/410 on a Tender holding at least one
+        // recorded notice (deploy #3 review: these two sentences were unpinned).
+        let successors = |code: &str| {
+            described(
+                &responses[code]["content"]["application/json"]["schema"]["allOf"][1]["properties"]["successors"]["description"],
+                "getTender's successors",
+            )
+        };
+        assert_says(
+            "getTender's 308 successors",
+            &successors("308"),
+            &["the one tender that holds any of this id's notices now (others may sit in no tender)"],
+        );
+        assert_says(
+            "getTender's 410 successors",
+            &successors("410"),
+            &["the tenders that hold any of this id's notices now, lowest id first; [] when none does"],
+        );
 
         // The issue's Verify greps the served page BY LINE, so the words must share a source line.
         assert!(
@@ -2408,7 +2426,7 @@ mod tests {
         assert_says(
             "/docs /v1/tenders/{id} row",
             row,
-            &["a tender id can be retired within a generation and then answers 308 to the tender that holds its notices, or 410 naming several or none"],
+            &["a tender id can be retired within a generation and then answers 308 to the one tender that holds any of its notices, or 410 naming several or none"],
         );
         let note = block(PAGE, "The <code>notice_id</code> above is illustrative", "</p>");
         assert_says("/docs notice-content id note", note, &["and a tender id can also be retired within one"]);

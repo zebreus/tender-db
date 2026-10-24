@@ -4,23 +4,23 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
-## Unreleased (issue 581) — a retired Tender id answers `308` to the Tender that holds its notices, or `410` naming them; it answered `404`
+## Unreleased (issue 581) — a retired Tender id answers `308` to the one Tender that holds any of its notices, or `410` naming them; it answered `404`
 
 `GET /v1/tenders/{id}` on a Tender id a fold or a repair retired (issue 580) answered
 `404 {"error":{"message":"no such tender","status":404}}`. It now answers where that Tender's notices are when you ask:
 - One Tender holds any of them (others may sit in no Tender): `308` with `Location: /v1/tenders/<id>` (`?lang=`
   carried over) and
   `{"error":{"message":"tender retired","status":308},"successors":[<id>]}`. A client that follows redirects receives
-  that Tender's detail. After a repair, it is the Tender of the kept twin.
+  that Tender's detail. For an id a repair retired, it is the Tender of the kept twin.
 - Several hold them (a split): `410` with `"successors"` listing them, lowest id first.
 - None holds one now: `410` with `"successors": []` (for a moment during a fold, or for good while the notices are
-  held or after a repair deleted them as duplicates).
+  held or once a later repair deleted them as duplicates).
 - Retired before these records began (October 2026): `410` with `"successors": null`. Tender 8811451 (issue 539's
   refold run c) is one. Follow such an id by its notices, as issue 580 documented.
 
 Both answers carry `Cache-Control: no-store`. Successors are read when you ask, so a later fold can move them: a merge
 that is undone sends the id to the Tender that split off, and an id whose successor was itself retired answers the
-newest one directly, unless a repair deleted the id's notices as duplicates. An id never issued in this generation
+newest one directly, unless a later repair deleted, as duplicates, the notices recorded for it. An id never issued in this generation
 still answers `404`, and so does `/v1/notices?tender=` on a retired id. The change feed is unchanged: a `tender`
 `removed` is still the signal, and GETting the removed id now says where its notices went. Where: /docs (the
 `/v1/tenders/{id}` row; Tender detail, retired Tender ids; the change feed's `generation` paragraph) and OpenAPI
@@ -773,8 +773,8 @@ legal form. The head changes only when a cluster other than its own holds at lea
 votes and at least twice the head's; or when the head's own cluster holds at most 1 vote and a unique top cluster
 holds at least 3 votes and at least 25%; or when the head is empty or not a name (a placeholder, a blank, a
 void-lot phrase) and some mention's name votes, whatever script that name is written in. A head that is one of the
-winning cluster's spellings with its accented letters dropped (every non-ASCII character deleted, case and spacing
-aside, where some word of that spelling has both an ASCII and a non-ASCII letter and none has two or more letters,
+winning cluster's spellings with its accented letters dropped (every non-ASCII character deleted, case aside,
+whitespace runs collapsed, where some word of that spelling has both an ASCII and a non-ASCII letter and none has two or more letters,
 all non-ASCII: a broken decoder's `Tribunal administratif d'Orlans` for `Tribunal administratif d'Orléans`) changes
 whenever that cluster holds at least 55% of the votes, at least 3 votes and at least twice the head's; of the checks
 below, only the legal-form, consortium, NHS, placeholder, fit-spelling, review-verdict and script checks apply to
@@ -864,7 +864,7 @@ the broken head no longer reads as a review body's name. Such a head now changes
 the winning cluster holds at least 55% of the votes, at least 3 votes and at least twice the head's; the
 legal-form, consortium, NHS, placeholder, fit-spelling, review-verdict and script checks still apply. A head
 counts as dropped when deleting every non-ASCII character from one of the winning cluster's spellings gives the
-head (case and spacing aside), at least one word lost a letter but kept an ASCII one, and no whole word of two or
+head (case aside, whitespace runs collapsed), at least one word lost a letter but kept an ASCII one, and no whole word of two or
 more non-ASCII letters was left out (`Johnson & Johnson Hellas` against `JOHNSON & JOHNSON HELLAS ΑΕΒΕ` leaves out
 a Greek legal form: not a drop). Pointe-à-Pitre's winning spelling prints a no-break space, which the served
 name shows as a plain space (`Tribunal judiciaire de Pointe-à -Pitre`).

@@ -3215,7 +3215,7 @@ survivor does this: `merge-provisional-orgs`, `match-org-identifiers` with `rule
 rekey, `fold-provisional-echoes`, `repair-provisional-name-norm` and `repair-nested-orgs`. In the transaction that
 repoints, it stamps every Tender whose party, bid-party or winner rows it repointed epoch-stale and re-queues that
 Tender's parsed notices. Those are the Tenders its summary counts as `N tenders touched` (`N tender change event(s)`
-for `merge-provisional-orgs`; that count, `repair-nested-orgs`' and p0/p1's are each summed per transaction, so a
+for `merge-provisional-orgs`; that count, `repair-nested-orgs`' and p0/p1's (`fold-provisional-echoes`, `repair-provisional-name-norm`) are each summed per transaction, so a
 Tender can be counted twice, while r2, e0, r3, altid, nhs-body and rekey count each Tender once per run).
 The `project` refolds them, and any party, bid-party or winner table whose rows sat out of the fold's order is
 rewritten in that order. Its `compare (issue 495): X tenders verified, Y corrected` covers at least those Tenders.
@@ -3225,7 +3225,7 @@ identical/compared` line moves only `tender_version_parties`, `tender_version_bi
 A later refold verifies them. Before issue 583 the repoint left each row where the loser's id sorted, and whichever
 refold next reached the Tender announced it corrected (issue 579's mechanism; 579 U4 gave the dissolve path the
 same stamp). A large merge makes that `project` long: 2564 refolded about 500 Tenders a second, planning included.
-If those Tenders' re-queued notices, with any others still un-projected, hold more than 500,000 legacy notices, or
+If those Tenders' re-queued notices, with any others still un-projected, include more than 500,000 legacy notices, or
 the legacy, link or refused-sibling closure passes its cap (`LEGACY_CLOSURE_CAP` and `LINK_CLOSURE_CAP` in
 `crates/ingest/src/project.rs`, 500,000 notices each), that `project` logs `INCREMENTAL → FULL fallback` and
 re-projects the whole corpus (about 4.3–7.5 h, holding the writer): size a large wet merge first (its dry plan's
@@ -3728,7 +3728,7 @@ arithmetic.
      no full run is made on that plan (build spec 573's D573-5: `exclude_rules` accepts `R0d`).
 
      The wet run reads the latest stored plan, so no other `refresh-org-names` job (527's scoped pair, or any
-     upkeep run) is queued or run from the dry plan until the scoped wet run finishes. At the GO read, record the
+     upkeep run) is queued or run from the dry plan's run until the scoped wet run finishes. At the GO read, record the
      plan envelope's `computed_at` (`/root/aj.sh /admin/reports/org-name-refresh-plan | jq .computed_at`). Re-read
      it right before enqueuing the wet run: it must be unchanged, and `.body|fromjson|.scope_ids` must be null.
      Then run the v14 wet run right away, with the R0d ids alone:
