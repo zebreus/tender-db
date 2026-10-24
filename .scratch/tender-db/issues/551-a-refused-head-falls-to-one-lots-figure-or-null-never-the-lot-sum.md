@@ -1672,3 +1672,11 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   `marker_covers adcb7b0` = COVERS and `gate_deploy_step adcb7b0` = skip, so a switch-off is again a covered deploy
   (0 min). A switch-off commit carries adcb7b0's tree outside `.scratch` on top of main, as before. The twin is
   unchanged: the deployed code is still 512b297.
+- **2026-10-24 06:00–06:23Z: 580 U2 gated green at fe3eca5** (served docs: a Tender id can be retired within a
+  generation; fold summary prints `Report.absorbed`; 1,457 s). main = handover = fe3eca5. **06:24–06:50Z: twin
+  adcb7b0 re-gated green** (1,562 s): COVERS, `gate_deploy_step` = skip, so a switch-off costs 0 min.
+  - The 10-28 batch is now 576 U2 (cb19854, the only fold-changing commit), 578 U2, 579 U4, 539's caveat retirement
+    (ce20b28) and 580 U2 (fe3eca5: docs and a summary line; no fold change).
+  - The twin rebuilt on the deployed base must carry the supervisor.rs hunks of 576 and 580 and the docs/openapi
+    hunks of 539, 576 and 580 (C7).
+
