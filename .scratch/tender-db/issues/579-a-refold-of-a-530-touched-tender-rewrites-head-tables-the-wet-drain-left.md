@@ -1,6 +1,6 @@
 # 579 — a refold of a Tender issue 530's wet drain touched rewrites head tables the drain left in place
 
-Status: ready-for-agent — **U4 BUILT and GATED 2026-10-23** (1fb7541: `dissolve_org_mentions` adds every touched Tender to `refold`, so the trailing project reconciles row order; wet-then-refold-rewrites-0-tables tests; gate green at 406529a), on main, NOT deployed: deploys in the batch after 539's drain, then the twin re-gate. U2/U3 done; U6 (file the merge-side follow-up) open; the 6 open Tenders heal at their next natural refold (539 step 2). Was: ready-for-agent — TRIAGED (wf triage-579: measurer + 2 adversarial skeptics; 6 of 6 bounded /v1/sql reads, no
+Status: ready-for-agent — **U2, U3, U5 DONE; U4 GATED, NOT DEPLOYED; U6 OPEN** (re-read 2026-10-24). U5: 539 step 2 run b (refold 2737 / project 2738, PASS; 47a886a; 539 "Drain — done", 551's run-b line) refolded the 6 pre-registered Tenders, order only, no value move. U4 (1fb7541) stayed on main through the 577 revert (b3effc2) and re-gated green at b3effc2 and fe3eca5. It ships in the 10-28 batch after the day-7 fetch (576 U2 + 578 U2 + 579 U4 + 539's ce20b28 + 580 U2). The deployed code is still 512b297. NEXT: U6, file the merge-side follow-up (announce the number first). 579 closes when U4 is deployed and U6's issue exists. Was: ready-for-agent — **U4 BUILT and GATED 2026-10-23** (1fb7541: `dissolve_org_mentions` adds every touched Tender to `refold`, so the trailing project reconciles row order; wet-then-refold-rewrites-0-tables tests; gate green at 406529a), on main, NOT deployed: deploys in the batch after 539's drain, then the twin re-gate. U2/U3 done; U6 (file the merge-side follow-up) open; the 6 open Tenders heal at their next natural refold (539 step 2). Was: ready-for-agent — TRIAGED (wf triage-579: measurer + 2 adversarial skeptics; 6 of 6 bounded /v1/sql reads, no
 408, every one `truncated:false`; skeptic-corrected, `## Triage (2026-10-21, wf triage-579)` below). **Unit 1 DONE:** the
 difference is row ORDER, not bindings. `Db::dissolve_org_mentions` re-inserts each repointed winner at a fresh rowid
 (INSERT OR IGNORE + DELETE), and its in-place party / bid-party org-id UPDATE leaves a row where the old GUID id sorted; the
@@ -29,6 +29,20 @@ Relates to:
 - 551 B6 (path W flip): this surfaced as 3 non-W corrections in its L_changed run lc01; it changes no 551 verdict (no value
   moved), and any refold over 530's touched set must respect 551's standing rule (port-diff re-run before a W-input drain
   while W is on: org merges feed R1/R6).
+
+## Verify
+
+    r=$(curl -s --max-time 30 https://tenders.zebreus.click/health | jq -r .rev); git grep -c 'issue 579' "$r" -- crates/store/src/canonical.rs || echo "$r: 0"; python3 -c "import glob,re;print('U6:', sorted(m.group(1) for f in glob.glob('.scratch/tender-db/issues/*.md') for m in [re.match(r'(\d+)-', f.rsplit('/',1)[-1])] if m and int(m.group(1))>579 and 'repoint_org_references' in open(f).read()))"
+
+This checks the two open units, U4's deploy and U6's filing. U2, U3 and U5 are done (Status). Line 1 greps the served
+`/health` rev's tree for U4's `issue 579` comments in canonical.rs. A count of 4 at fe3eca5 means U4's code is in that
+tree, even if a switch-off commit-tree sits on top of main. If the rev is unknown locally, `git fetch` first; a
+`fatal: unable to resolve revision` line followed by `: 0` means the rev was not found, not that U4 is undeployed.
+Line 2 lists issue files numbered above 579 that name `repoint_org_references`, which is where U6's follow-up lands.
+- **done**: `<rev>:crates/store/src/canonical.rs:4` (any count ≥ 1), then `U6: ['<NNN>']`.
+- **open (2026-10-24)**: `512b2976f8c5d65de6b72d642202311e3308349a: 0`, then `U6: []`. The rev is the deployed code
+  per 551's 2026-10-24 log ("the deployed code is still 512b297"). The local halves were run against that rev; this
+  pass sent no HTTP request.
 
 ## What was seen (2026-10-21, issue 551 B6 lc01)
 

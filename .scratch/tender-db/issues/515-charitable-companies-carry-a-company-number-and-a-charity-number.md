@@ -18,6 +18,21 @@ Use the Charity Commission extract's `charity_company_registration_number` to cr
 (register-confirmed), then admit triples whose survivor is the company-number org (448's alias keeps its owner).
 Measure first: `ppon_beside_coh` per scheme on the 469 dry plan.
 
+## Verify
+
+    curl -s -o /dev/null -w '%{http_code} %{redirect_url}\n' https://tenders.zebreus.click/v1/organizations/31593920
+
+This checks the end state, the cross-walked pair merged, on the issue's own witness from 469 U2: Choice Housing
+Ireland = CCNI 100095 = Companies House NP000408. Org 31593920 holds `GBNICNIC100095`. Org 30967375 holds
+`GBCOHNP000408` and, as the 448 survivor, the shared PPON, so U4 denied the NIC pair as a triple
+(`../469-registry-pairs/u2/registry-sample-2163.json`, entry 91; `u2-results.md` NIC row).
+
+- **done**: `308 https://tenders.zebreus.click/v1/organizations/30967375`. The charity-number org has folded into the
+  company-number survivor; 448's alias keeps its owner, as "Proposed unit" says.
+- **open** (2026-10-11, from 469 U2's sample of job 2163, not re-read in this pass): `200 `. The NIC org stands apart.
+  Unit 1, the measurement, has not started: no commit names 515 after its triage (23c3780), and no code reads
+  `charity_company_registration_number` (canonical.rs only defers to "issue 515's cross-walk").
+
 ## 469 U2 evidence (2026-10-11)
 
 - The cross-walk source exists and works. The Charity Commission JSON extract

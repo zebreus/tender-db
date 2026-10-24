@@ -21,8 +21,21 @@ annotation from the served name and drop the winner role of a `niet gegunde` par
 specimen `Humble Inpect B.V. (niet gegunde partij)` must stay a kept name.
 
 ## Verify
-`curl -s "https://tenders.zebreus.click/v1/organizations?name_prefix=Humble%20Inpect&limit=10" | jq '[.items[].name]'`
-Open: includes "(niet gegunde partij)". Done: the annotation is gone and the org holds no winner role on 24400562.
+
+    curl -s https://tenders.zebreus.click/v1/tenders/229981 | jq -c '[.lot_results[] | [.notice_id, .key, [.winners[].organization_id]]]'
+
+This reads unit 3, the last open unit: does the later award notice's result supersede the earlier one's? Unit 2's
+part is already done (v3's RES-0001 serves Planon alone). The filed check, `name_prefix=Humble Inpect` showing the
+annotation gone, is not this issue's to close: the decision keeps the org heads 30533823 and 30533824 on their
+first-seen marked spelling until 524.
+- **done**: RES-0001 names Planon (16387876) alone in every row for the lot. Either v2's (24424017) row is
+  superseded, or its winners narrow to 16387876. If unit 3 rules against superseding, the ruling is the closure, and
+  the open output below becomes the accepted state.
+- **open** (2026-10-13, from unit 2's read; not re-run on 2026-10-24 because this pass made no HTTP request): two
+  RES-0001 rows. `[24400562,"RES-0001",[16387876]]` is v3, Planon alone. v2's 24424017 row lists all five tenderers
+  as winners: Planon 16387876, Facilicom 6734977 (unit 1's census), PVM Eindhoven 7201067, Humble Inpect 30533823 and
+  Provadi 30533824. No later commit or issue records a unit-3 measurement or ruling (checked 2026-10-24: git log
+  shows 527 commits only through 55c1fa3; 534 still lists 527 as ready-for-agent).
 
 ## Triage decision (2026-10-13, owner)
 

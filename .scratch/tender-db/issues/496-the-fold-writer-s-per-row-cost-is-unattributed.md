@@ -6,6 +6,20 @@ Kind: performance / projection writer
 Relates to: 495 (skip unchanged content, the big lever), 488 (step 4 there was never done), 42 (why the
 in-fold TRUNCATE exists), 175 (the prepare/write split), 457 (turso 0.8.1)
 
+## Verify
+
+    grep -nE 'const CHECKPOINT_EVERY_BATCHES|&& let Err\(e\) = checkpoint_on\(&conn, CheckpointMode::' crates/store/src/canonical.rs
+
+This reads unit 2 (the in-fold checkpoint cadence), the last unit whose done state shows in code. Unit 1 is a
+measurement recorded in this file, and unit 3 waits on unit 1's pricing; most of it already landed with 495 unit 2
+(see the 2026-10-24 comment at the bottom).
+- **done**: the `apply_tenders` checkpoint line reads `CheckpointMode::Passive`, or it is gone (auto-checkpoint only),
+  or `CHECKPOINT_EVERY_BATCHES` is raised. In each case unit 2's bounded-WAL test and the fold-bucket timing are
+  recorded here.
+- **open** (2026-10-24): two lines, `const CHECKPOINT_EVERY_BATCHES: usize = 32;` and `&& let Err(e) =
+  checkpoint_on(&conn, CheckpointMode::Truncate).await` (canonical.rs 1849 and 24063 today). The fold writer still
+  runs a TRUNCATE every 32 batches, and each one clears its own page cache.
+
 ## What is known
 
 During a fold, the single writer thread (`apply_tenders`) uses 84.5 % of a core: 86.6 % of perf samples
@@ -85,3 +99,19 @@ minutes per refold. Unmeasured, small next to the fold, but pure waste.
 restart). The capture file stays in place for 429's diff.
 
 **Done 2026-10-08 20:21 UTC:** the drop-in is off (moved to `/root/plancapture.conf.removed-2026-10-08`); deploy B restarted without it.
+
+## Comments
+
+**2026-10-24, board hygiene: most of unit 3 landed with 495 unit 2.** Unit 3 is still open.
+- 495 unit 2 was deployed on 2026-10-08 (~22:20 UTC, `79b1212`). It covers most of unit 3's list:
+  - B2 `71a6c0c`: `Pending` is leaf-indexed and `flush_rows` moves values.
+  - B3 `fc1b3dc`: the 14 per-version DELETEs, the stored-chain SELECT and the change-row INSERT are prepared once in
+    `TenderInserts::prepare` (canonical.rs ~44878).
+  - B4 `7e6da04`: a per-Tender identity cache. The lot, result, bid and contract lookups are prepared statements.
+- What remains of unit 3:
+  - the sweep SELECTs;
+  - the `mark_projected` UPDATEs;
+  - writing change rows as multi-row INSERTs. `APPEND_CHANGE_SQL` is still one row per statement.
+- That remainder still waits on unit 1's pricing.
+- Units 1 and 2 have no record of being done: no symbol profile is recorded, and the in-fold TRUNCATE is unchanged
+  (see `## Verify`).

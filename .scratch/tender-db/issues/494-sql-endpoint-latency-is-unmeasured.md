@@ -1,6 +1,6 @@
 # 494 — /v1/sql's latency and outcomes are unmeasured
 
-Status: ready-for-agent — UNIT 2 READ 2026-10-09 (hourly audit). Three findings.
+Status: **DONE 2026-10-24** — both listed units are done. Unit 1 was built in `8e7c404` (gate green) and deployed in `0dc59d3` (2026-10-08 20:21 UTC, commit `274b4d0`); the gauges and the `[sql] slow` line are in `crates/app/src/v1/metrics.rs:101-112` and `crates/app/src/v1/sql.rs:469`. Unit 2 was read on 2026-10-09 (`6c15075`). Both problems it found are fixed and deployed: 500, found by the slow log (`7fa6074`, 2026-10-08, 15 s/408 → 133 ms), and 503, found by nginx `rt=` (`b568c10` then `3c80925`, 2026-10-09, 17.2 s → 7 ms). 503 landing was this line's own close condition. Optional unit 3, a daily per-path access-log summary, was not taken: nginx `rt=` (issue 97) is already the durable record. Was: ready-for-agent — UNIT 2 READ 2026-10-09 (hourly audit). Three findings.
 - The ring cannot span a day while the box deploys several times a day: each restart empties it, and at
   ~09:20 UTC it was empty (the series absent, honestly).
 - The `[sql] slow` log persists in the journal, so it carried the day. Since unit 1's deploy (2026-10-08
@@ -19,6 +19,16 @@ slow log names).
 Kind: observability / the SQL surface
 Relates to: 417 / 425 (the pinned-computation gauges, the only /v1/sql series today), 241 (writer
 contention, the precedent for measuring what "felt fine")
+
+## Verify
+
+    grep -c 'header(&mut out, "tender_db_sql_recent_' crates/app/src/v1/metrics.rs; grep -c 'eprintln!("\[sql\] slow' crates/app/src/v1/sql.rs
+
+This checks the code, not live `/metrics`. The ring empties on every restart, so the live series can honestly be
+absent after a deploy.
+- **done**: `3` then `1` (read 2026-10-24). The three window series (`tender_db_sql_recent_requests`, `_ok_seconds`,
+  `_window_seconds`) and the slow-query log line are in the tree, and they have been live since deploy `0dc59d3`.
+- **open (before 2026-10-08)**: `0` then `0`: no window gauges and no slow log, which was the state before `8e7c404`.
 
 ## What is wrong
 

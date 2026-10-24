@@ -28,6 +28,24 @@ linked-charity suffixes (`216250-1`), so one register number can mint several id
 Measure the spellings per scheme on the 469 dry plan's literal shapes (U0), then decide a per-scheme canonical form
 behind the name gate, as 470 did for GB company numbers.
 
+## Verify
+
+    curl -s 'https://tenders.zebreus.click/v1/organizations?identifier=GBMPRRS008376' | python3 -c 'import sys,json; d=json.load(sys.stdin); print([(o["id"], o["identifier"]) for o in d["items"]], d.get("resolved_filters"))'
+
+This checks the last open unit, unit 3: the Companies House mirror, `RS00NNNN` → bare, with alias canonicalisation
+first. It reads the largest in-scheme witness of that class (`../514-register-spellings/splits.json`), Connexus Homes,
+FCA `8376`. Connexus stands as 31536226 (`GBMPRRS008376`, 70 mentions, the 469 register-alias target
+`GBMPRRS008376~PZTX9645HPZJ`) beside its bare twin 31546143 (`GBMPR8376`, 5 mentions). Unit 2 is shipped and rolled out
+(`../514-register-spellings/rollout/results.md`: `?identifier=GBUKPRNUKPRN10007798` answers survivor 31600847 with
+`merged_into`). It deliberately left `RS008376` alone (project.rs `register_spelling`: "No `RS00NNNN` → bare ...
+deferred to unit 3").
+
+- **done**: one org whose own identifier is `GBMPR8376`, reached through the folded spelling:
+  `[(<id>, 'GBMPR8376')] {'identifier': {'asked': 'GBMPRRS008376', 'merged_into': [<id>]}}`.
+- **open** (2026-10-12, from unit 1's census and the unit-2 decision §4, not re-read in this pass):
+  `[(31536226, 'GBMPRRS008376')] None`. The RS spelling answers its own org, and the bare twin stands apart. The
+  fold's 448 "register target(s) stand on two or more rows" read (Status NEXT) is also not on record yet.
+
 ## 469 U2/U3 evidence (2026-10-11)
 
 The spellings are real. U3's shape gate keeps them apart, never folding them:

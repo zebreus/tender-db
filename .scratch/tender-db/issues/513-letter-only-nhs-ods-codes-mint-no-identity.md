@@ -38,6 +38,23 @@ code name-bound to several provisional orgs).
    mentions would not re-bind on a refold alone. Collapsing the multi-target orgs is itself a merge decision with its
    own gates.
 
+## Verify
+
+    ssh -o BatchMode=yes root@zebreus.click "/root/aj.sh '/admin/jobs?limit=600'" | python3 -c 'import sys,json,re,time; r=[j for j in json.load(sys.stdin)["recent"] if j["kind"]=="match-org-identifiers" and "nhs-body dry-run" in (j.get("params") or "")]; j=r[0] if r else {}; c=j.get("counts") or ""; s=re.search(r"\d+ keys regrown \(S4\)", c); a=re.search(r"\d+ applied", c); print("job %s %s: %s; %s" % (j["job_id"], time.strftime("%Y-%m-%d", time.gmtime(j.get("finished_at") or j["started_at"])), s.group(0) if s else "no S4 clause", a.group(0) if a else "no applied count") if j else "no nhs-body dry run in the last 600 jobs")'
+
+This checks the last open step: the S4 re-read after more daily folds, i.e. the newest `nhs-body` dry run's regrown
+count. U0-U5 and the survivor-exempt U6 are applied: 171 of 174 codes, closing dry 2287 (`../513-nhs/u5/results.md`).
+The decision's conditional forward arm (D8, listed as "U6 (conditional)" under Units) opens only if this read shows
+coded spellings regrowing.
+
+- **done**: a run dated 2026-10-14 or later prints `0 keys regrown (S4); 171 applied`, or more applied if a later
+  cohort lands. That is at least two daily folds after the first one (job 2300). Then close 513 with D8's arm
+  unopened; 469 U7 and 519 carry the handoffs.
+- **open** (2026-10-24, from the record, not re-run in this pass): `job 2348 2026-10-12: 0 keys regrown (S4); 171
+  applied`. That is 519's closing dry, the newest `nhs-body` dry run on record. Dries 2302, 2336, 2337, 2341 and 2348
+  all read 0 regrown, but all ran on 2026-10-12, the day of the first daily fold, so no dry run after two more folds
+  is on file. A count above 0 is an S4 breach: read the plan's `nhs_body_regrown` and take up D8's arm.
+
 ## 469 U2 evidence (2026-10-11)
 
 - In U2's 30-pair NHS sample, 14 codes mint no identity. Seven are letter-only ICB codes (`QGH`, `QMM`, `QOC`, `QPM`,

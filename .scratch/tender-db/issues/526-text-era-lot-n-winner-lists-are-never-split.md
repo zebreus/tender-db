@@ -44,8 +44,20 @@ Reparse the 1997–2003 text fetches (270+) through 491's path: a dry run first,
 re-minted winners, then the wet run and the 443 sweep. This must land before any other pre-2004 reparse.
 
 ## Verify
-`curl -s "https://tenders.zebreus.click/v1/organizations?name_prefix=Lot%201)%20Blin&limit=10" | jq '.items|length'`
-Open: 1 (31735007, 2026-10-12). Done: 0.
+
+    grep -c '^## Unit 4' .scratch/tender-db/issues/526-text-era-lot-n-winner-lists-are-never-split.md
+
+Units 1–3 are built, deployed, drained and verified (last: 6792e5f, drain 2449–2486 all 0/0/0, sweep 2487, exhibits
+read, record 0182cb8). Their own check stays as prose: `curl -s
+"https://tenders.zebreus.click/v1/organizations?name_prefix=Lot%201)%20Blin&limit=10" | jq '.items|length'` read 1
+(org 31735007) on 2026-10-12 and 0 after unit 1's drain on 2026-10-13 ("Drain log" below). The last open step is the
+Status NEXT: a decision on whether the unit-3 residue list ("Residue left (unit 3's own)") warrants a unit 4. The data
+cannot show that: the residue's bounded `name_norm` range counts (`lots ` 667, `lot a`–`lot z` 869 on 2026-10-14)
+mix the defect with real company names that begin with `Lot`/`Lots`, and they need `/v1/sql`. So the check reads
+the decision's prose, as 398's does.
+- **done**: `1`. A `## Unit 4 — …` section records the decision with its reasoning: either a unit 4 build, which
+  then names its own exhibit check, or the ruling that the residue stays as published. That ruling is the closure.
+- **open** (2026-10-24, run in this pass): `0`. No unit-4 decision is recorded.
 
 ## Unit 1 — built and measured (2026-10-13)
 

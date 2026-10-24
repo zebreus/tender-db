@@ -120,6 +120,23 @@ Relates to: 179 (scoped staleness; it rejected rebuild=true), 488 (the defrag, w
 496 (writer per-row cost), 497 (planning and grouping regressions), 340 (the in-place backfill precedent),
 490 (the epoch-4 refold that prompted this)
 
+## Verify
+
+    grep -c '^## Unit 6' .scratch/tender-db/issues/495-a-stale-refold-rewrites-byte-identical-content.md
+
+This checks unit 6, the last open unit: the measurement, which lives only in this file, so the file is the only
+thing a check can read (398's precedent). Units 1–5 are done and deployed: `b9906bc`, `79b1212`, `4022517`/`e744225`,
+`74cec22` and `6c15075`, with jobs 2083/2087, 2098 and 2099/2100.
+- **done**: `1`. A `## Unit 6` section records, for one all-profile or largest-scoped refold: the fold phase's time
+  against job 2044's 23,674 s, the skip ratio per table, µs per compared and per rewritten row, change rows against
+  70,643,598 and against the shadow prediction, and the writer hold per bucket and WAL size. It then either closes
+  495 (a fold of 3 h or less with no logic change) or files unit 7's follow-ups as their own issues.
+- **open (2026-10-24)**: `0`. A candidate run already exists: refold 2563 plus project 2564 (2026-10-16), recorded
+  on 538 and 533. 2563 ran 11:34–12:54 UTC and stamped 8,792,804 Tenders. 2564 ran 12:54–17:47 UTC, about 4 h 53 m
+  for the whole job, and gave 8,317,567 verified, 475,237 corrected and 3,162,052 correction rows against 2044's
+  70,643,598. It carried a logic change (538's decode and 533's fields), and the record does not give its fold
+  phase's time alone. Reading 2564's `[project]` phase lines is unit 6's first step.
+
 ## What was measured
 
 The last identical all-profile refold, job 2044 (2026-10-07, epoch 3), took 11 h 06 m end to end:

@@ -1,11 +1,24 @@
 # 521 — "nobody" words in a winner slot (`ingen`, `néant`, `geen`, `aucun`, `niet van toepassing`) may mean "not awarded"
 
-Status: ready-for-agent — triaged 2026-10-12, low priority. The claims hold, but the 510-style per-org reads no longer work: unit 3 swept the néant/aucun/geen/niet-van-toepassing orgs and retired their mentions. `ingen` is mostly a French name, which the language guard keeps on purpose. NEXT (M): a read-only dry census job over the legacy-era results (r208/r209/internal-ojs/text) on French, Dutch, Danish, Swedish and Norwegian notices. Output: per word × profile, how many results have a value (=0 / >0), a date only, or neither, plus the full notice list. Then decide per word (S), using a winner-slot marker rather than VOID_WHOLE.
+Status: ready-for-agent — low priority. NEXT is unchanged except that the census can no longer read the text era's winner SECTIONS (re-read 2026-10-24). This triage said to run the census "before any text reparse", and 526 then re-parsed every text fetch (186–401): jobs 2398–2413, 2416–2437 and 2449–2486, 2026-10-13/14, on 214ab64 and 6792e5f. Each re-parse ran `plausible_name`, which refuses néant, geen, aucun and niet van toepassing before a section exists (text/parse.rs:143-155), and a reparse deletes the sections that vanish (store lib.rs:2551-2572). So for the text era the census must re-derive the winner names from the stored TXT-TX bodies in `notice_texts`, which are kept whole as the authoritative claim (text/parse.rs:1202-1208; the derivations read TXT-TX at ~3018/3105): run awarded_names_and_values without the plausible_name refusal. No archive re-parse is needed. plausible_name passes no language, so text-era `Ingen` winner sections still exist (parse.rs:146-147); r208, r209 and internal-ojs are read from sections as before (skeptic-corrected, wf_d0321204-8e1). Nothing is built yet: no census arm in crates/, and no commit names 521 after triage 4274050. Was: ready-for-agent — triaged 2026-10-12, low priority. The claims hold, but the 510-style per-org reads no longer work: unit 3 swept the néant/aucun/geen/niet-van-toepassing orgs and retired their mentions. `ingen` is mostly a French name, which the language guard keeps on purpose. NEXT (M): a read-only dry census job over the legacy-era results (r208/r209/internal-ojs/text) on French, Dutch, Danish, Swedish and Norwegian notices. Output: per word × profile, how many results have a value (=0 / >0), a date only, or neither, plus the full notice list. Then decide per word (S), using a winner-slot marker rather than VOID_WHOLE.
 Was: needs-triage — filed 2026-10-12 with issue 511 unit 2 (decision §8.7, owner ruling 16).
 Kind: data quality (results)
 Relates to:
 - 511 (these words are `Blank`, so the existing evidence rule decides);
 - 510 (`VoidLot` and its per-word value/date table).
+
+## Verify
+
+    grep -c '^## Decision' .scratch/tender-db/issues/521-nobody-words-in-winner-slots-may-mean-not-awarded.md
+
+This reads the last open unit, the per-word decision (S). It follows the census unit (M), which is not built yet. The
+triage proposed this check. It reads prose because the data looks the same in both states when no word promotes:
+today's Blank reading already stands, and nothing moves. A promotion moves about 100–150 legacy lot results. In that
+case the `## Decision` section must also name the deploy of the winner-slot `nobody` marker and the `refold-notices`
+job over the census list before 521 closes.
+- **done**: `1` — a `## Decision` section holds the census table (per word × profile: value = 0 / value > 0 / date only
+  / neither) and a promote-or-keep ruling per word.
+- **open (2026-10-24)**: `0` — no census has run and nothing is decided.
 
 ## What is open
 

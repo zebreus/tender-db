@@ -39,6 +39,22 @@ Kind: data quality (organizations; all eras)
 Relates to: 510 (the `partyname::not_a_name` predicate and its `Placeholder` class), 484 (`NON_NAME_FOLDS` in
 `project/role_census.rs`, a fold-level placeholder list for the buyer-equal test), 483 (buyer-slot fixes)
 
+## Verify
+
+    curl -s -G https://tenders.zebreus.click/v1/organizations --data-urlencode 'name_prefix=die in Ziffer I.1' --data-urlencode limit=20 | jq -c '[.items[] | [.id, .mentions]]'
+
+This reads unit 7, the last open unit, through its item 2. Item 2 holds the largest org that residual dry 2335 still
+kept (`../511-placeholders/u6/plan-residual.json`, `top[0]`). The other items' exemplars can be read the same way
+with `GET /v1/organizations/<id>`: 1559927 'Organisations stated in Section II.1.5' (101 mentions) and 6226133
+'titulaires mentionnés au point Vi.2 du présent avis' (44) for item 3, and 5496719 'Voir Section VI) Renseignement
+complémentaires' (tender 5266661's winner) for item 5.
+- **done**: `[]`. The I.1 pointers are classed, their mentions have retired and the orphan sweep has removed the orgs.
+  An org that survives with a real name under this prefix gets a read before the issue closes.
+- **open** (2026-10-12, from residual dry 2335; not re-run on 2026-10-24 because this pass made no HTTP request): the
+  fold `die in ziffer i 1 genannte stelle` has 2 orgs and 199 mentions, class `name`: 14229092 'die in Ziffer I.1)
+  genannte Stelle' with 197, and one 'Die in Ziffer I.1. genannte Stelle'. So the command should print
+  `[[14229092,197],[…,2]]` or near it.
+
 ## What is wrong
 
 A party slot that names no organization — a pointer (`See section VI.3`, `Voir autres informations`, `Véase perfil del

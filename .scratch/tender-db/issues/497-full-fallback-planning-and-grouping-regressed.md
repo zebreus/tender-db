@@ -8,6 +8,22 @@ Kind: performance / projection planning (`crates/ingest/src/project.rs`)
 Relates to: 58 / 179 (the planning half of the full fallback, deliberately left open), 192, 305 (the
 closure cap), 495, 496
 
+## Verify
+
+    grep -nE 'let readers = db\.readers\(1\)\?;|const PLAN_CHECKPOINT_EVERY' crates/ingest/src/project.rs
+
+This reads P1 (shard the producer) and P2 (drop the per-chunk TRUNCATE), the last open units. P3 runs only if P0
+shows decode dominates. The grouping acceptance and the P0 read (Status NEXT) are journal reads, and they come
+before P1.
+- **done**: no `db.readers(1)` line, because phase 1 takes K readers through an env valve (`db.readers(k)` with a
+  reorder window), and no `PLAN_CHECKPOINT_EVERY` line, because the per-chunk TRUNCATE is gone and one TRUNCATE runs
+  after the producers join. The command then prints nothing (exit 1). The pre-pass's `db.readers(k)` does not match.
+- **open** (2026-10-24): two lines, `const PLAN_CHECKPOINT_EVERY: usize = 1;` and `let readers = db.readers(1)?;`
+  (project.rs 1732 and 2379 today). There is one producer thread and a TRUNCATE after every chunk. The grouping fix
+  (`8c50afa`) and P0 (`37ac1cb`) are both in the deployed `0dc59d3`. Full fallbacks have run since: 2531 (10-15),
+  2590 (10-17) and 2594 (10-18), per 550/567/568. None of their `group step keyed/island`, `refused-labels` or
+  `plan halves` lines is recorded here yet.
+
 ## What was measured
 
 Read from the `[project]` journal lines saved in `../495-refold/p2_*.txt`:

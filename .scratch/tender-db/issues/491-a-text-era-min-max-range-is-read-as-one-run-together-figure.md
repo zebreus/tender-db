@@ -12,6 +12,22 @@ Kind: data quality / text-era parser (`crates/ingest/src/text/parse.rs`)
 Relates to: 471 (the band; unit 5 decision), 489 (F14 value corrections, the structured-era version of
 (c)), ADR-0004
 
+## Verify
+
+    curl -s --max-time 20 https://tenders.zebreus.click/v1/tenders/4179951 | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['id'], d['value'])"
+
+This checks unit 4 (c), the last open unit. Units 1–3 are done (Status line; commits `78c512b`, `f71802e`/`ab879bc`,
+`57098ee`/`f67f6c3`, `5f596e6`).
+- **done**: `4179951 {'cents': 15000000000, 'currency': 'GBP'}`. That is the "Read" figure of corrigendum 91132-2010,
+  £150,000,000. If the pair is refused rather than applied, it prints `4179951 None`. OR a `## Unit 4` section below
+  records how many text-era corrigenda carry an "Instead of / Read" value pair and decides not to map them, with the
+  reason. In that case the command keeps printing the £15 bn below, and that is accepted.
+- **open (2026-10-24, from the record, not re-read in this pass)**: `4179951 {'cents': 1500000000000, 'currency':
+  'GBP'}`, the "Instead of" figure of £15,000,000,000. It was last seen in section 16 of dq 2263
+  (`../471-values/section16-dq2263-2026-10-11.txt:74`: 15,000,000,000.00, which is €16,791,671,331.02) and in 551's
+  head walk (`../551-lot-sum/results-slim.jsonl`: elected `result_value` 1,500,000,000,000 GBP cents, not a derived
+  lot sum). No commit or later issue has worked unit 4 since `5f596e6` (2026-10-11).
+
 ## What is wrong
 
 ### (a) A bons-de-commande minimum and maximum, run together
