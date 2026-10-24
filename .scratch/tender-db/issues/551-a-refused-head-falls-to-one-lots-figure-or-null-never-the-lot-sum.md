@@ -1666,3 +1666,9 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   - The 576 U2 + 539 + revert tree is gating at b3effc2. A green gate moves the marker off the twin adcb7b0, which is
     re-gated right after. The deploy itself still waits for the 10-28 day-7 fetch (decision calendar).
   - 576 U2 touches supervisor.rs, a flip file, so the twin rebuilt on the deployed base carries its hunk.
+- **2026-10-24 04:06–04:29Z: gate green at b3effc2** (539 caveat retirement ce20b28 + 576 U2 cb19854 + the 577 U2 revert;
+  GATE-EXIT=0, 1,384 s); main = handover = 44e0f00, which holds undeployed gated code.
+  **04:30–04:54Z: twin adcb7b0 re-gated green** (GATE-EXIT=0, 1,441 s). The marker reads `gate-v2 adcb7b0…`;
+  `marker_covers adcb7b0` = COVERS and `gate_deploy_step adcb7b0` = skip, so a switch-off is again a covered deploy
+  (0 min). A switch-off commit carries adcb7b0's tree outside `.scratch` on top of main, as before. The twin is
+  unchanged: the deployed code is still 512b297.
