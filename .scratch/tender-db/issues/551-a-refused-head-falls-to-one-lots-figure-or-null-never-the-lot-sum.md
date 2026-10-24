@@ -1711,3 +1711,20 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   PASS, band 29 = B_R. K → 959250675. The 6 `organization/added` rows are 576 U2 minting touchpoint mentions on refolded
   Tenders. Writer released. The twin on the new base (111f1a7 is stale now that 577 rides deploy #2) is rebuilt and gated
   after deploy #2. **576 U3 posted at 11:47Z: refold-sections Touchpoint 2758 + project 2759.**
+- **2026-10-24 12:32Z: 576 U3 done** (2759: 103,852 corrected, touchpoint parties only; 0 regroup retirements).
+- **12:31Z: twin-4 built, `hold/551-switchoff-4` = d83c5b8** = ad8e305 with e718684 reverted by plumbing (temp index,
+  `git apply --cached --3way`, CHANGELOG excluded). Its +/- lines equal twin-3's (ed3e2d5..111f1a7) exactly. Gate started
+  12:31Z with HEAD on the hold branch; commits frozen until it returns (critique finding 8).
+- **12:35Z: DEPLOY #2, ad8e305** (gate green at 05313fa = its tree, 153 suites): the operator notice (banner), 577 U2
+  re-applied (bdd055d), CLAUDE.md "Velocity first". Banner set 12:36Z (546 + 577 maintenance); /health and /api/notice
+  serve it.
+- **12:36Z: gap g576 recorded** (segment.py gap, class Z, (959250675, 959564613]): foreign 2758 refold-sections + 2759
+  project = 576 U3, posted without a segment under the velocity ruling, plus the deploy restart. Its STOP is explained by
+  those jobs. The gd5 read cannot run while a job runs (B5), so it is read with 546's range in the next idle window. It
+  informs; nothing waits on it.
+- **12:37–12:42Z: 546 U4 by the gap route** (segment.py open n546 held on g576's open check; the hold is void under the
+  ruling). K1 by hand: 12:42Z + 8 h upper bound + 15 min = 20:57Z ≤ 02:10Z weekly. Probes: refold-fields 2760 (TED-CA_CE_NUTS,
+  TED-TENDERER_NUTS in notice_classifications) counted **4,488,813**; refold 2762 (ted-export-r209) counted **4,490,549**;
+  their paired projects 2761/2763 folded 0. **Wet: refold 2764 `{"profiles":["ted-export-r209"],"expect":4490549}` +
+  project 2765**, posted 12:41:56Z. The profile is the superset: the field cohort is inside r209 (546 unit 1: r208 carries
+  no address NUTS), and the profile also covers the 1,736 r209 notices without either field.

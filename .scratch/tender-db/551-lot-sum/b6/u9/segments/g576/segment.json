@@ -1,0 +1,75 @@
+{
+ "CA": 959564613,
+ "CB": null,
+ "K_open": 959250675,
+ "ca_health": [
+  "2026-10-24T12:36:24Z CA-g576 rev=ad8e305830c65780b24f2771509c1b65c1a6eee1 cursor=959564613 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-24T12:36:26Z CA-g576b rev=ad8e305830c65780b24f2771509c1b65c1a6eee1 cursor=959564613 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "ca_jobs": {
+  "current": null,
+  "file_sha256": "bfd38c6ab0a66b2dbfb9a60237a860b8e57e05e9e6dd9a8a78a9b9cc0fcc0189",
+  "max_job_id": 2759,
+  "measured_at": 1792845385,
+  "queued": []
+ },
+ "class": "Z",
+ "closed_at": "2026-10-24T12:36:26Z",
+ "corrected": null,
+ "dry_since_mark": [],
+ "foreign": [
+  {
+   "counts": "198857 notices → 107415 tenders (5098 islands), 199434 versions; 106091 tenders written, 1324 verified unchanged, 0 relabelled (issue 562); compare (issue 495): 2239 tenders verified, 103852 corrected; tables 1741854 skipped / 199434 rewritten; rows 11401701 skipped / 1857483 rewritten; 310193 correction rows; 12446527 stored rows of 207451 versions read in 161.2s: 12.95 us per row, 776.8 us per version; dropped parties (issue 511): 0 void, 8 placeholder (7 with an identifier: 24337127/ORG-0002 'Vertrouwelijk - perceel 1 is gegund aan 2 opdrachtnemers (aa' [00001668513763], 24337127/ORG-0003 'Vertrouwelijk - perceel 2 is gegund aan 3 opdrachtnemers (de' [0000-1729395962], 24337247/ORG-0002 'Vertrouwelijk - perceel 1 is gegund aan 11 opdrachtnemers (a' [0000809548349], 24337247/ORG-0003 'Vertrouwelijk - perceel 2 is gegund aan 13 opdrachtnemers (a' [00001836900942], 24337247/ORG-0004 'Vertrouwelijk - perceel 3 is gegund aan 2 opdrachtnemers (aa' [0000307789990], 24337247/ORG-0005 'Vertrouwelijk - perceel 4 is gegund aan 4 opdrachtnemers (aa' [0000659413478], 25358905/ORG-0002 'Vertrouwelijk. De opdracht is gegund aan 1 opdrachtnemer (er' [0000-415298946]), 2 blank; touchpoint roles (issue 576): 67434 aliased, 491287 minted (50094 without a country of their own took the organization's), 27378 dropped; issue-481 tender links joined: 1851 (previous-notice 1747 of which cross-source 96, logical-notice 104, matched 0); refused: 1624 (not-earlier 30, shared-kind 296, buyer-disjoint 1107, pin-fan-in 191, fan-in 0, not-one-to-one 0, keyed-weld 0, oversized 0); deferred: 0; largest component: 26 key(s) at notice 24910160; issue-482 uuid hubs refused: 16 key(s), 1200 notice(s) split into 396 buyer cluster(s); issue-479 procedure type: eforms 185189 folded / 313 unmapped / 19503 none, eforms-de-2x 2258 folded / 0 unmapped / 402 none, eforms-de-1x 2769 folded / 0 unmapped / 272 none",
+   "finished_at": 1792845134,
+   "job_id": 2759,
+   "kind": "project",
+   "outcome": "ok",
+   "params": "rebuild=false",
+   "started_at": 1792842410
+  },
+  {
+   "counts": "198857 notice(s) carry a [\"Touchpoint\"] section: re-queued 198857, stamped 106091 tender(s) epoch-stale for the incremental fold",
+   "finished_at": 1792842410,
+   "job_id": 2758,
+   "kind": "refold-sections",
+   "outcome": "ok",
+   "params": "refold-sections Touchpoint",
+   "started_at": 1792842398
+  }
+ ],
+ "full_required": true,
+ "jobs_mark": {
+  "max_job_id": 2757,
+  "measured_at": 1792842383,
+  "seg": "p1"
+ },
+ "jobs_verdict": "STOP",
+ "missing_own": [],
+ "own": [],
+ "reason": "576 U3: refold-sections 2758 + project 2759 (posted on a63cf23 without a segment under the owner's velocity ruling, 2026-10-24 11:46Z); then deploy #2 ad8e305 (12:35Z restart, queue idle)",
+ "seg": "g576",
+ "started": [
+  {
+   "counts": "198857 notices → 107415 tenders (5098 islands), 199434 versions; 106091 tenders written, 1324 verified unchanged, 0 relabelled (issue 562); compare (issue 495): 2239 tenders verified, 103852 corrected; tables 1741854 skipped / 199434 rewritten; rows 11401701 skipped / 1857483 rewritten; 310193 correction rows; 12446527 stored rows of 207451 versions read in 161.2s: 12.95 us per row, 776.8 us per version; dropped parties (issue 511): 0 void, 8 placeholder (7 with an identifier: 24337127/ORG-0002 'Vertrouwelijk - perceel 1 is gegund aan 2 opdrachtnemers (aa' [00001668513763], 24337127/ORG-0003 'Vertrouwelijk - perceel 2 is gegund aan 3 opdrachtnemers (de' [0000-1729395962], 24337247/ORG-0002 'Vertrouwelijk - perceel 1 is gegund aan 11 opdrachtnemers (a' [0000809548349], 24337247/ORG-0003 'Vertrouwelijk - perceel 2 is gegund aan 13 opdrachtnemers (a' [00001836900942], 24337247/ORG-0004 'Vertrouwelijk - perceel 3 is gegund aan 2 opdrachtnemers (aa' [0000307789990], 24337247/ORG-0005 'Vertrouwelijk - perceel 4 is gegund aan 4 opdrachtnemers (aa' [0000659413478], 25358905/ORG-0002 'Vertrouwelijk. De opdracht is gegund aan 1 opdrachtnemer (er' [0000-415298946]), 2 blank; touchpoint roles (issue 576): 67434 aliased, 491287 minted (50094 without a country of their own took the organization's), 27378 dropped; issue-481 tender links joined: 1851 (previous-notice 1747 of which cross-source 96, logical-notice 104, matched 0); refused: 1624 (not-earlier 30, shared-kind 296, buyer-disjoint 1107, pin-fan-in 191, fan-in 0, not-one-to-one 0, keyed-weld 0, oversized 0); deferred: 0; largest component: 26 key(s) at notice 24910160; issue-482 uuid hubs refused: 16 key(s), 1200 notice(s) split into 396 buyer cluster(s); issue-479 procedure type: eforms 185189 folded / 313 unmapped / 19503 none, eforms-de-2x 2258 folded / 0 unmapped / 402 none, eforms-de-1x 2769 folded / 0 unmapped / 272 none",
+   "finished_at": 1792845134,
+   "job_id": 2759,
+   "kind": "project",
+   "outcome": "ok",
+   "params": "rebuild=false",
+   "started_at": 1792842410
+  },
+  {
+   "counts": "198857 notice(s) carry a [\"Touchpoint\"] section: re-queued 198857, stamped 106091 tender(s) epoch-stale for the incremental fold",
+   "finished_at": 1792842410,
+   "job_id": 2758,
+   "kind": "refold-sections",
+   "outcome": "ok",
+   "params": "refold-sections Touchpoint",
+   "started_at": 1792842398
+  }
+ ],
+ "status": "closed",
+ "switchoff_by": "2026-10-25T01:05:00Z",
+ "tag": "gap-g576",
+ "w_input": []
+}

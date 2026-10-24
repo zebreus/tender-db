@@ -1,6 +1,6 @@
 # 576 — a party role whose eForms reference names a touchpoint (TPO-…) is dropped from the tender's parties
 
-Status: ready-for-agent — **unit 2 BUILT and GATED 2026-10-24 (cb19854; gate green at b3effc2, 1,384 s; on main)** in wf_52627394-803: implement, docs, three review lenses with a skeptic each, fixer; 14 findings, 5 confirmed and fixed; final focused run 138 passed, EXIT=0; the unit-3 re-mint test is mutation-checked. Country fallback: the touchpoint's BT-514, else the parent ORG's first, counted. supervisor.rs (a 551 flip file) gains the fold-summary suffix, so the switch-off twin rebuilt after the batch deploy must carry it. NEXT: the batch deploy (551 W-on decision: after the 10-28 day-7 fetch, with 578 U2, 579 U4 and 539's caveat retirement; 577 U2 is out, W7), probe P1, twin re-gate; then unit 3 (class N), after P1 PASS and the day-7 PASS. Was: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 bounded /v1/sql reads,
+Status: ready-for-agent — **unit 3 DRAINED 2026-10-24** (refold-sections 2758 + project 2759 on a63cf23, 11:46→12:32Z): 198,857 Touchpoint carriers re-queued, 106,091 Tenders stamped; the fold wrote 106,091 and corrected 103,852 (compare); touchpoint roles 67,434 aliased, 491,287 minted (50,094 took the parent organization's country), 27,378 dropped; 0 Tenders retired by regrouping (the issue-580 suffix is silent at zero). NEXT: unit 4 (Verify 8851944 / 8851996, then the salted read of 30, 0-W bar). Was: ready-for-agent — **unit 2 BUILT and GATED 2026-10-24 (cb19854; gate green at b3effc2, 1,384 s; on main)** in wf_52627394-803: implement, docs, three review lenses with a skeptic each, fixer; 14 findings, 5 confirmed and fixed; final focused run 138 passed, EXIT=0; the unit-3 re-mint test is mutation-checked. Country fallback: the touchpoint's BT-514, else the parent ORG's first, counted. supervisor.rs (a 551 flip file) gains the fold-summary suffix, so the switch-off twin rebuilt after the batch deploy must carry it. NEXT: the batch deploy (551 W-on decision: after the 10-28 day-7 fetch, with 578 U2, 579 U4 and 539's caveat retirement; 577 U2 is out, W7), probe P1, twin re-gate; then unit 3 (class N), after P1 PASS and the day-7 PASS. Was: ready-for-agent — triaged 2026-10-21 (wf triage-575-578: measurer + 2 adversarial skeptics; 4 + 2 bounded /v1/sql reads,
 0 GETs; skeptic-corrected, `## Triage (2026-10-21 …)` below). Reproduced: `bind_organizations` silently drops every OPT-301 Lot/Part
 role whose target is a Touchpoint (TPO-…) section (project.rs:6115-6118). Window 47408000-47415999: 1,179 TPO refs dropped on
 345-374 of 7,122 eForms notices (4.8-5.3%; corpus ≈160-175k notices, low confidence); ≥73 (6%, lower bound) print the parent
@@ -340,3 +340,18 @@ for the batch slot, and unit 3 also waits for P1 and the day-7 PASS.
     mention first.
   - Every touchpoint that mints nothing is handed to `retire_mentions`: one lookup, no write until something has been
     minted at that key.
+
+## Unit 3 — drained (2026-10-24)
+
+Posted on a63cf23 (the batch deploy, 11:32Z) under the owner's velocity ruling, without the old P1/day-7 holds.
+- **2758 refold-sections** `{"kind":"refold-sections","profiles":["Touchpoint"]}` (11:46:38→11:46:50Z): "198857 notice(s) carry a
+  ["Touchpoint"] section: re-queued 198857, stamped 106091 tender(s) epoch-stale for the incremental fold".
+- **2759 project** (11:46:50→12:32:14Z, 45 min): 198,857 notices → 107,415 Tenders (5,098 islands), 199,434 versions; 106,091
+  written, 1,324 verified unchanged; compare 2,239 verified, **103,852 corrected** (310,193 correction rows).
+  - Touchpoint roles (issue 576): **67,434 aliased, 491,287 minted** (50,094 without a country of their own took the
+    organization's), **27,378 dropped**.
+  - Issue-481 links joined 1,851, refused 1,624; issue-482 hubs refused 16 keys. No regroup retirements (no 580 suffix).
+- The 103,852 corrections are this unit's intended change (touchpoint parties gained), not drift: the cohort is exactly the
+  stamped Tenders that carry a Touchpoint section. Their ids are in the change rows of 2759 for 551's switch-off list.
+- Unit 4 next: the Verify reads and the salted 30.
+
