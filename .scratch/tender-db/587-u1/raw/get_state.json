@@ -1,0 +1,26 @@
+{
+ "used": 20,
+ "last": 1792879178.05192,
+ "names": [
+  "g01_dcp",
+  "g02_scp",
+  "g03_smp",
+  "g04_dda",
+  "g05_sda",
+  "g06_udc",
+  "g07_sdc",
+  "g08_mdc",
+  "g09_odc",
+  "g10_odc_ascii",
+  "g11_dzp",
+  "g12_ai",
+  "g13_afd",
+  "g14_zv",
+  "g15_v",
+  "g16_pd",
+  "g17_pud",
+  "g18_pt",
+  "g19_ug",
+  "g20_t19553"
+ ]
+}

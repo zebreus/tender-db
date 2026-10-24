@@ -1,0 +1,18 @@
+# plan
+SCAN q
+  SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+  USE HASH TABLE FOR DISTINCT
+SEARCH b USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=? AND section_id=?)
+USE SORTER FOR GROUP BY
+USE SORTER FOR ORDER BY
+# plan_prod
+SCAN q
+  SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+  USE HASH TABLE FOR DISTINCT
+SEARCH b USING INDEX tender_version_parties_version (tender_id=? AND seq=?)
+SEARCH m USING INDEX organization_mentions_notice (notice_id=?)
+USE SORTER FOR GROUP BY
+USE SORTER FOR ORDER BY

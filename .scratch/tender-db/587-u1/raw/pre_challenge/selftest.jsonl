@@ -1,0 +1,117 @@
+{"name": "Servicio de Contratación", "bare": true, "set": "MUST_HIT"}
+{"name": "SERVICIO DE CONTRATACION", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratacion", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación Administrativa", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction de la commande publique", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction de la Commande Publique", "bare": true, "set": "MUST_HIT"}
+{"name": "Service de la Commande publique", "bare": true, "set": "MUST_HIT"}
+{"name": "Service des marchés publics", "bare": true, "set": "MUST_HIT"}
+{"name": "Service des marchés", "bare": true, "set": "MUST_HIT"}
+{"name": "Service des achats et de la commande publique", "bare": true, "set": "MUST_HIT"}
+{"name": "Zentrale Vergabestelle", "bare": true, "set": "MUST_HIT"}
+{"name": "Vergabestelle", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación y Compras", "bare": true, "set": "MUST_HIT"}
+{"name": "Unidad de Contratación", "bare": true, "set": "MUST_HIT"}
+{"name": "Unidad de Contratacion", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación y Asuntos Generales", "bare": true, "set": "MUST_HIT"}
+{"name": "Dział Zamówień Publicznych", "bare": true, "set": "MUST_HIT"}
+{"name": "Dział Zamówień Publicznych i Zaopatrzenia", "bare": true, "set": "MUST_HIT"}
+{"name": "Órgano de Contratación", "bare": true, "set": "MUST_HIT"}
+{"name": "Mesa de contratación", "bare": true, "set": "MUST_HIT"}
+{"name": "Ufficio gare", "bare": true, "set": "MUST_HIT"}
+{"name": "Afdeling Inkoop", "bare": true, "set": "MUST_HIT"}
+{"name": "Afd. Inkoop", "bare": true, "set": "MUST_HIT"}
+{"name": "Team Inkoop", "bare": true, "set": "MUST_HIT"}
+{"name": "Procurement Department", "bare": true, "set": "MUST_HIT"}
+{"name": "Purchasing Department", "bare": true, "set": "MUST_HIT"}
+{"name": "Procurement Team", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction des achats", "bare": true, "set": "MUST_HIT"}
+{"name": "Service des achats", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación y Suministros", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación y Patrimonio", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación Centralizada", "bare": true, "set": "MUST_HIT"}
+{"name": "Service de la commande publique: responsable du service", "bare": true, "set": "MUST_HIT"}
+{"name": "Service des achats et approvisionnements", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación y Convenios", "bare": true, "set": "MUST_HIT"}
+{"name": "Unidad de Contratación Administrativa", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction de la commande publique - service des marchés", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación, Compras y Patrimonio", "bare": true, "set": "MUST_HIT"}
+{"name": "Servicio de Contratación y Gestión Patrimonial", "bare": true, "set": "MUST_HIT"}
+{"name": "Service de la commande publique et des marchés", "bare": true, "set": "MUST_HIT"}
+{"name": "Zespół Zamówień Publicznych", "bare": true, "set": "MUST_HIT"}
+{"name": "Biuro Zamówień Publicznych", "bare": true, "set": "MUST_HIT"}
+{"name": "Ufficio gare e contratti", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction des affaires juridiques", "bare": true, "set": "MUST_HIT"}
+{"name": "Vergabestelle Bau", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction des achats, marchés et assurances", "bare": true, "set": "MUST_HIT"}
+{"name": "Ufficio Gare Servizi e Forniture", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction de la commande publique et achats transversaux", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction de la commande publique : secrétariat", "bare": true, "set": "MUST_HIT"}
+{"name": "Direction des Achats de l'État", "bare": false, "set": "MUST_KEEP"}
+{"name": "Direction des achats de l'Etat (DAE)", "bare": false, "set": "MUST_KEEP"}
+{"name": "Service des achats de l'État", "bare": false, "set": "MUST_KEEP"}
+{"name": "Union des groupements d'achats publics (UGAP)", "bare": false, "set": "MUST_KEEP"}
+{"name": "UGAP", "bare": false, "set": "MUST_KEEP"}
+{"name": "Centrale d'achat du numérique", "bare": false, "set": "MUST_KEEP"}
+{"name": "Junta de Contratación Centralizada", "bare": false, "set": "MUST_KEEP"}
+{"name": "Junta Consultiva de Contratación Administrativa", "bare": false, "set": "MUST_KEEP"}
+{"name": "Dirección General de Racionalización y Centralización de la Contratación", "bare": false, "set": "MUST_KEEP"}
+{"name": "Central de Contratación", "bare": false, "set": "MUST_KEEP"}
+{"name": "Oficina Independiente de Regulación y Supervisión de la Contratación", "bare": false, "set": "MUST_KEEP"}
+{"name": "Plataforma de Contratación del Sector Público", "bare": false, "set": "MUST_KEEP"}
+{"name": "Dirección General de Patrimonio del Estado", "bare": false, "set": "MUST_KEEP"}
+{"name": "Centrale Unica di Committenza", "bare": false, "set": "MUST_KEEP"}
+{"name": "Stazione Unica Appaltante", "bare": false, "set": "MUST_KEEP"}
+{"name": "Groupement de commandes", "bare": false, "set": "MUST_KEEP"}
+{"name": "Beschaffungsamt des BMI", "bare": false, "set": "MUST_KEEP"}
+{"name": "Bundesbeschaffung GmbH", "bare": false, "set": "MUST_KEEP"}
+{"name": "Zentrale Vergabestelle des Landes Brandenburg", "bare": false, "set": "MUST_KEEP"}
+{"name": "Stadt Fürth - Zentrale Vergabestelle", "bare": false, "set": "MUST_KEEP"}
+{"name": "Stadt Erlangen - Zentrale Vergabestelle", "bare": false, "set": "MUST_KEEP"}
+{"name": "Ville de Lyon - Direction de la commande publique", "bare": false, "set": "MUST_KEEP"}
+{"name": "Servicio de Contratación del Ayuntamiento de Vigo", "bare": false, "set": "MUST_KEEP"}
+{"name": "Unidad de Contratación del Hospital Universitario Ramón y Cajal", "bare": false, "set": "MUST_KEEP"}
+{"name": "Órgano de contratación de ADIF", "bare": false, "set": "MUST_KEEP"}
+{"name": "Mesa de Contratación de la Diputación de Cádiz", "bare": false, "set": "MUST_KEEP"}
+{"name": "Vergabestelle Landeshauptstadt Stuttgart", "bare": false, "set": "MUST_KEEP"}
+{"name": "Team Inkoop gemeente Westland", "bare": false, "set": "MUST_KEEP"}
+{"name": "Afdeling Inkoop Gemeente Utrecht", "bare": false, "set": "MUST_KEEP"}
+{"name": "Dział Zamówień Publicznych UJ", "bare": false, "set": "MUST_KEEP"}
+{"name": "Service Public Fédéral Finances", "bare": false, "set": "MUST_KEEP"}
+{"name": "Service public de Wallonie", "bare": false, "set": "MUST_KEEP"}
+{"name": "Servicio Andaluz de Salud", "bare": false, "set": "MUST_KEEP"}
+{"name": "Área Metropolitana de Barcelona", "bare": false, "set": "MUST_KEEP"}
+{"name": "Bureau Veritas", "bare": false, "set": "MUST_KEEP"}
+{"name": "Secretaría General", "bare": false, "set": "MUST_KEEP"}
+{"name": "Dirección General", "bare": false, "set": "MUST_KEEP"}
+{"name": "Ayuntamiento", "bare": false, "set": "MUST_KEEP"}
+{"name": "Pleno", "bare": false, "set": "MUST_KEEP"}
+{"name": "Direction générale", "bare": false, "set": "MUST_KEEP"}
+{"name": "Service", "bare": false, "set": "MUST_KEEP"}
+{"name": "Inkoop", "bare": false, "set": "MUST_KEEP"}
+{"name": "Zentrale Vergabe", "bare": false, "set": "MUST_KEEP"}
+{"name": "Einkauf", "bare": false, "set": "MUST_KEEP"}
+{"name": "Procurement", "bare": false, "set": "MUST_KEEP"}
+{"name": "Tribunal Administrativo de Recursos Contractuales de Andalucía", "bare": false, "set": "MUST_KEEP"}
+{"name": "Commercial Services", "bare": false, "set": "MUST_KEEP"}
+{"name": "Crown Commercial Service", "bare": false, "set": "MUST_KEEP"}
+{"name": "Service des marchés publics Eric Baleine", "bare": false, "set": "MUST_KEEP"}
+{"name": "Direction de la commande publique 1 place Salvador Allende 94010 Créteil", "bare": false, "set": "MUST_KEEP"}
+{"name": "Servicio de Contratación (Ayuntamiento de Sevilla)", "bare": false, "set": "MUST_KEEP"}
+{"name": "Unidad de Contratación 2", "bare": false, "set": "MUST_KEEP"}
+{"name": "Junta de Contratación", "bare": false, "set": "MUST_KEEP"}
+{"name": "Direction de la Commande Publique de la Ville de Paris", "bare": false, "set": "MUST_KEEP"}
+{"name": "DCP", "bare": false, "set": "MUST_KEEP"}
+{"name": "La Poste - Direction des achats", "bare": false, "set": "MUST_KEEP"}
+{"name": "Service des marchés publics: Hôtel du Département", "bare": false, "set": "MUST_KEEP"}
+{"name": "Bau GmbH", "bare": false, "set": "MUST_KEEP"}
+{"name": "Travaux Publics de l'Ouest", "bare": false, "set": "MUST_KEEP"}
+{"name": "Secrétariat général", "bare": false, "set": "MUST_KEEP"}
+{"name": "Fournitures Hospitalières SA", "bare": false, "set": "MUST_KEEP"}
+{"name": "Assurances du Crédit Mutuel", "bare": false, "set": "MUST_KEEP"}
+{"town_a": "Paris Cedex 07", "town_b": "Paris", "same": true, "set": "TOWN"}
+{"town_a": "Wuppertal", "town_b": "Wuppertal", "same": true, "set": "TOWN"}
+{"town_a": "Saint-Denis", "town_b": "Saint-Étienne", "same": false, "set": "TOWN"}
+{"town_a": "", "town_b": "Sevilla", "same": true, "set": "TOWN"}
+{"town_a": "Ratzeburg", "town_b": "Mölln", "same": false, "set": "TOWN"}
+{"town_a": "STRASBOURG CEDEX", "town_b": "Strasbourg", "same": true, "set": "TOWN"}

@@ -1,0 +1,4194 @@
+{
+ "issue": 587,
+ "unit": 1,
+ "generated_from": [
+  "census_2781.json",
+  "raw/get/g01..g19 (name_prefix listings)",
+  "raw/get/g20_t19553.json",
+  "raw/sql/s01a_roles, s01b_roles, s02_buyers, s03_mentions, s04_selfbuyer"
+ ],
+ "budget_used": {
+  "sql_statements": 7,
+  "sql_budget": 12,
+  "gets": 20,
+  "get_budget": 20
+ },
+ "census_listing_order": "rows = hits.into_values().take(cap) over a BTreeMap keyed by org_id (canonical.rs name_phrase_census): the 500 LOWEST org ids (884..79376), not the largest; 491 of 500 are vergabestelle rows",
+ "census_rows": {
+  "n": 500,
+  "by_class": {
+   "BARE_STRICT": {
+    "orgs": 4,
+    "mentions": 1338
+   },
+   "DEPT": {
+    "orgs": 496,
+    "mentions": 59150
+   }
+  },
+  "by_first_phrase": {
+   "direction de la commande publique": {
+    "DEPT": {
+     "orgs": 1,
+     "mentions": 1
+    }
+   },
+   "direction des achats": {
+    "DEPT": {
+     "orgs": 1,
+     "mentions": 166
+    }
+   },
+   "service de la commande publique": {
+    "BARE_STRICT": {
+     "orgs": 1,
+     "mentions": 1026
+    }
+   },
+   "ufficio gare": {
+    "DEPT": {
+     "orgs": 5,
+     "mentions": 392
+    }
+   },
+   "unidad de contratacion": {
+    "BARE_STRICT": {
+     "orgs": 1,
+     "mentions": 2
+    }
+   },
+   "vergabestelle": {
+    "BARE_STRICT": {
+     "orgs": 1,
+     "mentions": 17
+    },
+    "DEPT": {
+     "orgs": 173,
+     "mentions": 16600
+    }
+   },
+   "zentrale vergabestelle": {
+    "BARE_STRICT": {
+     "orgs": 1,
+     "mentions": 293
+    },
+    "DEPT": {
+     "orgs": 316,
+     "mentions": 41991
+    }
+   }
+  },
+  "bare_rows": [
+   {
+    "org_id": 3443,
+    "name": "Service de la Commande publique",
+    "mentions": 1026,
+    "identifier": null,
+    "country": "FR",
+    "roles": {
+     "Lot-AddInfo": 55,
+     "Lot-DocProvider": 11,
+     "Lot-ReviewInfo": 1,
+     "Lot-TenderReceipt": 6,
+     "appeal-information": 220,
+     "buyer": 3,
+     "further-information": 338,
+     "mediation-body": 2,
+     "review-body": 1,
+     "specifications-provider": 38,
+     "tender-receipt": 309
+    }
+   },
+   {
+    "org_id": 8981,
+    "name": "Unidad de Contratación",
+    "mentions": 2,
+    "identifier": "1221940",
+    "country": "ES",
+    "roles": {
+     "Lot-ReviewOrg": 1
+    }
+   },
+   {
+    "org_id": 19553,
+    "name": "Zentrale Vergabestelle",
+    "mentions": 293,
+    "identifier": null,
+    "country": "",
+    "roles": {
+     "appeal-information": 2,
+     "buyer": 291
+    }
+   },
+   {
+    "org_id": 55205,
+    "name": "Vergabestelle",
+    "mentions": 17,
+    "identifier": null,
+    "country": "",
+    "roles": {
+     "appeal-information": 3,
+     "buyer": 14
+    }
+   }
+  ],
+  "winner_rows": [
+   {
+    "org_id": 6450,
+    "name": "Senatsverwaltung für Stadtentwicklung, Bauen und Wohnen, V M 1 - Vergabestelle für den Öffentlichen Hochbau",
+    "winner_tenders": 1,
+    "cls": "DEPT"
+   },
+   {
+    "org_id": 8598,
+    "name": "Stadt Aachen - Zentrale Vergabestelle FB60/300",
+    "winner_tenders": 7,
+    "cls": "DEPT"
+   },
+   {
+    "org_id": 9047,
+    "name": "Stadt Bochum, Referat Zentrale Vergabestelle",
+    "winner_tenders": 2,
+    "cls": "DEPT"
+   },
+   {
+    "org_id": 13350,
+    "name": "Vergabestelle tp",
+    "winner_tenders": 7,
+    "cls": "DEPT"
+   }
+  ],
+  "bare_rows_found_in_prefix_listings": {
+   "3443": true,
+   "8981": true,
+   "19553": true,
+   "55205": true
+  }
+ },
+ "prefix_listings": {
+  "orgs": 6010,
+  "truncated_listings": [
+   "g01_dcp (1000 rows, more=true; the bare exact name sorts first)"
+  ],
+  "by_class": {
+   "BARE_EXT": {
+    "orgs": 1032,
+    "mentions": 8376
+   },
+   "BARE_STRICT": {
+    "orgs": 1791,
+    "mentions": 12673
+   },
+   "DEPT": {
+    "orgs": 2712,
+    "mentions": 35856
+   },
+   "OTHER_ORGAN": {
+    "orgs": 475,
+    "mentions": 11565
+   }
+  },
+  "by_key_bucket": {
+   "identified": {
+    "BARE_EXT": {
+     "orgs": 29,
+     "mentions": 293
+    },
+    "BARE_STRICT": {
+     "orgs": 304,
+     "mentions": 916
+    },
+    "DEPT": {
+     "orgs": 304,
+     "mentions": 7410
+    },
+    "OTHER_ORGAN": {
+     "orgs": 9,
+     "mentions": 406
+    }
+   },
+   "no_identifier_null_country": {
+    "BARE_EXT": {
+     "orgs": 845,
+     "mentions": 1005
+    },
+    "BARE_STRICT": {
+     "orgs": 1433,
+     "mentions": 2089
+    },
+    "DEPT": {
+     "orgs": 510,
+     "mentions": 5556
+    },
+    "OTHER_ORGAN": {
+     "orgs": 21,
+     "mentions": 93
+    }
+   },
+   "no_identifier_with_country": {
+    "BARE_EXT": {
+     "orgs": 158,
+     "mentions": 7078
+    },
+    "BARE_STRICT": {
+     "orgs": 54,
+     "mentions": 9668
+    },
+    "DEPT": {
+     "orgs": 1898,
+     "mentions": 22890
+    },
+    "OTHER_ORGAN": {
+     "orgs": 445,
+     "mentions": 11066
+    }
+   }
+  },
+  "by_census_phrase": {
+   "(no census phrase)": {
+    "BARE_EXT": {
+     "orgs": 39,
+     "mentions": 372
+    },
+    "DEPT": {
+     "orgs": 87,
+     "mentions": 485
+    }
+   },
+   "afdeling inkoop": {
+    "BARE_EXT": {
+     "orgs": 3,
+     "mentions": 69
+    },
+    "BARE_STRICT": {
+     "orgs": 1,
+     "mentions": 121
+    },
+    "DEPT": {
+     "orgs": 20,
+     "mentions": 421
+    }
+   },
+   "direction de la commande publique": {
+    "BARE_EXT": {
+     "orgs": 77,
+     "mentions": 280
+    },
+    "BARE_STRICT": {
+     "orgs": 803,
+     "mentions": 2228
+    },
+    "DEPT": {
+     "orgs": 120,
+     "mentions": 329
+    }
+   },
+   "direction des achats": {
+    "BARE_EXT": {
+     "orgs": 211,
+     "mentions": 634
+    },
+    "BARE_STRICT": {
+     "orgs": 9,
+     "mentions": 416
+    },
+    "DEPT": {
+     "orgs": 175,
+     "mentions": 776
+    }
+   },
+   "dzial zamowien publicznych": {
+    "BARE_EXT": {
+     "orgs": 2,
+     "mentions": 44
+    },
+    "BARE_STRICT": {
+     "orgs": 1,
+     "mentions": 390
+    },
+    "DEPT": {
+     "orgs": 37,
+     "mentions": 702
+    }
+   },
+   "mesa de contratacion": {
+    "BARE_STRICT": {
+     "orgs": 3,
+     "mentions": 97
+    },
+    "DEPT": {
+     "orgs": 2,
+     "mentions": 3
+    },
+    "OTHER_ORGAN": {
+     "orgs": 206,
+     "mentions": 1441
+    }
+   },
+   "organo de contratacion": {
+    "BARE_STRICT": {
+     "orgs": 12,
+     "mentions": 292
+    },
+    "OTHER_ORGAN": {
+     "orgs": 269,
+     "mentions": 10124
+    }
+   },
+   "procurement department": {
+    "BARE_EXT": {
+     "orgs": 1,
+     "mentions": 1
+    },
+    "BARE_STRICT": {
+     "orgs": 4,
+     "mentions": 80
+    },
+    "DEPT": {
+     "orgs": 18,
+     "mentions": 38
+    }
+   },
+   "procurement team": {
+    "BARE_STRICT": {
+     "orgs": 1,
+     "mentions": 49
+    },
+    "DEPT": {
+     "orgs": 9,
+     "mentions": 15
+    }
+   },
+   "purchasing department": {
+    "BARE_STRICT": {
+     "orgs": 2,
+     "mentions": 11
+    },
+    "DEPT": {
+     "orgs": 5,
+     "mentions": 19
+    }
+   },
+   "service de la commande publique": {
+    "BARE_EXT": {
+     "orgs": 48,
+     "mentions": 217
+    },
+    "BARE_STRICT": {
+     "orgs": 438,
+     "mentions": 1693
+    },
+    "DEPT": {
+     "orgs": 50,
+     "mentions": 77
+    }
+   },
+   "service des achats": {
+    "BARE_EXT": {
+     "orgs": 427,
+     "mentions": 1616
+    },
+    "BARE_STRICT": {
+     "orgs": 6,
+     "mentions": 419
+    },
+    "DEPT": {
+     "orgs": 67,
+     "mentions": 460
+    }
+   },
+   "service des marches publics": {
+    "BARE_EXT": {
+     "orgs": 178,
+     "mentions": 307
+    },
+    "BARE_STRICT": {
+     "orgs": 427,
+     "mentions": 1401
+    },
+    "DEPT": {
+     "orgs": 127,
+     "mentions": 417
+    }
+   },
+   "servicio de contratacion": {
+    "BARE_EXT": {
+     "orgs": 33,
+     "mentions": 4229
+    },
+    "BARE_STRICT": {
+     "orgs": 16,
+     "mentions": 3498
+    },
+    "DEPT": {
+     "orgs": 659,
+     "mentions": 6896
+    },
+    "OTHER_ORGAN": {
+     "orgs": 14,
+     "mentions": 173
+    }
+   },
+   "ufficio gare": {
+    "BARE_EXT": {
+     "orgs": 7,
+     "mentions": 142
+    },
+    "BARE_STRICT": {
+     "orgs": 2,
+     "mentions": 162
+    },
+    "DEPT": {
+     "orgs": 60,
+     "mentions": 232
+    }
+   },
+   "unidad de contratacion": {
+    "BARE_EXT": {
+     "orgs": 4,
+     "mentions": 305
+    },
+    "BARE_STRICT": {
+     "orgs": 77,
+     "mentions": 623
+    },
+    "DEPT": {
+     "orgs": 151,
+     "mentions": 2178
+    },
+    "OTHER_ORGAN": {
+     "orgs": 2,
+     "mentions": 2
+    }
+   },
+   "vergabestelle": {
+    "BARE_EXT": {
+     "orgs": 4,
+     "mentions": 163
+    },
+    "BARE_STRICT": {
+     "orgs": 12,
+     "mentions": 1245
+    },
+    "DEPT": {
+     "orgs": 1130,
+     "mentions": 22814
+    }
+   },
+   "zentrale vergabestelle": {
+    "BARE_EXT": {
+     "orgs": 2,
+     "mentions": 2
+    },
+    "BARE_STRICT": {
+     "orgs": 7,
+     "mentions": 896
+    },
+    "DEPT": {
+     "orgs": 573,
+     "mentions": 12739
+    }
+   }
+  },
+  "bare_mention_histogram_orgs": {
+   "100+": 31,
+   "1": 2543,
+   "2-9": 190,
+   "10-99": 59
+  },
+  "bare_mention_histogram_mentions": {
+   "100+": 15624,
+   "1": 2543,
+   "2-9": 657,
+   "10-99": 2225
+  },
+  "bare_with_census_phrase": {
+   "orgs": 2784,
+   "mentions": 20677
+  },
+  "bare_without_census_phrase": {
+   "orgs": 39,
+   "mentions": 372,
+   "names": [
+    [
+     "service des marches",
+     27
+    ],
+    [
+     "service des marches hotel de ville",
+     2
+    ],
+    [
+     "service des marches et contrats publics",
+     2
+    ],
+    [
+     "service des marches et de la commande publique",
+     2
+    ],
+    [
+     "service des marches centralises",
+     1
+    ],
+    [
+     "service des marche publics",
+     1
+    ],
+    [
+     "service des marches public direction du patrimoine",
+     1
+    ],
+    [
+     "servicio de contrataciones",
+     1
+    ]
+   ]
+  },
+  "bare_estimate_per_phrase": {
+   "direction de la commande publique": {
+    "census_orgs": 4877,
+    "bare_orgs": 880,
+    "bare_mentions": 2508,
+    "bare_share_of_orgs": 0.18,
+    "bare_name_keyed_with_country": 20,
+    "bare_name_keyed_mentions": 1624
+   },
+   "service de la commande publique": {
+    "census_orgs": 2117,
+    "bare_orgs": 486,
+    "bare_mentions": 1910,
+    "bare_share_of_orgs": 0.23,
+    "bare_name_keyed_with_country": 26,
+    "bare_name_keyed_mentions": 1409
+   },
+   "service des marches publics": {
+    "census_orgs": 2860,
+    "bare_orgs": 605,
+    "bare_mentions": 1708,
+    "bare_share_of_orgs": 0.212,
+    "bare_name_keyed_with_country": 24,
+    "bare_name_keyed_mentions": 1080
+   },
+   "direction des achats": {
+    "census_orgs": 5054,
+    "bare_orgs": 220,
+    "bare_mentions": 1050,
+    "bare_share_of_orgs": 0.044,
+    "bare_name_keyed_with_country": 51,
+    "bare_name_keyed_mentions": 512
+   },
+   "service des achats": {
+    "census_orgs": 1057,
+    "bare_orgs": 433,
+    "bare_mentions": 2035,
+    "bare_share_of_orgs": 0.41,
+    "bare_name_keyed_with_country": 13,
+    "bare_name_keyed_mentions": 1295
+   },
+   "unidad de contratacion": {
+    "census_orgs": 541,
+    "bare_orgs": 81,
+    "bare_mentions": 928,
+    "bare_share_of_orgs": 0.15,
+    "bare_name_keyed_with_country": 5,
+    "bare_name_keyed_mentions": 795
+   },
+   "servicio de contratacion": {
+    "census_orgs": 1672,
+    "bare_orgs": 49,
+    "bare_mentions": 7727,
+    "bare_share_of_orgs": 0.029,
+    "bare_name_keyed_with_country": 31,
+    "bare_name_keyed_mentions": 7605
+   },
+   "mesa de contratacion": {
+    "census_orgs": 414,
+    "bare_orgs": 3,
+    "bare_mentions": 97,
+    "bare_share_of_orgs": 0.007,
+    "bare_name_keyed_with_country": 3,
+    "bare_name_keyed_mentions": 97
+   },
+   "organo de contratacion": {
+    "census_orgs": 389,
+    "bare_orgs": 12,
+    "bare_mentions": 292,
+    "bare_share_of_orgs": 0.031,
+    "bare_name_keyed_with_country": 3,
+    "bare_name_keyed_mentions": 264
+   },
+   "dzial zamowien publicznych": {
+    "census_orgs": 236,
+    "bare_orgs": 3,
+    "bare_mentions": 434,
+    "bare_share_of_orgs": 0.013,
+    "bare_name_keyed_with_country": 3,
+    "bare_name_keyed_mentions": 434
+   },
+   "zespol zamowien publicznych": {
+    "census_orgs": 16,
+    "bare_orgs": 0,
+    "bare_mentions": 0,
+    "bare_share_of_orgs": 0.0,
+    "bare_name_keyed_with_country": 0,
+    "bare_name_keyed_mentions": 0
+   },
+   "biuro zamowien publicznych": {
+    "census_orgs": 125,
+    "bare_orgs": 0,
+    "bare_mentions": 0,
+    "bare_share_of_orgs": 0.0,
+    "bare_name_keyed_with_country": 0,
+    "bare_name_keyed_mentions": 0
+   },
+   "afdeling inkoop": {
+    "census_orgs": 269,
+    "bare_orgs": 4,
+    "bare_mentions": 190,
+    "bare_share_of_orgs": 0.015,
+    "bare_name_keyed_with_country": 4,
+    "bare_name_keyed_mentions": 190
+   },
+   "team inkoop": {
+    "census_orgs": 12,
+    "bare_orgs": 0,
+    "bare_mentions": 0,
+    "bare_share_of_orgs": 0.0,
+    "bare_name_keyed_with_country": 0,
+    "bare_name_keyed_mentions": 0
+   },
+   "zentrale vergabestelle": {
+    "census_orgs": 4095,
+    "bare_orgs": 9,
+    "bare_mentions": 898,
+    "bare_share_of_orgs": 0.002,
+    "bare_name_keyed_with_country": 2,
+    "bare_name_keyed_mentions": 550
+   },
+   "vergabestelle": {
+    "census_orgs": 8535,
+    "bare_orgs": 16,
+    "bare_mentions": 1408,
+    "bare_share_of_orgs": 0.002,
+    "bare_name_keyed_with_country": 5,
+    "bare_name_keyed_mentions": 773
+   },
+   "procurement department": {
+    "census_orgs": 629,
+    "bare_orgs": 5,
+    "bare_mentions": 81,
+    "bare_share_of_orgs": 0.008,
+    "bare_name_keyed_with_country": 4,
+    "bare_name_keyed_mentions": 76
+   },
+   "purchasing department": {
+    "census_orgs": 428,
+    "bare_orgs": 2,
+    "bare_mentions": 11,
+    "bare_share_of_orgs": 0.005,
+    "bare_name_keyed_with_country": 1,
+    "bare_name_keyed_mentions": 8
+   },
+   "procurement team": {
+    "census_orgs": 195,
+    "bare_orgs": 1,
+    "bare_mentions": 49,
+    "bare_share_of_orgs": 0.005,
+    "bare_name_keyed_with_country": 1,
+    "bare_name_keyed_mentions": 49
+   },
+   "ufficio gare": {
+    "census_orgs": 387,
+    "bare_orgs": 9,
+    "bare_mentions": 304,
+    "bare_share_of_orgs": 0.023,
+    "bare_name_keyed_with_country": 6,
+    "bare_name_keyed_mentions": 286
+   }
+  },
+  "top_bare_folded_names": [
+   [
+    "servicio de contratacion",
+    3437,
+    8
+   ],
+   [
+    "direction de la commande publique",
+    2111,
+    736
+   ],
+   [
+    "servicio de contratacion administrativa",
+    2069,
+    3
+   ],
+   [
+    "service de la commande publique",
+    1433,
+    366
+   ],
+   [
+    "service des marches publics",
+    1349,
+    404
+   ],
+   [
+    "service des achats et de la commande publique",
+    1201,
+    417
+   ],
+   [
+    "zentrale vergabestelle",
+    896,
+    7
+   ],
+   [
+    "unidad de contratacion",
+    623,
+    77
+   ],
+   [
+    "servicio de contratacion y compras",
+    553,
+    4
+   ],
+   [
+    "direction des achats",
+    416,
+    9
+   ],
+   [
+    "servicio de contratacion y asuntos generales",
+    410,
+    3
+   ],
+   [
+    "servicio de contratacion y convenios",
+    393,
+    4
+   ],
+   [
+    "service des achats et approvisionnements",
+    390,
+    3
+   ],
+   [
+    "dzial zamowien publicznych",
+    390,
+    1
+   ],
+   [
+    "vergabestelle",
+    348,
+    4
+   ],
+   [
+    "service des achats responsables",
+    320,
+    1
+   ],
+   [
+    "unidad de contratacion administrativa",
+    299,
+    2
+   ],
+   [
+    "organo de contratacion",
+    292,
+    12
+   ],
+   [
+    "service des marches",
+    268,
+    27
+   ],
+   [
+    "service de la commande publique responsable du service",
+    259,
+    71
+   ],
+   [
+    "servicio de contratacion y suministros",
+    230,
+    3
+   ],
+   [
+    "servicio de contratacion y patrimonio",
+    214,
+    3
+   ],
+   [
+    "service des marches publics hotel du departement",
+    209,
+    157
+   ],
+   [
+    "direction des achats et de la commande publique",
+    167,
+    143
+   ],
+   [
+    "ufficio gare",
+    162,
+    2
+   ],
+   [
+    "vergabestelle bau",
+    161,
+    2
+   ],
+   [
+    "direction de la commande publique service des marches",
+    149,
+    60
+   ],
+   [
+    "afdeling inkoop",
+    121,
+    1
+   ],
+   [
+    "direction des achats et marches publics",
+    114,
+    4
+   ],
+   [
+    "servicio de contratacion centralizada",
+    113,
+    1
+   ]
+  ],
+  "bare_name_keyed_rows_with_country_top30": [
+   [
+    1164742,
+    "Servicio de Contratación",
+    "ES",
+    3236
+   ],
+   [
+    1171563,
+    "Servicio de Contratación Administrativa",
+    "ES",
+    2060
+   ],
+   [
+    1166638,
+    "Direction de la commande publique",
+    "FR",
+    1356
+   ],
+   [
+    3443,
+    "Service de la Commande publique",
+    "FR",
+    1026
+   ],
+   [
+    1181455,
+    "Service des marchés publics",
+    "FR",
+    852
+   ],
+   [
+    1165758,
+    "Service des achats et de la commande publique",
+    "FR",
+    785
+   ],
+   [
+    2997642,
+    "Zentrale Vergabestelle",
+    "DE",
+    545
+   ],
+   [
+    1241271,
+    "Servicio de Contratación y Compras",
+    "ES",
+    541
+   ],
+   [
+    1223007,
+    "Unidad de Contratación",
+    "ES",
+    410
+   ],
+   [
+    1214290,
+    "Servicio de Contratación y Asuntos Generales",
+    "ES",
+    398
+   ],
+   [
+    3975457,
+    "Dział Zamówień Publicznych",
+    "PL",
+    390
+   ],
+   [
+    1244992,
+    "Service des achats et approvisionnements",
+    "BE",
+    387
+   ],
+   [
+    1193769,
+    "Servicio de Contratación y Convenios",
+    "ES",
+    383
+   ],
+   [
+    1397643,
+    "Unidad de Contratación Administrativa",
+    "ES",
+    298
+   ],
+   [
+    1369148,
+    "Órgano de Contratación",
+    "ES",
+    231
+   ],
+   [
+    1768256,
+    "Servicio de Contratación y Suministros",
+    "ES",
+    217
+   ],
+   [
+    1804271,
+    "Vergabestelle",
+    "DE",
+    209
+   ],
+   [
+    1229388,
+    "Servicio de Contratación y Patrimonio",
+    "ES",
+    204
+   ],
+   [
+    2005009,
+    "Ufficio gare",
+    "IT",
+    156
+   ],
+   [
+    1340282,
+    "Direction des achats",
+    "FR",
+    126
+   ],
+   [
+    4154069,
+    "Service de la commande publique: responsable du service",
+    "FR",
+    122
+   ],
+   [
+    1575233,
+    "Servicio de Contratacion",
+    "ES",
+    122
+   ],
+   [
+    3801469,
+    "Afdeling Inkoop",
+    "NL",
+    121
+   ],
+   [
+    1378491,
+    "Servicio de Contratación Centralizada",
+    "ES",
+    113
+   ],
+   [
+    1168433,
+    "Service des marchés",
+    "BE",
+    100
+   ],
+   [
+    7229588,
+    "Servicio de Contratación y Gestión Patrimonial",
+    "ES",
+    100
+   ],
+   [
+    1228608,
+    "Direction de la commande publique - service des marchés",
+    "FR",
+    90
+   ],
+   [
+    1204150,
+    "Servicio de Contratación, Compras y Patrimonio",
+    "ES",
+    90
+   ],
+   [
+    1193704,
+    "Mesa de contratación",
+    "ES",
+    85
+   ],
+   [
+    1363144,
+    "Service des marchés",
+    "FR",
+    83
+   ]
+  ],
+  "bare_name_keyed_rows_with_country_total": {
+   "orgs": 212,
+   "mentions": 16746
+  }
+ },
+ "buyers_beside": [
+  {
+   "org_id": 1164742,
+   "group": "top15",
+   "name": "Servicio de Contratación",
+   "cls": "BARE_STRICT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 3236,
+   "mentions_by_section_prefix": {
+    "ORG": 3218,
+    "TPO": 18
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 51,
+   "buyer_names_folded": 43,
+   "buyer_tender_mass": 200,
+   "top_buyer": "confederacion hidrografica del tajo",
+   "top_buyer_tenders": 20,
+   "top_buyer_share": 0.1,
+   "buyers_top8": [
+    [
+     "confederacion hidrografica del tajo",
+     20
+    ],
+    [
+     "diputacion foral de bizkaia",
+     19
+    ],
+    [
+     "servicio gallego de salud",
+     18
+    ],
+    [
+     "universidad de alcala",
+     16
+    ],
+    [
+     "universitat politecnica de valencia",
+     16
+    ],
+    [
+     "ayuntamiento de madrid area de gobierno de hacienda y administracion publica servicio de contratacion",
+     15
+    ],
+    [
+     "cabildo de gran canaria",
+     11
+    ],
+    [
+     "ayuntamiento de san sebastian de los reyes",
+     9
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-ReviewOrg": 9,
+     "Lot-AddInfo": 2,
+     "Lot-ReviewInfo": 2,
+     "Lot-TenderReceipt": 1
+    },
+    "ORG": {
+     "appeal-information": 1916,
+     "mediation-body": 67,
+     "further-information": 23,
+     "tender-receipt": 17,
+     "review-body": 13,
+     "specifications-provider": 8,
+     "Lot-ReviewInfo": 4,
+     "Tenderer": 4
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1171563,
+   "group": "top15",
+   "name": "Servicio de Contratación Administrativa",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 2060,
+   "mentions_by_section_prefix": {
+    "ORG": 2058,
+    "TPO": 2
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 31,
+   "buyer_names_folded": 22,
+   "buyer_tender_mass": 200,
+   "top_buyer": "complejo hospitalario universitario de canarias",
+   "top_buyer_tenders": 86,
+   "top_buyer_share": 0.43,
+   "buyers_top8": [
+    [
+     "complejo hospitalario universitario de canarias",
+     86
+    ],
+    [
+     "diputacion provincial de granada",
+     18
+    ],
+    [
+     "servicio madrileno de salud",
+     17
+    ],
+    [
+     "consejeria de educacion junta de castilla y leon",
+     12
+    ],
+    [
+     "consejeria de cultura y turismo junta de castilla y leon",
+     10
+    ],
+    [
+     "hospital universitario nuestra senora de candelaria",
+     10
+    ],
+    [
+     "servicio gallego de salud complejo hospitalario universitario de vigo",
+     10
+    ],
+    [
+     "servicio gallego de salud estructura organizativa de gestion integrada de vigo",
+     7
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-ReviewInfo": 1
+    },
+    "ORG": {
+     "appeal-information": 998,
+     "further-information": 56,
+     "specifications-provider": 12,
+     "mediation-body": 1,
+     "tender-receipt": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1166638,
+   "group": "top15",
+   "name": "Direction de la commande publique",
+   "cls": "BARE_STRICT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 1356,
+   "mentions_by_section_prefix": {
+    "ORG": 1350,
+    "TPO": 6
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 35,
+   "buyer_names_folded": 34,
+   "buyer_tender_mass": 201,
+   "top_buyer": "ville de levallois",
+   "top_buyer_tenders": 35,
+   "top_buyer_share": 0.174,
+   "buyers_top8": [
+    [
+     "ville de levallois",
+     35
+    ],
+    [
+     "communaute urbaine du grand toulouse",
+     26
+    ],
+    [
+     "nantes metropole",
+     23
+    ],
+    [
+     "conseil general d eure et loir",
+     14
+    ],
+    [
+     "ville de villeurbanne",
+     13
+    ],
+    [
+     "ville de toulouse",
+     12
+    ],
+    [
+     "ville de gardanne",
+     9
+    ],
+    [
+     "commune de brignoles",
+     6
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "tender-receipt": 469,
+     "further-information": 345,
+     "appeal-information": 225,
+     "specifications-provider": 193,
+     "Lot-AddInfo": 11,
+     "buyer": 6,
+     "Lot-TenderReceipt": 2,
+     "mediation-body": 2
+    },
+    "TPO": {
+     "Lot-AddInfo": 3,
+     "Lot-DocProvider": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 3443,
+   "group": "top15",
+   "name": "Service de la Commande publique",
+   "cls": "BARE_STRICT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 1026,
+   "mentions_by_section_prefix": {
+    "ORG": 997,
+    "TPO": 29
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 1,
+   "buyer_org_ids": 58,
+   "buyer_names_folded": 55,
+   "buyer_tender_mass": 199,
+   "top_buyer": "ville de sartrouville",
+   "top_buyer_tenders": 39,
+   "top_buyer_share": 0.196,
+   "buyers_top8": [
+    [
+     "ville de sartrouville",
+     39
+    ],
+    [
+     "ville de troyes",
+     21
+    ],
+    [
+     "cdc argentan intercom",
+     15
+    ],
+    [
+     "ville de montrouge",
+     12
+    ],
+    [
+     "ville de bonneuil sur marne",
+     8
+    ],
+    [
+     "communaute de communes de flandre interieure",
+     8
+    ],
+    [
+     "ville de vannes",
+     7
+    ],
+    [
+     "cap l orient",
+     6
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "further-information": 338,
+     "tender-receipt": 309,
+     "appeal-information": 220,
+     "Lot-AddInfo": 40,
+     "specifications-provider": 38,
+     "Lot-TenderReceipt": 5,
+     "buyer": 3,
+     "mediation-body": 2,
+     "review-body": 1
+    },
+    "TPO": {
+     "Lot-AddInfo": 15,
+     "Lot-DocProvider": 11,
+     "Lot-ReviewInfo": 1,
+     "Lot-TenderReceipt": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1181455,
+   "group": "top15",
+   "name": "Service des marchés publics",
+   "cls": "BARE_STRICT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 852,
+   "mentions_by_section_prefix": {
+    "ORG": 852
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 49,
+   "buyer_names_folded": 49,
+   "buyer_tender_mass": 200,
+   "top_buyer": "conseil general des ardennes",
+   "top_buyer_tenders": 51,
+   "top_buyer_share": 0.255,
+   "buyers_top8": [
+    [
+     "conseil general des ardennes",
+     51
+    ],
+    [
+     "ville de fecamp",
+     18
+    ],
+    [
+     "ville d ajaccio",
+     15
+    ],
+    [
+     "commune de douai",
+     11
+    ],
+    [
+     "smdea",
+     9
+    ],
+    [
+     "ville de valenton",
+     9
+    ],
+    [
+     "ville d abbeville",
+     8
+    ],
+    [
+     "ca d aubagne et de l etoile",
+     6
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "tender-receipt": 294,
+     "further-information": 275,
+     "specifications-provider": 176,
+     "appeal-information": 57,
+     "review-body": 4,
+     "mediation-body": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1165758,
+   "group": "top15",
+   "name": "Service des achats et de la commande publique",
+   "cls": "BARE_EXT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 785,
+   "mentions_by_section_prefix": {
+    "ORG": 785
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 2,
+   "buyer_names_folded": 2,
+   "buyer_tender_mass": 200,
+   "top_buyer": "communaute urbaine de strasbourg",
+   "top_buyer_tenders": 100,
+   "top_buyer_share": 0.5,
+   "buyers_top8": [
+    [
+     "communaute urbaine de strasbourg",
+     100
+    ],
+    [
+     "ville de strasbourg",
+     100
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "further-information": 759,
+     "tender-receipt": 20
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_hand": "N (one administration: Ville de Strasbourg + Communaute urbaine de Strasbourg, 100/100 tenders each - its shared service)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 2997642,
+   "group": "top15",
+   "name": "Zentrale Vergabestelle",
+   "cls": "BARE_STRICT",
+   "country": "DE",
+   "identifier": null,
+   "mentions": 545,
+   "mentions_by_section_prefix": {
+    "ND-": 1,
+    "ORG": 521,
+    "TPO": 23
+   },
+   "sampled_served_tenders": 187,
+   "self_buyer_tenders": 29,
+   "buyer_org_ids": 46,
+   "buyer_names_folded": 43,
+   "buyer_tender_mass": 158,
+   "top_buyer": "landkreis wunsiedel i fichtelgebirge",
+   "top_buyer_tenders": 67,
+   "top_buyer_share": 0.424,
+   "buyers_top8": [
+    [
+     "landkreis wunsiedel i fichtelgebirge",
+     67
+    ],
+    [
+     "gemeinde odenthal",
+     14
+    ],
+    [
+     "kreisverwaltung dithmarschen",
+     7
+    ],
+    [
+     "kirchenlamitz",
+     7
+    ],
+    [
+     "hilfe fur das lernbehinderte kind im landkreis wunsiedel i f e v",
+     6
+    ],
+    [
+     "bezirksregierung dusseldorf",
+     5
+    ],
+    [
+     "landratsamt dachau",
+     5
+    ],
+    [
+     "hilfe fur das lernbehinderte kind im landkreis wunsiedel i fichtelgebirge e v",
+     4
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "Lot-AddInfo": 98,
+     "Lot-DocProvider": 96,
+     "Lot-TenderReceipt": 95,
+     "Procedure-SProvider": 83,
+     "appeal-information": 30,
+     "buyer": 27,
+     "further-information": 5,
+     "Lot-ReviewInfo": 3,
+     "tender-receipt": 3,
+     "specifications-provider": 2,
+     "Lot-ReviewOrg": 1,
+     "Lot-TenderEval": 1,
+     "Part-TenderReceipt": 1,
+     "Procedure-Buyer": 1,
+     "mediation-body": 1,
+     "review-body": 1
+    },
+    "TPO": {
+     "Lot-DocProvider": 8,
+     "Lot-TenderEval": 5,
+     "Lot-TenderReceipt": 5,
+     "Lot-ReviewInfo": 3,
+     "Lot-AddInfo": 1
+    },
+    "ND-": {
+     "buyer": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1241271,
+   "group": "top15",
+   "name": "Servicio de Contratación y Compras",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 541,
+   "mentions_by_section_prefix": {
+    "ORG": 519,
+    "TPO": 22
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 23,
+   "buyer_names_folded": 15,
+   "buyer_tender_mass": 200,
+   "top_buyer": "ajuntament de girona",
+   "top_buyer_tenders": 64,
+   "top_buyer_share": 0.32,
+   "buyers_top8": [
+    [
+     "ajuntament de girona",
+     64
+    ],
+    [
+     "gobierno de cantabria",
+     41
+    ],
+    [
+     "ayuntamiento de albacete",
+     20
+    ],
+    [
+     "universidad del pais vasco euskal herriko unibertsitatea",
+     18
+    ],
+    [
+     "diputacion provincial de zaragoza",
+     18
+    ],
+    [
+     "ayuntamiento de almunecar",
+     17
+    ],
+    [
+     "ayuntamiento de granollers",
+     9
+    ],
+    [
+     "ayuntamiento de malaga servicio de contratacion y compras",
+     4
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 283,
+     "Lot-ReviewInfo": 4,
+     "specifications-provider": 2,
+     "further-information": 1
+    },
+    "TPO": {
+     "Lot-ReviewInfo": 12
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1223007,
+   "group": "top15",
+   "name": "Unidad de Contratación",
+   "cls": "BARE_STRICT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 410,
+   "mentions_by_section_prefix": {
+    "ORG": 211,
+    "TPO": 199
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 43,
+   "buyer_names_folded": 36,
+   "buyer_tender_mass": 250,
+   "top_buyer": "intendente de rota",
+   "top_buyer_tenders": 64,
+   "top_buyer_share": 0.256,
+   "buyers_top8": [
+    [
+     "intendente de rota",
+     64
+    ],
+    [
+     "hospital universitario ramon y cajal",
+     19
+    ],
+    [
+     "organo de contratacion de la base naval de rota",
+     16
+    ],
+    [
+     "ayuntamiento de cordoba",
+     13
+    ],
+    [
+     "suma gestion tributaria diputacion de alicante",
+     12
+    ],
+    [
+     "empresa publica hospital de vallecas hospital universitario infanta leonor",
+     11
+    ],
+    [
+     "servicio madrileno de la salud hospital universitario ramon y cajal",
+     10
+    ],
+    [
+     "aguas de valencia s a",
+     10
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-ReviewOrg": 88,
+     "Lot-AddInfo": 9,
+     "Lot-ReviewInfo": 7
+    },
+    "ORG": {
+     "appeal-information": 64,
+     "specifications-provider": 38,
+     "review-body": 34,
+     "further-information": 14,
+     "tender-receipt": 5
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1214290,
+   "group": "top15",
+   "name": "Servicio de Contratación y Asuntos Generales",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 398,
+   "mentions_by_section_prefix": {
+    "ORG": 398
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 25,
+   "buyer_names_folded": 15,
+   "buyer_tender_mass": 200,
+   "top_buyer": "conselleria de infraestructuras territorio y medio ambiente",
+   "top_buyer_tenders": 38,
+   "top_buyer_share": 0.19,
+   "buyers_top8": [
+    [
+     "conselleria de infraestructuras territorio y medio ambiente",
+     38
+    ],
+    [
+     "universitat jaume i",
+     35
+    ],
+    [
+     "generalitat valenciana conselleria de hacienda y administracion publica",
+     33
+    ],
+    [
+     "generalitat valenciana conselleria de gobernacion",
+     28
+    ],
+    [
+     "generalitat valenciana conselleria de hacienda y modelo economico",
+     22
+    ],
+    [
+     "conselleria de agricultura medio ambiente cambio climatico y desarrollo rural",
+     12
+    ],
+    [
+     "conselleria de gobernacion y justicia",
+     8
+    ],
+    [
+     "conselleria de presidencia y agricultura pesca alimentacion y agua",
+     8
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 236
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_hand": "W HUB (Generalitat Valenciana consellerias x5 + Universitat Jaume I 35 + others)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 3975457,
+   "group": "top15",
+   "name": "Dział Zamówień Publicznych",
+   "cls": "BARE_STRICT",
+   "country": "PL",
+   "identifier": null,
+   "mentions": 390,
+   "mentions_by_section_prefix": {
+    "ORG": 231,
+    "TPO": 159
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 9,
+   "buyer_names_folded": 8,
+   "buyer_tender_mass": 200,
+   "top_buyer": "uniwersytet jagiellonski",
+   "top_buyer_tenders": 186,
+   "top_buyer_share": 0.93,
+   "buyers_top8": [
+    [
+     "uniwersytet jagiellonski",
+     186
+    ],
+    [
+     "narodowy instytut onkologii im marii sklodowskiej curie panstwowy instytut badawczy",
+     4
+    ],
+    [
+     "instytut kardiologii im prymasa tysiaclecia stefana kardynala wyszynskiego",
+     3
+    ],
+    [
+     "zachodniopomorski uniwersytet technolgiczny w szczecinie",
+     2
+    ],
+    [
+     "1 wojskowy szpital kliniczny z poliklinika sp zoz",
+     2
+    ],
+    [
+     "politechnika swietokrzyska",
+     1
+    ],
+    [
+     "sp zoz szpital wielospecjalistyczny w jaworznie",
+     1
+    ],
+    [
+     "samodzielny publiczny zespol opieki zdrowotnej",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "further-information": 211,
+     "appeal-information": 6,
+     "Lot-AddInfo": 3,
+     "Procedure-SProvider": 1,
+     "mediation-body": 1,
+     "tender-receipt": 1
+    },
+    "TPO": {
+     "Lot-TenderEval": 29,
+     "Lot-AddInfo": 18,
+     "Lot-ReviewInfo": 16,
+     "Lot-DocProvider": 14,
+     "Lot-TenderReceipt": 5,
+     "Lot-EnvironLegis": 3,
+     "Lot-ReviewOrg": 3,
+     "Lot-EmployLegis": 2,
+     "Lot-Mediator": 1
+    }
+   },
+   "verdict": "DOMINANT+TAIL (one buyer >= 80%, others pooled)",
+   "verdict_class": "DOMINANT+TAIL"
+  },
+  {
+   "org_id": 1244992,
+   "group": "top15",
+   "name": "Service des achats et approvisionnements",
+   "cls": "BARE_EXT",
+   "country": "BE",
+   "identifier": null,
+   "mentions": 387,
+   "mentions_by_section_prefix": {
+    "ORG": 387
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 7,
+   "buyer_names_folded": 4,
+   "buyer_tender_mass": 200,
+   "top_buyer": "intercommunale de sante publique du pays de charleroi scrl",
+   "top_buyer_tenders": 179,
+   "top_buyer_share": 0.895,
+   "buyers_top8": [
+    [
+     "intercommunale de sante publique du pays de charleroi scrl",
+     179
+    ],
+    [
+     "humani sc",
+     11
+    ],
+    [
+     "intercommunale de sante publique du pays de charleroi s c r l",
+     9
+    ],
+    [
+     "tauron wytwarzanie s a",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "tender-receipt": 150,
+     "specifications-provider": 139,
+     "further-information": 77,
+     "Lot-TenderReceipt": 8,
+     "Lot-AddInfo": 6
+    }
+   },
+   "verdict": "DOMINANT+TAIL (one buyer >= 80%, others pooled)",
+   "verdict_hand": "DOMINANT+TAIL (ISPPC Charleroi 188/200 in two spellings; Humani 11; Tauron Wytwarzanie 1)",
+   "verdict_class": "DOMINANT+TAIL"
+  },
+  {
+   "org_id": 1193769,
+   "group": "top15",
+   "name": "Servicio de Contratación y Convenios",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 383,
+   "mentions_by_section_prefix": {
+    "ORG": 383
+   },
+   "sampled_served_tenders": 135,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 5,
+   "buyer_names_folded": 5,
+   "buyer_tender_mass": 135,
+   "top_buyer": "tribunal administrativo de recursos contractuales de andalucia",
+   "top_buyer_tenders": 117,
+   "top_buyer_share": 0.867,
+   "buyers_top8": [
+    [
+     "tribunal administrativo de recursos contractuales de andalucia",
+     117
+    ],
+    [
+     "consejeria de economia innovacion y ciencia",
+     8
+    ],
+    [
+     "agencia andaluza del agua",
+     8
+    ],
+    [
+     "direccion general de planificacion y gestion del dominio publico hidraulico consejeria de agricultura pesca y medio ambiente",
+     1
+    ],
+    [
+     "delegacion territorial de consejeria de medio ambiente y ordenacion del territorio en huelva",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 134,
+     "Lot-ReviewInfo": 1
+    }
+   },
+   "verdict": "DOMINANT+TAIL (one buyer >= 80%, others pooled)",
+   "verdict_hand": "DOMINANT+TAIL (TARC Andalucia 117/135 as buyer, 4 Andalusian bodies)",
+   "verdict_class": "DOMINANT+TAIL"
+  },
+  {
+   "org_id": 22506338,
+   "group": "top15",
+   "name": "Service des Achats Responsables",
+   "cls": "BARE_STRICT",
+   "country": "FR",
+   "identifier": "FRF2108000",
+   "mentions": 320,
+   "mentions_by_section_prefix": {
+    "ORG": 320
+   },
+   "sampled_served_tenders": 107,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 5,
+   "buyer_names_folded": 5,
+   "buyer_tender_mass": 107,
+   "top_buyer": "ardenne metropole",
+   "top_buyer_tenders": 77,
+   "top_buyer_share": 0.72,
+   "buyers_top8": [
+    [
+     "ardenne metropole",
+     77
+    ],
+    [
+     "commune de charleville mezieres",
+     24
+    ],
+    [
+     "etablissement public d amenagement de la meuse et de ses affluents",
+     3
+    ],
+    [
+     "syndicat mixte campus sup ardenne",
+     2
+    ],
+    [
+     "commune de villers semeuse",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "Lot-AddInfo": 107,
+     "Lot-DocProvider": 107,
+     "Lot-TenderReceipt": 106
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_hand": "N-ish (Ardenne Metropole 77 + Commune de Charleville-Mezieres 24 + 3 small: the agglomeration shared purchasing service; identified FRF2108000)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 1397643,
+   "group": "top15",
+   "name": "Unidad de Contratación Administrativa",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 298,
+   "mentions_by_section_prefix": {
+    "ORG": 297,
+    "TPO": 1
+   },
+   "sampled_served_tenders": 165,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 10,
+   "buyer_names_folded": 8,
+   "buyer_tender_mass": 165,
+   "top_buyer": "direccion gerencia de atencion primaria sermas",
+   "top_buyer_tenders": 147,
+   "top_buyer_share": 0.891,
+   "buyers_top8": [
+    [
+     "direccion gerencia de atencion primaria sermas",
+     147
+    ],
+    [
+     "servicio extremeno de salud gerencia del area de salud de badajoz",
+     5
+    ],
+    [
+     "servicio extremeno de salud consejeria de salud y politica social",
+     5
+    ],
+    [
+     "junta de gobierno del ayuntamiento de cordoba",
+     2
+    ],
+    [
+     "ayuntamiento de cordoba",
+     2
+    ],
+    [
+     "gerencia asistencial de atencion primaria servicio madrileno de salud",
+     2
+    ],
+    [
+     "instituto psiquiatrico ssm jose germain",
+     1
+    ],
+    [
+     "servicio gallego de salud hospital comarcal de monforte",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-ReviewInfo": 1
+    },
+    "ORG": {
+     "appeal-information": 164,
+     "review-body": 6,
+     "further-information": 1,
+     "tender-receipt": 1
+    }
+   },
+   "verdict": "DOMINANT+TAIL (one buyer >= 80%, others pooled)",
+   "verdict_class": "DOMINANT+TAIL"
+  },
+  {
+   "org_id": 9327844,
+   "group": "extra",
+   "name": "Dział Zamówień Publicznych i Zaopatrzenia",
+   "cls": "BARE_EXT",
+   "country": "PL",
+   "identifier": null,
+   "mentions": 37,
+   "mentions_by_section_prefix": {
+    "ORG": 14,
+    "TPO": 23
+   },
+   "sampled_served_tenders": 20,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 3,
+   "buyer_names_folded": 3,
+   "buyer_tender_mass": 20,
+   "top_buyer": "szpital uniwersytecki nr 2 im dr jana biziela w bydgoszczy",
+   "top_buyer_tenders": 15,
+   "top_buyer_share": 0.75,
+   "buyers_top8": [
+    [
+     "szpital uniwersytecki nr 2 im dr jana biziela w bydgoszczy",
+     15
+    ],
+    [
+     "uzdrowisko ladek dlugopole s a",
+     4
+    ],
+    [
+     "samodzielny publiczny wielospecjalistyczny zaklad opieki zdrowotnej w stargardzie",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-TenderEval": 15,
+     "Lot-AddInfo": 1,
+     "Lot-DocProvider": 1
+    },
+    "ORG": {
+     "appeal-information": 4
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1369148,
+   "group": "extra",
+   "name": "Órgano de Contratación",
+   "cls": "BARE_STRICT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 231,
+   "mentions_by_section_prefix": {
+    "ORG": 226,
+    "TPO": 5
+   },
+   "sampled_served_tenders": 152,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 73,
+   "buyer_names_folded": 70,
+   "buyer_tender_mass": 169,
+   "top_buyer": "servicio meteorologico de cataluna",
+   "top_buyer_tenders": 18,
+   "top_buyer_share": 0.107,
+   "buyers_top8": [
+    [
+     "servicio meteorologico de cataluna",
+     18
+    ],
+    [
+     "ayuntamiento de santa lucia de tirajana",
+     13
+    ],
+    [
+     "conselleria de medio ambiente e ordenacion do territorio",
+     11
+    ],
+    [
+     "gestio integral sanitaria i assistencial a i e",
+     8
+    ],
+    [
+     "ajuntament de barcelona",
+     7
+    ],
+    [
+     "junta de castilla y leon consejeria de agricultura y ganaderia direccion general de produccion agropecuaria y desarrollo rural",
+     6
+    ],
+    [
+     "conselleria de medio ambiente territorio e infraestruturas",
+     5
+    ],
+    [
+     "diputacion de segovia",
+     4
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-ReviewInfo": 3,
+     "Lot-ReviewOrg": 2
+    },
+    "ORG": {
+     "review-body": 93,
+     "appeal-information": 29,
+     "specifications-provider": 16,
+     "mediation-body": 15
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 2005009,
+   "group": "extra",
+   "name": "Ufficio gare",
+   "cls": "BARE_STRICT",
+   "country": "IT",
+   "identifier": null,
+   "mentions": 156,
+   "mentions_by_section_prefix": {
+    "ORG": 155,
+    "TPO": 1
+   },
+   "sampled_served_tenders": 90,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 34,
+   "buyer_names_folded": 20,
+   "buyer_tender_mass": 90,
+   "top_buyer": "uniacque spa",
+   "top_buyer_tenders": 42,
+   "top_buyer_share": 0.467,
+   "buyers_top8": [
+    [
+     "uniacque spa",
+     42
+    ],
+    [
+     "s a cal s p a societa aeroportuale calabrese",
+     16
+    ],
+    [
+     "uniacque s p a",
+     6
+    ],
+    [
+     "aler di pavia lodi",
+     4
+    ],
+    [
+     "aca spa in house providing",
+     3
+    ],
+    [
+     "geat s r l",
+     3
+    ],
+    [
+     "consorzio venezia nuova",
+     2
+    ],
+    [
+     "comune di mercato san severino",
+     2
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-DocProvider": 1
+    },
+    "ORG": {
+     "appeal-information": 83,
+     "further-information": 3,
+     "specifications-provider": 2,
+     "tender-receipt": 2,
+     "mediation-body": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 3801469,
+   "group": "extra",
+   "name": "Afdeling Inkoop",
+   "cls": "BARE_STRICT",
+   "country": "NL",
+   "identifier": null,
+   "mentions": 121,
+   "mentions_by_section_prefix": {
+    "ORG": 38,
+    "TPO": 83
+   },
+   "sampled_served_tenders": 73,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 7,
+   "buyer_names_folded": 6,
+   "buyer_tender_mass": 73,
+   "top_buyer": "cyclus nv",
+   "top_buyer_tenders": 34,
+   "top_buyer_share": 0.466,
+   "buyers_top8": [
+    [
+     "cyclus nv",
+     34
+    ],
+    [
+     "stichting regionaal opleidingen centrum noord kennemerland west friesland horizon college",
+     13
+    ],
+    [
+     "universiteit maastricht",
+     11
+    ],
+    [
+     "genomescan b v",
+     9
+    ],
+    [
+     "wij groningen",
+     5
+    ],
+    [
+     "gemeente alphen aan den rijn",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-AddInfo": 47
+    },
+    "ORG": {
+     "further-information": 14,
+     "tender-receipt": 13,
+     "specifications-provider": 11
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 19463077,
+   "group": "extra",
+   "name": "Afd. Inkoop",
+   "cls": "BARE_EXT",
+   "country": "NL",
+   "identifier": null,
+   "mentions": 33,
+   "mentions_by_section_prefix": {
+    "ORG": 5,
+    "TPO": 28
+   },
+   "sampled_served_tenders": 20,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 1,
+   "buyer_names_folded": 1,
+   "buyer_tender_mass": 20,
+   "top_buyer": "stichting 113 zelfmoordpreventie",
+   "top_buyer_tenders": 20,
+   "top_buyer_share": 1.0,
+   "buyers_top8": [
+    [
+     "stichting 113 zelfmoordpreventie",
+     20
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-AddInfo": 15
+    },
+    "ORG": {
+     "further-information": 5
+    }
+   },
+   "verdict": "N (one buyer)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 1416875,
+   "group": "extra",
+   "name": "Procurement Department",
+   "cls": "BARE_STRICT",
+   "country": "GB",
+   "identifier": null,
+   "mentions": 73,
+   "mentions_by_section_prefix": {
+    "ORG": 73
+   },
+   "sampled_served_tenders": 35,
+   "self_buyer_tenders": 6,
+   "buyer_org_ids": 23,
+   "buyer_names_folded": 23,
+   "buyer_tender_mass": 34,
+   "top_buyer": "suffolk coastal district council",
+   "top_buyer_tenders": 5,
+   "top_buyer_share": 0.147,
+   "buyers_top8": [
+    [
+     "suffolk coastal district council",
+     5
+    ],
+    [
+     "east suffolk council",
+     5
+    ],
+    [
+     "university hospitals birmingham nhs foundation trust",
+     3
+    ],
+    [
+     "north wales police",
+     2
+    ],
+    [
+     "the university of nottingham",
+     1
+    ],
+    [
+     "united lincolnshire hospitals nhs trust",
+     1
+    ],
+    [
+     "nottingham university hospitals nhs trust",
+     1
+    ],
+    [
+     "london borough of lambeth",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "review-body": 21,
+     "appeal-information": 9,
+     "buyer": 6,
+     "mediation-body": 2,
+     "Lot-ReviewOrg": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 19553,
+   "group": "extra",
+   "name": "Zentrale Vergabestelle",
+   "cls": "BARE_STRICT",
+   "country": null,
+   "identifier": null,
+   "mentions": 293,
+   "mentions_by_section_prefix": {
+    "ND-": 291,
+    "ORG": 2
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 200,
+   "buyer_org_ids": 0,
+   "buyer_names_folded": 0,
+   "buyer_tender_mass": 0,
+   "top_buyer": null,
+   "top_buyer_tenders": 0,
+   "top_buyer_share": null,
+   "buyers_top8": [],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 2
+    },
+    "ND-": {
+     "buyer": 291
+    }
+   },
+   "verdict": "SELF-BUYER (label is the buyer of record; buyer ids cannot show pooling)",
+   "verdict_hand": "W HUB as buyer of record (DOE notices: g20 titles name Wuppertal, Leverkusen, Schwerte, Aulendorf, Rheinzabern, Bad Segeberg, Klein Nordende-Lieth, Reepsholt)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1606217,
+   "group": "control",
+   "name": "Unidad de Contratación del Hospital Universitario Ramón y Cajal",
+   "cls": "DEPT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 726,
+   "mentions_by_section_prefix": {
+    "ORG": 726
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 15,
+   "buyer_names_folded": 4,
+   "buyer_tender_mass": 200,
+   "top_buyer": "hospital universitario ramon y cajal",
+   "top_buyer_tenders": 71,
+   "top_buyer_share": 0.355,
+   "buyers_top8": [
+    [
+     "hospital universitario ramon y cajal",
+     71
+    ],
+    [
+     "servicio madrileno de la salud hospital universitario ramon y cajal",
+     58
+    ],
+    [
+     "servicio madrileno de salud",
+     37
+    ],
+    [
+     "servicio madrileno de salud hospital universitario ramon y cajal",
+     34
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 306,
+     "specifications-provider": 12,
+     "Lot-ReviewInfo": 5,
+     "Contract-Signatory": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_hand": "N (control: four spellings of Hospital Universitario Ramon y Cajal / SERMAS)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 1182792,
+   "group": "control",
+   "name": "Órgano de contratación de ADIF",
+   "cls": "OTHER_ORGAN",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 4080,
+   "mentions_by_section_prefix": {
+    "ORG": 4080
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 1,
+   "buyer_org_ids": 23,
+   "buyer_names_folded": 15,
+   "buyer_tender_mass": 199,
+   "top_buyer": "administrador de infraestructuras ferroviarias",
+   "top_buyer_tenders": 118,
+   "top_buyer_share": 0.593,
+   "buyers_top8": [
+    [
+     "administrador de infraestructuras ferroviarias",
+     118
+    ],
+    [
+     "adif alta velocidad",
+     61
+    ],
+    [
+     "administrador de infraestructuras ferroviarias adif direccion de contratacion y compras de la direccion general de operaciones e ingenieria",
+     3
+    ],
+    [
+     "administrador de infraestructuras ferroviarias adif",
+     2
+    ],
+    [
+     "administrador de infraestructuras ferroviarias direccion general de explotacion y desarrollo de la red",
+     2
+    ],
+    [
+     "administrador de infraestructuras ferroviarias subdireccion de contratacion explotacion",
+     2
+    ],
+    [
+     "administrador de infraestructuras ferroviarias adif direccion de contratacion y compras de la direccion general de operaciones e ingenieria direccion de operaciones e ingenieria de red de alta velocidad",
+     2
+    ],
+    [
+     "administrador de infraestructuras ferroviarias adif direccion de compras y contratacion de la direccion general economico financiera y de control",
+     2
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "mediation-body": 1758,
+     "review-body": 1118,
+     "appeal-information": 32,
+     "Lot-Mediator": 8,
+     "Lot-AddInfo": 5,
+     "Lot-DocProvider": 1,
+     "Lot-ReviewOrg": 1,
+     "Procedure-Buyer": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_hand": "N (control: ADIF and ADIF Alta Velocidad, one group)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 5766,
+   "group": "control",
+   "name": "Vergabestelle Landeshauptstadt Stuttgart",
+   "cls": "DEPT",
+   "country": "DE",
+   "identifier": "T4971121689746",
+   "mentions": 2003,
+   "mentions_by_section_prefix": {
+    "ORG": 2003
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 192,
+   "buyer_org_ids": 1,
+   "buyer_names_folded": 1,
+   "buyer_tender_mass": 8,
+   "top_buyer": "vergabestelle landeshauptstadt stuttgart",
+   "top_buyer_tenders": 8,
+   "top_buyer_share": 1.0,
+   "buyers_top8": [
+    [
+     "vergabestelle landeshauptstadt stuttgart",
+     8
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "Procedure-Buyer": 548,
+     "Contract-Signatory": 419,
+     "Lot-ReviewInfo": 297,
+     "Lot-TenderEval": 274,
+     "Lot-TenderReceipt": 270,
+     "Procedure-SProvider": 112,
+     "Lot-AddInfo": 18,
+     "Lot-DocProvider": 18,
+     "Lot-ReviewOrg": 2,
+     "LotResult-Financing": 2,
+     "Lot-Mediator": 1
+    }
+   },
+   "verdict": "N (one buyer)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 1515541,
+   "group": "control",
+   "name": "Servicio de Contratación del Ayuntamiento de Vigo",
+   "cls": "DEPT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 283,
+   "mentions_by_section_prefix": {
+    "ORG": 283
+   },
+   "sampled_served_tenders": 200,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 3,
+   "buyer_names_folded": 1,
+   "buyer_tender_mass": 200,
+   "top_buyer": "ayuntamiento de vigo",
+   "top_buyer_tenders": 200,
+   "top_buyer_share": 1.0,
+   "buyers_top8": [
+    [
+     "ayuntamiento de vigo",
+     200
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 202
+    }
+   },
+   "verdict": "N (one buyer)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 1768256,
+   "group": "next15",
+   "name": "Servicio de Contratación y Suministros",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 217,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 138,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 9,
+   "buyer_names_folded": 5,
+   "buyer_tender_mass": 138,
+   "top_buyer": "diputacion provincial de valencia",
+   "top_buyer_tenders": 57,
+   "top_buyer_share": 0.413,
+   "buyers_top8": [
+    [
+     "diputacion provincial de valencia",
+     57
+    ],
+    [
+     "presidencia de la diputacion provincial de valencia",
+     41
+    ],
+    [
+     "pleno de la diputacion provincial de valencia",
+     24
+    ],
+    [
+     "diputacion de valencia",
+     15
+    ],
+    [
+     "alcaldia del ayuntamiento de barakaldo",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-ReviewInfo": 64,
+     "Lot-AddInfo": 3
+    },
+    "ORG": {
+     "appeal-information": 72,
+     "further-information": 4,
+     "specifications-provider": 3
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1804271,
+   "group": "next15",
+   "name": "Vergabestelle",
+   "cls": "BARE_STRICT",
+   "country": "DE",
+   "identifier": null,
+   "mentions": 209,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 137,
+   "self_buyer_tenders": 15,
+   "buyer_org_ids": 31,
+   "buyer_names_folded": 31,
+   "buyer_tender_mass": 122,
+   "top_buyer": "stadt marktheidenfeld",
+   "top_buyer_tenders": 40,
+   "top_buyer_share": 0.328,
+   "buyers_top8": [
+    [
+     "stadt marktheidenfeld",
+     40
+    ],
+    [
+     "landkreis rhon grabfeld technisches bauamt hochbau",
+     17
+    ],
+    [
+     "stadt kirchheimbolanden",
+     13
+    ],
+    [
+     "staatl bauamt erlangen nurnberg",
+     10
+    ],
+    [
+     "landkreis miesbach vertr d d landratsamt miesbach",
+     8
+    ],
+    [
+     "landkreis miesbach vertreten durch das landratsamt miesbach",
+     5
+    ],
+    [
+     "staatliches bauamt augsburg",
+     3
+    ],
+    [
+     "gemeinde birkenwerder",
+     2
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 67,
+     "specifications-provider": 24,
+     "further-information": 13,
+     "tender-receipt": 12,
+     "buyer": 8,
+     "Procedure-Buyer": 7,
+     "Lot-AddInfo": 6,
+     "Lot-TenderReceipt": 4,
+     "mediation-body": 4,
+     "Lot-DocProvider": 2,
+     "Part-AddInfo": 2,
+     "Part-TenderReceipt": 2,
+     "review-body": 2,
+     "Contract-Signatory": 1
+    },
+    "TPO": {
+     "Lot-ReviewOrg": 18,
+     "Lot-Mediator": 2,
+     "Lot-ReviewInfo": 2
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1229388,
+   "group": "next15",
+   "name": "Servicio de Contratación y Patrimonio",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 204,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 140,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 38,
+   "buyer_names_folded": 28,
+   "buyer_tender_mass": 140,
+   "top_buyer": "universidad de jaen servicio de contratacion y patrimonio",
+   "top_buyer_tenders": 20,
+   "top_buyer_share": 0.143,
+   "buyers_top8": [
+    [
+     "universidad de jaen servicio de contratacion y patrimonio",
+     20
+    ],
+    [
+     "universidad de cordoba",
+     17
+    ],
+    [
+     "diputacion provincial de toledo",
+     16
+    ],
+    [
+     "rectorado de la universidad de cordoba",
+     12
+    ],
+    [
+     "ayuntamiento de gandia",
+     11
+    ],
+    [
+     "diputacion de granada",
+     9
+    ],
+    [
+     "generalidad de cataluna departamento de bienestar social y familia",
+     8
+    ],
+    [
+     "diputacion provincial de granada",
+     5
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-AddInfo": 1,
+     "Lot-DocProvider": 1,
+     "Lot-ReviewInfo": 1,
+     "Lot-ReviewOrg": 1
+    },
+    "ORG": {
+     "appeal-information": 124,
+     "specifications-provider": 8,
+     "review-body": 5,
+     "further-information": 3,
+     "Lot-ReviewInfo": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1340282,
+   "group": "next15",
+   "name": "Direction des achats",
+   "cls": "BARE_STRICT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 126,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 99,
+   "self_buyer_tenders": 10,
+   "buyer_org_ids": 22,
+   "buyer_names_folded": 20,
+   "buyer_tender_mass": 96,
+   "top_buyer": "ville de cannes",
+   "top_buyer_tenders": 22,
+   "top_buyer_share": 0.229,
+   "buyers_top8": [
+    [
+     "ville de cannes",
+     22
+    ],
+    [
+     "region bourgogne franche comte",
+     19
+    ],
+    [
+     "aeroports de paris",
+     17
+    ],
+    [
+     "hospices civils de lyon",
+     9
+    ],
+    [
+     "centre hospitalier d orthez",
+     8
+    ],
+    [
+     "chu grenoble",
+     4
+    ],
+    [
+     "chru de lille",
+     3
+    ],
+    [
+     "cevm",
+     2
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-DocProvider": 1,
+     "Lot-TenderEval": 1,
+     "Lot-TenderReceipt": 1
+    },
+    "ORG": {
+     "further-information": 38,
+     "tender-receipt": 32,
+     "appeal-information": 24,
+     "buyer": 10,
+     "specifications-provider": 8,
+     "mediation-body": 1,
+     "review-body": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 4154069,
+   "group": "next15",
+   "name": "Service de la commande publique: responsable du service",
+   "cls": "BARE_STRICT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 122,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 63,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 4,
+   "buyer_names_folded": 4,
+   "buyer_tender_mass": 66,
+   "top_buyer": "ville de sartrouville",
+   "top_buyer_tenders": 61,
+   "top_buyer_share": 0.924,
+   "buyers_top8": [
+    [
+     "ville de sartrouville",
+     61
+    ],
+    [
+     "ville de sartrouville service de la commande publique",
+     2
+    ],
+    [
+     "syndicat s3m",
+     2
+    ],
+    [
+     "syndicat intercommunal d assainissement de sartrouville maisons laffitte montesson et mesnil le roi",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 63
+    }
+   },
+   "verdict": "DOMINANT+TAIL (one buyer >= 80%, others pooled)",
+   "verdict_class": "DOMINANT+TAIL"
+  },
+  {
+   "org_id": 1575233,
+   "group": "next15",
+   "name": "Servicio de Contratacion",
+   "cls": "BARE_STRICT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 122,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 64,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 8,
+   "buyer_names_folded": 7,
+   "buyer_tender_mass": 64,
+   "top_buyer": "ayuntamiento de santa coloma de gramenet",
+   "top_buyer_tenders": 50,
+   "top_buyer_share": 0.781,
+   "buyers_top8": [
+    [
+     "ayuntamiento de santa coloma de gramenet",
+     50
+    ],
+    [
+     "ayuntamiento de granada",
+     5
+    ],
+    [
+     "gerencia de servicios sociales de la junta de castilla y leon servicio de contratacion",
+     5
+    ],
+    [
+     "concello de pontevedra",
+     1
+    ],
+    [
+     "ayuntamiento de san sebastian de los reyes",
+     1
+    ],
+    [
+     "xunta de galicia conselleria de cultura y turismo secretaria general tecnica edif admtvos san caetano s n",
+     1
+    ],
+    [
+     "ayuntamiento palencia",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 64
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1378491,
+   "group": "next15",
+   "name": "Servicio de Contratación Centralizada",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 113,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 76,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 23,
+   "buyer_names_folded": 12,
+   "buyer_tender_mass": 76,
+   "top_buyer": "consejeria de educacion",
+   "top_buyer_tenders": 23,
+   "top_buyer_share": 0.303,
+   "buyers_top8": [
+    [
+     "consejeria de educacion",
+     23
+    ],
+    [
+     "administracion del principado de asturias consejeria de hacienda y sector publico",
+     20
+    ],
+    [
+     "consejeria de hacienda justicia y asuntos europeos del principado de asturias",
+     6
+    ],
+    [
+     "gobierno de extremadura consejeria de fomento vivienda ordenacion del territorio y turismo",
+     6
+    ],
+    [
+     "gobierno de aragon departamento de hacienda y administracion publica",
+     4
+    ],
+    [
+     "diputado delegado del area de economia hacienda compras y patrimonio de la diputacion provincial de badajoz",
+     4
+    ],
+    [
+     "administracion del principado de asturias consejeria de hacienda",
+     4
+    ],
+    [
+     "consorcio de gestion de servicios medioambientales de badajoz",
+     3
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-ReviewInfo": 6,
+     "Lot-ReviewOrg": 1
+    },
+    "ORG": {
+     "appeal-information": 48,
+     "further-information": 10,
+     "specifications-provider": 6,
+     "mediation-body": 5
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1168433,
+   "group": "next15",
+   "name": "Service des marchés",
+   "cls": "BARE_EXT",
+   "country": "BE",
+   "identifier": null,
+   "mentions": 100,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 89,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 11,
+   "buyer_names_folded": 11,
+   "buyer_tender_mass": 89,
+   "top_buyer": "universite de liege",
+   "top_buyer_tenders": 51,
+   "top_buyer_share": 0.573,
+   "buyers_top8": [
+    [
+     "universite de liege",
+     51
+    ],
+    [
+     "service des marches de l ulg",
+     18
+    ],
+    [
+     "app chr sambre meuse site meuse",
+     5
+    ],
+    [
+     "universite de liege service des marches",
+     4
+    ],
+    [
+     "association intercommunale de soins et d hospitalisation",
+     2
+    ],
+    [
+     "universite de liege cellule marches",
+     2
+    ],
+    [
+     "bibliotheque interuniversitaire de la communaute francaise de belgique",
+     2
+    ],
+    [
+     "app chr sambre meuse chr de namur et chr du val de sambre",
+     2
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 77,
+     "tender-receipt": 11,
+     "specifications-provider": 9,
+     "further-information": 2
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 7229588,
+   "group": "next15",
+   "name": "Servicio de Contratación y Gestión Patrimonial",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 100,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 54,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 10,
+   "buyer_names_folded": 4,
+   "buyer_tender_mass": 54,
+   "top_buyer": "conselleria de vivienda obras publicas y vertebracion del territorio",
+   "top_buyer_tenders": 50,
+   "top_buyer_share": 0.926,
+   "buyers_top8": [
+    [
+     "conselleria de vivienda obras publicas y vertebracion del territorio",
+     50
+    ],
+    [
+     "conselleria de politica territorial obras publicas y movilidad",
+     2
+    ],
+    [
+     "generalitat valenciana conselleria de gobernacion",
+     1
+    ],
+    [
+     "consejeria de vivienda obras publicas y vertebracion del territorio",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 54
+    }
+   },
+   "verdict": "DOMINANT+TAIL (one buyer >= 80%, others pooled)",
+   "verdict_class": "DOMINANT+TAIL"
+  },
+  {
+   "org_id": 1228608,
+   "group": "next15",
+   "name": "Direction de la commande publique - service des marchés",
+   "cls": "BARE_EXT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 90,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 46,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 2,
+   "buyer_names_folded": 2,
+   "buyer_tender_mass": 46,
+   "top_buyer": "nantes metropole",
+   "top_buyer_tenders": 45,
+   "top_buyer_share": 0.978,
+   "buyers_top8": [
+    [
+     "nantes metropole",
+     45
+    ],
+    [
+     "syndicat mixte pour l hebergement des gens du voyage",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "specifications-provider": 45,
+     "tender-receipt": 45
+    }
+   },
+   "verdict": "N (one buyer)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 1204150,
+   "group": "next15",
+   "name": "Servicio de Contratación, Compras y Patrimonio",
+   "cls": "BARE_EXT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 90,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 47,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 4,
+   "buyer_names_folded": 1,
+   "buyer_tender_mass": 47,
+   "top_buyer": "universidad de la rioja",
+   "top_buyer_tenders": 47,
+   "top_buyer_share": 1.0,
+   "buyers_top8": [
+    [
+     "universidad de la rioja",
+     47
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "appeal-information": 47
+    }
+   },
+   "verdict": "N (one buyer)",
+   "verdict_class": "N"
+  },
+  {
+   "org_id": 1193704,
+   "group": "next15",
+   "name": "Mesa de contratación",
+   "cls": "BARE_STRICT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 85,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 35,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 12,
+   "buyer_names_folded": 12,
+   "buyer_tender_mass": 35,
+   "top_buyer": "ayuntamiento del valle de aranguren",
+   "top_buyer_tenders": 10,
+   "top_buyer_share": 0.286,
+   "buyers_top8": [
+    [
+     "ayuntamiento del valle de aranguren",
+     10
+    ],
+    [
+     "jefatura de la seccion economico administrativa 15 agrupacion del cuartel general del ejercito del aire",
+     5
+    ],
+    [
+     "jefatura de asuntos economicos del mando de apoyo logistico",
+     5
+    ],
+    [
+     "ayuntamiento de punta umbria",
+     5
+    ],
+    [
+     "ayuntamiento de olesa de montserrat",
+     3
+    ],
+    [
+     "jefatura de asuntos economicos del mando de personal",
+     1
+    ],
+    [
+     "iltmo ayuntamiento de calasparra",
+     1
+    ],
+    [
+     "direccion general de servicios del ministerio de agricultura alimentacion y medio ambiente",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "review-body": 27,
+     "specifications-provider": 12,
+     "further-information": 11,
+     "appeal-information": 6,
+     "tender-receipt": 6,
+     "mediation-body": 5
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1363144,
+   "group": "next15",
+   "name": "Service des marchés",
+   "cls": "BARE_EXT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 83,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 71,
+   "self_buyer_tenders": 1,
+   "buyer_org_ids": 30,
+   "buyer_names_folded": 30,
+   "buyer_tender_mass": 77,
+   "top_buyer": "centre hospitalier de saint quentin",
+   "top_buyer_tenders": 25,
+   "top_buyer_share": 0.325,
+   "buyers_top8": [
+    [
+     "centre hospitalier de saint quentin",
+     25
+    ],
+    [
+     "region paca",
+     14
+    ],
+    [
+     "commune de six fours les plages",
+     4
+    ],
+    [
+     "opac sud",
+     3
+    ],
+    [
+     "conseil general de la guyane",
+     3
+    ],
+    [
+     "mayenne habitat",
+     2
+    ],
+    [
+     "commune de gagny",
+     2
+    ],
+    [
+     "commune le cannet",
+     2
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "further-information": 37,
+     "specifications-provider": 14,
+     "tender-receipt": 12,
+     "appeal-information": 11,
+     "Lot-AddInfo": 2,
+     "buyer": 1,
+     "mediation-body": 1,
+     "review-body": 1
+    },
+    "TPO": {
+     "Lot-AddInfo": 1
+    }
+   },
+   "verdict": "W HUB (many unrelated buyers)",
+   "verdict_class": "W"
+  },
+  {
+   "org_id": 1163163,
+   "group": "next15",
+   "name": "Service de la commande publique et des marchés",
+   "cls": "BARE_EXT",
+   "country": "FR",
+   "identifier": null,
+   "mentions": 82,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 45,
+   "self_buyer_tenders": 0,
+   "buyer_org_ids": 4,
+   "buyer_names_folded": 3,
+   "buyer_tender_mass": 45,
+   "top_buyer": "conseil general de la dordogne",
+   "top_buyer_tenders": 39,
+   "top_buyer_share": 0.867,
+   "buyers_top8": [
+    [
+     "conseil general de la dordogne",
+     39
+    ],
+    [
+     "conseil general de la dordogne direction generale des services departementaux",
+     5
+    ],
+    [
+     "conseil general de la dordogne service des marches publics",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "ORG": {
+     "tender-receipt": 43,
+     "specifications-provider": 37,
+     "further-information": 2
+    }
+   },
+   "verdict": "DOMINANT+TAIL (one buyer >= 80%, others pooled)",
+   "verdict_class": "DOMINANT+TAIL"
+  },
+  {
+   "org_id": 2680514,
+   "group": "next15",
+   "name": "Unidad de Contratacion",
+   "cls": "BARE_STRICT",
+   "country": "ES",
+   "identifier": null,
+   "mentions": 81,
+   "mentions_by_section_prefix": {},
+   "sampled_served_tenders": 46,
+   "self_buyer_tenders": 2,
+   "buyer_org_ids": 4,
+   "buyer_names_folded": 4,
+   "buyer_tender_mass": 44,
+   "top_buyer": "intendente de rota",
+   "top_buyer_tenders": 39,
+   "top_buyer_share": 0.886,
+   "buyers_top8": [
+    [
+     "intendente de rota",
+     39
+    ],
+    [
+     "junta de gobierno local del ayuntamiento de sanlucar de barrameda",
+     3
+    ],
+    [
+     "hospital universitario ramon y cajal",
+     1
+    ],
+    [
+     "intendente de cartagena",
+     1
+    ]
+   ],
+   "roles_tenders_by_path": {
+    "TPO": {
+     "Lot-ReviewInfo": 35,
+     "Lot-ReviewOrg": 9
+    },
+    "ORG": {
+     "buyer": 2,
+     "appeal-information": 1
+    }
+   },
+   "verdict": "DOMINANT+TAIL (one buyer >= 80%, others pooled)",
+   "verdict_class": "DOMINANT+TAIL"
+  }
+ ],
+ "self_buyer_lens_s04": {
+  "19553": {
+   "sources": [
+    [
+     "doe",
+     "procedure",
+     200
+    ]
+   ],
+   "other_parties": []
+  },
+  "2997642": {
+   "sources": [
+    [
+     "doe",
+     "procedure",
+     1
+    ],
+    [
+     "ted",
+     "procedure",
+     28
+    ]
+   ],
+   "other_parties": [
+    [
+     "Lot-ReviewOrg",
+     1928149,
+     "2. Vergabekammer beim Landesverwaltungsamt Sachsen- Anhalt",
+     1
+    ],
+    [
+     "Procedure-SProvider",
+     28,
+     "Datenservice Öffentlicher Einkauf (in Verantwortung des Beschaffungsamts des BMI)",
+     1
+    ],
+    [
+     "Tenderer",
+     22197280,
+     "P&I Personal & Informatik AG",
+     1
+    ],
+    [
+     "appeal-information",
+     3233,
+     "Vergabekammer Westfalen",
+     1
+    ],
+    [
+     "appeal-information",
+     1167586,
+     "Vergabekammer bei der Bezirksregierung Münster",
+     1
+    ],
+    [
+     "appeal-information",
+     1188244,
+     "Zentrale Vergabestelle der Stadt Aachen",
+     1
+    ],
+    [
+     "mediation-body",
+     1167586,
+     "Vergabekammer bei der Bezirksregierung Münster",
+     1
+    ],
+    [
+     "mediation-body",
+     8414264,
+     "Landrat des Rhein-Sieg-Kreises",
+     2
+    ],
+    [
+     "review-body",
+     3233,
+     "Vergabekammer Westfalen",
+     12
+    ],
+    [
+     "review-body",
+     7473,
+     "Vergabekammer Rheinland bei der Bezirksregierung Köln",
+     3
+    ],
+    [
+     "review-body",
+     1163372,
+     "Vergabekammer bei der Bezirksregierung Düsseldorf",
+     1
+    ],
+    [
+     "review-body",
+     1167586,
+     "Vergabekammer bei der Bezirksregierung Münster",
+     1
+    ],
+    [
+     "review-body",
+     1417673,
+     "Vergabekammer Bezirksregierung Köln",
+     2
+    ],
+    [
+     "review-body",
+     6342384,
+     "Vergabekammer Rheinland bei der Bezirksregierung Köln, Spruchkörper Köln",
+     1
+    ],
+    [
+     "review-body",
+     17511966,
+     "Ministerium des Innern und für Kommunales, Referat III/1",
+     3
+    ],
+    [
+     "winner",
+     1176298,
+     "Westfälische Provinzial Versicherung AG",
+     1
+    ],
+    [
+     "winner",
+     1341940,
+     "Bechtle GmbH",
+     1
+    ],
+    [
+     "winner",
+     1355818,
+     "Schlingmann GmbH & Co. KG",
+     1
+    ],
+    [
+     "winner",
+     1388115,
+     "Carl Henkel GmbH & Co. KG",
+     1
+    ],
+    [
+     "winner",
+     1803710,
+     "Stadtwerke Schwerte GmbH",
+     1
+    ],
+    [
+     "winner",
+     2441948,
+     "Seufert-Niklaus GmbH",
+     1
+    ],
+    [
+     "winner",
+     8302799,
+     "Götz & Wetzels oHG",
+     1
+    ],
+    [
+     "winner",
+     9589722,
+     "Elster Ausbau GmbH",
+     1
+    ],
+    [
+     "winner",
+     12849156,
+     "Bauunternehmen Ulrich Bogenstahl GmbH",
+     1
+    ],
+    [
+     "winner",
+     13385245,
+     "BuchhalteStelle VS",
+     1
+    ],
+    [
+     "winner",
+     15955918,
+     "Glutton Cleaning machines division of Lange Christian SA/NV",
+     1
+    ],
+    [
+     "winner",
+     16580727,
+     "Elementmedia GmbH",
+     1
+    ],
+    [
+     "winner",
+     18856264,
+     "Förder Landschaftsarchitekten GmbH",
+     1
+    ],
+    [
+     "winner",
+     18907299,
+     "Böhm Bedachung",
+     1
+    ],
+    [
+     "winner",
+     20062314,
+     "Brandenburger Sicherheit & Service GmbH",
+     1
+    ],
+    [
+     "winner",
+     31434006,
+     "CSK Ing.-Gesellschaft mbH & Co. KG",
+     1
+    ]
+   ]
+  },
+  "1416875": {
+   "sources": [
+    [
+     "ted",
+     "procedure",
+     6
+    ]
+   ],
+   "other_parties": [
+    [
+     "buyer",
+     9573833,
+     "University Hospitals Birmingham NHS Foundation Trust (UHB)",
+     1
+    ],
+    [
+     "buyer",
+     11000035,
+     "University Hospitals Birmingham NHS Foundation Trust (UHB) and Heart of England NHS Foundation Trust (HEFT)",
+     1
+    ],
+    [
+     "buyer",
+     30914077,
+     "University Hospitals Birmingham NHS Foundation Trust",
+     3
+    ],
+    [
+     "review-body",
+     30914077,
+     "University Hospitals Birmingham NHS Foundation Trust",
+     1
+    ]
+   ]
+  }
+ },
+ "doe_19553_titles_g20": {
+  "tenders_read": 100,
+  "places": [
+   [
+    "Wuppertal (B/L/F/U-nnnn-yy file numbers)",
+    47
+   ],
+   [
+    "Wuppertal",
+    20
+   ],
+   [
+    "Leverkusen (2023-0nnn file numbers)",
+    13
+   ],
+   [
+    "(no place in title)",
+    9
+   ],
+   [
+    "Reepsholt",
+    2
+   ],
+   [
+    "Leverkusen",
+    2
+   ],
+   [
+    "Schwerte",
+    2
+   ],
+   [
+    "Priemelsfehn",
+    1
+   ],
+   [
+    "Aulendorf",
+    1
+   ],
+   [
+    "Rheinzabern",
+    1
+   ],
+   [
+    "Klein Nordende",
+    1
+   ],
+   [
+    "Bad Segeberg",
+    1
+   ]
+  ]
+ },
+ "verdict_tally": {
+  "top15": {
+   "W": {
+    "orgs": 9,
+    "mentions": 10424,
+    "ids": [
+     1164742,
+     1171563,
+     1166638,
+     3443,
+     1181455,
+     2997642,
+     1241271,
+     1223007,
+     1214290
+    ]
+   },
+   "N": {
+    "orgs": 2,
+    "mentions": 1105,
+    "ids": [
+     1165758,
+     22506338
+    ]
+   },
+   "DOMINANT+TAIL": {
+    "orgs": 4,
+    "mentions": 1458,
+    "ids": [
+     3975457,
+     1244992,
+     1193769,
+     1397643
+    ]
+   }
+  },
+  "all_bare": {
+   "W": {
+    "orgs": 24,
+    "mentions": 12594,
+    "ids": [
+     1164742,
+     1171563,
+     1166638,
+     3443,
+     1181455,
+     2997642,
+     1241271,
+     1223007,
+     1214290,
+     9327844,
+     1369148,
+     2005009,
+     3801469,
+     1416875,
+     19553,
+     1768256,
+     1804271,
+     1229388,
+     1340282,
+     1575233,
+     1378491,
+     1168433,
+     1193704,
+     1363144
+    ]
+   },
+   "N": {
+    "orgs": 5,
+    "mentions": 1318,
+    "ids": [
+     1165758,
+     22506338,
+     19463077,
+     1228608,
+     1204150
+    ]
+   },
+   "DOMINANT+TAIL": {
+    "orgs": 8,
+    "mentions": 1843,
+    "ids": [
+     3975457,
+     1244992,
+     1193769,
+     1397643,
+     4154069,
+     7229588,
+     1163163,
+     2680514
+    ]
+   }
+  },
+  "extra": {
+   "W": {
+    "orgs": 6,
+    "mentions": 911,
+    "ids": [
+     9327844,
+     1369148,
+     2005009,
+     3801469,
+     1416875,
+     19553
+    ]
+   },
+   "N": {
+    "orgs": 1,
+    "mentions": 33,
+    "ids": [
+     19463077
+    ]
+   }
+  },
+  "control": {
+   "N": {
+    "orgs": 4,
+    "mentions": 7092,
+    "ids": [
+     1606217,
+     1182792,
+     5766,
+     1515541
+    ]
+   }
+  },
+  "next15": {
+   "W": {
+    "orgs": 9,
+    "mentions": 1259,
+    "ids": [
+     1768256,
+     1804271,
+     1229388,
+     1340282,
+     1575233,
+     1378491,
+     1168433,
+     1193704,
+     1363144
+    ]
+   },
+   "DOMINANT+TAIL": {
+    "orgs": 4,
+    "mentions": 385,
+    "ids": [
+     4154069,
+     7229588,
+     1163163,
+     2680514
+    ]
+   },
+   "N": {
+    "orgs": 2,
+    "mentions": 180,
+    "ids": [
+     1228608,
+     1204150
+    ]
+   }
+  },
+  "coverage": {
+   "bare_orgs_measured": 37,
+   "bare_mentions_measured": 15755,
+   "bare_mentions_in_listings": 21049,
+   "share": 0.748
+  }
+ },
+ "roles": {
+  "bare_measured_orgs": 37,
+  "mentions_by_section_prefix_22_orgs_s03": {
+   "ORG": 13040,
+   "TPO": 599,
+   "ND-": 292
+  },
+  "party_tenders_by_path_per_org": {
+   "1164742": {
+    "TPO": 14,
+    "ORG": 2052
+   },
+   "1171563": {
+    "TPO": 1,
+    "ORG": 1068
+   },
+   "1182792": {
+    "ORG": 2924
+   },
+   "5766": {
+    "ORG": 1961
+   },
+   "1166638": {
+    "ORG": 1253,
+    "TPO": 4
+   },
+   "3443": {
+    "ORG": 956,
+    "TPO": 28
+   },
+   "1181455": {
+    "ORG": 807
+   },
+   "1165758": {
+    "ORG": 779
+   },
+   "2997642": {
+    "ORG": 448,
+    "TPO": 22,
+    "ND-": 1
+   },
+   "1241271": {
+    "ORG": 290,
+    "TPO": 12
+   },
+   "1223007": {
+    "TPO": 104,
+    "ORG": 155
+   },
+   "1214290": {
+    "ORG": 236
+   },
+   "3975457": {
+    "ORG": 223,
+    "TPO": 91
+   },
+   "1244992": {
+    "ORG": 380
+   },
+   "1193769": {
+    "ORG": 135
+   },
+   "22506338": {
+    "ORG": 320
+   },
+   "1397643": {
+    "TPO": 1,
+    "ORG": 172
+   },
+   "9327844": {
+    "TPO": 17,
+    "ORG": 4
+   },
+   "1369148": {
+    "TPO": 5,
+    "ORG": 153
+   },
+   "2005009": {
+    "TPO": 1,
+    "ORG": 91
+   },
+   "3801469": {
+    "TPO": 47,
+    "ORG": 38
+   },
+   "19463077": {
+    "TPO": 15,
+    "ORG": 5
+   },
+   "1416875": {
+    "ORG": 39
+   },
+   "19553": {
+    "ORG": 2,
+    "ND-": 291
+   },
+   "1606217": {
+    "ORG": 324
+   },
+   "1515541": {
+    "ORG": 202
+   },
+   "1768256": {
+    "TPO": 67,
+    "ORG": 79
+   },
+   "1804271": {
+    "ORG": 154,
+    "TPO": 22
+   },
+   "1229388": {
+    "TPO": 4,
+    "ORG": 141
+   },
+   "1340282": {
+    "TPO": 3,
+    "ORG": 114
+   },
+   "4154069": {
+    "ORG": 63
+   },
+   "1575233": {
+    "ORG": 64
+   },
+   "1378491": {
+    "TPO": 7,
+    "ORG": 69
+   },
+   "1168433": {
+    "ORG": 99
+   },
+   "7229588": {
+    "ORG": 54
+   },
+   "1228608": {
+    "ORG": 90
+   },
+   "1204150": {
+    "ORG": 47
+   },
+   "1193704": {
+    "ORG": 67
+   },
+   "1363144": {
+    "ORG": 79,
+    "TPO": 1
+   },
+   "1163163": {
+    "ORG": 82
+   },
+   "2680514": {
+    "TPO": 44,
+    "ORG": 3
+   }
+  },
+  "tenders_by_path_and_role": {
+   "TPO": {
+    "Lot-ReviewInfo": 154,
+    "Lot-ReviewOrg": 131,
+    "Lot-AddInfo": 116,
+    "Lot-TenderEval": 50,
+    "Lot-DocProvider": 38,
+    "Lot-TenderReceipt": 13,
+    "Lot-EnvironLegis": 3,
+    "Lot-Mediator": 3,
+    "Lot-EmployLegis": 2
+   },
+   "ORG": {
+    "appeal-information": 5118,
+    "further-information": 2247,
+    "tender-receipt": 1446,
+    "specifications-provider": 803,
+    "Lot-AddInfo": 273,
+    "Lot-TenderReceipt": 220,
+    "review-body": 209,
+    "Lot-DocProvider": 205,
+    "mediation-body": 109,
+    "Procedure-SProvider": 84,
+    "buyer": 63,
+    "Lot-ReviewInfo": 13,
+    "Procedure-Buyer": 8,
+    "Tenderer": 4,
+    "Part-TenderReceipt": 3,
+    "Lot-ReviewOrg": 2,
+    "Part-AddInfo": 2,
+    "Lot-TenderEval": 1,
+    "Contract-Signatory": 1
+   },
+   "ND-": {
+    "buyer": 292
+   }
+  },
+  "tenders_by_role_family": {
+   "eForms touchpoint (TPO path)": 510,
+   "eForms ORG section (ORG path)": 816,
+   "TED R2 address/role block (ORG path)": 10287
+  },
+  "tpo_path_orgs": [
+   [
+    1223007,
+    "Unidad de Contratación",
+    199,
+    410
+   ],
+   [
+    3975457,
+    "Dział Zamówień Publicznych",
+    159,
+    390
+   ],
+   [
+    3801469,
+    "Afdeling Inkoop",
+    83,
+    121
+   ],
+   [
+    3443,
+    "Service de la Commande publique",
+    29,
+    1026
+   ],
+   [
+    19463077,
+    "Afd. Inkoop",
+    28,
+    33
+   ],
+   [
+    2997642,
+    "Zentrale Vergabestelle",
+    23,
+    545
+   ],
+   [
+    9327844,
+    "Dział Zamówień Publicznych i Zaopatrzenia",
+    23,
+    37
+   ],
+   [
+    1241271,
+    "Servicio de Contratación y Compras",
+    22,
+    541
+   ],
+   [
+    1164742,
+    "Servicio de Contratación",
+    18,
+    3236
+   ],
+   [
+    1166638,
+    "Direction de la commande publique",
+    6,
+    1356
+   ],
+   [
+    1369148,
+    "Órgano de Contratación",
+    5,
+    231
+   ],
+   [
+    1171563,
+    "Servicio de Contratación Administrativa",
+    2,
+    2060
+   ],
+   [
+    1397643,
+    "Unidad de Contratación Administrativa",
+    1,
+    298
+   ],
+   [
+    2005009,
+    "Ufficio gare",
+    1,
+    156
+   ]
+  ],
+  "census_all_phrase_orgs_roles_family": {
+   "eForms roles": 50755,
+   "TED R2 legacy roles": 198059
+  }
+ }
+}

@@ -1,0 +1,127 @@
+{
+ "used": 12,
+ "stop": null,
+ "last": 1792881310.3416266,
+ "log": [
+  {
+   "n": 1,
+   "name": "s03_mentions",
+   "sha256": "caa6c89785d9ed4ffb2c5846c7f7f55d15a6f183a637f9fc1d2ee9bb99fbeee5",
+   "sent_at": "2026-10-24T21:57:32Z",
+   "secs": 1.96,
+   "ok": true,
+   "rows": 42,
+   "truncated": false
+  },
+  {
+   "n": 2,
+   "name": "s01a_roles",
+   "sha256": "4db038e5506420620aa34f7ed2196971d2547c5d670b8c51346d23df497c70b2",
+   "sent_at": "2026-10-24T21:57:52Z",
+   "secs": 1.47,
+   "ok": true,
+   "rows": 47,
+   "truncated": false
+  },
+  {
+   "n": 3,
+   "name": "s01b_roles",
+   "sha256": "e24557c1c773a7f8add011ce8fd4f4bac3d578484a60ad568546ec6b3f639479",
+   "sent_at": "2026-10-24T21:57:58Z",
+   "secs": 1.22,
+   "ok": true,
+   "rows": 121,
+   "truncated": false
+  },
+  {
+   "n": 4,
+   "name": "s02_buyers",
+   "sha256": "b7216234af23d5561871cdb1fcba79a2a9bd5bf16a3fde2a1c830e5a3776ec2c",
+   "sent_at": "2026-10-24T21:58:07Z",
+   "secs": 1.18,
+   "ok": true,
+   "rows": 624,
+   "truncated": false
+  },
+  {
+   "n": 5,
+   "name": "s04_selfbuyer",
+   "sha256": "90684805e4a0451bbe53589fcacb1716836f1f8af5ad2406fafa45d7dd7267bc",
+   "sent_at": "2026-10-24T21:59:14Z",
+   "secs": 0.37,
+   "ok": true,
+   "rows": 39,
+   "truncated": false
+  },
+  {
+   "n": 6,
+   "name": "s05_buyers_next15",
+   "sha256": "8fa658bd3b35e4597e71ab7d4d3efbe06c216a0243a8a666b6a40c5fff76081f",
+   "sent_at": "2026-10-24T22:01:42Z",
+   "secs": 0.77,
+   "ok": true,
+   "rows": 235,
+   "truncated": false
+  },
+  {
+   "n": 7,
+   "name": "s06_roles_next15",
+   "sha256": "1efd5b615810dde76f5984662bb8914a82e33f6530b1020511b3c68b3e0c2176",
+   "sent_at": "2026-10-24T22:01:46Z",
+   "secs": 0.37,
+   "ok": true,
+   "rows": 79,
+   "truncated": false
+  },
+  {
+   "n": 8,
+   "name": "s07_multibuyer",
+   "sha256": "da8702096d3a0127ed24bdfdd2eefb47189f1f21155c63f37aec6950d8d8a1f2",
+   "sent_at": "2026-10-24T22:12:21Z",
+   "secs": 0.42,
+   "ok": true,
+   "rows": 36,
+   "truncated": false
+  },
+  {
+   "n": 9,
+   "name": "s08_tarc",
+   "sha256": "5e397f7aa1fe619e5f2bc00215f2fe0843cd2eece7454a916d63ed5630582694",
+   "sent_at": "2026-10-24T22:12:25Z",
+   "secs": 0.39,
+   "ok": true,
+   "rows": 18,
+   "truncated": false
+  },
+  {
+   "n": 10,
+   "name": "s09_buyer_notice",
+   "sha256": "5ad416f694492d3093b49a7a38a2b3a3c82e644a952406ce61c5774b7114acfd",
+   "sent_at": "2026-10-24T22:12:56Z",
+   "secs": 0.38,
+   "ok": true,
+   "rows": 8,
+   "truncated": false
+  },
+  {
+   "n": 11,
+   "name": "s10_hub_roles",
+   "sha256": "35aaaaa451a192024e5f0eb7ac8e2d922cc06a503815a370c12f27e9001972fb",
+   "sent_at": "2026-10-24T22:31:25Z",
+   "secs": 0.68,
+   "ok": true,
+   "rows": 28,
+   "truncated": false
+  },
+  {
+   "n": 12,
+   "name": "s11_sprovider_sections",
+   "sha256": "57636244a969727d3ca9d0b777a4e4d5bfbc1dbf541e7b7eec4f0de099c8f1a9",
+   "sent_at": "2026-10-24T22:35:09Z",
+   "secs": 0.38,
+   "ok": true,
+   "rows": 27,
+   "truncated": false
+  }
+ ]
+}

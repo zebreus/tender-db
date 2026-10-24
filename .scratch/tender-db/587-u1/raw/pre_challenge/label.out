@@ -1,0 +1,203 @@
+{
+ "listed_orgs": 6010,
+ "by_measured_class": {
+  "BARE_STRICT": {
+   "orgs": 1791,
+   "mentions": 12673,
+   "hit_orgs": 1790,
+   "hit_mentions": 12672
+  },
+  "DEPT": {
+   "orgs": 2712,
+   "mentions": 35856,
+   "hit_orgs": 2,
+   "hit_mentions": 4
+  },
+  "BARE_EXT": {
+   "orgs": 1032,
+   "mentions": 8376,
+   "hit_orgs": 856,
+   "hit_mentions": 8131
+  },
+  "OTHER_ORGAN": {
+   "orgs": 475,
+   "mentions": 11565,
+   "hit_orgs": 0,
+   "hit_mentions": 0
+  }
+ },
+ "hit_by_key": {
+  "name-keyed (country)": {
+   "orgs": 198,
+   "mentions": 16668
+  },
+  "no id, NULL country": {
+   "orgs": 2117,
+   "mentions": 2930
+  },
+  "identified": {
+   "orgs": 333,
+   "mentions": 1209
+  }
+ },
+ "bare_miss_totals": {
+  "orgs": 177,
+  "mentions": 246,
+  "name_keyed_country": 82
+ },
+ "hit_totals": {
+  "orgs": 2648,
+  "mentions": 20807
+ }
+}
+
+## hits outside the measured BARE classes
+[14902852, 'Unidad de Contratación, Dirección de Gestión y Servicios Generales', 'DEPT', 2]
+[3779927, 'Servicio de Contratación y Compra', 'DEPT', 2]
+
+## measured orgs (id, name, verdict, mentions, hit)
+[1164742, 'Servicio de Contratación', 'W', 3236, True]
+[1171563, 'Servicio de Contratación Administrativa', 'W', 2060, True]
+[1166638, 'Direction de la commande publique', 'W', 1356, True]
+[3443, 'Service de la Commande publique', 'W', 1026, True]
+[1181455, 'Service des marchés publics', 'W', 852, True]
+[1165758, 'Service des achats et de la commande publique', 'N', 785, True]
+[2997642, 'Zentrale Vergabestelle', 'W', 545, True]
+[1241271, 'Servicio de Contratación y Compras', 'W', 541, True]
+[1223007, 'Unidad de Contratación', 'W', 410, True]
+[1214290, 'Servicio de Contratación y Asuntos Generales', 'W', 398, True]
+[3975457, 'Dział Zamówień Publicznych', 'DOMINANT+TAIL', 390, True]
+[1244992, 'Service des achats et approvisionnements', 'DOMINANT+TAIL', 387, True]
+[1193769, 'Servicio de Contratación y Convenios', 'DOMINANT+TAIL', 383, True]
+[22506338, 'Service des Achats Responsables', 'N', 320, True]
+[1397643, 'Unidad de Contratación Administrativa', 'DOMINANT+TAIL', 298, True]
+[9327844, 'Dział Zamówień Publicznych i Zaopatrzenia', 'W', 37, True]
+[1369148, 'Órgano de Contratación', 'W', 231, True]
+[2005009, 'Ufficio gare', 'W', 156, True]
+[3801469, 'Afdeling Inkoop', 'W', 121, True]
+[19463077, 'Afd. Inkoop', 'N', 33, True]
+[1416875, 'Procurement Department', 'W', 73, True]
+[19553, 'Zentrale Vergabestelle', 'W', 293, True]
+[1606217, 'Unidad de Contratación del Hospital Universitario Ramón y Cajal', 'N', 726, False]
+[1182792, 'Órgano de contratación de ADIF', 'N', 4080, False]
+[5766, 'Vergabestelle Landeshauptstadt Stuttgart', 'N', 2003, False]
+[1515541, 'Servicio de Contratación del Ayuntamiento de Vigo', 'N', 283, False]
+[1768256, 'Servicio de Contratación y Suministros', 'W', 217, True]
+[1804271, 'Vergabestelle', 'W', 209, True]
+[1229388, 'Servicio de Contratación y Patrimonio', 'W', 204, True]
+[1340282, 'Direction des achats', 'W', 126, True]
+[4154069, 'Service de la commande publique: responsable du service', 'DOMINANT+TAIL', 122, True]
+[1575233, 'Servicio de Contratacion', 'W', 122, True]
+[1378491, 'Servicio de Contratación Centralizada', 'W', 113, True]
+[1168433, 'Service des marchés', 'W', 100, True]
+[7229588, 'Servicio de Contratación y Gestión Patrimonial', 'DOMINANT+TAIL', 100, True]
+[1228608, 'Direction de la commande publique - service des marchés', 'N', 90, True]
+[1204150, 'Servicio de Contratación, Compras y Patrimonio', 'N', 90, True]
+[1193704, 'Mesa de contratación', 'W', 85, True]
+[1363144, 'Service des marchés', 'W', 83, True]
+[1163163, 'Service de la commande publique et des marchés', 'DOMINANT+TAIL', 82, True]
+[2680514, 'Unidad de Contratacion', 'DOMINANT+TAIL', 81, True]
+
+## top hits
+[1164742, 'Servicio de Contratación', 'name-keyed (country)', 3236]
+[1171563, 'Servicio de Contratación Administrativa', 'name-keyed (country)', 2060]
+[1166638, 'Direction de la commande publique', 'name-keyed (country)', 1356]
+[3443, 'Service de la Commande publique', 'name-keyed (country)', 1026]
+[1181455, 'Service des marchés publics', 'name-keyed (country)', 852]
+[1165758, 'Service des achats et de la commande publique', 'name-keyed (country)', 785]
+[2997642, 'Zentrale Vergabestelle', 'name-keyed (country)', 545]
+[1241271, 'Servicio de Contratación y Compras', 'name-keyed (country)', 541]
+[1223007, 'Unidad de Contratación', 'name-keyed (country)', 410]
+[1214290, 'Servicio de Contratación y Asuntos Generales', 'name-keyed (country)', 398]
+[3975457, 'Dział Zamówień Publicznych', 'name-keyed (country)', 390]
+[1244992, 'Service des achats et approvisionnements', 'name-keyed (country)', 387]
+[1193769, 'Servicio de Contratación y Convenios', 'name-keyed (country)', 383]
+[22506338, 'Service des Achats Responsables', 'identified', 320]
+[1397643, 'Unidad de Contratación Administrativa', 'name-keyed (country)', 298]
+[19553, 'Zentrale Vergabestelle', 'no id, NULL country', 293]
+[3083044, 'Direction des achats', 'no id, NULL country', 261]
+[1369148, 'Órgano de Contratación', 'name-keyed (country)', 231]
+[1768256, 'Servicio de Contratación y Suministros', 'name-keyed (country)', 217]
+[1804271, 'Vergabestelle', 'name-keyed (country)', 209]
+[1229388, 'Servicio de Contratación y Patrimonio', 'name-keyed (country)', 204]
+[2005009, 'Ufficio gare', 'name-keyed (country)', 156]
+[22204231, 'Vergabestelle Bau', 'identified', 148]
+[1340282, 'Direction des achats', 'name-keyed (country)', 126]
+[4154069, 'Service de la commande publique: responsable du service', 'name-keyed (country)', 122]
+[1575233, 'Servicio de Contratacion', 'name-keyed (country)', 122]
+[3801469, 'Afdeling Inkoop', 'name-keyed (country)', 121]
+[22503093, 'Vergabestelle', 'identified', 114]
+[1378491, 'Servicio de Contratación Centralizada', 'name-keyed (country)', 113]
+[1168433, 'Service des marchés', 'name-keyed (country)', 100]
+[7229588, 'Servicio de Contratación y Gestión Patrimonial', 'name-keyed (country)', 100]
+[1228608, 'Direction de la commande publique - service des marchés', 'name-keyed (country)', 90]
+[1204150, 'Servicio de Contratación, Compras y Patrimonio', 'name-keyed (country)', 90]
+[1193704, 'Mesa de contratación', 'name-keyed (country)', 85]
+[1363144, 'Service des marchés', 'name-keyed (country)', 83]
+[1163163, 'Service de la commande publique et des marchés', 'name-keyed (country)', 82]
+[2680514, 'Unidad de Contratacion', 'name-keyed (country)', 81]
+[1263893, 'Service des marchés publics', 'name-keyed (country)', 78]
+[1281853, 'Ufficio gare e contratti', 'name-keyed (country)', 77]
+[1451688, 'Service des achats', 'name-keyed (country)', 73]
+
+## top BARE misses (residue)
+[8140389, 'Service des marchés publics: Hôtel du Département', 'BARE_EXT', 'name-keyed (country)', 53]
+[2294116, 'Service des marchés publics: maison des adjoints', 'BARE_EXT', 'name-keyed (country)', 7]
+[1960114, 'Service des marchés: hôtel de ville', 'BARE_EXT', 'name-keyed (country)', 4]
+[3812552, 'Service de la commande publique/centre administratif', 'BARE_EXT', 'no id, NULL country', 3]
+[11327519, 'Direction des achats, logistique et patrimoine', 'BARE_EXT', 'name-keyed (country)', 3]
+[3735721, 'Direction de la commande publique - pôle administratif', 'BARE_EXT', 'no id, NULL country', 2]
+[11518871, 'Service de la commande publique: Hôtel de Ville', 'BARE_EXT', 'name-keyed (country)', 2]
+[2671572, 'Service des marchés publics, direction du patrimoine', 'BARE_EXT', 'name-keyed (country)', 2]
+[31438471, 'Service des marchés publics, hôtel de ville', 'BARE_EXT', 'name-keyed (country)', 2]
+[11073722, "Direction de la commande publique division gestion administrative de l'achat", 'BARE_EXT', 'name-keyed (country)', 1]
+[30984553, 'SERVICE DES MARCHES CENTRALISES', 'BARE_EXT', 'name-keyed (country)', 1]
+[18129377, 'service des Marchés : Hôtel de Ville', 'BARE_EXT', 'name-keyed (country)', 1]
+[2696476, 'service des marchés public, Direction du Patrimoine', 'BARE_EXT', 'name-keyed (country)', 1]
+[4653665, 'Service des marchés publics - Hôtel de Ville', 'BARE_EXT', 'no id, NULL country', 1]
+[5050189, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5050190, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5061850, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5061851, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5091801, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5091802, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5091863, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5091864, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5092026, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5092027, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5096952, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5096953, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5109919, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5109938, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5109939, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5110308, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5110309, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5110508, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5110509, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5110643, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5110644, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5111014, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5111015, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5116919, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5116920, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5125740, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5125741, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5154998, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5154999, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5209343, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5209344, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5388512, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5388513, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5517285, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5517286, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5577649, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5577650, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5671169, 'service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5714324, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5714325, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5726797, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5740247, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5740248, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5752013, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5752014, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]
+[5752223, 'Service des marchés publics : Hôtel du Département', 'BARE_EXT', 'no id, NULL country', 1]

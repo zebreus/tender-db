@@ -1,0 +1,316 @@
+# plan
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+# plan_prod
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)

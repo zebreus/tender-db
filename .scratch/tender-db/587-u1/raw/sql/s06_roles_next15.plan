@@ -1,0 +1,214 @@
+# plan
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+# plan_prod
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN q
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
