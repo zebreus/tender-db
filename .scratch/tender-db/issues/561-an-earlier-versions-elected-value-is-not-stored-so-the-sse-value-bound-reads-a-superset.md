@@ -209,3 +209,5 @@ ends up holding, and 560's served text (`/docs` Live feed, openapi `EventStream`
 - **Cross-run.** A client that resumes, or lags, past a version since superseded reads both of that version's probes
   as the superset, so a `changed` can name an entity outside the bound until a later change probes the current
   version. That stays 561's to close (a stored per-version value).
+
+- **Fill baseline (hourly audit, 2026-10-24 22:45Z, 2 bounded reads):** window 8,761,858–8,861,858 epoch 5 = 1,009 / epoch 4 = 97,597; window 1–100,000 epoch 5 = 1 / epoch 4 = 97,951. As designed (lazy fill: folds stamp 5). 577 slice 3 (sdk probe) and the sdk rounds will fill most eForms Tenders; unit 6 retires the residue clause only when every window reads 0 at epoch <> 5.
