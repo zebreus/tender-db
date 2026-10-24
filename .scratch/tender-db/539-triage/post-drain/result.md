@@ -87,7 +87,7 @@ At least 11,504 notices changed their (profile, bucket, IssueDate) cell. Net sta
 
 ## Fetches with inv > 0 after the drain
 
-- **Fetch 431 (monthly 2024-01): 1 notice, profile de-1.1** (142 before the drain).
+- **Fetch 431 (monthly 2024-01): 1 notice, profile de-1.1** (the fetch had 142 before the drain: de-1.1 95 + sdk-0.1 47; corrected per skeptic.md).
   - It sits in the group `pb = in`, `db = in`: both its `published_at` day and its IssueDate day are inside 2024-01.
     The bucket and the stale share are therefore unaffected.
   - The group holds 11,224 notices (ids 26,239,408–26,260,202), so the agg read cannot pin the notice id.
