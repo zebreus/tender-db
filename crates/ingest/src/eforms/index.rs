@@ -33,25 +33,6 @@ pub struct FieldInfo {
     /// SDK type, kept for the value parser (`indicator` vs `integer`, …).
     pub kind: String,
     pub code_list: Option<String>,
-    /// Placed by the inventory's own declaration at its own xpath — not by a
-    /// patch table ([`ALIASES`], [`EXTRA`], a direct gap-fill call). What
-    /// [`Index::bind`] weighs when a patch field sorts first.
-    pub declared: bool,
-    /// A patch field whose xpath carries no positive predicate, only `not(…)`
-    /// ones: where it sorts ahead of a declared field it does so on negations
-    /// alone, so it does not identify its own business term there (issue 577,
-    /// D577-1 (c)). Always false for a declared field.
-    pub negated_only: bool,
-}
-
-/// One inventory's match tree, plus what [`Index::bind`] needs to know about
-/// the inventory itself.
-#[derive(Debug)]
-pub struct Index {
-    pub root: Branch,
-    /// The inventory is eforms-de-1.x: empirical and predicate-free, so every
-    /// predicated patch twin of one of its paths sorts first (D577-1 (a)).
-    pub de1: bool,
 }
 
 /// Elements published TED notices carry that the SDK's own inventory does not
@@ -101,12 +82,8 @@ pub const IGNORED: &[(&str, &str)] = &[
 /// result-layer blocks nested inside `efac:LotResult` rather than beside it.
 ///
 /// Each entry grafts the source subtree onto the target, *filling gaps only* —
-/// a field the SDK already defines at the target's exact branch is never
-/// displaced. A graft whose path carries more predicates than the inventory's
-/// own declaration of the same element lands on a sibling branch instead, and
-/// that branch sorts first; which of the two ids binds is then
-/// [`Index::bind`]'s call (issue 577). The value's true context is carried by
-/// its section, not by the SDK field id's suffix.
+/// a field the SDK already defines at the target always wins. The value's true
+/// context is carried by its section, not by the SDK field id's suffix.
 /// Each entry is (source prefix, target prefix).
 pub const ALIASES: &[(&str, &str)] = &[
     (
@@ -829,12 +806,6 @@ impl Branch {
         self.matching(node, false)
     }
 
-    /// The child branches in insertion order — for the index-wide invariant
-    /// test, which re-derives [`select`](Self::select)'s order on its own.
-    pub fn children(&self) -> &[Branch] {
-        &self.children
-    }
-
     fn matching(&self, node: roxmltree::Node<'_, '_>, predicates: bool) -> Vec<&Branch> {
         let mut matches: Vec<&Branch> = self
             .children
@@ -881,42 +852,6 @@ impl Branch {
     }
 }
 
-impl Index {
-    /// The field an element binds, given the fields of the branches it
-    /// matched in [`Branch::select`] order (issue 577, decision D577-1).
-    ///
-    /// The first field binds, as it always has — unless it is a patch field
-    /// and a matched branch carries a declared one that names the element
-    /// better. Patch tables gap-fill per exact branch only, so a patch whose
-    /// path carries more predicates than the inventory's own declaration of
-    /// the same element lands on a sibling branch, which `select` sorts first:
-    /// the Lot ProcurementProject graft put BT-23-Lot ahead of BT-23-Procedure
-    /// at every SDK-shaped root. The first declared field binds instead when
-    ///
-    /// - (a) the inventory is eforms-de-1.x, whose predicate-free lot paths
-    ///   every `[schemeName='Lot']` twin shadows — the sdk-0.1 rationale for
-    ///   keeping the patch tables off, which [`build`]'s guards already apply
-    ///   to de-1.x one call at a time;
-    /// - (b) it names the same business term ([`same_term`]): a scope-suffix
-    ///   fix, the value's scope being its section anyway;
-    /// - (c) the patch matched by negations alone ([`FieldInfo::negated_only`]):
-    ///   BT-772-Lot over BT-67(b)-Procedure on 1.3–1.7's procedure
-    ///   exclusion-ground descriptions.
-    ///
-    /// A patch that names its own term through a positive discriminator keeps
-    /// binding: BT-1252-Procedure on a lot's direct-award justification,
-    /// BT-01(c)-Procedure in a LOT. Only the bound id changes — what is
-    /// claimed, and what the relaxed ambiguity check quarantines, does not.
-    pub fn bind<'a>(&self, fields: impl Iterator<Item = &'a FieldInfo> + Clone) -> Option<&'a FieldInfo> {
-        let first = fields.clone().next()?;
-        if first.declared {
-            return Some(first);
-        }
-        let mut declared = fields.filter(|d| d.declared);
-        declared.find(|d| self.de1 || first.negated_only || same_term(&d.id, &first.id)).or(Some(first))
-    }
-}
-
 #[derive(Debug)]
 pub struct Error(String);
 
@@ -930,7 +865,7 @@ impl std::error::Error for Error {}
 /// Build the match tree for one SDK version. Fails only if the SDK ships an
 /// xpath shape outside [`xpath`]'s grammar — a loud, test-visible failure
 /// rather than a silent gap.
-pub fn build(sdk: &Sdk) -> Result<Index, Error> {
+pub fn build(sdk: &Sdk) -> Result<Branch, Error> {
     let mut root = Branch::default();
 
     for node in &sdk.nodes {
@@ -982,14 +917,8 @@ pub fn build(sdk: &Sdk) -> Result<Index, Error> {
     // predicate branches over its predicate-free paths would shadow its field
     // ids — so the patches stay off there.
     if sdk.sdk_version != "eforms-sdk-0.1" {
-        // Gap-fill (`true`) like every other patch (issue 577): four entries
-        // sit at an xpath some inventories declare — BT-92-Lot and BT-93-Lot
-        // under the electronic order/payment indicators on every SDK-shaped
-        // minor, BT-749-Lot on 1.0–1.11, OPT-050-Lot on 1.0–1.8 — and
-        // replaced the declared field outright while this inserted
-        // unconditionally.
         for &(xpath, field_id, kind) in EXTRA {
-            insert_extra(&mut root, xpath, field_id, kind, true)?;
+            insert_extra(&mut root, xpath, field_id, kind, false)?;
         }
 
         // BT-165 company size (issue 74). SDK 1.0–1.7 gate `efbc:CompanySizeCode`
@@ -1179,12 +1108,11 @@ pub fn build(sdk: &Sdk) -> Result<Index, Error> {
         // carve-out above is a direct call the [`ALIASES`] loop never
         // replicates onto the Lot — that loop rewrites only `sdk.fields` and
         // the [`EXTRA`] const. Claim the Lot description under BT-745-Lot,
-        // the field later SDKs declare at this very path, gap-filled so
-        // 1.12+'s (and eforms-de-2.x's) own BT-745-Lot declaration keeps its
-        // branch. It stays a direct call rather than an [`EXTRA`] entry,
-        // like the procedure-level one above: an [`EXTRA`] entry also rides
-        // the [`ALIASES`] loop onto the procedure mount, Part and LotsGroup,
-        // claiming there too. The predicated ≤1.11 branch still sorts first
+        // the field later SDKs declare at this very path; moving the pair
+        // into [`EXTRA`] instead would insert without gap-fill and displace
+        // 1.12+'s (and eforms-de-2.x's) own BT-745-Lot declaration, and at
+        // procedure level SDK-DE 1.x's DE1 field — so both stay direct,
+        // gap-filled calls. The predicated ≤1.11 branch still sorts first
         // for real no-esubmission justifications.
         insert_extra(
             &mut root,
@@ -1382,12 +1310,11 @@ pub fn build(sdk: &Sdk) -> Result<Index, Error> {
         }
     }
 
-    Ok(Index { root, de1: sdk.sdk_version == "eforms-de-1.x" })
+    Ok(root)
 }
 
 /// Place one SDK field at `xpath`. `gap_only` is set for aliased copies, which
-/// must never displace a field the SDK declares at the target itself; it is
-/// also what tells a patch field from a declared one ([`FieldInfo::declared`]).
+/// must never displace a field the SDK declares at the target itself.
 fn insert_field(root: &mut Branch, field: &sdk::Field, xpath: &str, gap_only: bool) -> Result<(), Error> {
     let decision = sdk::decide(field)
         .ok_or_else(|| Error(format!("field {} has unknown SDK type {}", field.id, field.kind)))?;
@@ -1396,15 +1323,13 @@ fn insert_field(root: &mut Branch, field: &sdk::Field, xpath: &str, gap_only: bo
     if decision == Decision::VirtualView {
         return Ok(());
     }
-    let location = locate(xpath)?;
     let info = FieldInfo {
         id: field.id.clone(),
         decision,
         kind: field.kind.clone(),
         code_list: field.code_list.as_ref().map(|c| c.value.id.clone()),
-        declared: !gap_only,
-        negated_only: gap_only && negated_only(&location.steps),
     };
+    let location = locate(xpath)?;
     let branch = root.descend(&location.steps);
     match location.attribute {
         Some(attr) => {
@@ -1436,60 +1361,16 @@ fn insert_extra(
         "id" => Decision::Ids,
         other => return Err(Error(format!("EXTRA field {field_id} has unknown type {other}"))),
     };
-    let steps = locate(xpath)?.steps;
-    let negated_only = negated_only(&steps);
-    let branch = root.descend(&steps);
+    let branch = root.descend(&locate(xpath)?.steps);
     if !(gap_only && branch.field.is_some()) {
         branch.field = Some(FieldInfo {
             id: field_id.to_owned(),
             decision,
             kind: kind.to_owned(),
             code_list: None,
-            declared: false,
-            negated_only,
         });
     }
     Ok(())
-}
-
-/// Whether a patch's path carries no positive predicate — every predicate on
-/// every step a `not(…)` ([`FieldInfo::negated_only`]). The whole placed
-/// path, not only an alias's remainder below its target: a positive predicate
-/// in the target (`[cbc:ID/@schemeName='Lot']`) is either where the graft
-/// splits from the declared field, and so its own positive discriminator, or
-/// shared with that field, where counting it can only keep the graft's id.
-fn negated_only(steps: &[Step]) -> bool {
-    steps.iter().flat_map(|s| &s.preds).all(|p| matches!(p, xpath::Pred::Not(_)))
-}
-
-/// Whether two field ids name one business term: equal once the scope segment
-/// is dropped (`BT-23-Lot` ≡ `BT-23-Procedure`; `OPT-300-Procedure-Buyer` ≢
-/// `OPT-300-Procedure-SProvider`). The scope is the third `-`-separated
-/// segment outside parentheses, so `BT-195(BT-106)-Procedure` names BT-195 of
-/// BT-106 — project.rs's `stem` cuts that id at its inner dash (`BT-195(BT`)
-/// and would make every BT-195 declaration one term. Business-term ids only
-/// (a number after the prefix): the empirical dialects' path-named ids
-/// (`DE1-ProcurementProject-Name`) and the `UBL-` grafts carry no scope
-/// segment and name a term of their own.
-fn same_term(a: &str, b: &str) -> bool {
-    fn unscoped(id: &str) -> Option<(&str, &str)> {
-        let mut depth = 0usize;
-        let mut dashes = Vec::with_capacity(3);
-        for (i, c) in id.char_indices() {
-            match c {
-                '(' => depth += 1,
-                ')' => depth = depth.saturating_sub(1),
-                '-' if depth == 0 => dashes.push(i),
-                _ => {}
-            }
-        }
-        let (first, scope) = (*dashes.first()?, *dashes.get(1)?);
-        if !id[first + 1..].starts_with(|c: char| c.is_ascii_digit()) {
-            return None;
-        }
-        Some((&id[..scope], dashes.get(2).map_or("", |&rest| &id[rest..])))
-    }
-    matches!((unscoped(a), unscoped(b)), (Some(a), Some(b)) if a == b)
 }
 
 fn locate(xpath: &str) -> Result<xpath::Location, Error> {
@@ -1497,20 +1378,20 @@ fn locate(xpath: &str) -> Result<xpath::Location, Error> {
 }
 
 /// The index for a `CustomizationID`, built once per process.
-pub fn for_customization(customization: &str) -> Option<&'static Index> {
+pub fn for_customization(customization: &str) -> Option<&'static Branch> {
     use std::sync::{Mutex, OnceLock};
-    static CACHE: OnceLock<Mutex<HashMap<String, &'static Index>>> = OnceLock::new();
+    static CACHE: OnceLock<Mutex<HashMap<String, &'static Branch>>> = OnceLock::new();
     let cache = CACHE.get_or_init(Default::default);
     let mut cache = cache.lock().expect("index cache poisoned");
-    if let Some(index) = cache.get(customization) {
-        return Some(index);
+    if let Some(branch) = cache.get(customization) {
+        return Some(branch);
     }
     let sdk = sdk::load(customization)?;
     // Leaked deliberately: one index per accepted SDK version lives for the
     // whole process, and `&'static` keeps it out of every parse signature.
-    let index: &'static Index = Box::leak(Box::new(
+    let branch: &'static Branch = Box::leak(Box::new(
         build(sdk).unwrap_or_else(|e| panic!("vendored SDK {customization} has an unsupported xpath: {e}")),
     ));
-    cache.insert(customization.to_owned(), index);
-    Some(index)
+    cache.insert(customization.to_owned(), branch);
+    Some(branch)
 }

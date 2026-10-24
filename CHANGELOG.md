@@ -88,29 +88,6 @@ roles mostly a tribunal. Nothing wrong was served; the roles were missing.
   touchpoint). Until then a tender folded before the change can lack these parties. Each refolded tender whose parties
   change is announced as a `version: null` `changed` row (ADR-0017 D3).
 
-## Unreleased (issue 577) — notice content serves the field id the notice's own SDK declares, not a grafted one
-
-`/v1/notices/{id}/content` and the `notice_*` tables on `/v1/sql` promise field ids in the source's own vocabulary.
-Where the parser fills a gap the notice's SDK leaves with an id grafted from another mount or a synthetic `UBL-` id,
-that id could sort ahead of, or replace, the field the SDK declares for the very same element. Notice 47414082
-(sdk-1.14) served its procedure's contract nature as `BT-23-Lot`, and so did the root of 2,193 of 2,201 recent eForms
-notices. The parser now binds the declared field there.
-- EU and eForms-DE 2.x root contract nature: `BT-23-Lot` → `BT-23-Procedure`. A lot keeps `BT-23-Lot`, a part
-  `BT-23-Part`.
-- SDK 1.3–1.7 procedure exclusion-ground description: `BT-772-Lot` → `BT-67(b)-Procedure`.
-- A lot's electronic ordering and payment indicators: `BT-92-Lot` and `BT-93-Lot` (were `UBL-ElectronicOrderUsage`
-  and `UBL-ElectronicPaymentUsage`).
-- SDK 1.0–1.11 lot selection-criterion name: `BT-749-Lot` (was `UBL-SelectionCriterionName`).
-- SDK 1.0–1.8 lot procurement-document status: `OPT-050-Lot` (was `UBL-DocumentStatusCode`).
-- eForms-DE 1.x lot values: the lot's own `DE1-ProcurementProjectLot-*` ids (were `DE1-ProcurementProject-*`,
-  `DE1-TenderingTerms-*`, `DE1-TenderingProcess-*`, `UBL-*` and a few `BT-`/`OPT-` ids). The lot's
-  procurement-document language moves from `notice_codes` (`UBL-DocumentLanguageID`) to `notice_ids`
-  (`DE1-ProcurementProjectLot-TenderingTerms-CallForTendersDocumentReference-LanguageID`).
-- A grafted id that names the right business term through its own discriminator is kept, its scope given by its
-  section: `BT-01(c)-Procedure` in a `LOT`, `BT-1252-Procedure` on a lot's direct-award justification.
-- A stored notice changes once it is re-parsed (issue 577 unit 3); until then it serves the ids it was parsed with.
-  Canonical tenders are unchanged.
-
 ## Unreleased (issue 546) — legacy TED `country` is the place of performance only; `?country=` no longer matches a buyer's or winner's region
 
 A legacy TED (r2.0.9) tender's `country` was the union of three things: its place of performance, its buyer's
