@@ -4,6 +4,26 @@ Behavior changes a client could observe, newest first. Additive fields and new
 endpoints land without an entry unless they change how an existing request
 answers; this file exists for the rare case where one does.
 
+## Unreleased (issue 581) — a retired Tender id answers `308` to the Tender that holds its notices, or `410` naming them; it answered `404`
+
+`GET /v1/tenders/{id}` on a Tender id a fold or a repair retired (issue 580) answered
+`404 {"error":{"message":"no such tender","status":404}}`. It now answers where that Tender's notices are when you ask:
+- One Tender holds them: `308` with `Location: /v1/tenders/<id>` (`?lang=` carried over) and
+  `{"error":{"message":"tender retired","status":308},"successors":[<id>]}`. A client that follows redirects receives
+  that Tender's detail. After a repair, it is the Tender of the kept twin.
+- Several hold them (a split): `410` with `"successors"` listing them, lowest id first.
+- None holds one now: `410` with `"successors": []` (for a moment during a fold, or for good while the notices are
+  held).
+- Retired before these records began (October 2026): `410` with `"successors": null`. Tender 8811451 (issue 539's
+  refold run c) is one. Follow such an id by its notices, as issue 580 documented.
+
+Both answers carry `Cache-Control: no-store`. Successors are read when you ask, so a later fold can move them: a merge
+that is undone sends the id to the Tender that split off, and an id whose successor was itself retired answers the
+newest one directly. An id never issued in this generation still answers `404`, and so does `/v1/notices?tender=` on
+a retired id. The change feed is unchanged: a `tender` `removed` is still the signal, and GETting the removed id now
+says where its notices went. Where: /docs (the `/v1/tenders/{id}` row; Tender detail, retired Tender ids; the change
+feed's `generation` paragraph) and OpenAPI (`generation`; `getTender` and its `308`, `404` and `410`).
+
 ## Unreleased — an operator notice can appear on the pages, /v1 and /health
 
 While known issues or maintenance are in progress, the operator can set a notice without a deploy. While one is set,

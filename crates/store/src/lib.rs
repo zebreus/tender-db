@@ -5600,6 +5600,53 @@ tmpfs /data/ramcache tmpfs rw 0 0
         }
     }
 
+    /// Issue 581: both tender-layer resets empty `retired_tenders` and keep its index. Ids
+    /// restart at 1 after either reset, so a stale row would answer a new Tender's id with an
+    /// old Tender's notices.
+    #[tokio::test]
+    async fn both_tender_layer_resets_empty_the_retired_ledger() {
+        let path = format!("/tmp/tender-db-reset-ledger-{}.db", std::process::id());
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+        let db = Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+
+        for reset in ["reset_tender_layer", "clear_canonical"] {
+            {
+                let conn = db.conn().await;
+                for notice in [70i64, 71] {
+                    conn.execute(
+                        "INSERT INTO retired_tenders (retired_id, notice_id, retired_at) VALUES (7, ?, 1)",
+                        (Value::Integer(notice),),
+                    )
+                    .await
+                    .unwrap();
+                }
+            }
+            match reset {
+                "reset_tender_layer" => db.reset_tender_layer().await.unwrap(),
+                _ => db.clear_canonical().await.unwrap(),
+            }
+            assert_eq!(
+                db.scalar("SELECT COUNT(*) FROM retired_tenders").await.unwrap(),
+                Some(Value::Integer(0)),
+                "{reset} empties the ledger"
+            );
+            assert_eq!(
+                db.scalar("SELECT COUNT(*) FROM sqlite_master WHERE type = 'index' AND name = 'retired_tenders_id'")
+                    .await
+                    .unwrap(),
+                Some(Value::Integer(1)),
+                "{reset} keeps its index"
+            );
+        }
+
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
     /// Regression (issue 42/53, the store-pool WAL pin): `import_lag`'s newest-notice
     /// read must be O(1), not a full `notices` scan. `MAX(ingested_at)` full-scanned
     /// the table (no index on ingested_at) — running ungated every 60 s from the

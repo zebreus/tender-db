@@ -7,6 +7,7 @@
 //! "did this version match?" question). That is why filtered SSE cannot drift
 //! from filtered REST — there is no second copy of the predicate.
 
+use crate::canonical::{IN_CHUNK, placeholders};
 use crate::{Change, int, max_cursor, opt_int_of, opt_text_of, t, text};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
@@ -5487,6 +5488,81 @@ pub async fn resolve_org(conn: &Connection, id: i64) -> turso::Result<OrgResolut
     Ok(OrgResolution::Unknown)
 }
 
+/// Where a Tender id's notices are now (issue 581).
+///
+/// A fold that regroups notices, or the twin repair, retires a Tender (`retire_chunk_tx`) and
+/// records the notices it held in `retired_tenders`. A reader holding the retired id is answered
+/// with the live Tenders those notices sit in NOW. So splits, chains (a successor retired later)
+/// and a merge that is undone resolve with no hop limit, and the answer can move. That is why
+/// the handler sends it `no-store`.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum TenderResolution {
+    /// The id is a live Tender.
+    Live,
+    /// The id was retired. These live Tenders hold at least one of its recorded notices,
+    /// ascending and distinct. Empty when none does now.
+    Retired(Vec<i64>),
+    /// The id was retired before `retired_tenders` existed: a `tender removed` change row and an
+    /// id within the layer's issued range, but no ledger row. Nothing says where its notices went.
+    RetiredBeforeLedger,
+    /// Never issued in this layer.
+    Unknown,
+}
+
+/// The live probe: a primary-key seek.
+const TENDER_LIVE_SQL: &str = "SELECT 1 FROM tenders WHERE id = ?";
+/// A retired id's recorded notices, through `retired_tenders_id`.
+const RETIRED_NOTICES_SQL: &str = "SELECT notice_id FROM retired_tenders WHERE retired_id = ?";
+/// The Tenders holding `n` notices now, through `tender_versions_notice`: the IN shape
+/// `guid_census_tenders_sql` plan-gates at [`IN_CHUNK`].
+fn notice_tenders_sql(n: usize) -> String {
+    format!("SELECT tender_id FROM tender_versions WHERE caused_by_notice_id IN ({})", placeholders(n))
+}
+/// The layer's Tender high-water, O(1) from `sqlite_sequence` (the `max_cursor` shape). Both
+/// resets clear it, so an id above it was never issued in this layer (580 triage D2: not
+/// `MAX(id)`, which a retired newest id would undercut).
+const TENDER_HIGH_WATER_SQL: &str = "SELECT COALESCE((SELECT seq FROM sqlite_sequence WHERE name = 'tenders'), 0)";
+/// A retirement in the change log, through `changes_entity (entity_kind, entity_id)`.
+/// `retire_chunk_tx` writes the only `tender removed` rows, and the log is never trimmed.
+const TENDER_REMOVED_SQL: &str =
+    "SELECT 1 FROM changes WHERE entity_kind = 'tender' AND entity_id = ? AND op = 'removed' LIMIT 1";
+
+/// Resolves a Tender id that `tender_detail` did not find (issue 581). In order: live; recorded
+/// (`Retired`, even if no Tender holds the notices now); retired before the ledger; unknown.
+pub async fn resolve_tender(conn: &Connection, id: i64) -> turso::Result<TenderResolution> {
+    if exists(conn, TENDER_LIVE_SQL, vec![Value::Integer(id)]).await? {
+        return Ok(TenderResolution::Live);
+    }
+    let mut notices = Vec::new();
+    {
+        let mut rows = conn.query(RETIRED_NOTICES_SQL, (Value::Integer(id),)).await?;
+        while let Some(row) = rows.next().await? {
+            notices.push(int(&row, 0));
+        }
+    }
+    if !notices.is_empty() {
+        notices.sort_unstable();
+        notices.dedup();
+        let mut successors = std::collections::BTreeSet::new();
+        for part in notices.chunks(IN_CHUNK) {
+            let params: Vec<Value> = part.iter().map(|&n| Value::Integer(n)).collect();
+            let mut rows = conn.query(&notice_tenders_sql(part.len()), params).await?;
+            while let Some(row) = rows.next().await? {
+                successors.insert(int(&row, 0));
+            }
+        }
+        return Ok(TenderResolution::Retired(successors.into_iter().collect()));
+    }
+    let issued = {
+        let mut rows = conn.query(TENDER_HIGH_WATER_SQL, ()).await?;
+        rows.next().await?.map_or(0, |row| int(&row, 0))
+    };
+    if (1..=issued).contains(&id) && exists(conn, TENDER_REMOVED_SQL, vec![Value::Integer(id)]).await? {
+        return Ok(TenderResolution::RetiredBeforeLedger);
+    }
+    Ok(TenderResolution::Unknown)
+}
+
 /// The head version seq of one Tender, or `None` when it is gone (retired or
 /// absent) or carries no head. The SSE diff's probe point for a seq-less
 /// in-place `changed` row (issue 287): the write repointed CURRENT rows, so
@@ -6698,5 +6774,118 @@ pub(crate) mod publication_lookup_tests {
             let _ = std::fs::remove_file(format!("{path}{s}"));
         }
         assert!(failures.is_empty(), "{} plan(s) failed:\n{}", failures.len(), failures.join("\n"));
+    }
+}
+
+/// Issue 581: [`resolve_tender`] on seeded rows, and the plans of the reads it sends.
+#[cfg(test)]
+mod tender_resolution_tests {
+    use super::*;
+
+    fn cleanup(path: &str) {
+        for s in ["", "-wal", "-shm"] {
+            let _ = std::fs::remove_file(format!("{path}{s}"));
+        }
+    }
+
+    /// A retired id answers the live Tenders its recorded notices sit in now, distinct and
+    /// ascending (one is a 308, several or none a 410). With no ledger row it answers "retired
+    /// before the ledger" only for a `tender removed` change row AND an id the layer issued
+    /// (580 triage D2: the `sqlite_sequence` high-water). Everything else is unknown.
+    #[tokio::test]
+    async fn a_retired_tender_id_resolves_to_where_its_notices_are_now() {
+        let path = format!("/tmp/tender-db-resolve-tender-cases-{}.db", std::process::id());
+        cleanup(&path);
+        let db = crate::Db::open(&path).await.unwrap();
+        db.set_foreign_keys(false).await.unwrap();
+        {
+            let conn = db.conn().await;
+            // No explicit id: the autoincrement assigns 1..4, so `sqlite_sequence('tenders')` is 4.
+            for n in 1..=4 {
+                conn.execute(
+                    "INSERT INTO tenders(source, procedure_key, kind, created_at) VALUES('ted', ?, 'procedure', 0)",
+                    (t(&format!("k{n}")),),
+                )
+                .await
+                .unwrap();
+            }
+            for sql in [
+                "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id) VALUES (1, 1, 10, 0, 'x')",
+                "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id) VALUES (2, 1, 20, 0, 'x')",
+                "INSERT INTO tender_versions(tender_id, seq, caused_by_notice_id, published_at, publication_id) VALUES (2, 2, 21, 0, 'x')",
+                "DELETE FROM tenders WHERE id IN (3, 4)",
+                "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at) VALUES ('tender', 3, NULL, 'removed', 0)",
+                "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at) VALUES ('tender', 4, NULL, 'changed', 0)",
+                "INSERT INTO changes(entity_kind, entity_id, version_seq, op, changed_at) VALUES ('tender', 9, NULL, 'removed', 0)",
+            ] {
+                conn.execute(sql, ()).await.unwrap();
+            }
+            for (retired, notice) in [(5, 10), (6, 10), (6, 20), (6, 21), (7, 99), (8, 20), (8, 21)] {
+                conn.execute(
+                    "INSERT INTO retired_tenders (retired_id, notice_id, retired_at) VALUES (?, ?, 0)",
+                    (Value::Integer(retired), Value::Integer(notice)),
+                )
+                .await
+                .unwrap();
+            }
+        }
+
+        let reader = db.reader().await.unwrap();
+        for (id, expected, why) in [
+            (1, TenderResolution::Live, "a live Tender"),
+            (5, TenderResolution::Retired(vec![1]), "one notice, one Tender: a 308"),
+            (6, TenderResolution::Retired(vec![1, 2]), "two Tenders, lowest id first: a 410 split"),
+            (8, TenderResolution::Retired(vec![2]), "two notices in one Tender count once"),
+            (7, TenderResolution::Retired(vec![]), "its notice is in no Tender now"),
+            (3, TenderResolution::RetiredBeforeLedger, "a removed row and an id the layer issued"),
+            (4, TenderResolution::Unknown, "a `changed` row is no retirement"),
+            (9, TenderResolution::Unknown, "a removed row above the high-water belongs to another layer (D2)"),
+            (42, TenderResolution::Unknown, "never issued"),
+        ] {
+            assert_eq!(resolve_tender(&reader, id).await.unwrap(), expected, "Tender {id}: {why}");
+        }
+        drop(reader);
+        cleanup(&path);
+    }
+
+    /// Every read the resolver sends seeks: the live probe by primary key, the ledger through
+    /// `retired_tenders_id`, the successors through `tender_versions_notice` at the [`IN_CHUNK`]
+    /// width it sends, the pre-ledger probe through `changes_entity`. A `SCAN` would be a walk of
+    /// a table per GET. Planned with the lazily built `changes_entity_cursor` and the deferred
+    /// tender indexes present, as prod carries them (docs/agents/prod-box-reads.md). The
+    /// high-water read is not gated: `sqlite_sequence` holds one row per AUTOINCREMENT table
+    /// (the `max_cursor` precedent).
+    #[tokio::test]
+    async fn the_tender_resolver_seeks_every_read() {
+        let path = format!("/tmp/tender-db-resolve-tender-plans-{}.db", std::process::id());
+        cleanup(&path);
+        let db = crate::Db::open(&path).await.unwrap();
+        db.ensure_changes_entity_cursor_index().await.unwrap();
+        db.build_tender_indexes().await.unwrap();
+        let reader = db.reader().await.unwrap();
+        let ids: Vec<Value> = (1..=IN_CHUNK as i64).map(Value::Integer).collect();
+        for (what, sql, params, needle) in [
+            ("live", TENDER_LIVE_SQL.to_owned(), vec![Value::Integer(1)], "SEARCH tenders"),
+            ("ledger", RETIRED_NOTICES_SQL.to_owned(), vec![Value::Integer(1)], "retired_tenders_id"),
+            ("successors", notice_tenders_sql(IN_CHUNK), ids.clone(), "tender_versions_notice"),
+            ("removed", TENDER_REMOVED_SQL.to_owned(), vec![Value::Integer(1)], "changes_entity"),
+        ] {
+            let mut rows = reader.query(&format!("EXPLAIN QUERY PLAN {sql}"), params).await.unwrap();
+            let mut plan = String::new();
+            while let Some(r) = rows.next().await.unwrap() {
+                plan.push_str(&r.get_value(3).ok().and_then(|v| v.as_text().cloned()).unwrap_or_default());
+                plan.push('\n');
+            }
+            drop(rows);
+            println!("PLAN {what}:\n{plan}");
+            assert!(plan.lines().any(|l| l.contains("SEARCH") && l.contains(needle)), "{what} must seek `{needle}`:\n{plan}");
+            assert!(!plan.lines().any(|l| l.trim_start().starts_with("SCAN ")), "{what} scans:\n{plan}");
+            if what == "removed" {
+                // `(entity_kind, cursor)` would walk every `tender` row of the log for one id.
+                assert!(!plan.contains("changes_entity_cursor"), "removed must seek (entity_kind, entity_id):\n{plan}");
+            }
+        }
+        drop(reader);
+        cleanup(&path);
     }
 }

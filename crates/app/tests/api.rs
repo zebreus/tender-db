@@ -3573,6 +3573,106 @@ async fn a_merged_away_org_id_redirects_and_filters_by_its_survivor() {
     assert!(notices.get("resolved_filters").is_none(), "{notices}");
 }
 
+/// Issue 581: a retired Tender id answers `308` to the one Tender holding its notices, `410`
+/// naming several or none, `410` with `successors: null` when it was retired before the ledger,
+/// and `404` only when it was never issued; the `308` and the `410`s are always `no-store`.
+#[tokio::test]
+async fn a_retired_tender_id_answers_where_its_notices_went() {
+    let server = Server::start("retired_tender").await;
+    server.ingest_chain().await;
+    server.ingest(LATE).await;
+    // The chain is one Tender (four notices), LATE another (api.rs:4790 relies on the same pair).
+    let reader = server.db.readers(1).expect("readers").get().await.expect("reader");
+    let mut rows = reader
+        .query("SELECT tender_id, caused_by_notice_id FROM tender_versions ORDER BY tender_id, seq", ())
+        .await
+        .expect("versions");
+    let mut versions: Vec<(i64, i64)> = Vec::new();
+    while let Some(row) = rows.next().await.expect("row") {
+        versions.push((
+            row.get_value(0).unwrap().as_integer().copied().unwrap(),
+            row.get_value(1).unwrap().as_integer().copied().unwrap(),
+        ));
+    }
+    drop(rows);
+    drop(reader);
+    let (t, l) = (versions[0].0, versions.last().unwrap().0);
+    assert_ne!(t, l, "two Tenders");
+    let of = |tender: i64| versions.iter().filter(|v| v.0 == tender).map(|v| v.1).collect::<Vec<_>>();
+    let (t1, t2, l1) = (of(t)[0], of(t)[1], of(l)[0]);
+
+    // Ledger rows as a retirement leaves them. The write path has its own store and ingest tests.
+    let raw = store::turso::Builder::new_local(&server.path).build().await.expect("raw");
+    let conn = raw.connect().expect("connect");
+    for (retired, notice) in [(88_001, t1), (88_002, t1), (88_002, l1), (88_003, t1), (88_003, t2), (88_004, 999_999_999)] {
+        conn.execute(
+            "INSERT INTO retired_tenders (retired_id, notice_id, retired_at) VALUES (?, ?, 1)",
+            (store::turso::Value::Integer(retired), store::turso::Value::Integer(notice)),
+        )
+        .await
+        .expect("ledger row");
+    }
+    let plain = reqwest::Client::builder().redirect(reqwest::redirect::Policy::none()).build().unwrap();
+    let ask = async |path: &str| -> (u16, Option<String>, Option<String>, Value) {
+        let r = plain.get(format!("{}{path}", server.base)).send().await.expect("request");
+        let status = r.status().as_u16();
+        let header = |name: &str| r.headers().get(name).and_then(|v| v.to_str().ok()).map(str::to_owned);
+        let (location, cache) = (header("location"), header("cache-control"));
+        (status, location, cache, r.json::<Value>().await.expect("json body"))
+    };
+
+    // One Tender holds the notices: a 308 there, the id in the body, never cached.
+    let (status, location, cache, body) = ask("/v1/tenders/88001").await;
+    assert_eq!(status, 308);
+    assert_eq!(location.as_deref(), Some(format!("/v1/tenders/{t}").as_str()));
+    assert_eq!(cache.as_deref(), Some("no-store"));
+    assert_eq!(body["successors"], serde_json::json!([t]));
+    assert_eq!(body["error"]["status"], 308);
+    // `?lang=` is carried over, normalised.
+    let (_, location, _, _) = ask("/v1/tenders/88001?lang=de").await;
+    assert_eq!(location.as_deref(), Some(format!("/v1/tenders/{t}?lang=DEU").as_str()));
+    // A following client lands on the successor's detail.
+    assert_eq!(server.get("/v1/tenders/88001").await["id"], t);
+    // Two notices in one Tender are one successor.
+    assert_eq!(ask("/v1/tenders/88003").await.0, 308);
+    // A split: 410 naming both, lowest id first.
+    let (status, _, cache, body) = ask("/v1/tenders/88002").await;
+    assert_eq!((status, cache.as_deref()), (410, Some("no-store")));
+    assert_eq!(body["successors"], serde_json::json!([t.min(l), t.max(l)]));
+    // Notices in no Tender: 410 with [].
+    let (status, _, _, body) = ask("/v1/tenders/88004").await;
+    assert_eq!((status, body["successors"].clone()), (410, serde_json::json!([])));
+
+    // The real write path: retire L (an empty plan orphans it). Its notices sit in no Tender now.
+    server.db.reset_plan().await.expect("reset plan");
+    assert_eq!(server.db.retire_regrouped_tenders(&[l], 1_000_000).await.expect("retire"), 1);
+    let (status, _, _, body) = ask(&format!("/v1/tenders/{l}")).await;
+    assert_eq!((status, body["successors"].clone()), (410, serde_json::json!([])), "L's own ledger rows, none folded");
+    // The answer is read when asked: the split id now has one successor left.
+    let (status, location, _, _) = ask("/v1/tenders/88002").await;
+    assert_eq!((status, location.as_deref()), (308, Some(format!("/v1/tenders/{t}").as_str())));
+
+    // Retired before the ledger: no rows, a `tender removed` change row, an id the layer issued.
+    conn.execute("DELETE FROM retired_tenders WHERE retired_id = ?", (store::turso::Value::Integer(l),))
+        .await
+        .expect("forget");
+    let (status, _, cache, body) = ask(&format!("/v1/tenders/{l}")).await;
+    assert_eq!((status, cache.as_deref()), (410, Some("no-store")));
+    assert!(body.get("successors").is_some_and(Value::is_null), "successors: null, present: {body}");
+
+    // Never issued: 404. A removed row above the high-water does not make one 410 (D2).
+    assert_eq!(server.status("/v1/tenders/88005").await, 404);
+    conn.execute(
+        "INSERT INTO changes (entity_kind, entity_id, version_seq, op, changed_at) VALUES ('tender', 88006, NULL, 'removed', 1)",
+        (),
+    )
+    .await
+    .expect("foreign removed row");
+    assert_eq!(server.status("/v1/tenders/88006").await, 404);
+    // `/v1/notices?tender=` on a retired id stays 404 (unchanged).
+    assert_eq!(server.status(&format!("/v1/notices?tender={l}")).await, 404);
+}
+
 /// Issue 460: an identifier a merge folded into an organization finds it. The
 /// list page answers the survivor and names the merge it followed in
 /// `resolved_filters.identifier` (an array: one identifier can answer several

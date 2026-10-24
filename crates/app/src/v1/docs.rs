@@ -154,7 +154,7 @@ defined in the project's <code>CONTEXT.md</code>.</p>
 <table>
   <tr><th>Endpoint</th><th>Returns</th></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/tenders</td><td>Tenders (current version of each), ascending id by default — see <a href="#ordering">ordering</a> for newest-first and closes-soon.</td></tr>
-  <tr><td class="ep"><span class="method">GET</span>/v1/tenders/{id}</td><td>One Tender in full — see <a href="#detail">detail</a>. A Tender id can be retired within a generation and then answers <code>404</code> — see <a href="#retired">retired Tender ids</a>.</td></tr>
+  <tr><td class="ep"><span class="method">GET</span>/v1/tenders/{id}</td><td>One Tender in full — see <a href="#detail">detail</a>. A Tender id can be retired within a generation and then answers <code>308</code> to the Tender that holds its notices, or <code>410</code> naming several or none — see <a href="#retired">retired Tender ids</a>.</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/lots</td><td>Lots (subdivisions of Tenders).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations</td><td>Canonical Organizations (buyers, bidders, winners).</td></tr>
   <tr><td class="ep"><span class="method">GET</span>/v1/organizations/{id}</td><td>One Organization by id — the counterpart of a detail's <code>parties[].organization_id</code>. An id that a merge folded into another organization answers <code>308</code> to the survivor.</td></tr>
@@ -339,9 +339,17 @@ several, or re-link into a new one &mdash; the Tender is retired, on the daily f
 in a refold. A repair that deletes a duplicate notice (the same notice imported twice; its twin
 is kept) retires a Tender it leaves with no notice. The <code>generation</code> does not move
 for either.
-A retired Tender id answers <code>404</code> (<code>"no such tender"</code>) from then on
-within that generation, and so does <code>/v1/notices?tender=</code> on it; it is never issued
-again within a generation.
+A retired Tender id answers where its notices are now, from then on within that generation:
+<code>308</code> with <code>Location</code> and <code>successors</code> naming the one Tender
+that holds them (after a repair, the Tender of the kept twin), or <code>410</code> with
+<code>successors</code> naming several, lowest id first, or none (<code>[]</code>) while none of
+its notices is in a Tender (for a moment during a fold, or for good while they are held).
+Successors are read when you ask, so an id whose successor was itself retired later answers the
+newest one directly, and both answers are sent with <code>Cache-Control: no-store</code>. A
+Tender id retired before these records began (October 2026) answers <code>410</code> with
+<code>"successors": null</code>: follow it by its notices, below.
+<code>/v1/notices?tender=</code> on a retired id answers <code>404</code>, and the id is never
+issued again within a generation.
 The <a href="#changes">change feed</a> sends the retired Tender's <code>removed</code>
 (<code>version: null</code>) and a <code>removed</code> for each of its lots (its lot results,
 bids and contracts go with it), and a Tender that takes its notices can send
@@ -573,7 +581,7 @@ across a rebuild do not compose: entity ids are reissued and your cursor indexes
 a feed that no longer exists. Within a generation no id is issued twice, but not
 every id lasts: a Tender id can be retired by a fold or a repair, and the generation
 does not move for that &mdash; the Tender's <code>removed</code> event is the signal,
-and the id answers <code>404</code> from then on (see <a href="#retired">retired Tender ids</a>).
+and the id answers <code>308</code> or <code>410</code> from then on, naming where its notices went (see <a href="#retired">retired Tender ids</a>).
 When the generation you read differs from the one
 you stored, drop your local state, re-fetch the collections you mirror, store the
 new generation, and continue polling from that response's
@@ -1516,6 +1524,14 @@ mod tests {
             // 2741; 2026-10-23/24), so the stored DÖE notices serve the raised date. The pre-drain caveats on /docs and
             // the three OpenAPI descriptions shared this token.
             ("issue-539 drain re-dates", "the issue-539 drain ran, jobs 2732-2741 (issue 539)"),
+            // Issue 581: served from issue 580 (deployed a63cf23, 2026-10-24) until the successor records:
+            // a retired Tender id answered 404. It answers 308 or 410 with `successors` since.
+            ("retired Tender id answers <code>404</code>", "a retired Tender id answers 308 or 410 with its successors (issue 581)"),
+            ("retired Tender id answers 404", "a retired Tender id answers 308 or 410 with its successors (issue 581)"),
+            ("and then answers <code>404</code>", "a retired Tender id answers 308 or 410 with its successors (issue 581)"),
+            ("the id answers <code>404</code> from then on", "a retired Tender id answers 308 or 410 with its successors (issue 581)"),
+            ("the id answers 404 from then on", "a retired Tender id answers 308 or 410 with its successors (issue 581)"),
+            ("a once-valid Tender id retired", "a retired Tender id answers 308 or 410 with its successors (issue 581)"),
         ];
         // Issue 534 review: an entry is only as good as its spelling. The `/docs` form
         // of the winner sentence, wrapped the way the page wraps prose, is caught.
@@ -2222,6 +2238,7 @@ mod tests {
     /// again within a generation, and how a client follows the notices. Read from the `#retired`
     /// paragraph and `getTender`, the generation texts, the `/v1/tenders/{id}` row, the notice-content
     /// id note and the `version: null` lists, not the whole surface. One phrase per sentence.
+    /// Issue 581: the id now answers 308 or 410 with `successors`; the 404 sentences are in RETIRED.
     #[test]
     fn the_docs_say_a_tender_id_can_be_retired_and_how_to_follow_it() {
         let block = |text: &'static str, start: &str, end: &str| -> &'static str {
@@ -2257,9 +2274,13 @@ mod tests {
                     "a repair that deletes a duplicate notice (the same notice imported twice; its twin is kept) \
                      retires a tender it leaves with no notice",
                     "the generation does not move for either",
-                    "a retired tender id answers 404",
-                    "from then on within that generation, and so does /v1/notices?tender= on it",
-                    "it is never issued again within a generation",
+                    "a retired tender id answers where its notices are now, from then on within that generation",
+                    "308 with location and successors naming the one tender that holds them (after a repair, the tender of the kept twin)",
+                    "or 410 with successors naming several, lowest id first, or none ([]) while none of its notices is in a tender (for a moment during a fold, or for good while they are held)",
+                    "successors are read when you ask, so an id whose successor was itself retired later answers the newest one directly",
+                    "both answers are sent with cache-control: no-store",
+                    "a tender id retired before these records began (october 2026) answers 410",
+                    "/v1/notices?tender= on a retired id answers 404, and the id is never issued again within a generation",
                     "a removed for each of its lots (its lot results, bids and contracts go with it)",
                     "a tender that takes its notices can send added or changed, in either order",
                     "an added there does not mean a new tender: an existing one whose versions are rewritten from \
@@ -2299,7 +2320,33 @@ mod tests {
             retired,
             &["a tender is the group its notices fold into, and a fold can regroup them"],
         );
-        assert_says("getTender's 404", &not_found, &["a once-valid tender id retired by a fold or a repair"]);
+        assert_says("getTender's 404", &not_found, &["no such tender: an id never issued in this generation"]);
+        assert!(!plain(&not_found).contains("retired"), "getTender's 404 must not cover a retired id: {not_found}");
+        let responses = &get_tender["responses"];
+        let moved = described(&responses["308"]["description"], "getTender's 308");
+        let gone = described(&responses["410"]["description"], "getTender's 410");
+        assert_says(
+            "getTender's 308",
+            &moved,
+            &["its notices now sit in one tender: location and successors name it", "sent with cache-control: no-store"],
+        );
+        assert_says(
+            "getTender's 410",
+            &gone,
+            &[
+                "sit in several tenders, or in none now: successors names them, lowest id first, or is []",
+                "it is null for an id retired before these records began (october 2026)",
+            ],
+        );
+        assert!(responses["308"]["headers"]["Location"].is_object(), "the 308 declares Location");
+        for code in ["308", "410"] {
+            assert!(responses[code]["headers"]["Cache-Control"].is_object(), "the {code} declares Cache-Control");
+        }
+        assert_eq!(
+            responses["410"]["content"]["application/json"]["schema"]["allOf"][1]["properties"]["successors"]["nullable"],
+            serde_json::Value::Bool(true),
+            "the 410's successors can be null"
+        );
 
         // The issue's Verify greps the served page BY LINE, so the words must share a source line.
         assert!(
@@ -2314,7 +2361,7 @@ mod tests {
         assert_says(
             "/docs /v1/tenders/{id} row",
             row,
-            &["a tender id can be retired within a generation and then answers 404"],
+            &["a tender id can be retired within a generation and then answers 308 to the tender that holds its notices, or 410 naming several or none"],
         );
         let note = block(PAGE, "The <code>notice_id</code> above is illustrative", "</p>");
         assert_says("/docs notice-content id note", note, &["and a tender id can also be retired within one"]);
@@ -2335,15 +2382,15 @@ mod tests {
                     "within a generation no id is issued twice, but not every id lasts",
                     "a tender id can be retired by a fold or a repair",
                     signal,
-                    "the id answers 404 from then on",
+                    "the id answers 308 or 410 from then on, naming where its notices went",
                 ],
             );
         }
 
         let event = block(PAGE, "<h2 id=\"event\">", "<h2 id=\"sql\">");
         for (surface, text) in [("/docs version: null", event), ("ChangeEvent.version", version.as_str())] {
-            // Review contract-4: a retired id answers 404, so the closing re-read is for added and
-            // changed rows, and a removed is a delete.
+            // Review contract-4: a retired id answers 308/410 with its successors, and a `removed` is
+            // still applied as a delete; the closing re-read is for added and changed rows.
             assert_says(
                 surface,
                 text,

@@ -524,6 +524,22 @@ pub(crate) const SCHEMA: &str = "
     -- through this partial index over those rows alone.
     CREATE INDEX IF NOT EXISTS org_merge_log_nhs_body ON org_merge_log(rule) WHERE rule = 'nhs-body';
 
+    -- Issue 581: every notice a retired Tender held when it was retired, so its id can answer where
+    -- those notices are NOW (read::resolve_tender: 308 to the one Tender holding them, 410 naming
+    -- several or none). Written by retire_chunk_tx inside the retirement's own transaction, before
+    -- the rows go. A twin repair writes the kept twin's notice instead, because the emptied Tender's
+    -- versions name the notices the repair just deleted. Not a content table (it outlives the Tender),
+    -- no FK and not on /v1/sql's allow-list (the org_merge_log precedent), no UNIQUE (issue 62: a
+    -- Tender is retired once and its notices are unique per Tender). Emptied by both tender-layer
+    -- resets, because ids restart at 1 after one. Never named tender_version_* (the golden digests
+    -- count that GLOB).
+    CREATE TABLE IF NOT EXISTS retired_tenders (
+        retired_id INTEGER NOT NULL,
+        notice_id  INTEGER NOT NULL,
+        retired_at INTEGER NOT NULL -- unix seconds, the retirement's `now`
+    ) STRICT;
+    CREATE INDEX IF NOT EXISTS retired_tenders_id ON retired_tenders(retired_id);
+
     -- Issue 524 unit 2b: every served head `refresh-org-names` rewrote, with its byte-exact
     -- pre-image (`old_name`, `old_name_norm`), what it wrote, the rule and the election's
     -- counts (`evidence`, JSON), so `revert-org-name-refresh` can restore one job's renames
@@ -16090,8 +16106,9 @@ impl Db {
     /// Clearing them here was pure redundant work in front of the DROP.
     pub async fn clear_canonical(&self) -> turso::Result<()> {
         let conn = self.conn().await;
-        // Issue 495 unit 2: the descriptor's teardown list, then `tenders`.
-        for table in CONTENT_TABLES.into_iter().chain(["tenders"]) {
+        // Issue 495 unit 2: the descriptor's teardown list, then `tenders` and the retired-Tender
+        // ledger (issue 581: its ids restart at 1).
+        for table in CONTENT_TABLES.into_iter().chain(["tenders", "retired_tenders"]) {
             // DROP+recreate, NOT DELETE (issue 63): over the tens-of-millions-of-row
             // tender-content tables a per-row DELETE balloons the WAL to OOM. Same
             // fix as reset_tender_layer; the fresh path must not balloon either.
@@ -18171,6 +18188,9 @@ impl Db {
             // back on kill, so they never cleared — the deadlock, issue 63).
             Self::drop_and_recreate(&conn, table).await?;
         }
+        // Issue 581: the retired-Tender ledger is keyed on Tender ids, which restart at 1 from here,
+        // so it goes with the layer. DROP+recreate (issue 63), and the index replays from sqlite_master.
+        Self::drop_and_recreate(&conn, "retired_tenders").await?;
         // Note: `changes` (the CDC cursor spine) is deliberately NOT cleared here.
         // A rebuild re-derives identical deterministic surrogate ids (ADR-0001), so
         // existing change rows stay valid; re-projection appends a fresh set and the
@@ -43299,7 +43319,7 @@ impl Db {
         let total = ids.len();
         let mut done = 0usize;
         for chunk in ids.chunks(batch.max(1)) {
-            Self::immediate(conn, self.retire_chunk_tx(conn, chunk, now)).await?;
+            Self::immediate(conn, self.retire_chunk_tx(conn, chunk, None, now)).await?;
             let _ = checkpoint_on(conn, CheckpointMode::Truncate).await;
             done += chunk.len();
             eprintln!("[project] retire {what}: {done}/{total} Tenders retired");
@@ -43317,7 +43337,15 @@ impl Db {
     /// ~0.09 ms against 4 entity reads at ~0.013 ms), and batching them is invisible
     /// to the feed because a DELETE writes no change row. Doing all reads before any
     /// delete is equivalent — a Tender's deletes never touch another Tender's rows.
-    async fn retire_chunk_tx(&self, conn: &Connection, ids: &[i64], now: i64) -> turso::Result<()> {
+    /// It also records each Tender's notices in `retired_tenders` (issue 581) — from
+    /// its own versions, or `anchors` when the caller passes them.
+    async fn retire_chunk_tx(
+        &self,
+        conn: &Connection,
+        ids: &[i64],
+        anchors: Option<&[(i64, i64)]>,
+        now: i64,
+    ) -> turso::Result<()> {
         for &tender_id in ids {
             append_change(conn, "tender", tender_id, None, "removed", now).await?;
             for (kind, table) in [
@@ -43342,6 +43370,10 @@ impl Db {
                 }
             }
         }
+        // Issue 581: what each Tender held, recorded before the deletes below take its versions, so
+        // `read::resolve_tender` can answer the retired id with where those notices are now. It
+        // writes no change row, so the feed's order above is untouched.
+        Self::record_retired_notices(conn, ids, anchors, now).await?;
         for table in Self::RETIRE_TABLES {
             for part in ids.chunks(IN_CHUNK) {
                 let sql =
@@ -43354,6 +43386,44 @@ impl Db {
             let sql = format!("DELETE FROM tenders WHERE id IN ({})", placeholders(part.len()));
             let params: Vec<Value> = part.iter().map(|&i| Value::Integer(i)).collect();
             conn.execute(&sql, params).await?;
+        }
+        Ok(())
+    }
+
+    /// Issue 581: one chunk's `retired_tenders` rows, inside the retirement's transaction.
+    ///
+    /// `None` reads each Tender's own versions: one INSERT…SELECT per [`IN_CHUNK`] ids, over the
+    /// `tender_versions` primary key the DELETE loop after it already walks. `Some` writes these
+    /// `(retired_id, notice_id)` pairs instead. That is the twin repair, whose emptied Tenders'
+    /// versions name the notices it just deleted (580 triage, skeptic D1).
+    async fn record_retired_notices(
+        conn: &Connection,
+        ids: &[i64],
+        anchors: Option<&[(i64, i64)]>,
+        now: i64,
+    ) -> turso::Result<()> {
+        match anchors {
+            None => {
+                for part in ids.chunks(IN_CHUNK) {
+                    let sql = format!(
+                        "INSERT INTO retired_tenders (retired_id, notice_id, retired_at) \
+                         SELECT tender_id, caused_by_notice_id, ? FROM tender_versions WHERE tender_id IN ({})",
+                        placeholders(part.len())
+                    );
+                    let mut params = vec![Value::Integer(now)];
+                    params.extend(part.iter().map(|&i| Value::Integer(i)));
+                    conn.execute(&sql, params).await?;
+                }
+            }
+            Some(pairs) => {
+                for &(retired, notice) in pairs {
+                    conn.execute(
+                        "INSERT INTO retired_tenders (retired_id, notice_id, retired_at) VALUES (?, ?, ?)",
+                        (Value::Integer(retired), Value::Integer(notice), Value::Integer(now)),
+                    )
+                    .await?;
+                }
+            }
         }
         Ok(())
     }
@@ -43969,7 +44039,22 @@ impl Db {
             out.tenders_stamped += conn.execute(&sql, params).await?;
         }
         if !plan.tenders_emptied.is_empty() {
-            Box::pin(self.retire_chunk_tx(conn, &plan.tenders_emptied, now)).await?;
+            // Issue 581 (580 triage D1): an emptied Tender's versions name the notices deleted above,
+            // so its ledger rows anchor on the kept twin's notice: the same bytes, folded wherever
+            // the twin's Tender is (or nowhere until the next fold re-derives it).
+            let anchors: Vec<(i64, i64)> = plan
+                .plan
+                .iter()
+                .flat_map(|r| {
+                    r.drop
+                        .iter()
+                        .filter(|d| d.empties_tender)
+                        .filter_map(move |d| d.version.map(|(tender, _)| (tender, r.keep)))
+                })
+                .collect::<std::collections::BTreeSet<_>>()
+                .into_iter()
+                .collect();
+            Box::pin(self.retire_chunk_tx(conn, &plan.tenders_emptied, Some(anchors.as_slice()), now)).await?;
             out.tenders_retired = plan.tenders_emptied.len();
         }
         Ok(())
@@ -51017,6 +51102,22 @@ mod tests {
             2,
             "both re-keyed survivors' Tenders are epoch-stale"
         );
+        // Issue 581 (580 triage D1): Tender 201's one version names notice 21, which the repair
+        // deleted, so the ledger records the kept twin's notice 11 instead, and 201 answers Tender
+        // 200, where 11 is folded, never a permanent `[]`.
+        assert_eq!(count(&db, "SELECT COUNT(*) FROM retired_tenders").await, 1);
+        assert_eq!(
+            count(&db, "SELECT COUNT(*) FROM retired_tenders WHERE retired_id = 201 AND notice_id = 11 AND retired_at = 1000").await,
+            1,
+            "anchored on the kept twin, never on the deleted notice 21"
+        );
+        let reader = db.reader().await.unwrap();
+        assert_eq!(
+            crate::read::resolve_tender(&reader, 201).await.unwrap(),
+            crate::read::TenderResolution::Retired(vec![200]),
+            "the emptied Tender's id answers the kept twin's Tender"
+        );
+        drop(reader);
 
         let _ = std::fs::remove_file(&path);
     }

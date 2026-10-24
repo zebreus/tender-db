@@ -2004,6 +2004,13 @@ async fn notices(State(s): State<AppState>, h: HeaderMap, ApiQuery(p): ApiQuery<
     collection(Collection::Notices, s, h, p).await
 }
 
+/// `GET /v1/tenders/{id}` — one Tender in full.
+///
+/// An id a fold or a repair retired answers where its notices are now (issue 581): `308` to the
+/// one Tender holding them, `410` naming several or none, `410` with `successors: null` for an id
+/// retired before those records began. This is the issue-455 organization answer, with a list,
+/// because a retirement can split. It is read when asked and can move (a merge that is undone), so
+/// it is sent `Cache-Control: no-store`. Only an id never issued is a 404.
 async fn tender(
     State(state): State<AppState>,
     ApiPath(id): ApiPath<i64>,
@@ -2015,9 +2022,41 @@ async fn tender(
     // extractor the detail endpoint silently ignored its query string.
     let lang = params.filter(store::now_unix())?.lang;
     let reader = state.readers.get().await?;
-    match read::tender_detail(&reader, id, lang.as_deref()).await? {
-        Some(detail) => Ok(axum::Json(json::detail(&detail)).into_response()),
-        None => Err(ApiError::not_found("tender")),
+    if let Some(detail) = read::tender_detail(&reader, id, lang.as_deref()).await? {
+        return Ok(axum::Json(json::detail(&detail)).into_response());
+    }
+    let body = |status: StatusCode, successors: Value| {
+        json!({ "error": { "message": "tender retired", "status": status.as_u16() }, "successors": successors })
+    };
+    match read::resolve_tender(&reader, id).await? {
+        read::TenderResolution::Retired(successors) if successors.len() == 1 => {
+            let to = successors[0];
+            // The normalised selector (`de` → `DEU`), an accepted spelling, so the followed
+            // request picks the same language.
+            let location = match &lang {
+                Some(lang) => format!("/v1/tenders/{to}?lang={lang}"),
+                None => format!("/v1/tenders/{to}"),
+            };
+            Ok((
+                StatusCode::PERMANENT_REDIRECT,
+                [(header::LOCATION, location), (header::CACHE_CONTROL, "no-store".to_owned())],
+                axum::Json(body(StatusCode::PERMANENT_REDIRECT, json!([to]))),
+            )
+                .into_response())
+        }
+        read::TenderResolution::Retired(successors) => Ok((
+            StatusCode::GONE,
+            [(header::CACHE_CONTROL, "no-store")],
+            axum::Json(body(StatusCode::GONE, json!(successors))),
+        )
+            .into_response()),
+        read::TenderResolution::RetiredBeforeLedger => Ok((
+            StatusCode::GONE,
+            [(header::CACHE_CONTROL, "no-store")],
+            axum::Json(body(StatusCode::GONE, Value::Null)),
+        )
+            .into_response()),
+        read::TenderResolution::Live | read::TenderResolution::Unknown => Err(ApiError::not_found("tender")),
     }
 }
 

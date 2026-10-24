@@ -234,6 +234,25 @@ async fn count(db: &Db, sql: &str) -> i64 {
     }
 }
 
+/// Issue 581: the retired-Tender ledger, one `retired_id|notice_id` row a line (the stamp left out).
+async fn retired_ledger(db: &Db) -> String {
+    match db
+        .scalar("SELECT group_concat(r, x'0a') FROM (SELECT retired_id||'|'||notice_id AS r FROM retired_tenders ORDER BY retired_id, notice_id)")
+        .await
+        .expect("ledger")
+    {
+        Some(store::turso::Value::Text(s)) => s,
+        _ => String::new(),
+    }
+}
+
+/// Issue 581: where a Tender id's notices are now, through the production resolver.
+async fn resolve(db: &Db, id: i64) -> store::read::TenderResolution {
+    let readers = db.readers(1).expect("readers");
+    let reader = readers.get().await.expect("reader");
+    store::read::resolve_tender(&reader, id).await.expect("resolve")
+}
+
 /// A late award notice attaching to an existing keyed Tender is absorbed
 /// identically by a full non-rebuild projection and an incremental one.
 #[tokio::test]
@@ -972,6 +991,7 @@ async fn retirement_is_identical_however_it_is_chunked() {
         let live = count(&db, "SELECT COUNT(*) FROM tenders").await;
         assert!(live >= 12, "need enough Tenders to cross chunk boundaries, got {live}");
         let ids: Vec<i64> = (1..=live + 10).collect();
+        let versions = count(&db, "SELECT COUNT(*) FROM tender_versions").await;
 
         // An empty plan means no touched Tender's key is reproduced → all orphaned.
         db.reset_plan().await.expect("reset plan");
@@ -979,7 +999,11 @@ async fn retirement_is_identical_however_it_is_chunked() {
             .retire_regrouped_tenders_chunked(&ids, 1_000_000, chunk)
             .await
             .expect("retire");
-        let snap = snapshot(&db).await;
+        // Issue 581: one ledger row per retired version, and the ledger is part of what must not
+        // depend on the chunking.
+        let ledger = retired_ledger(&db).await;
+        assert_eq!(ledger.lines().count() as i64, versions, "{name}: one ledger row per retired version");
+        let snap = format!("{}--- ledger ---\n{ledger}\n", snapshot(&db).await);
         for s in ["", "-wal", "-shm"] {
             let _ = std::fs::remove_file(format!("{path}{s}"));
         }
@@ -2410,6 +2434,7 @@ async fn a_matched_row_merges_on_the_next_daily_and_its_undo_splits() {
     }
     absorb_and_compare(&full, &incr, "the two notices alone").await;
     assert_ne!(tender_of(&incr, "123456-1").await, tender_of(&incr, "00700001-2024").await);
+    let island = tender_of(&incr, "123456-1").await;
 
     let id = async |db: &Db, pub_id: &str| count(db, &format!("SELECT id FROM notices WHERE publication_id = '{pub_id}'")).await;
     let removed = async |db: &Db| count(db, "SELECT COUNT(*) FROM changes WHERE entity_kind = 'tender' AND op = 'removed'").await;
@@ -2432,6 +2457,22 @@ async fn a_matched_row_merges_on_the_next_daily_and_its_undo_splits() {
     assert_eq!(report.links.matched, 1, "{:?}", report.links);
     assert_eq!(tender_of(&incr, "123456-1").await, tender_of(&incr, "00700001-2024").await, "merged");
     assert_eq!(removed(&incr).await, removed_before + 1, "the island's Tender retired, announced once");
+    // Issue 581: the retired island answers the TED Tender its notice merged into, on both paths,
+    // from the same recorded notice (the full fold retires after Phase 2, the daily before it).
+    let merged = tender_of(&incr, "00700001-2024").await;
+    let doe = id(&incr, "123456-1").await;
+    for db in [&full, &incr] {
+        assert_eq!(
+            resolve(db, island).await,
+            store::read::TenderResolution::Retired(vec![merged]),
+            "the retired island answers its TED Tender"
+        );
+    }
+    assert_eq!(retired_ledger(&full).await, retired_ledger(&incr).await, "the match: the same retired notices on both paths");
+    assert!(
+        retired_ledger(&incr).await.lines().any(|l| l == format!("{island}|{doe}")),
+        "the island's notice is recorded under its id"
+    );
 
     // A match between notices that already share a Tender joins nothing new.
     let other = store::MatchedLink {
@@ -2462,6 +2503,18 @@ async fn a_matched_row_merges_on_the_next_daily_and_its_undo_splits() {
         1,
         "the DÖE notice is its own island again"
     );
+    // Issue 581: after the undo the retired id follows its notice to the NEW island, not to the TED
+    // Tender it once merged into. A successor-id ledger would get this wrong, and it is why the
+    // answer is sent no-store (580 triage F3).
+    for db in [&full, &incr] {
+        let island_now = tender_of(db, "123456-1").await;
+        assert_ne!(island_now, island, "a fresh island id, never the retired one");
+        assert_eq!(
+            resolve(db, island).await,
+            store::read::TenderResolution::Retired(vec![island_now]),
+            "the undo moves the answer"
+        );
+    }
 
     for p in [pf, pi] {
         for s in ["", "-wal", "-shm"] {
@@ -3890,6 +3943,15 @@ async fn a_uuid_hub_splits_per_buyer_cluster_on_full_and_daily_folds() {
                     1,
                     "the linked cluster's group is recorded as absorbed"
                 );
+                // Issue 581: the retired hub names both Tenders its two notices split into (a 410), on
+                // both paths, from the same recorded notices.
+                let successors: Vec<i64> =
+                    tenders_of(&incr, &["00420001-2024", "00420002-2024"]).await.into_iter().collect();
+                assert_eq!(successors.len(), 2, "its two notices went to two Tenders");
+                for db in [&full, &incr] {
+                    assert_eq!(resolve(db, hub2_tender).await, store::read::TenderResolution::Retired(successors.clone()));
+                }
+                assert_eq!(retired_ledger(&full).await, retired_ledger(&incr).await, "step 1: the same retired notices on both paths");
             }
             2 => {
                 assert_eq!(tender_of(&incr, "00410005-2024").await, tender_of(&incr, "00410001-2024").await);
