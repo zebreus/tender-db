@@ -105,7 +105,12 @@ roles mostly a tribunal. Nothing wrong was served; the roles were missing.
   largest other-name groups this drops 25 references (21 of TenderNed prose, 4 `ORG-0001`) and no tribunal.
 - A touchpoint no role names is not a party. A touchpoint is never a buyer, a bidder or a winner: the roles behind
   `Procedure-Buyer`, `Tenderer`, `bids[]` and `lot_results[].winners` reference organizations only, so they,
-  `is_buyer`, `?winner=` and `?bidder=` are unchanged, and so is the buyer the role census elects (issue 483).
+  `is_buyer`, `?winner=` and `?bidder=` are unchanged.
+- TenderNed's dashboard labels (`Dashboard van deze aanbesteding`, `Vraag- en antwoordmodule in het dashboard van deze
+  aanbesteding`) name a page, not a body, so a touchpoint printing one is not served (issue 576 unit 5). The same phrase
+  also stops the role census (issue 483) from promoting such a party, or a sentence about "deze aanbesteding"
+  (`Inhoudelijke en procedurele aspecten rond deze aanbesteding dienen via het tabblad berichten te worden
+  aangemeld.`), to buyer in place of a review-body-named one; that is the only change 576 makes to the census.
 - Stored tenders change once refolded (issue 576 unit 3: a `refold-sections` run over the notices that carry a
   touchpoint). Until then a tender folded before the change can lack these parties. Each refolded tender whose parties
   change is announced as a `version: null` `changed` row (ADR-0017 D3).
