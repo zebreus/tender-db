@@ -1,0 +1,5 @@
+# turso plan-probe on plan_prod.db
+SCAN q
+  SEARCH p USING INDEX tender_version_parties_org_role (organization_id=? AND role=?)
+  USE HASH TABLE FOR DISTINCT
+SEARCH m USING INDEX sqlite_autoindex_organization_mentions_1 (notice_id=?)

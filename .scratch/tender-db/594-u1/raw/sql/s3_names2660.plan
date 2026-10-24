@@ -1,0 +1,3 @@
+# turso plan-probe on plan_prod.db
+SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+USE SORTER FOR GROUP BY

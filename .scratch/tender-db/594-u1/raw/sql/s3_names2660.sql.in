@@ -1,0 +1,1 @@
+SELECT m.name AS name, m.raw_identifier AS raw_id, m.scheme AS scheme, m.country AS cc, count(*) AS n, min(m.notice_id) AS first_notice, max(m.notice_id) AS last_notice FROM organization_mentions m WHERE m.organization_id = 2660 GROUP BY m.name, m.raw_identifier, m.scheme, m.country

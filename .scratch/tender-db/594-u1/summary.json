@@ -1,0 +1,209 @@
+{
+ "mentions_total": 9103,
+ "party_rows_total": 40265,
+ "by_class": {
+  "other": {
+   "names": 3,
+   "mentions": 8,
+   "party_rows": {
+    "buyer": 8
+   }
+  },
+  "third": {
+   "names": 8,
+   "mentions": 8,
+   "party_rows": {
+    "buyer": 1,
+    "review": 9,
+    "buyer-shaped other": 3,
+    "bidder": 7
+   }
+  },
+  "junta": {
+   "names": 899,
+   "mentions": 7064,
+   "party_rows": {
+    "buyer": 6794,
+    "review": 6088,
+    "buyer-shaped other": 15791,
+    "bidder": 26
+   }
+  },
+  "agency": {
+   "names": 4,
+   "mentions": 26,
+   "party_rows": {
+    "buyer": 22,
+    "review": 17,
+    "buyer-shaped other": 59
+   }
+  },
+  "unit": {
+   "names": 5,
+   "mentions": 9,
+   "party_rows": {
+    "buyer": 5,
+    "buyer-shaped other": 6
+   }
+  },
+  "review": {
+   "names": 3,
+   "mentions": 12,
+   "party_rows": {
+    "review": 12
+   }
+  },
+  "tarc": {
+   "names": 65,
+   "mentions": 1976,
+   "party_rows": {
+    "buyer": 5,
+    "review": 11362,
+    "buyer-shaped other": 48,
+    "bidder": 2
+   }
+  }
+ },
+ "buyer_current_rows": {
+  "Procedure-Buyer/agency": 4,
+  "Procedure-Buyer/junta": 1046,
+  "Procedure-Buyer/tarc": 4,
+  "Procedure-Buyer/third": 0,
+  "buyer/agency": 7,
+  "buyer/junta": 2267,
+  "buyer/other": 4,
+  "buyer/unit": 2
+ },
+ "by_role": {
+  "Lot-ReviewOrg": {
+   "third": 3,
+   "junta": 878,
+   "agency": 8,
+   "review": 12,
+   "tarc": 7620
+  },
+  "Lot-ReviewInfo": {
+   "third": 3,
+   "junta": 4833,
+   "agency": 7,
+   "tarc": 2778
+  },
+  "Lot-AddInfo": {
+   "third": 3,
+   "junta": 6201,
+   "agency": 8,
+   "tarc": 4
+  },
+  "buyer": {
+   "other": 8,
+   "junta": 4560,
+   "agency": 18,
+   "unit": 5
+  },
+  "Lot-DocProvider": {
+   "junta": 4562,
+   "agency": 8,
+   "tarc": 3
+  },
+  "Procedure-Buyer": {
+   "third": 1,
+   "junta": 2234,
+   "agency": 4,
+   "tarc": 5
+  },
+  "Lot-Mediator": {
+   "third": 3,
+   "junta": 357,
+   "agency": 2,
+   "tarc": 860
+  },
+  "Lot-TenderReceipt": {
+   "junta": 1041,
+   "agency": 8
+  },
+  "Contract-Signatory": {
+   "junta": 998
+  },
+  "Lot-TenderEval": {
+   "junta": 893,
+   "agency": 6
+  },
+  "LotResult-Paying": {
+   "junta": 670,
+   "tarc": 1
+  },
+  "LotResult-Financing": {
+   "junta": 521,
+   "tarc": 1
+  },
+  "tender-receipt": {
+   "junta": 478,
+   "unit": 6,
+   "agency": 10
+  },
+  "Lot-FiscalLegis": {
+   "junta": 126,
+   "agency": 5,
+   "tarc": 36
+  },
+  "Lot-EnvironLegis": {
+   "junta": 98,
+   "agency": 7
+  },
+  "Part-ReviewOrg": {
+   "junta": 12,
+   "tarc": 81
+  },
+  "Procedure-SProvider": {
+   "junta": 84,
+   "tarc": 3
+  },
+  "Lot-EmployLegis": {
+   "junta": 63,
+   "agency": 7
+  },
+  "further-information": {
+   "junta": 34
+  },
+  "Tenderer": {
+   "third": 7,
+   "junta": 24,
+   "tarc": 2
+  },
+  "Part-ReviewInfo": {
+   "junta": 4,
+   "tarc": 17
+  },
+  "Part-Mediator": {
+   "junta": 4,
+   "tarc": 6
+  },
+  "Part-TenderReceipt": {
+   "junta": 4
+  },
+  "specifications-provider": {
+   "junta": 4
+  },
+  "Part-EmployLegis": {
+   "junta": 3
+  },
+  "Part-EnvironLegis": {
+   "junta": 3
+  },
+  "Part-FiscalLegis": {
+   "junta": 3
+  },
+  "Part-DocProvider": {
+   "junta": 2
+  },
+  "Part-TenderEval": {
+   "junta": 2
+  },
+  "winner": {
+   "junta": 2
+  },
+  "Part-AddInfo": {
+   "junta": 1
+  }
+ }
+}

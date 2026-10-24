@@ -1,0 +1,38 @@
+# turso plan-probe on plan_prod.db
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 1
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 2
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 3
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 4
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 5
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 6
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_name_country (name_norm>=? AND name_norm<?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_name_country (name_norm>=? AND name_norm<?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_name_country (name_norm>=? AND name_norm<?)

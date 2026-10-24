@@ -1,0 +1,17 @@
+2026-10-24T22:49:30Z SQL #1 s1_identifiers sha256:07631b6e2e7e6b89 secs=0.4 ok=True rows=5 truncated=False sql=raw/sql/s1_identifiers.sql
+2026-10-24T22:49:46Z SQL #2 s2_names sha256:b09e41e28d8499a9 secs=0.68 ok=True rows=477 truncated=False sql=raw/sql/s2_names.sql
+2026-10-24T22:50:16Z SQL #3 s3_names2660 sha256:5acf276472124bc8 secs=0.92 ok=True rows=1151 truncated=False sql=raw/sql/s3_names2660.sql
+2026-10-24T22:51:38Z SQL #4 s4a_buyer_roles sha256:7e413c5cad7b81d0 secs=1.78 ok=True rows=889 truncated=False sql=raw/sql/s4a_buyer_roles.sql
+2026-10-24T22:51:54Z SQL #5 s4b_review_roles sha256:678e198f7577bf19 secs=0.76 ok=True rows=352 truncated=False sql=raw/sql/s4b_review_roles.sql
+2026-10-24T22:52:04Z SQL #6 s4c_other_roles sha256:c942165bf29a821c secs=0.71 ok=True rows=813 truncated=False sql=raw/sql/s4c_other_roles.sql
+2026-10-24T22:52:31Z SQL #7 s5_tarc_rows sha256:7ff2708270d27c5a secs=0.75 ok=True rows=320 truncated=False sql=raw/sql/s5_tarc_rows.sql
+2026-10-24T22:53:37Z SQL #8 s6_exhibits sha256:df7ee51be0c0ae7c secs=0.36 ok=True rows=95 truncated=False sql=raw/sql/s6_exhibits.sql
+2026-10-24T22:53:46Z GET #1 /v1/organizations/2660 -> 200 rc=0 bytes=238
+2026-10-24T22:53:49Z GET #2 /v1/tenders/8857916 -> 200 rc=0 bytes=6905
+2026-10-24T22:53:53Z GET #3 /v1/tenders/8852785 -> 200 rc=0 bytes=4917
+2026-10-24T22:53:56Z GET #4 /v1/organizations/3601 -> 200 rc=0 bytes=238
+2026-10-24T22:54:00Z GET #5 /v1/organizations/22235590 -> 200 rc=0 bytes=227
+2026-10-24T22:54:03Z GET #6 /v1/organizations/3231 -> 200 rc=0 bytes=179
+2026-10-24T23:03:19Z SQL #9 s7_pinned_current sha256:1b0b633054d23f02 secs=0.55 ok=True rows=6 truncated=False sql=raw/sql/s7_pinned_current.sql
+2026-10-24T23:15:40Z SQL #10 s8_sibling_names sha256:4c66a7f9b2fc02f7 secs=0.38 ok=True rows=31 truncated=False sql=raw/sql/s8_sibling_names.sql
+2026-10-24T23:21:40Z WEB search (not a box GET): Consejo Audiovisual de Andalucía personalidad jurídica propia Ley 1/2004 -> boe.es/eli/es-an/l/2004/12/17/1 (challenge A1)

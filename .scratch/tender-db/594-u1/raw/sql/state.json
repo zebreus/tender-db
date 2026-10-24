@@ -1,0 +1,97 @@
+{
+ "used": 10,
+ "stop": null,
+ "last": 1792883740.7844567,
+ "log": [
+  {
+   "name": "s1_identifiers",
+   "sha256": "07631b6e2e7e6b89",
+   "sent_at": "2026-10-24T22:49:30Z",
+   "secs": 0.4,
+   "ok": true,
+   "rows": 5,
+   "truncated": false
+  },
+  {
+   "name": "s2_names",
+   "sha256": "b09e41e28d8499a9",
+   "sent_at": "2026-10-24T22:49:46Z",
+   "secs": 0.68,
+   "ok": true,
+   "rows": 477,
+   "truncated": false
+  },
+  {
+   "name": "s3_names2660",
+   "sha256": "5acf276472124bc8",
+   "sent_at": "2026-10-24T22:50:16Z",
+   "secs": 0.92,
+   "ok": true,
+   "rows": 1151,
+   "truncated": false
+  },
+  {
+   "name": "s4a_buyer_roles",
+   "sha256": "7e413c5cad7b81d0",
+   "sent_at": "2026-10-24T22:51:38Z",
+   "secs": 1.78,
+   "ok": true,
+   "rows": 889,
+   "truncated": false
+  },
+  {
+   "name": "s4b_review_roles",
+   "sha256": "678e198f7577bf19",
+   "sent_at": "2026-10-24T22:51:54Z",
+   "secs": 0.76,
+   "ok": true,
+   "rows": 352,
+   "truncated": false
+  },
+  {
+   "name": "s4c_other_roles",
+   "sha256": "c942165bf29a821c",
+   "sent_at": "2026-10-24T22:52:04Z",
+   "secs": 0.71,
+   "ok": true,
+   "rows": 813,
+   "truncated": false
+  },
+  {
+   "name": "s5_tarc_rows",
+   "sha256": "7ff2708270d27c5a",
+   "sent_at": "2026-10-24T22:52:31Z",
+   "secs": 0.75,
+   "ok": true,
+   "rows": 320,
+   "truncated": false
+  },
+  {
+   "name": "s6_exhibits",
+   "sha256": "df7ee51be0c0ae7c",
+   "sent_at": "2026-10-24T22:53:37Z",
+   "secs": 0.36,
+   "ok": true,
+   "rows": 95,
+   "truncated": false
+  },
+  {
+   "name": "s7_pinned_current",
+   "sha256": "1b0b633054d23f02",
+   "sent_at": "2026-10-24T23:03:19Z",
+   "secs": 0.55,
+   "ok": true,
+   "rows": 6,
+   "truncated": false
+  },
+  {
+   "name": "s8_sibling_names",
+   "sha256": "4c66a7f9b2fc02f7",
+   "sent_at": "2026-10-24T23:15:40Z",
+   "secs": 0.38,
+   "ok": true,
+   "rows": 31,
+   "truncated": false
+  }
+ ]
+}

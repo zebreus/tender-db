@@ -1,0 +1,65 @@
+# turso plan-probe on plan_prod.db
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SCAN (subquery-0)
+      SEARCH o USING INDEX organizations_name_norm_id (name_norm>=? AND name_norm<?)
+      CORRELATED SCALAR SUBQUERY 1
+        SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+      USE SORTER FOR GROUP BY
+      USE SORTER FOR ORDER BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+      USE SORTER FOR GROUP BY
+      USE SORTER FOR ORDER BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+      USE SORTER FOR GROUP BY
+      USE SORTER FOR ORDER BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+      USE SORTER FOR GROUP BY
+      USE SORTER FOR ORDER BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+      USE SORTER FOR GROUP BY
+      USE SORTER FOR ORDER BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+      USE SORTER FOR GROUP BY
+      USE SORTER FOR ORDER BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+      USE SORTER FOR GROUP BY
+      USE SORTER FOR ORDER BY
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH n USING INDEX sqlite_autoindex_organization_names_1 (org_id=?)

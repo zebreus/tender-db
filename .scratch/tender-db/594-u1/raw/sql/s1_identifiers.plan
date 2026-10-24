@@ -1,0 +1,50 @@
+# turso plan-probe on plan_prod.db
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH o USING INDEX organizations_identifier_id (identifier=?)
+    CORRELATED SCALAR SUBQUERY 1
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    CORRELATED SCALAR SUBQUERY 2
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_identifier_id (identifier=?)
+    CORRELATED SCALAR SUBQUERY 3
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    CORRELATED SCALAR SUBQUERY 4
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_identifier_id (identifier=?)
+    CORRELATED SCALAR SUBQUERY 5
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    CORRELATED SCALAR SUBQUERY 6
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_identifier_id (identifier=?)
+    CORRELATED SCALAR SUBQUERY 7
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    CORRELATED SCALAR SUBQUERY 8
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_identifier_id (identifier=?)
+    CORRELATED SCALAR SUBQUERY 9
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    CORRELATED SCALAR SUBQUERY 10
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_identifier_id (identifier=?)
+    CORRELATED SCALAR SUBQUERY 11
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    CORRELATED SCALAR SUBQUERY 12
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_identifier_id (identifier=?)
+    CORRELATED SCALAR SUBQUERY 13
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    CORRELATED SCALAR SUBQUERY 14
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+  UNION ALL
+    SEARCH o USING INDEX organizations_identifier_id (identifier=?)
+    CORRELATED SCALAR SUBQUERY 15
+      SEARCH m USING INDEX organization_mentions_org (organization_id=?)
+    CORRELATED SCALAR SUBQUERY 16
+      SEARCH p USING INDEX tender_version_parties_org (organization_id=?)

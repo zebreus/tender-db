@@ -1,0 +1,32 @@
+# turso plan-probe on plan_prod.db
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=? AND role=?)
+    SEARCH m USING INDEX organization_mentions_notice (notice_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=? AND role=?)
+    SEARCH m USING INDEX organization_mentions_notice (notice_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=? AND role=?)
+    SEARCH m USING INDEX organization_mentions_notice (notice_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=? AND role=?)
+    SEARCH m USING INDEX organization_mentions_notice (notice_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=? AND role=?)
+    SEARCH m USING INDEX organization_mentions_notice (notice_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org_role (organization_id=? AND role=?)
+    SEARCH m USING INDEX organization_mentions_notice (notice_id=?)
+    USE SORTER FOR GROUP BY
+    USE HASH TABLE FOR count(DISTINCT)

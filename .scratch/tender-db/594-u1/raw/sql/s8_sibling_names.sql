@@ -1,0 +1,1 @@
+SELECT m.organization_id AS org, m.name AS name, m.raw_identifier AS raw_id, count(*) AS n, min(m.notice_id) AS first_notice FROM organization_mentions m WHERE m.organization_id IN (22341455, 22419088, 22525033, 11044446) GROUP BY m.organization_id, m.name, m.raw_identifier

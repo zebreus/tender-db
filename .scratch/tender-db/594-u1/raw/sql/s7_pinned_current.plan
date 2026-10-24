@@ -1,0 +1,44 @@
+# turso plan-probe on plan_prod.db
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH p USING INDEX tender_version_parties_org (organization_id=?)
+    SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
