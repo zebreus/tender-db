@@ -257,6 +257,10 @@ const NAME_PATTERNS: &[(&str, &str, NameList)] = &[
     ("DTVP", "deutsches vergabeportal", NameList::Platform),
     ("NL TenderNed", "tenderned", NameList::Portal),
     ("NL TenderNed", "digitaal via", NameList::Portal),
+    // TenderNed's template touchpoint labels name a dashboard page, not a body ("Dashboard van deze
+    // aanbesteding", "Vraag- en antwoordmodule in het dashboard van deze aanbesteding"): "this tender" is a
+    // self-reference no organization's name holds (issue 576 unit 4's read-back, items 1 and 2).
+    ("NL TenderNed", "deze aanbesteding", NameList::Portal),
     ("Negometrix", "negometrix", NameList::Portal),
     ("FR achatpublic", "achatpublic", NameList::Portal),
     ("FR achatpublic", "achatpublic com", NameList::Portal),
@@ -1723,6 +1727,8 @@ mod tests {
         assert!(!may_need_fix(false, &notice(&[(BUYER, "ORG-1", "Gmina Olkusz"), ("OPT-301-Lot-ReviewOrg", "ORG-2", "KIO")])));
         assert!(may_need_fix(false, &notice(&[(BUYER, "ORG-1", "KIO"), (BUYER, "ORG-2", "Gmina Olkusz")])));
         assert!(portal_label(&fold("Digitaal via TenderNed")) && portal_label(&fold("Mercell Norge AS")));
+        assert!(portal_label(&fold("Dashboard van deze aanbesteding")), "TenderNed's dashboard label (issue 576)");
+        assert!(!portal_label(&fold("Aanbestedingsdienst Utrecht")), "an organization named for tendering is no label");
         assert!(!portal_label(&fold("Gemeente Utrecht")));
     }
 

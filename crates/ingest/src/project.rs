@@ -25141,6 +25141,8 @@ mod tests {
                 "Voor inlichtingen over de aanbesteding kunt u ons bereiken via de aanbesteding op www.tenderned.nl",
                 "Vragen kunt u stellen via TenderNed (berichtenmodule)",
                 "Indiening Inschrijving via de digitale kluis van TenderNed",
+                "Dashboard van deze aanbesteding",
+                "Vraag- en antwoordmodule in het dashboard van deze aanbesteding",
                 "Mercell Norge AS",
                 "ORG-0001",
                 "https://www.tenderned.nl",
