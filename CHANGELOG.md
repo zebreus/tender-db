@@ -8,21 +8,23 @@ answers; this file exists for the rare case where one does.
 
 `GET /v1/tenders/{id}` on a Tender id a fold or a repair retired (issue 580) answered
 `404 {"error":{"message":"no such tender","status":404}}`. It now answers where that Tender's notices are when you ask:
-- One Tender holds them: `308` with `Location: /v1/tenders/<id>` (`?lang=` carried over) and
+- One Tender holds any of them (others may sit in no Tender): `308` with `Location: /v1/tenders/<id>` (`?lang=`
+  carried over) and
   `{"error":{"message":"tender retired","status":308},"successors":[<id>]}`. A client that follows redirects receives
   that Tender's detail. After a repair, it is the Tender of the kept twin.
 - Several hold them (a split): `410` with `"successors"` listing them, lowest id first.
 - None holds one now: `410` with `"successors": []` (for a moment during a fold, or for good while the notices are
-  held).
+  held or after a repair deleted them as duplicates).
 - Retired before these records began (October 2026): `410` with `"successors": null`. Tender 8811451 (issue 539's
   refold run c) is one. Follow such an id by its notices, as issue 580 documented.
 
 Both answers carry `Cache-Control: no-store`. Successors are read when you ask, so a later fold can move them: a merge
 that is undone sends the id to the Tender that split off, and an id whose successor was itself retired answers the
-newest one directly. An id never issued in this generation still answers `404`, and so does `/v1/notices?tender=` on
-a retired id. The change feed is unchanged: a `tender` `removed` is still the signal, and GETting the removed id now
-says where its notices went. Where: /docs (the `/v1/tenders/{id}` row; Tender detail, retired Tender ids; the change
-feed's `generation` paragraph) and OpenAPI (`generation`; `getTender` and its `308`, `404` and `410`).
+newest one directly, unless a repair deleted the id's notices as duplicates. An id never issued in this generation
+still answers `404`, and so does `/v1/notices?tender=` on a retired id. The change feed is unchanged: a `tender`
+`removed` is still the signal, and GETting the removed id now says where its notices went. Where: /docs (the
+`/v1/tenders/{id}` row; Tender detail, retired Tender ids; the change feed's `generation` paragraph) and OpenAPI
+(`generation`; `getTender` and its `308`, `404` and `410`).
 
 ## Unreleased — an operator notice can appear on the pages, /v1 and /health
 
@@ -765,11 +767,13 @@ name, a blank one or a non-name one does not vote), clustered as one name across
 legal form. The head changes only when a cluster other than its own holds at least 55% of the votes, at least 3
 votes and at least twice the head's; or when the head's own cluster holds at most 1 vote and a unique top cluster
 holds at least 3 votes and at least 25%; or when the head is empty or not a name (a placeholder, a blank, a
-void-lot phrase) and some mention's name votes, whatever script that name is written in. A head that is the winning
-cluster's spelling with its accented letters dropped (a broken decoder's `Tribunal administratif d'Orlans` for
-`Tribunal administratif d'Orléans`) changes whenever that cluster holds at least 55% of the votes, at least 3 votes
-and at least twice the head's; of the checks below, only the legal-form, consortium, NHS, placeholder, fit-spelling,
-review-verdict and script checks apply to it. Even then it stays when
+void-lot phrase) and some mention's name votes, whatever script that name is written in. A head that is one of the
+winning cluster's spellings with its accented letters dropped (every non-ASCII character deleted, case and spacing
+aside, where some word of that spelling has both an ASCII and a non-ASCII letter and none has two or more letters,
+all non-ASCII: a broken decoder's `Tribunal administratif d'Orlans` for `Tribunal administratif d'Orléans`) changes
+whenever that cluster holds at least 55% of the votes, at least 3 votes and at least twice the head's; of the checks
+below, only the legal-form, consortium, NHS, placeholder, fit-spelling, review-verdict and script checks apply to
+it. For those three cases, the head still stays when
 the change would swap one legal-form family for another (`AG` to `Sàrl`) while the head's own cluster holds at least
 2 votes, drop a consortium mark unless the new name keeps a word besides its legal forms and every such word is a
 word of the head, fail the NHS ODS name check the old head passed, or, on the 25% arm only, serve an initialism of the head; when the identifier is a
@@ -847,7 +851,7 @@ PEINTURES ET REVETEMENTS` to `SARL CPR`, where `Consortium` is the firm's own na
 legal forms alone. Every other hold above is unchanged.
 
 Rule v14 (2026-10-24, issue 573) repairs a head printed with its accented letters dropped. Fifteen French courts
-and committees, all first printed in January and February 2024, were served under a broken decoder's print that
+and committees, all printed in January and February 2024, were served under a broken decoder's print that
 had deleted every accented letter (`Comit consultatif interrgional du rglement amiable`,
 `Tribunal administratif d'Orlans`, `Tribunal judiciaire de Pointe--Pitre`), while most of their notices print
 the right spelling. The 3-year hold kept each of those heads, and for one the review-body check did too, because

@@ -341,11 +341,14 @@ is kept) retires a Tender it leaves with no notice. The <code>generation</code> 
 for either.
 A retired Tender id answers where its notices are now, from then on within that generation:
 <code>308</code> with <code>Location</code> and <code>successors</code> naming the one Tender
-that holds them (after a repair, the Tender of the kept twin), or <code>410</code> with
+that holds any of them (others may sit in no Tender; after a repair, the Tender of the kept
+twin), or <code>410</code> with
 <code>successors</code> naming several, lowest id first, or none (<code>[]</code>) while none of
-its notices is in a Tender (for a moment during a fold, or for good while they are held).
+its notices is in a Tender (for a moment during a fold, or for good while they are held or after
+a repair deleted them as duplicates).
 Successors are read when you ask, so an id whose successor was itself retired later answers the
-newest one directly, and both answers are sent with <code>Cache-Control: no-store</code>. A
+newest one directly (unless a repair deleted the id's notices as duplicates), and both answers
+are sent with <code>Cache-Control: no-store</code>. A
 Tender id retired before these records began (October 2026) answers <code>410</code> with
 <code>"successors": null</code>: follow it by its notices, below.
 <code>/v1/notices?tender=</code> on a retired id answers <code>404</code>, and the id is never
@@ -397,12 +400,14 @@ only when a cluster other than its own holds at least 55% of the votes, at least
 at least twice the head's; or when the head's own cluster holds at most 1 vote and a unique
 top cluster holds at least 3 votes and at least 25%; or when the head is empty or not a name
 (a placeholder, a blank, a void-lot phrase) and some mention's name votes, whatever script
-that name is written in. A head that is the winning cluster's spelling with its accented letters
-dropped (a broken decoder's <code>Tribunal administratif d'Orlans</code> for
+that name is written in. A head that is one of the winning cluster's spellings with its accented
+letters dropped (every non-ASCII character deleted, case and spacing aside, where some word of that
+spelling has both an ASCII and a non-ASCII letter and none has two or more letters, all non-ASCII:
+a broken decoder's <code>Tribunal administratif d'Orlans</code> for
 <code>Tribunal administratif d'Orléans</code>) changes whenever that cluster holds at least 55% of
 the votes, at least 3 votes and at least twice the head's; of the checks below, only the
 legal-form, consortium, NHS, placeholder, fit-spelling, review-verdict and script checks apply to
-it. Even then it stays when the change would swap one legal-form family
+it. For those three cases, the head still stays when the change would swap one legal-form family
 for another (<code>AG</code> to <code>Sàrl</code>) while the head's own cluster holds at least
 2 votes, drop a consortium mark unless the new name keeps a word besides its legal forms and
 every such word is a word of the head, fail the NHS ODS
@@ -2185,8 +2190,14 @@ mod tests {
                 &format!("{surface}'s head-name rule"),
                 text,
                 &[
-                    "a head that is the winning cluster's spelling with its accented letters dropped (a broken decoder's tribunal administratif d'orlans for tribunal administratif d'orléans) changes whenever that cluster holds at least 55% of the votes, at least 3 votes and at least twice the head's",
+                    "a head that is one of the winning cluster's spellings with its accented letters dropped (every \
+                     non-ascii character deleted, case and spacing aside, where some word of that spelling has both an \
+                     ascii and a non-ascii letter and none has two or more letters, all non-ascii: a broken decoder's \
+                     tribunal administratif d'orlans for tribunal administratif d'orléans) changes whenever that \
+                     cluster holds at least 55% of the votes, at least 3 votes and at least twice the head's",
                     "of the checks below, only the legal-form, consortium, nhs, placeholder, fit-spelling, review-verdict and script checks apply to it",
+                    // Review 573 C3: the hold list continues the three arms, not the dropped-accent sentence.
+                    "it. for those three cases, the head still stays when the change would swap one legal-form family",
                 ],
             );
         }
@@ -2304,9 +2315,13 @@ mod tests {
                      retires a tender it leaves with no notice",
                     "the generation does not move for either",
                     "a retired tender id answers where its notices are now, from then on within that generation",
-                    "308 with location and successors naming the one tender that holds them (after a repair, the tender of the kept twin)",
-                    "or 410 with successors naming several, lowest id first, or none ([]) while none of its notices is in a tender (for a moment during a fold, or for good while they are held)",
-                    "successors are read when you ask, so an id whose successor was itself retired later answers the newest one directly",
+                    "308 with location and successors naming the one tender that holds any of them (others may sit \
+                     in no tender; after a repair, the tender of the kept twin)",
+                    "or 410 with successors naming several, lowest id first, or none ([]) while none of its notices \
+                     is in a tender (for a moment during a fold, or for good while they are held or after a repair \
+                     deleted them as duplicates)",
+                    "successors are read when you ask, so an id whose successor was itself retired later answers the \
+                     newest one directly (unless a repair deleted the id's notices as duplicates)",
                     "both answers are sent with cache-control: no-store",
                     "a tender id retired before these records began (october 2026) answers 410",
                     "/v1/notices?tender= on a retired id answers 404, and the id is never issued again within a generation",
@@ -2357,7 +2372,10 @@ mod tests {
         assert_says(
             "getTender's 308",
             &moved,
-            &["its notices now sit in one tender: location and successors name it", "sent with cache-control: no-store"],
+            &[
+                "one tender holds any of its notices now (others may sit in no tender): location and successors name it",
+                "sent with cache-control: no-store",
+            ],
         );
         assert_says(
             "getTender's 410",
