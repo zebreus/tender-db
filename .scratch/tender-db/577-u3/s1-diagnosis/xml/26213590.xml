@@ -1,0 +1,611 @@
+<ContractNotice xmlns="urn:oasis:names:specification:ubl:schema:xsd:ContractNotice-2" xmlns:cac="urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2" xmlns:cbc="urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2" xmlns:ccts-cct="urn:un:unece:uncefact:data:specification:CoreComponentTypeSchemaModule:2" xmlns:efac="http://data.europa.eu/p27/eforms-ubl-extension-aggregate-components/1" xmlns:efbc="http://data.europa.eu/p27/eforms-ubl-extension-basic-components/1" xmlns:efext="http://data.europa.eu/p27/eforms-ubl-extensions/1" xmlns:ext="urn:oasis:names:specification:ubl:schema:xsd:CommonExtensionComponents-2" xmlns:qdt="urn:oasis:names:specification:ubl:schema:xsd:QualifiedDataTypes-2" xmlns:udt="urn:oasis:names:specification:bdndr:schema:xsd:UnqualifiedDataTypes-1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<ext:UBLExtensions>
+		<ext:UBLExtension>
+			<ext:ExtensionContent>
+				<efext:EformsExtension>
+					<efac:NoticeSubType>
+						<cbc:SubTypeCode listName="notice-subtype">16</cbc:SubTypeCode>
+					</efac:NoticeSubType>
+					<efac:Organizations>
+						<efac:Organization>
+							<efac:Company>
+								<cac:PartyIdentification>
+									<cbc:ID>ORG-0001</cbc:ID>
+								</cac:PartyIdentification>
+								<cac:PartyName>
+									<cbc:Name languageID="DEU">Landkreis Göttingen</cbc:Name>
+								</cac:PartyName>
+								<cac:PostalAddress>
+									<cbc:StreetName>Reinhäuser Landstraße 4</cbc:StreetName>
+									<cbc:CityName>Göttingen</cbc:CityName>
+									<cbc:PostalZone>37083</cbc:PostalZone>
+									<cbc:CountrySubentityCode listName="nuts-lvl3">DE91C</cbc:CountrySubentityCode>
+									<cac:Country>
+										<cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+									</cac:Country>
+								</cac:PostalAddress>
+								<cac:PartyLegalEntity>
+									<cbc:CompanyID>DE 308 703 297</cbc:CompanyID>
+								</cac:PartyLegalEntity>
+								<cac:Contact>
+									<cbc:Name>Zentrale Vergabestelle</cbc:Name>
+									<cbc:Telephone>+49 5515252312</cbc:Telephone>
+									<cbc:Telefax>+49 5515252537</cbc:Telefax>
+									<cbc:ElectronicMail>vergabe@landkreisgoettingen.de</cbc:ElectronicMail>
+								</cac:Contact>
+							</efac:Company>
+						</efac:Organization>
+						<efac:Organization>
+							<efac:Company>
+								<cac:PartyIdentification>
+									<cbc:ID>ORG-0002</cbc:ID>
+								</cac:PartyIdentification>
+								<cac:PartyName>
+									<cbc:Name languageID="DEU">Landkreis Göttingen</cbc:Name>
+								</cac:PartyName>
+								<cac:PostalAddress>
+									<cbc:StreetName>Reinhäuser Landstraße 4</cbc:StreetName>
+									<cbc:CityName>Göttingen</cbc:CityName>
+									<cbc:PostalZone>37083</cbc:PostalZone>
+									<cbc:CountrySubentityCode listName="nuts-lvl3">DE91C</cbc:CountrySubentityCode>
+									<cac:Country>
+										<cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+									</cac:Country>
+								</cac:PostalAddress>
+								<cac:PartyLegalEntity>
+									<cbc:CompanyID>DE 308 703 297</cbc:CompanyID>
+								</cac:PartyLegalEntity>
+								<cac:Contact>
+									<cbc:Name>Zentrale Vergabestelle</cbc:Name>
+									<cbc:Telephone>+49 5515252312</cbc:Telephone>
+									<cbc:Telefax>+49 5515252537</cbc:Telefax>
+									<cbc:ElectronicMail>vergabe@landkreisgoettingen.de</cbc:ElectronicMail>
+								</cac:Contact>
+							</efac:Company>
+						</efac:Organization>
+						<efac:Organization>
+							<efac:Company>
+								<cac:PartyIdentification>
+									<cbc:ID>ORG-0003</cbc:ID>
+								</cac:PartyIdentification>
+								<cac:PartyName>
+									<cbc:Name languageID="DEU">Vergabekammer Niedersachsen beim Nds. Ministerium für Ministerium für Wirtschaft, Verkehr, Bauen und Digitalisierung</cbc:Name>
+								</cac:PartyName>
+								<cac:PostalAddress>
+									<cbc:StreetName>Auf der Hude 2</cbc:StreetName>
+									<cbc:CityName>Lüneburg</cbc:CityName>
+									<cbc:PostalZone>21339</cbc:PostalZone>
+									<cbc:CountrySubentityCode listName="nuts-lvl3">DE935</cbc:CountrySubentityCode>
+									<cac:Country>
+										<cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+									</cac:Country>
+								</cac:PostalAddress>
+								<cac:PartyLegalEntity>
+									<cbc:CompanyID>t:04131153308</cbc:CompanyID>
+								</cac:PartyLegalEntity>
+								<cac:Contact>
+									<cbc:Telephone>+49 4131153306</cbc:Telephone>
+									<cbc:Telefax>+49 4131152943</cbc:Telefax>
+									<cbc:ElectronicMail>vergabekammer@mw.niedersachsen.de</cbc:ElectronicMail>
+								</cac:Contact>
+							</efac:Company>
+						</efac:Organization>
+						<efac:Organization>
+							<efac:Company>
+								<cac:PartyIdentification>
+									<cbc:ID>ORG-0004</cbc:ID>
+								</cac:PartyIdentification>
+								<cac:PartyName>
+									<cbc:Name languageID="DEU">Vergabekammer Niedersachsen beim Nds. Ministerium für Ministerium für Wirtschaft, Verkehr, Bauen und Digitalisierung</cbc:Name>
+								</cac:PartyName>
+								<cac:PostalAddress>
+									<cbc:StreetName>Auf der Hude 2</cbc:StreetName>
+									<cbc:CityName>Lüneburg</cbc:CityName>
+									<cbc:PostalZone>21339</cbc:PostalZone>
+									<cbc:CountrySubentityCode listName="nuts-lvl3">DE935</cbc:CountrySubentityCode>
+									<cac:Country>
+										<cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+									</cac:Country>
+								</cac:PostalAddress>
+								<cac:PartyLegalEntity>
+									<cbc:CompanyID>t:04131153308</cbc:CompanyID>
+								</cac:PartyLegalEntity>
+								<cac:Contact>
+									<cbc:Telephone>+49 4131153306</cbc:Telephone>
+									<cbc:Telefax>+49 4131152943</cbc:Telefax>
+									<cbc:ElectronicMail>vergabekammer@mw.niedersachsen.de</cbc:ElectronicMail>
+								</cac:Contact>
+							</efac:Company>
+						</efac:Organization>
+						<efac:Organization>
+							<efac:Company>
+								<cac:PartyIdentification>
+									<cbc:ID>ORG-0005</cbc:ID>
+								</cac:PartyIdentification>
+								<cac:PartyName>
+									<cbc:Name languageID="DEU">Landkreis Göttingen</cbc:Name>
+								</cac:PartyName>
+								<cac:PostalAddress>
+									<cbc:StreetName>Reinhäuser Landstraße 4</cbc:StreetName>
+									<cbc:CityName>Göttingen</cbc:CityName>
+									<cbc:PostalZone>37083</cbc:PostalZone>
+									<cbc:CountrySubentityCode listName="nuts-lvl3">DE91C</cbc:CountrySubentityCode>
+									<cac:Country>
+										<cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+									</cac:Country>
+								</cac:PostalAddress>
+								<cac:PartyLegalEntity>
+									<cbc:CompanyID>DE 308 703 297</cbc:CompanyID>
+								</cac:PartyLegalEntity>
+								<cac:Contact>
+									<cbc:Name>Zentrale Vergabestelle</cbc:Name>
+									<cbc:Telephone>+49 5515252312</cbc:Telephone>
+									<cbc:Telefax>+49 5515252537</cbc:Telefax>
+									<cbc:ElectronicMail>vergabe@landkreisgoettingen.de</cbc:ElectronicMail>
+								</cac:Contact>
+							</efac:Company>
+						</efac:Organization>
+					</efac:Organizations>
+				</efext:EformsExtension>
+			</ext:ExtensionContent>
+		</ext:UBLExtension>
+	</ext:UBLExtensions>
+	<cbc:UBLVersionID>2.3</cbc:UBLVersionID>
+	<cbc:CustomizationID>eforms-de-1.1</cbc:CustomizationID>
+	<cbc:ID schemeName="notice-id">38abee04-9627-459b-a9be-55e2f51a832c</cbc:ID>
+	<cbc:ContractFolderID>00000001-2023-4000-a000-000000000001</cbc:ContractFolderID>
+	<cbc:IssueDate>2023-11-20+01:00</cbc:IssueDate>
+	<cbc:IssueTime>15:41:55+01:00</cbc:IssueTime>
+	<cbc:VersionID>01</cbc:VersionID>
+	<cbc:RequestedPublicationDate>2023-11-20+01:00</cbc:RequestedPublicationDate>
+	<cbc:RegulatoryDomain>32014L0024</cbc:RegulatoryDomain>
+	<cbc:NoticeTypeCode listName="competition">cn-standard</cbc:NoticeTypeCode>
+	<cbc:NoticeLanguageCode listID="eu-official-language">DEU</cbc:NoticeLanguageCode>
+	<cac:ContractingParty>
+		<cac:ContractingPartyType>
+			<cbc:PartyTypeCode listName="buyer-legal-type">kommun-beh</cbc:PartyTypeCode>
+		</cac:ContractingPartyType>
+		<cac:ContractingActivity>
+			<cbc:ActivityTypeCode listName="authority-activity">gen-pub</cbc:ActivityTypeCode>
+		</cac:ContractingActivity>
+		<cac:Party>
+			<cac:PartyIdentification>
+				<cbc:ID>ORG-0001</cbc:ID>
+			</cac:PartyIdentification>
+		</cac:Party>
+	</cac:ContractingParty>
+	<cac:TenderingTerms>
+		<cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+		<cac:RequiredFinancialGuarantee>
+			<cbc:GuaranteeTypeCode listName="tender-guarantee-required">false</cbc:GuaranteeTypeCode>
+		</cac:RequiredFinancialGuarantee>
+		<cac:ProcurementLegislationDocumentReference>
+			<cbc:ID>vgv</cbc:ID>
+		</cac:ProcurementLegislationDocumentReference>
+		<cac:CallForTendersDocumentReference>
+			<cbc:ID>SomeTenderDocID1</cbc:ID>
+			<cbc:DocumentType>non-restricted-document</cbc:DocumentType>
+			<cbc:LanguageID>DEU</cbc:LanguageID>
+		</cac:CallForTendersDocumentReference>
+		<cac:TendererQualificationRequest>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">bankr-nat</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">bankruptcy</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">corruption</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">cred-arran</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">crime-org</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">distorsion</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">envir-law</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">finan-laund</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">fraud</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">human-traffic</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">insolvency</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">labour-law</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">liq-admin</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">misrepresent</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">partic-confl</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">prep-confl</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">prof-misconduct</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">sanction</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">socsec-law</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">socsec-pay</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">susp-act</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">tax-pay</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+			<cac:SpecificTendererRequirement>
+				<cbc:TendererRequirementTypeCode listName="exclusion-ground">terr-offence</cbc:TendererRequirementTypeCode>
+				<cbc:Description languageID="DEU">Zwingende bzw. fakultative Ausschlussgründe nach §§ 123 bis 126 GWB</cbc:Description>
+			</cac:SpecificTendererRequirement>
+		</cac:TendererQualificationRequest>
+		<cac:ContractExecutionRequirement>
+			<cbc:ExecutionRequirementCode listName="reserved-execution">no</cbc:ExecutionRequirementCode>
+		</cac:ContractExecutionRequirement>
+		<cac:ContractExecutionRequirement>
+			<cbc:ExecutionRequirementCode listName="ecatalog-submission">not-allowed</cbc:ExecutionRequirementCode>
+		</cac:ContractExecutionRequirement>
+		<cac:TenderRecipientParty>
+			<cbc:EndpointID>https://vergabe.niedersachsen.de/Satellite/notice/CXTWYYDY19N1AEQJ</cbc:EndpointID>
+			<cac:PartyIdentification>
+				<cbc:ID>ORG-0005</cbc:ID>
+			</cac:PartyIdentification>
+		</cac:TenderRecipientParty>
+		<cac:TenderValidityPeriod>
+			<cbc:DurationMeasure unitCode="DAYS">116</cbc:DurationMeasure>
+		</cac:TenderValidityPeriod>
+		<cac:AppealTerms>
+			<cac:PresentationPeriod>
+				<cbc:Description languageID="DEU">Genaue Angaben zu den Fristen für die Einlegung von Rechtsbehelfen:
+Gemäß § 160 Abs. 1 GWB leitet die Vergabekammer ein Nachprüfungsverfahren nur auf Antrag ein.
+Der Antrag ist unzulässig, soweit der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrags erkannt und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach § 134 Absatz 2 bleibt unberührt (§ 160 Abs. 3 Nr. 1 GWB).
+Der Nachprüfungsantrag ist gemäß § 160 Abs. 3 Nr. 2 GWB ebenfalls unzulässig, soweit Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Bewerbung oder zur Angebotsabgabe gegenüber dem Auftraggeber gerügt werden.
+Der Vergabenachprüfungsantrag ist ferner nach § 160 Abs. 3 Nr. 3 GWB unzulässig, soweit Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der Frist zur Bewerbung oder zur Angebotsabgabe gegenüber dem Auftraggeber gerügt werden. Der Nachprüfungsantrag ist gemäß § 160 Abs. 3 Nr. 4 GWB schließlich dann unzulässig, soweit mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind. Für die weiteren Voraussetzungen der Zulässigkeit wird auf §§ 160 und 161 GWB verwiesen.</cbc:Description>
+			</cac:PresentationPeriod>
+			<cac:AppealInformationParty>
+				<cac:PartyIdentification>
+					<cbc:ID schemeName="organization">ORG-0003</cbc:ID>
+				</cac:PartyIdentification>
+			</cac:AppealInformationParty>
+			<cac:AppealReceiverParty>
+				<cac:PartyIdentification>
+					<cbc:ID schemeName="organization">ORG-0004</cbc:ID>
+				</cac:PartyIdentification>
+			</cac:AppealReceiverParty>
+		</cac:AppealTerms>
+		<cac:Language>
+			<cbc:ID>DEU</cbc:ID>
+		</cac:Language>
+	</cac:TenderingTerms>
+	<cac:TenderingProcess>
+		<cbc:ProcedureCode listName="procurement-procedure-type">neg-w-call</cbc:ProcedureCode>
+		<cbc:SubmissionMethodCode listName="esubmission">required</cbc:SubmissionMethodCode>
+		<cbc:AccessToolsURI>https://vergabe.niedersachsen.de/Satellite/notice/CXTWYYDY19N1AEQJ</cbc:AccessToolsURI>
+		<cac:TenderSubmissionDeadlinePeriod>
+			<cbc:EndDate>2023-12-22+01:00</cbc:EndDate>
+			<cbc:EndTime>09:00:00+01:00</cbc:EndTime>
+		</cac:TenderSubmissionDeadlinePeriod>
+		<cac:AuctionTerms>
+			<cbc:AuctionConstraintIndicator>false</cbc:AuctionConstraintIndicator>
+		</cac:AuctionTerms>
+	</cac:TenderingProcess>
+	<cac:ProcurementProject>
+		<cbc:Name languageID="DEU">Landkreis Göttingen - Beschaffung Fachverfahren Kfz-Zulassung 2024</cbc:Name>
+		<cbc:Description languageID="DEU">Im Rahmen dieser Neuausschreibung wird ein modernes, zukunftsorientiertes Zulassungsverfahren gefordert, das fortlaufend an rechtliche und technische Änderungen angepasst werden kann. Der Landkreis Göttingen sucht deshalb einen Partner, für Lizenzierung und Pflege eines Kfz-Zulassungsverfahrens sowie dessen Einführung inklusive Datenmigration und Schulung.
+
+Soweit möglich, sollen bei der Gestaltung des Angebotes, die bereits dem Landkreis Göttingen auf Dauer überlassenen Lizenzen der Vorverfahren, berücksichtigt werden.
+
+Die Mindestvertragslaufzeit beträgt 36 Monate. Der Vertrag verlängert sich jeweils um 24 Monate, wenn nicht eine der Parteien 15 Monate zum Laufzeitende / Verlängerungsende kündigt. Die maximale Anzahl an Vertragsverlängerungen beträgt sechs.
+
+In der Phase II Angebotswertung kommt zur Wertung der Angebote die einfache Richtwertmethode zum Einsatz. Die einzelnen Kriterien für die Punktewertung können bereits den Unterlagen der Phase I Teilnahmewettbewerb entnommen werden.</cbc:Description>
+		<cbc:ProcurementTypeCode listName="contract-nature">services</cbc:ProcurementTypeCode>
+		<cbc:Note languageID="DEU">Bekanntmachungs-ID: CXTWYYDY19N1AEQJ
+
+
+Zusätzliche Auskünfte über die Vergabeunterlagen und das Anschreiben müssen beim Auftraggeber elektronisch über die Vergabeplattform eingereicht werden.
+Elektronische Dateien in den Formaten *.off und *.ink können nicht geöffnet werden.
+Das im VHB 631 Nr. 6 bezeichnete "Formblatt Zuschlagskriterien" wird vom Landkreis Göttingen nicht genutzt. Die Zuschlagskriterien sind dem Leistungsverzeichnis/der Leistungsbeschreibung zu entnehmen.</cbc:Note>
+		<cbc:SMESuitableIndicator>true</cbc:SMESuitableIndicator>
+		<cac:MainCommodityClassification>
+			<cbc:ItemClassificationCode listName="cpv">72500000</cbc:ItemClassificationCode>
+		</cac:MainCommodityClassification>
+		<cac:AdditionalCommodityClassification>
+			<cbc:ItemClassificationCode listName="cpv">72000000</cbc:ItemClassificationCode>
+		</cac:AdditionalCommodityClassification>
+		<cac:AdditionalCommodityClassification>
+			<cbc:ItemClassificationCode listName="cpv">72230000</cbc:ItemClassificationCode>
+		</cac:AdditionalCommodityClassification>
+		<cac:AdditionalCommodityClassification>
+			<cbc:ItemClassificationCode listName="cpv">72260000</cbc:ItemClassificationCode>
+		</cac:AdditionalCommodityClassification>
+		<cac:AdditionalCommodityClassification>
+			<cbc:ItemClassificationCode listName="cpv">72510000</cbc:ItemClassificationCode>
+		</cac:AdditionalCommodityClassification>
+		<cac:RealizedLocation>
+			<cac:Address>
+				<cbc:StreetName>Landkreis Göttingen</cbc:StreetName>
+				<cbc:AdditionalStreetName>Reinhäuser Landstraße 4</cbc:AdditionalStreetName>
+				<cbc:CityName>Göttingen</cbc:CityName>
+				<cbc:PostalZone>37083</cbc:PostalZone>
+				<cbc:CountrySubentityCode listName="nuts">DE91C</cbc:CountrySubentityCode>
+				<cbc:Region>anyw-cou</cbc:Region>
+				<cac:Country>
+					<cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+				</cac:Country>
+			</cac:Address>
+		</cac:RealizedLocation>
+		<cac:ContractExtension>
+			<cbc:MaximumNumberNumeric>6</cbc:MaximumNumberNumeric>
+			<cac:Renewal>
+				<cac:Period>
+					<cbc:Description languageID="DEU">Der Vertrag verlängert sich jeweils um 24 Monate, wenn nicht eine der Parteien 15 Monate zum Laufzeitende / Verlängerungsende kündigt.</cbc:Description>
+				</cac:Period>
+			</cac:Renewal>
+		</cac:ContractExtension>
+	</cac:ProcurementProject>
+	<cac:ProcurementProjectLot>
+		<cbc:ID schemeName="Lot">LOT-0001</cbc:ID>
+		<cac:TenderingTerms>
+			<ext:UBLExtensions>
+				<ext:UBLExtension>
+					<ext:ExtensionContent>
+						<efext:EformsExtension>
+							<efac:SelectionCriteria>
+								<cbc:CriterionTypeCode listName="selection-criterion">ef-stand</cbc:CriterionTypeCode>
+								<cbc:Name languageID="DEU">Wirtschaftliche und finanzielle Leistungsfähigkeit</cbc:Name>
+								<cbc:Description languageID="DEU">Die Eignungsprüfung erfolgt hinsichtlich der
+Leistungsfähigkeit sowie Gesetzestreue und Zuverlässigkeit des Bieters, um sicher zu stellen, dass eine ordnungsgemäße und störungsfreie Auftragsdurchführung zu erwarten ist.
+
+Zur Prüfung der Eignung ihres Unternehmens ist es notwendig, dass Sie Angaben über ihren Unternehmensumsatz der letzten drei Jahre machen.
+
+Weiterhin sind Erklärungen über 
+- die Eintragung in das Berufsregister, 
+- das Vorliegen von Referenzen über vergleichbare Leistungen in den letzten drei Jahren,
+- die Verfügbarkeit des für die Ausführung erforderlichen Personals sowie Bereitschaft zur Benennung des Mitteilung der durchschnittlichen Beschäftigtenzahl in den letzten drei Jahren und Nennung des Leistungspersonals,
+- ein ggf. bestehendes Insolvenzverfahren/Liquidation, 
+- eine ggf. schwere Verfehlungen nach § 123 oder 124 GWB,
+- eine Eintragungen in das Gewerbezentralregister bzw. Wettbewerbsregister in den letzten zwei Jahren aufgrund eines Verstoßes gegen Vorschriften,
+- die ordnungsgemäße Zahlung von Steuern, Abgaben und Beiträgen,
+- die Mitgliedschaft in einer Berufsgenossenschaft
+abzugeben.
+
+Nachweis der Haftpflichtversicherung:
+Vorlage eines Nachweises zur bestehenden Haftpflichtversicherung mit ausreichender Deckungshöhe oder eines Nachweises, dass die bestehende Versicherung im Auftragsfall entsprechend erhöht wird. Hierzu ist entweder eine Kopie des Versicherungsscheins oder eine entsprechende Bestätigung des Versicherungsnehmers über die Erhöhung im Auftragsfall beizubringen.
+
+Kann keine entsprechende Haftpflichtversicherung  nachgewiesen werden, so erklärt sich der Bieter eine entsprechende Haftpflichtversicherung in der geforderten Höhe bei Zuschlagserteilung abzuschließen. 
+
+Die Kosten für die Haftpflichtversicherung sind durch den Bieter zu tragen. Eine entsprechende Eigenerklärung ist den Angebotsunterlagen beizufügen.
+Einzureichende Unterlagen:
+    - Eigenerklärung zur wirtschaftlichen und finanziellen Eignung - VHB-Vordruck 124 LD (mit dem Angebot mittels Eigenerklärung vorzulegen): Zum Nachweis der Eignung reichen Sie bitte den anliegenden VHB-Vordruck 124LD mit ihrem Angebot ein.
+- Nachweis Berufshaftpflicht (mit dem Teilnahmeantrag mittels Eigenerklärung vorzulegen): Bitte füllen Sie den Vordruck "Nachweis Berufshaftpflicht"  aus.
+
+Gefordert ist der Nachweis einer Berufs- bzw. Betriebshaftpflichtversicherung mit einer Deckungssumme von mindestens 3.000.000,- Euro je Schadensfall für Personen-, Sach- und Vermögensschäden oder eine Erklärung, dass die bietende Person/jedes Mitglied einer Bie-tendengemeinschaft eine solche Versicherung spätestens bis zum Zuschlagszeitpunkt abges-chlossen haben wird (= Mindeststandard). Fügen Sie entsprechende Nachweise bei. Die Na-chweise dürfen nicht älter als sechs Monate sein. Bestätigungen in anderen als deutscher Sprache müssen in einer Übersetzung vorgelegt werden. Die bewerbende Person garantiert die Richtigkeit der Übersetzung.
+
+</cbc:Description>
+							</efac:SelectionCriteria>
+							<efac:SelectionCriteria>
+								<cbc:CriterionTypeCode listName="selection-criterion">tp-abil</cbc:CriterionTypeCode>
+								<cbc:Name languageID="DEU">Technische und berufliche Leistungsfähigkeit</cbc:Name>
+								<cbc:Description languageID="DEU">Einzureichende Unterlagen:
+- 234 Erklärung Bietergemeinschaft (mit dem Teilnahmeantrag mittels Eigenerklärung vorzulegen): Bitte füllen die Vordruck "Vollmacht Bietendengemeinschaft" aus, wenn eine gemeinschaftliche Bewerbung/Auftragsabwicklung beabsichtigen.
+
+- Referenzprojekte (mit dem Teilnahmeantrag mittels Eigenerklärung vorzulegen): Bitte füllen Sie den Vordruck "Referenzprojekte _ berufliche Befähigung" aus.
+Es sind drei Referenzprojekte zu einem Kfz-Fachverfahren in vergleichbarer Größenordnung zum Landkreis Göttingen in Bezug auf den Kfz-Bestand von ca. 200.000 Fahrzeugen aus den letzten fünf Jahren zu benennen.
+Die Referenzprojekte sind in Form von Texten, Plänen, Masken, Fotos oder Skizzen gesondert darzustellen.
+Referenzen von Mitarbeitenden sind zugelassen, sofern eine schriftliche Bestätigung des Büros zur Verantwortlichkeit des/der ehemalig Mitarbeitenden vorliegt.
+
+- 235 Angaben zu Auftragsanteilen (mit dem Teilnahmeantrag mittels Eigenerklärung vorzulegen): Sofern Sie sich der Kapazitäten anderer Unternehmen bedienen, geben sie dies bitte im Vordruck "235 Angaben zu Auftragsanteilen" an.
+
+- 236 Verpflichtungserklärung anderer Unternehmen (mit dem Teilnahmeantrag mittels Eigenerklärung vorzulegen): Sofern Sie sich anderer Unternehmen bedienen füllen Sie bitte den Vordruck "236 Verpflichtungserklärung anderer Unternehmen"
+</cbc:Description>
+							</efac:SelectionCriteria>
+							<efac:StrategicProcurement>
+								<efbc:ApplicableLegalBasis listName="cvd-scope">false</efbc:ApplicableLegalBasis>
+							</efac:StrategicProcurement>
+						</efext:EformsExtension>
+					</ext:ExtensionContent>
+				</ext:UBLExtension>
+			</ext:UBLExtensions>
+			<cbc:VariantConstraintCode listName="permission">not-allowed</cbc:VariantConstraintCode>
+			<cbc:FundingProgramCode listName="eu-funded">no-eu-funds</cbc:FundingProgramCode>
+			<cbc:RequiredCurriculaCode listName="requirement-stage">par-requ</cbc:RequiredCurriculaCode>
+			<cbc:MultipleTendersCode listName="permission">not-allowed</cbc:MultipleTendersCode>
+			<cac:RequiredFinancialGuarantee>
+				<cbc:GuaranteeTypeCode listName="tender-guarantee-required">false</cbc:GuaranteeTypeCode>
+			</cac:RequiredFinancialGuarantee>
+			<cac:ProcurementLegislationDocumentReference>
+				<cbc:ID>vgv</cbc:ID>
+			</cac:ProcurementLegislationDocumentReference>
+			<cac:CallForTendersDocumentReference>
+				<cbc:ID>SomeTenderDocID1</cbc:ID>
+				<cbc:DocumentType>non-restricted-document</cbc:DocumentType>
+				<cbc:LanguageID>DEU</cbc:LanguageID>
+				<cac:Attachment>
+					<cac:ExternalReference>
+						<cbc:URI>https://vergabe.niedersachsen.de/Satellite/notice/CXTWYYDY19N1AEQJ/documents</cbc:URI>
+					</cac:ExternalReference>
+				</cac:Attachment>
+			</cac:CallForTendersDocumentReference>
+			<cac:TendererQualificationRequest>
+				<cbc:CompanyLegalFormCode listName="required">false</cbc:CompanyLegalFormCode>
+			</cac:TendererQualificationRequest>
+			<cac:TendererQualificationRequest>
+				<cac:SpecificTendererRequirement>
+					<cbc:TendererRequirementTypeCode listName="missing-info-submission">late-all</cbc:TendererRequirementTypeCode>
+					<cbc:Description languageID="DEU">Die Nachforderung von leistungsbezogenen Unterlagen, die die Wirtschaftlichkeitsbewertung der Angebote anhand der Zuschlagskriterien betreffen, ist ausgeschlossen. Dies gilt nicht für Preisangaben, wenn es sich um unwesentliche Einzelpositionen handelt, deren Einzelpreise den Gesamtpreis nicht verändern oder die Wertungsreihenfolge und den Wettbewerb nicht beeinträchtigen.</cbc:Description>
+				</cac:SpecificTendererRequirement>
+			</cac:TendererQualificationRequest>
+			<cac:ContractExecutionRequirement>
+				<cbc:ExecutionRequirementCode listName="reserved-execution">no</cbc:ExecutionRequirementCode>
+			</cac:ContractExecutionRequirement>
+			<cac:ContractExecutionRequirement>
+				<cbc:ExecutionRequirementCode listName="ecatalog-submission">not-allowed</cbc:ExecutionRequirementCode>
+			</cac:ContractExecutionRequirement>
+			<cac:ContractExecutionRequirement>
+				<cbc:ExecutionRequirementCode listName="einvoicing">required</cbc:ExecutionRequirementCode>
+			</cac:ContractExecutionRequirement>
+			<cac:ContractExecutionRequirement>
+				<cbc:ExecutionRequirementCode listName="conditions">performance</cbc:ExecutionRequirementCode>
+				<cbc:Description languageID="DEU">§ 128 Abs. 1 GWB Auftragsausführung
+
+Unternehmen haben bei der Ausführung des öffentlichen Auftrags alle für sie geltenden rechtlichen Verpflichtungen einzuhalten, insbesondere Steuern, Abgaben und Beiträge zur Sozialversicherung zu entrichten, die arbeitsschutzrechtlichen Regelungen einzuhalten und den Arbeitnehmerinnen und Arbeitnehmern wenigstens diejenigen Mindestarbeitsbedingungen einschließlich des Mindestentgelts zu gewähren, die nach dem Mindestlohngesetz, einem nach dem Tarifvertragsgesetz mit den Wirkungen des Arbeitnehmer- Entsendegesetzes für allgemein verbindlich erklärten Tarifvertrag oder einer nach § 7, § 7a oder § 11 des Arbeitnehmer-Entsendegesetzes oder einer nach § 3a des Arbeitnehmerüberlassungsgesetzes erlassenen Rechtsverordnung für die betreffende Leistung verbindlich vorgegeben werden.</cbc:Description>
+			</cac:ContractExecutionRequirement>
+			<cac:AwardingTerms>
+				<cbc:NoFurtherNegotiationIndicator>true</cbc:NoFurtherNegotiationIndicator>
+			</cac:AwardingTerms>
+			<cac:AdditionalInformationParty>
+				<cac:PartyIdentification>
+					<cbc:ID>ORG-0002</cbc:ID>
+				</cac:PartyIdentification>
+			</cac:AdditionalInformationParty>
+			<cac:TenderRecipientParty>
+				<cbc:EndpointID>https://vergabe.niedersachsen.de/Satellite/notice/CXTWYYDY19N1AEQJ</cbc:EndpointID>
+				<cac:PartyIdentification>
+					<cbc:ID>ORG-0005</cbc:ID>
+				</cac:PartyIdentification>
+			</cac:TenderRecipientParty>
+			<cac:TenderValidityPeriod>
+				<cbc:DurationMeasure unitCode="DAYS">116</cbc:DurationMeasure>
+			</cac:TenderValidityPeriod>
+			<cac:AppealTerms>
+				<cac:PresentationPeriod>
+					<cbc:Description languageID="DEU">Genaue Angaben zu den Fristen für die Einlegung von Rechtsbehelfen:
+Gemäß § 160 Abs. 1 GWB leitet die Vergabekammer ein Nachprüfungsverfahren nur auf Antrag ein.
+Der Antrag ist unzulässig, soweit der Antragsteller den geltend gemachten Verstoß gegen Vergabevorschriften vor Einreichen des Nachprüfungsantrags erkannt und gegenüber dem Auftraggeber nicht innerhalb einer Frist von 10 Kalendertagen gerügt hat; der Ablauf der Frist nach § 134 Absatz 2 bleibt unberührt (§ 160 Abs. 3 Nr. 1 GWB).
+Der Nachprüfungsantrag ist gemäß § 160 Abs. 3 Nr. 2 GWB ebenfalls unzulässig, soweit Verstöße gegen Vergabevorschriften, die aufgrund der Bekanntmachung erkennbar sind, nicht spätestens bis zum Ablauf der in der Bekanntmachung benannten Frist zur Bewerbung oder zur Angebotsabgabe gegenüber dem Auftraggeber gerügt werden.
+Der Vergabenachprüfungsantrag ist ferner nach § 160 Abs. 3 Nr. 3 GWB unzulässig, soweit Verstöße gegen Vergabevorschriften, die erst in den Vergabeunterlagen erkennbar sind, nicht spätestens bis zum Ablauf der Frist zur Bewerbung oder zur Angebotsabgabe gegenüber dem Auftraggeber gerügt werden. Der Nachprüfungsantrag ist gemäß § 160 Abs. 3 Nr. 4 GWB schließlich dann unzulässig, soweit mehr als 15 Kalendertage nach Eingang der Mitteilung des Auftraggebers, einer Rüge nicht abhelfen zu wollen, vergangen sind. Für die weiteren Voraussetzungen der Zulässigkeit wird auf §§ 160 und 161 GWB verwiesen.</cbc:Description>
+				</cac:PresentationPeriod>
+				<cac:AppealInformationParty>
+					<cac:PartyIdentification>
+						<cbc:ID schemeName="organization">ORG-0003</cbc:ID>
+					</cac:PartyIdentification>
+				</cac:AppealInformationParty>
+				<cac:AppealReceiverParty>
+					<cac:PartyIdentification>
+						<cbc:ID schemeName="organization">ORG-0004</cbc:ID>
+					</cac:PartyIdentification>
+				</cac:AppealReceiverParty>
+			</cac:AppealTerms>
+			<cac:Language>
+				<cbc:ID>DEU</cbc:ID>
+			</cac:Language>
+			<cac:PostAwardProcess>
+				<cbc:ElectronicOrderUsageIndicator>true</cbc:ElectronicOrderUsageIndicator>
+				<cbc:ElectronicPaymentUsageIndicator>true</cbc:ElectronicPaymentUsageIndicator>
+			</cac:PostAwardProcess>
+		</cac:TenderingTerms>
+		<cac:TenderingProcess>
+			<cbc:SubmissionMethodCode listName="esubmission">required</cbc:SubmissionMethodCode>
+			<cbc:GovernmentAgreementConstraintIndicator>true</cbc:GovernmentAgreementConstraintIndicator>
+			<cbc:AccessToolsURI>https://vergabe.niedersachsen.de/Satellite/notice/CXTWYYDY19N1AEQJ</cbc:AccessToolsURI>
+			<cac:TenderSubmissionDeadlinePeriod>
+				<cbc:EndDate>2023-12-22+01:00</cbc:EndDate>
+				<cbc:EndTime>09:00:00+01:00</cbc:EndTime>
+			</cac:TenderSubmissionDeadlinePeriod>
+			<cac:AuctionTerms>
+				<cbc:AuctionConstraintIndicator>false</cbc:AuctionConstraintIndicator>
+			</cac:AuctionTerms>
+			<cac:ContractingSystem>
+				<cbc:ContractingSystemTypeCode listName="framework-agreement">none</cbc:ContractingSystemTypeCode>
+			</cac:ContractingSystem>
+			<cac:ContractingSystem>
+				<cbc:ContractingSystemTypeCode listName="dps-usage">none</cbc:ContractingSystemTypeCode>
+			</cac:ContractingSystem>
+		</cac:TenderingProcess>
+		<cac:ProcurementProject>
+			<cbc:ID schemeName="internalID">#1</cbc:ID>
+			<cbc:Name languageID="DEU">Landkreis Göttingen - Beschaffung Fachverfahren Kfz-Zulassung 2024</cbc:Name>
+			<cbc:Description languageID="DEU">Im Rahmen dieser Neuausschreibung wird ein modernes, zukunftsorientiertes Zulassungsverfahren gefordert, das fortlaufend an rechtliche und technische Änderungen angepasst werden kann. Der Landkreis Göttingen sucht deshalb einen Partner, für Lizenzierung und Pflege eines Kfz-Zulassungsverfahrens sowie dessen Einführung inklusive Datenmigration und Schulung.
+
+Soweit möglich, sollen bei der Gestaltung des Angebotes, die bereits dem Landkreis Göttingen auf Dauer überlassenen Lizenzen der Vorverfahren, berücksichtigt werden.
+
+Die Mindestvertragslaufzeit beträgt 36 Monate. Der Vertrag verlängert sich jeweils um 24 Monate, wenn nicht eine der Parteien 15 Monate zum Laufzeitende / Verlängerungsende kündigt. Die maximale Anzahl an Vertragsverlängerungen beträgt sechs.
+
+In der Phase II Angebotswertung kommt zur Wertung der Angebote die einfache Richtwertmethode zum Einsatz. Die einzelnen Kriterien für die Punktewertung können bereits den Unterlagen der Phase I Teilnahmewettbewerb entnommen werden.</cbc:Description>
+			<cbc:ProcurementTypeCode listName="contract-nature">services</cbc:ProcurementTypeCode>
+			<cbc:Note languageID="DEU">#Besonders geeignet für:selbst#</cbc:Note>
+			<cbc:SMESuitableIndicator>true</cbc:SMESuitableIndicator>
+			<cac:ProcurementAdditionalType>
+				<cbc:ProcurementTypeCode listName="strategic-procurement">none</cbc:ProcurementTypeCode>
+			</cac:ProcurementAdditionalType>
+			<cac:MainCommodityClassification>
+				<cbc:ItemClassificationCode listName="cpv">72500000</cbc:ItemClassificationCode>
+			</cac:MainCommodityClassification>
+			<cac:AdditionalCommodityClassification>
+				<cbc:ItemClassificationCode listName="cpv">72000000</cbc:ItemClassificationCode>
+			</cac:AdditionalCommodityClassification>
+			<cac:AdditionalCommodityClassification>
+				<cbc:ItemClassificationCode listName="cpv">72230000</cbc:ItemClassificationCode>
+			</cac:AdditionalCommodityClassification>
+			<cac:AdditionalCommodityClassification>
+				<cbc:ItemClassificationCode listName="cpv">72260000</cbc:ItemClassificationCode>
+			</cac:AdditionalCommodityClassification>
+			<cac:AdditionalCommodityClassification>
+				<cbc:ItemClassificationCode listName="cpv">72510000</cbc:ItemClassificationCode>
+			</cac:AdditionalCommodityClassification>
+			<cac:RealizedLocation>
+				<cac:Address>
+					<cbc:StreetName>Landkreis Göttingen</cbc:StreetName>
+					<cbc:AdditionalStreetName>Reinhäuser Landstraße 4</cbc:AdditionalStreetName>
+					<cbc:CityName>Göttingen</cbc:CityName>
+					<cbc:PostalZone>37083</cbc:PostalZone>
+					<cbc:CountrySubentityCode listName="nuts">DE91C</cbc:CountrySubentityCode>
+					<cbc:Region>anyw-cou</cbc:Region>
+					<cac:Country>
+						<cbc:IdentificationCode>DEU</cbc:IdentificationCode>
+					</cac:Country>
+				</cac:Address>
+			</cac:RealizedLocation>
+			<cac:ContractExtension>
+				<cbc:MaximumNumberNumeric>6</cbc:MaximumNumberNumeric>
+				<cac:Renewal>
+					<cac:Period>
+						<cbc:Description languageID="DEU">Der Vertrag verlängert sich jeweils um 24 Monate, wenn nicht eine der Parteien 15 Monate zum Laufzeitende / Verlängerungsende kündigt.</cbc:Description>
+					</cac:Period>
+				</cac:Renewal>
+			</cac:ContractExtension>
+		</cac:ProcurementProject>
+	</cac:ProcurementProjectLot>
+</ContractNotice>

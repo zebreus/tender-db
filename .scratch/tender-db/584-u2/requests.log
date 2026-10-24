@@ -33,3 +33,9 @@
 2026-10-24T19:48:36Z GET #20 (challenger) /v1/notices/24300743/content -> 200 rc=0 bytes=26959
 2026-10-24T19:48:40Z GET #21 (challenger) /v1/notices/23540012/content -> 200 rc=0 bytes=44555
 2026-10-24T19:48:44Z GET #22 (challenger) /v1/notices/25592320/content -> 200 rc=0 bytes=129221
+2026-10-24T19:52:35Z SQL #7 (challenger) c1_verify sha256:48514a4a448a3737 secs=0.40 ok=True rows=142 truncated=False sql=challenge-raw/sql/c1_verify.sql
+2026-10-24T19:52:39Z SQL #8 (challenger) c2_org36 sha256:3f2c2b9ca72a81c1 secs=0.75 ok=True rows=380 truncated=False sql=challenge-raw/sql/c2_org36.sql
+2026-10-24T19:55:33Z GET #23 (challenger) /v1/notices/25235025/content -> 200 rc=0 bytes=41359
+2026-10-24T19:49:30Z EXT WebFetch (challenger) https://wl-api.mf.gov.pl/api/search/nips/8992680461,9491924705,6481997718,7382070551,5851476863,7123245197,6871892878,5262825916,5540312757,5272663852?date=2026-10-23 -> 10 subjects with residence/working addresses (challenge.md table)
+2026-10-24T19:50:10Z EXT WebSearch (challenger) "I&M ENGINEERS" Ireneusz Malewicz Chełm NIP -> no NIP found
+2026-10-24T20:05:47Z GET #24 (finalizer) /v1/notices/25028774/content -> 200 rc=0 bytes=58433

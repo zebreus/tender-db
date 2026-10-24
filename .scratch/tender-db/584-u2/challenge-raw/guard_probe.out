@@ -1,0 +1,14 @@
+PASS (binds KIO) | KRAJOWA IZBA GOSPODARCZA
+PASS (binds KIO) | Krajowa Izba Kontroli
+PASS (binds KIO) | Urząd Miasta Szubin
+PASS (binds KIO) | Urząd Gminy Wojcieszków
+refused         | Gmina Skaryszew
+refused         | Ministerstwo Finansów
+refused         | Platforma eZamówienia
+refused         | STANIMEX SPÓŁKA JAWNA S. STANISZEWSKI, M. STANISZEWSKI
+refused         | METALZBYT-HURT Sp. z o.o.
+refused         | Ever Cleaning Sp. z o.o.
+PASS (binds KIO) | Bank Gospodarstwa Krajowego
+PASS (binds KIO) | Krajowy Ośrodek Wsparcia Rolnictwa
+PASS (binds KIO) | Publiczna Szkoła Podstawowa nr 1
+PASS (binds KIO) | Krajowa Spółka Cukrowa S.A.

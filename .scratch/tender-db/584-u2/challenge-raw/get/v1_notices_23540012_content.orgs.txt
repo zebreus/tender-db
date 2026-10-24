@@ -1,0 +1,8 @@
+ORG-0001 Organization {'name': 'POL:Skarb Państwa Generalny Dyrektor Dróg Krajowych i Autostrad ul. Wronia 53 00-874 Warszawa, Prowadzący postępowanie na podstawie porozumienia: Generalna Dyrekcja Dróg Krajowych i Autostrad Oddział w Warszawie, ul. Mińska 25, 03-808 Warszawa', 'tel': '+48 222092391', 'web': 'http://www.gddkia.gov.pl', 'email': 'mbakula@gddkia.gov.pl', 'street': 'ul. Mińska 25', 'pc': '03-808', 'town': 'Warszawa'} ID= [['NIP 113 20 97 244']] ['OPP-050-Organization']
+ORG-0002 Organization {'name': 'POL:Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akcyjna, Plac Starynkiewicza 5, 02 – 015 Warszawa,', 'tel': '+48 222092391', 'web': 'http://www.gddkia.gov.pl', 'email': 'mbakula@gddkia.gov.pl', 'street': 'Plac Starynkiewicza 5', 'pc': '02-015', 'town': 'Warszawa'} ID= [['NIP: 5262239325']] ['OPP-050-Organization']
+ORG-0003 Organization {'name': 'POL:Prezes Krajowej Izby Odwoławczej', 'tel': '+482245587801', 'web': 'http://www.uzp.gov.pl', 'email': 'uzp@uzp.gov.pl', 'street': 'ul. Postępu 17a', 'pc': '02-676', 'town': 'Warszawa'} ID= [['NIP5262239325']] 
+ORG-0004 Organization {'name': 'POL:Urząd Zamówień Publicznych - Biuro Odwołań', 'tel': '+482245587801', 'web': 'http://www.uzp.gov.pl', 'email': 'uzp@uzp.gov.pl', 'street': 'ul. Postępu 17a', 'pc': '02-676', 'town': 'NIP5262239325'} ID= [['NIP5262239325']] 
+  ref ORG-0001 ['OPT-300-Procedure-Buyer@ContractingParty', 'OPT-301-Lot-AddInfo@Lot']
+  ref ORG-0002 ['OPT-300-Procedure-Buyer@ContractingParty']
+  ref ORG-0003 ['OPT-301-Lot-ReviewOrg@Lot']
+  ref ORG-0004 ['OPT-301-Lot-ReviewInfo@Lot']

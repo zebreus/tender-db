@@ -108,7 +108,7 @@
    "action": "keep",
    "target_org_id": null,
    "target_name": null,
-   "rationale": "Notice 24831057 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 320481: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "rationale": "Notice 24831057 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 320481: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, and the section is bound in review roles only, so the mention is the identifier's own body and stays on org 49.",
    "confidence": "high"
   },
   {
@@ -128,7 +128,7 @@
    "action": "keep",
    "target_org_id": null,
    "target_name": null,
-   "rationale": "Notice 24906332 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "rationale": "Notice 24906332 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, and the section is bound in review roles only, so the mention is the identifier's own body and stays on org 49.",
    "confidence": "high"
   },
   {
@@ -138,7 +138,7 @@
    "action": "keep",
    "target_org_id": null,
    "target_name": null,
-   "rationale": "Notice 24993174 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "rationale": "Notice 24993174 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, and the section is bound in review roles only, so the mention is the identifier's own body and stays on org 49.",
    "confidence": "high"
   },
   {
@@ -148,7 +148,7 @@
    "action": "keep",
    "target_org_id": null,
    "target_name": null,
-   "rationale": "Notice 25117974 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 320481: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "rationale": "Notice 25117974 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-ReviewOrg on tender 320481: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, and the section is bound in review roles only, so the mention is the identifier's own body and stays on org 49.",
    "confidence": "high"
   },
   {
@@ -168,7 +168,7 @@
    "action": "keep",
    "target_org_id": null,
    "target_name": null,
-   "rationale": "Notice 25398003 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-Mediator, Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, in a Lot-ReviewOrg (and Lot-Mediator) role, so the mention is the identifier's own body and stays on org 49.",
+   "rationale": "Notice 25398003 prints 'National Appeals Chamber' in ORG-0002 with NIP 5262239325 as Lot-Mediator, Lot-ReviewOrg on tender 733110: the English BT-500 of KIO; the same section also prints POL \"Krajowa Izba Odwoławcza\" (S6) and KIO's NIP, and the section is bound in review roles only, so the mention is the identifier's own body and stays on org 49.",
    "confidence": "high"
   },
   {

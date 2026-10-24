@@ -1,0 +1,41 @@
+{
+ "used": 5,
+ "stop": null,
+ "log": [
+  {
+   "name": "s1_versions",
+   "secs": 0.37,
+   "ok": true,
+   "rows": 14,
+   "at": "2026-10-24T19:56:50Z"
+  },
+  {
+   "name": "s2_parties",
+   "secs": 0.37,
+   "ok": true,
+   "rows": 112,
+   "at": "2026-10-24T19:57:01Z"
+  },
+  {
+   "name": "s3_bid_parties",
+   "secs": 0.37,
+   "ok": true,
+   "rows": 18,
+   "at": "2026-10-24T19:57:05Z"
+  },
+  {
+   "name": "s4_changes",
+   "secs": 0.5,
+   "ok": true,
+   "rows": 578,
+   "at": "2026-10-24T20:00:33Z"
+  },
+  {
+   "name": "s5_mentions",
+   "secs": 0.37,
+   "ok": true,
+   "rows": 49,
+   "at": "2026-10-24T20:00:37Z"
+  }
+ ]
+}

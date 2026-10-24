@@ -1,5 +1,10 @@
 # 584 unit 2 (preparer): the KIO-NIP rehoming cohort, 2026-10-24
 
+> **Errata (finalizer, after `challenge.md`). `runbook.md` supersedes the "Read for the apply step" section below.**
+> - **Dry plan.** Do not expect "exactly 32 moves". Expect 32 moves **plus any other cohort's pending high rehome**: `apply_rehoming` reads every unapplied row (`canonical.rs:33847`). Compare the plan to the 32 tuples in `cohort.json` tuple-wise; runbook step D does this.
+> - **Persistence and recurrence.** Read "back to 49" and "still binds org 49" as **org 36**. Org 36 holds the same triple at a lower id, and E0 keeps the lowest id (`canonical.rs:21255`). A re-parse re-resolves a mention only when its name, country, raw identifier or scheme changes (`canonical.rs:15758`).
+> - **Cohort.** The only change is wording in the 5 "National Appeals Chamber" keep rationales: "(and Lot-Mediator)" was true only of 25398003. Verdicts and targets are unchanged. The new sha256 is in `runbook.md`.
+
 **Outcome.** Of the 38 mentions on org 49 whose name does not read as "Krajowa Izba Odwoławcza", **32 rehome** (all `high`) and **6 keep**. **0 are parked.**
 - `cohort.json` holds cohort `584-2026-10-24` in 545's exact per-mention shape (317's `POST /admin/rehoming` body): 38 verdicts, `org_id` 49 on each.
 - `parked.json` is an empty list, with the reason no row needed parking.

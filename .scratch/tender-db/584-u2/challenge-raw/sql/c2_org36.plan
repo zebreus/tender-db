@@ -1,0 +1,19 @@
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SCAN (subquery-0)
+      SEARCH b USING INDEX tender_version_bid_parties_org (organization_id=?)
+      SEARCH m USING INDEX organization_mentions_notice (notice_id=?)
+      SEARCH t USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH tender_version_bid_parties USING INDEX tender_version_bid_parties_org (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SEARCH tender_version_result_winners USING INDEX tender_version_result_winners_org (organization_id=?)
+    USE HASH TABLE FOR count(DISTINCT)
+  UNION ALL
+    SCAN (subquery-0)
+      SCAN (subquery-0)
+        SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+      USE SORTER FOR GROUP BY
+      USE SORTER FOR ORDER BY

@@ -1,0 +1,77 @@
+PLAN	readback	COMPOUND QUERY
+PLAN	readback	  LEFT-MOST SUBQUERY
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+PLAN	readback	  UNION ALL
+PLAN	readback	    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)

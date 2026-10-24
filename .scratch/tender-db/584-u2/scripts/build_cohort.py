@@ -58,7 +58,7 @@ BODIES = [
   'MF white list: PAWEŁ KRAWCZYK, NIP 7123245197, Lublin (buyer: OISW w Lublinie)', 'none'),
 ]
 KEEP = {
- 'National Appeals Chamber': 'the English BT-500 of KIO; the same section also prints POL "Krajowa Izba Odwoławcza" (S6) and KIO\'s NIP, in a Lot-ReviewOrg (and Lot-Mediator) role',
+ 'National Appeals Chamber': 'the English BT-500 of KIO; the same section also prints POL "Krajowa Izba Odwoławcza" (S6) and KIO\'s NIP, and the section is bound in review roles only',  # finalizer 2026-10-24: was 'in a Lot-ReviewOrg (and Lot-Mediator) role', true only of 25398003 (challenge.md §2 note 2; S2)
  'Urząd Zamóweń Publicznych': 'a one-letter misspelling of Urząd Zamówień Publicznych, which is the NIP\'s own holder (MF white list: 5262239325 = UZP, REGON 010828091; KIO sits inside UZP), in Lot-ReviewOrg + Lot-ReviewInfo roles',
 }
 BUYER_SIDE = {'Procedure-Buyer', 'Lot-TenderEval', 'Lot-TenderReceipt', 'Lot-DocProvider'}

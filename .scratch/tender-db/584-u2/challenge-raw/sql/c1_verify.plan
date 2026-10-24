@@ -1,0 +1,165 @@
+COMPOUND QUERY
+  LEFT-MOST SUBQUERY
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organization_mentions USING INDEX organization_mentions_notice (notice_id=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SEARCH organizations USING INTEGER PRIMARY KEY (rowid=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organization_mentions USING INDEX organization_mentions_org (organization_id=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)
+  UNION ALL
+    SCAN (subquery-0)
+      SEARCH organizations USING INDEX organizations_identifier_id (identifier=?)

@@ -1,0 +1,1 @@
+SELECT p.rowid AS rid, p.tender_id, p.seq, p.lot_id, l.lot_key, p.role, p.organization_id, p.mention_notice_id, p.mention_section_id FROM tender_version_parties p LEFT JOIN lots l ON l.id = p.lot_id WHERE p.tender_id IN (2, 26, 28, 37) ORDER BY p.tender_id, p.seq, p.rowid

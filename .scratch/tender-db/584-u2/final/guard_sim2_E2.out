@@ -1,0 +1,53 @@
+variant: E2 distinctive + diacritic fold + edit distance <= 2 on tokens >= 8
+distinctive holder tokens: ['appeals', 'odwoławcza', 'zamówień'] initialisms: ['kio', 'nac', 'uzp']
+
+== org 49 (all 30567 mentions): refuses 34 mentions / 17 names
+       13  'Uniwersytet Warszawski'
+        5  'Miejskie Przedsiębiorstwo Wodociągów i Kanalizacji w m. st. Warszawie Spółka Akcyjna, Plac Starynkiewicza 5, 02 – 015 Warszawa,'
+        2  'Terra Mota Sp. z o.o.'
+        1  'Powszechna Kasa Oszczędności Bank Polski Spółka Akcyjna'
+        1  'Ireneusz Malewicz J&M Engineers (Lider)'
+        1  'Prezes Izby'
+        1  'ARCHITEKTURA PLUS DESIGN STUDIO MICHAŁ MARCZAK'
+        1  'Krajowa Izba Gospodarcza'
+        1  'REMONDIS Bydgoszcz  S.A.'
+        1  'Digitex Sp.z o.o Sp. k.'
+        1  'NOVUM S.A.'
+        1  'WTU Spółka z o.o.'
+        1  'PZU ZDROWIE S.A. Odział Centra Medyczne w Gdańsku'
+        1  'Evalu Sp. z o.o.'
+        1  'Zarys International Sp. z o.o.'
+        1  'Gminny Zakład Gospodarki Komunalnej Sp. z o.o.'
+        1  'Pro3Ds Paweł Krawczyk'
+
+== org 36 bid-party mentions (142): refuses 133 / passes 9
+   PASS    8  'Krajowa Izba Odwoławcza'
+   PASS    1  'KIO'
+
+== org 36 recent sample (6000 mentions, 63 names): refuses 10 mentions / 8 names
+        2  'Ministerstwo Finansów'
+        2  'KRAJOWA IZBA GOSPODARCZA'
+        1  'STANIMEX SPÓŁKA JAWNA S. STANISZEWSKI, M. STANISZEWSKI'
+        1  'Platforma eZamówienia'
+        1  'METALZBYT-HURT Sp. z o.o.'
+        1  'Krajowa Izba Kontroli'
+        1  'Gmina Skaryszew'
+        1  'Ever Cleaning Sp. z o.o.'
+
+== challenger probe names (guard_probe.out):
+   refused          | KRAJOWA IZBA GOSPODARCZA
+   refused          | Krajowa Izba Kontroli
+   refused          | Urząd Miasta Szubin
+   refused          | Urząd Gminy Wojcieszków
+   refused          | Bank Gospodarstwa Krajowego
+   refused          | Krajowy Ośrodek Wsparcia Rolnictwa
+   refused          | Publiczna Szkoła Podstawowa nr 1
+   refused          | Krajowa Spółka Cukrowa S.A.
+   refused          | Gmina Skaryszew
+   refused          | Ministerstwo Finansów
+   refused          | Platforma eZamówienia
+   PASS (binds KIO) | Urząd Zamóweń Publicznych
+   PASS (binds KIO) | Prezes Krajowej Izby Odwoławczej
+   PASS (binds KIO) | KIO
+   PASS (binds KIO) | KIO UZP
+   PASS (binds KIO) | National Appeals Chamber

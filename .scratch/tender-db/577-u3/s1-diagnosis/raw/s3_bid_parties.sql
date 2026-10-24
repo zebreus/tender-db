@@ -1,0 +1,1 @@
+SELECT bp.rowid AS rid, bp.tender_id, bp.seq, bp.bid_id, b.lot_id, bp.role, bp.organization_id, bp.mention_notice_id, bp.mention_section_id FROM tender_version_bid_parties bp LEFT JOIN tender_version_bids b ON b.tender_id = bp.tender_id AND b.seq = bp.seq AND b.bid_id = bp.bid_id WHERE bp.tender_id IN (2, 26, 28, 37) ORDER BY bp.tender_id, bp.seq, bp.rowid

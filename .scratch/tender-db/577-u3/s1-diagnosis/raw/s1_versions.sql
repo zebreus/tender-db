@@ -1,0 +1,1 @@
+SELECT v.tender_id, v.seq, v.caused_by_notice_id, n.source, n.profile, n.fetch_id, n.member_path, n.published_at, v.notice_subtype FROM tender_versions v JOIN notices n ON n.id = v.caused_by_notice_id WHERE v.tender_id IN (2, 26, 28, 37) ORDER BY v.tender_id, v.seq

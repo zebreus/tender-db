@@ -1,0 +1,6 @@
+ORG-0000 Organization {'name': 'POL:Publications Office of the European Union', 'tel': '+352 29291', 'web': 'https://op.europa.eu', 'email': 'ted@publications.europa.eu', 'pc': '2417', 'town': 'Luxembourg'} ID= [['PUBL']] 
+ORG-0001 Organization {'name': 'POL:Zarząd Transportu Miejskiego w Kielcach', 'tel': '41 3431593', 'web': 'https://ztm.kielce.pl/przetargi.html', 'email': 'ztm@ztm.kielce.pl', 'street': 'pl. Niepodległości 1', 'pc': '25-001', 'town': 'KIELCE'} ID= [['NIP 6572617325']] 
+ORG-0002 Organization {'name': 'POL:Krajowa Izba Gospodarcza', 'tel': '22 458 78 01', 'web': 'https://www.gov.pl/web/uzp/kontakt2', 'email': 'odwolania@uzp.gov.pl', 'street': 'ul. Postępu 17a', 'pc': '02-676', 'town': 'Warszawa'} ID= [['NIP 5262239325']] 
+  ref ORG-0000 ['OPT-300-Procedure-SProvider@ServiceProviderParty']
+  ref ORG-0001 ['OPT-300-Procedure-Buyer@ContractingParty', 'OPT-301-Lot-AddInfo@Lot', 'OPT-301-Lot-DocProvider@Lot', 'OPT-301-Lot-TenderEval@Lot', 'OPT-301-Lot-TenderReceipt@Lot']
+  ref ORG-0002 ['OPT-301-Lot-Mediator@Lot', 'OPT-301-Lot-ReviewInfo@Lot', 'OPT-301-Lot-ReviewOrg@Lot']

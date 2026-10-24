@@ -1,0 +1,8 @@
+ORG-0000 Organization {'name': 'POL:Publications Office of the European Union', 'tel': '+352 29291', 'web': 'https://op.europa.eu', 'email': 'ted@publications.europa.eu', 'pc': '2417', 'town': 'Luxembourg'} ID= [['PUBL']] 
+ORG-0001 Organization {'name': 'POL:Uniwersytet Warszawski', 'tel': '+48 225544612', 'web': 'https://dzp.uw.edu.pl/postepowania-przetargowe/', 'email': 'dzpmed@uw.edu.pl', 'street': 'ul. Krakowskie Przedmieście 26/28', 'pc': '00-927', 'town': 'Warszawa'} ID= [['NIP 5262239325']] 
+TPO-0001 Touchpoint {'tp_name': 'POL:Krajowa Izba Odwoławcza', 'tp_street': 'ul. Postępu 17a', 'tp_town': 'Warszawa'} ID= None 
+TPO-0002 Touchpoint {'tp_name': 'POL:Prokuratoria Generalna Rzeczpospolitej Polskiej', 'tp_town': 'Warszawa'} ID= None 
+  ref ORG-0000 ['OPT-300-Procedure-SProvider@ServiceProviderParty']
+  ref ORG-0001 ['OPT-300-Procedure-Buyer@ContractingParty', 'OPT-301-Lot-DocProvider@Lot', 'OPT-301-Lot-TenderEval@Lot', 'OPT-301-Lot-TenderReceipt@Lot']
+  ref TPO-0001 ['OPT-301-Lot-ReviewInfo@Lot', 'OPT-301-Lot-ReviewOrg@Lot']
+  ref TPO-0002 ['OPT-301-Lot-Mediator@Lot']

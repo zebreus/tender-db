@@ -1,0 +1,1 @@
+SELECT m.notice_id, m.section_id, m.organization_id, m.name, m.country, m.raw_identifier, m.scheme FROM organization_mentions m WHERE m.notice_id IN (26213590, 23555356, 26198825, 23491395, 26290799, 23851800, 26608207, 24610830, 26635993, 24720730, 26710678, 24872092, 26588853, 24666434) ORDER BY m.notice_id, m.section_id
