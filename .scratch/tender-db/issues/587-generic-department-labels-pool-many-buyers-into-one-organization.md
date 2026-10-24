@@ -1,6 +1,6 @@
 # 587 — generic department labels pool many buyers into one organization
 
-Status: needs-triage — filed 2026-10-24 from 576 U5 / 586 U3's read-back (wf_0fa63db1-03e, minted items B07, B14, B29).
+Status: ready-for-agent — **unit 1 QUEUED 2026-10-24 ~19:00Z: census 2781** (`name-phrase-census`, served names, 20 folded contracting-unit phrases FR/ES/PL/NL/DE/EN/IT; job file `.scratch/tender-db/587-u1/census.json`). It lists every organization whose served name holds a phrase, with its roles per Tender and mention count. NEXT: from 2781, split BARE labels (the folded name IS the phrase, or the phrase plus only punctuation/legal noise) from a buyer's department under its own name ("Ville de X — Direction de la Commande Publique", D576-1's accepted N); for the bare ones with many mentions, read distinct buyers per org (bounded `tender_version_parties_org` seeks for the top 20) and decide: 586 D2's whole-name list for the touchpoint gate + an ORG-path drop/alias-to-own-buyer. Was: needs-triage — filed 2026-10-24 from 576 U5 / 586 U3's read-back (wf_0fa63db1-03e, minted items B07, B14, B29).
 Next: unit 1, size the label rows (organizations with no identifier whose name is a bare department/contracting-unit label
 and whose mentions span several unrelated buyers) and decide: a whole-name stem list for the touchpoint gate (586 D2's
 mechanism) and/or the ORG path (585's question), or an alias to the parent when a department label names no body.

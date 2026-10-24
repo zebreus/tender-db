@@ -1,6 +1,6 @@
 # 585 — TenderNed dashboard labels printed as ORG sections are served as organizations
 
-Status: needs-triage — filed 2026-10-24 from issue 576 unit 4's read-back (items 1 and 2). 576 U5 (the `deze
+Status: ready-for-agent — **unit 1 MEASURED 2026-10-24 ~18:55Z (after 576 U5's Touchpoint re-fold 2768/2769; 4 bounded /v1/sql seeks + 2 GETs)**: the touchpoint mentions are gone (575 → 101 and 370 → 83 mentions). What still binds is the **ORG path of TED R2.0.9 exports** (`ted-export-r209`, NL, notices 22,022,889–23,458,877, 2021–2023): org 18044191 "Vraag- en antwoordmodule in het dashboard van deze aanbesteding" serves **further-information** on 193 version-party rows (section ORG-2, plus 1 ORG-3), org 18044192 "Dashboard van deze aanbesteding" serves **tender-receipt** on 175 (ORG-3); one spelling each. Census 2780 (`name-phrase-census` "deze aanbesteding" +mentions) queued to find every other organization or mention carrying the phrase. NEXT: unit 2 decides from 2780 — proposed: drop an ORG-path party whose whole name `portal_label` reads as portal prose (576 U5's phrase), as 520/525's not_a_name, then a refold-fields of the hit notices + sweep. Was: needs-triage — filed 2026-10-24 from issue 576 unit 4's read-back (items 1 and 2). 576 U5 (the `deze
 aanbesteding` portal phrase) stops the touchpoint path from binding these labels; this issue is the Organization path,
 where the same labels already existed as name-keyed organizations before 576's drain. Next: after 576 U5's deploy and
 Touchpoint re-fold, read what still binds to orgs 18044191 / 18044192 and decide.
@@ -23,6 +23,21 @@ path), 456 (each party serves its own published name).
   the name of an ORG section that carries the buyer's address and TenderNed's URL.
 - On the touchpoint path 576 U5 drops them (`touchpoint_gate` → `portal_name`). The ORG path has no such drop: 483's
   BuyerFix keeps a platform name served as published, and `portal_label` only refuses promotion to buyer.
+
+## Unit 1 (2026-10-24, measured)
+
+Reads (bounded: `tender_version_parties_org` and `organization_mentions_org` index seeks, one `notices` PK seek):
+
+| org | name | mentions (was) | role rows | sections | notices |
+| --- | --- | --- | --- | --- | --- |
+| 18044191 | Vraag- en antwoordmodule in het dashboard van deze aanbesteding | 101 (575) | further-information 193 | ORG-2 192, ORG-3 1 | 22022889–23458877 |
+| 18044192 | Dashboard van deze aanbesteding | 83 (370) | tender-receipt 175 | ORG-3 175 | 22022889–23458877 |
+
+Sample notices 22022889 (565872-2021), 22656969 (502713-2022), 23458877 (530958-2023): source `ted`, profile `ted-export-r209`.
+So the labels sit in the R2.0.9 address blocks (further information / tenders to be submitted to), where TenderNed printed
+its dashboard link text as OFFICIALNAME. 576 U5's gate covers only the eForms touchpoint path.
+
+Census 2780 (queued 2026-10-24): `{"kind":"name-phrase-census","phrases":["deze aanbesteding"],"mentions":true}`.
 
 ## Proposed units
 
