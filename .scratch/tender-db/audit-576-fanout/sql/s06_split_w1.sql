@@ -1,0 +1,1 @@
+SELECT m.organization_id AS org, count(*) AS n, count(DISTINCT s.notice_id) AS notices FROM notice_sections s LEFT JOIN organization_mentions m ON m.notice_id = s.notice_id AND m.section_id = s.section_id WHERE s.kind = 'Touchpoint' AND s.notice_id BETWEEN 24000000 AND 24019999 GROUP BY +m.organization_id ORDER BY n DESC

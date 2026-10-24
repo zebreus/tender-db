@@ -1,0 +1,70 @@
+{
+ "used": 7,
+ "stop": null,
+ "last": 1792846410.7210665,
+ "log": [
+  {
+   "name": "s01_g0",
+   "sha256": "36634044b23d4dc39e9c4472b3123c188bf50ba9eaa24cad30034ed17676936a",
+   "sent_at": "2026-10-24T12:52:36Z",
+   "secs": 0.6,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "name": "s02_g1",
+   "sha256": "bbe35cfabc529e1c12ae318b8e6fe3390cea35408de4f9959a442fdcf409847b",
+   "sent_at": "2026-10-24T12:52:44Z",
+   "secs": 0.63,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "name": "s03_g2",
+   "sha256": "fa96a7344f463975463536a3fd723f45150d0a7871ad84a89e532efb62f012f5",
+   "sent_at": "2026-10-24T12:52:48Z",
+   "secs": 0.72,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "name": "s04_g3",
+   "sha256": "da74e0ccea056acbd28a3a0ec1e8214cdd079bf99a93e2c0e605b17cfff19d9f",
+   "sent_at": "2026-10-24T12:52:53Z",
+   "secs": 0.71,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "name": "s05_g4",
+   "sha256": "ab0d4ed6ec619771a55cec86ba8b54459a6fb1f7301dadf5a338388e11d16610",
+   "sent_at": "2026-10-24T12:52:57Z",
+   "secs": 0.42,
+   "ok": true,
+   "rows": 0,
+   "truncated": false
+  },
+  {
+   "name": "s06_g5",
+   "sha256": "02eaa63a456347be95ee6ba714f7bceee9bc64b4b7a50d1419a485b8af9d460b",
+   "sent_at": "2026-10-24T12:53:01Z",
+   "secs": 0.68,
+   "ok": true,
+   "rows": 40,
+   "truncated": false
+  },
+  {
+   "name": "s07_n6",
+   "sha256": "f7012656cae98ea6d599e03261659cafc0293e9c1f977d9148f4b1a36c1eac6b",
+   "sent_at": "2026-10-24T12:53:29Z",
+   "secs": 1.56,
+   "ok": true,
+   "rows": 17,
+   "truncated": false
+  }
+ ]
+}
