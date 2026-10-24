@@ -1,0 +1,36 @@
+{
+ "CB": 959192253,
+ "K_open": 959192253,
+ "cb_health": [
+  "2026-10-24T00:04:59Z CB-w539-a rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959192253 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-24T00:05:00Z CB-w539-ab rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959192253 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "cb_jobs": {
+  "current": null,
+  "file_sha256": "e566250ef58e40c54b7133b2717ef671d6d16f6e1d65469c1feb58ab60de5a45",
+  "max_job_id": 2732,
+  "measured_at": 1792800299,
+  "queued": []
+ },
+ "class": "W",
+ "deadline": "2026-10-24T05:35:00Z",
+ "dry_since_mark": [],
+ "lock": "Writer: 551 w539-a until 2026-10-24T02:30Z",
+ "minutes_per_run": 80,
+ "opened_at": "2026-10-24T00:05:00Z",
+ "prereg": {
+  "bar": "U5 sequential; cap max(2Ar, Ar+10)",
+  "class": "W",
+  "expected_moves": "0 R moves (C9')",
+  "expected_new": 0,
+  "salt": "551-b6-drain-539-"
+ },
+ "read_minutes": 45,
+ "runs_left": 1,
+ "seg": "w539-a",
+ "status": "open",
+ "switchoff_by": "2026-10-24T07:05:00Z",
+ "tag": "drain-539-a",
+ "tick": "2026-10-24T07:35:00Z",
+ "tick_kind": "chain"
+}

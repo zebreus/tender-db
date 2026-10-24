@@ -1,0 +1,2 @@
+  start rule (W mode, E6): now 2026-10-23T23:46Z; next chain 2026-10-24T07:35Z (09:35 Berlin); next weekly tick 2026-10-25T02:10Z (Sun 03:10 Berlin); binding: chain; must finish by 2026-10-24T05:35Z; 1 run(s) left, estimate 1:15:00 (switch-off gate budgeted) -> 2026-10-24T01:01Z: GO; a switch-off must START by 2026-10-24T07:05Z (gate 0+deploy 10+drain_back_and_verify 20 min)
+p0: dry admitted 3537 of 3541 (15626 notices); wrote p0_wet.json (expect 3537)

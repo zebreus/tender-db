@@ -1,0 +1,78 @@
+{
+ "CA": 959192253,
+ "CB": 959192253,
+ "K_open": 959192253,
+ "ca_health": [
+  "2026-10-24T00:03:29Z CA-z539-1 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959192253 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-24T00:03:31Z CA-z539-1b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959192253 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "ca_jobs": {
+  "current": null,
+  "file_sha256": "26a0b152d15aa213c91a7f289a8df4b3b9310e690bb627c24f07299273bc691f",
+  "max_job_id": 2732,
+  "measured_at": 1792800210,
+  "queued": []
+ },
+ "cb_health": [
+  "2026-10-23T23:50:17Z CB-z539-1 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959192253 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-23T23:50:19Z CB-z539-1b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959192253 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "cb_jobs": {
+  "current": null,
+  "file_sha256": "44b408d07bd88a7dd897b53d124c36a15f5cfbb614aaa96ae599ef4300b189d9",
+  "max_job_id": 2730,
+  "measured_at": 1792799418,
+  "queued": []
+ },
+ "class": "Z",
+ "closed_at": "2026-10-24T00:03:31Z",
+ "corrected": 0,
+ "corrected_parsed": null,
+ "deadline": "2026-10-24T05:35:00Z",
+ "dry_since_mark": [],
+ "foreign": [],
+ "jobs_verdict": "PASS",
+ "lock": "Writer: 551 z539-1 until 2026-10-24T01:30Z",
+ "minutes_per_run": 60,
+ "missing_own": [],
+ "opened_at": "2026-10-23T23:50:19Z",
+ "own": [
+  2731,
+  2732
+ ],
+ "prereg": {
+  "bar": null,
+  "class": "Z",
+  "expected_moves": "0",
+  "expected_new": 0,
+  "salt": "551-b6-drain-539-"
+ },
+ "read_minutes": 0,
+ "runs_left": 1,
+ "seg": "z539-1",
+ "started": [
+  {
+   "counts": "repair-notice-instants (issue 367, WET): 14959552 parsed notice(s) walked, 14943209 already agree with the resolver, 0 agree on the instants but lack the offset/precision pair (unit 3) and 0 carry a date-only instant at local midnight that moves to its civil midnight (issue 418) — both mechanical, written as walked, no plan needed; 0 written. 16343 planned — 0 stamped the epoch (1970-01-01, the flattened not-found), 0 NULL while the parse states a date, 0 whose parse states NO date and whose stored value is therefore REMOVED. By profile: [eforms:eforms-de-1.1 1359, eforms:eforms-de-1.2 1138, eforms:eforms-de-2.0 469, eforms:eforms-de-2.1 2487, eforms:eforms-sdk-0.1 10890]. The versions are untouched: they read the pair off their notice, and nothing is re-projected. APPLIED 16343, skipped 0 whose row moved under the plan.",
+   "finished_at": 1792800194,
+   "job_id": 2732,
+   "kind": "repair-notice-instants",
+   "outcome": "ok",
+   "params": "repair-notice-instants",
+   "started_at": 1792799950
+  },
+  {
+   "counts": "repair-notice-instants (issue 367, DRY): 14959552 parsed notice(s) walked, 14943209 already agree with the resolver, 0 agree on the instants but lack the offset/precision pair (unit 3) and 0 carry a date-only instant at local midnight that moves to its civil midnight (issue 418) — both mechanical, written as walked, no plan needed. 16343 planned — 0 stamped the epoch (1970-01-01, the flattened not-found), 0 NULL while the parse states a date, 0 whose parse states NO date and whose stored value is therefore REMOVED. By profile: [eforms:eforms-de-1.1 1359, eforms:eforms-de-1.2 1138, eforms:eforms-de-2.0 469, eforms:eforms-de-2.1 2487, eforms:eforms-sdk-0.1 10890]. The versions are untouched: they read the pair off their notice, and nothing is re-projected.",
+   "finished_at": 1792799934,
+   "job_id": 2731,
+   "kind": "repair-notice-instants",
+   "outcome": "ok",
+   "params": "repair-notice-instants dry-run",
+   "started_at": 1792799430
+  }
+ ],
+ "status": "closed",
+ "switchoff_by": "2026-10-24T07:05:00Z",
+ "tag": "drain-539-1",
+ "tick": "2026-10-24T07:35:00Z",
+ "tick_kind": "chain"
+}

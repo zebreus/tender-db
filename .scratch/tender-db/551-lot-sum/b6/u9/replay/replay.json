@@ -1,0 +1,14 @@
+{
+ "at": "2026-10-23T23:45:03Z",
+ "lost_since": [],
+ "lsa_e1": 3478,
+ "lsa_outside_registry": [],
+ "n_archive": 18216,
+ "n_e1": 18216,
+ "only_archive": [],
+ "only_e1": [],
+ "pass": true,
+ "r0": 3478,
+ "r0_missing_unexplained": [],
+ "tender_rows_equal": true
+}

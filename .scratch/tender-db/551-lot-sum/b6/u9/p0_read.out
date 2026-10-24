@@ -1,0 +1,8 @@
+2026-10-23T23:49:07Z #5 p0_e1_959180852 0.61s rows=1879 truncated=False sha256=92f379b89585287e raw=0005_p0_e1_959180852.json
+2026-10-23T23:49:10Z #6 changes_959180852_959185852 0.86s rows=5000 truncated=False sha256=784ef842cb541fed raw=0006_changes_959180852_959185852.json
+2026-10-23T23:49:13Z #7 changes_959185852_959190852 0.85s rows=5000 truncated=False sha256=e3b35a50aace93ef raw=0007_changes_959185852_959190852.json
+2026-10-23T23:49:17Z #8 changes_959190852_959192253 0.61s rows=1401 truncated=False sha256=f735a030c6bd92df raw=0008_changes_959190852_959192253.json
+2026-10-23T23:49:20Z #9 p0_r_pk000 0.97s rows=2000 truncated=False sha256=2636b35ab631aeec raw=0009_p0_r_pk000.json
+2026-10-23T23:49:23Z #10 p0_r_pk001_n1541 0.96s rows=1541 truncated=False sha256=441c88df392025e7 raw=0010_p0_r_pk001_n1541.json
+2026-10-23T23:49:26Z #11 p0_band 0.47s rows=29 truncated=False sha256=a0577e91a2d75e29 raw=0011_p0_band.json
+p0: reads complete over (959180852, 959192253] (route both): 1879 Tenders with tender rows, 1879 live changed, 0 retired; 0 NEW candidates PK-read; R ∪ Rg ∪ pins 3541; band sql; 7 statements; changed live ids for A: /home/user/tender-db/.scratch/tender-db/551-lot-sum/b6/u9/segments/p0/read/changed_live_ids.json (1 dry job(s): ajobs.py build p0 --from-seg p0)

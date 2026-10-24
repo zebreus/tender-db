@@ -1,0 +1,88 @@
+{
+ "CA": 959192253,
+ "CB": 959180852,
+ "K_open": 959180852,
+ "ca_health": [
+  "2026-10-23T23:48:57Z CA-p0 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959192253 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-23T23:48:58Z CA-p0b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959192253 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "ca_jobs": {
+  "current": null,
+  "file_sha256": "2f355bc9b971cc3084c4aa9e00eca7ba768a2a4052481e8fcadd6503e3726441",
+  "max_job_id": 2730,
+  "measured_at": 1792799337,
+  "queued": []
+ },
+ "cb_health": [
+  "2026-10-23T23:46:26Z CB-p0 rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959180852 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None",
+  "2026-10-23T23:46:28Z CB-p0b rev=512b2976f8c5d65de6b72d642202311e3308349a cursor=959180852 last_job_kind=None last_job_outcome=None last_job_started_at=None last_job_finished_at=None"
+ ],
+ "cb_jobs": {
+  "current": null,
+  "file_sha256": "376cae2ab5f29775169806c183eca68ba05ef14a57bf3fbae12924ae259c2b2d",
+  "max_job_id": 2728,
+  "measured_at": 1792799187,
+  "queued": []
+ },
+ "class": "D",
+ "closed_at": "2026-10-23T23:48:58Z",
+ "corrected": 1879,
+ "corrected_parsed": 1879,
+ "deadline": "2026-10-24T05:35:00Z",
+ "dry_since_mark": [
+  {
+   "counts": "refold-lot-sum (issue 551) DRY RUN — nothing written: 3537 of 3541 named Tender(s) whose head could serve a derived lot sum, 15626 notice(s); 4 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 4925871,4930240,5625591,8822313; run it with \"dry_run\":false,\"expect\":3537 with the same tender_ids to stamp and re-queue them (a `project` is queued behind the wet run)",
+   "finished_at": 1792799164,
+   "job_id": 2728,
+   "kind": "refold-lot-sum",
+   "outcome": "ok",
+   "params": "refold-lot-sum dry-run tender_ids=3541 [909,3296,5733,10700,17251,20295,23846,24526,…]",
+   "started_at": 1792799161
+  }
+ ],
+ "foreign": [],
+ "jobs_verdict": "PASS",
+ "lock": "Writer: 551 p0 until 2026-10-24T01:01Z",
+ "minutes_per_run": 45,
+ "missing_own": [],
+ "opened_at": "2026-10-23T23:46:35Z",
+ "own": [
+  2729,
+  2730
+ ],
+ "prereg": {
+  "bar": "B4: 0 moves in derivation, cents, currency, eur, detail.lots, vouched_by membership",
+  "class": "D",
+  "expected_moves": "0 W-column moves",
+  "expected_new": 0,
+  "salt": null
+ },
+ "read_minutes": 0,
+ "runs_left": 1,
+ "seg": "p0",
+ "started": [
+  {
+   "counts": "15626 notices → 4257 tenders (0 islands), 8039 versions; 3537 tenders written, 720 verified unchanged, 0 relabelled (issue 562); compare (issue 495): 1658 tenders verified, 1879 corrected; tables 132763 skipped / 8039 rewritten; rows 1737857 skipped / 212581 rewritten; 11401 correction rows; 1962716 stored rows of 15626 versions read in 17.7s: 9.04 us per row, 1135.5 us per version; dropped parties (issue 511): 0 void, 53 placeholder (0 with an identifier), 37 blank; issue-364 previous-publication citations: 13169 admitted, 24 refused (prior-information 7, buyer-profile 6, periodic-indicative 0, qualification-system 6, DPS 0, undeclared 5, unknown kind 0); issue-364 edges refused by the cited notice's own type: 659 (prior-information 207, buyer-profile 46, periodic-indicative 120, qualification-system 147, DPS 139, unknown kind 0); issue-481 tender links joined: 13 (previous-notice 13 of which cross-source 1, logical-notice 0, matched 0); refused: 58 (not-earlier 0, shared-kind 25, buyer-disjoint 33, pin-fan-in 0, fan-in 0, not-one-to-one 0, keyed-weld 0, oversized 0); deferred: 0; largest component: 5 key(s) at notice 25538619; issue-385 F14 corrigendum dates: 2296 mapped (deadline 1176, opening 1120), 204 refused (validity 158, duration 15, information 8, invitations 9, UNCLASSIFIED 14, no target stated 0); issue-489 F14 value corrections: 19 admitted (estimated 6, result 0, lot 13), 10 unread, 2 ambiguous, 7 contract refused; issue-479 procedure type: eforms 2442 folded / 0 unmapped / 37 none, eforms-de-2x 88 folded / 0 unmapped / 0 none, eforms-de-1x 25 folded / 0 unmapped / 0 none, r209 15368 folded / 123 unmapped / 0 none, r208 99 folded / 18 unmapped / 0 none",
+   "finished_at": 1792799324,
+   "job_id": 2730,
+   "kind": "project",
+   "outcome": "ok",
+   "params": "rebuild=false",
+   "started_at": 1792799207
+  },
+  {
+   "counts": "refold-lot-sum (issue 551): 3537 of 3541 named Tender(s) whose head could serve a derived lot sum, 15626 notice(s); 4 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 4925871,4930240,5625591,8822313; re-queued 15626, stamped 3537 epoch-stale — the `project` queued behind this job applies them",
+   "finished_at": 1792799207,
+   "job_id": 2729,
+   "kind": "refold-lot-sum",
+   "outcome": "ok",
+   "params": "refold-lot-sum expect=3537 tender_ids=3541 [909,3296,5733,10700,17251,20295,23846,24526,…]",
+   "started_at": 1792799206
+  }
+ ],
+ "status": "closed",
+ "switchoff_by": "2026-10-24T07:05:00Z",
+ "tag": "probe-512b297",
+ "tick": "2026-10-24T07:35:00Z",
+ "tick_kind": "chain"
+}

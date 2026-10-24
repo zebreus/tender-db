@@ -364,3 +364,5 @@ that morning's U9 check and P0. 579 needs nothing from it.
 - **579's pre-registration applies to step 2:** 408007, 413501, 454861, 179248, 340956, 823340 (all hold eforms-de versions)
   are expected to read corrected with order-only changes and no value move; 179248's v_awards buyer flips 23052423 →
   13025902 (579 U3). Not a fire, not a STOP.
+- **Writer: 551 z539-1 until 2026-10-24T01:30Z** (539 step 1, repair-notice-instants, class Z; opened 2026-10-23 23:50Z at CB = K = 959192253).
+- **Writer: 551 w539-a until 2026-10-24T02:30Z** (539 step 2 run a, refold eforms-sdk-0.1, class W; opened 00:05Z at CB = K = 959192253).

@@ -1616,3 +1616,21 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
   for place/country on R's legacy r209 heads; NEW expected 0; an eur-only move on a re-dated head with its tender row is a
   NOTE; path-W pin / partial sum off, or 6465510 serving lot-sum-awards = SWITCH OFF; 6908248 moving = stop and read. Twin
   adcb7b0 covered (switch-off gate 0 min). Writer lock: "Writer: 551 p0" from its open until its advance.
+- **Writer: 551 p0 until 2026-10-24T01:01Z** (segment p0 opened 2026-10-23 23:46Z at CB = K = 959180852; class D; dry 2728 admitted 3,537 of 3,541).
+- **Writer: 551 z539-1 until 2026-10-24T01:30Z** (539 step 1, repair-notice-instants, class Z; opened 2026-10-23 23:50Z at CB = K = 959192253).
+- **P0 PASS (2026-10-23 23:46–23:49Z):** dry 2728 (3,537 of 3,541 admitted; 4 unreachable pins) → wet 2729 (stamped 3,537)
+  → project 2730 (1,658 verified, 1,879 corrected, 8,039 tables rewritten — 546's place/country) over (959180852,
+  959192253]. gd5 class D, route both: E1 = all-kind on the 1,879 Tenders; NEW 0; R MOVED/LOST/SILENT 0; pins PASS; band
+  29 = B_R. Advanced: K → 959192253.
+- **539 step 1 PASS (z539-1, 23:50–00:04Z):** dry 2731 planned 16,343 (sdk-0.1 10,890, de-2.1 2,487, de-1.1 1,359, de-1.2
+  1,138, de-2.0 469; 0 epoch/NULL/removed; vs 16,344 measured in 539 unit 1) → wet 2732 APPLIED 16,343, skipped 0, no
+  project. Class Z shortcut: K = CA = 959192253, own jobs only, corrected 0 → PASS, advanced.
+- **539 step 2 pre-run record (C9' discharge):** A6 + P0 show R at 539's fixed point (539 deployed 10-19; zero-drift
+  2656-2658/2677-2679 and P0 0 R moves), so the prediction is **0 R moves**; seq/published_at moves are NOTEs; an eur-only
+  move on a re-dated head WITH its tender row is explained (899272 and 5842187 under the 2 % rule). Cap: max(2·A·1.0974 %,
+  A·1.0974 % + 10) with A the run's dry-admitted count. Salt `551-b6-drain-539-`. Bar: U5's sequential bar on the NEW
+  heads (all if ≤ 30); band rows 0 wrong of any class. 579's 6 order-only Tenders expected as non-W corrections. Runs:
+  a = sdk-0.1 (expect ~565k), b = de-1.0/1.1/1.2 (~219k), c = de-2.0/2.1 (~253k); each its own segment, STOP point
+  between runs; all close before the 10-25 02:10Z weekly tick, else c moves to 10-25. Started in the 10-23/24 night gap
+  (after the 10-23 chain's check in R0, P0 and step 1; no tick before 07:35Z).
+- **Writer: 551 w539-a until 2026-10-24T02:30Z** (539 step 2 run a, refold eforms-sdk-0.1, class W; opened 00:05Z at CB = K = 959192253).

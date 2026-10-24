@@ -1,0 +1,18 @@
+{
+ "at": "2026-10-23T23:46:23Z",
+ "found": 3537,
+ "named": 3541,
+ "not_admitted_n": 4,
+ "not_admitted_shown": [
+  4925871,
+  4930240,
+  5625591,
+  8822313
+ ],
+ "not_admitted_truncated": false,
+ "notes": [],
+ "notices": 15626,
+ "run": "p0",
+ "stops": [],
+ "summary": "refold-lot-sum (issue 551) DRY RUN — nothing written: 3537 of 3541 named Tender(s) whose head could serve a derived lot sum, 15626 notice(s); 4 named Tender(s) not in the cohort (no such Tender, or a head no lot sum can reach): 4925871,4930240,5625591,8822313; run it with \"dry_run\":false,\"expect\":3537 with the same tender_ids to stamp and re-queue them (a `project` is queued behind the wet run)"
+}

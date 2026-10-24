@@ -1,0 +1,67 @@
+{
+ "A": null,
+ "CA": 959192253,
+ "K": 959192253,
+ "advance": {
+  "add": [],
+  "band_add": [],
+  "band_drop": [],
+  "lost": [],
+  "moved": [],
+  "refresh": {},
+  "retired": []
+ },
+ "at": "2026-10-24T00:03:31Z",
+ "cap": null,
+ "class": "Z",
+ "code": 0,
+ "d7_hold": false,
+ "escalate": null,
+ "explained_file": null,
+ "explained_sha256": null,
+ "gap_end": "2026-10-24T07:05:00Z",
+ "lost": [],
+ "moved": [],
+ "new": [],
+ "now": "2026-10-24T00:03:31Z",
+ "prediction_sha256": null,
+ "read_sha256": "30389083ebdb05c4c2325f8c983a753f1e98d19d8f0393ba326c261f8a8ba201",
+ "rules": [
+  {
+   "code": 0,
+   "lines": [
+    "note: zero-change shortcut: K == CA over (959192253, 959192253]; jobs in (CB, CA] = own [2731, 2732]"
+   ],
+   "rule": "SCOPE",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "NEW",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "R (MOVED/LOST/SILENT)",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "PINS",
+   "verdict": "PASS"
+  },
+  {
+   "code": 0,
+   "lines": [],
+   "rule": "BAND",
+   "verdict": "PASS"
+  }
+ ],
+ "seg": "z539-1",
+ "silent": [],
+ "tag": "drain-539-1",
+ "verdict": "PASS"
+}

@@ -1,0 +1,7 @@
+SCOPE: PASS
+   note: zero-change shortcut: K == CA over (959192253, 959192253]; jobs in (CB, CA] = own [2731, 2732]
+NEW: PASS
+R (MOVED/LOST/SILENT): PASS
+PINS: PASS
+BAND: PASS
+z539-1: PASS -- registry.py advance z539-1 (K -> 959192253; NEW 0, moved 0, lost 0)

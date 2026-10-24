@@ -1,0 +1,9 @@
+SCOPE: PASS
+   note: all-kind rows {'lot/changed': 9522, 'tender/changed': 1879}
+   note: E1 = the all-kind reader on the tender rows (1879 Tenders, 0 retired); 0 lot-only Tenders read beside
+NEW: PASS
+R (MOVED/LOST/SILENT): PASS
+PINS: PASS
+BAND: PASS
+   note: band route sql; 29 rows; B_R 29
+p0: PASS -- registry.py advance p0 (K -> 959192253; NEW 0, moved 0, lost 0)

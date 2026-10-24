@@ -1,0 +1,14 @@
+{
+ "CA": 959192253,
+ "K": 959192253,
+ "at": "2026-10-24T00:03:31Z",
+ "class": "Z",
+ "complete": true,
+ "e1_ids": [],
+ "e1_rows": 0,
+ "jobs_sha256": "0ebbfa9abe5389d18a51ce6685483de764d684be40f270c97bf8d785fcd255b2",
+ "note": "K == CA: nothing was written",
+ "seg": "z539-1",
+ "shortcut": true,
+ "statements": 0
+}
