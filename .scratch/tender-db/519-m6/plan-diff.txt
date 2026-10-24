@@ -1,0 +1,8 @@
+NOTE GBNHS110044: denied names (residue; pending-move merges on the second pass)
+NOTE GBNHS78HNHS: denied names (residue; pending-move merges on the second pass)
+NOTE GBNHSFF360FNL49FK182: denied names (residue; pending-move merges on the second pass)
+NOTE GBNHSPTPB4248VJQT: denied names (residue; pending-move merges on the second pass)
+NOTE GBNHSPVQC921WGRM: denied names (residue; pending-move merges on the second pass)
+NOTE GBNHSQE1000: denied names (residue; pending-move merges on the second pass)
+plan 94 keys; holds 0; stops 1
+STOP GB/national/GBCOH02109186>merge:02109168: not an M6 verdict (an older cohort's key drifted into the plan): read it
