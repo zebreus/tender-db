@@ -3210,6 +3210,23 @@ review machinery that records verdicts. **Every writing one defaults to
 merge arms run the T4 ladder (dry census → recorded plan → capped wet →
 uncapped wet), so a wet run refuses unless its dry plan is on file.
 
+**Since issue 583, queue `{"kind":"project"}` right after every wet merge.** Every arm that repoints a loser onto a
+survivor does this: `merge-provisional-orgs`, `match-org-identifiers` with `rule` r2, e0, r3, altid, nhs-body or
+rekey, `fold-provisional-echoes`, `repair-provisional-name-norm` and `repair-nested-orgs`. In the transaction that
+repoints, it stamps every Tender whose party, bid-party or winner rows it repointed epoch-stale and re-queues that
+Tender's parsed notices. Those are the Tenders its summary counts as `N tenders touched` (`N tender change event(s)`
+for `merge-provisional-orgs`; that count and p0/p1's sum per transaction, so a Tender can be counted twice).
+The `project` refolds them, and any party, bid-party or winner table whose rows sat out of the fold's order is
+rewritten in that order. Its `compare (issue 495): X tenders verified, Y corrected` covers at least those Tenders.
+Y counts the ones whose survivor's id sorted across a sibling's. Those corrections are order-only (the `tables
+identical/compared` line moves only `tender_version_parties`, `tender_version_bid_parties` and
+`tender_version_result_winners`), unless a deployed fold change has not yet been drained for that Tender.
+A later refold verifies them. Before issue 583 the repoint left each row where the loser's id sorted, and whichever
+refold next reached the Tender announced it corrected (issue 579's mechanism; 579 U4 gave the dissolve path the
+same stamp). A large merge makes that `project` long: 2564 refolded about 500 Tenders a second, planning included.
+If no `project` is queued, the next daily chain's `project` runs it instead and carries the corrections into that
+segment.
+
 | kind | writes? | notes |
 |---|---|---|
 | `org-merge-health`, `r2-census`, `r3-census` | no | the standing measurements; `org-merge-health` is weekly and carries the Stage-5 `null_country` bucket (issue 300) plus three tripwires read against its previous report: `parser_vs_stock.alarms` (issue 325), `gln_9110.shared_one_country` (327) and `name_growth.alarms` (300 tripwire 2: a top-100 org gaining ≥20 distinct names, a new entrant at ≥50, or `ge6` growing >5 %). Any alarm shows in the job's summary line as `… ALARM(S): …`; the first run after a deploy that adds a block has no baseline for it and stays quiet |

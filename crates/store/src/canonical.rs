@@ -7474,7 +7474,8 @@ const REKEY_RULE: &str = "rekey";
 /// (tender, seq, lot_result) already stands on `keep`, so the PK survives and
 /// a doubled award collapses to one row. Deleting the loser org row and the
 /// change events stay with the caller — the merge and the repair group them
-/// differently.
+/// differently — and the caller announces AND stamps the Tenders it touched
+/// through [`announce_repointed_tenders`] (issue 583).
 ///
 /// Issue 460: and the loser's identifiers, which the caller's DELETE would
 /// otherwise take out of the identity index. `rule` names the merge (the
@@ -7546,6 +7547,36 @@ async fn repoint_org_references(
     )
     .await?;
     Ok(counts)
+}
+
+/// The merge-side twin of 579 U4 (issue 583): announce the Tenders a merge's repoints
+/// touched AND hand them to the fold. Every caller of [`repoint_org_references`] collects
+/// the loser's Tenders (party, bid-party and winner rows) before the repoint and calls this
+/// once per transaction, inside it:
+/// - one seq-less `tender changed` row per Tender (issue 286: what the org-role filters
+///   return moved);
+/// - the Tenders stamped epoch-stale and their causing notices re-queued (the issue-179
+///   pair), so the next incremental fold rewrites them.
+///
+/// The repoint UPDATEs party, bid-party and winner rows in place, so each keeps the rowid
+/// where the loser's id sorted, while the fold writes each group in its own sort order
+/// (role, then org id) and the refold's compare (issue 495) reads rows by position. Left
+/// as written, a Tender whose survivor's id sorts across a sibling's is rewritten and
+/// announced corrected at its next refold although nothing it binds moved. Stamped here,
+/// the next `project` writes the fold's own order and a later refold verifies it. The
+/// requeue and the stamp skip their checkpoints inside a transaction (`checkpoint_on`).
+async fn announce_repointed_tenders(conn: &Connection, touched: &BTreeSet<i64>, now: i64) -> turso::Result<()> {
+    for &tid in touched {
+        append_change(conn, "tender", tid, None, "changed", now).await?;
+    }
+    if touched.is_empty() {
+        return Ok(());
+    }
+    let ids: Vec<i64> = touched.iter().copied().collect();
+    let notices = Db::notice_ids_of_tenders(conn, &ids).await?;
+    Db::requeue_notice_ids(conn, &notices, false).await?;
+    Db::stamp_tenders_stale(conn, ids).await?;
+    Ok(())
 }
 
 /// Issue 484 unit 3 (review): the keep rows a merge's collapse would leave
@@ -25099,9 +25130,7 @@ impl Db {
             // new version, it re-points existing ones. It tells a `buyer`/`winner`/`bidder`
             // subscriber to re-evaluate the Tender (add it if it now matches the survivor,
             // drop it if it no longer matches the deleted loser).
-            for &tid in &touched {
-                append_change(&conn, "tender", tid, None, "changed", now).await?;
-            }
+            Box::pin(announce_repointed_tenders(&conn, &touched, now)).await?;
             report.tender_changes = touched.len() as u64;
             Ok(())
         })
@@ -26329,9 +26358,7 @@ impl Db {
                         .await?;
                     }
                 }
-                for &tid in &txn_touched {
-                    append_change(&conn, "tender", tid, None, "changed", now).await?;
-                }
+                Box::pin(announce_repointed_tenders(&conn, &txn_touched, now)).await?;
                 Ok(())
             }
             .await;
@@ -29039,9 +29066,7 @@ impl Db {
                 for &keep in &txn_keeps {
                     append_change(&conn, "organization", keep, None, "changed", now).await?;
                 }
-                for &tid in &txn_touched {
-                    append_change(&conn, "tender", tid, None, "changed", now).await?;
-                }
+                Box::pin(announce_repointed_tenders(&conn, &txn_touched, now)).await?;
                 Ok(())
             }
             .await;
@@ -32182,9 +32207,7 @@ impl Db {
                 (Value::Integer(fold.now), Value::Text(action), job(), t(NHS_BODY_SCHEME), t(code), t(fold.cohort)),
             )
             .await?;
-            for &tid in &touched {
-                append_change(conn, "tender", tid, None, "changed", fold.now).await?;
-            }
+            Box::pin(announce_repointed_tenders(conn, &touched, fold.now)).await?;
             Ok(touched)
         })
         .await
@@ -33413,9 +33436,7 @@ impl Db {
                         )
                         .await?;
                 }
-                for &tid in &txn_touched {
-                    append_change(conn, "tender", tid, None, "changed", now).await?;
-                }
+                Box::pin(announce_repointed_tenders(conn, &txn_touched, now)).await?;
                 Ok(())
             }
             .await;
@@ -34956,9 +34977,7 @@ impl Db {
                     .await?;
                     txn_done += 1;
                 }
-                for &tid in &txn_touched {
-                    append_change(conn, "tender", tid, None, "changed", now).await?;
-                }
+                Box::pin(announce_repointed_tenders(conn, &txn_touched, now)).await?;
                 Ok(())
             }
             .await;
@@ -38103,9 +38122,7 @@ impl Db {
                     append_change(&conn, "organization", keep, None, "changed", now).await?;
                     report.merged_groups += 1;
                 }
-                for &tid in &txn_touched {
-                    append_change(&conn, "tender", tid, None, "changed", now).await?;
-                }
+                Box::pin(announce_repointed_tenders(conn, &txn_touched, now)).await?;
                 Ok(())
             }
             .await;
@@ -40672,11 +40689,9 @@ impl Db {
         }
         report.tender_changes = touched.len() as u64;
         if !dry_run {
-            for &tid in &touched {
-                if let Err(e) = append_change(&conn, "tender", tid, None, "changed", now).await {
-                    let _ = conn.execute("ROLLBACK", ()).await;
-                    return Err(e);
-                }
+            if let Err(e) = Box::pin(announce_repointed_tenders(&conn, &touched, now)).await {
+                let _ = conn.execute("ROLLBACK", ()).await;
+                return Err(e);
             }
             finish_tx(&conn, Ok(())).await?; // a failed COMMIT rolls back too (issue 498)
             if report.repaired > 0 {
