@@ -1,0 +1,42 @@
+{
+ "A": 4105,
+ "at": "2026-10-24T02:51:56Z",
+ "cap_W": 90.0960219478738,
+ "complete": true,
+ "expected_fires": 45.0480109739369,
+ "ids_sha256": "2bb7757823c1e9195044be6008ad0655c96dea1146a519fc0f55ebbfd7280f24",
+ "n": 13453,
+ "n_named": 13453,
+ "name": "days12",
+ "per_job": [
+  {
+   "found": 2704,
+   "job": "A01",
+   "n": 5000,
+   "not_admitted": 2296,
+   "notices": 15736,
+   "problems": [],
+   "summary_sha256": "752b6beb6ad7749d80fa27ffacda0eef6376f8e2c0326e8a4db7dcbe7e0eb4a9"
+  },
+  {
+   "found": 1378,
+   "job": "A02",
+   "n": 5000,
+   "not_admitted": 3622,
+   "notices": 6913,
+   "problems": [],
+   "summary_sha256": "281f162ef9106c85ae146209a53b4adcee3c6b90fc2b5c69fa4c76ec22f5d94c"
+  },
+  {
+   "found": 23,
+   "job": "A03",
+   "n": 3453,
+   "not_admitted": 3430,
+   "notices": 30,
+   "problems": [],
+   "summary_sha256": "40813d39a3e07d18383656fb9050fe2a67a258c1666172898fd63825264e5408"
+  }
+ ],
+ "source": "archived all-kind enumeration, cursor > 959004090 (retired 24 left out)",
+ "three_x": 135.1440329218107
+}

@@ -1,0 +1,21 @@
+{
+ "at": "2026-10-24T02:50:55Z",
+ "ids_sha256": "2bb7757823c1e9195044be6008ad0655c96dea1146a519fc0f55ebbfd7280f24",
+ "jobs": [
+  {
+   "job": "A01",
+   "n": 5000
+  },
+  {
+   "job": "A02",
+   "n": 5000
+  },
+  {
+   "job": "A03",
+   "n": 3453
+  }
+ ],
+ "n": 13453,
+ "name": "days12",
+ "source": "archived all-kind enumeration, cursor > 959004090 (retired 24 left out)"
+}

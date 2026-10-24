@@ -1649,3 +1649,10 @@ Full record: `551-lot-sum/b6/decision-b6.md` (three judges — risk-first, value
 - **539 drain complete** (the 539 issue has the table). R stayed at 539's fixed point, as predicted by C9': 0 R moves
   across 4 class-W/D segments. Next W-on users: the U9 class-chain check after the 10-24 07:35Z chain (RUNBOOK-W §2); the
   10-25 02:10Z weekly tick (§6); 546 U4.
+- **A for days 1–2 (H), measured 2026-10-24 02:51–03:0xZ: A_1-2 = 4,105** admitted of the decision's literal 13,453
+  (`u9/ajobs/days12/`, `--after-cursor 959004090`, archived all-kind enumeration; dry refold-lot-sum 2743 / 2744 / 2745
+  = 2,704 + 1,378 + 23; A.json ids_sha256 2bb77578…). **3 fires vs 3 × A_1-2 × 1.0974 % = 135.1: far under.** Order
+  deviation, recorded: the decision asked for this before the first drain wrote, and it ran after P0 and 539's four
+  segments. A dry admission reads today's heads. Across those segments, gd5 found NEW 0 and 0 R moves, and the retired
+  Tenders are reported as not admitted. So the drift is at most a few re-headed non-R Tenders against 4,105, and the
+  verdict cannot flip.
