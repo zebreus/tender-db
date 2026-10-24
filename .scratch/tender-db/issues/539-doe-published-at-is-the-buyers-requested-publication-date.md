@@ -426,6 +426,6 @@ plans reused, 7 statements, queue idle, no 408). They cover all 135 baseline fet
 - **Not measured.** The ~3,800 reorder estimate was not verified: version-level change rows came on only 470
   Tenders across the three runs, 93 of them new. Folds between the 10-19 deploy and the drain had already applied the
   new dates to many chains.
-- A served-docs gap may exist: no sentence says a Tender id can be retired on regroup. It is being checked
-  adversarially before filing.
+- **Filed 580** (verified by a finder and a refuter, wf_bc2614fa-460): a Tender id retired on regroup answers 404,
+  and no served doc says a Tender id can go away within a generation; the served text implies the opposite.
 
